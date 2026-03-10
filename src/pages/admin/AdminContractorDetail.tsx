@@ -170,7 +170,39 @@ const AdminContractorDetail = () => {
           </CardContent>
         </Card>
 
-        {/* Admin note (read-only if exists) */}
+        {/* Subscription */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">Abonnement</CardTitle></CardHeader>
+          <CardContent>
+            {subscription ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Plan</p>
+                  <p className="font-medium">{getPlanById(subscription.plan_id)?.name ?? subscription.plan_id}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Statut</p>
+                  <p className="font-medium">{subscription.status}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Période</p>
+                  <p className="font-medium">
+                    {subscription.current_period_start
+                      ? `${new Date(subscription.current_period_start).toLocaleDateString("fr-CA")} — ${new Date(subscription.current_period_end!).toLocaleDateString("fr-CA")}`
+                      : "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Annulation prévue</p>
+                  <p className="font-medium">{subscription.cancel_at_period_end ? "Oui" : "Non"}</p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Aucun abonnement actif.</p>
+            )}
+          </CardContent>
+        </Card>
+
         {contractor.admin_note && (
           <Card>
             <CardHeader><CardTitle className="text-base">Note admin existante</CardTitle></CardHeader>
