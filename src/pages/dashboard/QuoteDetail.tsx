@@ -209,7 +209,7 @@ const QuoteDetail = () => {
                     title="Éléments souvent oubliés"
                     items={missingItems}
                     emptyText="Tous les éléments courants semblent présents."
-                    className="text-orange-600 dark:text-orange-400"
+                    className="text-destructive/80"
                   />
                 </CardContent>
               </Card>

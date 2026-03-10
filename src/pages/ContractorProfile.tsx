@@ -176,7 +176,7 @@ const ContractorProfile = () => {
                         {Array.from({ length: 5 }).map((_, si) => (
                           <Star
                             key={si}
-                            className={`h-3.5 w-3.5 ${si < review.rating ? "fill-current text-yellow-500" : "text-muted"}`}
+                            className={`h-3.5 w-3.5 ${si < review.rating ? "fill-current text-accent" : "text-muted"}`}
                           />
                         ))}
                       </div>

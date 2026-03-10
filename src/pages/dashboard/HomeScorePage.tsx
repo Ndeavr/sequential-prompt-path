@@ -81,7 +81,7 @@ const HomeScorePage = () => {
 
 const ScoreBar = ({ label, value }: { label: string; value: number }) => {
   const color =
-    value >= 70 ? "bg-success" : value >= 45 ? "bg-yellow-500" : "bg-destructive";
+    value >= 70 ? "bg-success" : value >= 45 ? "bg-accent" : "bg-destructive";
 
   return (
     <div>
