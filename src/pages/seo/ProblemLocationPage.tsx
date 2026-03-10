@@ -1,5 +1,5 @@
 /**
- * UNPRO — Problem Location SEO Page
+ * UNPRO — Problem Location SEO Page (Premium redesign)
  */
 
 import { useParams, Link } from "react-router-dom";
@@ -29,6 +29,14 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
 };
 
+const WaveDivider = () => (
+  <div className="wave-divider">
+    <svg viewBox="0 0 1440 48" preserveAspectRatio="none">
+      <path d="M0 24C240 0 480 48 720 24C960 0 1200 48 1440 24V48H0Z" fill="hsl(var(--background))" />
+    </svg>
+  </div>
+);
+
 const ProblemLocationPage = () => {
   const { problem, city } = useParams<{ problem: string; city: string }>();
   const data = problem && city ? buildProblemLocationPage(problem, city) : null;
@@ -39,66 +47,103 @@ const ProblemLocationPage = () => {
     <MainLayout>
       <SeoHead title={data.metaTitle} description={data.metaDescription} />
 
-      <article className="mesh-gradient noise-overlay">
-        <div className="relative z-10 max-w-4xl mx-auto px-4 py-8 md:py-12 space-y-10">
-          {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Link to="/" className="hover:text-primary transition-colors">Accueil</Link>
-            <span className="text-border">/</span>
-            <span className="text-foreground font-medium">{data.h1}</span>
-          </nav>
+      <article className="premium-bg">
+        {/* ─── Hero section with gradient ─── */}
+        <div className="relative hero-gradient noise-overlay overflow-hidden">
+          <div className="relative z-10 max-w-2xl mx-auto px-5 pt-8 pb-20 md:pt-12 md:pb-28 space-y-6">
+            {/* Breadcrumb */}
+            <nav className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Link to="/" className="hover:text-primary transition-colors">Accueil</Link>
+              <span className="text-border">/</span>
+              <span className="text-foreground font-medium truncate">{data.h1}</span>
+            </nav>
 
-          {/* H1 + urgency */}
-          <motion.header initial="hidden" animate="visible" variants={fadeUp} className="space-y-4">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">{data.h1}</h1>
-              <Badge className={`${urgencyColor[data.urgency] ?? ""} rounded-full`}>
-                Urgence : {data.urgency}
-              </Badge>
-            </div>
-            <p className="text-lg text-muted-foreground leading-relaxed">{data.intro}</p>
-          </motion.header>
+            <motion.div initial="hidden" animate="visible" variants={fadeUp} className="space-y-4">
+              <div className="flex items-start gap-3 flex-wrap">
+                <h1 className="text-2xl md:text-[2.5rem] font-extrabold text-foreground leading-tight tracking-[-0.02em]">
+                  {data.h1}
+                </h1>
+                <Badge className={`${urgencyColor[data.urgency] ?? ""} rounded-full mt-1`}>
+                  Urgence : {data.urgency}
+                </Badge>
+              </div>
+              <p className="text-base text-muted-foreground leading-relaxed max-w-lg">{data.intro}</p>
+            </motion.div>
+          </div>
+          <WaveDivider />
+        </div>
 
-          {/* Symptoms */}
-          <section>
-            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-              <Eye className="h-5 w-5" />
-              Symptômes à surveiller
+        <div className="relative z-10 max-w-2xl mx-auto px-5 space-y-8 pb-12">
+          {/* ─── Problem / Solution cards side by side ─── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 -mt-10">
+            <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <Card className="glass-card border-0 shadow-md h-full">
+                <CardContent className="p-5 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-xl bg-destructive/10 flex items-center justify-center">
+                      <AlertTriangle className="h-4 w-4 text-destructive" />
+                    </div>
+                    <h2 className="text-sm font-bold text-foreground">Le Problème</h2>
+                  </div>
+                  <ul className="space-y-2">
+                    {data.symptoms.map((s, i) => (
+                      <li key={i} className="text-xs text-muted-foreground flex items-start gap-2 leading-relaxed">
+                        <span className="mt-1 h-1 w-1 rounded-full bg-destructive shrink-0" />
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}>
+              <Card className="glass-card border-0 shadow-md h-full">
+                <CardContent className="p-5 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-xl bg-success/10 flex items-center justify-center">
+                      <CheckCircle className="h-4 w-4 text-success" />
+                    </div>
+                    <h2 className="text-sm font-bold text-foreground">La Solution</h2>
+                  </div>
+                  <ul className="space-y-2">
+                    {data.whatToCheck.map((w, i) => (
+                      <li key={i} className="text-xs text-muted-foreground flex items-start gap-2 leading-relaxed">
+                        <span className="mt-1 h-1 w-1 rounded-full bg-success shrink-0" />
+                        {w}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+
+          {/* ─── Causes ─── */}
+          <section className="space-y-3">
+            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+              <Eye className="h-4 w-4" /> Causes fréquentes
             </h2>
-            <div className="space-y-2">
-              {data.symptoms.map((s, i) => (
-                <div key={i} className="flex items-start gap-3 text-muted-foreground">
-                  <AlertTriangle className="h-4 w-4 mt-0.5 text-destructive shrink-0" />
-                  <span className="leading-relaxed">{s}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Causes */}
-          <section>
-            <h2 className="text-xl font-bold text-foreground mb-4">Causes fréquentes</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {data.commonCauses.map((c, i) => (
-                <Card key={i} className="glass-card border-0 shadow-soft">
+                <Card key={i} className="glass-card border-0 shadow-xs">
                   <CardContent className="p-4">
-                    <p className="text-sm text-foreground leading-relaxed">{c}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{c}</p>
                   </CardContent>
                 </Card>
               ))}
             </div>
           </section>
 
-          {/* Risks */}
-          <Card className="glass-card border-0 shadow-soft border-l-4 border-l-destructive/30">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-bold text-foreground mb-3 flex items-center gap-2">
-                <ShieldAlert className="h-5 w-5 text-destructive" />
-                Risques si non traité
+          {/* ─── Risks ─── */}
+          <Card className="glass-card border-0 shadow-sm border-l-4 border-l-destructive/30">
+            <CardContent className="p-5 space-y-3">
+              <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                <ShieldAlert className="h-4 w-4 text-destructive" /> Risques si non traité
               </h2>
               <ul className="space-y-2">
                 {data.risks.map((r, i) => (
-                  <li key={i} className="flex items-start gap-2 text-muted-foreground leading-relaxed">
+                  <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground leading-relaxed">
                     <span className="text-destructive font-bold mt-0.5">•</span>
                     <span>{r}</span>
                   </li>
@@ -107,27 +152,13 @@ const ProblemLocationPage = () => {
             </CardContent>
           </Card>
 
-          {/* What to check */}
-          <section>
-            <h2 className="text-xl font-bold text-foreground mb-4">Ce que vous pouvez vérifier</h2>
-            <div className="space-y-2">
-              {data.whatToCheck.map((w, i) => (
-                <div key={i} className="flex items-start gap-3 text-muted-foreground">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-primary shrink-0" />
-                  <span className="leading-relaxed">{w}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Local context */}
-          <Card className="glass-card border-0 shadow-soft">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-bold text-foreground mb-3 flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Contexte local
+          {/* ─── Local context ─── */}
+          <Card className="glass-card border-0 shadow-sm">
+            <CardContent className="p-5 space-y-2">
+              <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                <MapPin className="h-4 w-4" /> Contexte local
               </h2>
-              <p className="text-muted-foreground leading-relaxed">{data.localContext}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">{data.localContext}</p>
             </CardContent>
           </Card>
 
@@ -137,7 +168,7 @@ const ProblemLocationPage = () => {
           {/* CTA */}
           <SeoCta searchUrl={data.searchUrl} cityName={city} />
 
-          {/* Contractor acquisition */}
+          {/* Contractor CTA */}
           <ContractorLandingCta />
 
           {/* FAQ */}

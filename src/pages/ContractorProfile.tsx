@@ -1,5 +1,5 @@
 /**
- * UNPRO — Public Contractor Profile Page
+ * UNPRO — Public Contractor Profile Page (Premium)
  */
 
 import { useParams, Link } from "react-router-dom";
@@ -9,15 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import ScoreRing from "@/components/ui/score-ring";
 import {
-  ArrowLeft,
-  MapPin,
-  Star,
-  ShieldCheck,
-  TrendingUp,
-  Clock,
-  FileText,
-  CalendarPlus,
-  ArrowRight,
+  ArrowLeft, MapPin, Star, ShieldCheck, TrendingUp, Clock,
+  FileText, CalendarPlus, ArrowRight, Award,
 } from "lucide-react";
 import {
   usePublicContractorProfile,
@@ -30,6 +23,14 @@ const fadeUp = {
   hidden: { opacity: 0, y: 16 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
 };
+
+const WaveDivider = () => (
+  <div className="wave-divider">
+    <svg viewBox="0 0 1440 48" preserveAspectRatio="none">
+      <path d="M0 24C240 0 480 48 720 24C960 0 1200 48 1440 24V48H0Z" fill="hsl(var(--background))" />
+    </svg>
+  </div>
+);
 
 const ContractorProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -47,9 +48,9 @@ const ContractorProfile = () => {
 
   if (isError || !contractor) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center hero-gradient gap-4">
-        <p className="text-lg font-medium text-foreground">Entrepreneur introuvable</p>
-        <p className="text-sm text-muted-foreground">
+      <div className="flex min-h-screen flex-col items-center justify-center hero-gradient gap-4 px-5">
+        <p className="text-lg font-bold text-foreground">Entrepreneur introuvable</p>
+        <p className="text-sm text-muted-foreground text-center">
           Ce profil n'existe pas ou n'est pas encore vérifié.
         </p>
         <Button asChild variant="outline" className="rounded-xl">
@@ -62,95 +63,117 @@ const ContractorProfile = () => {
   const isVerified = contractor.verification_status === "verified";
   const isHomeowner = !!user && role === "homeowner";
   const isAuthenticated = !!user;
+  const yearsExp = contractor.years_experience;
 
   return (
-    <div className="min-h-screen mesh-gradient noise-overlay">
-      {/* Top bar */}
-      <div className="border-b border-border/50 glass-surface sticky top-0 z-20">
-        <div className="mx-auto max-w-3xl px-4 py-3 flex items-center gap-2">
-          <Button asChild variant="ghost" size="icon" className="rounded-xl">
-            <Link to="/search"><ArrowLeft className="h-4 w-4" /></Link>
-          </Button>
-          <span className="text-sm text-muted-foreground">Retour à la recherche</span>
+    <div className="min-h-screen premium-bg">
+      {/* Hero header */}
+      <div className="relative hero-gradient noise-overlay overflow-hidden">
+        {/* Nav bar */}
+        <div className="relative z-20 glass-surface border-b border-border/40">
+          <div className="mx-auto max-w-2xl px-5 py-3 flex items-center gap-2">
+            <Button asChild variant="ghost" size="icon" className="rounded-xl h-9 w-9">
+              <Link to="/search"><ArrowLeft className="h-4 w-4" /></Link>
+            </Button>
+            <span className="text-xs text-muted-foreground">Retour à la recherche</span>
+          </div>
         </div>
+
+        {/* Identity block */}
+        <div className="relative z-10 mx-auto max-w-2xl px-5 pt-6 pb-20">
+          <motion.div initial="hidden" animate="visible" variants={fadeUp} className="flex gap-4 items-start">
+            <div className="h-16 w-16 shrink-0 rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center overflow-hidden shadow-sm">
+              {contractor.logo_url ? (
+                <img src={contractor.logo_url} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <span className="text-2xl font-bold text-gradient">
+                  {contractor.business_name.charAt(0)}
+                </span>
+              )}
+            </div>
+            <div className="space-y-1.5 flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl font-extrabold text-foreground truncate">{contractor.business_name}</h1>
+                {isVerified && (
+                  <Badge variant="secondary" className="gap-1 text-[10px] bg-success/10 text-success border-0 rounded-full">
+                    <ShieldCheck className="h-2.5 w-2.5" /> Vérifié
+                  </Badge>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                {contractor.specialty && <span className="font-medium text-foreground/70">{contractor.specialty}</span>}
+                {contractor.city && (
+                  <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{contractor.city}</span>
+                )}
+                {yearsExp != null && yearsExp > 0 && (
+                  <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{yearsExp} ans</span>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        <WaveDivider />
       </div>
 
-      <div className="relative mx-auto max-w-3xl px-4 py-8 space-y-6 z-10">
-        {/* Identity block */}
-        <motion.div initial="hidden" animate="visible" variants={fadeUp} className="flex gap-4 items-start">
-          <div className="h-16 w-16 shrink-0 rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center overflow-hidden shadow-soft">
-            {contractor.logo_url ? (
-              <img src={contractor.logo_url} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <span className="text-2xl font-bold text-gradient">
-                {contractor.business_name.charAt(0)}
-              </span>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl font-bold text-foreground">{contractor.business_name}</h1>
-              {isVerified && (
-                <Badge variant="secondary" className="gap-1 bg-success/10 text-success border-0 rounded-full">
-                  <ShieldCheck className="h-3 w-3" /> Vérifié
-                </Badge>
-              )}
-            </div>
-
-            <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-              {contractor.specialty && <span className="font-medium text-foreground/70">{contractor.specialty}</span>}
-              {contractor.city && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  {contractor.city}{contractor.province ? `, ${contractor.province}` : ""}
-                </span>
-              )}
-              {contractor.years_experience != null && contractor.years_experience > 0 && (
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {contractor.years_experience} ans
-                </span>
-              )}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Scores */}
-        <motion.div initial="hidden" animate="visible" variants={fadeUp} className="flex flex-wrap gap-4">
+      {/* Content */}
+      <div className="relative z-10 mx-auto max-w-2xl px-5 -mt-10 pb-10 space-y-5">
+        {/* Score cards */}
+        <motion.div initial="hidden" animate="visible" variants={fadeUp} className="flex flex-wrap gap-3">
           {contractor.aipp_score != null && contractor.aipp_score > 0 && (
-            <Card className="flex-1 min-w-[140px] glass-card border-0 shadow-soft">
-              <CardContent className="p-5 flex items-center gap-4">
-                <ScoreRing score={contractor.aipp_score} size={56} strokeWidth={5} />
+            <Card className="flex-1 min-w-[140px] glass-card border-0 shadow-md">
+              <CardContent className="p-4 flex items-center gap-3">
+                <ScoreRing score={contractor.aipp_score} size={52} strokeWidth={5} />
                 <div>
-                  <p className="text-xs text-muted-foreground font-medium">Score AIPP</p>
+                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">Score AIPP</p>
                   <p className="text-lg font-bold text-foreground">{contractor.aipp_score}/100</p>
                 </div>
               </CardContent>
             </Card>
           )}
           {contractor.rating != null && contractor.rating > 0 && (
-            <Card className="flex-1 min-w-[140px] glass-card border-0 shadow-soft">
-              <CardContent className="p-5 flex items-center gap-4">
-                <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <Card className="flex-1 min-w-[140px] glass-card border-0 shadow-md">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="h-[52px] w-[52px] rounded-2xl bg-accent/10 flex items-center justify-center">
                   <Star className="h-6 w-6 fill-current text-accent" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground font-medium">Évaluation</p>
-                  <p className="text-lg font-bold text-foreground">{contractor.rating.toFixed(1)} <span className="text-sm font-normal text-muted-foreground">({contractor.review_count ?? 0} avis)</span></p>
+                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">Évaluation</p>
+                  <p className="text-lg font-bold text-foreground">
+                    {contractor.rating.toFixed(1)}{" "}
+                    <span className="text-xs font-normal text-muted-foreground">({contractor.review_count ?? 0})</span>
+                  </p>
                 </div>
               </CardContent>
             </Card>
           )}
         </motion.div>
 
-        {/* Description */}
+        {/* Trust badges */}
+        <div className="flex flex-wrap gap-1.5">
+          {yearsExp != null && yearsExp > 0 && (
+            <span className="trust-badge bg-muted/50 text-muted-foreground">
+              <Clock className="h-3 w-3" /> {yearsExp}+ ans d'expérience
+            </span>
+          )}
+          {isVerified && (
+            <span className="trust-badge bg-muted/50 text-muted-foreground">
+              <Award className="h-3 w-3" /> Certifié & Assuré
+            </span>
+          )}
+          {contractor.rating != null && contractor.rating >= 4.0 && (
+            <span className="trust-badge bg-muted/50 text-muted-foreground">
+              <Star className="h-3 w-3" /> Excellent Avis
+            </span>
+          )}
+        </div>
+
+        {/* About */}
         {contractor.description && (
-          <Card className="glass-card border-0 shadow-soft">
-            <CardHeader>
-              <CardTitle className="text-base">À propos</CardTitle>
-            </CardHeader>
+          <Card className="glass-card border-0 shadow-sm">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">À propos</CardTitle></CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+              <p className="text-xs text-muted-foreground whitespace-pre-line leading-relaxed">
                 {contractor.description}
               </p>
             </CardContent>
@@ -159,11 +182,10 @@ const ContractorProfile = () => {
 
         {/* Reviews */}
         {reviews && reviews.length > 0 && (
-          <Card className="glass-card border-0 shadow-soft">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Avis ({reviews.length})
+          <Card className="glass-card border-0 shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <FileText className="h-3.5 w-3.5" /> Avis ({reviews.length})
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -176,20 +198,16 @@ const ContractorProfile = () => {
                         {Array.from({ length: 5 }).map((_, si) => (
                           <Star
                             key={si}
-                            className={`h-3.5 w-3.5 ${si < review.rating ? "fill-current text-accent" : "text-muted"}`}
+                            className={`h-3 w-3 ${si < review.rating ? "fill-current text-accent" : "text-muted"}`}
                           />
                         ))}
                       </div>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-[10px] text-muted-foreground">
                         {new Date(review.created_at).toLocaleDateString("fr-CA")}
                       </span>
                     </div>
-                    {review.title && (
-                      <p className="text-sm font-medium text-foreground">{review.title}</p>
-                    )}
-                    {review.content && (
-                      <p className="text-sm text-muted-foreground leading-relaxed">{review.content}</p>
-                    )}
+                    {review.title && <p className="text-xs font-medium text-foreground">{review.title}</p>}
+                    {review.content && <p className="text-xs text-muted-foreground leading-relaxed">{review.content}</p>}
                   </div>
                 </div>
               ))}
@@ -198,38 +216,34 @@ const ContractorProfile = () => {
         )}
 
         {/* CTA */}
-        <Card className="glass-card border-0 shadow-elevation overflow-hidden">
+        <Card className="glass-card border-0 shadow-md overflow-hidden">
           <CardContent className="p-6 text-center space-y-4">
             {isHomeowner ? (
               <>
-                <p className="text-sm text-muted-foreground">
-                  Intéressé par cet entrepreneur?
-                </p>
-                <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3">
-                  <Button asChild size="lg" className="rounded-2xl shadow-glow gap-1">
+                <p className="text-xs text-muted-foreground">Intéressé par cet entrepreneur?</p>
+                <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-2">
+                  <Button asChild size="lg" className="rounded-2xl shadow-glow gap-1 h-12">
                     <Link to={`/dashboard/book/${id}`}>
                       <CalendarPlus className="h-4 w-4" /> Demander un rendez-vous <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>
-                  <Button asChild variant="outline" className="rounded-2xl">
+                  <Button asChild variant="outline" className="rounded-2xl glass-surface border-border/60 h-12">
                     <Link to="/dashboard/quotes/upload">Téléverser une soumission</Link>
                   </Button>
                 </div>
               </>
             ) : isAuthenticated ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 La prise de rendez-vous est réservée aux propriétaires.
               </p>
             ) : (
               <>
-                <p className="text-sm text-muted-foreground">
-                  Vous souhaitez contacter cet entrepreneur?
-                </p>
-                <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3">
-                  <Button asChild size="lg" className="rounded-2xl shadow-glow gap-1">
+                <p className="text-xs text-muted-foreground">Vous souhaitez contacter cet entrepreneur?</p>
+                <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-2">
+                  <Button asChild size="lg" className="rounded-2xl shadow-glow gap-1 h-12">
                     <Link to={`/signup?redirect=/contractors/${id}`}>Créer un compte <ArrowRight className="h-4 w-4" /></Link>
                   </Button>
-                  <Button asChild variant="outline" className="rounded-2xl">
+                  <Button asChild variant="outline" className="rounded-2xl glass-surface border-border/60 h-12">
                     <Link to={`/login?redirect=/contractors/${id}`}>Se connecter</Link>
                   </Button>
                 </div>
