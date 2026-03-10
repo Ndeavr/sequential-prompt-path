@@ -61,6 +61,12 @@ export const AppRouter = () => (
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
 
+      {/* SEO Pages */}
+      <Route path="/services" element={<SeoDirectoryPage />} />
+      <Route path="/services/:category/:city" element={<ServiceLocationPage />} />
+      <Route path="/problems/:problem/:city" element={<ProblemLocationPage />} />
+      <Route path="/guides/:topic" element={<GuidePage />} />
+
       {/* Homeowner Dashboard */}
       <Route path="/dashboard" element={<ProtectedRoute requiredRole="homeowner"><DashboardHome /></ProtectedRoute>} />
       <Route path="/dashboard/properties" element={<ProtectedRoute requiredRole="homeowner"><PropertiesList /></ProtectedRoute>} />
