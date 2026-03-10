@@ -35,7 +35,7 @@ import AdminContractors from "@/pages/admin/AdminContractors";
 import AdminQuotes from "@/pages/admin/AdminQuotes";
 import AdminReviews from "@/pages/admin/AdminReviews";
 import AdminDocuments from "@/pages/admin/AdminDocuments";
-
+import AdminContractorDetail from "@/pages/admin/AdminContractorDetail";
 export const AppRouter = () => (
   <BrowserRouter>
     <Routes>
