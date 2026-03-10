@@ -9,6 +9,12 @@ import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import NotFound from "@/pages/NotFound";
 
+// SEO Pages
+import ServiceLocationPage from "@/pages/seo/ServiceLocationPage";
+import ProblemLocationPage from "@/pages/seo/ProblemLocationPage";
+import GuidePage from "@/pages/seo/GuidePage";
+import SeoDirectoryPage from "@/pages/seo/SeoDirectoryPage";
+
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
 import PropertiesList from "@/pages/dashboard/PropertiesList";
@@ -54,6 +60,12 @@ export const AppRouter = () => (
       <Route path="/contractors/:id" element={<ContractorProfile />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+
+      {/* SEO Pages */}
+      <Route path="/services" element={<SeoDirectoryPage />} />
+      <Route path="/services/:category/:city" element={<ServiceLocationPage />} />
+      <Route path="/problems/:problem/:city" element={<ProblemLocationPage />} />
+      <Route path="/guides/:topic" element={<GuidePage />} />
 
       {/* Homeowner Dashboard */}
       <Route path="/dashboard" element={<ProtectedRoute requiredRole="homeowner"><DashboardHome /></ProtectedRoute>} />
