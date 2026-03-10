@@ -26,10 +26,23 @@ export const useAdminStats = () => {
 export const useAdminUsers = () => useQuery({
   queryKey: ["admin-users"],
   queryFn: async () => {
-    // Fetch profiles and roles separately, then merge (FK now exists)
-    const { data: profiles, error } = await supabase.from("profiles").select("*, user_roles(role)").order("created_at", { ascending: false }).limit(100);
-    if (error) throw error;
-    return profiles;
+    // Separate queries — no FK between user_roles and profiles
+    const [profilesRes, rolesRes] = await Promise.all([
+      supabase.from("profiles").select("*").order("created_at", { ascending: false }).limit(100),
+      supabase.from("user_roles").select("user_id, role"),
+    ]);
+    if (profilesRes.error) throw profilesRes.error;
+    if (rolesRes.error) throw rolesRes.error;
+
+    const rolesByUser = (rolesRes.data ?? []).reduce<Record<string, string[]>>((acc, r) => {
+      (acc[r.user_id] ??= []).push(r.role);
+      return acc;
+    }, {});
+
+    return (profilesRes.data ?? []).map((p) => ({
+      ...p,
+      roles: rolesByUser[p.user_id] ?? [],
+    }));
   },
 });
 
