@@ -325,33 +325,48 @@ export type Database = {
       quote_analysis: {
         Row: {
           ai_model: string | null
+          concerns: Json | null
           created_at: string
           fairness_score: number | null
           id: string
           line_items: Json | null
           market_comparison: Json | null
+          missing_items: Json | null
           quote_id: string
           recommendations: string | null
+          status: string
+          strengths: Json | null
+          summary: string | null
         }
         Insert: {
           ai_model?: string | null
+          concerns?: Json | null
           created_at?: string
           fairness_score?: number | null
           id?: string
           line_items?: Json | null
           market_comparison?: Json | null
+          missing_items?: Json | null
           quote_id: string
           recommendations?: string | null
+          status?: string
+          strengths?: Json | null
+          summary?: string | null
         }
         Update: {
           ai_model?: string | null
+          concerns?: Json | null
           created_at?: string
           fairness_score?: number | null
           id?: string
           line_items?: Json | null
           market_comparison?: Json | null
+          missing_items?: Json | null
           quote_id?: string
           recommendations?: string | null
+          status?: string
+          strengths?: Json | null
+          summary?: string | null
         }
         Relationships: [
           {
