@@ -50,6 +50,7 @@ export type Database = {
       contractors: {
         Row: {
           address: string | null
+          admin_note: string | null
           aipp_score: number | null
           business_name: string
           city: string | null
@@ -66,17 +67,21 @@ export type Database = {
           province: string | null
           rating: number | null
           review_count: number | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           specialty: string | null
           updated_at: string
           user_id: string
           verification_status:
             | Database["public"]["Enums"]["verification_status"]
             | null
+          verified_at: string | null
           website: string | null
           years_experience: number | null
         }
         Insert: {
           address?: string | null
+          admin_note?: string | null
           aipp_score?: number | null
           business_name: string
           city?: string | null
@@ -93,17 +98,21 @@ export type Database = {
           province?: string | null
           rating?: number | null
           review_count?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           specialty?: string | null
           updated_at?: string
           user_id: string
           verification_status?:
             | Database["public"]["Enums"]["verification_status"]
             | null
+          verified_at?: string | null
           website?: string | null
           years_experience?: number | null
         }
         Update: {
           address?: string | null
+          admin_note?: string | null
           aipp_score?: number | null
           business_name?: string
           city?: string | null
@@ -120,12 +129,15 @@ export type Database = {
           province?: string | null
           rating?: number | null
           review_count?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           specialty?: string | null
           updated_at?: string
           user_id?: string
           verification_status?:
             | Database["public"]["Enums"]["verification_status"]
             | null
+          verified_at?: string | null
           website?: string | null
           years_experience?: number | null
         }
