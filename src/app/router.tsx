@@ -40,6 +40,7 @@ import ProAppointments from "@/pages/pro/ProAppointments";
 import ProLeads from "@/pages/pro/ProLeads";
 import ProLeadDetail from "@/pages/pro/ProLeadDetail";
 import ProBilling from "@/pages/pro/ProBilling";
+import ProTerritories from "@/pages/pro/ProTerritories";
 
 // Admin
 import AdminDashboard from "@/pages/admin/AdminDashboard";
