@@ -20,7 +20,7 @@ const staggerContainer = {
 
 const cardHover = {
   rest: { y: 0, scale: 1 },
-  hover: { y: -4, scale: 1.01, transition: { duration: 0.25, ease: "easeOut" } },
+  hover: { y: -4, scale: 1.01, transition: { duration: 0.25, ease: "easeOut" as const } },
 };
 
 const Home = () => {
