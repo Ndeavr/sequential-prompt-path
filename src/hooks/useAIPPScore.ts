@@ -1,9 +1,10 @@
 /**
  * UNPRO — useAIPPScore Hook
- * Computes AIPP score from live contractor data.
+ * Computes AIPP score from live contractor data and syncs to DB.
  */
 
-import { useMemo } from "react";
+import { useMemo, useEffect, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useContractorProfile, useContractorReviews, useContractorDocuments } from "./useContractor";
 import { useContractorAppointments } from "./useAppointments";
 import { computeAIPPScore, type AIPPResult, type AIPPInput } from "@/services/aippScoreService";
@@ -13,6 +14,7 @@ export const useContractorAIPPComputed = () => {
   const { data: reviews, isLoading: reviewsLoading } = useContractorReviews();
   const { data: docs, isLoading: docsLoading } = useContractorDocuments();
   const { data: appointments, isLoading: apptsLoading } = useContractorAppointments();
+  const lastSyncedScore = useRef<number | null>(null);
 
   const isLoading = profileLoading || reviewsLoading || docsLoading || apptsLoading;
 
@@ -51,6 +53,21 @@ export const useContractorAIPPComputed = () => {
 
     return computeAIPPScore(input);
   }, [profile, reviews, docs, appointments]);
+
+  // Sync score to contractors table for search/ranking
+  useEffect(() => {
+    if (!result || !profile) return;
+    if (lastSyncedScore.current === result.score) return;
+    lastSyncedScore.current = result.score;
+
+    supabase
+      .from("contractors")
+      .update({ aipp_score: result.score })
+      .eq("user_id", profile.user_id)
+      .then(({ error }) => {
+        if (error) console.error("AIPP score sync failed:", error);
+      });
+  }, [result?.score, profile?.user_id]);
 
   return { data: result, isLoading, profile };
 };
