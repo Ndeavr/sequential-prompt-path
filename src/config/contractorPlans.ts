@@ -1,16 +1,21 @@
 /**
  * UNPRO — Contractor Plans Configuration
+ * Single source of truth for plan pricing, features, and Stripe price IDs.
  */
+
+export type BillingInterval = "month" | "year";
 
 export interface ContractorPlan {
   id: string;
   name: string;
-  monthlyPrice: number; // in cents CAD
-  stripePriceId: string;
+  monthlyPrice: number; // cents CAD — monthly
+  yearlyPrice: number; // cents CAD — yearly total
+  monthlyStripePriceId: string;
+  yearlyStripePriceId: string;
   features: string[];
   leadAccessLevel: "limited" | "standard" | "priority" | "premium" | "exclusive";
-  priorityLevel: number; // 1-5
-  matchingBoost: number; // 0-1 multiplier
+  priorityLevel: number;
+  matchingBoost: number;
   highlighted?: boolean;
 }
 
@@ -19,7 +24,9 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     id: "recrue",
     name: "Recrue",
     monthlyPrice: 4900,
-    stripePriceId: "price_1T9X6oCvZwK1QnPVG3tLbNqV",
+    yearlyPrice: 49900, // ~15 % off
+    monthlyStripePriceId: "price_1T9X6oCvZwK1QnPVG3tLbNqV",
+    yearlyStripePriceId: "price_1T9X6oCvZwK1QnPVG3tLbNqY",
     features: [
       "Profil public de base",
       "Jusqu'à 5 leads par mois",
@@ -34,7 +41,9 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     id: "pro",
     name: "Pro",
     monthlyPrice: 9900,
-    stripePriceId: "price_1T9X6pCvZwK1QnPVfBlT13Lw",
+    yearlyPrice: 99900,
+    monthlyStripePriceId: "price_1T9X6pCvZwK1QnPVfBlT13Lw",
+    yearlyStripePriceId: "price_1T9X6pCvZwK1QnPVfBlT13Ly",
     features: [
       "Profil public complet",
       "Leads illimités",
@@ -51,7 +60,9 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     id: "premium",
     name: "Premium",
     monthlyPrice: 14900,
-    stripePriceId: "price_1T9X6qCvZwK1QnPV8V4P18tw",
+    yearlyPrice: 149900,
+    monthlyStripePriceId: "price_1T9X6qCvZwK1QnPV8V4P18tw",
+    yearlyStripePriceId: "price_1T9X6qCvZwK1QnPV8V4P18ty",
     features: [
       "Tout le plan Pro",
       "Priorité dans le matching",
@@ -67,7 +78,9 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     id: "elite",
     name: "Élite",
     monthlyPrice: 24900,
-    stripePriceId: "price_1T9X6sCvZwK1QnPV2ZwYQOGT",
+    yearlyPrice: 249900,
+    monthlyStripePriceId: "price_1T9X6sCvZwK1QnPV2ZwYQOGT",
+    yearlyStripePriceId: "price_1T9X6sCvZwK1QnPV2ZwYQOGY",
     features: [
       "Tout le plan Premium",
       "Haute visibilité dans la recherche",
@@ -83,7 +96,9 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     id: "signature",
     name: "Signature",
     monthlyPrice: 49900,
-    stripePriceId: "price_1T9X6tCvZwK1QnPVxNcBNeBM",
+    yearlyPrice: 499900,
+    monthlyStripePriceId: "price_1T9X6tCvZwK1QnPVxNcBNeBM",
+    yearlyStripePriceId: "price_1T9X6tCvZwK1QnPVxNcBNeBY",
     features: [
       "Tout le plan Élite",
       "Exclusivité territoriale éligible",
@@ -100,5 +115,30 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
 export const getPlanById = (planId: string): ContractorPlan | undefined =>
   CONTRACTOR_PLANS.find((p) => p.id === planId);
 
+/** Format cents to display string */
 export const formatPlanPrice = (cents: number): string =>
   `${(cents / 100).toFixed(0)} $`;
+
+/** Yearly savings percentage compared to 12× monthly */
+export const getYearlySavingsPercent = (plan: ContractorPlan): number => {
+  const fullYearly = plan.monthlyPrice * 12;
+  if (fullYearly === 0) return 0;
+  return Math.round(((fullYearly - plan.yearlyPrice) / fullYearly) * 100);
+};
+
+/** Get the correct Stripe price ID for a plan + interval */
+export const getStripePriceId = (
+  plan: ContractorPlan,
+  interval: BillingInterval
+): string =>
+  interval === "year" ? plan.yearlyStripePriceId : plan.monthlyStripePriceId;
+
+/** Get display price for a plan + interval */
+export const getPlanDisplayPrice = (
+  plan: ContractorPlan,
+  interval: BillingInterval
+): number => (interval === "year" ? plan.yearlyPrice : plan.monthlyPrice);
+
+/** Monthly equivalent when billed yearly */
+export const getMonthlyEquivalent = (plan: ContractorPlan): string =>
+  `${((plan.yearlyPrice / 12) / 100).toFixed(2).replace(/\.00$/, "")} $`;

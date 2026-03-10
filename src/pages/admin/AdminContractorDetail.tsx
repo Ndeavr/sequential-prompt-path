@@ -185,6 +185,10 @@ const AdminContractorDetail = () => {
                   <p className="font-medium">{subscription.status}</p>
                 </div>
                 <div>
+                  <p className="text-muted-foreground">Facturation</p>
+                  <p className="font-medium">{(subscription as any).billing_interval === "year" ? "Annuel" : "Mensuel"}</p>
+                </div>
+                <div>
                   <p className="text-muted-foreground">Période</p>
                   <p className="font-medium">
                     {subscription.current_period_start

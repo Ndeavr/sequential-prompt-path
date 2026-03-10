@@ -1,0 +1,1 @@
+ALTER TABLE public.contractor_subscriptions ADD COLUMN IF NOT EXISTS billing_interval text NOT NULL DEFAULT 'month';

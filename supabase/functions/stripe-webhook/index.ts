@@ -45,9 +45,9 @@ Deno.serve(async (req) => {
         const session = event.data.object as Stripe.Checkout.Session;
         const contractorId = session.metadata?.contractor_id;
         const planId = session.metadata?.plan_id;
+        const billingInterval = session.metadata?.billing_interval || "month";
         if (!contractorId || !planId) break;
 
-        // Get subscription details
         const subscription = await stripe.subscriptions.retrieve(
           session.subscription as string
         );
@@ -58,9 +58,14 @@ Deno.serve(async (req) => {
             stripe_customer_id: session.customer as string,
             stripe_subscription_id: subscription.id,
             plan_id: planId,
+            billing_interval: billingInterval,
             status: subscription.status,
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            current_period_start: new Date(
+              subscription.current_period_start * 1000
+            ).toISOString(),
+            current_period_end: new Date(
+              subscription.current_period_end * 1000
+            ).toISOString(),
             cancel_at_period_end: subscription.cancel_at_period_end,
             updated_at: new Date().toISOString(),
           },
@@ -76,16 +81,24 @@ Deno.serve(async (req) => {
 
         const subscription = await stripe.subscriptions.retrieve(subId);
         const planId = subscription.metadata?.plan_id;
+        const billingInterval = subscription.metadata?.billing_interval;
+
+        const updateData: Record<string, unknown> = {
+          status: subscription.status,
+          current_period_start: new Date(
+            subscription.current_period_start * 1000
+          ).toISOString(),
+          current_period_end: new Date(
+            subscription.current_period_end * 1000
+          ).toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        if (planId) updateData.plan_id = planId;
+        if (billingInterval) updateData.billing_interval = billingInterval;
 
         await supabase
           .from("contractor_subscriptions")
-          .update({
-            status: subscription.status,
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-            plan_id: planId || undefined,
-            updated_at: new Date().toISOString(),
-          })
+          .update(updateData)
           .eq("stripe_subscription_id", subId);
         break;
       }
@@ -97,10 +110,7 @@ Deno.serve(async (req) => {
 
         await supabase
           .from("contractor_subscriptions")
-          .update({
-            status: "past_due",
-            updated_at: new Date().toISOString(),
-          })
+          .update({ status: "past_due", updated_at: new Date().toISOString() })
           .eq("stripe_subscription_id", subId);
         break;
       }
@@ -108,17 +118,25 @@ Deno.serve(async (req) => {
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
         const planId = subscription.metadata?.plan_id;
+        const billingInterval = subscription.metadata?.billing_interval;
+
+        const updateData: Record<string, unknown> = {
+          status: subscription.status,
+          current_period_start: new Date(
+            subscription.current_period_start * 1000
+          ).toISOString(),
+          current_period_end: new Date(
+            subscription.current_period_end * 1000
+          ).toISOString(),
+          cancel_at_period_end: subscription.cancel_at_period_end,
+          updated_at: new Date().toISOString(),
+        };
+        if (planId) updateData.plan_id = planId;
+        if (billingInterval) updateData.billing_interval = billingInterval;
 
         await supabase
           .from("contractor_subscriptions")
-          .update({
-            status: subscription.status,
-            plan_id: planId || undefined,
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-            cancel_at_period_end: subscription.cancel_at_period_end,
-            updated_at: new Date().toISOString(),
-          })
+          .update(updateData)
           .eq("stripe_subscription_id", subscription.id);
         break;
       }
@@ -128,10 +146,7 @@ Deno.serve(async (req) => {
 
         await supabase
           .from("contractor_subscriptions")
-          .update({
-            status: "canceled",
-            updated_at: new Date().toISOString(),
-          })
+          .update({ status: "canceled", updated_at: new Date().toISOString() })
           .eq("stripe_subscription_id", subscription.id);
         break;
       }
