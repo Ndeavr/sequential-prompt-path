@@ -1,0 +1,50 @@
+import { useState, useEffect } from "react";
+import ContractorLayout from "@/layouts/ContractorLayout";
+import { PageHeader, LoadingState } from "@/components/shared";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+
+const ProAccount = () => {
+  const { user } = useAuth();
+  const { data: profile, isLoading } = useProfile();
+  const updateProfile = useUpdateProfile();
+  const [form, setForm] = useState<{ full_name: string; phone: string } | null>(null);
+
+  const current = form ?? { full_name: profile?.full_name ?? "", phone: profile?.phone ?? "" };
+
+  if (isLoading) return <ContractorLayout><LoadingState /></ContractorLayout>;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await updateProfile.mutateAsync({ full_name: current.full_name, phone: current.phone });
+      toast.success("Profil mis à jour !");
+      setForm(null);
+    } catch {
+      toast.error("Erreur lors de la mise à jour.");
+    }
+  };
+
+  return (
+    <ContractorLayout>
+      <PageHeader title="Mon compte" description="Informations personnelles" />
+      <Card className="max-w-lg">
+        <CardContent className="pt-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2"><Label>Courriel</Label><Input value={user?.email ?? ""} disabled /></div>
+            <div className="space-y-2"><Label>Nom complet</Label><Input value={current.full_name} onChange={(e) => setForm({ ...current, full_name: e.target.value })} /></div>
+            <div className="space-y-2"><Label>Téléphone</Label><Input value={current.phone} onChange={(e) => setForm({ ...current, phone: e.target.value })} /></div>
+            <Button type="submit" disabled={updateProfile.isPending}>{updateProfile.isPending ? "Enregistrement…" : "Enregistrer"}</Button>
+          </form>
+        </CardContent>
+      </Card>
+    </ContractorLayout>
+  );
+};
+
+export default ProAccount;
