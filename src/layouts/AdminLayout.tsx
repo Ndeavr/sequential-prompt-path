@@ -14,6 +14,7 @@ const navItems = [
   { to: "/admin/quotes", label: "Soumissions", icon: FileText },
   { to: "/admin/reviews", label: "Avis", icon: Star },
   { to: "/admin/documents", label: "Documents", icon: FolderOpen },
+  { to: "/admin/growth", label: "Croissance", icon: BarChart3 },
 ];
 
 const AdminLayout = ({ children }: { children: ReactNode }) => {
