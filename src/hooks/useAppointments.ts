@@ -104,8 +104,8 @@ export const useCreateAppointment = () => {
           documents_uploaded: (docCount ?? 0) > 0,
           quote_uploaded: (quoteCount ?? 0) > 0,
           homeowner_profile_completeness: profileCompleteness,
-          score_factors: scoreResult.factors,
-        });
+          score_factors: scoreResult.factors as any,
+        } as any);
       if (leadError) console.error("Lead qualification creation failed:", leadError);
 
       return appt;
