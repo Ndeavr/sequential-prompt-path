@@ -31,6 +31,7 @@ const statusLabels: Record<string, string> = {
 const ProLeads = () => {
   const { data: leads, isLoading } = useContractorLeads();
   const updateStatus = useUpdateAppointmentStatus();
+  const { hasActive, isLoading: subLoading } = useHasActiveSubscription();
   const [qualityFilter, setQualityFilter] = useState("all");
   const [sortBy, setSortBy] = useState("score");
 

@@ -12,6 +12,7 @@ const navItems = [
   { to: "/pro/aipp-score", label: "Score AIPP", icon: Star },
   { to: "/pro/reviews", label: "Avis clients", icon: Star },
   { to: "/pro/documents", label: "Documents", icon: FileText },
+  { to: "/pro/billing", label: "Facturation", icon: CreditCard },
   { to: "/pro/account", label: "Mon compte", icon: Shield },
 ];
 
