@@ -17,6 +17,7 @@ import {
   Search,
   FileText,
 } from "lucide-react";
+import ShareAnalysis from "@/components/growth/ShareAnalysis";
 
 const statusLabel: Record<string, string> = {
   pending: "En attente",
