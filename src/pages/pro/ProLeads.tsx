@@ -62,6 +62,9 @@ const ProLeads = () => {
     } catch { toast.error("Erreur."); }
   };
 
+  if (subLoading) return <ContractorLayout><LoadingState /></ContractorLayout>;
+  if (!hasActive) return <ContractorLayout><SubscriptionPaywall /></ContractorLayout>;
+
   return (
     <ContractorLayout>
       <PageHeader title="Leads qualifiés" description="Demandes de rendez-vous classées par qualité" />
