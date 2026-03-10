@@ -1,0 +1,35 @@
+-- UNPRO Database Schema
+-- ====================
+-- This file will contain the complete Supabase database schema for UNPRO.
+--
+-- Planned contents:
+--
+-- ENUMS:
+--   - user_role (homeowner, contractor, admin)
+--   - quote_status (pending, analyzed, accepted, rejected)
+--   - verification_status (unverified, pending, verified, rejected)
+--   - property_condition (excellent, good, fair, poor, critical)
+--
+-- TABLES:
+--   - profiles (user profiles linked to auth.users)
+--   - user_roles (role assignments, separated from profiles for security)
+--   - properties (homeowner properties)
+--   - contractors (contractor business profiles)
+--   - quotes (uploaded contractor quotes)
+--   - quote_analysis (AI analysis results for quotes)
+--   - reviews (homeowner reviews of contractors)
+--   - aipp_scores (AIPP score records for properties and contractors)
+--   - home_scores (property condition scores)
+--   - property_events (knowledge graph timeline events)
+--   - storage_documents (metadata for uploaded files)
+--
+-- INDEXES:
+--   - Performance indexes on foreign keys and commonly queried columns
+--
+-- RELATIONS:
+--   - profiles -> properties (one-to-many)
+--   - properties -> quotes (one-to-many)
+--   - contractors -> quotes (one-to-many)
+--   - contractors -> reviews (one-to-many)
+--
+-- This file will be populated by the 01-foundation prompt.

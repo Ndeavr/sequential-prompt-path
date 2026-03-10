@@ -1,0 +1,35 @@
+-- UNPRO Row-Level Security Policies
+-- ==================================
+-- This file will contain all RLS policies for the UNPRO database.
+--
+-- Planned policies:
+--
+-- PROFILES:
+--   - Users can read their own profile
+--   - Users can update their own profile
+--   - Admins can read all profiles
+--
+-- PROPERTIES:
+--   - Homeowners can CRUD their own properties
+--   - Contractors can view properties they have quotes for
+--   - Admins can view all properties
+--
+-- QUOTES:
+--   - Homeowners can manage quotes for their properties
+--   - Contractors can view quotes assigned to them
+--   - Admins can view all quotes
+--
+-- CONTRACTORS:
+--   - Public read access to verified contractor profiles
+--   - Contractors can update their own profile
+--   - Admins can manage all contractor profiles
+--
+-- REVIEWS:
+--   - Public read access to published reviews
+--   - Homeowners can create reviews for completed work
+--   - Admins can moderate all reviews
+--
+-- SECURITY FUNCTIONS:
+--   - has_role(user_id, role) — SECURITY DEFINER function to check roles without recursion
+--
+-- This file will be populated by the 01-foundation prompt.
