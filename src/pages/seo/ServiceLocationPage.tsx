@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, AlertTriangle, DollarSign, MapPin } from "lucide-react";
 import NotFound from "@/pages/NotFound";
+import GrowthCtaBlock from "@/components/growth/GrowthCtaBlock";
+import ContractorLandingCta from "@/components/growth/ContractorLandingCta";
 
 const ServiceLocationPage = () => {
   const { category, city } = useParams<{ category: string; city: string }>();
@@ -89,8 +91,14 @@ const ServiceLocationPage = () => {
           <p className="text-muted-foreground leading-relaxed">{data.localContext}</p>
         </section>
 
+        {/* Growth CTAs */}
+        <GrowthCtaBlock showAlex cityName={city} />
+
         {/* CTA */}
         <SeoCta searchUrl={data.searchUrl} cityName={city} serviceName={data.h1.split(" à ")[0]} />
+
+        {/* Contractor acquisition */}
+        <ContractorLandingCta />
 
         {/* FAQ */}
         <SeoFaqSection faqs={data.faqs} />

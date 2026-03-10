@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, Eye, ShieldAlert, CheckCircle, MapPin } from "lucide-react";
 import NotFound from "@/pages/NotFound";
+import GrowthCtaBlock from "@/components/growth/GrowthCtaBlock";
+import ContractorLandingCta from "@/components/growth/ContractorLandingCta";
 
 const urgencyColor: Record<string, string> = {
   Faible: "bg-secondary text-secondary-foreground",
@@ -119,8 +121,14 @@ const ProblemLocationPage = () => {
           <p className="text-muted-foreground leading-relaxed">{data.localContext}</p>
         </section>
 
+        {/* Growth CTAs */}
+        <GrowthCtaBlock showAlex cityName={city} />
+
         {/* CTA */}
         <SeoCta searchUrl={data.searchUrl} cityName={city} />
+
+        {/* Contractor acquisition */}
+        <ContractorLandingCta />
 
         {/* FAQ */}
         <SeoFaqSection faqs={data.faqs} />
