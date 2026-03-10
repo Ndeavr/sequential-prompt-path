@@ -8,6 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useContractorLeads } from "@/hooks/useLeads";
 import { useUpdateAppointmentStatus } from "@/hooks/useAppointments";
+import { useHasActiveSubscription } from "@/hooks/useSubscription";
+import SubscriptionPaywall from "@/components/contractor/SubscriptionPaywall";
 import { toast } from "sonner";
 import { Eye, TrendingUp } from "lucide-react";
 
