@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Users, Briefcase, FileText, Star, FolderOpen, CalendarDays, TrendingUp, LogOut, MapPin } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, FileText, Star, FolderOpen, CalendarDays, TrendingUp, LogOut, MapPin, BarChart3 } from "lucide-react";
 import type { ReactNode } from "react";
 
 const navItems = [
