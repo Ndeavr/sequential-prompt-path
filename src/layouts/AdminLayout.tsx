@@ -1,13 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Users, Briefcase, FileText, Star, FolderOpen, CalendarDays, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, FileText, Star, FolderOpen, CalendarDays, TrendingUp, LogOut } from "lucide-react";
 import type { ReactNode } from "react";
 
 const navItems = [
   { to: "/admin", label: "Tableau de bord", icon: LayoutDashboard },
   { to: "/admin/users", label: "Utilisateurs", icon: Users },
   { to: "/admin/contractors", label: "Entrepreneurs", icon: Briefcase },
+  { to: "/admin/leads", label: "Leads", icon: TrendingUp },
   { to: "/admin/appointments", label: "Rendez-vous", icon: CalendarDays },
   { to: "/admin/quotes", label: "Soumissions", icon: FileText },
   { to: "/admin/reviews", label: "Avis", icon: Star },
