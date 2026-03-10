@@ -16,7 +16,7 @@ const ScoreRing = ({ score, size = 96, strokeWidth = 8, label, colorClass }: Sco
     (score >= 70
       ? "text-success"
       : score >= 45
-      ? "text-yellow-500"
+      ? "text-accent"
       : "text-destructive");
 
   return (
