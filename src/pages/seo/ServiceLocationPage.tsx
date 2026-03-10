@@ -125,15 +125,9 @@ const ServiceLocationPage = () => {
         <div className="pt-4 border-t">
           <h3 className="text-lg font-semibold text-foreground mb-2">Guides utiles</h3>
           <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary" asChild>
-              <Link to="/guides/comment-choisir-couvreur">Comment choisir un couvreur</Link>
-            </Badge>
-            <Badge variant="secondary" asChild>
-              <Link to="/guides/verifier-soumission-isolation">Vérifier une soumission</Link>
-            </Badge>
-            <Badge variant="secondary" asChild>
-              <Link to="/guides/signes-probleme-fondation">Problèmes de fondation</Link>
-            </Badge>
+            <Link to="/guides/comment-choisir-couvreur"><Badge variant="secondary">Comment choisir un couvreur</Badge></Link>
+            <Link to="/guides/verifier-soumission-isolation"><Badge variant="secondary">Vérifier une soumission</Badge></Link>
+            <Link to="/guides/signes-probleme-fondation"><Badge variant="secondary">Problèmes de fondation</Badge></Link>
           </div>
         </div>
       </article>

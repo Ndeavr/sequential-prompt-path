@@ -99,8 +99,8 @@ const SeoDirectoryPage = () => {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {SEO_GUIDES.map((guide) => (
-              <Card key={guide.slug} asChild>
-                <Link to={`/guides/${guide.slug}`}>
+              <Link key={guide.slug} to={`/guides/${guide.slug}`}>
+                <Card className="hover:shadow-md transition-shadow">
                   <CardHeader>
                     <CardTitle className="text-base">{guide.title}</CardTitle>
                   </CardHeader>
@@ -109,8 +109,8 @@ const SeoDirectoryPage = () => {
                       {guide.metaDescription}
                     </p>
                   </CardContent>
-                </Link>
-              </Card>
+                </Card>
+              </Link>
             ))}
           </div>
         </section>
