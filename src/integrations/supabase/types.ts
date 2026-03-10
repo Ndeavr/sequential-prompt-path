@@ -481,6 +481,53 @@ export type Database = {
           },
         ]
       }
+      property_insights: {
+        Row: {
+          contractor_category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          property_id: string
+          title: string
+          type: string
+          urgency: string | null
+          user_id: string
+        }
+        Insert: {
+          contractor_category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          property_id: string
+          title: string
+          type: string
+          urgency?: string | null
+          user_id: string
+        }
+        Update: {
+          contractor_category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          property_id?: string
+          title?: string
+          type?: string
+          urgency?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_insights_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_analysis: {
         Row: {
           ai_model: string | null

@@ -18,6 +18,7 @@ import QuotesList from "@/pages/dashboard/QuotesList";
 import QuoteUploadPage from "@/pages/dashboard/QuoteUploadPage";
 import QuoteDetail from "@/pages/dashboard/QuoteDetail";
 import HomeScorePage from "@/pages/dashboard/HomeScorePage";
+import PropertyInsightsPage from "@/pages/dashboard/PropertyInsightsPage";
 import AccountPage from "@/pages/dashboard/AccountPage";
 import HomeownerAppointments from "@/pages/dashboard/HomeownerAppointments";
 import BookingPage from "@/pages/dashboard/BookingPage";
@@ -63,6 +64,7 @@ export const AppRouter = () => (
       <Route path="/dashboard/quotes/upload" element={<ProtectedRoute requiredRole="homeowner"><QuoteUploadPage /></ProtectedRoute>} />
       <Route path="/dashboard/quotes/:id" element={<ProtectedRoute requiredRole="homeowner"><QuoteDetail /></ProtectedRoute>} />
       <Route path="/dashboard/home-score" element={<ProtectedRoute requiredRole="homeowner"><HomeScorePage /></ProtectedRoute>} />
+      <Route path="/dashboard/properties/:id/insights" element={<ProtectedRoute requiredRole="homeowner"><PropertyInsightsPage /></ProtectedRoute>} />
       <Route path="/dashboard/account" element={<ProtectedRoute requiredRole="homeowner"><AccountPage /></ProtectedRoute>} />
       <Route path="/dashboard/appointments" element={<ProtectedRoute requiredRole="homeowner"><HomeownerAppointments /></ProtectedRoute>} />
       <Route path="/dashboard/book/:id" element={<ProtectedRoute requiredRole="homeowner"><BookingPage /></ProtectedRoute>} />
