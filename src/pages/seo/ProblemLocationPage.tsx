@@ -121,8 +121,14 @@ const ProblemLocationPage = () => {
           <p className="text-muted-foreground leading-relaxed">{data.localContext}</p>
         </section>
 
+        {/* Growth CTAs */}
+        <GrowthCtaBlock showAlex cityName={city} />
+
         {/* CTA */}
         <SeoCta searchUrl={data.searchUrl} cityName={city} />
+
+        {/* Contractor acquisition */}
+        <ContractorLandingCta />
 
         {/* FAQ */}
         <SeoFaqSection faqs={data.faqs} />

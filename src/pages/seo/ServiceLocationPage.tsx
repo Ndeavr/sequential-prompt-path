@@ -91,8 +91,14 @@ const ServiceLocationPage = () => {
           <p className="text-muted-foreground leading-relaxed">{data.localContext}</p>
         </section>
 
+        {/* Growth CTAs */}
+        <GrowthCtaBlock showAlex cityName={city} />
+
         {/* CTA */}
         <SeoCta searchUrl={data.searchUrl} cityName={city} serviceName={data.h1.split(" à ")[0]} />
+
+        {/* Contractor acquisition */}
+        <ContractorLandingCta />
 
         {/* FAQ */}
         <SeoFaqSection faqs={data.faqs} />

@@ -250,6 +250,13 @@ const QuoteDetail = () => {
 
         {/* CTAs */}
         <div className="flex flex-wrap gap-3">
+          {analysis && (
+            <ShareAnalysis
+              quoteId={quote.id}
+              fairnessScore={analysis.fairness_score}
+              amount={quote.amount}
+            />
+          )}
           <Button asChild variant="outline">
             <Link to="/dashboard/quotes/upload">
               <Upload className="h-4 w-4 mr-1" /> Téléverser une autre soumission
