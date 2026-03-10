@@ -17,7 +17,7 @@ export interface ContractorSubscription {
 }
 
 export const useContractorSubscription = () => {
-  const { data: contractor } = useContractor();
+  const { data: contractor } = useContractorProfile();
 
   return useQuery({
     queryKey: ["contractor-subscription", contractor?.id],
