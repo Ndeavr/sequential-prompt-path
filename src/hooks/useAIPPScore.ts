@@ -5,7 +5,7 @@
 
 import { useMemo } from "react";
 import { useContractorProfile, useContractorReviews, useContractorDocuments } from "./useContractor";
-import { useAppointments } from "./useAppointments";
+import { useContractorAppointments } from "./useAppointments";
 import { computeAIPPScore, type AIPPResult, type AIPPInput } from "@/services/aippScoreService";
 
 export const useContractorAIPPComputed = () => {
