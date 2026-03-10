@@ -7,6 +7,33 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+/**
+ * Server-side plan config — single source of truth for Stripe price IDs.
+ * Must stay in sync with src/config/contractorPlans.ts.
+ */
+const PLAN_PRICES: Record<string, { month: string; year: string }> = {
+  recrue: {
+    month: "price_1T9X6oCvZwK1QnPVG3tLbNqV",
+    year: "price_1T9X6oCvZwK1QnPVG3tLbNqY",
+  },
+  pro: {
+    month: "price_1T9X6pCvZwK1QnPVfBlT13Lw",
+    year: "price_1T9X6pCvZwK1QnPVfBlT13Ly",
+  },
+  premium: {
+    month: "price_1T9X6qCvZwK1QnPV8V4P18tw",
+    year: "price_1T9X6qCvZwK1QnPV8V4P18ty",
+  },
+  elite: {
+    month: "price_1T9X6sCvZwK1QnPV2ZwYQOGT",
+    year: "price_1T9X6sCvZwK1QnPV2ZwYQOGY",
+  },
+  signature: {
+    month: "price_1T9X6tCvZwK1QnPVxNcBNeBM",
+    year: "price_1T9X6tCvZwK1QnPVxNcBNeBY",
+  },
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -17,7 +44,8 @@ Deno.serve(async (req) => {
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not configured");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
+    const supabaseAnonKey =
+      Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
@@ -43,13 +71,21 @@ Deno.serve(async (req) => {
     const userId = claimsData.claims.sub;
     const userEmail = claimsData.claims.email as string;
 
-    const { priceId, planId, successUrl, cancelUrl } = await req.json();
-    if (!priceId || !planId) {
-      return new Response(JSON.stringify({ error: "Missing priceId or planId" }), {
+    const { planId, billingInterval, successUrl, cancelUrl } = await req.json();
+
+    // Validate plan
+    const planPrices = PLAN_PRICES[planId];
+    if (!planPrices) {
+      return new Response(JSON.stringify({ error: "Invalid plan" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Validate interval
+    const interval: "month" | "year" =
+      billingInterval === "year" ? "year" : "month";
+    const resolvedPriceId = planPrices[interval];
 
     // Get or create contractor
     const serviceClient = createClient(
@@ -64,17 +100,16 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!contractor) {
-      // Auto-create contractor profile so checkout can proceed
       const { data: newContractor, error: insertErr } = await serviceClient
         .from("contractors")
         .insert({ user_id: userId, business_name: userEmail })
         .select("id")
         .single();
       if (insertErr || !newContractor) {
-        return new Response(JSON.stringify({ error: "Could not create contractor profile" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ error: "Could not create contractor profile" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
       contractor = newContractor;
     }
@@ -101,12 +136,22 @@ Deno.serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: successUrl || `${req.headers.get("origin")}/pro/billing?success=true`,
-      cancel_url: cancelUrl || `${req.headers.get("origin")}/pro/billing?canceled=true`,
-      metadata: { contractor_id: contractor.id, plan_id: planId },
+      line_items: [{ price: resolvedPriceId, quantity: 1 }],
+      success_url:
+        successUrl || `${req.headers.get("origin")}/pro/billing?success=true`,
+      cancel_url:
+        cancelUrl || `${req.headers.get("origin")}/pro/billing?canceled=true`,
+      metadata: {
+        contractor_id: contractor.id,
+        plan_id: planId,
+        billing_interval: interval,
+      },
       subscription_data: {
-        metadata: { contractor_id: contractor.id, plan_id: planId },
+        metadata: {
+          contractor_id: contractor.id,
+          plan_id: planId,
+          billing_interval: interval,
+        },
       },
     });
 

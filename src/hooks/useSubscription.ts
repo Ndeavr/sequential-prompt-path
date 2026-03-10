@@ -1,6 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useContractorProfile } from "@/hooks/useContractor";
+import type { BillingInterval } from "@/config/contractorPlans";
 
 export interface ContractorSubscription {
   id: string;
@@ -9,6 +10,7 @@ export interface ContractorSubscription {
   stripe_subscription_id: string | null;
   plan_id: string;
   status: string;
+  billing_interval: BillingInterval;
   current_period_start: string | null;
   current_period_end: string | null;
   cancel_at_period_end: boolean;
@@ -40,9 +42,11 @@ export const useCreateCheckoutSession = () => {
     mutationFn: async ({
       priceId,
       planId,
+      billingInterval,
     }: {
       priceId: string;
       planId: string;
+      billingInterval: BillingInterval;
     }) => {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData?.session?.access_token;
@@ -60,6 +64,7 @@ export const useCreateCheckoutSession = () => {
           body: JSON.stringify({
             priceId,
             planId,
+            billingInterval,
             successUrl: `${window.location.origin}/pro/billing?success=true`,
             cancelUrl: `${window.location.origin}/pro/billing?canceled=true`,
           }),
@@ -112,9 +117,15 @@ export const useHasActiveSubscription = (): {
   hasActive: boolean;
   isLoading: boolean;
   planId: string | null;
+  billingInterval: BillingInterval;
 } => {
   const { data: sub, isLoading } = useContractorSubscription();
   const activeStatuses = ["active", "trialing"];
   const hasActive = !!sub && activeStatuses.includes(sub.status);
-  return { hasActive, isLoading, planId: sub?.plan_id ?? null };
+  return {
+    hasActive,
+    isLoading,
+    planId: sub?.plan_id ?? null,
+    billingInterval: (sub?.billing_interval as BillingInterval) ?? "month",
+  };
 };
