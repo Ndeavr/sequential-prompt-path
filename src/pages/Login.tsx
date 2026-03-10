@@ -23,6 +23,7 @@ const Login = () => {
       toast.error(error.message);
     } else {
       toast.success("Connexion réussie !");
+      // Role will be fetched async; navigate to home, ProtectedRoute will redirect if needed
       navigate("/");
     }
   };
