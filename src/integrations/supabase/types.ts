@@ -49,6 +49,7 @@ export type Database = {
       }
       appointments: {
         Row: {
+          budget_range: string | null
           contact_preference: string | null
           contractor_id: string
           created_at: string
@@ -57,12 +58,16 @@ export type Database = {
           notes: string | null
           preferred_date: string | null
           preferred_time_window: string | null
+          project_category: string | null
           property_id: string | null
           scheduled_at: string | null
           status: Database["public"]["Enums"]["appointment_status"]
+          timeline: string | null
           updated_at: string
+          urgency_level: string | null
         }
         Insert: {
+          budget_range?: string | null
           contact_preference?: string | null
           contractor_id: string
           created_at?: string
@@ -71,12 +76,16 @@ export type Database = {
           notes?: string | null
           preferred_date?: string | null
           preferred_time_window?: string | null
+          project_category?: string | null
           property_id?: string | null
           scheduled_at?: string | null
           status?: Database["public"]["Enums"]["appointment_status"]
+          timeline?: string | null
           updated_at?: string
+          urgency_level?: string | null
         }
         Update: {
+          budget_range?: string | null
           contact_preference?: string | null
           contractor_id?: string
           created_at?: string
@@ -85,10 +94,13 @@ export type Database = {
           notes?: string | null
           preferred_date?: string | null
           preferred_time_window?: string | null
+          project_category?: string | null
           property_id?: string | null
           scheduled_at?: string | null
           status?: Database["public"]["Enums"]["appointment_status"]
+          timeline?: string | null
           updated_at?: string
+          urgency_level?: string | null
         }
         Relationships: [
           {
@@ -249,6 +261,81 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_qualifications: {
+        Row: {
+          appointment_id: string
+          budget_range: string | null
+          city: string | null
+          contractor_id: string
+          created_at: string
+          description_length_score: number | null
+          documents_uploaded: boolean | null
+          homeowner_profile_completeness: number | null
+          homeowner_user_id: string
+          id: string
+          project_category: string | null
+          property_linked: boolean | null
+          quote_uploaded: boolean | null
+          score: number
+          score_factors: Json | null
+          timeline: string | null
+          urgency_level: string | null
+        }
+        Insert: {
+          appointment_id: string
+          budget_range?: string | null
+          city?: string | null
+          contractor_id: string
+          created_at?: string
+          description_length_score?: number | null
+          documents_uploaded?: boolean | null
+          homeowner_profile_completeness?: number | null
+          homeowner_user_id: string
+          id?: string
+          project_category?: string | null
+          property_linked?: boolean | null
+          quote_uploaded?: boolean | null
+          score?: number
+          score_factors?: Json | null
+          timeline?: string | null
+          urgency_level?: string | null
+        }
+        Update: {
+          appointment_id?: string
+          budget_range?: string | null
+          city?: string | null
+          contractor_id?: string
+          created_at?: string
+          description_length_score?: number | null
+          documents_uploaded?: boolean | null
+          homeowner_profile_completeness?: number | null
+          homeowner_user_id?: string
+          id?: string
+          project_category?: string | null
+          property_linked?: boolean | null
+          quote_uploaded?: boolean | null
+          score?: number
+          score_factors?: Json | null
+          timeline?: string | null
+          urgency_level?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_qualifications_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: true
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_qualifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
             referencedColumns: ["id"]
           },
         ]
