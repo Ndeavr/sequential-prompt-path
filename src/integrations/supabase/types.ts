@@ -151,6 +151,7 @@ export type Database = {
       }
       contractor_subscriptions: {
         Row: {
+          billing_interval: string
           cancel_at_period_end: boolean | null
           contractor_id: string
           created_at: string
@@ -164,6 +165,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          billing_interval?: string
           cancel_at_period_end?: boolean | null
           contractor_id: string
           created_at?: string
@@ -177,6 +179,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          billing_interval?: string
           cancel_at_period_end?: boolean | null
           contractor_id?: string
           created_at?: string

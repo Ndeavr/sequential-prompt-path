@@ -121,7 +121,7 @@ const PlanCard = ({
         </p>
         {interval === "year" && savings > 0 && (
           <div className="space-y-0.5">
-            <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+            <Badge variant="secondary" className="text-xs bg-secondary/20 text-secondary-foreground">
               Économisez {savings} %
             </Badge>
             <p className="text-xs text-muted-foreground">
