@@ -3,17 +3,29 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 import { StatCard, EmptyState, LoadingState, PageHeader } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useProperties } from "@/hooks/useProperties";
 import { useQuotes } from "@/hooks/useQuotes";
-import { useHomeScores } from "@/hooks/useHomeScore";
-import { Home, FileText, BarChart3, Plus } from "lucide-react";
+import { useAppointments } from "@/hooks/useAppointments";
+import { calculateHomeScore } from "@/services/homeScoreService";
+import { Home, FileText, BarChart3, Plus, CalendarDays } from "lucide-react";
 
 const Dashboard = () => {
   const { data: properties, isLoading: pLoading } = useProperties();
   const { data: quotes, isLoading: qLoading } = useQuotes();
-  const { data: scores, isLoading: sLoading } = useHomeScores();
+  const { data: appointments, isLoading: aLoading } = useAppointments();
 
-  const isLoading = pLoading || qLoading || sLoading;
+  const isLoading = pLoading || qLoading || aLoading;
+
+  // Compute best home score
+  const bestScore = (properties ?? []).reduce((best, p) => {
+    const s = calculateHomeScore({
+      yearBuilt: p.year_built, propertyType: p.property_type, squareFootage: p.square_footage,
+      condition: p.condition, hasInspectionReports: false, uploadedDocumentCount: 0,
+      quoteCount: 0, renovationCount: 0, recentRepairCount: 0,
+    });
+    return s.overall > best ? s.overall : best;
+  }, 0);
 
   if (isLoading) return <DashboardLayout><LoadingState /></DashboardLayout>;
 
@@ -21,11 +33,25 @@ const Dashboard = () => {
     <DashboardLayout>
       <PageHeader title="Tableau de bord" description="Vue d'ensemble de vos propriétés et soumissions" />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard title="Propriétés" value={properties?.length ?? 0} icon={<Home className="h-4 w-4" />} />
         <StatCard title="Soumissions" value={quotes?.length ?? 0} icon={<FileText className="h-4 w-4" />} />
-        <StatCard title="Scores maison" value={scores?.length ?? 0} icon={<BarChart3 className="h-4 w-4" />} />
+        <StatCard title="Rendez-vous" value={appointments?.length ?? 0} icon={<CalendarDays className="h-4 w-4" />} />
+        <StatCard title="Score maison" value={bestScore > 0 ? `${bestScore}/100` : "—"} icon={<BarChart3 className="h-4 w-4" />} />
       </div>
+
+      {/* Home Score Alert */}
+      {properties?.length ? (
+        <Card className="mb-6">
+          <CardContent className="flex items-center justify-between pt-6">
+            <div>
+              <p className="text-sm font-medium">Intelligence propriété</p>
+              <p className="text-xs text-muted-foreground">Découvrez le score et les recommandations pour vos propriétés</p>
+            </div>
+            <Button asChild size="sm"><Link to="/dashboard/home-score">Voir les scores</Link></Button>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Properties */}
@@ -79,6 +105,7 @@ const Dashboard = () => {
       <div className="mt-8 flex flex-wrap gap-3">
         <Button asChild variant="outline"><Link to="/search">Trouver un entrepreneur</Link></Button>
         <Button asChild variant="outline"><Link to="/dashboard/home-score">Voir mon score maison</Link></Button>
+        <Button asChild variant="outline"><Link to="/dashboard/appointments">Mes rendez-vous</Link></Button>
       </div>
     </DashboardLayout>
   );

@@ -18,7 +18,12 @@ const PropertyDetail = () => {
       <PageHeader
         title={property.address}
         description={[property.city, property.province].filter(Boolean).join(", ")}
-        action={<Button asChild variant="outline"><Link to="/dashboard/properties">← Retour</Link></Button>}
+        action={
+          <div className="flex gap-2">
+            <Button asChild variant="outline"><Link to="/dashboard/properties">← Retour</Link></Button>
+            <Button asChild><Link to={`/dashboard/properties/${id}/insights`}>Intelligence propriété</Link></Button>
+          </div>
+        }
       />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
         <Card>

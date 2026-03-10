@@ -1,35 +1,69 @@
+import { Link } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { PageHeader, LoadingState, EmptyState } from "@/components/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { useProperties } from "@/hooks/useProperties";
 import { useHomeScores } from "@/hooks/useHomeScore";
+import { calculateHomeScore, type HomeScoreInput } from "@/services/homeScoreService";
+import { BarChart3 } from "lucide-react";
 
 const HomeScorePage = () => {
-  const { data: scores, isLoading } = useHomeScores();
+  const { data: properties, isLoading: pLoading } = useProperties();
+  const { data: dbScores, isLoading: sLoading } = useHomeScores();
+
+  const isLoading = pLoading || sLoading;
+
+  // Compute live scores for each property
+  const propertyScores = (properties ?? []).map(p => {
+    const input: HomeScoreInput = {
+      yearBuilt: p.year_built,
+      propertyType: p.property_type,
+      squareFootage: p.square_footage,
+      condition: p.condition,
+      hasInspectionReports: false,
+      uploadedDocumentCount: 0,
+      quoteCount: 0,
+      renovationCount: 0,
+      recentRepairCount: 0,
+    };
+    return { property: p, score: calculateHomeScore(input) };
+  });
 
   return (
     <DashboardLayout>
       <PageHeader title="Score maison" description="Évaluation de la condition de vos propriétés" />
-      {isLoading ? <LoadingState /> : !scores?.length ? (
-        <EmptyState message="Aucun score disponible. Les scores seront calculés automatiquement." />
+      {isLoading ? <LoadingState /> : !propertyScores.length ? (
+        <EmptyState
+          message="Ajoutez une propriété pour voir votre score maison."
+          action={<Button asChild><Link to="/dashboard/properties/new">Ajouter une propriété</Link></Button>}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {scores.map((s) => (
-            <Card key={s.id}>
-              <CardHeader>
-                <CardTitle className="text-base">{(s as any).properties?.address || "Propriété"}</CardTitle>
+          {propertyScores.map(({ property: p, score }) => (
+            <Card key={p.id}>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">{p.address}</CardTitle>
+                <Badge variant="secondary">{score.label}</Badge>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="text-4xl font-bold">{s.overall_score}</div>
+                <div className="flex items-center gap-4 mb-5">
+                  <div className={`text-4xl font-bold ${score.color}`}>{score.overall}</div>
                   <span className="text-sm text-muted-foreground">/ 100</span>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <ScoreRow label="Structure" value={s.structure_score} />
-                  <ScoreRow label="Systèmes" value={s.systems_score} />
-                  <ScoreRow label="Extérieur" value={s.exterior_score} />
-                  <ScoreRow label="Intérieur" value={s.interior_score} />
+                <div className="space-y-3">
+                  <ScoreBar label="Structure" value={score.structure} />
+                  <ScoreBar label="Systèmes" value={score.systems} />
+                  <ScoreBar label="Extérieur" value={score.exterior} />
+                  <ScoreBar label="Intérieur" value={score.interior} />
                 </div>
-                {s.notes && <p className="text-sm text-muted-foreground mt-4">{s.notes}</p>}
+                <Button asChild variant="outline" size="sm" className="mt-4 w-full">
+                  <Link to={`/dashboard/properties/${p.id}/insights`}>
+                    <BarChart3 className="h-4 w-4 mr-1" /> Voir les recommandations
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           ))}
@@ -39,10 +73,13 @@ const HomeScorePage = () => {
   );
 };
 
-const ScoreRow = ({ label, value }: { label: string; value: number | null }) => (
+const ScoreBar = ({ label, value }: { label: string; value: number }) => (
   <div>
-    <p className="text-xs text-muted-foreground">{label}</p>
-    <p className="text-lg font-semibold">{value ?? "—"}</p>
+    <div className="flex justify-between text-sm mb-1">
+      <span>{label}</span>
+      <span className="font-medium">{value}</span>
+    </div>
+    <Progress value={value} className="h-2" />
   </div>
 );
 
