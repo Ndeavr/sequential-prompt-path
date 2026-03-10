@@ -12,7 +12,7 @@ export const useContractorAIPPComputed = () => {
   const { data: profile, isLoading: profileLoading } = useContractorProfile();
   const { data: reviews, isLoading: reviewsLoading } = useContractorReviews();
   const { data: docs, isLoading: docsLoading } = useContractorDocuments();
-  const { data: appointments, isLoading: apptsLoading } = useAppointments();
+  const { data: appointments, isLoading: apptsLoading } = useContractorAppointments();
 
   const isLoading = profileLoading || reviewsLoading || docsLoading || apptsLoading;
 
