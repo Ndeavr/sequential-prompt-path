@@ -41,7 +41,6 @@ export const AppRouter = () => (
       {/* Public */}
       <Route path="/" element={<Home />} />
       <Route path="/search" element={<Search />} />
-      <Route path="/contractors" element={<ContractorProfile />} />
       <Route path="/contractors/:id" element={<ContractorProfile />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
