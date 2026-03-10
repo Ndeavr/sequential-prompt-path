@@ -51,23 +51,32 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get contractor
+    // Get or create contractor
     const serviceClient = createClient(
       supabaseUrl,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: contractor } = await serviceClient
+    let { data: contractor } = await serviceClient
       .from("contractors")
       .select("id")
       .eq("user_id", userId)
       .maybeSingle();
 
     if (!contractor) {
-      return new Response(JSON.stringify({ error: "Contractor not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // Auto-create contractor profile so checkout can proceed
+      const { data: newContractor, error: insertErr } = await serviceClient
+        .from("contractors")
+        .insert({ user_id: userId, business_name: userEmail })
+        .select("id")
+        .single();
+      if (insertErr || !newContractor) {
+        return new Response(JSON.stringify({ error: "Could not create contractor profile" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      contractor = newContractor;
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
