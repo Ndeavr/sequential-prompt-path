@@ -16,6 +16,25 @@ import {
   Globe,
   Clock,
   FileText,
+  CalendarPlus,
+} from "lucide-react";
+import {
+  usePublicContractorProfile,
+  usePublicContractorReviews,
+} from "@/hooks/usePublicContractors";
+import { useAuth } from "@/hooks/useAuth";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  ArrowLeft,
+  MapPin,
+  Star,
+  ShieldCheck,
+  TrendingUp,
+  Globe,
+  Clock,
+  FileText,
 } from "lucide-react";
 import {
   usePublicContractorProfile,
