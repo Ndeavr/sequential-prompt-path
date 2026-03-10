@@ -198,7 +198,7 @@ const QuoteDetail = () => {
                     title="Points à vérifier"
                     items={concerns}
                     emptyText="Aucune préoccupation identifiée."
-                    className="text-yellow-600 dark:text-yellow-400"
+                    className="text-accent-foreground"
                   />
                 </CardContent>
               </Card>
