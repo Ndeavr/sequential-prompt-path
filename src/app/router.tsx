@@ -16,6 +16,7 @@ import PropertyNew from "@/pages/dashboard/PropertyNew";
 import PropertyDetail from "@/pages/dashboard/PropertyDetail";
 import QuotesList from "@/pages/dashboard/QuotesList";
 import QuoteUploadPage from "@/pages/dashboard/QuoteUploadPage";
+import QuoteDetail from "@/pages/dashboard/QuoteDetail";
 import HomeScorePage from "@/pages/dashboard/HomeScorePage";
 import AccountPage from "@/pages/dashboard/AccountPage";
 
@@ -52,6 +53,7 @@ export const AppRouter = () => (
       <Route path="/dashboard/properties/:id" element={<ProtectedRoute requiredRole="homeowner"><PropertyDetail /></ProtectedRoute>} />
       <Route path="/dashboard/quotes" element={<ProtectedRoute requiredRole="homeowner"><QuotesList /></ProtectedRoute>} />
       <Route path="/dashboard/quotes/upload" element={<ProtectedRoute requiredRole="homeowner"><QuoteUploadPage /></ProtectedRoute>} />
+      <Route path="/dashboard/quotes/:id" element={<ProtectedRoute requiredRole="homeowner"><QuoteDetail /></ProtectedRoute>} />
       <Route path="/dashboard/home-score" element={<ProtectedRoute requiredRole="homeowner"><HomeScorePage /></ProtectedRoute>} />
       <Route path="/dashboard/account" element={<ProtectedRoute requiredRole="homeowner"><AccountPage /></ProtectedRoute>} />
 
