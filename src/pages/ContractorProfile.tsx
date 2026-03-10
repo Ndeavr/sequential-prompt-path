@@ -132,7 +132,7 @@ const ContractorProfile = () => {
             <Card className="flex-1 min-w-[140px] glass-card border-0 shadow-soft">
               <CardContent className="p-5 flex items-center gap-4">
                 <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-                  <Star className="h-6 w-6 fill-current text-yellow-500" />
+                  <Star className="h-6 w-6 fill-current text-accent" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">Évaluation</p>
