@@ -18,6 +18,7 @@ import QuotesList from "@/pages/dashboard/QuotesList";
 import QuoteUploadPage from "@/pages/dashboard/QuoteUploadPage";
 import QuoteDetail from "@/pages/dashboard/QuoteDetail";
 import HomeScorePage from "@/pages/dashboard/HomeScorePage";
+import PropertyInsightsPage from "@/pages/dashboard/PropertyInsightsPage";
 import AccountPage from "@/pages/dashboard/AccountPage";
 import HomeownerAppointments from "@/pages/dashboard/HomeownerAppointments";
 import BookingPage from "@/pages/dashboard/BookingPage";
