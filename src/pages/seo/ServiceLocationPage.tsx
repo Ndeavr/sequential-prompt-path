@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, AlertTriangle, DollarSign, MapPin } from "lucide-react";
 import NotFound from "@/pages/NotFound";
+import GrowthCtaBlock from "@/components/growth/GrowthCtaBlock";
+import ContractorLandingCta from "@/components/growth/ContractorLandingCta";
 
 const ServiceLocationPage = () => {
   const { category, city } = useParams<{ category: string; city: string }>();
