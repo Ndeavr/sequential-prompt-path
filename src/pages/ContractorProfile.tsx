@@ -13,19 +13,21 @@ import {
   Star,
   ShieldCheck,
   TrendingUp,
-  Globe,
   Clock,
   FileText,
+  CalendarPlus,
 } from "lucide-react";
 import {
   usePublicContractorProfile,
   usePublicContractorReviews,
 } from "@/hooks/usePublicContractors";
+import { useAuth } from "@/hooks/useAuth";
 
 const ContractorProfile = () => {
   const { id } = useParams<{ id: string }>();
   const { data: contractor, isLoading, isError } = usePublicContractorProfile(id);
   const { data: reviews } = usePublicContractorReviews(id);
+  const { user, role } = useAuth();
 
   if (isLoading) {
     return (
@@ -50,6 +52,8 @@ const ContractorProfile = () => {
   }
 
   const isVerified = contractor.verification_status === "verified";
+  const isHomeowner = !!user && role === "homeowner";
+  const isAuthenticated = !!user;
 
   return (
     <div className="min-h-screen bg-background">
@@ -188,17 +192,41 @@ const ContractorProfile = () => {
         {/* CTA */}
         <Card>
           <CardContent className="p-6 text-center space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Vous souhaitez comparer des soumissions ou contacter cet entrepreneur?
-            </p>
-            <div className="flex flex-wrap justify-center gap-2">
-              <Button asChild>
-                <Link to="/signup">Créer un compte</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link to="/login">Se connecter</Link>
-              </Button>
-            </div>
+            {isHomeowner ? (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  Intéressé par cet entrepreneur?
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button asChild>
+                    <Link to={`/dashboard/book/${id}`}>
+                      <CalendarPlus className="h-4 w-4 mr-1" /> Demander un rendez-vous
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link to="/dashboard/quotes/upload">Téléverser une soumission</Link>
+                  </Button>
+                </div>
+              </>
+            ) : isAuthenticated ? (
+              <p className="text-sm text-muted-foreground">
+                La prise de rendez-vous est réservée aux propriétaires.
+              </p>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  Vous souhaitez contacter cet entrepreneur ou demander un rendez-vous?
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button asChild>
+                    <Link to={`/signup?redirect=/contractors/${id}`}>Créer un compte</Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link to={`/login?redirect=/contractors/${id}`}>Se connecter</Link>
+                  </Button>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

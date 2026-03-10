@@ -19,6 +19,8 @@ import QuoteUploadPage from "@/pages/dashboard/QuoteUploadPage";
 import QuoteDetail from "@/pages/dashboard/QuoteDetail";
 import HomeScorePage from "@/pages/dashboard/HomeScorePage";
 import AccountPage from "@/pages/dashboard/AccountPage";
+import HomeownerAppointments from "@/pages/dashboard/HomeownerAppointments";
+import BookingPage from "@/pages/dashboard/BookingPage";
 
 // Contractor Pro
 import ProDashboard from "@/pages/pro/ProDashboard";
@@ -27,6 +29,7 @@ import ProAIPPScore from "@/pages/pro/ProAIPPScore";
 import ProReviews from "@/pages/pro/ProReviews";
 import ProDocuments from "@/pages/pro/ProDocuments";
 import ProAccount from "@/pages/pro/ProAccount";
+import ProAppointments from "@/pages/pro/ProAppointments";
 
 // Admin
 import AdminDashboard from "@/pages/admin/AdminDashboard";
@@ -36,6 +39,8 @@ import AdminQuotes from "@/pages/admin/AdminQuotes";
 import AdminReviews from "@/pages/admin/AdminReviews";
 import AdminDocuments from "@/pages/admin/AdminDocuments";
 import AdminContractorDetail from "@/pages/admin/AdminContractorDetail";
+import AdminAppointments from "@/pages/admin/AdminAppointments";
+
 export const AppRouter = () => (
   <BrowserRouter>
     <Routes>
@@ -56,6 +61,8 @@ export const AppRouter = () => (
       <Route path="/dashboard/quotes/:id" element={<ProtectedRoute requiredRole="homeowner"><QuoteDetail /></ProtectedRoute>} />
       <Route path="/dashboard/home-score" element={<ProtectedRoute requiredRole="homeowner"><HomeScorePage /></ProtectedRoute>} />
       <Route path="/dashboard/account" element={<ProtectedRoute requiredRole="homeowner"><AccountPage /></ProtectedRoute>} />
+      <Route path="/dashboard/appointments" element={<ProtectedRoute requiredRole="homeowner"><HomeownerAppointments /></ProtectedRoute>} />
+      <Route path="/dashboard/book/:id" element={<ProtectedRoute requiredRole="homeowner"><BookingPage /></ProtectedRoute>} />
 
       {/* Contractor Pro */}
       <Route path="/pro" element={<ProtectedRoute requiredRole="contractor"><ProDashboard /></ProtectedRoute>} />
@@ -64,6 +71,7 @@ export const AppRouter = () => (
       <Route path="/pro/reviews" element={<ProtectedRoute requiredRole="contractor"><ProReviews /></ProtectedRoute>} />
       <Route path="/pro/documents" element={<ProtectedRoute requiredRole="contractor"><ProDocuments /></ProtectedRoute>} />
       <Route path="/pro/account" element={<ProtectedRoute requiredRole="contractor"><ProAccount /></ProtectedRoute>} />
+      <Route path="/pro/appointments" element={<ProtectedRoute requiredRole="contractor"><ProAppointments /></ProtectedRoute>} />
 
       {/* Admin */}
       <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
@@ -73,6 +81,7 @@ export const AppRouter = () => (
       <Route path="/admin/quotes" element={<ProtectedRoute requiredRole="admin"><AdminQuotes /></ProtectedRoute>} />
       <Route path="/admin/reviews" element={<ProtectedRoute requiredRole="admin"><AdminReviews /></ProtectedRoute>} />
       <Route path="/admin/documents" element={<ProtectedRoute requiredRole="admin"><AdminDocuments /></ProtectedRoute>} />
+      <Route path="/admin/appointments" element={<ProtectedRoute requiredRole="admin"><AdminAppointments /></ProtectedRoute>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>

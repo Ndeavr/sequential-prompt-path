@@ -1,13 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Home, FileText, BarChart3, User, Plus, LogOut } from "lucide-react";
+import { Home, FileText, BarChart3, User, CalendarDays, LogOut } from "lucide-react";
 import type { ReactNode } from "react";
 
 const navItems = [
   { to: "/dashboard", label: "Tableau de bord", icon: Home },
   { to: "/dashboard/properties", label: "Propriétés", icon: Home },
   { to: "/dashboard/quotes", label: "Soumissions", icon: FileText },
+  { to: "/dashboard/appointments", label: "Rendez-vous", icon: CalendarDays },
   { to: "/dashboard/home-score", label: "Score maison", icon: BarChart3 },
   { to: "/dashboard/account", label: "Mon compte", icon: User },
 ];
