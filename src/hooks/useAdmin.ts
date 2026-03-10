@@ -187,3 +187,19 @@ export const useAdminDocuments = () =>
       return data;
     },
   });
+
+/* ── Admin Contractor Subscription ── */
+export const useAdminContractorSubscription = (contractorId?: string) =>
+  useQuery({
+    queryKey: ["admin-contractor-subscription", contractorId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contractor_subscriptions")
+        .select("*")
+        .eq("contractor_id", contractorId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!contractorId,
+  });

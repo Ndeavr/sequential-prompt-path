@@ -28,6 +28,7 @@ const AdminContractorDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { data: contractor, isLoading } = useAdminContractor(id);
   const { data: docs } = useAdminContractorDocuments(contractor?.user_id);
+  const { data: subscription } = useAdminContractorSubscription(contractor?.id);
   const updateVerification = useUpdateContractorVerification();
   const [newStatus, setNewStatus] = useState("");
   const [adminNote, setAdminNote] = useState("");
