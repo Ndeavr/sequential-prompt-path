@@ -47,6 +47,36 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          intake_data: Json | null
+          last_intent: string | null
+          session_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          intake_data?: Json | null
+          last_intent?: string | null
+          session_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          intake_data?: Json | null
+          last_intent?: string | null
+          session_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           budget_range: string | null

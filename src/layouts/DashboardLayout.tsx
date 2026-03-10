@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Home, FileText, BarChart3, User, CalendarDays, LogOut } from "lucide-react";
+import AlexConcierge from "@/components/alex/AlexConcierge";
 import type { ReactNode } from "react";
 
 const navItems = [
@@ -59,6 +60,7 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
         </header>
         <main className="flex-1 p-4 md:p-6 overflow-auto">{children}</main>
       </div>
+      <AlexConcierge />
     </div>
   );
 };
