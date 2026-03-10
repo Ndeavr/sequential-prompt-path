@@ -26,11 +26,11 @@ const AdminUsers = () => {
                 <TableRow key={u.id}>
                   <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{u.email || "—"}</TableCell>
-                  <TableCell>
-                    {(u as any).user_roles?.map((r: any) => (
-                      <Badge key={r.role} variant="secondary" className="mr-1">{r.role}</Badge>
-                    ))}
-                  </TableCell>
+                    <TableCell>
+                      {u.roles.map((role: string) => (
+                        <Badge key={role} variant="secondary" className="mr-1">{role}</Badge>
+                      ))}
+                    </TableCell>
                   <TableCell className="text-muted-foreground">{new Date(u.created_at).toLocaleDateString("fr-CA")}</TableCell>
                 </TableRow>
               ))}
