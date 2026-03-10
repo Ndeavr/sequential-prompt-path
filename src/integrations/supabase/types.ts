@@ -47,6 +47,66 @@ export type Database = {
         }
         Relationships: []
       }
+      appointments: {
+        Row: {
+          contact_preference: string | null
+          contractor_id: string
+          created_at: string
+          homeowner_user_id: string
+          id: string
+          notes: string | null
+          preferred_date: string | null
+          preferred_time_window: string | null
+          property_id: string | null
+          scheduled_at: string | null
+          status: Database["public"]["Enums"]["appointment_status"]
+          updated_at: string
+        }
+        Insert: {
+          contact_preference?: string | null
+          contractor_id: string
+          created_at?: string
+          homeowner_user_id: string
+          id?: string
+          notes?: string | null
+          preferred_date?: string | null
+          preferred_time_window?: string | null
+          property_id?: string | null
+          scheduled_at?: string | null
+          status?: Database["public"]["Enums"]["appointment_status"]
+          updated_at?: string
+        }
+        Update: {
+          contact_preference?: string | null
+          contractor_id?: string
+          created_at?: string
+          homeowner_user_id?: string
+          id?: string
+          notes?: string | null
+          preferred_date?: string | null
+          preferred_time_window?: string | null
+          property_id?: string | null
+          scheduled_at?: string | null
+          status?: Database["public"]["Enums"]["appointment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractors: {
         Row: {
           address: string | null
@@ -572,6 +632,14 @@ export type Database = {
     }
     Enums: {
       app_role: "homeowner" | "contractor" | "admin"
+      appointment_status:
+        | "requested"
+        | "under_review"
+        | "accepted"
+        | "declined"
+        | "scheduled"
+        | "completed"
+        | "cancelled"
       property_condition: "excellent" | "good" | "fair" | "poor" | "critical"
       quote_status: "pending" | "analyzed" | "accepted" | "rejected"
       verification_status: "unverified" | "pending" | "verified" | "rejected"
@@ -703,6 +771,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["homeowner", "contractor", "admin"],
+      appointment_status: [
+        "requested",
+        "under_review",
+        "accepted",
+        "declined",
+        "scheduled",
+        "completed",
+        "cancelled",
+      ],
       property_condition: ["excellent", "good", "fair", "poor", "critical"],
       quote_status: ["pending", "analyzed", "accepted", "rejected"],
       verification_status: ["unverified", "pending", "verified", "rejected"],
