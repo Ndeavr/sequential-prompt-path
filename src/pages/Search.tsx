@@ -14,6 +14,7 @@ import {
   usePublicFilterOptions,
   type PublicContractorFilters,
 } from "@/hooks/usePublicContractors";
+import { motion } from "framer-motion";
 
 const SORT_OPTIONS = [
   { value: "default", label: "Pertinence" },
@@ -32,7 +33,6 @@ const Search = () => {
     sort: (searchParams.get("sort") as PublicContractorFilters["sort"]) ?? "default",
   });
 
-  // Sync filters → URL
   useEffect(() => {
     const params = new URLSearchParams();
     if (filters.q) params.set("q", filters.q);
@@ -49,12 +49,12 @@ const Search = () => {
   const hasFilters = !!(filters.q || filters.city || filters.specialty);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen mesh-gradient noise-overlay">
       {/* Header */}
-      <div className="border-b bg-card">
-        <div className="mx-auto max-w-4xl px-4 py-8 space-y-4">
-          <div className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="icon" className="shrink-0">
+      <div className="border-b border-border/50 glass-surface sticky top-0 z-20">
+        <div className="mx-auto max-w-4xl px-4 py-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <Button asChild variant="ghost" size="icon" className="shrink-0 rounded-xl">
               <Link to="/"><ArrowLeft className="h-4 w-4" /></Link>
             </Button>
             <div>
@@ -67,10 +67,10 @@ const Search = () => {
 
           {/* Search input */}
           <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Nom de l'entreprise…"
-              className="pl-10"
+              className="pl-10 rounded-2xl border-0 bg-muted/50 h-12 text-base focus-visible:ring-1"
               value={filters.q ?? ""}
               onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
             />
@@ -82,7 +82,7 @@ const Search = () => {
               value={filters.city || "__all__"}
               onValueChange={(v) => setFilters((f) => ({ ...f, city: v === "__all__" ? "" : v }))}
             >
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-[160px] rounded-xl">
                 <SelectValue placeholder="Ville" />
               </SelectTrigger>
               <SelectContent>
@@ -97,7 +97,7 @@ const Search = () => {
               value={filters.specialty || "__all__"}
               onValueChange={(v) => setFilters((f) => ({ ...f, specialty: v === "__all__" ? "" : v }))}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px] rounded-xl">
                 <SelectValue placeholder="Spécialité" />
               </SelectTrigger>
               <SelectContent>
@@ -112,7 +112,7 @@ const Search = () => {
               value={filters.sort ?? "default"}
               onValueChange={(v) => setFilters((f) => ({ ...f, sort: v as PublicContractorFilters["sort"] }))}
             >
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-[160px] rounded-xl">
                 <SelectValue placeholder="Trier par" />
               </SelectTrigger>
               <SelectContent>
@@ -123,7 +123,7 @@ const Search = () => {
             </Select>
 
             {hasFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1 rounded-xl">
                 <X className="h-3 w-3" /> Effacer
               </Button>
             )}
@@ -132,9 +132,11 @@ const Search = () => {
       </div>
 
       {/* Results */}
-      <div className="mx-auto max-w-4xl px-4 py-6 space-y-4">
+      <div className="relative z-10 mx-auto max-w-4xl px-4 py-6 space-y-4">
         {isLoading && (
-          <p className="text-center text-muted-foreground py-12">Chargement…</p>
+          <div className="flex items-center justify-center py-16">
+            <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          </div>
         )}
 
         {isError && (
@@ -144,7 +146,11 @@ const Search = () => {
         )}
 
         {!isLoading && !isError && contractors && contractors.length === 0 && (
-          <div className="text-center py-16 space-y-2">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-16 space-y-3"
+          >
             <p className="text-lg font-medium text-foreground">Aucun entrepreneur trouvé</p>
             <p className="text-sm text-muted-foreground">
               {hasFilters
@@ -152,11 +158,11 @@ const Search = () => {
                 : "Aucun entrepreneur vérifié n'est disponible pour le moment."}
             </p>
             {hasFilters && (
-              <Button variant="outline" size="sm" onClick={clearFilters} className="mt-2">
+              <Button variant="outline" size="sm" onClick={clearFilters} className="mt-2 rounded-xl">
                 Effacer les filtres
               </Button>
             )}
-          </div>
+          </motion.div>
         )}
 
         {!isLoading && !isError && contractors && contractors.length > 0 && (

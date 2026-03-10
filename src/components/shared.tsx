@@ -9,7 +9,7 @@ interface StatCardProps {
 }
 
 export const StatCard = ({ title, value, icon, description }: StatCardProps) => (
-  <Card className="relative overflow-hidden">
+  <Card className="relative overflow-hidden glass-card border-0 shadow-soft">
     <CardHeader className="flex flex-row items-center justify-between pb-2">
       <CardTitle className="text-meta font-medium text-muted-foreground">{title}</CardTitle>
       {icon && <div className="text-primary/60">{icon}</div>}
@@ -22,17 +22,17 @@ export const StatCard = ({ title, value, icon, description }: StatCardProps) => 
 );
 
 export const EmptyState = ({ message, action }: { message: string; action?: ReactNode }) => (
-  <div className="flex flex-col items-center justify-center py-16 text-center">
-    <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+  <div className="flex flex-col items-center justify-center py-20 text-center">
+    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center mb-5 shadow-soft">
       <span className="text-2xl">📭</span>
     </div>
-    <p className="text-muted-foreground mb-4 max-w-sm">{message}</p>
+    <p className="text-muted-foreground mb-5 max-w-sm leading-relaxed">{message}</p>
     {action}
   </div>
 );
 
 export const LoadingState = () => (
-  <div className="flex items-center justify-center py-16">
+  <div className="flex items-center justify-center py-20">
     <div className="flex flex-col items-center gap-3">
       <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
       <p className="text-muted-foreground text-sm">Chargement…</p>
@@ -41,7 +41,7 @@ export const LoadingState = () => (
 );
 
 export const ErrorState = ({ message }: { message?: string }) => (
-  <div className="flex items-center justify-center py-16">
+  <div className="flex items-center justify-center py-20">
     <p className="text-destructive">{message || "Une erreur est survenue."}</p>
   </div>
 );
@@ -50,7 +50,7 @@ export const PageHeader = ({ title, description, action }: { title: string; desc
   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
     <div>
       <h1 className="text-section font-bold">{title}</h1>
-      {description && <p className="text-muted-foreground mt-1 text-body-lg">{description}</p>}
+      {description && <p className="text-muted-foreground mt-1 text-body-lg leading-relaxed">{description}</p>}
     </div>
     {action}
   </div>

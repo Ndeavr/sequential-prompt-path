@@ -16,8 +16,11 @@ import {
   Upload,
   Search,
   FileText,
+  ArrowRight,
 } from "lucide-react";
 import ShareAnalysis from "@/components/growth/ShareAnalysis";
+import ScoreRing from "@/components/ui/score-ring";
+import { motion } from "framer-motion";
 
 const statusLabel: Record<string, string> = {
   pending: "En attente",
@@ -31,21 +34,6 @@ const statusVariant: Record<string, "default" | "secondary" | "destructive"> = {
   processing: "secondary",
   completed: "default",
   failed: "destructive",
-};
-
-const ScoreBadge = ({ score }: { score: number | null }) => {
-  if (score == null) return null;
-  const color =
-    score >= 70
-      ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-      : score >= 45
-      ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-      : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
-  return (
-    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${color}`}>
-      {score}/100
-    </span>
-  );
 };
 
 const AnalysisSection = ({
@@ -67,10 +55,10 @@ const AnalysisSection = ({
       {title}
     </h3>
     {items.length > 0 ? (
-      <ul className="space-y-2">
+      <ul className="space-y-2.5">
         {items.map((item, i) => (
-          <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-            <span className="mt-1 h-1.5 w-1.5 rounded-full bg-current flex-shrink-0" />
+          <li key={i} className="text-sm text-muted-foreground flex items-start gap-2 leading-relaxed">
+            <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-current flex-shrink-0" />
             {item}
           </li>
         ))}
@@ -98,7 +86,7 @@ const QuoteDetail = () => {
     return (
       <DashboardLayout>
         <PageHeader title="Soumission introuvable" />
-        <Button asChild variant="outline">
+        <Button asChild variant="outline" className="rounded-xl">
           <Link to="/dashboard/quotes">
             <ArrowLeft className="h-4 w-4 mr-1" /> Retour
           </Link>
@@ -116,7 +104,7 @@ const QuoteDetail = () => {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="sm">
+          <Button asChild variant="ghost" size="sm" className="rounded-xl">
             <Link to="/dashboard/quotes">
               <ArrowLeft className="h-4 w-4" />
             </Link>
@@ -127,11 +115,11 @@ const QuoteDetail = () => {
               {(quote as any).properties?.address || "Propriété"} · {format(new Date(quote.created_at), "dd/MM/yyyy")}
             </p>
           </div>
-          <Badge variant={statusVariant[quote.status ?? "pending"]}>{quote.status}</Badge>
+          <Badge variant={statusVariant[quote.status ?? "pending"]} className="rounded-full">{quote.status}</Badge>
         </div>
 
         {/* Quote summary card */}
-        <Card>
+        <Card className="glass-card border-0 shadow-soft">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <FileText className="h-4 w-4" /> Résumé de la soumission
@@ -139,25 +127,25 @@ const QuoteDetail = () => {
           </CardHeader>
           <CardContent className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
             <div>
-              <p className="text-muted-foreground">Montant</p>
+              <p className="text-muted-foreground text-meta">Montant</p>
               <p className="font-semibold">{quote.amount ? `${quote.amount.toLocaleString("fr-CA")} $` : "Non précisé"}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Propriété</p>
+              <p className="text-muted-foreground text-meta">Propriété</p>
               <p className="font-semibold">{(quote as any).properties?.address || "—"}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Document</p>
+              <p className="text-muted-foreground text-meta">Document</p>
               <p className="font-semibold">{quote.file_url ? "Oui" : "Non"}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Date</p>
+              <p className="text-muted-foreground text-meta">Date</p>
               <p className="font-semibold">{format(new Date(quote.created_at), "dd/MM/yyyy")}</p>
             </div>
             {quote.description && (
               <div className="col-span-2 sm:col-span-4">
-                <p className="text-muted-foreground">Description</p>
-                <p>{quote.description}</p>
+                <p className="text-muted-foreground text-meta">Description</p>
+                <p className="leading-relaxed">{quote.description}</p>
               </div>
             )}
           </CardContent>
@@ -166,70 +154,73 @@ const QuoteDetail = () => {
         {/* Analysis */}
         {analysis ? (
           <>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">Analyse de la soumission</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={statusVariant[analysis.status ?? "pending"]}>
-                      {statusLabel[analysis.status ?? "pending"] ?? analysis.status}
-                    </Badge>
-                    <ScoreBadge score={analysis.fairness_score} />
+            {/* Score hero */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4 }}
+            >
+              <Card className="glass-card border-0 shadow-elevation">
+                <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-6">
+                  <ScoreRing score={analysis.fairness_score ?? 0} size={100} strokeWidth={8} label="Équité" />
+                  <div className="flex-1 text-center sm:text-left">
+                    <CardTitle className="text-base mb-2">Analyse de la soumission</CardTitle>
+                    {analysis.summary && <p className="text-sm text-muted-foreground leading-relaxed">{analysis.summary}</p>}
+                    {analysis.ai_model === "temp-deterministic-v1" && (
+                      <p className="text-xs text-muted-foreground italic mt-2">
+                        Analyse préliminaire automatique — une analyse approfondie sera disponible prochainement.
+                      </p>
+                    )}
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {analysis.summary && <p className="text-sm">{analysis.summary}</p>}
-                {analysis.ai_model === "temp-deterministic-v1" && (
-                  <p className="text-xs text-muted-foreground italic">
-                    Analyse préliminaire automatique — une analyse approfondie par IA sera disponible prochainement.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+                  <Badge variant={statusVariant[analysis.status ?? "pending"]} className="rounded-full shrink-0">
+                    {statusLabel[analysis.status ?? "pending"] ?? analysis.status}
+                  </Badge>
+                </CardContent>
+              </Card>
+            </motion.div>
 
             <div className="grid md:grid-cols-2 gap-4">
-              <Card>
+              <Card className="glass-card border-0 shadow-soft">
                 <CardContent className="pt-6">
                   <AnalysisSection
                     icon={CheckCircle}
                     title="Ce qui semble bon"
                     items={strengths}
                     emptyText="Aucun point positif identifié."
-                    className="text-green-700 dark:text-green-400"
+                    className="text-success"
                   />
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="glass-card border-0 shadow-soft">
                 <CardContent className="pt-6">
                   <AnalysisSection
                     icon={AlertTriangle}
                     title="Points à vérifier"
                     items={concerns}
                     emptyText="Aucune préoccupation identifiée."
-                    className="text-yellow-700 dark:text-yellow-400"
+                    className="text-yellow-600 dark:text-yellow-400"
                   />
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="glass-card border-0 shadow-soft">
                 <CardContent className="pt-6">
                   <AnalysisSection
                     icon={HelpCircle}
                     title="Éléments souvent oubliés"
                     items={missingItems}
                     emptyText="Tous les éléments courants semblent présents."
-                    className="text-orange-700 dark:text-orange-400"
+                    className="text-orange-600 dark:text-orange-400"
                   />
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="glass-card border-0 shadow-soft">
                 <CardContent className="pt-6">
-                  <div className="text-blue-700 dark:text-blue-400">
+                  <div className="text-primary">
                     <h3 className="flex items-center gap-2 font-semibold text-base mb-3">
                       <Lightbulb className="h-5 w-5" /> Prochaines étapes recommandées
                     </h3>
                     {analysis.recommendations ? (
-                      <p className="text-sm text-muted-foreground">{analysis.recommendations}</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{analysis.recommendations}</p>
                     ) : (
                       <p className="text-sm text-muted-foreground">Aucune recommandation pour le moment.</p>
                     )}
@@ -239,14 +230,14 @@ const QuoteDetail = () => {
             </div>
           </>
         ) : (
-          <Card>
-            <CardContent className="py-8 text-center text-muted-foreground">
+          <Card className="glass-card border-0 shadow-soft">
+            <CardContent className="py-10 text-center text-muted-foreground">
               Aucune analyse disponible pour cette soumission.
             </CardContent>
           </Card>
         )}
 
-        <Separator />
+        <Separator className="bg-border/50" />
 
         {/* CTAs */}
         <div className="flex flex-wrap gap-3">
@@ -257,19 +248,19 @@ const QuoteDetail = () => {
               amount={quote.amount}
             />
           )}
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" className="rounded-xl gap-1">
             <Link to="/dashboard/quotes/upload">
-              <Upload className="h-4 w-4 mr-1" /> Téléverser une autre soumission
+              <Upload className="h-4 w-4" /> Téléverser une autre soumission
             </Link>
           </Button>
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" className="rounded-xl gap-1">
             <Link to="/search">
-              <Search className="h-4 w-4 mr-1" /> Voir les entrepreneurs
+              <Search className="h-4 w-4" /> Voir les entrepreneurs
             </Link>
           </Button>
-          <Button asChild variant="ghost">
+          <Button asChild variant="ghost" className="rounded-xl gap-1">
             <Link to="/dashboard/quotes">
-              <ArrowLeft className="h-4 w-4 mr-1" /> Toutes les soumissions
+              <ArrowLeft className="h-4 w-4" /> Toutes les soumissions
             </Link>
           </Button>
         </div>

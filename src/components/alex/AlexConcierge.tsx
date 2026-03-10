@@ -20,6 +20,7 @@ import {
   Star,
   Loader2,
   RotateCcw,
+  Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -108,10 +109,10 @@ const AlexConcierge = ({ properties, homeScore }: AlexConciergeProps) => {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-5 right-5 z-50 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-glow alex-orb flex items-center justify-center"
+            className="fixed bottom-5 right-5 z-50 h-14 w-14 rounded-full bg-gradient-to-br from-primary to-secondary text-primary-foreground shadow-glow alex-orb flex items-center justify-center"
             aria-label="Ouvrir Alex"
           >
-            <MessageCircle className="h-6 w-6" />
+            <Sparkles className="h-5 w-5" />
           </motion.button>
         )}
       </AnimatePresence>
@@ -123,14 +124,14 @@ const AlexConcierge = ({ properties, homeScore }: AlexConciergeProps) => {
             initial={{ opacity: 0, y: 24, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.95 }}
-            transition={{ duration: 0.25 }}
-            className="fixed bottom-5 right-5 z-50 w-[360px] max-w-[calc(100vw-2.5rem)] max-h-[min(600px,calc(100vh-5rem))] flex flex-col rounded-2xl border border-border bg-card shadow-float overflow-hidden"
+            transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+            className="fixed bottom-5 right-5 z-50 w-[380px] max-w-[calc(100vw-2.5rem)] max-h-[min(620px,calc(100vh-5rem))] flex flex-col rounded-3xl glass-surface shadow-float overflow-hidden border-0"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                  <span className="text-primary-foreground text-sm font-bold">A</span>
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-glow">
+                  <Sparkles className="text-primary-foreground h-4 w-4" />
                 </div>
                 <div>
                   <CardTitle className="text-sm">Alex</CardTitle>
@@ -138,10 +139,10 @@ const AlexConcierge = ({ properties, homeScore }: AlexConciergeProps) => {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleReset}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={handleReset}>
                   <RotateCcw className="h-3.5 w-3.5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={() => setIsOpen(false)}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -151,7 +152,7 @@ const AlexConcierge = ({ properties, homeScore }: AlexConciergeProps) => {
             <ScrollArea className="flex-1 p-4" ref={scrollRef}>
               {messages.length === 0 ? (
                 <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     Bonjour ! Je suis Alex, votre concierge UNPRO. Comment puis-je vous aider ?
                   </p>
                   <div className="grid grid-cols-1 gap-2">
@@ -159,7 +160,7 @@ const AlexConcierge = ({ properties, homeScore }: AlexConciergeProps) => {
                       <button
                         key={qa.label}
                         onClick={() => handleQuickAction(qa.message)}
-                        className="text-left px-3 py-2.5 rounded-xl border border-border text-sm hover:bg-primary/5 hover:border-primary/30 transition-all duration-200"
+                        className="text-left px-4 py-3 rounded-2xl glass-card text-sm hover:bg-primary/5 hover:shadow-soft transition-all duration-200 border-0"
                       >
                         {qa.label}
                       </button>
@@ -176,10 +177,10 @@ const AlexConcierge = ({ properties, homeScore }: AlexConciergeProps) => {
                       className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                     >
                       <div
-                        className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm ${
+                        className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                           msg.role === "user"
-                            ? "bg-primary text-primary-foreground rounded-br-md"
-                            : "bg-muted text-foreground rounded-bl-md"
+                            ? "bg-gradient-to-br from-primary to-primary/90 text-primary-foreground rounded-br-lg shadow-soft"
+                            : "glass-card text-foreground rounded-bl-lg"
                         }`}
                       >
                         {msg.content}
@@ -202,10 +203,10 @@ const AlexConcierge = ({ properties, homeScore }: AlexConciergeProps) => {
                           <Link
                             key={rec.ctaLink}
                             to={rec.ctaLink}
-                            className="flex items-start gap-2.5 p-3 rounded-xl border border-border hover:bg-primary/5 hover:border-primary/30 transition-all duration-200"
+                            className="flex items-start gap-2.5 p-3 rounded-2xl glass-card hover:bg-primary/5 hover:shadow-soft transition-all duration-200"
                             onClick={() => setIsOpen(false)}
                           >
-                            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                               <Icon className="h-4 w-4 text-primary" />
                             </div>
                             <div>
@@ -222,7 +223,7 @@ const AlexConcierge = ({ properties, homeScore }: AlexConciergeProps) => {
             </ScrollArea>
 
             {/* Input */}
-            <div className="p-3 border-t border-border">
+            <div className="p-4 border-t border-border/50">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -235,14 +236,14 @@ const AlexConcierge = ({ properties, homeScore }: AlexConciergeProps) => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Décrivez votre besoin…"
-                  className="flex-1 text-sm rounded-xl"
+                  className="flex-1 text-sm rounded-2xl border-0 bg-muted/50 focus-visible:ring-1"
                   disabled={isStreaming}
                 />
                 <Button
                   type="submit"
                   size="icon"
                   disabled={!input.trim() || isStreaming}
-                  className="shrink-0 rounded-xl"
+                  className="shrink-0 rounded-2xl h-10 w-10 bg-gradient-to-br from-primary to-secondary shadow-soft"
                 >
                   <Send className="h-4 w-4" />
                 </Button>

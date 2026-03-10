@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useProperties } from "@/hooks/useProperties";
 import { useHomeScores } from "@/hooks/useHomeScore";
 import { calculateHomeScore, type HomeScoreInput } from "@/services/homeScoreService";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, ArrowRight } from "lucide-react";
 import ScoreRing from "@/components/ui/score-ring";
 import { motion } from "framer-motion";
 
@@ -38,10 +38,10 @@ const HomeScorePage = () => {
       {isLoading ? <LoadingState /> : !propertyScores.length ? (
         <EmptyState
           message="Ajoutez une propriété pour voir votre score maison."
-          action={<Button asChild><Link to="/dashboard/properties/new">Ajouter une propriété</Link></Button>}
+          action={<Button asChild className="rounded-xl"><Link to="/dashboard/properties/new">Ajouter une propriété</Link></Button>}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {propertyScores.map(({ property: p, score }, i) => (
             <motion.div
               key={p.id}
@@ -49,24 +49,24 @@ const HomeScorePage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1, duration: 0.4 }}
             >
-              <Card>
+              <Card className="glass-card border-0 shadow-soft hover:shadow-elevation transition-shadow duration-300">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-base">{p.address}</CardTitle>
-                  <Badge variant="secondary" className="text-meta">{score.label}</Badge>
+                  <Badge variant="secondary" className="text-meta rounded-full">{score.label}</Badge>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-6 mb-6">
                     <ScoreRing score={score.overall} size={88} label="Global" />
-                    <div className="flex-1 space-y-2">
+                    <div className="flex-1 space-y-3">
                       <ScoreBar label="Structure" value={score.structure} />
                       <ScoreBar label="Systèmes" value={score.systems} />
                       <ScoreBar label="Extérieur" value={score.exterior} />
                       <ScoreBar label="Intérieur" value={score.interior} />
                     </div>
                   </div>
-                  <Button asChild variant="soft" size="sm" className="w-full">
+                  <Button asChild variant="soft" size="sm" className="w-full rounded-xl gap-1">
                     <Link to={`/dashboard/properties/${p.id}/insights`}>
-                      <BarChart3 className="h-4 w-4 mr-1" /> Voir les recommandations
+                      <BarChart3 className="h-4 w-4" /> Voir les recommandations <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                   </Button>
                 </CardContent>

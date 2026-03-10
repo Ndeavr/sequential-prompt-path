@@ -20,17 +20,17 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
 
   return (
     <div className="min-h-screen flex bg-background">
-      <aside className="hidden md:flex w-64 flex-col bg-card border-r border-border p-5">
+      <aside className="hidden md:flex w-64 flex-col glass-surface border-r border-border/50 p-5">
         <Link to="/" className="text-xl font-bold text-gradient mb-8 px-2">UNPRO</Link>
         <nav className="flex-1 space-y-1">
           {navItems.map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
               to={to}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+              className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                 pathname === to
-                  ? "bg-primary text-primary-foreground shadow-soft"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-soft"
+                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -38,24 +38,24 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
             </Link>
           ))}
         </nav>
-        <div className="border-t border-border pt-4 mt-4">
+        <div className="border-t border-border/50 pt-4 mt-4">
           <p className="text-meta text-muted-foreground px-2 mb-2 truncate">{user?.email}</p>
-          <Button variant="ghost" size="sm" className="w-full justify-start gap-2" onClick={signOut}>
+          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 rounded-xl" onClick={signOut}>
             <LogOut className="h-4 w-4" /> Déconnexion
           </Button>
         </div>
       </aside>
       {/* Mobile header */}
       <div className="flex-1 flex flex-col">
-        <header className="md:hidden flex items-center justify-between border-b border-border px-4 py-3 bg-card">
+        <header className="md:hidden flex items-center justify-between border-b border-border/50 px-4 py-3 glass-surface sticky top-0 z-20">
           <Link to="/" className="text-lg font-bold text-gradient">UNPRO</Link>
           <div className="flex items-center gap-1">
             {navItems.slice(0, 4).map(({ to, icon: Icon }) => (
-              <Link key={to} to={to} className={`p-2.5 rounded-xl transition-colors ${pathname === to ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+              <Link key={to} to={to} className={`p-2.5 rounded-xl transition-all duration-200 ${pathname === to ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:bg-muted/60"}`}>
                 <Icon className="h-4 w-4" />
               </Link>
             ))}
-            <Button variant="ghost" size="icon" onClick={signOut}><LogOut className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={signOut} className="rounded-xl"><LogOut className="h-4 w-4" /></Button>
           </div>
         </header>
         <main className="flex-1 p-4 md:p-8 overflow-auto">{children}</main>

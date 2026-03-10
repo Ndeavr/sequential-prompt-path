@@ -49,16 +49,16 @@
     --radius: 0.75rem;
 
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(220 16% 10% / 0.04);
-    --shadow-md: 0 4px 12px -2px hsl(220 16% 10% / 0.08);
-    --shadow-lg: 0 8px 24px -4px hsl(220 16% 10% / 0.12);
-    --shadow-xl: 0 16px 48px -8px hsl(220 16% 10% / 0.16);
-    --shadow-glow: 0 0 24px -4px hsl(222 100% 61% / 0.25);
+    --shadow-sm: 0 1px 3px 0 hsl(220 16% 10% / 0.04), 0 1px 2px -1px hsl(220 16% 10% / 0.03);
+    --shadow-md: 0 4px 16px -3px hsl(220 16% 10% / 0.08), 0 2px 6px -2px hsl(220 16% 10% / 0.04);
+    --shadow-lg: 0 10px 32px -6px hsl(220 16% 10% / 0.1), 0 4px 12px -4px hsl(220 16% 10% / 0.06);
+    --shadow-xl: 0 20px 56px -12px hsl(220 16% 10% / 0.14), 0 8px 24px -8px hsl(220 16% 10% / 0.08);
+    --shadow-glow: 0 0 28px -4px hsl(222 100% 61% / 0.3), 0 0 12px -2px hsl(222 100% 61% / 0.15);
 
     /* Glass */
-    --glass-bg: hsl(0 0% 100% / 0.7);
-    --glass-border: hsl(0 0% 100% / 0.5);
-    --glass-blur: 12px;
+    --glass-bg: hsl(0 0% 100% / 0.65);
+    --glass-border: hsl(0 0% 100% / 0.6);
+    --glass-blur: 16px;
 
     /* Sidebar */
     --sidebar-background: 0 0% 100%;
@@ -103,7 +103,7 @@
     --input: 222 25% 18%;
     --ring: 222 100% 65%;
 
-    --glass-bg: hsl(222 40% 10% / 0.7);
+    --glass-bg: hsl(222 40% 10% / 0.65);
     --glass-border: hsl(222 40% 20% / 0.5);
 
     --sidebar-background: 222 47% 8%;
@@ -138,6 +138,32 @@
     backdrop-filter: blur(var(--glass-blur));
     -webkit-backdrop-filter: blur(var(--glass-blur));
     border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+  }
+
+  /* Premium glass surface */
+  .glass-surface {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    border: 1px solid var(--glass-border);
+  }
+
+  /* Hero gradient background */
+  .hero-gradient {
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%, hsl(222 100% 61% / 0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 20%, hsl(252 100% 65% / 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 40% at 20% 30%, hsl(195 100% 50% / 0.04) 0%, transparent 50%),
+      hsl(var(--background));
+  }
+
+  /* Section gradient */
+  .section-gradient {
+    background:
+      radial-gradient(ellipse 70% 50% at 30% 50%, hsl(222 100% 61% / 0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 70% 50%, hsl(252 100% 65% / 0.03) 0%, transparent 50%),
+      hsl(var(--muted) / 0.3);
   }
 
   /* Score ring animation */
@@ -152,7 +178,7 @@
   /* Alex orb breathing */
   @keyframes orb-breathe {
     0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4); }
-    50% { box-shadow: 0 0 16px 6px hsl(var(--primary) / 0.15); }
+    50% { box-shadow: 0 0 20px 8px hsl(var(--primary) / 0.15); }
   }
 
   .alex-orb {
@@ -167,6 +193,14 @@
     background-clip: text;
   }
 
+  /* Gradient text accent */
+  .text-gradient-accent {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
   /* Background decorative blobs */
   .bg-blob-primary {
     background: radial-gradient(ellipse at 20% 50%, hsl(var(--primary) / 0.06) 0%, transparent 70%);
@@ -174,5 +208,26 @@
 
   .bg-blob-secondary {
     background: radial-gradient(ellipse at 80% 50%, hsl(var(--secondary) / 0.06) 0%, transparent 70%);
+  }
+
+  /* Mesh gradient for premium sections */
+  .mesh-gradient {
+    background:
+      radial-gradient(at 40% 20%, hsl(222 100% 61% / 0.06) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, hsl(252 100% 65% / 0.05) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, hsl(195 100% 50% / 0.04) 0px, transparent 50%),
+      radial-gradient(at 80% 80%, hsl(152 69% 51% / 0.03) 0px, transparent 50%),
+      hsl(var(--background));
+  }
+
+  /* Noise overlay for depth */
+  .noise-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.015;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
   }
 }
