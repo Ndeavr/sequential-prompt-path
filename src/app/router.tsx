@@ -1,16 +1,39 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
+
+// Public
 import Home from "@/pages/Home";
 import Search from "@/pages/Search";
 import ContractorProfile from "@/pages/ContractorProfile";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
-import QuoteAnalyzer from "@/pages/QuoteAnalyzer";
-import HomeScore from "@/pages/HomeScore";
-import AIPPScore from "@/pages/AIPPScore";
-import ProDashboard from "@/pages/pro/ProDashboard";
-import AdminDashboard from "@/pages/admin/AdminDashboard";
 import NotFound from "@/pages/NotFound";
+
+// Homeowner Dashboard
+import DashboardHome from "@/pages/dashboard/DashboardHome";
+import PropertiesList from "@/pages/dashboard/PropertiesList";
+import PropertyNew from "@/pages/dashboard/PropertyNew";
+import PropertyDetail from "@/pages/dashboard/PropertyDetail";
+import QuotesList from "@/pages/dashboard/QuotesList";
+import QuoteUploadPage from "@/pages/dashboard/QuoteUploadPage";
+import HomeScorePage from "@/pages/dashboard/HomeScorePage";
+import AccountPage from "@/pages/dashboard/AccountPage";
+
+// Contractor Pro
+import ProDashboard from "@/pages/pro/ProDashboard";
+import ProProfile from "@/pages/pro/ProProfile";
+import ProAIPPScore from "@/pages/pro/ProAIPPScore";
+import ProReviews from "@/pages/pro/ProReviews";
+import ProDocuments from "@/pages/pro/ProDocuments";
+import ProAccount from "@/pages/pro/ProAccount";
+
+// Admin
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminUsers from "@/pages/admin/AdminUsers";
+import AdminContractors from "@/pages/admin/AdminContractors";
+import AdminQuotes from "@/pages/admin/AdminQuotes";
+import AdminReviews from "@/pages/admin/AdminReviews";
+import AdminDocuments from "@/pages/admin/AdminDocuments";
 
 export const AppRouter = () => (
   <BrowserRouter>
@@ -24,15 +47,30 @@ export const AppRouter = () => (
       <Route path="/signup" element={<Signup />} />
 
       {/* Homeowner Dashboard */}
-      <Route path="/dashboard/quotes" element={<ProtectedRoute><QuoteAnalyzer /></ProtectedRoute>} />
-      <Route path="/dashboard/home-score" element={<ProtectedRoute><HomeScore /></ProtectedRoute>} />
-      <Route path="/dashboard/aipp-score" element={<ProtectedRoute><AIPPScore /></ProtectedRoute>} />
+      <Route path="/dashboard" element={<ProtectedRoute><DashboardHome /></ProtectedRoute>} />
+      <Route path="/dashboard/properties" element={<ProtectedRoute><PropertiesList /></ProtectedRoute>} />
+      <Route path="/dashboard/properties/new" element={<ProtectedRoute><PropertyNew /></ProtectedRoute>} />
+      <Route path="/dashboard/properties/:id" element={<ProtectedRoute><PropertyDetail /></ProtectedRoute>} />
+      <Route path="/dashboard/quotes" element={<ProtectedRoute><QuotesList /></ProtectedRoute>} />
+      <Route path="/dashboard/quotes/upload" element={<ProtectedRoute><QuoteUploadPage /></ProtectedRoute>} />
+      <Route path="/dashboard/home-score" element={<ProtectedRoute><HomeScorePage /></ProtectedRoute>} />
+      <Route path="/dashboard/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
 
       {/* Contractor Pro */}
       <Route path="/pro" element={<ProtectedRoute requiredRole="contractor"><ProDashboard /></ProtectedRoute>} />
+      <Route path="/pro/profile" element={<ProtectedRoute requiredRole="contractor"><ProProfile /></ProtectedRoute>} />
+      <Route path="/pro/aipp-score" element={<ProtectedRoute requiredRole="contractor"><ProAIPPScore /></ProtectedRoute>} />
+      <Route path="/pro/reviews" element={<ProtectedRoute requiredRole="contractor"><ProReviews /></ProtectedRoute>} />
+      <Route path="/pro/documents" element={<ProtectedRoute requiredRole="contractor"><ProDocuments /></ProtectedRoute>} />
+      <Route path="/pro/account" element={<ProtectedRoute requiredRole="contractor"><ProAccount /></ProtectedRoute>} />
 
       {/* Admin */}
       <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
+      <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><AdminUsers /></ProtectedRoute>} />
+      <Route path="/admin/contractors" element={<ProtectedRoute requiredRole="admin"><AdminContractors /></ProtectedRoute>} />
+      <Route path="/admin/quotes" element={<ProtectedRoute requiredRole="admin"><AdminQuotes /></ProtectedRoute>} />
+      <Route path="/admin/reviews" element={<ProtectedRoute requiredRole="admin"><AdminReviews /></ProtectedRoute>} />
+      <Route path="/admin/documents" element={<ProtectedRoute requiredRole="admin"><AdminDocuments /></ProtectedRoute>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
