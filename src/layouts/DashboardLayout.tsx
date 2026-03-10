@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Home, FileText, BarChart3, User, CalendarDays, LogOut } from "lucide-react";
+import AlexConcierge from "@/components/alex/AlexConcierge";
 import type { ReactNode } from "react";
 
 const navItems = [
