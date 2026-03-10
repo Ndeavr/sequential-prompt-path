@@ -9,6 +9,12 @@ import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import NotFound from "@/pages/NotFound";
 
+// SEO Pages
+import ServiceLocationPage from "@/pages/seo/ServiceLocationPage";
+import ProblemLocationPage from "@/pages/seo/ProblemLocationPage";
+import GuidePage from "@/pages/seo/GuidePage";
+import SeoDirectoryPage from "@/pages/seo/SeoDirectoryPage";
+
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
 import PropertiesList from "@/pages/dashboard/PropertiesList";
