@@ -26,9 +26,10 @@ export const useAdminStats = () => {
 export const useAdminUsers = () => useQuery({
   queryKey: ["admin-users"],
   queryFn: async () => {
-    const { data, error } = await supabase.from("profiles").select("*, user_roles(role)").order("created_at", { ascending: false }).limit(100);
+    // Fetch profiles and roles separately, then merge (FK now exists)
+    const { data: profiles, error } = await supabase.from("profiles").select("*, user_roles(role)").order("created_at", { ascending: false }).limit(100);
     if (error) throw error;
-    return data;
+    return profiles;
   },
 });
 

@@ -13,7 +13,7 @@ import { useCreateQuote, useUploadQuoteFile } from "@/hooks/useQuotes";
 import { toast } from "sonner";
 import { Upload } from "lucide-react";
 
-const QuoteUpload = () => {
+const QuoteUploadPage = () => {
   const navigate = useNavigate();
   const { data: properties } = useProperties();
   const createQuote = useCreateQuote();
@@ -25,16 +25,17 @@ const QuoteUpload = () => {
     e.preventDefault();
     if (!form.property_id) { toast.error("Sélectionnez une propriété."); return; }
     try {
-      let fileUrl: string | undefined;
+      let storagePath: string | undefined;
       if (file) {
-        fileUrl = await uploadFile.mutateAsync(file);
+        // Upload returns storage path (bucket is private)
+        storagePath = await uploadFile.mutateAsync(file);
       }
       await createQuote.mutateAsync({
         title: form.title,
         description: form.description || undefined,
         amount: form.amount ? parseFloat(form.amount) : undefined,
         property_id: form.property_id,
-        file_url: fileUrl,
+        file_url: storagePath,
       });
       toast.success("Soumission créée !");
       navigate("/dashboard/quotes");
@@ -96,4 +97,4 @@ const QuoteUpload = () => {
   );
 };
 
-export default QuoteUpload;
+export default QuoteUploadPage;
