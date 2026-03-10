@@ -46,15 +46,15 @@ export const AppRouter = () => (
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
 
-      {/* Homeowner Dashboard */}
-      <Route path="/dashboard" element={<ProtectedRoute><DashboardHome /></ProtectedRoute>} />
-      <Route path="/dashboard/properties" element={<ProtectedRoute><PropertiesList /></ProtectedRoute>} />
-      <Route path="/dashboard/properties/new" element={<ProtectedRoute><PropertyNew /></ProtectedRoute>} />
-      <Route path="/dashboard/properties/:id" element={<ProtectedRoute><PropertyDetail /></ProtectedRoute>} />
-      <Route path="/dashboard/quotes" element={<ProtectedRoute><QuotesList /></ProtectedRoute>} />
-      <Route path="/dashboard/quotes/upload" element={<ProtectedRoute><QuoteUploadPage /></ProtectedRoute>} />
-      <Route path="/dashboard/home-score" element={<ProtectedRoute><HomeScorePage /></ProtectedRoute>} />
-      <Route path="/dashboard/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
+      {/* Homeowner Dashboard — role-protected */}
+      <Route path="/dashboard" element={<ProtectedRoute requiredRole="homeowner"><DashboardHome /></ProtectedRoute>} />
+      <Route path="/dashboard/properties" element={<ProtectedRoute requiredRole="homeowner"><PropertiesList /></ProtectedRoute>} />
+      <Route path="/dashboard/properties/new" element={<ProtectedRoute requiredRole="homeowner"><PropertyNew /></ProtectedRoute>} />
+      <Route path="/dashboard/properties/:id" element={<ProtectedRoute requiredRole="homeowner"><PropertyDetail /></ProtectedRoute>} />
+      <Route path="/dashboard/quotes" element={<ProtectedRoute requiredRole="homeowner"><QuotesList /></ProtectedRoute>} />
+      <Route path="/dashboard/quotes/upload" element={<ProtectedRoute requiredRole="homeowner"><QuoteUploadPage /></ProtectedRoute>} />
+      <Route path="/dashboard/home-score" element={<ProtectedRoute requiredRole="homeowner"><HomeScorePage /></ProtectedRoute>} />
+      <Route path="/dashboard/account" element={<ProtectedRoute requiredRole="homeowner"><AccountPage /></ProtectedRoute>} />
 
       {/* Contractor Pro */}
       <Route path="/pro" element={<ProtectedRoute requiredRole="contractor"><ProDashboard /></ProtectedRoute>} />

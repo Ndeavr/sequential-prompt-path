@@ -35,8 +35,8 @@ export const useUploadQuoteFile = () => {
       const path = `${user!.id}/${Date.now()}-${file.name}`;
       const { error } = await supabase.storage.from("quote-files").upload(path, file);
       if (error) throw error;
-      const { data: { publicUrl } } = supabase.storage.from("quote-files").getPublicUrl(path);
-      return publicUrl;
+      // Bucket is private — store the storage path, not a public URL
+      return path;
     },
   });
 };
