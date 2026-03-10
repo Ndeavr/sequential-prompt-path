@@ -8,6 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useContractorLeads } from "@/hooks/useLeads";
 import { useUpdateAppointmentStatus } from "@/hooks/useAppointments";
+import { useHasActiveSubscription } from "@/hooks/useSubscription";
+import SubscriptionPaywall from "@/components/contractor/SubscriptionPaywall";
 import { toast } from "sonner";
 import { Eye, TrendingUp } from "lucide-react";
 
@@ -29,6 +31,7 @@ const statusLabels: Record<string, string> = {
 const ProLeads = () => {
   const { data: leads, isLoading } = useContractorLeads();
   const updateStatus = useUpdateAppointmentStatus();
+  const { hasActive, isLoading: subLoading } = useHasActiveSubscription();
   const [qualityFilter, setQualityFilter] = useState("all");
   const [sortBy, setSortBy] = useState("score");
 
@@ -58,6 +61,9 @@ const ProLeads = () => {
       toast.success("Statut mis à jour.");
     } catch { toast.error("Erreur."); }
   };
+
+  if (subLoading) return <ContractorLayout><LoadingState /></ContractorLayout>;
+  if (!hasActive) return <ContractorLayout><SubscriptionPaywall /></ContractorLayout>;
 
   return (
     <ContractorLayout>

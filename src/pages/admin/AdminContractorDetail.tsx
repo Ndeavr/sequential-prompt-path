@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
-import { useAdminContractor, useAdminContractorDocuments, useUpdateContractorVerification } from "@/hooks/useAdmin";
+import { useAdminContractor, useAdminContractorDocuments, useUpdateContractorVerification, useAdminContractorSubscription } from "@/hooks/useAdmin";
+import { getPlanById } from "@/config/contractorPlans";
 import { getContractorCompleteness } from "@/services/contractorCompletenessService";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
@@ -27,6 +28,7 @@ const AdminContractorDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { data: contractor, isLoading } = useAdminContractor(id);
   const { data: docs } = useAdminContractorDocuments(contractor?.user_id);
+  const { data: subscription } = useAdminContractorSubscription(contractor?.id);
   const updateVerification = useUpdateContractorVerification();
   const [newStatus, setNewStatus] = useState("");
   const [adminNote, setAdminNote] = useState("");
@@ -168,7 +170,39 @@ const AdminContractorDetail = () => {
           </CardContent>
         </Card>
 
-        {/* Admin note (read-only if exists) */}
+        {/* Subscription */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">Abonnement</CardTitle></CardHeader>
+          <CardContent>
+            {subscription ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Plan</p>
+                  <p className="font-medium">{getPlanById(subscription.plan_id)?.name ?? subscription.plan_id}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Statut</p>
+                  <p className="font-medium">{subscription.status}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Période</p>
+                  <p className="font-medium">
+                    {subscription.current_period_start
+                      ? `${new Date(subscription.current_period_start).toLocaleDateString("fr-CA")} — ${new Date(subscription.current_period_end!).toLocaleDateString("fr-CA")}`
+                      : "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Annulation prévue</p>
+                  <p className="font-medium">{subscription.cancel_at_period_end ? "Oui" : "Non"}</p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Aucun abonnement actif.</p>
+            )}
+          </CardContent>
+        </Card>
+
         {contractor.admin_note && (
           <Card>
             <CardHeader><CardTitle className="text-base">Note admin existante</CardTitle></CardHeader>

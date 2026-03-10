@@ -39,6 +39,7 @@ import ProAccount from "@/pages/pro/ProAccount";
 import ProAppointments from "@/pages/pro/ProAppointments";
 import ProLeads from "@/pages/pro/ProLeads";
 import ProLeadDetail from "@/pages/pro/ProLeadDetail";
+import ProBilling from "@/pages/pro/ProBilling";
 
 // Admin
 import AdminDashboard from "@/pages/admin/AdminDashboard";
@@ -91,6 +92,7 @@ export const AppRouter = () => (
       <Route path="/pro/appointments" element={<ProtectedRoute requiredRole="contractor"><ProAppointments /></ProtectedRoute>} />
       <Route path="/pro/leads" element={<ProtectedRoute requiredRole="contractor"><ProLeads /></ProtectedRoute>} />
       <Route path="/pro/leads/:id" element={<ProtectedRoute requiredRole="contractor"><ProLeadDetail /></ProtectedRoute>} />
+      <Route path="/pro/billing" element={<ProtectedRoute requiredRole="contractor"><ProBilling /></ProtectedRoute>} />
 
       {/* Admin */}
       <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
