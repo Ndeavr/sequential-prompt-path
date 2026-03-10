@@ -80,11 +80,9 @@ const SeoDirectoryPage = () => {
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {SEO_CITIES.slice(0, 4).map((city) => (
-                      <Badge key={city.slug} variant="outline" asChild>
-                        <Link to={`/problems/${problem.slug}/${city.slug}`}>
-                          {city.name}
-                        </Link>
-                      </Badge>
+                      <Link key={city.slug} to={`/problems/${problem.slug}/${city.slug}`}>
+                        <Badge variant="outline">{city.name}</Badge>
+                      </Link>
                     ))}
                   </div>
                 </CardContent>
