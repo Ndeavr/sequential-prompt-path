@@ -1,13 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, User, Star, FileText, Shield, CalendarDays, TrendingUp, LogOut, CreditCard } from "lucide-react";
+import { LayoutDashboard, User, Star, FileText, Shield, CalendarDays, TrendingUp, LogOut, CreditCard, MapPin } from "lucide-react";
 import type { ReactNode } from "react";
 
 const navItems = [
   { to: "/pro", label: "Tableau de bord", icon: LayoutDashboard },
   { to: "/pro/profile", label: "Mon profil", icon: User },
   { to: "/pro/leads", label: "Leads", icon: TrendingUp },
+  { to: "/pro/territories", label: "Territoires", icon: MapPin },
   { to: "/pro/appointments", label: "Rendez-vous", icon: CalendarDays },
   { to: "/pro/aipp-score", label: "Score AIPP", icon: Star },
   { to: "/pro/reviews", label: "Avis clients", icon: Star },

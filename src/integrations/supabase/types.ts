@@ -780,6 +780,132 @@ export type Database = {
         }
         Relationships: []
       }
+      territories: {
+        Row: {
+          category_name: string
+          category_slug: string
+          city_name: string
+          city_slug: string
+          created_at: string
+          elite_slots: number
+          id: string
+          is_active: boolean
+          max_contractors: number
+          premium_slots: number
+          signature_slots: number
+          updated_at: string
+        }
+        Insert: {
+          category_name: string
+          category_slug: string
+          city_name: string
+          city_slug: string
+          created_at?: string
+          elite_slots?: number
+          id?: string
+          is_active?: boolean
+          max_contractors?: number
+          premium_slots?: number
+          signature_slots?: number
+          updated_at?: string
+        }
+        Update: {
+          category_name?: string
+          category_slug?: string
+          city_name?: string
+          city_slug?: string
+          created_at?: string
+          elite_slots?: number
+          id?: string
+          is_active?: boolean
+          max_contractors?: number
+          premium_slots?: number
+          signature_slots?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      territory_assignments: {
+        Row: {
+          active: boolean
+          contractor_id: string
+          created_at: string
+          id: string
+          plan_level: string
+          slot_type: string
+          territory_id: string
+        }
+        Insert: {
+          active?: boolean
+          contractor_id: string
+          created_at?: string
+          id?: string
+          plan_level?: string
+          slot_type?: string
+          territory_id: string
+        }
+        Update: {
+          active?: boolean
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          plan_level?: string
+          slot_type?: string
+          territory_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "territory_assignments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "territory_assignments_territory_id_fkey"
+            columns: ["territory_id"]
+            isOneToOne: false
+            referencedRelation: "territories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      territory_waitlist: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          id: string
+          territory_id: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          id?: string
+          territory_id: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          territory_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "territory_waitlist_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "territory_waitlist_territory_id_fkey"
+            columns: ["territory_id"]
+            isOneToOne: false
+            referencedRelation: "territories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string

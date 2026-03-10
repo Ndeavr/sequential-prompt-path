@@ -40,6 +40,7 @@ import ProAppointments from "@/pages/pro/ProAppointments";
 import ProLeads from "@/pages/pro/ProLeads";
 import ProLeadDetail from "@/pages/pro/ProLeadDetail";
 import ProBilling from "@/pages/pro/ProBilling";
+import ProTerritories from "@/pages/pro/ProTerritories";
 
 // Admin
 import AdminDashboard from "@/pages/admin/AdminDashboard";
@@ -51,6 +52,7 @@ import AdminDocuments from "@/pages/admin/AdminDocuments";
 import AdminContractorDetail from "@/pages/admin/AdminContractorDetail";
 import AdminAppointments from "@/pages/admin/AdminAppointments";
 import AdminLeads from "@/pages/admin/AdminLeads";
+import AdminTerritories from "@/pages/admin/AdminTerritories";
 
 export const AppRouter = () => (
   <BrowserRouter>
@@ -93,6 +95,7 @@ export const AppRouter = () => (
       <Route path="/pro/leads" element={<ProtectedRoute requiredRole="contractor"><ProLeads /></ProtectedRoute>} />
       <Route path="/pro/leads/:id" element={<ProtectedRoute requiredRole="contractor"><ProLeadDetail /></ProtectedRoute>} />
       <Route path="/pro/billing" element={<ProtectedRoute requiredRole="contractor"><ProBilling /></ProtectedRoute>} />
+      <Route path="/pro/territories" element={<ProtectedRoute requiredRole="contractor"><ProTerritories /></ProtectedRoute>} />
 
       {/* Admin */}
       <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
@@ -104,6 +107,7 @@ export const AppRouter = () => (
       <Route path="/admin/documents" element={<ProtectedRoute requiredRole="admin"><AdminDocuments /></ProtectedRoute>} />
       <Route path="/admin/appointments" element={<ProtectedRoute requiredRole="admin"><AdminAppointments /></ProtectedRoute>} />
       <Route path="/admin/leads" element={<ProtectedRoute requiredRole="admin"><AdminLeads /></ProtectedRoute>} />
+      <Route path="/admin/territories" element={<ProtectedRoute requiredRole="admin"><AdminTerritories /></ProtectedRoute>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
