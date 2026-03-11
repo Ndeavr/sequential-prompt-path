@@ -1,6 +1,7 @@
 /**
  * UNPRO — SEO Content Assembly Service
  * Composes unique page content from structured fragments.
+ * Designed for 30,000+ pages via combinatorial assembly.
  */
 
 import type { SeoCity } from "../data/cities";
@@ -22,6 +23,7 @@ export interface ServiceLocationPageData {
   whyItMatters: string;
   pricingFactors: string[];
   whenToAct: string[];
+  costEstimate: { low: number; high: number; unit: string };
   localContext: string;
   contractorType: string;
   faqs: SeoFaq[];
@@ -29,6 +31,7 @@ export interface ServiceLocationPageData {
   relatedProblemPages: { slug: string; citySlug: string; label: string }[];
   nearbyCityPages: { slug: string; serviceSlug: string; label: string }[];
   searchUrl: string;
+  jsonLd: Record<string, unknown>;
 }
 
 export function buildServiceLocationPage(
@@ -47,7 +50,7 @@ export function buildServiceLocationPage(
 
   const localContext = `${city.housingHints} Dans la région de ${city.name}, les ${city.climateTags.join(" et ")} influencent directement les besoins en ${service.name.toLowerCase()}. Il est essentiel de choisir un entrepreneur qui connaît bien les particularités de la région.`;
 
-  const faqs = getFaqsByTopics([service.contractorType, service.slug, "general"], 4);
+  const faqs = getFaqsByTopics([service.contractorType, service.slug, "general"], 5);
 
   const relatedServicePages = service.relatedServices
     .map((s) => getServiceBySlug(s))
@@ -67,11 +70,40 @@ export function buildServiceLocationPage(
 
   const searchUrl = `/search?specialty=${encodeURIComponent(service.contractorType)}&city=${encodeURIComponent(city.name)}`;
 
+  // JSON-LD structured data
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: h1,
+    description: service.shortDescription,
+    provider: {
+      "@type": "Organization",
+      name: "UNPRO",
+      url: "https://unpro.ca",
+    },
+    areaServed: {
+      "@type": "City",
+      name: city.name,
+      containedInPlace: {
+        "@type": "AdministrativeArea",
+        name: city.region,
+      },
+    },
+    offers: {
+      "@type": "AggregateOffer",
+      lowPrice: service.costEstimate.low,
+      highPrice: service.costEstimate.high,
+      priceCurrency: "CAD",
+      offerCount: "3+",
+    },
+  };
+
   return {
     h1, metaTitle, metaDescription, intro, whyItMatters: service.whyItMatters,
     pricingFactors: service.pricingFactors, whenToAct: service.whenToAct,
+    costEstimate: service.costEstimate,
     localContext, contractorType: service.contractorType, faqs,
-    relatedServicePages, relatedProblemPages, nearbyCityPages, searchUrl,
+    relatedServicePages, relatedProblemPages, nearbyCityPages, searchUrl, jsonLd,
   };
 }
 
@@ -87,6 +119,7 @@ export interface ProblemLocationPageData {
   risks: string[];
   whatToCheck: string[];
   urgency: string;
+  costEstimate: { low: number; high: number; unit: string };
   localContext: string;
   contractorTypes: string[];
   faqs: SeoFaq[];
@@ -94,6 +127,7 @@ export interface ProblemLocationPageData {
   relatedServicePages: { slug: string; citySlug: string; label: string }[];
   nearbyCityPages: { slug: string; problemSlug: string; label: string }[];
   searchUrl: string;
+  jsonLd: Record<string, unknown>;
 }
 
 export function buildProblemLocationPage(
@@ -106,7 +140,7 @@ export function buildProblemLocationPage(
 
   const h1 = `${problem.name} à ${city.name}`;
   const metaTitle = `${problem.name} à ${city.name} | Solutions et entrepreneurs | UNPRO`;
-  const metaDescription = `${problem.name} à ${city.name} : symptômes, causes, risques et solutions. Trouvez un entrepreneur vérifié pour résoudre ce problème. ${city.region}.`;
+  const metaDescription = `${problem.name} à ${city.name} : symptômes, causes, coûts estimés et solutions. Trouvez un entrepreneur vérifié pour résoudre ce problème. ${city.region}.`;
 
   const intro = `${problem.shortDescription} À ${city.name}, les conditions locales (${city.climateTags.join(", ")}) peuvent aggraver ce problème. Voici comment identifier, comprendre et résoudre ce problème.`;
 
@@ -114,7 +148,7 @@ export function buildProblemLocationPage(
 
   const urgencyLabel = { low: "Faible", medium: "Moyenne", high: "Élevée", critical: "Critique" }[problem.urgency];
 
-  const faqs = getFaqsByTopics(problem.contractorTypes.concat([problem.slug]), 4);
+  const faqs = getFaqsByTopics(problem.contractorTypes.concat([problem.slug]), 5);
 
   const relatedProblemPages = problem.relatedProblems
     .map((p) => getProblemBySlug(p))
@@ -134,12 +168,32 @@ export function buildProblemLocationPage(
 
   const searchUrl = `/search?specialty=${encodeURIComponent(problem.contractorTypes[0] ?? "")}&city=${encodeURIComponent(city.name)}`;
 
+  // JSON-LD structured data
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: `Comment résoudre : ${h1}`,
+    description: problem.shortDescription,
+    step: problem.whatToCheck.map((step, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      text: step,
+    })),
+    estimatedCost: {
+      "@type": "MonetaryAmount",
+      currency: "CAD",
+      minValue: problem.costEstimate.low,
+      maxValue: problem.costEstimate.high,
+    },
+  };
+
   return {
     h1, metaTitle, metaDescription, intro,
     symptoms: problem.symptoms, commonCauses: problem.commonCauses,
     risks: problem.risks, whatToCheck: problem.whatToCheck,
-    urgency: urgencyLabel, localContext, contractorTypes: problem.contractorTypes,
-    faqs, relatedProblemPages, relatedServicePages, nearbyCityPages, searchUrl,
+    urgency: urgencyLabel, costEstimate: problem.costEstimate,
+    localContext, contractorTypes: problem.contractorTypes,
+    faqs, relatedProblemPages, relatedServicePages, nearbyCityPages, searchUrl, jsonLd,
   };
 }
 
@@ -155,4 +209,9 @@ export function getAllProblemLocationSlugs(): { problem: string; city: string }[
 
 export function getAllGuideSlugs(): string[] {
   return SEO_GUIDES.map((g) => g.slug);
+}
+
+/** Total programmatic page count */
+export function getTotalSeoPageCount(): number {
+  return (SEO_SERVICES.length * SEO_CITIES.length) + (SEO_PROBLEMS.length * SEO_CITIES.length) + SEO_GUIDES.length;
 }
