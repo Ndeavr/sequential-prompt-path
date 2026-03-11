@@ -11,6 +11,10 @@ import NotFound from "@/pages/NotFound";
 import HomeownersPage from "@/pages/HomeownersPage";
 import ProfessionalsPage from "@/pages/ProfessionalsPage";
 import PartnersPage from "@/pages/PartnersPage";
+import DescribeProjectPage from "@/pages/DescribeProjectPage";
+import CompareQuotesPage from "@/pages/CompareQuotesPage";
+import ContractorOnboardingPage from "@/pages/ContractorOnboardingPage";
+import PricingPage from "@/pages/PricingPage";
 
 // SEO Pages
 import ServiceLocationPage from "@/pages/seo/ServiceLocationPage";
