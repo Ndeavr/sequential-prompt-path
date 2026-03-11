@@ -58,7 +58,26 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            {/* Language toggle */}
+            <button
+              onClick={() => setLang(lang === "fr" ? "en" : "fr")}
+              className="hidden sm:flex h-8 items-center gap-1 rounded-lg px-2 text-caption font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all duration-200 uppercase tracking-wider"
+              title={lang === "fr" ? "Switch to English" : "Passer en français"}
+            >
+              <span className={lang === "fr" ? "text-foreground" : "text-muted-foreground/40"}>FR</span>
+              <span className="text-border">/</span>
+              <span className={lang === "en" ? "text-foreground" : "text-muted-foreground/40"}>EN</span>
+            </button>
+
+            {/* Alerts */}
+            {isAuthenticated && (
+              <Button variant="ghost" size="icon" className="relative h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground">
+                <Bell className="h-4 w-4" />
+                <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              </Button>
+            )}
+
             {isAuthenticated ? (
               <Button asChild size="sm" className="rounded-lg h-8 text-xs">
                 <Link to={dash}>Tableau de bord</Link>
