@@ -1,8 +1,10 @@
 /**
- * UNPRO — Problem Location SEO Page (Premium redesign)
+ * UNPRO — Problem Location SEO Page
+ * With cost estimates, professional recommendations, and JSON-LD structured data.
  */
 
 import { useParams, Link } from "react-router-dom";
+import { useEffect } from "react";
 import MainLayout from "@/layouts/MainLayout";
 import SeoHead from "@/seo/components/SeoHead";
 import SeoCta from "@/seo/components/SeoCta";
@@ -11,7 +13,8 @@ import SeoInternalLinks from "@/seo/components/SeoInternalLinks";
 import { buildProblemLocationPage } from "@/seo/services/seoContentService";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertTriangle, Eye, ShieldAlert, CheckCircle, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, Eye, ShieldAlert, CheckCircle, MapPin, DollarSign, Shield, Star, ArrowRight } from "lucide-react";
 import NotFound from "@/pages/NotFound";
 import GrowthCtaBlock from "@/components/growth/GrowthCtaBlock";
 import ContractorLandingCta from "@/components/growth/ContractorLandingCta";
@@ -41,7 +44,21 @@ const ProblemLocationPage = () => {
   const { problem, city } = useParams<{ problem: string; city: string }>();
   const data = problem && city ? buildProblemLocationPage(problem, city) : null;
 
+  // Inject JSON-LD
+  useEffect(() => {
+    if (!data?.jsonLd) return;
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.text = JSON.stringify(data.jsonLd);
+    script.id = "seo-problem-jsonld";
+    document.getElementById("seo-problem-jsonld")?.remove();
+    document.head.appendChild(script);
+    return () => { script.remove(); };
+  }, [data?.jsonLd]);
+
   if (!data) return <NotFound />;
+
+  const fmt = (n: number) => n.toLocaleString("fr-CA");
 
   return (
     <MainLayout>
@@ -51,7 +68,6 @@ const ProblemLocationPage = () => {
         {/* ─── Hero section with gradient ─── */}
         <div className="relative hero-gradient noise-overlay overflow-hidden">
           <div className="relative z-10 max-w-2xl mx-auto px-5 pt-8 pb-20 md:pt-12 md:pb-28 space-y-6">
-            {/* Breadcrumb */}
             <nav className="flex items-center gap-2 text-xs text-muted-foreground">
               <Link to="/" className="hover:text-primary transition-colors">Accueil</Link>
               <span className="text-border">/</span>
@@ -74,7 +90,7 @@ const ProblemLocationPage = () => {
         </div>
 
         <div className="relative z-10 max-w-2xl mx-auto px-5 space-y-8 pb-12">
-          {/* ─── Problem / Solution cards side by side ─── */}
+          {/* ─── Problem / Solution cards ─── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 -mt-10">
             <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
               <Card className="glass-card border-0 shadow-md h-full">
@@ -119,6 +135,28 @@ const ProblemLocationPage = () => {
             </motion.div>
           </div>
 
+          {/* ─── Cost Estimate ─── */}
+          <Card className="border-0 bg-gradient-to-br from-primary/5 to-secondary/5 shadow-soft">
+            <CardContent className="p-5">
+              <h2 className="text-base font-bold text-foreground mb-3 flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-primary" />
+                Estimation des coûts
+              </h2>
+              <div className="flex items-baseline gap-2 mb-2">
+                <span className="text-2xl font-bold text-foreground">{fmt(data.costEstimate.low)} $ — {fmt(data.costEstimate.high)} $</span>
+                <span className="text-xs text-muted-foreground">/ {data.costEstimate.unit}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Coût moyen pour résoudre ce problème à {city}. Le prix varie selon la gravité, l'accessibilité et les matériaux requis.
+              </p>
+              <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
+                <p className="text-xs text-muted-foreground">
+                  💡 <strong>Conseil UNPRO :</strong> Obtenez 3 soumissions détaillées et utilisez notre analyse IA gratuite pour comparer les prix au marché local.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* ─── Causes ─── */}
           <section className="space-y-3">
             <h2 className="text-base font-bold text-foreground flex items-center gap-2">
@@ -152,11 +190,58 @@ const ProblemLocationPage = () => {
             </CardContent>
           </Card>
 
+          {/* ─── Professional Recommendation ─── */}
+          <Card className="border-0 glass-card-elevated shadow-soft">
+            <CardContent className="p-5">
+              <h2 className="text-base font-bold text-foreground mb-4 flex items-center gap-2">
+                <Shield className="h-4 w-4 text-primary" />
+                Recommandation professionnelle
+              </h2>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Star className="h-3.5 w-3.5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Type de professionnel requis</p>
+                    <p className="text-xs text-muted-foreground">
+                      Pour résoudre ce problème, consultez un{" "}
+                      {data.contractorTypes.map((t, i) => (
+                        <span key={t}>
+                          {i > 0 && (i === data.contractorTypes.length - 1 ? " ou " : ", ")}
+                          <strong>{t}</strong>
+                        </span>
+                      ))}
+                      {" "}vérifié à {city}.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <DollarSign className="h-3.5 w-3.5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Comparez avant de choisir</p>
+                    <p className="text-xs text-muted-foreground">
+                      Obtenez 3 soumissions minimum. UNPRO analyse chaque soumission avec l'IA pour identifier les écarts de prix et les éléments manquants.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <Button asChild size="sm" className="mt-4 w-full sm:w-auto">
+                <Link to={data.searchUrl}>
+                  Trouver un professionnel à {city}
+                  <ArrowRight className="h-3.5 w-3.5 ml-2" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* ─── Local context ─── */}
           <Card className="glass-card border-0 shadow-sm">
             <CardContent className="p-5 space-y-2">
               <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-                <MapPin className="h-4 w-4" /> Contexte local
+                <MapPin className="h-4 w-4" /> Contexte local — {city}
               </h2>
               <p className="text-xs text-muted-foreground leading-relaxed">{data.localContext}</p>
             </CardContent>

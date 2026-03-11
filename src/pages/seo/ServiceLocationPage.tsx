@@ -1,8 +1,10 @@
 /**
  * UNPRO — Service Location SEO Page
+ * With cost estimates, professional recommendations, and JSON-LD structured data.
  */
 
 import { useParams, Link } from "react-router-dom";
+import { useEffect } from "react";
 import MainLayout from "@/layouts/MainLayout";
 import SeoHead from "@/seo/components/SeoHead";
 import SeoCta from "@/seo/components/SeoCta";
@@ -11,7 +13,8 @@ import SeoInternalLinks from "@/seo/components/SeoInternalLinks";
 import { buildServiceLocationPage } from "@/seo/services/seoContentService";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, AlertTriangle, DollarSign, MapPin } from "lucide-react";
+import { CheckCircle, AlertTriangle, DollarSign, MapPin, Shield, Star, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import NotFound from "@/pages/NotFound";
 import GrowthCtaBlock from "@/components/growth/GrowthCtaBlock";
 import ContractorLandingCta from "@/components/growth/ContractorLandingCta";
@@ -26,7 +29,21 @@ const ServiceLocationPage = () => {
   const { category, city } = useParams<{ category: string; city: string }>();
   const data = category && city ? buildServiceLocationPage(category, city) : null;
 
+  // Inject JSON-LD
+  useEffect(() => {
+    if (!data?.jsonLd) return;
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.text = JSON.stringify(data.jsonLd);
+    script.id = "seo-service-jsonld";
+    document.getElementById("seo-service-jsonld")?.remove();
+    document.head.appendChild(script);
+    return () => { script.remove(); };
+  }, [data?.jsonLd]);
+
   if (!data) return <NotFound />;
+
+  const fmt = (n: number) => n.toLocaleString("fr-CA");
 
   return (
     <MainLayout>
@@ -38,7 +55,7 @@ const ServiceLocationPage = () => {
           <nav className="flex items-center gap-2 text-sm text-muted-foreground">
             <Link to="/" className="hover:text-primary transition-colors">Accueil</Link>
             <span className="text-border">/</span>
-            <Link to="/search" className="hover:text-primary transition-colors">Services</Link>
+            <Link to="/services" className="hover:text-primary transition-colors">Services</Link>
             <span className="text-border">/</span>
             <span className="text-foreground font-medium">{data.h1}</span>
           </nav>
@@ -54,6 +71,36 @@ const ServiceLocationPage = () => {
             <CardContent className="p-6">
               <h2 className="text-xl font-bold text-foreground mb-3">Pourquoi c'est important</h2>
               <p className="text-muted-foreground leading-relaxed">{data.whyItMatters}</p>
+            </CardContent>
+          </Card>
+
+          {/* ─── Cost Estimate ─── */}
+          <Card className="border-0 bg-gradient-to-br from-primary/5 to-secondary/5 shadow-soft">
+            <CardContent className="p-6">
+              <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-primary" />
+                Estimation des coûts
+              </h2>
+              <div className="flex items-baseline gap-2 mb-3">
+                <span className="text-3xl font-bold text-foreground">{fmt(data.costEstimate.low)} $ — {fmt(data.costEstimate.high)} $</span>
+                <span className="text-sm text-muted-foreground">/ {data.costEstimate.unit}</span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Estimation moyenne pour {data.h1.toLowerCase()}. Le prix final dépend de plusieurs facteurs :
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {data.pricingFactors.map((factor, i) => (
+                  <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <CheckCircle className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
+                    <span>{factor}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 p-3 rounded-xl bg-primary/5 border border-primary/10">
+                <p className="text-xs text-muted-foreground">
+                  💡 <strong>Conseil UNPRO :</strong> Obtenez au minimum 3 soumissions détaillées pour comparer les prix et les approches. Notre IA peut analyser vos soumissions gratuitement.
+                </p>
+              </div>
             </CardContent>
           </Card>
 
@@ -73,29 +120,57 @@ const ServiceLocationPage = () => {
             </div>
           </section>
 
-          {/* Pricing factors */}
-          <section>
-            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              Ce qui influence le prix
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {data.pricingFactors.map((factor, i) => (
-                <Card key={i} className="glass-card border-0 shadow-soft">
-                  <CardContent className="p-4">
-                    <p className="text-sm text-foreground leading-relaxed">{factor}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
+          {/* ─── Professional Recommendation ─── */}
+          <Card className="border-0 glass-card-elevated shadow-soft">
+            <CardContent className="p-6">
+              <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+                <Shield className="h-5 w-5 text-primary" />
+                Trouver le bon professionnel
+              </h2>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <Star className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Entrepreneurs vérifiés UNPRO</p>
+                    <p className="text-sm text-muted-foreground">Licence RBQ validée, assurances vérifiées et score AIPP calculé pour chaque professionnel.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <DollarSign className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Analyse IA de soumissions</p>
+                    <p className="text-sm text-muted-foreground">Notre IA compare vos soumissions au marché local et identifie les éléments manquants ou les prix inhabituels.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <MapPin className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Expertise locale {city}</p>
+                    <p className="text-sm text-muted-foreground">Entrepreneurs spécialisés dans votre région qui connaissent les particularités climatiques et réglementaires locales.</p>
+                  </div>
+                </div>
+              </div>
+              <Button asChild className="mt-5 w-full sm:w-auto">
+                <Link to={data.searchUrl}>
+                  Voir les entrepreneurs en {data.contractorType}
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
 
           {/* Local context */}
           <Card className="glass-card border-0 shadow-soft">
             <CardContent className="p-6">
               <h2 className="text-xl font-bold text-foreground mb-3 flex items-center gap-2">
                 <MapPin className="h-5 w-5" />
-                Contexte local
+                Contexte local — {city}
               </h2>
               <p className="text-muted-foreground leading-relaxed">{data.localContext}</p>
             </CardContent>
