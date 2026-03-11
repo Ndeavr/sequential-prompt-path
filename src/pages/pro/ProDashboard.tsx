@@ -24,7 +24,7 @@ const ProDashboard = () => {
   const { data: profile, isLoading: pLoading } = useContractorProfile();
   const { data: reviews, isLoading: rLoading } = useContractorReviews();
   const { data: docs, isLoading: dLoading } = useContractorDocuments();
-  const { data: leads, isLoading: lLoading } = useLeads();
+  const { data: leads, isLoading: lLoading } = useContractorLeads();
   const { data: appointments, isLoading: apLoading } = useAppointments();
 
   const isLoading = pLoading || rLoading || dLoading || lLoading || apLoading;
