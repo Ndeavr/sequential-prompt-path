@@ -72,7 +72,7 @@ const ScoreGauge = ({ score, size = 180 }: { score: number; size?: number }) => 
 
 /* ─── Simulated result data ─── */
 const MOCK_STRENGTHS = [
-  { icon: Roof, label: "Toiture récente (< 5 ans)" },
+  { icon: HardHat, label: "Toiture récente (< 5 ans)" },
   { icon: Zap, label: "Fenêtres écoénergétiques" },
   { icon: Shield, label: "Fondation en bon état" },
 ];
