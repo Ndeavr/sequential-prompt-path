@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Sparkles, Menu, X, Bell } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import AlexGlobalOrb from "@/components/alex/AlexGlobalOrb";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -178,6 +179,9 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           <p className="text-caption text-muted-foreground/60">© {new Date().getFullYear()} UNPRO. Tous droits réservés.</p>
         </div>
       </footer>
+
+      {/* Global Alex Orb for unauthenticated users */}
+      {!isAuthenticated && <AlexGlobalOrb />}
     </div>
   );
 };
