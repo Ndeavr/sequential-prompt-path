@@ -14,6 +14,128 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_logs: {
+        Row: {
+          agent_name: string
+          created_at: string
+          id: string
+          log_type: string
+          message: string
+          metadata: Json | null
+          task_id: string | null
+        }
+        Insert: {
+          agent_name: string
+          created_at?: string
+          id?: string
+          log_type?: string
+          message: string
+          metadata?: Json | null
+          task_id?: string | null
+        }
+        Update: {
+          agent_name?: string
+          created_at?: string
+          id?: string
+          log_type?: string
+          message?: string
+          metadata?: Json | null
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "agent_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_metrics: {
+        Row: {
+          id: string
+          metadata: Json | null
+          metric_category: string
+          metric_name: string
+          metric_value: number
+          snapshot_at: string
+        }
+        Insert: {
+          id?: string
+          metadata?: Json | null
+          metric_category?: string
+          metric_name: string
+          metric_value?: number
+          snapshot_at?: string
+        }
+        Update: {
+          id?: string
+          metadata?: Json | null
+          metric_category?: string
+          metric_name?: string
+          metric_value?: number
+          snapshot_at?: string
+        }
+        Relationships: []
+      }
+      agent_tasks: {
+        Row: {
+          action_plan: Json | null
+          agent_domain: string
+          agent_name: string
+          created_at: string
+          executed_at: string | null
+          execution_result: Json | null
+          id: string
+          impact_score: number
+          proposed_at: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          task_description: string | null
+          task_title: string
+          updated_at: string
+          urgency: string
+        }
+        Insert: {
+          action_plan?: Json | null
+          agent_domain?: string
+          agent_name: string
+          created_at?: string
+          executed_at?: string | null
+          execution_result?: Json | null
+          id?: string
+          impact_score?: number
+          proposed_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          task_description?: string | null
+          task_title: string
+          updated_at?: string
+          urgency?: string
+        }
+        Update: {
+          action_plan?: Json | null
+          agent_domain?: string
+          agent_name?: string
+          created_at?: string
+          executed_at?: string | null
+          execution_result?: Json | null
+          id?: string
+          impact_score?: number
+          proposed_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          task_description?: string | null
+          task_title?: string
+          updated_at?: string
+          urgency?: string
+        }
+        Relationships: []
+      }
       aipp_scores: {
         Row: {
           calculated_at: string
