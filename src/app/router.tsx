@@ -81,6 +81,7 @@ export const AppRouter = () => (
       <Route path="/compare-quotes" element={<CompareQuotesPage />} />
       <Route path="/contractor-onboarding" element={<ContractorOnboardingPage />} />
       <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/aipp-score" element={<AIPPScorePage />} />
 
       {/* Property Graph */}
       <Route path="/property-graph" element={<PropertyGraphPage />} />
