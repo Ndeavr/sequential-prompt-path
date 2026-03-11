@@ -217,17 +217,17 @@ const Home = () => {
             {[
               {
                 icon: HomeIcon, title: "Propriétaires", desc: "Gérez votre propriété et trouvez des professionnels de confiance.",
-                cta: "Gérer ma propriété", to: isAuthenticated ? dash : "/signup",
+                cta: "Gérer ma propriété", to: isAuthenticated ? dash : "/homeowners",
                 iconBg: "bg-primary", gradient: "bg-primary/20",
               },
               {
                 icon: HardHat, title: "Professionnels", desc: "Développez votre entreprise avec des projets qualifiés.",
-                cta: "Inscrire mon entreprise", to: "/signup",
+                cta: "Inscrire mon entreprise", to: "/professionals",
                 iconBg: "bg-secondary", gradient: "bg-secondary/20",
               },
               {
                 icon: Handshake, title: "Partenaires & Institutions", desc: "Assurances, banques, municipalités — intégrez l'écosystème.",
-                cta: "Explorer les partenariats", to: "/search",
+                cta: "Explorer les partenariats", to: "/partners",
                 iconBg: "bg-gradient-to-br from-accent to-primary", gradient: "bg-accent/20",
               },
             ].map((card, i) => (
