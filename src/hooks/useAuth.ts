@@ -30,10 +30,14 @@ export const useAuth = () => {
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
+        .eq("user_id", session.user.id);
       if (error) throw error;
-      return data?.role ?? null;
+      if (!data || data.length === 0) return null;
+      // Priority: admin > contractor > homeowner
+      const roles = data.map((r) => r.role);
+      if (roles.includes("admin")) return "admin";
+      if (roles.includes("contractor")) return "contractor";
+      return roles[0];
     },
     enabled: !!session?.user?.id,
   });
