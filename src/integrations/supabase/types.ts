@@ -620,6 +620,126 @@ export type Database = {
           },
         ]
       }
+      media_assets: {
+        Row: {
+          alt_text: string | null
+          approved_at: string | null
+          approved_by: string | null
+          aspect_ratio: string | null
+          asset_type: string
+          brand_consistency_score: number | null
+          clarity_score: number | null
+          color_palette: Json | null
+          composition_score: number | null
+          created_at: string
+          error_message: string | null
+          file_format: string | null
+          file_size: number | null
+          generated_at: string | null
+          generation_strategy: string | null
+          height: number | null
+          id: string
+          models_used: string[] | null
+          optimized_prompt: string | null
+          overall_score: number | null
+          purpose: string
+          realism_score: number | null
+          request_prompt: string
+          requested_by: string | null
+          seo_metadata: Json | null
+          status: string
+          storage_path: string | null
+          storage_url: string | null
+          style_preset: string | null
+          target_entity_id: string | null
+          target_entity_type: string | null
+          target_page: string | null
+          thumbnail_url: string | null
+          updated_at: string
+          variations: Json | null
+          variations_count: number | null
+          width: number | null
+        }
+        Insert: {
+          alt_text?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          aspect_ratio?: string | null
+          asset_type?: string
+          brand_consistency_score?: number | null
+          clarity_score?: number | null
+          color_palette?: Json | null
+          composition_score?: number | null
+          created_at?: string
+          error_message?: string | null
+          file_format?: string | null
+          file_size?: number | null
+          generated_at?: string | null
+          generation_strategy?: string | null
+          height?: number | null
+          id?: string
+          models_used?: string[] | null
+          optimized_prompt?: string | null
+          overall_score?: number | null
+          purpose?: string
+          realism_score?: number | null
+          request_prompt: string
+          requested_by?: string | null
+          seo_metadata?: Json | null
+          status?: string
+          storage_path?: string | null
+          storage_url?: string | null
+          style_preset?: string | null
+          target_entity_id?: string | null
+          target_entity_type?: string | null
+          target_page?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string
+          variations?: Json | null
+          variations_count?: number | null
+          width?: number | null
+        }
+        Update: {
+          alt_text?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          aspect_ratio?: string | null
+          asset_type?: string
+          brand_consistency_score?: number | null
+          clarity_score?: number | null
+          color_palette?: Json | null
+          composition_score?: number | null
+          created_at?: string
+          error_message?: string | null
+          file_format?: string | null
+          file_size?: number | null
+          generated_at?: string | null
+          generation_strategy?: string | null
+          height?: number | null
+          id?: string
+          models_used?: string[] | null
+          optimized_prompt?: string | null
+          overall_score?: number | null
+          purpose?: string
+          realism_score?: number | null
+          request_prompt?: string
+          requested_by?: string | null
+          seo_metadata?: Json | null
+          status?: string
+          storage_path?: string | null
+          storage_url?: string | null
+          style_preset?: string | null
+          target_entity_id?: string | null
+          target_entity_type?: string | null
+          target_page?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string
+          variations?: Json | null
+          variations_count?: number | null
+          width?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
