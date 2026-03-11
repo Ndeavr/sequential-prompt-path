@@ -197,11 +197,12 @@ function HouseHeatDiagram() {
 }
 
 /* ─── Fade-up helper ─── */
+const ease: [number, number, number, number] = [0.4, 0, 0.2, 1];
 const fadeUp = {
   initial: { opacity: 0, y: 24 },
   whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: "-60px" },
-  transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] },
+  viewport: { once: true, margin: "-60px" as const },
+  transition: { duration: 0.5, ease },
 };
 
 /* ─── Page ─── */

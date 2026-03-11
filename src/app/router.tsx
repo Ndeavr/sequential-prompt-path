@@ -89,6 +89,7 @@ export const AppRouter = () => (
       <Route path="/property-graph" element={<PropertyGraphPage />} />
       <Route path="/alex" element={<AlexChat />} />
       <Route path="/flywheel" element={<FlywheelPage />} />
+      <Route path="/energy" element={<EnergyPage />} />
 
       {/* SEO Pages */}
       <Route path="/services" element={<SeoDirectoryPage />} />
