@@ -67,6 +67,7 @@ import AdminAppointments from "@/pages/admin/AdminAppointments";
 import AdminLeads from "@/pages/admin/AdminLeads";
 import AdminTerritories from "@/pages/admin/AdminTerritories";
 import AdminGrowth from "@/pages/admin/AdminGrowth";
+import AdminAgents from "@/pages/admin/AdminAgents";
 
 export const AppRouter = () => (
   <BrowserRouter>
