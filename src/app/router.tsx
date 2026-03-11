@@ -91,6 +91,7 @@ export const AppRouter = () => (
       <Route path="/alex" element={<AlexChat />} />
       <Route path="/flywheel" element={<FlywheelPage />} />
       <Route path="/energy" element={<EnergyPage />} />
+      <Route path="/preventive-maintenance" element={<PreventiveMaintenancePage />} />
 
       {/* SEO Pages */}
       <Route path="/services" element={<SeoDirectoryPage />} />
