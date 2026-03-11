@@ -69,6 +69,7 @@ export const AppRouter = () => (
 
       {/* Property Graph */}
       <Route path="/property-graph" element={<PropertyGraphPage />} />
+      <Route path="/alex" element={<AlexChat />} />
 
       {/* SEO Pages */}
       <Route path="/services" element={<SeoDirectoryPage />} />
