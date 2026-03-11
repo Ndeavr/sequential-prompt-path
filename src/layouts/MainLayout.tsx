@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Sparkles, Menu, X, Bell } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import AlexGlobalOrb from "@/components/alex/AlexGlobalOrb";
+import AlexConcierge from "@/components/alex/AlexConcierge";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -28,6 +28,9 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [lang, setLang] = useState<"fr" | "en">("fr");
   const dash = role === "contractor" ? "/pro" : role === "admin" ? "/admin" : "/dashboard";
+
+  // Don't show orb on full-screen Alex chat
+  const showAlex = pathname !== "/alex";
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -180,8 +183,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </div>
       </footer>
 
-      {/* Global Alex Orb for unauthenticated users */}
-      {!isAuthenticated && <AlexGlobalOrb />}
+      {/* ─── Alex AI Assistant (all users, all pages except /alex) ─── */}
+      {showAlex && <AlexConcierge />}
     </div>
   );
 };
