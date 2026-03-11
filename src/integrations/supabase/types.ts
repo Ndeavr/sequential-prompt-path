@@ -337,6 +337,42 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_memory: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          importance_score: number | null
+          memory_text: string
+          memory_type: string
+          property_id: string | null
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          importance_score?: number | null
+          memory_text: string
+          memory_type?: string
+          property_id?: string | null
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          importance_score?: number | null
+          memory_text?: string
+          memory_type?: string
+          property_id?: string | null
+          session_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       home_scores: {
         Row: {
           calculated_at: string
@@ -852,6 +888,137 @@ export type Database = {
           },
         ]
       }
+      rag_chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          created_at: string
+          document_id: string
+          embedding: string | null
+          id: string
+          metadata_json: Json | null
+          token_count: number | null
+        }
+        Insert: {
+          chunk_index: number
+          content: string
+          created_at?: string
+          document_id: string
+          embedding?: string | null
+          id?: string
+          metadata_json?: Json | null
+          token_count?: number | null
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          created_at?: string
+          document_id?: string
+          embedding?: string | null
+          id?: string
+          metadata_json?: Json | null
+          token_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rag_chunks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "rag_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rag_documents: {
+        Row: {
+          city: string | null
+          contractor_id: string | null
+          created_at: string
+          id: string
+          language: string
+          metadata_json: Json | null
+          namespace: string
+          project_id: string | null
+          property_id: string | null
+          source_id: string | null
+          source_type: string
+          summary: string | null
+          tags: Json | null
+          title: string | null
+          updated_at: string
+          user_id: string | null
+          visibility_scope: string
+        }
+        Insert: {
+          city?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          language?: string
+          metadata_json?: Json | null
+          namespace: string
+          project_id?: string | null
+          property_id?: string | null
+          source_id?: string | null
+          source_type: string
+          summary?: string | null
+          tags?: Json | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string | null
+          visibility_scope?: string
+        }
+        Update: {
+          city?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          language?: string
+          metadata_json?: Json | null
+          namespace?: string
+          project_id?: string | null
+          property_id?: string | null
+          source_id?: string | null
+          source_type?: string
+          summary?: string | null
+          tags?: Json | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string | null
+          visibility_scope?: string
+        }
+        Relationships: []
+      }
+      rag_queries_log: {
+        Row: {
+          created_at: string
+          id: string
+          namespace_filter: string[] | null
+          query_text: string
+          results_json: Json | null
+          top_k: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          namespace_filter?: string[] | null
+          query_text: string
+          results_json?: Json | null
+          top_k?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          namespace_filter?: string[] | null
+          query_text?: string
+          results_json?: Json | null
+          top_k?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           content: string | null
@@ -1194,6 +1361,43 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      match_rag_chunks: {
+        Args: {
+          filter_namespaces?: string[]
+          filter_user_id?: string
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          chunk_content: string
+          chunk_id: string
+          chunk_index: number
+          document_id: string
+          document_summary: string
+          document_title: string
+          namespace: string
+          similarity: number
+        }[]
+      }
+      search_rag_chunks_text: {
+        Args: {
+          filter_namespaces?: string[]
+          filter_user_id?: string
+          match_count?: number
+          search_query: string
+        }
+        Returns: {
+          chunk_content: string
+          chunk_id: string
+          chunk_index: number
+          document_id: string
+          document_summary: string
+          document_title: string
+          namespace: string
+          rank: number
+        }[]
       }
     }
     Enums: {

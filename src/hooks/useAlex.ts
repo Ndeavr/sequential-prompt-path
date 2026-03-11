@@ -48,6 +48,8 @@ export const useAlex = () => {
           ...context,
           isAuthenticated,
           userRole: role,
+          userId: session?.user?.id,
+          userName: session?.user?.user_metadata?.full_name?.split(" ")[0],
         };
 
         const resp = await fetch(ALEX_URL, {
