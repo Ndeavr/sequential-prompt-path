@@ -130,6 +130,17 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                     {link.label}
                   </Link>
                 ))}
+                <div className="flex items-center justify-between px-3 py-2">
+                  <span className="text-caption text-muted-foreground">Langue</span>
+                  <button
+                    onClick={() => setLang(lang === "fr" ? "en" : "fr")}
+                    className="flex items-center gap-1 text-caption font-semibold uppercase tracking-wider"
+                  >
+                    <span className={lang === "fr" ? "text-foreground" : "text-muted-foreground/40"}>FR</span>
+                    <span className="text-border">/</span>
+                    <span className={lang === "en" ? "text-foreground" : "text-muted-foreground/40"}>EN</span>
+                  </button>
+                </div>
                 <div className="divider-gradient my-2" />
                 {isAuthenticated ? (
                   <Link to={dash} onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-lg text-meta font-semibold text-primary">
