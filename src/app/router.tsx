@@ -15,6 +15,7 @@ import DescribeProjectPage from "@/pages/DescribeProjectPage";
 import CompareQuotesPage from "@/pages/CompareQuotesPage";
 import ContractorOnboardingPage from "@/pages/ContractorOnboardingPage";
 import PricingPage from "@/pages/PricingPage";
+import AIPPScorePage from "@/pages/AIPPScorePage";
 
 // SEO Pages
 import ServiceLocationPage from "@/pages/seo/ServiceLocationPage";
