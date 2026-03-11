@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Search, Home as HomeIcon, Shield, TrendingUp, Users,
-  MapPin, Sparkles, ArrowRight, Star, Clock,
+  Sparkles, ArrowRight, Star, Clock,
   MessageCircle, CalendarDays, Heart, Brain, FolderOpen, Lightbulb, HardHat,
+  Building2, Handshake,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import heroImg from "@/assets/hero-home.jpg";
@@ -33,6 +34,52 @@ const WaveDivider = ({ className = "" }: { className?: string }) => (
   </div>
 );
 
+/* ─── Audience Gateway Card ─── */
+const GatewayCard = ({
+  icon: Icon,
+  title,
+  description,
+  cta,
+  to,
+  gradient,
+  iconBg,
+  delay,
+}: {
+  icon: React.ElementType;
+  title: string;
+  description: string;
+  cta: string;
+  to: string;
+  gradient: string;
+  iconBg: string;
+  delay: number;
+}) => (
+  <motion.div variants={fadeUp} custom={delay}>
+    <Link to={to} className="block">
+      <div className={`glass-card rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all group relative overflow-hidden`}>
+        {/* Subtle gradient accent */}
+        <div className={`absolute top-0 right-0 w-32 h-32 rounded-full ${gradient} blur-3xl opacity-40 pointer-events-none -translate-y-1/2 translate-x-1/2`} />
+        <div className="relative flex items-start gap-4">
+          <div className={`h-14 w-14 shrink-0 rounded-2xl ${iconBg} flex items-center justify-center shadow-sm`}>
+            <Icon className="h-6 w-6 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-foreground text-base">{title}</h3>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{description}</p>
+          </div>
+          <ArrowRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0 mt-1" />
+        </div>
+        <Button
+          size="sm"
+          className="mt-4 w-full rounded-xl h-11 text-sm bg-primary hover:bg-primary/90 text-primary-foreground group-hover:shadow-glow transition-shadow"
+        >
+          {cta}
+        </Button>
+      </div>
+    </Link>
+  </motion.div>
+);
+
 const Home = () => {
   const { isAuthenticated, role } = useAuth();
   const dash = role === "contractor" ? "/pro" : role === "admin" ? "/admin" : "/dashboard";
@@ -41,15 +88,12 @@ const Home = () => {
     <div className="flex min-h-screen flex-col bg-background">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section className="relative overflow-hidden">
-        {/* Hero image background */}
         <div className="absolute inset-0">
           <img src={heroImg} alt="" className="h-full w-full object-cover" />
-          {/* Gradient overlays for text readability */}
           <div className="absolute inset-0 bg-gradient-to-b from-[hsl(222,47%,8%,0.55)] via-[hsl(222,47%,8%,0.35)] to-[hsl(222,47%,8%,0.75)]" />
           <div className="absolute inset-0 bg-gradient-to-t from-[hsl(222,100%,12%,0.6)] via-transparent to-transparent" />
         </div>
 
-        {/* Decorative glow orbs */}
         <div className="absolute top-[10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-primary/20 blur-[80px] pointer-events-none" />
         <div className="absolute bottom-[15%] left-[-15%] w-[40vw] h-[40vw] rounded-full bg-accent/15 blur-[60px] pointer-events-none" />
 
@@ -69,7 +113,7 @@ const Home = () => {
             </motion.h1>
 
             <motion.p variants={fadeUp} custom={2} className="text-sm md:text-base text-white/70 max-w-md mx-auto leading-relaxed">
-              Analysez vos soumissions, comparez les entrepreneurs et prenez des décisions éclairées grâce à l'IA.
+              UNPRO aide les propriétaires à gérer leur maison et à trouver des professionnels vérifiés.
             </motion.p>
 
             <motion.div variants={fadeUp} custom={3} className="flex flex-col items-center gap-3 pt-2">
@@ -94,11 +138,58 @@ const Home = () => {
         <WaveDivider className="bottom-0" />
       </section>
 
-      {/* ══════════════════════ FLOATING CARDS ══════════════════════ */}
-      <section className="relative z-20 -mt-20 px-5 pb-8">
+      {/* ══════════════════════ AUDIENCE GATEWAY ══════════════════════ */}
+      <section className="relative z-20 -mt-16 px-5 pb-10">
+        <div className="max-w-lg mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-6"
+          >
+            <p className="text-sm font-semibold text-primary tracking-wide uppercase">Choisissez votre parcours</p>
+          </motion.div>
+
+          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="space-y-3">
+            <GatewayCard
+              icon={HomeIcon}
+              title="Propriétaires"
+              description="Gérez votre propriété et trouvez des professionnels de confiance."
+              cta="Gérer ma propriété"
+              to={isAuthenticated ? dash : "/signup"}
+              gradient="bg-primary/30"
+              iconBg="bg-primary"
+              delay={0}
+            />
+            <GatewayCard
+              icon={HardHat}
+              title="Professionnels"
+              description="Développez votre entreprise avec des projets qualifiés."
+              cta="Inscrire mon entreprise"
+              to="/signup"
+              gradient="bg-secondary/30"
+              iconBg="bg-secondary"
+              delay={1}
+            />
+            <GatewayCard
+              icon={Handshake}
+              title="Partenaires & Institutions"
+              description="Assurances, banques, municipalités — intégrez l'écosystème UNPRO."
+              cta="Explorer les partenariats"
+              to="/search"
+              gradient="bg-accent/30"
+              iconBg="bg-gradient-to-br from-accent to-primary"
+              delay={2}
+            />
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ══════════════════════ FEATURE CARDS ══════════════════════ */}
+      <section className="relative px-5 pb-8">
         <div className="max-w-lg mx-auto space-y-3">
           <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="space-y-3">
-            {/* Card 1 — Analyser 3 soumissions */}
+            {/* Analyser 3 soumissions */}
             <motion.div variants={fadeUp} custom={0}>
               <Link to={isAuthenticated ? "/dashboard/quotes/upload" : "/signup"}>
                 <div className="glass-card rounded-3xl p-5 shadow-lg hover:shadow-xl transition-shadow group">
@@ -118,7 +209,7 @@ const Home = () => {
               </Link>
             </motion.div>
 
-            {/* Card 2 — Score Maison */}
+            {/* Score Maison */}
             <motion.div variants={fadeUp} custom={1}>
               <Link to={isAuthenticated ? "/dashboard/home-score" : "/signup"}>
                 <div className="glass-card rounded-3xl p-5 shadow-lg hover:shadow-xl transition-shadow group">
@@ -138,7 +229,7 @@ const Home = () => {
               </Link>
             </motion.div>
 
-            {/* Card 3 — Alex IA */}
+            {/* Alex IA */}
             <motion.div variants={fadeUp} custom={2}>
               <div className="glass-card rounded-3xl p-5 shadow-lg">
                 <div className="flex items-center gap-4">
@@ -181,7 +272,6 @@ const Home = () => {
             transition={{ duration: 0.45 }}
           >
             <div className="glass-card rounded-3xl p-5 shadow-lg space-y-4">
-              {/* Header row */}
               <div className="flex items-start gap-4">
                 <div className="h-16 w-16 shrink-0 rounded-2xl bg-gradient-to-br from-primary/15 to-secondary/10 overflow-hidden flex items-center justify-center">
                   <HardHat className="h-7 w-7 text-primary" />
@@ -195,7 +285,6 @@ const Home = () => {
                     <span className="text-xs text-muted-foreground ml-1">(34 Avis)</span>
                   </div>
                 </div>
-                {/* AIPP Score badge */}
                 <div className="shrink-0 flex flex-col items-center">
                   <div className="bg-primary text-primary-foreground font-extrabold text-lg px-3 py-1 rounded-xl leading-tight">
                     88<span className="text-xs font-normal opacity-70">/100</span>
@@ -204,7 +293,6 @@ const Home = () => {
                 </div>
               </div>
 
-              {/* Trust badges */}
               <div className="space-y-2">
                 {[
                   { icon: Clock, text: "15+ années d'expérience" },
@@ -218,7 +306,6 @@ const Home = () => {
                 ))}
               </div>
 
-              {/* Action buttons */}
               <div className="flex gap-2 pt-1">
                 <Button asChild size="sm" className="flex-1 rounded-xl gap-1.5 h-11 text-sm">
                   <Link to="/search"><CalendarDays className="h-3.5 w-3.5" /> Rendez-vous</Link>
@@ -259,7 +346,7 @@ const Home = () => {
             {[
               { icon: TrendingUp, label: "Score AIPP" },
               { icon: Users, label: "Leads qualifiés" },
-              { icon: MapPin, label: "Territoires" },
+              { icon: Building2, label: "Territoires" },
               { icon: Shield, label: "Badge vérifié" },
             ].map((item) => (
               <motion.div key={item.label} variants={fadeUp} custom={0}>
