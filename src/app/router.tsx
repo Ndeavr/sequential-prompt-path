@@ -11,6 +11,10 @@ import NotFound from "@/pages/NotFound";
 import HomeownersPage from "@/pages/HomeownersPage";
 import ProfessionalsPage from "@/pages/ProfessionalsPage";
 import PartnersPage from "@/pages/PartnersPage";
+import DescribeProjectPage from "@/pages/DescribeProjectPage";
+import CompareQuotesPage from "@/pages/CompareQuotesPage";
+import ContractorOnboardingPage from "@/pages/ContractorOnboardingPage";
+import PricingPage from "@/pages/PricingPage";
 
 // SEO Pages
 import ServiceLocationPage from "@/pages/seo/ServiceLocationPage";
@@ -72,6 +76,10 @@ export const AppRouter = () => (
       <Route path="/homeowners" element={<HomeownersPage />} />
       <Route path="/professionals" element={<ProfessionalsPage />} />
       <Route path="/partners" element={<PartnersPage />} />
+      <Route path="/describe-project" element={<DescribeProjectPage />} />
+      <Route path="/compare-quotes" element={<CompareQuotesPage />} />
+      <Route path="/contractor-onboarding" element={<ContractorOnboardingPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
 
       {/* Property Graph */}
       <Route path="/property-graph" element={<PropertyGraphPage />} />
