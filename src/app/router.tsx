@@ -8,6 +8,9 @@ import ContractorProfile from "@/pages/ContractorProfile";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import NotFound from "@/pages/NotFound";
+import HomeownersPage from "@/pages/HomeownersPage";
+import ProfessionalsPage from "@/pages/ProfessionalsPage";
+import PartnersPage from "@/pages/PartnersPage";
 
 // SEO Pages
 import ServiceLocationPage from "@/pages/seo/ServiceLocationPage";
@@ -66,6 +69,9 @@ export const AppRouter = () => (
       <Route path="/contractors/:id" element={<ContractorProfile />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/homeowners" element={<HomeownersPage />} />
+      <Route path="/professionals" element={<ProfessionalsPage />} />
+      <Route path="/partners" element={<PartnersPage />} />
 
       {/* Property Graph */}
       <Route path="/property-graph" element={<PropertyGraphPage />} />
