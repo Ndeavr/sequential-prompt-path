@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Home, ArrowRight, CheckCircle2, Shield, Sparkles,
-  ChevronRight, Leaf, Droplets, Wind, Zap, Roof,
+  ChevronRight, Leaf, Droplets, Wind, Zap, HardHat,
   TrendingUp, FileText, Star,
 } from "lucide-react";
 
