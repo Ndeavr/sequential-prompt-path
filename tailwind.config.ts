@@ -17,11 +17,15 @@ export default {
         sans: ["Manrope", "system-ui", "-apple-system", "sans-serif"],
       },
       fontSize: {
-        "hero": ["3rem", { lineHeight: "1.1", fontWeight: "800", letterSpacing: "-0.02em" }],
-        "hero-sm": ["2.25rem", { lineHeight: "1.15", fontWeight: "800", letterSpacing: "-0.02em" }],
-        "section": ["1.5rem", { lineHeight: "1.25", fontWeight: "700" }],
-        "body-lg": ["1.125rem", { lineHeight: "1.6" }],
+        "display": ["3.5rem", { lineHeight: "1.05", fontWeight: "800", letterSpacing: "-0.03em" }],
+        "hero": ["3rem", { lineHeight: "1.08", fontWeight: "800", letterSpacing: "-0.025em" }],
+        "hero-sm": ["2.25rem", { lineHeight: "1.12", fontWeight: "800", letterSpacing: "-0.02em" }],
+        "title": ["1.75rem", { lineHeight: "1.2", fontWeight: "700", letterSpacing: "-0.015em" }],
+        "section": ["1.5rem", { lineHeight: "1.25", fontWeight: "700", letterSpacing: "-0.01em" }],
+        "body-lg": ["1.125rem", { lineHeight: "1.65" }],
+        "body": ["0.9375rem", { lineHeight: "1.6" }],
         "meta": ["0.8125rem", { lineHeight: "1.5" }],
+        "caption": ["0.6875rem", { lineHeight: "1.45", letterSpacing: "0.02em" }],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -44,6 +48,10 @@ export default {
         success: {
           DEFAULT: "hsl(var(--success))",
           foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -78,13 +86,16 @@ export default {
         sm: "calc(var(--radius) - 4px)",
         xl: "calc(var(--radius) + 4px)",
         "2xl": "calc(var(--radius) + 8px)",
+        "3xl": "1.5rem",
       },
       boxShadow: {
         "soft": "var(--shadow-sm)",
         "elevation": "var(--shadow-md)",
         "elevated": "var(--shadow-lg)",
         "float": "var(--shadow-xl)",
+        "dramatic": "var(--shadow-2xl)",
         "glow": "var(--shadow-glow)",
+        "glow-lg": "var(--shadow-glow-lg)",
       },
       keyframes: {
         "accordion-down": {
@@ -104,21 +115,45 @@ export default {
           "100%": { opacity: "1" },
         },
         "scale-in": {
-          "0%": { opacity: "0", transform: "scale(0.95)" },
+          "0%": { opacity: "0", transform: "scale(0.96)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
         "slide-up": {
           "0%": { opacity: "0", transform: "translateY(24px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        "slide-down": {
+          "0%": { opacity: "0", transform: "translateY(-12px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "slide-in-right": {
+          "0%": { opacity: "0", transform: "translateX(16px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        "shimmer": {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
+        "pulse-soft": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.7" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "fade-up": "fade-up 0.5s ease-out",
+        "fade-up": "fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
         "fade-in": "fade-in 0.3s ease-out",
-        "scale-in": "scale-in 0.3s ease-out",
-        "slide-up": "slide-up 0.5s ease-out",
+        "scale-in": "scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+        "slide-up": "slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
+        "slide-down": "slide-down 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+        "slide-in-right": "slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+        "shimmer": "shimmer 2s linear infinite",
+        "pulse-soft": "pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+      },
+      spacing: {
+        "18": "4.5rem",
+        "22": "5.5rem",
       },
     },
   },

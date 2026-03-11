@@ -1,58 +1,159 @@
 /**
- * UNPRO — Main Layout (Premium)
+ * UNPRO — Main Layout (Premium Stripe-grade)
  */
 
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Menu, X } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface MainLayoutProps {
   children: ReactNode;
 }
 
+const navLinks = [
+  { to: "/homeowners", label: "Propriétaires" },
+  { to: "/professionals", label: "Professionnels" },
+  { to: "/partners", label: "Partenaires" },
+  { to: "/search", label: "Trouver un Pro" },
+];
+
 const MainLayout = ({ children }: MainLayoutProps) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, role } = useAuth();
+  const { pathname } = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const dash = role === "contractor" ? "/pro" : role === "admin" ? "/admin" : "/dashboard";
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-30 glass-surface border-b border-border/40">
-        <div className="mx-auto max-w-4xl px-5 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+      {/* ─── Navbar ─── */}
+      <header className="sticky top-0 z-40 glass-surface border-b border-border/30">
+        <div className="mx-auto max-w-5xl px-5 h-14 flex items-center justify-between">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2.5 shrink-0">
+            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-soft">
               <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
             </div>
             <span className="text-sm font-bold text-gradient tracking-tight">UNPRO</span>
           </Link>
-          <nav className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm" className="text-xs rounded-xl h-8">
-              <Link to="/search">Entrepreneurs</Link>
-            </Button>
+
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={`px-3 py-1.5 text-meta font-medium rounded-lg transition-colors duration-200 ${
+                  pathname.startsWith(link.to)
+                    ? "text-foreground bg-muted/60"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2">
             {isAuthenticated ? (
-              <Button asChild size="sm" className="text-xs rounded-xl h-8">
-                <Link to="/dashboard">Tableau de bord</Link>
+              <Button asChild size="sm" className="rounded-xl h-8 text-xs hidden sm:inline-flex">
+                <Link to={dash}>Tableau de bord</Link>
               </Button>
             ) : (
-              <Button asChild size="sm" className="text-xs rounded-xl h-8">
-                <Link to="/login">Connexion</Link>
-              </Button>
+              <>
+                <Button asChild variant="ghost" size="sm" className="rounded-xl h-8 text-xs hidden sm:inline-flex">
+                  <Link to="/login">Connexion</Link>
+                </Button>
+                <Button asChild size="sm" className="rounded-xl h-8 text-xs">
+                  <Link to="/signup">Commencer</Link>
+                </Button>
+              </>
             )}
-          </nav>
+
+            {/* Mobile menu toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden h-8 w-8 rounded-lg"
+              onClick={() => setMobileOpen(!mobileOpen)}
+            >
+              {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
+
+        {/* Mobile nav drawer */}
+        <AnimatePresence>
+          {mobileOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+              className="md:hidden overflow-hidden border-t border-border/30"
+            >
+              <nav className="px-5 py-3 space-y-1">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    onClick={() => setMobileOpen(false)}
+                    className={`block px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                      pathname.startsWith(link.to)
+                        ? "text-foreground bg-muted/60"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                <div className="divider-gradient my-2" />
+                {isAuthenticated ? (
+                  <Link
+                    to={dash}
+                    onClick={() => setMobileOpen(false)}
+                    className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-primary"
+                  >
+                    Tableau de bord
+                  </Link>
+                ) : (
+                  <Link
+                    to="/login"
+                    onClick={() => setMobileOpen(false)}
+                    className="block px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground"
+                  >
+                    Connexion
+                  </Link>
+                )}
+              </nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       <main className="flex-1">{children}</main>
 
-      {/* Footer */}
-      <footer className="border-t border-border/40 py-8 px-5">
-        <div className="mx-auto max-w-4xl flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <span>© {new Date().getFullYear()} UNPRO — Intelligence immobilière</span>
-          <div className="flex items-center gap-4">
-            <Link to="/search" className="hover:text-primary transition-colors">Entrepreneurs</Link>
-            <Link to="/signup" className="hover:text-primary transition-colors">Inscription</Link>
+      {/* ─── Footer ─── */}
+      <footer className="border-t border-border/30 py-10 px-5">
+        <div className="mx-auto max-w-5xl">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            <div>
+              <Link to="/" className="text-sm font-bold text-gradient">UNPRO</Link>
+              <p className="text-caption text-muted-foreground mt-1">Intelligence immobilière pour tous.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-meta text-muted-foreground">
+              <Link to="/homeowners" className="hover:text-foreground transition-colors">Propriétaires</Link>
+              <Link to="/professionals" className="hover:text-foreground transition-colors">Professionnels</Link>
+              <Link to="/partners" className="hover:text-foreground transition-colors">Partenaires</Link>
+              <Link to="/search" className="hover:text-foreground transition-colors">Trouver un Pro</Link>
+            </div>
           </div>
+          <div className="divider-gradient mt-6 mb-4" />
+          <p className="text-caption text-muted-foreground">© {new Date().getFullYear()} UNPRO. Tous droits réservés.</p>
         </div>
       </footer>
     </div>
