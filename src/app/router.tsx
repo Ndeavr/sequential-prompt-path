@@ -25,6 +25,7 @@ import SeoDirectoryPage from "@/pages/seo/SeoDirectoryPage";
 import PropertyGraphPage from "@/pages/PropertyGraphPage";
 import AlexChat from "@/pages/AlexChat";
 import FlywheelPage from "@/pages/FlywheelPage";
+import EnergyPage from "@/pages/EnergyPage";
 
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
@@ -88,6 +89,7 @@ export const AppRouter = () => (
       <Route path="/property-graph" element={<PropertyGraphPage />} />
       <Route path="/alex" element={<AlexChat />} />
       <Route path="/flywheel" element={<FlywheelPage />} />
+      <Route path="/energy" element={<EnergyPage />} />
 
       {/* SEO Pages */}
       <Route path="/services" element={<SeoDirectoryPage />} />
