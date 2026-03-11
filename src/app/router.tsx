@@ -26,6 +26,7 @@ import PropertyGraphPage from "@/pages/PropertyGraphPage";
 import AlexChat from "@/pages/AlexChat";
 import FlywheelPage from "@/pages/FlywheelPage";
 import EnergyPage from "@/pages/EnergyPage";
+import PreventiveMaintenancePage from "@/pages/PreventiveMaintenancePage";
 
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
