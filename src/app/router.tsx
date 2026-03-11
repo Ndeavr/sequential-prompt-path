@@ -8,6 +8,9 @@ import ContractorProfile from "@/pages/ContractorProfile";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import NotFound from "@/pages/NotFound";
+import HomeownersPage from "@/pages/HomeownersPage";
+import ProfessionalsPage from "@/pages/ProfessionalsPage";
+import PartnersPage from "@/pages/PartnersPage";
 
 // SEO Pages
 import ServiceLocationPage from "@/pages/seo/ServiceLocationPage";
