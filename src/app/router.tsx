@@ -68,6 +68,7 @@ import AdminLeads from "@/pages/admin/AdminLeads";
 import AdminTerritories from "@/pages/admin/AdminTerritories";
 import AdminGrowth from "@/pages/admin/AdminGrowth";
 import AdminAgents from "@/pages/admin/AdminAgents";
+import AdminMedia from "@/pages/admin/AdminMedia";
 
 export const AppRouter = () => (
   <BrowserRouter>
@@ -140,6 +141,7 @@ export const AppRouter = () => (
       <Route path="/admin/territories" element={<ProtectedRoute requiredRole="admin"><AdminTerritories /></ProtectedRoute>} />
       <Route path="/admin/growth" element={<ProtectedRoute requiredRole="admin"><AdminGrowth /></ProtectedRoute>} />
       <Route path="/admin/agents" element={<ProtectedRoute requiredRole="admin"><AdminAgents /></ProtectedRoute>} />
+      <Route path="/admin/media" element={<ProtectedRoute requiredRole="admin"><AdminMedia /></ProtectedRoute>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
