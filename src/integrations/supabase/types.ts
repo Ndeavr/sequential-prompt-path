@@ -52,6 +52,53 @@ export type Database = {
           },
         ]
       }
+      agent_memory: {
+        Row: {
+          agent_key: string | null
+          content: string
+          created_at: string
+          domain: string
+          expires_at: string | null
+          id: string
+          importance: number | null
+          memory_key: string
+          memory_type: string
+          metadata: Json | null
+        }
+        Insert: {
+          agent_key?: string | null
+          content: string
+          created_at?: string
+          domain?: string
+          expires_at?: string | null
+          id?: string
+          importance?: number | null
+          memory_key: string
+          memory_type?: string
+          metadata?: Json | null
+        }
+        Update: {
+          agent_key?: string | null
+          content?: string
+          created_at?: string
+          domain?: string
+          expires_at?: string | null
+          id?: string
+          importance?: number | null
+          memory_key?: string
+          memory_type?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_memory_agent_key_fkey"
+            columns: ["agent_key"]
+            isOneToOne: false
+            referencedRelation: "agent_registry"
+            referencedColumns: ["agent_key"]
+          },
+        ]
+      }
       agent_metrics: {
         Row: {
           id: string
@@ -79,13 +126,99 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_registry: {
+        Row: {
+          actions: Json | null
+          agent_key: string
+          agent_name: string
+          autonomy_level: string
+          config: Json | null
+          created_at: string
+          created_by: string | null
+          domain: string
+          id: string
+          inputs: Json | null
+          layer: string
+          mission: string | null
+          outputs: Json | null
+          parent_agent_key: string | null
+          status: string
+          success_metrics: Json | null
+          success_rate: number | null
+          tasks_executed: number | null
+          tasks_succeeded: number | null
+          tools: Json | null
+          triggers: Json | null
+          updated_at: string
+        }
+        Insert: {
+          actions?: Json | null
+          agent_key: string
+          agent_name: string
+          autonomy_level?: string
+          config?: Json | null
+          created_at?: string
+          created_by?: string | null
+          domain?: string
+          id?: string
+          inputs?: Json | null
+          layer?: string
+          mission?: string | null
+          outputs?: Json | null
+          parent_agent_key?: string | null
+          status?: string
+          success_metrics?: Json | null
+          success_rate?: number | null
+          tasks_executed?: number | null
+          tasks_succeeded?: number | null
+          tools?: Json | null
+          triggers?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          actions?: Json | null
+          agent_key?: string
+          agent_name?: string
+          autonomy_level?: string
+          config?: Json | null
+          created_at?: string
+          created_by?: string | null
+          domain?: string
+          id?: string
+          inputs?: Json | null
+          layer?: string
+          mission?: string | null
+          outputs?: Json | null
+          parent_agent_key?: string | null
+          status?: string
+          success_metrics?: Json | null
+          success_rate?: number | null
+          tasks_executed?: number | null
+          tasks_succeeded?: number | null
+          tools?: Json | null
+          triggers?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_registry_parent_agent_key_fkey"
+            columns: ["parent_agent_key"]
+            isOneToOne: false
+            referencedRelation: "agent_registry"
+            referencedColumns: ["agent_key"]
+          },
+        ]
+      }
       agent_tasks: {
         Row: {
           action_plan: Json | null
           agent_domain: string
+          agent_key: string | null
           agent_name: string
+          auto_executable: boolean | null
           created_at: string
           executed_at: string | null
+          execution_mode: string | null
           execution_result: Json | null
           id: string
           impact_score: number
@@ -101,9 +234,12 @@ export type Database = {
         Insert: {
           action_plan?: Json | null
           agent_domain?: string
+          agent_key?: string | null
           agent_name: string
+          auto_executable?: boolean | null
           created_at?: string
           executed_at?: string | null
+          execution_mode?: string | null
           execution_result?: Json | null
           id?: string
           impact_score?: number
@@ -119,9 +255,12 @@ export type Database = {
         Update: {
           action_plan?: Json | null
           agent_domain?: string
+          agent_key?: string | null
           agent_name?: string
+          auto_executable?: boolean | null
           created_at?: string
           executed_at?: string | null
+          execution_mode?: string | null
           execution_result?: Json | null
           id?: string
           impact_score?: number
@@ -134,7 +273,15 @@ export type Database = {
           updated_at?: string
           urgency?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "agent_tasks_agent_key_fkey"
+            columns: ["agent_key"]
+            isOneToOne: false
+            referencedRelation: "agent_registry"
+            referencedColumns: ["agent_key"]
+          },
+        ]
       }
       aipp_scores: {
         Row: {
