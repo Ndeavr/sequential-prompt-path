@@ -1,23 +1,25 @@
 /**
- * UNPRO — Contractor Landing Page (Conversion-focused)
+ * UNPRO — Contractor Landing Page (Premium, Conversion-focused)
  */
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   ArrowRight, CheckCircle2, Sparkles, MapPin,
-  TrendingUp, Users, Calendar, Shield, Brain,
-  ChevronRight, Clock, Star, Zap, Eye,
+  TrendingUp, Calendar, Shield, Brain,
+  ChevronRight, Zap, Eye, Users, Gift, Send,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import ScoreRing from "@/components/ui/score-ring";
+import MainLayout from "@/layouts/MainLayout";
 
+const ease: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
   visible: (i: number) => ({
     opacity: 1, y: 0,
-    transition: { delay: i * 0.12, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] },
+    transition: { delay: i * 0.12, duration: 0.5, ease },
   }),
 };
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.1 } } };
@@ -26,70 +28,78 @@ const HOW_IT_WORKS = [
   {
     icon: Brain,
     title: "Profil AIPP",
-    desc: "Profil structuré pour être recommandé par Alex, notre IA concierge.",
+    desc: "Un profil intelligent, structuré pour être recommandé par Alex, notre IA concierge. Plus votre profil est complet, plus vous êtes visible.",
   },
   {
     icon: Sparkles,
-    title: "Recommandation intelligente",
-    desc: "Quand un propriétaire décrit un problème, Alex recommande les entrepreneurs pertinents.",
+    title: "Recommandation IA",
+    desc: "Quand un propriétaire décrit un problème, Alex analyse le contexte et recommande les entrepreneurs les plus pertinents.",
   },
   {
     icon: Calendar,
-    title: "Réservation simple",
-    desc: "Agenda connecté ou préférence : matin, après-midi, fin de journée.",
+    title: "Système de rendez-vous",
+    desc: "Les propriétaires réservent directement. Vous recevez des rendez-vous qualifiés, pas des demandes de soumission.",
   },
 ];
 
 const AIPP_BENEFITS = [
-  { icon: Eye, label: "Votre visibilité" },
-  { icon: TrendingUp, label: "Votre position" },
-  { icon: Sparkles, label: "Vos recommandations Alex" },
+  { icon: Eye, label: "Visibilité dans les résultats de recherche", desc: "Plus votre score est élevé, plus vous apparaissez en haut." },
+  { icon: TrendingUp, label: "Position dans les recommandations Alex", desc: "Alex priorise les profils avec un AIPP élevé." },
+  { icon: Shield, label: "Crédibilité auprès des propriétaires", desc: "Un badge vérifié et un score fort inspirent confiance." },
 ];
 
 const PLANS = [
   {
     name: "Founder Early",
-    price: "1 997$",
-    tag: "Accès à vie",
+    price: "1 997",
+    tag: "Accès fondateur",
     features: [
       "Profil AIPP complet",
-      "Recommandation Alex",
+      "Recommandation Alex activée",
       "1 territoire inclus",
       "Accès fondateur permanent",
-      "Aucun frais mensuel",
+      "Aucun frais mensuel récurrent",
     ],
   },
   {
     name: "Founder Prime",
-    price: "2 997$",
-    tag: "Priorité Alex",
+    price: "2 997",
+    tag: "Priorité maximale",
     highlight: true,
     features: [
       "Tout de Founder Early",
-      "Priorité maximale Alex",
+      "Priorité maximale dans Alex",
       "3 territoires inclus",
       "Badge Fondateur Prime",
       "Support prioritaire dédié",
+      "Accès bêta aux nouvelles fonctionnalités",
     ],
   },
 ];
 
 const TERRITORIES = [
-  { category: "Isolation", city: "Laval", used: 3, total: 5 },
-  { category: "Toiture", city: "Montréal", used: 6, total: 10 },
+  { category: "Isolation", city: "Laval", used: 2, total: 5 },
+  { category: "Toiture", city: "Montréal", used: 7, total: 10 },
   { category: "Drainage", city: "Longueuil", used: 2, total: 5 },
+  { category: "Plomberie", city: "Québec", used: 1, total: 5 },
+];
+
+const REFERRAL_STEPS = [
+  { icon: Send, label: "Envoyez votre lien à 2 entrepreneurs sérieux" },
+  { icon: Users, label: "Ils créent leur profil AIPP sur UNPRO" },
+  { icon: Gift, label: "Vous recevez un boost de visibilité immédiat" },
 ];
 
 export default function ProfessionalsPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <MainLayout>
       {/* ── Hero ── */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 mesh-gradient" />
-        <div className="absolute top-[5%] left-[-15%] w-[50vw] h-[50vw] rounded-full bg-secondary/10 blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-[5%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-primary/8 blur-[80px] pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-secondary/6 via-primary/3 to-transparent pointer-events-none" />
+        <div className="absolute top-[5%] left-[-15%] w-[50vw] h-[50vw] rounded-full bg-secondary/8 blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-[5%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-primary/6 blur-[80px] pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col items-center text-center px-5 pt-28 pb-16 md:pt-40 md:pb-24">
+        <div className="relative z-10 flex flex-col items-center text-center px-5 pt-20 pb-14 md:pt-32 md:pb-20">
           <motion.div className="space-y-6 max-w-xl" initial="hidden" animate="visible">
             <motion.div variants={fadeUp} custom={0}>
               <Badge className="rounded-full px-4 py-1.5 text-xs font-semibold gap-1.5 bg-success/10 text-success border-success/20">
@@ -98,21 +108,23 @@ export default function ProfessionalsPage() {
               </Badge>
             </motion.div>
 
-            <motion.h1 variants={fadeUp} custom={1} className="text-[1.75rem] md:text-[3rem] leading-[1.08] font-extrabold tracking-[-0.03em] text-foreground">
+            <motion.h1 variants={fadeUp} custom={1} className="font-display text-3xl md:text-[3rem] leading-[1.08] font-extrabold tracking-tight text-foreground">
               Moins de soumissions inutiles.{" "}
-              <span className="text-gradient">Plus de vrais rendez-vous.</span>
+              <span className="bg-gradient-to-r from-secondary via-primary to-accent bg-clip-text text-transparent">
+                Plus de vrais rendez-vous.
+              </span>
             </motion.h1>
 
             <motion.p variants={fadeUp} custom={2} className="text-sm md:text-base text-muted-foreground leading-relaxed max-w-md mx-auto">
-              UNPRO connecte les propriétaires aux bons entrepreneurs, au bon moment.
+              UNPRO connecte les propriétaires aux bons entrepreneurs, au bon moment. Fini les appels à froid et les soumissions sans retour.
             </motion.p>
 
             <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-              <Button asChild size="lg" className="w-full sm:w-auto h-14 text-base rounded-2xl bg-secondary hover:bg-secondary/90 text-secondary-foreground shadow-[0_0_32px_-4px_hsl(252,100%,65%,0.4)]">
+              <Button asChild size="xl" className="w-full sm:w-auto rounded-2xl bg-secondary hover:bg-secondary/90 text-secondary-foreground shadow-glow">
                 <Link to="/aipp-score">Voir mon Score AIPP <ArrowRight className="h-4 w-4 ml-1" /></Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="w-full sm:w-auto h-14 text-base rounded-2xl border-border/50 hover:bg-muted/30">
-                <Link to="/contractor-onboarding">Réserver ma position <ChevronRight className="h-4 w-4 ml-1" /></Link>
+              <Button asChild variant="outline" size="xl" className="w-full sm:w-auto rounded-2xl">
+                <Link to="/contractor-onboarding">Rejoindre UNPRO <ChevronRight className="h-4 w-4 ml-1" /></Link>
               </Button>
             </motion.div>
           </motion.div>
@@ -120,24 +132,27 @@ export default function ProfessionalsPage() {
       </section>
 
       {/* ── Comment ça fonctionne ── */}
-      <section className="px-5 py-14 relative">
-        <div className="absolute inset-0 hero-gradient" />
-        <div className="relative z-10 max-w-3xl mx-auto">
-          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-10">
-            <p className="text-xs font-semibold text-secondary tracking-widest uppercase mb-2">Comment ça fonctionne</p>
-            <h2 className="text-xl md:text-2xl font-bold text-foreground">Des rendez-vous qualifiés, pas des soumissions.</h2>
+      <section className="px-5 py-16">
+        <div className="max-w-5xl mx-auto">
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-12">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary/10 border border-secondary/20 px-3 py-1 text-caption font-semibold text-secondary mb-4">
+              <Brain className="h-3 w-3" /> Comment ça fonctionne
+            </span>
+            <h2 className="font-display text-2xl font-bold text-foreground">Des rendez-vous qualifiés, pas des soumissions.</h2>
           </motion.div>
 
-          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid md:grid-cols-3 gap-4">
             {HOW_IT_WORKS.map((item, i) => (
               <motion.div key={item.title} variants={fadeUp} custom={i}>
-                <div className="glass-card-elevated rounded-2xl p-6 h-full text-center">
-                  <div className="h-14 w-14 mx-auto rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center mb-4">
-                    <item.icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="text-sm font-bold text-foreground mb-2">{item.title}</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
-                </div>
+                <Card className="h-full text-center">
+                  <CardContent className="p-6">
+                    <div className="h-12 w-12 mx-auto rounded-2xl bg-gradient-to-br from-secondary/15 to-primary/10 flex items-center justify-center mb-4">
+                      <item.icon className="h-6 w-6 text-secondary" />
+                    </div>
+                    <h3 className="font-display text-sm font-bold text-foreground mb-2">{item.title}</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+                  </CardContent>
+                </Card>
               </motion.div>
             ))}
           </motion.div>
@@ -145,81 +160,124 @@ export default function ProfessionalsPage() {
       </section>
 
       {/* ── Score AIPP ── */}
-      <section className="px-5 py-14 relative">
-        <div className="absolute inset-0 section-gradient" />
-        <div className="relative z-10 max-w-lg mx-auto">
-          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-8">
-            <p className="text-xs font-semibold text-secondary tracking-widest uppercase mb-2">Score AIPP</p>
-            <h2 className="text-xl md:text-2xl font-bold text-foreground">Votre Score AIPP détermine tout.</h2>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="glass-card-elevated rounded-3xl p-6 md:p-8">
-            {/* Benefits list */}
-            <div className="space-y-3 mb-8">
-              {AIPP_BENEFITS.map((b) => (
-                <div key={b.label} className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                    <b.icon className="h-4 w-4 text-primary" />
+      <section className="px-5 py-16 bg-muted/30">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-caption font-semibold text-primary mb-4">
+                <TrendingUp className="h-3 w-3" /> Score AIPP
+              </span>
+              <h2 className="font-display text-2xl font-bold text-foreground mb-3">Votre Score AIPP détermine tout.</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                Le score AIPP (AI-Indexed Professional Profile) mesure la qualité, la crédibilité et la visibilité de votre profil. Plus il est élevé, plus vous recevez de rendez-vous.
+              </p>
+              <div className="space-y-3">
+                {AIPP_BENEFITS.map((b) => (
+                  <div key={b.label} className="flex items-start gap-3 rounded-xl bg-card/60 border border-border/40 p-3.5">
+                    <div className="shrink-0 h-8 w-8 rounded-lg bg-primary/8 flex items-center justify-center">
+                      <b.icon className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-foreground mb-0.5">{b.label}</p>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">{b.desc}</p>
+                    </div>
                   </div>
-                  <span className="text-sm font-medium text-foreground">{b.label}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </motion.div>
 
-            <div className="divider-gradient mb-6" />
-
-            {/* Score comparison */}
-            <div className="flex items-center justify-center gap-8">
-              <div className="text-center">
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Actuel</p>
-                <ScoreRing score={61} size={80} label="Score" />
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <ArrowRight className="h-5 w-5 text-secondary" />
-                <span className="text-[10px] text-secondary font-semibold">Potentiel</span>
-              </div>
-              <div className="text-center">
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Possible</p>
-                <ScoreRing score={82} size={80} label="Score" colorClass="text-success" />
-              </div>
-            </div>
-          </motion.div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="flex justify-center"
+            >
+              <Card>
+                <CardContent className="p-8">
+                  <div className="flex items-center justify-center gap-8">
+                    <div className="text-center">
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">Actuel</p>
+                      <ScoreRing score={61} size={90} label="Score" />
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <ArrowRight className="h-5 w-5 text-secondary" />
+                      <span className="text-[10px] text-secondary font-semibold">Potentiel</span>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">Possible</p>
+                      <ScoreRing score={82} size={90} label="Score" colorClass="text-success" />
+                    </div>
+                  </div>
+                  <div className="mt-6 pt-4 border-t border-border/30 text-center">
+                    <Button asChild variant="soft" size="sm">
+                      <Link to="/aipp-score">Calculer mon score <ChevronRight className="h-3.5 w-3.5 ml-1" /></Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
         </div>
       </section>
 
       {/* ── Offres Founder ── */}
-      <section className="px-5 py-14">
-        <div className="max-w-3xl mx-auto">
-          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-10">
-            <p className="text-xs font-semibold text-secondary tracking-widest uppercase mb-2">Offres Founder</p>
-            <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">Accès exclusif, places limitées.</h2>
-            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-              Vous ne payez que si vous voulez augmenter le nombre de rendez-vous.
+      <section className="px-5 py-16">
+        <div className="max-w-5xl mx-auto">
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-4">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-warning/10 border border-warning/20 px-3 py-1 text-caption font-semibold text-warning mb-4">
+              <Sparkles className="h-3 w-3" /> Offres Founder
+            </span>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-2">Accès exclusif, places limitées.</h2>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="rounded-xl bg-success/8 border border-success/15 px-4 py-3 text-center mb-10 max-w-md mx-auto"
+          >
+            <p className="text-xs text-success font-semibold">
+              💡 Vous ne payez que si vous voulez augmenter le nombre de rendez-vous.
             </p>
           </motion.div>
 
-          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid md:grid-cols-2 gap-5 max-w-3xl mx-auto">
             {PLANS.map((p, i) => (
               <motion.div key={p.name} variants={fadeUp} custom={i}>
-                <div className={`rounded-3xl p-6 h-full ${p.highlight ? "pricing-highlight bg-gradient-to-br from-secondary/8 to-primary/4 shadow-glow" : "glass-card-elevated"}`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-base font-bold text-foreground">{p.name}</h3>
-                      <Badge className="mt-1 bg-secondary/15 text-secondary border-secondary/20 text-[10px]">{p.tag}</Badge>
+                <Card className={`h-full ${p.highlight ? "border-secondary/30 shadow-glow relative overflow-hidden" : ""}`}>
+                  {p.highlight && (
+                    <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-secondary via-primary to-accent" />
+                  )}
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="font-display text-base font-bold text-foreground">{p.name}</h3>
+                        <Badge className="mt-1.5 bg-secondary/12 text-secondary border-secondary/20 text-[10px]">{p.tag}</Badge>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-display text-3xl font-extrabold text-foreground">{p.price}<span className="text-sm font-semibold text-muted-foreground">$</span></p>
+                        <p className="text-[10px] text-muted-foreground">paiement unique</p>
+                      </div>
                     </div>
-                    <p className="text-2xl font-extrabold text-foreground">{p.price}</p>
-                  </div>
-                  <ul className="space-y-2 mb-6">
-                    {p.features.map(f => (
-                      <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" /> {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button asChild className={`w-full rounded-2xl h-12 ${p.highlight ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground shadow-[0_0_24px_-4px_hsl(252,100%,65%,0.3)]" : ""}`} variant={p.highlight ? "default" : "outline"}>
-                    <Link to="/contractor-onboarding">Réserver ma place <ArrowRight className="h-4 w-4 ml-1" /></Link>
-                  </Button>
-                </div>
+
+                    <ul className="space-y-2.5 mb-6">
+                      {p.features.map(f => (
+                        <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0 mt-0.5" /> {f}
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Button
+                      asChild
+                      className={`w-full rounded-xl ${p.highlight ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground shadow-glow" : ""}`}
+                      variant={p.highlight ? "default" : "outline"}
+                      size="lg"
+                    >
+                      <Link to="/contractor-onboarding">Réserver ma place <ArrowRight className="h-4 w-4 ml-1" /></Link>
+                    </Button>
+                  </CardContent>
+                </Card>
               </motion.div>
             ))}
           </motion.div>
@@ -227,41 +285,51 @@ export default function ProfessionalsPage() {
       </section>
 
       {/* ── Territoires ── */}
-      <section className="px-5 py-14 relative">
-        <div className="absolute inset-0 section-gradient" />
-        <div className="relative z-10 max-w-lg mx-auto">
-          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-8">
-            <p className="text-xs font-semibold text-secondary tracking-widest uppercase mb-2">Territoires</p>
-            <h2 className="text-xl md:text-2xl font-bold text-foreground">Places limitées par territoire.</h2>
+      <section className="px-5 py-16 bg-muted/30">
+        <div className="max-w-5xl mx-auto">
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-10">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-caption font-semibold text-primary mb-4">
+              <MapPin className="h-3 w-3" /> Territoires
+            </span>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-2">Places limitées par territoire.</h2>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Chaque catégorie dans chaque ville a un nombre maximum d'entrepreneurs. Réservez avant que votre territoire soit complet.
+            </p>
           </motion.div>
 
-          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="space-y-3">
+          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid sm:grid-cols-2 gap-3 max-w-2xl mx-auto">
             {TERRITORIES.map((t, i) => {
+              const remaining = t.total - t.used;
               const pct = (t.used / t.total) * 100;
               const almostFull = pct >= 60;
               return (
                 <motion.div key={t.category + t.city} variants={fadeUp} custom={i}>
-                  <div className="glass-card-elevated rounded-2xl p-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2.5">
-                        <MapPin className="h-4 w-4 text-primary" />
-                        <div>
-                          <span className="text-sm font-bold text-foreground">{t.category}</span>
-                          <span className="text-xs text-muted-foreground ml-2">{t.city}</span>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-2.5">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
+                          <div>
+                            <span className="text-sm font-bold text-foreground">{t.category}</span>
+                            <span className="text-xs text-muted-foreground ml-1.5">{t.city}</span>
+                          </div>
                         </div>
+                        <Badge className={`text-[10px] ${almostFull ? "bg-warning/12 text-warning border-warning/20" : "bg-success/12 text-success border-success/20"}`}>
+                          {remaining} places restantes
+                        </Badge>
                       </div>
-                      <Badge className={`text-[10px] ${almostFull ? "bg-warning/15 text-warning border-warning/20" : "bg-success/15 text-success border-success/20"}`}>
-                        {t.total - t.used} places restantes
-                      </Badge>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-700 ${almostFull ? "bg-warning" : "bg-success"}`}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-1.5">{t.used} / {t.total} places occupées</p>
-                  </div>
+                      <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                        <motion.div
+                          className={`h-full rounded-full ${almostFull ? "bg-warning" : "bg-success"}`}
+                          initial={{ width: 0 }}
+                          whileInView={{ width: `${pct}%` }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.8, delay: i * 0.1 }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1.5">{t.used} / {t.total} places occupées</p>
+                    </CardContent>
+                  </Card>
                 </motion.div>
               );
             })}
@@ -269,29 +337,99 @@ export default function ProfessionalsPage() {
         </div>
       </section>
 
+      {/* ── Referral Section ── */}
+      <section className="px-5 py-16">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="rounded-2xl bg-gradient-to-br from-secondary/8 via-primary/5 to-accent/5 border border-secondary/15 overflow-hidden"
+          >
+            <div className="p-8 md:p-10">
+              <div className="grid md:grid-cols-2 gap-8 items-center">
+                <div>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary/12 border border-secondary/20 px-3 py-1 text-caption font-semibold text-secondary mb-4">
+                    <Gift className="h-3 w-3" /> Programme de référence
+                  </span>
+                  <h2 className="font-display text-2xl font-bold text-foreground mb-3">
+                    Vous voulez des rendez-vous la semaine prochaine ?
+                  </h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                    Référez <span className="font-bold text-foreground">2 entrepreneurs sérieux</span> et recevez un boost de visibilité immédiat dans votre territoire. Plus vous référez, plus vous montez.
+                  </p>
+
+                  <div className="space-y-3 mb-6">
+                    {REFERRAL_STEPS.map((step, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="shrink-0 h-8 w-8 rounded-lg bg-secondary/12 flex items-center justify-center">
+                          <step.icon className="h-4 w-4 text-secondary" />
+                        </div>
+                        <span className="text-xs text-foreground/80 font-medium">{step.label}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Button asChild size="lg" className="rounded-xl bg-secondary hover:bg-secondary/90 text-secondary-foreground shadow-glow">
+                    <Link to="/contractor-onboarding">Obtenir mon lien de référence <ArrowRight className="h-4 w-4 ml-1" /></Link>
+                  </Button>
+                </div>
+
+                {/* Referral visual */}
+                <div className="hidden md:block">
+                  <div className="rounded-2xl border border-border/40 bg-card/70 backdrop-blur-sm p-6 space-y-4">
+                    <div className="text-center mb-2">
+                      <p className="font-display text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Votre impact</p>
+                      <p className="font-display text-4xl font-extrabold text-secondary">2</p>
+                      <p className="text-[11px] text-muted-foreground">références nécessaires</p>
+                    </div>
+                    <div className="space-y-2.5">
+                      {[
+                        { label: "Boost visibilité", value: "+25 %", color: "text-success" },
+                        { label: "Priorité Alex", value: "+1 niveau", color: "text-primary" },
+                        { label: "Score AIPP", value: "+5 pts", color: "text-secondary" },
+                      ].map((r) => (
+                        <div key={r.label} className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
+                          <span className="text-xs text-muted-foreground">{r.label}</span>
+                          <span className={`text-xs font-bold ${r.color}`}>{r.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ── CTA Final ── */}
-      <section className="px-5 py-16 relative">
-        <div className="absolute inset-0 mesh-gradient" />
-        <div className="relative z-10 max-w-lg mx-auto text-center space-y-6">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+      <section className="px-5 py-16">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="rounded-2xl bg-gradient-to-br from-primary/8 via-secondary/5 to-accent/5 border border-primary/15 p-8 text-center"
+          >
             <Sparkles className="h-8 w-8 text-secondary mx-auto mb-4" />
-            <h2 className="text-xl md:text-2xl font-bold text-foreground mb-3">
+            <h2 className="font-display text-xl font-bold text-foreground mb-3">
               Réservez votre position dans le réseau UNPRO
             </h2>
-            <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-6">
-              Rejoignez les premiers entrepreneurs à bénéficier de l'IA pour recevoir des rendez-vous qualifiés.
+            <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
+              Rejoignez les premiers entrepreneurs à bénéficier de l'IA pour recevoir des rendez-vous qualifiés, sans soumissions inutiles.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button asChild size="lg" className="w-full sm:w-auto h-14 text-base rounded-2xl bg-secondary hover:bg-secondary/90 text-secondary-foreground shadow-[0_0_32px_-4px_hsl(252,100%,65%,0.4)]">
+              <Button asChild size="lg" className="rounded-xl bg-secondary hover:bg-secondary/90 text-secondary-foreground shadow-glow">
                 <Link to="/contractor-onboarding">Créer mon profil <ArrowRight className="h-4 w-4 ml-1" /></Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="w-full sm:w-auto h-14 text-base rounded-2xl border-border/50 hover:bg-muted/30">
+              <Button asChild variant="outline" size="lg" className="rounded-xl">
                 <Link to="/aipp-score">Voir mon Score AIPP</Link>
               </Button>
             </div>
           </motion.div>
         </div>
       </section>
-    </div>
+    </MainLayout>
   );
 }
