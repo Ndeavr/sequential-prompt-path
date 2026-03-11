@@ -6,7 +6,7 @@ type Msg = { role: "user" | "assistant"; content: string };
 const ALEX_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-chat`;
 
 export const useAlex = () => {
-  const { session } = useAuth();
+  const { session, isAuthenticated, role } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -44,6 +44,12 @@ export const useAlex = () => {
 
       try {
         const allMessages = [...messages, userMsg];
+        const enrichedContext = {
+          ...context,
+          isAuthenticated,
+          userRole: role,
+        };
+
         const resp = await fetch(ALEX_URL, {
           method: "POST",
           headers: {
@@ -55,7 +61,7 @@ export const useAlex = () => {
               role: m.role,
               content: m.content,
             })),
-            context,
+            context: enrichedContext,
           }),
           signal: controller.signal,
         });
@@ -100,9 +106,7 @@ export const useAlex = () => {
 
             try {
               const parsed = JSON.parse(jsonStr);
-              const content = parsed.choices?.[0]?.delta?.content as
-                | string
-                | undefined;
+              const content = parsed.choices?.[0]?.delta?.content as string | undefined;
               if (content) upsertAssistant(content);
             } catch {
               textBuffer = line + "\n" + textBuffer;
@@ -122,9 +126,7 @@ export const useAlex = () => {
             if (jsonStr === "[DONE]") continue;
             try {
               const parsed = JSON.parse(jsonStr);
-              const content = parsed.choices?.[0]?.delta?.content as
-                | string
-                | undefined;
+              const content = parsed.choices?.[0]?.delta?.content as string | undefined;
               if (content) upsertAssistant(content);
             } catch {
               /* ignore */
@@ -140,7 +142,7 @@ export const useAlex = () => {
         abortRef.current = null;
       }
     },
-    [messages, session]
+    [messages, session, isAuthenticated, role]
   );
 
   const cancel = useCallback(() => {
