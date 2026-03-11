@@ -24,6 +24,7 @@ import GuidePage from "@/pages/seo/GuidePage";
 import SeoDirectoryPage from "@/pages/seo/SeoDirectoryPage";
 import PropertyGraphPage from "@/pages/PropertyGraphPage";
 import AlexChat from "@/pages/AlexChat";
+import FlywheelPage from "@/pages/FlywheelPage";
 
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
