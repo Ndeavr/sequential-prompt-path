@@ -15,17 +15,18 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Manrope", "system-ui", "-apple-system", "sans-serif"],
+        display: ["Space Grotesk", "Manrope", "system-ui", "sans-serif"],
       },
       fontSize: {
-        "display": ["3.5rem", { lineHeight: "1.05", fontWeight: "800", letterSpacing: "-0.03em" }],
-        "hero": ["3rem", { lineHeight: "1.08", fontWeight: "800", letterSpacing: "-0.025em" }],
-        "hero-sm": ["2.25rem", { lineHeight: "1.12", fontWeight: "800", letterSpacing: "-0.02em" }],
-        "title": ["1.75rem", { lineHeight: "1.2", fontWeight: "700", letterSpacing: "-0.015em" }],
-        "section": ["1.5rem", { lineHeight: "1.25", fontWeight: "700", letterSpacing: "-0.01em" }],
-        "body-lg": ["1.125rem", { lineHeight: "1.65" }],
+        "display": ["3.75rem", { lineHeight: "1.02", fontWeight: "700", letterSpacing: "-0.035em" }],
+        "hero": ["3rem", { lineHeight: "1.06", fontWeight: "700", letterSpacing: "-0.03em" }],
+        "hero-sm": ["2.25rem", { lineHeight: "1.1", fontWeight: "700", letterSpacing: "-0.025em" }],
+        "title": ["1.75rem", { lineHeight: "1.18", fontWeight: "600", letterSpacing: "-0.02em" }],
+        "section": ["1.375rem", { lineHeight: "1.25", fontWeight: "600", letterSpacing: "-0.015em" }],
+        "body-lg": ["1.0625rem", { lineHeight: "1.65" }],
         "body": ["0.9375rem", { lineHeight: "1.6" }],
         "meta": ["0.8125rem", { lineHeight: "1.5" }],
-        "caption": ["0.6875rem", { lineHeight: "1.45", letterSpacing: "0.02em" }],
+        "caption": ["0.6875rem", { lineHeight: "1.45", letterSpacing: "0.015em" }],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -138,6 +139,10 @@ export default {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.7" },
         },
+        "glow-pulse": {
+          "0%, 100%": { boxShadow: "0 0 20px -4px hsl(222 100% 65% / 0.2)" },
+          "50%": { boxShadow: "0 0 32px -4px hsl(222 100% 65% / 0.35)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -150,6 +155,7 @@ export default {
         "slide-in-right": "slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
         "shimmer": "shimmer 2s linear infinite",
         "pulse-soft": "pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "glow-pulse": "glow-pulse 3s ease-in-out infinite",
       },
       spacing: {
         "18": "4.5rem",
