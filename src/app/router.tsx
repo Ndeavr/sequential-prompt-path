@@ -14,6 +14,7 @@ import ServiceLocationPage from "@/pages/seo/ServiceLocationPage";
 import ProblemLocationPage from "@/pages/seo/ProblemLocationPage";
 import GuidePage from "@/pages/seo/GuidePage";
 import SeoDirectoryPage from "@/pages/seo/SeoDirectoryPage";
+import PropertyGraphPage from "@/pages/PropertyGraphPage";
 
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
