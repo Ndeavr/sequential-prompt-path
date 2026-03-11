@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Users, Briefcase, FileText, Star, FolderOpen, CalendarDays, TrendingUp, LogOut, MapPin, BarChart3, Sparkles, Brain } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, FileText, Star, FolderOpen, CalendarDays, TrendingUp, LogOut, MapPin, BarChart3, Sparkles, Brain, Palette } from "lucide-react";
 import type { ReactNode } from "react";
 
 const navItems = [
@@ -16,6 +16,7 @@ const navItems = [
   { to: "/admin/documents", label: "Documents", icon: FolderOpen },
   { to: "/admin/growth", label: "Croissance", icon: BarChart3 },
   { to: "/admin/agents", label: "Agents IA", icon: Brain },
+  { to: "/admin/media", label: "Média IA", icon: Palette },
 ];
 
 const AdminLayout = ({ children }: { children: ReactNode }) => {
