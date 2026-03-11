@@ -3,16 +3,44 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
-interface AgentTask {
+export interface AgentRegistryEntry {
+  id: string;
+  agent_key: string;
+  agent_name: string;
+  layer: "chief" | "executive" | "operational" | "micro";
+  domain: string;
+  parent_agent_key: string | null;
+  mission: string | null;
+  actions: string[];
+  triggers: string[];
+  inputs: string[];
+  outputs: string[];
+  tools: string[];
+  success_metrics: string[];
+  config: Record<string, unknown>;
+  autonomy_level: "propose" | "semi_auto" | "full_auto";
+  status: "active" | "paused" | "archived" | "creating";
+  tasks_executed: number;
+  tasks_succeeded: number;
+  success_rate: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgentTask {
   id: string;
   agent_name: string;
   agent_domain: string;
+  agent_key: string | null;
   task_title: string;
   task_description: string | null;
   action_plan: string[];
   impact_score: number;
   urgency: string;
   status: string;
+  auto_executable: boolean;
+  execution_mode: string;
   execution_result: Record<string, unknown> | null;
   proposed_at: string;
   reviewed_at: string | null;
@@ -20,7 +48,7 @@ interface AgentTask {
   executed_at: string | null;
 }
 
-interface AgentLog {
+export interface AgentLog {
   id: string;
   task_id: string | null;
   agent_name: string;
@@ -30,7 +58,7 @@ interface AgentLog {
   created_at: string;
 }
 
-interface AgentMetric {
+export interface AgentMetric {
   id: string;
   metric_name: string;
   metric_value: number;
@@ -38,17 +66,24 @@ interface AgentMetric {
   snapshot_at: string;
 }
 
-interface AgentInfo {
-  name: string;
+export interface AgentMemory {
+  id: string;
+  memory_key: string;
+  memory_type: string;
   domain: string;
-  label: string;
+  content: string;
+  metadata: Record<string, unknown>;
+  importance: number;
+  agent_key: string | null;
+  created_at: string;
 }
 
-interface OrchestratorStatus {
+export interface OrchestratorStatus {
   tasks: AgentTask[];
   logs: AgentLog[];
   metrics: AgentMetric[];
-  agents: AgentInfo[];
+  agents: AgentRegistryEntry[];
+  memory: AgentMemory[];
 }
 
 export const useAgentOrchestrator = () => {
@@ -76,7 +111,7 @@ export const useAgentOrchestrator = () => {
       return data;
     },
     onSuccess: (data) => {
-      toast.success(`Analyse terminée: ${data.proposals?.length ?? 0} propositions générées`);
+      toast.success(`Analyse terminée: ${data.proposals?.length ?? 0} propositions, ${data.stored ?? 0} nouvelles`);
       queryClient.invalidateQueries({ queryKey: ["agent-orchestrator-status"] });
     },
     onError: () => toast.error("Erreur lors de l'analyse"),
@@ -110,6 +145,34 @@ export const useAgentOrchestrator = () => {
     },
   });
 
+  const toggleAgentMutation = useMutation({
+    mutationFn: async ({ agentKey, newStatus }: { agentKey: string; newStatus: string }) => {
+      const { data, error } = await supabase.functions.invoke("agent-orchestrator", {
+        body: { action: "toggle_agent", agent_key: agentKey, new_status: newStatus },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Statut agent mis à jour");
+      queryClient.invalidateQueries({ queryKey: ["agent-orchestrator-status"] });
+    },
+  });
+
+  const createAgentMutation = useMutation({
+    mutationFn: async (agentData: Record<string, string>) => {
+      const { data, error } = await supabase.functions.invoke("agent-orchestrator", {
+        body: { action: "create_agent", ...agentData },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Nouvel agent créé");
+      queryClient.invalidateQueries({ queryKey: ["agent-orchestrator-status"] });
+    },
+  });
+
   return {
     status: statusQuery.data,
     isLoading: statusQuery.isLoading,
@@ -117,5 +180,7 @@ export const useAgentOrchestrator = () => {
     isAnalyzing: analyzeMutation.isPending,
     approveTask: approveMutation.mutate,
     rejectTask: rejectMutation.mutate,
+    toggleAgent: toggleAgentMutation.mutate,
+    createAgent: createAgentMutation.mutate,
   };
 };
