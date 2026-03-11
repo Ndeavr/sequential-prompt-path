@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import ScoreRing from "@/components/ui/score-ring";
 import { useContractorProfile, useContractorReviews, useContractorDocuments } from "@/hooks/useContractor";
-import { useLeads } from "@/hooks/useLeads";
+import { useContractorLeads } from "@/hooks/useLeads";
 import { useAppointments } from "@/hooks/useAppointments";
 import { motion } from "framer-motion";
 import {
