@@ -7,7 +7,7 @@ import {
   Sparkles, ArrowRight, Star, Clock,
   MessageCircle, CalendarDays, Heart, Brain, FolderOpen, Lightbulb, HardHat,
   Building2, Handshake, FileText, Trophy, CheckCircle2, ChevronRight,
-  Upload, BarChart3, Quote, Zap,
+  Upload, BarChart3, Quote, Zap, ShieldCheck,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import heroImg from "@/assets/hero-home.jpg";
