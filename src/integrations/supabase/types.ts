@@ -149,6 +149,45 @@ export type Database = {
           },
         ]
       }
+      cities: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          latitude: number | null
+          longitude: number | null
+          name: string
+          population: number | null
+          province: string
+          province_slug: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          population?: number | null
+          province: string
+          province_slug: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          population?: number | null
+          province?: string
+          province_slug?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       contractor_subscriptions: {
         Row: {
           billing_interval: string
@@ -456,6 +495,79 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          budget_max: number | null
+          budget_min: number | null
+          category_id: string | null
+          city_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          property_id: string
+          status: string
+          timeline: string | null
+          title: string
+          updated_at: string
+          urgency: string | null
+          user_id: string
+        }
+        Insert: {
+          budget_max?: number | null
+          budget_min?: number | null
+          category_id?: string | null
+          city_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          property_id: string
+          status?: string
+          timeline?: string | null
+          title: string
+          updated_at?: string
+          urgency?: string | null
+          user_id: string
+        }
+        Update: {
+          budget_max?: number | null
+          budget_min?: number | null
+          category_id?: string | null
+          city_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          property_id?: string
+          status?: string
+          timeline?: string | null
+          title?: string
+          updated_at?: string
+          urgency?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       properties: {
         Row: {
           address: string
@@ -676,6 +788,7 @@ export type Database = {
           description: string | null
           file_url: string | null
           id: string
+          project_id: string | null
           property_id: string
           status: Database["public"]["Enums"]["quote_status"] | null
           submitted_at: string
@@ -691,6 +804,7 @@ export type Database = {
           description?: string | null
           file_url?: string | null
           id?: string
+          project_id?: string | null
           property_id: string
           status?: Database["public"]["Enums"]["quote_status"] | null
           submitted_at?: string
@@ -706,6 +820,7 @@ export type Database = {
           description?: string | null
           file_url?: string | null
           id?: string
+          project_id?: string | null
           property_id?: string
           status?: Database["public"]["Enums"]["quote_status"] | null
           submitted_at?: string
@@ -719,6 +834,13 @@ export type Database = {
             columns: ["contractor_id"]
             isOneToOne: false
             referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
@@ -770,6 +892,107 @@ export type Database = {
             columns: ["contractor_id"]
             isOneToOne: false
             referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_pages: {
+        Row: {
+          category_id: string | null
+          city_id: string | null
+          content_data: Json | null
+          created_at: string
+          id: string
+          is_published: boolean
+          meta_description: string | null
+          page_type: string
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          city_id?: string | null
+          content_data?: Json | null
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          meta_description?: string | null
+          page_type: string
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          city_id?: string | null
+          content_data?: Json | null
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          meta_description?: string | null
+          page_type?: string
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_pages_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_pages_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean
+          name: string
+          parent_id: string | null
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          parent_id?: string | null
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          parent_id?: string | null
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
             referencedColumns: ["id"]
           },
         ]
