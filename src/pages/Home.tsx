@@ -309,8 +309,8 @@ const Home = () => {
                     <p className="text-[11px] text-muted-foreground mt-0.5">Posez vos questions sur vos travaux.</p>
                   </div>
                 </div>
-                <Button size="sm" variant="outline" className="mt-4 w-full rounded-xl h-10 text-sm border-border/60 gap-1.5">
-                  <MessageCircle className="h-3.5 w-3.5" /> Parler avec Alex
+                <Button asChild size="sm" variant="outline" className="mt-4 w-full rounded-xl h-10 text-sm border-border/60 gap-1.5">
+                  <Link to="/alex"><MessageCircle className="h-3.5 w-3.5" /> Parler avec Alex</Link>
                 </Button>
               </div>
             </motion.div>
