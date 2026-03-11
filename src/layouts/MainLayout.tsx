@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Sparkles, Menu, X, Bell } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import AlexGlobalOrb from "@/components/alex/AlexGlobalOrb";
 
 interface MainLayoutProps {
   children: ReactNode;
