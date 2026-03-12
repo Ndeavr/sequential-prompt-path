@@ -57,6 +57,7 @@ import ReserveFundAnalyzer from "@/pages/dashboard/ReserveFundAnalyzer";
 import SyndicateMaintenance from "@/pages/dashboard/SyndicateMaintenance";
 import SyndicateVotes from "@/pages/dashboard/SyndicateVotes";
 import SyndicateVoteCreate from "@/pages/dashboard/SyndicateVoteCreate";
+import SyndicateGrowthDashboard from "@/pages/dashboard/SyndicateGrowthDashboard";
 
 // Contractor Pro
 import ProDashboard from "@/pages/pro/ProDashboard";
