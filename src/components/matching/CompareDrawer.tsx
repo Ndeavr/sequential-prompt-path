@@ -17,7 +17,7 @@ interface CompareDrawerProps {
   onRemove: (id: string) => void;
 }
 
-const dimensions = [
+const dimensions: { key: string; label: string; invert?: boolean }[] = [
   { key: "recommendation_score", label: "Score URS" },
   { key: "success_probability", label: "Probabilité de succès" },
   { key: "conflict_risk_score", label: "Risque de conflit", invert: true },
@@ -28,7 +28,7 @@ const dimensions = [
   { key: "unpro_score_snapshot", label: "UNPRO" },
   { key: "aipp_score_snapshot", label: "AIPP" },
   { key: "budget_fit_score", label: "Budget" },
-] as const;
+];
 
 const getCellColor = (val: number, invert?: boolean) => {
   const effective = invert ? 100 - val : val;
