@@ -43,6 +43,8 @@ import PropertyInsightsPage from "@/pages/dashboard/PropertyInsightsPage";
 import AccountPage from "@/pages/dashboard/AccountPage";
 import HomeownerAppointments from "@/pages/dashboard/HomeownerAppointments";
 import BookingPage from "@/pages/dashboard/BookingPage";
+import DocumentUploadPage from "@/pages/dashboard/DocumentUploadPage";
+import ProjectNewPage from "@/pages/dashboard/ProjectNewPage";
 
 // Contractor Pro
 import ProDashboard from "@/pages/pro/ProDashboard";
@@ -118,6 +120,8 @@ export const AppRouter = () => (
       <Route path="/dashboard/account" element={<ProtectedRoute requiredRole="homeowner"><AccountPage /></ProtectedRoute>} />
       <Route path="/dashboard/appointments" element={<ProtectedRoute requiredRole="homeowner"><HomeownerAppointments /></ProtectedRoute>} />
       <Route path="/dashboard/book/:id" element={<ProtectedRoute requiredRole="homeowner"><BookingPage /></ProtectedRoute>} />
+      <Route path="/dashboard/documents/upload" element={<ProtectedRoute requiredRole="homeowner"><DocumentUploadPage /></ProtectedRoute>} />
+      <Route path="/dashboard/projects/new" element={<ProtectedRoute requiredRole="homeowner"><ProjectNewPage /></ProtectedRoute>} />
 
       {/* Contractor Pro */}
       <Route path="/pro" element={<ProtectedRoute requiredRole="contractor"><ProDashboard /></ProtectedRoute>} />

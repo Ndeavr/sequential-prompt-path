@@ -563,6 +563,48 @@ export type Database = {
           },
         ]
       }
+      contractor_members: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          id: string
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          id?: string
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_members_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_members_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_performance_metrics: {
         Row: {
           appointment_show_rate: number | null
@@ -1455,6 +1497,75 @@ export type Database = {
         }
         Relationships: []
       }
+      portfolio_properties: {
+        Row: {
+          added_at: string
+          id: string
+          portfolio_id: string
+          property_id: string
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          portfolio_id: string
+          property_id: string
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          portfolio_id?: string
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_properties_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portfolio_properties_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolios: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          max_properties: number
+          name: string
+          plan_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          max_properties?: number
+          name: string
+          plan_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          max_properties?: number
+          name?: string
+          plan_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profile_alignment_answers: {
         Row: {
           answer_code: string
@@ -1619,6 +1730,61 @@ export type Database = {
           },
         ]
       }
+      project_matches: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          explanation: Json | null
+          id: string
+          match_score: number | null
+          project_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          explanation?: Json | null
+          id?: string
+          match_score?: number | null
+          project_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          explanation?: Json | null
+          id?: string
+          match_score?: number | null
+          project_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_matches_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           budget_max: number | null
@@ -1743,6 +1909,56 @@ export type Database = {
         }
         Relationships: []
       }
+      property_documents: {
+        Row: {
+          created_at: string
+          document_type: string
+          file_size: number | null
+          file_url: string | null
+          id: string
+          notes: string | null
+          property_id: string
+          storage_path: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_type?: string
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          property_id: string
+          storage_path?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          property_id?: string
+          storage_path?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_documents_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_events: {
         Row: {
           contractor_id: string | null
@@ -1847,6 +2063,85 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "property_insights_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_members: {
+        Row: {
+          created_at: string
+          id: string
+          property_id: string
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          property_id: string
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          property_id?: string
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_members_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_scores: {
+        Row: {
+          calculated_at: string
+          component_scores: Json | null
+          created_at: string
+          id: string
+          notes: string | null
+          overall_score: number
+          property_id: string
+          score_type: string
+          user_id: string
+        }
+        Insert: {
+          calculated_at?: string
+          component_scores?: Json | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          overall_score?: number
+          property_id: string
+          score_type?: string
+          user_id: string
+        }
+        Update: {
+          calculated_at?: string
+          component_scores?: Json | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          overall_score?: number
+          property_id?: string
+          score_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_scores_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
@@ -2569,6 +2864,48 @@ export type Database = {
           file_type?: string | null
           id?: string
           storage_path?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subscription_accounts: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          max_properties: number
+          plan_type: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          max_properties?: number
+          plan_type?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          max_properties?: number
+          plan_type?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
