@@ -2910,6 +2910,531 @@ export type Database = {
         }
         Relationships: []
       }
+      syndicate_budget_items: {
+        Row: {
+          actual_amount: number | null
+          budgeted_amount: number
+          category: string
+          created_at: string
+          fiscal_year: number
+          id: string
+          label: string
+          notes: string | null
+          syndicate_id: string
+          updated_at: string
+        }
+        Insert: {
+          actual_amount?: number | null
+          budgeted_amount?: number
+          category?: string
+          created_at?: string
+          fiscal_year: number
+          id?: string
+          label: string
+          notes?: string | null
+          syndicate_id: string
+          updated_at?: string
+        }
+        Update: {
+          actual_amount?: number | null
+          budgeted_amount?: number
+          category?: string
+          created_at?: string
+          fiscal_year?: number
+          id?: string
+          label?: string
+          notes?: string | null
+          syndicate_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_budget_items_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicate_capex_forecasts: {
+        Row: {
+          component: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          estimated_cost: number
+          forecast_year: number
+          id: string
+          notes: string | null
+          remaining_life_years: number | null
+          replacement_priority: string | null
+          syndicate_id: string
+          updated_at: string
+          useful_life_years: number | null
+        }
+        Insert: {
+          component: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_cost?: number
+          forecast_year: number
+          id?: string
+          notes?: string | null
+          remaining_life_years?: number | null
+          replacement_priority?: string | null
+          syndicate_id: string
+          updated_at?: string
+          useful_life_years?: number | null
+        }
+        Update: {
+          component?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_cost?: number
+          forecast_year?: number
+          id?: string
+          notes?: string | null
+          remaining_life_years?: number | null
+          replacement_priority?: string | null
+          syndicate_id?: string
+          updated_at?: string
+          useful_life_years?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_capex_forecasts_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicate_maintenance_items: {
+        Row: {
+          actual_cost: number | null
+          category: string | null
+          completed_date: string | null
+          contractor_id: string | null
+          created_at: string
+          description: string | null
+          estimated_cost: number | null
+          id: string
+          plan_id: string
+          priority: string | null
+          scheduled_date: string | null
+          status: string
+          syndicate_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          actual_cost?: number | null
+          category?: string | null
+          completed_date?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_cost?: number | null
+          id?: string
+          plan_id: string
+          priority?: string | null
+          scheduled_date?: string | null
+          status?: string
+          syndicate_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          actual_cost?: number | null
+          category?: string | null
+          completed_date?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_cost?: number | null
+          id?: string
+          plan_id?: string
+          priority?: string | null
+          scheduled_date?: string | null
+          status?: string
+          syndicate_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_maintenance_items_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndicate_maintenance_items_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndicate_maintenance_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "syndicate_maintenance_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndicate_maintenance_items_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicate_maintenance_plans: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          plan_year: number
+          status: string
+          syndicate_id: string
+          title: string
+          total_budget: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          plan_year?: number
+          status?: string
+          syndicate_id: string
+          title: string
+          total_budget?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          plan_year?: number
+          status?: string
+          syndicate_id?: string
+          title?: string
+          total_budget?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_maintenance_plans_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicate_members: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          joined_at: string
+          property_id: string | null
+          role: Database["public"]["Enums"]["syndicate_member_role"]
+          share_percentage: number | null
+          syndicate_id: string
+          unit_number: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          property_id?: string | null
+          role?: Database["public"]["Enums"]["syndicate_member_role"]
+          share_percentage?: number | null
+          syndicate_id: string
+          unit_number?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          property_id?: string | null
+          role?: Database["public"]["Enums"]["syndicate_member_role"]
+          share_percentage?: number | null
+          syndicate_id?: string
+          unit_number?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_members_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndicate_members_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicate_reserve_fund_snapshots: {
+        Row: {
+          annual_contribution: number | null
+          balance: number
+          created_at: string
+          created_by: string | null
+          funding_ratio: number | null
+          id: string
+          notes: string | null
+          snapshot_date: string
+          syndicate_id: string
+          target_balance: number | null
+        }
+        Insert: {
+          annual_contribution?: number | null
+          balance?: number
+          created_at?: string
+          created_by?: string | null
+          funding_ratio?: number | null
+          id?: string
+          notes?: string | null
+          snapshot_date?: string
+          syndicate_id: string
+          target_balance?: number | null
+        }
+        Update: {
+          annual_contribution?: number | null
+          balance?: number
+          created_at?: string
+          created_by?: string | null
+          funding_ratio?: number | null
+          id?: string
+          notes?: string | null
+          snapshot_date?: string
+          syndicate_id?: string
+          target_balance?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_reserve_fund_snapshots_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicate_vote_choices: {
+        Row: {
+          created_at: string
+          display_order: number | null
+          id: string
+          label: string
+          vote_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          label: string
+          vote_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          label?: string
+          vote_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_vote_choices_vote_id_fkey"
+            columns: ["vote_id"]
+            isOneToOne: false
+            referencedRelation: "syndicate_votes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicate_vote_responses: {
+        Row: {
+          choice_id: string
+          id: string
+          member_id: string
+          submitted_at: string
+          user_id: string
+          vote_id: string
+          weight: number | null
+        }
+        Insert: {
+          choice_id: string
+          id?: string
+          member_id: string
+          submitted_at?: string
+          user_id: string
+          vote_id: string
+          weight?: number | null
+        }
+        Update: {
+          choice_id?: string
+          id?: string
+          member_id?: string
+          submitted_at?: string
+          user_id?: string
+          vote_id?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_vote_responses_choice_id_fkey"
+            columns: ["choice_id"]
+            isOneToOne: false
+            referencedRelation: "syndicate_vote_choices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndicate_vote_responses_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "syndicate_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndicate_vote_responses_vote_id_fkey"
+            columns: ["vote_id"]
+            isOneToOne: false
+            referencedRelation: "syndicate_votes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicate_votes: {
+        Row: {
+          closes_at: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          opens_at: string | null
+          quorum_percentage: number
+          required_majority: number
+          result_summary: Json | null
+          status: Database["public"]["Enums"]["vote_status"]
+          syndicate_id: string
+          title: string
+          updated_at: string
+          vote_type: string
+        }
+        Insert: {
+          closes_at?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          opens_at?: string | null
+          quorum_percentage?: number
+          required_majority?: number
+          result_summary?: Json | null
+          status?: Database["public"]["Enums"]["vote_status"]
+          syndicate_id: string
+          title: string
+          updated_at?: string
+          vote_type?: string
+        }
+        Update: {
+          closes_at?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          opens_at?: string | null
+          quorum_percentage?: number
+          required_majority?: number
+          result_summary?: Json | null
+          status?: Database["public"]["Enums"]["vote_status"]
+          syndicate_id?: string
+          title?: string
+          updated_at?: string
+          vote_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_votes_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicates: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          fiscal_year_start: number | null
+          id: string
+          name: string
+          postal_code: string | null
+          province: string | null
+          unit_count: number | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          fiscal_year_start?: number | null
+          id?: string
+          name: string
+          postal_code?: string | null
+          province?: string | null
+          unit_count?: number | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          fiscal_year_start?: number | null
+          id?: string
+          name?: string
+          postal_code?: string | null
+          province?: string | null
+          unit_count?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       territories: {
         Row: {
           category_name: string
@@ -3247,6 +3772,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_syndicate_admin: {
+        Args: { _syndicate_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_syndicate_member: {
+        Args: { _syndicate_id: string; _user_id: string }
+        Returns: boolean
+      }
       match_rag_chunks: {
         Args: {
           filter_namespaces?: string[]
@@ -3297,7 +3830,13 @@ export type Database = {
         | "cancelled"
       property_condition: "excellent" | "good" | "fair" | "poor" | "critical"
       quote_status: "pending" | "analyzed" | "accepted" | "rejected"
+      syndicate_member_role:
+        | "owner"
+        | "board_member"
+        | "manager"
+        | "administrator"
       verification_status: "unverified" | "pending" | "verified" | "rejected"
+      vote_status: "draft" | "open" | "closed" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3437,7 +3976,14 @@ export const Constants = {
       ],
       property_condition: ["excellent", "good", "fair", "poor", "critical"],
       quote_status: ["pending", "analyzed", "accepted", "rejected"],
+      syndicate_member_role: [
+        "owner",
+        "board_member",
+        "manager",
+        "administrator",
+      ],
       verification_status: ["unverified", "pending", "verified", "rejected"],
+      vote_status: ["draft", "open", "closed", "cancelled"],
     },
   },
 } as const
