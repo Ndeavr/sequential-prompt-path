@@ -215,10 +215,10 @@ export default function HeroSection() {
 
               {/* ═══ Popular chips ═══ */}
               <div className="mt-7">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em]" style={{ color: "#6C7A92" }}>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-center md:text-left" style={{ color: "#6C7A92" }}>
                   Populaire
                 </p>
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex flex-wrap gap-2.5 justify-center md:justify-start">
                   {POPULAR_CHIPS.map((chip) => (
                     <button
                       key={chip.label}
