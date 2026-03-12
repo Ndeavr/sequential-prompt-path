@@ -120,7 +120,7 @@ const SyndicateReserveFund = () => {
         </CardHeader>
         <CardContent>
           {!forecasts?.length ? (
-            <EmptyState icon={<Calendar className="h-8 w-8 text-muted-foreground/40" />} title="Aucune prévision" description="Ajoutez des composantes à remplacer." />
+            <EmptyState icon={<Calendar className="h-8 w-8 text-muted-foreground/40" />} message="Aucune prévision — Ajoutez des composantes à remplacer." />
           ) : (
             <div className="space-y-2">
               {forecasts.map((f: any) => (

@@ -29,8 +29,7 @@ const SyndicateMaintenance = () => {
       {!plans?.length ? (
         <EmptyState
           icon={<Wrench className="h-10 w-10 text-muted-foreground/40" />}
-          title="Aucun plan de maintenance"
-          description="Créez un plan d'entretien annuel pour votre immeuble."
+          message="Aucun plan de maintenance — Créez un plan d'entretien annuel pour votre immeuble."
         />
       ) : (
         <div className="space-y-6">

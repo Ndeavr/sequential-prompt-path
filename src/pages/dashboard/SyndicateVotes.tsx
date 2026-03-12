@@ -151,8 +151,7 @@ const SyndicateVotes = () => {
       {!votes?.length ? (
         <EmptyState
           icon={<Vote className="h-10 w-10 text-muted-foreground/40" />}
-          title="Aucun vote"
-          description="Créez une résolution pour commencer."
+          message="Aucun vote — Créez une résolution pour commencer."
           action={
             <Button asChild>
               <Link to={`/dashboard/syndicates/${id}/votes/new`}><Plus className="h-4 w-4 mr-1" /> Créer un vote</Link>

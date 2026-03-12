@@ -24,8 +24,7 @@ const SyndicateDashboard = () => {
         <PageHeader title="Syndicats" description="Gestion de copropriété" />
         <EmptyState
           icon={<Building2 className="h-10 w-10 text-primary/40" />}
-          title="Aucun syndicat"
-          description="Créez ou rejoignez un syndicat de copropriété pour commencer."
+          message="Aucun syndicat — Créez ou rejoignez un syndicat de copropriété pour commencer."
           action={
             <Button asChild>
               <Link to="/dashboard/syndicates/new"><Plus className="h-4 w-4 mr-1" /> Créer un syndicat</Link>
