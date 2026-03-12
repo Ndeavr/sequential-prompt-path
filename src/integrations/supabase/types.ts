@@ -352,6 +352,7 @@ export type Database = {
           category: string
           code: string
           created_at: string
+          display_order: number | null
           id: string
           is_active: boolean
           question_en: string
@@ -364,6 +365,7 @@ export type Database = {
           category: string
           code: string
           created_at?: string
+          display_order?: number | null
           id?: string
           is_active?: boolean
           question_en: string
@@ -376,6 +378,7 @@ export type Database = {
           category?: string
           code?: string
           created_at?: string
+          display_order?: number | null
           id?: string
           is_active?: boolean
           question_en?: string
@@ -2667,6 +2670,47 @@ export type Database = {
       }
     }
     Views: {
+      ccai_answer_matrix: {
+        Row: {
+          answer_code: string | null
+          category: string | null
+          confidence: number | null
+          contractor_id: string | null
+          created_at: string | null
+          id: string | null
+          property_id: string | null
+          question_code: string | null
+          question_en: string | null
+          question_fr: string | null
+          source: string | null
+          updated_at: string | null
+          user_id: string | null
+          weight: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_alignment_answers_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_alignment_answers_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_alignment_answers_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_contractor_public_profile: {
         Row: {
           aipp_score: number | null
@@ -2762,6 +2806,21 @@ export type Database = {
       }
     }
     Functions: {
+      get_ccai_answer_pairs: {
+        Args: {
+          p_contractor_id: string
+          p_property_id?: string
+          p_user_id: string
+        }
+        Returns: {
+          category: string
+          contractor_answer: string
+          homeowner_answer: string
+          is_match: boolean
+          question_code: string
+          weight: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
