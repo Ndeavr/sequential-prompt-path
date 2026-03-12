@@ -1298,6 +1298,92 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_messages: {
+        Row: {
+          agent_calls: Json | null
+          conversation_id: string
+          created_at: string
+          id: string
+          intent: string | null
+          memory_updates: Json | null
+          message_text: string | null
+          role: string
+          stage: string | null
+          structured_payload: Json | null
+          ui_actions: Json | null
+        }
+        Insert: {
+          agent_calls?: Json | null
+          conversation_id: string
+          created_at?: string
+          id?: string
+          intent?: string | null
+          memory_updates?: Json | null
+          message_text?: string | null
+          role: string
+          stage?: string | null
+          structured_payload?: Json | null
+          ui_actions?: Json | null
+        }
+        Update: {
+          agent_calls?: Json | null
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          intent?: string | null
+          memory_updates?: Json | null
+          message_text?: string | null
+          role?: string
+          stage?: string | null
+          structured_payload?: Json | null
+          ui_actions?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          channel: string
+          created_at: string
+          current_intent: string | null
+          current_stage: string | null
+          id: string
+          metadata: Json | null
+          session_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          current_intent?: string | null
+          current_stage?: string | null
+          id?: string
+          metadata?: Json | null
+          session_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          current_intent?: string | null
+          current_stage?: string | null
+          id?: string
+          metadata?: Json | null
+          session_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       dna_fit_results: {
         Row: {
           compatibility_label: string
