@@ -151,6 +151,7 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
       setMode("choose");
       setShowLogin(false);
       setChipContext(undefined);
+      setVoiceAutoStarted(false);
     }
   }, [open]);
 
