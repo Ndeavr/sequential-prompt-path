@@ -2,3 +2,6 @@ project_id = "clmaqdnphbndvmmqvpff"
 
 [functions.validation-orchestrator]
 verify_jwt = false
+
+[functions.answer-engine]
+verify_jwt = false
