@@ -35,6 +35,7 @@ import EnergyPage from "@/pages/EnergyPage";
 import PreventiveMaintenancePage from "@/pages/PreventiveMaintenancePage";
 import CoproprietePage from "@/pages/CoproprietePage";
 import BuildingIntelligenceMap from "@/pages/BuildingIntelligenceMap";
+import AnswerEnginePage from "@/pages/AnswerEnginePage";
 
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
@@ -88,6 +89,7 @@ import AdminGrowth from "@/pages/admin/AdminGrowth";
 import AdminAgents from "@/pages/admin/AdminAgents";
 import AdminMedia from "@/pages/admin/AdminMedia";
 import AdminValidation from "@/pages/admin/AdminValidation";
+import AdminAnswerEngine from "@/pages/admin/AdminAnswerEngine";
 
 export const AppRouter = () => (
   <BrowserRouter>
@@ -117,6 +119,7 @@ export const AppRouter = () => (
       <Route path="/preventive-maintenance" element={<PreventiveMaintenancePage />} />
       <Route path="/copropriete" element={<CoproprietePage />} />
       <Route path="/building-map" element={<BuildingIntelligenceMap />} />
+      <Route path="/answers" element={<AnswerEnginePage />} />
 
       {/* SEO Pages */}
       <Route path="/services" element={<SeoDirectoryPage />} />
@@ -180,6 +183,7 @@ export const AppRouter = () => (
       <Route path="/admin/agents" element={<ProtectedRoute requiredRole="admin"><AdminAgents /></ProtectedRoute>} />
       <Route path="/admin/media" element={<ProtectedRoute requiredRole="admin"><AdminMedia /></ProtectedRoute>} />
       <Route path="/admin/validation" element={<ProtectedRoute requiredRole="admin"><AdminValidation /></ProtectedRoute>} />
+      <Route path="/admin/answer-engine" element={<ProtectedRoute requiredRole="admin"><AdminAnswerEngine /></ProtectedRoute>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
