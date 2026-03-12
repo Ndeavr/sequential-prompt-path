@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Check, AlertTriangle, X, ChevronRight, ChevronDown, Shield, Eye, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PremiumMagneticButton } from "@/components/ui/PremiumMagneticButton";
 import { useState } from "react";
 import type { AuditSection } from "@/services/businessImportService";
 
