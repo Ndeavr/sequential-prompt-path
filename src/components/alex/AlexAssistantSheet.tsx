@@ -310,19 +310,19 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
                   </button>
                 </div>
               </div>
-            ) : mode === "voice" && listening ? (
-              /* ─── Voice mode ─── */
-              <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 text-center space-y-6">
+            ) : mode === "voice" ? (
+              /* ─── Voice mode (auto-started) ─── */
+              <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 text-center space-y-5">
                 <motion.div
                   className="h-24 w-24 rounded-full flex items-center justify-center relative"
                   style={{
                     background: "linear-gradient(135deg, #3F7BFF, #06B6D4)",
                     boxShadow: "0 8px 32px rgba(63,123,255,0.3)",
                   }}
-                  animate={{ scale: [1, 1.08, 1] }}
-                  transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+                  animate={listening ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+                  transition={{ duration: 1.2, repeat: listening ? Infinity : 0, ease: "easeInOut" }}
                 >
-                  {[0, 1, 2].map((i) => (
+                  {listening && [0, 1, 2].map((i) => (
                     <motion.div
                       key={i}
                       className="absolute inset-0 rounded-full"
@@ -334,16 +334,40 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
                   <Mic className="h-10 w-10 text-white relative z-10" />
                 </motion.div>
 
-                <p className="text-sm font-medium" style={{ color: "#6C7A92" }}>Je vous écoute…</p>
+                <div className="space-y-1">
+                  <p className="text-lg font-bold" style={{ color: "#0B1533" }}>{greeting}</p>
+                  <p className="text-sm" style={{ color: "#6C7A92" }}>
+                    {listening ? "Je vous écoute…" : "Parlez-moi de votre projet"}
+                  </p>
+                </div>
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => { toggleVoice(); setMode("text"); }}
-                  className="rounded-2xl"
+                {/* Text fallback */}
+                <motion.button
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.5, duration: 0.4 }}
+                  onClick={() => setMode("text")}
+                  className="flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-medium transition-all hover:scale-[1.03]"
+                  style={{
+                    color: "#6C7A92",
+                    background: "rgba(63,123,255,0.04)",
+                    border: "1px solid #E7EEF8",
+                  }}
                 >
-                  <Square className="h-3 w-3 mr-1.5" /> Arrêter
-                </Button>
+                  <Keyboard className="h-3.5 w-3.5" />
+                  On peut aussi écrire si vous préférez
+                </motion.button>
+
+                {listening && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { toggleVoice(); setMode("text"); }}
+                    className="rounded-2xl"
+                  >
+                    <Square className="h-3 w-3 mr-1.5" /> Arrêter
+                  </Button>
+                )}
               </div>
             ) : (
               /* ─── Text/chat mode ─── */
