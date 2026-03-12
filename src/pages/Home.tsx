@@ -431,7 +431,7 @@ const Home = () => {
                     Décrire mon projet <ArrowRight className="h-4 w-4 ml-1.5 inline" />
                   </button>
                   <button
-                    onClick={() => navigate(isAuthenticated ? "/dashboard/quotes/upload" : "/signup")}
+                    onClick={() => handleCta("/dashboard/quotes/upload", "Comparer des soumissions")}
                     className="h-13 rounded-full px-8 text-sm font-bold transition-all active:scale-[0.97]"
                     style={{ background: "white", border: "2px solid hsl(220 25% 88%)", color: "hsl(222 47% 11%)" }}
                   >
