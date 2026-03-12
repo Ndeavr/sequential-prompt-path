@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Globe, MapPin, Facebook, Instagram, Phone, Building2, ArrowRight, Shield, Sparkles, Search, Zap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PremiumMagneticButton } from "@/components/ui/PremiumMagneticButton";
 
 interface Props {
   onImport: (data: { businessName: string; website: string; googleUrl: string; facebookUrl: string; instagramUrl: string; phone: string; city: string }) => void;
