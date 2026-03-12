@@ -135,10 +135,10 @@ const Home = () => {
       <section className="px-5 py-8">
         <div className="max-w-3xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <div className="relative rounded-3xl p-8 text-center overflow-hidden bg-gradient-to-br from-blue-800 via-primary to-accent">
+            <div className="relative rounded-3xl p-8 text-center overflow-hidden" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.9), hsl(var(--primary)), hsl(var(--accent)))" }}>
               <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-[-50%] right-[-20%] w-[60%] h-[120%] rounded-full blur-3xl bg-blue-300/15" />
-                <div className="absolute bottom-[-30%] left-[-10%] w-[40%] h-[80%] rounded-full blur-2xl bg-cyan-300/12" />
+                <div className="absolute top-[-50%] right-[-20%] w-[60%] h-[120%] rounded-full blur-3xl bg-primary-foreground/15" />
+                <div className="absolute bottom-[-30%] left-[-10%] w-[40%] h-[80%] rounded-full blur-2xl bg-accent/12" />
               </div>
 
               <div className="relative z-10">
