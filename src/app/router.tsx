@@ -118,6 +118,7 @@ export const AppRouter = () => (
       <Route path="/preventive-maintenance" element={<PreventiveMaintenancePage />} />
       <Route path="/copropriete" element={<CoproprietePage />} />
       <Route path="/building-map" element={<BuildingIntelligenceMap />} />
+      <Route path="/answers" element={<AnswerEnginePage />} />
 
       {/* SEO Pages */}
       <Route path="/services" element={<SeoDirectoryPage />} />
