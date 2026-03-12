@@ -113,7 +113,11 @@ export const AppRouter = () => (
       {/* SEO Pages */}
       <Route path="/services" element={<SeoDirectoryPage />} />
       <Route path="/services/:category/:city" element={<ServiceLocationPage />} />
+      <Route path="/problems/:slug" element={<ProblemPage />} />
       <Route path="/problems/:problem/:city" element={<ProblemLocationPage />} />
+      <Route path="/solutions/:slug" element={<SolutionPage />} />
+      <Route path="/profession/:slug" element={<ProfessionPage />} />
+      <Route path="/city/:slug" element={<CityPage />} />
       <Route path="/guides/:topic" element={<GuidePage />} />
 
       {/* Homeowner Dashboard */}
