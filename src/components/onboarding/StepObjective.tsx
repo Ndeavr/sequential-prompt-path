@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Phone, MapPin, Star, ArrowUpRight, Globe, Building2, Brain, Zap, ChevronRight, Clock, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PremiumMagneticButton } from "@/components/ui/PremiumMagneticButton";
 
 interface Props {
   onSelect: (objective: string) => void;
