@@ -4493,6 +4493,120 @@ export type Database = {
           },
         ]
       }
+      syndicate_project_interests: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          estimated_price: number | null
+          id: string
+          interest_type: string
+          message: string | null
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          estimated_price?: number | null
+          id?: string
+          interest_type?: string
+          message?: string | null
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          estimated_price?: number | null
+          id?: string
+          interest_type?: string
+          message?: string | null
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_project_interests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndicate_project_interests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndicate_project_interests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "syndicate_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicate_projects: {
+        Row: {
+          component: string
+          created_at: string
+          description: string | null
+          estimated_cost: number
+          estimated_year: number
+          id: string
+          matched_contractor_count: number | null
+          priority: string
+          remaining_life_years: number | null
+          risk_score: number | null
+          status: string
+          syndicate_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          component: string
+          created_at?: string
+          description?: string | null
+          estimated_cost?: number
+          estimated_year: number
+          id?: string
+          matched_contractor_count?: number | null
+          priority?: string
+          remaining_life_years?: number | null
+          risk_score?: number | null
+          status?: string
+          syndicate_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          component?: string
+          created_at?: string
+          description?: string | null
+          estimated_cost?: number
+          estimated_year?: number
+          id?: string
+          matched_contractor_count?: number | null
+          priority?: string
+          remaining_life_years?: number | null
+          risk_score?: number | null
+          status?: string
+          syndicate_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_projects_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       syndicate_reserve_fund_snapshots: {
         Row: {
           annual_contribution: number | null
