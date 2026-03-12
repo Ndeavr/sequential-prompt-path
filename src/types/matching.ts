@@ -67,30 +67,39 @@ export type ContractorDNAType =
 
 export interface DNATraits {
   involvement: number;
-  budget_sensitivity: number;
-  speed_priority: number;
-  quality_priority: number;
-  communication_detail: number;
-  autonomy_preference: number;
-  cleanliness_expectation: number;
-  documentation_preference: number;
+  budgetSensitivity: number;
+  speedPriority: number;
+  qualityPriority: number;
+  communicationDetail: number;
+  autonomyPreference: number;
+  cleanlinessExpectation: number;
+  documentationPreference: number;
+  noiseTolerance: number;
+  friendlinessPreference: number;
 }
 
 export interface DNAProfile {
-  id: string;
+  id?: string;
   dna_type: string;
   dna_label_fr: string;
   dna_label_en: string;
   traits: DNATraits;
-  scores: Record<string, number>;
+  scores?: Record<string, number>;
   confidence: number;
-  generated_by: string;
+  generated_by?: string;
 }
 
 export interface DNAFitResult {
   score: number;
+  dna_fit_score: number;
+  compatibility_label: "very_high" | "high" | "moderate" | "low";
+  homeowner_type: string;
+  contractor_type: string;
   complementary_traits: string[];
   friction_traits: string[];
+  matching_traits_fr: string[];
+  watchout_traits_fr: string[];
+  explanation_fr: string;
 }
 
 // ─── Review Intelligence ───
