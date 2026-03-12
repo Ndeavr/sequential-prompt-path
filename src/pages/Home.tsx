@@ -9,6 +9,8 @@ import {
   FileText, Trophy, CheckCircle2, ChevronRight,
   Upload, BarChart3, Zap, ShieldCheck, Eye, Camera, Layers,
   Clock, MapPin, Award, ThumbsUp, Users, FolderOpen,
+  Building, Vote, Wrench, PiggyBank, ClipboardList,
+  Droplets, Leaf,
 } from "lucide-react";
 import FeaturedCarousel from "@/components/home/FeaturedCarousel";
 import HeroSection from "@/components/home/HeroSection";
