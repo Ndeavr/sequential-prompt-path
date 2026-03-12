@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 import { Button } from "@/components/ui/button";
 import {
   Search, Home as HomeIcon, Shield, TrendingUp,
