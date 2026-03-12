@@ -64,31 +64,23 @@ const Home = () => {
             <h2 className="font-display text-title sm:text-hero-sm font-bold mb-8" style={{ color: "hsl(222 47% 11%)" }}>Comment ça marche ?</h2>
           </motion.div>
 
-          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="flex flex-col sm:flex-row items-stretch gap-4">
+          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-3 gap-3 sm:gap-4">
             {[
               { step: 1, icon: FileText, title: "Décrivez", subtitle: "votre projet", gradient: "linear-gradient(135deg, #3B82F6, #60A5FA)" },
               { step: 2, icon: BarChart3, title: "Comparez", subtitle: "les soumissions", gradient: "linear-gradient(135deg, #06B6D4, #67E8F9)" },
               { step: 3, icon: Trophy, title: "Choisissez", subtitle: "le meilleur pro", gradient: "linear-gradient(135deg, #F59E0B, #FBBF24)" },
             ].map((item, i) => (
-              <motion.div key={item.step} variants={fadeUp} custom={i} className="flex-1 relative">
-                <div className="rounded-2xl p-6 text-center h-full relative overflow-hidden" style={{ background: "white", border: "1px solid hsl(220 25% 92%)", boxShadow: "0 4px 16px -4px hsl(220 40% 30% / 0.08)" }}>
-                  {/* Bold numbered badge — top-right */}
-                  <div className="absolute top-3 right-3 h-7 w-7 rounded-full flex items-center justify-center text-[11px] font-black" style={{ background: item.gradient, color: "white", boxShadow: "0 3px 10px -2px hsl(222 80% 55% / 0.3)" }}>
+              <motion.div key={item.step} variants={fadeUp} custom={i} className="relative">
+                <div className="rounded-2xl p-3 sm:p-6 text-center h-full relative overflow-hidden" style={{ background: "white", border: "1px solid hsl(220 25% 92%)", boxShadow: "0 4px 16px -4px hsl(220 40% 30% / 0.08)" }}>
+                  <div className="absolute top-2 right-2 sm:top-3 sm:right-3 h-6 w-6 sm:h-7 sm:w-7 rounded-full flex items-center justify-center text-[10px] sm:text-[11px] font-black" style={{ background: item.gradient, color: "white", boxShadow: "0 3px 10px -2px hsl(222 80% 55% / 0.3)" }}>
                     {item.step}
                   </div>
-                  {/* Large icon container */}
-                  <div className="h-16 w-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: `${item.gradient}15`, border: `2px solid ${item.gradient}25` }}>
-                    <item.icon className="h-7 w-7" style={{ color: i === 0 ? "#3B82F6" : i === 1 ? "#06B6D4" : "#F59E0B" }} />
+                  <div className="h-10 w-10 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-2 sm:mb-4" style={{ background: `${item.gradient}15`, border: `2px solid ${item.gradient}25` }}>
+                    <item.icon className="h-5 w-5 sm:h-7 sm:w-7" style={{ color: i === 0 ? "#3B82F6" : i === 1 ? "#06B6D4" : "#F59E0B" }} />
                   </div>
-                  <p className="font-display text-section font-bold" style={{ color: "hsl(222 47% 11%)" }}>{item.title}</p>
-                  <p className="text-meta mt-0.5" style={{ color: "hsl(220 12% 50%)" }}>{item.subtitle}</p>
+                  <p className="font-display text-sm sm:text-section font-bold" style={{ color: "hsl(222 47% 11%)" }}>{item.title}</p>
+                  <p className="text-xs sm:text-meta mt-0.5" style={{ color: "hsl(220 12% 50%)" }}>{item.subtitle}</p>
                 </div>
-                {/* Dotted connector */}
-                {i < 2 && (
-                  <div className="hidden sm:block absolute top-1/2 -right-3 w-6 text-center">
-                    <span className="text-meta tracking-[3px] font-bold" style={{ color: "hsl(222 60% 78%)" }}>···</span>
-                  </div>
-                )}
               </motion.div>
             ))}
           </motion.div>
