@@ -14,6 +14,7 @@ import PartnersPage from "@/pages/PartnersPage";
 import DescribeProjectPage from "@/pages/DescribeProjectPage";
 import CompareQuotesPage from "@/pages/CompareQuotesPage";
 import ContractorOnboardingPage from "@/pages/ContractorOnboardingPage";
+import OnboardingFlow from "@/pages/OnboardingFlow";
 import PricingPage from "@/pages/PricingPage";
 import AIPPScorePage from "@/pages/AIPPScorePage";
 
