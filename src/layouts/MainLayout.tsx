@@ -190,7 +190,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         <div className="mx-auto max-w-5xl">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div>
-              <Link to="/" className="font-display text-sm font-bold text-gradient">UNPRO</Link>
+              <Link to="/" className="font-display text-sm font-bold text-foreground">UNPRO</Link>
               <p className="text-caption text-muted-foreground mt-1">Intelligence immobilière pour tous.</p>
             </div>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-meta text-muted-foreground">
