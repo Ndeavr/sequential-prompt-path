@@ -42,11 +42,23 @@ export const useAuth = () => {
     enabled: !!session?.user?.id,
   });
 
-  const signUp = useCallback(async (email: string, password: string, fullName: string, userRole: string) => {
+  const signUp = useCallback(async (
+    email: string,
+    password: string,
+    fullName: string,
+    userRole: string,
+    meta?: { salutation?: string; first_name?: string; last_name?: string; account_type?: string }
+  ) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName, role: userRole } },
+      options: {
+        data: {
+          full_name: fullName,
+          role: userRole,
+          ...meta,
+        },
+      },
     });
     return { data, error };
   }, []);
