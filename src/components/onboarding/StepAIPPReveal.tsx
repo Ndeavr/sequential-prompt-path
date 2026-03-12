@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Award, ChevronRight, Zap, TrendingUp, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PremiumMagneticButton } from "@/components/ui/PremiumMagneticButton";
 import type { OnboardingAIPPScore } from "@/services/businessImportService";
 
 interface Props {
