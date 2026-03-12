@@ -51,6 +51,7 @@ import BookingPage from "@/pages/dashboard/BookingPage";
 import DocumentUploadPage from "@/pages/dashboard/DocumentUploadPage";
 import ProjectNewPage from "@/pages/dashboard/ProjectNewPage";
 import SyndicateDashboard from "@/pages/dashboard/SyndicateDashboard";
+import SyndicateDetailDashboard from "@/pages/dashboard/SyndicateDetailDashboard";
 import SyndicateReserveFund from "@/pages/dashboard/SyndicateReserveFund";
 import SyndicateMaintenance from "@/pages/dashboard/SyndicateMaintenance";
 import SyndicateVotes from "@/pages/dashboard/SyndicateVotes";
@@ -138,7 +139,7 @@ export const AppRouter = () => (
       <Route path="/dashboard/documents/upload" element={<ProtectedRoute requiredRole="homeowner"><DocumentUploadPage /></ProtectedRoute>} />
       <Route path="/dashboard/projects/new" element={<ProtectedRoute requiredRole="homeowner"><ProjectNewPage /></ProtectedRoute>} />
       <Route path="/dashboard/syndicates" element={<ProtectedRoute requiredRole="homeowner"><SyndicateDashboard /></ProtectedRoute>} />
-      <Route path="/dashboard/syndicates/:id" element={<ProtectedRoute requiredRole="homeowner"><SyndicateDashboard /></ProtectedRoute>} />
+      <Route path="/dashboard/syndicates/:id" element={<ProtectedRoute requiredRole="homeowner"><SyndicateDetailDashboard /></ProtectedRoute>} />
       <Route path="/dashboard/syndicates/:id/reserve" element={<ProtectedRoute requiredRole="homeowner"><SyndicateReserveFund /></ProtectedRoute>} />
       <Route path="/dashboard/syndicates/:id/maintenance" element={<ProtectedRoute requiredRole="homeowner"><SyndicateMaintenance /></ProtectedRoute>} />
       <Route path="/dashboard/syndicates/:id/votes" element={<ProtectedRoute requiredRole="homeowner"><SyndicateVotes /></ProtectedRoute>} />
