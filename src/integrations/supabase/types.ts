@@ -1137,6 +1137,328 @@ export type Database = {
           },
         ]
       }
+      home_problem_city_pages: {
+        Row: {
+          avg_cost_local_high: number | null
+          avg_cost_local_low: number | null
+          city_id: string
+          contractor_count: number | null
+          created_at: string
+          custom_content: string | null
+          faq: Json | null
+          id: string
+          is_published: boolean | null
+          local_tips: string | null
+          problem_id: string
+          seo_description: string | null
+          seo_title: string | null
+          updated_at: string
+        }
+        Insert: {
+          avg_cost_local_high?: number | null
+          avg_cost_local_low?: number | null
+          city_id: string
+          contractor_count?: number | null
+          created_at?: string
+          custom_content?: string | null
+          faq?: Json | null
+          id?: string
+          is_published?: boolean | null
+          local_tips?: string | null
+          problem_id: string
+          seo_description?: string | null
+          seo_title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avg_cost_local_high?: number | null
+          avg_cost_local_low?: number | null
+          city_id?: string
+          contractor_count?: number | null
+          created_at?: string
+          custom_content?: string | null
+          faq?: Json | null
+          id?: string
+          is_published?: boolean | null
+          local_tips?: string | null
+          problem_id?: string
+          seo_description?: string | null
+          seo_title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_problem_city_pages_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "home_problem_city_pages_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "home_problems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_problem_images: {
+        Row: {
+          alt_text_en: string | null
+          alt_text_fr: string | null
+          caption_fr: string | null
+          created_at: string
+          display_order: number | null
+          id: string
+          image_url: string
+          is_primary: boolean | null
+          problem_id: string
+        }
+        Insert: {
+          alt_text_en?: string | null
+          alt_text_fr?: string | null
+          caption_fr?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          image_url: string
+          is_primary?: boolean | null
+          problem_id: string
+        }
+        Update: {
+          alt_text_en?: string | null
+          alt_text_fr?: string | null
+          caption_fr?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          image_url?: string
+          is_primary?: boolean | null
+          problem_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_problem_images_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "home_problems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_problem_solution_edges: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary: boolean | null
+          notes: string | null
+          problem_id: string
+          relevance_score: number | null
+          solution_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          notes?: string | null
+          problem_id: string
+          relevance_score?: number | null
+          solution_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          notes?: string | null
+          problem_id?: string
+          relevance_score?: number | null
+          solution_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_problem_solution_edges_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "home_problems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "home_problem_solution_edges_solution_id_fkey"
+            columns: ["solution_id"]
+            isOneToOne: false
+            referencedRelation: "home_solutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_problem_tags: {
+        Row: {
+          created_at: string
+          id: string
+          problem_id: string
+          tag: string
+          tag_category: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          problem_id: string
+          tag: string
+          tag_category?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          problem_id?: string
+          tag?: string
+          tag_category?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_problem_tags_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "home_problems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_problems: {
+        Row: {
+          building_age_relevance: string | null
+          climate_relevance: string[] | null
+          cost_estimate_high: number | null
+          cost_estimate_low: number | null
+          cost_unit: string | null
+          created_at: string
+          description_en: string | null
+          description_fr: string | null
+          difficulty_score: number | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name_en: string
+          name_fr: string
+          professional_category: string | null
+          property_types: string[] | null
+          recommended_solution_slugs: string[] | null
+          seo_description_fr: string | null
+          seo_keywords: string[] | null
+          seo_title_fr: string | null
+          slug: string
+          typical_causes: Json | null
+          updated_at: string
+          urgency_score: number | null
+        }
+        Insert: {
+          building_age_relevance?: string | null
+          climate_relevance?: string[] | null
+          cost_estimate_high?: number | null
+          cost_estimate_low?: number | null
+          cost_unit?: string | null
+          created_at?: string
+          description_en?: string | null
+          description_fr?: string | null
+          difficulty_score?: number | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name_en: string
+          name_fr: string
+          professional_category?: string | null
+          property_types?: string[] | null
+          recommended_solution_slugs?: string[] | null
+          seo_description_fr?: string | null
+          seo_keywords?: string[] | null
+          seo_title_fr?: string | null
+          slug: string
+          typical_causes?: Json | null
+          updated_at?: string
+          urgency_score?: number | null
+        }
+        Update: {
+          building_age_relevance?: string | null
+          climate_relevance?: string[] | null
+          cost_estimate_high?: number | null
+          cost_estimate_low?: number | null
+          cost_unit?: string | null
+          created_at?: string
+          description_en?: string | null
+          description_fr?: string | null
+          difficulty_score?: number | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name_en?: string
+          name_fr?: string
+          professional_category?: string | null
+          property_types?: string[] | null
+          recommended_solution_slugs?: string[] | null
+          seo_description_fr?: string | null
+          seo_keywords?: string[] | null
+          seo_title_fr?: string | null
+          slug?: string
+          typical_causes?: Json | null
+          updated_at?: string
+          urgency_score?: number | null
+        }
+        Relationships: []
+      }
+      home_professions: {
+        Row: {
+          created_at: string
+          description_en: string | null
+          description_fr: string | null
+          id: string
+          insurance_required: boolean | null
+          is_active: boolean | null
+          license_body: string | null
+          license_required: boolean | null
+          name_en: string
+          name_fr: string
+          seo_keywords: string[] | null
+          slug: string
+          typical_hourly_rate_high: number | null
+          typical_hourly_rate_low: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description_en?: string | null
+          description_fr?: string | null
+          id?: string
+          insurance_required?: boolean | null
+          is_active?: boolean | null
+          license_body?: string | null
+          license_required?: boolean | null
+          name_en: string
+          name_fr: string
+          seo_keywords?: string[] | null
+          slug: string
+          typical_hourly_rate_high?: number | null
+          typical_hourly_rate_low?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description_en?: string | null
+          description_fr?: string | null
+          id?: string
+          insurance_required?: boolean | null
+          is_active?: boolean | null
+          license_body?: string | null
+          license_required?: boolean | null
+          name_en?: string
+          name_fr?: string
+          seo_keywords?: string[] | null
+          slug?: string
+          typical_hourly_rate_high?: number | null
+          typical_hourly_rate_low?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       home_scores: {
         Row: {
           calculated_at: string
@@ -1186,6 +1508,180 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      home_solution_city_pages: {
+        Row: {
+          avg_cost_local_high: number | null
+          avg_cost_local_low: number | null
+          city_id: string
+          contractor_count: number | null
+          created_at: string
+          custom_content: string | null
+          faq: Json | null
+          id: string
+          is_published: boolean | null
+          local_tips: string | null
+          seo_description: string | null
+          seo_title: string | null
+          solution_id: string
+          updated_at: string
+        }
+        Insert: {
+          avg_cost_local_high?: number | null
+          avg_cost_local_low?: number | null
+          city_id: string
+          contractor_count?: number | null
+          created_at?: string
+          custom_content?: string | null
+          faq?: Json | null
+          id?: string
+          is_published?: boolean | null
+          local_tips?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          solution_id: string
+          updated_at?: string
+        }
+        Update: {
+          avg_cost_local_high?: number | null
+          avg_cost_local_low?: number | null
+          city_id?: string
+          contractor_count?: number | null
+          created_at?: string
+          custom_content?: string | null
+          faq?: Json | null
+          id?: string
+          is_published?: boolean | null
+          local_tips?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          solution_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_solution_city_pages_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "home_solution_city_pages_solution_id_fkey"
+            columns: ["solution_id"]
+            isOneToOne: false
+            referencedRelation: "home_solutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_solution_profession_edges: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary: boolean | null
+          notes: string | null
+          profession_id: string
+          relevance_score: number | null
+          solution_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          notes?: string | null
+          profession_id: string
+          relevance_score?: number | null
+          solution_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          notes?: string | null
+          profession_id?: string
+          relevance_score?: number | null
+          solution_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_solution_profession_edges_profession_id_fkey"
+            columns: ["profession_id"]
+            isOneToOne: false
+            referencedRelation: "home_professions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "home_solution_profession_edges_solution_id_fkey"
+            columns: ["solution_id"]
+            isOneToOne: false
+            referencedRelation: "home_solutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_solutions: {
+        Row: {
+          cost_estimate_high: number | null
+          cost_estimate_low: number | null
+          cost_unit: string | null
+          created_at: string
+          description_en: string | null
+          description_fr: string | null
+          diy_difficulty: number | null
+          diy_possible: boolean | null
+          id: string
+          is_active: boolean | null
+          materials: Json | null
+          method_steps: Json | null
+          name_en: string
+          name_fr: string
+          seo_keywords: string[] | null
+          slug: string
+          time_estimate_hours: number | null
+          updated_at: string
+        }
+        Insert: {
+          cost_estimate_high?: number | null
+          cost_estimate_low?: number | null
+          cost_unit?: string | null
+          created_at?: string
+          description_en?: string | null
+          description_fr?: string | null
+          diy_difficulty?: number | null
+          diy_possible?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          materials?: Json | null
+          method_steps?: Json | null
+          name_en: string
+          name_fr: string
+          seo_keywords?: string[] | null
+          slug: string
+          time_estimate_hours?: number | null
+          updated_at?: string
+        }
+        Update: {
+          cost_estimate_high?: number | null
+          cost_estimate_low?: number | null
+          cost_unit?: string | null
+          created_at?: string
+          description_en?: string | null
+          description_fr?: string | null
+          diy_difficulty?: number | null
+          diy_possible?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          materials?: Json | null
+          method_steps?: Json | null
+          name_en?: string
+          name_fr?: string
+          seo_keywords?: string[] | null
+          slug?: string
+          time_estimate_hours?: number | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       homeowner_dna_profiles: {
         Row: {
