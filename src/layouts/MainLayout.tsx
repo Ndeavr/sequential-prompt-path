@@ -148,22 +148,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                 {/* Mobile theme + language row */}
                 <div className="flex items-center justify-between px-3 py-2">
                   <div className="flex items-center gap-3">
-                    <button
-                      onClick={toggleTheme}
-                      className="flex items-center gap-1.5 text-caption font-medium text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-                      <span>{theme === "dark" ? "Clair" : "Sombre"}</span>
-                    </button>
-                    <span className="text-border">·</span>
-                    <button
-                      onClick={() => setLang(lang === "fr" ? "en" : "fr")}
-                      className="flex items-center gap-1 text-caption font-semibold uppercase tracking-wider"
-                    >
-                      <span className={lang === "fr" ? "text-foreground" : "text-muted-foreground/40"}>FR</span>
-                      <span className="text-border">/</span>
-                      <span className={lang === "en" ? "text-foreground" : "text-muted-foreground/40"}>EN</span>
-                    </button>
+                    <LanguageToggle lang={lang} onChange={setLang} />
                   </div>
                 </div>
                 <div className="divider-gradient my-2" />
