@@ -1,17 +1,18 @@
 /**
  * UNPRO — Matching Engine Core
  * Calculates URS (UNPRO Recommendation Score), success probability, and conflict risk.
+ * Delegates CCAI computation to ccaiEngine, RAS to reviewAuthenticityService.
  */
 
 import type {
   MatchEvaluation,
   MatchExplanations,
-  CCAIResult,
-  CCAIInsight,
-  DNATraits,
-  DNAFitResult,
-  AlignmentAnswer,
 } from "@/types/matching";
+
+// Re-export scoring functions from dedicated services
+export { computeCCAI, buildCCAIEngineOutput, getCCAILabelFr } from "./ccaiEngine";
+export { computeRAS, computeWeightedReviewFit } from "./reviewAuthenticityService";
+export { computeUNPROScore } from "./unproScoreService";
 
 // ─── URS Weights ───
 const URS_WEIGHTS = {
@@ -26,177 +27,7 @@ const URS_WEIGHTS = {
   weighted_review_fit: 0.05,
 };
 
-// ─── CCAI ───
-const CCAI_LABELS: Record<string, { en: string; fr: string }> = {
-  strong: { en: "Strong Alignment", fr: "Alignement fort" },
-  good: { en: "Good Fit", fr: "Bonne compatibilité" },
-  caution: { en: "Caution", fr: "Prudence" },
-  mismatch: { en: "Misalignment", fr: "Désalignement" },
-};
-
-export function computeCCAI(
-  homeownerAnswers: AlignmentAnswer[],
-  contractorAnswers: AlignmentAnswer[],
-  questionCategories: Record<string, string>
-): CCAIResult {
-  const hoMap = new Map(homeownerAnswers.map((a) => [a.question_id, a.answer_code]));
-  const coMap = new Map(contractorAnswers.map((a) => [a.question_id, a.answer_code]));
-
-  const matched: string[] = [];
-  const mismatched: string[] = [];
-
-  for (const [qId, hoAnswer] of hoMap) {
-    const coAnswer = coMap.get(qId);
-    if (!coAnswer) continue;
-    if (hoAnswer === coAnswer) matched.push(qId);
-    else mismatched.push(qId);
-  }
-
-  const total = matched.length + mismatched.length;
-  const score = matched.length;
-  const pct = total > 0 ? Math.round((score / total) * 100) : 0;
-
-  let labelKey = "mismatch";
-  if (score >= 21) labelKey = "strong";
-  else if (score >= 15) labelKey = "good";
-  else if (score >= 10) labelKey = "caution";
-
-  const insights: CCAIInsight[] = [];
-
-  // Group mismatches by category for insight generation
-  const categoryMismatches = new Map<string, number>();
-  for (const qId of mismatched) {
-    const cat = questionCategories[qId] ?? "unknown";
-    categoryMismatches.set(cat, (categoryMismatches.get(cat) ?? 0) + 1);
-  }
-
-  for (const [cat, count] of categoryMismatches) {
-    if (count >= 2) {
-      insights.push({
-        type: "friction",
-        category: cat,
-        message_fr: `Friction possible sur ${cat.replace(/_/g, " ")}`,
-        message_en: `Possible friction on ${cat.replace(/_/g, " ")}`,
-      });
-    }
-  }
-
-  const categoryMatches = new Map<string, number>();
-  for (const qId of matched) {
-    const cat = questionCategories[qId] ?? "unknown";
-    categoryMatches.set(cat, (categoryMatches.get(cat) ?? 0) + 1);
-  }
-  for (const [cat, count] of categoryMatches) {
-    if (count >= 3) {
-      insights.push({
-        type: "aligned",
-        category: cat,
-        message_fr: `Bonne entente sur ${cat.replace(/_/g, " ")}`,
-        message_en: `Good alignment on ${cat.replace(/_/g, " ")}`,
-      });
-    }
-  }
-
-  return {
-    score,
-    percentage: pct,
-    label: CCAI_LABELS[labelKey].en,
-    label_fr: CCAI_LABELS[labelKey].fr,
-    matchedQuestions: matched,
-    mismatchedQuestions: mismatched,
-    insights,
-  };
-}
-
-// ─── DNA Fit ───
-export function computeDNAFitLegacy(
-  homeowner: DNATraits,
-  contractor: DNATraits
-): DNAFitResult {
-  const dimensions = Object.keys(homeowner) as (keyof DNATraits)[];
-  let totalDiff = 0;
-  const complementary: string[] = [];
-  const friction: string[] = [];
-
-  for (const dim of dimensions) {
-    const diff = Math.abs((homeowner[dim] ?? 50) - (contractor[dim] ?? 50));
-    totalDiff += diff;
-    if (diff <= 15) complementary.push(dim);
-    else if (diff >= 40) friction.push(dim);
-  }
-
-  const maxDiff = dimensions.length * 100;
-  const score = Math.round((1 - totalDiff / maxDiff) * 100);
-  const clamped = Math.max(0, Math.min(100, score));
-
-  let compatibility_label: DNAFitResult["compatibility_label"] = "low";
-  if (clamped >= 85) compatibility_label = "very_high";
-  else if (clamped >= 72) compatibility_label = "high";
-  else if (clamped >= 58) compatibility_label = "moderate";
-
-  return {
-    score: clamped,
-    dna_fit_score: clamped,
-    compatibility_label,
-    homeowner_type: "unknown",
-    contractor_type: "unknown",
-    complementary_traits: complementary,
-    friction_traits: friction,
-    matching_traits_fr: [],
-    watchout_traits_fr: [],
-    explanation_fr: "",
-  };
-}
-
-// ─── Review Authenticity Score (RAS) ───
-export function computeRAS(input: {
-  temporal_authenticity: number;
-  reviewer_credibility: number;
-  linguistic_authenticity: number;
-  contextual_specificity: number;
-  rating_distribution_integrity: number;
-  cross_platform_consistency: number;
-  recency_continuity_quality: number;
-}): { ras: number; fake_review_risk: number; reliability_factor: number } {
-  const ras =
-    input.temporal_authenticity * 0.15 +
-    input.reviewer_credibility * 0.20 +
-    input.linguistic_authenticity * 0.20 +
-    input.contextual_specificity * 0.15 +
-    input.rating_distribution_integrity * 0.10 +
-    input.cross_platform_consistency * 0.10 +
-    input.recency_continuity_quality * 0.10;
-
-  return {
-    ras: Math.round(ras * 100) / 100,
-    fake_review_risk: Math.round((100 - ras) * 100) / 100,
-    reliability_factor: Math.round((ras / 100) * 1000) / 1000,
-  };
-}
-
-// ─── UNPRO Score ───
-export function computeUNPROScore(input: {
-  operational_reliability: number;
-  client_satisfaction: number;
-  compliance: number;
-  profile_quality: number;
-  experience_relevance: number;
-  internal_performance: number;
-  transparency_trust: number;
-}): number {
-  return Math.round(
-    (input.operational_reliability * 0.20 +
-      input.client_satisfaction * 0.20 +
-      input.compliance * 0.15 +
-      input.profile_quality * 0.10 +
-      input.experience_relevance * 0.10 +
-      input.internal_performance * 0.15 +
-      input.transparency_trust * 0.10) *
-      100
-  ) / 100;
-}
-
-// ─── AIPP Score ───
+// ─── AIPP Match Score (authenticity-weighted) ───
 export function computeAIPPMatchScore(input: {
   identity_consistency: number;
   authority_presence: number;
