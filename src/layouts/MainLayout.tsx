@@ -29,7 +29,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const { isAuthenticated, role } = useAuth();
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [lang, setLang] = useState<"fr" | "en">("fr");
+  const { lang, setLang } = useLanguage();
   const { theme, setTheme } = useTheme();
   const dash = role === "contractor" ? "/pro" : role === "admin" ? "/admin" : "/dashboard";
 
