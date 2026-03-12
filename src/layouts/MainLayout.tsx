@@ -11,6 +11,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
 import AlexConcierge from "@/components/alex/AlexConcierge";
+import { useEffect } from "react";
 
 interface MainLayoutProps {
   children: ReactNode;
