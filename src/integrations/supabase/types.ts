@@ -2100,6 +2100,42 @@ export type Database = {
           },
         ]
       }
+      market_price_benchmarks: {
+        Row: {
+          avg_cost_per_unit: number
+          component: string
+          created_at: string | null
+          id: string
+          last_updated_from_actuals: string | null
+          region: string
+          sample_count: number | null
+          unit_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          avg_cost_per_unit: number
+          component: string
+          created_at?: string | null
+          id?: string
+          last_updated_from_actuals?: string | null
+          region?: string
+          sample_count?: number | null
+          unit_type?: string
+          updated_at?: string | null
+        }
+        Update: {
+          avg_cost_per_unit?: number
+          component?: string
+          created_at?: string | null
+          id?: string
+          last_updated_from_actuals?: string | null
+          region?: string
+          sample_count?: number | null
+          unit_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       match_evaluations: {
         Row: {
           aipp_score_snapshot: number | null
@@ -4550,13 +4586,20 @@ export type Database = {
       }
       syndicate_projects: {
         Row: {
+          actual_contractor_id: string | null
+          actual_cost: number | null
+          ai_prediction_accuracy: number | null
+          completed_at: string | null
           component: string
+          cost_variance_percent: number | null
           created_at: string
           description: string | null
           estimated_cost: number
           estimated_year: number
           id: string
           matched_contractor_count: number | null
+          owner_feedback: string | null
+          owner_rating: number | null
           priority: string
           remaining_life_years: number | null
           risk_score: number | null
@@ -4566,13 +4609,20 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          actual_contractor_id?: string | null
+          actual_cost?: number | null
+          ai_prediction_accuracy?: number | null
+          completed_at?: string | null
           component: string
+          cost_variance_percent?: number | null
           created_at?: string
           description?: string | null
           estimated_cost?: number
           estimated_year: number
           id?: string
           matched_contractor_count?: number | null
+          owner_feedback?: string | null
+          owner_rating?: number | null
           priority?: string
           remaining_life_years?: number | null
           risk_score?: number | null
@@ -4582,13 +4632,20 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          actual_contractor_id?: string | null
+          actual_cost?: number | null
+          ai_prediction_accuracy?: number | null
+          completed_at?: string | null
           component?: string
+          cost_variance_percent?: number | null
           created_at?: string
           description?: string | null
           estimated_cost?: number
           estimated_year?: number
           id?: string
           matched_contractor_count?: number | null
+          owner_feedback?: string | null
+          owner_rating?: number | null
           priority?: string
           remaining_life_years?: number | null
           risk_score?: number | null
@@ -4598,6 +4655,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "syndicate_projects_actual_contractor_id_fkey"
+            columns: ["actual_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndicate_projects_actual_contractor_id_fkey"
+            columns: ["actual_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "syndicate_projects_syndicate_id_fkey"
             columns: ["syndicate_id"]
