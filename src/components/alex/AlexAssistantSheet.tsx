@@ -110,21 +110,48 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "";
   const greeting = firstName ? `Bonjour ${firstName} !` : "Bonjour !";
 
-  // Auto-start voice when sheet opens (voice-first UX)
+  // Auto-start voice when sheet opens (voice-first UX) — chips also launch voice
   useEffect(() => {
     if (open && !voiceAutoStarted) {
       if (initialChip) {
         setChipContext(initialChip);
-        setMode("text");
-      } else {
-        setMode("voice");
-        setVoiceAutoStarted(true);
       }
+      setMode("voice");
+      setVoiceAutoStarted(true);
     }
   }, [open, initialChip, voiceAutoStarted]);
 
+  // Natural contextual greeting based on chip
+  const CHIP_GREETINGS: Record<string, string> = {
+    "Rénovation": "vous cherchez à rénover ?",
+    "Construction": "vous cherchez à construire ?",
+    "Agrandissement": "vous pensez agrandir votre maison ?",
+    "Toiture": "vous avez un projet de toiture ?",
+    "Cuisine": "vous voulez refaire votre cuisine ?",
+    "Électricité": "vous avez besoin d'un électricien ?",
+    "Plomberie": "vous cherchez un plombier ?",
+    "Maçonnerie": "vous avez un projet de maçonnerie ?",
+    "Fenêtres": "vous pensez changer vos fenêtres ?",
+    "Isolation": "vous voulez améliorer l'isolation ?",
+    "Condo": "vous gérez un condo ?",
+    "Entretien": "vous cherchez de l'entretien ?",
+    "Peinture": "vous voulez faire peinturer ?",
+    "Aménagement": "vous avez un projet d'aménagement ?",
+    "Réparation": "vous avez quelque chose à réparer ?",
+    "Éclairage": "vous cherchez un projet d'éclairage ?",
+    "Portes": "vous pensez changer vos portes ?",
+    "Dépannage": "vous avez besoin d'un dépannage ?",
+    "Démolition": "vous avez un projet de démolition ?",
+    "Déménagement": "vous planifiez un déménagement ?",
+    "Fondation": "vous avez un problème de fondation ?",
+    "Chauffage": "vous cherchez une solution de chauffage ?",
+    "Climatisation": "vous voulez installer la climatisation ?",
+    "Salle de bain": "vous voulez rénover votre salle de bain ?",
+    "Revêtement": "vous pensez refaire le revêtement ?",
+  };
+
   const chipGreeting = chipContext
-    ? `${greeting}\n\nComment puis-je vous aider avec vos projets de ${chipContext.toLowerCase()} ?`
+    ? `${greeting.replace(" !", ",")} ${CHIP_GREETINGS[chipContext] || `vous avez un projet de ${chipContext.toLowerCase()} ?`}`
     : undefined;
 
   const suggestions = chipContext
@@ -335,9 +362,11 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
                 </motion.div>
 
                 <div className="space-y-1">
-                  <p className="text-lg font-bold" style={{ color: "#0B1533" }}>{greeting}</p>
+                  <p className="text-lg font-bold" style={{ color: "#0B1533" }}>
+                    {chipGreeting || greeting}
+                  </p>
                   <p className="text-sm" style={{ color: "#6C7A92" }}>
-                    {listening ? "Je vous écoute…" : "Parlez-moi de votre projet"}
+                    {listening ? "Je vous écoute…" : "Décrivez-moi votre projet"}
                   </p>
                 </div>
 
