@@ -1,22 +1,20 @@
 /**
- * HeroSection — Premium mobile-first UNPRO hero with AlexOrb as primary CTA,
- * stable rotating headline, and search card as secondary action.
+ * HeroSection — AI-first hero with AlexOrb as the sole primary CTA.
+ * No search bar. Popular chips launch Alex with context.
  */
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import heroHouse from "@/assets/hero-house.jpg";
 import unproRobot from "@/assets/unpro-robot.png";
-import { ArrowRight } from "lucide-react";
 import AlexOrb from "@/components/alex/AlexOrb";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 
 const ROTATING_ITEMS = [
   { article: "le", profession: "couvreur", action: "votre toiture" },
   { article: "le", profession: "designer", action: "votre cuisine" },
-  { article: "l'", profession: "électricien", action: "votre boîte électrique" },
-  { article: "l'", profession: "arpenteur-géomètre", action: "votre certificat" },
+  { article: "l'", profession: "électricien", action: "votre panneau" },
+  { article: "l'", profession: "arpenteur", action: "votre certificat" },
   { article: "le", profession: "paysagiste", action: "votre terrain" },
   { article: "le", profession: "plombier", action: "votre salle de bain" },
   { article: "le", profession: "maçon", action: "votre fondation" },
@@ -31,13 +29,14 @@ const textVariants = {
   exit: { opacity: 0, y: -8, filter: "blur(8px)" },
 };
 
-const popularTags = [
-  { icon: "🏡", label: "Rénovation", color: "text-primary" },
-  { icon: "🏗️", label: "Construction", color: "text-[hsl(45_90%_45%)]" },
-  { icon: "📐", label: "Agrandissement", color: "text-[hsl(160_55%_40%)]" },
+const POPULAR_CHIPS = [
+  { icon: "🏠", label: "Rénovation" },
+  { icon: "🏗️", label: "Construction" },
+  { icon: "📐", label: "Agrandissement" },
+  { icon: "🏡", label: "Toiture" },
+  { icon: "🍳", label: "Cuisine" },
 ];
 
-/* ─── Helper bubble messages ─── */
 const HELPER_BUBBLES = [
   "Décrivez votre projet",
   "Je peux vous aider",
@@ -45,10 +44,10 @@ const HELPER_BUBBLES = [
 ];
 
 export default function HeroSection() {
-  const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { user } = useAuth();
   const [index, setIndex] = useState(0);
   const [alexOpen, setAlexOpen] = useState(false);
+  const [alexInitialMessage, setAlexInitialMessage] = useState<string | undefined>();
   const [bubbleIndex, setBubbleIndex] = useState(0);
   const [showBubble, setShowBubble] = useState(false);
 
@@ -61,7 +60,6 @@ export default function HeroSection() {
     return () => window.clearInterval(interval);
   }, []);
 
-  // Helper bubble cycle
   useEffect(() => {
     const show = () => {
       setShowBubble(true);
@@ -81,19 +79,28 @@ export default function HeroSection() {
     ? `Bonjour ${firstName} !`
     : HELPER_BUBBLES[bubbleIndex];
 
+  const openAlex = (chipLabel?: string) => {
+    if (chipLabel) {
+      setAlexInitialMessage(chipLabel);
+    } else {
+      setAlexInitialMessage(undefined);
+    }
+    setAlexOpen(true);
+  };
+
   return (
     <>
       <section
         className="relative overflow-hidden pb-8"
         style={{
-          background: "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(210 80% 93%) 58%, hsl(210 80% 91%) 100%)",
+          background: "linear-gradient(180deg, #F7FBFF 0%, #EAF4FF 58%, #DCEEFF 100%)",
         }}
       >
         {/* Ambient orbs */}
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-20 left-[-80px] h-56 w-56 rounded-full bg-background/35 blur-3xl" />
-          <div className="absolute top-36 right-[-60px] h-52 w-52 rounded-full bg-primary/15 blur-3xl" />
-          <div className="absolute bottom-10 left-10 h-32 w-32 rounded-full bg-accent/20 blur-2xl" />
+          <div className="absolute -top-20 left-[-80px] h-56 w-56 rounded-full blur-3xl" style={{ background: "hsl(210 60% 92% / 0.6)" }} />
+          <div className="absolute top-36 right-[-60px] h-52 w-52 rounded-full blur-3xl" style={{ background: "hsl(222 100% 61% / 0.1)" }} />
+          <div className="absolute bottom-10 left-10 h-32 w-32 rounded-full blur-2xl" style={{ background: "hsl(195 80% 70% / 0.12)" }} />
         </div>
 
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-8 md:px-10 md:pt-12">
@@ -101,8 +108,8 @@ export default function HeroSection() {
             {/* Left column */}
             <div className="min-w-0">
               {/* Fixed-height title container */}
-              <div className="min-h-[220px] sm:min-h-[260px] md:min-h-[320px]">
-                <h1 className="max-w-[680px] text-[2.6rem] font-extrabold leading-[0.95] tracking-[-0.05em] text-foreground sm:text-[3.25rem] md:text-[4.25rem]">
+              <div className="min-h-[200px] sm:min-h-[240px] md:min-h-[300px]">
+                <h1 className="max-w-[680px] text-[2.6rem] font-extrabold leading-[0.95] tracking-[-0.05em] sm:text-[3.25rem] md:text-[4.25rem]" style={{ color: "#0B1533" }}>
                   <span className="block">Trouvez</span>
                   <span className="mt-1 block min-h-[1.15em]">
                     <AnimatePresence mode="wait">
@@ -115,15 +122,15 @@ export default function HeroSection() {
                         transition={{ duration: 0.4, ease: "easeOut" }}
                         className="inline-block"
                       >
-                        <span className="text-foreground">{current.article} </span>
-                        <span className="text-primary [text-shadow:0_0_18px_hsl(var(--primary)/0.16)]">
+                        <span style={{ color: "#0B1533" }}>{current.article} </span>
+                        <span style={{ color: "#3F7BFF", textShadow: "0 0 18px rgba(63,123,255,0.16)" }}>
                           {current.profession}
                         </span>
                       </motion.span>
                     </AnimatePresence>
                   </span>
-                  <span className="mt-1 block text-foreground">idéal pour</span>
-                  <span className="mt-1 block min-h-[2.2em] max-w-[13ch] text-[hsl(225_70%_55%)]">
+                  <span className="mt-1 block" style={{ color: "#0B1533" }}>idéal pour</span>
+                  <span className="mt-1 block min-h-[2.2em] max-w-[13ch]" style={{ color: "#3F7BFF" }}>
                     <AnimatePresence mode="wait">
                       <motion.span
                         key={`a-${index}`}
@@ -142,7 +149,7 @@ export default function HeroSection() {
               </div>
 
               {/* Subtitle */}
-              <p className="max-w-[420px] text-lg leading-8 text-muted-foreground md:text-xl md:leading-10">
+              <p className="max-w-[420px] text-lg leading-8 md:text-xl md:leading-10" style={{ color: "#6C7A92" }}>
                 Comparez, évaluez et choisissez en toute confiance.
               </p>
 
@@ -160,82 +167,51 @@ export default function HeroSection() {
                         className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-2xl px-4 py-2 text-xs font-medium"
                         style={{
                           background: "white",
-                          color: "hsl(222 47% 11%)",
-                          boxShadow: "0 4px 16px hsl(220 30% 20% / 0.1)",
-                          border: "1px solid hsl(220 16% 92%)",
+                          color: "#0B1533",
+                          boxShadow: "0 4px 16px rgba(83,118,180,0.1)",
+                          border: "1px solid #DFE9F5",
                         }}
                       >
                         {greetingBubble}
-                        {/* Arrow */}
                         <div
                           className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-3 w-3 rotate-45"
-                          style={{ background: "white", borderRight: "1px solid hsl(220 16% 92%)", borderBottom: "1px solid hsl(220 16% 92%)" }}
+                          style={{ background: "white", borderRight: "1px solid #DFE9F5", borderBottom: "1px solid #DFE9F5" }}
                         />
                       </motion.div>
                     )}
                   </AnimatePresence>
 
-                  <AlexOrb size="lg" onClick={() => setAlexOpen(true)} />
+                  <AlexOrb size="lg" onClick={() => openAlex()} />
                 </div>
 
-                <p className="mt-4 text-sm font-bold" style={{ color: "hsl(222 47% 11%)" }}>
+                <p className="mt-4 text-sm font-bold" style={{ color: "#0B1533" }}>
                   Parlez à Alex
                 </p>
-                <p className="text-xs" style={{ color: "hsl(220 12% 50%)" }}>
-                  Voix ou texte
+                <p className="text-xs" style={{ color: "#6C7A92" }}>
+                  Décrivez votre projet en 30 secondes
                 </p>
               </div>
 
-              {/* ═══ Search card — Secondary ═══ */}
-              <div
-                className="mt-6 max-w-[650px] rounded-[24px] p-4"
-                style={{
-                  background: "hsl(0 0% 100% / 0.88)",
-                  border: "1px solid hsl(220 25% 92%)",
-                  boxShadow: "0 8px 24px hsl(220 30% 30% / 0.06)",
-                }}
-              >
-                <p className="mb-3 text-sm font-bold" style={{ color: "hsl(222 47% 11%)" }}>
-                  ou recherchez directement
-                </p>
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className="flex h-11 flex-1 items-center rounded-full px-4 text-xs"
-                    style={{
-                      background: "hsl(220 16% 97%)",
-                      border: "1px solid hsl(220 16% 92%)",
-                      color: "hsl(220 12% 50%)",
-                    }}
-                  >
-                    <span className="mr-2">🏠</span>
-                    <span className="truncate">Ex: Rénovation, cuisine, toiture…</span>
-                  </div>
-                  <button
-                    onClick={() => navigate(isAuthenticated ? "/describe-project" : "/signup")}
-                    className="h-11 w-11 shrink-0 rounded-full flex items-center justify-center text-white"
-                    style={{
-                      background: "linear-gradient(135deg, hsl(var(--primary)), hsl(195 100% 55%))",
-                      boxShadow: "0 6px 16px hsl(195 100% 50% / 0.25)",
-                    }}
-                  >
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Popular chips */}
-              <div className="mt-5">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              {/* ═══ Popular chips ═══ */}
+              <div className="mt-7">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em]" style={{ color: "#6C7A92" }}>
                   Populaire
                 </p>
-                <div className="flex flex-wrap gap-3">
-                  {popularTags.map((tag) => (
-                    <span
-                      key={tag.label}
-                      className={`rounded-full bg-card px-5 py-3 text-base font-semibold shadow-sm ring-1 ring-border/20 ${tag.color}`}
+                <div className="flex flex-wrap gap-2.5">
+                  {POPULAR_CHIPS.map((chip) => (
+                    <button
+                      key={chip.label}
+                      onClick={() => openAlex(chip.label)}
+                      className="rounded-full px-5 py-2.5 text-sm font-semibold transition-all hover:scale-[1.03] active:scale-[0.97]"
+                      style={{
+                        background: "white",
+                        color: "#0B1533",
+                        border: "1px solid #E7EEF8",
+                        boxShadow: "0 4px 12px rgba(83,118,180,0.06)",
+                      }}
                     >
-                      {tag.icon} {tag.label}
-                    </span>
+                      {chip.icon} {chip.label}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -244,7 +220,8 @@ export default function HeroSection() {
             {/* Right column: image + robot */}
             <div className="relative mx-auto w-full max-w-[280px] md:max-w-[420px]">
               <div
-                className="overflow-hidden rounded-[28px] bg-card/75 shadow-[0_22px_64px_rgba(34,72,145,0.18)] ring-1 ring-border/30 backdrop-blur-xl md:rounded-[32px]"
+                className="overflow-hidden rounded-[28px] shadow-[0_22px_64px_rgba(34,72,145,0.18)] md:rounded-[32px]"
+                style={{ background: "rgba(255,255,255,0.75)", border: "1px solid #DFE9F5" }}
               >
                 <img
                   src={heroHouse}
@@ -265,13 +242,17 @@ export default function HeroSection() {
         {/* Bottom wave */}
         <div className="pointer-events-none absolute -bottom-[2px] left-0 right-0 z-[2]">
           <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-auto w-full" preserveAspectRatio="none">
-            <path d="M0 80C200 40 400 100 600 70C800 40 1000 90 1200 60C1350 45 1440 70 1440 60V120H0V80Z" fill="hsl(var(--background))" />
+            <path d="M0 80C200 40 400 100 600 70C800 40 1000 90 1200 60C1350 45 1440 70 1440 60V120H0V80Z" fill="#F0F4FA" />
           </svg>
         </div>
       </section>
 
       {/* Alex Assistant Sheet */}
-      <AlexAssistantSheet open={alexOpen} onClose={() => setAlexOpen(false)} />
+      <AlexAssistantSheet
+        open={alexOpen}
+        onClose={() => { setAlexOpen(false); setAlexInitialMessage(undefined); }}
+        initialChip={alexInitialMessage}
+      />
     </>
   );
 }
