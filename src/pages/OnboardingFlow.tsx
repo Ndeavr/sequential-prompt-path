@@ -27,6 +27,15 @@ import {
 
 const TOTAL_STEPS = 10;
 
+/** Official UNPRO plan catalog — single source of truth */
+const PLAN_CATALOG: Record<string, { name: string; monthlyPrice: number; yearlyPrice: number }> = {
+  recrue:    { name: "Recrue",    monthlyPrice: 49,  yearlyPrice: 499  },
+  pro:       { name: "Pro",       monthlyPrice: 99,  yearlyPrice: 999  },
+  premium:   { name: "Premium",   monthlyPrice: 149, yearlyPrice: 1499 },
+  elite:     { name: "Élite",     monthlyPrice: 249, yearlyPrice: 2499 },
+  signature: { name: "Signature", monthlyPrice: 499, yearlyPrice: 4999 },
+};
+
 export default function OnboardingFlow() {
   const [step, setStep] = useState(0);
   const [businessName, setBusinessName] = useState("");
@@ -35,7 +44,7 @@ export default function OnboardingFlow() {
   const [auditSections, setAuditSections] = useState<AuditSection[]>([]);
   const [aippScore, setAippScore] = useState<OnboardingAIPPScore | null>(null);
   const [objective, setObjective] = useState("");
-  const [selectedPlan, setSelectedPlan] = useState<{ id: string; name: string; price: number; interval: "month" | "year" }>({ id: "growth", name: "Growth", price: 99, interval: "month" });
+  const [selectedPlan, setSelectedPlan] = useState<{ id: string; name: string; price: number; interval: "month" | "year" }>({ id: "recrue", name: "Recrue", price: 49, interval: "month" });
 
   const handleImport = useCallback((form: { businessName: string }) => {
     setBusinessName(form.businessName);
@@ -56,13 +65,6 @@ export default function OnboardingFlow() {
     ? Math.round(modules.reduce((s, m) => s + m.progress, 0) / modules.length)
     : 0;
 
-  const planPrices: Record<string, { month: number; year: number; name: string }> = {
-    starter: { month: 49, year: 499, name: "Starter" },
-    growth: { month: 99, year: 999, name: "Growth" },
-    authority: { month: 199, year: 1999, name: "Authority" },
-    signature: { month: 499, year: 4999, name: "Signature" },
-  };
-
   return (
     <OnboardingShell currentStep={step} totalSteps={TOTAL_STEPS} showProgress={step < 8}>
       {step === 0 && (
@@ -79,7 +81,6 @@ export default function OnboardingFlow() {
       )}
       {step === 3 && (
         <StepCompleteMissing data={businessData} onContinue={(updates) => {
-          // Recalculate AIPP with updates
           setAippScore(calculateOnboardingAIPP(businessData));
           setStep(4);
         }} />
@@ -95,8 +96,8 @@ export default function OnboardingFlow() {
           aippScore={aippScore.total}
           objective={objective}
           onSelectPlan={(planId, interval) => {
-            const p = planPrices[planId] || planPrices.growth;
-            setSelectedPlan({ id: planId, name: p.name, price: interval === "month" ? p.month : p.year, interval });
+            const p = PLAN_CATALOG[planId] || PLAN_CATALOG.recrue;
+            setSelectedPlan({ id: planId, name: p.name, price: interval === "month" ? p.monthlyPrice : p.yearlyPrice, interval });
             setStep(7);
           }}
         />
