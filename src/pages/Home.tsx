@@ -283,7 +283,7 @@ const Home = () => {
               <h2 className="font-display text-title sm:text-hero-sm font-bold" style={{ color: "hsl(222 47% 11%)" }}>Connaissez la santé de votre propriété</h2>
               <p className="text-body mt-3 leading-relaxed" style={{ color: "hsl(220 12% 42%)" }}>Un diagnostic complet alimenté par l'IA. Identifiez les priorités d'entretien.</p>
               <button
-                onClick={() => navigate(isAuthenticated ? "/dashboard/home-score" : "/signup")}
+                onClick={() => handleCta("/dashboard/home-score", "Calculer mon Score Maison")}
                 className="mt-6 h-12 rounded-xl px-6 flex items-center gap-2 text-meta font-bold transition-all active:scale-[0.97]"
                 style={{ background: "white", border: "2px solid hsl(152 69% 51% / 0.3)", color: "hsl(152 55% 38%)" }}
               >
