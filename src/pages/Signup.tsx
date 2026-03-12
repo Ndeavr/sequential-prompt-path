@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Check, Home, Briefcase, Handshake } from "lucide-react";
+import { Check, Home, Building2, Briefcase, Wrench, Truck } from "lucide-react";
 import logo from "@/assets/unpro-robot.png";
 
 const ACCOUNT_TYPES = [
@@ -20,18 +20,32 @@ const ACCOUNT_TYPES = [
     roleForDb: "homeowner",
   },
   {
-    value: "contractor",
-    label: "Entrepreneur",
-    description: "Présenter mon entreprise et recevoir des opportunités",
+    value: "property_manager",
+    label: "Gestionnaire immobilier",
+    description: "Administrer des immeubles et copropriétés",
+    icon: Building2,
+    roleForDb: "homeowner",
+  },
+  {
+    value: "professional",
+    label: "Professionnel",
+    description: "Offrir des services spécialisés",
     icon: Briefcase,
     roleForDb: "contractor",
   },
   {
-    value: "partner",
-    label: "Partenaire",
-    description: "Collaborer avec UNPRO",
-    icon: Handshake,
-    roleForDb: "homeowner", // default role, admin upgrades later
+    value: "contractor",
+    label: "Entrepreneur",
+    description: "Présenter mon entreprise et recevoir des opportunités",
+    icon: Wrench,
+    roleForDb: "contractor",
+  },
+  {
+    value: "service_provider",
+    label: "Fournisseur de services",
+    description: "Proposer des services aux propriétaires",
+    icon: Truck,
+    roleForDb: "contractor",
   },
 ] as const;
 
@@ -187,7 +201,7 @@ const Signup = () => {
               {/* Account Type Radio Cards */}
               <div className="space-y-2">
                 <Label style={{ color: "#0B1533" }}>Type de compte</Label>
-                <div className="grid gap-2.5 sm:grid-cols-3">
+                <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   {ACCOUNT_TYPES.map((type) => {
                     const isSelected = accountType === type.value;
                     const Icon = type.icon;
