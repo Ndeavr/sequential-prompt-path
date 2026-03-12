@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { Sparkles, Menu, X, Bell, Sun, Moon } from "lucide-react";
+import { Home as HomeIcon, Menu, X, Bell, Sun, Moon } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
@@ -17,10 +17,10 @@ interface MainLayoutProps {
 }
 
 const navLinks = [
-  { to: "/homeowners", label: "Propriétaires" },
-  { to: "/professionals", label: "Professionnels" },
-  { to: "/pricing", label: "Tarifs" },
   { to: "/search", label: "Trouver un Pro" },
+  { to: "/homeowners", label: "Services" },
+  { to: "/pricing", label: "Tarifs" },
+  { to: "/professionals", label: "FAQ" },
 ];
 
 const MainLayout = ({ children }: MainLayoutProps) => {
@@ -42,10 +42,10 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         <div className="mx-auto max-w-5xl px-5 h-14 flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 shrink-0 group">
-            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-glow transition-shadow group-hover:shadow-glow-lg">
-              <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
+            <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center shadow-glow transition-shadow group-hover:shadow-glow-lg">
+              <HomeIcon className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-display text-sm font-bold text-gradient tracking-tight">UNPRO</span>
+            <span className="font-display text-sm font-bold text-foreground tracking-tight">UNPRO</span>
           </Link>
 
           {/* Desktop nav */}
@@ -96,16 +96,16 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             )}
 
             {isAuthenticated ? (
-              <Button asChild size="sm" className="rounded-lg h-8 text-xs">
+              <Button asChild size="sm" className="rounded-full h-8 text-xs px-4">
                 <Link to={dash}>Tableau de bord</Link>
               </Button>
             ) : (
               <>
-                <Button asChild variant="ghost" size="sm" className="rounded-lg h-8 text-xs hidden sm:inline-flex text-muted-foreground">
+                <Button asChild variant="outline" size="sm" className="rounded-full h-8 text-xs px-4 hidden sm:inline-flex">
                   <Link to="/login">Connexion</Link>
                 </Button>
-                <Button asChild size="sm" className="rounded-lg h-8 text-xs">
-                  <Link to="/signup">Commencer</Link>
+                <Button asChild size="sm" className="rounded-full h-8 text-xs px-4">
+                  <Link to="/signup">Créer un Projet</Link>
                 </Button>
               </>
             )}
@@ -190,7 +190,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         <div className="mx-auto max-w-5xl">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div>
-              <Link to="/" className="font-display text-sm font-bold text-gradient">UNPRO</Link>
+              <Link to="/" className="font-display text-sm font-bold text-foreground">UNPRO</Link>
               <p className="text-caption text-muted-foreground mt-1">Intelligence immobilière pour tous.</p>
             </div>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-meta text-muted-foreground">
