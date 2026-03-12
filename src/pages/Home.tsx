@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 import { Button } from "@/components/ui/button";
 import {
   Search, Home as HomeIcon, Shield, TrendingUp,
@@ -43,8 +44,16 @@ const Home = () => {
   const dash = role === "contractor" ? "/pro" : role === "admin" ? "/admin" : "/dashboard";
   const [searchQuery, setSearchQuery] = useState("");
 
-  const handleSearch = () => {
-    navigate(isAuthenticated ? "/describe-project" : "/signup");
+  const [alexOpen, setAlexOpen] = useState(false);
+  const [alexChip, setAlexChip] = useState<string | undefined>();
+
+  const handleCta = (destination: string, label?: string) => {
+    if (isAuthenticated) {
+      navigate(destination);
+    } else {
+      setAlexChip(label);
+      setAlexOpen(true);
+    }
   };
 
   return (
@@ -111,7 +120,7 @@ const Home = () => {
 
             {/* BOLD CTA — Full gradient pill */}
             <button
-              onClick={() => navigate(isAuthenticated ? "/describe-project" : "/signup")}
+              onClick={() => handleCta("/describe-project", "Décrire mon projet")}
               className="w-full h-16 rounded-full flex items-center justify-center gap-4 text-body font-bold transition-all hover:scale-[1.01] active:scale-[0.98]"
               style={{ background: "linear-gradient(135deg, #2563EB 0%, #3B82F6 40%, #06B6D4 100%)", color: "white", boxShadow: "0 8px 30px -4px hsl(222 90% 55% / 0.4), 0 2px 8px hsl(222 80% 50% / 0.15)" }}
             >
@@ -227,7 +236,7 @@ const Home = () => {
               </div>
 
               <button
-                onClick={() => navigate(isAuthenticated ? "/dashboard/quotes/upload" : "/signup")}
+                onClick={() => handleCta("/dashboard/quotes/upload", "Analyser mes soumissions")}
                 className="w-full h-12 rounded-xl flex items-center justify-center gap-2 text-meta font-bold transition-all active:scale-[0.97]"
                 style={{ background: "linear-gradient(135deg, #2563EB, #3B82F6)", color: "white", boxShadow: "0 4px 14px -3px hsl(222 90% 55% / 0.35)" }}
               >
@@ -274,7 +283,7 @@ const Home = () => {
               <h2 className="font-display text-title sm:text-hero-sm font-bold" style={{ color: "hsl(222 47% 11%)" }}>Connaissez la santé de votre propriété</h2>
               <p className="text-body mt-3 leading-relaxed" style={{ color: "hsl(220 12% 42%)" }}>Un diagnostic complet alimenté par l'IA. Identifiez les priorités d'entretien.</p>
               <button
-                onClick={() => navigate(isAuthenticated ? "/dashboard/home-score" : "/signup")}
+                onClick={() => handleCta("/dashboard/home-score", "Calculer mon Score Maison")}
                 className="mt-6 h-12 rounded-xl px-6 flex items-center gap-2 text-meta font-bold transition-all active:scale-[0.97]"
                 style={{ background: "white", border: "2px solid hsl(152 69% 51% / 0.3)", color: "hsl(152 55% 38%)" }}
               >
@@ -415,14 +424,14 @@ const Home = () => {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <button
-                    onClick={() => navigate(isAuthenticated ? "/describe-project" : "/signup")}
+                    onClick={() => handleCta("/describe-project", "Décrire mon projet")}
                     className="h-13 rounded-full px-8 text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
                     style={{ background: "linear-gradient(135deg, #2563EB, #06B6D4)", color: "white", boxShadow: "0 6px 24px -4px hsl(222 90% 55% / 0.4)" }}
                   >
                     Décrire mon projet <ArrowRight className="h-4 w-4 ml-1.5 inline" />
                   </button>
                   <button
-                    onClick={() => navigate(isAuthenticated ? "/dashboard/quotes/upload" : "/signup")}
+                    onClick={() => handleCta("/dashboard/quotes/upload", "Comparer des soumissions")}
                     className="h-13 rounded-full px-8 text-sm font-bold transition-all active:scale-[0.97]"
                     style={{ background: "white", border: "2px solid hsl(220 25% 88%)", color: "hsl(222 47% 11%)" }}
                   >
@@ -463,6 +472,13 @@ const Home = () => {
           ))}
         </div>
       </nav>
+
+      {/* Alex polite assistant for unauthenticated users */}
+      <AlexAssistantSheet
+        open={alexOpen}
+        onClose={() => { setAlexOpen(false); setAlexChip(undefined); }}
+        initialChip={alexChip}
+      />
     </div>
   );
 };
