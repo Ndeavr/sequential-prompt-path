@@ -16,7 +16,7 @@ const ROTATING_ITEMS = [
   { label: "le couvreur", action: "refaire votre toiture" },
   { label: "l'électricien", action: "remplacer votre panneau électrique" },
   { label: "le plombier", action: "rénover votre salle de bain" },
-  { label: "l'isoleur", action: "isoler votre grenier" },
+  { label: "l'entrepreneur", action: "isoler votre grenier" },
 ];
 
 const textVariants = {
@@ -74,7 +74,7 @@ export default function HeroSection() {
   useEffect(() => {
     const interval = window.setInterval(() => {
       setIndex((prev) => (prev + 1) % ROTATING_ITEMS.length);
-    }, 2800);
+    }, 4500);
     return () => window.clearInterval(interval);
   }, []);
 
