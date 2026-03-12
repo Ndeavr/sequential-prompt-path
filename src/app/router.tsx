@@ -14,6 +14,7 @@ import PartnersPage from "@/pages/PartnersPage";
 import DescribeProjectPage from "@/pages/DescribeProjectPage";
 import CompareQuotesPage from "@/pages/CompareQuotesPage";
 import ContractorOnboardingPage from "@/pages/ContractorOnboardingPage";
+import OnboardingFlow from "@/pages/OnboardingFlow";
 import PricingPage from "@/pages/PricingPage";
 import AIPPScorePage from "@/pages/AIPPScorePage";
 
@@ -85,6 +86,7 @@ export const AppRouter = () => (
       <Route path="/describe-project" element={<DescribeProjectPage />} />
       <Route path="/compare-quotes" element={<CompareQuotesPage />} />
       <Route path="/contractor-onboarding" element={<ContractorOnboardingPage />} />
+      <Route path="/onboarding" element={<OnboardingFlow />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/aipp-score" element={<AIPPScorePage />} />
 
