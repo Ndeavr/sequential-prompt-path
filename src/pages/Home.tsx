@@ -10,6 +10,7 @@ import {
   Clock, MapPin, Award, ThumbsUp, Users, FolderOpen,
 } from "lucide-react";
 import FeaturedCarousel from "@/components/home/FeaturedCarousel";
+import HeroSection from "@/components/home/HeroSection";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import heroHouse from "@/assets/hero-house.jpg";
