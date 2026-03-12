@@ -1040,6 +1040,103 @@ export type Database = {
           },
         ]
       }
+      document_chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          created_at: string
+          document_id: string | null
+          id: string
+          job_item_id: string | null
+          metadata: Json | null
+          page_number: number | null
+          section_title: string | null
+          token_count: number | null
+        }
+        Insert: {
+          chunk_index?: number
+          content: string
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          job_item_id?: string | null
+          metadata?: Json | null
+          page_number?: number | null
+          section_title?: string | null
+          token_count?: number | null
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          job_item_id?: string | null
+          metadata?: Json | null
+          page_number?: number | null
+          section_title?: string | null
+          token_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_chunks_job_item_id_fkey"
+            columns: ["job_item_id"]
+            isOneToOne: false
+            referencedRelation: "ingestion_job_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_entities: {
+        Row: {
+          confidence: number
+          created_at: string
+          document_id: string | null
+          entity_type: string
+          entity_value: string
+          id: string
+          job_item_id: string | null
+          metadata: Json | null
+          normalized_value: string | null
+          source_page: number | null
+          source_text: string | null
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          document_id?: string | null
+          entity_type: string
+          entity_value: string
+          id?: string
+          job_item_id?: string | null
+          metadata?: Json | null
+          normalized_value?: string | null
+          source_page?: number | null
+          source_text?: string | null
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          document_id?: string | null
+          entity_type?: string
+          entity_value?: string
+          id?: string
+          job_item_id?: string | null
+          metadata?: Json | null
+          normalized_value?: string | null
+          source_page?: number | null
+          source_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_entities_job_item_id_fkey"
+            columns: ["job_item_id"]
+            isOneToOne: false
+            referencedRelation: "ingestion_job_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       home_scores: {
         Row: {
           calculated_at: string
@@ -1142,6 +1239,110 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ingestion_job_items: {
+        Row: {
+          created_at: string
+          doc_type: Database["public"]["Enums"]["ingestion_doc_type"]
+          document_id: string | null
+          error_message: string | null
+          extraction_result: Json | null
+          file_name: string | null
+          file_size: number | null
+          id: string
+          job_id: string
+          processing_time_ms: number | null
+          status: Database["public"]["Enums"]["ingestion_job_status"]
+          storage_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doc_type?: Database["public"]["Enums"]["ingestion_doc_type"]
+          document_id?: string | null
+          error_message?: string | null
+          extraction_result?: Json | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          job_id: string
+          processing_time_ms?: number | null
+          status?: Database["public"]["Enums"]["ingestion_job_status"]
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doc_type?: Database["public"]["Enums"]["ingestion_doc_type"]
+          document_id?: string | null
+          error_message?: string | null
+          extraction_result?: Json | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          job_id?: string
+          processing_time_ms?: number | null
+          status?: Database["public"]["Enums"]["ingestion_job_status"]
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingestion_job_items_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "ingestion_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ingestion_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_log: Json | null
+          failed_items: number
+          id: string
+          job_type: string
+          metadata: Json | null
+          processed_items: number
+          started_at: string | null
+          status: Database["public"]["Enums"]["ingestion_job_status"]
+          total_items: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_log?: Json | null
+          failed_items?: number
+          id?: string
+          job_type?: string
+          metadata?: Json | null
+          processed_items?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["ingestion_job_status"]
+          total_items?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_log?: Json | null
+          failed_items?: number
+          id?: string
+          job_type?: string
+          metadata?: Json | null
+          processed_items?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["ingestion_job_status"]
+          total_items?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       lead_qualifications: {
         Row: {
@@ -1909,6 +2110,113 @@ export type Database = {
         }
         Relationships: []
       }
+      property_ai_extractions: {
+        Row: {
+          confidence: number
+          created_at: string
+          extraction_type: string
+          id: string
+          job_item_id: string | null
+          model_used: string | null
+          property_id: string | null
+          source_doc_type:
+            | Database["public"]["Enums"]["ingestion_doc_type"]
+            | null
+          structured_data: Json
+          updated_at: string
+          validated: boolean | null
+          validated_at: string | null
+          validated_by: string | null
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          extraction_type: string
+          id?: string
+          job_item_id?: string | null
+          model_used?: string | null
+          property_id?: string | null
+          source_doc_type?:
+            | Database["public"]["Enums"]["ingestion_doc_type"]
+            | null
+          structured_data?: Json
+          updated_at?: string
+          validated?: boolean | null
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          extraction_type?: string
+          id?: string
+          job_item_id?: string | null
+          model_used?: string | null
+          property_id?: string | null
+          source_doc_type?:
+            | Database["public"]["Enums"]["ingestion_doc_type"]
+            | null
+          structured_data?: Json
+          updated_at?: string
+          validated?: boolean | null
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_ai_extractions_job_item_id_fkey"
+            columns: ["job_item_id"]
+            isOneToOne: false
+            referencedRelation: "ingestion_job_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_ai_extractions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_aliases: {
+        Row: {
+          alias_type: string
+          alias_value: string
+          confidence: number | null
+          created_at: string
+          id: string
+          property_id: string | null
+          source: string | null
+        }
+        Insert: {
+          alias_type?: string
+          alias_value: string
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          property_id?: string | null
+          source?: string | null
+        }
+        Update: {
+          alias_type?: string
+          alias_value?: string
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          property_id?: string | null
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_aliases_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_documents: {
         Row: {
           created_at: string
@@ -2070,6 +2378,86 @@ export type Database = {
           },
         ]
       }
+      property_master_records: {
+        Row: {
+          building_area_sqft: number | null
+          building_type: string | null
+          cadastral_number: string | null
+          canonical_address: string | null
+          canonical_city: string | null
+          canonical_postal_code: string | null
+          canonical_province: string | null
+          confidence_score: number | null
+          created_at: string
+          data_sources: Json | null
+          id: string
+          land_area_sqft: number | null
+          last_enriched_at: string | null
+          last_tax_year: number | null
+          lot_number: string | null
+          municipal_evaluation: number | null
+          property_id: string | null
+          tax_amount: number | null
+          unit_count: number | null
+          updated_at: string
+          year_built: number | null
+        }
+        Insert: {
+          building_area_sqft?: number | null
+          building_type?: string | null
+          cadastral_number?: string | null
+          canonical_address?: string | null
+          canonical_city?: string | null
+          canonical_postal_code?: string | null
+          canonical_province?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          data_sources?: Json | null
+          id?: string
+          land_area_sqft?: number | null
+          last_enriched_at?: string | null
+          last_tax_year?: number | null
+          lot_number?: string | null
+          municipal_evaluation?: number | null
+          property_id?: string | null
+          tax_amount?: number | null
+          unit_count?: number | null
+          updated_at?: string
+          year_built?: number | null
+        }
+        Update: {
+          building_area_sqft?: number | null
+          building_type?: string | null
+          cadastral_number?: string | null
+          canonical_address?: string | null
+          canonical_city?: string | null
+          canonical_postal_code?: string | null
+          canonical_province?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          data_sources?: Json | null
+          id?: string
+          land_area_sqft?: number | null
+          last_enriched_at?: string | null
+          last_tax_year?: number | null
+          lot_number?: string | null
+          municipal_evaluation?: number | null
+          property_id?: string | null
+          tax_amount?: number | null
+          unit_count?: number | null
+          updated_at?: string
+          year_built?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_master_records_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: true
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_members: {
         Row: {
           created_at: string
@@ -2099,6 +2487,60 @@ export type Database = {
           {
             foreignKeyName: "property_members_property_id_fkey"
             columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_merge_candidates: {
+        Row: {
+          created_at: string
+          id: string
+          match_reasons: Json | null
+          merged_into_id: string | null
+          property_a_id: string | null
+          property_b_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          similarity_score: number
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          match_reasons?: Json | null
+          merged_into_id?: string | null
+          property_a_id?: string | null
+          property_b_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          similarity_score?: number
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          match_reasons?: Json | null
+          merged_into_id?: string | null
+          property_a_id?: string | null
+          property_b_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          similarity_score?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_merge_candidates_property_a_id_fkey"
+            columns: ["property_a_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_merge_candidates_property_b_id_fkey"
+            columns: ["property_b_id"]
             isOneToOne: false
             referencedRelation: "properties"
             referencedColumns: ["id"]
@@ -2142,6 +2584,54 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "property_scores_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_source_links: {
+        Row: {
+          extraction_id: string | null
+          id: string
+          linked_at: string
+          metadata: Json | null
+          property_id: string | null
+          source_id: string | null
+          source_type: string
+          source_url: string | null
+        }
+        Insert: {
+          extraction_id?: string | null
+          id?: string
+          linked_at?: string
+          metadata?: Json | null
+          property_id?: string | null
+          source_id?: string | null
+          source_type: string
+          source_url?: string | null
+        }
+        Update: {
+          extraction_id?: string | null
+          id?: string
+          linked_at?: string
+          metadata?: Json | null
+          property_id?: string | null
+          source_id?: string | null
+          source_type?: string
+          source_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_source_links_extraction_id_fkey"
+            columns: ["extraction_id"]
+            isOneToOne: false
+            referencedRelation: "property_ai_extractions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_source_links_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
@@ -3828,6 +4318,20 @@ export type Database = {
         | "scheduled"
         | "completed"
         | "cancelled"
+      ingestion_doc_type:
+        | "tax_bill"
+        | "contractor_quote"
+        | "reserve_fund_study"
+        | "inspection_report"
+        | "maintenance_document"
+        | "insurance_certificate"
+        | "other"
+      ingestion_job_status:
+        | "pending"
+        | "processing"
+        | "completed"
+        | "failed"
+        | "partial"
       property_condition: "excellent" | "good" | "fair" | "poor" | "critical"
       quote_status: "pending" | "analyzed" | "accepted" | "rejected"
       syndicate_member_role:
@@ -3973,6 +4477,22 @@ export const Constants = {
         "scheduled",
         "completed",
         "cancelled",
+      ],
+      ingestion_doc_type: [
+        "tax_bill",
+        "contractor_quote",
+        "reserve_fund_study",
+        "inspection_report",
+        "maintenance_document",
+        "insurance_certificate",
+        "other",
+      ],
+      ingestion_job_status: [
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+        "partial",
       ],
       property_condition: ["excellent", "good", "fair", "poor", "critical"],
       quote_status: ["pending", "analyzed", "accepted", "rejected"],
