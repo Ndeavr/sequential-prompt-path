@@ -1,12 +1,12 @@
 /**
  * AlexAssistantSheet — Premium bottom sheet with voice/text modes,
- * chat interface, and login prompt for unauthenticated users.
+ * chat interface, chip-triggered conversations, and login prompt.
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, X, Mic, MicOff, Keyboard, Send, Loader2, Square } from "lucide-react";
+import { Sparkles, X, Mic, Keyboard, Send, Loader2, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,12 +15,46 @@ import { useAuth } from "@/hooks/useAuth";
 
 type Mode = "choose" | "voice" | "text";
 
-const SUGGESTIONS = [
+const DEFAULT_SUGGESTIONS = [
   "Rénover ma cuisine",
   "Réparer ma toiture",
   "Obtenir un certificat de localisation",
   "Agrandir ma maison",
 ];
+
+const CHIP_SUGGESTIONS: Record<string, string[]> = {
+  "Rénovation": [
+    "Rénover ma cuisine",
+    "Rénover ma salle de bain",
+    "Rénover mon sous-sol",
+    "Trouver un entrepreneur général",
+    "Estimer le coût des travaux",
+  ],
+  "Construction": [
+    "Construire un garage",
+    "Construire une maison neuve",
+    "Trouver un entrepreneur général",
+    "Estimer le coût de construction",
+  ],
+  "Agrandissement": [
+    "Agrandir ma maison",
+    "Ajouter un étage",
+    "Construire une extension",
+    "Estimer le coût d'agrandissement",
+  ],
+  "Toiture": [
+    "Réparer ma toiture",
+    "Remplacer mon toit",
+    "Trouver un couvreur",
+    "Estimer le coût de toiture",
+  ],
+  "Cuisine": [
+    "Rénover ma cuisine",
+    "Refaire les armoires",
+    "Installer un îlot",
+    "Estimer le coût de rénovation",
+  ],
+};
 
 /* ─── Voice hook ─── */
 const useVoice = (onResult: (t: string) => void) => {
@@ -57,9 +91,10 @@ const useVoice = (onResult: (t: string) => void) => {
 interface Props {
   open: boolean;
   onClose: () => void;
+  initialChip?: string;
 }
 
-export default function AlexAssistantSheet({ open, onClose }: Props) {
+export default function AlexAssistantSheet({ open, onClose, initialChip }: Props) {
   const { user, isAuthenticated } = useAuth();
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -67,11 +102,28 @@ export default function AlexAssistantSheet({ open, onClose }: Props) {
   const [mode, setMode] = useState<Mode>("choose");
   const [input, setInput] = useState("");
   const [showLogin, setShowLogin] = useState(false);
+  const [chipContext, setChipContext] = useState<string | undefined>();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "";
   const greeting = firstName ? `Bonjour ${firstName} !` : "Bonjour !";
+
+  // When opened with a chip, go straight to text mode with context
+  useEffect(() => {
+    if (open && initialChip) {
+      setChipContext(initialChip);
+      setMode("text");
+    }
+  }, [open, initialChip]);
+
+  const chipGreeting = chipContext
+    ? `${greeting}\n\nComment puis-je vous aider avec vos projets de ${chipContext.toLowerCase()} ?`
+    : undefined;
+
+  const suggestions = chipContext
+    ? (CHIP_SUGGESTIONS[chipContext] || DEFAULT_SUGGESTIONS)
+    : DEFAULT_SUGGESTIONS;
 
   const handleVoiceResult = useCallback((text: string) => {
     setInput(text);
@@ -80,21 +132,19 @@ export default function AlexAssistantSheet({ open, onClose }: Props) {
 
   const { listening, supported, toggle: toggleVoice } = useVoice(handleVoiceResult);
 
-  // scroll to bottom
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
 
-  // focus input in text mode
   useEffect(() => {
     if (mode === "text") setTimeout(() => inputRef.current?.focus(), 100);
   }, [mode]);
 
-  // reset on close
   useEffect(() => {
     if (!open) {
       setMode("choose");
       setShowLogin(false);
+      setChipContext(undefined);
     }
   }, [open]);
 
@@ -103,7 +153,6 @@ export default function AlexAssistantSheet({ open, onClose }: Props) {
     if (!t || isStreaming) return;
     setInput("");
 
-    // If action needs auth and user not logged in
     if (!isAuthenticated) {
       setShowLogin(true);
       return;
@@ -134,7 +183,8 @@ export default function AlexAssistantSheet({ open, onClose }: Props) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm"
+            className="fixed inset-0 z-50"
+            style={{ background: "rgba(11,21,51,0.18)", backdropFilter: "blur(6px)" }}
             onClick={onClose}
           />
 
@@ -146,20 +196,20 @@ export default function AlexAssistantSheet({ open, onClose }: Props) {
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
             className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] rounded-t-3xl overflow-hidden flex flex-col"
             style={{
-              background: "hsl(220 20% 98%)",
-              boxShadow: "0 -8px 40px hsl(222 40% 20% / 0.12)",
+              background: "#F7FBFF",
+              boxShadow: "0 -8px 40px rgba(11,21,51,0.12)",
             }}
           >
             {/* Handle + close */}
             <div className="flex items-center justify-between px-5 pt-3 pb-2">
-              <div className="w-10 h-1 rounded-full bg-border mx-auto" />
+              <div className="w-10 h-1 rounded-full mx-auto" style={{ background: "#DFE9F5" }} />
               <Button
                 variant="ghost"
                 size="icon"
                 className="absolute right-3 top-3 h-8 w-8 rounded-full"
                 onClick={onClose}
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" style={{ color: "#6C7A92" }} />
               </Button>
             </div>
 
@@ -167,28 +217,24 @@ export default function AlexAssistantSheet({ open, onClose }: Props) {
             {showLogin ? (
               <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 text-center space-y-5">
                 <div className="h-16 w-16 rounded-full flex items-center justify-center"
-                  style={{ background: "linear-gradient(135deg, hsl(222 100% 61%), hsl(252 100% 65%), hsl(195 100% 50%))" }}
+                  style={{ background: "linear-gradient(135deg, #3F7BFF, #06B6D4)", boxShadow: "0 8px 24px rgba(63,123,255,0.25)" }}
                 >
                   <Sparkles className="h-7 w-7 text-white" />
                 </div>
                 <div className="space-y-2 max-w-xs">
-                  <p className="text-base font-bold" style={{ color: "hsl(222 47% 11%)" }}>
-                    {greeting}
+                  <p className="text-base font-bold" style={{ color: "#0B1533" }}>{greeting}</p>
+                  <p className="text-sm leading-relaxed" style={{ color: "#6C7A92" }}>
+                    Pour enregistrer votre projet et trouver les meilleurs entrepreneurs, vous devez vous connecter.
                   </p>
-                  <p className="text-sm leading-relaxed" style={{ color: "hsl(220 12% 42%)" }}>
-                    Pour vous aider à trouver le bon entrepreneur et enregistrer votre projet, vous devez vous connecter.
-                  </p>
-                  <p className="text-sm font-medium" style={{ color: "hsl(222 47% 11%)" }}>
-                    Je vous montre ?
-                  </p>
+                  <p className="text-sm font-medium" style={{ color: "#0B1533" }}>Je vous montre ?</p>
                 </div>
                 <div className="flex flex-col gap-3 w-full max-w-xs">
                   <button
                     onClick={handleLogin}
                     className="h-12 rounded-2xl font-bold text-sm text-white"
                     style={{
-                      background: "linear-gradient(135deg, hsl(222 100% 61%), hsl(195 100% 50%))",
-                      boxShadow: "0 6px 20px hsl(222 100% 61% / 0.3)",
+                      background: "linear-gradient(135deg, #3F7BFF, #06B6D4)",
+                      boxShadow: "0 6px 20px rgba(63,123,255,0.3)",
                     }}
                   >
                     Oui, se connecter
@@ -196,7 +242,7 @@ export default function AlexAssistantSheet({ open, onClose }: Props) {
                   <button
                     onClick={() => setShowLogin(false)}
                     className="h-12 rounded-2xl font-medium text-sm"
-                    style={{ color: "hsl(220 12% 42%)", background: "hsl(220 16% 95%)" }}
+                    style={{ color: "#6C7A92", background: "#EEF3FA" }}
                   >
                     Continuer sans compte
                   </button>
@@ -211,20 +257,16 @@ export default function AlexAssistantSheet({ open, onClose }: Props) {
                   transition={{ duration: 0.4, ease: "easeOut" }}
                   className="h-20 w-20 rounded-full flex items-center justify-center"
                   style={{
-                    background: "linear-gradient(135deg, hsl(222 100% 61%), hsl(252 100% 65%), hsl(195 100% 50%))",
-                    boxShadow: "0 8px 32px hsl(222 100% 61% / 0.3)",
+                    background: "linear-gradient(135deg, #3F7BFF, #06B6D4)",
+                    boxShadow: "0 8px 32px rgba(63,123,255,0.3)",
                   }}
                 >
                   <Sparkles className="h-8 w-8 text-white" />
                 </motion.div>
 
                 <div className="space-y-1">
-                  <p className="text-lg font-bold" style={{ color: "hsl(222 47% 11%)" }}>
-                    {greeting}
-                  </p>
-                  <p className="text-sm" style={{ color: "hsl(220 12% 42%)" }}>
-                    Quel projet avez-vous en tête ?
-                  </p>
+                  <p className="text-lg font-bold" style={{ color: "#0B1533" }}>{greeting}</p>
+                  <p className="text-sm" style={{ color: "#6C7A92" }}>Quel projet avez-vous en tête ?</p>
                 </div>
 
                 <div className="flex gap-4 w-full max-w-xs">
@@ -233,8 +275,8 @@ export default function AlexAssistantSheet({ open, onClose }: Props) {
                       onClick={() => handleChooseMode("voice")}
                       className="flex-1 h-14 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm text-white"
                       style={{
-                        background: "linear-gradient(135deg, hsl(222 100% 61%), hsl(195 100% 50%))",
-                        boxShadow: "0 6px 20px hsl(222 100% 61% / 0.3)",
+                        background: "linear-gradient(135deg, #3F7BFF, #06B6D4)",
+                        boxShadow: "0 6px 20px rgba(63,123,255,0.3)",
                       }}
                     >
                       <Mic className="h-4 w-4" /> Parler
@@ -244,9 +286,9 @@ export default function AlexAssistantSheet({ open, onClose }: Props) {
                     onClick={() => handleChooseMode("text")}
                     className={`${supported ? "flex-1" : "w-full"} h-14 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm`}
                     style={{
-                      color: "hsl(222 100% 61%)",
-                      background: "hsl(222 100% 61% / 0.08)",
-                      border: "1.5px solid hsl(222 100% 61% / 0.2)",
+                      color: "#3F7BFF",
+                      background: "rgba(63,123,255,0.06)",
+                      border: "1.5px solid rgba(63,123,255,0.18)",
                     }}
                   >
                     <Keyboard className="h-4 w-4" /> Écrire
@@ -259,36 +301,25 @@ export default function AlexAssistantSheet({ open, onClose }: Props) {
                 <motion.div
                   className="h-24 w-24 rounded-full flex items-center justify-center relative"
                   style={{
-                    background: "linear-gradient(135deg, hsl(222 100% 61%), hsl(252 100% 65%), hsl(195 100% 50%))",
-                    boxShadow: "0 8px 32px hsl(222 100% 61% / 0.3)",
+                    background: "linear-gradient(135deg, #3F7BFF, #06B6D4)",
+                    boxShadow: "0 8px 32px rgba(63,123,255,0.3)",
                   }}
                   animate={{ scale: [1, 1.08, 1] }}
                   transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
                 >
-                  {/* Sound wave rings */}
                   {[0, 1, 2].map((i) => (
                     <motion.div
                       key={i}
-                      className="absolute inset-0 rounded-full border-2"
-                      style={{ borderColor: "hsl(222 100% 61% / 0.2)" }}
-                      animate={{
-                        scale: [1, 1.4 + i * 0.2],
-                        opacity: [0.5, 0],
-                      }}
-                      transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                        delay: i * 0.3,
-                        ease: "easeOut",
-                      }}
+                      className="absolute inset-0 rounded-full"
+                      style={{ border: "2px solid rgba(63,123,255,0.2)" }}
+                      animate={{ scale: [1, 1.4 + i * 0.2], opacity: [0.5, 0] }}
+                      transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.3, ease: "easeOut" }}
                     />
                   ))}
                   <Mic className="h-10 w-10 text-white relative z-10" />
                 </motion.div>
 
-                <p className="text-sm font-medium" style={{ color: "hsl(220 12% 42%)" }}>
-                  Je vous écoute…
-                </p>
+                <p className="text-sm font-medium" style={{ color: "#6C7A92" }}>Je vous écoute…</p>
 
                 <Button
                   variant="ghost"
@@ -309,29 +340,40 @@ export default function AlexAssistantSheet({ open, onClose }: Props) {
                         {/* Greeting */}
                         <div className="flex items-start gap-2.5">
                           <div className="h-8 w-8 rounded-full flex items-center justify-center shrink-0"
-                            style={{ background: "linear-gradient(135deg, hsl(222 100% 61%), hsl(252 100% 65%), hsl(195 100% 50%))" }}
+                            style={{ background: "linear-gradient(135deg, #3F7BFF, #06B6D4)" }}
                           >
                             <Sparkles className="h-3.5 w-3.5 text-white" />
                           </div>
                           <div className="rounded-2xl rounded-bl-lg px-4 py-3 text-sm leading-relaxed"
-                            style={{ background: "white", border: "1px solid hsl(220 16% 92%)" }}
+                            style={{ background: "white", border: "1px solid #DFE9F5" }}
                           >
-                            <p className="font-bold" style={{ color: "hsl(222 47% 11%)" }}>{greeting}</p>
-                            <p style={{ color: "hsl(220 12% 42%)" }}>Quel projet avez-vous en tête ?</p>
+                            {chipGreeting ? (
+                              chipGreeting.split("\n").map((line, i) => (
+                                <p key={i} className={i === 0 ? "font-bold" : ""} style={{ color: i === 0 ? "#0B1533" : "#6C7A92" }}>
+                                  {line || <br />}
+                                </p>
+                              ))
+                            ) : (
+                              <>
+                                <p className="font-bold" style={{ color: "#0B1533" }}>{greeting}</p>
+                                <p style={{ color: "#6C7A92" }}>Quel projet avez-vous en tête ?</p>
+                              </>
+                            )}
                           </div>
                         </div>
 
                         {/* Suggestion chips */}
                         <div className="flex flex-wrap gap-2 pl-10">
-                          {SUGGESTIONS.map((s) => (
+                          {suggestions.map((s) => (
                             <button
                               key={s}
                               onClick={() => handleSend(s)}
-                              className="rounded-full px-4 py-2 text-xs font-medium transition-colors"
+                              className="rounded-full px-4 py-2.5 text-xs font-medium transition-all hover:scale-[1.03] active:scale-[0.97]"
                               style={{
-                                background: "hsl(222 100% 61% / 0.06)",
-                                color: "hsl(222 100% 61%)",
-                                border: "1px solid hsl(222 100% 61% / 0.15)",
+                                background: "white",
+                                color: "#3F7BFF",
+                                border: "1px solid #E7EEF8",
+                                boxShadow: "0 2px 8px rgba(83,118,180,0.06)",
                               }}
                             >
                               {s}
@@ -344,7 +386,7 @@ export default function AlexAssistantSheet({ open, onClose }: Props) {
                         <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                           {msg.role === "assistant" && (
                             <div className="h-7 w-7 rounded-full flex items-center justify-center shrink-0 mt-1 mr-2"
-                              style={{ background: "linear-gradient(135deg, hsl(222 100% 61%), hsl(252 100% 65%), hsl(195 100% 50%))" }}
+                              style={{ background: "linear-gradient(135deg, #3F7BFF, #06B6D4)" }}
                             >
                               <Sparkles className="h-3 w-3 text-white" />
                             </div>
@@ -355,8 +397,8 @@ export default function AlexAssistantSheet({ open, onClose }: Props) {
                             }`}
                             style={
                               msg.role === "user"
-                                ? { background: "hsl(222 100% 61%)", color: "white" }
-                                : { background: "white", border: "1px solid hsl(220 16% 92%)", color: "hsl(222 47% 11%)" }
+                                ? { background: "#3F7BFF", color: "white" }
+                                : { background: "white", border: "1px solid #DFE9F5", color: "#0B1533" }
                             }
                           >
                             {msg.role === "assistant" ? (
@@ -368,7 +410,7 @@ export default function AlexAssistantSheet({ open, onClose }: Props) {
                             )}
                             {isStreaming && i === messages.length - 1 && msg.role === "assistant" && (
                               <span className="inline-flex ml-1">
-                                <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: "hsl(222 100% 61%)" }} />
+                                <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: "#3F7BFF" }} />
                               </span>
                             )}
                           </div>
@@ -379,7 +421,7 @@ export default function AlexAssistantSheet({ open, onClose }: Props) {
                 </ScrollArea>
 
                 {/* Input */}
-                <div className="px-4 py-3" style={{ borderTop: "1px solid hsl(220 16% 92%)" }}>
+                <div className="px-4 py-3" style={{ borderTop: "1px solid #DFE9F5" }}>
                   <form
                     onSubmit={(e) => { e.preventDefault(); handleSend(); }}
                     className="flex items-center gap-2"
@@ -389,7 +431,8 @@ export default function AlexAssistantSheet({ open, onClose }: Props) {
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       placeholder="Posez votre question…"
-                      className="flex-1 text-sm rounded-2xl h-11 border-border/60 bg-muted/30"
+                      className="flex-1 text-sm rounded-2xl h-11"
+                      style={{ background: "#EEF3FA", border: "1px solid #DFE9F5", color: "#0B1533" }}
                       disabled={isStreaming}
                     />
                     {supported && (
@@ -399,9 +442,10 @@ export default function AlexAssistantSheet({ open, onClose }: Props) {
                         size="icon"
                         onClick={() => { setMode("voice"); toggleVoice(); }}
                         className="shrink-0 rounded-2xl h-11 w-11"
+                        style={{ border: "1px solid #DFE9F5" }}
                         disabled={isStreaming}
                       >
-                        <Mic className="h-4 w-4" />
+                        <Mic className="h-4 w-4" style={{ color: "#6C7A92" }} />
                       </Button>
                     )}
                     <button
@@ -409,8 +453,8 @@ export default function AlexAssistantSheet({ open, onClose }: Props) {
                       disabled={!input.trim() || isStreaming}
                       className="shrink-0 h-11 w-11 rounded-2xl flex items-center justify-center text-white disabled:opacity-50"
                       style={{
-                        background: "linear-gradient(135deg, hsl(222 100% 61%), hsl(195 100% 50%))",
-                        boxShadow: "0 4px 14px hsl(222 100% 61% / 0.3)",
+                        background: "linear-gradient(135deg, #3F7BFF, #06B6D4)",
+                        boxShadow: "0 4px 14px rgba(63,123,255,0.3)",
                       }}
                     >
                       {isStreaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
