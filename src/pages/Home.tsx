@@ -424,7 +424,7 @@ const Home = () => {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <button
-                    onClick={() => navigate(isAuthenticated ? "/describe-project" : "/signup")}
+                    onClick={() => handleCta("/describe-project", "Décrire mon projet")}
                     className="h-13 rounded-full px-8 text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
                     style={{ background: "linear-gradient(135deg, #2563EB, #06B6D4)", color: "white", boxShadow: "0 6px 24px -4px hsl(222 90% 55% / 0.4)" }}
                   >
