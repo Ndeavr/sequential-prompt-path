@@ -103,19 +103,25 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
   const [input, setInput] = useState("");
   const [showLogin, setShowLogin] = useState(false);
   const [chipContext, setChipContext] = useState<string | undefined>();
+  const [voiceAutoStarted, setVoiceAutoStarted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "";
   const greeting = firstName ? `Bonjour ${firstName} !` : "Bonjour !";
 
-  // When opened with a chip, go straight to text mode with context
+  // Auto-start voice when sheet opens (voice-first UX)
   useEffect(() => {
-    if (open && initialChip) {
-      setChipContext(initialChip);
-      setMode("text");
+    if (open && !voiceAutoStarted) {
+      if (initialChip) {
+        setChipContext(initialChip);
+        setMode("text");
+      } else {
+        setMode("voice");
+        setVoiceAutoStarted(true);
+      }
     }
-  }, [open, initialChip]);
+  }, [open, initialChip, voiceAutoStarted]);
 
   const chipGreeting = chipContext
     ? `${greeting}\n\nComment puis-je vous aider avec vos projets de ${chipContext.toLowerCase()} ?`
