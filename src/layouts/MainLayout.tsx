@@ -17,10 +17,10 @@ interface MainLayoutProps {
 }
 
 const navLinks = [
-  { to: "/homeowners", label: "Propriétaires" },
-  { to: "/professionals", label: "Professionnels" },
-  { to: "/pricing", label: "Tarifs" },
   { to: "/search", label: "Trouver un Pro" },
+  { to: "/homeowners", label: "Services" },
+  { to: "/pricing", label: "Tarifs" },
+  { to: "/professionals", label: "FAQ" },
 ];
 
 const MainLayout = ({ children }: MainLayoutProps) => {
