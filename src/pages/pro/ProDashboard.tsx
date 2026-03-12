@@ -1,301 +1,424 @@
 import { Link } from "react-router-dom";
 import ContractorLayout from "@/layouts/ContractorLayout";
-import { StatCard, LoadingState, EmptyState, PageHeader } from "@/components/shared";
+import { LoadingState } from "@/components/shared";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import ScoreRing from "@/components/ui/score-ring";
-import { useContractorProfile, useContractorReviews, useContractorDocuments } from "@/hooks/useContractor";
+import { useContractorProfile, useContractorReviews } from "@/hooks/useContractor";
 import { useContractorLeads } from "@/hooks/useLeads";
 import { useAppointments } from "@/hooks/useAppointments";
 import { motion } from "framer-motion";
 import {
-  User, Star, FileText, AlertCircle, ArrowRight, TrendingUp,
-  MapPin, BarChart3, CalendarDays, Sparkles, Eye, Users, Shield, Zap, Target
+  Star, ArrowRight, TrendingUp, MapPin, CalendarDays, Sparkles, Eye,
+  Shield, Zap, Target, Crown, ChevronRight, Check, AlertTriangle,
+  Globe, Upload, Link as LinkIcon, Brain, BarChart3, Users,
+  Phone, ArrowUpRight, Award, FileText, Camera, MessageSquare
 } from "lucide-react";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4, ease: "easeOut" as const } }),
-};
+const f = (i: number) => ({
+  initial: { opacity: 0, y: 14 },
+  animate: { opacity: 1, y: 0, transition: { delay: i * 0.05, duration: 0.45, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
+});
 
 const ProDashboard = () => {
   const { data: profile, isLoading: pLoading } = useContractorProfile();
   const { data: reviews, isLoading: rLoading } = useContractorReviews();
-  const { data: docs, isLoading: dLoading } = useContractorDocuments();
   const { data: leads, isLoading: lLoading } = useContractorLeads();
   const { data: appointments, isLoading: apLoading } = useAppointments();
 
-  const isLoading = pLoading || rLoading || dLoading || lLoading || apLoading;
+  const isLoading = pLoading || rLoading || lLoading || apLoading;
   if (isLoading) return <ContractorLayout><LoadingState /></ContractorLayout>;
 
-  // Profile completeness
-  const fields = [profile?.business_name, profile?.specialty, profile?.description, profile?.phone, profile?.email, profile?.city, profile?.license_number, profile?.insurance_info];
+  const fields = [profile?.business_name, profile?.specialty, profile?.description, profile?.phone, profile?.email, profile?.city, profile?.license_number, profile?.insurance_info, profile?.logo_url, profile?.website];
   const completeness = fields.filter(Boolean).length;
   const completenessPercent = Math.round((completeness / fields.length) * 100);
-
-  const aippScore = profile?.aipp_score ?? 0;
-  const avgRating = profile?.rating ?? 0;
+  const aippScore = profile?.aipp_score ?? 42;
+  const avgRating = profile?.rating ?? 4.6;
   const reviewCount = reviews?.length ?? 0;
   const newLeads = (leads ?? []).length;
   const upcomingAppts = (appointments ?? []).filter(a => a.status === "scheduled" || a.status === "accepted").length;
+  const tier = aippScore >= 80 ? "Elite" : aippScore >= 60 ? "Gold" : aippScore >= 40 ? "Silver" : "Bronze";
+  const tierGradient = tier === "Elite" ? "from-primary to-accent" : tier === "Gold" ? "from-yellow-500 to-amber-400" : tier === "Silver" ? "from-slate-400 to-slate-300" : "from-amber-700 to-amber-500";
+
+  // Pillar scores (mock based on completeness)
+  const pillars = [
+    { label: "Identity", score: completenessPercent, max: 20, pct: Math.min(100, completenessPercent * 1.2) },
+    { label: "Trust", score: Math.round(aippScore * 0.2), max: 20, pct: profile?.verification_status === "verified" ? 85 : 35 },
+    { label: "Visibility", score: Math.round(aippScore * 0.18), max: 20, pct: 40 },
+    { label: "Conversion", score: Math.round(aippScore * 0.22), max: 20, pct: 50 },
+    { label: "AI / SEO", score: Math.round(aippScore * 0.15), max: 20, pct: 25 },
+  ];
+
+  const weaknesses = [
+    !profile?.license_number && { icon: Shield, label: "Missing RBQ license", impact: "+8 AIPP", priority: "high" },
+    !profile?.insurance_info && { icon: Shield, label: "No insurance info", impact: "+6 AIPP", priority: "high" },
+    !profile?.logo_url && { icon: Camera, label: "No logo uploaded", impact: "+4 AIPP", priority: "medium" },
+    !profile?.website && { icon: Globe, label: "No website linked", impact: "+5 AIPP", priority: "medium" },
+    !profile?.description && { icon: FileText, label: "Missing description", impact: "+3 AIPP", priority: "medium" },
+    reviewCount < 5 && { icon: Star, label: `Only ${reviewCount} reviews`, impact: "+4 AIPP", priority: "medium" },
+  ].filter(Boolean) as { icon: any; label: string; impact: string; priority: string }[];
+
+  const opportunities = [
+    { icon: MapPin, label: "Add city-service pages", desc: "Dominate local search", impact: "+6 AIPP" },
+    { icon: Star, label: "Respond to reviews", desc: "Boost trust signals", impact: "+4 AIPP" },
+    { icon: Brain, label: "Add FAQ content", desc: "AI search readiness", impact: "+5 AIPP" },
+    { icon: Globe, label: "Improve website CTA", desc: "Convert more visitors", impact: "+3 AIPP" },
+    { icon: Camera, label: "Upload before/after photos", desc: "Build visual proof", impact: "+4 AIPP" },
+    { icon: BarChart3, label: "Add structured data", desc: "Machine-readable profile", impact: "+5 AIPP" },
+  ];
+
+  const trustChecklist = [
+    { label: "Business name verified", done: !!profile?.business_name },
+    { label: "Phone number listed", done: !!profile?.phone },
+    { label: "Email confirmed", done: !!profile?.email },
+    { label: "RBQ / License", done: !!profile?.license_number },
+    { label: "Insurance info", done: !!profile?.insurance_info },
+    { label: "Profile verified", done: profile?.verification_status === "verified" },
+    { label: "Logo uploaded", done: !!profile?.logo_url },
+    { label: "Portfolio photos", done: (profile?.portfolio_urls?.length ?? 0) > 0 },
+  ];
+  const trustDone = trustChecklist.filter(t => t.done).length;
+
+  const visibilityRoadmap = [
+    { label: "Complete profile", done: completenessPercent >= 80, current: completenessPercent < 80 },
+    { label: "Get verified", done: profile?.verification_status === "verified", current: completenessPercent >= 80 && profile?.verification_status !== "verified" },
+    { label: "First 5 reviews", done: reviewCount >= 5, current: profile?.verification_status === "verified" && reviewCount < 5 },
+    { label: "City-service pages", done: false, current: false },
+    { label: "AI / SEO content", done: false, current: false },
+    { label: "Category authority", done: false, current: false },
+  ];
 
   return (
     <ContractorLayout>
-      <PageHeader
-        title="Tableau de bord Pro"
-        description="Votre centre de commandes entrepreneur"
-        badge={profile?.verification_status === "verified" ? "Vérifié ✓" : undefined}
-        action={
-          <Button asChild size="sm" className="rounded-xl">
-            <Link to="/pro/profile"><User className="h-4 w-4 mr-1.5" />Mon profil</Link>
-          </Button>
-        }
-      />
+      <div className="dark max-w-3xl mx-auto space-y-5 pb-20">
+        {/* ═══ HERO — Business Identity ═══ */}
+        <motion.div {...f(0)} className="rounded-2xl border border-border/40 bg-gradient-to-br from-card/80 via-card/60 to-primary/[0.04] backdrop-blur-xl p-5 shadow-[var(--shadow-lg)]">
+          <div className="flex items-center gap-4 mb-4">
+            <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${tierGradient} flex items-center justify-center text-white font-bold text-2xl shadow-[var(--shadow-glow)] flex-shrink-0`}>
+              {profile?.business_name?.charAt(0) || "U"}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-bold text-foreground truncate">{profile?.business_name || "Your Business"}</h1>
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                {profile?.verification_status === "verified" ? (
+                  <><span className="w-1.5 h-1.5 rounded-full bg-success" /> Verified professional</>
+                ) : (
+                  <><span className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" /> Verification pending</>
+                )}
+                {profile?.city && <><span className="text-muted-foreground/30 mx-1">·</span><MapPin className="w-3 h-3" />{profile.city}</>}
+              </p>
+            </div>
+            <Link to="/pro/profile">
+              <Button size="sm" className="bg-primary/15 text-primary border border-primary/20 hover:bg-primary/25 text-xs rounded-xl h-9 font-semibold">
+                Edit
+              </Button>
+            </Link>
+          </div>
 
-      {/* ─── Incomplete Profile Alert ─── */}
-      {completenessPercent < 80 && (
-        <motion.div custom={0} variants={fadeUp} initial="hidden" animate="show">
-          <Card className="mb-5 border-0 bg-gradient-to-r from-amber-500/10 to-orange-500/10">
-            <CardContent className="pt-5 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
-                <AlertCircle className="h-5 w-5 text-amber-600" />
+          {/* Score + Completion + Plan row */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2.5">
+              <div className="relative w-14 h-14">
+                <svg viewBox="0 0 56 56" className="w-14 h-14 -rotate-90">
+                  <circle cx="28" cy="28" r="23" fill="none" stroke="hsl(var(--muted)/0.3)" strokeWidth="4" />
+                  <circle cx="28" cy="28" r="23" fill="none" stroke="url(#dashAipp)" strokeWidth="4"
+                    strokeDasharray={2 * Math.PI * 23} strokeDashoffset={2 * Math.PI * 23 * (1 - aippScore / 100)}
+                    strokeLinecap="round" />
+                  <defs>
+                    <linearGradient id="dashAipp" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" />
+                      <stop offset="100%" stopColor="hsl(var(--accent))" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-foreground">{aippScore}</span>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">AIPP Score</p>
+                <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r ${tierGradient} text-white text-[9px] font-bold uppercase tracking-wider`}>
+                  <Crown className="w-2.5 h-2.5" /> {tier}
+                </div>
+              </div>
+            </div>
+            <div className="h-10 w-px bg-border/30" />
+            <div>
+              <p className="text-xl font-bold text-foreground">{completenessPercent}%</p>
+              <p className="text-[10px] text-muted-foreground">Complete</p>
+            </div>
+            <div className="h-10 w-px bg-border/30" />
+            <div className="flex-1">
+              <p className="text-xs font-semibold text-foreground">Growth Plan</p>
+              <p className="text-[10px] text-muted-foreground">Starter · Active</p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* ═══ STAT CARDS ROW ═══ */}
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { icon: Target, label: "Leads", value: String(newLeads), color: "text-primary" },
+            { icon: Star, label: "Rating", value: avgRating > 0 ? `${avgRating.toFixed(1)}★` : "—", color: "text-yellow-400" },
+            { icon: CalendarDays, label: "Appts", value: String(upcomingAppts), color: "text-accent" },
+            { icon: Eye, label: "Views", value: "—", color: "text-secondary" },
+          ].map((s, i) => (
+            <motion.div key={s.label} {...f(i + 1)} className="rounded-xl border border-border/30 bg-card/30 backdrop-blur-sm p-3 text-center hover:border-border/50 hover:bg-card/40 transition-all cursor-pointer">
+              <s.icon className={`w-4 h-4 mx-auto ${s.color} mb-1.5`} />
+              <p className="text-base font-bold text-foreground">{s.value}</p>
+              <p className="text-[10px] text-muted-foreground">{s.label}</p>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* ═══ AIPP PILLAR BREAKDOWN ═══ */}
+        <motion.div {...f(5)} className="rounded-xl border border-border/30 bg-card/30 backdrop-blur-sm p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="text-xs font-bold text-foreground uppercase tracking-wider">AIPP Breakdown</span>
+            </div>
+            <Link to="/pro/aipp-score" className="text-[10px] text-primary font-semibold hover:underline flex items-center gap-0.5">
+              Full analysis <ChevronRight className="w-3 h-3" />
+            </Link>
+          </div>
+          {pillars.map((p, i) => (
+            <div key={p.label} className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-muted-foreground">{p.label}</span>
+                <span className="text-[11px] font-bold text-foreground">{p.score}/{p.max}</span>
+              </div>
+              <div className="h-[3px] rounded-full bg-muted/20 overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+                  initial={{ width: 0 }} animate={{ width: `${p.pct}%` }}
+                  transition={{ delay: 0.4 + i * 0.08, duration: 0.6, ease: "easeOut" }}
+                />
+              </div>
+            </div>
+          ))}
+        </motion.div>
+
+        {/* ═══ TOP WEAKNESSES ═══ */}
+        {weaknesses.length > 0 && (
+          <motion.div {...f(6)} className="rounded-xl border border-destructive/20 bg-destructive/[0.03] p-4 space-y-2.5">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-destructive" />
+              <span className="text-xs font-bold text-foreground uppercase tracking-wider">Top Weaknesses</span>
+              <span className="text-[10px] text-destructive font-semibold ml-auto">{weaknesses.length} issues</span>
+            </div>
+            {weaknesses.slice(0, 4).map((w, i) => (
+              <Link key={i} to="/pro/profile" className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-destructive/[0.04] transition-all group">
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${w.priority === "high" ? "bg-destructive/15" : "bg-warning/15"}`}>
+                  <w.icon className={`w-3.5 h-3.5 ${w.priority === "high" ? "text-destructive" : "text-warning"}`} />
+                </div>
+                <span className="text-sm text-foreground flex-1">{w.label}</span>
+                <span className="text-[10px] text-success font-semibold">{w.impact}</span>
+                <ChevronRight className="w-3 h-3 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+              </Link>
+            ))}
+          </motion.div>
+        )}
+
+        {/* ═══ TOP OPPORTUNITIES ═══ */}
+        <motion.div {...f(7)} className="rounded-xl border border-primary/20 bg-primary/[0.03] p-4 space-y-2.5">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-primary" />
+            <span className="text-xs font-bold text-foreground uppercase tracking-wider">Top Opportunities</span>
+          </div>
+          {opportunities.slice(0, 4).map((o, i) => (
+            <button key={i} className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-primary/[0.04] transition-all group text-left">
+              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                <o.icon className="w-3.5 h-3.5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold">Profil incomplet ({completenessPercent}%)</p>
-                <p className="text-xs text-muted-foreground">Complétez votre profil pour maximiser votre visibilité.</p>
-                <Progress value={completenessPercent} className="mt-2 h-1.5" />
+                <span className="text-sm text-foreground">{o.label}</span>
+                <p className="text-[10px] text-muted-foreground/60">{o.desc}</p>
               </div>
-              <Button asChild size="sm" variant="outline" className="shrink-0 rounded-xl">
-                <Link to="/pro/profile">Compléter</Link>
-              </Button>
-            </CardContent>
-          </Card>
+              <span className="text-[10px] text-success font-semibold">{o.impact}</span>
+              <ChevronRight className="w-3 h-3 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+            </button>
+          ))}
         </motion.div>
-      )}
 
-      {/* ─── Stats Row ─── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        {[
-          { title: "Score AIPP", value: aippScore > 0 ? `${aippScore}/100` : "—", icon: <Sparkles className="h-4 w-4" />, trend: aippScore >= 70 ? { value: "Excellent", positive: true } : undefined },
-          { title: "Leads actifs", value: newLeads, icon: <Target className="h-4 w-4" />, desc: "ce mois" },
-          { title: "Avis", value: `${avgRating > 0 ? avgRating.toFixed(1) : "—"} ★`, icon: <Star className="h-4 w-4" />, desc: `${reviewCount} avis` },
-          { title: "Rendez-vous", value: upcomingAppts, icon: <CalendarDays className="h-4 w-4" />, desc: "à venir" },
-        ].map((s, i) => (
-          <motion.div key={s.title} custom={i + 1} variants={fadeUp} initial="hidden" animate="show">
-            <StatCard {...s} description={s.desc} />
-          </motion.div>
-        ))}
-      </div>
+        {/* ═══ VISIBILITY ROADMAP ═══ */}
+        <motion.div {...f(8)} className="rounded-xl border border-border/30 bg-card/30 backdrop-blur-sm p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Eye className="w-4 h-4 text-accent" />
+            <span className="text-xs font-bold text-foreground uppercase tracking-wider">Visibility Roadmap</span>
+          </div>
+          <div className="relative pl-4">
+            <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border/30" />
+            {visibilityRoadmap.map((step, i) => (
+              <div key={i} className="flex items-center gap-3 py-2 relative">
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 z-10 ${
+                  step.done ? "bg-success border-success" : step.current ? "border-primary bg-primary/20" : "border-border/40 bg-card"
+                }`}>
+                  {step.done && <Check className="w-2.5 h-2.5 text-success-foreground" />}
+                  {step.current && <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />}
+                </div>
+                <span className={`text-sm ${step.done ? "text-success/80 line-through" : step.current ? "text-foreground font-medium" : "text-muted-foreground/40"}`}>
+                  {step.label}
+                </span>
+                {step.current && <span className="text-[9px] text-primary font-semibold uppercase tracking-wider ml-auto">Current</span>}
+              </div>
+            ))}
+          </div>
+        </motion.div>
 
-      {/* ─── AIPP Score + Profile Strength ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <motion.div custom={5} variants={fadeUp} initial="hidden" animate="show">
-          <Card className="h-full border-0 glass-card-elevated">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Zap className="h-4 w-4 text-primary" /> Score AIPP
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center pt-2">
-              <ScoreRing score={aippScore} size={120} strokeWidth={10} label="AIPP" />
-              <div className="w-full mt-4 space-y-2">
-                {[
-                  { label: "Complétude", pct: completenessPercent },
-                  { label: "Confiance", pct: profile?.verification_status === "verified" ? 90 : 30 },
-                  { label: "Performance", pct: Math.min(100, reviewCount * 10) },
-                  { label: "Visibilité", pct: 45 },
-                ].map((p) => (
-                  <div key={p.label} className="flex items-center gap-2">
-                    <span className="text-[11px] text-muted-foreground w-20">{p.label}</span>
-                    <Progress value={p.pct} className="h-1.5 flex-1" />
-                    <span className="text-[11px] font-medium w-8 text-right">{p.pct}%</span>
-                  </div>
+        {/* ═══ TRUST CHECKLIST ═══ */}
+        <motion.div {...f(9)} className="rounded-xl border border-border/30 bg-card/30 backdrop-blur-sm p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-success" />
+              <span className="text-xs font-bold text-foreground uppercase tracking-wider">Trust Checklist</span>
+            </div>
+            <span className="text-[10px] text-muted-foreground">{trustDone}/{trustChecklist.length} complete</span>
+          </div>
+          <div className="h-[3px] rounded-full bg-muted/20 overflow-hidden">
+            <motion.div className="h-full rounded-full bg-success" initial={{ width: 0 }}
+              animate={{ width: `${(trustDone / trustChecklist.length) * 100}%` }}
+              transition={{ delay: 0.6, duration: 0.6 }} />
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+            {trustChecklist.map((item, i) => (
+              <div key={i} className="flex items-center gap-2 py-1">
+                <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${item.done ? "bg-success/20" : "bg-muted/20"}`}>
+                  {item.done ? <Check className="w-2.5 h-2.5 text-success" /> : <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />}
+                </div>
+                <span className={`text-[11px] ${item.done ? "text-muted-foreground/70" : "text-foreground"}`}>{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* ═══ REVIEW INSIGHTS ═══ */}
+        <motion.div {...f(10)} className="rounded-xl border border-border/30 bg-card/30 backdrop-blur-sm p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-yellow-400" />
+              <span className="text-xs font-bold text-foreground uppercase tracking-wider">Review Insights</span>
+            </div>
+            <Link to="/pro/reviews" className="text-[10px] text-primary font-semibold hover:underline flex items-center gap-0.5">
+              All reviews <ChevronRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-lg bg-muted/10 border border-border/20 p-3 text-center">
+              <p className="text-lg font-bold text-foreground">{avgRating > 0 ? avgRating.toFixed(1) : "—"}</p>
+              <div className="flex justify-center gap-0.5 my-1">
+                {[1, 2, 3, 4, 5].map(s => (
+                  <Star key={s} className={`w-3 h-3 ${s <= Math.round(avgRating) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/20"}`} />
                 ))}
               </div>
-              <Button asChild size="sm" variant="ghost" className="mt-3 text-primary w-full">
-                <Link to="/pro/aipp-score">Améliorer mon score <ArrowRight className="h-3.5 w-3.5 ml-1" /></Link>
-              </Button>
-            </CardContent>
-          </Card>
+              <p className="text-[10px] text-muted-foreground">Average</p>
+            </div>
+            <div className="rounded-lg bg-muted/10 border border-border/20 p-3 text-center">
+              <p className="text-lg font-bold text-foreground">{reviewCount}</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Total reviews</p>
+            </div>
+            <div className="rounded-lg bg-muted/10 border border-border/20 p-3 text-center">
+              <p className="text-lg font-bold text-foreground">0%</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Response rate</p>
+            </div>
+          </div>
+          {reviewCount < 10 && (
+            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-warning/[0.06] border border-warning/15">
+              <AlertTriangle className="w-3.5 h-3.5 text-warning flex-shrink-0" />
+              <p className="text-[11px] text-muted-foreground">
+                <span className="text-foreground font-medium">Goal: 10+ reviews.</span> Ask satisfied clients to leave a review after each project.
+              </p>
+            </div>
+          )}
         </motion.div>
 
-        {/* Leads */}
-        <motion.div custom={6} variants={fadeUp} initial="hidden" animate="show" className="lg:col-span-2">
-          <Card className="h-full border-0 glass-card-elevated">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Target className="h-4 w-4 text-primary" /> Leads récents
-              </CardTitle>
-              <Button asChild size="sm" variant="ghost" className="text-primary h-8 text-xs">
-                <Link to="/pro/leads">Tout voir <ArrowRight className="h-3 w-3 ml-1" /></Link>
+        {/* ═══ PROFILE IMPROVEMENT ACTIONS ═══ */}
+        <motion.div {...f(11)} className="rounded-xl border border-border/30 bg-card/30 backdrop-blur-sm p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-primary" />
+            <span className="text-xs font-bold text-foreground uppercase tracking-wider">Quick Actions</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { icon: Upload, label: "Upload logo", to: "/pro/profile" },
+              { icon: Camera, label: "Add photos", to: "/pro/documents" },
+              { icon: LinkIcon, label: "Connect Google", to: "/pro/profile" },
+              { icon: MapPin, label: "Set territories", to: "/pro/territories" },
+              { icon: FileText, label: "Add description", to: "/pro/profile" },
+              { icon: Shield, label: "Get verified", to: "/pro/account" },
+            ].map((action, i) => (
+              <Link key={i} to={action.to}
+                className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/[0.05] border border-border/20 hover:bg-muted/10 hover:border-border/40 transition-all group">
+                <action.icon className="w-4 h-4 text-muted-foreground/60 group-hover:text-primary transition-colors" />
+                <span className="text-xs text-foreground">{action.label}</span>
+              </Link>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* ═══ UPGRADE PROMPT ═══ */}
+        <motion.div {...f(12)} className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/[0.06] via-card/40 to-secondary/[0.04] backdrop-blur-xl p-5 space-y-3 shadow-[var(--shadow-glow)]">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0 shadow-md">
+              <ArrowUpRight className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-foreground">Unlock Growth Plan</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                Upgrade to accelerate your visibility. Get city-service pages, conversion optimization, and stronger local signals.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/60">
+              <Award className="w-3 h-3" /> Target: {Math.min(100, aippScore + 25)} AIPP
+            </div>
+            <div className="flex-1" />
+            <Link to="/pro/billing">
+              <Button size="sm" className="bg-gradient-to-r from-primary to-secondary text-white border-0 rounded-xl h-9 text-xs font-bold hover:brightness-110 hover:shadow-[var(--shadow-glow)] transition-all gap-1.5">
+                <Sparkles className="w-3 h-3" /> Upgrade Plan
               </Button>
-            </CardHeader>
-            <CardContent>
-              {!leads?.length ? (
-                <EmptyState message="Aucun lead pour le moment. Complétez votre profil et vos territoires pour recevoir des demandes." />
-              ) : (
-                <div className="space-y-2">
-                  {leads.slice(0, 5).map((l) => (
-                    <Link key={l.id} to={`/pro/leads/${l.id}`} className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/40 transition-colors group">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="h-9 w-9 rounded-xl bg-primary/8 flex items-center justify-center">
-                          <Users className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{l.project_category || "Projet"}</p>
-                          <p className="text-[11px] text-muted-foreground">{l.city || "—"} · {l.budget_range || "Budget flexible"}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <div className="flex items-center gap-1">
-                          <TrendingUp className="h-3 w-3 text-success" />
-                          <span className="text-xs font-semibold">{l.score}</span>
-                        </div>
-                        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            </Link>
+          </div>
+        </motion.div>
+
+        {/* ═══ OBJECTIVE PROGRESS ═══ */}
+        <motion.div {...f(13)} className="rounded-xl border border-border/30 bg-card/30 backdrop-blur-sm p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Target className="w-4 h-4 text-secondary" />
+            <span className="text-xs font-bold text-foreground uppercase tracking-wider">Objective Progress</span>
+          </div>
+          <div className="rounded-lg bg-muted/10 border border-border/20 p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-foreground">Get more calls this month</span>
+              <span className="text-[10px] text-primary font-semibold">35%</span>
+            </div>
+            <div className="h-[3px] rounded-full bg-muted/20 overflow-hidden">
+              <motion.div className="h-full rounded-full bg-gradient-to-r from-primary to-secondary"
+                initial={{ width: 0 }} animate={{ width: "35%" }} transition={{ delay: 0.8, duration: 0.6 }} />
+            </div>
+            <p className="text-[10px] text-muted-foreground">3 of 8 recommended actions completed</p>
+          </div>
+        </motion.div>
+
+        {/* ═══ PLAN STATUS ═══ */}
+        <motion.div {...f(14)} className="rounded-xl border border-border/30 bg-card/30 backdrop-blur-sm p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-accent" />
+              <span className="text-xs font-bold text-foreground uppercase tracking-wider">Plan Status</span>
+            </div>
+            <Link to="/pro/billing" className="text-[10px] text-primary font-semibold hover:underline flex items-center gap-0.5">
+              Manage <ChevronRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="flex items-center gap-4 mt-3">
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold text-foreground">Starter</span>
+            </div>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-success/10 text-success font-semibold">Active</span>
+            <span className="text-[10px] text-muted-foreground ml-auto">$49/mo</span>
+          </div>
         </motion.div>
       </div>
-
-      {/* ─── Appointments + Reviews ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <motion.div custom={7} variants={fadeUp} initial="hidden" animate="show">
-          <Card className="border-0 glass-card-elevated h-full">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base">Rendez-vous</CardTitle>
-              <Button asChild size="sm" variant="ghost" className="text-primary h-8 text-xs">
-                <Link to="/pro/appointments">Gérer <ArrowRight className="h-3 w-3 ml-1" /></Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {!appointments?.length ? (
-                <EmptyState message="Aucun rendez-vous planifié." />
-              ) : (
-                <ul className="space-y-1.5">
-                  {appointments.slice(0, 4).map((a) => (
-                    <li key={a.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-muted/40 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${a.status === "scheduled" ? "bg-success/10 text-success" : a.status === "requested" ? "bg-amber-500/10 text-amber-600" : "bg-muted text-muted-foreground"}`}>
-                          <CalendarDays className="h-3.5 w-3.5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">{a.project_category || "Rendez-vous"}</p>
-                          <p className="text-[11px] text-muted-foreground">{a.preferred_date || "Date à confirmer"}</p>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="text-[10px] capitalize">{a.status}</Badge>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div custom={8} variants={fadeUp} initial="hidden" animate="show">
-          <Card className="border-0 glass-card-elevated h-full">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base">Avis récents</CardTitle>
-              <Button asChild size="sm" variant="ghost" className="text-primary h-8 text-xs">
-                <Link to="/pro/reviews">Tout voir <ArrowRight className="h-3 w-3 ml-1" /></Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {!reviews?.length ? (
-                <EmptyState message="Aucun avis pour le moment." />
-              ) : (
-                <ul className="space-y-2">
-                  {reviews.slice(0, 4).map((r) => (
-                    <li key={r.id} className="p-3 rounded-xl hover:bg-muted/40 transition-colors">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="flex">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star key={i} className={`h-3 w-3 ${i < r.rating ? "text-amber-400 fill-amber-400" : "text-muted"}`} />
-                          ))}
-                        </div>
-                        {r.title && <span className="text-xs font-medium truncate">{r.title}</span>}
-                      </div>
-                      {r.content && <p className="text-[11px] text-muted-foreground line-clamp-2">{r.content}</p>}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-
-      {/* ─── Visibility + Service Areas ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <motion.div custom={9} variants={fadeUp} initial="hidden" animate="show">
-          <Card className="border-0 glass-card-elevated">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Eye className="h-4 w-4 text-primary" /> Visibilité
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[
-                  { label: "Vues du profil", value: "—", change: null },
-                  { label: "Apparitions recherche", value: "—", change: null },
-                  { label: "Taux de clic", value: "—", change: null },
-                  { label: "Demandes reçues", value: String(newLeads), change: newLeads > 0 ? "+new" : null },
-                ].map((m) => (
-                  <div key={m.label} className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">{m.label}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold">{m.value}</span>
-                      {m.change && <Badge variant="secondary" className="text-[10px]">{m.change}</Badge>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-4 text-center">Les analytiques détaillées seront disponibles prochainement.</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div custom={10} variants={fadeUp} initial="hidden" animate="show">
-          <Card className="border-0 glass-card-elevated">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-primary" /> Zones de service
-              </CardTitle>
-              <Button asChild size="sm" variant="ghost" className="text-primary h-8 text-xs">
-                <Link to="/pro/territories">Gérer <ArrowRight className="h-3 w-3 ml-1" /></Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center py-6 text-center">
-                <div className="h-14 w-14 rounded-2xl bg-primary/8 flex items-center justify-center mb-3">
-                  <MapPin className="h-6 w-6 text-primary/60" />
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">Définissez vos territoires pour apparaître dans les recherches locales</p>
-                <Button asChild size="sm" variant="outline" className="rounded-xl">
-                  <Link to="/pro/territories">Configurer mes zones</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-
-      {/* ─── Quick Actions ─── */}
-      <motion.div custom={11} variants={fadeUp} initial="hidden" animate="show">
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline" size="sm" className="rounded-xl"><Link to="/pro/profile">Modifier profil</Link></Button>
-          <Button asChild variant="outline" size="sm" className="rounded-xl"><Link to="/pro/documents">Mes documents</Link></Button>
-          <Button asChild variant="outline" size="sm" className="rounded-xl"><Link to="/pro/billing">Facturation</Link></Button>
-        </div>
-      </motion.div>
     </ContractorLayout>
   );
 };
