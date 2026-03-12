@@ -11,20 +11,16 @@ import AlexOrb from "@/components/alex/AlexOrb";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 
 const ROTATING_ITEMS = [
-  { article: "le", profession: "couvreur", action: "votre toiture" },
-  { article: "le", profession: "designer", action: "votre cuisine" },
-  { article: "l'", profession: "électricien", action: "votre panneau" },
-  { article: "l'", profession: "arpenteur", action: "votre certificat" },
-  { article: "le", profession: "paysagiste", action: "votre terrain" },
-  { article: "le", profession: "plombier", action: "votre salle de bain" },
-  { article: "le", profession: "maçon", action: "votre fondation" },
-  { article: "le", profession: "notaire", action: "votre transaction" },
-  { article: "le", profession: "contracteur", action: "votre agrandissement" },
-  { article: "l'", profession: "isoleur", action: "votre grenier" },
+  { label: "le contracteur", action: "agrandir votre maison" },
+  { label: "l'arpenteur-géomètre", action: "un certificat de localisation" },
+  { label: "le couvreur", action: "refaire votre toiture" },
+  { label: "l'électricien", action: "remplacer votre panneau électrique" },
+  { label: "le plombier", action: "rénover votre salle de bain" },
+  { label: "l'isoleur", action: "isoler votre grenier" },
 ];
 
 const textVariants = {
-  enter: { opacity: 0, y: 10, filter: "blur(8px)" },
+  enter: { opacity: 0, y: 8, filter: "blur(8px)" },
   center: { opacity: 1, y: 0, filter: "blur(0px)" },
   exit: { opacity: 0, y: -8, filter: "blur(8px)" },
 };
@@ -88,6 +84,14 @@ export default function HeroSection() {
     setAlexOpen(true);
   };
 
+  /* Line-clamp style for animated slots */
+  const clampStyle: React.CSSProperties = {
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical" as const,
+    overflow: "hidden",
+  };
+
   return (
     <>
       <section
@@ -107,46 +111,46 @@ export default function HeroSection() {
           <div className="grid items-start gap-8 md:grid-cols-[minmax(0,1.08fr)_420px]">
             {/* Left column */}
             <div className="min-w-0">
-              {/* Fixed-height title container */}
-              <div className="min-h-[200px] sm:min-h-[240px] md:min-h-[300px]">
-                <h1 className="max-w-[680px] text-[2.6rem] font-extrabold leading-[0.95] tracking-[-0.05em] sm:text-[3.25rem] md:text-[4.25rem]" style={{ color: "#0B1533" }}>
-                  <span className="block">Trouvez</span>
-                  <span className="mt-1 block min-h-[1.15em]">
-                    <AnimatePresence mode="wait">
-                      <motion.span
-                        key={`p-${index}`}
-                        variants={textVariants}
-                        initial="enter"
-                        animate="center"
-                        exit="exit"
-                        transition={{ duration: 0.4, ease: "easeOut" }}
-                        className="inline-block"
-                      >
-                        <span style={{ color: "#0B1533" }}>{current.article} </span>
-                        <span style={{ color: "#3F7BFF", textShadow: "0 0 18px rgba(63,123,255,0.16)" }}>
-                          {current.profession}
-                        </span>
-                      </motion.span>
-                    </AnimatePresence>
-                  </span>
-                  <span className="mt-1 block" style={{ color: "#0B1533" }}>idéal pour</span>
-                  <span className="mt-1 block min-h-[2.2em] max-w-[13ch]" style={{ color: "#3F7BFF" }}>
-                    <AnimatePresence mode="wait">
-                      <motion.span
-                        key={`a-${index}`}
-                        variants={textVariants}
-                        initial="enter"
-                        animate="center"
-                        exit="exit"
-                        transition={{ duration: 0.4, ease: "easeOut", delay: 0.03 }}
-                        className="inline-block"
-                      >
-                        {current.action}
-                      </motion.span>
-                    </AnimatePresence>
-                  </span>
-                </h1>
-              </div>
+              {/* ═══ FIXED-HEIGHT title container ═══ */}
+              <h1 className="max-w-[680px] text-[44px] font-extrabold leading-[0.92] tracking-[-0.05em] sm:text-[54px] md:text-[68px]" style={{ color: "#0B1533" }}>
+                <div>Trouvez</div>
+
+                {/* Profession slot — fixed 2-line height */}
+                <div className="mt-1 overflow-hidden" style={{ height: "1.95em" }}>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={current.label}
+                      variants={textVariants}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      transition={{ duration: 0.38, ease: "easeOut" }}
+                      style={{ ...clampStyle, color: "#3F7BFF" }}
+                    >
+                      {current.label}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+
+                <div className="mt-1" style={{ color: "#0B1533" }}>idéal pour</div>
+
+                {/* Action slot — fixed 2-line height */}
+                <div className="mt-1 overflow-hidden" style={{ height: "1.95em" }}>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={current.action}
+                      variants={textVariants}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      transition={{ duration: 0.38, ease: "easeOut", delay: 0.03 }}
+                      style={{ ...clampStyle, color: "#3F7BFF" }}
+                    >
+                      {current.action}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </h1>
 
               {/* Subtitle */}
               <p className="max-w-[420px] text-lg leading-8 md:text-xl md:leading-10" style={{ color: "#6C7A92" }}>
