@@ -236,7 +236,7 @@ const Home = () => {
               </div>
 
               <button
-                onClick={() => navigate(isAuthenticated ? "/dashboard/quotes/upload" : "/signup")}
+                onClick={() => handleCta("/dashboard/quotes/upload", "Analyser mes soumissions")}
                 className="w-full h-12 rounded-xl flex items-center justify-center gap-2 text-meta font-bold transition-all active:scale-[0.97]"
                 style={{ background: "linear-gradient(135deg, #2563EB, #3B82F6)", color: "white", boxShadow: "0 4px 14px -3px hsl(222 90% 55% / 0.35)" }}
               >
