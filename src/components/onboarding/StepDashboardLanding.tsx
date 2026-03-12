@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Award, TrendingUp, Shield, Star, Globe, Users, Zap, Settings, ChevronRight, Upload, Link, ArrowUpRight, Eye, BarChart3, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PremiumMagneticButton } from "@/components/ui/PremiumMagneticButton";
 import { useNavigate } from "react-router-dom";
 
 interface Props {
