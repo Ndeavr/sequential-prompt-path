@@ -17,6 +17,7 @@ import ContractorOnboardingPage from "@/pages/ContractorOnboardingPage";
 import OnboardingFlow from "@/pages/OnboardingFlow";
 import PricingPage from "@/pages/PricingPage";
 import AIPPScorePage from "@/pages/AIPPScorePage";
+import MatchingResultsPage from "@/pages/MatchingResultsPage";
 
 // SEO Pages
 import ServiceLocationPage from "@/pages/seo/ServiceLocationPage";
@@ -89,6 +90,7 @@ export const AppRouter = () => (
       <Route path="/onboarding" element={<OnboardingFlow />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/aipp-score" element={<AIPPScorePage />} />
+      <Route path="/matching" element={<ProtectedRoute requiredRole="homeowner"><MatchingResultsPage /></ProtectedRoute>} />
 
       {/* Property Graph */}
       <Route path="/property-graph" element={<PropertyGraphPage />} />
