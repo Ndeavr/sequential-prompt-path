@@ -405,6 +405,87 @@ const Home = () => {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
+          CONDO / SYNDICATE SECTION
+      ═══════════════════════════════════════════════════════════ */}
+      <section className="px-5 py-16 md:py-20">
+        <div className="max-w-3xl mx-auto">
+          <motion.div variants={sectionFade} initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-10">
+            <p className="text-meta font-bold tracking-widest uppercase mb-2" style={{ color: "#8B5CF6" }}>Condominiums</p>
+            <h2 className="font-display text-title sm:text-hero-sm font-bold" style={{ color: "hsl(222 47% 11%)" }}>Gestion intelligente de copropriété</h2>
+            <p className="text-body mt-3 max-w-lg mx-auto" style={{ color: "hsl(220 12% 42%)" }}>
+              Tout ce dont votre syndicat a besoin : maintenance, fonds de prévoyance, votes et suivi des réparations.
+            </p>
+          </motion.div>
+
+          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {[
+              { icon: Building, title: "Gestion d'immeuble", desc: "Suivi complet de votre copropriété", color: "#8B5CF6" },
+              { icon: Wrench, title: "Réparations", desc: "Planification et suivi des travaux", color: "#3B82F6" },
+              { icon: ClipboardList, title: "Maintenance", desc: "Calendrier d'entretien préventif", color: "#06B6D4" },
+              { icon: PiggyBank, title: "Fonds de prévoyance", desc: "Projections et réserves financières", color: "#22C55E" },
+              { icon: Vote, title: "Votes & Quorum", desc: "Assemblées et résolutions en ligne", color: "#F59E0B" },
+              { icon: BarChart3, title: "Rapports", desc: "Tableaux de bord et historiques", color: "#EF4444" },
+            ].map((item, i) => (
+              <motion.div key={item.title} variants={fadeUp} custom={i}>
+                <div className="rounded-2xl p-4 sm:p-5 h-full space-y-2" style={{ background: "white", border: "1px solid hsl(220 25% 92%)", boxShadow: "0 2px 10px -3px hsl(220 30% 30% / 0.06)" }}>
+                  <div className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ background: `${item.color}12`, border: `1.5px solid ${item.color}25` }}>
+                    <item.icon className="h-4.5 w-4.5" style={{ color: item.color }} />
+                  </div>
+                  <p className="text-meta font-bold" style={{ color: "hsl(222 47% 11%)" }}>{item.title}</p>
+                  <p className="text-caption leading-snug" style={{ color: "hsl(220 12% 50%)" }}>{item.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mt-8 text-center">
+            <button
+              onClick={() => handleCta("/dashboard/syndicate", "Gérer ma copropriété")}
+              className="h-12 rounded-xl px-7 inline-flex items-center gap-2 text-meta font-bold transition-all active:scale-[0.97]"
+              style={{ background: "linear-gradient(135deg, #7C3AED, #8B5CF6)", color: "white", boxShadow: "0 6px 20px -4px hsl(262 80% 55% / 0.35)" }}
+            >
+              Gérer ma copropriété <ArrowRight className="h-4 w-4" />
+            </button>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════
+          SERVICES — Window cleaning, lawn, etc.
+      ═══════════════════════════════════════════════════════════ */}
+      <section className="px-5 py-10 md:py-14">
+        <div className="max-w-3xl mx-auto">
+          <motion.div variants={sectionFade} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            <p className="text-meta font-bold tracking-widest uppercase mb-2" style={{ color: "#06B6D4" }}>Services résidentiels</p>
+            <h2 className="font-display text-section sm:text-title font-bold mb-6" style={{ color: "hsl(222 47% 11%)" }}>Entretien courant pour votre propriété</h2>
+          </motion.div>
+
+          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="flex flex-wrap gap-2.5">
+            {[
+              { icon: Droplets, label: "Nettoyage de fenêtres" },
+              { icon: Leaf, label: "Entretien de gazon" },
+              { icon: Wrench, label: "Plomberie" },
+              { icon: Zap, label: "Électricité" },
+              { icon: ShieldCheck, label: "Déneigement" },
+              { icon: Camera, label: "Inspection" },
+            ].map((svc, i) => (
+              <motion.button
+                key={svc.label}
+                variants={fadeUp}
+                custom={i}
+                onClick={() => handleCta("/search", svc.label)}
+                className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-meta font-semibold transition-all hover:scale-[1.03] active:scale-[0.97]"
+                style={{ background: "white", border: "1px solid hsl(220 25% 90%)", color: "hsl(222 47% 11%)", boxShadow: "0 2px 8px -2px hsl(220 30% 30% / 0.06)" }}
+              >
+                <svc.icon className="h-4 w-4" style={{ color: "#06B6D4" }} />
+                {svc.label}
+              </motion.button>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════
           FINAL CTA — Bold gradient card
       ═══════════════════════════════════════════════════════════ */}
       <section className="px-5 py-16">
