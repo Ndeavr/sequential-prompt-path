@@ -618,6 +618,72 @@ export type Database = {
         }
         Relationships: []
       }
+      contractor_aipp_scores: {
+        Row: {
+          ai_seo_readiness_score: number | null
+          breakdown_json: Json | null
+          contractor_id: string
+          conversion_score: number | null
+          created_at: string
+          id: string
+          identity_score: number | null
+          is_current: boolean
+          score_confidence: number | null
+          tier: string | null
+          total_score: number
+          trust_score: number | null
+          updated_at: string
+          visibility_score: number | null
+        }
+        Insert: {
+          ai_seo_readiness_score?: number | null
+          breakdown_json?: Json | null
+          contractor_id: string
+          conversion_score?: number | null
+          created_at?: string
+          id?: string
+          identity_score?: number | null
+          is_current?: boolean
+          score_confidence?: number | null
+          tier?: string | null
+          total_score?: number
+          trust_score?: number | null
+          updated_at?: string
+          visibility_score?: number | null
+        }
+        Update: {
+          ai_seo_readiness_score?: number | null
+          breakdown_json?: Json | null
+          contractor_id?: string
+          conversion_score?: number | null
+          created_at?: string
+          id?: string
+          identity_score?: number | null
+          is_current?: boolean
+          score_confidence?: number | null
+          tier?: string | null
+          total_score?: number
+          trust_score?: number | null
+          updated_at?: string
+          visibility_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_aipp_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_aipp_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_dna_profiles: {
         Row: {
           confidence: number
@@ -4977,6 +5043,17 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_unpro_checkout_totals: {
+        Args: {
+          _addons_total?: number
+          _base_price: number
+          _discount_type?: string
+          _discount_value?: number
+          _setup_fee?: number
+          _tax_rate?: number
+        }
+        Returns: Json
+      }
       get_ccai_answer_pairs: {
         Args: {
           p_contractor_id: string
@@ -5043,6 +5120,15 @@ export type Database = {
           namespace: string
           rank: number
         }[]
+      }
+      set_current_contractor_aipp_score: {
+        Args: { _contractor_id: string; _score_id: string }
+        Returns: undefined
+      }
+      unpro_aipp_tier: { Args: { score: number }; Returns: string }
+      validate_unpro_promo_code: {
+        Args: { _code: string; _contractor_id?: string; _plan_code: string }
+        Returns: Json
       }
     }
     Enums: {
