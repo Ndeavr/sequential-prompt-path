@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Shield, Wrench, MapPin, Award, Camera, Target, ChevronRight, AlertCircle, Check, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PremiumMagneticButton } from "@/components/ui/PremiumMagneticButton";
 import type { ImportedBusinessData } from "@/services/businessImportService";
 
 interface Props {
