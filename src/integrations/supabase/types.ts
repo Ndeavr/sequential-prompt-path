@@ -932,6 +932,72 @@ export type Database = {
         }
         Relationships: []
       }
+      dna_fit_results: {
+        Row: {
+          compatibility_label: string
+          contractor_dna_type: string
+          contractor_id: string
+          created_at: string
+          dna_fit_score: number
+          explanation_en: Json
+          explanation_fr: Json
+          homeowner_dna_type: string
+          id: string
+          matching_traits: Json
+          property_id: string | null
+          updated_at: string
+          user_id: string
+          watchout_traits: Json
+        }
+        Insert: {
+          compatibility_label?: string
+          contractor_dna_type: string
+          contractor_id: string
+          created_at?: string
+          dna_fit_score?: number
+          explanation_en?: Json
+          explanation_fr?: Json
+          homeowner_dna_type: string
+          id?: string
+          matching_traits?: Json
+          property_id?: string | null
+          updated_at?: string
+          user_id: string
+          watchout_traits?: Json
+        }
+        Update: {
+          compatibility_label?: string
+          contractor_dna_type?: string
+          contractor_id?: string
+          created_at?: string
+          dna_fit_score?: number
+          explanation_en?: Json
+          explanation_fr?: Json
+          homeowner_dna_type?: string
+          id?: string
+          matching_traits?: Json
+          property_id?: string | null
+          updated_at?: string
+          user_id?: string
+          watchout_traits?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dna_fit_results_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dna_fit_results_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       home_scores: {
         Row: {
           calculated_at: string
@@ -2710,6 +2776,22 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      dna_profile_summary: {
+        Row: {
+          actor_id: string | null
+          actor_type: string | null
+          confidence: number | null
+          contractor_id: string | null
+          dna_label_en: string | null
+          dna_label_fr: string | null
+          dna_type: string | null
+          property_id: string | null
+          scores: Json | null
+          traits: Json | null
+          updated_at: string | null
+        }
+        Relationships: []
       }
       v_contractor_public_profile: {
         Row: {

@@ -109,7 +109,7 @@ export function computeCCAI(
 }
 
 // ─── DNA Fit ───
-export function computeDNAFit(
+export function computeDNAFitLegacy(
   homeowner: DNATraits,
   contractor: DNATraits
 ): DNAFitResult {
@@ -121,18 +121,31 @@ export function computeDNAFit(
   for (const dim of dimensions) {
     const diff = Math.abs((homeowner[dim] ?? 50) - (contractor[dim] ?? 50));
     totalDiff += diff;
-
-    if (diff <= 15) {
-      complementary.push(dim);
-    } else if (diff >= 40) {
-      friction.push(dim);
-    }
+    if (diff <= 15) complementary.push(dim);
+    else if (diff >= 40) friction.push(dim);
   }
 
   const maxDiff = dimensions.length * 100;
   const score = Math.round((1 - totalDiff / maxDiff) * 100);
+  const clamped = Math.max(0, Math.min(100, score));
 
-  return { score: Math.max(0, Math.min(100, score)), complementary_traits: complementary, friction_traits: friction };
+  let compatibility_label: DNAFitResult["compatibility_label"] = "low";
+  if (clamped >= 85) compatibility_label = "very_high";
+  else if (clamped >= 72) compatibility_label = "high";
+  else if (clamped >= 58) compatibility_label = "moderate";
+
+  return {
+    score: clamped,
+    dna_fit_score: clamped,
+    compatibility_label,
+    homeowner_type: "unknown",
+    contractor_type: "unknown",
+    complementary_traits: complementary,
+    friction_traits: friction,
+    matching_traits_fr: [],
+    watchout_traits_fr: [],
+    explanation_fr: "",
+  };
 }
 
 // ─── Review Authenticity Score (RAS) ───
