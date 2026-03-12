@@ -87,6 +87,7 @@ import AdminTerritories from "@/pages/admin/AdminTerritories";
 import AdminGrowth from "@/pages/admin/AdminGrowth";
 import AdminAgents from "@/pages/admin/AdminAgents";
 import AdminMedia from "@/pages/admin/AdminMedia";
+import AdminValidation from "@/pages/admin/AdminValidation";
 
 export const AppRouter = () => (
   <BrowserRouter>
