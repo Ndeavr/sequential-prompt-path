@@ -25,13 +25,35 @@ const textVariants = {
   exit: { opacity: 0, y: -8, filter: "blur(8px)" },
 };
 
-const POPULAR_CHIPS = [
+const ALL_SEARCHES = [
   { icon: "🏠", label: "Rénovation" },
   { icon: "🏗️", label: "Construction" },
   { icon: "📐", label: "Agrandissement" },
   { icon: "🏡", label: "Toiture" },
   { icon: "🍳", label: "Cuisine" },
+  { icon: "🔌", label: "Électricité" },
+  { icon: "🚿", label: "Plomberie" },
+  { icon: "🧱", label: "Maçonnerie" },
+  { icon: "🪟", label: "Fenêtres" },
+  { icon: "🌡️", label: "Isolation" },
+  { icon: "🏢", label: "Condo" },
+  { icon: "🔧", label: "Entretien" },
+  { icon: "🎨", label: "Peinture" },
+  { icon: "🌿", label: "Aménagement" },
+  { icon: "🛠️", label: "Réparation" },
+  { icon: "💡", label: "Éclairage" },
+  { icon: "🚪", label: "Portes" },
+  { icon: "🧰", label: "Dépannage" },
+  { icon: "♻️", label: "Démolition" },
+  { icon: "📦", label: "Déménagement" },
+  { icon: "🏗️", label: "Fondation" },
+  { icon: "🔥", label: "Chauffage" },
+  { icon: "❄️", label: "Climatisation" },
+  { icon: "🛁", label: "Salle de bain" },
+  { icon: "🏡", label: "Revêtement" },
 ];
+
+const POPULAR_CHIPS = ALL_SEARCHES.slice(0, 6);
 
 const HELPER_BUBBLES = [
   "Décrivez votre projet",
@@ -193,10 +215,10 @@ export default function HeroSection() {
 
               {/* ═══ Popular chips ═══ */}
               <div className="mt-7">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em]" style={{ color: "#6C7A92" }}>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-center md:text-left" style={{ color: "#6C7A92" }}>
                   Populaire
                 </p>
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex flex-wrap gap-2.5 justify-center md:justify-start">
                   {POPULAR_CHIPS.map((chip) => (
                     <button
                       key={chip.label}
