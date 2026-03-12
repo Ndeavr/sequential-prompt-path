@@ -2333,32 +2333,44 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_type: string | null
           avatar_url: string | null
           created_at: string
           email: string | null
+          first_name: string | null
           full_name: string | null
           id: string
+          last_name: string | null
           phone: string | null
+          salutation: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          account_type?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
+          first_name?: string | null
           full_name?: string | null
           id?: string
+          last_name?: string | null
           phone?: string | null
+          salutation?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          account_type?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
+          first_name?: string | null
           full_name?: string | null
           id?: string
+          last_name?: string | null
           phone?: string | null
+          salutation?: string | null
           updated_at?: string
           user_id?: string
         }
