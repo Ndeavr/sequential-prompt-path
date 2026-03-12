@@ -175,10 +175,18 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
 
   const handleChooseMode = (m: "voice" | "text") => {
     setMode(m);
-    if (m === "voice" && supported) {
+    if (m === "voice" && supported && !listening) {
       toggleVoice();
     }
   };
+
+  // Auto-start voice recognition when entering voice mode
+  useEffect(() => {
+    if (mode === "voice" && supported && !listening && voiceAutoStarted) {
+      const timer = setTimeout(() => toggleVoice(), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [mode, supported, voiceAutoStarted]);
 
   return (
     <AnimatePresence>
