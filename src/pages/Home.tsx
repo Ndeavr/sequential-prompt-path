@@ -472,6 +472,13 @@ const Home = () => {
           ))}
         </div>
       </nav>
+
+      {/* Alex polite assistant for unauthenticated users */}
+      <AlexAssistantSheet
+        open={alexOpen}
+        onClose={() => { setAlexOpen(false); setAlexChip(undefined); }}
+        initialChip={alexChip}
+      />
     </div>
   );
 };
