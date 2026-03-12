@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Check, Home, Briefcase, Handshake } from "lucide-react";
+import { Check, Home, Building2, Briefcase, Wrench, Truck } from "lucide-react";
 import logo from "@/assets/unpro-robot.png";
 
 const ACCOUNT_TYPES = [
