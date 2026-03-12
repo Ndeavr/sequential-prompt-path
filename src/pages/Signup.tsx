@@ -201,7 +201,7 @@ const Signup = () => {
               {/* Account Type Radio Cards */}
               <div className="space-y-2">
                 <Label style={{ color: "#0B1533" }}>Type de compte</Label>
-                <div className="grid gap-2.5 sm:grid-cols-3">
+                <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   {ACCOUNT_TYPES.map((type) => {
                     const isSelected = accountType === type.value;
                     const Icon = type.icon;
