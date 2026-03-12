@@ -74,7 +74,7 @@ export default function HeroSection() {
   useEffect(() => {
     const interval = window.setInterval(() => {
       setIndex((prev) => (prev + 1) % ROTATING_ITEMS.length);
-    }, 2800);
+    }, 4500);
     return () => window.clearInterval(interval);
   }, []);
 
