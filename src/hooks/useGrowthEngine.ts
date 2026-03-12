@@ -82,6 +82,7 @@ export function useCompleteProject() {
     },
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ["syndicate-projects", vars.syndicate_id] });
+      qc.invalidateQueries({ queryKey: ["market-benchmarks"] });
     },
   });
 }
@@ -102,21 +103,6 @@ export function useMarketBenchmarks() {
 }
 
 export function useExpressInterest() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (params: { syndicate_id: string; project_id: string; estimated_price?: number; message?: string }) => {
-      const { data, error } = await supabase.functions.invoke("condo-growth-engine", {
-        body: { ...params, action: "express_interest" },
-      });
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (_, vars) => {
-      qc.invalidateQueries({ queryKey: ["project-interests", vars.project_id] });
-      qc.invalidateQueries({ queryKey: ["syndicate-projects", vars.syndicate_id] });
-    },
-  });
-}
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (params: { syndicate_id: string; project_id: string; estimated_price?: number; message?: string }) => {
