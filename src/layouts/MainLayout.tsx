@@ -32,6 +32,11 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const { theme, setTheme } = useTheme();
   const dash = role === "contractor" ? "/pro" : role === "admin" ? "/admin" : "/dashboard";
 
+  // Force light mode on all public pages
+  useEffect(() => {
+    if (theme !== "light") setTheme("light");
+  }, [theme, setTheme]);
+
   const showAlex = pathname !== "/alex";
 
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");

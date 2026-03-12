@@ -11,16 +11,16 @@ import unproRobot from "@/assets/unpro-robot.png";
 import { ArrowRight } from "lucide-react";
 
 const ROTATING_ITEMS = [
-  { article: "le", profession: "couvreur", action: "refaire votre toiture" },
-  { article: "le", profession: "designer", action: "concevoir votre cuisine" },
-  { article: "l'", profession: "électricien", action: "changer la boîte de disjoncteurs" },
-  { article: "l'", profession: "arpenteur-géomètre", action: "obtenir un certificat de localisation" },
-  { article: "le", profession: "paysagiste", action: "installer de la tourbe" },
-  { article: "le", profession: "plombier", action: "rénover votre salle de bain" },
-  { article: "le", profession: "maçon", action: "réparer votre fondation" },
-  { article: "le", profession: "notaire", action: "gérer votre transaction" },
-  { article: "le", profession: "contracteur", action: "agrandir votre maison" },
-  { article: "l'", profession: "isoleur", action: "isoler votre grenier" },
+  { article: "le", profession: "couvreur", action: "votre toiture" },
+  { article: "le", profession: "designer", action: "votre cuisine" },
+  { article: "l'", profession: "électricien", action: "votre boîte électrique" },
+  { article: "l'", profession: "arpenteur-géomètre", action: "votre certificat" },
+  { article: "le", profession: "paysagiste", action: "votre terrain" },
+  { article: "le", profession: "plombier", action: "votre salle de bain" },
+  { article: "le", profession: "maçon", action: "votre fondation" },
+  { article: "le", profession: "notaire", action: "votre transaction" },
+  { article: "le", profession: "contracteur", action: "votre agrandissement" },
+  { article: "l'", profession: "isoleur", action: "votre grenier" },
 ];
 
 const textVariants = {
