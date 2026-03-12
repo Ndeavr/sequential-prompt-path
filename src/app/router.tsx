@@ -24,6 +24,10 @@ import ServiceLocationPage from "@/pages/seo/ServiceLocationPage";
 import ProblemLocationPage from "@/pages/seo/ProblemLocationPage";
 import GuidePage from "@/pages/seo/GuidePage";
 import SeoDirectoryPage from "@/pages/seo/SeoDirectoryPage";
+import ProblemPage from "@/pages/seo/ProblemPage";
+import SolutionPage from "@/pages/seo/SolutionPage";
+import ProfessionPage from "@/pages/seo/ProfessionPage";
+import CityPage from "@/pages/seo/CityPage";
 import PropertyGraphPage from "@/pages/PropertyGraphPage";
 import AlexChat from "@/pages/AlexChat";
 import FlywheelPage from "@/pages/FlywheelPage";
@@ -109,7 +113,11 @@ export const AppRouter = () => (
       {/* SEO Pages */}
       <Route path="/services" element={<SeoDirectoryPage />} />
       <Route path="/services/:category/:city" element={<ServiceLocationPage />} />
+      <Route path="/problems/:slug" element={<ProblemPage />} />
       <Route path="/problems/:problem/:city" element={<ProblemLocationPage />} />
+      <Route path="/solutions/:slug" element={<SolutionPage />} />
+      <Route path="/profession/:slug" element={<ProfessionPage />} />
+      <Route path="/city/:slug" element={<CityPage />} />
       <Route path="/guides/:topic" element={<GuidePage />} />
 
       {/* Homeowner Dashboard */}
