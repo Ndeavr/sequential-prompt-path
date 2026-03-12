@@ -6,9 +6,10 @@ import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { Sparkles, Menu, X, Bell } from "lucide-react";
+import { Sparkles, Menu, X, Bell, Sun, Moon } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "next-themes";
 import AlexConcierge from "@/components/alex/AlexConcierge";
 
 interface MainLayoutProps {
@@ -27,10 +28,12 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [lang, setLang] = useState<"fr" | "en">("fr");
+  const { theme, setTheme } = useTheme();
   const dash = role === "contractor" ? "/pro" : role === "admin" ? "/admin" : "/dashboard";
 
-  // Don't show orb on full-screen Alex chat
   const showAlex = pathname !== "/alex";
+
+  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -64,10 +67,19 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
           {/* Actions */}
           <div className="flex items-center gap-1.5">
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/40 bg-muted/20 text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-all duration-200"
+              title={theme === "dark" ? "Mode clair" : "Mode sombre"}
+            >
+              {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+            </button>
+
             {/* Language toggle */}
             <button
               onClick={() => setLang(lang === "fr" ? "en" : "fr")}
-              className="flex h-8 items-center gap-0.5 rounded-lg px-2 text-caption font-semibold transition-all duration-200 uppercase tracking-wider border border-border/30 bg-muted/10 hover:bg-muted/30"
+              className="flex h-8 items-center gap-0.5 rounded-lg px-2 text-caption font-semibold transition-all duration-200 uppercase tracking-wider border border-border/40 bg-muted/20 hover:bg-muted/40"
               title={lang === "fr" ? "Switch to English" : "Passer en français"}
             >
               <span className={lang === "fr" ? "text-foreground font-bold" : "text-muted-foreground/50"}>FR</span>
@@ -134,16 +146,26 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                     {link.label}
                   </Link>
                 ))}
+                {/* Mobile theme + language row */}
                 <div className="flex items-center justify-between px-3 py-2">
-                  <span className="text-caption text-muted-foreground">Langue</span>
-                  <button
-                    onClick={() => setLang(lang === "fr" ? "en" : "fr")}
-                    className="flex items-center gap-1 text-caption font-semibold uppercase tracking-wider"
-                  >
-                    <span className={lang === "fr" ? "text-foreground" : "text-muted-foreground/40"}>FR</span>
-                    <span className="text-border">/</span>
-                    <span className={lang === "en" ? "text-foreground" : "text-muted-foreground/40"}>EN</span>
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={toggleTheme}
+                      className="flex items-center gap-1.5 text-caption font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+                      <span>{theme === "dark" ? "Clair" : "Sombre"}</span>
+                    </button>
+                    <span className="text-border">·</span>
+                    <button
+                      onClick={() => setLang(lang === "fr" ? "en" : "fr")}
+                      className="flex items-center gap-1 text-caption font-semibold uppercase tracking-wider"
+                    >
+                      <span className={lang === "fr" ? "text-foreground" : "text-muted-foreground/40"}>FR</span>
+                      <span className="text-border">/</span>
+                      <span className={lang === "en" ? "text-foreground" : "text-muted-foreground/40"}>EN</span>
+                    </button>
+                  </div>
                 </div>
                 <div className="divider-gradient my-2" />
                 {isAuthenticated ? (
@@ -183,7 +205,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </div>
       </footer>
 
-      {/* ─── Alex AI Assistant (all users, all pages except /alex) ─── */}
+      {/* ─── Alex AI Assistant ─── */}
       {showAlex && <AlexConcierge />}
     </div>
   );
