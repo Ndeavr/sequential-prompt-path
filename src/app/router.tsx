@@ -34,6 +34,7 @@ import FlywheelPage from "@/pages/FlywheelPage";
 import EnergyPage from "@/pages/EnergyPage";
 import PreventiveMaintenancePage from "@/pages/PreventiveMaintenancePage";
 import CoproprietePage from "@/pages/CoproprietePage";
+import BuildingIntelligenceMap from "@/pages/BuildingIntelligenceMap";
 
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
