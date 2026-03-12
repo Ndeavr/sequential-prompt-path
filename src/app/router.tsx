@@ -33,6 +33,7 @@ import AlexChat from "@/pages/AlexChat";
 import FlywheelPage from "@/pages/FlywheelPage";
 import EnergyPage from "@/pages/EnergyPage";
 import PreventiveMaintenancePage from "@/pages/PreventiveMaintenancePage";
+import CoproprietePage from "@/pages/CoproprietePage";
 
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
@@ -109,6 +110,7 @@ export const AppRouter = () => (
       <Route path="/flywheel" element={<FlywheelPage />} />
       <Route path="/energy" element={<EnergyPage />} />
       <Route path="/preventive-maintenance" element={<PreventiveMaintenancePage />} />
+      <Route path="/copropriete" element={<CoproprietePage />} />
 
       {/* SEO Pages */}
       <Route path="/services" element={<SeoDirectoryPage />} />
