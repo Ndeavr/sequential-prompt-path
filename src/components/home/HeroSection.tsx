@@ -160,7 +160,7 @@ export default function HeroSection() {
                       initial="enter"
                       animate="center"
                       exit="exit"
-                      transition={{ duration: 0.38, ease: "easeOut", delay: 0.03 }}
+                      transition={{ duration: 0.38, ease: "easeOut", delay: 0.42 }}
                       style={{ ...clampStyle, color: "#3F7BFF" }}
                     >
                       {current.action}
