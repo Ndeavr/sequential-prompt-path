@@ -112,11 +112,9 @@ export default function HeroSection() {
             {/* Left column */}
             <div className="min-w-0">
               {/* ═══ FIXED-HEIGHT title container ═══ */}
-              <h1 className="max-w-[680px] text-[44px] font-extrabold leading-[0.92] tracking-[-0.05em] sm:text-[54px] md:text-[68px]" style={{ color: "#0B1533" }}>
-                <div>Trouvez</div>
-
-                {/* Profession slot — fixed 2-line height */}
-                <div className="mt-1 overflow-hidden" style={{ height: "1.95em" }}>
+              <h1 className="max-w-[680px] text-[40px] font-extrabold leading-[1.1] tracking-[-0.04em] sm:text-[50px] md:text-[64px]" style={{ color: "#0B1533" }}>
+                <span>Trouvez</span>
+                <div className="overflow-hidden" style={{ height: "2.2em" }}>
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={current.label}
@@ -131,11 +129,8 @@ export default function HeroSection() {
                     </motion.div>
                   </AnimatePresence>
                 </div>
-
-                <div className="mt-1" style={{ color: "#0B1533" }}>idéal pour</div>
-
-                {/* Action slot — fixed 2-line height */}
-                <div className="mt-1 overflow-hidden" style={{ height: "1.95em" }}>
+                <span style={{ color: "#0B1533" }}>idéal pour</span>
+                <div className="overflow-hidden" style={{ height: "2.2em" }}>
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={current.action}
