@@ -388,4 +388,101 @@
   .surface-3 {
     background: hsl(var(--muted) / 0.6);
   }
+
+  /* ─── Premium content card ─── */
+  .premium-card {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: 1rem;
+    box-shadow: 0 4px 16px -4px hsl(220 40% 30% / 0.08);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+  }
+  .premium-card:hover {
+    box-shadow: 0 8px 28px -6px hsl(220 40% 30% / 0.12);
+    transform: translateY(-2px);
+  }
+
+  /* ─── Section heading ─── */
+  .section-label {
+    @apply text-meta font-bold tracking-widest uppercase mb-2;
+    color: hsl(var(--primary));
+  }
+  .section-title {
+    @apply font-display text-title sm:text-hero-sm font-bold;
+    color: hsl(var(--foreground));
+  }
+  .section-desc {
+    @apply text-body mt-3 max-w-md mx-auto;
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* ─── Mobile bottom nav ─── */
+  .mobile-bottom-nav {
+    @apply sticky bottom-0 z-30 md:hidden;
+    background: hsl(var(--card) / 0.92);
+    backdrop-filter: blur(24px) saturate(1.6);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    border-top: 1px solid hsl(var(--border) / 0.5);
+    box-shadow: 0 -4px 20px -4px hsl(220 30% 20% / 0.06);
+  }
+  .mobile-nav-item {
+    @apply flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-xl transition-all duration-200;
+    color: hsl(var(--muted-foreground));
+  }
+  .mobile-nav-item.active {
+    color: hsl(var(--primary));
+  }
+  .mobile-nav-item.active::after {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 4px;
+    border-radius: 999px;
+    background: hsl(var(--primary));
+    margin-top: 1px;
+  }
+
+  /* ─── Stat card ─── */
+  .stat-card {
+    @apply text-center p-5 rounded-2xl;
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 2px 10px -3px hsl(220 30% 30% / 0.06);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px -6px hsl(220 30% 30% / 0.1);
+  }
+
+  /* ─── Primary gradient CTA ─── */
+  .cta-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(222 80% 55%) 40%, hsl(var(--accent)) 100%);
+    color: hsl(var(--primary-foreground));
+    box-shadow: 0 8px 30px -4px hsl(222 90% 55% / 0.4), 0 2px 8px hsl(222 80% 50% / 0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .cta-gradient:hover {
+    transform: scale(1.01);
+    box-shadow: 0 10px 36px -4px hsl(222 90% 55% / 0.5), 0 4px 12px hsl(222 80% 50% / 0.2);
+  }
+  .cta-gradient:active {
+    transform: scale(0.98);
+  }
+
+  /* ─── Trust badge row ─── */
+  .trust-row {
+    @apply flex items-center justify-center gap-5 sm:gap-7;
+  }
+  .trust-item {
+    @apply flex items-center gap-1.5;
+  }
+  .trust-item svg {
+    @apply h-4 w-4;
+    color: hsl(var(--primary));
+  }
+  .trust-item span {
+    @apply text-meta font-semibold;
+    color: hsl(var(--muted-foreground));
+  }
 }
