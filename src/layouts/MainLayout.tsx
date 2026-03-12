@@ -67,12 +67,12 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             {/* Language toggle */}
             <button
               onClick={() => setLang(lang === "fr" ? "en" : "fr")}
-              className="hidden sm:flex h-8 items-center gap-1 rounded-lg px-2 text-caption font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all duration-200 uppercase tracking-wider"
+              className="flex h-8 items-center gap-0.5 rounded-lg px-2 text-caption font-semibold transition-all duration-200 uppercase tracking-wider border border-border/30 bg-muted/10 hover:bg-muted/30"
               title={lang === "fr" ? "Switch to English" : "Passer en français"}
             >
-              <span className={lang === "fr" ? "text-foreground" : "text-muted-foreground/40"}>FR</span>
-              <span className="text-border">/</span>
-              <span className={lang === "en" ? "text-foreground" : "text-muted-foreground/40"}>EN</span>
+              <span className={lang === "fr" ? "text-foreground font-bold" : "text-muted-foreground/50"}>FR</span>
+              <span className="text-muted-foreground/30 mx-0.5">|</span>
+              <span className={lang === "en" ? "text-foreground font-bold" : "text-muted-foreground/50"}>EN</span>
             </button>
 
             {/* Alerts */}
