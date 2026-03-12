@@ -35,7 +35,7 @@ export default function OnboardingFlow() {
   const [auditSections, setAuditSections] = useState<AuditSection[]>([]);
   const [aippScore, setAippScore] = useState<OnboardingAIPPScore | null>(null);
   const [objective, setObjective] = useState("");
-  const [selectedPlan, setSelectedPlan] = useState({ id: "growth", name: "Growth", price: 99, interval: "month" as const });
+  const [selectedPlan, setSelectedPlan] = useState<{ id: string; name: string; price: number; interval: "month" | "year" }>({ id: "growth", name: "Growth", price: 99, interval: "month" });
 
   const handleImport = useCallback((form: { businessName: string }) => {
     setBusinessName(form.businessName);
