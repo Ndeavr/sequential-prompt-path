@@ -434,65 +434,9 @@ const Home = () => {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          FEATURED CONTRACTORS
+          FEATURED CONTRACTORS — Rotating Carousel
       ═══════════════════════════════════════════════════════════ */}
-      <section className="px-5 py-16">
-        <div className="max-w-3xl mx-auto">
-          <motion.div variants={sectionFade} initial="hidden" whileInView="visible" viewport={{ once: true }} className="flex items-end justify-between mb-8">
-            <div>
-              <p className="text-caption font-semibold text-primary tracking-widest uppercase mb-2">Entrepreneurs vedettes</p>
-              <h2 className="font-display text-title text-foreground">Vérifiés, certifiés, recommandés</h2>
-            </div>
-            <Link to="/search" className="hidden sm:flex items-center gap-1.5 text-meta font-semibold text-primary hover:gap-2.5 transition-all">
-              Voir tous <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </motion.div>
-
-          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid sm:grid-cols-3 gap-3">
-            {[
-              { name: "TOITURE EXPERT", specialty: "Toiture & Couverture", city: "Montréal", score: 92, rating: 4.9, reviews: 47, years: 18 },
-              { name: "PLOMBERIE PRO", specialty: "Plomberie", city: "Laval", score: 88, rating: 4.8, reviews: 34, years: 12 },
-              { name: "RÉNO MAÎTRE", specialty: "Rénovation générale", city: "Québec", score: 85, rating: 4.7, reviews: 29, years: 15 },
-            ].map((c, i) => (
-              <motion.div key={c.name} variants={fadeUp} custom={i}>
-                <Link to="/search" className="block h-full">
-                  <div className="glass-card-elevated rounded-2xl p-5 h-full group">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="h-11 w-11 shrink-0 rounded-xl bg-gradient-to-br from-primary/12 to-secondary/8 flex items-center justify-center border border-border/20">
-                        <span className="font-display text-meta font-bold text-gradient">{c.name.charAt(0)}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <h3 className="text-caption font-semibold text-foreground truncate">{c.name}</h3>
-                          <ShieldCheck className="h-3.5 w-3.5 text-success shrink-0" />
-                        </div>
-                        <p className="text-caption text-muted-foreground">{c.specialty}</p>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <Star className="h-3 w-3 fill-current text-warning" />
-                        <span className="text-caption font-bold text-foreground">{c.rating}</span>
-                        <span className="text-caption text-muted-foreground/60">({c.reviews})</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-caption text-muted-foreground">
-                        <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{c.city}</span>
-                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{c.years} ans</span>
-                      </div>
-                    </div>
-                    <div className="pt-3 mt-3 border-t border-border/15 flex items-center justify-between">
-                      <div className="bg-primary/8 border border-primary/12 text-primary font-display font-bold text-meta px-2.5 py-1 rounded-lg">
-                        {c.score}<span className="text-caption font-normal opacity-50">/100</span>
-                      </div>
-                      <span className="text-[10px] font-semibold text-primary/50 uppercase tracking-wider">AIPP</span>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
+      <FeaturedCarousel />
 
       {/* ═══════════════════════════════════════════════════════════
           TESTIMONIALS
