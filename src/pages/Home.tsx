@@ -43,8 +43,16 @@ const Home = () => {
   const dash = role === "contractor" ? "/pro" : role === "admin" ? "/admin" : "/dashboard";
   const [searchQuery, setSearchQuery] = useState("");
 
-  const handleSearch = () => {
-    navigate(isAuthenticated ? "/describe-project" : "/signup");
+  const [alexOpen, setAlexOpen] = useState(false);
+  const [alexChip, setAlexChip] = useState<string | undefined>();
+
+  const handleCta = (destination: string, label?: string) => {
+    if (isAuthenticated) {
+      navigate(destination);
+    } else {
+      setAlexChip(label);
+      setAlexOpen(true);
+    }
   };
 
   return (
