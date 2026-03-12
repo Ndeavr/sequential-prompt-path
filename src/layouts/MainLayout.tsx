@@ -96,16 +96,16 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             )}
 
             {isAuthenticated ? (
-              <Button asChild size="sm" className="rounded-lg h-8 text-xs">
+              <Button asChild size="sm" className="rounded-full h-8 text-xs px-4">
                 <Link to={dash}>Tableau de bord</Link>
               </Button>
             ) : (
               <>
-                <Button asChild variant="ghost" size="sm" className="rounded-lg h-8 text-xs hidden sm:inline-flex text-muted-foreground">
+                <Button asChild variant="outline" size="sm" className="rounded-full h-8 text-xs px-4 hidden sm:inline-flex">
                   <Link to="/login">Connexion</Link>
                 </Button>
-                <Button asChild size="sm" className="rounded-lg h-8 text-xs">
-                  <Link to="/signup">Commencer</Link>
+                <Button asChild size="sm" className="rounded-full h-8 text-xs px-4">
+                  <Link to="/signup">Créer un Projet</Link>
                 </Button>
               </>
             )}
