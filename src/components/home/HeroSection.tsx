@@ -12,7 +12,7 @@ import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 
 const ROTATING_ITEMS = [
   { label: "le contracteur", action: "agrandir votre maison" },
-  { label: "l'arpenteur-géomètre", action: "un certificat de localisation" },
+  { label: "l'arpenteur", action: "un certificat de localisation" },
   { label: "le couvreur", action: "refaire votre toiture" },
   { label: "l'électricien", action: "remplacer votre panneau électrique" },
   { label: "le plombier", action: "rénover votre salle de bain" },
@@ -114,7 +114,7 @@ export default function HeroSection() {
               {/* ═══ FIXED-HEIGHT title container ═══ */}
               <h1 className="max-w-[680px] text-[40px] font-extrabold leading-[1.1] tracking-[-0.04em] sm:text-[50px] md:text-[64px]" style={{ color: "#0B1533" }}>
                 <span>Trouvez</span>
-                <div className="overflow-hidden" style={{ height: "2.2em" }}>
+                <div className="overflow-hidden" style={{ height: "1.15em" }}>
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={current.label}
