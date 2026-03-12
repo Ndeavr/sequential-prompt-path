@@ -43,6 +43,8 @@ import PropertyInsightsPage from "@/pages/dashboard/PropertyInsightsPage";
 import AccountPage from "@/pages/dashboard/AccountPage";
 import HomeownerAppointments from "@/pages/dashboard/HomeownerAppointments";
 import BookingPage from "@/pages/dashboard/BookingPage";
+import DocumentUploadPage from "@/pages/dashboard/DocumentUploadPage";
+import ProjectNewPage from "@/pages/dashboard/ProjectNewPage";
 
 // Contractor Pro
 import ProDashboard from "@/pages/pro/ProDashboard";
