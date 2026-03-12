@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
 import AlexConcierge from "@/components/alex/AlexConcierge";
 import { useEffect } from "react";
+import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -28,7 +29,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const { isAuthenticated, role } = useAuth();
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [lang, setLang] = useState<"fr" | "en">("fr");
+  const { lang, setLang } = useLanguage();
   const { theme, setTheme } = useTheme();
   const dash = role === "contractor" ? "/pro" : role === "admin" ? "/admin" : "/dashboard";
 
@@ -83,15 +84,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             </button>
 
             {/* Language toggle */}
-            <button
-              onClick={() => setLang(lang === "fr" ? "en" : "fr")}
-              className="flex h-8 items-center gap-0.5 rounded-lg px-2 text-caption font-semibold transition-all duration-200 uppercase tracking-wider border border-border/40 bg-muted/20 hover:bg-muted/40"
-              title={lang === "fr" ? "Switch to English" : "Passer en français"}
-            >
-              <span className={lang === "fr" ? "text-foreground font-bold" : "text-muted-foreground/50"}>FR</span>
-              <span className="text-muted-foreground/30 mx-0.5">|</span>
-              <span className={lang === "en" ? "text-foreground font-bold" : "text-muted-foreground/50"}>EN</span>
-            </button>
+            <LanguageToggle lang={lang} onChange={setLang} />
 
             {/* Alerts */}
             {isAuthenticated && (
@@ -155,22 +148,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                 {/* Mobile theme + language row */}
                 <div className="flex items-center justify-between px-3 py-2">
                   <div className="flex items-center gap-3">
-                    <button
-                      onClick={toggleTheme}
-                      className="flex items-center gap-1.5 text-caption font-medium text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-                      <span>{theme === "dark" ? "Clair" : "Sombre"}</span>
-                    </button>
-                    <span className="text-border">·</span>
-                    <button
-                      onClick={() => setLang(lang === "fr" ? "en" : "fr")}
-                      className="flex items-center gap-1 text-caption font-semibold uppercase tracking-wider"
-                    >
-                      <span className={lang === "fr" ? "text-foreground" : "text-muted-foreground/40"}>FR</span>
-                      <span className="text-border">/</span>
-                      <span className={lang === "en" ? "text-foreground" : "text-muted-foreground/40"}>EN</span>
-                    </button>
+                    <LanguageToggle lang={lang} onChange={setLang} />
                   </div>
                 </div>
                 <div className="divider-gradient my-2" />
