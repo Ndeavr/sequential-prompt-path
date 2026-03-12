@@ -362,9 +362,11 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
                 </motion.div>
 
                 <div className="space-y-1">
-                  <p className="text-lg font-bold" style={{ color: "#0B1533" }}>{greeting}</p>
+                  <p className="text-lg font-bold" style={{ color: "#0B1533" }}>
+                    {chipGreeting || greeting}
+                  </p>
                   <p className="text-sm" style={{ color: "#6C7A92" }}>
-                    {listening ? "Je vous écoute…" : "Parlez-moi de votre projet"}
+                    {listening ? "Je vous écoute…" : "Décrivez-moi votre projet"}
                   </p>
                 </div>
 
