@@ -120,7 +120,7 @@ const Home = () => {
 
             {/* BOLD CTA — Full gradient pill */}
             <button
-              onClick={() => navigate(isAuthenticated ? "/describe-project" : "/signup")}
+              onClick={() => handleCta("/describe-project", "Décrire mon projet")}
               className="w-full h-16 rounded-full flex items-center justify-center gap-4 text-body font-bold transition-all hover:scale-[1.01] active:scale-[0.98]"
               style={{ background: "linear-gradient(135deg, #2563EB 0%, #3B82F6 40%, #06B6D4 100%)", color: "white", boxShadow: "0 8px 30px -4px hsl(222 90% 55% / 0.4), 0 2px 8px hsl(222 80% 50% / 0.15)" }}
             >
