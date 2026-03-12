@@ -51,6 +51,7 @@ import BookingPage from "@/pages/dashboard/BookingPage";
 import DocumentUploadPage from "@/pages/dashboard/DocumentUploadPage";
 import ProjectNewPage from "@/pages/dashboard/ProjectNewPage";
 import SyndicateDashboard from "@/pages/dashboard/SyndicateDashboard";
+import SyndicateDetailDashboard from "@/pages/dashboard/SyndicateDetailDashboard";
 import SyndicateReserveFund from "@/pages/dashboard/SyndicateReserveFund";
 import SyndicateMaintenance from "@/pages/dashboard/SyndicateMaintenance";
 import SyndicateVotes from "@/pages/dashboard/SyndicateVotes";
