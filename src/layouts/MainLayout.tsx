@@ -11,6 +11,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
 import AlexConcierge from "@/components/alex/AlexConcierge";
+import { useEffect } from "react";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -30,6 +31,11 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const [lang, setLang] = useState<"fr" | "en">("fr");
   const { theme, setTheme } = useTheme();
   const dash = role === "contractor" ? "/pro" : role === "admin" ? "/admin" : "/dashboard";
+
+  // Force light mode on all public pages
+  useEffect(() => {
+    if (theme !== "light") setTheme("light");
+  }, [theme, setTheme]);
 
   const showAlex = pathname !== "/alex";
 
