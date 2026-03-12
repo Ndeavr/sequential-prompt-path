@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
 import AlexConcierge from "@/components/alex/AlexConcierge";
 import { useEffect } from "react";
+import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
 
 interface MainLayoutProps {
   children: ReactNode;
