@@ -20,18 +20,32 @@ const ACCOUNT_TYPES = [
     roleForDb: "homeowner",
   },
   {
-    value: "contractor",
-    label: "Entrepreneur",
-    description: "Présenter mon entreprise et recevoir des opportunités",
+    value: "property_manager",
+    label: "Gestionnaire immobilier",
+    description: "Administrer des immeubles et copropriétés",
+    icon: Building2,
+    roleForDb: "homeowner",
+  },
+  {
+    value: "professional",
+    label: "Professionnel",
+    description: "Offrir des services spécialisés",
     icon: Briefcase,
     roleForDb: "contractor",
   },
   {
-    value: "partner",
-    label: "Partenaire",
-    description: "Collaborer avec UNPRO",
-    icon: Handshake,
-    roleForDb: "homeowner", // default role, admin upgrades later
+    value: "contractor",
+    label: "Entrepreneur",
+    description: "Présenter mon entreprise et recevoir des opportunités",
+    icon: Wrench,
+    roleForDb: "contractor",
+  },
+  {
+    value: "service_provider",
+    label: "Fournisseur de services",
+    description: "Proposer des services aux propriétaires",
+    icon: Truck,
+    roleForDb: "contractor",
   },
 ] as const;
 
