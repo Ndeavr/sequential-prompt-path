@@ -1,73 +1,96 @@
-# Welcome to your Lovable project
+# UNPRO — Property Intelligence Platform
 
-## Project info
+UNPRO is a property intelligence and contractor-matching platform built on Supabase and a modular knowledge graph.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+The system connects property data, building problems, solutions, contractors, and cities to help property owners make better decisions about maintenance and renovations.
 
-## How can I edit this code?
+The platform is built with:
 
-There are several ways of editing your application.
+- Supabase (database, auth, storage, edge functions)
+- React / Vite / shadcn UI
+- Modular knowledge graph
+- AI document analysis
+- Programmatic SEO
 
-**Use Lovable**
+---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+# Architecture
 
-Changes made via Lovable will be committed automatically to this repo.
+UNPRO is built as four layers.
 
-**Use your preferred IDE**
+## 1. Property Intelligence Layer
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Source of truth for:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- properties
+- documents
+- property events
+- maintenance history
+- scores
+- risk indicators
 
-Follow these steps:
+## 2. Decision Layer
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Determines:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- recommended repairs
+- cost ranges
+- risk levels
+- timing of work
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 3. Marketplace Layer
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+Connects projects to contractors.
 
-**Edit a file directly in GitHub**
+Includes:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- contractor profiles
+- contractor scores
+- project matching
+- quote analysis
 
-**Use GitHub Codespaces**
+## 4. Public Authority Layer
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Public layer that generates:
 
-## What technologies are used for this project?
+- contractor pages
+- SEO pages
+- answer engine pages
 
-This project is built with:
+---
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# Repository Structure
 
-## How can I deploy this project?
+`/docs` — architecture and build documentation
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+`/prompts` — Lovable master prompts
 
-## Can I connect a custom domain to my Lovable project?
+`/supabase` — database migrations and seed data
 
-Yes, you can!
+`/functions` — edge functions
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+`/scripts` — deployment and migration helpers
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+---
+
+# Core Product Rules
+
+- `auth.users` is the identity source.
+- `profiles` is the application layer.
+- `contractors` must remain separate from profiles.
+- Property data must remain private by default.
+- Public contractor pages and SEO pages must be derived from the private core.
+- Personal accounts are limited to 3 properties.
+- Accounts managing more than 500 addresses must route to Enterprise contact.
+
+---
+
+# Build Phases
+
+**V1 Core** — Profiles, properties, documents, projects.
+
+**V2 Syndicates** — Condo / building governance, reserve fund tracking, votes.
+
+**V3 Ingestion** — Document analysis and property intelligence extraction.
+
+**V4 Knowledge Graph + SEO** — Public knowledge graph and SEO generation.
