@@ -467,6 +467,118 @@ export type Database = {
           },
         ]
       }
+      checkout_sessions: {
+        Row: {
+          addons_json: Json | null
+          addons_total: number
+          base_price: number
+          billing_cycle: string
+          card_required: boolean
+          checkout_status: string
+          contractor_profile_id: string | null
+          created_at: string
+          currency: string
+          discount_amount: number
+          discount_type: string
+          discount_value: number
+          external_checkout_id: string | null
+          final_total_after_discount: number
+          id: string
+          payment_provider: string | null
+          promo_code: string | null
+          promo_code_type: string | null
+          selected_plan_code: string | null
+          selected_plan_id: string | null
+          selected_plan_name: string | null
+          setup_fee: number
+          subtotal_before_discount: number
+          tax_amount: number
+          taxable_amount: number
+          updated_at: string
+          zero_dollar_activation: boolean
+        }
+        Insert: {
+          addons_json?: Json | null
+          addons_total?: number
+          base_price?: number
+          billing_cycle?: string
+          card_required?: boolean
+          checkout_status?: string
+          contractor_profile_id?: string | null
+          created_at?: string
+          currency?: string
+          discount_amount?: number
+          discount_type?: string
+          discount_value?: number
+          external_checkout_id?: string | null
+          final_total_after_discount?: number
+          id?: string
+          payment_provider?: string | null
+          promo_code?: string | null
+          promo_code_type?: string | null
+          selected_plan_code?: string | null
+          selected_plan_id?: string | null
+          selected_plan_name?: string | null
+          setup_fee?: number
+          subtotal_before_discount?: number
+          tax_amount?: number
+          taxable_amount?: number
+          updated_at?: string
+          zero_dollar_activation?: boolean
+        }
+        Update: {
+          addons_json?: Json | null
+          addons_total?: number
+          base_price?: number
+          billing_cycle?: string
+          card_required?: boolean
+          checkout_status?: string
+          contractor_profile_id?: string | null
+          created_at?: string
+          currency?: string
+          discount_amount?: number
+          discount_type?: string
+          discount_value?: number
+          external_checkout_id?: string | null
+          final_total_after_discount?: number
+          id?: string
+          payment_provider?: string | null
+          promo_code?: string | null
+          promo_code_type?: string | null
+          selected_plan_code?: string | null
+          selected_plan_id?: string | null
+          selected_plan_name?: string | null
+          setup_fee?: number
+          subtotal_before_discount?: number
+          tax_amount?: number
+          taxable_amount?: number
+          updated_at?: string
+          zero_dollar_activation?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkout_sessions_contractor_profile_id_fkey"
+            columns: ["contractor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkout_sessions_contractor_profile_id_fkey"
+            columns: ["contractor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkout_sessions_selected_plan_id_fkey"
+            columns: ["selected_plan_id"]
+            isOneToOne: false
+            referencedRelation: "plan_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cities: {
         Row: {
           created_at: string
@@ -2194,6 +2306,72 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_catalog: {
+        Row: {
+          active: boolean
+          aipp_fit_max: number
+          aipp_fit_min: number
+          annual_price: number
+          badge_text: string | null
+          best_for: string | null
+          code: string
+          created_at: string
+          id: string
+          includes_json: Json | null
+          monthly_price: number
+          name: string
+          objective_fit_json: Json | null
+          position_rank: number
+          recommended_for_json: Json | null
+          setup_fee: number
+          short_pitch: string | null
+          summary_outcome: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          aipp_fit_max?: number
+          aipp_fit_min?: number
+          annual_price?: number
+          badge_text?: string | null
+          best_for?: string | null
+          code: string
+          created_at?: string
+          id?: string
+          includes_json?: Json | null
+          monthly_price?: number
+          name: string
+          objective_fit_json?: Json | null
+          position_rank?: number
+          recommended_for_json?: Json | null
+          setup_fee?: number
+          short_pitch?: string | null
+          summary_outcome?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          aipp_fit_max?: number
+          aipp_fit_min?: number
+          annual_price?: number
+          badge_text?: string | null
+          best_for?: string | null
+          code?: string
+          created_at?: string
+          id?: string
+          includes_json?: Json | null
+          monthly_price?: number
+          name?: string
+          objective_fit_json?: Json | null
+          position_rank?: number
+          recommended_for_json?: Json | null
+          setup_fee?: number
+          short_pitch?: string | null
+          summary_outcome?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       portfolio_properties: {
         Row: {
           added_at: string
@@ -2566,6 +2744,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      promo_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          description: string | null
+          discount_type: string
+          discount_value: number
+          eligible_plan_codes: string[]
+          ends_at: string | null
+          id: string
+          label: string | null
+          starts_at: string | null
+          updated_at: string
+          usage_limit_per_business: number | null
+          usage_limit_total: number | null
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          eligible_plan_codes?: string[]
+          ends_at?: string | null
+          id?: string
+          label?: string | null
+          starts_at?: string | null
+          updated_at?: string
+          usage_limit_per_business?: number | null
+          usage_limit_total?: number | null
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          eligible_plan_codes?: string[]
+          ends_at?: string | null
+          id?: string
+          label?: string | null
+          starts_at?: string | null
+          updated_at?: string
+          usage_limit_per_business?: number | null
+          usage_limit_total?: number | null
+        }
+        Relationships: []
       }
       properties: {
         Row: {
