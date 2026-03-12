@@ -88,7 +88,7 @@ const SyndicateReserveFund = () => {
         </CardHeader>
         <CardContent>
           {!snapshots?.length ? (
-            <EmptyState icon={<Wallet className="h-8 w-8 text-muted-foreground/40" />} title="Aucun relevé" description="Ajoutez un premier relevé du fonds de prévoyance." />
+            <EmptyState icon={<Wallet className="h-8 w-8 text-muted-foreground/40" />} message="Aucun relevé — Ajoutez un premier relevé du fonds de prévoyance." />
           ) : (
             <div className="space-y-3">
               {snapshots.map((s: any) => (
