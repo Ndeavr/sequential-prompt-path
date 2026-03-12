@@ -12,7 +12,7 @@ import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 
 const ROTATING_ITEMS = [
   { label: "le contracteur", action: "agrandir votre maison" },
-  { label: "l'arpenteur-géomètre", action: "un certificat de localisation" },
+  { label: "l'arpenteur", action: "un certificat de localisation" },
   { label: "le couvreur", action: "refaire votre toiture" },
   { label: "l'électricien", action: "remplacer votre panneau électrique" },
   { label: "le plombier", action: "rénover votre salle de bain" },
