@@ -42,10 +42,10 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         <div className="mx-auto max-w-5xl px-5 h-14 flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 shrink-0 group">
-            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-glow transition-shadow group-hover:shadow-glow-lg">
-              <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
+            <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center shadow-glow transition-shadow group-hover:shadow-glow-lg">
+              <HomeIcon className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-display text-sm font-bold text-gradient tracking-tight">UNPRO</span>
+            <span className="font-display text-sm font-bold text-foreground tracking-tight">UNPRO</span>
           </Link>
 
           {/* Desktop nav */}
