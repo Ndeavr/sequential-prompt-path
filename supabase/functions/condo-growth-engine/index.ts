@@ -201,6 +201,89 @@ serve(async (req) => {
       });
     }
 
+    // ── ACTION: complete_project — Record actual costs & feedback ──
+    if (action === "complete_project") {
+      const body = await req.clone().json();
+      const { project_id, actual_cost, actual_contractor_id, owner_rating, owner_feedback } = body;
+      if (!project_id || !actual_cost) throw new Error("project_id and actual_cost required");
+
+      const { data: project, error: pErr } = await supabase
+        .from("syndicate_projects")
+        .select("*")
+        .eq("id", project_id)
+        .single();
+      if (pErr || !project) throw new Error("Project not found");
+
+      const estimatedCost = project.estimated_cost || actual_cost;
+      const variancePercent = Math.round(((actual_cost - estimatedCost) / estimatedCost) * 100 * 10) / 10;
+      const predictionAccuracy = Math.max(0, 100 - Math.abs(variancePercent));
+
+      const { error: uErr } = await supabase
+        .from("syndicate_projects")
+        .update({
+          status: "completed",
+          actual_cost,
+          actual_contractor_id: actual_contractor_id || null,
+          completed_at: new Date().toISOString(),
+          owner_rating: owner_rating || null,
+          owner_feedback: owner_feedback || null,
+          cost_variance_percent: variancePercent,
+          ai_prediction_accuracy: predictionAccuracy,
+        })
+        .eq("id", project_id);
+      if (uErr) throw uErr;
+
+      // Update market benchmark with running average
+      const { data: benchmark } = await supabase
+        .from("market_price_benchmarks")
+        .select("*")
+        .eq("component", project.component)
+        .eq("region", "quebec")
+        .single();
+
+      if (benchmark) {
+        const oldCount = benchmark.sample_count || 1;
+        const newAvg = Math.round((benchmark.avg_cost_per_unit * oldCount + actual_cost) / (oldCount + 1));
+        await supabase
+          .from("market_price_benchmarks")
+          .update({
+            avg_cost_per_unit: newAvg,
+            sample_count: oldCount + 1,
+            last_updated_from_actuals: new Date().toISOString(),
+          })
+          .eq("id", benchmark.id);
+      }
+
+      // Update contractor rating if feedback provided
+      if (actual_contractor_id && owner_rating) {
+        const { data: contractor } = await supabase
+          .from("contractors")
+          .select("aipp_score, review_count, rating")
+          .eq("id", actual_contractor_id)
+          .single();
+
+        if (contractor) {
+          const oldCount = contractor.review_count || 0;
+          const oldRating = contractor.rating || 0;
+          const newRating = Math.round(((oldRating * oldCount + owner_rating) / (oldCount + 1)) * 10) / 10;
+          await supabase
+            .from("contractors")
+            .update({ rating: newRating, review_count: oldCount + 1 })
+            .eq("id", actual_contractor_id);
+        }
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        cost_variance_percent: variancePercent,
+        ai_prediction_accuracy: predictionAccuracy,
+        market_benchmark_updated: !!benchmark,
+        contractor_score_updated: !!(actual_contractor_id && owner_rating),
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // ── ACTION: ai_recommendations — Generate AI insights ──
     if (action === "ai_recommendations") {
       const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
