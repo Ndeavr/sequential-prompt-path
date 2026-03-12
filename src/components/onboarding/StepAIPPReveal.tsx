@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Award, ChevronRight, Zap, TrendingUp, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PremiumMagneticButton } from "@/components/ui/PremiumMagneticButton";
 import type { OnboardingAIPPScore } from "@/services/businessImportService";
 
 interface Props {
@@ -211,10 +212,15 @@ export default function StepAIPPReveal({ score, onContinue }: Props) {
           )}
         </AnimatePresence>
 
-        <Button onClick={onContinue} className="w-full h-13 text-base font-semibold bg-gradient-to-r from-primary via-primary to-secondary hover:shadow-[var(--shadow-glow-lg)] hover:brightness-110 transition-all duration-300 border-0 rounded-xl gap-2 group">
+        <PremiumMagneticButton
+          onReleaseAction={onContinue}
+          variant="indigo"
+          fullWidth
+          iconRight={<ChevronRight className="w-4 h-4" />}
+          className="h-13 text-base font-semibold"
+        >
           Choose your objective
-          <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-        </Button>
+        </PremiumMagneticButton>
       </div>
     </div>
   );

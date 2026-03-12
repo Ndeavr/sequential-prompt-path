@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Phone, MapPin, Star, ArrowUpRight, Globe, Building2, Brain, Zap, ChevronRight, Clock, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PremiumMagneticButton } from "@/components/ui/PremiumMagneticButton";
 
 interface Props {
   onSelect: (objective: string) => void;
@@ -76,14 +77,16 @@ export default function StepObjective({ onSelect }: Props) {
           ))}
         </div>
 
-        <Button
-          onClick={() => selected && onSelect(selected)}
+        <PremiumMagneticButton
+          onReleaseAction={() => selected && onSelect(selected)}
           disabled={!selected}
-          className="w-full h-13 text-base font-semibold bg-gradient-to-r from-primary via-primary to-secondary hover:shadow-[var(--shadow-glow-lg)] hover:brightness-110 disabled:opacity-30 transition-all duration-300 border-0 rounded-xl gap-2 group"
+          variant="indigo"
+          fullWidth
+          iconRight={<ChevronRight className="w-4 h-4" />}
+          className="h-13 text-base font-semibold"
         >
           See recommended plan
-          <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-        </Button>
+        </PremiumMagneticButton>
       </div>
     </div>
   );

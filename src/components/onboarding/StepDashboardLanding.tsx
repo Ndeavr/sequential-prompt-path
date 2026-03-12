@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Award, TrendingUp, Shield, Star, Globe, Users, Zap, Settings, ChevronRight, Upload, Link, ArrowUpRight, Eye, BarChart3, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PremiumMagneticButton } from "@/components/ui/PremiumMagneticButton";
 import { useNavigate } from "react-router-dom";
 
 interface Props {
@@ -135,11 +136,15 @@ export default function StepDashboardLanding({ businessName, aippScore }: Props)
           </div>
         </motion.div>
 
-        <Button onClick={() => navigate("/pro")}
-          className="w-full h-13 text-base font-bold bg-gradient-to-r from-primary via-primary to-secondary hover:shadow-[var(--shadow-glow-lg)] hover:brightness-110 transition-all duration-300 border-0 rounded-xl gap-2 group">
+        <PremiumMagneticButton
+          href="/pro"
+          variant="indigo"
+          fullWidth
+          iconRight={<ArrowUpRight className="w-4 h-4" />}
+          className="h-13 text-base font-bold"
+        >
           Go to Full Dashboard
-          <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-        </Button>
+        </PremiumMagneticButton>
       </div>
     </div>
   );

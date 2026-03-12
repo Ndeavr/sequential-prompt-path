@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Globe, MapPin, Facebook, Instagram, Phone, Building2, ArrowRight, Shield, Sparkles, Search, Zap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PremiumMagneticButton } from "@/components/ui/PremiumMagneticButton";
 
 interface Props {
   onImport: (data: { businessName: string; website: string; googleUrl: string; facebookUrl: string; instagramUrl: string; phone: string; city: string }) => void;
@@ -89,15 +90,17 @@ export default function StepImportSources({ onImport, onManual }: Props) {
 
         {/* Actions */}
         <motion.div {...fadeUp} transition={{ delay: 0.5 }} className="space-y-3">
-          <Button
-            onClick={() => onImport(form)}
+          <PremiumMagneticButton
+            onReleaseAction={() => onImport(form)}
             disabled={!canImport}
-            className="w-full h-13 text-base font-semibold bg-gradient-to-r from-primary via-primary to-secondary hover:shadow-[var(--shadow-glow-lg)] hover:brightness-110 transition-all duration-300 border-0 rounded-xl gap-2 group"
+            variant="indigo"
+            fullWidth
+            iconRight={<ArrowRight className="w-4 h-4" />}
+            className="h-13 text-base font-semibold"
           >
-            <Zap className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            <Zap className="w-4 h-4" />
             Import & Analyze
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Button>
+          </PremiumMagneticButton>
           <Button variant="ghost" onClick={onManual} className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors">
             I'll fill it manually →
           </Button>
