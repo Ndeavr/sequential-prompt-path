@@ -388,6 +388,152 @@ export type Database = {
         }
         Relationships: []
       }
+      answer_logs: {
+        Row: {
+          answer_mode: string
+          city: string | null
+          confidence_score: number | null
+          created_at: string
+          feedback_rating: number | null
+          id: string
+          matched_template_id: string | null
+          property_type: string | null
+          question: string
+          response_time_ms: number | null
+          session_id: string | null
+          structured_answer: Json
+          user_id: string | null
+        }
+        Insert: {
+          answer_mode: string
+          city?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          feedback_rating?: number | null
+          id?: string
+          matched_template_id?: string | null
+          property_type?: string | null
+          question: string
+          response_time_ms?: number | null
+          session_id?: string | null
+          structured_answer: Json
+          user_id?: string | null
+        }
+        Update: {
+          answer_mode?: string
+          city?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          feedback_rating?: number | null
+          id?: string
+          matched_template_id?: string | null
+          property_type?: string | null
+          question?: string
+          response_time_ms?: number | null
+          session_id?: string | null
+          structured_answer?: Json
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answer_logs_matched_template_id_fkey"
+            columns: ["matched_template_id"]
+            isOneToOne: false
+            referencedRelation: "answer_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      answer_templates: {
+        Row: {
+          category: string
+          causes: Json | null
+          city_context: Json | null
+          confidence_base: number | null
+          cost_max: number | null
+          cost_min: number | null
+          cost_unit: string | null
+          created_at: string
+          explanation: string
+          follow_up_question: string | null
+          graph_problem_slug: string | null
+          graph_profession_slugs: string[] | null
+          graph_solution_slugs: string[] | null
+          id: string
+          is_published: boolean | null
+          preventive_advice: Json | null
+          property_types: string[] | null
+          question_pattern: string
+          recommended_professionals: string[] | null
+          related_questions: Json | null
+          seo_description: string | null
+          seo_title: string | null
+          short_answer: string
+          solutions: Json | null
+          updated_at: string
+          urgency: string | null
+          version: number | null
+        }
+        Insert: {
+          category: string
+          causes?: Json | null
+          city_context?: Json | null
+          confidence_base?: number | null
+          cost_max?: number | null
+          cost_min?: number | null
+          cost_unit?: string | null
+          created_at?: string
+          explanation: string
+          follow_up_question?: string | null
+          graph_problem_slug?: string | null
+          graph_profession_slugs?: string[] | null
+          graph_solution_slugs?: string[] | null
+          id?: string
+          is_published?: boolean | null
+          preventive_advice?: Json | null
+          property_types?: string[] | null
+          question_pattern: string
+          recommended_professionals?: string[] | null
+          related_questions?: Json | null
+          seo_description?: string | null
+          seo_title?: string | null
+          short_answer: string
+          solutions?: Json | null
+          updated_at?: string
+          urgency?: string | null
+          version?: number | null
+        }
+        Update: {
+          category?: string
+          causes?: Json | null
+          city_context?: Json | null
+          confidence_base?: number | null
+          cost_max?: number | null
+          cost_min?: number | null
+          cost_unit?: string | null
+          created_at?: string
+          explanation?: string
+          follow_up_question?: string | null
+          graph_problem_slug?: string | null
+          graph_profession_slugs?: string[] | null
+          graph_solution_slugs?: string[] | null
+          id?: string
+          is_published?: boolean | null
+          preventive_advice?: Json | null
+          property_types?: string[] | null
+          question_pattern?: string
+          recommended_professionals?: string[] | null
+          related_questions?: Json | null
+          seo_description?: string | null
+          seo_title?: string | null
+          short_answer?: string
+          solutions?: Json | null
+          updated_at?: string
+          urgency?: string | null
+          version?: number | null
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           budget_range: string | null
