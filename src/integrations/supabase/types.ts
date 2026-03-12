@@ -1914,6 +1914,72 @@ export type Database = {
           },
         ]
       }
+      improvement_tasks: {
+        Row: {
+          assigned_to: string | null
+          category: string
+          completed_at: string | null
+          created_at: string
+          description: string
+          effort: string | null
+          finding_id: string | null
+          id: string
+          page_route: string | null
+          priority: string
+          run_id: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category: string
+          completed_at?: string | null
+          created_at?: string
+          description: string
+          effort?: string | null
+          finding_id?: string | null
+          id?: string
+          page_route?: string | null
+          priority: string
+          run_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string
+          effort?: string | null
+          finding_id?: string | null
+          id?: string
+          page_route?: string | null
+          priority?: string
+          run_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "improvement_tasks_finding_id_fkey"
+            columns: ["finding_id"]
+            isOneToOne: false
+            referencedRelation: "validation_findings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "improvement_tasks_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "validation_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingestion_job_items: {
         Row: {
           created_at: string
@@ -2407,6 +2473,71 @@ export type Database = {
           width?: number | null
         }
         Relationships: []
+      }
+      page_scores: {
+        Row: {
+          clarity_score: number | null
+          created_at: string
+          cta_score: number | null
+          id: string
+          image_score: number | null
+          mobile_score: number | null
+          navigation_score: number | null
+          overall_score: number | null
+          page_name: string
+          page_route: string
+          recommendations: Json | null
+          run_id: string
+          strengths: Json | null
+          trust_score: number | null
+          visual_score: number | null
+          weaknesses: Json | null
+        }
+        Insert: {
+          clarity_score?: number | null
+          created_at?: string
+          cta_score?: number | null
+          id?: string
+          image_score?: number | null
+          mobile_score?: number | null
+          navigation_score?: number | null
+          overall_score?: number | null
+          page_name: string
+          page_route: string
+          recommendations?: Json | null
+          run_id: string
+          strengths?: Json | null
+          trust_score?: number | null
+          visual_score?: number | null
+          weaknesses?: Json | null
+        }
+        Update: {
+          clarity_score?: number | null
+          created_at?: string
+          cta_score?: number | null
+          id?: string
+          image_score?: number | null
+          mobile_score?: number | null
+          navigation_score?: number | null
+          overall_score?: number | null
+          page_name?: string
+          page_route?: string
+          recommendations?: Json | null
+          run_id?: string
+          strengths?: Json | null
+          trust_score?: number | null
+          visual_score?: number | null
+          weaknesses?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_scores_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "validation_runs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plan_catalog: {
         Row: {
@@ -5071,6 +5202,137 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      validation_findings: {
+        Row: {
+          actual_behavior: string | null
+          agent: string
+          business_impact_score: number | null
+          category: string
+          created_at: string
+          description: string
+          expected_behavior: string | null
+          id: string
+          is_resolved: boolean | null
+          metadata: Json | null
+          page_route: string | null
+          probable_cause: string | null
+          reproduction_steps: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          run_id: string
+          screenshot_url: string | null
+          severity: string
+          suggested_fix: string | null
+          title: string
+        }
+        Insert: {
+          actual_behavior?: string | null
+          agent: string
+          business_impact_score?: number | null
+          category: string
+          created_at?: string
+          description: string
+          expected_behavior?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          metadata?: Json | null
+          page_route?: string | null
+          probable_cause?: string | null
+          reproduction_steps?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          run_id: string
+          screenshot_url?: string | null
+          severity: string
+          suggested_fix?: string | null
+          title: string
+        }
+        Update: {
+          actual_behavior?: string | null
+          agent?: string
+          business_impact_score?: number | null
+          category?: string
+          created_at?: string
+          description?: string
+          expected_behavior?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          metadata?: Json | null
+          page_route?: string | null
+          probable_cause?: string | null
+          reproduction_steps?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          run_id?: string
+          screenshot_url?: string | null
+          severity?: string
+          suggested_fix?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "validation_findings_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "validation_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      validation_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          critical_count: number | null
+          executive_summary: string | null
+          high_count: number | null
+          id: string
+          low_count: number | null
+          medium_count: number | null
+          pages_scanned: number | null
+          run_config: Json | null
+          started_at: string | null
+          status: string
+          total_pages: number | null
+          triggered_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          critical_count?: number | null
+          executive_summary?: string | null
+          high_count?: number | null
+          id?: string
+          low_count?: number | null
+          medium_count?: number | null
+          pages_scanned?: number | null
+          run_config?: Json | null
+          started_at?: string | null
+          status?: string
+          total_pages?: number | null
+          triggered_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          critical_count?: number | null
+          executive_summary?: string | null
+          high_count?: number | null
+          id?: string
+          low_count?: number | null
+          medium_count?: number | null
+          pages_scanned?: number | null
+          run_config?: Json | null
+          started_at?: string | null
+          status?: string
+          total_pages?: number | null
+          triggered_by?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
