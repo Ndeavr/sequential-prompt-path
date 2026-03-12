@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Check, Crown, ChevronRight, Sparkles, Shield, TrendingUp, Zap, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PremiumMagneticButton } from "@/components/ui/PremiumMagneticButton";
 
 interface Props {
   aippScore: number;
