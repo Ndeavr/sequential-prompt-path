@@ -401,7 +401,7 @@ const Home = () => {
           <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mt-8 text-center">
             <button
               onClick={() => handleCta("/dashboard/syndicate", "Gérer ma copropriété")}
-              className="h-12 rounded-xl px-7 inline-flex items-center gap-2 text-meta font-bold bg-gradient-to-r from-secondary to-purple-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all active:scale-[0.97]"
+              className="h-12 rounded-xl px-7 inline-flex items-center gap-2 text-meta font-bold bg-secondary text-secondary-foreground shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all active:scale-[0.97]"
             >
               Gérer ma copropriété <ArrowRight className="h-4 w-4" />
             </button>
