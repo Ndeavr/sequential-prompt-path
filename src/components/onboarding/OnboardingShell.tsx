@@ -57,14 +57,32 @@ export default function OnboardingShell({ currentStep, totalSteps, children, sho
         </div>
       )}
 
-      {/* Content with premium transitions */}
+      {/* Content with premium cinematic transitions */}
       <AnimatePresence mode="wait">
         <motion.div
           key={currentStep}
-          initial={{ opacity: 0, y: 24, filter: "blur(4px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          exit={{ opacity: 0, y: -16, filter: "blur(4px)" }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          initial={{
+            opacity: 0,
+            y: 14,
+            scale: 0.985,
+            filter: "blur(10px)",
+            clipPath: "inset(0% 0% 18% 0% round 28px)",
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            filter: "blur(0px)",
+            clipPath: "inset(0% 0% 0% 0% round 0px)",
+          }}
+          exit={{
+            opacity: 0,
+            y: -8,
+            scale: 0.992,
+            filter: "blur(6px)",
+            clipPath: "inset(0% 0% 10% 0% round 28px)",
+          }}
+          transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
           className="relative z-10"
         >
           {children}

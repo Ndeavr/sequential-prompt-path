@@ -113,11 +113,16 @@ export default function StepAuditResults({ sections, onContinue }: Props) {
 
         {/* CTA */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="space-y-3 pt-2">
-          <Button onClick={onContinue} className="w-full h-13 text-base font-semibold bg-gradient-to-r from-primary via-primary to-secondary hover:shadow-[var(--shadow-glow-lg)] hover:brightness-110 transition-all duration-300 border-0 rounded-xl gap-2 group">
+          <PremiumMagneticButton
+            onReleaseAction={onContinue}
+            variant="indigo"
+            fullWidth
+            iconRight={<ChevronRight className="w-4 h-4" />}
+            className="h-13 text-base font-semibold"
+          >
             <TrendingUp className="w-4 h-4" />
             Complete & Boost Score
-            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Button>
+          </PremiumMagneticButton>
           <p className="text-center text-[10px] text-muted-foreground/50">Fill missing info to significantly improve your AIPP score</p>
         </motion.div>
       </div>

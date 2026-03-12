@@ -143,11 +143,16 @@ export default function StepCompleteMissing({ data, onContinue }: Props) {
           })}
         </div>
 
-        <Button onClick={() => onContinue(updates)} className="w-full h-13 text-base font-semibold bg-gradient-to-r from-primary via-primary to-secondary hover:shadow-[var(--shadow-glow-lg)] hover:brightness-110 transition-all duration-300 border-0 rounded-xl gap-2 group">
+        <PremiumMagneticButton
+          onReleaseAction={() => onContinue(updates)}
+          variant="indigo"
+          fullWidth
+          iconRight={<ChevronRight className="w-4 h-4" />}
+          className="h-13 text-base font-semibold"
+        >
           <Sparkles className="w-4 h-4" />
           Calculate my AIPP Score
-          <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-        </Button>
+        </PremiumMagneticButton>
       </div>
     </div>
   );

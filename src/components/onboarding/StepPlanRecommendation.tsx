@@ -169,12 +169,16 @@ export default function StepPlanRecommendation({ aippScore, objective, onSelectP
           })}
         </div>
 
-        <Button onClick={() => onSelectPlan(selected, interval)}
-          className="w-full h-13 text-base font-semibold bg-gradient-to-r from-primary via-primary to-secondary hover:shadow-[var(--shadow-glow-lg)] hover:brightness-110 transition-all duration-300 border-0 rounded-xl gap-2 group">
+        <PremiumMagneticButton
+          onReleaseAction={() => onSelectPlan(selected, interval)}
+          variant="indigo"
+          fullWidth
+          iconRight={<ChevronRight className="w-4 h-4" />}
+          className="h-13 text-base font-semibold"
+        >
           <Shield className="w-4 h-4" />
           Continue to secure checkout
-          <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-        </Button>
+        </PremiumMagneticButton>
       </div>
     </div>
   );

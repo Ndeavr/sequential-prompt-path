@@ -138,12 +138,16 @@ export default function StepPayment({ planName, price, interval, aippScore, obje
           )}
         </div>
 
-        <Button onClick={onPay}
-          className="w-full h-14 text-base font-bold bg-gradient-to-r from-primary via-primary to-secondary hover:shadow-[var(--shadow-glow-lg)] hover:brightness-110 transition-all duration-300 border-0 rounded-xl gap-2 group">
+        <PremiumMagneticButton
+          onReleaseAction={onPay}
+          variant="indigo"
+          fullWidth
+          iconRight={<ArrowRight className="w-4 h-4" />}
+          className="h-14 text-base font-bold"
+        >
           <Lock className="w-4 h-4" />
           Pay & Activate Now
-          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-        </Button>
+        </PremiumMagneticButton>
 
         {/* Trust signals */}
         <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[10px] text-muted-foreground/50 pb-4">
