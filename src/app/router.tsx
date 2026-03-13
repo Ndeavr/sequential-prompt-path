@@ -40,6 +40,7 @@ import BusinessImportPage from "@/pages/BusinessImportPage";
 import GmbLinkPage from "@/pages/GmbLinkPage";
 import ContractorQuestionnairePage from "@/pages/ContractorQuestionnairePage";
 import VerifyContractorPage from "@/pages/VerifyContractorPage";
+import VerifyLandingPage from "@/pages/VerifyLandingPage";
 
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
@@ -126,6 +127,7 @@ export const AppRouter = () => (
       <Route path="/answers" element={<AnswerEnginePage />} />
       <Route path="/import-business" element={<BusinessImportPage />} />
       <Route path="/verify" element={<VerifyContractorPage />} />
+      <Route path="/verifier-entrepreneur" element={<VerifyLandingPage />} />
 
       {/* SEO Pages */}
       <Route path="/services" element={<SeoDirectoryPage />} />
