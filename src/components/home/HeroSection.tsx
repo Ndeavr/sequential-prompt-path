@@ -135,9 +135,39 @@ export default function HeroSection() {
         </div>
 
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-8 md:px-10 md:pt-12">
-          <div className="grid items-start gap-4 grid-cols-[1fr_140px] sm:grid-cols-[1fr_200px] md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8">
-            {/* Left column */}
-            <div className="min-w-0">
+          {/* Image behind text on mobile, side-by-side on desktop */}
+          <div className="relative md:grid md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8 md:items-start">
+            {/* Mobile background image */}
+            <div className="absolute top-0 right-0 w-[55%] h-[320px] md:hidden pointer-events-none">
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={current.image}
+                  src={current.image}
+                  alt={current.action}
+                  className="w-full h-full object-cover rounded-[20px]"
+                  loading="eager"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.5 }}
+                />
+              </AnimatePresence>
+              {/* Gradient fade left + bottom to blend with background */}
+              <div
+                className="absolute inset-0 rounded-[20px]"
+                style={{
+                  background: "linear-gradient(to right, hsl(213 60% 97%) 0%, transparent 40%), linear-gradient(to top, hsl(213 60% 97%) 0%, transparent 50%)",
+                }}
+              />
+              <img
+                src={unproRobot}
+                alt="Alex UNPRO"
+                className="absolute -right-1 -bottom-4 w-[44px] drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)]"
+              />
+            </div>
+
+            {/* Left column — text */}
+            <div className="relative z-10 min-w-0">
               {/* ═══ FIXED-HEIGHT title container ═══ */}
               <h1 className="max-w-[680px] text-[40px] font-extrabold leading-[1.1] tracking-[-0.04em] sm:text-[50px] md:text-[64px]" style={{ color: "#0B1533" }}>
                 <span>Trouvez</span>
