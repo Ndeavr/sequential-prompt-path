@@ -246,14 +246,28 @@ export default function HeroSection() {
             {/* Right column: image + robot */}
             <div className="relative mx-auto w-full max-w-[280px] md:max-w-[420px]">
               <div
-                className="overflow-hidden rounded-[28px] shadow-[0_22px_64px_rgba(34,72,145,0.18)] md:rounded-[32px]"
+                className="relative overflow-hidden rounded-[28px] shadow-[0_22px_64px_rgba(34,72,145,0.18)] md:rounded-[32px]"
                 style={{ background: "rgba(255,255,255,0.75)", border: "1px solid #DFE9F5" }}
               >
-                <img
-                  src={heroHouse}
-                  alt="Maison moderne"
-                  className="aspect-square w-full object-cover"
-                  loading="eager"
+                <AnimatePresence mode="wait">
+                  <motion.img
+                    key={current.image}
+                    src={current.image}
+                    alt={current.action}
+                    className="aspect-square w-full object-cover"
+                    loading="eager"
+                    initial={{ opacity: 0, scale: 1.05 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.97 }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                  />
+                </AnimatePresence>
+                {/* Gradient overlay */}
+                <div
+                  className="pointer-events-none absolute inset-0 rounded-[28px] md:rounded-[32px]"
+                  style={{
+                    background: "linear-gradient(135deg, hsl(222 100% 61% / 0.15) 0%, transparent 50%, hsl(195 100% 50% / 0.1) 100%)",
+                  }}
                 />
               </div>
               <img
