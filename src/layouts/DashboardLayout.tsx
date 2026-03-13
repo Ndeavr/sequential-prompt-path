@@ -1,7 +1,13 @@
+/**
+ * UNPRO — Homeowner Dashboard Layout (Programmatic Navigation)
+ */
+
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { Button } from "@/components/ui/button";
-import { Home, FileText, BarChart3, User, CalendarDays, LogOut, Sparkles, Building2 } from "lucide-react";
+import { Home, FileText, BarChart3, User, CalendarDays, LogOut, Sparkles, Building2, FolderOpen } from "lucide-react";
+import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import AlexConcierge from "@/components/alex/AlexConcierge";
 import type { ReactNode } from "react";
 
@@ -10,24 +16,44 @@ const navItems = [
   { to: "/dashboard/properties", label: "Propriétés", icon: Building2 },
   { to: "/dashboard/quotes", label: "Soumissions", icon: FileText },
   { to: "/dashboard/appointments", label: "Rendez-vous", icon: CalendarDays },
-  { to: "/dashboard/home-score", label: "Score maison", icon: BarChart3 },
+  { to: "/dashboard/home-score", label: "Home Score", icon: BarChart3 },
   { to: "/dashboard/account", label: "Mon compte", icon: User },
 ];
 
 const DashboardLayout = ({ children }: { children: ReactNode }) => {
   const { pathname } = useLocation();
   const { signOut, user } = useAuth();
+  const { ctx } = useNavigationContext();
+
+  // Property switcher data
+  const properties = ctx?.homeowner?.properties ?? [];
 
   return (
     <div className="min-h-screen flex bg-background">
       {/* ─── Desktop sidebar ─── */}
       <aside className="hidden md:flex w-56 flex-col border-r border-border/30 bg-card/40 p-4">
-        <Link to="/" className="flex items-center gap-2 px-3 mb-8 mt-2">
+        <Link to="/" className="flex items-center gap-2 px-3 mb-2 mt-2">
           <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-glow">
             <Sparkles className="h-3 w-3 text-primary-foreground" />
           </div>
-          <span className="font-display text-sm font-bold text-gradient">UNPRO</span>
+          <span className="font-display text-sm font-bold text-foreground">UNPRO</span>
         </Link>
+
+        {/* Property switcher */}
+        {properties.length > 0 && (
+          <div className="px-3 mb-4">
+            <select
+              className="w-full text-caption bg-muted/40 border border-border/30 rounded-lg px-2 py-1.5 text-foreground truncate"
+              defaultValue={properties[0]?.id}
+            >
+              {properties.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.address}{p.city ? `, ${p.city}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <nav className="flex-1 space-y-0.5">
           {navItems.map(({ to, label, icon: Icon }) => {
@@ -64,27 +90,12 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
             <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
               <Sparkles className="h-3 w-3 text-primary-foreground" />
             </div>
-            <span className="font-display text-meta font-bold text-gradient">UNPRO</span>
+            <span className="font-display text-meta font-bold text-foreground">UNPRO</span>
           </Link>
-          <div className="flex items-center gap-0.5">
-            {navItems.slice(0, 5).map(({ to, icon: Icon }) => {
-              const active = pathname === to || (to !== "/dashboard" && pathname.startsWith(to));
-              return (
-                <Link
-                  key={to}
-                  to={to}
-                  className={`p-2 rounded-lg transition-all duration-200 ${
-                    active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted/30"
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                </Link>
-              );
-            })}
-          </div>
         </header>
-        <main className="flex-1 p-4 md:p-8 overflow-auto">{children}</main>
+        <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8 overflow-auto">{children}</main>
       </div>
+      <MobileBottomNav />
       <AlexConcierge />
     </div>
   );

@@ -1,3 +1,7 @@
+/**
+ * UNPRO — Admin Layout (Programmatic Navigation)
+ */
+
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -5,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, Users, Briefcase, FileText, Star, FolderOpen,
   CalendarDays, TrendingUp, LogOut, MapPin, BarChart3, Sparkles,
-  Brain, Palette, Menu, X,
+  Brain, Palette, Menu, X, ShieldCheck,
 } from "lucide-react";
+import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import type { ReactNode } from "react";
 
 const navItems = [
@@ -22,6 +27,7 @@ const navItems = [
   { to: "/admin/growth", label: "Croissance", icon: BarChart3 },
   { to: "/admin/agents", label: "Agents IA", icon: Brain },
   { to: "/admin/media", label: "Média IA", icon: Palette },
+  { to: "/admin/validation", label: "Validation", icon: ShieldCheck },
 ];
 
 const NavLinks = ({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) => (
@@ -54,13 +60,12 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
 
   return (
     <div className="min-h-screen flex bg-background">
-      {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-60 flex-col glass-surface border-r border-border/30 p-4">
+      <aside className="hidden md:flex w-60 flex-col border-r border-border/30 bg-card/40 p-4">
         <Link to="/" className="flex items-center gap-2 px-3 mb-1 mt-2">
           <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
             <Sparkles className="h-3 w-3 text-primary-foreground" />
           </div>
-          <span className="text-sm font-bold text-gradient">UNPRO</span>
+          <span className="text-sm font-bold text-foreground">UNPRO</span>
         </Link>
         <span className="text-caption text-muted-foreground px-3 mb-6">Administration</span>
 
@@ -77,32 +82,22 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile header */}
-        <header className="md:hidden flex items-center justify-between border-b border-border/30 px-4 py-2.5 glass-surface sticky top-0 z-30">
+        <header className="md:hidden flex items-center justify-between border-b border-border/30 px-4 py-2.5 bg-background/80 backdrop-blur-xl sticky top-0 z-30">
           <Link to="/" className="flex items-center gap-2">
             <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
               <Sparkles className="h-3 w-3 text-primary-foreground" />
             </div>
-            <span className="text-meta font-bold text-gradient">UNPRO Admin</span>
+            <span className="text-meta font-bold text-foreground">UNPRO Admin</span>
           </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-lg"
-            onClick={() => setMobileMenuOpen((v) => !v)}
-          >
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setMobileMenuOpen((v) => !v)}>
             {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </Button>
         </header>
 
-        {/* Mobile drawer */}
         {mobileMenuOpen && (
           <>
-            <div
-              className="md:hidden fixed inset-0 bg-black/50 z-30 top-[45px]"
-              onClick={() => setMobileMenuOpen(false)}
-            />
-            <div className="md:hidden fixed top-[45px] left-0 right-0 bottom-0 z-40 glass-surface border-b border-border/30 overflow-y-auto p-4 space-y-1">
+            <div className="md:hidden fixed inset-0 bg-black/50 z-30 top-[45px]" onClick={() => setMobileMenuOpen(false)} />
+            <div className="md:hidden fixed top-[45px] left-0 right-0 bottom-0 z-40 bg-card border-b border-border/30 overflow-y-auto p-4 space-y-1">
               <NavLinks pathname={pathname} onNavigate={() => setMobileMenuOpen(false)} />
               <div className="border-t border-border/30 pt-3 mt-3 space-y-2">
                 <p className="text-caption text-muted-foreground px-3 truncate">{user?.email}</p>
@@ -114,8 +109,9 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
           </>
         )}
 
-        <main className="flex-1 p-4 md:p-8 overflow-auto">{children}</main>
+        <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8 overflow-auto">{children}</main>
       </div>
+      <MobileBottomNav />
     </div>
   );
 };
