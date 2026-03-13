@@ -514,12 +514,7 @@ const Home = () => {
         </div>
       </nav>
 
-      {/* Alex assistant */}
-      <AlexAssistantSheet
-        open={alexOpen}
-        onClose={() => { setAlexOpen(false); setAlexChip(undefined); }}
-        initialChip={alexChip}
-      />
+      {/* Alex voice is handled inline in HeroSection */}
     </div>
   );
 };
