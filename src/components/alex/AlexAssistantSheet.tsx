@@ -194,6 +194,7 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
       setShowLogin(false);
       setChipContext(undefined);
       setVoiceAutoStarted(false);
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     }
   }, [open]);
 
