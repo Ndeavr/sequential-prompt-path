@@ -399,8 +399,8 @@ Valeur normalisée : ${normalizedInput}`);
 
     // Save to contractor_verification_searches (analytics table)
     const primaryEntity = report.probable_entities?.[0];
-    await supabase.from("contractor_verification_searches").insert({
-      user_id: userId ? undefined : null, // will need profile id lookup for authenticated users
+    const { error: analyticsErr } = await supabase.from("contractor_verification_searches").insert({
+      user_id: userId ? undefined : null,
       session_id: null,
       is_logged_in: !!userId,
       search_query: input?.trim() || null,
@@ -422,7 +422,8 @@ Valeur normalisée : ${normalizedInput}`);
       source_page: body.source_page || null,
       device_type: body.device_type || null,
       referrer: body.referrer || null,
-    }).catch((err: any) => console.error("Analytics save error:", err));
+    });
+    if (analyticsErr) console.error("Analytics save error:", analyticsErr);
 
     return new Response(JSON.stringify({ success: true, report, db_matches: dbMatches }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
