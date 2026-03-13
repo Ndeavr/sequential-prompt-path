@@ -5,13 +5,18 @@ type Msg = { role: "user" | "assistant"; content: string };
 
 const ALEX_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-chat`;
 
-export const useAlex = (onResponseComplete?: (fullText: string) => void) => {
+interface UseAlexOptions {
+  onResponseComplete?: (fullText: string) => void;
+  onSentenceReady?: (sentence: string) => void;
+}
+
+export const useAlex = (options?: UseAlexOptions) => {
   const { session, isAuthenticated, role } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
-  const onResponseCompleteRef = useRef(onResponseComplete);
-  onResponseCompleteRef.current = onResponseComplete;
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
 
   const sendMessage = useCallback(
     async (
@@ -20,6 +25,7 @@ export const useAlex = (onResponseComplete?: (fullText: string) => void) => {
         properties?: Array<{ address: string; city?: string | null }>;
         homeScore?: number | null;
         currentPage?: string;
+        voiceMode?: boolean;
       }
     ) => {
       const userMsg: Msg = { role: "user", content: input };
@@ -30,6 +36,7 @@ export const useAlex = (onResponseComplete?: (fullText: string) => void) => {
       abortRef.current = controller;
 
       let assistantSoFar = "";
+      let sentenceBuffer = "";
 
       const upsertAssistant = (chunk: string) => {
         assistantSoFar += chunk;
@@ -42,6 +49,23 @@ export const useAlex = (onResponseComplete?: (fullText: string) => void) => {
           }
           return [...prev, { role: "assistant", content: assistantSoFar }];
         });
+
+        // Stream sentences to TTS as they arrive
+        if (optionsRef.current?.onSentenceReady) {
+          sentenceBuffer += chunk;
+          // Look for sentence boundaries
+          const regex = /[.!?]\s/g;
+          let match: RegExpExecArray | null;
+          let lastEnd = 0;
+          while ((match = regex.exec(sentenceBuffer)) !== null) {
+            const sentence = sentenceBuffer.slice(lastEnd, match.index + 1).trim();
+            if (sentence.length > 5) {
+              optionsRef.current.onSentenceReady(sentence);
+            }
+            lastEnd = match.index + match[0].length;
+          }
+          sentenceBuffer = sentenceBuffer.slice(lastEnd);
+        }
       };
 
       try {
@@ -119,7 +143,7 @@ export const useAlex = (onResponseComplete?: (fullText: string) => void) => {
           }
         }
 
-        // Flush remaining
+        // Flush remaining text buffer
         if (textBuffer.trim()) {
           for (let raw of textBuffer.split("\n")) {
             if (!raw) continue;
@@ -137,6 +161,11 @@ export const useAlex = (onResponseComplete?: (fullText: string) => void) => {
             }
           }
         }
+
+        // Flush remaining sentence buffer
+        if (sentenceBuffer.trim() && optionsRef.current?.onSentenceReady) {
+          optionsRef.current.onSentenceReady(sentenceBuffer.trim());
+        }
       } catch (e: any) {
         if (e.name !== "AbortError") {
           upsertAssistant("Désolé, une erreur est survenue. Réessayez.");
@@ -144,9 +173,8 @@ export const useAlex = (onResponseComplete?: (fullText: string) => void) => {
       } finally {
         setIsStreaming(false);
         abortRef.current = null;
-        // Notify that the full response is ready
         if (assistantSoFar) {
-          onResponseCompleteRef.current?.(assistantSoFar);
+          optionsRef.current?.onResponseComplete?.(assistantSoFar);
         }
       }
     },

@@ -1,6 +1,6 @@
 /**
- * AlexAssistantSheet — Premium bottom sheet with ElevenLabs voice conversation loop,
- * chip-triggered contextual greetings, and text fallback.
+ * AlexAssistantSheet — Real-time voice conversation like ChatGPT Voice.
+ * Features: streaming TTS, barge-in, continuous listening, short responses.
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -31,43 +31,6 @@ const CHIP_SUGGESTIONS: Record<string, string[]> = {
   "Cuisine": ["Rénover ma cuisine", "Refaire les armoires", "Installer un îlot", "Estimer le coût de rénovation"],
 };
 
-/* ─── Browser STT hook ─── */
-const useVoice = (onResult: (t: string) => void) => {
-  const [listening, setListening] = useState(false);
-  const [supported, setSupported] = useState(false);
-  const recRef = useRef<any>(null);
-
-  useEffect(() => {
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    setSupported(!!SR);
-    if (!SR) return;
-    const r = new SR();
-    r.lang = "fr-CA";
-    r.continuous = false;
-    r.interimResults = false;
-    r.onresult = (e: any) => {
-      const t = e.results[0]?.[0]?.transcript;
-      if (t) onResult(t);
-    };
-    r.onerror = () => setListening(false);
-    r.onend = () => setListening(false);
-    recRef.current = r;
-  }, [onResult]);
-
-  const startListening = useCallback(() => {
-    if (!recRef.current) return;
-    try { recRef.current.start(); setListening(true); } catch { /* already started */ }
-  }, []);
-
-  const stopListening = useCallback(() => {
-    if (!recRef.current) return;
-    try { recRef.current.stop(); } catch { /* not started */ }
-    setListening(false);
-  }, []);
-
-  return { listening, supported, startListening, stopListening };
-};
-
 const CHIP_GREETINGS: Record<string, string> = {
   "Rénovation": "vous cherchez à rénover ?",
   "Construction": "vous cherchez à construire ?",
@@ -96,6 +59,69 @@ const CHIP_GREETINGS: Record<string, string> = {
   "Revêtement": "vous pensez refaire le revêtement ?",
 };
 
+/* ─── Continuous STT hook with barge-in support ─── */
+const useVoiceContinuous = (onResult: (t: string) => void) => {
+  const [listening, setListening] = useState(false);
+  const [supported, setSupported] = useState(false);
+  const recRef = useRef<any>(null);
+  const shouldListenRef = useRef(false);
+  const onResultRef = useRef(onResult);
+  onResultRef.current = onResult;
+
+  useEffect(() => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    setSupported(!!SR);
+    if (!SR) return;
+    const r = new SR();
+    r.lang = "fr-CA";
+    r.continuous = false;
+    r.interimResults = false;
+    r.onresult = (e: any) => {
+      const t = e.results[0]?.[0]?.transcript;
+      if (t) onResultRef.current(t);
+    };
+    r.onerror = (e: any) => {
+      console.log("[STT] error:", e.error);
+      setListening(false);
+      // Auto-restart on non-fatal errors if we should be listening
+      if (e.error !== "not-allowed" && shouldListenRef.current) {
+        setTimeout(() => {
+          if (shouldListenRef.current) {
+            try { r.start(); setListening(true); } catch { /* ignore */ }
+          }
+        }, 300);
+      }
+    };
+    r.onend = () => {
+      setListening(false);
+      // Auto-restart if we should keep listening (continuous loop)
+      if (shouldListenRef.current) {
+        setTimeout(() => {
+          if (shouldListenRef.current) {
+            try { r.start(); setListening(true); } catch { /* ignore */ }
+          }
+        }, 200);
+      }
+    };
+    recRef.current = r;
+  }, []);
+
+  const startListening = useCallback(() => {
+    if (!recRef.current) return;
+    shouldListenRef.current = true;
+    try { recRef.current.start(); setListening(true); } catch { /* already started */ }
+  }, []);
+
+  const stopListening = useCallback(() => {
+    shouldListenRef.current = false;
+    if (!recRef.current) return;
+    try { recRef.current.stop(); } catch { /* not started */ }
+    setListening(false);
+  }, []);
+
+  return { listening, supported, startListening, stopListening };
+};
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -108,22 +134,6 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
   const navigate = useNavigate();
   const { isSpeaking, speak, stop: stopSpeaking } = useAlexVoice();
 
-  // Wire up onResponseComplete to speak the response
-  const handleResponseComplete = useCallback(
-    (fullText: string) => {
-      if (modeRef.current === "voice" || modeRef.current === "text") {
-        speak(fullText, () => {
-          // After speaking, auto-listen again if in voice mode
-          if (modeRef.current === "voice") {
-            startListeningRef.current?.();
-          }
-        });
-      }
-    },
-    [speak]
-  );
-
-  const { messages, isStreaming, sendMessage, reset } = useAlex(handleResponseComplete);
   const [mode, setMode] = useState<Mode>("choose");
   const [input, setInput] = useState("");
   const [showLogin, setShowLogin] = useState(false);
@@ -134,29 +144,54 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
   const inputRef = useRef<HTMLInputElement>(null);
   const modeRef = useRef<Mode>("choose");
   const startListeningRef = useRef<(() => void) | null>(null);
+  const isBargeInRef = useRef(false);
 
   // Keep modeRef in sync
   useEffect(() => { modeRef.current = mode; }, [mode]);
 
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "";
   const greeting = firstName ? `Bonjour ${firstName} !` : "Bonjour !";
-
   const chipGreeting = chipContext
     ? `${greeting.replace(" !", ",")} ${CHIP_GREETINGS[chipContext] || `vous avez un projet de ${chipContext.toLowerCase()} ?`}`
     : undefined;
-
   const suggestions = chipContext
     ? (CHIP_SUGGESTIONS[chipContext] || DEFAULT_SUGGESTIONS)
     : DEFAULT_SUGGESTIONS;
 
-  // Voice result → send to Alex as text
+  // Streaming TTS: speak each sentence as it arrives from LLM
+  const handleSentenceReady = useCallback(
+    (sentence: string) => {
+      if (modeRef.current === "voice" && !isBargeInRef.current) {
+        speak(sentence);
+      }
+    },
+    [speak]
+  );
+
+  // After full response, auto-listen if in voice mode
+  const handleResponseComplete = useCallback(
+    () => {
+      isBargeInRef.current = false;
+      // Auto-listen will be triggered when isSpeaking becomes false
+    },
+    []
+  );
+
+  const { messages, isStreaming, sendMessage, reset } = useAlex({
+    onSentenceReady: handleSentenceReady,
+    onResponseComplete: handleResponseComplete,
+  });
+
+  // Barge-in: when user speaks, stop Alex immediately
   const handleVoiceResult = useCallback((text: string) => {
     if (!text.trim()) return;
-    // Don't switch to text mode — stay in voice for conversation loop
-    sendMessage(text, { currentPage: pathname });
-  }, [sendMessage, pathname]);
+    console.log("[Alex] Barge-in! User said:", text);
+    isBargeInRef.current = true;
+    stopSpeaking(); // Immediately stop Alex
+    sendMessage(text, { currentPage: pathname, voiceMode: true });
+  }, [sendMessage, pathname, stopSpeaking]);
 
-  const { listening, supported, startListening, stopListening } = useVoice(handleVoiceResult);
+  const { listening, supported, startListening, stopListening } = useVoiceContinuous(handleVoiceResult);
   startListeningRef.current = startListening;
 
   // Auto-start voice mode when sheet opens
@@ -168,7 +203,7 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
     }
   }, [open, initialChip, voiceAutoStarted]);
 
-  // Speak greeting via ElevenLabs when voice mode starts
+  // Speak greeting when voice mode starts
   useEffect(() => {
     if (mode === "voice" && voiceAutoStarted && open && !greetingSpokenRef.current) {
       greetingSpokenRef.current = true;
@@ -176,6 +211,7 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
       console.log("[Alex] Speaking greeting:", greetText);
       const timer = setTimeout(() => {
         speak(greetText, () => {
+          // After greeting, start continuous listening
           if (modeRef.current === "voice" && supported) {
             startListening();
           }
@@ -184,6 +220,19 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
       return () => clearTimeout(timer);
     }
   }, [mode, voiceAutoStarted, open, chipGreeting, greeting, speak, supported, startListening]);
+
+  // Auto-listen after Alex finishes speaking (conversation loop)
+  useEffect(() => {
+    if (mode === "voice" && !isSpeaking && !isStreaming && !listening && voiceAutoStarted && greetingSpokenRef.current) {
+      // Small delay before re-listening to avoid picking up speaker echo
+      const timer = setTimeout(() => {
+        if (modeRef.current === "voice" && supported && !listening) {
+          startListening();
+        }
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [mode, isSpeaking, isStreaming, listening, voiceAutoStarted, supported, startListening]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -201,32 +250,30 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
       setChipContext(undefined);
       setVoiceAutoStarted(false);
       greetingSpokenRef.current = false;
+      isBargeInRef.current = false;
       stopSpeaking();
       stopListening();
     }
   }, [open, stopSpeaking, stopListening]);
-
-  // Stop listening while Alex is speaking or streaming
-  useEffect(() => {
-    if ((isSpeaking || isStreaming) && listening) {
-      stopListening();
-    }
-  }, [isSpeaking, isStreaming, listening, stopListening]);
 
   const handleSend = async (text?: string) => {
     const t = (text ?? input).trim();
     if (!t || isStreaming) return;
     setInput("");
     if (!isAuthenticated) { setShowLogin(true); return; }
-    await sendMessage(t, { currentPage: pathname });
+    const isVoice = mode === "voice";
+    await sendMessage(t, { currentPage: pathname, voiceMode: isVoice });
   };
 
   const handleLogin = () => { onClose(); navigate("/login"); };
 
   const handleChooseMode = (m: "voice" | "text") => {
     setMode(m);
-    // Voice greeting will be triggered by the useEffect above
   };
+
+  // Determine orb state
+  const orbState: "idle" | "listening" | "thinking" | "speaking" =
+    isSpeaking ? "speaking" : isStreaming ? "thinking" : listening ? "listening" : "idle";
 
   return (
     <AnimatePresence>
@@ -324,24 +371,27 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
             ) : mode === "voice" ? (
               /* ─── Voice conversation mode ─── */
               <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 text-center space-y-5">
-                {/* Premium animated orb */}
+                {/* Premium animated orb with state-based animations */}
                 <div className="relative flex items-center justify-center">
-                  {/* Outer halo */}
+                  {/* Outer halo — rotates when thinking */}
                   <motion.div className="absolute rounded-full"
                     style={{ width: 180, height: 180, background: "conic-gradient(from 0deg, hsl(222 100% 61% / 0.12), hsl(195 100% 50% / 0.18), hsl(252 100% 65% / 0.12), hsl(38 92% 50% / 0.06), hsl(222 100% 61% / 0.12))" }}
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                    transition={{ duration: orbState === "thinking" ? 3 : 10, repeat: Infinity, ease: "linear" }}
                   />
 
                   {/* Breathing glow */}
                   <motion.div className="absolute rounded-full"
                     style={{ width: 160, height: 160, background: "radial-gradient(circle, hsl(222 100% 61% / 0.18) 0%, hsl(252 100% 65% / 0.08) 50%, transparent 70%)" }}
-                    animate={{ scale: isSpeaking ? [1, 1.25, 1] : [1, 1.15, 1], opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: isSpeaking ? 1.5 : 3, repeat: Infinity, ease: "easeInOut" }}
+                    animate={{
+                      scale: orbState === "speaking" ? [1, 1.3, 1] : orbState === "listening" ? [1, 1.2, 1] : [1, 1.1, 1],
+                      opacity: [0.5, 1, 0.5],
+                    }}
+                    transition={{ duration: orbState === "speaking" ? 0.8 : orbState === "listening" ? 1.5 : 3, repeat: Infinity, ease: "easeInOut" }}
                   />
 
                   {/* Pulse rings when listening */}
-                  {listening && [0, 1, 2].map((i) => (
+                  {orbState === "listening" && [0, 1, 2].map((i) => (
                     <motion.div key={i} className="absolute rounded-full"
                       style={{ width: 120, height: 120, border: "2px solid hsl(222 100% 61% / 0.15)" }}
                       animate={{ scale: [1, 1.6 + i * 0.25], opacity: [0.6, 0] }}
@@ -350,7 +400,7 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
                   ))}
 
                   {/* Speaking wave rings */}
-                  {isSpeaking && [0, 1, 2].map((i) => (
+                  {orbState === "speaking" && [0, 1, 2].map((i) => (
                     <motion.div key={`s${i}`} className="absolute rounded-full"
                       style={{ width: 120, height: 120, border: "2px solid hsl(195 100% 50% / 0.2)" }}
                       animate={{ scale: [1, 1.5 + i * 0.2], opacity: [0.7, 0] }}
@@ -358,15 +408,32 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
                     />
                   ))}
 
+                  {/* Thinking shimmer */}
+                  {orbState === "thinking" && (
+                    <motion.div className="absolute rounded-full"
+                      style={{ width: 130, height: 130, border: "2px dashed hsl(252 100% 65% / 0.25)" }}
+                      animate={{ rotate: -360 }}
+                      transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                    />
+                  )}
+
                   {/* Main orb */}
                   <motion.div className="relative rounded-full flex items-center justify-center overflow-hidden"
                     style={{ width: 120, height: 120, boxShadow: "0 12px 40px -8px hsl(222 100% 61% / 0.4), 0 0 24px -4px hsl(195 100% 50% / 0.25), inset 0 1px 2px hsl(0 0% 100% / 0.3)" }}
-                    animate={isSpeaking ? { scale: [1, 1.08, 1] } : listening ? { scale: [1, 1.06, 1] } : { scale: [1, 1.03, 1] }}
-                    transition={{ duration: isSpeaking ? 0.8 : listening ? 1.2 : 3.5, repeat: Infinity, ease: "easeInOut" }}
+                    animate={
+                      orbState === "speaking" ? { scale: [1, 1.08, 1] }
+                        : orbState === "listening" ? { scale: [1, 1.06, 1] }
+                        : orbState === "thinking" ? { scale: [1, 1.04, 1] }
+                        : { scale: [1, 1.03, 1] }
+                    }
+                    transition={{
+                      duration: orbState === "speaking" ? 0.6 : orbState === "listening" ? 1.2 : orbState === "thinking" ? 1.5 : 3.5,
+                      repeat: Infinity, ease: "easeInOut",
+                    }}
                   >
                     <motion.div className="absolute inset-0"
                       animate={{
-                        background: isSpeaking
+                        background: orbState === "speaking"
                           ? ["linear-gradient(135deg, hsl(195 100% 50%), hsl(252 100% 65%), hsl(222 100% 61%))",
                              "linear-gradient(225deg, hsl(222 100% 61%), hsl(195 100% 55%), hsl(252 100% 70%))",
                              "linear-gradient(135deg, hsl(195 100% 50%), hsl(252 100% 65%), hsl(222 100% 61%))"]
@@ -375,7 +442,7 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
                              "linear-gradient(315deg, hsl(195 100% 50%), hsl(222 100% 61%), hsl(252 100% 70%))",
                              "linear-gradient(135deg, hsl(222 100% 61%), hsl(252 100% 65%), hsl(195 100% 50%))"],
                       }}
-                      transition={{ duration: isSpeaking ? 3 : 8, repeat: Infinity, ease: "easeInOut" }}
+                      transition={{ duration: orbState === "speaking" ? 3 : 8, repeat: Infinity, ease: "easeInOut" }}
                     />
                     {/* Specular highlight */}
                     <motion.div className="absolute inset-0 rounded-full"
@@ -387,8 +454,10 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
                       animate={{ x: ["-120%", "120%"] }}
                       transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", repeatDelay: 3 }}
                     />
-                    {isSpeaking ? (
+                    {orbState === "speaking" ? (
                       <Volume2 className="h-11 w-11 text-white relative z-10 drop-shadow-sm" />
+                    ) : orbState === "thinking" ? (
+                      <Loader2 className="h-11 w-11 text-white relative z-10 drop-shadow-sm animate-spin" />
                     ) : (
                       <Mic className="h-11 w-11 text-white relative z-10 drop-shadow-sm" />
                     )}
@@ -400,13 +469,16 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
                     {chipGreeting || greeting}
                   </p>
                   <p className="text-sm" style={{ color: "#6C7A92" }}>
-                    {isSpeaking ? "Alex vous parle…" : isStreaming ? "Alex réfléchit…" : listening ? "Je vous écoute…" : "Décrivez-moi votre projet"}
+                    {orbState === "speaking" ? "Alex vous parle…"
+                      : orbState === "thinking" ? "Alex réfléchit…"
+                      : orbState === "listening" ? "Je vous écoute…"
+                      : "Décrivez-moi votre projet"}
                   </p>
                 </div>
 
-                {/* Stop speaking button */}
+                {/* Stop speaking / barge-in button */}
                 {isSpeaking && (
-                  <Button variant="ghost" size="sm" onClick={stopSpeaking} className="rounded-2xl">
+                  <Button variant="ghost" size="sm" onClick={() => { stopSpeaking(); }} className="rounded-2xl">
                     <VolumeX className="h-3 w-3 mr-1.5" /> Couper le son
                   </Button>
                 )}
@@ -423,15 +495,6 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
                   <Keyboard className="h-3.5 w-3.5" />
                   On peut aussi écrire si vous préférez
                 </motion.button>
-
-                {listening && (
-                  <Button variant="ghost" size="sm"
-                    onClick={() => { stopListening(); setMode("text"); }}
-                    className="rounded-2xl"
-                  >
-                    <Square className="h-3 w-3 mr-1.5" /> Arrêter
-                  </Button>
-                )}
               </div>
             ) : (
               /* ─── Text/chat mode ─── */
