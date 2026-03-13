@@ -144,6 +144,10 @@ export const useAlex = (onResponseComplete?: (fullText: string) => void) => {
       } finally {
         setIsStreaming(false);
         abortRef.current = null;
+        // Notify that the full response is ready
+        if (assistantSoFar) {
+          onResponseCompleteRef.current?.(assistantSoFar);
+        }
       }
     },
     [messages, session, isAuthenticated, role]
