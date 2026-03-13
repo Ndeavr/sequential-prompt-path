@@ -151,19 +151,33 @@ Return valid JSON only, no markdown. Format:
 WEBSITE CONTENT:
 ${combinedContent.slice(0, 12000)}`;
 
-    const aiRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ success: false, error: 'LOVABLE_API_KEY not configured' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://lovable.dev',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'google/gemini-3-flash-preview',
         messages: [{ role: 'user', content: extractionPrompt }],
         temperature: 0.1,
       }),
     });
+
+    if (!aiRes.ok) {
+      const errText = await aiRes.text();
+      console.error('AI gateway error:', aiRes.status, errText);
+      return new Response(JSON.stringify({ success: false, error: `AI extraction failed (${aiRes.status})` }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const aiData = await aiRes.json();
     const aiContent = aiData?.choices?.[0]?.message?.content || '{"fields":[]}';
