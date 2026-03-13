@@ -149,7 +149,7 @@ export default function HeroSection() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.5 }}
+                  transition={{ duration: 0.9, ease: "easeInOut" }}
                 />
               </AnimatePresence>
               {/* Gradient fade left + bottom to blend with background */}
@@ -286,10 +286,10 @@ export default function HeroSection() {
                     alt={current.action}
                     className="aspect-square w-full object-cover"
                     loading="eager"
-                    initial={{ opacity: 0, scale: 1.05 }}
+                    initial={{ opacity: 0, scale: 1.03 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.97 }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    exit={{ opacity: 0, scale: 0.98 }}
+                    transition={{ duration: 0.9, ease: "easeInOut" }}
                   />
                 </AnimatePresence>
                 {/* Gradient fade to background */}
