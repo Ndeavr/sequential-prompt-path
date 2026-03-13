@@ -143,21 +143,6 @@ export default function CitySelector({
     });
   };
 
-  const nextPlanLabel: Record<string, string> = {
-    recrue: "Pro",
-    pro: "Premium",
-    premium: "Élite",
-    elite: "Signature",
-    signature: "Signature",
-  };
-
-  const nextPlanCities: Record<string, number> = {
-    recrue: 8,
-    pro: 15,
-    premium: 25,
-    elite: 50,
-    signature: 50,
-  };
 
   return (
     <div className="space-y-4">

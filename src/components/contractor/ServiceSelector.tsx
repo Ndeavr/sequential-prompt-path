@@ -4,17 +4,12 @@
  * Secondary services = additional offerings, limited by plan
  */
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
-  Search, Star, X, Check, Sparkles, ArrowUpRight, Lock, Crown, Wrench, Zap,
+  Search, X, Sparkles, Lock, Crown, Wrench,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import UpgradeWindow from "./UpgradeWindow";
 
 export interface ServiceSelection {
   primaryServices: string[];
