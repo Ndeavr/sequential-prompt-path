@@ -36,6 +36,7 @@ import PreventiveMaintenancePage from "@/pages/PreventiveMaintenancePage";
 import CoproprietePage from "@/pages/CoproprietePage";
 import BuildingIntelligenceMap from "@/pages/BuildingIntelligenceMap";
 import AnswerEnginePage from "@/pages/AnswerEnginePage";
+import BusinessImportPage from "@/pages/BusinessImportPage";
 
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
