@@ -495,29 +495,9 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ═══ Mobile bottom nav ═══ */}
-      <nav className="mobile-bottom-nav">
-        <div className="flex items-center justify-around h-16 px-2">
-          {[
-            { icon: HomeIcon, label: "Accueil", to: "/", active: true },
-            { icon: FolderOpen, label: "Projets", to: isAuthenticated ? "/dashboard" : "/login", active: false },
-            { icon: HardHat, label: "Pros", to: "/search", active: false },
-            { icon: Brain, label: "Alex", to: "/alex", active: false, glow: true },
-          ].map(item => (
-            <Link
-              key={item.label}
-              to={item.to}
-              className={`mobile-nav-item ${item.active ? "active" : ""}`}
-            >
-              <item.icon className={`h-5 w-5 ${item.glow ? "drop-shadow-[0_0_6px_hsl(var(--primary)/0.5)]" : ""}`} />
-              <span className="text-[10px] font-semibold">{item.label}</span>
-            </Link>
-          ))}
-        </div>
-      </nav>
-
       {/* Alex voice is handled inline in HeroSection */}
     </div>
+    </MainLayout>
   );
 };
 
