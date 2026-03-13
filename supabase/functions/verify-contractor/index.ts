@@ -379,7 +379,7 @@ Valeur normalisée : ${normalizedInput}`);
     }
 
     // Save to verification_reports (legacy table)
-    await supabase.from("verification_reports").insert({
+    const { error: dbSaveErr } = await supabase.from("verification_reports").insert({
       user_id: userId,
       input_type: inputType,
       input_value: input?.trim() || "image_upload",
@@ -394,7 +394,8 @@ Valeur normalisée : ${normalizedInput}`);
       license_fit_score: report.scores?.license_fit_score || null,
       verdict: report.verdict,
       matched_contractor_id: dbMatches.length === 1 ? dbMatches[0].id : null,
-    }).throwOnError().catch((err: any) => console.error("DB save error:", err));
+    });
+    if (dbSaveErr) console.error("DB save error:", dbSaveErr);
 
     // Save to contractor_verification_searches (analytics table)
     const primaryEntity = report.probable_entities?.[0];
