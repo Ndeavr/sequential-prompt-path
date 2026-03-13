@@ -159,8 +159,132 @@ export default function BusinessImportPage() {
   const confidenceColor = (c: number) =>
     c >= 0.8 ? "text-emerald-400" : c >= 0.5 ? "text-amber-400" : "text-red-400";
 
-  const confidenceBg = (c: number) =>
-    c >= 0.8 ? "bg-emerald-400/10" : c >= 0.5 ? "bg-amber-400/10" : "bg-red-400/10";
+  const createProfile = useCallback(async () => {
+    if (!user) {
+      toast({ title: "Erreur", description: "Vous devez être connecté pour créer un profil.", variant: "destructive" });
+      navigate("/login");
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const accepted = fields.filter(f => f.status === "accepted" || f.status === "corrected");
+      const getVal = (fieldName: string): string | null => {
+        const f = accepted.find(a => a.field === fieldName);
+        if (!f) return null;
+        const v = f.correctedValue ?? f.value;
+        if (Array.isArray(v)) return v.join(", ");
+        if (v === null || v === undefined) return null;
+        return String(v);
+      };
+      const getArr = (fieldName: string): string[] | null => {
+        const f = accepted.find(a => a.field === fieldName);
+        if (!f) return null;
+        const v = f.correctedValue ?? f.value;
+        if (Array.isArray(v)) return v;
+        if (typeof v === "string") return v.split(",").map(s => s.trim()).filter(Boolean);
+        return null;
+      };
+
+      const businessName = getVal("company_name") || domain;
+      const slug = businessName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+      // Create contractor
+      const { data: contractor, error: cError } = await supabase
+        .from("contractors")
+        .insert({
+          user_id: user.id,
+          business_name: businessName,
+          specialty: getVal("service_categories"),
+          description: getVal("about_text"),
+          city: getVal("city"),
+          province: getVal("province"),
+          postal_code: getVal("postal_code"),
+          address: getVal("address"),
+          phone: getArr("phones")?.[0] || null,
+          email: getArr("emails")?.[0] || null,
+          website: domain.startsWith("http") ? domain : `https://${domain}`,
+          logo_url: getVal("logo_url"),
+          portfolio_urls: getArr("media_urls"),
+          slug,
+          verification_status: "pending" as any,
+        })
+        .select("id")
+        .single();
+
+      if (cError) throw cError;
+      const contractorId = contractor.id;
+
+      // Insert services
+      const primaryServices = getArr("primary_services") || [];
+      const secondaryServices = getArr("secondary_services") || [];
+      const serviceInserts = [
+        ...primaryServices.map((s, i) => ({
+          contractor_id: contractorId,
+          service_name_fr: s,
+          is_primary: true,
+          is_active: true,
+          display_order: i,
+          data_source: "public_site_confirmed",
+        })),
+        ...secondaryServices.map((s, i) => ({
+          contractor_id: contractorId,
+          service_name_fr: s,
+          is_primary: false,
+          is_active: true,
+          display_order: primaryServices.length + i,
+          data_source: "public_site_confirmed",
+        })),
+      ];
+      if (serviceInserts.length > 0) {
+        await supabase.from("contractor_services").insert(serviceInserts);
+      }
+
+      // Insert service areas
+      const areas = getArr("service_areas") || [];
+      if (areas.length > 0) {
+        await supabase.from("contractor_service_areas").insert(
+          areas.map((a, i) => ({
+            contractor_id: contractorId,
+            city_name: a,
+            is_primary: i === 0,
+            data_source: "public_site_confirmed",
+          }))
+        );
+      }
+
+      // Insert media
+      const mediaUrls = getArr("media_urls") || [];
+      if (mediaUrls.length > 0) {
+        await supabase.from("contractor_media").insert(
+          mediaUrls.slice(0, 10).map((url, i) => ({
+            contractor_id: contractorId,
+            media_type: "photo",
+            public_url: url,
+            display_order: i,
+            data_source: "public_site_confirmed",
+            is_approved: false,
+          }))
+        );
+      }
+
+      // Create public page entry
+      await supabase.from("contractor_public_pages").insert({
+        contractor_id: contractorId,
+        slug,
+        is_published: false,
+        seo_title: `${businessName} — UNPRO`,
+      });
+
+      toast({ title: "Profil créé !", description: `${businessName} a été importé avec ${accepted.length} champs.` });
+      navigate(`/pro`);
+    } catch (err: any) {
+      console.error("Create profile error:", err);
+      toast({ title: "Erreur", description: err.message || "Impossible de créer le profil.", variant: "destructive" });
+    } finally {
+      setIsCreating(false);
+    }
+  }, [fields, domain, user, toast, navigate]);
 
   return (
     <MainLayout>
