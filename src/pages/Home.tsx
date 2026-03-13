@@ -250,6 +250,9 @@ const Home = () => {
         </div>
       </section>
 
+      {/* ═══ VERIFICATION FEATURE ═══ */}
+      <VerificationFeatureCard />
+
       {/* ═══ HOME SCORE PREVIEW ═══ */}
       <section className="relative px-5 py-16 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-success/5 via-background to-primary/5" />
