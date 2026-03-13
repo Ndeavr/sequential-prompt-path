@@ -1,13 +1,13 @@
 /**
  * HeroSection — AI-first hero with inline voice conversation on the orb.
+ * Uses useAlexVoiceSession for stable, premium voice experience.
  * Clicking the orb starts voice mode in-place (no sheet).
  * Text mode opens the AlexAssistantSheet.
  */
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import { useAlex } from "@/hooks/useAlex";
-import { useAlexVoice } from "@/hooks/useAlexVoice";
+import { useAlexVoiceSession } from "@/hooks/useAlexVoiceSession";
 import { useLocation } from "react-router-dom";
 import { Mic, Volume2, VolumeX, Loader2, Keyboard, Square } from "lucide-react";
 import heroAgrandissement from "@/assets/hero-agrandissement.jpg";
@@ -64,65 +64,6 @@ const ALL_SEARCHES = [
 
 const POPULAR_CHIPS = ALL_SEARCHES.slice(0, 6);
 
-/* ─── Continuous STT hook ─── */
-const useVoiceContinuous = (onResult: (t: string) => void) => {
-  const [listening, setListening] = useState(false);
-  const [supported, setSupported] = useState(false);
-  const recRef = useRef<any>(null);
-  const shouldListenRef = useRef(false);
-  const onResultRef = useRef(onResult);
-  onResultRef.current = onResult;
-
-  useEffect(() => {
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    setSupported(!!SR);
-    if (!SR) return;
-    const r = new SR();
-    r.lang = "fr-CA";
-    r.continuous = false;
-    r.interimResults = false;
-    r.onresult = (e: any) => {
-      const t = e.results[0]?.[0]?.transcript;
-      if (t) onResultRef.current(t);
-    };
-    r.onerror = (e: any) => {
-      setListening(false);
-      if (e.error !== "not-allowed" && shouldListenRef.current) {
-        setTimeout(() => {
-          if (shouldListenRef.current) {
-            try { r.start(); setListening(true); } catch { /* */ }
-          }
-        }, 300);
-      }
-    };
-    r.onend = () => {
-      setListening(false);
-      if (shouldListenRef.current) {
-        setTimeout(() => {
-          if (shouldListenRef.current) {
-            try { r.start(); setListening(true); } catch { /* */ }
-          }
-        }, 200);
-      }
-    };
-    recRef.current = r;
-  }, []);
-
-  const startListening = useCallback(() => {
-    if (!recRef.current) return;
-    shouldListenRef.current = true;
-    try { recRef.current.start(); setListening(true); } catch { /* */ }
-  }, []);
-
-  const stopListening = useCallback(() => {
-    shouldListenRef.current = false;
-    try { recRef.current?.stop(); } catch { /* */ }
-    setListening(false);
-  }, []);
-
-  return { listening, supported, startListening, stopListening };
-};
-
 const CHIP_GREETINGS: Record<string, string> = {
   "Rénovation": "vous cherchez à rénover ?",
   "Construction": "vous cherchez à construire ?",
@@ -138,58 +79,22 @@ export default function HeroSection() {
   const { pathname } = useLocation();
   const [index, setIndex] = useState(0);
 
-  // Voice inline state
-  const [voiceActive, setVoiceActive] = useState(false);
-  const [chipContext, setChipContext] = useState<string | undefined>();
-  const greetingSpokenRef = useRef(false);
-  const modeRef = useRef<"idle" | "voice">("idle");
-  const isBargeInRef = useRef(false);
-
   // Text sheet state
   const [textSheetOpen, setTextSheetOpen] = useState(false);
   const [textSheetChip, setTextSheetChip] = useState<string | undefined>();
 
-  const { isSpeaking, speak, stop: stopSpeaking } = useAlexVoice();
+  // Voice session
+  const {
+    state: orbState,
+    sessionActive: voiceActive,
+    openSession,
+    closeSession,
+    muteSpeech,
+    sttSupported,
+  } = useAlexVoiceSession();
 
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "";
-  const greeting = firstName ? `Bonjour ${firstName} !` : "Bonjour !";
-
-  // Streaming TTS
-  const handleSentenceReady = useCallback(
-    (sentence: string) => {
-      if (modeRef.current === "voice" && !isBargeInRef.current) {
-        speak(sentence);
-      }
-    },
-    [speak]
-  );
-
-  const handleResponseComplete = useCallback(() => {
-    isBargeInRef.current = false;
-  }, []);
-
-  const { isStreaming, sendMessage } = useAlex({
-    onSentenceReady: handleSentenceReady,
-    onResponseComplete: handleResponseComplete,
-  });
-
-  // Barge-in
-  const handleVoiceResult = useCallback((text: string) => {
-    if (!text.trim()) return;
-    isBargeInRef.current = true;
-    stopSpeaking();
-    sendMessage(text, { currentPage: pathname, voiceMode: true });
-  }, [sendMessage, pathname, stopSpeaking]);
-
-  const { listening, supported, startListening, stopListening } = useVoiceContinuous(handleVoiceResult);
-
-  // Orb state
-  const orbState: "idle" | "listening" | "thinking" | "speaking" =
-    !voiceActive ? "idle"
-      : isSpeaking ? "speaking"
-      : isStreaming ? "thinking"
-      : listening ? "listening"
-      : "idle";
+  const greeting = firstName ? `Bonjour ${firstName}.` : "Bonjour.";
 
   // Rotating hero text
   useEffect(() => {
@@ -199,55 +104,22 @@ export default function HeroSection() {
 
   // Start voice mode
   const startVoice = useCallback((chip?: string) => {
-    if (!supported) {
-      // Fallback to text if no STT
+    if (!sttSupported) {
       setTextSheetChip(chip);
       setTextSheetOpen(true);
       return;
     }
-    setChipContext(chip);
-    setVoiceActive(true);
-    modeRef.current = "voice";
-    greetingSpokenRef.current = false;
-  }, [supported]);
+    const chipGreet = chip ? CHIP_GREETINGS[chip] : undefined;
+    const greetText = chipGreet
+      ? `${greeting.replace(".", ",")} ${chipGreet}`
+      : `${greeting} Quel projet avez-vous en tête ?`;
+    openSession(greetText);
+  }, [sttSupported, greeting, openSession]);
 
   // Stop voice mode
   const stopVoice = useCallback(() => {
-    setVoiceActive(false);
-    modeRef.current = "idle";
-    stopSpeaking();
-    stopListening();
-    greetingSpokenRef.current = false;
-    isBargeInRef.current = false;
-    setChipContext(undefined);
-  }, [stopSpeaking, stopListening]);
-
-  // Speak greeting when voice starts
-  useEffect(() => {
-    if (voiceActive && !greetingSpokenRef.current) {
-      greetingSpokenRef.current = true;
-      const chipGreet = chipContext ? CHIP_GREETINGS[chipContext] : undefined;
-      const greetText = chipGreet
-        ? `${greeting.replace(" !", ",")} ${chipGreet}`
-        : `${greeting} Quel projet avez-vous en tête ?`;
-      const timer = setTimeout(() => {
-        speak(greetText, () => {
-          if (modeRef.current === "voice" && supported) startListening();
-        });
-      }, 400);
-      return () => clearTimeout(timer);
-    }
-  }, [voiceActive, chipContext, greeting, speak, supported, startListening]);
-
-  // Auto-listen after Alex finishes speaking
-  useEffect(() => {
-    if (voiceActive && !isSpeaking && !isStreaming && !listening && greetingSpokenRef.current) {
-      const timer = setTimeout(() => {
-        if (modeRef.current === "voice" && supported && !listening) startListening();
-      }, 400);
-      return () => clearTimeout(timer);
-    }
-  }, [voiceActive, isSpeaking, isStreaming, listening, supported, startListening]);
+    closeSession();
+  }, [closeSession]);
 
   const current = useMemo(() => ROTATING_ITEMS[index], [index]);
 
@@ -481,8 +353,8 @@ export default function HeroSection() {
                       transition={{ duration: 0.3 }}
                       className="mt-3 flex items-center gap-3"
                     >
-                      {isSpeaking && (
-                        <button onClick={stopSpeaking}
+                      {orbState === "speaking" && (
+                        <button onClick={muteSpeech}
                           className="flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all hover:scale-[1.03]"
                           style={{ color: "#6C7A92", background: "rgba(63,123,255,0.04)", border: "1px solid #E7EEF8" }}
                         >
