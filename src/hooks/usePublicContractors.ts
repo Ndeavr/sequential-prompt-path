@@ -13,7 +13,7 @@ export interface PublicContractorFilters {
   sort?: "newest" | "aipp" | "reviews" | "default";
 }
 
-const PUBLIC_FIELDS = "id, business_name, specialty, city, province, description, verification_status, aipp_score, rating, review_count, years_experience, logo_url, created_at" as const;
+const PUBLIC_FIELDS = "id, business_name, specialty, city, province, description, verification_status, aipp_score, rating, review_count, years_experience, logo_url, created_at, phone, email, website, postal_code, license_number, portfolio_urls, address, insurance_info" as const;
 
 export const usePublicContractorSearch = (filters: PublicContractorFilters) => {
   return useQuery({
