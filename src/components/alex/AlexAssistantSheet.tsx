@@ -200,7 +200,7 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
       setShowLogin(false);
       setChipContext(undefined);
       setVoiceAutoStarted(false);
-      setGreetingSpoken(false);
+      greetingSpokenRef.current = false;
       stopSpeaking();
       stopListening();
     }
