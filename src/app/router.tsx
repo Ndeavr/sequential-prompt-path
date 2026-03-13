@@ -40,6 +40,7 @@ import BusinessImportPage from "@/pages/BusinessImportPage";
 import GmbLinkPage from "@/pages/GmbLinkPage";
 import ContractorQuestionnairePage from "@/pages/ContractorQuestionnairePage";
 import VerifyContractorPage from "@/pages/VerifyContractorPage";
+import VerifyLandingPage from "@/pages/VerifyLandingPage";
 
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
