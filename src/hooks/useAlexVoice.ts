@@ -62,9 +62,11 @@ export const useAlexVoice = () => {
         processQueue();
       };
 
-      await audio.play();
+      await audio.play().catch((playErr) => {
+        console.error("[AlexVoice] audio.play() rejected:", playErr?.name, playErr?.message);
+      });
     } catch (err) {
-      console.error("TTS playback error:", err);
+      console.error("[AlexVoice] TTS playback error:", err);
       processingRef.current = false;
       processQueue();
     }
