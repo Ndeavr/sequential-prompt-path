@@ -16,12 +16,12 @@ import AlexOrb from "@/components/alex/AlexOrb";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 
 const ROTATING_ITEMS = [
-  { label: "le contracteur", action: "agrandir votre maison" },
-  { label: "l'arpenteur", action: "un certificat de localisation" },
-  { label: "le couvreur", action: "refaire votre toiture" },
-  { label: "l'électricien", action: "remplacer votre panneau électrique" },
-  { label: "le plombier", action: "rénover votre salle de bain" },
-  { label: "l'entrepreneur", action: "isoler votre grenier" },
+  { label: "le contracteur", action: "agrandir votre maison", image: heroAgrandissement },
+  { label: "l'arpenteur", action: "un certificat de localisation", image: heroArpenteur },
+  { label: "le couvreur", action: "refaire votre toiture", image: heroToiture },
+  { label: "l'électricien", action: "remplacer votre panneau électrique", image: heroElectricien },
+  { label: "le plombier", action: "rénover votre salle de bain", image: heroPlomberie },
+  { label: "l'entrepreneur", action: "isoler votre grenier", image: heroIsolation },
 ];
 
 const textVariants = {
