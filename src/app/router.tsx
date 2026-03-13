@@ -39,6 +39,7 @@ import AnswerEnginePage from "@/pages/AnswerEnginePage";
 import BusinessImportPage from "@/pages/BusinessImportPage";
 import GmbLinkPage from "@/pages/GmbLinkPage";
 import ContractorQuestionnairePage from "@/pages/ContractorQuestionnairePage";
+import VerifyContractorPage from "@/pages/VerifyContractorPage";
 
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
