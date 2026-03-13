@@ -10,6 +10,7 @@ export const useAlexVoice = () => {
   const onDoneRef = useRef<(() => void) | null>(null);
 
   const processQueue = useCallback(async () => {
+    console.log("[AlexVoice] processQueue called, processing:", processingRef.current, "queue:", queueRef.current.length);
     if (processingRef.current || queueRef.current.length === 0) {
       if (queueRef.current.length === 0) {
         setIsSpeaking(false);
@@ -22,6 +23,7 @@ export const useAlexVoice = () => {
     setIsSpeaking(true);
 
     const text = queueRef.current.shift()!;
+    console.log("[AlexVoice] Fetching TTS for:", text.substring(0, 50));
 
     try {
       const response = await fetch(TTS_URL, {
