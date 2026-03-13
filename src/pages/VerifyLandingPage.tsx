@@ -46,25 +46,6 @@ const STEPS = [
   { num: "05", title: "Un verdict clair apparaît", desc: "Score de confiance, compatibilité de licence et recommandation." },
 ];
 
-const DEMO_LINES = [
-  { label: "Validation licence RBQ", icon: FileText },
-  { label: "Validation entreprise / NEQ", icon: Building2 },
-  { label: "Analyse téléphone", icon: Phone },
-  { label: "Analyse contrat", icon: ClipboardCheck },
-  { label: "Analyse camion", icon: Truck },
-  { label: "Portée de licence", icon: Eye },
-  { label: "Verdict UNPRO", icon: Shield },
-];
-
-type DemoVerdict = "succes" | "attention" | "non_succes" | "se_tenir_loin";
-const DEMO_RESULTS: DemoVerdict[] = ["succes", "succes", "succes", "attention", "succes", "succes", "succes"];
-
-const VERDICT_MAP: Record<DemoVerdict, { label: string; color: string; bg: string }> = {
-  succes: { label: "Succès", color: "text-success", bg: "bg-success/10" },
-  attention: { label: "Attention", color: "text-warning", bg: "bg-warning/10" },
-  non_succes: { label: "Non-succès", color: "text-destructive", bg: "bg-destructive/10" },
-  se_tenir_loin: { label: "Se tenir loin", color: "text-destructive", bg: "bg-destructive/10" },
-};
 
 const VERDICTS_OVERVIEW = [
   { verdict: "Succès", icon: CheckCircle2, color: "text-success", bg: "bg-success/10 border-success/20" },
