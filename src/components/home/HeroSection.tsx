@@ -135,7 +135,7 @@ export default function HeroSection() {
         </div>
 
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-8 md:px-10 md:pt-12">
-          <div className="grid items-start gap-8 md:grid-cols-[minmax(0,1.08fr)_420px]">
+          <div className="grid items-start gap-4 grid-cols-[1fr_140px] sm:grid-cols-[1fr_200px] md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8">
             {/* Left column */}
             <div className="min-w-0">
               {/* ═══ FIXED-HEIGHT title container ═══ */}
