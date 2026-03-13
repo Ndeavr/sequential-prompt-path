@@ -74,7 +74,10 @@ export default function BusinessImportPage() {
   const [fields, setFields] = useState<ExtractedField[]>([]);
   const [summary, setSummary] = useState<ImportSummary | null>(null);
   const [expandedFields, setExpandedFields] = useState<Set<string>>(new Set());
+  const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const startImport = useCallback(async () => {
     if (!domain.trim()) return;
