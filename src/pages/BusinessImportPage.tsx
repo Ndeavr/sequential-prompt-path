@@ -241,7 +241,7 @@ export default function BusinessImportPage() {
 
         const { error: updateError } = await supabase
           .from("contractors")
-          .update(contractorPayload)
+          .update(contractorPayload as any)
           .eq("id", existingContractor.id);
 
         if (updateError) throw updateError;
@@ -249,11 +249,13 @@ export default function BusinessImportPage() {
       } else {
         const { data: contractor, error: createError } = await supabase
           .from("contractors")
-          .insert({
-            user_id: user.id,
-            slug: `${slugBase}-${user.id.slice(0, 8)}`,
-            ...contractorPayload,
-          })
+          .insert([
+            {
+              user_id: user.id,
+              slug: `${slugBase}-${user.id.slice(0, 8)}`,
+              ...contractorPayload,
+            },
+          ] as any)
           .select("id")
           .single();
 
@@ -297,12 +299,12 @@ export default function BusinessImportPage() {
       };
       if (!existingContractor) pagePayload.is_published = false;
 
-      const writePromises: Promise<any>[] = [
-        supabase.from("contractor_public_pages").upsert(pagePayload, { onConflict: "contractor_id" }),
+      const writePromises: any[] = [
+        supabase.from("contractor_public_pages").upsert([pagePayload] as any, { onConflict: "contractor_id" }),
       ];
 
       if (serviceInserts.length > 0) {
-        writePromises.push(supabase.from("contractor_services").insert(serviceInserts));
+        writePromises.push(supabase.from("contractor_services").insert(serviceInserts as any));
       }
 
       if (areas.length > 0) {
@@ -313,7 +315,7 @@ export default function BusinessImportPage() {
               city_name: a,
               is_primary: i === 0,
               data_source: "public_site_confirmed",
-            }))
+            })) as any
           )
         );
       }
@@ -328,7 +330,7 @@ export default function BusinessImportPage() {
               display_order: i,
               data_source: "public_site_confirmed",
               is_approved: false,
-            }))
+            })) as any
           )
         );
       }
