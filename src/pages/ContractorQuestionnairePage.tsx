@@ -257,23 +257,19 @@ export default function ContractorQuestionnairePage() {
 
               {step === 2 && (
                 <>
-                  <StepHeader title="Activité principale" subtitle="Décrivez votre métier et votre clientèle cible." />
-                  <FieldWrapper label="Métier principal" prefilled={pf.has("specialty")} aippBoost={10}>
-                    <Select value={form.specialty} onValueChange={(v) => updateField("specialty", v)}>
-                      <SelectTrigger><SelectValue placeholder="Choisir un métier" /></SelectTrigger>
-                      <SelectContent>
-                        {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </FieldWrapper>
-                  <FieldWrapper label="Catégories principales" aippBoost={8}>
-                    <ChipSelector options={CATEGORIES} selected={form.primary_categories} onToggle={(v) => toggleArrayField("primary_categories", v)} />
-                  </FieldWrapper>
-                  <FieldWrapper label="Catégories secondaires">
-                    <ChipSelector
-                      options={CATEGORIES.filter((c) => !form.primary_categories.includes(c))}
-                      selected={form.secondary_categories}
-                      onToggle={(v) => toggleArrayField("secondary_categories", v)}
+                  <StepHeader title="Activité principale" subtitle="Sélectionnez votre catégorie principale et vos spécialités." />
+                  <FieldWrapper label="Catégories de service" aippBoost={15}>
+                    <CategorySelector
+                      selection={{
+                        primaryId: form.primary_categories[0] || null,
+                        secondaryIds: form.secondary_categories,
+                      }}
+                      onSelectionChange={(sel: CategorySelection) => {
+                        updateField("primary_categories", sel.primaryId ? [sel.primaryId] : []);
+                        updateField("secondary_categories", sel.secondaryIds);
+                      }}
+                      maxSecondary={3}
+                      planName="Pro"
                     />
                   </FieldWrapper>
                   <FieldWrapper label="Description courte" prefilled={pf.has("description")} aippBoost={6}>
