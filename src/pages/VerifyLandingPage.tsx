@@ -8,15 +8,18 @@ import { Badge } from "@/components/ui/badge";
 import {
   Shield, Search, FileText, Building2, Fingerprint, ShieldAlert,
   Eye, Camera, ArrowRight, CheckCircle2, AlertTriangle, XCircle,
-  Ban, Loader2, ClipboardCheck, MessageSquare, Users, Phone,
+  Ban, Loader2, ClipboardCheck, MessageSquare, Phone,
   Truck, CreditCard, Lock, FileCheck, Wrench, DollarSign,
-  ShieldCheck, Sparkles,
+  ShieldCheck, Sparkles, Upload, MapPin, Globe, Hash,
 } from "lucide-react";
 
 /* ─── Animation variants ─── */
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
-  visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.5, ease: "easeOut" as const } }),
+  visible: (i: number) => ({
+    opacity: 1, y: 0,
+    transition: { delay: i * 0.1, duration: 0.5, ease: "easeOut" as const },
+  }),
 };
 
 const staggerContainer = {
@@ -35,18 +38,38 @@ const VERIFY_CARDS = [
 ];
 
 const STEPS = [
-  { num: "01", title: "Entrer un numéro ou un nom", desc: "Téléphone, nom d'entreprise, licence RBQ ou NEQ." },
-  { num: "02", title: "UNPRO reconstruit l'identité", desc: "Recoupement automatique de multiples sources publiques." },
-  { num: "03", title: "Les registres sont vérifiés", desc: "RBQ, Registraire des entreprises, profils en ligne." },
-  { num: "04", title: "Les preuves visuelles sont analysées", desc: "Contrat, camion, carte d'affaires — OCR et IA." },
-  { num: "05", title: "UNPRO donne un verdict", desc: "Score de confiance, compatibilité et recommandation." },
+  { num: "01", title: "Entrez un nom ou un numéro", desc: "Téléphone, nom d'entreprise, licence RBQ, NEQ ou site web." },
+  { num: "02", title: "UNPRO reconstruit l'identité commerciale probable", desc: "Recoupement automatique de multiples sources publiques." },
+  { num: "03", title: "Les validations officielles sont croisées", desc: "RBQ, Registraire des entreprises, profils en ligne." },
+  { num: "04", title: "Les preuves visuelles sont analysées", desc: "Contrat, camion, carte d'affaires — OCR et intelligence artificielle." },
+  { num: "05", title: "Un verdict clair apparaît", desc: "Score de confiance, compatibilité de licence et recommandation." },
 ];
 
-const VERDICTS = [
-  { verdict: "Très rassurant", icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-500/10 border-emerald-500/20", ring: "ring-emerald-500/30" },
-  { verdict: "Prudence", icon: AlertTriangle, color: "text-amber-500", bg: "bg-amber-500/10 border-amber-500/20", ring: "ring-amber-500/30" },
-  { verdict: "Non recommandé", icon: XCircle, color: "text-red-500", bg: "bg-red-500/10 border-red-500/20", ring: "ring-red-500/30" },
-  { verdict: "Se tenir loin", icon: Ban, color: "text-red-700 dark:text-red-400", bg: "bg-red-600/10 border-red-600/20", ring: "ring-red-600/30" },
+const DEMO_LINES = [
+  { label: "Validation licence RBQ", icon: FileText },
+  { label: "Validation entreprise / NEQ", icon: Building2 },
+  { label: "Analyse téléphone", icon: Phone },
+  { label: "Analyse contrat", icon: ClipboardCheck },
+  { label: "Analyse camion", icon: Truck },
+  { label: "Portée de licence", icon: Eye },
+  { label: "Verdict UNPRO", icon: Shield },
+];
+
+type DemoVerdict = "succes" | "attention" | "non_succes" | "se_tenir_loin";
+const DEMO_RESULTS: DemoVerdict[] = ["succes", "succes", "succes", "attention", "succes", "succes", "succes"];
+
+const VERDICT_MAP: Record<DemoVerdict, { label: string; color: string; bg: string }> = {
+  succes: { label: "Succès", color: "text-success", bg: "bg-success/10" },
+  attention: { label: "Attention", color: "text-warning", bg: "bg-warning/10" },
+  non_succes: { label: "Non-succès", color: "text-destructive", bg: "bg-destructive/10" },
+  se_tenir_loin: { label: "Se tenir loin", color: "text-destructive", bg: "bg-destructive/10" },
+};
+
+const VERDICTS_OVERVIEW = [
+  { verdict: "Succès", icon: CheckCircle2, color: "text-success", bg: "bg-success/10 border-success/20" },
+  { verdict: "Attention", icon: AlertTriangle, color: "text-warning", bg: "bg-warning/10 border-warning/20" },
+  { verdict: "Non-succès", icon: XCircle, color: "text-destructive", bg: "bg-destructive/10 border-destructive/20" },
+  { verdict: "Se tenir loin", icon: Ban, color: "text-destructive", bg: "bg-destructive/10 border-destructive/20" },
 ];
 
 const CHECKLIST = [
@@ -55,18 +78,10 @@ const CHECKLIST = [
   { icon: Wrench, label: "Portée des travaux spécifiée" },
   { icon: DollarSign, label: "Modalités de paiement claires" },
   { icon: Lock, label: "Garantie sur les travaux" },
+  { icon: Building2, label: "Identité claire de l'entreprise" },
 ];
 
-const DEMO_STEPS = [
-  { label: "Validation RBQ", icon: FileText },
-  { label: "Validation NEQ", icon: Building2 },
-  { label: "Analyse téléphone", icon: Phone },
-  { label: "Analyse contrat", icon: ClipboardCheck },
-  { label: "Analyse camion", icon: Truck },
-  { label: "Analyse carte d'affaires", icon: CreditCard },
-];
-
-/* ─── Components ─── */
+/* ─── Reusable sub-components ─── */
 
 function SectionHeading({ eyebrow, title, subtitle }: { eyebrow?: string; title: string; subtitle?: string }) {
   const ref = useRef(null);
@@ -75,7 +90,7 @@ function SectionHeading({ eyebrow, title, subtitle }: { eyebrow?: string; title:
     <motion.div ref={ref} initial="hidden" animate={inView ? "visible" : "hidden"} variants={fadeUp} custom={0} className="text-center max-w-2xl mx-auto mb-12 md:mb-16">
       {eyebrow && <Badge variant="outline" className="mb-3 text-xs font-medium tracking-wide uppercase border-primary/20 text-primary">{eyebrow}</Badge>}
       <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold font-display text-foreground mb-3">{title}</h2>
-      {subtitle && <p className="text-muted-foreground text-sm md:text-base">{subtitle}</p>}
+      {subtitle && <p className="text-muted-foreground text-sm md:text-base leading-relaxed">{subtitle}</p>}
     </motion.div>
   );
 }
@@ -89,7 +104,7 @@ function GlassCard({ children, className = "" }: { children: React.ReactNode; cl
   );
 }
 
-function DemoAnimation() {
+function LiveDemoPanel() {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
   const [activeStep, setActiveStep] = useState(-1);
@@ -99,25 +114,26 @@ function DemoAnimation() {
     if (!inView) return;
     let step = 0;
     const interval = setInterval(() => {
-      if (step >= DEMO_STEPS.length) {
+      if (step >= DEMO_LINES.length) {
         clearInterval(interval);
         return;
       }
       setActiveStep(step);
-      setTimeout(() => {
-        setCompleted((prev) => [...prev, step]);
-      }, 900);
+      const s = step;
+      setTimeout(() => setCompleted((prev) => [...prev, s]), 900);
       step++;
     }, 1400);
     return () => clearInterval(interval);
   }, [inView]);
 
   return (
-    <div ref={ref} className="space-y-3 max-w-md mx-auto">
-      {DEMO_STEPS.map((s, i) => {
+    <div ref={ref} className="space-y-2.5 max-w-md mx-auto">
+      {DEMO_LINES.map((s, i) => {
         const Icon = s.icon;
         const isActive = activeStep === i;
         const isDone = completed.includes(i);
+        const result = DEMO_RESULTS[i];
+        const vm = VERDICT_MAP[result];
         return (
           <motion.div
             key={s.label}
@@ -126,34 +142,110 @@ function DemoAnimation() {
             transition={{ delay: i * 0.08 }}
             className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all duration-500 ${
               isDone
-                ? "border-emerald-500/30 bg-emerald-500/5"
+                ? "border-success/30 bg-success/5"
                 : isActive
                 ? "border-primary/40 bg-primary/5"
                 : "border-border/40 bg-card/60"
             }`}
           >
             <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-300 ${
-              isDone ? "bg-emerald-500/15" : "bg-muted/50"
+              isDone ? "bg-success/15" : "bg-muted/50"
             }`}>
-              <Icon className={`w-4.5 h-4.5 ${isDone ? "text-emerald-500" : "text-muted-foreground"}`} />
+              <Icon className={`w-4 h-4 ${isDone ? "text-success" : "text-muted-foreground"}`} />
             </div>
             <span className="text-sm font-medium text-foreground flex-1">{s.label}</span>
             <AnimatePresence mode="wait">
               {isActive && !isDone && (
-                <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                </motion.div>
+                <motion.span key="spin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                  En cours…
+                </motion.span>
               )}
               {isDone && (
-                <motion.div key="done" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400, damping: 15 }}>
-                  <CheckCircle2 className="w-4.5 h-4.5 text-emerald-500" />
-                </motion.div>
+                <motion.span
+                  key="badge"
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                  className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${vm.bg} ${vm.color}`}
+                >
+                  {vm.label}
+                </motion.span>
               )}
             </AnimatePresence>
           </motion.div>
         );
       })}
     </div>
+  );
+}
+
+function ExampleResultCard() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+
+  const data = {
+    name: "Toitures Québec Pro Inc.",
+    phone: "(418) 555-0199",
+    service: "Couverture — Toiture résidentielle",
+    city: "Québec",
+    rbq: "5789-1234-01",
+    neq: "1173456789",
+    coherence: "Cohérence détectée",
+    verdict: "Succès" as const,
+  };
+
+  return (
+    <motion.div ref={ref} initial={{ opacity: 0, y: 24 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.6 }}>
+      <GlassCard className="p-6 md:p-8 max-w-lg mx-auto">
+        {/* Header */}
+        <div className="flex items-start gap-3 mb-5">
+          <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
+            <ShieldCheck className="w-6 h-6 text-success" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-0.5">Résultat — Exemple</p>
+            <h3 className="text-base font-bold font-display text-foreground">{data.name}</h3>
+          </div>
+        </div>
+
+        {/* Info rows */}
+        <div className="space-y-3 mb-5">
+          {[
+            { icon: Phone, label: "Téléphone", value: data.phone },
+            { icon: Wrench, label: "Service probable", value: data.service },
+            { icon: MapPin, label: "Ville", value: data.city },
+            { icon: FileText, label: "RBQ", value: data.rbq, status: "success" as const },
+            { icon: Hash, label: "NEQ", value: data.neq, status: "success" as const },
+            { icon: Fingerprint, label: "Cohérence", value: data.coherence, status: "success" as const },
+          ].map((row) => {
+            const RIcon = row.icon;
+            return (
+              <div key={row.label} className="flex items-center gap-3 text-sm">
+                <RIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                <span className="text-muted-foreground w-28 shrink-0">{row.label}</span>
+                <span className="font-medium text-foreground flex-1">{row.value}</span>
+                {row.status === "success" && <CheckCircle2 className="w-4 h-4 text-success shrink-0" />}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Verdict */}
+        <div className="rounded-xl bg-success/5 border border-success/20 p-4 flex items-center gap-3 mb-5">
+          <ShieldCheck className="w-6 h-6 text-success shrink-0" />
+          <div>
+            <p className="text-xs text-muted-foreground">Verdict UNPRO</p>
+            <p className="text-sm font-bold text-success">{data.verdict}</p>
+          </div>
+        </div>
+
+        <Button className="w-full gap-2 h-11 font-semibold" variant="outline" onClick={() => {}}>
+          <ClipboardCheck className="w-4 h-4" />
+          Analyser une soumission de cet entrepreneur
+        </Button>
+      </GlassCard>
+    </motion.div>
   );
 }
 
@@ -172,7 +264,6 @@ export default function VerifyLandingPage() {
 
         {/* ═══════ HERO ═══════ */}
         <section className="relative py-20 md:py-32 overflow-hidden">
-          {/* Background glow */}
           <div className="absolute inset-0">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-radial from-primary/8 via-transparent to-transparent opacity-60" />
             <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-gradient-radial from-secondary/6 via-transparent to-transparent" />
@@ -195,21 +286,20 @@ export default function VerifyLandingPage() {
               </motion.h1>
 
               <motion.p variants={fadeUp} custom={2} className="text-muted-foreground text-base md:text-lg max-w-xl mx-auto mb-8">
-                Licence RBQ, NEQ, identité commerciale et analyse UNPRO.
-                Avant de signer, vérifiez.
+                Licence RBQ, NEQ, identité commerciale, cohérence visuelle et analyse UNPRO.
               </motion.p>
 
-              {/* Search input */}
+              {/* Search */}
               <motion.div variants={fadeUp} custom={3} className="max-w-lg mx-auto">
                 <GlassCard className="p-2">
                   <div className="flex gap-2">
                     <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground" />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         value={heroInput}
                         onChange={(e) => setHeroInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleVerify()}
-                        placeholder="Nom, téléphone, RBQ ou NEQ"
+                        placeholder="Nom, téléphone, RBQ, NEQ ou site web"
                         className="pl-10 h-12 border-0 bg-transparent text-sm md:text-base focus-visible:ring-0 focus-visible:ring-offset-0"
                       />
                     </div>
@@ -219,11 +309,19 @@ export default function VerifyLandingPage() {
                   </div>
                 </GlassCard>
 
+                {/* Secondary CTAs */}
                 <motion.div variants={fadeUp} custom={4} className="flex flex-wrap justify-center gap-3 mt-5">
-                  <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-primary gap-1.5" onClick={() => navigate("/compare-quotes")}>
-                    <Users className="w-3.5 h-3.5" /> Comparer avec d'autres entrepreneurs
+                  <Button variant="outline" size="sm" className="text-xs gap-1.5 rounded-full" onClick={() => navigate("/verify")}>
+                    <Upload className="w-3.5 h-3.5" /> Téléverser une photo
+                  </Button>
+                  <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-primary gap-1.5 rounded-full" onClick={() => navigate("/compare-quotes")}>
+                    <Globe className="w-3.5 h-3.5" /> Comparer des entrepreneurs
                   </Button>
                 </motion.div>
+
+                <motion.p variants={fadeUp} custom={5} className="text-xs text-muted-foreground/70 mt-5 max-w-md mx-auto leading-relaxed">
+                  UNPRO recoupe les informations visibles, les registres et les signaux de cohérence pour vous aider avant de signer.
+                </motion.p>
               </motion.div>
             </motion.div>
           </div>
@@ -237,7 +335,6 @@ export default function VerifyLandingPage() {
               title="Ce que nous vérifions"
               subtitle="Six couches de validation croisée pour protéger votre investissement."
             />
-
             <motion.div
               initial="hidden"
               whileInView="visible"
@@ -271,7 +368,6 @@ export default function VerifyLandingPage() {
               title="Comment ça fonctionne"
               subtitle="Un processus automatisé en 5 étapes, complété en moins d'une minute."
             />
-
             <motion.div
               initial="hidden"
               whileInView="visible"
@@ -280,12 +376,7 @@ export default function VerifyLandingPage() {
               className="max-w-2xl mx-auto space-y-0"
             >
               {STEPS.map((step, i) => (
-                <motion.div
-                  key={step.num}
-                  variants={fadeUp}
-                  custom={i}
-                  className="relative flex gap-5 pb-8 last:pb-0"
-                >
+                <motion.div key={step.num} variants={fadeUp} custom={i} className="relative flex gap-5 pb-8 last:pb-0">
                   {i < STEPS.length - 1 && (
                     <div className="absolute left-[22px] top-12 bottom-0 w-px bg-gradient-to-b from-primary/20 to-transparent" />
                   )}
@@ -302,43 +393,54 @@ export default function VerifyLandingPage() {
           </div>
         </section>
 
-        {/* ═══════ DEMO ANIMATION ═══════ */}
+        {/* ═══════ LIVE DEMO ═══════ */}
         <section className="py-16 md:py-24">
           <div className="container mx-auto px-4">
             <SectionHeading
               eyebrow="En action"
-              title="Exemple de vérification"
-              subtitle="Observez le moteur UNPRO valider chaque composante en temps réel."
+              title="Vérification en temps réel"
+              subtitle="Observez le moteur UNPRO valider chaque composante, une par une."
             />
-            <DemoAnimation />
+            <LiveDemoPanel />
           </div>
         </section>
 
-        {/* ═══════ VERDICTS ═══════ */}
+        {/* ═══════ EXAMPLE RESULT ═══════ */}
         <section className="py-16 md:py-24 bg-muted/30">
           <div className="container mx-auto px-4">
             <SectionHeading
-              eyebrow="Verdicts"
-              title="Résultat clair et actionnable"
-              subtitle="Chaque vérification se termine par un verdict UNPRO, selon les informations disponibles."
+              eyebrow="Exemple"
+              title="Un résultat clair et actionnable"
+              subtitle="Voici à quoi ressemble un rapport de vérification UNPRO, selon les informations disponibles."
             />
+            <ExampleResultCard />
+          </div>
+        </section>
 
+        {/* ═══════ VERDICTS OVERVIEW ═══════ */}
+        <section className="py-16 md:py-24">
+          <div className="container mx-auto px-4">
+            <SectionHeading
+              eyebrow="Verdicts"
+              title="Quatre niveaux de confiance"
+              subtitle="Chaque vérification se termine par un verdict UNPRO."
+            />
             <motion.div
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-60px" }}
               variants={staggerContainer}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto"
+              className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 max-w-3xl mx-auto"
             >
-              {VERDICTS.map((v, i) => {
-                const Icon = v.icon;
+              {VERDICTS_OVERVIEW.map((v, i) => {
+                const VIcon = v.icon;
                 return (
                   <motion.div key={v.verdict} variants={fadeUp} custom={i}>
-                    <GlassCard className={`p-5 text-center border ${v.bg} ring-1 ${v.ring}`}>
+                    <GlassCard className={`p-5 text-center border ${v.bg}`}>
                       <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center ${v.bg}`}>
-                        <Icon className={`w-6 h-6 ${v.color}`} />
+                        <VIcon className={`w-6 h-6 ${v.color}`} />
                       </div>
-                      <p className="text-xs text-muted-foreground mb-1">Verdict UNPRO</p>
+                      <p className="text-[11px] text-muted-foreground mb-0.5">Verdict</p>
                       <p className={`text-sm font-bold font-display ${v.color}`}>{v.verdict}</p>
                     </GlassCard>
                   </motion.div>
@@ -349,19 +451,18 @@ export default function VerifyLandingPage() {
         </section>
 
         {/* ═══════ CHECKLIST ═══════ */}
-        <section className="py-16 md:py-24">
+        <section className="py-16 md:py-24 bg-muted/30">
           <div className="container mx-auto px-4">
             <SectionHeading
               eyebrow="Aide-mémoire"
               title="Avant de signer"
-              subtitle="Les 5 éléments essentiels à vérifier avant d'engager un entrepreneur."
+              subtitle="Les 6 éléments essentiels à vérifier avant d'engager un entrepreneur."
             />
-
             <div className="max-w-md mx-auto">
               <GlassCard className="p-6">
                 <div className="space-y-4">
                   {CHECKLIST.map((item, i) => {
-                    const Icon = item.icon;
+                    const CIcon = item.icon;
                     return (
                       <motion.div
                         key={item.label}
@@ -372,7 +473,7 @@ export default function VerifyLandingPage() {
                         className="flex items-center gap-3 group"
                       >
                         <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center flex-shrink-0 group-hover:bg-success/20 transition-colors">
-                          <Icon className="w-4 h-4 text-success" />
+                          <CIcon className="w-4 h-4 text-success" />
                         </div>
                         <span className="text-sm font-medium text-foreground">{item.label}</span>
                         <CheckCircle2 className="w-4 h-4 text-success/40 ml-auto" />
@@ -394,21 +495,21 @@ export default function VerifyLandingPage() {
                 <Sparkles className="w-8 h-8 text-primary mx-auto mb-4" />
               </motion.div>
               <motion.h2 variants={fadeUp} custom={1} className="text-2xl md:text-3xl lg:text-4xl font-bold font-display text-foreground mb-4">
-                Vous avez une soumission?
+                Avant de signer, vérifiez ce que le prix ne dit pas
               </motion.h2>
               <motion.p variants={fadeUp} custom={2} className="text-muted-foreground text-sm md:text-base mb-8 max-w-md mx-auto">
-                Analysez-la, comparez les entrepreneurs et obtenez des réponses personnalisées.
+                Analysez, comparez et obtenez des réponses personnalisées — gratuitement.
               </motion.p>
 
               <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button size="lg" className="gap-2 font-semibold h-12 px-6" onClick={() => navigate("/dashboard/quotes/upload")}>
-                  <ClipboardCheck className="w-4.5 h-4.5" /> Analyser ma soumission
+                <Button size="lg" className="gap-2 font-semibold h-12 px-6" onClick={handleVerify}>
+                  <ShieldCheck className="w-4 h-4" /> Vérifier un entrepreneur
                 </Button>
-                <Button size="lg" variant="outline" className="gap-2 font-semibold h-12 px-6" onClick={() => navigate("/compare-quotes")}>
-                  <Users className="w-4.5 h-4.5" /> Comparer 3 entrepreneurs
+                <Button size="lg" variant="outline" className="gap-2 font-semibold h-12 px-6" onClick={() => navigate("/dashboard/quotes/upload")}>
+                  <ClipboardCheck className="w-4 h-4" /> Analyser ma soumission
                 </Button>
                 <Button size="lg" variant="ghost" className="gap-2 font-semibold h-12 px-6 text-primary" onClick={() => navigate("/alex")}>
-                  <MessageSquare className="w-4.5 h-4.5" /> Parler à Alex
+                  <MessageSquare className="w-4 h-4" /> Parler à Alex
                 </Button>
               </motion.div>
             </motion.div>
