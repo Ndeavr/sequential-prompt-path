@@ -620,6 +620,51 @@ export type Database = {
           },
         ]
       }
+      category_problem_links: {
+        Row: {
+          category_id: string
+          created_at: string | null
+          id: string
+          problem_id: string | null
+          problem_slug: string | null
+          relevance_score: number | null
+          solution_slugs: string[] | null
+        }
+        Insert: {
+          category_id: string
+          created_at?: string | null
+          id?: string
+          problem_id?: string | null
+          problem_slug?: string | null
+          relevance_score?: number | null
+          solution_slugs?: string[] | null
+        }
+        Update: {
+          category_id?: string
+          created_at?: string | null
+          id?: string
+          problem_id?: string | null
+          problem_slug?: string | null
+          relevance_score?: number | null
+          solution_slugs?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_problem_links_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_problem_links_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "home_problems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkout_sessions: {
         Row: {
           addons_json: Json | null
@@ -917,6 +962,74 @@ export type Database = {
           },
           {
             foreignKeyName: "contractor_aipp_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_category_assignments: {
+        Row: {
+          admin_approved: boolean | null
+          approved_at: string | null
+          approved_by: string | null
+          assignment_source: string | null
+          category_id: string
+          contractor_id: string
+          created_at: string | null
+          id: string
+          is_primary: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          admin_approved?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
+          assignment_source?: string | null
+          category_id: string
+          contractor_id: string
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          admin_approved?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
+          assignment_source?: string | null
+          category_id?: string
+          contractor_id?: string
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_category_assignments_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_category_assignments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_category_assignments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_category_assignments_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
@@ -5649,37 +5762,67 @@ export type Database = {
       }
       service_categories: {
         Row: {
+          ai_keywords: string[] | null
           created_at: string
           description: string | null
+          description_en: string | null
+          description_fr: string | null
           icon: string | null
+          icon_name: string | null
           id: string
           is_active: boolean
           name: string
+          name_en: string | null
+          name_fr: string | null
           parent_id: string | null
+          requires_admin_approval: boolean | null
+          seo_description_fr: string | null
+          seo_title_fr: string | null
           slug: string
           sort_order: number
+          updated_at: string | null
         }
         Insert: {
+          ai_keywords?: string[] | null
           created_at?: string
           description?: string | null
+          description_en?: string | null
+          description_fr?: string | null
           icon?: string | null
+          icon_name?: string | null
           id?: string
           is_active?: boolean
           name: string
+          name_en?: string | null
+          name_fr?: string | null
           parent_id?: string | null
+          requires_admin_approval?: boolean | null
+          seo_description_fr?: string | null
+          seo_title_fr?: string | null
           slug: string
           sort_order?: number
+          updated_at?: string | null
         }
         Update: {
+          ai_keywords?: string[] | null
           created_at?: string
           description?: string | null
+          description_en?: string | null
+          description_fr?: string | null
           icon?: string | null
+          icon_name?: string | null
           id?: string
           is_active?: boolean
           name?: string
+          name_en?: string | null
+          name_fr?: string | null
           parent_id?: string | null
+          requires_admin_approval?: boolean | null
+          seo_description_fr?: string | null
+          seo_title_fr?: string | null
           slug?: string
           sort_order?: number
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -7006,6 +7149,10 @@ export type Database = {
       get_profile_completion: {
         Args: { _contractor_id: string }
         Returns: Json
+      }
+      get_secondary_category_limit: {
+        Args: { plan_code: string }
+        Returns: number
       }
       get_upgrade_recommendations: {
         Args: { _contractor_id: string }
