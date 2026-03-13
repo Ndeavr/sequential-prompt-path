@@ -66,7 +66,7 @@ export default function CitySelector({
   const { data: cities = [], isLoading } = useCities();
   const [search, setSearch] = useState("");
   const [showUpsell, setShowUpsell] = useState(false);
-  const navigate = useNavigate();
+  
 
   const isPrimary = (name: string) => selection.primaryCity === name;
   const isSecondary = (name: string) => selection.secondaryCities.includes(name);
