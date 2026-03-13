@@ -129,7 +129,7 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
   const [showLogin, setShowLogin] = useState(false);
   const [chipContext, setChipContext] = useState<string | undefined>();
   const [voiceAutoStarted, setVoiceAutoStarted] = useState(false);
-  const [greetingSpoken, setGreetingSpoken] = useState(false);
+  const greetingSpokenRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const modeRef = useRef<Mode>("choose");
