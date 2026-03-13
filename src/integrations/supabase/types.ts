@@ -7141,6 +7141,7 @@ export type Database = {
           weight: number
         }[]
       }
+      get_city_limit: { Args: { plan_code: string }; Returns: number }
       get_contractor_dashboard: {
         Args: { _contractor_id: string }
         Returns: Json
