@@ -91,75 +91,10 @@ function GlassCard({ children, className = "" }: { children: React.ReactNode; cl
 function LiveDemoPanel() {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
-  const [activeStep, setActiveStep] = useState(-1);
-  const [completed, setCompleted] = useState<number[]>([]);
-
-  useEffect(() => {
-    if (!inView) return;
-    let step = 0;
-    const interval = setInterval(() => {
-      if (step >= DEMO_LINES.length) {
-        clearInterval(interval);
-        return;
-      }
-      setActiveStep(step);
-      const s = step;
-      setTimeout(() => setCompleted((prev) => [...prev, s]), 900);
-      step++;
-    }, 1400);
-    return () => clearInterval(interval);
-  }, [inView]);
 
   return (
-    <div ref={ref} className="space-y-2.5 max-w-md mx-auto">
-      {DEMO_LINES.map((s, i) => {
-        const Icon = s.icon;
-        const isActive = activeStep === i;
-        const isDone = completed.includes(i);
-        const result = DEMO_RESULTS[i];
-        const vm = VERDICT_MAP[result];
-        return (
-          <motion.div
-            key={s.label}
-            initial={{ opacity: 0, x: -20 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ delay: i * 0.08 }}
-            className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all duration-500 ${
-              isDone
-                ? "border-success/30 bg-success/5"
-                : isActive
-                ? "border-primary/40 bg-primary/5"
-                : "border-border/40 bg-card/60"
-            }`}
-          >
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-300 ${
-              isDone ? "bg-success/15" : "bg-muted/50"
-            }`}>
-              <Icon className={`w-4 h-4 ${isDone ? "text-success" : "text-muted-foreground"}`} />
-            </div>
-            <span className="text-sm font-medium text-foreground flex-1">{s.label}</span>
-            <AnimatePresence mode="wait">
-              {isActive && !isDone && (
-                <motion.span key="spin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                  En cours…
-                </motion.span>
-              )}
-              {isDone && (
-                <motion.span
-                  key="badge"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                  className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${vm.bg} ${vm.color}`}
-                >
-                  {vm.label}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        );
-      })}
+    <div ref={ref} className="max-w-lg mx-auto">
+      {inView && <VerificationTimeline autoplay stepDelay={1000} />}
     </div>
   );
 }
