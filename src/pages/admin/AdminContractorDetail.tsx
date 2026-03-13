@@ -14,8 +14,9 @@ import { Progress } from "@/components/ui/progress";
 import { useAdminContractor, useAdminContractorDocuments, useUpdateContractorVerification, useAdminContractorSubscription } from "@/hooks/useAdmin";
 import { getPlanById } from "@/config/contractorPlans";
 import { getContractorCompleteness } from "@/services/contractorCompletenessService";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, RefreshCw, Eye, EyeOff, ExternalLink } from "lucide-react";
 
 const statusLabels: Record<string, string> = {
   unverified: "Non vérifié",
@@ -26,17 +27,19 @@ const statusLabels: Record<string, string> = {
 
 const AdminContractorDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const { data: contractor, isLoading } = useAdminContractor(id);
+  const { data: contractor, isLoading, refetch } = useAdminContractor(id);
   const { data: docs } = useAdminContractorDocuments(contractor?.user_id);
   const { data: subscription } = useAdminContractorSubscription(contractor?.id);
   const updateVerification = useUpdateContractorVerification();
   const [newStatus, setNewStatus] = useState("");
   const [adminNote, setAdminNote] = useState("");
+  const [recalculating, setRecalculating] = useState(false);
 
   if (isLoading) return <AdminLayout><LoadingState /></AdminLayout>;
   if (!contractor) return <AdminLayout><PageHeader title="Entrepreneur introuvable" /><Button asChild variant="outline"><Link to="/admin/contractors"><ArrowLeft className="h-4 w-4 mr-1" />Retour</Link></Button></AdminLayout>;
 
   const completeness = getContractorCompleteness(contractor);
+  const isPublished = contractor.verification_status === "verified";
 
   const handleVerification = async () => {
     if (!newStatus) { toast.error("Sélectionnez un statut."); return; }
@@ -50,6 +53,36 @@ const AdminContractorDetail = () => {
       setAdminNote("");
     } catch {
       toast.error("Erreur lors de la mise à jour.");
+    }
+  };
+
+  const handleTogglePublish = async () => {
+    const nextStatus = isPublished ? "pending" : "verified";
+    try {
+      await updateVerification.mutateAsync({
+        contractorId: contractor.id,
+        verification_status: nextStatus,
+        admin_note: `${isPublished ? "Dépublié" : "Publié"} par admin`,
+      });
+      toast.success(isPublished ? "Profil dépublié" : "Profil publié !");
+    } catch {
+      toast.error("Erreur lors du changement.");
+    }
+  };
+
+  const handleRecalculateAIPP = async () => {
+    setRecalculating(true);
+    try {
+      const { error } = await supabase.functions.invoke("compute-contractor-score", {
+        body: { contractor_id: contractor.id },
+      });
+      if (error) throw error;
+      toast.success("Score AIPP recalculé !");
+      refetch();
+    } catch {
+      toast.error("Erreur lors du recalcul AIPP.");
+    } finally {
+      setRecalculating(false);
     }
   };
 
@@ -87,6 +120,21 @@ const AdminContractorDetail = () => {
           </Badge>
         </div>
 
+        {/* Quick actions bar */}
+        <div className="flex flex-wrap gap-2">
+          <Button variant={isPublished ? "destructive" : "default"} size="sm" onClick={handleTogglePublish} disabled={updateVerification.isPending} className="gap-1.5">
+            {isPublished ? <><EyeOff className="h-3.5 w-3.5" /> Dépublier</> : <><Eye className="h-3.5 w-3.5" /> Publier</>}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleRecalculateAIPP} disabled={recalculating} className="gap-1.5">
+            <RefreshCw className={`h-3.5 w-3.5 ${recalculating ? "animate-spin" : ""}`} /> Recalculer AIPP
+          </Button>
+          <Button variant="outline" size="sm" asChild className="gap-1.5">
+            <Link to={`/contractors/${contractor.id}`} target="_blank">
+              <ExternalLink className="h-3.5 w-3.5" /> Voir page publique
+            </Link>
+          </Button>
+        </div>
+
         {/* Profile info */}
         <Card>
           <CardHeader><CardTitle className="text-base">Profil de l'entreprise</CardTitle></CardHeader>
@@ -115,9 +163,7 @@ const AdminContractorDetail = () => {
                 <p className="text-sm font-medium mb-1">Éléments manquants :</p>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   {completeness.missing.map((m) => (
-                    <li key={m} className="flex items-center gap-1">
-                      <XCircle className="h-3 w-3 text-destructive" /> {m}
-                    </li>
+                    <li key={m} className="flex items-center gap-1"><XCircle className="h-3 w-3 text-destructive" /> {m}</li>
                   ))}
                 </ul>
               </div>
@@ -127,9 +173,7 @@ const AdminContractorDetail = () => {
                 <p className="text-sm font-medium mb-1">Éléments complétés :</p>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   {completeness.completed.map((c) => (
-                    <li key={c} className="flex items-center gap-1">
-                      <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" /> {c}
-                    </li>
+                    <li key={c} className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-success" /> {c}</li>
                   ))}
                 </ul>
               </div>
@@ -176,18 +220,9 @@ const AdminContractorDetail = () => {
           <CardContent>
             {subscription ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Plan</p>
-                  <p className="font-medium">{getPlanById(subscription.plan_id)?.name ?? subscription.plan_id}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Statut</p>
-                  <p className="font-medium">{subscription.status}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Facturation</p>
-                  <p className="font-medium">{(subscription as any).billing_interval === "year" ? "Annuel" : "Mensuel"}</p>
-                </div>
+                <div><p className="text-muted-foreground">Plan</p><p className="font-medium">{getPlanById(subscription.plan_id)?.name ?? subscription.plan_id}</p></div>
+                <div><p className="text-muted-foreground">Statut</p><p className="font-medium">{subscription.status}</p></div>
+                <div><p className="text-muted-foreground">Facturation</p><p className="font-medium">{(subscription as any).billing_interval === "year" ? "Annuel" : "Mensuel"}</p></div>
                 <div>
                   <p className="text-muted-foreground">Période</p>
                   <p className="font-medium">
@@ -196,10 +231,7 @@ const AdminContractorDetail = () => {
                       : "—"}
                   </p>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Annulation prévue</p>
-                  <p className="font-medium">{subscription.cancel_at_period_end ? "Oui" : "Non"}</p>
-                </div>
+                <div><p className="text-muted-foreground">Annulation prévue</p><p className="font-medium">{subscription.cancel_at_period_end ? "Oui" : "Non"}</p></div>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">Aucun abonnement actif.</p>
