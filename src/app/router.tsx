@@ -42,6 +42,24 @@ import ContractorQuestionnairePage from "@/pages/ContractorQuestionnairePage";
 import VerifyContractorPage from "@/pages/VerifyContractorPage";
 import VerifyLandingPage from "@/pages/VerifyLandingPage";
 
+// Condos
+import CondoHomePage from "@/pages/condos/CondoHomePage";
+import CondoLoi16Page from "@/pages/condos/CondoLoi16Page";
+import CondoCarnetPage from "@/pages/condos/CondoCarnetPage";
+import CondoFondsPage from "@/pages/condos/CondoFondsPage";
+import CondoAttestationPage from "@/pages/condos/CondoAttestationPage";
+import CondoTarifsPage from "@/pages/condos/CondoTarifsPage";
+import CondoOnboardingPage from "@/pages/condos/CondoOnboardingPage";
+import CondoDashboardPage from "@/pages/condos/CondoDashboardPage";
+import CondoBuildingPage from "@/pages/condos/CondoBuildingPage";
+import CondoComponentsPage from "@/pages/condos/CondoComponentsPage";
+import CondoMaintenancePage from "@/pages/condos/CondoMaintenancePage";
+import CondoDocumentsPage from "@/pages/condos/CondoDocumentsPage";
+import CondoReserveFundPage from "@/pages/condos/CondoReserveFundPage";
+import CondoQuotesPage from "@/pages/condos/CondoQuotesPage";
+import CondoReportsPage from "@/pages/condos/CondoReportsPage";
+import CondoBillingPage from "@/pages/condos/CondoBillingPage";
+
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
 import PropertiesList from "@/pages/dashboard/PropertiesList";
