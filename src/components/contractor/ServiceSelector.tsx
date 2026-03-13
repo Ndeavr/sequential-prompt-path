@@ -36,17 +36,6 @@ export const SERVICE_LIMITS: Record<string, { primary: number; secondary: number
   signature: { primary: 8, secondary: 20 },
 };
 
-const NEXT_PLAN: Record<string, string> = {
-  recrue: "Pro", pro: "Premium", premium: "Élite", elite: "Signature", signature: "Signature",
-};
-
-const NEXT_PLAN_LIMITS: Record<string, { primary: number; secondary: number }> = {
-  recrue: SERVICE_LIMITS.pro,
-  pro: SERVICE_LIMITS.premium,
-  premium: SERVICE_LIMITS.elite,
-  elite: SERVICE_LIMITS.signature,
-  signature: SERVICE_LIMITS.signature,
-};
 
 /** Master service list — grouped by trade */
 const SERVICE_CATALOG: { group: string; services: string[] }[] = [
