@@ -138,7 +138,7 @@ export default function HeroSection() {
           {/* Image behind text on mobile, side-by-side on desktop */}
           <div className="relative md:grid md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8 md:items-start">
             {/* Mobile background image */}
-            <div className="absolute top-0 right-0 w-[55%] h-[320px] md:hidden pointer-events-none">
+            <div className="absolute top-0 right-0 w-[55%] h-[260px] md:hidden pointer-events-none">
               <AnimatePresence mode="wait">
                 <motion.img
                   key={current.image}
@@ -162,7 +162,7 @@ export default function HeroSection() {
               <img
                 src={unproRobot}
                 alt="Alex UNPRO"
-                className="absolute -right-1 -bottom-4 w-[44px] drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)]"
+                className="absolute -right-1 -bottom-4 w-[56px] drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)]"
               />
             </div>
 
