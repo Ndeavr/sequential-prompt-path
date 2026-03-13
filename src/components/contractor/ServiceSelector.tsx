@@ -418,70 +418,14 @@ export default function ServiceSelector({
         ))}
       </div>
 
-      {/* Upsell dialog */}
-      <Dialog open={showUpsell} onOpenChange={setShowUpsell}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-primary" />
-              Limite de services atteinte
-            </DialogTitle>
-            <DialogDescription className="text-sm">
-              Votre plan <span className="font-semibold text-foreground">{planName}</span> inclut{" "}
-              {upsellType === "primary" ? (
-                <><span className="font-semibold text-foreground">{maxPrimary} services principaux</span>.</>
-              ) : (
-                <><span className="font-semibold text-foreground">{maxSecondary} services secondaires</span>.</>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <Card className="bg-primary/5 border-primary/20">
-              <CardContent className="p-4 space-y-3">
-                <p className="text-sm font-semibold text-foreground">
-                  Passez au plan {NEXT_PLAN[planCode] || "supérieur"}
-                </p>
-                <ul className="text-xs text-muted-foreground space-y-1.5">
-                  <li className="flex items-center gap-1.5">
-                    <Check className="w-3 h-3 text-primary shrink-0" />
-                    Jusqu'à {nextLimits.primary} services principaux
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <Check className="w-3 h-3 text-primary shrink-0" />
-                    Jusqu'à {nextLimits.secondary} services secondaires
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <Check className="w-3 h-3 text-primary shrink-0" />
-                    Visibilité SEO sur plus de pages locales
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <Check className="w-3 h-3 text-primary shrink-0" />
-                    Matching amélioré avec plus de types de projets
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <Check className="w-3 h-3 text-primary shrink-0" />
-                    Plus de leads qualifiés par mois
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setShowUpsell(false)} className="flex-1">
-                Plus tard
-              </Button>
-              <Button
-                onClick={() => {
-                  setShowUpsell(false);
-                  navigate("/pro/billing");
-                }}
-                className="flex-1 gap-1"
-              >
-                Voir les plans <ArrowUpRight className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Upsell */}
+      <UpgradeWindow
+        open={showUpsell}
+        onOpenChange={setShowUpsell}
+        trigger="services_limit"
+        currentPlanId={planCode}
+        currentLimit={upsellType === "primary" ? maxPrimary : maxSecondary}
+      />
     </div>
   );
 }
