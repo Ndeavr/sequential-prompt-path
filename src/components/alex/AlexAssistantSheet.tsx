@@ -302,7 +302,7 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
                 </motion.div>
                 <div className="space-y-1">
                   <p className="text-lg font-bold" style={{ color: "#0B1533" }}>{greeting}</p>
-                  <p className="text-sm" style={{ color: "#6C7A92" }}>Quel projet avez-vous en tête ?</p>
+                  <p className="text-sm" style={{ color: "#6C7A92" }}>Comment puis-je vous aider ?</p>
                 </div>
                 <div className="flex gap-4 w-full max-w-xs">
                   {supported && (
