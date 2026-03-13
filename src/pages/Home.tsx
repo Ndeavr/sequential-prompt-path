@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import FeaturedCarousel from "@/components/home/FeaturedCarousel";
 import HeroSection from "@/components/home/HeroSection";
+import VerificationFeatureCard from "@/components/home/VerificationFeatureCard";
 import MainLayout from "@/layouts/MainLayout";
 import { motion } from "framer-motion";
 import { useState } from "react";
