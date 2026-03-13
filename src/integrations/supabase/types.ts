@@ -7155,6 +7155,10 @@ export type Database = {
         Args: { plan_code: string }
         Returns: number
       }
+      get_service_limit: {
+        Args: { plan_code: string; service_type?: string }
+        Returns: number
+      }
       get_upgrade_recommendations: {
         Args: { _contractor_id: string }
         Returns: Json
