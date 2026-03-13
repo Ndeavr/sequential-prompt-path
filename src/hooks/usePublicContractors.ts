@@ -63,7 +63,6 @@ export const usePublicContractorProfile = (id: string | undefined) => {
         .from("contractors")
         .select(PUBLIC_FIELDS)
         .eq("id", id!)
-        .eq("verification_status", "verified")
         .maybeSingle();
       if (error) throw error;
       return data;

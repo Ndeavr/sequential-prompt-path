@@ -1,11 +1,11 @@
 /**
  * UNPRO — Featured Contractors Rotating Carousel
  * Auto-rotates through featured contractors with images.
- * In production, data comes from agent-selected contractors based on geo/user context.
+ * Premium "Voir profil" button with release-trigger pattern.
  */
 
-import { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShieldCheck, Star, MapPin, Clock, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { usePublicContractorSearch } from "@/hooks/usePublicContractors";
@@ -22,7 +22,77 @@ const fallbackContractors = [
 
 const AUTOPLAY_MS = 4000;
 
+/* ── Premium Release-Trigger Button ── */
+const PremiumProfileButton = ({ contractorId }: { contractorId: string }) => {
+  const navigate = useNavigate();
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [pressed, setPressed] = useState(false);
+  const [ripple, setRipple] = useState(false);
+
+  const handleRelease = useCallback(() => {
+    if (!pressed) return;
+    setPressed(false);
+    setRipple(true);
+    // Intentional delay for momentum feel
+    setTimeout(() => {
+      navigate(`/contractors/${contractorId}`);
+    }, 180);
+    setTimeout(() => setRipple(false), 500);
+  }, [pressed, contractorId, navigate]);
+
+  return (
+    <motion.button
+      ref={btnRef}
+      className="relative shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-xl overflow-hidden text-[12px] font-bold tracking-wide"
+      style={{
+        background: "linear-gradient(135deg, hsl(222 100% 61%), hsl(222 100% 55%))",
+        color: "white",
+        boxShadow: pressed
+          ? "0 2px 8px hsl(222 100% 61% / 0.2)"
+          : "0 4px 16px hsl(222 100% 61% / 0.3), 0 0 0 0 hsl(222 100% 61% / 0)",
+      }}
+      onPointerDown={() => setPressed(true)}
+      onPointerUp={handleRelease}
+      onPointerLeave={() => setPressed(false)}
+      animate={{
+        scale: pressed ? 0.94 : 1,
+        y: pressed ? 1 : 0,
+      }}
+      transition={{ type: "spring", stiffness: 500, damping: 25 }}
+      whileHover={{ scale: 1.04, boxShadow: "0 6px 24px hsl(222 100% 61% / 0.35)" }}
+    >
+      {/* Ripple on release */}
+      <AnimatePresence>
+        {ripple && (
+          <motion.div
+            className="absolute inset-0 rounded-xl"
+            style={{ background: "radial-gradient(circle, hsl(0 0% 100% / 0.35) 0%, transparent 70%)" }}
+            initial={{ scale: 0, opacity: 1 }}
+            animate={{ scale: 2.5, opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Shine sweep */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: "linear-gradient(120deg, transparent 30%, hsl(0 0% 100% / 0.15) 50%, transparent 70%)",
+        }}
+        animate={{ x: ["-120%", "120%"] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", repeatDelay: 4 }}
+      />
+
+      <span className="relative z-10">Voir profil</span>
+      <ArrowRight className="h-3.5 w-3.5 relative z-10" />
+    </motion.button>
+  );
+};
+
 const FeaturedCarousel = () => {
+  const navigate = useNavigate();
   const { data: dbContractors } = usePublicContractorSearch({ sort: "aipp" });
   const contractors = dbContractors && dbContractors.length >= 3 ? dbContractors.slice(0, 6) : fallbackContractors;
 
@@ -49,9 +119,12 @@ const FeaturedCarousel = () => {
             <p className="text-caption font-semibold text-primary tracking-widest uppercase mb-2">Entrepreneurs vedettes</p>
             <h2 className="font-display text-title text-foreground">Vérifiés, certifiés, recommandés</h2>
           </div>
-          <Link to="/search" className="hidden sm:flex items-center gap-1.5 text-meta font-semibold text-primary hover:gap-2.5 transition-all">
+          <button
+            onClick={() => navigate("/search")}
+            className="hidden sm:flex items-center gap-1.5 text-meta font-semibold text-primary hover:gap-2.5 transition-all"
+          >
             Voir tous <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          </button>
         </div>
 
         {/* Carousel */}
@@ -108,12 +181,7 @@ const FeaturedCarousel = () => {
                         <p className="text-meta text-muted-foreground mt-1">{c.specialty}</p>
                       )}
                     </div>
-                    <Link
-                      to={`/contractors/${c.id}`}
-                      className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-primary-foreground text-caption font-semibold hover:shadow-glow transition-shadow"
-                    >
-                      Voir profil <ArrowRight className="h-3 w-3" />
-                    </Link>
+                    <PremiumProfileButton contractorId={c.id} />
                   </div>
 
                   {/* Stats row */}
