@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.import-business-website]
 verify_jwt = false
+
+[functions.search-gmb-profile]
+verify_jwt = false
