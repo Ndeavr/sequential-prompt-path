@@ -24,6 +24,7 @@ import MainLayout from "@/layouts/MainLayout";
 import { useContractorQuestionnaire } from "@/hooks/useContractorQuestionnaire";
 import CategorySelector, { CategorySelection } from "@/components/contractor/CategorySelector";
 import CitySelector, { CitySelection } from "@/components/contractor/CitySelector";
+import ServiceSelector, { ServiceSelection, SERVICE_LIMITS } from "@/components/contractor/ServiceSelector";
 import { toast } from "sonner";
 
 /** City limits per plan code */
@@ -297,31 +298,51 @@ export default function ContractorQuestionnairePage() {
                 </>
               )}
 
-              {step === 3 && (
-                <>
-                  <StepHeader title="Services offerts" subtitle="Précisez ce que vous faites et comment." />
-                  <FieldWrapper label="Types de projets" aippBoost={5}>
-                    <ChipSelector options={PROJECT_TYPES} selected={form.project_types} onToggle={(v) => toggleArrayField("project_types", v)} />
-                  </FieldWrapper>
-                  <FieldWrapper label="Portée de service" aippBoost={5}>
-                    <ChipSelector
-                      options={SERVICE_SCOPES.map((s) => s.label)}
-                      selected={form.service_scope}
-                      onToggle={(v) => toggleArrayField("service_scope", v)}
-                    />
-                  </FieldWrapper>
-                  <div className="flex items-center justify-between bg-card rounded-lg border border-border p-3">
-                    <div className="space-y-0.5">
-                      <p className="text-sm font-medium text-foreground">Service d'urgence 24/7</p>
-                      <p className="text-[10px] text-muted-foreground">Disponible en dehors des heures normales</p>
+              {step === 3 && (() => {
+                const planCode = "pro"; // TODO: get from subscription
+                const limits = SERVICE_LIMITS[planCode] || SERVICE_LIMITS.recrue;
+                return (
+                  <>
+                    <StepHeader title="Services offerts" subtitle="Précisez ce que vous faites et comment." />
+                    <FieldWrapper label="Services" aippBoost={10}>
+                      <ServiceSelector
+                        selection={{
+                          primaryServices: form.primary_services,
+                          secondaryServices: form.secondary_services,
+                        }}
+                        onSelectionChange={(sel: ServiceSelection) => {
+                          updateField("primary_services", sel.primaryServices);
+                          updateField("secondary_services", sel.secondaryServices);
+                        }}
+                        maxPrimary={limits.primary}
+                        maxSecondary={limits.secondary}
+                        planName={PLAN_LABELS[planCode] || "Pro"}
+                        planCode={planCode}
+                      />
+                    </FieldWrapper>
+                    <FieldWrapper label="Types de projets" aippBoost={5}>
+                      <ChipSelector options={PROJECT_TYPES} selected={form.project_types} onToggle={(v) => toggleArrayField("project_types", v)} />
+                    </FieldWrapper>
+                    <FieldWrapper label="Portée de service" aippBoost={5}>
+                      <ChipSelector
+                        options={SERVICE_SCOPES.map((s) => s.label)}
+                        selected={form.service_scope}
+                        onToggle={(v) => toggleArrayField("service_scope", v)}
+                      />
+                    </FieldWrapper>
+                    <div className="flex items-center justify-between bg-card rounded-lg border border-border p-3">
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-medium text-foreground">Service d'urgence 24/7</p>
+                        <p className="text-[10px] text-muted-foreground">Disponible en dehors des heures normales</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-primary font-semibold">+5 AIPP</span>
+                        <Switch checked={form.emergency_service} onCheckedChange={(v) => updateField("emergency_service", v)} />
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-primary font-semibold">+5 AIPP</span>
-                      <Switch checked={form.emergency_service} onCheckedChange={(v) => updateField("emergency_service", v)} />
-                    </div>
-                  </div>
-                </>
-              )}
+                  </>
+                );
+              })()}
 
               {step === 4 && (() => {
                 const planCode = "pro"; // TODO: get from subscription
