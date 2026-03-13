@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Globe, Search, Loader2, CheckCircle2, XCircle, AlertTriangle,
@@ -13,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import MainLayout from "@/layouts/MainLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 type FieldStatus = "accepted" | "corrected" | "ignored" | "pending";
 
