@@ -45,7 +45,8 @@ const Home = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
+    <MainLayout>
+    <div className="flex flex-col bg-background text-foreground">
 
       {/* ═══ HERO ═══ */}
       <HeroSection />
