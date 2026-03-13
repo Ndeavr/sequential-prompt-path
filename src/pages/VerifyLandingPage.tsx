@@ -272,34 +272,33 @@ export default function VerifyLandingPage() {
               subtitle="Un processus automatisé en 5 étapes, complété en moins d'une minute."
             />
 
-            <div className="max-w-2xl mx-auto space-y-0">
-              {STEPS.map((step, i) => {
-                const ref = useRef(null);
-                const inView = useInView(ref, { once: true, margin: "-40px" });
-                return (
-                  <motion.div
-                    key={step.num}
-                    ref={ref}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={inView ? { opacity: 1, x: 0 } : {}}
-                    transition={{ delay: i * 0.1, duration: 0.5 }}
-                    className="relative flex gap-5 pb-8 last:pb-0"
-                  >
-                    {/* Connector line */}
-                    {i < STEPS.length - 1 && (
-                      <div className="absolute left-[22px] top-12 bottom-0 w-px bg-gradient-to-b from-primary/20 to-transparent" />
-                    )}
-                    <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <span className="text-xs font-bold font-display text-primary">{step.num}</span>
-                    </div>
-                    <div className="pt-1">
-                      <h3 className="text-sm font-semibold text-foreground mb-1">{step.title}</h3>
-                      <p className="text-xs text-muted-foreground">{step.desc}</p>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-40px" }}
+              variants={staggerContainer}
+              className="max-w-2xl mx-auto space-y-0"
+            >
+              {STEPS.map((step, i) => (
+                <motion.div
+                  key={step.num}
+                  variants={fadeUp}
+                  custom={i}
+                  className="relative flex gap-5 pb-8 last:pb-0"
+                >
+                  {i < STEPS.length - 1 && (
+                    <div className="absolute left-[22px] top-12 bottom-0 w-px bg-gradient-to-b from-primary/20 to-transparent" />
+                  )}
+                  <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <span className="text-xs font-bold font-display text-primary">{step.num}</span>
+                  </div>
+                  <div className="pt-1">
+                    <h3 className="text-sm font-semibold text-foreground mb-1">{step.title}</h3>
+                    <p className="text-xs text-muted-foreground">{step.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
         </section>
 
