@@ -114,7 +114,7 @@ export const useNavigationContext = (): {
             unreadLeadsCount: unreadLeads,
             upcomingAppointmentsCount: upcomingCOAppts,
             reviewsCount: contractor.review_count ?? 0,
-            isPublished: contractor.verification_status === "approved",
+            isPublished: contractor.verification_status === "verified",
             businessName: contractor.business_name,
           }
         : undefined,
