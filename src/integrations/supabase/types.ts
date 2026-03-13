@@ -2165,6 +2165,119 @@ export type Database = {
           },
         ]
       }
+      contractor_verification_searches: {
+        Row: {
+          business_card_uploaded: boolean | null
+          city: string | null
+          contract_uploaded: boolean | null
+          created_at: string | null
+          detected_business_name: string | null
+          detected_contractor_id: string | null
+          detected_neq: string | null
+          detected_rbq: string | null
+          device_type: string | null
+          id: string
+          is_logged_in: boolean | null
+          license_fit_score: number | null
+          normalized_phone: string | null
+          project_type: string | null
+          referrer: string | null
+          result_found: boolean | null
+          search_query: string | null
+          search_type: string | null
+          session_id: string | null
+          source_page: string | null
+          truck_uploaded: boolean | null
+          trust_score: number | null
+          user_id: string | null
+          verdict: string | null
+          visual_validation_used: boolean | null
+        }
+        Insert: {
+          business_card_uploaded?: boolean | null
+          city?: string | null
+          contract_uploaded?: boolean | null
+          created_at?: string | null
+          detected_business_name?: string | null
+          detected_contractor_id?: string | null
+          detected_neq?: string | null
+          detected_rbq?: string | null
+          device_type?: string | null
+          id?: string
+          is_logged_in?: boolean | null
+          license_fit_score?: number | null
+          normalized_phone?: string | null
+          project_type?: string | null
+          referrer?: string | null
+          result_found?: boolean | null
+          search_query?: string | null
+          search_type?: string | null
+          session_id?: string | null
+          source_page?: string | null
+          truck_uploaded?: boolean | null
+          trust_score?: number | null
+          user_id?: string | null
+          verdict?: string | null
+          visual_validation_used?: boolean | null
+        }
+        Update: {
+          business_card_uploaded?: boolean | null
+          city?: string | null
+          contract_uploaded?: boolean | null
+          created_at?: string | null
+          detected_business_name?: string | null
+          detected_contractor_id?: string | null
+          detected_neq?: string | null
+          detected_rbq?: string | null
+          device_type?: string | null
+          id?: string
+          is_logged_in?: boolean | null
+          license_fit_score?: number | null
+          normalized_phone?: string | null
+          project_type?: string | null
+          referrer?: string | null
+          result_found?: boolean | null
+          search_query?: string | null
+          search_type?: string | null
+          session_id?: string | null
+          source_page?: string | null
+          truck_uploaded?: boolean | null
+          trust_score?: number | null
+          user_id?: string | null
+          verdict?: string | null
+          visual_validation_used?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_verification_searches_detected_contractor_id_fkey"
+            columns: ["detected_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_verification_searches_detected_contractor_id_fkey"
+            columns: ["detected_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_verification_searches_detected_contractor_id_fkey"
+            columns: ["detected_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_verification_searches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractors: {
         Row: {
           address: string | null
