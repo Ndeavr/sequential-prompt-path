@@ -273,11 +273,11 @@ export default function HeroSection() {
               </div>
             </div>
 
-            {/* Right column: image + robot */}
-            <div className="relative w-full row-span-2 md:row-span-1">
+            {/* Right column: image + robot — desktop only */}
+            <div className="relative hidden md:block w-full">
               <div
-                className="relative overflow-hidden rounded-[20px] shadow-[0_22px_64px_rgba(34,72,145,0.18)] sm:rounded-[28px] md:rounded-[32px]"
-                style={{ background: "rgba(255,255,255,0.75)", border: "1px solid #DFE9F5" }}
+                className="relative overflow-hidden rounded-[32px]"
+                style={{ border: "1px solid #DFE9F5" }}
               >
                 <AnimatePresence mode="wait">
                   <motion.img
@@ -292,7 +292,7 @@ export default function HeroSection() {
                     transition={{ duration: 0.5, ease: "easeOut" }}
                   />
                 </AnimatePresence>
-                {/* Gradient fade to white at bottom */}
+                {/* Gradient fade to background */}
                 <div
                   className="pointer-events-none absolute inset-0"
                   style={{
@@ -303,7 +303,7 @@ export default function HeroSection() {
               <img
                 src={unproRobot}
                 alt="Alex UNPRO"
-                className="absolute -right-2 -bottom-5 w-[48px] drop-shadow-[0_12px_20px_rgba(0,0,0,0.18)] sm:w-[70px] md:-right-4 md:-bottom-7 md:w-[112px]"
+                className="absolute -right-4 -bottom-7 w-[112px] drop-shadow-[0_12px_20px_rgba(0,0,0,0.18)]"
               />
             </div>
           </div>
