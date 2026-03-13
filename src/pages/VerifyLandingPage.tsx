@@ -1,16 +1,17 @@
-import { useState, useEffect, useRef } from "react";
-import { motion, useInView, AnimatePresence } from "framer-motion";
+import { useState, useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { VerificationTimeline } from "@/components/verification";
 import {
   Shield, Search, FileText, Building2, Fingerprint, ShieldAlert,
-  Eye, Camera, ArrowRight, CheckCircle2, AlertTriangle, XCircle,
-  Ban, Loader2, ClipboardCheck, MessageSquare, Phone,
-  Truck, CreditCard, Lock, FileCheck, Wrench, DollarSign,
-  ShieldCheck, Sparkles, Upload, MapPin, Globe, Hash,
+  Eye, Camera, ArrowRight, CheckCircle2,
+  ClipboardCheck, MessageSquare, Phone,
+  Lock, FileCheck, Wrench, DollarSign,
+  ShieldCheck, Sparkles, Upload, Globe, Hash, MapPin,
 } from "lucide-react";
 
 /* ─── Animation variants ─── */
