@@ -37,6 +37,7 @@ import CoproprietePage from "@/pages/CoproprietePage";
 import BuildingIntelligenceMap from "@/pages/BuildingIntelligenceMap";
 import AnswerEnginePage from "@/pages/AnswerEnginePage";
 import BusinessImportPage from "@/pages/BusinessImportPage";
+import GmbLinkPage from "@/pages/GmbLinkPage";
 
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
@@ -169,6 +170,7 @@ export const AppRouter = () => (
       <Route path="/pro/leads/:id" element={<ProtectedRoute requiredRole="contractor"><ProLeadDetail /></ProtectedRoute>} />
       <Route path="/pro/billing" element={<ProtectedRoute requiredRole="contractor"><ProBilling /></ProtectedRoute>} />
       <Route path="/pro/territories" element={<ProtectedRoute requiredRole="contractor"><ProTerritories /></ProtectedRoute>} />
+      <Route path="/pro/gmb-link" element={<ProtectedRoute requiredRole="contractor"><GmbLinkPage /></ProtectedRoute>} />
 
       {/* Admin */}
       <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />

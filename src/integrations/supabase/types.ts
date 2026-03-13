@@ -1134,6 +1134,115 @@ export type Database = {
           },
         ]
       }
+      contractor_gmb_profiles: {
+        Row: {
+          contractor_id: string
+          created_at: string | null
+          gmb_address: string | null
+          gmb_categories_secondary: string[] | null
+          gmb_category_primary: string | null
+          gmb_description: string | null
+          gmb_hours: Json | null
+          gmb_latitude: number | null
+          gmb_longitude: number | null
+          gmb_name: string | null
+          gmb_phone: string | null
+          gmb_photos_urls: string[] | null
+          gmb_place_id: string
+          gmb_qanda: Json | null
+          gmb_rating: number | null
+          gmb_review_count: number | null
+          gmb_website: string | null
+          id: string
+          is_confirmed: boolean | null
+          last_synced_at: string | null
+          linked_at: string | null
+          linked_by: string | null
+          match_confidence: number | null
+          match_signals: Json | null
+          raw_response: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string | null
+          gmb_address?: string | null
+          gmb_categories_secondary?: string[] | null
+          gmb_category_primary?: string | null
+          gmb_description?: string | null
+          gmb_hours?: Json | null
+          gmb_latitude?: number | null
+          gmb_longitude?: number | null
+          gmb_name?: string | null
+          gmb_phone?: string | null
+          gmb_photos_urls?: string[] | null
+          gmb_place_id: string
+          gmb_qanda?: Json | null
+          gmb_rating?: number | null
+          gmb_review_count?: number | null
+          gmb_website?: string | null
+          id?: string
+          is_confirmed?: boolean | null
+          last_synced_at?: string | null
+          linked_at?: string | null
+          linked_by?: string | null
+          match_confidence?: number | null
+          match_signals?: Json | null
+          raw_response?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string | null
+          gmb_address?: string | null
+          gmb_categories_secondary?: string[] | null
+          gmb_category_primary?: string | null
+          gmb_description?: string | null
+          gmb_hours?: Json | null
+          gmb_latitude?: number | null
+          gmb_longitude?: number | null
+          gmb_name?: string | null
+          gmb_phone?: string | null
+          gmb_photos_urls?: string[] | null
+          gmb_place_id?: string
+          gmb_qanda?: Json | null
+          gmb_rating?: number | null
+          gmb_review_count?: number | null
+          gmb_website?: string | null
+          id?: string
+          is_confirmed?: boolean | null
+          last_synced_at?: string | null
+          linked_at?: string | null
+          linked_by?: string | null
+          match_confidence?: number | null
+          match_signals?: Json | null
+          raw_response?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_gmb_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_gmb_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_gmb_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_media: {
         Row: {
           alt_text: string | null
@@ -1503,6 +1612,97 @@ export type Database = {
           },
           {
             foreignKeyName: "contractor_public_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_review_aggregates: {
+        Row: {
+          average_rating: number | null
+          contractor_id: string
+          created_at: string | null
+          data_source: string
+          id: string
+          last_computed_at: string | null
+          owner_response_count: number | null
+          owner_response_rate: number | null
+          rating_1: number | null
+          rating_2: number | null
+          rating_3: number | null
+          rating_4: number | null
+          rating_5: number | null
+          recent_review_date: string | null
+          sentiment_negative: number | null
+          sentiment_neutral: number | null
+          sentiment_positive: number | null
+          top_keywords: string[] | null
+          total_reviews: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          average_rating?: number | null
+          contractor_id: string
+          created_at?: string | null
+          data_source?: string
+          id?: string
+          last_computed_at?: string | null
+          owner_response_count?: number | null
+          owner_response_rate?: number | null
+          rating_1?: number | null
+          rating_2?: number | null
+          rating_3?: number | null
+          rating_4?: number | null
+          rating_5?: number | null
+          recent_review_date?: string | null
+          sentiment_negative?: number | null
+          sentiment_neutral?: number | null
+          sentiment_positive?: number | null
+          top_keywords?: string[] | null
+          total_reviews?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          average_rating?: number | null
+          contractor_id?: string
+          created_at?: string | null
+          data_source?: string
+          id?: string
+          last_computed_at?: string | null
+          owner_response_count?: number | null
+          owner_response_rate?: number | null
+          rating_1?: number | null
+          rating_2?: number | null
+          rating_3?: number | null
+          rating_4?: number | null
+          rating_5?: number | null
+          recent_review_date?: string | null
+          sentiment_negative?: number | null
+          sentiment_neutral?: number | null
+          sentiment_positive?: number | null
+          top_keywords?: string[] | null
+          total_reviews?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_review_aggregates_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_review_aggregates_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_review_aggregates_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
