@@ -340,26 +340,93 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
             ) : mode === "voice" ? (
               /* ─── Voice mode (auto-started) ─── */
               <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 text-center space-y-5">
-                <motion.div
-                  className="h-24 w-24 rounded-full flex items-center justify-center relative"
-                  style={{
-                    background: "linear-gradient(135deg, #3F7BFF, #06B6D4)",
-                    boxShadow: "0 8px 32px rgba(63,123,255,0.3)",
-                  }}
-                  animate={listening ? { scale: [1, 1.08, 1] } : { scale: 1 }}
-                  transition={{ duration: 1.2, repeat: listening ? Infinity : 0, ease: "easeInOut" }}
-                >
+                {/* Premium animated orb */}
+                <div className="relative flex items-center justify-center">
+                  {/* Outer halo — slow color-shifting spin */}
+                  <motion.div
+                    className="absolute rounded-full"
+                    style={{
+                      width: 180,
+                      height: 180,
+                      background: "conic-gradient(from 0deg, hsl(222 100% 61% / 0.12), hsl(195 100% 50% / 0.18), hsl(252 100% 65% / 0.12), hsl(38 92% 50% / 0.06), hsl(222 100% 61% / 0.12))",
+                    }}
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                  />
+
+                  {/* Breathing glow ring */}
+                  <motion.div
+                    className="absolute rounded-full"
+                    style={{
+                      width: 160,
+                      height: 160,
+                      background: "radial-gradient(circle, hsl(222 100% 61% / 0.18) 0%, hsl(252 100% 65% / 0.08) 50%, transparent 70%)",
+                    }}
+                    animate={{ scale: [1, 1.15, 1], opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  />
+
+                  {/* Pulse rings when listening */}
                   {listening && [0, 1, 2].map((i) => (
                     <motion.div
                       key={i}
-                      className="absolute inset-0 rounded-full"
-                      style={{ border: "2px solid rgba(63,123,255,0.2)" }}
-                      animate={{ scale: [1, 1.4 + i * 0.2], opacity: [0.5, 0] }}
-                      transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.3, ease: "easeOut" }}
+                      className="absolute rounded-full"
+                      style={{
+                        width: 120,
+                        height: 120,
+                        border: "2px solid hsl(222 100% 61% / 0.15)",
+                      }}
+                      animate={{ scale: [1, 1.6 + i * 0.25], opacity: [0.6, 0] }}
+                      transition={{ duration: 2, repeat: Infinity, delay: i * 0.4, ease: "easeOut" }}
                     />
                   ))}
-                  <Mic className="h-10 w-10 text-white relative z-10" />
-                </motion.div>
+
+                  {/* Main orb with color-shifting gradient */}
+                  <motion.div
+                    className="relative rounded-full flex items-center justify-center overflow-hidden"
+                    style={{
+                      width: 120,
+                      height: 120,
+                      boxShadow: "0 12px 40px -8px hsl(222 100% 61% / 0.4), 0 0 24px -4px hsl(195 100% 50% / 0.25), inset 0 1px 2px hsl(0 0% 100% / 0.3)",
+                    }}
+                    animate={listening ? { scale: [1, 1.06, 1] } : { scale: [1, 1.03, 1] }}
+                    transition={{ duration: listening ? 1.2 : 3.5, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    {/* Animated gradient background */}
+                    <motion.div
+                      className="absolute inset-0"
+                      animate={{
+                        background: [
+                          "linear-gradient(135deg, hsl(222 100% 61%), hsl(252 100% 65%), hsl(195 100% 50%))",
+                          "linear-gradient(225deg, hsl(252 100% 65%), hsl(195 100% 55%), hsl(222 100% 65%))",
+                          "linear-gradient(315deg, hsl(195 100% 50%), hsl(222 100% 61%), hsl(252 100% 70%))",
+                          "linear-gradient(135deg, hsl(222 100% 61%), hsl(252 100% 65%), hsl(195 100% 50%))",
+                        ],
+                      }}
+                      transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                    />
+
+                    {/* Specular highlight */}
+                    <motion.div
+                      className="absolute inset-0 rounded-full"
+                      style={{
+                        background: "radial-gradient(ellipse 60% 50% at 35% 25%, hsl(0 0% 100% / 0.3), transparent 60%)",
+                      }}
+                    />
+
+                    {/* Shine sweep */}
+                    <motion.div
+                      className="absolute inset-0"
+                      style={{
+                        background: "linear-gradient(120deg, transparent 30%, hsl(0 0% 100% / 0.18) 50%, transparent 70%)",
+                      }}
+                      animate={{ x: ["-120%", "120%"] }}
+                      transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", repeatDelay: 3 }}
+                    />
+
+                    <Mic className="h-11 w-11 text-white relative z-10 drop-shadow-sm" />
+                  </motion.div>
+                </div>
 
                 <div className="space-y-1">
                   <p className="text-lg font-bold" style={{ color: "#0B1533" }}>
