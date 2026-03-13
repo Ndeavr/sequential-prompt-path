@@ -5,11 +5,13 @@ type Msg = { role: "user" | "assistant"; content: string };
 
 const ALEX_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-chat`;
 
-export const useAlex = () => {
+export const useAlex = (onResponseComplete?: (fullText: string) => void) => {
   const { session, isAuthenticated, role } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const onResponseCompleteRef = useRef(onResponseComplete);
+  onResponseCompleteRef.current = onResponseComplete;
 
   const sendMessage = useCallback(
     async (
@@ -142,6 +144,10 @@ export const useAlex = () => {
       } finally {
         setIsStreaming(false);
         abortRef.current = null;
+        // Notify that the full response is ready
+        if (assistantSoFar) {
+          onResponseCompleteRef.current?.(assistantSoFar);
+        }
       }
     },
     [messages, session, isAuthenticated, role]
