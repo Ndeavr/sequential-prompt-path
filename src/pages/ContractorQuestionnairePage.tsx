@@ -23,7 +23,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import MainLayout from "@/layouts/MainLayout";
 import { useContractorQuestionnaire } from "@/hooks/useContractorQuestionnaire";
 import CategorySelector, { CategorySelection } from "@/components/contractor/CategorySelector";
+import CitySelector, { CitySelection } from "@/components/contractor/CitySelector";
 import { toast } from "sonner";
+
+/** City limits per plan code */
+const CITY_LIMITS: Record<string, number> = {
+  signature: 50, elite: 25, premium: 15, pro: 8, recrue: 3,
+};
+const PLAN_LABELS: Record<string, string> = {
+  signature: "Signature", elite: "Élite", premium: "Premium", pro: "Pro", recrue: "Recrue",
+};
 
 const STEPS = [
   { id: 1, title: "Identité", icon: Building2 },
