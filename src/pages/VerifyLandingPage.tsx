@@ -47,12 +47,14 @@ const STEPS = [
 ];
 
 
-const VERDICTS_OVERVIEW = [
-  { verdict: "Succès", icon: CheckCircle2, color: "text-success", bg: "bg-success/10 border-success/20" },
-  { verdict: "Attention", icon: AlertTriangle, color: "text-warning", bg: "bg-warning/10 border-warning/20" },
-  { verdict: "Non-succès", icon: XCircle, color: "text-destructive", bg: "bg-destructive/10 border-destructive/20" },
-  { verdict: "Se tenir loin", icon: Ban, color: "text-destructive", bg: "bg-destructive/10 border-destructive/20" },
-];
+import { VERDICT_STYLES } from "@/components/verification";
+
+const VERDICTS_OVERVIEW = Object.entries(VERDICT_STYLES).map(([, cfg]) => ({
+  verdict: cfg.label,
+  icon: cfg.icon,
+  color: cfg.color,
+  bg: `${cfg.bg} ${cfg.border}`,
+}));
 
 const CHECKLIST = [
   { icon: FileCheck, label: "Contrat écrit détaillé" },
