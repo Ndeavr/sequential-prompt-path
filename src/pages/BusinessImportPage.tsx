@@ -159,6 +159,9 @@ export default function BusinessImportPage() {
   const confidenceColor = (c: number) =>
     c >= 0.8 ? "text-emerald-400" : c >= 0.5 ? "text-amber-400" : "text-red-400";
 
+  const confidenceBg = (c: number) =>
+    c >= 0.8 ? "bg-emerald-400/10" : c >= 0.5 ? "bg-amber-400/10" : "bg-red-400/10";
+
   const createProfile = useCallback(async () => {
     if (!user) {
       toast({ title: "Erreur", description: "Vous devez être connecté pour créer un profil.", variant: "destructive" });
