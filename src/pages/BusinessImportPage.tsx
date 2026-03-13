@@ -178,49 +178,97 @@ export default function BusinessImportPage() {
         const v = f.correctedValue ?? f.value;
         if (Array.isArray(v)) return v.join(", ");
         if (v === null || v === undefined) return null;
-        return String(v);
+        const clean = String(v).trim();
+        return clean.length > 0 ? clean : null;
       };
-      const getArr = (fieldName: string): string[] | null => {
+      const getArr = (fieldName: string): string[] => {
         const f = accepted.find(a => a.field === fieldName);
-        if (!f) return null;
+        if (!f) return [];
         const v = f.correctedValue ?? f.value;
-        if (Array.isArray(v)) return v;
+        if (Array.isArray(v)) return v.map(String).map(s => s.trim()).filter(Boolean);
         if (typeof v === "string") return v.split(",").map(s => s.trim()).filter(Boolean);
-        return null;
+        return [];
       };
 
       const businessName = getVal("company_name") || domain;
-      const slug = businessName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const slugBase = (businessName || "entrepreneur")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "") || "entrepreneur";
+      const websiteUrl = domain.startsWith("http") ? domain : `https://${domain}`;
 
-      // Create contractor
-      const { data: contractor, error: cError } = await supabase
+      const { data: existingContractor, error: existingError } = await supabase
         .from("contractors")
-        .insert({
-          user_id: user.id,
-          business_name: businessName,
-          specialty: getVal("service_categories"),
-          description: getVal("about_text"),
-          city: getVal("city"),
-          province: getVal("province"),
-          postal_code: getVal("postal_code"),
-          address: getVal("address"),
-          phone: getArr("phones")?.[0] || null,
-          email: getArr("emails")?.[0] || null,
-          website: domain.startsWith("http") ? domain : `https://${domain}`,
-          logo_url: getVal("logo_url"),
-          portfolio_urls: getArr("media_urls"),
-          slug,
-          verification_status: "pending" as any,
-        })
-        .select("id")
-        .single();
+        .select("id, slug")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-      if (cError) throw cError;
-      const contractorId = contractor.id;
+      if (existingError) throw existingError;
 
-      // Insert services
-      const primaryServices = getArr("primary_services") || [];
-      const secondaryServices = getArr("secondary_services") || [];
+      const contractorPayload: Record<string, any> = {
+        business_name: businessName,
+        website: websiteUrl,
+        verification_status: "pending" as const,
+      };
+
+      const assignIfPresent = (key: string, value: string | string[] | null) => {
+        if (Array.isArray(value)) {
+          if (value.length > 0) contractorPayload[key] = value;
+          return;
+        }
+        if (value !== null && value !== "") contractorPayload[key] = value;
+      };
+
+      assignIfPresent("specialty", getVal("service_categories"));
+      assignIfPresent("description", getVal("about_text"));
+      assignIfPresent("city", getVal("city"));
+      assignIfPresent("province", getVal("province"));
+      assignIfPresent("postal_code", getVal("postal_code"));
+      assignIfPresent("address", getVal("address"));
+      assignIfPresent("phone", getArr("phones")[0] || null);
+      assignIfPresent("email", getArr("emails")[0] || null);
+      assignIfPresent("logo_url", getVal("logo_url"));
+      assignIfPresent("portfolio_urls", getArr("media_urls"));
+
+      let contractorId: string;
+
+      if (existingContractor) {
+        if (!existingContractor.slug) {
+          contractorPayload.slug = `${slugBase}-${user.id.slice(0, 8)}`;
+        }
+
+        const { error: updateError } = await supabase
+          .from("contractors")
+          .update(contractorPayload)
+          .eq("id", existingContractor.id);
+
+        if (updateError) throw updateError;
+        contractorId = existingContractor.id;
+      } else {
+        const { data: contractor, error: createError } = await supabase
+          .from("contractors")
+          .insert({
+            user_id: user.id,
+            slug: `${slugBase}-${user.id.slice(0, 8)}`,
+            ...contractorPayload,
+          })
+          .select("id")
+          .single();
+
+        if (createError) throw createError;
+        contractorId = contractor.id;
+      }
+
+      await Promise.all([
+        supabase.from("contractor_services").delete().eq("contractor_id", contractorId).eq("data_source", "public_site_confirmed"),
+        supabase.from("contractor_service_areas").delete().eq("contractor_id", contractorId).eq("data_source", "public_site_confirmed"),
+        supabase.from("contractor_media").delete().eq("contractor_id", contractorId).eq("data_source", "public_site_confirmed"),
+      ]);
+
+      const primaryServices = getArr("primary_services");
+      const secondaryServices = getArr("secondary_services");
       const serviceInserts = [
         ...primaryServices.map((s, i) => ({
           contractor_id: contractorId,
@@ -239,47 +287,60 @@ export default function BusinessImportPage() {
           data_source: "public_site_confirmed",
         })),
       ];
-      if (serviceInserts.length > 0) {
-        await supabase.from("contractor_services").insert(serviceInserts);
-      }
 
-      // Insert service areas
-      const areas = getArr("service_areas") || [];
-      if (areas.length > 0) {
-        await supabase.from("contractor_service_areas").insert(
-          areas.map((a, i) => ({
-            contractor_id: contractorId,
-            city_name: a,
-            is_primary: i === 0,
-            data_source: "public_site_confirmed",
-          }))
-        );
-      }
-
-      // Insert media
-      const mediaUrls = getArr("media_urls") || [];
-      if (mediaUrls.length > 0) {
-        await supabase.from("contractor_media").insert(
-          mediaUrls.slice(0, 10).map((url, i) => ({
-            contractor_id: contractorId,
-            media_type: "photo",
-            public_url: url,
-            display_order: i,
-            data_source: "public_site_confirmed",
-            is_approved: false,
-          }))
-        );
-      }
-
-      // Create public page entry
-      await supabase.from("contractor_public_pages").insert({
+      const areas = getArr("service_areas");
+      const mediaUrls = getArr("media_urls");
+      const pagePayload: Record<string, any> = {
         contractor_id: contractorId,
-        slug,
-        is_published: false,
+        slug: existingContractor?.slug || `${slugBase}-${user.id.slice(0, 8)}`,
         seo_title: `${businessName} — UNPRO`,
-      });
+      };
+      if (!existingContractor) pagePayload.is_published = false;
 
-      toast({ title: "Profil créé !", description: `${businessName} a été importé avec ${accepted.length} champs.` });
+      const writePromises: Promise<any>[] = [
+        supabase.from("contractor_public_pages").upsert(pagePayload, { onConflict: "contractor_id" }),
+      ];
+
+      if (serviceInserts.length > 0) {
+        writePromises.push(supabase.from("contractor_services").insert(serviceInserts));
+      }
+
+      if (areas.length > 0) {
+        writePromises.push(
+          supabase.from("contractor_service_areas").insert(
+            areas.map((a, i) => ({
+              contractor_id: contractorId,
+              city_name: a,
+              is_primary: i === 0,
+              data_source: "public_site_confirmed",
+            }))
+          )
+        );
+      }
+
+      if (mediaUrls.length > 0) {
+        writePromises.push(
+          supabase.from("contractor_media").insert(
+            mediaUrls.slice(0, 10).map((url, i) => ({
+              contractor_id: contractorId,
+              media_type: "photo",
+              public_url: url,
+              display_order: i,
+              data_source: "public_site_confirmed",
+              is_approved: false,
+            }))
+          )
+        );
+      }
+
+      const writeResults = await Promise.all(writePromises);
+      const failedWrite = writeResults.find((res: any) => res?.error);
+      if (failedWrite?.error) throw failedWrite.error;
+
+      toast({
+        title: existingContractor ? "Profil mis à jour !" : "Profil créé !",
+        description: `${businessName} a été importé avec ${accepted.length} champs.`,
+      });
       navigate(`/pro`);
     } catch (err: any) {
       console.error("Create profile error:", err);
