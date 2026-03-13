@@ -5,17 +5,39 @@ const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tt
 export const useAlexVoice = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const currentObjectUrlRef = useRef<string | null>(null);
   const queueRef = useRef<string[]>([]);
   const processingRef = useRef(false);
   const onDoneRef = useRef<(() => void) | null>(null);
 
+  const cleanupObjectUrl = useCallback(() => {
+    if (currentObjectUrlRef.current) {
+      URL.revokeObjectURL(currentObjectUrlRef.current);
+      currentObjectUrlRef.current = null;
+    }
+  }, []);
+
+  const finishIfIdle = useCallback(() => {
+    if (!processingRef.current && queueRef.current.length === 0) {
+      setIsSpeaking(false);
+      const done = onDoneRef.current;
+      onDoneRef.current = null;
+      done?.();
+    }
+  }, []);
+
   const processQueue = useCallback(async () => {
-    console.log("[AlexVoice] processQueue called, processing:", processingRef.current, "queue:", queueRef.current.length);
-    if (processingRef.current || queueRef.current.length === 0) {
-      if (queueRef.current.length === 0) {
-        setIsSpeaking(false);
-        onDoneRef.current?.();
-      }
+    console.log(
+      "[AlexVoice] processQueue called, processing:",
+      processingRef.current,
+      "queue:",
+      queueRef.current.length
+    );
+
+    if (processingRef.current) return;
+
+    if (queueRef.current.length === 0) {
+      finishIfIdle();
       return;
     }
 
@@ -39,38 +61,51 @@ export const useAlexVoice = () => {
       if (!response.ok) {
         console.error("TTS fetch failed:", response.status);
         processingRef.current = false;
-        processQueue();
+        queueMicrotask(() => processQueue());
         return;
       }
 
       const blob = await response.blob();
+      cleanupObjectUrl();
       const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
+      currentObjectUrlRef.current = url;
+
+      const audio = audioRef.current ?? new Audio();
       audioRef.current = audio;
+      audio.src = url;
+      audio.preload = "auto";
 
       audio.onended = () => {
-        URL.revokeObjectURL(url);
-        audioRef.current = null;
+        cleanupObjectUrl();
         processingRef.current = false;
-        processQueue();
+        queueMicrotask(() => processQueue());
       };
 
       audio.onerror = () => {
-        URL.revokeObjectURL(url);
-        audioRef.current = null;
+        cleanupObjectUrl();
         processingRef.current = false;
-        processQueue();
+        queueMicrotask(() => processQueue());
       };
 
-      await audio.play().catch((playErr) => {
-        console.error("[AlexVoice] audio.play() rejected:", playErr?.name, playErr?.message);
-      });
+      try {
+        await audio.play();
+      } catch (playErr: any) {
+        console.error(
+          "[AlexVoice] audio.play() rejected:",
+          playErr?.name,
+          playErr?.message
+        );
+        cleanupObjectUrl();
+        processingRef.current = false;
+        queueMicrotask(() => processQueue());
+      }
     } catch (err) {
       console.error("[AlexVoice] TTS playback error:", err);
+      cleanupObjectUrl();
       processingRef.current = false;
-      processQueue();
+      queueMicrotask(() => processQueue());
     }
-  }, []);
+  }, [cleanupObjectUrl, finishIfIdle]);
 
   const speak = useCallback(
     (text: string, onDone?: () => void) => {
@@ -78,20 +113,25 @@ export const useAlexVoice = () => {
       if (onDone) onDoneRef.current = onDone;
       const chunks = splitIntoChunks(text, 250);
       queueRef.current.push(...chunks);
-      processQueue();
+      queueMicrotask(() => processQueue());
     },
     [processQueue]
   );
 
   const stop = useCallback(() => {
     queueRef.current = [];
+    processingRef.current = false;
+    onDoneRef.current = null;
+
     if (audioRef.current) {
       audioRef.current.pause();
-      audioRef.current = null;
+      audioRef.current.removeAttribute("src");
+      audioRef.current.load();
     }
-    processingRef.current = false;
+
+    cleanupObjectUrl();
     setIsSpeaking(false);
-  }, []);
+  }, [cleanupObjectUrl]);
 
   return { isSpeaking, speak, stop };
 };
