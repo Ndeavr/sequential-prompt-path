@@ -5,7 +5,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import heroHouse from "@/assets/hero-house.jpg";
+import heroAgrandissement from "@/assets/hero-agrandissement.jpg";
+import heroArpenteur from "@/assets/hero-arpenteur.jpg";
+import heroToiture from "@/assets/hero-toiture.jpg";
+import heroElectricien from "@/assets/hero-electricien.jpg";
+import heroPlomberie from "@/assets/hero-plomberie.jpg";
+import heroIsolation from "@/assets/hero-isolation.jpg";
 import unproRobot from "@/assets/unpro-robot.png";
 import AlexOrb from "@/components/alex/AlexOrb";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
