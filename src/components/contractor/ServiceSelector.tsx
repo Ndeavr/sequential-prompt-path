@@ -214,7 +214,7 @@ export default function ServiceSelector({
     });
   };
 
-  const nextLimits = NEXT_PLAN_LIMITS[planCode] || { primary: 4, secondary: 10 };
+  
 
   return (
     <div className="space-y-4">
