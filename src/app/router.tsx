@@ -213,6 +213,26 @@ export const AppRouter = () => (
       <Route path="/admin/validation" element={<ProtectedRoute requiredRole="admin"><AdminValidation /></ProtectedRoute>} />
       <Route path="/admin/answer-engine" element={<ProtectedRoute requiredRole="admin"><AdminAnswerEngine /></ProtectedRoute>} />
 
+      {/* Condos — Public SEO */}
+      <Route path="/condos" element={<CondoHomePage />} />
+      <Route path="/condos/loi-16" element={<CondoLoi16Page />} />
+      <Route path="/condos/carnet-entretien" element={<CondoCarnetPage />} />
+      <Route path="/condos/fonds-prevoyance" element={<CondoFondsPage />} />
+      <Route path="/condos/attestation" element={<CondoAttestationPage />} />
+      <Route path="/condos/tarifs" element={<CondoTarifsPage />} />
+      <Route path="/condos/onboarding" element={<ProtectedRoute requiredRole="homeowner"><CondoOnboardingPage /></ProtectedRoute>} />
+
+      {/* Condos — Authenticated Dashboard */}
+      <Route path="/condos/dashboard" element={<ProtectedRoute requiredRole="homeowner"><CondoDashboardPage /></ProtectedRoute>} />
+      <Route path="/condos/building" element={<ProtectedRoute requiredRole="homeowner"><CondoBuildingPage /></ProtectedRoute>} />
+      <Route path="/condos/components" element={<ProtectedRoute requiredRole="homeowner"><CondoComponentsPage /></ProtectedRoute>} />
+      <Route path="/condos/maintenance" element={<ProtectedRoute requiredRole="homeowner"><CondoMaintenancePage /></ProtectedRoute>} />
+      <Route path="/condos/documents" element={<ProtectedRoute requiredRole="homeowner"><CondoDocumentsPage /></ProtectedRoute>} />
+      <Route path="/condos/reserve-fund" element={<ProtectedRoute requiredRole="homeowner"><CondoReserveFundPage /></ProtectedRoute>} />
+      <Route path="/condos/quotes" element={<ProtectedRoute requiredRole="homeowner"><CondoQuotesPage /></ProtectedRoute>} />
+      <Route path="/condos/reports" element={<ProtectedRoute requiredRole="homeowner"><CondoReportsPage /></ProtectedRoute>} />
+      <Route path="/condos/billing" element={<ProtectedRoute requiredRole="homeowner"><CondoBillingPage /></ProtectedRoute>} />
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   </BrowserRouter>
