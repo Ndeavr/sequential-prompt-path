@@ -22,6 +22,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import MainLayout from "@/layouts/MainLayout";
 import { useContractorQuestionnaire } from "@/hooks/useContractorQuestionnaire";
+import CategorySelector, { CategorySelection } from "@/components/contractor/CategorySelector";
 import { toast } from "sonner";
 
 const STEPS = [
