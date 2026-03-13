@@ -222,10 +222,21 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
     }
   };
 
+  // Speak the greeting when voice mode is entered
+  useEffect(() => {
+    if (mode === "voice" && voiceAutoStarted && open) {
+      // Small delay to let the sheet animate in, then speak
+      const greetText = chipGreeting || greeting;
+      const timer = setTimeout(() => speakGreeting(greetText), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [mode, voiceAutoStarted, open]);
+
   // Auto-start voice recognition when entering voice mode
   useEffect(() => {
     if (mode === "voice" && supported && !listening && voiceAutoStarted) {
-      const timer = setTimeout(() => toggleVoice(), 400);
+      // Start listening AFTER the greeting finishes speaking
+      const timer = setTimeout(() => toggleVoice(), 3000);
       return () => clearTimeout(timer);
     }
   }, [mode, supported, voiceAutoStarted]);
