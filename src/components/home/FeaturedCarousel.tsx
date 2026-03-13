@@ -60,7 +60,7 @@ const FeaturedCarousel = () => {
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
-          <div className="glass-card-elevated rounded-2xl overflow-hidden">
+          <div className="rounded-2xl overflow-hidden border border-border/30 bg-card shadow-lg">
             <AnimatePresence mode="wait">
               <motion.div
                 key={current}
@@ -70,13 +70,12 @@ const FeaturedCarousel = () => {
                 transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
               >
                 {/* Image area */}
-                <div className="relative h-44 sm:h-56 overflow-hidden bg-gradient-to-br from-primary/10 to-secondary/5">
+                <div className="relative h-44 sm:h-56 overflow-hidden">
                   <img
                     src={c.logo_url || heroHouse}
                     alt={`${c.business_name} — ${c.city}`}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-card/80 via-transparent to-transparent" />
 
                   {/* AIPP badge overlay */}
                   {c.aipp_score != null && (
