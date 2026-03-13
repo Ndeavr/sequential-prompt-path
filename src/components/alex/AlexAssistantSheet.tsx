@@ -170,13 +170,11 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
 
   // Speak greeting via ElevenLabs when voice mode starts
   useEffect(() => {
-    console.log("[Alex] Greeting effect check:", { mode, voiceAutoStarted, open, greetingSpoken });
-    if (mode === "voice" && voiceAutoStarted && open && !greetingSpoken) {
-      setGreetingSpoken(true);
+    if (mode === "voice" && voiceAutoStarted && open && !greetingSpokenRef.current) {
+      greetingSpokenRef.current = true;
       const greetText = chipGreeting || `${greeting} Quel projet avez-vous en tête ?`;
-      console.log("[Alex] Will speak greeting in 500ms:", greetText);
+      console.log("[Alex] Speaking greeting:", greetText);
       const timer = setTimeout(() => {
-        console.log("[Alex] Calling speak() for greeting now");
         speak(greetText, () => {
           if (modeRef.current === "voice" && supported) {
             startListening();
@@ -185,7 +183,7 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [mode, voiceAutoStarted, open, greetingSpoken, chipGreeting, greeting, speak, supported, startListening]);
+  }, [mode, voiceAutoStarted, open, chipGreeting, greeting, speak, supported, startListening]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
