@@ -38,6 +38,7 @@ import BuildingIntelligenceMap from "@/pages/BuildingIntelligenceMap";
 import AnswerEnginePage from "@/pages/AnswerEnginePage";
 import BusinessImportPage from "@/pages/BusinessImportPage";
 import GmbLinkPage from "@/pages/GmbLinkPage";
+import ContractorQuestionnairePage from "@/pages/ContractorQuestionnairePage";
 
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
