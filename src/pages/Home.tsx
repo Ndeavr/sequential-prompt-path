@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import FeaturedCarousel from "@/components/home/FeaturedCarousel";
 import HeroSection from "@/components/home/HeroSection";
+import VerificationFeatureCard from "@/components/home/VerificationFeatureCard";
 import MainLayout from "@/layouts/MainLayout";
 import { motion } from "framer-motion";
 import { useState } from "react";
@@ -248,6 +249,9 @@ const Home = () => {
           </motion.div>
         </div>
       </section>
+
+      {/* ═══ VERIFICATION FEATURE ═══ */}
+      <VerificationFeatureCard />
 
       {/* ═══ HOME SCORE PREVIEW ═══ */}
       <section className="relative px-5 py-16 overflow-hidden">
