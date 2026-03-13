@@ -127,6 +127,7 @@ export const AppRouter = () => (
       <Route path="/answers" element={<AnswerEnginePage />} />
       <Route path="/import-business" element={<BusinessImportPage />} />
       <Route path="/verify" element={<VerifyContractorPage />} />
+      <Route path="/verifier-entrepreneur" element={<VerifyLandingPage />} />
 
       {/* SEO Pages */}
       <Route path="/services" element={<SeoDirectoryPage />} />
