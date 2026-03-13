@@ -277,58 +277,14 @@ export default function CitySelector({
         Cliquez pour ajouter · Double-cliquez pour définir comme principale
       </p>
 
-      {/* Upsell dialog */}
-      <Dialog open={showUpsell} onOpenChange={setShowUpsell}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Star className="w-5 h-5 text-primary" />
-              Limite de villes atteinte
-            </DialogTitle>
-            <DialogDescription className="text-sm">
-              Votre plan <span className="font-semibold text-foreground">{planName}</span> inclut{" "}
-              <span className="font-semibold text-foreground">{maxSecondary + 1} villes</span>.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <Card className="bg-primary/5 border-primary/20">
-              <CardContent className="p-4 space-y-2">
-                <p className="text-sm font-semibold text-foreground">
-                  Passez au plan {nextPlanLabel[planCode] || "supérieur"}
-                </p>
-                <ul className="text-xs text-muted-foreground space-y-1">
-                  <li className="flex items-center gap-1.5">
-                    <Check className="w-3 h-3 text-primary" />
-                    Jusqu'à {nextPlanCities[planCode] || 15} villes desservies
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <Check className="w-3 h-3 text-primary" />
-                    Plus de visibilité dans les recherches locales
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <Check className="w-3 h-3 text-primary" />
-                    Plus de leads par zone couverte
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setShowUpsell(false)} className="flex-1">
-                Plus tard
-              </Button>
-              <Button
-                onClick={() => {
-                  setShowUpsell(false);
-                  navigate("/pro/billing");
-                }}
-                className="flex-1 gap-1"
-              >
-                Voir les plans <ArrowUpRight className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Upsell */}
+      <UpgradeWindow
+        open={showUpsell}
+        onOpenChange={setShowUpsell}
+        trigger="cities_limit"
+        currentPlanId={planCode}
+        currentLimit={maxSecondary + 1}
+      />
     </div>
   );
 }
