@@ -1,10 +1,15 @@
 /**
- * HeroSection — AI-first hero with AlexOrb as the sole primary CTA.
- * No search bar. Popular chips launch Alex with context.
+ * HeroSection — AI-first hero with inline voice conversation on the orb.
+ * Clicking the orb starts voice mode in-place (no sheet).
+ * Text mode opens the AlexAssistantSheet.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useAlex } from "@/hooks/useAlex";
+import { useAlexVoice } from "@/hooks/useAlexVoice";
+import { useLocation } from "react-router-dom";
+import { Mic, Volume2, VolumeX, Loader2, Keyboard, Square } from "lucide-react";
 import heroAgrandissement from "@/assets/hero-agrandissement.jpg";
 import heroArpenteur from "@/assets/hero-arpenteur.jpg";
 import heroToiture from "@/assets/hero-toiture.jpg";
@@ -12,7 +17,6 @@ import heroElectricien from "@/assets/hero-electricien.jpg";
 import heroPlomberie from "@/assets/hero-plomberie.jpg";
 import heroIsolation from "@/assets/hero-isolation.jpg";
 import unproRobot from "@/assets/unpro-robot.png";
-import AlexOrb from "@/components/alex/AlexOrb";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 
 const ROTATING_ITEMS = [
@@ -60,58 +64,193 @@ const ALL_SEARCHES = [
 
 const POPULAR_CHIPS = ALL_SEARCHES.slice(0, 6);
 
-const HELPER_BUBBLES = [
-  "Décrivez votre projet",
-  "Je peux vous aider",
-  "Trouvez le bon pro",
-];
+/* ─── Continuous STT hook ─── */
+const useVoiceContinuous = (onResult: (t: string) => void) => {
+  const [listening, setListening] = useState(false);
+  const [supported, setSupported] = useState(false);
+  const recRef = useRef<any>(null);
+  const shouldListenRef = useRef(false);
+  const onResultRef = useRef(onResult);
+  onResultRef.current = onResult;
+
+  useEffect(() => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    setSupported(!!SR);
+    if (!SR) return;
+    const r = new SR();
+    r.lang = "fr-CA";
+    r.continuous = false;
+    r.interimResults = false;
+    r.onresult = (e: any) => {
+      const t = e.results[0]?.[0]?.transcript;
+      if (t) onResultRef.current(t);
+    };
+    r.onerror = (e: any) => {
+      setListening(false);
+      if (e.error !== "not-allowed" && shouldListenRef.current) {
+        setTimeout(() => {
+          if (shouldListenRef.current) {
+            try { r.start(); setListening(true); } catch { /* */ }
+          }
+        }, 300);
+      }
+    };
+    r.onend = () => {
+      setListening(false);
+      if (shouldListenRef.current) {
+        setTimeout(() => {
+          if (shouldListenRef.current) {
+            try { r.start(); setListening(true); } catch { /* */ }
+          }
+        }, 200);
+      }
+    };
+    recRef.current = r;
+  }, []);
+
+  const startListening = useCallback(() => {
+    if (!recRef.current) return;
+    shouldListenRef.current = true;
+    try { recRef.current.start(); setListening(true); } catch { /* */ }
+  }, []);
+
+  const stopListening = useCallback(() => {
+    shouldListenRef.current = false;
+    try { recRef.current?.stop(); } catch { /* */ }
+    setListening(false);
+  }, []);
+
+  return { listening, supported, startListening, stopListening };
+};
+
+const CHIP_GREETINGS: Record<string, string> = {
+  "Rénovation": "vous cherchez à rénover ?",
+  "Construction": "vous cherchez à construire ?",
+  "Agrandissement": "vous pensez agrandir votre maison ?",
+  "Toiture": "vous avez un projet de toiture ?",
+  "Cuisine": "vous voulez refaire votre cuisine ?",
+  "Électricité": "vous avez besoin d'un électricien ?",
+  "Plomberie": "vous cherchez un plombier ?",
+};
 
 export default function HeroSection() {
   const { user } = useAuth();
+  const { pathname } = useLocation();
   const [index, setIndex] = useState(0);
-  const [alexOpen, setAlexOpen] = useState(false);
-  const [alexInitialMessage, setAlexInitialMessage] = useState<string | undefined>();
-  const [bubbleIndex, setBubbleIndex] = useState(0);
-  const [showBubble, setShowBubble] = useState(false);
+
+  // Voice inline state
+  const [voiceActive, setVoiceActive] = useState(false);
+  const [chipContext, setChipContext] = useState<string | undefined>();
+  const greetingSpokenRef = useRef(false);
+  const modeRef = useRef<"idle" | "voice">("idle");
+  const isBargeInRef = useRef(false);
+
+  // Text sheet state
+  const [textSheetOpen, setTextSheetOpen] = useState(false);
+  const [textSheetChip, setTextSheetChip] = useState<string | undefined>();
+
+  const { isSpeaking, speak, stop: stopSpeaking } = useAlexVoice();
 
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "";
+  const greeting = firstName ? `Bonjour ${firstName} !` : "Bonjour !";
 
+  // Streaming TTS
+  const handleSentenceReady = useCallback(
+    (sentence: string) => {
+      if (modeRef.current === "voice" && !isBargeInRef.current) {
+        speak(sentence);
+      }
+    },
+    [speak]
+  );
+
+  const handleResponseComplete = useCallback(() => {
+    isBargeInRef.current = false;
+  }, []);
+
+  const { isStreaming, sendMessage } = useAlex({
+    onSentenceReady: handleSentenceReady,
+    onResponseComplete: handleResponseComplete,
+  });
+
+  // Barge-in
+  const handleVoiceResult = useCallback((text: string) => {
+    if (!text.trim()) return;
+    isBargeInRef.current = true;
+    stopSpeaking();
+    sendMessage(text, { currentPage: pathname, voiceMode: true });
+  }, [sendMessage, pathname, stopSpeaking]);
+
+  const { listening, supported, startListening, stopListening } = useVoiceContinuous(handleVoiceResult);
+
+  // Orb state
+  const orbState: "idle" | "listening" | "thinking" | "speaking" =
+    !voiceActive ? "idle"
+      : isSpeaking ? "speaking"
+      : isStreaming ? "thinking"
+      : listening ? "listening"
+      : "idle";
+
+  // Rotating hero text
   useEffect(() => {
-    const interval = window.setInterval(() => {
-      setIndex((prev) => (prev + 1) % ROTATING_ITEMS.length);
-    }, 4500);
+    const interval = window.setInterval(() => setIndex((p) => (p + 1) % ROTATING_ITEMS.length), 4500);
     return () => window.clearInterval(interval);
   }, []);
 
+  // Start voice mode
+  const startVoice = useCallback((chip?: string) => {
+    if (!supported) {
+      // Fallback to text if no STT
+      setTextSheetChip(chip);
+      setTextSheetOpen(true);
+      return;
+    }
+    setChipContext(chip);
+    setVoiceActive(true);
+    modeRef.current = "voice";
+    greetingSpokenRef.current = false;
+  }, [supported]);
+
+  // Stop voice mode
+  const stopVoice = useCallback(() => {
+    setVoiceActive(false);
+    modeRef.current = "idle";
+    stopSpeaking();
+    stopListening();
+    greetingSpokenRef.current = false;
+    isBargeInRef.current = false;
+    setChipContext(undefined);
+  }, [stopSpeaking, stopListening]);
+
+  // Speak greeting when voice starts
   useEffect(() => {
-    const show = () => {
-      setShowBubble(true);
-      setTimeout(() => setShowBubble(false), 3000);
-    };
-    const timeout = setTimeout(show, 2500);
-    const interval = setInterval(() => {
-      setBubbleIndex((p) => (p + 1) % HELPER_BUBBLES.length);
-      show();
-    }, 8000);
-    return () => { clearTimeout(timeout); clearInterval(interval); };
-  }, []);
+    if (voiceActive && !greetingSpokenRef.current) {
+      greetingSpokenRef.current = true;
+      const chipGreet = chipContext ? CHIP_GREETINGS[chipContext] : undefined;
+      const greetText = chipGreet
+        ? `${greeting.replace(" !", ",")} ${chipGreet}`
+        : `${greeting} Quel projet avez-vous en tête ?`;
+      const timer = setTimeout(() => {
+        speak(greetText, () => {
+          if (modeRef.current === "voice" && supported) startListening();
+        });
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [voiceActive, chipContext, greeting, speak, supported, startListening]);
+
+  // Auto-listen after Alex finishes speaking
+  useEffect(() => {
+    if (voiceActive && !isSpeaking && !isStreaming && !listening && greetingSpokenRef.current) {
+      const timer = setTimeout(() => {
+        if (modeRef.current === "voice" && supported && !listening) startListening();
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [voiceActive, isSpeaking, isStreaming, listening, supported, startListening]);
 
   const current = useMemo(() => ROTATING_ITEMS[index], [index]);
 
-  const greetingBubble = firstName
-    ? `Bonjour ${firstName} !`
-    : HELPER_BUBBLES[bubbleIndex];
-
-  const openAlex = (chipLabel?: string) => {
-    if (chipLabel) {
-      setAlexInitialMessage(chipLabel);
-    } else {
-      setAlexInitialMessage(undefined);
-    }
-    setAlexOpen(true);
-  };
-
-  /* Line-clamp style for animated slots */
   const clampStyle: React.CSSProperties = {
     display: "-webkit-box",
     WebkitLineClamp: 2,
@@ -119,13 +258,21 @@ export default function HeroSection() {
     overflow: "hidden",
   };
 
+  // Status text
+  const statusText =
+    orbState === "speaking" ? "Alex vous parle…"
+      : orbState === "thinking" ? "Alex réfléchit…"
+      : orbState === "listening" ? "Je vous écoute…"
+      : "Parlez à Alex";
+
+  const statusSub =
+    orbState === "idle" && !voiceActive ? "Décrivez votre projet en 30 secondes" : "";
+
   return (
     <>
       <section
         className="relative overflow-hidden pb-8"
-        style={{
-          background: "linear-gradient(180deg, #F7FBFF 0%, #EAF4FF 58%, #DCEEFF 100%)",
-        }}
+        style={{ background: "linear-gradient(180deg, #F7FBFF 0%, #EAF4FF 58%, #DCEEFF 100%)" }}
       >
         {/* Ambient orbs */}
         <div className="pointer-events-none absolute inset-0">
@@ -135,50 +282,32 @@ export default function HeroSection() {
         </div>
 
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-8 md:px-10 md:pt-12">
-          {/* Image behind text on mobile, side-by-side on desktop */}
           <div className="relative md:grid md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8 md:items-start">
             {/* Mobile background image */}
             <div className="absolute top-0 right-0 w-[55%] h-[260px] md:hidden pointer-events-none">
               <AnimatePresence mode="wait">
-                <motion.img
-                  key={current.image}
-                  src={current.image}
-                  alt={current.action}
-                  className="w-full h-full object-cover rounded-[20px]"
-                  loading="eager"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
+                <motion.img key={current.image} src={current.image} alt={current.action}
+                  className="w-full h-full object-cover rounded-[20px]" loading="eager"
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                   transition={{ duration: 0.9, ease: "easeInOut" }}
                 />
               </AnimatePresence>
-              {/* Gradient fade left + bottom to blend with background */}
-              <div
-                className="absolute inset-0 rounded-[20px]"
-                style={{
-                  background: "linear-gradient(to right, hsl(213 60% 97%) 0%, transparent 40%), linear-gradient(to top, hsl(213 60% 97%) 0%, transparent 50%)",
-                }}
+              <div className="absolute inset-0 rounded-[20px]"
+                style={{ background: "linear-gradient(to right, hsl(213 60% 97%) 0%, transparent 40%), linear-gradient(to top, hsl(213 60% 97%) 0%, transparent 50%)" }}
               />
-              <img
-                src={unproRobot}
-                alt="Alex UNPRO"
+              <img src={unproRobot} alt="Alex UNPRO"
                 className="absolute -right-1 -bottom-4 w-[56px] drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)]"
               />
             </div>
 
-            {/* Left column — text */}
+            {/* Left column */}
             <div className="relative z-10 min-w-0">
-              {/* ═══ FIXED-HEIGHT title container ═══ */}
               <h1 className="max-w-[680px] text-[40px] font-extrabold leading-[1.1] tracking-[-0.04em] sm:text-[50px] md:text-[64px]" style={{ color: "#0B1533" }}>
                 <span>Trouvez</span>
                 <div className="overflow-hidden" style={{ height: "1.15em" }}>
                   <AnimatePresence mode="wait">
-                    <motion.div
-                      key={current.label}
-                      variants={textVariants}
-                      initial="enter"
-                      animate="center"
-                      exit="exit"
+                    <motion.div key={current.label} variants={textVariants}
+                      initial="enter" animate="center" exit="exit"
                       transition={{ duration: 0.38, ease: "easeOut" }}
                       style={{ ...clampStyle, color: "#3F7BFF" }}
                     >
@@ -189,12 +318,8 @@ export default function HeroSection() {
                 <span style={{ color: "#0B1533" }}>idéal pour</span>
                 <div className="overflow-hidden" style={{ height: "2.2em" }}>
                   <AnimatePresence mode="wait">
-                    <motion.div
-                      key={current.action}
-                      variants={textVariants}
-                      initial="enter"
-                      animate="center"
-                      exit="exit"
+                    <motion.div key={current.action} variants={textVariants}
+                      initial="enter" animate="center" exit="exit"
                       transition={{ duration: 0.38, ease: "easeOut", delay: 0.42 }}
                       style={{ ...clampStyle, color: "#3F7BFF" }}
                     >
@@ -204,105 +329,225 @@ export default function HeroSection() {
                 </div>
               </h1>
 
-              {/* Subtitle */}
               <p className="max-w-[420px] text-lg leading-8 md:text-xl md:leading-10" style={{ color: "#6C7A92" }}>
                 Comparez, évaluez et choisissez en toute confiance.
               </p>
 
-              {/* ═══ Alex Orb — Primary CTA ═══ */}
+              {/* ═══ INLINE ANIMATED ORB ═══ */}
               <div className="mt-8 flex flex-col items-center md:items-start">
-                <div className="relative">
-                  {/* Helper bubble */}
-                  <AnimatePresence>
-                    {showBubble && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -4, scale: 0.95 }}
-                        transition={{ duration: 0.35 }}
-                        className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-2xl px-4 py-2 text-xs font-medium"
-                        style={{
-                          background: "white",
-                          color: "#0B1533",
-                          boxShadow: "0 4px 16px rgba(83,118,180,0.1)",
-                          border: "1px solid #DFE9F5",
-                        }}
-                      >
-                        {greetingBubble}
-                        <div
-                          className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-3 w-3 rotate-45"
-                          style={{ background: "white", borderRight: "1px solid #DFE9F5", borderBottom: "1px solid #DFE9F5" }}
-                        />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                <div className="relative flex items-center justify-center">
+                  {/* Outer halo */}
+                  <motion.div className="absolute rounded-full pointer-events-none"
+                    style={{
+                      width: voiceActive ? 180 : 150,
+                      height: voiceActive ? 180 : 150,
+                      background: "conic-gradient(from 0deg, hsl(222 100% 61% / 0.1), hsl(195 100% 50% / 0.15), hsl(252 100% 65% / 0.1), hsl(222 100% 61% / 0.1))",
+                    }}
+                    animate={{ rotate: 360, scale: voiceActive ? 1 : 0.85 }}
+                    transition={{ rotate: { duration: orbState === "thinking" ? 3 : 12, repeat: Infinity, ease: "linear" }, scale: { duration: 0.4 } }}
+                  />
 
-                  <AlexOrb size="lg" onClick={() => openAlex()} />
-                </div>
+                  {/* Breathing glow */}
+                  <motion.div className="absolute rounded-full pointer-events-none"
+                    style={{
+                      width: voiceActive ? 160 : 130,
+                      height: voiceActive ? 160 : 130,
+                      background: "radial-gradient(circle, hsl(222 100% 61% / 0.18) 0%, hsl(252 100% 65% / 0.06) 50%, transparent 70%)",
+                    }}
+                    animate={{
+                      scale: orbState === "speaking" ? [1, 1.35, 1] : orbState === "listening" ? [1, 1.2, 1] : [1, 1.1, 1],
+                      opacity: [0.5, 1, 0.5],
+                    }}
+                    transition={{
+                      duration: orbState === "speaking" ? 0.7 : orbState === "listening" ? 1.5 : 3,
+                      repeat: Infinity, ease: "easeInOut",
+                    }}
+                  />
 
-                <p className="mt-4 text-sm font-bold" style={{ color: "#0B1533" }}>
-                  Parlez à Alex
-                </p>
-                <p className="text-xs" style={{ color: "#6C7A92" }}>
-                  Décrivez votre projet en 30 secondes
-                </p>
-              </div>
-
-              {/* ═══ Popular chips ═══ */}
-              <div className="mt-7">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-center md:text-left" style={{ color: "#6C7A92" }}>
-                  Populaire
-                </p>
-                <div className="flex flex-wrap gap-2.5 justify-center md:justify-start">
-                  {POPULAR_CHIPS.map((chip) => (
-                    <button
-                      key={chip.label}
-                      onClick={() => openAlex(chip.label)}
-                      className="rounded-full px-5 py-2.5 text-sm font-semibold transition-all hover:scale-[1.03] active:scale-[0.97]"
-                      style={{
-                        background: "white",
-                        color: "#0B1533",
-                        border: "1px solid #E7EEF8",
-                        boxShadow: "0 4px 12px rgba(83,118,180,0.06)",
-                      }}
-                    >
-                      {chip.icon} {chip.label}
-                    </button>
+                  {/* Pulse rings — listening */}
+                  {orbState === "listening" && [0, 1, 2].map((i) => (
+                    <motion.div key={i} className="absolute rounded-full pointer-events-none"
+                      style={{ width: 112, height: 112, border: "2px solid hsl(222 100% 61% / 0.15)" }}
+                      animate={{ scale: [1, 1.6 + i * 0.25], opacity: [0.6, 0] }}
+                      transition={{ duration: 2, repeat: Infinity, delay: i * 0.4, ease: "easeOut" }}
+                    />
                   ))}
+
+                  {/* Speaking wave rings */}
+                  {orbState === "speaking" && [0, 1, 2].map((i) => (
+                    <motion.div key={`s${i}`} className="absolute rounded-full pointer-events-none"
+                      style={{ width: 112, height: 112, border: "2px solid hsl(195 100% 50% / 0.2)" }}
+                      animate={{ scale: [1, 1.5 + i * 0.2], opacity: [0.7, 0] }}
+                      transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.3, ease: "easeOut" }}
+                    />
+                  ))}
+
+                  {/* Thinking dashed ring */}
+                  {orbState === "thinking" && (
+                    <motion.div className="absolute rounded-full pointer-events-none"
+                      style={{ width: 125, height: 125, border: "2px dashed hsl(252 100% 65% / 0.25)" }}
+                      animate={{ rotate: -360 }}
+                      transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                    />
+                  )}
+
+                  {/* Main orb button */}
+                  <motion.button
+                    onClick={() => voiceActive ? stopVoice() : startVoice()}
+                    className="relative rounded-full flex items-center justify-center overflow-hidden z-10"
+                    style={{
+                      width: voiceActive ? 112 : 100,
+                      height: voiceActive ? 112 : 100,
+                      boxShadow: "0 12px 40px -8px hsl(222 100% 61% / 0.4), 0 0 24px -4px hsl(195 100% 50% / 0.25), inset 0 1px 2px hsl(0 0% 100% / 0.3)",
+                    }}
+                    animate={
+                      orbState === "speaking" ? { scale: [1, 1.08, 1] }
+                        : orbState === "listening" ? { scale: [1, 1.06, 1] }
+                        : orbState === "thinking" ? { scale: [1, 1.04, 1] }
+                        : { scale: [1, 1.03, 1] }
+                    }
+                    transition={{
+                      duration: orbState === "speaking" ? 0.6 : orbState === "listening" ? 1.2 : orbState === "thinking" ? 1.5 : 3.5,
+                      repeat: Infinity, ease: "easeInOut",
+                    }}
+                    whileHover={!voiceActive ? { scale: 1.08 } : undefined}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {/* Gradient bg */}
+                    <motion.div className="absolute inset-0"
+                      animate={{
+                        background: orbState === "speaking"
+                          ? ["linear-gradient(135deg, hsl(195 100% 50%), hsl(252 100% 65%), hsl(222 100% 61%))",
+                             "linear-gradient(225deg, hsl(222 100% 61%), hsl(195 100% 55%), hsl(252 100% 70%))",
+                             "linear-gradient(135deg, hsl(195 100% 50%), hsl(252 100% 65%), hsl(222 100% 61%))"]
+                          : ["linear-gradient(135deg, hsl(222 100% 61%), hsl(252 100% 65%), hsl(195 100% 50%))",
+                             "linear-gradient(225deg, hsl(252 100% 65%), hsl(195 100% 55%), hsl(222 100% 65%))",
+                             "linear-gradient(315deg, hsl(195 100% 50%), hsl(222 100% 61%), hsl(252 100% 70%))",
+                             "linear-gradient(135deg, hsl(222 100% 61%), hsl(252 100% 65%), hsl(195 100% 50%))"],
+                      }}
+                      transition={{ duration: orbState === "speaking" ? 3 : 8, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                    {/* Specular */}
+                    <div className="absolute inset-0 rounded-full"
+                      style={{ background: "radial-gradient(ellipse 60% 50% at 35% 25%, hsl(0 0% 100% / 0.3), transparent 60%)" }}
+                    />
+                    {/* Shine sweep */}
+                    <motion.div className="absolute inset-0"
+                      style={{ background: "linear-gradient(120deg, transparent 30%, hsl(0 0% 100% / 0.18) 50%, transparent 70%)" }}
+                      animate={{ x: ["-120%", "120%"] }}
+                      transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", repeatDelay: 3 }}
+                    />
+                    {/* Icon */}
+                    {orbState === "speaking" ? (
+                      <Volume2 className="h-10 w-10 text-white relative z-10 drop-shadow-sm" />
+                    ) : orbState === "thinking" ? (
+                      <Loader2 className="h-10 w-10 text-white relative z-10 drop-shadow-sm animate-spin" />
+                    ) : voiceActive ? (
+                      <Mic className="h-10 w-10 text-white relative z-10 drop-shadow-sm" />
+                    ) : (
+                      <motion.svg viewBox="0 0 24 24" className="h-10 w-10 relative z-10 drop-shadow-sm" fill="none" stroke="white" strokeWidth="1.5">
+                        <path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
+                      </motion.svg>
+                    )}
+                  </motion.button>
                 </div>
+
+                {/* Status text */}
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={voiceActive ? orbState : "idle"}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.25 }}
+                    className="mt-4 text-center md:text-left"
+                  >
+                    <p className="text-sm font-bold" style={{ color: "#0B1533" }}>
+                      {statusText}
+                    </p>
+                    {statusSub && (
+                      <p className="text-xs" style={{ color: "#6C7A92" }}>{statusSub}</p>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Voice active controls */}
+                <AnimatePresence>
+                  {voiceActive && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      transition={{ duration: 0.3 }}
+                      className="mt-3 flex items-center gap-3"
+                    >
+                      {isSpeaking && (
+                        <button onClick={stopSpeaking}
+                          className="flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all hover:scale-[1.03]"
+                          style={{ color: "#6C7A92", background: "rgba(63,123,255,0.04)", border: "1px solid #E7EEF8" }}
+                        >
+                          <VolumeX className="h-3.5 w-3.5" /> Couper
+                        </button>
+                      )}
+                      <button onClick={() => { stopVoice(); setTextSheetOpen(true); }}
+                        className="flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all hover:scale-[1.03]"
+                        style={{ color: "#6C7A92", background: "rgba(63,123,255,0.04)", border: "1px solid #E7EEF8" }}
+                      >
+                        <Keyboard className="h-3.5 w-3.5" /> Écrire
+                      </button>
+                      <button onClick={stopVoice}
+                        className="flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all hover:scale-[1.03]"
+                        style={{ color: "#EF4444", background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.15)" }}
+                      >
+                        <Square className="h-3 w-3" /> Arrêter
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
+
+              {/* Popular chips — hide when voice is active */}
+              <AnimatePresence>
+                {!voiceActive && (
+                  <motion.div
+                    initial={{ opacity: 1 }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="mt-7"
+                  >
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-center md:text-left" style={{ color: "#6C7A92" }}>
+                      Populaire
+                    </p>
+                    <div className="flex flex-wrap gap-2.5 justify-center md:justify-start">
+                      {POPULAR_CHIPS.map((chip) => (
+                        <button key={chip.label} onClick={() => startVoice(chip.label)}
+                          className="rounded-full px-5 py-2.5 text-sm font-semibold transition-all hover:scale-[1.03] active:scale-[0.97]"
+                          style={{ background: "white", color: "#0B1533", border: "1px solid #E7EEF8", boxShadow: "0 4px 12px rgba(83,118,180,0.06)" }}
+                        >
+                          {chip.icon} {chip.label}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            {/* Right column: image + robot — desktop only */}
+            {/* Right column: desktop image */}
             <div className="relative hidden md:block w-full">
-              <div
-                className="relative overflow-hidden rounded-[32px]"
-                style={{ border: "1px solid #DFE9F5" }}
-              >
+              <div className="relative overflow-hidden rounded-[32px]" style={{ border: "1px solid #DFE9F5" }}>
                 <AnimatePresence mode="wait">
-                  <motion.img
-                    key={current.image}
-                    src={current.image}
-                    alt={current.action}
-                    className="aspect-square w-full object-cover"
-                    loading="eager"
-                    initial={{ opacity: 0, scale: 1.03 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.98 }}
+                  <motion.img key={current.image} src={current.image} alt={current.action}
+                    className="aspect-square w-full object-cover" loading="eager"
+                    initial={{ opacity: 0, scale: 1.03 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
                     transition={{ duration: 0.9, ease: "easeInOut" }}
                   />
                 </AnimatePresence>
-                {/* Gradient fade to background */}
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  style={{
-                    background: "linear-gradient(to bottom, transparent 50%, hsl(213 60% 97%) 100%)",
-                  }}
+                <div className="pointer-events-none absolute inset-0"
+                  style={{ background: "linear-gradient(to bottom, transparent 50%, hsl(213 60% 97%) 100%)" }}
                 />
               </div>
-              <img
-                src={unproRobot}
-                alt="Alex UNPRO"
+              <img src={unproRobot} alt="Alex UNPRO"
                 className="absolute -right-4 -bottom-7 w-[112px] drop-shadow-[0_12px_20px_rgba(0,0,0,0.18)]"
               />
             </div>
@@ -317,11 +562,11 @@ export default function HeroSection() {
         </div>
       </section>
 
-      {/* Alex Assistant Sheet */}
+      {/* Text-only sheet */}
       <AlexAssistantSheet
-        open={alexOpen}
-        onClose={() => { setAlexOpen(false); setAlexInitialMessage(undefined); }}
-        initialChip={alexInitialMessage}
+        open={textSheetOpen}
+        onClose={() => { setTextSheetOpen(false); setTextSheetChip(undefined); }}
+        initialChip={textSheetChip}
       />
     </>
   );

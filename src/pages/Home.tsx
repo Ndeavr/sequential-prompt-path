@@ -1,6 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 import {
   Home as HomeIcon, Shield, ArrowRight, Star, Brain,
   MessageCircle, Heart, HardHat,
@@ -36,15 +35,11 @@ const Home = () => {
   const navigate = useNavigate();
   const dash = role === "contractor" ? "/pro" : role === "admin" ? "/admin" : "/dashboard";
 
-  const [alexOpen, setAlexOpen] = useState(false);
-  const [alexChip, setAlexChip] = useState<string | undefined>();
-
   const handleCta = (destination: string, label?: string) => {
     if (isAuthenticated) {
       navigate(destination);
     } else {
-      setAlexChip(label);
-      setAlexOpen(true);
+      navigate(destination);
     }
   };
 
@@ -519,12 +514,7 @@ const Home = () => {
         </div>
       </nav>
 
-      {/* Alex assistant */}
-      <AlexAssistantSheet
-        open={alexOpen}
-        onClose={() => { setAlexOpen(false); setAlexChip(undefined); }}
-        initialChip={alexChip}
-      />
+      {/* Alex voice is handled inline in HeroSection */}
     </div>
   );
 };
