@@ -323,46 +323,49 @@ export default function ContractorQuestionnairePage() {
                 </>
               )}
 
-              {step === 4 && (
-                <>
-                  <StepHeader title="Zones desservies" subtitle="Où intervenez-vous principalement?" />
-                  <FieldWrapper label="Ville principale" prefilled={pf.has("city")} aippBoost={8}>
-                    <Select value={form.city} onValueChange={(v) => updateField("city", v)}>
-                      <SelectTrigger><SelectValue placeholder="Choisir une ville" /></SelectTrigger>
-                      <SelectContent>
-                        {QUEBEC_CITIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </FieldWrapper>
-                  <FieldWrapper label="Villes secondaires">
-                    <ChipSelector
-                      options={QUEBEC_CITIES.filter((c) => c !== form.city)}
-                      selected={form.secondary_cities}
-                      onToggle={(v) => toggleArrayField("secondary_cities", v)}
-                      columns={3}
-                    />
-                  </FieldWrapper>
-                  <FieldWrapper label={`Rayon de déplacement — ${form.radius_km} km`}>
-                    <Slider
-                      value={[form.radius_km]}
-                      onValueChange={([v]) => updateField("radius_km", v)}
-                      min={5}
-                      max={150}
-                      step={5}
-                    />
-                    <div className="flex justify-between text-[10px] text-muted-foreground">
-                      <span>5 km</span><span>150 km</span>
+              {step === 4 && (() => {
+                const planCode = "pro"; // TODO: get from subscription
+                const maxCities = (CITY_LIMITS[planCode] || 3) - 1; // -1 for primary
+                return (
+                  <>
+                    <StepHeader title="Zones desservies" subtitle="Où intervenez-vous principalement?" />
+                    <FieldWrapper label="Villes desservies" prefilled={pf.has("city")} aippBoost={8}>
+                      <CitySelector
+                        selection={{
+                          primaryCity: form.city || null,
+                          secondaryCities: form.secondary_cities,
+                        }}
+                        onSelectionChange={(sel: CitySelection) => {
+                          updateField("city", sel.primaryCity || "");
+                          updateField("secondary_cities", sel.secondaryCities);
+                        }}
+                        maxSecondary={maxCities}
+                        planName={PLAN_LABELS[planCode] || "Pro"}
+                        planCode={planCode}
+                      />
+                    </FieldWrapper>
+                    <FieldWrapper label={`Rayon de déplacement — ${form.radius_km} km`}>
+                      <Slider
+                        value={[form.radius_km]}
+                        onValueChange={([v]) => updateField("radius_km", v)}
+                        min={5}
+                        max={150}
+                        step={5}
+                      />
+                      <div className="flex justify-between text-[10px] text-muted-foreground">
+                        <span>5 km</span><span>150 km</span>
+                      </div>
+                    </FieldWrapper>
+                    <div className="flex items-center justify-between bg-card rounded-lg border border-border p-3">
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-medium text-foreground">Se déplace chez le client</p>
+                        <p className="text-[10px] text-muted-foreground">Vs atelier / point de service uniquement</p>
+                      </div>
+                      <Switch checked={form.travels} onCheckedChange={(v) => updateField("travels", v)} />
                     </div>
-                  </FieldWrapper>
-                  <div className="flex items-center justify-between bg-card rounded-lg border border-border p-3">
-                    <div className="space-y-0.5">
-                      <p className="text-sm font-medium text-foreground">Se déplace chez le client</p>
-                      <p className="text-[10px] text-muted-foreground">Vs atelier / point de service uniquement</p>
-                    </div>
-                    <Switch checked={form.travels} onCheckedChange={(v) => updateField("travels", v)} />
-                  </div>
-                </>
-              )}
+                  </>
+                );
+              })()}
 
               {step === 5 && (
                 <>
