@@ -72,8 +72,8 @@ export const useAlexVoice = () => {
 
   const speak = useCallback(
     (text: string, onDone?: () => void) => {
+      console.log("[AlexVoice] speak() called with:", text.substring(0, 80));
       if (onDone) onDoneRef.current = onDone;
-      // Split long text into chunks at sentence boundaries (~200 chars) for faster first-audio
       const chunks = splitIntoChunks(text, 250);
       queueRef.current.push(...chunks);
       processQueue();
