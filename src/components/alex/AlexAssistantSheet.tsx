@@ -110,6 +110,21 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "";
   const greeting = firstName ? `Bonjour ${firstName} !` : "Bonjour !";
 
+  // Speak greeting aloud via TTS
+  const speakGreeting = useCallback((text: string) => {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "fr-CA";
+    utter.rate = 1.0;
+    utter.pitch = 1.05;
+    // Try to pick a French voice
+    const voices = window.speechSynthesis.getVoices();
+    const frVoice = voices.find(v => v.lang.startsWith("fr")) || null;
+    if (frVoice) utter.voice = frVoice;
+    window.speechSynthesis.speak(utter);
+  }, []);
+
   // Auto-start voice when sheet opens (voice-first UX) — chips also launch voice
   useEffect(() => {
     if (open && !voiceAutoStarted) {
