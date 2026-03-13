@@ -1,16 +1,17 @@
-import { useState, useEffect, useRef } from "react";
-import { motion, useInView, AnimatePresence } from "framer-motion";
+import { useState, useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { VerificationTimeline } from "@/components/verification";
 import {
   Shield, Search, FileText, Building2, Fingerprint, ShieldAlert,
-  Eye, Camera, ArrowRight, CheckCircle2, AlertTriangle, XCircle,
-  Ban, Loader2, ClipboardCheck, MessageSquare, Phone,
-  Truck, CreditCard, Lock, FileCheck, Wrench, DollarSign,
-  ShieldCheck, Sparkles, Upload, MapPin, Globe, Hash,
+  Eye, Camera, ArrowRight, CheckCircle2,
+  ClipboardCheck, MessageSquare, Phone,
+  Lock, FileCheck, Wrench, DollarSign,
+  ShieldCheck, Sparkles, Upload, Globe, Hash, MapPin,
 } from "lucide-react";
 
 /* ─── Animation variants ─── */
@@ -45,32 +46,15 @@ const STEPS = [
   { num: "05", title: "Un verdict clair apparaît", desc: "Score de confiance, compatibilité de licence et recommandation." },
 ];
 
-const DEMO_LINES = [
-  { label: "Validation licence RBQ", icon: FileText },
-  { label: "Validation entreprise / NEQ", icon: Building2 },
-  { label: "Analyse téléphone", icon: Phone },
-  { label: "Analyse contrat", icon: ClipboardCheck },
-  { label: "Analyse camion", icon: Truck },
-  { label: "Portée de licence", icon: Eye },
-  { label: "Verdict UNPRO", icon: Shield },
-];
 
-type DemoVerdict = "succes" | "attention" | "non_succes" | "se_tenir_loin";
-const DEMO_RESULTS: DemoVerdict[] = ["succes", "succes", "succes", "attention", "succes", "succes", "succes"];
+import { VERDICT_STYLES } from "@/components/verification";
 
-const VERDICT_MAP: Record<DemoVerdict, { label: string; color: string; bg: string }> = {
-  succes: { label: "Succès", color: "text-success", bg: "bg-success/10" },
-  attention: { label: "Attention", color: "text-warning", bg: "bg-warning/10" },
-  non_succes: { label: "Non-succès", color: "text-destructive", bg: "bg-destructive/10" },
-  se_tenir_loin: { label: "Se tenir loin", color: "text-destructive", bg: "bg-destructive/10" },
-};
-
-const VERDICTS_OVERVIEW = [
-  { verdict: "Succès", icon: CheckCircle2, color: "text-success", bg: "bg-success/10 border-success/20" },
-  { verdict: "Attention", icon: AlertTriangle, color: "text-warning", bg: "bg-warning/10 border-warning/20" },
-  { verdict: "Non-succès", icon: XCircle, color: "text-destructive", bg: "bg-destructive/10 border-destructive/20" },
-  { verdict: "Se tenir loin", icon: Ban, color: "text-destructive", bg: "bg-destructive/10 border-destructive/20" },
-];
+const VERDICTS_OVERVIEW = Object.entries(VERDICT_STYLES).map(([, cfg]) => ({
+  verdict: cfg.label,
+  icon: cfg.icon,
+  color: cfg.color,
+  bg: `${cfg.bg} ${cfg.border}`,
+}));
 
 const CHECKLIST = [
   { icon: FileCheck, label: "Contrat écrit détaillé" },
@@ -107,75 +91,10 @@ function GlassCard({ children, className = "" }: { children: React.ReactNode; cl
 function LiveDemoPanel() {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
-  const [activeStep, setActiveStep] = useState(-1);
-  const [completed, setCompleted] = useState<number[]>([]);
-
-  useEffect(() => {
-    if (!inView) return;
-    let step = 0;
-    const interval = setInterval(() => {
-      if (step >= DEMO_LINES.length) {
-        clearInterval(interval);
-        return;
-      }
-      setActiveStep(step);
-      const s = step;
-      setTimeout(() => setCompleted((prev) => [...prev, s]), 900);
-      step++;
-    }, 1400);
-    return () => clearInterval(interval);
-  }, [inView]);
 
   return (
-    <div ref={ref} className="space-y-2.5 max-w-md mx-auto">
-      {DEMO_LINES.map((s, i) => {
-        const Icon = s.icon;
-        const isActive = activeStep === i;
-        const isDone = completed.includes(i);
-        const result = DEMO_RESULTS[i];
-        const vm = VERDICT_MAP[result];
-        return (
-          <motion.div
-            key={s.label}
-            initial={{ opacity: 0, x: -20 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ delay: i * 0.08 }}
-            className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all duration-500 ${
-              isDone
-                ? "border-success/30 bg-success/5"
-                : isActive
-                ? "border-primary/40 bg-primary/5"
-                : "border-border/40 bg-card/60"
-            }`}
-          >
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-300 ${
-              isDone ? "bg-success/15" : "bg-muted/50"
-            }`}>
-              <Icon className={`w-4 h-4 ${isDone ? "text-success" : "text-muted-foreground"}`} />
-            </div>
-            <span className="text-sm font-medium text-foreground flex-1">{s.label}</span>
-            <AnimatePresence mode="wait">
-              {isActive && !isDone && (
-                <motion.span key="spin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                  En cours…
-                </motion.span>
-              )}
-              {isDone && (
-                <motion.span
-                  key="badge"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                  className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${vm.bg} ${vm.color}`}
-                >
-                  {vm.label}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        );
-      })}
+    <div ref={ref} className="max-w-lg mx-auto">
+      {inView && <VerificationTimeline autoplay stepDelay={1000} />}
     </div>
   );
 }
