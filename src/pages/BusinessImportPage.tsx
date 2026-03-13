@@ -584,9 +584,13 @@ export default function BusinessImportPage() {
                   >
                     Recommencer
                   </Button>
-                  <Button className="flex-1 gap-2" disabled={acceptedCount === 0}>
-                    <ArrowRight className="w-4 h-4" />
-                    Créer mon profil ({acceptedCount} champs)
+                  <Button
+                    className="flex-1 gap-2"
+                    disabled={acceptedCount === 0 || isCreating}
+                    onClick={createProfile}
+                  >
+                    {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                    {isCreating ? "Création…" : `Créer mon profil (${acceptedCount} champs)`}
                   </Button>
                 </div>
               </motion.div>
