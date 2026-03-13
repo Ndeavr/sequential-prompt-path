@@ -170,12 +170,14 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
 
   // Speak greeting via ElevenLabs when voice mode starts
   useEffect(() => {
+    console.log("[Alex] Greeting effect check:", { mode, voiceAutoStarted, open, greetingSpoken });
     if (mode === "voice" && voiceAutoStarted && open && !greetingSpoken) {
       setGreetingSpoken(true);
       const greetText = chipGreeting || `${greeting} Quel projet avez-vous en tête ?`;
+      console.log("[Alex] Will speak greeting in 500ms:", greetText);
       const timer = setTimeout(() => {
+        console.log("[Alex] Calling speak() for greeting now");
         speak(greetText, () => {
-          // After greeting, start listening
           if (modeRef.current === "voice" && supported) {
             startListening();
           }
