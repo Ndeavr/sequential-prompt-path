@@ -39,6 +39,7 @@ import AnswerEnginePage from "@/pages/AnswerEnginePage";
 import BusinessImportPage from "@/pages/BusinessImportPage";
 import GmbLinkPage from "@/pages/GmbLinkPage";
 import ContractorQuestionnairePage from "@/pages/ContractorQuestionnairePage";
+import VerifyContractorPage from "@/pages/VerifyContractorPage";
 
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
@@ -124,6 +125,7 @@ export const AppRouter = () => (
       <Route path="/building-map" element={<BuildingIntelligenceMap />} />
       <Route path="/answers" element={<AnswerEnginePage />} />
       <Route path="/import-business" element={<BusinessImportPage />} />
+      <Route path="/verify" element={<VerifyContractorPage />} />
 
       {/* SEO Pages */}
       <Route path="/services" element={<SeoDirectoryPage />} />

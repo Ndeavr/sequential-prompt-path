@@ -9,6 +9,7 @@ export const ROUTES = {
   SEARCH: "/search",
   CONTRACTOR_PROFILE: "/contractors/:id",
   CONTRACTORS: "/contractors",
+  VERIFY_CONTRACTOR: "/verify",
 
   // Homeowner Dashboard
   DASHBOARD_QUOTES: "/dashboard/quotes",
