@@ -131,7 +131,7 @@ export default function ServiceSelector({
   const [search, setSearch] = useState("");
   const [showUpsell, setShowUpsell] = useState(false);
   const [upsellType, setUpsellType] = useState<"primary" | "secondary">("primary");
-  const navigate = useNavigate();
+  
 
   const isPrimary = (s: string) => selection.primaryServices.includes(s);
   const isSecondary = (s: string) => selection.secondaryServices.includes(s);
