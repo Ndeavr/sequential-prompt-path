@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  Home as HomeIcon, Shield, ArrowRight, Star, Brain,
+  Shield, ArrowRight, Star, Brain,
   MessageCircle, Heart, HardHat,
   FileText, Trophy, CheckCircle2,
   BarChart3, Zap, ShieldCheck, Camera,
