@@ -88,9 +88,9 @@ const Home = () => {
       <section className="px-5 py-8 md:py-10">
         <div className="max-w-3xl mx-auto">
           <motion.div variants={sectionFade} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            <div className="flex items-center justify-center gap-6 sm:gap-10 mb-8">
+             <div className="flex items-center justify-center gap-6 sm:gap-10 mb-8">
               <div className="text-center">
-                <p className="font-display text-hero-sm sm:text-hero font-bold text-primary">+10 000</p>
+                <p className="font-display text-title sm:text-hero-sm font-bold text-primary">+10 000</p>
                 <p className="text-meta font-medium text-muted-foreground">projets réussis</p>
               </div>
               <div className="h-12 w-px bg-border" />
