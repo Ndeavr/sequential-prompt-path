@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  Home as HomeIcon, Shield, ArrowRight, Star, Brain,
+  Shield, ArrowRight, Star, Brain,
   MessageCircle, Heart, HardHat,
   FileText, Trophy, CheckCircle2,
   BarChart3, Zap, ShieldCheck, Camera,
@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import FeaturedCarousel from "@/components/home/FeaturedCarousel";
 import HeroSection from "@/components/home/HeroSection";
+import MainLayout from "@/layouts/MainLayout";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import unproRobot from "@/assets/unpro-robot.png";
@@ -44,7 +45,8 @@ const Home = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
+    <MainLayout>
+    <div className="flex flex-col bg-background text-foreground">
 
       {/* ═══ HERO ═══ */}
       <HeroSection />
@@ -493,29 +495,9 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ═══ Mobile bottom nav ═══ */}
-      <nav className="mobile-bottom-nav">
-        <div className="flex items-center justify-around h-16 px-2">
-          {[
-            { icon: HomeIcon, label: "Accueil", to: "/", active: true },
-            { icon: FolderOpen, label: "Projets", to: isAuthenticated ? "/dashboard" : "/login", active: false },
-            { icon: HardHat, label: "Pros", to: "/search", active: false },
-            { icon: Brain, label: "Alex", to: "/alex", active: false, glow: true },
-          ].map(item => (
-            <Link
-              key={item.label}
-              to={item.to}
-              className={`mobile-nav-item ${item.active ? "active" : ""}`}
-            >
-              <item.icon className={`h-5 w-5 ${item.glow ? "drop-shadow-[0_0_6px_hsl(var(--primary)/0.5)]" : ""}`} />
-              <span className="text-[10px] font-semibold">{item.label}</span>
-            </Link>
-          ))}
-        </div>
-      </nav>
-
       {/* Alex voice is handled inline in HeroSection */}
     </div>
+    </MainLayout>
   );
 };
 
