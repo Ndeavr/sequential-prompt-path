@@ -24,6 +24,7 @@ import MainLayout from "@/layouts/MainLayout";
 import { useContractorQuestionnaire } from "@/hooks/useContractorQuestionnaire";
 import CategorySelector, { CategorySelection } from "@/components/contractor/CategorySelector";
 import CitySelector, { CitySelection } from "@/components/contractor/CitySelector";
+import ServiceSelector, { ServiceSelection, SERVICE_LIMITS } from "@/components/contractor/ServiceSelector";
 import { toast } from "sonner";
 
 /** City limits per plan code */
