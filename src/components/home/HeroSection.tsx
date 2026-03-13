@@ -244,9 +244,9 @@ export default function HeroSection() {
             </div>
 
             {/* Right column: image + robot */}
-            <div className="relative mx-auto w-full max-w-[280px] md:max-w-[420px]">
+            <div className="relative w-full row-span-2 md:row-span-1">
               <div
-                className="relative overflow-hidden rounded-[28px] shadow-[0_22px_64px_rgba(34,72,145,0.18)] md:rounded-[32px]"
+                className="relative overflow-hidden rounded-[20px] shadow-[0_22px_64px_rgba(34,72,145,0.18)] sm:rounded-[28px] md:rounded-[32px]"
                 style={{ background: "rgba(255,255,255,0.75)", border: "1px solid #DFE9F5" }}
               >
                 <AnimatePresence mode="wait">
@@ -262,18 +262,18 @@ export default function HeroSection() {
                     transition={{ duration: 0.5, ease: "easeOut" }}
                   />
                 </AnimatePresence>
-                {/* Gradient overlay */}
+                {/* Gradient fade to white at bottom */}
                 <div
-                  className="pointer-events-none absolute inset-0 rounded-[28px] md:rounded-[32px]"
+                  className="pointer-events-none absolute inset-0"
                   style={{
-                    background: "linear-gradient(135deg, hsl(222 100% 61% / 0.15) 0%, transparent 50%, hsl(195 100% 50% / 0.1) 100%)",
+                    background: "linear-gradient(to bottom, transparent 50%, hsl(213 60% 97%) 100%)",
                   }}
                 />
               </div>
               <img
                 src={unproRobot}
                 alt="Alex UNPRO"
-                className="absolute -right-4 -bottom-7 w-[80px] drop-shadow-[0_22px_30px_rgba(0,0,0,0.20)] md:w-[112px]"
+                className="absolute -right-2 -bottom-5 w-[48px] drop-shadow-[0_12px_20px_rgba(0,0,0,0.18)] sm:w-[70px] md:-right-4 md:-bottom-7 md:w-[112px]"
               />
             </div>
           </div>
