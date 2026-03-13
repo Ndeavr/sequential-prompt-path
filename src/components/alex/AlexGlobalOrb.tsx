@@ -51,7 +51,7 @@ const AlexGlobalOrb = () => {
                 </div>
                 <div>
                   <p className="text-xs font-bold text-foreground">Alex</p>
-                  <p className="text-[10px] text-muted-foreground">IA Concierge</p>
+                  <p className="text-[10px] text-muted-foreground">Concierge IA</p>
                 </div>
               </div>
               <button onClick={() => setDismissed(true)} className="text-muted-foreground/50 hover:text-foreground transition-colors">
