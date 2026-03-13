@@ -36,6 +36,7 @@ import PreventiveMaintenancePage from "@/pages/PreventiveMaintenancePage";
 import CoproprietePage from "@/pages/CoproprietePage";
 import BuildingIntelligenceMap from "@/pages/BuildingIntelligenceMap";
 import AnswerEnginePage from "@/pages/AnswerEnginePage";
+import BusinessImportPage from "@/pages/BusinessImportPage";
 
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
@@ -120,6 +121,7 @@ export const AppRouter = () => (
       <Route path="/copropriete" element={<CoproprietePage />} />
       <Route path="/building-map" element={<BuildingIntelligenceMap />} />
       <Route path="/answers" element={<AnswerEnginePage />} />
+      <Route path="/import-business" element={<BusinessImportPage />} />
 
       {/* SEO Pages */}
       <Route path="/services" element={<SeoDirectoryPage />} />
