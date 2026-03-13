@@ -823,6 +823,68 @@ export type Database = {
         }
         Relationships: []
       }
+      condo_subscriptions: {
+        Row: {
+          billing_interval: string | null
+          cancel_at_period_end: boolean | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_tier: string
+          price_cents: number | null
+          status: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          syndicate_id: string
+          unit_count_tier: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          billing_interval?: string | null
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_tier?: string
+          price_cents?: number | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          syndicate_id: string
+          unit_count_tier?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          billing_interval?: string | null
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_tier?: string
+          price_cents?: number | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          syndicate_id?: string
+          unit_count_tier?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "condo_subscriptions_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: true
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_ai_profiles: {
         Row: {
           best_for: Json | null
@@ -6028,6 +6090,50 @@ export type Database = {
         }
         Relationships: []
       }
+      syndicate_audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          ip_address: string | null
+          syndicate_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip_address?: string | null
+          syndicate_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip_address?: string | null
+          syndicate_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_audit_logs_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       syndicate_budget_items: {
         Row: {
           actual_amount: number | null
@@ -6131,6 +6237,115 @@ export type Database = {
           },
         ]
       }
+      syndicate_components: {
+        Row: {
+          category: string
+          condition_rating: string | null
+          created_at: string
+          estimated_replacement_cost: number | null
+          id: string
+          install_year: number | null
+          last_inspection_date: string | null
+          name: string
+          notes: string | null
+          remaining_life_years: number | null
+          syndicate_id: string
+          updated_at: string
+          useful_life_years: number | null
+        }
+        Insert: {
+          category?: string
+          condition_rating?: string | null
+          created_at?: string
+          estimated_replacement_cost?: number | null
+          id?: string
+          install_year?: number | null
+          last_inspection_date?: string | null
+          name: string
+          notes?: string | null
+          remaining_life_years?: number | null
+          syndicate_id: string
+          updated_at?: string
+          useful_life_years?: number | null
+        }
+        Update: {
+          category?: string
+          condition_rating?: string | null
+          created_at?: string
+          estimated_replacement_cost?: number | null
+          id?: string
+          install_year?: number | null
+          last_inspection_date?: string | null
+          name?: string
+          notes?: string | null
+          remaining_life_years?: number | null
+          syndicate_id?: string
+          updated_at?: string
+          useful_life_years?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_components_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicate_documents: {
+        Row: {
+          created_at: string
+          document_type: string
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          storage_path: string
+          syndicate_id: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_type?: string
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          storage_path: string
+          syndicate_id: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          storage_path?: string
+          syndicate_id?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_documents_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       syndicate_maintenance_items: {
         Row: {
           actual_cost: number | null
@@ -6221,6 +6436,73 @@ export type Database = {
           },
         ]
       }
+      syndicate_maintenance_logs: {
+        Row: {
+          component_id: string | null
+          cost: number | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          documents: Json | null
+          id: string
+          performed_by: string | null
+          performed_date: string
+          syndicate_id: string
+          task_id: string | null
+          title: string
+        }
+        Insert: {
+          component_id?: string | null
+          cost?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          documents?: Json | null
+          id?: string
+          performed_by?: string | null
+          performed_date?: string
+          syndicate_id: string
+          task_id?: string | null
+          title: string
+        }
+        Update: {
+          component_id?: string | null
+          cost?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          documents?: Json | null
+          id?: string
+          performed_by?: string | null
+          performed_date?: string
+          syndicate_id?: string
+          task_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_maintenance_logs_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "syndicate_components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndicate_maintenance_logs_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndicate_maintenance_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "syndicate_maintenance_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       syndicate_maintenance_plans: {
         Row: {
           created_at: string
@@ -6261,6 +6543,81 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "syndicate_maintenance_plans_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicate_maintenance_tasks: {
+        Row: {
+          actual_cost: number | null
+          assigned_to: string | null
+          category: string | null
+          completed_date: string | null
+          component_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          estimated_cost: number | null
+          id: string
+          priority: string | null
+          recurrence: string | null
+          status: string | null
+          syndicate_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          actual_cost?: number | null
+          assigned_to?: string | null
+          category?: string | null
+          completed_date?: string | null
+          component_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          estimated_cost?: number | null
+          id?: string
+          priority?: string | null
+          recurrence?: string | null
+          status?: string | null
+          syndicate_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          actual_cost?: number | null
+          assigned_to?: string | null
+          category?: string | null
+          completed_date?: string | null
+          component_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          estimated_cost?: number | null
+          id?: string
+          priority?: string | null
+          recurrence?: string | null
+          status?: string | null
+          syndicate_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_maintenance_tasks_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "syndicate_components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndicate_maintenance_tasks_syndicate_id_fkey"
             columns: ["syndicate_id"]
             isOneToOne: false
             referencedRelation: "syndicates"
@@ -6488,6 +6845,53 @@ export type Database = {
           },
         ]
       }
+      syndicate_quote_analyses: {
+        Row: {
+          comparison_result: Json | null
+          created_at: string
+          created_by: string | null
+          id: string
+          project_title: string
+          quotes: Json | null
+          recommendation: string | null
+          status: string | null
+          syndicate_id: string
+          updated_at: string
+        }
+        Insert: {
+          comparison_result?: Json | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          project_title: string
+          quotes?: Json | null
+          recommendation?: string | null
+          status?: string | null
+          syndicate_id: string
+          updated_at?: string
+        }
+        Update: {
+          comparison_result?: Json | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          project_title?: string
+          quotes?: Json | null
+          recommendation?: string | null
+          status?: string | null
+          syndicate_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_quote_analyses_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       syndicate_reserve_fund_snapshots: {
         Row: {
           annual_contribution: number | null
@@ -6681,45 +7085,78 @@ export type Database = {
       syndicates: {
         Row: {
           address: string | null
+          building_type: string | null
           city: string | null
           created_at: string
           created_by: string
           description: string | null
           fiscal_year_start: number | null
+          health_score: number | null
           id: string
+          insurance_policy_number: string | null
+          insurance_provider: string | null
+          insurance_renewal_date: string | null
+          loi16_inspection_date: string | null
+          loi16_inspection_done: boolean | null
+          loi16_report_storage_path: string | null
           name: string
+          onboarding_completed: boolean | null
+          plan_tier: string | null
           postal_code: string | null
           province: string | null
           unit_count: number | null
           updated_at: string
+          year_built: number | null
         }
         Insert: {
           address?: string | null
+          building_type?: string | null
           city?: string | null
           created_at?: string
           created_by: string
           description?: string | null
           fiscal_year_start?: number | null
+          health_score?: number | null
           id?: string
+          insurance_policy_number?: string | null
+          insurance_provider?: string | null
+          insurance_renewal_date?: string | null
+          loi16_inspection_date?: string | null
+          loi16_inspection_done?: boolean | null
+          loi16_report_storage_path?: string | null
           name: string
+          onboarding_completed?: boolean | null
+          plan_tier?: string | null
           postal_code?: string | null
           province?: string | null
           unit_count?: number | null
           updated_at?: string
+          year_built?: number | null
         }
         Update: {
           address?: string | null
+          building_type?: string | null
           city?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
           fiscal_year_start?: number | null
+          health_score?: number | null
           id?: string
+          insurance_policy_number?: string | null
+          insurance_provider?: string | null
+          insurance_renewal_date?: string | null
+          loi16_inspection_date?: string | null
+          loi16_inspection_done?: boolean | null
+          loi16_report_storage_path?: string | null
           name?: string
+          onboarding_completed?: boolean | null
+          plan_tier?: string | null
           postal_code?: string | null
           province?: string | null
           unit_count?: number | null
           updated_at?: string
+          year_built?: number | null
         }
         Relationships: []
       }
