@@ -6916,6 +6916,88 @@ export type Database = {
         }
         Relationships: []
       }
+      verification_reports: {
+        Row: {
+          contractor_identity: Json | null
+          created_at: string
+          id: string
+          input_type: string
+          input_value: string
+          license_fit_score: number | null
+          license_scope: Json | null
+          matched_contractor_id: string | null
+          neq_validation: Json | null
+          project_description: string | null
+          rbq_validation: Json | null
+          risk_signals: Json | null
+          trust_score: number | null
+          updated_at: string
+          user_id: string | null
+          verdict: string | null
+          visual_validation: Json | null
+        }
+        Insert: {
+          contractor_identity?: Json | null
+          created_at?: string
+          id?: string
+          input_type: string
+          input_value: string
+          license_fit_score?: number | null
+          license_scope?: Json | null
+          matched_contractor_id?: string | null
+          neq_validation?: Json | null
+          project_description?: string | null
+          rbq_validation?: Json | null
+          risk_signals?: Json | null
+          trust_score?: number | null
+          updated_at?: string
+          user_id?: string | null
+          verdict?: string | null
+          visual_validation?: Json | null
+        }
+        Update: {
+          contractor_identity?: Json | null
+          created_at?: string
+          id?: string
+          input_type?: string
+          input_value?: string
+          license_fit_score?: number | null
+          license_scope?: Json | null
+          matched_contractor_id?: string | null
+          neq_validation?: Json | null
+          project_description?: string | null
+          rbq_validation?: Json | null
+          risk_signals?: Json | null
+          trust_score?: number | null
+          updated_at?: string
+          user_id?: string | null
+          verdict?: string | null
+          visual_validation?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_reports_matched_contractor_id_fkey"
+            columns: ["matched_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_reports_matched_contractor_id_fkey"
+            columns: ["matched_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_reports_matched_contractor_id_fkey"
+            columns: ["matched_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       ccai_answer_matrix: {
