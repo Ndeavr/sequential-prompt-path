@@ -6,13 +6,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
-  MapPin, Search, Crown, Star, X, Check, Sparkles, ArrowUpRight, AlertTriangle,
+  MapPin, Search, Crown, X, Check, Sparkles,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import UpgradeWindow from "./UpgradeWindow";
 
 export interface CitySelection {
   primaryCity: string | null;
