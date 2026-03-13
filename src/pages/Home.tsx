@@ -88,9 +88,9 @@ const Home = () => {
       <section className="px-5 py-8 md:py-10">
         <div className="max-w-3xl mx-auto">
           <motion.div variants={sectionFade} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            <div className="flex items-center justify-center gap-6 sm:gap-10 mb-8">
+             <div className="flex items-center justify-center gap-6 sm:gap-10 mb-8">
               <div className="text-center">
-                <p className="font-display text-hero-sm sm:text-hero font-bold text-primary">+10 000</p>
+                <p className="font-display text-title sm:text-hero-sm font-bold text-primary">+10 000</p>
                 <p className="text-meta font-medium text-muted-foreground">projets réussis</p>
               </div>
               <div className="h-12 w-px bg-border" />
@@ -146,7 +146,14 @@ const Home = () => {
                   Approuvé par des milliers de clients
                 </p>
                 <div className="flex items-center justify-center">
-                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                  {[
+                    { x: "5%", y: "10%" },
+                    { x: "18%", y: "10%" },
+                    { x: "32%", y: "10%" },
+                    { x: "46%", y: "10%" },
+                    { x: "60%", y: "10%" },
+                    { x: "74%", y: "10%" },
+                  ].map((pos, i) => (
                     <div
                       key={i}
                       className="h-12 w-12 sm:h-14 sm:w-14 rounded-full overflow-hidden -ml-3 first:ml-0 border-[3px] border-white/60 shadow-md"
@@ -154,8 +161,8 @@ const Home = () => {
                       <img
                         src={avatarsGroup}
                         alt={`Client ${i + 1}`}
-                        className="h-full w-full object-cover"
-                        style={{ objectPosition: `${(i * 16) + 4}% 15%` }}
+                        className="w-[600%] h-[200%] max-w-none"
+                        style={{ objectFit: "cover", objectPosition: `${pos.x} ${pos.y}` }}
                       />
                     </div>
                   ))}
