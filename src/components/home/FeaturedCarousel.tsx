@@ -76,7 +76,7 @@ const FeaturedCarousel = () => {
                     alt={`${c.business_name} — ${c.city}`}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-card/80 via-transparent to-transparent" />
 
                   {/* AIPP badge overlay */}
                   {c.aipp_score != null && (
