@@ -3298,6 +3298,39 @@ export type Database = {
         }
         Relationships: []
       }
+      cta_events: {
+        Row: {
+          created_at: string
+          cta_text: string
+          id: string
+          intent: string
+          page: string
+          session_id: string | null
+          user_id: string | null
+          user_role: string | null
+        }
+        Insert: {
+          created_at?: string
+          cta_text: string
+          id?: string
+          intent: string
+          page: string
+          session_id?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          created_at?: string
+          cta_text?: string
+          id?: string
+          intent?: string
+          page?: string
+          session_id?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Relationships: []
+      }
       data_sources: {
         Row: {
           confidence: number | null
