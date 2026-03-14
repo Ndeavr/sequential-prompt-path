@@ -3312,6 +3312,75 @@ export type Database = {
           },
         ]
       }
+      grant_programs: {
+        Row: {
+          applicable_property_types: string[] | null
+          applicable_regions: string[] | null
+          coverage_pct: number | null
+          created_at: string
+          description_en: string | null
+          description_fr: string | null
+          eligibility_rules: Json | null
+          ends_at: string | null
+          id: string
+          max_amount: number | null
+          name_en: string | null
+          name_fr: string
+          program_key: string
+          program_url: string | null
+          provider: string
+          provider_type: string | null
+          required_fields: string[] | null
+          starts_at: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          applicable_property_types?: string[] | null
+          applicable_regions?: string[] | null
+          coverage_pct?: number | null
+          created_at?: string
+          description_en?: string | null
+          description_fr?: string | null
+          eligibility_rules?: Json | null
+          ends_at?: string | null
+          id?: string
+          max_amount?: number | null
+          name_en?: string | null
+          name_fr: string
+          program_key: string
+          program_url?: string | null
+          provider: string
+          provider_type?: string | null
+          required_fields?: string[] | null
+          starts_at?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          applicable_property_types?: string[] | null
+          applicable_regions?: string[] | null
+          coverage_pct?: number | null
+          created_at?: string
+          description_en?: string | null
+          description_fr?: string | null
+          eligibility_rules?: Json | null
+          ends_at?: string | null
+          id?: string
+          max_amount?: number | null
+          name_en?: string | null
+          name_fr?: string
+          program_key?: string
+          program_url?: string | null
+          provider?: string
+          provider_type?: string | null
+          required_fields?: string[] | null
+          starts_at?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       home_problem_city_pages: {
         Row: {
           avg_cost_local_high: number | null
@@ -3929,6 +3998,68 @@ export type Database = {
           },
         ]
       }
+      homeowner_messages: {
+        Row: {
+          action_label_fr: string | null
+          action_url: string | null
+          body_fr: string
+          category: string
+          channel: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_read: boolean | null
+          metadata: Json | null
+          priority: string | null
+          property_id: string | null
+          read_at: string | null
+          title_fr: string
+          user_id: string
+        }
+        Insert: {
+          action_label_fr?: string | null
+          action_url?: string | null
+          body_fr: string
+          category: string
+          channel?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          metadata?: Json | null
+          priority?: string | null
+          property_id?: string | null
+          read_at?: string | null
+          title_fr: string
+          user_id: string
+        }
+        Update: {
+          action_label_fr?: string | null
+          action_url?: string | null
+          body_fr?: string
+          category?: string
+          channel?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          metadata?: Json | null
+          priority?: string | null
+          property_id?: string | null
+          read_at?: string | null
+          title_fr?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homeowner_messages_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       improvement_tasks: {
         Row: {
           assigned_to: string | null
@@ -4500,6 +4631,33 @@ export type Database = {
           variations?: Json | null
           variations_count?: number | null
           width?: number | null
+        }
+        Relationships: []
+      }
+      message_frequency_rules: {
+        Row: {
+          category: string
+          cooldown_hours: number | null
+          id: string
+          is_active: boolean | null
+          max_per_day: number | null
+          max_per_week: number | null
+        }
+        Insert: {
+          category: string
+          cooldown_hours?: number | null
+          id?: string
+          is_active?: boolean | null
+          max_per_day?: number | null
+          max_per_week?: number | null
+        }
+        Update: {
+          category?: string
+          cooldown_hours?: number | null
+          id?: string
+          is_active?: boolean | null
+          max_per_day?: number | null
+          max_per_week?: number | null
         }
         Relationships: []
       }
@@ -5587,6 +5745,72 @@ export type Database = {
           },
           {
             foreignKeyName: "property_events_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_grant_eligibility: {
+        Row: {
+          answers: Json | null
+          computed_at: string
+          confidence_score: number | null
+          created_at: string
+          eligibility_status: string
+          estimated_amount: number | null
+          id: string
+          missing_fields: string[] | null
+          notes: string | null
+          program_id: string
+          property_id: string
+          recommendation_fr: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answers?: Json | null
+          computed_at?: string
+          confidence_score?: number | null
+          created_at?: string
+          eligibility_status?: string
+          estimated_amount?: number | null
+          id?: string
+          missing_fields?: string[] | null
+          notes?: string | null
+          program_id: string
+          property_id: string
+          recommendation_fr?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answers?: Json | null
+          computed_at?: string
+          confidence_score?: number | null
+          created_at?: string
+          eligibility_status?: string
+          estimated_amount?: number | null
+          id?: string
+          missing_fields?: string[] | null
+          notes?: string | null
+          program_id?: string
+          property_id?: string
+          recommendation_fr?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_grant_eligibility_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "grant_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_grant_eligibility_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
