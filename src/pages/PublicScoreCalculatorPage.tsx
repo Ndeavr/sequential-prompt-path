@@ -46,7 +46,7 @@ export default function PublicScoreCalculatorPage() {
 
       if (existing) {
         setPropertySlug(existing.slug);
-        // Generate estimated score with minimal data
+        if (existing.city) setCity(existing.city);
         const input: HomeScoreInput = {
           yearBuilt: null,
           propertyType: null,
