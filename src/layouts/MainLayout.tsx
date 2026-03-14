@@ -32,6 +32,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       <SmartHeader />
       <main className="flex-1 pb-16 md:pb-0">{children}</main>
       <SmartFooter />
+      <FloatingMobileCTA />
       <MobileBottomNav />
       {showAlex && <AlexConcierge />}
     </div>

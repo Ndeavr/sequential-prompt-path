@@ -97,9 +97,7 @@ const SmartHeader = () => {
               <Button asChild variant="outline" size="sm" className="rounded-full h-8 text-xs px-4 hidden sm:inline-flex">
                 <Link to="/login">{lang === "en" ? "Sign In" : "Connexion"}</Link>
               </Button>
-              <Button asChild size="sm" className="rounded-full h-8 text-xs px-4">
-                <Link to="/signup">{lang === "en" ? "Create Project" : "Créer un Projet"}</Link>
-              </Button>
+              <SmartCTA variant="header" className="hidden sm:block" />
             </>
           )}
 
