@@ -14,6 +14,7 @@ import ProfileMenu from "./ProfileMenu";
 import MobileDrawer from "./MobileDrawer";
 import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
 import type { NavItem } from "@/types/navigation";
+import unproLogo from "@/assets/unpro-logo.png";
 
 const NavBadge = ({ item }: { item: NavItem }) => {
   if (!item.badge) return null;
@@ -48,9 +49,7 @@ const SmartHeader = () => {
       <div className="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0 group">
-          <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center shadow-glow transition-shadow group-hover:shadow-glow-lg">
-            <HomeIcon className="h-4 w-4 text-primary-foreground" />
-          </div>
+          <img src={unproLogo} alt="UNPRO" className="h-8 w-8 rounded-xl shadow-glow transition-shadow group-hover:shadow-glow-lg" />
           <span className="font-display text-sm font-bold text-foreground tracking-tight">UNPRO</span>
         </Link>
 
