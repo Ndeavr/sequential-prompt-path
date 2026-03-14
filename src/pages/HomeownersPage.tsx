@@ -122,11 +122,16 @@ export default function HomeownersPage() {
   const [address, setAddress] = useState("");
   const [neighborCount, setNeighborCount] = useState(0);
 
+  // Only show neighbor count after user has typed a real address (min 10 chars)
   useEffect(() => {
-    const target = 3 + Math.floor(Math.random() * 5);
-    const timer = setTimeout(() => setNeighborCount(target), 1200);
-    return () => clearTimeout(timer);
-  }, []);
+    if (address.length >= 10) {
+      const target = 3 + Math.floor(Math.random() * 5);
+      const timer = setTimeout(() => setNeighborCount(target), 800);
+      return () => clearTimeout(timer);
+    } else {
+      setNeighborCount(0);
+    }
+  }, [address]);
 
   return (
     <MainLayout>
