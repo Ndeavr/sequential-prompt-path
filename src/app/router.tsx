@@ -127,6 +127,7 @@ import AdminAgents from "@/pages/admin/AdminAgents";
 import AdminMedia from "@/pages/admin/AdminMedia";
 import AdminValidation from "@/pages/admin/AdminValidation";
 import AdminAnswerEngine from "@/pages/admin/AdminAnswerEngine";
+import AdminOperationsHub from "@/pages/admin/AdminOperationsHub";
 
 export const AppRouter = () => (
   <BrowserRouter>
