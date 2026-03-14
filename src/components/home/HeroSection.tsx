@@ -176,7 +176,7 @@ export default function HeroSection() {
 
             {/* Left column */}
             <div className="relative z-10 min-w-0">
-              <h1 className="max-w-[55%] sm:max-w-[680px] text-[32px] font-extrabold leading-[1.1] tracking-[-0.04em] sm:text-[50px] md:text-[64px] drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]" style={{ color: "#0B1533" }}>
+              <h1 className="max-w-[60%] sm:max-w-[680px] text-[40px] font-extrabold leading-[1.1] tracking-[-0.04em] sm:text-[50px] md:text-[64px] drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]" style={{ color: "#0B1533" }}>
                 <span>Trouvez</span>
                 <div className="overflow-hidden" style={{ height: "1.15em" }}>
                   <AnimatePresence mode="wait">
