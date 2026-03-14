@@ -99,7 +99,7 @@ export default function PropertyPassportPage() {
 
   const isOwner = property.user_id === user?.id || property.claimed_by === user?.id;
   const status = getStatusLabel(property.public_status);
-  const claimStatus = getClaimStatusLabel(property.claim_status || "unclaimed");
+  const claimStatus = getClaimStatusLabel((property.claim_status || "unclaimed") as any);
   const levelBadge = passport ? getLevelBadge(passport.level) : null;
 
   return (
