@@ -625,6 +625,13 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "appointments_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       category_problem_links: {
@@ -724,6 +731,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certification_reviews_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
             referencedColumns: ["id"]
           },
         ]
@@ -1388,6 +1402,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_contributions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
             referencedColumns: ["id"]
           },
           {
@@ -4143,6 +4164,13 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "home_scores_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       home_solution_city_pages: {
@@ -4370,6 +4398,13 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "homeowner_dna_profiles_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       homeowner_messages: {
@@ -4430,6 +4465,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "homeowner_messages_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
             referencedColumns: ["id"]
           },
         ]
@@ -4754,6 +4796,13 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "listing_imports_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       market_price_benchmarks: {
@@ -4911,6 +4960,13 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "match_evaluations_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       matching_runs: {
@@ -4954,6 +5010,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matching_runs_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
             referencedColumns: ["id"]
           },
         ]
@@ -5354,6 +5417,13 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "portfolio_properties_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       portfolios: {
@@ -5460,6 +5530,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_alignment_answers_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
             referencedColumns: ["id"]
           },
           {
@@ -5575,6 +5652,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_context_snapshots_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
             referencedColumns: ["id"]
           },
         ]
@@ -5869,6 +5953,13 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "projects_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       promo_codes: {
@@ -6099,6 +6190,13 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "property_ai_extractions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       property_aliases: {
@@ -6135,6 +6233,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_aliases_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
             referencedColumns: ["id"]
           },
         ]
@@ -6188,6 +6293,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_claims_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
             referencedColumns: ["id"]
           },
         ]
@@ -6249,6 +6361,13 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "property_completion_tasks_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       property_documents: {
@@ -6297,6 +6416,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_documents_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
             referencedColumns: ["id"]
           },
         ]
@@ -6377,6 +6503,13 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "property_events_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       property_grant_eligibility: {
@@ -6443,6 +6576,13 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "property_grant_eligibility_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       property_insights: {
@@ -6488,6 +6628,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_insights_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
             referencedColumns: ["id"]
           },
         ]
@@ -6570,6 +6717,13 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "property_master_records_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: true
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       property_members: {
@@ -6603,6 +6757,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_members_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
             referencedColumns: ["id"]
           },
         ]
@@ -6653,10 +6814,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "property_merge_candidates_property_a_id_fkey"
+            columns: ["property_a_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "property_merge_candidates_property_b_id_fkey"
             columns: ["property_b_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_merge_candidates_property_b_id_fkey"
+            columns: ["property_b_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
             referencedColumns: ["id"]
           },
         ]
@@ -6692,6 +6867,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_passport_sections_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
             referencedColumns: ["id"]
           },
         ]
@@ -6757,6 +6939,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_predictions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
             referencedColumns: ["id"]
           },
         ]
@@ -6856,6 +7045,13 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "property_qr_codes_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       property_scores: {
@@ -6898,6 +7094,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_scores_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
             referencedColumns: ["id"]
           },
         ]
@@ -6946,6 +7149,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_source_links_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
             referencedColumns: ["id"]
           },
         ]
@@ -7137,6 +7347,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
             referencedColumns: ["id"]
           },
         ]
@@ -8674,6 +8891,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "syndicate_members_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "syndicate_members_syndicate_id_fkey"
             columns: ["syndicate_id"]
             isOneToOne: false
@@ -9638,6 +9862,13 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "profile_alignment_answers_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       dna_profile_summary: {
@@ -9819,7 +10050,80 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "match_evaluations_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      v_property_map_markers: {
+        Row: {
+          certification_status: string | null
+          city: string | null
+          created_at: string | null
+          estimated_score: number | null
+          id: string | null
+          latitude: number | null
+          longitude: number | null
+          neighborhood: string | null
+          photo_url: string | null
+          property_type: string | null
+          public_status: string | null
+          slug: string | null
+          year_built: number | null
+        }
+        Insert: {
+          certification_status?: string | null
+          city?: string | null
+          created_at?: string | null
+          estimated_score?: number | null
+          id?: string | null
+          latitude?: never
+          longitude?: never
+          neighborhood?: string | null
+          photo_url?: string | null
+          property_type?: string | null
+          public_status?: string | null
+          slug?: string | null
+          year_built?: number | null
+        }
+        Update: {
+          certification_status?: string | null
+          city?: string | null
+          created_at?: string | null
+          estimated_score?: number | null
+          id?: string | null
+          latitude?: never
+          longitude?: never
+          neighborhood?: string | null
+          photo_url?: string | null
+          property_type?: string | null
+          public_status?: string | null
+          slug?: string | null
+          year_built?: number | null
+        }
+        Relationships: []
+      }
+      v_renovation_activity_map: {
+        Row: {
+          city: string | null
+          contractor_name: string | null
+          contractor_slug: string | null
+          contribution_status:
+            | Database["public"]["Enums"]["contribution_status"]
+            | null
+          created_at: string | null
+          id: string | null
+          latitude: number | null
+          longitude: number | null
+          neighborhood: string | null
+          work_date: string | null
+          work_type: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {

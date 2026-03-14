@@ -60,6 +60,7 @@ import RenovationLocationPage from "@/pages/seo/RenovationLocationPage";
 import DiscoveryFeedPage from "@/pages/DiscoveryFeedPage";
 import TransformationDetailPage from "@/pages/TransformationDetailPage";
 import TrendingPage from "@/pages/TrendingPage";
+import PropertyMapPage from "@/pages/PropertyMapPage";
 
 // Condos
 import CondoHomePage from "@/pages/condos/CondoHomePage";
@@ -161,6 +162,7 @@ export const AppRouter = () => (
       <Route path="/inspirations" element={<DiscoveryFeedPage />} />
       <Route path="/transformations/:id" element={<TransformationDetailPage />} />
       <Route path="/tendances" element={<TrendingPage />} />
+      <Route path="/carte" element={<PropertyMapPage />} />
       <Route path="/flywheel" element={<FlywheelPage />} />
       <Route path="/energy" element={<EnergyPage />} />
       <Route path="/preventive-maintenance" element={<PreventiveMaintenancePage />} />
