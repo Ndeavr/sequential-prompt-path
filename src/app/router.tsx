@@ -60,6 +60,7 @@ import RenovationLocationPage from "@/pages/seo/RenovationLocationPage";
 import DiscoveryFeedPage from "@/pages/DiscoveryFeedPage";
 import TransformationDetailPage from "@/pages/TransformationDetailPage";
 import TrendingPage from "@/pages/TrendingPage";
+import PropertyMapPage from "@/pages/PropertyMapPage";
 
 // Condos
 import CondoHomePage from "@/pages/condos/CondoHomePage";
