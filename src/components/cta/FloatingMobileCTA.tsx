@@ -8,13 +8,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useIntentCTA } from "@/hooks/useIntentCTA";
 import { ArrowRight } from "lucide-react";
 
-const HIDDEN_PREFIXES = ["/dashboard", "/pro", "/admin", "/condo", "/alex", "/login", "/signup"];
+const HIDDEN_PREFIXES = ["/dashboard", "/pro", "/admin", "/condo", "/alex", "/login", "/signup", "/", "/index"];
 
 export default function FloatingMobileCTA() {
   const { pathname } = useLocation();
   const { primary, getLabel, trackClick } = useIntentCTA();
 
-  const isHidden = HIDDEN_PREFIXES.some((p) => pathname.startsWith(p));
+  const isHidden = HIDDEN_PREFIXES.some((p) => p === "/" || p === "/index" ? pathname === p : pathname.startsWith(p));
   const label = getLabel(primary);
 
   return (
