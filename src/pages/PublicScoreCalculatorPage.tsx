@@ -238,6 +238,15 @@ export default function PublicScoreCalculatorPage() {
                 </Card>
               )}
 
+              {/* Neighborhood Momentum */}
+              {city && (
+                <NeighborhoodMomentum
+                  stats={neighborhoodStats ?? null}
+                  city={city}
+                  yourScore={scoreResult?.overall}
+                />
+              )}
+
               <p className="text-center text-xs text-muted-foreground pt-2">
                 Le score estimé est basé sur les données publiques disponibles et ne constitue pas un avis professionnel.
               </p>
