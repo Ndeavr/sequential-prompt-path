@@ -191,13 +191,13 @@ export default function HeroSection() {
                   </AnimatePresence>
                 </div>
                 <span style={{ color: "#0B1533" }}>idéal pour</span>
-                <div className="overflow-hidden" style={{ height: "2.2em" }}>
+                <div className="overflow-hidden" style={{ height: "2.4em" }}>
                   <AnimatePresence mode="wait">
                     <motion.div key={current.action} variants={textVariants}
                       initial="enter" animate="center" exit="exit"
                       transition={{ duration: 0.38, ease: "easeOut", delay: 0.42 }}
-                      className="drop-shadow-[0_1px_4px_rgba(255,255,255,1)]"
-                      style={{ ...clampStyle, color: "#3F7BFF" }}
+                      className="whitespace-pre-line drop-shadow-[0_1px_4px_rgba(255,255,255,1)]"
+                      style={{ color: "#3F7BFF" }}
                     >
                       {current.action}
                     </motion.div>
