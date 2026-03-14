@@ -13,6 +13,7 @@ import { resolveIcon, Menu, X, Bell, Home as HomeIcon } from "./IconResolver";
 import ProfileMenu from "./ProfileMenu";
 import MobileDrawer from "./MobileDrawer";
 import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
+import SmartCTA from "@/components/cta/SmartCTA";
 import type { NavItem } from "@/types/navigation";
 import unproLogo from "@/assets/unpro-logo.png";
 
