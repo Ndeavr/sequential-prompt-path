@@ -2,6 +2,11 @@
  * UNPRO — Data Moat Service
  * Maps every major user action to durable, reusable data assets.
  * Connects to the property-centered model and feeds scoring/prediction/SEO systems.
+ */
+
+import { trackEvent, type EventCategory } from "@/services/eventTrackingService";
+
+/**
  * 
  * This is the canonical registry of what data is captured per action.
  */
