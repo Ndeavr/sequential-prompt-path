@@ -176,33 +176,34 @@ export default function HeroSection() {
 
             {/* Left column */}
             <div className="relative z-10 min-w-0">
-              <h1 className="max-w-[58%] sm:max-w-[680px] text-[32px] font-extrabold leading-[1.08] tracking-[-0.04em] sm:text-[44px] md:text-[64px] drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]" style={{ color: "#0B1533" }}>
+              <h1 className="relative z-10 max-w-[60%] sm:max-w-[680px] text-[28px] font-extrabold leading-[1.15] tracking-[-0.03em] sm:text-[40px] md:text-[60px]" style={{ color: "#0B1533" }}>
                 <span>Trouvez</span>
-                <div className="overflow-hidden" style={{ height: "1.15em" }}>
-                  <AnimatePresence mode="wait">
-                    <motion.div key={current.label} variants={textVariants}
-                      initial="enter" animate="center" exit="exit"
-                      transition={{ duration: 0.38, ease: "easeOut" }}
-                      className="drop-shadow-[0_1px_4px_rgba(255,255,255,1)]"
-                      style={{ color: "#3F7BFF" }}
-                    >
-                      {current.label}
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-                <span style={{ color: "#0B1533" }}>idéal pour</span>
-                <div className="overflow-hidden" style={{ height: "2.4em" }}>
-                  <AnimatePresence mode="wait">
-                    <motion.div key={current.action} variants={textVariants}
-                      initial="enter" animate="center" exit="exit"
-                      transition={{ duration: 0.38, ease: "easeOut", delay: 0.42 }}
-                      className="whitespace-pre-line drop-shadow-[0_1px_4px_rgba(255,255,255,1)]"
-                      style={{ color: "#3F7BFF" }}
-                    >
-                      {current.action}
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
+                <br />
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={current.label}
+                    variants={textVariants}
+                    initial="enter" animate="center" exit="exit"
+                    transition={{ duration: 0.38, ease: "easeOut" }}
+                    className="inline"
+                    style={{ color: "#3F7BFF" }}
+                  >
+                    {current.label}
+                  </motion.span>
+                </AnimatePresence>
+                <br />
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={current.action}
+                    variants={textVariants}
+                    initial="enter" animate="center" exit="exit"
+                    transition={{ duration: 0.38, ease: "easeOut", delay: 0.42 }}
+                    className="inline"
+                    style={{ color: "#3F7BFF" }}
+                  >
+                    {current.action}
+                  </motion.span>
+                </AnimatePresence>
               </h1>
 
               <p className="relative z-10 max-w-[420px] text-lg leading-8 md:text-xl md:leading-10 drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]" style={{ color: "#6C7A92" }}>

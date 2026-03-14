@@ -14,7 +14,7 @@ export default function FloatingMobileCTA() {
   const { pathname } = useLocation();
   const { primary, getLabel, trackClick } = useIntentCTA();
 
-  const isHidden = HIDDEN_PREFIXES.some((p) => pathname.startsWith(p));
+  const isHidden = HIDDEN_PREFIXES.some((p) => p === "/" || p === "/index" ? pathname === p : pathname.startsWith(p));
   const label = getLabel(primary);
 
   return (
