@@ -423,8 +423,10 @@ export default function HeroSection() {
                   style={{ background: "linear-gradient(to bottom, transparent 50%, hsl(213 60% 97%) 100%)" }}
                 />
               </div>
-              <img src={unproRobot} alt="Alex UNPRO"
-                className="absolute -right-4 -bottom-7 w-[112px] drop-shadow-[0_12px_20px_rgba(0,0,0,0.18)]"
+              <motion.img src={unproRobot} alt="Alex UNPRO"
+                className="absolute -right-4 -bottom-7 w-[168px] drop-shadow-[0_12px_20px_rgba(0,0,0,0.18)]"
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               />
             </div>
           </div>
