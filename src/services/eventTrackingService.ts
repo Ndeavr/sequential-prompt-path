@@ -33,14 +33,14 @@ export interface TrackEventInput {
  */
 export async function trackEvent(input: TrackEventInput, userId?: string) {
   try {
-    await supabase.from("platform_events").insert({
+    await supabase.from("platform_events").insert([{
       event_type: input.eventType,
       event_category: input.category,
       entity_type: input.entityType || null,
       entity_id: input.entityId || null,
       user_id: userId || null,
-      metadata: input.metadata || {},
-    });
+      metadata: (input.metadata || {}) as any,
+    }]);
   } catch {
     // Silent — observability should never break UX
   }
