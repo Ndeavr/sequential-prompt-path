@@ -52,6 +52,9 @@ import MessageCenterPage from "@/pages/dashboard/MessageCenterPage";
 import ProjectMatchesPage from "@/pages/dashboard/ProjectMatchesPage";
 import QrScanPage from "@/pages/QrScanPage";
 import ContributionApprovalPage from "@/pages/dashboard/ContributionApprovalPage";
+import ListingImportPage from "@/pages/ListingImportPage";
+import PublicScoreCalculatorPage from "@/pages/PublicScoreCalculatorPage";
+import PropertyReportPage from "@/pages/dashboard/PropertyReportPage";
 
 // Condos
 import CondoHomePage from "@/pages/condos/CondoHomePage";
