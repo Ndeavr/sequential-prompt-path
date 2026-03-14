@@ -190,6 +190,7 @@ export const SITEMAP_SEGMENTS = [
   "service-locations",
   "problem-locations",
   "guides",
+  "renovation-locations",
 ];
 
 /** Total indexable page count */
