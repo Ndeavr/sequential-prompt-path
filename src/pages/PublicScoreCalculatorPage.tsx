@@ -5,7 +5,7 @@
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import MainLayout from "@/layouts/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,10 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { findPropertyByAddress, createProperty } from "@/services/property/propertyService";
 import { calculateHomeScore, type HomeScoreInput } from "@/services/homeScoreService";
+import { getNeighborhoodStats } from "@/services/property/neighborhoodService";
+import { NeighborhoodMomentum } from "@/components/funnel/NeighborhoodMomentum";
+import { NextBestAction, determineNextAction } from "@/components/funnel/NextBestAction";
+import { recordDataAction } from "@/services/dataMoatService";
 import {
   Search, Home, ArrowRight, ShieldCheck, UserPlus,
   BarChart3, AlertCircle, Loader2, TrendingUp,
