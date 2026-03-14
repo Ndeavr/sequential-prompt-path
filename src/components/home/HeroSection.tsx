@@ -208,7 +208,7 @@ export default function HeroSection() {
                 </AnimatePresence>
               </h1>
 
-              <p className="relative z-10 max-w-[420px] text-lg leading-8 md:text-xl md:leading-10 drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]" style={{ color: "#6C7A92" }}>
+              <p className="relative z-10 max-w-[55%] sm:max-w-[420px] text-base leading-7 md:text-xl md:leading-10 drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]" style={{ color: "#6C7A92" }}>
                 Comparez, évaluez et choisissez en toute confiance.
               </p>
 
