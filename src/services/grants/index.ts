@@ -1,7 +1,5 @@
 /**
  * UNPRO — Grants Services
- * Placeholder barrel for grants eligibility engine.
- * Will be implemented in Phase 5.
+ * Barrel for grants eligibility engine.
  */
-// Future exports:
-// export { grantsEligibilityService } from "./grantsEligibilityService";
+export * from "./grantsEligibilityService";

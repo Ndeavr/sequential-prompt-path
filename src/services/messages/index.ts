@@ -1,8 +1,5 @@
 /**
  * UNPRO — Messaging Services
- * Placeholder barrel for homeowner messaging / notification orchestration.
- * Will be implemented in Phase 5.
+ * Barrel for homeowner messaging / notification orchestration.
  */
-// Future exports:
-// export { messagingService } from "./messagingService";
-// export { notificationService } from "./notificationService";
+export * from "./messagingService";
