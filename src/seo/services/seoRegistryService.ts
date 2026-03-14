@@ -7,6 +7,7 @@ import { SEO_CITIES } from "../data/cities";
 import { SEO_SERVICES } from "../data/services";
 import { SEO_PROBLEMS } from "../data/problems";
 import { SEO_GUIDES } from "../data/guides";
+import { SEO_RENOVATIONS } from "../data/renovations";
 
 export type SeoPageType =
   | "house"
@@ -19,7 +20,8 @@ export type SeoPageType =
   | "profession"
   | "service_location"
   | "problem_location"
-  | "guide";
+  | "guide"
+  | "renovation_location";
 
 export interface SeoPageEntry {
   type: SeoPageType;
@@ -120,6 +122,20 @@ export function getGuideEntries(): SeoPageEntry[] {
   }));
 }
 
+/** Generate renovation+location entries */
+export function getRenovationLocationEntries(): SeoPageEntry[] {
+  return SEO_RENOVATIONS.flatMap((r) =>
+    SEO_CITIES.map((c) => ({
+      type: "renovation_location" as SeoPageType,
+      path: `/renovation/${r.slug}/${c.slug}`,
+      canonical: `${BASE_URL}/renovation/${r.slug}/${c.slug}`,
+      indexable: true,
+      priority: 0.7,
+      changefreq: "monthly" as const,
+    }))
+  );
+}
+
 /** Indexability check — noindex pages without enough data */
 export function shouldIndex(pageType: SeoPageType, hasData: boolean): boolean {
   if (!hasData) return false;
@@ -161,6 +177,7 @@ export function getEntriesBySegment(segment: string): SeoPageEntry[] {
     case "service-locations": return getServiceLocationEntries();
     case "problem-locations": return getProblemLocationEntries();
     case "guides": return getGuideEntries();
+    case "renovation-locations": return getRenovationLocationEntries();
     default: return [];
   }
 }
@@ -173,6 +190,7 @@ export const SITEMAP_SEGMENTS = [
   "service-locations",
   "problem-locations",
   "guides",
+  "renovation-locations",
 ];
 
 /** Total indexable page count */

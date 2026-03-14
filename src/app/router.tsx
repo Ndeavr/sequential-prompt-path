@@ -56,6 +56,7 @@ import ListingImportPage from "@/pages/ListingImportPage";
 import PublicScoreCalculatorPage from "@/pages/PublicScoreCalculatorPage";
 import PropertyReportPage from "@/pages/dashboard/PropertyReportPage";
 import RenovationVisualizerPage from "@/pages/RenovationVisualizerPage";
+import RenovationLocationPage from "@/pages/seo/RenovationLocationPage";
 
 // Condos
 import CondoHomePage from "@/pages/condos/CondoHomePage";
@@ -182,6 +183,7 @@ export const AppRouter = () => (
       <Route path="/quartier/:ville/:quartier" element={<QuartierPage />} />
       <Route path="/rue/:ville/:rue" element={<RuePage />} />
       <Route path="/guides/:topic" element={<GuidePage />} />
+      <Route path="/renovation/:projectSlug/:citySlug" element={<RenovationLocationPage />} />
 
       {/* Legacy English routes (kept for backward compat, redirect later) */}
       <Route path="/problems/:slug" element={<ProblemPage />} />

@@ -4,3 +4,4 @@
  */
 export * from "../../seo/services/seoContentService";
 export * from "../../seo/services/seoRegistryService";
+export * from "../../seo/services/renovationContentService";
