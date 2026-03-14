@@ -5096,15 +5096,29 @@ export type Database = {
         Row: {
           address: string
           city: string | null
+          claimed_at: string | null
+          claimed_by: string | null
           condition: Database["public"]["Enums"]["property_condition"] | null
+          country: string | null
           created_at: string
+          estimated_score: number | null
+          full_address: string | null
           id: string
+          latitude: number | null
+          longitude: number | null
           lot_size: number | null
+          neighborhood: string | null
+          normalized_address: string | null
           photo_url: string | null
           postal_code: string | null
           property_type: string | null
           province: string | null
+          public_status: string | null
+          slug: string | null
           square_footage: number | null
+          street_name: string | null
+          street_number: string | null
+          unit: string | null
           updated_at: string
           user_id: string
           year_built: number | null
@@ -5112,15 +5126,29 @@ export type Database = {
         Insert: {
           address: string
           city?: string | null
+          claimed_at?: string | null
+          claimed_by?: string | null
           condition?: Database["public"]["Enums"]["property_condition"] | null
+          country?: string | null
           created_at?: string
+          estimated_score?: number | null
+          full_address?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           lot_size?: number | null
+          neighborhood?: string | null
+          normalized_address?: string | null
           photo_url?: string | null
           postal_code?: string | null
           property_type?: string | null
           province?: string | null
+          public_status?: string | null
+          slug?: string | null
           square_footage?: number | null
+          street_name?: string | null
+          street_number?: string | null
+          unit?: string | null
           updated_at?: string
           user_id: string
           year_built?: number | null
@@ -5128,15 +5156,29 @@ export type Database = {
         Update: {
           address?: string
           city?: string | null
+          claimed_at?: string | null
+          claimed_by?: string | null
           condition?: Database["public"]["Enums"]["property_condition"] | null
+          country?: string | null
           created_at?: string
+          estimated_score?: number | null
+          full_address?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           lot_size?: number | null
+          neighborhood?: string | null
+          normalized_address?: string | null
           photo_url?: string | null
           postal_code?: string | null
           property_type?: string | null
           province?: string | null
+          public_status?: string | null
+          slug?: string | null
           square_footage?: number | null
+          street_name?: string | null
+          street_number?: string | null
+          unit?: string | null
           updated_at?: string
           user_id?: string
           year_built?: number | null

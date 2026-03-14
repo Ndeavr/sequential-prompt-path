@@ -4,3 +4,4 @@
  */
 export * from "../propertyInsightService";
 export * from "../homeScoreService";
+export * from "./propertyService";

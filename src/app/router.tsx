@@ -41,6 +41,7 @@ import GmbLinkPage from "@/pages/GmbLinkPage";
 import ContractorQuestionnairePage from "@/pages/ContractorQuestionnairePage";
 import VerifyContractorPage from "@/pages/VerifyContractorPage";
 import VerifyLandingPage from "@/pages/VerifyLandingPage";
+import PublicPropertyPage from "@/pages/PublicPropertyPage";
 
 // Condos
 import CondoHomePage from "@/pages/condos/CondoHomePage";
@@ -146,6 +147,9 @@ export const AppRouter = () => (
       <Route path="/import-business" element={<BusinessImportPage />} />
       <Route path="/verify" element={<VerifyContractorPage />} />
       <Route path="/verifier-entrepreneur" element={<VerifyLandingPage />} />
+
+      {/* Public Property Page */}
+      <Route path="/maison/:slug" element={<PublicPropertyPage />} />
 
       {/* SEO Pages */}
       <Route path="/services" element={<SeoDirectoryPage />} />
