@@ -57,6 +57,9 @@ import PublicScoreCalculatorPage from "@/pages/PublicScoreCalculatorPage";
 import PropertyReportPage from "@/pages/dashboard/PropertyReportPage";
 import RenovationVisualizerPage from "@/pages/RenovationVisualizerPage";
 import RenovationLocationPage from "@/pages/seo/RenovationLocationPage";
+import DiscoveryFeedPage from "@/pages/DiscoveryFeedPage";
+import TransformationDetailPage from "@/pages/TransformationDetailPage";
+import TrendingPage from "@/pages/TrendingPage";
 
 // Condos
 import CondoHomePage from "@/pages/condos/CondoHomePage";
