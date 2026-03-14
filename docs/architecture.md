@@ -1,20 +1,34 @@
-# UNPRO — Architecture
+# UNPRO — Architecture Index
 
-> This document describes the technical architecture of the UNPRO platform.
+> Central navigation hub for all architecture documentation.
 
-## Purpose
+## Documentation Structure
 
-Defines the system design, technology stack, data flow, and integration points.
+| # | Document | Purpose |
+|---|----------|---------|
+| 01 | [Master Context](./architecture/01_MASTER_CONTEXT.md) | Platform vision, data model, conceptual layers, and invariants |
+| 02 | [Execution Plan](./architecture/02_EXECUTION_PLAN.md) | Phased build order with dependencies and deliverables |
+| 03 | [Lovable Master Prompt](./architecture/03_LOVABLE_MASTER_PROMPT.md) | Canonical prompt for Lovable to execute each phase |
+| 04 | [Phase Commands](./architecture/04_PHASE_COMMANDS.md) | Concrete per-phase instructions with SQL, components, and routes |
+| 05 | [Self-QA & Acceptance](./architecture/05_SELF_QA_AND_ACCEPTANCE.md) | Automated verification rules and acceptance criteria |
 
-## Planned Sections
+## Tech Stack
 
-- **Tech Stack** — React + Vite, Tailwind CSS, Lovable Cloud (Supabase), Stripe, Google Calendar API
-- **Frontend Architecture** — Component tree, routing structure, state management
-- **Backend Architecture** — Database schema, edge functions, RLS policies, storage buckets
-- **Authentication** — Email/password, Google OAuth, role-based access (homeowner, contractor, admin)
-- **API Integrations** — Stripe payments, Google Calendar scheduling, AI scoring engine
-- **Deployment** — Lovable hosting, custom domain, CI/CD via GitHub
+- **Frontend**: React 18 + Vite + TypeScript + Tailwind CSS + shadcn/ui
+- **Backend**: Lovable Cloud (Supabase) — Postgres, Edge Functions, Storage, Auth
+- **Payments**: Stripe (contractor subscriptions, condo SaaS)
+- **AI**: Lovable AI Gateway (Gemini, GPT-5) — no external API keys required
+- **SEO**: Programmatic pages via Knowledge Graph topology
+
+## Core Invariants
+
+1. `auth.users` is identity source; `profiles` is application layer
+2. `contractors` table is separate from `profiles` — linked via `user_id`
+3. All property/document data is **private by default** (RLS enforced)
+4. Roles stored in `user_roles` table — never on profiles
+5. Storage buckets are private; use signed URLs for access
+6. Database migrations are the canonical schema source — never edit `types.ts` manually
 
 ---
 
-_This file will be expanded as architecture decisions are finalized._
+_Last updated: 2026-03-14_
