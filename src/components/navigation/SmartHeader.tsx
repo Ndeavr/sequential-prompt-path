@@ -14,6 +14,7 @@ import ProfileMenu from "./ProfileMenu";
 import MobileDrawer from "./MobileDrawer";
 import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
 import type { NavItem } from "@/types/navigation";
+import unproLogo from "@/assets/unpro-logo.png";
 
 const NavBadge = ({ item }: { item: NavItem }) => {
   if (!item.badge) return null;
