@@ -43,6 +43,8 @@ import VerifyContractorPage from "@/pages/VerifyContractorPage";
 import VerifyLandingPage from "@/pages/VerifyLandingPage";
 import PublicPropertyPage from "@/pages/PublicPropertyPage";
 import PropertyPassportPage from "@/pages/dashboard/PropertyPassportPage";
+import PropertyGrantsPage from "@/pages/dashboard/PropertyGrantsPage";
+import MessageCenterPage from "@/pages/dashboard/MessageCenterPage";
 
 // Condos
 import CondoHomePage from "@/pages/condos/CondoHomePage";
