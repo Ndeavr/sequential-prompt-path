@@ -78,6 +78,7 @@ export default function PublicScoreCalculatorPage() {
     },
     onSuccess: (result) => {
       setScoreResult(result);
+      recordDataAction("address_searched", { address, city });
     },
   });
 
