@@ -672,6 +672,62 @@ export type Database = {
           },
         ]
       }
+      certification_reviews: {
+        Row: {
+          certification_status: string
+          contribution_count: number | null
+          created_at: string
+          data_confidence_score: number | null
+          document_quality_score: number | null
+          expires_at: string | null
+          id: string
+          passport_completion_pct: number | null
+          property_id: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          certification_status?: string
+          contribution_count?: number | null
+          created_at?: string
+          data_confidence_score?: number | null
+          document_quality_score?: number | null
+          expires_at?: string | null
+          id?: string
+          passport_completion_pct?: number | null
+          property_id: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          certification_status?: string
+          contribution_count?: number | null
+          created_at?: string
+          data_confidence_score?: number | null
+          document_quality_score?: number | null
+          expires_at?: string | null
+          id?: string
+          passport_completion_pct?: number | null
+          property_id?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certification_reviews_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkout_sessions: {
         Row: {
           addons_json: Json | null
@@ -4644,6 +4700,62 @@ export type Database = {
           },
         ]
       }
+      listing_imports: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          error_message: string | null
+          extracted_data: Json | null
+          id: string
+          import_status: string
+          mapped_fields: Json | null
+          property_id: string | null
+          raw_html: string | null
+          source_platform: string | null
+          source_url: string
+          submitted_by: string
+          updated_at: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          error_message?: string | null
+          extracted_data?: Json | null
+          id?: string
+          import_status?: string
+          mapped_fields?: Json | null
+          property_id?: string | null
+          raw_html?: string | null
+          source_platform?: string | null
+          source_url: string
+          submitted_by: string
+          updated_at?: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          error_message?: string | null
+          extracted_data?: Json | null
+          id?: string
+          import_status?: string
+          mapped_fields?: Json | null
+          property_id?: string | null
+          raw_html?: string | null
+          source_platform?: string | null
+          source_url?: string
+          submitted_by?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_imports_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       market_price_benchmarks: {
         Row: {
           avg_cost_per_unit: number
@@ -5677,6 +5789,7 @@ export type Database = {
       properties: {
         Row: {
           address: string
+          certification_status: string | null
           city: string | null
           claim_status: string | null
           claimed_at: string | null
@@ -5688,6 +5801,7 @@ export type Database = {
           full_address: string | null
           id: string
           latitude: number | null
+          listing_import_id: string | null
           longitude: number | null
           lot_size: number | null
           neighborhood: string | null
@@ -5708,6 +5822,7 @@ export type Database = {
         }
         Insert: {
           address: string
+          certification_status?: string | null
           city?: string | null
           claim_status?: string | null
           claimed_at?: string | null
@@ -5719,6 +5834,7 @@ export type Database = {
           full_address?: string | null
           id?: string
           latitude?: number | null
+          listing_import_id?: string | null
           longitude?: number | null
           lot_size?: number | null
           neighborhood?: string | null
@@ -5739,6 +5855,7 @@ export type Database = {
         }
         Update: {
           address?: string
+          certification_status?: string | null
           city?: string | null
           claim_status?: string | null
           claimed_at?: string | null
@@ -5750,6 +5867,7 @@ export type Database = {
           full_address?: string | null
           id?: string
           latitude?: number | null
+          listing_import_id?: string | null
           longitude?: number | null
           lot_size?: number | null
           neighborhood?: string | null
@@ -5768,7 +5886,15 @@ export type Database = {
           user_id?: string
           year_built?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "properties_listing_import_id_fkey"
+            columns: ["listing_import_id"]
+            isOneToOne: false
+            referencedRelation: "listing_imports"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       property_ai_extractions: {
         Row: {
