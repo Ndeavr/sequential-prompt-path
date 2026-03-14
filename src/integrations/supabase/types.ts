@@ -5284,6 +5284,42 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_events: {
+        Row: {
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          event_category: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_category?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_category?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       portfolio_properties: {
         Row: {
           added_at: string
