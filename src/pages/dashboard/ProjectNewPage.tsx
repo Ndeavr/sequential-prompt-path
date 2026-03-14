@@ -8,11 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useProperties } from "@/hooks/useProperties";
 import { useAuth } from "@/hooks/useAuth";
+import { useServiceCategories } from "@/hooks/useServiceCategories";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Hammer, Check } from "lucide-react";
+import { Hammer, Check, Sparkles, Camera, Phone, Mail, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 
 const URGENCY_OPTIONS = [
@@ -30,21 +32,34 @@ const TIMELINE_OPTIONS = [
   { value: "1_year", label: "Sous 1 an" },
 ];
 
+const CONTACT_OPTIONS = [
+  { value: "phone", label: "Téléphone", icon: Phone },
+  { value: "email", label: "Courriel", icon: Mail },
+  { value: "message", label: "Messagerie", icon: MessageSquare },
+];
+
 const ProjectNewPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: properties } = useProperties();
+  const { data: categories } = useServiceCategories();
   const [form, setForm] = useState({
     title: "",
     description: "",
     property_id: "",
+    category_id: "",
+    subcategory: "",
     urgency: "normal",
     timeline: "flexible",
     budget_min: "",
     budget_max: "",
+    preferred_contact: "phone",
   });
   const [submitting, setSubmitting] = useState(false);
-  const [created, setCreated] = useState(false);
+  const [created, setCreated] = useState<string | null>(null);
+
+  const selectedCategory = categories?.roots.find((c) => c.id === form.category_id);
+  const subcategories = selectedCategory?.children ?? [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,22 +70,25 @@ const ProjectNewPage = () => {
 
     setSubmitting(true);
     try {
-      const { error } = await supabase.from("projects").insert({
+      const { data, error } = await supabase.from("projects").insert({
         title: form.title,
         description: form.description || null,
         property_id: form.property_id,
         user_id: user.id,
+        category_id: form.category_id || null,
+        subcategory: form.subcategory || null,
         urgency: form.urgency,
         timeline: form.timeline,
         budget_min: form.budget_min ? parseFloat(form.budget_min) : null,
         budget_max: form.budget_max ? parseFloat(form.budget_max) : null,
-      });
+        preferred_contact: form.preferred_contact,
+      } as any).select("id").single();
 
       if (error) throw error;
 
-      setCreated(true);
-      toast.success("Projet créé avec succès !");
-      setTimeout(() => navigate("/dashboard"), 1500);
+      setCreated(data.id);
+      toast.success("Projet créé ! Recherche d'entrepreneurs…");
+      setTimeout(() => navigate(`/dashboard/projects/${data.id}/matches`), 1500);
     } catch (err: any) {
       toast.error(err.message || "Erreur lors de la création.");
     } finally {
@@ -91,7 +109,10 @@ const ProjectNewPage = () => {
             <Check className="h-8 w-8 text-primary" />
           </motion.div>
           <h2 className="text-lg font-semibold text-foreground">Projet créé</h2>
-          <p className="text-sm text-muted-foreground">Redirection en cours…</p>
+          <p className="text-sm text-muted-foreground flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+            Recherche d'entrepreneurs en cours…
+          </p>
         </div>
       </DashboardLayout>
     );
@@ -112,7 +133,8 @@ const ProjectNewPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Property */}
             <div className="space-y-2">
               <Label htmlFor="property">Propriété *</Label>
               <Select value={form.property_id} onValueChange={(v) => setForm((f) => ({ ...f, property_id: v }))}>
@@ -127,6 +149,39 @@ const ProjectNewPage = () => {
               </Select>
             </div>
 
+            {/* Category */}
+            <div className="space-y-2">
+              <Label>Catégorie de travaux</Label>
+              <Select value={form.category_id} onValueChange={(v) => setForm((f) => ({ ...f, category_id: v, subcategory: "" }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionnez une catégorie" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(categories?.roots ?? []).map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name_fr}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Subcategory */}
+            {subcategories.length > 0 && (
+              <div className="space-y-2">
+                <Label>Sous-catégorie</Label>
+                <Select value={form.subcategory} onValueChange={(v) => setForm((f) => ({ ...f, subcategory: v }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Précisez le type de travaux" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subcategories.map((c) => (
+                      <SelectItem key={c.id} value={c.name_fr}>{c.name_fr}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Title */}
             <div className="space-y-2">
               <Label htmlFor="title">Titre du projet *</Label>
               <Input
@@ -138,6 +193,7 @@ const ProjectNewPage = () => {
               />
             </div>
 
+            {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
@@ -149,13 +205,12 @@ const ProjectNewPage = () => {
               />
             </div>
 
+            {/* Urgency + Timeline */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Urgence</Label>
                 <Select value={form.urgency} onValueChange={(v) => setForm((f) => ({ ...f, urgency: v }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {URGENCY_OPTIONS.map((o) => (
                       <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
@@ -163,13 +218,10 @@ const ProjectNewPage = () => {
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-2">
                 <Label>Échéancier</Label>
                 <Select value={form.timeline} onValueChange={(v) => setForm((f) => ({ ...f, timeline: v }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {TIMELINE_OPTIONS.map((o) => (
                       <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
@@ -179,6 +231,7 @@ const ProjectNewPage = () => {
               </div>
             </div>
 
+            {/* Budget */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="budget_min">Budget min ($)</Label>
@@ -202,8 +255,30 @@ const ProjectNewPage = () => {
               </div>
             </div>
 
+            {/* Contact preference */}
+            <div className="space-y-2">
+              <Label>Mode de contact préféré</Label>
+              <div className="flex gap-2">
+                {CONTACT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, preferred_contact: opt.value }))}
+                    className={`flex-1 flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs font-medium transition-all ${
+                      form.preferred_contact === opt.value
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-muted/40 text-muted-foreground hover:bg-muted/60"
+                    }`}
+                  >
+                    <opt.icon className="h-3.5 w-3.5" />
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <Button type="submit" disabled={submitting} className="w-full">
-              {submitting ? "Création…" : "Créer le projet"}
+              {submitting ? "Création…" : "Créer le projet et trouver des entrepreneurs"}
             </Button>
           </form>
         </CardContent>
