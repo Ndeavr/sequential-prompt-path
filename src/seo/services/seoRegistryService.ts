@@ -177,6 +177,7 @@ export function getEntriesBySegment(segment: string): SeoPageEntry[] {
     case "service-locations": return getServiceLocationEntries();
     case "problem-locations": return getProblemLocationEntries();
     case "guides": return getGuideEntries();
+    case "renovation-locations": return getRenovationLocationEntries();
     default: return [];
   }
 }
