@@ -1,37 +1,23 @@
 /**
  * UNPRO — Public Property Page
  * Route: /maison/:slug
- *
- * Displays public-safe property information with:
- * - Address and public score
- * - Public status badge
- * - CTAs for claim, signup, score explanation
- * - Privacy-safe: no owner identity, no private docs
- *
- * French-first, premium mobile-first design.
  */
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { usePublicProperty } from "@/hooks/usePublicProperty";
 import { getStatusLabel } from "@/services/property/propertyService";
 import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { getNeighborhoodStats } from "@/services/property/neighborhoodService";
 import MainLayout from "@/layouts/MainLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { NeighborhoodMomentum } from "@/components/funnel/NeighborhoodMomentum";
+import { NextBestAction } from "@/components/funnel/NextBestAction";
 import {
-  MapPin,
-  BarChart3,
-  ShieldCheck,
-  UserPlus,
-  HelpCircle,
-  Home,
-  Calendar,
-  Ruler,
-  Award,
-  FileCheck,
-  Hammer,
-  ArrowRight,
+  MapPin, BarChart3, ShieldCheck, UserPlus, HelpCircle,
+  Home, Calendar, Ruler, Award, FileCheck, Hammer, ArrowRight,
 } from "lucide-react";
 
 const ICON_MAP: Record<string, React.ElementType> = {
