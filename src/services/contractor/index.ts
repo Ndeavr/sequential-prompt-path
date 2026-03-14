@@ -6,3 +6,4 @@ export * from "../contractorCompletenessService";
 export * from "../reviewAuthenticityService";
 export * from "../matchingEngine";
 export * from "../dnaEngine";
+export * from "./trustSummaryService";

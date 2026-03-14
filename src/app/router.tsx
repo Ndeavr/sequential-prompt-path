@@ -45,6 +45,7 @@ import PublicPropertyPage from "@/pages/PublicPropertyPage";
 import PropertyPassportPage from "@/pages/dashboard/PropertyPassportPage";
 import PropertyGrantsPage from "@/pages/dashboard/PropertyGrantsPage";
 import MessageCenterPage from "@/pages/dashboard/MessageCenterPage";
+import ProjectMatchesPage from "@/pages/dashboard/ProjectMatchesPage";
 
 // Condos
 import CondoHomePage from "@/pages/condos/CondoHomePage";
