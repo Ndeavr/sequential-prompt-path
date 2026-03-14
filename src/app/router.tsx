@@ -166,6 +166,7 @@ export const AppRouter = () => (
 
       {/* Public Property Page */}
       <Route path="/maison/:slug" element={<PublicPropertyPage />} />
+      <Route path="/score-maison" element={<PublicScoreCalculatorPage />} />
 
       {/* SEO Pages — French-first routes */}
       <Route path="/services" element={<SeoDirectoryPage />} />
