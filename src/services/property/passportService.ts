@@ -74,20 +74,35 @@ export async function updatePassportSection(
   sectionData: Record<string, unknown>,
   completionPct: number
 ) {
-  const { data, error } = await supabase
+  // Check if exists
+  const { data: existing } = await supabase
     .from("property_passport_sections")
-    .upsert(
-      {
-        property_id: propertyId,
-        section_key: sectionKey,
-        section_data: sectionData,
-        completion_pct: Math.min(100, Math.max(0, completionPct)),
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "property_id,section_key" }
-    )
-    .select()
-    .single();
+    .select("id")
+    .eq("property_id", propertyId)
+    .eq("section_key", sectionKey)
+    .maybeSingle();
+
+  const payload = {
+    section_data: sectionData as unknown as Record<string, unknown>,
+    completion_pct: Math.min(100, Math.max(0, completionPct)),
+    updated_at: new Date().toISOString(),
+  };
+
+  let data, error;
+  if (existing) {
+    ({ data, error } = await supabase
+      .from("property_passport_sections")
+      .update(payload)
+      .eq("id", existing.id)
+      .select()
+      .single());
+  } else {
+    ({ data, error } = await supabase
+      .from("property_passport_sections")
+      .insert({ ...payload, property_id: propertyId, section_key: sectionKey })
+      .select()
+      .single());
+  }
 
   if (error) throw error;
   return data;
