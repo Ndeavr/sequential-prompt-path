@@ -98,7 +98,7 @@ export default function HeroSection() {
 
   // Rotating hero text
   useEffect(() => {
-    const interval = window.setInterval(() => setIndex((p) => (p + 1) % ROTATING_ITEMS.length), 4500);
+    const interval = window.setInterval(() => setIndex((p) => (p + 1) % ROTATING_ITEMS.length), 6500);
     return () => window.clearInterval(interval);
   }, []);
 
@@ -167,20 +167,23 @@ export default function HeroSection() {
               <div className="absolute inset-0 rounded-[20px]"
                 style={{ background: "linear-gradient(to right, hsl(213 60% 97%) 0%, transparent 40%), linear-gradient(to top, hsl(213 60% 97%) 0%, transparent 50%)" }}
               />
-              <img src={unproRobot} alt="Alex UNPRO"
-                className="absolute -right-1 -bottom-4 w-[56px] drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)]"
+              <motion.img src={unproRobot} alt="Alex UNPRO"
+                className="absolute -right-2 -bottom-6 w-[84px] drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)]"
+                animate={{ y: [0, -6, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               />
             </div>
 
             {/* Left column */}
             <div className="relative z-10 min-w-0">
-              <h1 className="max-w-[680px] text-[40px] font-extrabold leading-[1.1] tracking-[-0.04em] sm:text-[50px] md:text-[64px]" style={{ color: "#0B1533" }}>
+              <h1 className="max-w-[680px] text-[40px] font-extrabold leading-[1.1] tracking-[-0.04em] sm:text-[50px] md:text-[64px] drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]" style={{ color: "#0B1533" }}>
                 <span>Trouvez</span>
                 <div className="overflow-hidden" style={{ height: "1.15em" }}>
                   <AnimatePresence mode="wait">
                     <motion.div key={current.label} variants={textVariants}
                       initial="enter" animate="center" exit="exit"
                       transition={{ duration: 0.38, ease: "easeOut" }}
+                      className="drop-shadow-[0_1px_4px_rgba(255,255,255,1)]"
                       style={{ ...clampStyle, color: "#3F7BFF" }}
                     >
                       {current.label}
@@ -193,6 +196,7 @@ export default function HeroSection() {
                     <motion.div key={current.action} variants={textVariants}
                       initial="enter" animate="center" exit="exit"
                       transition={{ duration: 0.38, ease: "easeOut", delay: 0.42 }}
+                      className="drop-shadow-[0_1px_4px_rgba(255,255,255,1)]"
                       style={{ ...clampStyle, color: "#3F7BFF" }}
                     >
                       {current.action}
@@ -201,7 +205,7 @@ export default function HeroSection() {
                 </div>
               </h1>
 
-              <p className="max-w-[420px] text-lg leading-8 md:text-xl md:leading-10" style={{ color: "#6C7A92" }}>
+              <p className="relative z-10 max-w-[420px] text-lg leading-8 md:text-xl md:leading-10 drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]" style={{ color: "#6C7A92" }}>
                 Comparez, évaluez et choisissez en toute confiance.
               </p>
 
@@ -419,8 +423,10 @@ export default function HeroSection() {
                   style={{ background: "linear-gradient(to bottom, transparent 50%, hsl(213 60% 97%) 100%)" }}
                 />
               </div>
-              <img src={unproRobot} alt="Alex UNPRO"
-                className="absolute -right-4 -bottom-7 w-[112px] drop-shadow-[0_12px_20px_rgba(0,0,0,0.18)]"
+              <motion.img src={unproRobot} alt="Alex UNPRO"
+                className="absolute -right-4 -bottom-7 w-[168px] drop-shadow-[0_12px_20px_rgba(0,0,0,0.18)]"
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               />
             </div>
           </div>

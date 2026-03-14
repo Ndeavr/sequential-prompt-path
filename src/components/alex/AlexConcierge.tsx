@@ -125,6 +125,7 @@ interface AlexConciergeProps {
 }
 
 const AlexConcierge = ({ properties, homeScore }: AlexConciergeProps) => {
+  const isHomePage = useLocation().pathname === "/";
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated } = useAuth();
   const { pathname } = useLocation();
@@ -176,14 +177,14 @@ const AlexConcierge = ({ properties, homeScore }: AlexConciergeProps) => {
     <>
       {/* ── Floating Orb ── */}
       <AnimatePresence>
-        {!isOpen && (
+        {!isOpen && !isHomePage && (
           <motion.button
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             transition={{ delay: 1.5, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-5 right-5 z-50 group"
+            className="fixed bottom-20 right-5 z-50 group"
             aria-label="Ouvrir Alex"
           >
             {/* Ambient glow */}
