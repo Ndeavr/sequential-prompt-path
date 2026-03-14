@@ -291,6 +291,18 @@ export default function PublicPropertyPage() {
               </CardContent>
             </Card>
 
+            {/* Neighborhood Momentum */}
+            <NeighborhoodMomentum
+              stats={neighborhoodStats}
+              city={propertyCity}
+              yourScore={score}
+            />
+
+            {/* Next Best Action */}
+            <NextBestAction
+              action={isAuthenticated ? "claim_property" : "create_account"}
+            />
+
             {/* Disclaimer */}
             <p className="text-center text-xs text-muted-foreground pt-4 max-w-md mx-auto">
               Le score estimé est basé sur les données publiques disponibles et ne remplace pas une inspection professionnelle.
