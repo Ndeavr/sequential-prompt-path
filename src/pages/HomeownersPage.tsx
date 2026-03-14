@@ -4,6 +4,7 @@ import { motion, useInView } from "framer-motion";
 import MainLayout from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import GooglePlacesInput from "@/components/property/GooglePlacesInput";
 import { useAuth } from "@/hooks/useAuth";
 import {
   ArrowRight, Shield, Lock, Eye, FileText,
