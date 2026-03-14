@@ -49,7 +49,7 @@ const SmartHeader = () => {
       <div className="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0 group">
-          <img src={unproLogo} alt="UNPRO" className="h-8 w-8 rounded-xl shadow-glow transition-shadow group-hover:shadow-glow-lg" />
+          <img src={unproLogo} alt="UNPRO" className="h-8 w-8 rounded-xl object-contain" />
           <span className="font-display text-sm font-bold text-foreground tracking-tight">UNPRO</span>
         </Link>
 
