@@ -46,6 +46,8 @@ import PropertyPassportPage from "@/pages/dashboard/PropertyPassportPage";
 import PropertyGrantsPage from "@/pages/dashboard/PropertyGrantsPage";
 import MessageCenterPage from "@/pages/dashboard/MessageCenterPage";
 import ProjectMatchesPage from "@/pages/dashboard/ProjectMatchesPage";
+import QrScanPage from "@/pages/QrScanPage";
+import ContributionApprovalPage from "@/pages/dashboard/ContributionApprovalPage";
 
 // Condos
 import CondoHomePage from "@/pages/condos/CondoHomePage";
@@ -152,6 +154,9 @@ export const AppRouter = () => (
       <Route path="/verify" element={<VerifyContractorPage />} />
       <Route path="/verifier-entrepreneur" element={<VerifyLandingPage />} />
 
+      {/* QR Scan Route */}
+      <Route path="/qr/:token" element={<QrScanPage />} />
+
       {/* Public Property Page */}
       <Route path="/maison/:slug" element={<PublicPropertyPage />} />
 
@@ -172,6 +177,7 @@ export const AppRouter = () => (
       <Route path="/dashboard/properties/:id" element={<ProtectedRoute requiredRole="homeowner"><PropertyDetail /></ProtectedRoute>} />
       <Route path="/dashboard/properties/:id/passport" element={<ProtectedRoute requiredRole="homeowner"><PropertyPassportPage /></ProtectedRoute>} />
       <Route path="/dashboard/properties/:id/grants" element={<ProtectedRoute requiredRole="homeowner"><PropertyGrantsPage /></ProtectedRoute>} />
+      <Route path="/dashboard/properties/:id/contributions" element={<ProtectedRoute requiredRole="homeowner"><ContributionApprovalPage /></ProtectedRoute>} />
       <Route path="/dashboard/messages" element={<ProtectedRoute requiredRole="homeowner"><MessageCenterPage /></ProtectedRoute>} />
       <Route path="/dashboard/quotes" element={<ProtectedRoute requiredRole="homeowner"><QuotesList /></ProtectedRoute>} />
       <Route path="/dashboard/quotes/upload" element={<ProtectedRoute requiredRole="homeowner"><QuoteUploadPage /></ProtectedRoute>} />

@@ -1221,6 +1221,128 @@ export type Database = {
           },
         ]
       }
+      contractor_contributions: {
+        Row: {
+          contractor_id: string | null
+          contributor_email: string | null
+          contributor_name: string | null
+          contributor_phone: string | null
+          cost_estimate: number | null
+          created_at: string
+          document_paths: string[] | null
+          id: string
+          owner_review_note: string | null
+          passport_section_key: string | null
+          photo_paths: string[] | null
+          property_event_id: string | null
+          property_id: string
+          qr_code_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["contribution_status"]
+          updated_at: string
+          work_date: string | null
+          work_description: string | null
+          work_type: string
+        }
+        Insert: {
+          contractor_id?: string | null
+          contributor_email?: string | null
+          contributor_name?: string | null
+          contributor_phone?: string | null
+          cost_estimate?: number | null
+          created_at?: string
+          document_paths?: string[] | null
+          id?: string
+          owner_review_note?: string | null
+          passport_section_key?: string | null
+          photo_paths?: string[] | null
+          property_event_id?: string | null
+          property_id: string
+          qr_code_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["contribution_status"]
+          updated_at?: string
+          work_date?: string | null
+          work_description?: string | null
+          work_type: string
+        }
+        Update: {
+          contractor_id?: string | null
+          contributor_email?: string | null
+          contributor_name?: string | null
+          contributor_phone?: string | null
+          cost_estimate?: number | null
+          created_at?: string
+          document_paths?: string[] | null
+          id?: string
+          owner_review_note?: string | null
+          passport_section_key?: string | null
+          photo_paths?: string[] | null
+          property_event_id?: string | null
+          property_id?: string
+          qr_code_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["contribution_status"]
+          updated_at?: string
+          work_date?: string | null
+          work_description?: string | null
+          work_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_contributions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_contributions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_contributions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_contributions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_contributions_property_event_id_fkey"
+            columns: ["property_event_id"]
+            isOneToOne: false
+            referencedRelation: "property_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_contributions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_contributions_qr_code_id_fkey"
+            columns: ["qr_code_id"]
+            isOneToOne: false
+            referencedRelation: "property_qr_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_credentials: {
         Row: {
           contractor_id: string
@@ -6377,6 +6499,103 @@ export type Database = {
           },
         ]
       }
+      property_qr_codes: {
+        Row: {
+          contractor_id: string | null
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          label: string | null
+          project_id: string | null
+          property_id: string
+          public_city: string | null
+          public_project_type: string | null
+          public_status: string | null
+          qr_type: Database["public"]["Enums"]["qr_type"]
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          project_id?: string | null
+          property_id: string
+          public_city?: string | null
+          public_project_type?: string | null
+          public_status?: string | null
+          qr_type: Database["public"]["Enums"]["qr_type"]
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          project_id?: string | null
+          property_id?: string
+          public_city?: string | null
+          public_project_type?: string | null
+          public_status?: string | null
+          qr_type?: Database["public"]["Enums"]["qr_type"]
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_qr_codes_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_qr_codes_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_qr_codes_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_qr_codes_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "property_qr_codes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_qr_codes_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_scores: {
         Row: {
           calculated_at: string
@@ -6465,6 +6684,47 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qr_scan_events: {
+        Row: {
+          created_at: string
+          id: string
+          ip_hash: string | null
+          qr_code_id: string
+          scan_context: string | null
+          scanned_by: string | null
+          scanner_role: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          qr_code_id: string
+          scan_context?: string | null
+          scanned_by?: string | null
+          scanner_role?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          qr_code_id?: string
+          scan_context?: string | null
+          scanned_by?: string | null
+          scanner_role?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_scan_events_qr_code_id_fkey"
+            columns: ["qr_code_id"]
+            isOneToOne: false
+            referencedRelation: "property_qr_codes"
             referencedColumns: ["id"]
           },
         ]
@@ -9271,6 +9531,7 @@ export type Database = {
         Args: { _run_id: string; _user_id: string }
         Returns: boolean
       }
+      resolve_qr_token: { Args: { _token: string }; Returns: Json }
       search_rag_chunks_text: {
         Args: {
           filter_namespaces?: string[]
@@ -9310,6 +9571,7 @@ export type Database = {
         | "completed"
         | "cancelled"
       compatibility_result: "compatible" | "partial" | "verify" | "incompatible"
+      contribution_status: "pending" | "approved" | "rejected" | "expired"
       identity_coherence:
         | "strong"
         | "moderate"
@@ -9341,6 +9603,7 @@ export type Database = {
       neq_status: "active" | "inactive" | "struck_off" | "not_found" | "unknown"
       project_fit: "compatible" | "partial" | "verify" | "incompatible"
       property_condition: "excellent" | "good" | "fair" | "poor" | "critical"
+      qr_type: "property_plate" | "electrical_panel" | "jobsite_temporary"
       quote_status: "pending" | "analyzed" | "accepted" | "rejected"
       rbq_category_type: "general" | "specialty"
       rbq_status: "valid" | "expired" | "suspended" | "not_found" | "unknown"
@@ -9502,6 +9765,7 @@ export const Constants = {
         "cancelled",
       ],
       compatibility_result: ["compatible", "partial", "verify", "incompatible"],
+      contribution_status: ["pending", "approved", "rejected", "expired"],
       identity_coherence: [
         "strong",
         "moderate",
@@ -9537,6 +9801,7 @@ export const Constants = {
       neq_status: ["active", "inactive", "struck_off", "not_found", "unknown"],
       project_fit: ["compatible", "partial", "verify", "incompatible"],
       property_condition: ["excellent", "good", "fair", "poor", "critical"],
+      qr_type: ["property_plate", "electrical_panel", "jobsite_temporary"],
       quote_status: ["pending", "analyzed", "accepted", "rejected"],
       rbq_category_type: ["general", "specialty"],
       rbq_status: ["valid", "expired", "suspended", "not_found", "unknown"],
