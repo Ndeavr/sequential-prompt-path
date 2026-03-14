@@ -199,7 +199,7 @@ const Home = () => {
                       </div>
                     )}
                     <p className="text-caption font-semibold text-muted-foreground">{q.name}</p>
-                    <p className="font-display text-section sm:text-title font-bold mt-1 text-foreground">{q.price}</p>
+                    <p className="font-display text-lg sm:text-xl font-bold mt-1 text-foreground whitespace-nowrap">{q.price}</p>
                     <div className="mt-2 pt-2 text-center border-t border-border/40">
                       <p className={`font-display text-body font-bold ${q.best ? "text-success" : q.score < 70 ? "text-destructive" : "text-muted-foreground"}`}>
                         {q.score}<span className="text-caption font-normal opacity-50">/100</span>
