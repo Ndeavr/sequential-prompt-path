@@ -165,7 +165,7 @@ export default function HeroSection() {
                 />
               </AnimatePresence>
               <div className="absolute inset-0 rounded-[20px]"
-                style={{ background: "linear-gradient(to right, hsl(213 60% 97%) 0%, transparent 50%), linear-gradient(to top, hsl(213 60% 97%) 0%, transparent 50%)" }}
+                style={{ background: "linear-gradient(135deg, hsl(213 60% 97%) 15%, hsl(213 60% 97% / 0.6) 40%, transparent 65%), linear-gradient(to bottom, transparent 60%, hsl(213 60% 97%) 100%)" }}
               />
               <motion.img src={unproRobot} alt="Alex UNPRO"
                 className="absolute -right-2 -bottom-6 w-[84px] drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)]"
