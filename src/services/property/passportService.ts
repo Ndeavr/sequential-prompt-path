@@ -82,24 +82,22 @@ export async function updatePassportSection(
     .eq("section_key", sectionKey)
     .maybeSingle();
 
-  const payload = {
-    section_data: sectionData as unknown as Record<string, unknown>,
-    completion_pct: Math.min(100, Math.max(0, completionPct)),
-    updated_at: new Date().toISOString(),
-  };
+  const sectionDataJson = sectionData as any;
+  const clampedPct = Math.min(100, Math.max(0, completionPct));
+  const now = new Date().toISOString();
 
   let data, error;
   if (existing) {
     ({ data, error } = await supabase
       .from("property_passport_sections")
-      .update(payload)
+      .update({ section_data: sectionDataJson, completion_pct: clampedPct, updated_at: now })
       .eq("id", existing.id)
       .select()
       .single());
   } else {
     ({ data, error } = await supabase
       .from("property_passport_sections")
-      .insert({ ...payload, property_id: propertyId, section_key: sectionKey })
+      .insert([{ property_id: propertyId, section_key: sectionKey, section_data: sectionDataJson, completion_pct: clampedPct, updated_at: now }])
       .select()
       .single());
   }
