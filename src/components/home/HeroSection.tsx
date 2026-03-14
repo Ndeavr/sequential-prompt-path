@@ -20,12 +20,12 @@ import unproRobot from "@/assets/unpro-robot.png";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 
 const ROTATING_ITEMS = [
-  { label: "le contracteur", action: "agrandir votre maison", image: heroAgrandissement },
-  { label: "l'arpenteur", action: "un certificat de localisation", image: heroArpenteur },
-  { label: "le couvreur", action: "refaire votre toiture", image: heroToiture },
-  { label: "l'électricien", action: "remplacer votre panneau électrique", image: heroElectricien },
-  { label: "le plombier", action: "rénover votre salle de bain", image: heroPlomberie },
-  { label: "l'entrepreneur", action: "isoler votre grenier", image: heroIsolation },
+  { label: "le contracteur", action: "agrandir votre\nmaison", image: heroAgrandissement },
+  { label: "l'arpenteur", action: "votre certificat\nde localisation", image: heroArpenteur },
+  { label: "le couvreur", action: "refaire votre\ntoiture", image: heroToiture },
+  { label: "l'électricien", action: "votre panneau\nélectrique", image: heroElectricien },
+  { label: "le plombier", action: "rénover votre\nsalle de bain", image: heroPlomberie },
+  { label: "l'entrepreneur", action: "isoler votre\ngrenier", image: heroIsolation },
 ];
 
 const textVariants = {
