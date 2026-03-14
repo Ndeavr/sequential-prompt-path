@@ -20,7 +20,8 @@ export type SeoPageType =
   | "profession"
   | "service_location"
   | "problem_location"
-  | "guide";
+  | "guide"
+  | "renovation_location";
 
 export interface SeoPageEntry {
   type: SeoPageType;
