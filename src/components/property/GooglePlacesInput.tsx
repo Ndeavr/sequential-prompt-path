@@ -8,6 +8,18 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { MapPin } from "lucide-react";
 
+declare global {
+  interface Window {
+    google?: {
+      maps: {
+        places: {
+          Autocomplete: new (input: HTMLInputElement, opts?: any) => any;
+        };
+      };
+    };
+  }
+}
+
 interface GooglePlacesInputProps {
   value: string;
   onChange: (value: string) => void;
