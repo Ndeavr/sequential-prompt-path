@@ -8,3 +8,5 @@ export * from "./propertyService";
 export * from "./claimService";
 export * from "./passportService";
 export * from "./completionEngine";
+export * from "./predictionService";
+export * from "./neighborhoodService";

@@ -3637,39 +3637,57 @@ export type Database = {
       home_scores: {
         Row: {
           calculated_at: string
+          confidence_label: string | null
+          confidence_level: number | null
           created_at: string
+          data_sources_count: number | null
           exterior_score: number | null
+          factor_breakdown: Json | null
           id: string
           interior_score: number | null
+          maintenance_score: number | null
           notes: string | null
           overall_score: number
           property_id: string
+          score_type: string | null
           structure_score: number | null
           systems_score: number | null
           user_id: string
         }
         Insert: {
           calculated_at?: string
+          confidence_label?: string | null
+          confidence_level?: number | null
           created_at?: string
+          data_sources_count?: number | null
           exterior_score?: number | null
+          factor_breakdown?: Json | null
           id?: string
           interior_score?: number | null
+          maintenance_score?: number | null
           notes?: string | null
           overall_score?: number
           property_id: string
+          score_type?: string | null
           structure_score?: number | null
           systems_score?: number | null
           user_id: string
         }
         Update: {
           calculated_at?: string
+          confidence_label?: string | null
+          confidence_level?: number | null
           created_at?: string
+          data_sources_count?: number | null
           exterior_score?: number | null
+          factor_breakdown?: Json | null
           id?: string
           interior_score?: number | null
+          maintenance_score?: number | null
           notes?: string | null
           overall_score?: number
           property_id?: string
+          score_type?: string | null
           structure_score?: number | null
           systems_score?: number | null
           user_id?: string
@@ -4482,6 +4500,54 @@ export type Database = {
           variations?: Json | null
           variations_count?: number | null
           width?: number | null
+        }
+        Relationships: []
+      }
+      neighborhood_stats: {
+        Row: {
+          active_passports: number | null
+          area_key: string
+          area_type: string
+          avg_score: number | null
+          city: string | null
+          computed_at: string
+          id: string
+          median_score: number | null
+          neighborhood: string | null
+          property_count: number | null
+          recent_improvements: number | null
+          street_name: string | null
+          top_renovation_types: Json | null
+        }
+        Insert: {
+          active_passports?: number | null
+          area_key: string
+          area_type?: string
+          avg_score?: number | null
+          city?: string | null
+          computed_at?: string
+          id?: string
+          median_score?: number | null
+          neighborhood?: string | null
+          property_count?: number | null
+          recent_improvements?: number | null
+          street_name?: string | null
+          top_renovation_types?: Json | null
+        }
+        Update: {
+          active_passports?: number | null
+          area_key?: string
+          area_type?: string
+          avg_score?: number | null
+          city?: string | null
+          computed_at?: string
+          id?: string
+          median_score?: number | null
+          neighborhood?: string | null
+          property_count?: number | null
+          recent_improvements?: number | null
+          street_name?: string | null
+          top_renovation_types?: Json | null
         }
         Relationships: []
       }
@@ -5772,6 +5838,71 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "property_passport_sections_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_predictions: {
+        Row: {
+          category: string | null
+          cost_max: number | null
+          cost_min: number | null
+          cost_unit: string | null
+          created_at: string
+          explanation_fr: string | null
+          generated_at: string
+          id: string
+          is_active: boolean | null
+          predicted_year: number | null
+          prediction_type: string
+          probability_score: number | null
+          property_id: string
+          source_confidence: string | null
+          title_fr: string
+          urgency: string | null
+        }
+        Insert: {
+          category?: string | null
+          cost_max?: number | null
+          cost_min?: number | null
+          cost_unit?: string | null
+          created_at?: string
+          explanation_fr?: string | null
+          generated_at?: string
+          id?: string
+          is_active?: boolean | null
+          predicted_year?: number | null
+          prediction_type: string
+          probability_score?: number | null
+          property_id: string
+          source_confidence?: string | null
+          title_fr: string
+          urgency?: string | null
+        }
+        Update: {
+          category?: string | null
+          cost_max?: number | null
+          cost_min?: number | null
+          cost_unit?: string | null
+          created_at?: string
+          explanation_fr?: string | null
+          generated_at?: string
+          id?: string
+          is_active?: boolean | null
+          predicted_year?: number | null
+          prediction_type?: string
+          probability_score?: number | null
+          property_id?: string
+          source_confidence?: string | null
+          title_fr?: string
+          urgency?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_predictions_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
