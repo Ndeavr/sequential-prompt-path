@@ -55,6 +55,7 @@ import ContributionApprovalPage from "@/pages/dashboard/ContributionApprovalPage
 import ListingImportPage from "@/pages/ListingImportPage";
 import PublicScoreCalculatorPage from "@/pages/PublicScoreCalculatorPage";
 import PropertyReportPage from "@/pages/dashboard/PropertyReportPage";
+import RenovationVisualizerPage from "@/pages/RenovationVisualizerPage";
 
 // Condos
 import CondoHomePage from "@/pages/condos/CondoHomePage";
@@ -152,6 +153,7 @@ export const AppRouter = () => (
       {/* Property Graph */}
       <Route path="/property-graph" element={<PropertyGraphPage />} />
       <Route path="/alex" element={<AlexChat />} />
+      <Route path="/alex/renovation" element={<RenovationVisualizerPage />} />
       <Route path="/flywheel" element={<FlywheelPage />} />
       <Route path="/energy" element={<EnergyPage />} />
       <Route path="/preventive-maintenance" element={<PreventiveMaintenancePage />} />

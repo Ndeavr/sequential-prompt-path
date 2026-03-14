@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.search-gmb-profile]
 verify_jwt = false
+
+[functions.alex-renovation]
+verify_jwt = false
