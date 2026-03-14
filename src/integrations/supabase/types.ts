@@ -612,6 +612,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "appointments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
             foreignKeyName: "appointments_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
@@ -774,6 +781,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkout_sessions_contractor_profile_id_fkey"
+            columns: ["contractor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "checkout_sessions_selected_plan_id_fkey"
@@ -956,6 +970,13 @@ export type Database = {
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_ai_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
         ]
       }
       contractor_aipp_scores: {
@@ -1029,6 +1050,13 @@ export type Database = {
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_aipp_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
         ]
       }
       contractor_category_assignments: {
@@ -1097,6 +1125,13 @@ export type Database = {
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_category_assignments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
         ]
       }
       contractor_comparables: {
@@ -1150,6 +1185,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "contractor_comparables_comparable_contractor_id_fkey"
+            columns: ["comparable_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
             foreignKeyName: "contractor_comparables_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
@@ -1169,6 +1211,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_comparables_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
         ]
       }
@@ -1243,6 +1292,13 @@ export type Database = {
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_credentials_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
         ]
       }
       contractor_dna_profiles: {
@@ -1306,6 +1362,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_dna_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
         ]
       }
@@ -1416,6 +1479,13 @@ export type Database = {
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_gmb_profiles_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
         ]
       }
       contractor_license_scope_results: {
@@ -1524,6 +1594,13 @@ export type Database = {
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_media_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
         ]
       }
       contractor_members: {
@@ -1572,6 +1649,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_members_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
         ]
       }
@@ -1639,6 +1723,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_performance_metrics_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
         ]
       }
@@ -1749,6 +1840,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "contractor_problem_links_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
             foreignKeyName: "contractor_problem_links_problem_id_fkey"
             columns: ["problem_id"]
             isOneToOne: false
@@ -1831,6 +1929,13 @@ export type Database = {
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_public_pages_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
         ]
       }
       contractor_public_scores: {
@@ -1888,6 +1993,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_public_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
         ]
       }
@@ -2033,6 +2145,13 @@ export type Database = {
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_review_aggregates_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
         ]
       }
       contractor_review_dimension_scores: {
@@ -2105,6 +2224,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_review_dimension_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
         ]
       }
@@ -2211,6 +2337,13 @@ export type Database = {
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_service_areas_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
         ]
       }
       contractor_services: {
@@ -2290,6 +2423,13 @@ export type Database = {
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_services_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
         ]
       }
       contractor_solution_links: {
@@ -2338,6 +2478,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_solution_links_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_solution_links_solution_id_fkey"
@@ -2412,6 +2559,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_subscriptions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
         ]
       }
@@ -2533,6 +2687,13 @@ export type Database = {
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_verification_runs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
         ]
       }
       contractor_verification_searches: {
@@ -2638,6 +2799,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_verification_searches_detected_contractor_id_fkey"
+            columns: ["detected_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "contractor_verification_searches_user_id_fkey"
@@ -2994,6 +3162,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "data_sources_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
             foreignKeyName: "data_sources_extraction_job_id_fkey"
             columns: ["extraction_job_id"]
             isOneToOne: false
@@ -3072,6 +3247,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dna_fit_results_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
         ]
       }
@@ -3243,6 +3425,13 @@ export type Database = {
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "extraction_jobs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
         ]
       }
       field_validations: {
@@ -3309,6 +3498,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_validations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
         ]
       }
@@ -4317,6 +4513,13 @@ export type Database = {
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "lead_qualifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
         ]
       }
       market_price_benchmarks: {
@@ -4452,6 +4655,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_evaluations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "match_evaluations_project_id_fkey"
@@ -4969,6 +5179,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "profile_alignment_answers_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
             foreignKeyName: "profile_alignment_answers_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
@@ -5146,6 +5363,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "project_matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
             foreignKeyName: "project_matches_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
@@ -5201,8 +5425,12 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          matching_status: string | null
+          photo_urls: string[] | null
+          preferred_contact: string | null
           property_id: string
           status: string
+          subcategory: string | null
           timeline: string | null
           title: string
           updated_at: string
@@ -5217,8 +5445,12 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          matching_status?: string | null
+          photo_urls?: string[] | null
+          preferred_contact?: string | null
           property_id: string
           status?: string
+          subcategory?: string | null
           timeline?: string | null
           title: string
           updated_at?: string
@@ -5233,8 +5465,12 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          matching_status?: string | null
+          photo_urls?: string[] | null
+          preferred_contact?: string | null
           property_id?: string
           status?: string
+          subcategory?: string | null
           timeline?: string | null
           title?: string
           updated_at?: string
@@ -5742,6 +5978,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "property_events_property_id_fkey"
@@ -6354,6 +6597,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "quotes_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
             foreignKeyName: "quotes_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
@@ -6748,6 +6998,13 @@ export type Database = {
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "review_insights_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
         ]
       }
       review_items: {
@@ -6850,6 +7107,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_items_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
         ]
       }
@@ -6959,6 +7223,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
         ]
       }
@@ -7505,6 +7776,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "syndicate_maintenance_items_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
             foreignKeyName: "syndicate_maintenance_items_plan_id_fkey"
             columns: ["plan_id"]
             isOneToOne: false
@@ -7820,6 +8098,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "syndicate_project_interests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
             foreignKeyName: "syndicate_project_interests_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
@@ -7919,6 +8204,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndicate_projects_actual_contractor_id_fkey"
+            columns: ["actual_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "syndicate_projects_syndicate_id_fkey"
@@ -8340,6 +8632,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "territory_assignments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
             foreignKeyName: "territory_assignments_territory_id_fkey"
             columns: ["territory_id"]
             isOneToOne: false
@@ -8388,6 +8687,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "territory_waitlist_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "territory_waitlist_territory_id_fkey"
@@ -8630,6 +8936,13 @@ export type Database = {
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "verification_reports_matched_contractor_id_fkey"
+            columns: ["matched_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
         ]
       }
     }
@@ -8672,6 +8985,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_alignment_answers_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "profile_alignment_answers_property_id_fkey"
@@ -8759,6 +9079,33 @@ export type Database = {
         }
         Relationships: []
       }
+      v_contractor_trust_summary: {
+        Row: {
+          aipp_score: number | null
+          appointment_show_rate: number | null
+          business_name: string | null
+          close_rate: number | null
+          complaint_rate: number | null
+          contractor_id: string | null
+          insurance_verified: boolean | null
+          neq_verified: boolean | null
+          profile_completeness_score: number | null
+          rating: number | null
+          rbq_verified: boolean | null
+          response_time_avg_hours: number | null
+          review_count: number | null
+          review_sentiment_score: number | null
+          trust_score: number | null
+          unpro_score: number | null
+          verification_status:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          verified_credentials_count: number | null
+          visibility_score: number | null
+          years_experience: number | null
+        }
+        Relationships: []
+      }
       v_match_results_safe: {
         Row: {
           aipp_score_snapshot: number | null
@@ -8812,6 +9159,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_evaluations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
           {
             foreignKeyName: "match_evaluations_project_id_fkey"
