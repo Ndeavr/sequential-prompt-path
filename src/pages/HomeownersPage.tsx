@@ -173,11 +173,11 @@ export default function HomeownersPage() {
                 {/* Address input */}
                 <motion.div variants={fadeUp} custom={3} className="max-w-md space-y-3">
                   <div className="flex gap-2">
-                    <Input
-                      placeholder="123 rue des Érables, Laval"
+                    <GooglePlacesInput
                       value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      className="h-13 rounded-2xl bg-card border-border/40 text-base px-5 flex-1 shadow-sm"
+                      onChange={setAddress}
+                      placeholder="123 rue des Érables, Laval"
+                      className="flex-1"
                     />
                     <Button
                       asChild
