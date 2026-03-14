@@ -5096,6 +5096,7 @@ export type Database = {
         Row: {
           address: string
           city: string | null
+          claim_status: string | null
           claimed_at: string | null
           claimed_by: string | null
           condition: Database["public"]["Enums"]["property_condition"] | null
@@ -5126,6 +5127,7 @@ export type Database = {
         Insert: {
           address: string
           city?: string | null
+          claim_status?: string | null
           claimed_at?: string | null
           claimed_by?: string | null
           condition?: Database["public"]["Enums"]["property_condition"] | null
@@ -5156,6 +5158,7 @@ export type Database = {
         Update: {
           address?: string
           city?: string | null
+          claim_status?: string | null
           claimed_at?: string | null
           claimed_by?: string | null
           condition?: Database["public"]["Enums"]["property_condition"] | null
@@ -5285,6 +5288,118 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "property_aliases_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_claims: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          property_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          verification_code: string | null
+          verification_data: Json | null
+          verification_method: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          property_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          verification_code?: string | null
+          verification_data?: Json | null
+          verification_method?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          property_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          verification_code?: string | null
+          verification_data?: Json | null
+          verification_method?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_claims_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_completion_tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          description_fr: string | null
+          dismissed_at: string | null
+          estimated_minutes: number | null
+          field_key: string | null
+          id: string
+          points: number | null
+          priority: number | null
+          property_id: string
+          section_key: string
+          status: string
+          task_key: string
+          title_fr: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          description_fr?: string | null
+          dismissed_at?: string | null
+          estimated_minutes?: number | null
+          field_key?: string | null
+          id?: string
+          points?: number | null
+          priority?: number | null
+          property_id: string
+          section_key: string
+          status?: string
+          task_key: string
+          title_fr: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          description_fr?: string | null
+          dismissed_at?: string | null
+          estimated_minutes?: number | null
+          field_key?: string | null
+          id?: string
+          points?: number | null
+          priority?: number | null
+          property_id?: string
+          section_key?: string
+          status?: string
+          task_key?: string
+          title_fr?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_completion_tasks_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
@@ -5623,6 +5738,41 @@ export type Database = {
           {
             foreignKeyName: "property_merge_candidates_property_b_id_fkey"
             columns: ["property_b_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_passport_sections: {
+        Row: {
+          completion_pct: number | null
+          id: string
+          property_id: string
+          section_data: Json | null
+          section_key: string
+          updated_at: string
+        }
+        Insert: {
+          completion_pct?: number | null
+          id?: string
+          property_id: string
+          section_data?: Json | null
+          section_key: string
+          updated_at?: string
+        }
+        Update: {
+          completion_pct?: number | null
+          id?: string
+          property_id?: string
+          section_data?: Json | null
+          section_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_passport_sections_property_id_fkey"
+            columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
             referencedColumns: ["id"]
