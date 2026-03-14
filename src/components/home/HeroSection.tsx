@@ -98,7 +98,7 @@ export default function HeroSection() {
 
   // Rotating hero text
   useEffect(() => {
-    const interval = window.setInterval(() => setIndex((p) => (p + 1) % ROTATING_ITEMS.length), 4500);
+    const interval = window.setInterval(() => setIndex((p) => (p + 1) % ROTATING_ITEMS.length), 6500);
     return () => window.clearInterval(interval);
   }, []);
 
