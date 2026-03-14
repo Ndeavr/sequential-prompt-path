@@ -57,6 +57,9 @@ import PublicScoreCalculatorPage from "@/pages/PublicScoreCalculatorPage";
 import PropertyReportPage from "@/pages/dashboard/PropertyReportPage";
 import RenovationVisualizerPage from "@/pages/RenovationVisualizerPage";
 import RenovationLocationPage from "@/pages/seo/RenovationLocationPage";
+import DiscoveryFeedPage from "@/pages/DiscoveryFeedPage";
+import TransformationDetailPage from "@/pages/TransformationDetailPage";
+import TrendingPage from "@/pages/TrendingPage";
 
 // Condos
 import CondoHomePage from "@/pages/condos/CondoHomePage";
@@ -155,6 +158,9 @@ export const AppRouter = () => (
       <Route path="/property-graph" element={<PropertyGraphPage />} />
       <Route path="/alex" element={<AlexChat />} />
       <Route path="/alex/renovation" element={<RenovationVisualizerPage />} />
+      <Route path="/inspirations" element={<DiscoveryFeedPage />} />
+      <Route path="/transformations/:id" element={<TransformationDetailPage />} />
+      <Route path="/tendances" element={<TrendingPage />} />
       <Route path="/flywheel" element={<FlywheelPage />} />
       <Route path="/energy" element={<EnergyPage />} />
       <Route path="/preventive-maintenance" element={<PreventiveMaintenancePage />} />

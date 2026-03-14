@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -64,7 +65,54 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const { messages, action, imageBase64, generationParams } = await req.json();
+    const { messages, action, imageBase64, generationParams, projectData } = await req.json();
+
+    // ===== ACTION: SAVE PROJECT =====
+    if (action === "save_project" && projectData) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const sb = createClient(supabaseUrl, supabaseKey);
+
+      const slug = `${projectData.category}-${Date.now().toString(36)}`;
+      const { data: project, error: projErr } = await sb.from("renovation_projects").insert({
+        user_id: projectData.user_id || null,
+        category: projectData.category,
+        city: projectData.city || null,
+        style: projectData.style || null,
+        budget: projectData.budget || null,
+        goal: projectData.goal || null,
+        original_image_url: projectData.original_image_url || null,
+        project_summary: projectData.project_summary || null,
+        slug,
+        is_public: true,
+      }).select("id").single();
+
+      if (projErr) {
+        console.error("Save project error:", projErr);
+        return new Response(JSON.stringify({ error: "Erreur lors de la sauvegarde" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // Save concepts
+      const concepts = (projectData.concepts || []).map((c: any, i: number) => ({
+        project_id: project.id,
+        concept_type: c.type || ["safe", "balanced", "premium"][i] || "balanced",
+        image_url: c.image_url || null,
+        title: c.title || null,
+        description: c.description || null,
+        estimated_budget_min: c.budget_min || null,
+        estimated_budget_max: c.budget_max || null,
+        display_order: i,
+      }));
+
+      if (concepts.length > 0) {
+        const { error: cErr } = await sb.from("renovation_concepts").insert(concepts);
+        if (cErr) console.error("Save concepts error:", cErr);
+      }
+
+      return new Response(JSON.stringify({ project_id: project.id, slug }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     // ===== ACTION: GENERATE TRANSFORMATION =====
     if (action === "generate_transformation") {

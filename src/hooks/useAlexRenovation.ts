@@ -256,6 +256,33 @@ export const useAlexRenovation = () => {
         const filtered = prev.filter(m => !m.content.includes("Je prépare vos concepts"));
         return [...filtered, { role: "assistant", content: resultMessage, images }];
       });
+
+      // Persist the project to DB
+      try {
+        await fetch(RENO_URL, {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({
+            action: "save_project",
+            projectData: {
+              user_id: session?.user?.id || null,
+              category: params.category,
+              style: params.style,
+              budget: params.budget,
+              goal: params.goal,
+              original_image_url: photoBase64,
+              project_summary: text || `Transformation ${catFr} — ${params.style || "personnalisé"}`,
+              concepts: images.map((img: string, i: number) => ({
+                type: ["safe", "balanced", "premium"][i] || "balanced",
+                image_url: img,
+                title: i === 0 ? "Sobre & Réaliste" : i === 1 ? "Équilibré" : "Premium",
+              })),
+            },
+          }),
+        });
+      } catch (saveErr) {
+        console.error("Project save error:", saveErr);
+      }
     } catch (err) {
       console.error("Generation error:", err);
       setMessages(prev => [...prev, {
