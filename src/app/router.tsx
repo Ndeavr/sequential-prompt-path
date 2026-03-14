@@ -148,6 +148,9 @@ export const AppRouter = () => (
       <Route path="/verify" element={<VerifyContractorPage />} />
       <Route path="/verifier-entrepreneur" element={<VerifyLandingPage />} />
 
+      {/* Public Property Page */}
+      <Route path="/maison/:slug" element={<PublicPropertyPage />} />
+
       {/* SEO Pages */}
       <Route path="/services" element={<SeoDirectoryPage />} />
       <Route path="/services/:category/:city" element={<ServiceLocationPage />} />

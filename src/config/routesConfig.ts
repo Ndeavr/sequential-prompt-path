@@ -10,6 +10,7 @@ export const ROUTES = {
   CONTRACTOR_PROFILE: "/contractors/:id",
   CONTRACTORS: "/contractors",
   VERIFY_CONTRACTOR: "/verify",
+  PUBLIC_PROPERTY: "/maison/:slug",
 
   // Homeowner Dashboard
   DASHBOARD_QUOTES: "/dashboard/quotes",
