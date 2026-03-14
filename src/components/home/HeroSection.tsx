@@ -200,7 +200,7 @@ export default function HeroSection() {
                     variants={textVariants}
                     initial="enter" animate="center" exit="exit"
                     transition={{ duration: 0.38, ease: "easeOut", delay: 0.42 }}
-                    className="inline"
+                    className="inline whitespace-pre-line"
                     style={{ color: "#3F7BFF" }}
                   >
                     {current.action}
