@@ -122,6 +122,20 @@ export function getGuideEntries(): SeoPageEntry[] {
   }));
 }
 
+/** Generate renovation+location entries */
+export function getRenovationLocationEntries(): SeoPageEntry[] {
+  return SEO_RENOVATIONS.flatMap((r) =>
+    SEO_CITIES.map((c) => ({
+      type: "renovation_location" as SeoPageType,
+      path: `/renovation/${r.slug}/${c.slug}`,
+      canonical: `${BASE_URL}/renovation/${r.slug}/${c.slug}`,
+      indexable: true,
+      priority: 0.7,
+      changefreq: "monthly" as const,
+    }))
+  );
+}
+
 /** Indexability check — noindex pages without enough data */
 export function shouldIndex(pageType: SeoPageType, hasData: boolean): boolean {
   if (!hasData) return false;
