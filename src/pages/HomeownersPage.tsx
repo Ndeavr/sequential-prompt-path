@@ -434,7 +434,7 @@ export default function HomeownersPage() {
               </div>
               <p className="text-lg text-foreground font-semibold max-w-sm mx-auto">
                 Certaines maisons choisissent d'afficher leur{" "}
-                <span className="text-primary">Passeport Maison</span> UNPRO.
+                <Link to="/maison/exemple-certifie" className="text-primary underline underline-offset-2 hover:text-primary/80 transition-colors">Passeport Maison</Link> UNPRO.
               </p>
               <p className="text-sm text-muted-foreground max-w-xs mx-auto">
                 Un gage de transparence et de confiance pour les acheteurs potentiels.
