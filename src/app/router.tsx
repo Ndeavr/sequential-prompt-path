@@ -42,6 +42,7 @@ import ContractorQuestionnairePage from "@/pages/ContractorQuestionnairePage";
 import VerifyContractorPage from "@/pages/VerifyContractorPage";
 import VerifyLandingPage from "@/pages/VerifyLandingPage";
 import PublicPropertyPage from "@/pages/PublicPropertyPage";
+import PropertyPassportPage from "@/pages/dashboard/PropertyPassportPage";
 
 // Condos
 import CondoHomePage from "@/pages/condos/CondoHomePage";
