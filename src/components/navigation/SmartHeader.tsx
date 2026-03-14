@@ -13,6 +13,7 @@ import { resolveIcon, Menu, X, Bell, Home as HomeIcon } from "./IconResolver";
 import ProfileMenu from "./ProfileMenu";
 import MobileDrawer from "./MobileDrawer";
 import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
+import SmartCTA from "@/components/cta/SmartCTA";
 import type { NavItem } from "@/types/navigation";
 import unproLogo from "@/assets/unpro-logo.png";
 
@@ -96,9 +97,7 @@ const SmartHeader = () => {
               <Button asChild variant="outline" size="sm" className="rounded-full h-8 text-xs px-4 hidden sm:inline-flex">
                 <Link to="/login">{lang === "en" ? "Sign In" : "Connexion"}</Link>
               </Button>
-              <Button asChild size="sm" className="rounded-full h-8 text-xs px-4">
-                <Link to="/signup">{lang === "en" ? "Create Project" : "Créer un Projet"}</Link>
-              </Button>
+              <SmartCTA variant="header" className="hidden sm:block" />
             </>
           )}
 
