@@ -209,7 +209,7 @@ export async function getPropertyQrCodes(propertyId: string) {
     .order("created_at", { ascending: false });
 
   if (error) throw error;
-  return (data ?? []) as QrCodeRecord[];
+  return (data ?? []) as unknown as QrCodeRecord[];
 }
 
 // ─── Upload contribution file ───

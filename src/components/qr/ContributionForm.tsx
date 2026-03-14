@@ -85,7 +85,7 @@ export default function ContributionForm({ propertyId, qrCodeId, userId }: Contr
         property_id: propertyId,
         qr_code_id: qrCodeId,
         contractor_id: contractorProfile?.id ?? undefined,
-        contributor_name: contractorProfile?.business_name ?? form.contributor_name || undefined,
+        contributor_name: (contractorProfile?.business_name ?? form.contributor_name) || undefined,
         contributor_phone: form.contributor_phone || undefined,
         work_type: form.work_type,
         work_description: form.work_description || undefined,

@@ -90,10 +90,10 @@ export default function ElectricalPanelFlow({ propertyId, qrId }: ElectricalPane
               <Card className="glass-card border-0">
                 <CardContent className="p-6 space-y-5">
                   <div className="text-center space-y-3">
-                    <div className="h-16 w-16 rounded-2xl bg-amber-500/10 flex items-center justify-center mx-auto">
-                      <Zap className="h-8 w-8 text-amber-500" />
+                    <div className="h-16 w-16 rounded-2xl bg-warning/10 flex items-center justify-center mx-auto">
+                      <Zap className="h-8 w-8 text-warning" />
                     </div>
-                    <Badge variant="outline" className="text-xs border-amber-500/20 text-amber-600">
+                    <Badge variant="outline" className="text-xs border-warning/20 text-warning">
                       Panneau électrique
                     </Badge>
                     <h2 className="text-lg font-bold text-foreground">
