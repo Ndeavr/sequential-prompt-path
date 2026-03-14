@@ -7,6 +7,7 @@ import { SEO_CITIES } from "../data/cities";
 import { SEO_SERVICES } from "../data/services";
 import { SEO_PROBLEMS } from "../data/problems";
 import { SEO_GUIDES } from "../data/guides";
+import { SEO_RENOVATIONS } from "../data/renovations";
 
 export type SeoPageType =
   | "house"
