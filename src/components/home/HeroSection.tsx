@@ -167,8 +167,10 @@ export default function HeroSection() {
               <div className="absolute inset-0 rounded-[20px]"
                 style={{ background: "linear-gradient(to right, hsl(213 60% 97%) 0%, transparent 40%), linear-gradient(to top, hsl(213 60% 97%) 0%, transparent 50%)" }}
               />
-              <img src={unproRobot} alt="Alex UNPRO"
-                className="absolute -right-1 -bottom-4 w-[56px] drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)]"
+              <motion.img src={unproRobot} alt="Alex UNPRO"
+                className="absolute -right-2 -bottom-6 w-[84px] drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)]"
+                animate={{ y: [0, -6, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               />
             </div>
 
