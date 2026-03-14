@@ -263,10 +263,10 @@ const Home = () => {
               <h2 className="section-title">Connaissez la santé de votre propriété</h2>
               <p className="text-body mt-3 leading-relaxed text-muted-foreground">Un diagnostic complet alimenté par l'IA. Identifiez les priorités d'entretien.</p>
               <button
-                onClick={() => handleCta("/dashboard/home-score", "Calculer mon Score Maison")}
+                onClick={() => handleCta("/score-maison", "Calculer mon Score Maison")}
                 className="mt-6 h-12 rounded-xl px-6 flex items-center gap-2 text-meta font-bold bg-card border-2 border-success/30 text-success hover:border-success/50 transition-all active:scale-[0.97]"
               >
-                Calculer mon Score <ArrowRight className="h-4 w-4" />
+                Calculer mon Score gratuitement <ArrowRight className="h-4 w-4" />
               </button>
             </motion.div>
 

@@ -5,7 +5,7 @@
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import MainLayout from "@/layouts/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,10 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { findPropertyByAddress, createProperty } from "@/services/property/propertyService";
 import { calculateHomeScore, type HomeScoreInput } from "@/services/homeScoreService";
+import { getNeighborhoodStats } from "@/services/property/neighborhoodService";
+import { NeighborhoodMomentum } from "@/components/funnel/NeighborhoodMomentum";
+import { NextBestAction, determineNextAction } from "@/components/funnel/NextBestAction";
+import { recordDataAction } from "@/services/dataMoatService";
 import {
   Search, Home, ArrowRight, ShieldCheck, UserPlus,
   BarChart3, AlertCircle, Loader2, TrendingUp,
@@ -23,8 +27,17 @@ export default function PublicScoreCalculatorPage() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
   const [scoreResult, setScoreResult] = useState<ReturnType<typeof calculateHomeScore> | null>(null);
   const [propertySlug, setPropertySlug] = useState<string | null>(null);
+
+  // Neighborhood stats for city (privacy-safe)
+  const { data: neighborhoodStats } = useQuery({
+    queryKey: ["neighborhood-stats-calc", city],
+    queryFn: () => getNeighborhoodStats(city),
+    enabled: !!city && city.length > 2,
+    staleTime: 10 * 60 * 1000,
+  });
 
   const lookupMutation = useMutation({
     mutationFn: async () => {
@@ -33,7 +46,7 @@ export default function PublicScoreCalculatorPage() {
 
       if (existing) {
         setPropertySlug(existing.slug);
-        // Generate estimated score with minimal data
+        if (existing.city) setCity(existing.city);
         const input: HomeScoreInput = {
           yearBuilt: null,
           propertyType: null,
@@ -65,6 +78,7 @@ export default function PublicScoreCalculatorPage() {
     },
     onSuccess: (result) => {
       setScoreResult(result);
+      recordDataAction("address_searched", { address, city });
     },
   });
 
@@ -222,6 +236,15 @@ export default function PublicScoreCalculatorPage() {
                     </Button>
                   </CardContent>
                 </Card>
+              )}
+
+              {/* Neighborhood Momentum */}
+              {city && (
+                <NeighborhoodMomentum
+                  stats={neighborhoodStats ?? null}
+                  city={city}
+                  yourScore={scoreResult?.overall}
+                />
               )}
 
               <p className="text-center text-xs text-muted-foreground pt-2">

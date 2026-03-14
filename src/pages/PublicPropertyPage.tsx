@@ -1,37 +1,23 @@
 /**
  * UNPRO — Public Property Page
  * Route: /maison/:slug
- *
- * Displays public-safe property information with:
- * - Address and public score
- * - Public status badge
- * - CTAs for claim, signup, score explanation
- * - Privacy-safe: no owner identity, no private docs
- *
- * French-first, premium mobile-first design.
  */
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { usePublicProperty } from "@/hooks/usePublicProperty";
 import { getStatusLabel } from "@/services/property/propertyService";
 import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { getNeighborhoodStats } from "@/services/property/neighborhoodService";
 import MainLayout from "@/layouts/MainLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { NeighborhoodMomentum } from "@/components/funnel/NeighborhoodMomentum";
+import { NextBestAction } from "@/components/funnel/NextBestAction";
 import {
-  MapPin,
-  BarChart3,
-  ShieldCheck,
-  UserPlus,
-  HelpCircle,
-  Home,
-  Calendar,
-  Ruler,
-  Award,
-  FileCheck,
-  Hammer,
-  ArrowRight,
+  MapPin, BarChart3, ShieldCheck, UserPlus, HelpCircle,
+  Home, Calendar, Ruler, Award, FileCheck, Hammer, ArrowRight,
 } from "lucide-react";
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -90,6 +76,15 @@ export default function PublicPropertyPage() {
   const StatusIcon = ICON_MAP[status.icon] || BarChart3;
   const score = property.estimated_score;
   const displayAddress = property.full_address || property.address;
+  const propertyCity = property.city || "";
+
+  // Neighborhood stats (privacy-safe aggregated data)
+  const { data: neighborhoodStats } = useQuery({
+    queryKey: ["neighborhood-stats", propertyCity],
+    queryFn: () => getNeighborhoodStats(propertyCity),
+    enabled: !!propertyCity,
+    staleTime: 10 * 60 * 1000,
+  });
 
   return (
     <MainLayout>
@@ -295,6 +290,18 @@ export default function PublicPropertyPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Neighborhood Momentum */}
+            <NeighborhoodMomentum
+              stats={neighborhoodStats}
+              city={propertyCity}
+              yourScore={score}
+            />
+
+            {/* Next Best Action */}
+            <NextBestAction
+              action={isAuthenticated ? "claim_property" : "create_account"}
+            />
 
             {/* Disclaimer */}
             <p className="text-center text-xs text-muted-foreground pt-4 max-w-md mx-auto">
