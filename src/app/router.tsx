@@ -164,15 +164,23 @@ export const AppRouter = () => (
       {/* Public Property Page */}
       <Route path="/maison/:slug" element={<PublicPropertyPage />} />
 
-      {/* SEO Pages */}
+      {/* SEO Pages — French-first routes */}
       <Route path="/services" element={<SeoDirectoryPage />} />
       <Route path="/services/:category/:city" element={<ServiceLocationPage />} />
+      <Route path="/probleme/:slug" element={<ProblemPage />} />
+      <Route path="/probleme/:problem/:city" element={<ProblemeLocationFrPage />} />
+      <Route path="/solution/:slug" element={<SolutionPage />} />
+      <Route path="/profession/:slug" element={<ProfessionPage />} />
+      <Route path="/ville/:slug" element={<VillePage />} />
+      <Route path="/quartier/:ville/:quartier" element={<QuartierPage />} />
+      <Route path="/rue/:ville/:rue" element={<RuePage />} />
+      <Route path="/guides/:topic" element={<GuidePage />} />
+
+      {/* Legacy English routes (kept for backward compat, redirect later) */}
       <Route path="/problems/:slug" element={<ProblemPage />} />
       <Route path="/problems/:problem/:city" element={<ProblemLocationPage />} />
       <Route path="/solutions/:slug" element={<SolutionPage />} />
-      <Route path="/profession/:slug" element={<ProfessionPage />} />
       <Route path="/city/:slug" element={<CityPage />} />
-      <Route path="/guides/:topic" element={<GuidePage />} />
 
       {/* Homeowner Dashboard */}
       <Route path="/dashboard" element={<ProtectedRoute requiredRole="homeowner"><DashboardHome /></ProtectedRoute>} />
