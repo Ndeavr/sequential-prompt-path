@@ -7,13 +7,6 @@
 import { trackEvent, type EventCategory } from "@/services/eventTrackingService";
 
 /**
- * 
- * This is the canonical registry of what data is captured per action.
- */
-
-import { trackEvent } from "@/services/eventTrackingService";
-
-/**
  * Data asset map: action → what is stored, what it feeds.
  */
 export const DATA_ASSET_MAP = {
