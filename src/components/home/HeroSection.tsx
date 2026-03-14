@@ -20,12 +20,12 @@ import unproRobot from "@/assets/unpro-robot.png";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 
 const ROTATING_ITEMS = [
-  { label: "le contracteur idéal pour", action: "agrandir votre maison", image: heroAgrandissement },
-  { label: "l'arpenteur idéal pour", action: "votre certificat de localisation", image: heroArpenteur },
-  { label: "le couvreur idéal pour", action: "refaire votre toiture", image: heroToiture },
-  { label: "l'électricien idéal pour", action: "votre panneau électrique", image: heroElectricien },
-  { label: "le plombier idéal pour", action: "votre salle de bain", image: heroPlomberie },
-  { label: "l'expert idéal pour", action: "isoler votre grenier", image: heroIsolation },
+  { label: "le contracteur", qualifier: "idéal pour", action: "agrandir votre maison", image: heroAgrandissement },
+  { label: "l'arpenteur", qualifier: "idéal pour", action: "votre certificat de localisation", image: heroArpenteur },
+  { label: "le couvreur", qualifier: "idéal pour", action: "refaire votre toiture", image: heroToiture },
+  { label: "l'électricien", qualifier: "idéal pour", action: "votre panneau électrique", image: heroElectricien },
+  { label: "le plombier", qualifier: "idéal pour", action: "votre salle de bain", image: heroPlomberie },
+  { label: "l'expert", qualifier: "idéal pour", action: "isoler votre grenier", image: heroIsolation },
 ];
 
 const textVariants = {
