@@ -90,7 +90,7 @@ export async function recordDataAction(
   const assetInfo = DATA_ASSET_MAP[action];
   
   // Map to event tracking categories
-  const categoryMap: Record<string, string> = {
+  const categoryMap: Record<string, EventCategory> = {
     property_created: "property",
     address_searched: "search",
     property_claimed: "property",
@@ -108,7 +108,7 @@ export async function recordDataAction(
 
   await trackEvent({
     eventType: action,
-    category: categoryMap[action] || "other",
+    category: categoryMap[action] || "property" as EventCategory,
     metadata: {
       ...metadata,
       data_feeds: assetInfo.feeds,
