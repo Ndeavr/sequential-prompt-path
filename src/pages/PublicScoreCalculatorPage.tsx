@@ -27,8 +27,17 @@ export default function PublicScoreCalculatorPage() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
   const [scoreResult, setScoreResult] = useState<ReturnType<typeof calculateHomeScore> | null>(null);
   const [propertySlug, setPropertySlug] = useState<string | null>(null);
+
+  // Neighborhood stats for city (privacy-safe)
+  const { data: neighborhoodStats } = useQuery({
+    queryKey: ["neighborhood-stats-calc", city],
+    queryFn: () => getNeighborhoodStats(city),
+    enabled: !!city && city.length > 2,
+    staleTime: 10 * 60 * 1000,
+  });
 
   const lookupMutation = useMutation({
     mutationFn: async () => {
