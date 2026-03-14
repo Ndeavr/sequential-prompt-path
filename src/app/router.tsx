@@ -162,6 +162,7 @@ export const AppRouter = () => (
       <Route path="/inspirations" element={<DiscoveryFeedPage />} />
       <Route path="/transformations/:id" element={<TransformationDetailPage />} />
       <Route path="/tendances" element={<TrendingPage />} />
+      <Route path="/carte" element={<PropertyMapPage />} />
       <Route path="/flywheel" element={<FlywheelPage />} />
       <Route path="/energy" element={<EnergyPage />} />
       <Route path="/preventive-maintenance" element={<PreventiveMaintenancePage />} />
