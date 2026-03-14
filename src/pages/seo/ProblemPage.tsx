@@ -83,7 +83,7 @@ const ProblemPage = () => {
       <Helmet>
         <title>{problem.seo_title_fr || `${problem.name_fr} — UNPRO`}</title>
         <meta name="description" content={problem.seo_description_fr || problem.description_fr || ""} />
-        <link rel="canonical" href={`https://unpro.ca/problems/${slug}`} />
+        <link rel="canonical" href={`https://unpro.ca/probleme/${slug}`} />
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
       </Helmet>

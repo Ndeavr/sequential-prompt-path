@@ -54,7 +54,7 @@ const SolutionPage = () => {
       <Helmet>
         <title>{solution.name_fr} — UNPRO</title>
         <meta name="description" content={solution.description_fr || `${solution.name_fr} — Guide complet et professionnels recommandés.`} />
-        <link rel="canonical" href={`https://unpro.ca/solutions/${slug}`} />
+        <link rel="canonical" href={`https://unpro.ca/solution/${slug}`} />
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
       </Helmet>
 
