@@ -20,12 +20,12 @@ import unproRobot from "@/assets/unpro-robot.png";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 
 const ROTATING_ITEMS = [
-  { label: "le contracteur", action: "agrandir votre maison", image: heroAgrandissement },
-  { label: "l'arpenteur", action: "un certificat de localisation", image: heroArpenteur },
-  { label: "le couvreur", action: "refaire votre toiture", image: heroToiture },
-  { label: "l'électricien", action: "remplacer votre panneau électrique", image: heroElectricien },
-  { label: "le plombier", action: "rénover votre salle de bain", image: heroPlomberie },
-  { label: "l'entrepreneur", action: "isoler votre grenier", image: heroIsolation },
+  { label: "le contracteur", action: "agrandir votre\nmaison", image: heroAgrandissement },
+  { label: "l'arpenteur", action: "votre certificat\nde localisation", image: heroArpenteur },
+  { label: "le couvreur", action: "refaire votre\ntoiture", image: heroToiture },
+  { label: "l'électricien", action: "votre panneau\nélectrique", image: heroElectricien },
+  { label: "le plombier", action: "rénover votre\nsalle de bain", image: heroPlomberie },
+  { label: "l'entrepreneur", action: "isoler votre\ngrenier", image: heroIsolation },
 ];
 
 const textVariants = {
@@ -176,7 +176,7 @@ export default function HeroSection() {
 
             {/* Left column */}
             <div className="relative z-10 min-w-0">
-              <h1 className="max-w-[55%] sm:max-w-[680px] text-[32px] font-extrabold leading-[1.1] tracking-[-0.04em] sm:text-[50px] md:text-[64px] drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]" style={{ color: "#0B1533" }}>
+              <h1 className="max-w-[60%] sm:max-w-[680px] text-[40px] font-extrabold leading-[1.1] tracking-[-0.04em] sm:text-[50px] md:text-[64px] drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]" style={{ color: "#0B1533" }}>
                 <span>Trouvez</span>
                 <div className="overflow-hidden" style={{ height: "1.15em" }}>
                   <AnimatePresence mode="wait">
@@ -191,13 +191,13 @@ export default function HeroSection() {
                   </AnimatePresence>
                 </div>
                 <span style={{ color: "#0B1533" }}>idéal pour</span>
-                <div className="overflow-hidden" style={{ height: "2.2em" }}>
+                <div className="overflow-hidden" style={{ height: "2.4em" }}>
                   <AnimatePresence mode="wait">
                     <motion.div key={current.action} variants={textVariants}
                       initial="enter" animate="center" exit="exit"
                       transition={{ duration: 0.38, ease: "easeOut", delay: 0.42 }}
-                      className="drop-shadow-[0_1px_4px_rgba(255,255,255,1)]"
-                      style={{ ...clampStyle, color: "#3F7BFF" }}
+                      className="whitespace-pre-line drop-shadow-[0_1px_4px_rgba(255,255,255,1)]"
+                      style={{ color: "#3F7BFF" }}
                     >
                       {current.action}
                     </motion.div>
