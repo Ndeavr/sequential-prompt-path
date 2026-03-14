@@ -21,7 +21,8 @@ const PropertyDetail = () => {
         action={
           <div className="flex gap-2">
             <Button asChild variant="outline"><Link to="/dashboard/properties">← Retour</Link></Button>
-            <Button asChild><Link to={`/dashboard/properties/${id}/insights`}>Intelligence propriété</Link></Button>
+            <Button asChild variant="default"><Link to={`/dashboard/properties/${id}/passport`}>Passeport Maison</Link></Button>
+            <Button asChild variant="outline"><Link to={`/dashboard/properties/${id}/insights`}>Intelligence propriété</Link></Button>
           </div>
         }
       />
