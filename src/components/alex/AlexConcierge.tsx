@@ -177,7 +177,7 @@ const AlexConcierge = ({ properties, homeScore }: AlexConciergeProps) => {
     <>
       {/* ── Floating Orb ── */}
       <AnimatePresence>
-        {!isOpen && (
+        {!isOpen && !isHomePage && (
           <motion.button
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
