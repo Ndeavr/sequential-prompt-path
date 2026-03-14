@@ -242,10 +242,70 @@ function detectAgentCreationOpportunities(ctx: SystemContext): AgentProposal[] {
   return proposals;
 }
 
+// ===== PROPERTY DOMAIN ANALYZERS =====
+function analyzeProperty(ctx: SystemContext): AgentProposal[] {
+  const proposals: AgentProposal[] = [];
+
+  if ((ctx as any).propertiesWithLowPassport > 5) {
+    proposals.push({
+      agent_name: "Passport Completion Agent", agent_key: "op-passport-completion", agent_domain: "property",
+      task_title: "Propriétés avec passeport incomplet — relancer propriétaires",
+      task_description: "Plusieurs propriétés ont un passeport < 30%. Notification de relance recommandée.",
+      action_plan: ["Identifier propriétés < 30%", "Envoyer notification push", "Proposer prochaine action"],
+      impact_score: 75, urgency: "medium", auto_executable: true, execution_mode: "semi_auto",
+    });
+  }
+
+  if ((ctx as any).propertiesNeedingScoreUpdate > 3) {
+    proposals.push({
+      agent_name: "Home Score Agent", agent_key: "op-home-score", agent_domain: "property",
+      task_title: "Recalculer scores propriétés avec nouvelles données",
+      task_description: "Des propriétés ont reçu de nouvelles contributions — score à mettre à jour.",
+      action_plan: ["Identifier propriétés avec changements", "Recalculer Home Score", "Notifier propriétaire si changement > 5pts"],
+      impact_score: 70, urgency: "medium", auto_executable: true, execution_mode: "semi_auto",
+    });
+  }
+
+  return proposals;
+}
+
+function analyzeNeighborhood(ctx: SystemContext): AgentProposal[] {
+  const proposals: AgentProposal[] = [];
+
+  if ((ctx as any).citiesWithProperties > 3) {
+    proposals.push({
+      agent_name: "Neighborhood Forecast Agent", agent_key: "op-neighborhood-forecast", agent_domain: "property",
+      task_title: "Générer prévisions de quartier pour villes actives",
+      task_description: "Suffisamment de données pour produire des insights de quartier.",
+      action_plan: ["Agréger données par quartier", "Calculer tendances prix/rénovations", "Publier insights"],
+      impact_score: 55, urgency: "low", auto_executable: true, execution_mode: "semi_auto",
+    });
+  }
+
+  return proposals;
+}
+
+function analyzeMessaging(ctx: SystemContext): AgentProposal[] {
+  const proposals: AgentProposal[] = [];
+
+  if (ctx.totalUsers > 10) {
+    proposals.push({
+      agent_name: "Homeowner Message Orchestrator", agent_key: "op-messaging-orchestrator", agent_domain: "engagement",
+      task_title: "Orchestrer séquences de messages propriétaires",
+      task_description: "Base utilisateurs suffisante pour activer séquences d'engagement.",
+      action_plan: ["Segmenter par activité", "Envoyer rappel passeport J+3", "Proposer score gratuit J+7"],
+      impact_score: 65, urgency: "medium", auto_executable: true, execution_mode: "semi_auto",
+    });
+  }
+
+  return proposals;
+}
+
 // ===== ALL ANALYZERS =====
 const ANALYZERS = [
   analyzeGrowth, analyzeLeads, analyzeSEO, analyzeRevenue,
   analyzeOperations, analyzeMedia, analyzeProduct, analyzeData,
+  analyzeProperty, analyzeNeighborhood, analyzeMessaging,
   detectAgentCreationOpportunities,
 ];
 
