@@ -20,12 +20,12 @@ import unproRobot from "@/assets/unpro-robot.png";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 
 const ROTATING_ITEMS = [
-  { label: "le contracteur", action: "agrandir votre\nmaison", image: heroAgrandissement },
+  { label: "le contracteur", action: "agrandir\nvotre maison", image: heroAgrandissement },
   { label: "l'arpenteur", action: "votre certificat\nde localisation", image: heroArpenteur },
-  { label: "le couvreur", action: "refaire votre\ntoiture", image: heroToiture },
+  { label: "le couvreur", action: "refaire\nvotre toiture", image: heroToiture },
   { label: "l'électricien", action: "votre panneau\nélectrique", image: heroElectricien },
-  { label: "le plombier", action: "rénover votre\nsalle de bain", image: heroPlomberie },
-  { label: "l'entrepreneur", action: "isoler votre\ngrenier", image: heroIsolation },
+  { label: "le plombier", action: "votre salle\nde bain", image: heroPlomberie },
+  { label: "l'expert", action: "isoler\nvotre grenier", image: heroIsolation },
 ];
 
 const textVariants = {
@@ -155,8 +155,8 @@ export default function HeroSection() {
 
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-8 md:px-10 md:pt-12">
           <div className="relative md:grid md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8 md:items-start">
-            {/* Mobile background image */}
-            <div className="absolute top-0 right-0 w-[55%] h-[260px] md:hidden pointer-events-none">
+            {/* Mobile background image — pushed right & behind text */}
+            <div className="absolute top-0 right-0 w-[48%] h-[280px] md:hidden pointer-events-none">
               <AnimatePresence mode="wait">
                 <motion.img key={current.image} src={current.image} alt={current.action}
                   className="w-full h-full object-cover rounded-[20px]" loading="eager"
@@ -165,7 +165,7 @@ export default function HeroSection() {
                 />
               </AnimatePresence>
               <div className="absolute inset-0 rounded-[20px]"
-                style={{ background: "linear-gradient(to right, hsl(213 60% 97%) 0%, transparent 40%), linear-gradient(to top, hsl(213 60% 97%) 0%, transparent 50%)" }}
+                style={{ background: "linear-gradient(to right, hsl(213 60% 97%) 0%, transparent 50%), linear-gradient(to top, hsl(213 60% 97%) 0%, transparent 50%)" }}
               />
               <motion.img src={unproRobot} alt="Alex UNPRO"
                 className="absolute -right-2 -bottom-6 w-[84px] drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)]"
@@ -176,7 +176,7 @@ export default function HeroSection() {
 
             {/* Left column */}
             <div className="relative z-10 min-w-0">
-              <h1 className="max-w-[60%] sm:max-w-[680px] text-[40px] font-extrabold leading-[1.1] tracking-[-0.04em] sm:text-[50px] md:text-[64px] drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]" style={{ color: "#0B1533" }}>
+              <h1 className="max-w-[58%] sm:max-w-[680px] text-[32px] font-extrabold leading-[1.08] tracking-[-0.04em] sm:text-[44px] md:text-[64px] drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]" style={{ color: "#0B1533" }}>
                 <span>Trouvez</span>
                 <div className="overflow-hidden" style={{ height: "1.15em" }}>
                   <AnimatePresence mode="wait">
@@ -184,7 +184,7 @@ export default function HeroSection() {
                       initial="enter" animate="center" exit="exit"
                       transition={{ duration: 0.38, ease: "easeOut" }}
                       className="drop-shadow-[0_1px_4px_rgba(255,255,255,1)]"
-                      style={{ ...clampStyle, color: "#3F7BFF" }}
+                      style={{ color: "#3F7BFF" }}
                     >
                       {current.label}
                     </motion.div>
