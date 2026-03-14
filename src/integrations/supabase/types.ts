@@ -1418,6 +1418,44 @@ export type Database = {
           },
         ]
       }
+      contractor_license_scope_results: {
+        Row: {
+          created_at: string
+          explanation_fr: string | null
+          id: string
+          license_fit_score: number | null
+          mapped_work_types: Json | null
+          project_fit: Database["public"]["Enums"]["project_fit"] | null
+          verification_run_id: string
+        }
+        Insert: {
+          created_at?: string
+          explanation_fr?: string | null
+          id?: string
+          license_fit_score?: number | null
+          mapped_work_types?: Json | null
+          project_fit?: Database["public"]["Enums"]["project_fit"] | null
+          verification_run_id: string
+        }
+        Update: {
+          created_at?: string
+          explanation_fr?: string | null
+          id?: string
+          license_fit_score?: number | null
+          mapped_work_types?: Json | null
+          project_fit?: Database["public"]["Enums"]["project_fit"] | null
+          verification_run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_license_scope_results_verification_run_id_fkey"
+            columns: ["verification_run_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_verification_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_media: {
         Row: {
           alt_text: string | null
@@ -1600,6 +1638,65 @@ export type Database = {
             columns: ["contractor_id"]
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_probable_entities: {
+        Row: {
+          business_name: string | null
+          confidence_score: number | null
+          created_at: string
+          email_domain: string | null
+          evidence: Json | null
+          id: string
+          legal_name: string | null
+          normalized_phone: string | null
+          probable_city: string | null
+          probable_neq: string | null
+          probable_rbq: string | null
+          probable_service_category: string | null
+          verification_run_id: string
+          website: string | null
+        }
+        Insert: {
+          business_name?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          email_domain?: string | null
+          evidence?: Json | null
+          id?: string
+          legal_name?: string | null
+          normalized_phone?: string | null
+          probable_city?: string | null
+          probable_neq?: string | null
+          probable_rbq?: string | null
+          probable_service_category?: string | null
+          verification_run_id: string
+          website?: string | null
+        }
+        Update: {
+          business_name?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          email_domain?: string | null
+          evidence?: Json | null
+          id?: string
+          legal_name?: string | null
+          normalized_phone?: string | null
+          probable_city?: string | null
+          probable_neq?: string | null
+          probable_rbq?: string | null
+          probable_service_category?: string | null
+          verification_run_id?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_probable_entities_verification_run_id_fkey"
+            columns: ["verification_run_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_verification_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -1794,6 +1891,59 @@ export type Database = {
           },
         ]
       }
+      contractor_registry_validations: {
+        Row: {
+          created_at: string
+          id: string
+          identity_coherence:
+            | Database["public"]["Enums"]["identity_coherence"]
+            | null
+          neq_status: Database["public"]["Enums"]["neq_status"] | null
+          rbq_license_number: string | null
+          rbq_status: Database["public"]["Enums"]["rbq_status"] | null
+          rbq_subcategories: Json | null
+          registered_name: string | null
+          source_snapshot: Json | null
+          verification_run_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          identity_coherence?:
+            | Database["public"]["Enums"]["identity_coherence"]
+            | null
+          neq_status?: Database["public"]["Enums"]["neq_status"] | null
+          rbq_license_number?: string | null
+          rbq_status?: Database["public"]["Enums"]["rbq_status"] | null
+          rbq_subcategories?: Json | null
+          registered_name?: string | null
+          source_snapshot?: Json | null
+          verification_run_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          identity_coherence?:
+            | Database["public"]["Enums"]["identity_coherence"]
+            | null
+          neq_status?: Database["public"]["Enums"]["neq_status"] | null
+          rbq_license_number?: string | null
+          rbq_status?: Database["public"]["Enums"]["rbq_status"] | null
+          rbq_subcategories?: Json | null
+          registered_name?: string | null
+          source_snapshot?: Json | null
+          verification_run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_registry_validations_verification_run_id_fkey"
+            columns: ["verification_run_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_verification_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_review_aggregates: {
         Row: {
           average_rating: number | null
@@ -1954,6 +2104,44 @@ export type Database = {
             columns: ["contractor_id"]
             isOneToOne: false
             referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_risk_signals: {
+        Row: {
+          created_at: string
+          description_fr: string | null
+          id: string
+          severity: Database["public"]["Enums"]["risk_severity"]
+          signal_type: string
+          title_fr: string
+          verification_run_id: string
+        }
+        Insert: {
+          created_at?: string
+          description_fr?: string | null
+          id?: string
+          severity?: Database["public"]["Enums"]["risk_severity"]
+          signal_type: string
+          title_fr: string
+          verification_run_id: string
+        }
+        Update: {
+          created_at?: string
+          description_fr?: string | null
+          id?: string
+          severity?: Database["public"]["Enums"]["risk_severity"]
+          signal_type?: string
+          title_fr?: string
+          verification_run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_risk_signals_verification_run_id_fkey"
+            columns: ["verification_run_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_verification_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -2227,6 +2415,126 @@ export type Database = {
           },
         ]
       }
+      contractor_verification_assets: {
+        Row: {
+          asset_type: Database["public"]["Enums"]["image_asset_type"] | null
+          created_at: string
+          id: string
+          mime_type: string | null
+          original_filename: string | null
+          storage_path: string
+          verification_run_id: string
+        }
+        Insert: {
+          asset_type?: Database["public"]["Enums"]["image_asset_type"] | null
+          created_at?: string
+          id?: string
+          mime_type?: string | null
+          original_filename?: string | null
+          storage_path: string
+          verification_run_id: string
+        }
+        Update: {
+          asset_type?: Database["public"]["Enums"]["image_asset_type"] | null
+          created_at?: string
+          id?: string
+          mime_type?: string | null
+          original_filename?: string | null
+          storage_path?: string
+          verification_run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_verification_assets_verification_run_id_fkey"
+            columns: ["verification_run_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_verification_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_verification_runs: {
+        Row: {
+          contractor_id: string | null
+          created_at: string
+          id: string
+          input_type: Database["public"]["Enums"]["verification_input_type"]
+          license_fit_score: number | null
+          normalized_phone: string | null
+          project_text: string | null
+          raw_input: string
+          source_context: Json | null
+          summary_headline: string | null
+          summary_next_steps: Json | null
+          summary_short: string | null
+          unpro_trust_score: number | null
+          updated_at: string
+          user_id: string | null
+          verdict: Database["public"]["Enums"]["verification_verdict"] | null
+          visual_trust_score: number | null
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          input_type: Database["public"]["Enums"]["verification_input_type"]
+          license_fit_score?: number | null
+          normalized_phone?: string | null
+          project_text?: string | null
+          raw_input: string
+          source_context?: Json | null
+          summary_headline?: string | null
+          summary_next_steps?: Json | null
+          summary_short?: string | null
+          unpro_trust_score?: number | null
+          updated_at?: string
+          user_id?: string | null
+          verdict?: Database["public"]["Enums"]["verification_verdict"] | null
+          visual_trust_score?: number | null
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          input_type?: Database["public"]["Enums"]["verification_input_type"]
+          license_fit_score?: number | null
+          normalized_phone?: string | null
+          project_text?: string | null
+          raw_input?: string
+          source_context?: Json | null
+          summary_headline?: string | null
+          summary_next_steps?: Json | null
+          summary_short?: string | null
+          unpro_trust_score?: number | null
+          updated_at?: string
+          user_id?: string | null
+          verdict?: Database["public"]["Enums"]["verification_verdict"] | null
+          visual_trust_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_verification_runs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_verification_runs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_verification_runs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_verification_searches: {
         Row: {
           business_card_uploaded: boolean | null
@@ -2336,6 +2644,68 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_visual_extractions: {
+        Row: {
+          address: string | null
+          brand_notes: Json | null
+          business_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          image_type: Database["public"]["Enums"]["image_asset_type"] | null
+          neq: string | null
+          phone: string | null
+          raw_ocr_text: string | null
+          rbq: string | null
+          representative_name: string | null
+          service_keywords: Json | null
+          verification_run_id: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          brand_notes?: Json | null
+          business_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          image_type?: Database["public"]["Enums"]["image_asset_type"] | null
+          neq?: string | null
+          phone?: string | null
+          raw_ocr_text?: string | null
+          rbq?: string | null
+          representative_name?: string | null
+          service_keywords?: Json | null
+          verification_run_id: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          brand_notes?: Json | null
+          business_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          image_type?: Database["public"]["Enums"]["image_asset_type"] | null
+          neq?: string | null
+          phone?: string | null
+          raw_ocr_text?: string | null
+          rbq?: string | null
+          representative_name?: string | null
+          service_keywords?: Json | null
+          verification_run_id?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_visual_extractions_verification_run_id_fkey"
+            columns: ["verification_run_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_verification_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -4560,6 +4930,44 @@ export type Database = {
           },
         ]
       }
+      project_work_taxonomy: {
+        Row: {
+          contractor_professions: string[] | null
+          homeowner_examples: string[] | null
+          label_en: string | null
+          label_fr: string
+          parent_slug: string | null
+          seo_keywords: string[] | null
+          slug: string
+        }
+        Insert: {
+          contractor_professions?: string[] | null
+          homeowner_examples?: string[] | null
+          label_en?: string | null
+          label_fr: string
+          parent_slug?: string | null
+          seo_keywords?: string[] | null
+          slug: string
+        }
+        Update: {
+          contractor_professions?: string[] | null
+          homeowner_examples?: string[] | null
+          label_en?: string | null
+          label_fr?: string
+          parent_slug?: string | null
+          seo_keywords?: string[] | null
+          slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_work_taxonomy_parent_slug_fkey"
+            columns: ["parent_slug"]
+            isOneToOne: false
+            referencedRelation: "project_work_taxonomy"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       projects: {
         Row: {
           budget_max: number | null
@@ -5544,6 +5952,135 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      rbq_license_subcategories: {
+        Row: {
+          annex: string | null
+          category_type: Database["public"]["Enums"]["rbq_category_type"] | null
+          code: string
+          is_active: boolean
+          official_description_fr: string | null
+          official_name_fr: string
+          simplified_label_fr: string | null
+          updated_at: string
+        }
+        Insert: {
+          annex?: string | null
+          category_type?:
+            | Database["public"]["Enums"]["rbq_category_type"]
+            | null
+          code: string
+          is_active?: boolean
+          official_description_fr?: string | null
+          official_name_fr: string
+          simplified_label_fr?: string | null
+          updated_at?: string
+        }
+        Update: {
+          annex?: string | null
+          category_type?:
+            | Database["public"]["Enums"]["rbq_category_type"]
+            | null
+          code?: string
+          is_active?: boolean
+          official_description_fr?: string | null
+          official_name_fr?: string
+          simplified_label_fr?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rbq_license_work_types: {
+        Row: {
+          compatibility_level:
+            | Database["public"]["Enums"]["compatibility_result"]
+            | null
+          id: string
+          notes_fr: string | null
+          rbq_code: string
+          sort_order: number | null
+          work_label_en: string | null
+          work_label_fr: string
+          work_slug: string
+        }
+        Insert: {
+          compatibility_level?:
+            | Database["public"]["Enums"]["compatibility_result"]
+            | null
+          id?: string
+          notes_fr?: string | null
+          rbq_code: string
+          sort_order?: number | null
+          work_label_en?: string | null
+          work_label_fr: string
+          work_slug: string
+        }
+        Update: {
+          compatibility_level?:
+            | Database["public"]["Enums"]["compatibility_result"]
+            | null
+          id?: string
+          notes_fr?: string | null
+          rbq_code?: string
+          sort_order?: number | null
+          work_label_en?: string | null
+          work_label_fr?: string
+          work_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rbq_license_work_types_rbq_code_fkey"
+            columns: ["rbq_code"]
+            isOneToOne: false
+            referencedRelation: "rbq_license_subcategories"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      rbq_project_compatibility_rules: {
+        Row: {
+          confidence_score: number | null
+          explanation_en: string | null
+          explanation_fr: string | null
+          id: string
+          project_work_slug: string
+          rbq_code: string
+          result: Database["public"]["Enums"]["compatibility_result"]
+        }
+        Insert: {
+          confidence_score?: number | null
+          explanation_en?: string | null
+          explanation_fr?: string | null
+          id?: string
+          project_work_slug: string
+          rbq_code: string
+          result?: Database["public"]["Enums"]["compatibility_result"]
+        }
+        Update: {
+          confidence_score?: number | null
+          explanation_en?: string | null
+          explanation_fr?: string | null
+          id?: string
+          project_work_slug?: string
+          rbq_code?: string
+          result?: Database["public"]["Enums"]["compatibility_result"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rbq_project_compatibility_rules_project_work_slug_fkey"
+            columns: ["project_work_slug"]
+            isOneToOne: false
+            referencedRelation: "project_work_taxonomy"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "rbq_project_compatibility_rules_rbq_code_fkey"
+            columns: ["rbq_code"]
+            isOneToOne: false
+            referencedRelation: "rbq_license_subcategories"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       review_insights: {
         Row: {
@@ -7829,6 +8366,10 @@ export type Database = {
           similarity: number
         }[]
       }
+      owns_verification_run: {
+        Args: { _run_id: string; _user_id: string }
+        Returns: boolean
+      }
       search_rag_chunks_text: {
         Args: {
           filter_namespaces?: string[]
@@ -7867,6 +8408,21 @@ export type Database = {
         | "scheduled"
         | "completed"
         | "cancelled"
+      compatibility_result: "compatible" | "partial" | "verify" | "incompatible"
+      identity_coherence:
+        | "strong"
+        | "moderate"
+        | "weak"
+        | "contradictory"
+        | "unknown"
+      image_asset_type:
+        | "truck"
+        | "contract"
+        | "business_card"
+        | "invoice"
+        | "storefront"
+        | "logo"
+        | "unknown"
       ingestion_doc_type:
         | "tax_bill"
         | "contractor_quote"
@@ -7881,14 +8437,31 @@ export type Database = {
         | "completed"
         | "failed"
         | "partial"
+      neq_status: "active" | "inactive" | "struck_off" | "not_found" | "unknown"
+      project_fit: "compatible" | "partial" | "verify" | "incompatible"
       property_condition: "excellent" | "good" | "fair" | "poor" | "critical"
       quote_status: "pending" | "analyzed" | "accepted" | "rejected"
+      rbq_category_type: "general" | "specialty"
+      rbq_status: "valid" | "expired" | "suspended" | "not_found" | "unknown"
+      risk_severity: "low" | "medium" | "high"
       syndicate_member_role:
         | "owner"
         | "board_member"
         | "manager"
         | "administrator"
+      verification_input_type:
+        | "phone"
+        | "name"
+        | "rbq"
+        | "neq"
+        | "website"
+        | "upload"
       verification_status: "unverified" | "pending" | "verified" | "rejected"
+      verification_verdict:
+        | "succes"
+        | "attention"
+        | "non_succes"
+        | "se_tenir_loin"
       vote_status: "draft" | "open" | "closed" | "cancelled"
     }
     CompositeTypes: {
@@ -8027,6 +8600,23 @@ export const Constants = {
         "completed",
         "cancelled",
       ],
+      compatibility_result: ["compatible", "partial", "verify", "incompatible"],
+      identity_coherence: [
+        "strong",
+        "moderate",
+        "weak",
+        "contradictory",
+        "unknown",
+      ],
+      image_asset_type: [
+        "truck",
+        "contract",
+        "business_card",
+        "invoice",
+        "storefront",
+        "logo",
+        "unknown",
+      ],
       ingestion_doc_type: [
         "tax_bill",
         "contractor_quote",
@@ -8043,15 +8633,34 @@ export const Constants = {
         "failed",
         "partial",
       ],
+      neq_status: ["active", "inactive", "struck_off", "not_found", "unknown"],
+      project_fit: ["compatible", "partial", "verify", "incompatible"],
       property_condition: ["excellent", "good", "fair", "poor", "critical"],
       quote_status: ["pending", "analyzed", "accepted", "rejected"],
+      rbq_category_type: ["general", "specialty"],
+      rbq_status: ["valid", "expired", "suspended", "not_found", "unknown"],
+      risk_severity: ["low", "medium", "high"],
       syndicate_member_role: [
         "owner",
         "board_member",
         "manager",
         "administrator",
       ],
+      verification_input_type: [
+        "phone",
+        "name",
+        "rbq",
+        "neq",
+        "website",
+        "upload",
+      ],
       verification_status: ["unverified", "pending", "verified", "rejected"],
+      verification_verdict: [
+        "succes",
+        "attention",
+        "non_succes",
+        "se_tenir_loin",
+      ],
       vote_status: ["draft", "open", "closed", "cancelled"],
     },
   },
