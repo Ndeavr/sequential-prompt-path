@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useIntentCTA } from "@/hooks/useIntentCTA";
 import { ArrowRight } from "lucide-react";
 
-const HIDDEN_PREFIXES = ["/dashboard", "/pro", "/admin", "/condo", "/alex", "/login", "/signup"];
+const HIDDEN_PREFIXES = ["/dashboard", "/pro", "/admin", "/condo", "/alex", "/login", "/signup", "/", "/index"];
 
 export default function FloatingMobileCTA() {
   const { pathname } = useLocation();
