@@ -76,6 +76,15 @@ export default function PublicPropertyPage() {
   const StatusIcon = ICON_MAP[status.icon] || BarChart3;
   const score = property.estimated_score;
   const displayAddress = property.full_address || property.address;
+  const propertyCity = property.city || "";
+
+  // Neighborhood stats (privacy-safe aggregated data)
+  const { data: neighborhoodStats } = useQuery({
+    queryKey: ["neighborhood-stats", propertyCity],
+    queryFn: () => getNeighborhoodStats(propertyCity),
+    enabled: !!propertyCity,
+    staleTime: 10 * 60 * 1000,
+  });
 
   return (
     <MainLayout>
