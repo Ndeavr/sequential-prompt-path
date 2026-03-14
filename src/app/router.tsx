@@ -55,6 +55,7 @@ import ContributionApprovalPage from "@/pages/dashboard/ContributionApprovalPage
 import ListingImportPage from "@/pages/ListingImportPage";
 import PublicScoreCalculatorPage from "@/pages/PublicScoreCalculatorPage";
 import PropertyReportPage from "@/pages/dashboard/PropertyReportPage";
+import RenovationVisualizerPage from "@/pages/RenovationVisualizerPage";
 
 // Condos
 import CondoHomePage from "@/pages/condos/CondoHomePage";
