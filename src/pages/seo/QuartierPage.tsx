@@ -19,18 +19,22 @@ const QuartierPage = () => {
   const { ville, quartier } = useParams<{ ville: string; quartier: string }>();
   const city = getCityBySlug(ville || "");
 
-  // Fetch neighborhood stats from DB
+  // Fetch neighborhood stats from DB (table may not exist yet)
   const { data: neighborhoodData, isLoading } = useQuery({
     queryKey: ["neighborhood-seo", ville, quartier],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("neighborhood_stats")
-        .select("*")
-        .eq("city_slug", ville!)
-        .eq("neighborhood_slug", quartier!)
-        .maybeSingle();
-      if (error) return null;
-      return data;
+      try {
+        const { data, error } = await supabase
+          .from("neighborhood_stats" as any)
+          .select("*")
+          .eq("city_slug", ville!)
+          .eq("neighborhood_slug", quartier!)
+          .maybeSingle();
+        if (error) return null;
+        return data;
+      } catch {
+        return null;
+      }
     },
     enabled: !!ville && !!quartier,
   });
