@@ -10,6 +10,7 @@ import SmartHeader from "@/components/navigation/SmartHeader";
 import SmartFooter from "@/components/navigation/SmartFooter";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import AlexConcierge from "@/components/alex/AlexConcierge";
+import FloatingMobileCTA from "@/components/cta/FloatingMobileCTA";
 
 interface MainLayoutProps {
   children: ReactNode;
