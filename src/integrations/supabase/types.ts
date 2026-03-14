@@ -5579,6 +5579,35 @@ export type Database = {
           },
         ]
       }
+      project_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_likes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "renovation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_matches: {
         Row: {
           contractor_id: string
@@ -5644,6 +5673,77 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_saves: {
+        Row: {
+          created_at: string | null
+          id: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_saves_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "renovation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_votes: {
+        Row: {
+          concept_id: string
+          created_at: string | null
+          id: string
+          project_id: string
+          voter_fingerprint: string | null
+          voter_id: string | null
+        }
+        Insert: {
+          concept_id: string
+          created_at?: string | null
+          id?: string
+          project_id: string
+          voter_fingerprint?: string | null
+          voter_id?: string | null
+        }
+        Update: {
+          concept_id?: string
+          created_at?: string | null
+          id?: string
+          project_id?: string
+          voter_fingerprint?: string | null
+          voter_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_votes_concept_id_fkey"
+            columns: ["concept_id"]
+            isOneToOne: false
+            referencedRelation: "renovation_concepts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_votes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "renovation_projects"
             referencedColumns: ["id"]
           },
         ]
@@ -7300,6 +7400,122 @@ export type Database = {
             referencedColumns: ["code"]
           },
         ]
+      }
+      renovation_concepts: {
+        Row: {
+          concept_type: string
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          estimated_budget_max: number | null
+          estimated_budget_min: number | null
+          id: string
+          image_url: string | null
+          project_id: string
+          title: string | null
+          vote_count: number | null
+        }
+        Insert: {
+          concept_type?: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          estimated_budget_max?: number | null
+          estimated_budget_min?: number | null
+          id?: string
+          image_url?: string | null
+          project_id: string
+          title?: string | null
+          vote_count?: number | null
+        }
+        Update: {
+          concept_type?: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          estimated_budget_max?: number | null
+          estimated_budget_min?: number | null
+          id?: string
+          image_url?: string | null
+          project_id?: string
+          title?: string | null
+          vote_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "renovation_concepts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "renovation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      renovation_projects: {
+        Row: {
+          budget: string | null
+          category: string
+          city: string | null
+          created_at: string | null
+          goal: string | null
+          id: string
+          is_public: boolean | null
+          like_count: number | null
+          original_image_url: string | null
+          project_summary: string | null
+          session_id: string | null
+          share_count: number | null
+          slug: string | null
+          style: string | null
+          timeline: string | null
+          updated_at: string | null
+          user_id: string | null
+          view_count: number | null
+          vote_count: number | null
+        }
+        Insert: {
+          budget?: string | null
+          category: string
+          city?: string | null
+          created_at?: string | null
+          goal?: string | null
+          id?: string
+          is_public?: boolean | null
+          like_count?: number | null
+          original_image_url?: string | null
+          project_summary?: string | null
+          session_id?: string | null
+          share_count?: number | null
+          slug?: string | null
+          style?: string | null
+          timeline?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          view_count?: number | null
+          vote_count?: number | null
+        }
+        Update: {
+          budget?: string | null
+          category?: string
+          city?: string | null
+          created_at?: string | null
+          goal?: string | null
+          id?: string
+          is_public?: boolean | null
+          like_count?: number | null
+          original_image_url?: string | null
+          project_summary?: string | null
+          session_id?: string | null
+          share_count?: number | null
+          slug?: string | null
+          style?: string | null
+          timeline?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          view_count?: number | null
+          vote_count?: number | null
+        }
+        Relationships: []
       }
       review_insights: {
         Row: {
