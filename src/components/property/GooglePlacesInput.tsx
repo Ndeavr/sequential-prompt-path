@@ -72,14 +72,24 @@ export default function GooglePlacesInput({
 
   // Load Google Maps
   useEffect(() => {
-    const apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
-    if (!apiKey) {
-      setLoadError(true);
-      return;
+    async function init() {
+      try {
+        // Try VITE env first, then fetch from edge function
+        let apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
+        if (!apiKey) {
+          const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+          const res = await fetch(`https://${projectId}.supabase.co/functions/v1/get-places-key`);
+          const data = await res.json();
+          apiKey = data?.key;
+        }
+        if (!apiKey) { setLoadError(true); return; }
+        await loadGoogleMapsScript(apiKey);
+        setIsLoaded(true);
+      } catch {
+        setLoadError(true);
+      }
     }
-    loadGoogleMapsScript(apiKey)
-      .then(() => setIsLoaded(true))
-      .catch(() => setLoadError(true));
+    init();
   }, []);
 
   // Initialize autocomplete
