@@ -4,6 +4,7 @@ import { motion, useInView } from "framer-motion";
 import MainLayout from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import GooglePlacesInput from "@/components/property/GooglePlacesInput";
 import { useAuth } from "@/hooks/useAuth";
 import {
   ArrowRight, Shield, Lock, Eye, FileText,
@@ -122,11 +123,16 @@ export default function HomeownersPage() {
   const [address, setAddress] = useState("");
   const [neighborCount, setNeighborCount] = useState(0);
 
+  // Only show neighbor count after user has typed a real address (min 10 chars)
   useEffect(() => {
-    const target = 3 + Math.floor(Math.random() * 5);
-    const timer = setTimeout(() => setNeighborCount(target), 1200);
-    return () => clearTimeout(timer);
-  }, []);
+    if (address.length >= 10) {
+      const target = 3 + Math.floor(Math.random() * 5);
+      const timer = setTimeout(() => setNeighborCount(target), 800);
+      return () => clearTimeout(timer);
+    } else {
+      setNeighborCount(0);
+    }
+  }, [address]);
 
   return (
     <MainLayout>
@@ -167,11 +173,11 @@ export default function HomeownersPage() {
                 {/* Address input */}
                 <motion.div variants={fadeUp} custom={3} className="max-w-md space-y-3">
                   <div className="flex gap-2">
-                    <Input
-                      placeholder="123 rue des Érables, Laval"
+                    <GooglePlacesInput
                       value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      className="h-13 rounded-2xl bg-card border-border/40 text-base px-5 flex-1 shadow-sm"
+                      onChange={setAddress}
+                      placeholder="123 rue des Érables, Laval"
+                      className="flex-1"
                     />
                     <Button
                       asChild
