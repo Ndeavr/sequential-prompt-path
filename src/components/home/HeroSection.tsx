@@ -20,12 +20,12 @@ import unproRobot from "@/assets/unpro-robot.png";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 
 const ROTATING_ITEMS = [
-  { label: "le contracteur", qualifier: "idéal pour", action: "agrandir votre maison", image: heroAgrandissement },
-  { label: "l'arpenteur", qualifier: "idéal pour", action: "votre certificat de localisation", image: heroArpenteur },
-  { label: "le couvreur", qualifier: "idéal pour", action: "refaire votre toiture", image: heroToiture },
-  { label: "l'électricien", qualifier: "idéal pour", action: "votre panneau électrique", image: heroElectricien },
-  { label: "le plombier", qualifier: "idéal pour", action: "votre salle de bain", image: heroPlomberie },
-  { label: "l'expert", qualifier: "idéal pour", action: "isoler votre grenier", image: heroIsolation },
+  { label: "le contracteur", qualifier: "idéal pour", action: "agrandir\nvotre maison", image: heroAgrandissement },
+  { label: "l'arpenteur-géomètre", qualifier: "idéal pour", action: "votre certificat\nde localisation", image: heroArpenteur },
+  { label: "le couvreur", qualifier: "idéal pour", action: "refaire\nvotre toiture", image: heroToiture },
+  { label: "l'électricien", qualifier: "idéal pour", action: "votre panneau\nélectrique", image: heroElectricien },
+  { label: "le plombier", qualifier: "idéal pour", action: "votre salle\nde bain", image: heroPlomberie },
+  { label: "l'expert", qualifier: "idéal pour", action: "isoler\nvotre grenier", image: heroIsolation },
 ];
 
 const textVariants = {
@@ -200,7 +200,7 @@ export default function HeroSection() {
                     variants={textVariants}
                     initial="enter" animate="center" exit="exit"
                     transition={{ duration: 0.38, ease: "easeOut", delay: 0.42 }}
-                    className="inline"
+                    className="inline whitespace-pre-line"
                     style={{ color: "#3F7BFF" }}
                   >
                     {current.action}
