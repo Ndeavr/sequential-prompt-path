@@ -139,7 +139,8 @@ const ContractorProfile = () => {
   }
 
   /* ── Derived data ── */
-  const isVerified = contractor.verification_status === "verified";
+  const isAdminVerified = contractor.admin_verified === true;
+  const isVerified = isAdminVerified || contractor.verification_status === "verified";
   const isHomeowner = !!user && role === "homeowner";
   const isAuthenticated = !!user;
   const yearsExp = contractor.years_experience;
