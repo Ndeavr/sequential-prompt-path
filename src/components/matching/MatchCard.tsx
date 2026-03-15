@@ -13,6 +13,7 @@ import {
   ShieldCheck, Star, MapPin, Clock, MessageCircle,
   AlertTriangle, CheckCircle, ArrowRight, Sparkles, Scale,
 } from "lucide-react";
+import { UnproVerifiedBadge } from "@/components/contractor/UnproVerifiedBadge";
 import type { MatchEvaluation } from "@/types/matching";
 
 interface MatchCardProps {
