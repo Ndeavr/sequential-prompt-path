@@ -35,6 +35,10 @@ export interface AlexContractorVerificationContext {
   aipp_score?: number | null;
   /** UNPRO score if available */
   unpro_score?: number | null;
+  /** Duplicate detection flags — internal only, affects Alex tone */
+  has_duplicate_flags?: boolean;
+  /** Entity confidence from duplicate detection */
+  entity_confidence?: string | null;
 }
 
 /**
