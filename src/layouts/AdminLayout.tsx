@@ -28,6 +28,9 @@ const navItems = [
   { to: "/admin/agents", label: "Agents IA", icon: Brain },
   { to: "/admin/media", label: "Média IA", icon: Palette },
   { to: "/admin/validation", label: "Validation", icon: ShieldCheck },
+  { to: "/admin/verification", label: "Vérifications", icon: SearchCheck },
+  { to: "/admin/alerts", label: "Alertes", icon: Bell },
+  { to: "/admin/verified-contractors", label: "Entrepreneurs vérifiés", icon: Shield },
 ];
 
 const NavLinks = ({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) => (
