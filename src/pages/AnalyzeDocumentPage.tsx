@@ -91,9 +91,15 @@ const AnalyzeDocumentPage = () => {
     setFile(null);
     setPreview(null);
     setContractorId("");
+    setShowQualityScore(false);
     reset();
     if (fileRef.current) fileRef.current.value = "";
   };
+
+  // Compute quote quality score when we have results
+  const quoteQuality = result?.extraction
+    ? computeQuoteQualityScore(result.extraction)
+    : null;
 
   return (
     <MainLayout>
