@@ -19,6 +19,7 @@ import PricingPage from "@/pages/PricingPage";
 import AIPPScorePage from "@/pages/AIPPScorePage";
 import MatchingResultsPage from "@/pages/MatchingResultsPage";
 import ContractorComparisonPage from "@/pages/ContractorComparisonPage";
+import DecisionAssistantPage from "@/pages/DecisionAssistantPage";
 
 // SEO Pages
 import ServiceLocationPage from "@/pages/seo/ServiceLocationPage";
@@ -165,6 +166,7 @@ export const AppRouter = () => (
       <Route path="/aipp-score" element={<AIPPScorePage />} />
       <Route path="/matching" element={<ProtectedRoute requiredRole="homeowner"><MatchingResultsPage /></ProtectedRoute>} />
       <Route path="/comparer" element={<ContractorComparisonPage />} />
+      <Route path="/decision" element={<ProtectedRoute requiredRole="homeowner"><DecisionAssistantPage /></ProtectedRoute>} />
 
       {/* Property Graph */}
       <Route path="/property-graph" element={<PropertyGraphPage />} />
