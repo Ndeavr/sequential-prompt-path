@@ -5,12 +5,12 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Scale, Filter, SlidersHorizontal } from "lucide-react";
+import { Scale, Filter, SlidersHorizontal, HelpCircle } from "lucide-react";
 import MatchCard from "@/components/matching/MatchCard";
 import CompareDrawer from "@/components/matching/CompareDrawer";
 import AlexMatchingModule from "@/components/matching/AlexMatchingModule";
