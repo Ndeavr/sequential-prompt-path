@@ -21,7 +21,7 @@ import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 
 const ROTATING_ITEMS = [
   { label: "le contracteur", qualifier: "idéal pour", action: "agrandir\nvotre maison", image: heroAgrandissement },
-  { label: "l'arpenteur-géomètre", qualifier: "idéal pour", action: "votre certificat\nde localisation", image: heroArpenteur },
+  { label: "l'arpenteur-géomètre", qualifier: "idéal pour", action: "votre certificat\nde localisation", image: heroArpenteur, labelSingleLine: true },
   { label: "le couvreur", qualifier: "idéal pour", action: "refaire\nvotre toiture", image: heroToiture },
   { label: "l'électricien", qualifier: "idéal pour", action: "votre panneau\nélectrique", image: heroElectricien },
   { label: "le plombier", qualifier: "idéal pour", action: "votre salle\nde bain", image: heroPlomberie },
