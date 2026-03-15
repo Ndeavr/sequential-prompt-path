@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import { useAdminContractor, useAdminContractorDocuments, useUpdateContractorVerification, useAdminContractorSubscription } from "@/hooks/useAdmin";
+import { useContractorVerificationSnapshot, useContractorVerificationHistory, useContractorMergeSuggestions } from "@/hooks/useContractorVerificationIntegration";
+import { VerificationSnapshotCard, LatestVerificationInsights, MergeSuggestionsPanel, VerificationHistoryTable } from "@/components/verification";
 import { getPlanById } from "@/config/contractorPlans";
 import { getContractorCompleteness } from "@/services/contractorCompletenessService";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +32,9 @@ const AdminContractorDetail = () => {
   const { data: contractor, isLoading, refetch } = useAdminContractor(id);
   const { data: docs } = useAdminContractorDocuments(contractor?.user_id);
   const { data: subscription } = useAdminContractorSubscription(contractor?.id);
+  const { data: verificationSnapshot, isLoading: snapshotLoading } = useContractorVerificationSnapshot(contractor?.id);
+  const { data: verificationHistory = [] } = useContractorVerificationHistory(contractor?.id);
+  const { data: mergeSuggestions = [], isLoading: suggestionsLoading } = useContractorMergeSuggestions(contractor?.id);
   const updateVerification = useUpdateContractorVerification();
   const [newStatus, setNewStatus] = useState("");
   const [adminNote, setAdminNote] = useState("");
@@ -180,6 +185,29 @@ const AdminContractorDetail = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Verification Snapshot */}
+        <VerificationSnapshotCard snapshot={verificationSnapshot as any} isLoading={snapshotLoading} />
+
+        {/* Verification Insights */}
+        {verificationSnapshot && (
+          <LatestVerificationInsights
+            strengths={Array.isArray(verificationSnapshot.strengths) ? verificationSnapshot.strengths as string[] : []}
+            risks={Array.isArray(verificationSnapshot.risks) ? verificationSnapshot.risks as string[] : []}
+            inconsistencies={Array.isArray(verificationSnapshot.inconsistencies) ? verificationSnapshot.inconsistencies as string[] : []}
+            missingProofs={Array.isArray(verificationSnapshot.missing_proofs) ? verificationSnapshot.missing_proofs as string[] : []}
+          />
+        )}
+
+        {/* Merge Suggestions */}
+        <MergeSuggestionsPanel
+          suggestions={mergeSuggestions as any}
+          contractorId={contractor.id}
+          isLoading={suggestionsLoading}
+        />
+
+        {/* Verification History */}
+        <VerificationHistoryTable runs={verificationHistory as any} />
 
         {/* Documents */}
         <Card>

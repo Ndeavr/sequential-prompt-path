@@ -139,7 +139,8 @@ const ContractorProfile = () => {
   }
 
   /* ── Derived data ── */
-  const isVerified = contractor.verification_status === "verified";
+  const isAdminVerified = contractor.admin_verified === true;
+  const isVerified = isAdminVerified || contractor.verification_status === "verified";
   const isHomeowner = !!user && role === "homeowner";
   const isAuthenticated = !!user;
   const yearsExp = contractor.years_experience;
@@ -277,10 +278,11 @@ const ContractorProfile = () => {
                     <div className="flex-1 min-w-0 space-y-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h1 className="text-lg font-extrabold text-foreground leading-tight">{contractor.business_name}</h1>
-                        {isVerified && <ShieldCheck className="h-4 w-4 text-success shrink-0" />}
+                        {isAdminVerified && <ShieldCheck className="h-4 w-4 text-success shrink-0" aria-label="Validé par UnPRO" />}
+                        {!isAdminVerified && isVerified && <ShieldCheck className="h-4 w-4 text-success/60 shrink-0" aria-label="Vérifié" />}
                         {!isVerified && (
-                          <Badge variant="outline" className="text-[9px] bg-warning/10 text-warning border-warning/20 rounded-full px-2 gap-1">
-                            <Eye className="h-2.5 w-2.5" /> À valider
+                          <Badge variant="outline" className="text-[9px] bg-muted text-muted-foreground border-border rounded-full px-2 gap-1">
+                            <Eye className="h-2.5 w-2.5" /> En analyse
                           </Badge>
                         )}
                       </div>
@@ -317,9 +319,24 @@ const ContractorProfile = () => {
 
           {/* ── Trust Badges ── */}
           <motion.div variants={fadeUp} className="flex flex-wrap gap-2">
-            {isVerified && (
+            {isAdminVerified && (
+              <Badge variant="outline" className="gap-1.5 text-[11px] bg-success/5 text-success border-success/20 rounded-full px-3 py-1.5">
+                <ShieldCheck className="h-3 w-3" /> Validé par UnPRO
+              </Badge>
+            )}
+            {!isAdminVerified && isVerified && (
               <Badge variant="outline" className="gap-1.5 text-[11px] bg-success/5 text-success border-success/20 rounded-full px-3 py-1.5">
                 <ShieldCheck className="h-3 w-3" /> Vérifié & Assuré
+              </Badge>
+            )}
+            {!isVerified && (
+              <Badge variant="outline" className="gap-1.5 text-[11px] bg-muted text-muted-foreground border-border rounded-full px-3 py-1.5">
+                <Eye className="h-3 w-3" /> Profil en cours d'analyse
+              </Badge>
+            )}
+            {isAdminVerified && contractor.internal_verified_at && (
+              <Badge variant="outline" className="gap-1.5 text-[11px] bg-muted text-muted-foreground border-border rounded-full px-3 py-1.5">
+                <Clock className="h-3 w-3" /> Validé le {new Date(contractor.internal_verified_at).toLocaleDateString("fr-CA")}
               </Badge>
             )}
             {yearsExp != null && yearsExp > 0 && (
