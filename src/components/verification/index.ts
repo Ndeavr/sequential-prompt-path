@@ -10,6 +10,13 @@ export { default as MissingProofsCard } from "./MissingProofsCard";
 export { default as ScoreDetailsDrawer } from "./ScoreDetailsDrawer";
 export { default as VerificationResultsLayout } from "./VerificationResultsLayout";
 
+// Integration widgets
+export { VerificationSnapshotCard } from "./VerificationSnapshotCard";
+export { ConfidenceAndTrustMiniPanel } from "./ConfidenceAndTrustMiniPanel";
+export { LatestVerificationInsights } from "./LatestVerificationInsights";
+export { MergeSuggestionsPanel } from "./MergeSuggestionsPanel";
+export { VerificationHistoryTable } from "./VerificationHistoryTable";
+
 // Legacy exports
 export { StatusBadge, VERDICT_STYLES, type VerificationVerdict } from "./StatusBadge";
 export { AnimatedProgressLine } from "./AnimatedProgressLine";
