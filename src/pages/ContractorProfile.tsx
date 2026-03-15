@@ -396,6 +396,27 @@ const ContractorProfile = () => {
             </Card>
           </motion.div>
 
+          {/* ═══ 2b. WHY RECOMMENDED (Trust Explanation) ═══ */}
+          <motion.div variants={fadeUp}>
+            <WhyThisContractorIsRecommended
+              variant="full"
+              contractor={{
+                admin_verified: isAdminVerified,
+                verification_status: contractor.verification_status,
+                aipp_score: aippScore,
+                rating: contractor.rating,
+                review_count: contractor.review_count,
+                years_experience: yearsExp,
+                has_rbq: !!contractor.license_number,
+                has_neq: enrichedCredentials.some((c: any) => c.credential_type === "neq"),
+                has_insurance: enrichedCredentials.some((c: any) => c.credential_type === "insurance"),
+                has_website: !!contractor.website,
+                credential_count: enrichedCredentials.length,
+                internal_verified_at: contractor.internal_verified_at,
+              }}
+            />
+          </motion.div>
+
           {/* ═══ 3. WHY UNPRO AI RECOMMENDS ═══ */}
           {aiProfile && (aiProfile.recommendation_reasons || aiProfile.best_for) && (
             <motion.div variants={fadeUp}>
