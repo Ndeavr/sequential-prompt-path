@@ -203,6 +203,7 @@ export const AppRouter = () => (
       {/* SEO Pages — French-first routes */}
       <Route path="/services" element={<SeoDirectoryPage />} />
       <Route path="/services/:category/:city" element={<ServiceLocationPage />} />
+      <Route path="/problemes" element={<ProblemGraphPage />} />
       <Route path="/probleme/:slug" element={<ProblemPage />} />
       <Route path="/probleme/:problem/:city" element={<ProblemeLocationFrPage />} />
       <Route path="/solution/:slug" element={<SolutionPage />} />
