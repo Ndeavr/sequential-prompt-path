@@ -431,7 +431,8 @@ export default function HeroSection() {
               <div className="relative overflow-hidden rounded-[32px]" style={{ border: "1px solid #DFE9F5" }}>
                 <AnimatePresence mode="wait">
                   <motion.img key={current.image} src={current.image} alt={current.action}
-                    className="aspect-square w-full object-cover" loading="eager"
+                    className="w-full object-cover" loading="eager"
+                    style={{ aspectRatio: "4/3" }}
                     initial={{ opacity: 0, scale: 1.03 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
                     transition={{ duration: 0.9, ease: "easeInOut" }}
                   />
@@ -441,7 +442,7 @@ export default function HeroSection() {
                 />
               </div>
               <motion.img src={unproRobot} alt="Alex UNPRO"
-                className="absolute -right-4 -bottom-7 w-[168px] drop-shadow-[0_12px_20px_rgba(0,0,0,0.18)]"
+                className="absolute -right-4 -bottom-7 w-[148px] drop-shadow-[0_12px_20px_rgba(0,0,0,0.18)]"
                 animate={{ y: [0, -8, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               />
