@@ -250,7 +250,7 @@ export default function VerifierEntrepreneurPage() {
                 </Button>
               </motion.div>
 
-              <VerificationResultsPanel
+              <VerificationResultsLayout
                 output={result}
                 onUploadEvidence={() => setShowEvidence(true)}
               />
