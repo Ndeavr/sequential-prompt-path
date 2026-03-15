@@ -213,9 +213,8 @@ export default function AdminDuplicates() {
                   <LoadingState />
                 ) : !candidates || candidates.length === 0 ? (
                   <EmptyState
+                    message="Aucun doublon détecté. Lancez un scan pour vérifier les profils."
                     icon={<CheckCircle className="h-8 w-8 text-success" />}
-                    title="Aucun doublon détecté"
-                    description="Lancez un scan pour vérifier les profils entrepreneurs."
                   />
                 ) : (
                   <Card>
