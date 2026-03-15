@@ -1,13 +1,12 @@
 /**
  * UNPRO — Compare Contractors Drawer
- * Side-by-side comparison of 2–3 contractors.
+ * Side-by-side comparison of 2–3 contractors with trust row.
  */
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import ScoreRing from "@/components/ui/score-ring";
-import { Scale, ShieldCheck, Star, X } from "lucide-react";
+import { Scale, ShieldCheck, Star, X, Info } from "lucide-react";
+import { getTrustBand, getContractorTrustLabel } from "@/lib/trustLabels";
 import type { MatchEvaluation } from "@/types/matching";
 
 interface CompareDrawerProps {
@@ -36,6 +35,16 @@ const getCellColor = (val: number, invert?: boolean) => {
   if (effective >= 50) return "text-foreground";
   return "text-warning";
 };
+
+/** Get a user-friendly trust band label for comparison — no raw numbers */
+function getTrustDisplayForMatch(m: MatchEvaluation): { label: string; color: string } {
+  if ((m as any).admin_verified === true) {
+    return { label: "Validé par UnPRO", color: "text-success" };
+  }
+  const band = getTrustBand(m.unpro_score_snapshot);
+  if (band) return { label: band.label_fr, color: band.color.split(" ")[0] };
+  return { label: "Non évalué", color: "text-muted-foreground" };
+}
 
 const CompareDrawer = ({ matches, open, onOpenChange, onRemove }: CompareDrawerProps) => {
   if (matches.length < 2) return null;
@@ -67,7 +76,7 @@ const CompareDrawer = ({ matches, open, onOpenChange, onRemove }: CompareDrawerP
                       </div>
                       <span className="text-xs font-semibold truncate max-w-[120px]">{m.business_name}</span>
                       <div className="flex items-center gap-1">
-                        {m.verification_status === "verified" && <ShieldCheck className="w-3 h-3 text-success" />}
+                        {(m as any).admin_verified === true && <ShieldCheck className="w-3 h-3 text-success" />}
                         {m.rating && (
                           <span className="flex items-center gap-0.5 text-[10px]">
                             <Star className="w-2.5 h-2.5 text-warning fill-warning" />
@@ -84,6 +93,21 @@ const CompareDrawer = ({ matches, open, onOpenChange, onRemove }: CompareDrawerP
               </tr>
             </thead>
             <tbody>
+              {/* Trust row — bands not raw numbers */}
+              <tr className="border-t-2 border-primary/10 bg-muted/20">
+                <td className="p-2 text-xs font-semibold text-foreground flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3 text-primary" /> Confiance
+                </td>
+                {matches.map((m) => {
+                  const trust = getTrustDisplayForMatch(m);
+                  return (
+                    <td key={m.id} className="p-2 text-center">
+                      <span className={`text-xs font-semibold ${trust.color}`}>{trust.label}</span>
+                    </td>
+                  );
+                })}
+              </tr>
+
               {dimensions.map((dim) => {
                 const vals = matches.map((m) => (m as any)[dim.key] ?? 0);
                 const best = dim.key === "conflict_risk_score" ? Math.min(...vals) : Math.max(...vals);
@@ -112,6 +136,12 @@ const CompareDrawer = ({ matches, open, onOpenChange, onRemove }: CompareDrawerP
               })}
             </tbody>
           </table>
+
+          {/* Explanatory microcopy */}
+          <p className="text-[10px] text-muted-foreground mt-4 px-2 flex items-start gap-1">
+            <Info className="w-3 h-3 shrink-0 mt-0.5" />
+            Les scores sont estimatifs et basés sur les données disponibles. La confiance « Validé par UnPRO » indique un profil revu par notre équipe, sans constituer une certification légale.
+          </p>
         </div>
       </SheetContent>
     </Sheet>

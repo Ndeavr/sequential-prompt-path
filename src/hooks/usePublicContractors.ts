@@ -1,19 +1,21 @@
 /**
  * UNPRO — Public Contractor Hooks
  * Query contractors and reviews using only public-safe RLS policies.
+ * Trust signals inform ranking but never monopolize it.
  */
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { computeTrustBoost } from "@/lib/trustLabels";
 
 export interface PublicContractorFilters {
   q?: string;
   city?: string;
   specialty?: string;
-  sort?: "newest" | "aipp" | "reviews" | "default";
+  sort?: "newest" | "aipp" | "reviews" | "trust" | "default";
 }
 
-const PUBLIC_FIELDS = "id, business_name, specialty, city, province, description, verification_status, aipp_score, rating, review_count, years_experience, logo_url, created_at, phone, email, website, postal_code, license_number, portfolio_urls, address, insurance_info" as const;
+const PUBLIC_FIELDS = "id, business_name, specialty, city, province, description, verification_status, admin_verified, aipp_score, rating, review_count, years_experience, logo_url, created_at, phone, email, website, postal_code, license_number, portfolio_urls, address, insurance_info" as const;
 
 export const usePublicContractorSearch = (filters: PublicContractorFilters) => {
   return useQuery({
@@ -34,6 +36,7 @@ export const usePublicContractorSearch = (filters: PublicContractorFilters) => {
         query = query.ilike("specialty", `%${filters.specialty}%`);
       }
 
+      // DB-level sort for explicit sort modes
       switch (filters.sort) {
         case "newest":
           query = query.order("created_at", { ascending: false });
@@ -45,12 +48,25 @@ export const usePublicContractorSearch = (filters: PublicContractorFilters) => {
           query = query.order("review_count", { ascending: false, nullsFirst: false });
           break;
         default:
+          // Default & trust: fetch by aipp then re-rank client-side with trust boost
           query = query.order("aipp_score", { ascending: false, nullsFirst: false });
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      return data ?? [];
+
+      const results = data ?? [];
+
+      // Client-side trust-boosted ranking for default/trust sort
+      if (!filters.sort || filters.sort === "default" || filters.sort === "trust") {
+        return results.sort((a, b) => {
+          const boostA = computeTrustBoost(a) + (a.aipp_score ?? 0) * 0.1;
+          const boostB = computeTrustBoost(b) + (b.aipp_score ?? 0) * 0.1;
+          return boostB - boostA;
+        });
+      }
+
+      return results;
     },
   });
 };

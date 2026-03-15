@@ -129,6 +129,7 @@ export function computeConflictRisk(input: {
 }
 
 // ─── Explanation Generator ───
+// Trust signals add context but never replace fit/relevance explanations
 export function generateExplanations(match: Partial<MatchEvaluation>): MatchExplanations {
   const top_reasons: MatchExplanations["top_reasons"] = [];
   const watchouts: MatchExplanations["watchouts"] = [];
@@ -143,6 +144,10 @@ export function generateExplanations(match: Partial<MatchEvaluation>): MatchExpl
     top_reasons.push({ text_fr: "Compatibilité comportementale forte", text_en: "Strong behavioral compatibility", icon: "heart" });
   if ((match.budget_fit_score ?? 0) >= 80)
     top_reasons.push({ text_fr: "Budget bien aligné", text_en: "Budget well aligned", icon: "dollar-sign" });
+
+  // Trust-based explanation — informative, never overstated
+  if ((match as any).admin_verified === true)
+    top_reasons.push({ text_fr: "Profil validé par l'équipe UnPRO", text_en: "Profile validated by UnPRO team", icon: "shield-check" });
 
   if ((match.conflict_risk_score ?? 0) >= 40)
     watchouts.push({ text_fr: "Risque de friction modéré", text_en: "Moderate friction risk", icon: "alert-triangle" });

@@ -1,6 +1,6 @@
 /**
  * UNPRO — Contractor Match Card
- * Premium card showing compatibility, scores, and decision support.
+ * Premium card showing compatibility, scores, trust signals, and decision support.
  */
 
 import { motion } from "framer-motion";
@@ -14,6 +14,7 @@ import {
   AlertTriangle, CheckCircle, ArrowRight, Sparkles, Scale,
 } from "lucide-react";
 import { UnproVerifiedBadge } from "@/components/contractor/UnproVerifiedBadge";
+import { getContractorTrustLabel } from "@/lib/trustLabels";
 import type { MatchEvaluation } from "@/types/matching";
 
 interface MatchCardProps {
@@ -35,10 +36,21 @@ const getConflictLabel = (r: number) => {
   return { label: "Élevé", color: "bg-destructive/10 text-destructive" };
 };
 
+/** Trust insight text for recommendation cards — never overstates certainty */
+function getMatchTrustInsight(match: MatchEvaluation): string | null {
+  if ((match as any).admin_verified === true) return "Profil validé par UnPRO";
+  const unpro = match.unpro_score_snapshot ?? 0;
+  const aipp = match.aipp_score_snapshot ?? 0;
+  if (unpro >= 70 && aipp >= 65) return "Informations cohérentes détectées";
+  if (unpro < 40 || aipp < 30) return "Certaines validations restent à compléter";
+  return null;
+}
+
 const MatchCard = ({ match, rank, onCompare, isComparing }: MatchCardProps) => {
   const conflict = getConflictLabel(match.conflict_risk_score);
   const explanations = (match.explanations ?? { top_reasons: [], watchouts: [] }) as any;
   const isTopMatch = rank === 1;
+  const trustInsight = getMatchTrustInsight(match);
 
   return (
     <motion.div
@@ -54,7 +66,6 @@ const MatchCard = ({ match, rank, onCompare, isComparing }: MatchCardProps) => {
         <CardContent className="p-4 sm:p-5">
           {/* Header */}
           <div className="flex items-start gap-3 mb-4">
-            {/* Avatar/Logo */}
             <div className="relative shrink-0">
               <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center overflow-hidden">
                 {match.logo_url ? (
@@ -72,7 +83,6 @@ const MatchCard = ({ match, rank, onCompare, isComparing }: MatchCardProps) => {
               )}
             </div>
 
-            {/* Name & Meta */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
                 <h3 className="font-display font-semibold text-sm truncate">{match.business_name}</h3>
@@ -99,9 +109,12 @@ const MatchCard = ({ match, rank, onCompare, isComparing }: MatchCardProps) => {
                   <span className="text-xs text-muted-foreground">({match.review_count ?? 0})</span>
                 </div>
               )}
+              {/* Trust insight — one short line */}
+              {trustInsight && (
+                <p className="text-[10px] mt-1 text-muted-foreground italic">{trustInsight}</p>
+              )}
             </div>
 
-            {/* Score Ring */}
             <div className="shrink-0">
               <ScoreRing score={Math.round(match.recommendation_score)} size={56} strokeWidth={5} label="URS" />
             </div>

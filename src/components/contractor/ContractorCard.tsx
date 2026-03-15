@@ -2,9 +2,10 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Star, ShieldCheck, TrendingUp, ArrowRight, Clock, Award } from "lucide-react";
+import { MapPin, Star, ShieldCheck, ArrowRight, Clock, Award } from "lucide-react";
 import { motion } from "framer-motion";
 import { UnproVerifiedBadge } from "@/components/contractor/UnproVerifiedBadge";
+import { getContractorTrustLabel, getTrustBand } from "@/lib/trustLabels";
 
 interface ContractorCardProps {
   contractor: {
@@ -25,11 +26,14 @@ interface ContractorCardProps {
 }
 
 const ContractorCard = ({ contractor }: ContractorCardProps) => {
-  const isAdminVerified = (contractor as any).admin_verified === true;
+  const isAdminVerified = contractor.admin_verified === true;
   const isVerified = isAdminVerified || contractor.verification_status === "verified";
   const hasScore = contractor.aipp_score != null && contractor.aipp_score > 0;
   const hasRating = contractor.rating != null && contractor.rating > 0;
-  const yearsExp = (contractor as any).years_experience;
+  const yearsExp = contractor.years_experience;
+
+  // Trust label — one concise label max on compact card
+  const trustLabel = getContractorTrustLabel(contractor);
 
   return (
     <motion.div
@@ -66,6 +70,17 @@ const ContractorCard = ({ contractor }: ContractorCardProps) => {
                   </Badge>
                 ) : null}
               </div>
+
+              {/* Trust label — concise, one line */}
+              {trustLabel && (
+                <span className={`inline-block text-[10px] font-medium px-2 py-0.5 rounded-full border ${
+                  trustLabel.variant === "solide" ? "text-success bg-success/8 border-success/20" :
+                  trustLabel.variant === "encourageant" ? "text-accent bg-accent/8 border-accent/20" :
+                  "text-muted-foreground bg-muted/50 border-border/40"
+                }`}>
+                  {trustLabel.text}
+                </span>
+              )}
 
               {/* Stats row */}
               <div className="flex flex-wrap items-center gap-2.5 text-xs text-muted-foreground">
