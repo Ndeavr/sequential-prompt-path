@@ -945,7 +945,7 @@ serve(async (req) => {
 
     const missingProofs = buildMissingProofs(inputType, bestMatch, finalIdentityScore);
     const recommendedNextInputs = buildRecommendedNextInputs(inputType, status);
-    const recommendation = buildRecommendation(status, bestMatch, finalIdentityScore, publicTrustScore);
+    const recommendation = buildRecommendation(status, bestMatch, finalIdentityScore, publicTrustScore, liveRiskDelta);
 
     // ── 7. Save verification run ──
     const runData = {
