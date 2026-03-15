@@ -147,14 +147,15 @@ export default function AdminDuplicates() {
   const reviewMutation = useMutation({
     mutationFn: async ({ id, status, notes }: { id: string; status: string; notes: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
+      const updatePayload: Record<string, any> = {
+        review_status: status as any,
+        review_notes: notes || null,
+        reviewed_by: user?.id,
+        reviewed_at: new Date().toISOString(),
+      };
       const { error } = await supabase
         .from("contractor_duplicate_candidates")
-        .update({
-          review_status: status,
-          review_notes: notes || null,
-          reviewed_by: user?.id,
-          reviewed_at: new Date().toISOString(),
-        })
+        .update(updatePayload)
         .eq("id", id);
       if (error) throw error;
     },
