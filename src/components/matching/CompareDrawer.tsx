@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Badge } from "@/components/ui/badge";
 import { Scale, ShieldCheck, Star, X, Info } from "lucide-react";
 import { getTrustBand, getContractorTrustLabel } from "@/lib/trustLabels";
+import WhyThisContractorIsRecommended from "@/components/contractor/WhyThisContractorIsRecommended";
 import type { MatchEvaluation } from "@/types/matching";
 
 interface CompareDrawerProps {
