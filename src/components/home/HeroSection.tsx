@@ -156,7 +156,7 @@ export default function HeroSection() {
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-8 md:px-10 md:pt-12">
           <div className="relative md:grid md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8 md:items-start">
             {/* Mobile background image — pushed right & behind text */}
-            <div className="absolute top-0 right-0 w-[48%] h-[280px] md:hidden pointer-events-none">
+            <div className="absolute top-0 right-0 w-[62%] h-[340px] md:hidden pointer-events-none">
               <AnimatePresence mode="wait">
                 <motion.img key={current.image} src={current.image} alt={current.action}
                   className="w-full h-full object-cover rounded-[20px]" loading="eager"
@@ -164,18 +164,19 @@ export default function HeroSection() {
                   transition={{ duration: 0.9, ease: "easeInOut" }}
                 />
               </AnimatePresence>
+              {/* Irregular dissolve mask — multiple angled gradients */}
               <div className="absolute inset-0 rounded-[20px]"
-                style={{ background: "linear-gradient(135deg, hsl(213 60% 97%) 15%, hsl(213 60% 97% / 0.6) 40%, transparent 65%), linear-gradient(to bottom, transparent 60%, hsl(213 60% 97%) 100%)" }}
+                style={{ background: "linear-gradient(155deg, hsl(213 60% 97%) 10%, hsl(213 60% 97% / 0.7) 28%, transparent 55%), linear-gradient(to bottom, transparent 50%, hsl(213 60% 97% / 0.8) 80%, hsl(213 60% 97%) 100%), linear-gradient(to right, hsl(213 60% 97%) 0%, hsl(213 60% 97% / 0.5) 15%, transparent 35%)" }}
               />
               <motion.img src={unproRobot} alt="Alex UNPRO"
-                className="absolute right-0 bottom-[60px] w-[72px] drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)]"
+                className="absolute right-2 bottom-[10px] w-[80px] drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)]"
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               />
             </div>
 
             {/* Left column */}
-            <div className="relative z-10 min-w-0">
+            <div className="relative z-20 min-w-0">
               <h1 className="relative z-10 text-[34px] font-extrabold leading-[1.12] tracking-[-0.03em] sm:text-[46px] md:text-[64px]" style={{ color: "#0B1533" }}>
                 <span>Trouvez</span>
                 <br />
@@ -213,7 +214,7 @@ export default function HeroSection() {
                 </span>
               </h1>
 
-              <p className="relative z-10 max-w-[55%] sm:max-w-[420px] text-base leading-7 md:text-xl md:leading-10 drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]" style={{ color: "#6C7A92" }}>
+              <p className="relative z-10 max-w-[220px] sm:max-w-[420px] text-base leading-7 md:text-xl md:leading-10 drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]" style={{ color: "#6C7A92" }}>
                 Comparez, évaluez et choisissez en toute confiance.
               </p>
 
