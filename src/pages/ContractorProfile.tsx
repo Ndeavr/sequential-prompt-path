@@ -278,10 +278,11 @@ const ContractorProfile = () => {
                     <div className="flex-1 min-w-0 space-y-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h1 className="text-lg font-extrabold text-foreground leading-tight">{contractor.business_name}</h1>
-                        {isVerified && <ShieldCheck className="h-4 w-4 text-success shrink-0" />}
+                        {isAdminVerified && <ShieldCheck className="h-4 w-4 text-success shrink-0" title="Validé par UnPRO" />}
+                        {!isAdminVerified && isVerified && <ShieldCheck className="h-4 w-4 text-success/60 shrink-0" title="Vérifié" />}
                         {!isVerified && (
-                          <Badge variant="outline" className="text-[9px] bg-warning/10 text-warning border-warning/20 rounded-full px-2 gap-1">
-                            <Eye className="h-2.5 w-2.5" /> À valider
+                          <Badge variant="outline" className="text-[9px] bg-muted text-muted-foreground border-border rounded-full px-2 gap-1">
+                            <Eye className="h-2.5 w-2.5" /> En analyse
                           </Badge>
                         )}
                       </div>
