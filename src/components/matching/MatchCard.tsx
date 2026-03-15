@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { UnproVerifiedBadge } from "@/components/contractor/UnproVerifiedBadge";
 import { getContractorTrustLabel } from "@/lib/trustLabels";
+import WhyThisContractorIsRecommended from "@/components/contractor/WhyThisContractorIsRecommended";
 import type { MatchEvaluation } from "@/types/matching";
 
 interface MatchCardProps {
