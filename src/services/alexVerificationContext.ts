@@ -96,6 +96,16 @@ export function buildAlexVerificationContext(contractor: {
     trust_label = "Non vérifié";
   }
 
+  // Duplicate detection integration — can escalate trust_level
+  if (contractor.has_duplicate_candidates && contractor.entity_confidence === "likely_duplicate") {
+    if (trust_level !== "admin_verified") {
+      trust_level = "ambiguous";
+      caution_notes.push("Ce profil a été signalé comme doublon potentiel dans notre système.");
+    }
+  } else if (contractor.entity_confidence === "ambiguous_shared_identity") {
+    caution_notes.push("Certaines informations de contact sont partagées avec d'autres profils.");
+  }
+
   return {
     contractor_id: contractor.id,
     business_name: contractor.business_name,
