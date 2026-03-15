@@ -65,6 +65,7 @@ import AnalyzeDocumentPage from "@/pages/AnalyzeDocumentPage";
 import TransformationDetailPage from "@/pages/TransformationDetailPage";
 import TrendingPage from "@/pages/TrendingPage";
 import PropertyMapPage from "@/pages/PropertyMapPage";
+import VerificationSeoPage from "@/pages/seo/VerificationSeoPage";
 
 // Condos
 import CondoHomePage from "@/pages/condos/CondoHomePage";
@@ -187,6 +188,8 @@ export const AppRouter = () => (
       <Route path="/verifier-entrepreneur" element={<VerifyLandingPage />} />
       <Route path="/verifier-un-entrepreneur" element={<VerifierEntrepreneurPage />} />
       <Route path="/analyser-document" element={<AnalyzeDocumentPage />} />
+      {/* Programmatic Verification SEO */}
+      <Route path="/verifier-:tradeSlug/:citySlug" element={<VerificationSeoPage />} />
       {/* QR Scan Route */}
       <Route path="/qr/:token" element={<QrScanPage />} />
 
