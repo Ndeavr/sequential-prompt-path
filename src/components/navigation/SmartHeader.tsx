@@ -50,8 +50,8 @@ const SmartHeader = () => {
       <div className="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0 group">
-          <img src={unproLogo} alt="UNPRO" className="h-10 w-10 rounded-lg object-contain" style={{ filter: "brightness(0) saturate(100%) invert(28%) sepia(92%) saturate(1800%) hue-rotate(213deg) brightness(101%) contrast(101%)" }} />
-          <span className="font-display text-xl font-bold text-foreground tracking-tight">UNPRO</span>
+          <img src={unproLogo} alt="UNPRO" className="h-14 w-14 rounded-xl object-contain" style={{ filter: "brightness(0) saturate(100%) invert(28%) sepia(92%) saturate(1800%) hue-rotate(213deg) brightness(101%) contrast(101%)" }} />
+          <span className="font-display text-2xl font-bold text-foreground tracking-tight">UNPRO</span>
         </Link>
 
         {/* Desktop nav */}
