@@ -187,7 +187,7 @@ const AdminContractorDetail = () => {
         </Card>
 
         {/* Verification Snapshot */}
-        <VerificationSnapshotCard snapshot={verificationSnapshot} isLoading={snapshotLoading} />
+        <VerificationSnapshotCard snapshot={verificationSnapshot as any} isLoading={snapshotLoading} />
 
         {/* Verification Insights */}
         {verificationSnapshot && (
