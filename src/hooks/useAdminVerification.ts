@@ -136,7 +136,8 @@ export const useLogAdminAction = () => {
         verification_run_id: params.verificationRunId ?? null,
         notes: params.notes ?? null,
         payload_json: (params.payload ?? {}) as any,
-      });
+      };
+      const { error } = await supabase.from("admin_action_logs").insert([row]);
       if (error) throw error;
     },
   });
