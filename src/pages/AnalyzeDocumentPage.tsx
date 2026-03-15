@@ -60,6 +60,7 @@ function FieldRow({ label, field }: { label: string; field: ExtractedField }) {
 
 const AnalyzeDocumentPage = () => {
   const { analyzeDocument, result, isAnalyzing, reset } = useDocumentAnalyzer();
+  const [showQualityScore, setShowQualityScore] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [contractorId, setContractorId] = useState("");
