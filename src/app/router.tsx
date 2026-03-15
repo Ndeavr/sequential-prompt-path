@@ -66,6 +66,7 @@ import TransformationDetailPage from "@/pages/TransformationDetailPage";
 import TrendingPage from "@/pages/TrendingPage";
 import PropertyMapPage from "@/pages/PropertyMapPage";
 import VerificationSeoPage from "@/pages/seo/VerificationSeoPage";
+import AlignmentQuestionnairePage from "@/pages/AlignmentQuestionnairePage";
 
 // Condos
 import CondoHomePage from "@/pages/condos/CondoHomePage";
