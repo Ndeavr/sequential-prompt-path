@@ -55,6 +55,8 @@ export function buildAlexVerificationContext(contractor: {
   review_count?: number | null;
   internal_verified_score?: number | null;
   internal_verified_at?: string | null;
+  has_duplicate_candidates?: boolean;
+  entity_confidence?: string | null;
 }): AlexContractorVerificationContext {
   const isAdminVerified = contractor.admin_verified === true;
   const isVerified = contractor.verification_status === "verified";
