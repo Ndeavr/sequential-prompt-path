@@ -26,15 +26,18 @@ function useDuplicateCandidates(status: string) {
   return useQuery({
     queryKey: ["admin-duplicates", status],
     queryFn: async () => {
-      const query = supabase
-        .from("contractor_duplicate_candidates")
-        .select("*")
-        .order("duplicate_confidence_score", { ascending: false })
-        .limit(200);
-
       const { data, error } = status === "all"
-        ? await query
-        : await query.eq("review_status", status);
+        ? await supabase
+            .from("contractor_duplicate_candidates")
+            .select("*")
+            .order("duplicate_confidence_score", { ascending: false })
+            .limit(200)
+        : await supabase
+            .from("contractor_duplicate_candidates")
+            .select("*")
+            .eq("review_status", status as any)
+            .order("duplicate_confidence_score", { ascending: false })
+            .limit(200);
       if (error) throw error;
       return data ?? [];
     },
