@@ -33,6 +33,7 @@ import {
   usePublicContractorReviews,
 } from "@/hooks/usePublicContractors";
 import { useContractorPublicScores, useReviewInsights } from "@/hooks/useMatchingEngine";
+import { UnproVerifiedBadge } from "@/components/contractor/UnproVerifiedBadge";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
 import { useState } from "react";
