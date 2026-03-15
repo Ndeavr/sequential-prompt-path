@@ -710,26 +710,36 @@ function resolveIdentityStatus(
   return "no_reliable_match";
 }
 
+/**
+ * Build final recommendation — uses careful, non-absolute wording.
+ * PRODUCT RULE: Never claim legal certainty. Use conditional language.
+ */
 function buildRecommendation(
   status: IdentityResolutionStatus,
   match: ContractorRow | null,
   identityScore: number,
-  publicTrustScore: number
+  publicTrustScore: number,
+  liveRiskDelta: number | null
 ): string {
   const safe = "Information non trouvée ou non confirmée";
   const name = match?.business_name || safe;
 
   switch (status) {
-    case "verified_internal_profile":
-      return `UNPRO possède déjà un profil vérifié en interne pour « ${name} ». Les signaux publics sont cohérents avec le profil vérifié. Score de confiance interne disponible.`;
+    case "verified_internal_profile": {
+      const base = `UnPRO possède un profil vérifié en interne pour « ${name} ». Selon les données disponibles, les signaux publics sont cohérents avec ce profil vérifié.`;
+      if (liveRiskDelta !== null && liveRiskDelta < -10) {
+        return `${base} Cependant, certaines données publiques récentes diffèrent du profil validé. Notre équipe peut réviser ce dossier si nécessaire.`;
+      }
+      return base;
+    }
     case "verified_match":
-      return `Les données pointent fortement vers la même entreprise « ${name} ». Cohérence élevée entre les identifiants fournis et le profil existant (score identité: ${identityScore}/100, confiance publique: ${publicTrustScore}/100).`;
+      return `Selon les informations publiques disponibles, les données fournies pointent fortement vers l'entreprise « ${name} ». Ce résultat est basé sur ${identityScore}/100 de correspondance estimée et un indice de confiance publique de ${publicTrustScore}/100. Ce résultat ne constitue pas une certification légale.`;
     case "probable_match_needs_more_proof":
-      return `Une correspondance probable a été trouvée pour « ${name} », mais des preuves supplémentaires sont nécessaires pour confirmer l'identité avec certitude. Fournissez jusqu'à 3 identifiants additionnels.`;
+      return `Une correspondance probable a été identifiée pour « ${name} », mais les données actuelles ne permettent pas de confirmer l'identité avec suffisamment de certitude. Fournissez jusqu'à 3 identifiants supplémentaires pour améliorer la correspondance.`;
     case "ambiguous_match":
-      return `Plusieurs correspondances possibles ont été détectées. Les données fournies ne permettent pas de déterminer avec certitude à quelle entreprise elles correspondent. Fournissez un identifiant plus précis (numéro RBQ, NEQ, ou site web).`;
+      return `Plusieurs correspondances possibles ont été détectées. Les données fournies ne permettent pas de déterminer avec certitude à quelle entreprise elles correspondent. Ajoutez un identifiant plus précis (numéro RBQ, NEQ, site web exact) pour lever l'ambiguïté.`;
     case "no_reliable_match":
-      return `Aucune correspondance fiable n'a été trouvée dans la base UNPRO. Les données fournies sont insuffisantes pour établir une identité commerciale probable. Cet entrepreneur n'est pas encore répertorié.`;
+      return `Aucune entreprise n'a pu être reliée à ces données de façon suffisamment fiable. L'entrepreneur n'est peut-être pas encore répertorié dans notre base, ou les informations fournies sont insuffisantes. Cela ne signifie pas que l'entreprise est frauduleuse.`;
   }
 }
 
@@ -935,7 +945,7 @@ serve(async (req) => {
 
     const missingProofs = buildMissingProofs(inputType, bestMatch, finalIdentityScore);
     const recommendedNextInputs = buildRecommendedNextInputs(inputType, status);
-    const recommendation = buildRecommendation(status, bestMatch, finalIdentityScore, publicTrustScore);
+    const recommendation = buildRecommendation(status, bestMatch, finalIdentityScore, publicTrustScore, liveRiskDelta);
 
     // ── 7. Save verification run ──
     const runData = {
