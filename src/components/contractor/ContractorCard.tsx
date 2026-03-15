@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Star, ShieldCheck, TrendingUp, ArrowRight, Clock, Award } from "lucide-react";
 import { motion } from "framer-motion";
+import { UnproVerifiedBadge } from "@/components/contractor/UnproVerifiedBadge";
 
 interface ContractorCardProps {
   contractor: {
@@ -14,6 +15,7 @@ interface ContractorCardProps {
     province: string | null;
     description: string | null;
     verification_status: string | null;
+    admin_verified?: boolean;
     aipp_score: number | null;
     rating: number | null;
     review_count: number | null;
@@ -23,7 +25,8 @@ interface ContractorCardProps {
 }
 
 const ContractorCard = ({ contractor }: ContractorCardProps) => {
-  const isVerified = contractor.verification_status === "verified";
+  const isAdminVerified = (contractor as any).admin_verified === true;
+  const isVerified = isAdminVerified || contractor.verification_status === "verified";
   const hasScore = contractor.aipp_score != null && contractor.aipp_score > 0;
   const hasRating = contractor.rating != null && contractor.rating > 0;
   const yearsExp = (contractor as any).years_experience;
