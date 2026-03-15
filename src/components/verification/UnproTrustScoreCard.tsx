@@ -1,5 +1,10 @@
 /**
  * UnproTrustScoreCard — Displays the UnPRO Public Trust Score with badge.
+ *
+ * Product rules:
+ * - Explicitly states scores are estimative
+ * - Not a legal certification
+ * - Accessible
  */
 import { motion } from "framer-motion";
 import { ShieldCheck, ShieldAlert, AlertTriangle, Shield } from "lucide-react";
@@ -21,7 +26,7 @@ function getBadge(score: number) {
 export default function UnproTrustScoreCard({ score, loading }: Props) {
   if (loading) {
     return (
-      <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-5">
+      <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-5" aria-busy="true">
         <Skeleton className="h-4 w-24 mb-3" />
         <Skeleton className="h-8 w-16 mb-2" />
         <Skeleton className="h-5 w-20 mb-3" />
@@ -40,9 +45,11 @@ export default function UnproTrustScoreCard({ score, loading }: Props) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.1 }}
       className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-5"
+      role="region"
+      aria-label={`Indice de confiance UnPRO : ${clamped} sur 100, ${badge.label}`}
     >
       <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-        Indice UNPRO
+        Indice UnPRO
       </p>
 
       <div className="flex items-baseline gap-1 mb-2">
@@ -51,12 +58,13 @@ export default function UnproTrustScoreCard({ score, loading }: Props) {
       </div>
 
       <Badge variant="outline" className={`gap-1.5 ${badge.className}`}>
-        <Icon className="w-3 h-3" />
+        <Icon className="w-3 h-3" aria-hidden="true" />
         {badge.label}
       </Badge>
 
       <p className="text-[11px] text-muted-foreground mt-3 leading-relaxed">
-        Score estimatif basé sur les données publiques détectées. Ce score ne constitue pas une certification légale.
+        Score estimatif basé sur les données publiques détectées au moment de l'analyse.
+        Ce score ne constitue pas une certification légale ni une garantie.
       </p>
     </motion.div>
   );
