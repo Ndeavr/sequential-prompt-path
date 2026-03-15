@@ -27,6 +27,7 @@ import ProblemLocationPage from "@/pages/seo/ProblemLocationPage";
 import GuidePage from "@/pages/seo/GuidePage";
 import SeoDirectoryPage from "@/pages/seo/SeoDirectoryPage";
 import ProblemPage from "@/pages/seo/ProblemPage";
+import ProblemGraphPage from "@/pages/seo/ProblemGraphPage";
 import SolutionPage from "@/pages/seo/SolutionPage";
 import ProfessionPage from "@/pages/seo/ProfessionPage";
 import CityPage from "@/pages/seo/CityPage";
