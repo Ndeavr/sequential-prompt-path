@@ -135,6 +135,10 @@ import AdminMedia from "@/pages/admin/AdminMedia";
 import AdminValidation from "@/pages/admin/AdminValidation";
 import AdminAnswerEngine from "@/pages/admin/AdminAnswerEngine";
 import AdminOperationsHub from "@/pages/admin/AdminOperationsHub";
+import AdminVerificationRuns from "@/pages/admin/AdminVerificationRuns";
+import AdminVerificationRunDetail from "@/pages/admin/AdminVerificationRunDetail";
+import AdminAlerts from "@/pages/admin/AdminAlerts";
+import AdminVerifiedContractors from "@/pages/admin/AdminVerifiedContractors";
 
 export const AppRouter = () => (
   <BrowserRouter>
