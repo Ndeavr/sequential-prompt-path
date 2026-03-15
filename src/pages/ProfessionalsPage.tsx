@@ -95,9 +95,36 @@ export default function ProfessionalsPage() {
     <MainLayout>
       {/* ── Hero ── */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-secondary/6 via-primary/3 to-transparent pointer-events-none" />
-        <div className="absolute top-[5%] left-[-15%] w-[50vw] h-[50vw] rounded-full bg-secondary/8 blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-[5%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-primary/6 blur-[80px] pointer-events-none" />
+        {/* Radial ray burst background */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: `
+            radial-gradient(ellipse 80% 60% at 50% 40%, hsl(var(--secondary) / 0.08) 0%, transparent 70%),
+            radial-gradient(ellipse 60% 80% at 30% 60%, hsl(var(--primary) / 0.06) 0%, transparent 60%),
+            radial-gradient(ellipse 50% 50% at 70% 30%, hsl(var(--accent) / 0.05) 0%, transparent 50%)
+          `
+        }} />
+        {/* Animated ray lines */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {Array.from({ length: 24 }).map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute top-1/2 left-1/2 origin-left"
+              style={{
+                width: "120%",
+                height: "1px",
+                rotate: `${i * 15}deg`,
+                background: `linear-gradient(90deg, transparent 0%, hsl(var(--secondary) / ${0.04 + (i % 3) * 0.02}) 30%, hsl(var(--primary) / ${0.03 + (i % 2) * 0.02}) 60%, transparent 100%)`,
+              }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0.3, 0.7, 0.3] }}
+              transition={{ duration: 4 + (i % 5), repeat: Infinity, delay: i * 0.2, ease: "easeInOut" }}
+            />
+          ))}
+        </div>
+        {/* Soft glowing orbs */}
+        <div className="absolute top-[10%] left-[10%] w-[35vw] h-[35vw] rounded-full blur-[120px] pointer-events-none" style={{ background: "hsl(var(--secondary) / 0.1)" }} />
+        <div className="absolute bottom-[5%] right-[5%] w-[30vw] h-[30vw] rounded-full blur-[100px] pointer-events-none" style={{ background: "hsl(var(--primary) / 0.08)" }} />
+        <div className="absolute top-[30%] right-[20%] w-[20vw] h-[20vw] rounded-full blur-[80px] pointer-events-none" style={{ background: "hsl(var(--accent) / 0.06)" }} />
 
         <div className="relative z-10 flex flex-col items-center text-center px-5 pt-20 pb-14 md:pt-32 md:pb-20">
           <motion.div className="space-y-6 max-w-xl" initial="hidden" animate="visible">
