@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Badge } from "@/components/ui/badge";
 import { Scale, ShieldCheck, Star, X, Info } from "lucide-react";
 import { getTrustBand, getContractorTrustLabel } from "@/lib/trustLabels";
+import WhyThisContractorIsRecommended from "@/components/contractor/WhyThisContractorIsRecommended";
 import type { MatchEvaluation } from "@/types/matching";
 
 interface CompareDrawerProps {
@@ -103,6 +104,18 @@ const CompareDrawer = ({ matches, open, onOpenChange, onRemove }: CompareDrawerP
                   return (
                     <td key={m.id} className="p-2 text-center">
                       <span className={`text-xs font-semibold ${trust.color}`}>{trust.label}</span>
+                      <div className="mt-1">
+                        <WhyThisContractorIsRecommended
+                          variant="inline"
+                          contractor={{
+                            admin_verified: (m as any).admin_verified,
+                            verification_status: m.verification_status,
+                            aipp_score: m.aipp_score_snapshot,
+                            rating: m.rating,
+                            review_count: m.review_count,
+                          }}
+                        />
+                      </div>
                     </td>
                   );
                 })}

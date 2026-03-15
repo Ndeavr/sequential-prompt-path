@@ -6,6 +6,7 @@ import { MapPin, Star, ShieldCheck, ArrowRight, Clock, Award } from "lucide-reac
 import { motion } from "framer-motion";
 import { UnproVerifiedBadge } from "@/components/contractor/UnproVerifiedBadge";
 import { getContractorTrustLabel, getTrustBand } from "@/lib/trustLabels";
+import WhyThisContractorIsRecommended from "@/components/contractor/WhyThisContractorIsRecommended";
 
 interface ContractorCardProps {
   contractor: {
@@ -117,29 +118,18 @@ const ContractorCard = ({ contractor }: ContractorCardProps) => {
             )}
           </div>
 
-          {/* Trust badges */}
-          <div className="flex flex-wrap gap-1.5">
-            {yearsExp != null && yearsExp > 0 && (
-              <span className="trust-badge bg-muted/50 text-muted-foreground">
-                <Clock className="h-3 w-3" /> {yearsExp}+ ans d'expérience
-              </span>
-            )}
-            {isAdminVerified && (
-              <span className="trust-badge bg-success/5 text-success">
-                <ShieldCheck className="h-3 w-3" /> Validé par UnPRO
-              </span>
-            )}
-            {!isAdminVerified && isVerified && (
-              <span className="trust-badge bg-muted/50 text-muted-foreground">
-                <Award className="h-3 w-3" /> Certifié & Assuré
-              </span>
-            )}
-            {hasRating && contractor.rating! >= 4.0 && (
-              <span className="trust-badge bg-muted/50 text-muted-foreground">
-                <Star className="h-3 w-3" /> Excellent Avis
-              </span>
-            )}
-          </div>
+          {/* Trust explanation — inline label */}
+          <WhyThisContractorIsRecommended
+            variant="inline"
+            contractor={{
+              admin_verified: isAdminVerified,
+              verification_status: contractor.verification_status,
+              rating: contractor.rating,
+              review_count: contractor.review_count,
+              years_experience: yearsExp,
+              aipp_score: contractor.aipp_score,
+            }}
+          />
 
           {/* CTAs */}
           <div className="flex gap-2">
