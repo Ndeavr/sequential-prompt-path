@@ -118,5 +118,7 @@ export function buildAlexVerificationContext(contractor: {
     caution_notes: caution_notes.length > 0 ? caution_notes : undefined,
     aipp_score: contractor.aipp_score,
     unpro_score: contractor.internal_verified_score,
+    has_duplicate_flags: contractor.has_duplicate_candidates ?? false,
+    entity_confidence: contractor.entity_confidence ?? null,
   };
 }
