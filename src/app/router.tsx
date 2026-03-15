@@ -266,6 +266,9 @@ export const AppRouter = () => (
       <Route path="/admin/operations" element={<ProtectedRoute requiredRole="admin"><AdminOperationsHub /></ProtectedRoute>} />
 
       {/* Condos — Public SEO */}
+      <Route path="/condo" element={<CondoHomePage />} />
+      <Route path="/condo/fonds-de-prevoyance" element={<CondoFondsPage />} />
+      <Route path="/condo/carnet-entretien" element={<CondoCarnetPage />} />
       <Route path="/condos" element={<CondoHomePage />} />
       <Route path="/condos/loi-16" element={<CondoLoi16Page />} />
       <Route path="/condos/carnet-entretien" element={<CondoCarnetPage />} />
