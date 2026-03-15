@@ -33,6 +33,7 @@ import {
   usePublicContractorReviews,
 } from "@/hooks/usePublicContractors";
 import { useContractorPublicScores, useReviewInsights } from "@/hooks/useMatchingEngine";
+import { UnproVerifiedBadge } from "@/components/contractor/UnproVerifiedBadge";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
 import { useState } from "react";
@@ -319,17 +320,13 @@ const ContractorProfile = () => {
 
           {/* ── Trust Badges ── */}
           <motion.div variants={fadeUp} className="flex flex-wrap gap-2">
-            {isAdminVerified && (
-              <Badge variant="outline" className="gap-1.5 text-[11px] bg-success/5 text-success border-success/20 rounded-full px-3 py-1.5">
-                <ShieldCheck className="h-3 w-3" /> Validé par UnPRO
-              </Badge>
-            )}
-            {!isAdminVerified && isVerified && (
+            {isAdminVerified ? (
+              <UnproVerifiedBadge adminVerified={true} variant="tooltip" />
+            ) : isVerified ? (
               <Badge variant="outline" className="gap-1.5 text-[11px] bg-success/5 text-success border-success/20 rounded-full px-3 py-1.5">
                 <ShieldCheck className="h-3 w-3" /> Vérifié & Assuré
               </Badge>
-            )}
-            {!isVerified && (
+            ) : (
               <Badge variant="outline" className="gap-1.5 text-[11px] bg-muted text-muted-foreground border-border rounded-full px-3 py-1.5">
                 <Eye className="h-3 w-3" /> Profil en cours d'analyse
               </Badge>
@@ -360,6 +357,18 @@ const ContractorProfile = () => {
               </Badge>
             )}
           </motion.div>
+
+          {/* ── Detailed Verified Badge Panel ── */}
+          {isAdminVerified && (
+            <motion.div variants={fadeUp}>
+              <UnproVerifiedBadge
+                adminVerified={true}
+                variant="detailed"
+                internalVerifiedScore={contractor.internal_verified_score}
+                internalVerifiedAt={contractor.internal_verified_at}
+              />
+            </motion.div>
+          )}
 
           {/* ═══ 2. AI SUMMARY ═══ */}
           <motion.div variants={fadeUp}>

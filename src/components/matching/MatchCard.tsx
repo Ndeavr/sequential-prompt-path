@@ -13,6 +13,7 @@ import {
   ShieldCheck, Star, MapPin, Clock, MessageCircle,
   AlertTriangle, CheckCircle, ArrowRight, Sparkles, Scale,
 } from "lucide-react";
+import { UnproVerifiedBadge } from "@/components/contractor/UnproVerifiedBadge";
 import type { MatchEvaluation } from "@/types/matching";
 
 interface MatchCardProps {
@@ -75,9 +76,11 @@ const MatchCard = ({ match, rank, onCompare, isComparing }: MatchCardProps) => {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
                 <h3 className="font-display font-semibold text-sm truncate">{match.business_name}</h3>
-                {match.verification_status === "verified" && (
+                {(match as any).admin_verified === true ? (
+                  <UnproVerifiedBadge adminVerified={true} variant="compact" />
+                ) : match.verification_status === "verified" ? (
                   <ShieldCheck className="w-3.5 h-3.5 text-success shrink-0" />
-                )}
+                ) : null}
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <MapPin className="w-3 h-3" />
