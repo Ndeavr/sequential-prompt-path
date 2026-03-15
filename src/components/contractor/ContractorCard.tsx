@@ -109,7 +109,12 @@ const ContractorCard = ({ contractor }: ContractorCardProps) => {
                 <Clock className="h-3 w-3" /> {yearsExp}+ ans d'expérience
               </span>
             )}
-            {isVerified && (
+            {isAdminVerified && (
+              <span className="trust-badge bg-success/5 text-success">
+                <ShieldCheck className="h-3 w-3" /> Validé par UnPRO
+              </span>
+            )}
+            {!isAdminVerified && isVerified && (
               <span className="trust-badge bg-muted/50 text-muted-foreground">
                 <Award className="h-3 w-3" /> Certifié & Assuré
               </span>
