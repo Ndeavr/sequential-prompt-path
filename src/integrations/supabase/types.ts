@@ -1715,6 +1715,185 @@ export type Database = {
           },
         ]
       }
+      contractor_duplicate_candidates: {
+        Row: {
+          candidate_contractor_id: string
+          contractor_id: string
+          created_at: string
+          duplicate_confidence_score: number
+          entity_confidence: Database["public"]["Enums"]["entity_confidence"]
+          id: string
+          matching_signals: Json | null
+          merge_direction: string | null
+          reasons_json: Json
+          review_notes: string | null
+          review_status: Database["public"]["Enums"]["duplicate_review_status"]
+          reviewed_at: string | null
+          reviewed_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          candidate_contractor_id: string
+          contractor_id: string
+          created_at?: string
+          duplicate_confidence_score?: number
+          entity_confidence?: Database["public"]["Enums"]["entity_confidence"]
+          id?: string
+          matching_signals?: Json | null
+          merge_direction?: string | null
+          reasons_json?: Json
+          review_notes?: string | null
+          review_status?: Database["public"]["Enums"]["duplicate_review_status"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          candidate_contractor_id?: string
+          contractor_id?: string
+          created_at?: string
+          duplicate_confidence_score?: number
+          entity_confidence?: Database["public"]["Enums"]["entity_confidence"]
+          id?: string
+          matching_signals?: Json | null
+          merge_direction?: string | null
+          reasons_json?: Json
+          review_notes?: string | null
+          review_status?: Database["public"]["Enums"]["duplicate_review_status"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_duplicate_candidates_candidate_contractor_id_fkey"
+            columns: ["candidate_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_duplicate_candidates_candidate_contractor_id_fkey"
+            columns: ["candidate_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_duplicate_candidates_candidate_contractor_id_fkey"
+            columns: ["candidate_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_duplicate_candidates_candidate_contractor_id_fkey"
+            columns: ["candidate_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_duplicate_candidates_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_duplicate_candidates_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_duplicate_candidates_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_duplicate_candidates_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_entity_flags: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          description: string | null
+          flag_type: string
+          id: string
+          is_resolved: boolean
+          metadata_json: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          updated_at: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          description?: string | null
+          flag_type: string
+          id?: string
+          is_resolved?: boolean
+          metadata_json?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          updated_at?: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          description?: string | null
+          flag_type?: string
+          id?: string
+          is_resolved?: boolean
+          metadata_json?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_entity_flags_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_entity_flags_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_entity_flags_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_entity_flags_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_gmb_profiles: {
         Row: {
           contractor_id: string
@@ -10812,6 +10991,19 @@ export type Database = {
         | "cancelled"
       compatibility_result: "compatible" | "partial" | "verify" | "incompatible"
       contribution_status: "pending" | "approved" | "rejected" | "expired"
+      duplicate_review_status:
+        | "pending"
+        | "confirmed_duplicate"
+        | "not_duplicate"
+        | "same_brand_separate_location"
+        | "needs_more_proof"
+        | "merged"
+      entity_confidence:
+        | "clear_unique"
+        | "likely_duplicate"
+        | "possible_duplicate"
+        | "ambiguous_shared_identity"
+        | "suspicious_low_confidence"
       identity_coherence:
         | "strong"
         | "moderate"
@@ -11006,6 +11198,21 @@ export const Constants = {
       ],
       compatibility_result: ["compatible", "partial", "verify", "incompatible"],
       contribution_status: ["pending", "approved", "rejected", "expired"],
+      duplicate_review_status: [
+        "pending",
+        "confirmed_duplicate",
+        "not_duplicate",
+        "same_brand_separate_location",
+        "needs_more_proof",
+        "merged",
+      ],
+      entity_confidence: [
+        "clear_unique",
+        "likely_duplicate",
+        "possible_duplicate",
+        "ambiguous_shared_identity",
+        "suspicious_low_confidence",
+      ],
       identity_coherence: [
         "strong",
         "moderate",

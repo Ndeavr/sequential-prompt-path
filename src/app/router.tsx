@@ -140,6 +140,7 @@ import AdminVerificationRuns from "@/pages/admin/AdminVerificationRuns";
 import AdminVerificationRunDetail from "@/pages/admin/AdminVerificationRunDetail";
 import AdminAlerts from "@/pages/admin/AdminAlerts";
 import AdminVerifiedContractors from "@/pages/admin/AdminVerifiedContractors";
+import AdminDuplicates from "@/pages/admin/AdminDuplicates";
 
 export const AppRouter = () => (
   <BrowserRouter>
@@ -275,6 +276,7 @@ export const AppRouter = () => (
       <Route path="/admin/verification/:id" element={<ProtectedRoute requiredRole="admin"><AdminVerificationRunDetail /></ProtectedRoute>} />
       <Route path="/admin/alerts" element={<ProtectedRoute requiredRole="admin"><AdminAlerts /></ProtectedRoute>} />
       <Route path="/admin/verified-contractors" element={<ProtectedRoute requiredRole="admin"><AdminVerifiedContractors /></ProtectedRoute>} />
+      <Route path="/admin/duplicates" element={<ProtectedRoute requiredRole="admin"><AdminDuplicates /></ProtectedRoute>} />
 
       {/* Condos — Public SEO */}
       <Route path="/condo" element={<CondoHomePage />} />

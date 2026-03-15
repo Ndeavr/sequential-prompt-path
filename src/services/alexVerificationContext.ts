@@ -35,6 +35,10 @@ export interface AlexContractorVerificationContext {
   aipp_score?: number | null;
   /** UNPRO score if available */
   unpro_score?: number | null;
+  /** Duplicate detection flags — internal only, affects Alex tone */
+  has_duplicate_flags?: boolean;
+  /** Entity confidence from duplicate detection */
+  entity_confidence?: string | null;
 }
 
 /**
@@ -51,6 +55,8 @@ export function buildAlexVerificationContext(contractor: {
   review_count?: number | null;
   internal_verified_score?: number | null;
   internal_verified_at?: string | null;
+  has_duplicate_candidates?: boolean;
+  entity_confidence?: string | null;
 }): AlexContractorVerificationContext {
   const isAdminVerified = contractor.admin_verified === true;
   const isVerified = contractor.verification_status === "verified";
@@ -90,6 +96,16 @@ export function buildAlexVerificationContext(contractor: {
     trust_label = "Non vérifié";
   }
 
+  // Duplicate detection integration — can escalate trust_level
+  if (contractor.has_duplicate_candidates && contractor.entity_confidence === "likely_duplicate") {
+    if (trust_level !== "admin_verified") {
+      trust_level = "ambiguous";
+      caution_notes.push("Ce profil a été signalé comme doublon potentiel dans notre système.");
+    }
+  } else if (contractor.entity_confidence === "ambiguous_shared_identity") {
+    caution_notes.push("Certaines informations de contact sont partagées avec d'autres profils.");
+  }
+
   return {
     contractor_id: contractor.id,
     business_name: contractor.business_name,
@@ -102,5 +118,7 @@ export function buildAlexVerificationContext(contractor: {
     caution_notes: caution_notes.length > 0 ? caution_notes : undefined,
     aipp_score: contractor.aipp_score,
     unpro_score: contractor.internal_verified_score,
+    has_duplicate_flags: contractor.has_duplicate_candidates ?? false,
+    entity_confidence: contractor.entity_confidence ?? null,
   };
 }
