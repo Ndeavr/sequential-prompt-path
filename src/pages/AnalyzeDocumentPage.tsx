@@ -359,6 +359,24 @@ const AnalyzeDocumentPage = () => {
                   </Card>
                 )}
 
+                {/* Quote Quality Score */}
+                {quoteQuality && (
+                  <>
+                    {!showQualityScore ? (
+                      <Button
+                        onClick={() => setShowQualityScore(true)}
+                        variant="outline"
+                        className="w-full gap-2"
+                      >
+                        <BarChart3 className="w-4 h-4" />
+                        Voir le score qualité de la soumission ({quoteQuality.total_score}/100)
+                      </Button>
+                    ) : (
+                      <QuoteQualityScorePanel result={quoteQuality} />
+                    )}
+                  </>
+                )}
+
                 {/* Actions */}
                 <div className="flex gap-3">
                   <Button onClick={handleReset} variant="outline" className="flex-1 gap-1">
