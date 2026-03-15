@@ -19,6 +19,7 @@ import { motion } from "framer-motion";
 
 const SORT_OPTIONS = [
   { value: "default", label: "Pertinence" },
+  { value: "trust", label: "Confiance" },
   { value: "newest", label: "Plus récents" },
   { value: "aipp", label: "Score AIPP" },
   { value: "reviews", label: "Plus d'avis" },
