@@ -334,6 +334,11 @@ const ContractorProfile = () => {
                 <Eye className="h-3 w-3" /> Profil en cours d'analyse
               </Badge>
             )}
+            {isAdminVerified && contractor.internal_verified_at && (
+              <Badge variant="outline" className="gap-1.5 text-[11px] bg-muted text-muted-foreground border-border rounded-full px-3 py-1.5">
+                <Clock className="h-3 w-3" /> Validé le {new Date(contractor.internal_verified_at).toLocaleDateString("fr-CA")}
+              </Badge>
+            )}
             {yearsExp != null && yearsExp > 0 && (
               <Badge variant="outline" className="gap-1.5 text-[11px] bg-muted text-muted-foreground border-border rounded-full px-3 py-1.5">
                 <Award className="h-3 w-3" /> {yearsExp}+ ans
