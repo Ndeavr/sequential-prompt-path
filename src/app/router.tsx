@@ -66,6 +66,7 @@ import TransformationDetailPage from "@/pages/TransformationDetailPage";
 import TrendingPage from "@/pages/TrendingPage";
 import PropertyMapPage from "@/pages/PropertyMapPage";
 import VerificationSeoPage from "@/pages/seo/VerificationSeoPage";
+import AlignmentQuestionnairePage from "@/pages/AlignmentQuestionnairePage";
 
 // Condos
 import CondoHomePage from "@/pages/condos/CondoHomePage";
@@ -168,6 +169,7 @@ export const AppRouter = () => (
       <Route path="/matching" element={<ProtectedRoute requiredRole="homeowner"><MatchingResultsPage /></ProtectedRoute>} />
       <Route path="/comparer" element={<ContractorComparisonPage />} />
       <Route path="/decision" element={<ProtectedRoute requiredRole="homeowner"><DecisionAssistantPage /></ProtectedRoute>} />
+      <Route path="/alignment" element={<ProtectedRoute requiredRole="homeowner"><AlignmentQuestionnairePage /></ProtectedRoute>} />
 
       {/* Property Graph */}
       <Route path="/property-graph" element={<PropertyGraphPage />} />
@@ -260,6 +262,7 @@ export const AppRouter = () => (
       <Route path="/pro/billing" element={<ProtectedRoute requiredRole="contractor"><ProBilling /></ProtectedRoute>} />
       <Route path="/pro/territories" element={<ProtectedRoute requiredRole="contractor"><ProTerritories /></ProtectedRoute>} />
       <Route path="/pro/gmb-link" element={<ProtectedRoute requiredRole="contractor"><GmbLinkPage /></ProtectedRoute>} />
+      <Route path="/pro/alignment" element={<ProtectedRoute requiredRole="contractor"><AlignmentQuestionnairePage /></ProtectedRoute>} />
       <Route path="/pro/questionnaire" element={<ProtectedRoute requiredRole="contractor"><ContractorQuestionnairePage /></ProtectedRoute>} />
 
       {/* Admin */}
