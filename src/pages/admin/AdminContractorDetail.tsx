@@ -186,6 +186,29 @@ const AdminContractorDetail = () => {
           </CardContent>
         </Card>
 
+        {/* Verification Snapshot */}
+        <VerificationSnapshotCard snapshot={verificationSnapshot} isLoading={snapshotLoading} />
+
+        {/* Verification Insights */}
+        {verificationSnapshot && (
+          <LatestVerificationInsights
+            strengths={Array.isArray(verificationSnapshot.strengths) ? verificationSnapshot.strengths as string[] : []}
+            risks={Array.isArray(verificationSnapshot.risks) ? verificationSnapshot.risks as string[] : []}
+            inconsistencies={Array.isArray(verificationSnapshot.inconsistencies) ? verificationSnapshot.inconsistencies as string[] : []}
+            missingProofs={Array.isArray(verificationSnapshot.missing_proofs) ? verificationSnapshot.missing_proofs as string[] : []}
+          />
+        )}
+
+        {/* Merge Suggestions */}
+        <MergeSuggestionsPanel
+          suggestions={mergeSuggestions as any}
+          contractorId={contractor.id}
+          isLoading={suggestionsLoading}
+        />
+
+        {/* Verification History */}
+        <VerificationHistoryTable runs={verificationHistory as any} />
+
         {/* Documents */}
         <Card>
           <CardHeader><CardTitle className="text-base">Documents ({docs?.length ?? 0})</CardTitle></CardHeader>
