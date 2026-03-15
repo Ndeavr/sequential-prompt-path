@@ -110,10 +110,19 @@ const MatchCard = ({ match, rank, onCompare, isComparing }: MatchCardProps) => {
                   <span className="text-xs text-muted-foreground">({match.review_count ?? 0})</span>
                 </div>
               )}
-              {/* Trust insight — one short line */}
-              {trustInsight && (
-                <p className="text-[10px] mt-1 text-muted-foreground italic">{trustInsight}</p>
-              )}
+              {/* Trust explanation — compact expandable */}
+              <div className="mt-1">
+                <WhyThisContractorIsRecommended
+                  variant="compact"
+                  contractor={{
+                    admin_verified: (match as any).admin_verified,
+                    verification_status: match.verification_status,
+                    aipp_score: match.aipp_score_snapshot,
+                    rating: match.rating,
+                    review_count: match.review_count,
+                  }}
+                />
+              </div>
             </div>
 
             <div className="shrink-0">
