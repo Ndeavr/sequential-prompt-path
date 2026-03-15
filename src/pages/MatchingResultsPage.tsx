@@ -159,6 +159,14 @@ const MatchingResultsPage = () => {
             </div>
           )}
 
+          {/* Decision Assistant CTA */}
+          <Button asChild variant="outline" size="sm" className="w-full">
+            <Link to="/decision">
+              <HelpCircle className="w-3.5 h-3.5 mr-1.5" />
+              Quel entrepreneur contacter en premier ?
+            </Link>
+          </Button>
+
           {/* Compare Bar */}
           {compareIds.size >= 2 && (
             <motion.div
