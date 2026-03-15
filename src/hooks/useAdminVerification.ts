@@ -129,13 +129,13 @@ export const useLogAdminAction = () => {
       notes?: string;
       payload?: Record<string, unknown>;
     }) => {
-      const { error } = await supabase.from("admin_action_logs").insert({
+      const row = {
         actor_user_id: user!.id,
         action_type: params.actionType,
         contractor_id: params.contractorId ?? null,
         verification_run_id: params.verificationRunId ?? null,
         notes: params.notes ?? null,
-        payload_json: params.payload ?? {},
+        payload_json: (params.payload ?? {}) as any,
       });
       if (error) throw error;
     },
