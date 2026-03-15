@@ -38,7 +38,9 @@ function detectIntent(message: string): string {
   if (/permis|réglementation|code/.test(lower)) return "permits";
   if (/subvention|aide|programme|crédit/.test(lower)) return "subsidies";
   if (/achat|acheter|avant.*offre|inspection/.test(lower)) return "buyer_analysis";
-  if (/profil|aipp|badge|vérif/.test(lower)) return "contractor_profile";
+  // Trust/verification intents
+  if (/confiance|fiable|vérif|validé|badge|sécuritaire|sûr|risque.*entrepreneur/.test(lower)) return "contractor_trust";
+  if (/profil|aipp/.test(lower)) return "contractor_profile";
   if (/entretien|préventif|maintenance/.test(lower)) return "maintenance";
   return "general";
 }
