@@ -221,7 +221,7 @@ export async function fetchDuplicateCandidates(status?: string) {
     .limit(200);
 
   if (status) {
-    query = query.eq("review_status", status);
+    query = query.eq("review_status", status as any);
   }
 
   const { data, error } = await query;
