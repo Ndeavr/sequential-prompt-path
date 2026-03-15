@@ -166,6 +166,7 @@ export const AppRouter = () => (
       <Route path="/aipp-score" element={<AIPPScorePage />} />
       <Route path="/matching" element={<ProtectedRoute requiredRole="homeowner"><MatchingResultsPage /></ProtectedRoute>} />
       <Route path="/comparer" element={<ContractorComparisonPage />} />
+      <Route path="/decision" element={<ProtectedRoute requiredRole="homeowner"><DecisionAssistantPage /></ProtectedRoute>} />
 
       {/* Property Graph */}
       <Route path="/property-graph" element={<PropertyGraphPage />} />
