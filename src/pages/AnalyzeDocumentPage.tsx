@@ -1,6 +1,7 @@
 /**
  * UNPRO — Quote & Contract Analyzer Page
  * Upload documents, extract identity clues, detect mismatches.
+ * Now includes Quote Quality Score integration.
  * Anti-hallucination: only shows actually extracted data.
  */
 
@@ -15,10 +16,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Upload, FileText, CheckCircle, AlertTriangle, Info,
-  ShieldCheck, X, Loader2, Search, HelpCircle,
+  ShieldCheck, X, Loader2, Search, HelpCircle, BarChart3,
 } from "lucide-react";
 import { useDocumentAnalyzer } from "@/hooks/useDocumentAnalyzer";
 import type { DocumentAnalysisResult, ExtractedField, ExtractionConfidence } from "@/types/documentExtraction";
+import { computeQuoteQualityScore } from "@/services/quoteQualityScoreService";
+import QuoteQualityScorePanel from "@/components/verification/QuoteQualityScorePanel";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const ACCEPTED_TYPES = ".pdf,.jpg,.jpeg,.png,.webp";
