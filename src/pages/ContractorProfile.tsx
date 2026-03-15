@@ -358,6 +358,18 @@ const ContractorProfile = () => {
             )}
           </motion.div>
 
+          {/* ── Detailed Verified Badge Panel ── */}
+          {isAdminVerified && (
+            <motion.div variants={fadeUp}>
+              <UnproVerifiedBadge
+                adminVerified={true}
+                variant="detailed"
+                internalVerifiedScore={contractor.internal_verified_score}
+                internalVerifiedAt={contractor.internal_verified_at}
+              />
+            </motion.div>
+          )}
+
           {/* ═══ 2. AI SUMMARY ═══ */}
           <motion.div variants={fadeUp}>
             <Card className="glass-card border-0 shadow-sm overflow-hidden">
