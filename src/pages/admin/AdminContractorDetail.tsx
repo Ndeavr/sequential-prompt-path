@@ -32,6 +32,9 @@ const AdminContractorDetail = () => {
   const { data: contractor, isLoading, refetch } = useAdminContractor(id);
   const { data: docs } = useAdminContractorDocuments(contractor?.user_id);
   const { data: subscription } = useAdminContractorSubscription(contractor?.id);
+  const { data: verificationSnapshot, isLoading: snapshotLoading } = useContractorVerificationSnapshot(contractor?.id);
+  const { data: verificationHistory = [] } = useContractorVerificationHistory(contractor?.id);
+  const { data: mergeSuggestions = [], isLoading: suggestionsLoading } = useContractorMergeSuggestions(contractor?.id);
   const updateVerification = useUpdateContractorVerification();
   const [newStatus, setNewStatus] = useState("");
   const [adminNote, setAdminNote] = useState("");
