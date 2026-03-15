@@ -42,6 +42,9 @@ const SmartHeader = () => {
 
   const isActive = (to: string) => {
     if (to === "/" || to === "/dashboard" || to === "/pro" || to === "/admin") return pathname === to;
+    if (to === "/proprietaires") return pathname === "/proprietaires" || pathname === "/homeowners";
+    if (to === "/entrepreneurs") return pathname === "/entrepreneurs" || pathname === "/professionals";
+    if (to === "/condo") return pathname.startsWith("/condo") || pathname.startsWith("/condos");
     return pathname.startsWith(to);
   };
 

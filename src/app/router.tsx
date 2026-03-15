@@ -145,7 +145,9 @@ export const AppRouter = () => (
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/homeowners" element={<HomeownersPage />} />
+      <Route path="/proprietaires" element={<HomeownersPage />} />
       <Route path="/professionals" element={<ProfessionalsPage />} />
+      <Route path="/entrepreneurs" element={<ProfessionalsPage />} />
       <Route path="/partners" element={<PartnersPage />} />
       <Route path="/describe-project" element={<DescribeProjectPage />} />
       <Route path="/compare-quotes" element={<CompareQuotesPage />} />
@@ -264,6 +266,9 @@ export const AppRouter = () => (
       <Route path="/admin/operations" element={<ProtectedRoute requiredRole="admin"><AdminOperationsHub /></ProtectedRoute>} />
 
       {/* Condos — Public SEO */}
+      <Route path="/condo" element={<CondoHomePage />} />
+      <Route path="/condo/fonds-de-prevoyance" element={<CondoFondsPage />} />
+      <Route path="/condo/carnet-entretien" element={<CondoCarnetPage />} />
       <Route path="/condos" element={<CondoHomePage />} />
       <Route path="/condos/loi-16" element={<CondoLoi16Page />} />
       <Route path="/condos/carnet-entretien" element={<CondoCarnetPage />} />

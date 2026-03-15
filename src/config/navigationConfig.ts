@@ -1,6 +1,7 @@
 /**
  * UNPRO — Navigation Configuration by Role
- * All menu definitions, sub-nav, profile menus, mobile tabs, footer links.
+ * All menu definitions aligned with master sitemap.
+ * Header, sub-nav, profile menus, mobile tabs, drawer, footer.
  */
 
 import type { UserRole, NavItem, NavigationContext } from "@/types/navigation";
@@ -12,9 +13,9 @@ import type { UserRole, NavItem, NavigationContext } from "@/types/navigation";
 export const headerNavByRole: Record<UserRole | "guest", NavItem[]> = {
   guest: [
     { to: "/", label: "Accueil", labelEn: "Home", icon: "Home" },
-    { to: "/homeowners", label: "Propriétaires", labelEn: "Homeowners", icon: "Building2" },
-    { to: "/professionals", label: "Entrepreneurs", labelEn: "Contractors", icon: "Briefcase" },
-    { to: "/search", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", icon: "ShieldCheck" },
+    { to: "/proprietaires", label: "Propriétaires", labelEn: "Homeowners", icon: "Building2" },
+    { to: "/entrepreneurs", label: "Entrepreneurs", labelEn: "Contractors", icon: "Briefcase" },
+    { to: "/condo", label: "Condo", icon: "Building" },
     { to: "/alex", label: "Alex", labelEn: "Alex", icon: "Sparkles" },
   ],
   homeowner: [
@@ -41,8 +42,8 @@ export const headerNavByRole: Record<UserRole | "guest", NavItem[]> = {
   admin: [
     { to: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
     { to: "/admin/users", label: "Utilisateurs", labelEn: "Users", icon: "Users" },
+    { to: "/admin/contractors", label: "Entrepreneurs", labelEn: "Contractors", icon: "Briefcase" },
     { to: "/admin/leads", label: "Leads", icon: "TrendingUp" },
-    { to: "/admin/contractors", label: "Contenu", labelEn: "Content", icon: "Briefcase" },
     { to: "/admin/agents", label: "Système", labelEn: "System", icon: "Brain" },
   ],
 };
@@ -82,6 +83,25 @@ export const subNavConfig: Record<string, NavItem[]> = {
   "/pro/appointments": [
     { to: "/pro/appointments", label: "À venir", labelEn: "Upcoming", icon: "CalendarDays" },
   ],
+  // Public sections
+  "/proprietaires": [
+    { to: "/proprietaires", label: "Aperçu", labelEn: "Overview", icon: "Home" },
+    { to: "/proprietaires/passeport-maison", label: "Passeport Maison", icon: "FileText" },
+    { to: "/proprietaires/score-maison", label: "Score Maison", icon: "BarChart3" },
+    { to: "/proprietaires/comparer-3-soumissions", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
+    { to: "/proprietaires/verifier-entrepreneur", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", icon: "ShieldCheck" },
+  ],
+  "/entrepreneurs": [
+    { to: "/entrepreneurs", label: "Aperçu", labelEn: "Overview", icon: "Briefcase" },
+    { to: "/entrepreneurs/creer-mon-profil", label: "Créer mon profil", labelEn: "Create My Profile", icon: "UserPlus" },
+    { to: "/entrepreneurs/score-aipp", label: "Score AIPP", icon: "Star" },
+    { to: "/entrepreneurs/plans", label: "Plans", icon: "CreditCard" },
+  ],
+  "/condo": [
+    { to: "/condo", label: "Aperçu", labelEn: "Overview", icon: "Building" },
+    { to: "/condo/fonds-de-prevoyance", label: "Fonds de prévoyance", labelEn: "Reserve Fund", icon: "Wallet" },
+    { to: "/condo/carnet-entretien", label: "Carnet d'entretien", labelEn: "Maintenance Log", icon: "BookOpen" },
+  ],
 };
 
 /* ═══════════════════════════════════════════
@@ -95,9 +115,10 @@ export function getProfileActions(ctx: NavigationContext): NavItem[] {
   if (role === "homeowner" && ctx.homeowner) {
     items.push(
       { to: "/dashboard/properties", label: "Mes propriétés", labelEn: "My Properties", icon: "Building2" },
+      { to: "/dashboard/home-score", label: "Mon Home Score", labelEn: "My Home Score", icon: "BarChart3" },
       { to: "/dashboard/appointments", label: "Mes rendez-vous", labelEn: "My Appointments", icon: "CalendarDays" },
       { to: "/dashboard/documents/upload", label: "Mes documents", labelEn: "My Documents", icon: "FileText" },
-      { to: "/dashboard/home-score", label: "Mon Home Score", labelEn: "My Home Score", icon: "BarChart3" },
+      { to: "/compare-quotes", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
     );
   }
 
@@ -105,8 +126,10 @@ export function getProfileActions(ctx: NavigationContext): NavItem[] {
     items.push(
       { to: "/pro/profile", label: "Mon profil entreprise", labelEn: "My Business Profile", icon: "User" },
       { to: "/pro/aipp-score", label: "Mon score AIPP", labelEn: "My AIPP Score", icon: "Star" },
-      { to: "/pro/appointments", label: "Mes rendez-vous", labelEn: "My Appointments", icon: "CalendarDays" },
       { to: "/pro/leads", label: "Mes leads", labelEn: "My Leads", icon: "TrendingUp" },
+      { to: "/pro/appointments", label: "Mes rendez-vous", labelEn: "My Appointments", icon: "CalendarDays" },
+      { to: "/pro/reviews", label: "Mes avis", labelEn: "My Reviews", icon: "MessageSquare" },
+      { to: "/pro/billing", label: "Plans & facturation", labelEn: "Plans & Billing", icon: "CreditCard" },
     );
   }
 
@@ -114,6 +137,8 @@ export function getProfileActions(ctx: NavigationContext): NavItem[] {
     items.push(
       { to: "/admin", label: "Dashboard admin", icon: "LayoutDashboard" },
       { to: "/admin/users", label: "Utilisateurs", labelEn: "Users", icon: "Users" },
+      { to: "/admin/contractors", label: "Entrepreneurs", labelEn: "Contractors", icon: "Briefcase" },
+      { to: "/admin/agents", label: "Système IA", labelEn: "AI System", icon: "Brain" },
     );
   }
 
@@ -167,9 +192,9 @@ export function getStateActions(ctx: NavigationContext): NavItem[] {
 export const mobileTabsByRole: Record<UserRole | "guest", NavItem[]> = {
   guest: [
     { to: "/", label: "Accueil", labelEn: "Home", icon: "Home" },
-    { to: "/homeowners", label: "Services", icon: "Building2" },
+    { to: "/proprietaires", label: "Services", icon: "Building2" },
     { to: "/search", label: "Pros", icon: "Search" },
-    { to: "/pricing", label: "Tarifs", labelEn: "Pricing", icon: "CreditCard" },
+    { to: "/entrepreneurs", label: "Entreprises", labelEn: "Business", icon: "Briefcase" },
     { to: "/alex", label: "Alex", icon: "Sparkles" },
   ],
   homeowner: [
@@ -217,6 +242,7 @@ export function getDrawerItems(ctx: NavigationContext): NavItem[] {
       { to: "/dashboard/appointments", label: "Mes rendez-vous", labelEn: "My Appointments", icon: "CalendarDays" },
       { to: "/dashboard/quotes", label: "Mes soumissions", labelEn: "My Quotes", icon: "FileText" },
       { to: "/compare-quotes", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
+      { to: "/search", label: "Trouver un entrepreneur", labelEn: "Find a Contractor", icon: "Search" },
     ];
   }
 
@@ -228,7 +254,7 @@ export function getDrawerItems(ctx: NavigationContext): NavItem[] {
       { to: "/pro/appointments", label: "Mes rendez-vous", labelEn: "My Appointments", icon: "CalendarDays" },
       { to: "/pro/reviews", label: "Mes avis", labelEn: "My Reviews", icon: "MessageSquare" },
       { to: "/pro/territories", label: "Mes territoires", labelEn: "My Territories", icon: "MapPin" },
-      { to: "/pro/billing", label: "Facturation", labelEn: "Billing", icon: "CreditCard" },
+      { to: "/pro/billing", label: "Plans & facturation", labelEn: "Plans & Billing", icon: "CreditCard" },
     ];
   }
 
@@ -245,38 +271,104 @@ export function getDrawerItems(ctx: NavigationContext): NavItem[] {
     ];
   }
 
-  return [];
+  // Guest drawer
+  return [
+    { to: "/proprietaires", label: "Propriétaires", labelEn: "Homeowners", icon: "Building2" },
+    { to: "/entrepreneurs", label: "Entrepreneurs", labelEn: "Contractors", icon: "Briefcase" },
+    { to: "/condo", label: "Condo / Immeubles", labelEn: "Condos", icon: "Building" },
+    { to: "/compare-quotes", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
+    { to: "/search", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", icon: "ShieldCheck" },
+    { to: "/score-maison", label: "Score Maison", labelEn: "Home Score", icon: "BarChart3" },
+    { to: "/aipp-score", label: "Score AIPP", icon: "Star" },
+    { to: "/pricing", label: "Tarifs", labelEn: "Pricing", icon: "CreditCard" },
+  ];
 }
 
 /* ═══════════════════════════════════════════
-   7. FOOTER LINKS by role
+   7. FOOTER LINKS — multi-column by role
    ═══════════════════════════════════════════ */
 
-export function getFooterLinks(role: UserRole | "guest"): NavItem[] {
+export interface FooterSection {
+  title: string;
+  titleEn?: string;
+  items: NavItem[];
+}
+
+export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
+  const seoSection: FooterSection = {
+    title: "Découvrir",
+    titleEn: "Explore",
+    items: [
+      { to: "/probleme/infiltration-eau", label: "Problèmes maison", labelEn: "Home Problems", icon: "AlertTriangle" },
+      { to: "/ville/montreal", label: "Villes", labelEn: "Cities", icon: "MapPin" },
+      { to: "/services", label: "Services", icon: "Wrench" },
+      { to: "/profession/plombier", label: "Professionnels", labelEn: "Professionals", icon: "Users" },
+    ],
+  };
+
   if (role === "guest") {
     return [
-      { to: "/homeowners", label: "Propriétaires", labelEn: "Homeowners", icon: "Building2" },
-      { to: "/professionals", label: "Entrepreneurs", labelEn: "Contractors", icon: "Briefcase" },
-      { to: "/compare-quotes", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
-      { to: "/search", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", icon: "ShieldCheck" },
-      { to: "/signup", label: "Créer un compte", labelEn: "Create Account", icon: "UserPlus" },
+      {
+        title: "Propriétaires",
+        titleEn: "Homeowners",
+        items: [
+          { to: "/proprietaires", label: "Passeport Maison", icon: "FileText" },
+          { to: "/compare-quotes", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
+          { to: "/search", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", icon: "ShieldCheck" },
+          { to: "/score-maison", label: "Score Maison", labelEn: "Home Score", icon: "BarChart3" },
+        ],
+      },
+      {
+        title: "Entrepreneurs",
+        titleEn: "Contractors",
+        items: [
+          { to: "/entrepreneurs", label: "Créer mon profil", labelEn: "Create My Profile", icon: "UserPlus" },
+          { to: "/aipp-score", label: "Score AIPP", icon: "Star" },
+          { to: "/pricing", label: "Plans", icon: "CreditCard" },
+        ],
+      },
+      seoSection,
     ];
   }
+
   if (role === "homeowner") {
     return [
-      { to: "/dashboard/properties", label: "Mes propriétés", labelEn: "My Properties", icon: "Building2" },
-      { to: "/compare-quotes", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
-      { to: "/search", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", icon: "ShieldCheck" },
-      { to: "/dashboard/home-score", label: "Home Score", icon: "BarChart3" },
+      {
+        title: "Mon espace",
+        titleEn: "My Space",
+        items: [
+          { to: "/dashboard/properties", label: "Mes propriétés", labelEn: "My Properties", icon: "Building2" },
+          { to: "/compare-quotes", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
+          { to: "/search", label: "Trouver un entrepreneur", labelEn: "Find a Contractor", icon: "Search" },
+          { to: "/dashboard/home-score", label: "Home Score", icon: "BarChart3" },
+        ],
+      },
+      seoSection,
     ];
   }
+
   if (role === "contractor") {
     return [
-      { to: "/pro/profile", label: "Mon profil entreprise", labelEn: "My Business Profile", icon: "User" },
-      { to: "/pro/aipp-score", label: "Score AIPP", icon: "Star" },
-      { to: "/pricing", label: "Plans", labelEn: "Plans", icon: "CreditCard" },
-      { to: "/pro/leads", label: "Leads", icon: "TrendingUp" },
+      {
+        title: "Mon entreprise",
+        titleEn: "My Business",
+        items: [
+          { to: "/pro/profile", label: "Mon profil", labelEn: "My Profile", icon: "User" },
+          { to: "/pro/aipp-score", label: "Score AIPP", icon: "Star" },
+          { to: "/pro/leads", label: "Leads", icon: "TrendingUp" },
+          { to: "/pro/billing", label: "Plans", icon: "CreditCard" },
+          { to: "/pro/reviews", label: "Avis", labelEn: "Reviews", icon: "MessageSquare" },
+        ],
+      },
+      seoSection,
     ];
   }
-  return [];
+
+  return [seoSection];
+}
+
+/** Legacy flat footer links — kept for backward compatibility */
+export function getFooterLinks(role: UserRole | "guest"): NavItem[] {
+  const sections = getFooterSections(role);
+  return sections.flatMap((s) => s.items);
 }
