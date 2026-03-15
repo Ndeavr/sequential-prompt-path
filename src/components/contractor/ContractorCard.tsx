@@ -6,6 +6,7 @@ import { MapPin, Star, ShieldCheck, ArrowRight, Clock, Award } from "lucide-reac
 import { motion } from "framer-motion";
 import { UnproVerifiedBadge } from "@/components/contractor/UnproVerifiedBadge";
 import { getContractorTrustLabel, getTrustBand } from "@/lib/trustLabels";
+import WhyThisContractorIsRecommended from "@/components/contractor/WhyThisContractorIsRecommended";
 
 interface ContractorCardProps {
   contractor: {
