@@ -1,6 +1,7 @@
 /**
  * UNPRO — Quote & Contract Analyzer Page
  * Upload documents, extract identity clues, detect mismatches.
+ * Now includes Quote Quality Score integration.
  * Anti-hallucination: only shows actually extracted data.
  */
 
@@ -15,10 +16,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Upload, FileText, CheckCircle, AlertTriangle, Info,
-  ShieldCheck, X, Loader2, Search, HelpCircle,
+  ShieldCheck, X, Loader2, Search, HelpCircle, BarChart3,
 } from "lucide-react";
 import { useDocumentAnalyzer } from "@/hooks/useDocumentAnalyzer";
 import type { DocumentAnalysisResult, ExtractedField, ExtractionConfidence } from "@/types/documentExtraction";
+import { computeQuoteQualityScore } from "@/services/quoteQualityScoreService";
+import QuoteQualityScorePanel from "@/components/verification/QuoteQualityScorePanel";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const ACCEPTED_TYPES = ".pdf,.jpg,.jpeg,.png,.webp";
@@ -57,6 +60,7 @@ function FieldRow({ label, field }: { label: string; field: ExtractedField }) {
 
 const AnalyzeDocumentPage = () => {
   const { analyzeDocument, result, isAnalyzing, reset } = useDocumentAnalyzer();
+  const [showQualityScore, setShowQualityScore] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [contractorId, setContractorId] = useState("");
@@ -87,9 +91,15 @@ const AnalyzeDocumentPage = () => {
     setFile(null);
     setPreview(null);
     setContractorId("");
+    setShowQualityScore(false);
     reset();
     if (fileRef.current) fileRef.current.value = "";
   };
+
+  // Compute quote quality score when we have results
+  const quoteQuality = result?.extraction
+    ? computeQuoteQualityScore(result.extraction)
+    : null;
 
   return (
     <MainLayout>
@@ -347,6 +357,24 @@ const AnalyzeDocumentPage = () => {
                       </ul>
                     </CardContent>
                   </Card>
+                )}
+
+                {/* Quote Quality Score */}
+                {quoteQuality && (
+                  <>
+                    {!showQualityScore ? (
+                      <Button
+                        onClick={() => setShowQualityScore(true)}
+                        variant="outline"
+                        className="w-full gap-2"
+                      >
+                        <BarChart3 className="w-4 h-4" />
+                        Voir le score qualité de la soumission ({quoteQuality.total_score}/100)
+                      </Button>
+                    ) : (
+                      <QuoteQualityScorePanel result={quoteQuality} />
+                    )}
+                  </>
                 )}
 
                 {/* Actions */}
