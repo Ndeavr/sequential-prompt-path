@@ -58,6 +58,7 @@ import PropertyReportPage from "@/pages/dashboard/PropertyReportPage";
 import RenovationVisualizerPage from "@/pages/RenovationVisualizerPage";
 import RenovationLocationPage from "@/pages/seo/RenovationLocationPage";
 import DiscoveryFeedPage from "@/pages/DiscoveryFeedPage";
+import VerifierEntrepreneurPage from "@/pages/VerifierEntrepreneurPage";
 import TransformationDetailPage from "@/pages/TransformationDetailPage";
 import TrendingPage from "@/pages/TrendingPage";
 import PropertyMapPage from "@/pages/PropertyMapPage";
@@ -174,6 +175,7 @@ export const AppRouter = () => (
       <Route path="/import-business" element={<BusinessImportPage />} />
       <Route path="/verify" element={<VerifyContractorPage />} />
       <Route path="/verifier-entrepreneur" element={<VerifyLandingPage />} />
+      <Route path="/verifier-un-entrepreneur" element={<VerifierEntrepreneurPage />} />
 
       {/* QR Scan Route */}
       <Route path="/qr/:token" element={<QrScanPage />} />
