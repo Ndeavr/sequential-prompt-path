@@ -160,6 +160,9 @@ const Search = () => {
               <p className="text-xs text-muted-foreground">
                 {contractors.length} résultat{contractors.length > 1 ? "s" : ""}
               </p>
+              <p className="text-[10px] text-muted-foreground/70 leading-relaxed">
+                Les profils validés ou cohérents peuvent être mis en avant lorsqu'ils correspondent aussi à votre projet, votre zone et votre catégorie de travaux.
+              </p>
               <div className="space-y-3">
                 {contractors.map((c) => (
                   <ContractorCard key={c.id} contractor={c} />
