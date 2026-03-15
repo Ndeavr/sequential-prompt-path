@@ -21,7 +21,7 @@ import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 
 const ROTATING_ITEMS = [
   { label: "le contracteur", qualifier: "idéal pour", action: "agrandir\nvotre maison", image: heroAgrandissement },
-  { label: "l'arpenteur-géomètre", qualifier: "idéal pour", action: "votre certificat\nde localisation", image: heroArpenteur },
+  { label: "l'arpenteur-géomètre", qualifier: "idéal pour", action: "votre certificat\nde localisation", image: heroArpenteur, labelSingleLine: true },
   { label: "le couvreur", qualifier: "idéal pour", action: "refaire\nvotre toiture", image: heroToiture },
   { label: "l'électricien", qualifier: "idéal pour", action: "votre panneau\nélectrique", image: heroElectricien },
   { label: "le plombier", qualifier: "idéal pour", action: "votre salle\nde bain", image: heroPlomberie },
@@ -176,36 +176,41 @@ export default function HeroSection() {
 
             {/* Left column */}
             <div className="relative z-10 min-w-0">
-              <h1 className="relative z-10 max-w-[65%] sm:max-w-[680px] text-[34px] font-extrabold leading-[1.12] tracking-[-0.03em] sm:text-[46px] md:text-[64px]" style={{ color: "#0B1533" }}>
+              <h1 className="relative z-10 text-[34px] font-extrabold leading-[1.12] tracking-[-0.03em] sm:text-[46px] md:text-[64px]" style={{ color: "#0B1533" }}>
                 <span>Trouvez</span>
                 <br />
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={current.label}
-                    variants={textVariants}
-                    initial="enter" animate="center" exit="exit"
-                    transition={{ duration: 0.38, ease: "easeOut" }}
-                    className="inline"
-                    style={{ color: "#3F7BFF" }}
-                  >
-                    {current.label}
-                  </motion.span>
-                </AnimatePresence>
-                <br />
-                <span className="inline" style={{ color: "#0B1533" }}>{current.qualifier}</span>
-                <br />
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={current.action}
-                    variants={textVariants}
-                    initial="enter" animate="center" exit="exit"
-                    transition={{ duration: 0.38, ease: "easeOut", delay: 0.42 }}
-                    className="inline whitespace-pre-line"
-                    style={{ color: "#3F7BFF" }}
-                  >
-                    {current.action}
-                  </motion.span>
-                </AnimatePresence>
+                {/* Fixed-height container for rotating label — prevents layout shift */}
+                <span className="block" style={{ minHeight: "2.3em" }}>
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={current.label}
+                      variants={textVariants}
+                      initial="enter" animate="center" exit="exit"
+                      transition={{ duration: 0.38, ease: "easeOut" }}
+                      className="inline whitespace-nowrap"
+                      style={{ color: "#3F7BFF" }}
+                    >
+                      {current.label}
+                    </motion.span>
+                  </AnimatePresence>
+                  <br />
+                  <span className="inline" style={{ color: "#0B1533" }}>{current.qualifier}</span>
+                </span>
+                {/* Fixed-height container for rotating action — prevents layout shift */}
+                <span className="block" style={{ minHeight: "2.3em" }}>
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={current.action}
+                      variants={textVariants}
+                      initial="enter" animate="center" exit="exit"
+                      transition={{ duration: 0.38, ease: "easeOut", delay: 0.42 }}
+                      className="inline whitespace-pre-line"
+                      style={{ color: "#3F7BFF" }}
+                    >
+                      {current.action}
+                    </motion.span>
+                  </AnimatePresence>
+                </span>
               </h1>
 
               <p className="relative z-10 max-w-[55%] sm:max-w-[420px] text-base leading-7 md:text-xl md:leading-10 drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]" style={{ color: "#6C7A92" }}>
