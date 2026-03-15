@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Shield, ArrowRight, Search, Phone, Building2, FileText, Globe, MapPin, RotateCcw } from "lucide-react";
 import { useVerifyContractor } from "@/hooks/useVerifyContractor";
 import VerificationProgressSteps from "@/components/verify/VerificationProgressSteps";
-import VerificationResultsPanel from "@/components/verify/VerificationResultsPanel";
+import { VerificationResultsLayout } from "@/components/verification";
 import EvidenceUploadPanel from "@/components/verify/EvidenceUploadPanel";
 import type { VerificationFormInput, VerificationOutput, EvidenceType } from "@/types/verification";
 
@@ -250,7 +250,7 @@ export default function VerifierEntrepreneurPage() {
                 </Button>
               </motion.div>
 
-              <VerificationResultsPanel
+              <VerificationResultsLayout
                 output={result}
                 onUploadEvidence={() => setShowEvidence(true)}
               />
