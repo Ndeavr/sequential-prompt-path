@@ -188,6 +188,8 @@ export const AppRouter = () => (
       <Route path="/verifier-entrepreneur" element={<VerifyLandingPage />} />
       <Route path="/verifier-un-entrepreneur" element={<VerifierEntrepreneurPage />} />
       <Route path="/analyser-document" element={<AnalyzeDocumentPage />} />
+      {/* Programmatic Verification SEO */}
+      <Route path="/verifier-:tradeSlug/:citySlug" element={<VerificationSeoPage />} />
       {/* QR Scan Route */}
       <Route path="/qr/:token" element={<QrScanPage />} />
 
