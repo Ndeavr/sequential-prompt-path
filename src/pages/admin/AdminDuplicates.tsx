@@ -289,9 +289,8 @@ export default function AdminDuplicates() {
                   <LoadingState />
                 ) : !flags || flags.length === 0 ? (
                   <EmptyState
+                    message="Aucun drapeau actif. Tous les profils suspects ont été résolus."
                     icon={<Flag className="h-8 w-8 text-muted-foreground" />}
-                    title="Aucun drapeau actif"
-                    description="Tous les profils suspects ont été résolus."
                   />
                 ) : (
                   <Card>

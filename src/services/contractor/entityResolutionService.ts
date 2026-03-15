@@ -238,15 +238,17 @@ export async function updateDuplicateReview(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
+  const updatePayload: Record<string, any> = {
+    review_status: reviewStatus as any,
+    review_notes: notes ?? null,
+    merge_direction: mergeDirection ?? null,
+    reviewed_by: user.id,
+    reviewed_at: new Date().toISOString(),
+  };
+
   const { error } = await supabase
     .from("contractor_duplicate_candidates")
-    .update({
-      review_status: reviewStatus,
-      review_notes: notes ?? null,
-      merge_direction: mergeDirection ?? null,
-      reviewed_by: user.id,
-      reviewed_at: new Date().toISOString(),
-    })
+    .update(updatePayload)
     .eq("id", candidateId);
 
   if (error) throw error;
