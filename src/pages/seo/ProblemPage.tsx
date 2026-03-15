@@ -101,9 +101,9 @@ const ProblemPage = () => {
 
   // Build FAQs
   const faqs = [
-    { question: `Combien coûte la résolution de « ${name} » ?`, answer: `Le coût estimé se situe entre ${fmt(costLow)}$ et ${fmt(costHigh)}$ selon la sévérité et la complexité du problème.` },
-    { question: `Quel professionnel contacter pour ce problème ?`, answer: `Un spécialiste en ${contractorTypes.join(" ou ")} est recommandé pour diagnostiquer et résoudre ce problème.` },
-    { question: `Est-ce un problème urgent ?`, answer: urgencyScore >= 8 ? "Oui, une intervention rapide est fortement recommandée pour éviter des dommages supplémentaires." : urgencyScore >= 5 ? "Ce problème devrait être traité dans un délai raisonnable pour éviter une aggravation." : "Ce problème peut être planifié dans le cadre de l'entretien régulier de votre propriété." },
+    { question: `Combien coûte la résolution de « ${name} » ?`, answer: `Le coût estimé se situe entre ${fmt(costLow)}$ et ${fmt(costHigh)}$ selon la sévérité et la complexité du problème.`, topics: ["general"] },
+    { question: `Quel professionnel contacter pour ce problème ?`, answer: `Un spécialiste en ${contractorTypes.join(" ou ")} est recommandé pour diagnostiquer et résoudre ce problème.`, topics: ["general"] },
+    { question: `Est-ce un problème urgent ?`, answer: urgencyScore >= 8 ? "Oui, une intervention rapide est fortement recommandée pour éviter des dommages supplémentaires." : urgencyScore >= 5 ? "Ce problème devrait être traité dans un délai raisonnable pour éviter une aggravation." : "Ce problème peut être planifié dans le cadre de l'entretien régulier de votre propriété.", topics: ["general"] },
     { question: `Puis-je identifier ce problème moi-même ?`, answer: `Certains signes sont visibles (${symptoms.slice(0, 2).join(", ")}). Cependant, un diagnostic professionnel est recommandé pour confirmer l'étendue du problème et choisir la bonne solution.` },
   ];
 
