@@ -14,6 +14,150 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_action_logs: {
+        Row: {
+          action_type: string
+          actor_user_id: string
+          contractor_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          payload_json: Json | null
+          verification_run_id: string | null
+        }
+        Insert: {
+          action_type: string
+          actor_user_id: string
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payload_json?: Json | null
+          verification_run_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          actor_user_id?: string
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payload_json?: Json | null
+          verification_run_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_action_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_action_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_action_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_action_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "admin_action_logs_verification_run_id_fkey"
+            columns: ["verification_run_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_verification_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_notifications: {
+        Row: {
+          body: string
+          contractor_id: string | null
+          created_at: string
+          id: string
+          is_read: boolean | null
+          payload_json: Json | null
+          severity: string
+          title: string
+          type: string
+          verification_run_id: string | null
+        }
+        Insert: {
+          body: string
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          payload_json?: Json | null
+          severity?: string
+          title: string
+          type: string
+          verification_run_id?: string | null
+        }
+        Update: {
+          body?: string
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          payload_json?: Json | null
+          severity?: string
+          title?: string
+          type?: string
+          verification_run_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_notifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_notifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_notifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_notifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "admin_notifications_verification_run_id_fkey"
+            columns: ["verification_run_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_verification_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_logs: {
         Row: {
           agent_name: string
@@ -2806,60 +2950,222 @@ export type Database = {
           },
         ]
       }
+      contractor_verification_evidence: {
+        Row: {
+          analysis_summary: string | null
+          contractor_id: string | null
+          created_at: string
+          extracted_address: string | null
+          extracted_business_name: string | null
+          extracted_city: string | null
+          extracted_neq: string | null
+          extracted_phone: string | null
+          extracted_rbq: string | null
+          extracted_text: string | null
+          extracted_website: string | null
+          file_type: string | null
+          id: string
+          mime_type: string | null
+          storage_path: string
+          uploaded_by: string
+          verification_run_id: string
+          visual_consistency_score: number | null
+        }
+        Insert: {
+          analysis_summary?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          extracted_address?: string | null
+          extracted_business_name?: string | null
+          extracted_city?: string | null
+          extracted_neq?: string | null
+          extracted_phone?: string | null
+          extracted_rbq?: string | null
+          extracted_text?: string | null
+          extracted_website?: string | null
+          file_type?: string | null
+          id?: string
+          mime_type?: string | null
+          storage_path: string
+          uploaded_by: string
+          verification_run_id: string
+          visual_consistency_score?: number | null
+        }
+        Update: {
+          analysis_summary?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          extracted_address?: string | null
+          extracted_business_name?: string | null
+          extracted_city?: string | null
+          extracted_neq?: string | null
+          extracted_phone?: string | null
+          extracted_rbq?: string | null
+          extracted_text?: string | null
+          extracted_website?: string | null
+          file_type?: string | null
+          id?: string
+          mime_type?: string | null
+          storage_path?: string
+          uploaded_by?: string
+          verification_run_id?: string
+          visual_consistency_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_verification_evidence_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_verification_evidence_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_verification_evidence_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_verification_evidence_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_verification_evidence_verification_run_id_fkey"
+            columns: ["verification_run_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_verification_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_verification_runs: {
         Row: {
+          admin_review_status: string | null
+          admin_verified: boolean | null
+          admin_verified_snapshot_score: number | null
+          ambiguity_level: string | null
           contractor_id: string | null
           created_at: string
           id: string
+          identity_confidence_score: number | null
+          identity_resolution_status: string | null
+          inconsistencies_json: Json | null
+          input_business_name: string | null
+          input_city: string | null
+          input_neq: string | null
+          input_phone: string | null
+          input_rbq: string | null
           input_type: Database["public"]["Enums"]["verification_input_type"]
+          input_website: string | null
+          internal_profile_found: boolean | null
           license_fit_score: number | null
+          live_risk_delta: number | null
+          matched_by: string | null
+          missing_proofs_json: Json | null
           normalized_phone: string | null
           project_text: string | null
+          public_trust_score: number | null
+          raw_findings_json: Json | null
           raw_input: string
+          recommended_next_inputs_json: Json | null
           source_context: Json | null
           summary_headline: string | null
           summary_next_steps: Json | null
           summary_short: string | null
           unpro_trust_score: number | null
           updated_at: string
+          used_admin_verified_profile: boolean | null
           user_id: string | null
           verdict: Database["public"]["Enums"]["verification_verdict"] | null
           visual_trust_score: number | null
         }
         Insert: {
+          admin_review_status?: string | null
+          admin_verified?: boolean | null
+          admin_verified_snapshot_score?: number | null
+          ambiguity_level?: string | null
           contractor_id?: string | null
           created_at?: string
           id?: string
+          identity_confidence_score?: number | null
+          identity_resolution_status?: string | null
+          inconsistencies_json?: Json | null
+          input_business_name?: string | null
+          input_city?: string | null
+          input_neq?: string | null
+          input_phone?: string | null
+          input_rbq?: string | null
           input_type: Database["public"]["Enums"]["verification_input_type"]
+          input_website?: string | null
+          internal_profile_found?: boolean | null
           license_fit_score?: number | null
+          live_risk_delta?: number | null
+          matched_by?: string | null
+          missing_proofs_json?: Json | null
           normalized_phone?: string | null
           project_text?: string | null
+          public_trust_score?: number | null
+          raw_findings_json?: Json | null
           raw_input: string
+          recommended_next_inputs_json?: Json | null
           source_context?: Json | null
           summary_headline?: string | null
           summary_next_steps?: Json | null
           summary_short?: string | null
           unpro_trust_score?: number | null
           updated_at?: string
+          used_admin_verified_profile?: boolean | null
           user_id?: string | null
           verdict?: Database["public"]["Enums"]["verification_verdict"] | null
           visual_trust_score?: number | null
         }
         Update: {
+          admin_review_status?: string | null
+          admin_verified?: boolean | null
+          admin_verified_snapshot_score?: number | null
+          ambiguity_level?: string | null
           contractor_id?: string | null
           created_at?: string
           id?: string
+          identity_confidence_score?: number | null
+          identity_resolution_status?: string | null
+          inconsistencies_json?: Json | null
+          input_business_name?: string | null
+          input_city?: string | null
+          input_neq?: string | null
+          input_phone?: string | null
+          input_rbq?: string | null
           input_type?: Database["public"]["Enums"]["verification_input_type"]
+          input_website?: string | null
+          internal_profile_found?: boolean | null
           license_fit_score?: number | null
+          live_risk_delta?: number | null
+          matched_by?: string | null
+          missing_proofs_json?: Json | null
           normalized_phone?: string | null
           project_text?: string | null
+          public_trust_score?: number | null
+          raw_findings_json?: Json | null
           raw_input?: string
+          recommended_next_inputs_json?: Json | null
           source_context?: Json | null
           summary_headline?: string | null
           summary_next_steps?: Json | null
           summary_short?: string | null
           unpro_trust_score?: number | null
           updated_at?: string
+          used_admin_verified_profile?: boolean | null
           user_id?: string | null
           verdict?: Database["public"]["Enums"]["verification_verdict"] | null
           visual_trust_score?: number | null
@@ -3081,21 +3387,33 @@ export type Database = {
         Row: {
           address: string | null
           admin_note: string | null
+          admin_verified: boolean | null
           aipp_score: number | null
           business_name: string
           city: string | null
           created_at: string
           description: string | null
           email: string | null
+          facebook_page_url: string | null
+          google_business_url: string | null
           id: string
           insurance_info: string | null
+          internal_verified_at: string | null
+          internal_verified_by: string | null
+          internal_verified_score: number | null
+          legal_name: string | null
           license_number: string | null
           logo_url: string | null
+          neq: string | null
+          normalized_business_name: string | null
+          normalized_phone: string | null
+          normalized_website: string | null
           phone: string | null
           portfolio_urls: string[] | null
           postal_code: string | null
           province: string | null
           rating: number | null
+          rbq_number: string | null
           review_count: number | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -3103,6 +3421,7 @@ export type Database = {
           specialty: string | null
           updated_at: string
           user_id: string
+          verification_notes: string | null
           verification_status:
             | Database["public"]["Enums"]["verification_status"]
             | null
@@ -3113,21 +3432,33 @@ export type Database = {
         Insert: {
           address?: string | null
           admin_note?: string | null
+          admin_verified?: boolean | null
           aipp_score?: number | null
           business_name: string
           city?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
+          facebook_page_url?: string | null
+          google_business_url?: string | null
           id?: string
           insurance_info?: string | null
+          internal_verified_at?: string | null
+          internal_verified_by?: string | null
+          internal_verified_score?: number | null
+          legal_name?: string | null
           license_number?: string | null
           logo_url?: string | null
+          neq?: string | null
+          normalized_business_name?: string | null
+          normalized_phone?: string | null
+          normalized_website?: string | null
           phone?: string | null
           portfolio_urls?: string[] | null
           postal_code?: string | null
           province?: string | null
           rating?: number | null
+          rbq_number?: string | null
           review_count?: number | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -3135,6 +3466,7 @@ export type Database = {
           specialty?: string | null
           updated_at?: string
           user_id: string
+          verification_notes?: string | null
           verification_status?:
             | Database["public"]["Enums"]["verification_status"]
             | null
@@ -3145,21 +3477,33 @@ export type Database = {
         Update: {
           address?: string | null
           admin_note?: string | null
+          admin_verified?: boolean | null
           aipp_score?: number | null
           business_name?: string
           city?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
+          facebook_page_url?: string | null
+          google_business_url?: string | null
           id?: string
           insurance_info?: string | null
+          internal_verified_at?: string | null
+          internal_verified_by?: string | null
+          internal_verified_score?: number | null
+          legal_name?: string | null
           license_number?: string | null
           logo_url?: string | null
+          neq?: string | null
+          normalized_business_name?: string | null
+          normalized_phone?: string | null
+          normalized_website?: string | null
           phone?: string | null
           portfolio_urls?: string[] | null
           postal_code?: string | null
           province?: string | null
           rating?: number | null
+          rbq_number?: string | null
           review_count?: number | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -3167,6 +3511,7 @@ export type Database = {
           specialty?: string | null
           updated_at?: string
           user_id?: string
+          verification_notes?: string | null
           verification_status?:
             | Database["public"]["Enums"]["verification_status"]
             | null
