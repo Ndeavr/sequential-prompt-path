@@ -59,6 +59,7 @@ import RenovationVisualizerPage from "@/pages/RenovationVisualizerPage";
 import RenovationLocationPage from "@/pages/seo/RenovationLocationPage";
 import DiscoveryFeedPage from "@/pages/DiscoveryFeedPage";
 import VerifierEntrepreneurPage from "@/pages/VerifierEntrepreneurPage";
+import AnalyzeDocumentPage from "@/pages/AnalyzeDocumentPage";
 import TransformationDetailPage from "@/pages/TransformationDetailPage";
 import TrendingPage from "@/pages/TrendingPage";
 import PropertyMapPage from "@/pages/PropertyMapPage";
