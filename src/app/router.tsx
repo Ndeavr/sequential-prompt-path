@@ -19,6 +19,7 @@ import PricingPage from "@/pages/PricingPage";
 import AIPPScorePage from "@/pages/AIPPScorePage";
 import MatchingResultsPage from "@/pages/MatchingResultsPage";
 import ContractorComparisonPage from "@/pages/ContractorComparisonPage";
+import DecisionAssistantPage from "@/pages/DecisionAssistantPage";
 
 // SEO Pages
 import ServiceLocationPage from "@/pages/seo/ServiceLocationPage";
