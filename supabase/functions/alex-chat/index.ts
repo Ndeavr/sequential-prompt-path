@@ -21,6 +21,7 @@ const INTENT_NAMESPACE_MAP: Record<string, string[]> = {
   general: ["unpro_core", "home_problems"],
   buyer_analysis: ["property_private", "home_problems", "renovation_costs", "local_markets"],
   contractor_profile: ["contractors_public", "unpro_core"],
+  contractor_trust: ["contractors_public", "unpro_core"],
   maintenance: ["property_private", "home_problems", "renovation_costs"],
 };
 
