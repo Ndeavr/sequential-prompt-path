@@ -58,11 +58,13 @@ const ContractorCard = ({ contractor }: ContractorCardProps) => {
                 <h3 className="font-bold text-foreground text-base truncate">
                   {contractor.business_name}
                 </h3>
-                {isVerified && (
+                {isAdminVerified ? (
+                  <UnproVerifiedBadge adminVerified={true} variant="compact" />
+                ) : isVerified ? (
                   <Badge variant="secondary" className="gap-1 text-[10px] bg-success/10 text-success border-0 rounded-full px-2 py-0.5">
                     <ShieldCheck className="h-2.5 w-2.5" /> Vérifié
                   </Badge>
-                )}
+                ) : null}
               </div>
 
               {/* Stats row */}
