@@ -292,6 +292,26 @@ serve(async (req) => {
       });
     }
 
+    // Contractor verification context (trust-aware)
+    if (context?.contractorVerification) {
+      const cv = context.contractorVerification;
+      const parts = [
+        `Entrepreneur en discussion : ${cv.business_name}`,
+        `Niveau de confiance : ${cv.trust_level}`,
+        `Résumé : ${cv.verification_summary}`,
+      ];
+      if (cv.verified_badge_available) parts.push("Badge « Validé par UnPRO » actif.");
+      if (cv.last_verified_at) parts.push(`Dernière validation : ${cv.last_verified_at}`);
+      if (cv.aipp_score != null) parts.push(`Score AIPP : ${cv.aipp_score}/100`);
+      if (cv.missing_proofs?.length) parts.push(`Preuves manquantes : ${cv.missing_proofs.join(", ")}`);
+      if (cv.caution_notes?.length) parts.push(`Notes de prudence : ${cv.caution_notes.join("; ")}`);
+      
+      contextMessages.push({
+        role: "system",
+        content: `CONTEXTE DE VÉRIFICATION ENTREPRENEUR :\n${parts.join("\n")}`,
+      });
+    }
+
     // Intent hint
     contextMessages.push({
       role: "system",

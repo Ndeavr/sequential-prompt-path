@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import type { AlexContractorVerificationContext } from "@/services/alexVerificationContext";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -26,6 +27,8 @@ export const useAlex = (options?: UseAlexOptions) => {
         homeScore?: number | null;
         currentPage?: string;
         voiceMode?: boolean;
+        /** Contractor verification context for trust-aware responses */
+        contractorVerification?: AlexContractorVerificationContext | null;
       }
     ) => {
       const userMsg: Msg = { role: "user", content: input };
