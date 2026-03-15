@@ -176,7 +176,7 @@ export default function HeroSection() {
             </div>
 
             {/* Left column */}
-            <div className="relative z-10 min-w-0">
+            <div className="relative z-20 min-w-0">
               <h1 className="relative z-10 text-[34px] font-extrabold leading-[1.12] tracking-[-0.03em] sm:text-[46px] md:text-[64px]" style={{ color: "#0B1533" }}>
                 <span>Trouvez</span>
                 <br />
