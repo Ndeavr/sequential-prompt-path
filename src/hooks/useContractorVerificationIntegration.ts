@@ -28,8 +28,8 @@ export const useContractorVerificationHistory = (contractorId: string | undefine
   useQuery({
     queryKey: ["contractor-verification-history", contractorId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("contractor_verification_runs")
+      const { data, error } = await (supabase
+        .from("contractor_verification_runs") as any)
         .select("id, created_at, identity_resolution_status, identity_confidence_score, public_trust_score, live_risk_delta, admin_review_status, input_business_name, input_phone")
         .eq("matched_contractor_id", contractorId!)
         .order("created_at", { ascending: false })
