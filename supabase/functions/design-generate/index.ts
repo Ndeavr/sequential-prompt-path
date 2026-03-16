@@ -77,6 +77,27 @@ Deno.serve(async (req) => {
           ? "Create a balanced, mid-range transformation."
           : "Create a bold, premium transformation.";
 
+        const contentParts: any[] = [
+              {
+                type: "text",
+                text: `${systemPrompt}\n\n${variationHint}\n\nUser request: ${userPrompt}`,
+              },
+              {
+                type: "image_url",
+                image_url: { url: imageBase64 },
+              },
+            ];
+
+            // Add inspiration images as reference
+            if (inspirationImages?.length) {
+              for (const inspoImg of inspirationImages) {
+                contentParts.push({
+                  type: "image_url",
+                  image_url: { url: inspoImg },
+                });
+              }
+            }
+
         const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -88,16 +109,7 @@ Deno.serve(async (req) => {
             messages: [
               {
                 role: "user",
-                content: [
-                  {
-                    type: "text",
-                    text: `${systemPrompt}\n\n${variationHint}\n\nUser request: ${userPrompt}`,
-                  },
-                  {
-                    type: "image_url",
-                    image_url: { url: imageBase64 },
-                  },
-                ],
+                content: contentParts,
               },
             ],
             modalities: ["image", "text"],
