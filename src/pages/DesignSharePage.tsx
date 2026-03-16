@@ -176,35 +176,34 @@ export default function DesignSharePage() {
             </p>
           </div>
 
-          {/* Voter name input */}
-          {!hasEnteredName ? (
+          {/* Auth CTA or logged-in badge */}
+          {!isAuthenticated ? (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="max-w-xs mx-auto space-y-3"
+              className="max-w-sm mx-auto"
             >
-              <p className="text-xs text-muted-foreground text-center">Entrez votre prénom pour voter</p>
-              <div className="flex gap-2">
-                <Input
-                  value={voterName}
-                  onChange={(e) => setVoterName(e.target.value)}
-                  placeholder="Votre prénom"
-                  className="text-sm"
-                  onKeyDown={(e) => e.key === "Enter" && voterName.trim() && setHasEnteredName(true)}
-                />
-                <Button
-                  size="sm"
-                  onClick={() => voterName.trim() && setHasEnteredName(true)}
-                  disabled={!voterName.trim()}
-                >
-                  OK
-                </Button>
+              <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 space-y-3 text-center">
+                <UserPlus className="w-6 h-6 text-primary mx-auto" />
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Créez un compte pour voter</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">C'est gratuit et rapide !</p>
+                </div>
+                <Link to="/auth">
+                  <Button size="sm" className="w-full gap-2">
+                    <UserPlus className="w-4 h-4" />
+                    S'inscrire gratuitement
+                  </Button>
+                </Link>
+                <p className="text-[10px] text-muted-foreground">
+                  Déjà un compte ? <Link to="/auth" className="text-primary underline underline-offset-2">Se connecter</Link>
+                </p>
               </div>
             </motion.div>
           ) : (
             <div className="text-center">
               <Badge variant="outline" className="text-xs gap-1">
-                Vous votez en tant que <span className="font-semibold">{voterName}</span>
+                Connecté en tant que <span className="font-semibold">{user?.user_metadata?.first_name || user?.email?.split("@")[0]}</span>
               </Badge>
             </div>
           )}
