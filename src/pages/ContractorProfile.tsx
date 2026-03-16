@@ -224,8 +224,8 @@ const ContractorProfile = () => {
   const enrichedComparables: any[] = profileData?.comparables ?? [];
   const publicPage = profileData?.public_page ?? null;
 
-  const aippScore = aippBreakdown?.total_score ?? contractor.aipp_score ?? publicScores?.aipp_score ?? null;
-  const aippValidated = aippBreakdown != null && aippBreakdown.is_current;
+  const aippScore = effectiveAippBreakdown?.total_score ?? contractor.aipp_score ?? publicScores?.aipp_score ?? null;
+  const aippValidated = effectiveAippBreakdown != null && effectiveAippBreakdown.is_current;
   const tier = aippScore && aippScore > 0 ? getAIPPTier(aippScore) : null;
 
   const unproScore = publicScores?.unpro_score ?? null;
