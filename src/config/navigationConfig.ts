@@ -35,7 +35,7 @@ export const headerNavByRole: Record<UserRole | "guest", NavItem[]> = {
   partner: [
     { to: "/dashboard", label: "Accueil", labelEn: "Home", icon: "Home" },
     { to: "/dashboard/syndicates", label: "Dossiers", labelEn: "Cases", icon: "FolderOpen" },
-    { to: "/pro/leads", label: "Opportunités", labelEn: "Opportunities", icon: "TrendingUp" },
+    { to: "/pro/leads", label: "Rendez-vous garantis", labelEn: "Guaranteed Appointments", icon: "CalendarCheck" },
     { to: "/dashboard/home-score", label: "Rapports", labelEn: "Reports", icon: "BarChart3" },
     { to: "/alex", label: "Alex", labelEn: "Alex", icon: "Sparkles" },
   ],
