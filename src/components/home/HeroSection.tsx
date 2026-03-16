@@ -9,7 +9,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useAlexVoiceSession } from "@/hooks/useAlexVoiceSession";
 import { useLocation } from "react-router-dom";
-import { Mic, Volume2, VolumeX, Loader2, Keyboard, Square } from "lucide-react";
+import { Mic, Volume2, VolumeX, Loader2, Keyboard, Square, CheckCircle2 } from "lucide-react";
 import heroAgrandissement from "@/assets/hero-agrandissement.jpg";
 import heroArpenteur from "@/assets/hero-arpenteur.jpg";
 import heroToiture from "@/assets/hero-toiture.jpg";

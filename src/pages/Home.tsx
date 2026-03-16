@@ -97,6 +97,62 @@ const Home = () => {
       {/* ═══ HERO ═══ */}
       <HeroSection />
 
+      {/* ═══ ANTI-3-SOUMISSIONS SEO SECTION ═══ */}
+      <section className="px-5 py-12 md:py-16">
+        <div className="max-w-3xl mx-auto">
+          <motion.div variants={sectionFade} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            <h2 className="font-display text-section sm:text-title font-bold text-foreground mb-6">
+              Pourquoi UnPRO abolit les 3 soumissions
+            </h2>
+            <div className="text-body leading-relaxed text-muted-foreground space-y-4">
+              <p>
+                Pendant des années, les propriétaires ont été encouragés à demander trois soumissions pour leurs travaux.
+                Dans la réalité, ce modèle crée souvent :
+              </p>
+              <ul className="space-y-2 pl-1">
+                {[
+                  { icon: Clock, text: "des pertes de temps" },
+                  { icon: XCircle, text: "des estimations incomplètes" },
+                  { icon: DollarSign, text: "des entrepreneurs en compétition sur le prix plutôt que la qualité" },
+                ].map((item) => (
+                  <li key={item.text} className="flex items-center gap-3">
+                    <item.icon className="h-4 w-4 text-destructive shrink-0" />
+                    <span className="font-medium text-foreground">{item.text}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="font-semibold text-foreground">
+                UnPRO change complètement cette approche.
+              </p>
+              <p>
+                Notre plateforme analyse différents signaux de compétence, réputation et engagement afin d'identifier 
+                les entrepreneurs les plus fiables pour chaque type de travaux.
+              </p>
+              <p>
+                Au lieu de recevoir plusieurs soumissions approximatives, vous pouvez prendre un{" "}
+                <strong className="text-primary">rendez-vous direct avec un professionnel compétent</strong>.
+              </p>
+            </div>
+
+            {/* CTA */}
+            <div className="flex flex-col sm:flex-row gap-3 mt-8">
+              <button
+                onClick={() => handleCta("/search", "Trouver un entrepreneur compétent")}
+                className="h-13 rounded-full px-8 text-sm font-bold cta-gradient"
+              >
+                Trouver un entrepreneur compétent <ArrowRight className="h-4 w-4 ml-1.5 inline" />
+              </button>
+              <button
+                onClick={() => handleCta("/dashboard/appointments", "Prendre un rendez-vous")}
+                className="h-13 rounded-full px-8 text-sm font-bold bg-card border-2 border-border text-foreground hover:border-primary/30 transition-all active:scale-[0.97]"
+              >
+                Prendre un rendez-vous
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ═══ HOW IT WORKS ═══ */}
       <section className="px-5 py-10 md:py-14">
         <div className="max-w-3xl mx-auto">
@@ -107,8 +163,8 @@ const Home = () => {
           <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-3 gap-3 sm:gap-4">
             {[
               { step: 1, icon: FileText, title: "Décrivez", subtitle: "votre projet", iconColor: "text-primary" },
-              { step: 2, icon: BarChart3, title: "Comparez", subtitle: "les soumissions", iconColor: "text-accent" },
-              { step: 3, icon: Trophy, title: "Choisissez", subtitle: "le meilleur pro", iconColor: "text-warning" },
+              { step: 2, icon: Brain, title: "UnPRO analyse", subtitle: "et recommande", iconColor: "text-accent" },
+              { step: 3, icon: Trophy, title: "Rencontrez", subtitle: "le bon entrepreneur", iconColor: "text-warning" },
             ].map((item, i) => (
               <motion.div key={item.step} variants={fadeUp} custom={i} className="relative">
                 <div className="premium-card rounded-2xl p-3 sm:p-6 text-center h-full relative overflow-hidden">
