@@ -126,7 +126,7 @@ export function getProfileActions(ctx: NavigationContext): NavItem[] {
     items.push(
       { to: "/pro/profile", label: "Mon profil entreprise", labelEn: "My Business Profile", icon: "User" },
       { to: "/pro/aipp-score", label: "Mon score AIPP", labelEn: "My AIPP Score", icon: "Star" },
-      { to: "/pro/leads", label: "Mes leads", labelEn: "My Leads", icon: "TrendingUp" },
+      { to: "/pro/leads", label: "Mes rendez-vous garantis", labelEn: "My Guaranteed Appointments", icon: "CalendarCheck" },
       { to: "/pro/appointments", label: "Mes rendez-vous", labelEn: "My Appointments", icon: "CalendarDays" },
       { to: "/pro/reviews", label: "Mes avis", labelEn: "My Reviews", icon: "MessageSquare" },
       { to: "/pro/billing", label: "Plans & facturation", labelEn: "Plans & Billing", icon: "CreditCard" },
