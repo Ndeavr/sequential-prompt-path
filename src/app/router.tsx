@@ -40,6 +40,7 @@ import RuePage from "@/pages/seo/RuePage";
 import ProblemeLocationFrPage from "@/pages/seo/ProblemeLocationFrPage";
 import PropertyGraphPage from "@/pages/PropertyGraphPage";
 import AlexChat from "@/pages/AlexChat";
+import DesignPage from "@/pages/DesignPage";
 import FlywheelPage from "@/pages/FlywheelPage";
 import EnergyPage from "@/pages/EnergyPage";
 import PreventiveMaintenancePage from "@/pages/PreventiveMaintenancePage";
@@ -185,6 +186,7 @@ export const AppRouter = () => (
       <Route path="/property-graph" element={<PropertyGraphPage />} />
       <Route path="/alex" element={<AlexChat />} />
       <Route path="/alex/renovation" element={<RenovationVisualizerPage />} />
+      <Route path="/design" element={<DesignPage />} />
       <Route path="/inspirations" element={<DiscoveryFeedPage />} />
       <Route path="/transformations/:id" element={<TransformationDetailPage />} />
       <Route path="/tendances" element={<TrendingPage />} />
