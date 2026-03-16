@@ -185,6 +185,14 @@ export default function DesignWorkspace({
             onSelect={onSelectVersion}
           />
         )}
+        {isSharing && (
+          <DesignShare
+            projectId={projectId}
+            onClose={() => setIsSharing(false)}
+            onCreateShare={onCreateShare}
+            existingToken={shareToken}
+          />
+        )}
       </AnimatePresence>
     </div>
   );

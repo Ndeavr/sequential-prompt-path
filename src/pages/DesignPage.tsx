@@ -54,11 +54,14 @@ export default function DesignPage() {
           activeVersion={activeVersion}
           isGenerating={isGenerating}
           error={error}
+          projectId={projectId}
+          shareToken={shareToken}
           onBack={reset}
           onGenerate={generate}
           onFreeze={freezeVersion}
           onDuplicate={duplicateVersion}
           onSelectVersion={selectVersion}
+          onCreateShare={createShare}
         />
       ) : (
         <DesignUpload onUpload={handleUpload} />
