@@ -338,7 +338,7 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
         titleEn: "My Space",
         items: [
           { to: "/dashboard/properties", label: "Mes propriétés", labelEn: "My Properties", icon: "Building2" },
-          { to: "/compare-quotes", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
+          { to: "/compare-quotes", label: "Analyser mes soumissions", labelEn: "Analyze My Quotes", icon: "Scale" },
           { to: "/search", label: "Trouver un entrepreneur", labelEn: "Find a Contractor", icon: "Search" },
           { to: "/dashboard/home-score", label: "Home Score", icon: "BarChart3" },
         ],
