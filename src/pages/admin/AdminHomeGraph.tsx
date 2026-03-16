@@ -302,6 +302,20 @@ export default function AdminHomeGraph() {
             )}
           </TabsContent>
 
+          {/* ── Massive Generation ── */}
+          <TabsContent value="massive" className="mt-4">
+            <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}>
+              <MassiveBlueprintPanel />
+            </Suspense>
+          </TabsContent>
+
+          {/* ── JSON Import ── */}
+          <TabsContent value="import" className="mt-4">
+            <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}>
+              <JsonImportPipeline />
+            </Suspense>
+          </TabsContent>
+
           {/* ── Quick Wins ── */}
           <TabsContent value="quickwins" className="mt-4">
             <div className="space-y-2">
