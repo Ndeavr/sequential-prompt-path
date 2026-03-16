@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
 
     // ─── ACTION: generate ───
     if (action === "generate") {
-      const { imageBase64, prompt, style, budget, zones, roomType, projectId } = body;
+      const { imageBase64, prompt, style, budget, zones, roomType, projectId, inspirationImages, materials, colorPalette } = body;
 
       if (!imageBase64) {
         return new Response(
@@ -46,6 +46,11 @@ Deno.serve(async (req) => {
       const budgetHint = budget ? `Budget feel: ${budget}.` : "";
       const zoneHint = zones?.length ? `Focus zones: ${zones.join(", ")}.` : "";
       const roomHint = roomType ? `Room type: ${roomType}.` : "";
+      const materialHint = materials?.length ? `Preferred materials: ${materials.join(", ")}.` : "";
+      const colorHint = colorPalette ? `Color palette: ${colorPalette} tones.` : "";
+      const inspoHint = inspirationImages?.length
+        ? "Reference inspiration images are provided. Match their aesthetic, color scheme, materials, and overall design direction closely."
+        : "";
 
       const systemPrompt = [
         "You are a professional interior designer AI.",
@@ -57,6 +62,9 @@ Deno.serve(async (req) => {
         styleHint,
         budgetHint,
         zoneHint,
+        materialHint,
+        colorHint,
+        inspoHint,
       ].filter(Boolean).join(" ");
 
       const userPrompt = prompt || `Redesign this room in a ${style || "modern"} style.`;
