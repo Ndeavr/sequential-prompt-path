@@ -12,6 +12,7 @@ import { useProperties } from "@/hooks/useProperties";
 import { useCreateQuote, useUploadQuoteFile } from "@/hooks/useQuotes";
 import { toast } from "sonner";
 import { Upload } from "lucide-react";
+import PropertySelect from "@/components/shared/PropertySelect";
 
 const QuoteUploadPage = () => {
   const navigate = useNavigate();
