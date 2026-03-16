@@ -31,8 +31,8 @@ export interface CTAConfig {
 const INTENT_CTA_MAP: Record<UserIntent, CTAConfig> = {
   find_contractor: {
     intent: "find_contractor",
-    primary: { label: "Trouver un entrepreneur", labelEn: "Find a Contractor", to: "/recherche" },
-    secondary: { label: "Comparer des entrepreneurs", labelEn: "Compare Contractors", to: "/recherche" },
+    primary: { label: "Trouver un entrepreneur", labelEn: "Find a Contractor", to: "/search" },
+    secondary: { label: "Comparer des entrepreneurs", labelEn: "Compare Contractors", to: "/search" },
   },
   verify_contractor: {
     intent: "verify_contractor",
