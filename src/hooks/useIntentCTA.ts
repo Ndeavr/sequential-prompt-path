@@ -196,7 +196,7 @@ export function useIntentCTA() {
     // Enrich with city name
     const cityMatch = p.match(/\/ville\/([^/]+)/);
     if (cityMatch && cta.intent === "explore_city") {
-      const city = decodeURIComponent(cityMatch[1]).replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      const city = slugToDisplayName(decodeURIComponent(cityMatch[1]));
       cta.primary = {
         ...cta.primary,
         label: `Voir le score à ${city}`,
