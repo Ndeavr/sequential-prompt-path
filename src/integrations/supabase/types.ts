@@ -778,6 +778,318 @@ export type Database = {
           },
         ]
       }
+      automation_agents: {
+        Row: {
+          category: string
+          config: Json | null
+          created_at: string | null
+          cron_expression: string | null
+          description: string | null
+          duplicate_similarity_threshold: number | null
+          frequency_type: string
+          frequency_value: number | null
+          id: string
+          is_enabled: boolean | null
+          key: string
+          last_run_at: string | null
+          last_status: string | null
+          max_jobs_per_day: number | null
+          max_jobs_per_run: number | null
+          min_data_confidence: number | null
+          name: string
+          next_run_at: string | null
+          priority: number | null
+          quality_threshold: number | null
+          requires_manual_review: boolean | null
+          run_if_queue_not_empty_only: boolean | null
+          timezone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          config?: Json | null
+          created_at?: string | null
+          cron_expression?: string | null
+          description?: string | null
+          duplicate_similarity_threshold?: number | null
+          frequency_type: string
+          frequency_value?: number | null
+          id?: string
+          is_enabled?: boolean | null
+          key: string
+          last_run_at?: string | null
+          last_status?: string | null
+          max_jobs_per_day?: number | null
+          max_jobs_per_run?: number | null
+          min_data_confidence?: number | null
+          name: string
+          next_run_at?: string | null
+          priority?: number | null
+          quality_threshold?: number | null
+          requires_manual_review?: boolean | null
+          run_if_queue_not_empty_only?: boolean | null
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          config?: Json | null
+          created_at?: string | null
+          cron_expression?: string | null
+          description?: string | null
+          duplicate_similarity_threshold?: number | null
+          frequency_type?: string
+          frequency_value?: number | null
+          id?: string
+          is_enabled?: boolean | null
+          key?: string
+          last_run_at?: string | null
+          last_status?: string | null
+          max_jobs_per_day?: number | null
+          max_jobs_per_run?: number | null
+          min_data_confidence?: number | null
+          name?: string
+          next_run_at?: string | null
+          priority?: number | null
+          quality_threshold?: number | null
+          requires_manual_review?: boolean | null
+          run_if_queue_not_empty_only?: boolean | null
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      automation_alerts: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          level: string
+          message: string | null
+          metadata: Json | null
+          source: string | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          level: string
+          message?: string | null
+          metadata?: Json | null
+          source?: string | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          level?: string
+          message?: string | null
+          metadata?: Json | null
+          source?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
+      automation_jobs: {
+        Row: {
+          agent_id: string | null
+          attempts: number | null
+          created_at: string | null
+          created_by: string | null
+          duration_ms: number | null
+          entity_id: string | null
+          entity_type: string | null
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          job_type: string | null
+          max_attempts: number | null
+          payload: Json | null
+          priority: number | null
+          result_payload: Json | null
+          result_summary: string | null
+          scheduled_for: string | null
+          source_trigger: string | null
+          started_at: string | null
+          status: string
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          attempts?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          duration_ms?: number | null
+          entity_id?: string | null
+          entity_type?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          job_type?: string | null
+          max_attempts?: number | null
+          payload?: Json | null
+          priority?: number | null
+          result_payload?: Json | null
+          result_summary?: string | null
+          scheduled_for?: string | null
+          source_trigger?: string | null
+          started_at?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          attempts?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          duration_ms?: number | null
+          entity_id?: string | null
+          entity_type?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          job_type?: string | null
+          max_attempts?: number | null
+          payload?: Json | null
+          priority?: number | null
+          result_payload?: Json | null
+          result_summary?: string | null
+          scheduled_for?: string | null
+          source_trigger?: string | null
+          started_at?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_jobs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "automation_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_prompt_exports: {
+        Row: {
+          created_at: string | null
+          id: string
+          job_id: string | null
+          module_key: string | null
+          prompt_text: string | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          job_id?: string | null
+          module_key?: string | null
+          prompt_text?: string | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          job_id?: string | null
+          module_key?: string | null
+          prompt_text?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_prompt_exports_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "automation_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_runs: {
+        Row: {
+          agent_id: string | null
+          created_at: string | null
+          id: string
+          jobs_executed: number | null
+          jobs_failed: number | null
+          jobs_found: number | null
+          jobs_skipped: number | null
+          jobs_succeeded: number | null
+          metrics: Json | null
+          notes: string | null
+          run_finished_at: string | null
+          run_started_at: string | null
+          status: string | null
+          triggered_by: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string | null
+          id?: string
+          jobs_executed?: number | null
+          jobs_failed?: number | null
+          jobs_found?: number | null
+          jobs_skipped?: number | null
+          jobs_succeeded?: number | null
+          metrics?: Json | null
+          notes?: string | null
+          run_finished_at?: string | null
+          run_started_at?: string | null
+          status?: string | null
+          triggered_by?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string | null
+          id?: string
+          jobs_executed?: number | null
+          jobs_failed?: number | null
+          jobs_found?: number | null
+          jobs_skipped?: number | null
+          jobs_succeeded?: number | null
+          metrics?: Json | null
+          notes?: string | null
+          run_finished_at?: string | null
+          run_started_at?: string | null
+          status?: string | null
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_runs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "automation_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       category_problem_links: {
         Row: {
           category_id: string
@@ -4443,6 +4755,60 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      generated_pages_registry: {
+        Row: {
+          aiseo_score: number | null
+          category: string | null
+          city: string | null
+          id: string
+          indexed_status: string | null
+          metadata: Json | null
+          page_type: string | null
+          profession: string | null
+          published_at: string | null
+          quality_score: number | null
+          seo_score: number | null
+          slug: string | null
+          source_agent_key: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          aiseo_score?: number | null
+          category?: string | null
+          city?: string | null
+          id?: string
+          indexed_status?: string | null
+          metadata?: Json | null
+          page_type?: string | null
+          profession?: string | null
+          published_at?: string | null
+          quality_score?: number | null
+          seo_score?: number | null
+          slug?: string | null
+          source_agent_key?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          aiseo_score?: number | null
+          category?: string | null
+          city?: string | null
+          id?: string
+          indexed_status?: string | null
+          metadata?: Json | null
+          page_type?: string | null
+          profession?: string | null
+          published_at?: string | null
+          quality_score?: number | null
+          seo_score?: number | null
+          slug?: string | null
+          source_agent_key?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       grant_programs: {
         Row: {
