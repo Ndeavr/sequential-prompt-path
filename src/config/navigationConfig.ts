@@ -77,7 +77,7 @@ export const subNavConfig: Record<string, NavItem[]> = {
     { to: "/pro/documents", label: "Certifications", labelEn: "Certifications", icon: "Shield" },
   ],
   "/pro/leads": [
-    { to: "/pro/leads", label: "Nouveaux leads", labelEn: "New Leads", icon: "TrendingUp" },
+    { to: "/pro/leads", label: "Rendez-vous garantis", labelEn: "Guaranteed Appointments", icon: "CalendarCheck" },
     { to: "/pro/territories", label: "Territoires", labelEn: "Territories", icon: "MapPin" },
   ],
   "/pro/appointments": [
