@@ -33,6 +33,7 @@ const navItems = [
   { to: "/admin/alerts", label: "Alertes", icon: Bell },
   { to: "/admin/verified-contractors", label: "Entrepreneurs vérifiés", icon: Shield },
   { to: "/admin/automation", label: "Automatisation", icon: Bot },
+  { to: "/admin/home-graph", label: "Problem Graph", icon: Network },
 ];
 
 const NavLinks = ({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) => (
