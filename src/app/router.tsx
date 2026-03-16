@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import PlaceholderPage from "@/pages/PlaceholderPage";
 
 // Public
 import Home from "@/pages/Home";
@@ -194,9 +195,7 @@ export const AppRouter = () => (
       <Route path="/verifier-entrepreneur" element={<VerifyLandingPage />} />
       <Route path="/verifier-un-entrepreneur" element={<VerifierEntrepreneurPage />} />
       <Route path="/analyser-document" element={<AnalyzeDocumentPage />} />
-      {/* Programmatic Verification SEO */}
       <Route path="/verifier-:tradeSlug/:citySlug" element={<VerificationSeoPage />} />
-      {/* QR Scan Route */}
       <Route path="/qr/:token" element={<QrScanPage />} />
 
       {/* Public Property Page */}
@@ -217,11 +216,67 @@ export const AppRouter = () => (
       <Route path="/guides/:topic" element={<GuidePage />} />
       <Route path="/renovation/:projectSlug/:citySlug" element={<RenovationLocationPage />} />
 
-      {/* Legacy English routes (kept for backward compat, redirect later) */}
+      {/* Legacy English routes */}
       <Route path="/problems/:slug" element={<ProblemPage />} />
       <Route path="/problems/:problem/:city" element={<ProblemLocationPage />} />
       <Route path="/solutions/:slug" element={<SolutionPage />} />
       <Route path="/city/:slug" element={<CityPage />} />
+
+      {/* ─── Placeholder public pages (navigation links) ─── */}
+      <Route path="/proprietaires/passeport-maison" element={<PlaceholderPage />} />
+      <Route path="/proprietaires/score-maison" element={<PlaceholderPage />} />
+      <Route path="/outils-ia" element={<PlaceholderPage />} />
+      <Route path="/services/isolation-grenier" element={<PlaceholderPage />} />
+      <Route path="/services/toiture" element={<PlaceholderPage />} />
+      <Route path="/services/fondation" element={<PlaceholderPage />} />
+      <Route path="/services/fenetres" element={<PlaceholderPage />} />
+      <Route path="/services/chauffage" element={<PlaceholderPage />} />
+      <Route path="/entrepreneurs/creer-mon-profil" element={<PlaceholderPage />} />
+      <Route path="/entrepreneurs/pages-ia" element={<PlaceholderPage />} />
+      <Route path="/entrepreneurs/score-aipp" element={<PlaceholderPage />} />
+      <Route path="/entrepreneurs/profil-public" element={<PlaceholderPage />} />
+      <Route path="/entrepreneurs/matching" element={<PlaceholderPage />} />
+      <Route path="/entrepreneurs/badges" element={<PlaceholderPage />} />
+      <Route path="/entrepreneurs/demo" element={<PlaceholderPage />} />
+      <Route path="/entrepreneurs/ambassadeur" element={<PlaceholderPage />} />
+      <Route path="/ambassadeurs" element={<PlaceholderPage />} />
+      <Route path="/aide" element={<PlaceholderPage />} />
+      <Route path="/professionnels" element={<PlaceholderPage />} />
+      <Route path="/villes" element={<PlaceholderPage />} />
+      <Route path="/guides" element={<PlaceholderPage />} />
+      <Route path="/blog" element={<PlaceholderPage />} />
+      <Route path="/conseils-renovation" element={<PlaceholderPage />} />
+      <Route path="/faq" element={<PlaceholderPage />} />
+      <Route path="/comment-ca-marche" element={<PlaceholderPage />} />
+      <Route path="/verification" element={<PlaceholderPage />} />
+      <Route path="/nos-standards" element={<PlaceholderPage />} />
+      <Route path="/pourquoi-pas-3-soumissions" element={<PlaceholderPage />} />
+      <Route path="/a-propos" element={<PlaceholderPage />} />
+      <Route path="/partenaires" element={<PlaceholderPage />} />
+      <Route path="/contact" element={<PlaceholderPage />} />
+      <Route path="/conditions" element={<PlaceholderPage />} />
+      <Route path="/confidentialite" element={<PlaceholderPage />} />
+      <Route path="/cookies" element={<PlaceholderPage />} />
+      <Route path="/sitemap" element={<PlaceholderPage />} />
+      <Route path="/accessibilite" element={<PlaceholderPage />} />
+
+      {/* ─── Placeholder condo pages ─── */}
+      <Route path="/condo/passeport" element={<PlaceholderPage />} />
+      <Route path="/condo/documents" element={<PlaceholderPage />} />
+      <Route path="/condo/dashboard" element={<PlaceholderPage />} />
+      <Route path="/condo/dossier" element={<PlaceholderPage />} />
+      <Route path="/condo/travaux" element={<PlaceholderPage />} />
+      <Route path="/condo/historique" element={<PlaceholderPage />} />
+      <Route path="/condo/inviter" element={<PlaceholderPage />} />
+      <Route path="/condo/loi-16" element={<CondoLoi16Page />} />
+      <Route path="/condo/inspection" element={<PlaceholderPage />} />
+      <Route path="/condo/guides" element={<PlaceholderPage />} />
+
+      {/* ─── Placeholder pro pages ─── */}
+      <Route path="/pro/stats" element={<PlaceholderPage />} />
+      <Route path="/pro/visibility" element={<PlaceholderPage />} />
+      <Route path="/pro/recommendations" element={<PlaceholderPage />} />
+      <Route path="/dashboard/maintenance" element={<PlaceholderPage />} />
 
       {/* Homeowner Dashboard */}
       <Route path="/dashboard" element={<ProtectedRoute requiredRole="homeowner"><DashboardHome /></ProtectedRoute>} />
