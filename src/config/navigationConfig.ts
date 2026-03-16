@@ -61,7 +61,7 @@ export const subNavConfig: Record<string, NavItem[]> = {
   ],
   "/dashboard/projects": [
     { to: "/dashboard/projects/new", label: "Projets actifs", labelEn: "Active Projects", icon: "FolderOpen" },
-    { to: "/compare-quotes", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
+    { to: "/compare-quotes", label: "Analyser mes soumissions", labelEn: "Analyze My Quotes", icon: "Scale" },
     { to: "/dashboard/quotes", label: "Soumissions reçues", labelEn: "Received Quotes", icon: "FileText" },
     { to: "/dashboard/appointments", label: "Rendez-vous", labelEn: "Appointments", icon: "CalendarDays" },
   ],
