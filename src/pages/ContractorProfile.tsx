@@ -983,12 +983,12 @@ const ContractorProfile = () => {
                             </div>
                           </div>
                         ))}
-                        {reviews.length > 3 && !showAllReviews && (
+                        {effectiveReviews.length > 3 && !showAllReviews && (
                           <button
                             onClick={() => setShowAllReviews(true)}
                             className="w-full text-center text-xs font-semibold text-primary py-2 hover:underline flex items-center justify-center gap-1"
                           >
-                            Voir tous les {reviews.length} avis <ChevronDown className="h-3 w-3" />
+                            Voir tous les {effectiveReviews.length} avis <ChevronDown className="h-3 w-3" />
                           </button>
                         )}
                       </div>
