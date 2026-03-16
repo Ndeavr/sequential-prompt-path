@@ -223,13 +223,9 @@ export default function HeroSection() {
                 </span>
               </h1>
 
-              {/* Card with subtitle + bullet points */}
-              <div className="relative z-10 mt-5 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 max-w-[420px] shadow-sm">
-                <p className="text-sm leading-6 md:text-base md:leading-7 font-medium" style={{ color: "#6C7A92" }}>
-                  Fini les 3 soumissions identiques. UnPRO analyse et connecte directement avec le bon entrepreneur pour votre projet.
-                </p>
-
-                <ul className="mt-3 space-y-2">
+              {/* Card with bullet points — under image on mobile */}
+              <div className="relative z-10 mt-[140px] md:mt-5 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 max-w-[420px] shadow-sm">
+                <ul className="space-y-2">
                   {[
                     "Rendez-vous exclusif avec un professionnel",
                     "Entrepreneurs analysés selon leur réputation et expertise",
