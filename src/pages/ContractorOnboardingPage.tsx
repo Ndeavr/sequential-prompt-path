@@ -16,6 +16,7 @@ import {
   Shield, Camera, Sparkles, CheckCircle2, Upload, TrendingUp,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import BusinessNameSearch, { type BusinessSearchResult } from "@/components/contractor/BusinessNameSearch";
 import { toast } from "sonner";
 import ScoreRing from "@/components/ui/score-ring";
 
