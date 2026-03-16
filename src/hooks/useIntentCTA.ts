@@ -42,7 +42,7 @@ const INTENT_CTA_MAP: Record<UserIntent, CTAConfig> = {
   manage_property: {
     intent: "manage_property",
     primary: { label: "Créer mon Passeport Maison", labelEn: "Create My Home Passport", to: "/signup" },
-    secondary: { label: "Ajouter ma propriété", labelEn: "Add My Property", to: "/dashboard/proprietes/nouvelle" },
+    secondary: { label: "Ajouter ma propriété", labelEn: "Add My Property", to: "/dashboard/properties/new" },
   },
   offer_services: {
     intent: "offer_services",
