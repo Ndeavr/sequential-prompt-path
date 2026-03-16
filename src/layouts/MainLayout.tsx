@@ -1,5 +1,5 @@
 /**
- * UNPRO — Main Layout (Programmatic Navigation)
+ * UNPRO — Main Layout (Premium Navigation System)
  */
 
 import type { ReactNode } from "react";
@@ -8,9 +8,11 @@ import { useEffect } from "react";
 import { useTheme } from "next-themes";
 import SmartHeader from "@/components/navigation/SmartHeader";
 import SmartFooter from "@/components/navigation/SmartFooter";
+import FooterSEOGrid from "@/components/navigation/FooterSEOGrid";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import AlexConcierge from "@/components/alex/AlexConcierge";
-import FloatingMobileCTA from "@/components/cta/FloatingMobileCTA";
+import CommandPalette from "@/components/navigation/CommandPalette";
+import { useLanguage } from "@/components/ui/LanguageToggle";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -19,6 +21,7 @@ interface MainLayoutProps {
 const MainLayout = ({ children }: MainLayoutProps) => {
   const { pathname } = useLocation();
   const { theme, setTheme } = useTheme();
+  const { lang } = useLanguage();
 
   // Force light mode on public pages
   useEffect(() => {
@@ -27,14 +30,20 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
   const showAlex = pathname !== "/alex";
 
+  // Show SEO grid on programmatic pages
+  const showSEOGrid = ["/problemes", "/services", "/villes", "/professionnels"].some(
+    prefix => pathname.startsWith(prefix)
+  );
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <SmartHeader />
-      <main className="flex-1 pb-16 md:pb-0">{children}</main>
+      <main className="flex-1 pb-16 lg:pb-0">{children}</main>
+      {showSEOGrid && <FooterSEOGrid />}
       <SmartFooter />
-      <FloatingMobileCTA />
       <MobileBottomNav />
       {showAlex && <AlexConcierge />}
+      <CommandPalette lang={lang} />
     </div>
   );
 };
