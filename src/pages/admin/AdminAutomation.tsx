@@ -102,6 +102,10 @@ const AdminAutomation = () => {
             <AutomationRunHistory runs={runs} />
           </TabsContent>
 
+          <TabsContent value="adaptive" className="mt-4">
+            <AdaptiveFrequencyPanel />
+          </TabsContent>
+
           <TabsContent value="alerts" className="mt-4">
             <AutomationAlertsList alerts={alerts} onMarkRead={id => alertMutation.mutate(id)} />
           </TabsContent>
