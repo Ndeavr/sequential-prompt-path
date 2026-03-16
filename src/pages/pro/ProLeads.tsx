@@ -11,15 +11,13 @@ import { useUpdateAppointmentStatus } from "@/hooks/useAppointments";
 import { useHasActiveSubscription } from "@/hooks/useSubscription";
 import SubscriptionPaywall from "@/components/contractor/SubscriptionPaywall";
 import { toast } from "sonner";
-import { Eye, TrendingUp } from "lucide-react";
+import { Eye, CalendarCheck } from "lucide-react";
 
 const levelColors: Record<string, string> = {
   high: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
   medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
   low: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
 };
-
-const levelLabels: Record<string, string> = { high: "Élevé", medium: "Moyen", low: "Faible" };
 
 const urgencyLabels: Record<string, string> = { normal: "Normal", soon: "Bientôt", urgent: "Urgent" };
 
@@ -67,7 +65,7 @@ const ProLeads = () => {
 
   return (
     <ContractorLayout>
-      <PageHeader title="Leads qualifiés" description="Demandes de rendez-vous classées par qualité" />
+      <PageHeader title="Rendez-vous garantis" description="Vos rendez-vous exclusifs classés par qualité de projet" />
 
       <div className="flex flex-wrap gap-3 mb-4">
         <Select value={qualityFilter} onValueChange={setQualityFilter}>
@@ -90,7 +88,7 @@ const ProLeads = () => {
       </div>
 
       {isLoading ? <LoadingState /> : !sorted.length ? (
-        <EmptyState message="Aucun lead pour le moment." />
+        <EmptyState message="Aucun rendez-vous garanti pour le moment." />
       ) : (
         <div className="space-y-3">
           {sorted.map((lead: any) => {
@@ -103,7 +101,7 @@ const ProLeads = () => {
                     {/* Score badge */}
                     <div className="flex items-center gap-2 sm:w-20">
                       <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${levelColors[level]}`}>
-                        <TrendingUp className="h-3 w-3" />
+                        <CalendarCheck className="h-3 w-3" />
                         {lead.score}
                       </div>
                     </div>
