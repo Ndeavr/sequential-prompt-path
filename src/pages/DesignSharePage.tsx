@@ -81,9 +81,9 @@ export default function DesignSharePage() {
   }, [fetchProject]);
 
   const handleVote = async (versionId: string, voteType: "love" | "like" | "nope") => {
-    if (!voterName.trim()) {
-      setHasEnteredName(false);
-      toast({ title: "Entrez votre prénom", description: "Pour voter, indiquez votre prénom." });
+    const name = voterName.trim() || user?.user_metadata?.first_name || user?.email?.split("@")[0] || "Anonyme";
+    if (!isAuthenticated) {
+      toast({ title: "Créez un compte", description: "Inscrivez-vous gratuitement pour voter." });
       return;
     }
     setSubmittingVote(versionId);
