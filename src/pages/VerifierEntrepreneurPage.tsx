@@ -152,6 +152,16 @@ export default function VerifierEntrepreneurPage() {
     if (key !== "phone") setPhoneOnlyWarningDismissed(false);
   };
 
+  const handleBusinessSelected = (result: BusinessSearchResult) => {
+    setForm((prev) => ({
+      ...prev,
+      business_name: result.business_name,
+      city: result.city || prev.city || "",
+      website: result.website || prev.website || "",
+    }));
+    setPhoneOnlyWarningDismissed(false);
+  };
+
   return (
     <MainLayout>
       <div className="min-h-screen bg-background">
