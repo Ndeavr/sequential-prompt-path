@@ -22,12 +22,6 @@ import {
 
 const MassiveBlueprintPanel = lazy(() => import("@/components/homeGraph/MassiveBlueprintPanel"));
 const JsonImportPipeline = lazy(() => import("@/components/homeGraph/JsonImportPipeline"));
-import {
-  fetchGraphStats, fetchGraphProblems, fetchBlueprints,
-  fetchQuickWins, fetchQualityIssues, updateBlueprintStatus,
-  generateGraphPrompt,
-  type GraphStats, type GraphProblem, type GraphBlueprint,
-} from "@/services/homeGraphService";
 
 // ─── Stats Cards ─────────────────────────────────────────────────
 
