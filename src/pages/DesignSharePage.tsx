@@ -7,12 +7,13 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, ThumbsUp, ThumbsDown, MessageCircle, Trophy, Sparkles, ArrowLeft, Send, Loader2 } from "lucide-react";
+import { Heart, ThumbsUp, ThumbsDown, MessageCircle, Trophy, Sparkles, ArrowLeft, Send, Loader2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const DESIGN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/design-generate`;
 
