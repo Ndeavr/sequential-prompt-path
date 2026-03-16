@@ -250,7 +250,7 @@ export function getDrawerItems(ctx: NavigationContext): NavItem[] {
     return [
       { to: "/pro/profile", label: "Mon profil entreprise", labelEn: "My Business Profile", icon: "User" },
       { to: "/pro/aipp-score", label: "Mon score AIPP", icon: "Star" },
-      { to: "/pro/leads", label: "Mes opportunités", labelEn: "My Opportunities", icon: "TrendingUp" },
+      { to: "/pro/leads", label: "Mes rendez-vous garantis", labelEn: "My Guaranteed Appointments", icon: "CalendarCheck" },
       { to: "/pro/appointments", label: "Mes rendez-vous", labelEn: "My Appointments", icon: "CalendarDays" },
       { to: "/pro/reviews", label: "Mes avis", labelEn: "My Reviews", icon: "MessageSquare" },
       { to: "/pro/territories", label: "Mes territoires", labelEn: "My Territories", icon: "MapPin" },
