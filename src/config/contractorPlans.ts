@@ -13,7 +13,7 @@ export interface ContractorPlan {
   monthlyStripePriceId: string;
   yearlyStripePriceId: string;
   features: string[];
-  leadAccessLevel: "limited" | "standard" | "priority" | "premium" | "exclusive";
+  appointmentAccessLevel: "limited" | "standard" | "priority" | "premium" | "exclusive";
   priorityLevel: number;
   matchingBoost: number;
   highlighted?: boolean;
