@@ -19,6 +19,7 @@ export function useDesignProject() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isIdentifying, setIsIdentifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [usageLimitHit, setUsageLimitHit] = useState<{ current: number; limit: number } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const authHeaders = useCallback(
