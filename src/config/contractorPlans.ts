@@ -29,11 +29,11 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     yearlyStripePriceId: "price_1T9X6oCvZwK1QnPVG3tLbNqY",
     features: [
       "Profil public de base",
-      "Jusqu'à 5 leads par mois",
+      "Rendez-vous garantis classes S et M",
       "Score AIPP visible",
       "Support par courriel",
     ],
-    leadAccessLevel: "limited",
+    appointmentAccessLevel: "limited",
     priorityLevel: 1,
     matchingBoost: 0,
   },
