@@ -4894,6 +4894,56 @@ export type Database = {
         }
         Relationships: []
       }
+      geo_areas: {
+        Row: {
+          area_type: string
+          created_at: string | null
+          gdp_estimate: number | null
+          id: string
+          is_active: boolean | null
+          name_fr: string
+          parent_area_id: string | null
+          population_estimate: number | null
+          province_code: string | null
+          seo_tier: string | null
+          slug: string
+        }
+        Insert: {
+          area_type?: string
+          created_at?: string | null
+          gdp_estimate?: number | null
+          id?: string
+          is_active?: boolean | null
+          name_fr: string
+          parent_area_id?: string | null
+          population_estimate?: number | null
+          province_code?: string | null
+          seo_tier?: string | null
+          slug: string
+        }
+        Update: {
+          area_type?: string
+          created_at?: string | null
+          gdp_estimate?: number | null
+          id?: string
+          is_active?: boolean | null
+          name_fr?: string
+          parent_area_id?: string | null
+          population_estimate?: number | null
+          province_code?: string | null
+          seo_tier?: string | null
+          slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geo_areas_parent_area_id_fkey"
+            columns: ["parent_area_id"]
+            isOneToOne: false
+            referencedRelation: "geo_areas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grant_programs: {
         Row: {
           applicable_property_types: string[] | null
@@ -4962,6 +5012,153 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      graph_page_blueprints: {
+        Row: {
+          blueprint_type: string
+          canonical_slug: string
+          created_at: string | null
+          generation_reason: string | null
+          generation_status: string | null
+          geo_area_id: string | null
+          h1_fr: string | null
+          id: string
+          internal_link_targets: Json | null
+          meta_description_fr: string | null
+          meta_title_fr: string | null
+          priority_score: number | null
+          problem_id: string | null
+          profession_id: string | null
+          question_id: string | null
+          related_keywords: Json | null
+          schema_type: string | null
+          solution_id: string | null
+          target_keyword_fr: string | null
+          title_fr: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          blueprint_type: string
+          canonical_slug: string
+          created_at?: string | null
+          generation_reason?: string | null
+          generation_status?: string | null
+          geo_area_id?: string | null
+          h1_fr?: string | null
+          id?: string
+          internal_link_targets?: Json | null
+          meta_description_fr?: string | null
+          meta_title_fr?: string | null
+          priority_score?: number | null
+          problem_id?: string | null
+          profession_id?: string | null
+          question_id?: string | null
+          related_keywords?: Json | null
+          schema_type?: string | null
+          solution_id?: string | null
+          target_keyword_fr?: string | null
+          title_fr?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          blueprint_type?: string
+          canonical_slug?: string
+          created_at?: string | null
+          generation_reason?: string | null
+          generation_status?: string | null
+          geo_area_id?: string | null
+          h1_fr?: string | null
+          id?: string
+          internal_link_targets?: Json | null
+          meta_description_fr?: string | null
+          meta_title_fr?: string | null
+          priority_score?: number | null
+          problem_id?: string | null
+          profession_id?: string | null
+          question_id?: string | null
+          related_keywords?: Json | null
+          schema_type?: string | null
+          solution_id?: string | null
+          target_keyword_fr?: string | null
+          title_fr?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "graph_page_blueprints_geo_area_id_fkey"
+            columns: ["geo_area_id"]
+            isOneToOne: false
+            referencedRelation: "geo_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "graph_page_blueprints_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "home_problems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "graph_page_blueprints_profession_id_fkey"
+            columns: ["profession_id"]
+            isOneToOne: false
+            referencedRelation: "home_professions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "graph_page_blueprints_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "homeowner_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "graph_page_blueprints_solution_id_fkey"
+            columns: ["solution_id"]
+            isOneToOne: false
+            referencedRelation: "home_solutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_problem_causes: {
+        Row: {
+          cause_id: string
+          created_at: string | null
+          id: string
+          problem_id: string
+          weight: number | null
+        }
+        Insert: {
+          cause_id: string
+          created_at?: string | null
+          id?: string
+          problem_id: string
+          weight?: number | null
+        }
+        Update: {
+          cause_id?: string
+          created_at?: string | null
+          id?: string
+          problem_id?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_problem_causes_cause_id_fkey"
+            columns: ["cause_id"]
+            isOneToOne: false
+            referencedRelation: "problem_causes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "home_problem_causes_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "home_problems"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       home_problem_city_pages: {
         Row: {
@@ -5118,6 +5315,45 @@ export type Database = {
           },
         ]
       }
+      home_problem_symptoms: {
+        Row: {
+          created_at: string | null
+          id: string
+          problem_id: string
+          symptom_id: string
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          problem_id: string
+          symptom_id: string
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          problem_id?: string
+          symptom_id?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_problem_symptoms_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "home_problems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "home_problem_symptoms_symptom_id_fkey"
+            columns: ["symptom_id"]
+            isOneToOne: false
+            referencedRelation: "problem_symptoms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       home_problem_tags: {
         Row: {
           created_at: string
@@ -5152,79 +5388,115 @@ export type Database = {
       }
       home_problems: {
         Row: {
+          aiseo_priority_score: number | null
           building_age_relevance: string | null
           climate_relevance: string[] | null
           cost_estimate_high: number | null
           cost_estimate_low: number | null
           cost_unit: string | null
           created_at: string
+          demand_score: number | null
           description_en: string | null
           description_fr: string | null
           difficulty_score: number | null
           display_order: number | null
+          google_difficulty_score: number | null
+          homeowner_visible: boolean | null
           id: string
           is_active: boolean | null
+          long_description_fr: string | null
+          metadata: Json | null
           name_en: string
           name_fr: string
           professional_category: string | null
+          profitability_score: number | null
           property_types: string[] | null
           recommended_solution_slugs: string[] | null
           seo_description_fr: string | null
           seo_keywords: string[] | null
+          seo_priority_score: number | null
           seo_title_fr: string | null
+          severity_level: string | null
+          short_description_fr: string | null
           slug: string
+          source_confidence: number | null
+          total_priority_score: number | null
           typical_causes: Json | null
           updated_at: string
           urgency_score: number | null
         }
         Insert: {
+          aiseo_priority_score?: number | null
           building_age_relevance?: string | null
           climate_relevance?: string[] | null
           cost_estimate_high?: number | null
           cost_estimate_low?: number | null
           cost_unit?: string | null
           created_at?: string
+          demand_score?: number | null
           description_en?: string | null
           description_fr?: string | null
           difficulty_score?: number | null
           display_order?: number | null
+          google_difficulty_score?: number | null
+          homeowner_visible?: boolean | null
           id?: string
           is_active?: boolean | null
+          long_description_fr?: string | null
+          metadata?: Json | null
           name_en: string
           name_fr: string
           professional_category?: string | null
+          profitability_score?: number | null
           property_types?: string[] | null
           recommended_solution_slugs?: string[] | null
           seo_description_fr?: string | null
           seo_keywords?: string[] | null
+          seo_priority_score?: number | null
           seo_title_fr?: string | null
+          severity_level?: string | null
+          short_description_fr?: string | null
           slug: string
+          source_confidence?: number | null
+          total_priority_score?: number | null
           typical_causes?: Json | null
           updated_at?: string
           urgency_score?: number | null
         }
         Update: {
+          aiseo_priority_score?: number | null
           building_age_relevance?: string | null
           climate_relevance?: string[] | null
           cost_estimate_high?: number | null
           cost_estimate_low?: number | null
           cost_unit?: string | null
           created_at?: string
+          demand_score?: number | null
           description_en?: string | null
           description_fr?: string | null
           difficulty_score?: number | null
           display_order?: number | null
+          google_difficulty_score?: number | null
+          homeowner_visible?: boolean | null
           id?: string
           is_active?: boolean | null
+          long_description_fr?: string | null
+          metadata?: Json | null
           name_en?: string
           name_fr?: string
           professional_category?: string | null
+          profitability_score?: number | null
           property_types?: string[] | null
           recommended_solution_slugs?: string[] | null
           seo_description_fr?: string | null
           seo_keywords?: string[] | null
+          seo_priority_score?: number | null
           seo_title_fr?: string | null
+          severity_level?: string | null
+          short_description_fr?: string | null
           slug?: string
+          source_confidence?: number | null
+          total_priority_score?: number | null
           typical_causes?: Json | null
           updated_at?: string
           urgency_score?: number | null
@@ -5662,6 +5934,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      homeowner_questions: {
+        Row: {
+          cost_note_fr: string | null
+          created_at: string | null
+          full_answer_fr: string | null
+          id: string
+          question_fr: string
+          quick_answer_fr: string | null
+          slug: string
+          source_confidence: number | null
+          updated_at: string | null
+          urgency_note_fr: string | null
+        }
+        Insert: {
+          cost_note_fr?: string | null
+          created_at?: string | null
+          full_answer_fr?: string | null
+          id?: string
+          question_fr: string
+          quick_answer_fr?: string | null
+          slug: string
+          source_confidence?: number | null
+          updated_at?: string | null
+          urgency_note_fr?: string | null
+        }
+        Update: {
+          cost_note_fr?: string | null
+          created_at?: string | null
+          full_answer_fr?: string | null
+          id?: string
+          question_fr?: string
+          quick_answer_fr?: string | null
+          slug?: string
+          source_confidence?: number | null
+          updated_at?: string | null
+          urgency_note_fr?: string | null
+        }
+        Relationships: []
       }
       improvement_tasks: {
         Row: {
@@ -6645,6 +6956,177 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      problem_causes: {
+        Row: {
+          created_at: string | null
+          description_fr: string | null
+          id: string
+          name_fr: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string | null
+          description_fr?: string | null
+          id?: string
+          name_fr: string
+          slug: string
+        }
+        Update: {
+          created_at?: string | null
+          description_fr?: string | null
+          id?: string
+          name_fr?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      problem_geo_targets: {
+        Row: {
+          created_at: string | null
+          demand_score: number | null
+          geo_area_id: string
+          id: string
+          is_enabled: boolean | null
+          priority_score: number | null
+          problem_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          demand_score?: number | null
+          geo_area_id: string
+          id?: string
+          is_enabled?: boolean | null
+          priority_score?: number | null
+          problem_id: string
+        }
+        Update: {
+          created_at?: string | null
+          demand_score?: number | null
+          geo_area_id?: string
+          id?: string
+          is_enabled?: boolean | null
+          priority_score?: number | null
+          problem_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "problem_geo_targets_geo_area_id_fkey"
+            columns: ["geo_area_id"]
+            isOneToOne: false
+            referencedRelation: "geo_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "problem_geo_targets_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "home_problems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      problem_professionals: {
+        Row: {
+          created_at: string | null
+          id: string
+          problem_id: string
+          profession_id: string
+          recommended_order: number | null
+          relevance_score: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          problem_id: string
+          profession_id: string
+          recommended_order?: number | null
+          relevance_score?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          problem_id?: string
+          profession_id?: string
+          recommended_order?: number | null
+          relevance_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "problem_professionals_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "home_problems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "problem_professionals_profession_id_fkey"
+            columns: ["profession_id"]
+            isOneToOne: false
+            referencedRelation: "home_professions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      problem_symptoms: {
+        Row: {
+          created_at: string | null
+          description_fr: string | null
+          id: string
+          name_fr: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string | null
+          description_fr?: string | null
+          id?: string
+          name_fr: string
+          slug: string
+        }
+        Update: {
+          created_at?: string | null
+          description_fr?: string | null
+          id?: string
+          name_fr?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      problem_value_tags: {
+        Row: {
+          created_at: string | null
+          id: string
+          problem_id: string
+          value_tag_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          problem_id: string
+          value_tag_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          problem_id?: string
+          value_tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "problem_value_tags_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "home_problems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "problem_value_tags_value_tag_id_fkey"
+            columns: ["value_tag_id"]
+            isOneToOne: false
+            referencedRelation: "value_tags"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profile_alignment_answers: {
         Row: {
@@ -8384,6 +8866,84 @@ export type Database = {
             columns: ["qr_code_id"]
             isOneToOne: false
             referencedRelation: "property_qr_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      question_problem_links: {
+        Row: {
+          created_at: string | null
+          id: string
+          problem_id: string
+          question_id: string
+          relevance_score: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          problem_id: string
+          question_id: string
+          relevance_score?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          problem_id?: string
+          question_id?: string
+          relevance_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_problem_links_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "home_problems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "question_problem_links_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "homeowner_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      question_solution_links: {
+        Row: {
+          created_at: string | null
+          id: string
+          question_id: string
+          relevance_score: number | null
+          solution_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          question_id: string
+          relevance_score?: number | null
+          solution_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          question_id?: string
+          relevance_score?: number | null
+          solution_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_solution_links_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "homeowner_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "question_solution_links_solution_id_fkey"
+            columns: ["solution_id"]
+            isOneToOne: false
+            referencedRelation: "home_solutions"
             referencedColumns: ["id"]
           },
         ]
@@ -10902,6 +11462,33 @@ export type Database = {
           total_pages?: number | null
           triggered_by?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      value_tags: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description_fr: string | null
+          id: string
+          label_fr: string
+          slug: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description_fr?: string | null
+          id?: string
+          label_fr: string
+          slug: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description_fr?: string | null
+          id?: string
+          label_fr?: string
+          slug?: string
         }
         Relationships: []
       }

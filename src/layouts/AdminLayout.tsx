@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Users, Briefcase, FileText, Star, FolderOpen,
   CalendarDays, TrendingUp, LogOut, MapPin, BarChart3, Sparkles,
   Brain, Palette, Menu, X, ShieldCheck, Shield, Bell, SearchCheck,
-  Bot,
+  Bot, Network,
 } from "lucide-react";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import type { ReactNode } from "react";
@@ -33,6 +33,7 @@ const navItems = [
   { to: "/admin/alerts", label: "Alertes", icon: Bell },
   { to: "/admin/verified-contractors", label: "Entrepreneurs vérifiés", icon: Shield },
   { to: "/admin/automation", label: "Automatisation", icon: Bot },
+  { to: "/admin/home-graph", label: "Problem Graph", icon: Network },
 ];
 
 const NavLinks = ({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) => (

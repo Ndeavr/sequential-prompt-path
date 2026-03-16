@@ -147,6 +147,7 @@ import AdminAlerts from "@/pages/admin/AdminAlerts";
 import AdminVerifiedContractors from "@/pages/admin/AdminVerifiedContractors";
 import AdminDuplicates from "@/pages/admin/AdminDuplicates";
 import AdminAutomation from "@/pages/admin/AdminAutomation";
+import AdminHomeGraph from "@/pages/admin/AdminHomeGraph";
 
 export const AppRouter = () => (
   <BrowserRouter>
@@ -291,6 +292,7 @@ export const AppRouter = () => (
       <Route path="/admin/verified-contractors" element={<ProtectedRoute requiredRole="admin"><AdminVerifiedContractors /></ProtectedRoute>} />
       <Route path="/admin/duplicates" element={<ProtectedRoute requiredRole="admin"><AdminDuplicates /></ProtectedRoute>} />
       <Route path="/admin/automation" element={<ProtectedRoute requiredRole="admin"><AdminAutomation /></ProtectedRoute>} />
+      <Route path="/admin/home-graph" element={<ProtectedRoute requiredRole="admin"><AdminHomeGraph /></ProtectedRoute>} />
 
       {/* Condos — Public SEO */}
       <Route path="/condo" element={<CondoHomePage />} />
