@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { Helmet } from "react-helmet-async";
 import {
   Shield, ArrowRight, Star, Brain,
   MessageCircle, Heart, HardHat,
@@ -7,7 +8,7 @@ import {
   BarChart3, Zap, ShieldCheck, Camera,
   Award, Users, FolderOpen,
   Building, Vote, Wrench, PiggyBank, ClipboardList,
-  Droplets, Leaf, Sparkles,
+  Droplets, Leaf, Sparkles, XCircle, Clock, DollarSign,
 } from "lucide-react";
 import FeaturedCarousel from "@/components/home/FeaturedCarousel";
 import HeroSection from "@/components/home/HeroSection";
@@ -45,12 +46,112 @@ const Home = () => {
     }
   };
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "UnPRO",
+    "url": "https://unpro.ca",
+    "description": "Plateforme qui connecte les propriétaires avec des entrepreneurs compétents grâce à une analyse de réputation, expertise et engagement.",
+    "areaServed": "Quebec",
+    "knowsAbout": ["entrepreneurs", "renovation", "home services", "construction", "property maintenance"]
+  };
+
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Pourquoi UnPRO ne fonctionne pas avec 3 soumissions ?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Les plateformes de soumissions vendent souvent la même demande à plusieurs entrepreneurs. UnPRO privilégie une approche différente : identifier le bon professionnel et offrir un rendez-vous exclusif."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Les entrepreneurs sont-ils vérifiés ?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Les professionnels sont analysés selon plusieurs signaux incluant réputation, expertise et engagement dans leur domaine."
+        }
+      }
+    ]
+  };
+
   return (
     <MainLayout>
+      <Helmet>
+        <title>Tanné des plateformes à 3 soumissions ? | Rendez-vous exclusif | UnPRO</title>
+        <meta name="description" content="Tanné de courir après 3 soumissions inutiles ? UnPRO vous connecte directement avec le bon entrepreneur. Rendez-vous exclusif, sans compétition entre entrepreneurs." />
+        <meta property="og:title" content="Tanné des 3 soumissions ? UnPRO change les règles" />
+        <meta property="og:description" content="UnPRO abolit le modèle des 3 soumissions et vous connecte directement avec des entrepreneurs compétents. Rendez-vous exclusif et diagnostic clair." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://unpro.ca" />
+        <link rel="canonical" href="https://unpro.ca" />
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+        <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
+      </Helmet>
     <div className="flex flex-col bg-background text-foreground">
 
       {/* ═══ HERO ═══ */}
       <HeroSection />
+
+      {/* ═══ ANTI-3-SOUMISSIONS SEO SECTION ═══ */}
+      <section className="px-5 py-12 md:py-16">
+        <div className="max-w-3xl mx-auto">
+          <motion.div variants={sectionFade} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            <h2 className="font-display text-section sm:text-title font-bold text-foreground mb-6">
+              Pourquoi UnPRO abolit les 3 soumissions
+            </h2>
+            <div className="text-body leading-relaxed text-muted-foreground space-y-4">
+              <p>
+                Pendant des années, les propriétaires ont été encouragés à demander trois soumissions pour leurs travaux.
+                Dans la réalité, ce modèle crée souvent :
+              </p>
+              <ul className="space-y-2 pl-1">
+                {[
+                  { icon: Clock, text: "des pertes de temps" },
+                  { icon: XCircle, text: "des estimations incomplètes" },
+                  { icon: DollarSign, text: "des entrepreneurs en compétition sur le prix plutôt que la qualité" },
+                ].map((item) => (
+                  <li key={item.text} className="flex items-center gap-3">
+                    <item.icon className="h-4 w-4 text-destructive shrink-0" />
+                    <span className="font-medium text-foreground">{item.text}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="font-semibold text-foreground">
+                UnPRO change complètement cette approche.
+              </p>
+              <p>
+                Notre plateforme analyse différents signaux de compétence, réputation et engagement afin d'identifier 
+                les entrepreneurs les plus fiables pour chaque type de travaux.
+              </p>
+              <p>
+                Au lieu de recevoir plusieurs soumissions approximatives, vous pouvez prendre un{" "}
+                <strong className="text-primary">rendez-vous direct avec un professionnel compétent</strong>.
+              </p>
+            </div>
+
+            {/* CTA */}
+            <div className="flex flex-col sm:flex-row gap-3 mt-8">
+              <button
+                onClick={() => handleCta("/search", "Trouver un entrepreneur compétent")}
+                className="h-13 rounded-full px-8 text-sm font-bold cta-gradient"
+              >
+                Trouver un entrepreneur compétent <ArrowRight className="h-4 w-4 ml-1.5 inline" />
+              </button>
+              <button
+                onClick={() => handleCta("/dashboard/appointments", "Prendre un rendez-vous")}
+                className="h-13 rounded-full px-8 text-sm font-bold bg-card border-2 border-border text-foreground hover:border-primary/30 transition-all active:scale-[0.97]"
+              >
+                Prendre un rendez-vous
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
 
       {/* ═══ HOW IT WORKS ═══ */}
       <section className="px-5 py-10 md:py-14">
@@ -62,8 +163,8 @@ const Home = () => {
           <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-3 gap-3 sm:gap-4">
             {[
               { step: 1, icon: FileText, title: "Décrivez", subtitle: "votre projet", iconColor: "text-primary" },
-              { step: 2, icon: BarChart3, title: "Comparez", subtitle: "les soumissions", iconColor: "text-accent" },
-              { step: 3, icon: Trophy, title: "Choisissez", subtitle: "le meilleur pro", iconColor: "text-warning" },
+              { step: 2, icon: Brain, title: "UnPRO analyse", subtitle: "et recommande", iconColor: "text-accent" },
+              { step: 3, icon: Trophy, title: "Rencontrez", subtitle: "le bon entrepreneur", iconColor: "text-warning" },
             ].map((item, i) => (
               <motion.div key={item.step} variants={fadeUp} custom={i} className="relative">
                 <div className="premium-card rounded-2xl p-3 sm:p-6 text-center h-full relative overflow-hidden">
@@ -449,6 +550,43 @@ const Home = () => {
         </div>
       </section>
 
+      {/* ═══ FAQ SEO ═══ */}
+      <section className="px-5 py-12 md:py-16">
+        <div className="max-w-3xl mx-auto">
+          <motion.div variants={sectionFade} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            <h2 className="font-display text-section sm:text-title font-bold text-foreground mb-8">
+              Questions fréquentes
+            </h2>
+            <div className="space-y-4">
+              {[
+                {
+                  q: "Pourquoi UnPRO ne fonctionne pas avec 3 soumissions ?",
+                  a: "Les plateformes de soumissions vendent souvent la même demande à plusieurs entrepreneurs. UnPRO privilégie une approche différente : identifier le bon professionnel et offrir un rendez-vous exclusif.",
+                },
+                {
+                  q: "Les entrepreneurs sont-ils vérifiés ?",
+                  a: "Les professionnels sont analysés selon plusieurs signaux incluant réputation, expertise et engagement dans leur domaine.",
+                },
+                {
+                  q: "Les rendez-vous sont-ils partagés ?",
+                  a: "Non. Chaque projet est envoyé à un seul entrepreneur à la fois. C'est le principe fondamental d'UnPRO.",
+                },
+              ].map((faq) => (
+                <details key={faq.q} className="group premium-card rounded-2xl overflow-hidden">
+                  <summary className="flex items-center justify-between cursor-pointer px-5 py-4 text-body font-semibold text-foreground hover:bg-muted/30 transition-colors">
+                    {faq.q}
+                    <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 transition-transform group-open:rotate-90" />
+                  </summary>
+                  <div className="px-5 pb-4 text-meta leading-relaxed text-muted-foreground">
+                    {faq.a}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ═══ FINAL CTA ═══ */}
       <section className="px-5 py-16">
         <div className="max-w-3xl mx-auto">
@@ -463,22 +601,22 @@ const Home = () => {
                 <div className="h-14 w-14 mx-auto rounded-2xl flex items-center justify-center bg-gradient-to-br from-primary to-accent shadow-lg">
                   <Sparkles className="h-6 w-6 text-white" />
                 </div>
-                <h2 className="section-title">Lancez votre projet en toute confiance.</h2>
+                <h2 className="section-title">Tanné des 3 soumissions ?<br/>UnPRO change les règles.</h2>
                 <p className="text-body max-w-md mx-auto text-muted-foreground">
-                  Créez votre compte gratuit et commencez à comparer les soumissions.
+                  Rendez-vous exclusif. Pas de compétition entre entrepreneurs. Pas de leads partagés.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <button
-                    onClick={() => handleCta("/describe-project", "Décrire mon projet")}
+                    onClick={() => handleCta("/search", "Trouver un entrepreneur compétent")}
                     className="h-13 rounded-full px-8 text-sm font-bold cta-gradient"
                   >
-                    Décrire mon projet <ArrowRight className="h-4 w-4 ml-1.5 inline" />
+                    Trouver un entrepreneur compétent <ArrowRight className="h-4 w-4 ml-1.5 inline" />
                   </button>
                   <button
-                    onClick={() => handleCta("/dashboard/quotes/upload", "Comparer des soumissions")}
+                    onClick={() => handleCta("/dashboard/appointments", "Prendre un rendez-vous")}
                     className="h-13 rounded-full px-8 text-sm font-bold bg-card border-2 border-border text-foreground hover:border-primary/30 transition-all active:scale-[0.97]"
                   >
-                    Comparer des soumissions
+                    Prendre un rendez-vous
                   </button>
                 </div>
                 <div className="trust-row pt-2">
