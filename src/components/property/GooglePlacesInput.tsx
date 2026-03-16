@@ -133,6 +133,11 @@ export default function GooglePlacesInput({
     autocompleteRef.current = ac;
   }, [isLoaded, onChange, onPlaceSelect]);
 
+  // Always use controlled mode but let Google Autocomplete update via onChange
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(e.target.value);
+  }, [onChange]);
+
   return (
     <div className={`relative ${className}`}>
       <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
@@ -140,12 +145,16 @@ export default function GooglePlacesInput({
         ref={inputRef}
         type="text"
         placeholder={placeholder}
-        value={isLoaded ? undefined : value}
-        onChange={isLoaded ? undefined : (e) => onChange(e.target.value)}
-        defaultValue={isLoaded ? value : undefined}
+        value={value}
+        onChange={handleChange}
         className="h-13 rounded-2xl bg-card border-border/40 text-base pl-10 pr-5 shadow-sm w-full"
         autoComplete="off"
       />
+      {isInitializing && (
+        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+          <div className="h-4 w-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+        </div>
+      )}
     </div>
   );
 }
