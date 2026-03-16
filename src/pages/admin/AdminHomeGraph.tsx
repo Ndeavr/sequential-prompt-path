@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/layouts/AdminLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,7 +11,17 @@ import { toast } from "sonner";
 import {
   Network, FileText, Zap, AlertTriangle, Copy, Loader2,
   Bug, TrendingUp, Globe, Brain, HelpCircle, Tag, MapPin, BookOpen,
+  Rocket, Upload,
 } from "lucide-react";
+import {
+  fetchGraphStats, fetchGraphProblems, fetchBlueprints,
+  fetchQuickWins, fetchQualityIssues, updateBlueprintStatus,
+  generateGraphPrompt,
+  type GraphStats, type GraphProblem, type GraphBlueprint,
+} from "@/services/homeGraphService";
+
+const MassiveBlueprintPanel = lazy(() => import("@/components/homeGraph/MassiveBlueprintPanel"));
+const JsonImportPipeline = lazy(() => import("@/components/homeGraph/JsonImportPipeline"));
 import {
   fetchGraphStats, fetchGraphProblems, fetchBlueprints,
   fetchQuickWins, fetchQualityIssues, updateBlueprintStatus,
