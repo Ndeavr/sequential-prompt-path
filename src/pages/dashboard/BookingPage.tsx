@@ -16,6 +16,7 @@ import { CalendarIcon, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import PropertySelect from "@/components/shared/PropertySelect";
 
 const timeWindows = [
   { value: "morning", label: "Matin (8h–12h)" },

@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Upload, FileText, Check } from "lucide-react";
+import PropertySelect from "@/components/shared/PropertySelect";
 import { motion } from "framer-motion";
 
 const DOCUMENT_TYPES = [
