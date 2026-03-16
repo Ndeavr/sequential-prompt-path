@@ -40,12 +40,66 @@ import { useState } from "react";
 import heroHouse from "@/assets/hero-house.jpg";
 import WhyThisContractorIsRecommended from "@/components/contractor/WhyThisContractorIsRecommended";
 
-/* ── Animations ── */
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.45 } },
+/* ── Demo / fallback contractor data for carousel "Voir profil" ── */
+const DEMO_CONTRACTORS: Record<string, any> = {
+  "1": {
+    id: "1", business_name: "TOITURE EXPERT", specialty: "Toiture & Couverture", city: "Montréal", province: "QC",
+    aipp_score: 92, rating: 4.9, review_count: 47, years_experience: 18, verification_status: "verified", admin_verified: true,
+    description: "Spécialistes en toiture résidentielle et commerciale depuis 2006. Expertise en bardeaux d'asphalte, toiture métallique et membrane élastomère. Service d'urgence 24h disponible.",
+    phone: "(514) 555-0101", email: "info@toiture-expert.ca", website: "https://toiture-expert.ca",
+    address: "1234 Rue Saint-Denis", postal_code: "H2J 2L1",
+    logo_url: null,
+  },
+  "2": {
+    id: "2", business_name: "PLOMBERIE PRO", specialty: "Plomberie", city: "Laval", province: "QC",
+    aipp_score: 88, rating: 4.8, review_count: 34, years_experience: 12, verification_status: "verified", admin_verified: true,
+    description: "Service de plomberie résidentielle complet : réparations, installations, débouchage et rénovation de salles de bain. Détenteur de licence RBQ.",
+    phone: "(450) 555-0202", email: "contact@plomberie-pro.ca", website: "https://plomberie-pro.ca",
+    address: "567 Boul. des Laurentides", postal_code: "H7G 2T8",
+    logo_url: null,
+  },
+  "3": {
+    id: "3", business_name: "RÉNO MAÎTRE", specialty: "Rénovation générale", city: "Québec", province: "QC",
+    aipp_score: 85, rating: 4.7, review_count: 29, years_experience: 15, verification_status: "verified", admin_verified: true,
+    description: "Entrepreneur général spécialisé en rénovation résidentielle haut de gamme. Cuisines, salles de bain, sous-sols et agrandissements. Estimation gratuite.",
+    phone: "(418) 555-0303", email: "info@renomaster.ca", website: "https://renomaster.ca",
+    address: "890 Chemin Sainte-Foy", postal_code: "G1S 2L3",
+    logo_url: null,
+  },
+  "4": {
+    id: "4", business_name: "ÉLECTRO PLUS", specialty: "Électricité", city: "Gatineau", province: "QC",
+    aipp_score: 90, rating: 4.9, review_count: 52, years_experience: 20, verification_status: "verified", admin_verified: true,
+    description: "Maître-électricien certifié. Panneaux électriques, éclairage, bornes de recharge VÉ, domotique et mise aux normes. Résidentiel et commercial.",
+    phone: "(819) 555-0404", email: "info@electro-plus.ca", website: "https://electro-plus.ca",
+    address: "234 Boul. Maloney", postal_code: "J8T 5R4",
+    logo_url: null,
+  },
+  "5": {
+    id: "5", business_name: "CUISINE DESIGN", specialty: "Ébénisterie", city: "Sherbrooke", province: "QC",
+    aipp_score: 87, rating: 4.6, review_count: 23, years_experience: 10, verification_status: "verified", admin_verified: true,
+    description: "Fabrication et installation d'armoires de cuisine sur mesure. Design contemporain et classique. Comptoirs en quartz, granit et bois massif. Showroom disponible sur rendez-vous.",
+    phone: "(819) 555-0505", email: "info@cuisine-design.ca", website: "https://cuisine-design.ca",
+    address: "456 Rue King Ouest", postal_code: "J1H 1R4",
+    logo_url: null,
+  },
 };
-const stagger = { visible: { transition: { staggerChildren: 0.07 } } };
+
+const DEMO_AIPP_BREAKDOWN = (score: number) => ({
+  total_score: score,
+  is_current: true,
+  identity_score: Math.round(score * 0.2),
+  trust_score: Math.round(score * 0.19),
+  visibility_score: Math.round(score * 0.18),
+  conversion_score: Math.round(score * 0.22),
+  ai_seo_readiness_score: Math.round(score * 0.21),
+});
+
+const DEMO_REVIEWS = (name: string) => [
+  { id: "r1", rating: 5, comment: `${name} a fait un travail exceptionnel. Très professionnel, respectueux des délais et du budget. Je recommande sans hésitation.`, reviewer_name: "Martin L.", created_at: "2026-01-15", work_quality: 5, communication: 5, professionalism: 5, schedule: 5, budget: 5, cleanliness: 4 },
+  { id: "r2", rating: 5, comment: "Excellent service du début à la fin. Communication claire et résultat impeccable.", reviewer_name: "Sophie B.", created_at: "2025-11-20", work_quality: 5, communication: 5, professionalism: 5, schedule: 4, budget: 5, cleanliness: 5 },
+  { id: "r3", rating: 4, comment: "Bon travail dans l'ensemble. Quelques jours de retard mais le résultat final est de qualité.", reviewer_name: "Jean-François D.", created_at: "2025-09-08", work_quality: 5, communication: 4, professionalism: 4, schedule: 3, budget: 4, cleanliness: 4 },
+  { id: "r4", rating: 5, comment: "Très satisfait ! L'équipe est arrivée à l'heure, a protégé nos meubles et a laissé le chantier propre.", reviewer_name: "Isabelle T.", created_at: "2025-07-22", work_quality: 5, communication: 5, professionalism: 5, schedule: 5, budget: 5, cleanliness: 5 },
+];
 
 /* ── Helpers ── */
 const getAIPPTier = (score: number) => {
