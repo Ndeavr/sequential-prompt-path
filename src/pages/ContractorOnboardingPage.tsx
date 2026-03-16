@@ -60,6 +60,14 @@ export default function ContractorOnboardingPage() {
 
   const update = (field: string, value: any) => setForm((f) => ({ ...f, [field]: value }));
 
+  const handleBusinessSelected = (result: BusinessSearchResult) => {
+    update("businessName", result.business_name);
+    if (result.city) update("city", result.city);
+    if (result.primary_category) update("category", result.primary_category);
+    // Auto-fill territory city too
+    if (result.city) update("territoryCity", result.city);
+  };
+
   const toggleArray = (field: "services" | "certifications", val: string) => {
     setForm((f) => {
       const arr = f[field];
