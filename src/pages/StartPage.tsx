@@ -40,7 +40,7 @@ const INTENT_REDIRECT_MAP: Record<string, string> = {
   "diagnostic": "/alex?intent=diagnostic",
   "upload-soumission": "/dashboard/quotes/upload",
   "matching": "/matching",
-  "leads": "/pro/leads",
+  "rendez-vous": "/pro/leads",
   "profil-entreprise": "/pro/profile",
   "plans": "/pricing",
   "ambassadeur": "/ambassadeurs",

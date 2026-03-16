@@ -10,7 +10,7 @@ interface SubscriptionPaywallProps {
 
 const SubscriptionPaywall = ({
   title = "Abonnement requis",
-  message = "Activez votre abonnement pour accéder aux demandes de clients.",
+  message = "Activez votre abonnement pour recevoir des rendez-vous garantis exclusifs.",
 }: SubscriptionPaywallProps) => (
   <Card className="max-w-md mx-auto mt-12">
     <CardContent className="flex flex-col items-center text-center gap-4 py-8">
