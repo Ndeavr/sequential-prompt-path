@@ -57,7 +57,7 @@ const INTENT_CTA_MAP: Record<UserIntent, CTAConfig> = {
   explore_city: {
     intent: "explore_city",
     primary: { label: "Voir le score de votre maison", labelEn: "See Your Home Score", to: "/score-maison" },
-    secondary: { label: "Trouver un entrepreneur", labelEn: "Find a Contractor", to: "/recherche" },
+    secondary: { label: "Trouver un entrepreneur", labelEn: "Find a Contractor", to: "/search" },
   },
   create_project: {
     intent: "create_project",
