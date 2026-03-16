@@ -276,7 +276,7 @@ export function getDrawerItems(ctx: NavigationContext): NavItem[] {
     { to: "/proprietaires", label: "Propriétaires", labelEn: "Homeowners", icon: "Building2" },
     { to: "/entrepreneurs", label: "Entrepreneurs", labelEn: "Contractors", icon: "Briefcase" },
     { to: "/condo", label: "Condo / Immeubles", labelEn: "Condos", icon: "Building" },
-    { to: "/compare-quotes", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
+    { to: "/compare-quotes", label: "Analyser des soumissions", labelEn: "Analyze Quotes", icon: "Scale" },
     { to: "/search", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", icon: "ShieldCheck" },
     { to: "/score-maison", label: "Score Maison", labelEn: "Home Score", icon: "BarChart3" },
     { to: "/aipp-score", label: "Score AIPP", icon: "Star" },
