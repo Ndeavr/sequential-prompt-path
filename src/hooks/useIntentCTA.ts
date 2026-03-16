@@ -46,8 +46,8 @@ const INTENT_CTA_MAP: Record<UserIntent, CTAConfig> = {
   },
   offer_services: {
     intent: "offer_services",
-    primary: { label: "Créer mon profil professionnel", labelEn: "Create My Pro Profile", to: "/devenir-entrepreneur" },
-    secondary: { label: "Voir les plans disponibles", labelEn: "View Plans", to: "/tarifs" },
+    primary: { label: "Créer mon profil professionnel", labelEn: "Create My Pro Profile", to: "/entrepreneurs/creer-mon-profil" },
+    secondary: { label: "Voir les plans disponibles", labelEn: "View Plans", to: "/pricing" },
   },
   research_problem: {
     intent: "research_problem",
