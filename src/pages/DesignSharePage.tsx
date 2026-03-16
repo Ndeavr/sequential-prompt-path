@@ -95,7 +95,7 @@ export default function DesignSharePage() {
           action: "cast_vote",
           shareToken: token,
           versionId,
-          voterName: voterName.trim(),
+          voterName: name,
           voteType,
           fingerprint: fingerprint(),
           comment: commentingId === versionId && commentText.trim() ? commentText.trim() : null,
