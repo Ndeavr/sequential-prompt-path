@@ -188,6 +188,7 @@ export const AppRouter = () => (
       <Route path="/alex" element={<AlexChat />} />
       <Route path="/alex/renovation" element={<RenovationVisualizerPage />} />
       <Route path="/design" element={<DesignPage />} />
+      <Route path="/design/share/:token" element={<DesignSharePage />} />
       <Route path="/inspirations" element={<DiscoveryFeedPage />} />
       <Route path="/transformations/:id" element={<TransformationDetailPage />} />
       <Route path="/tendances" element={<TrendingPage />} />
