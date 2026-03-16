@@ -101,6 +101,9 @@ export function useDesignProject() {
         budget?: string;
         zones?: string[];
         sliders?: Record<string, number>;
+        inspirationImages?: string[];
+        materials?: string[];
+        colorPalette?: string;
       }
     ) => {
       if (!originalImage) return;
@@ -120,6 +123,9 @@ export function useDesignProject() {
             zones: options?.zones,
             roomType,
             projectId,
+            inspirationImages: options?.inspirationImages,
+            materials: options?.materials,
+            colorPalette: options?.colorPalette,
           }),
         });
 
