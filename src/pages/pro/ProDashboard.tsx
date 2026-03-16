@@ -155,7 +155,7 @@ const ProDashboard = () => {
         {/* ═══ STAT CARDS ROW ═══ */}
         <div className="grid grid-cols-4 gap-2">
           {[
-            { icon: Target, label: "Leads", value: String(newLeads), color: "text-primary" },
+            { icon: Target, label: "RDV garantis", value: String(newLeads), color: "text-primary" },
             { icon: Star, label: "Rating", value: avgRating > 0 ? `${avgRating.toFixed(1)}★` : "—", color: "text-yellow-400" },
             { icon: CalendarDays, label: "Appts", value: String(upcomingAppts), color: "text-accent" },
             { icon: Eye, label: "Views", value: "—", color: "text-secondary" },

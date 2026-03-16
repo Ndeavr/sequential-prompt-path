@@ -3,7 +3,7 @@ import { PageHeader, LoadingState, EmptyState, StatCard } from "@/components/sha
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAdminLeads, useAdminLeadStats } from "@/hooks/useLeads";
-import { TrendingUp, Zap, BarChart3, CalendarDays } from "lucide-react";
+import { CalendarCheck, Zap, BarChart3, CalendarDays } from "lucide-react";
 
 const levelLabel = (score: number) => score >= 60 ? "Élevé" : score >= 35 ? "Moyen" : "Faible";
 
@@ -13,17 +13,17 @@ const AdminLeads = () => {
 
   return (
     <AdminLayout>
-      <PageHeader title="Leads" description="Intelligence marketplace — leads qualifiés" />
+      <PageHeader title="Rendez-vous garantis" description="Intelligence marketplace — rendez-vous exclusifs qualifiés" />
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <StatCard title="Total leads" value={stats?.total ?? 0} icon={<TrendingUp className="h-4 w-4" />} />
+        <StatCard title="Total rendez-vous" value={stats?.total ?? 0} icon={<CalendarCheck className="h-4 w-4" />} />
         <StatCard title="Aujourd'hui" value={stats?.today ?? 0} icon={<CalendarDays className="h-4 w-4" />} />
         <StatCard title="Qualité élevée" value={stats?.highQuality ?? 0} icon={<Zap className="h-4 w-4" />} />
         <StatCard title="Score moyen" value={stats?.avgScore ?? 0} icon={<BarChart3 className="h-4 w-4" />} />
       </div>
 
-      {isLoading ? <LoadingState /> : !leads?.length ? <EmptyState message="Aucun lead." /> : (
+      {isLoading ? <LoadingState /> : !leads?.length ? <EmptyState message="Aucun rendez-vous garanti." /> : (
         <div className="rounded-md border">
           <Table>
             <TableHeader>

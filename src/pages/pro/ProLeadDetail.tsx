@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLead } from "@/hooks/useLeads";
 import { useUpdateAppointmentStatus } from "@/hooks/useAppointments";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle, AlertTriangle, TrendingUp } from "lucide-react";
+import { ArrowLeft, CheckCircle, AlertTriangle, CalendarCheck } from "lucide-react";
 
 const levelColors: Record<string, string> = {
   high: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
@@ -28,7 +28,7 @@ const ProLeadDetail = () => {
   const updateStatus = useUpdateAppointmentStatus();
 
   if (isLoading) return <ContractorLayout><LoadingState /></ContractorLayout>;
-  if (!lead) return <ContractorLayout><PageHeader title="Lead introuvable" /><Button asChild variant="outline"><Link to="/pro/leads"><ArrowLeft className="h-4 w-4 mr-1" />Retour</Link></Button></ContractorLayout>;
+  if (!lead) return <ContractorLayout><PageHeader title="Rendez-vous introuvable" /><Button asChild variant="outline"><Link to="/pro/leads"><ArrowLeft className="h-4 w-4 mr-1" />Retour</Link></Button></ContractorLayout>;
 
   const appt = (lead as any).appointments;
   const level = lead.score >= 60 ? "high" : lead.score >= 35 ? "medium" : "low";
@@ -51,13 +51,13 @@ const ProLeadDetail = () => {
         <div className="flex items-center gap-3">
           <Button asChild variant="ghost" size="sm"><Link to="/pro/leads"><ArrowLeft className="h-4 w-4" /></Link></Button>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">Détail du lead</h1>
+            <h1 className="text-2xl font-bold">Détail du rendez-vous garanti</h1>
             <p className="text-sm text-muted-foreground">
               {lead.project_category || "Projet"} · {lead.city || "Ville non précisée"}
             </p>
           </div>
           <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold ${levelColors[level]}`}>
-            <TrendingUp className="h-4 w-4" />
+            <CalendarCheck className="h-4 w-4" />
             {lead.score}/100
           </div>
         </div>
@@ -83,7 +83,7 @@ const ProLeadDetail = () => {
           <Card>
             <CardContent className="pt-6">
               <h3 className="flex items-center gap-2 font-semibold text-base mb-3 text-green-700 dark:text-green-400">
-                <CheckCircle className="h-5 w-5" /> Pourquoi ce lead est intéressant
+                <CheckCircle className="h-5 w-5" /> Pourquoi ce rendez-vous est pertinent
               </h3>
               {strengths.length > 0 ? (
                 <ul className="space-y-2">

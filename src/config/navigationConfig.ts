@@ -28,14 +28,14 @@ export const headerNavByRole: Record<UserRole | "guest", NavItem[]> = {
   contractor: [
     { to: "/pro", label: "Accueil", labelEn: "Home", icon: "Home" },
     { to: "/pro/profile", label: "Mon profil", labelEn: "My Profile", icon: "User" },
-    { to: "/pro/leads", label: "Opportunités", labelEn: "Opportunities", icon: "TrendingUp" },
-    { to: "/pro/appointments", label: "Rendez-vous", labelEn: "Appointments", icon: "CalendarDays" },
+    { to: "/pro/leads", label: "Rendez-vous garantis", labelEn: "Guaranteed Appointments", icon: "CalendarCheck" },
+    { to: "/pro/appointments", label: "Mes rendez-vous", labelEn: "My Appointments", icon: "CalendarDays" },
     { to: "/alex", label: "Alex", labelEn: "Alex", icon: "Sparkles" },
   ],
   partner: [
     { to: "/dashboard", label: "Accueil", labelEn: "Home", icon: "Home" },
     { to: "/dashboard/syndicates", label: "Dossiers", labelEn: "Cases", icon: "FolderOpen" },
-    { to: "/pro/leads", label: "Opportunités", labelEn: "Opportunities", icon: "TrendingUp" },
+    { to: "/pro/leads", label: "Rendez-vous garantis", labelEn: "Guaranteed Appointments", icon: "CalendarCheck" },
     { to: "/dashboard/home-score", label: "Rapports", labelEn: "Reports", icon: "BarChart3" },
     { to: "/alex", label: "Alex", labelEn: "Alex", icon: "Sparkles" },
   ],
@@ -43,7 +43,7 @@ export const headerNavByRole: Record<UserRole | "guest", NavItem[]> = {
     { to: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
     { to: "/admin/users", label: "Utilisateurs", labelEn: "Users", icon: "Users" },
     { to: "/admin/contractors", label: "Entrepreneurs", labelEn: "Contractors", icon: "Briefcase" },
-    { to: "/admin/leads", label: "Leads", icon: "TrendingUp" },
+    { to: "/admin/leads", label: "Rendez-vous", icon: "CalendarCheck" },
     { to: "/admin/agents", label: "Système", labelEn: "System", icon: "Brain" },
   ],
 };
@@ -77,7 +77,7 @@ export const subNavConfig: Record<string, NavItem[]> = {
     { to: "/pro/documents", label: "Certifications", labelEn: "Certifications", icon: "Shield" },
   ],
   "/pro/leads": [
-    { to: "/pro/leads", label: "Nouveaux leads", labelEn: "New Leads", icon: "TrendingUp" },
+    { to: "/pro/leads", label: "Rendez-vous garantis", labelEn: "Guaranteed Appointments", icon: "CalendarCheck" },
     { to: "/pro/territories", label: "Territoires", labelEn: "Territories", icon: "MapPin" },
   ],
   "/pro/appointments": [
@@ -126,7 +126,7 @@ export function getProfileActions(ctx: NavigationContext): NavItem[] {
     items.push(
       { to: "/pro/profile", label: "Mon profil entreprise", labelEn: "My Business Profile", icon: "User" },
       { to: "/pro/aipp-score", label: "Mon score AIPP", labelEn: "My AIPP Score", icon: "Star" },
-      { to: "/pro/leads", label: "Mes leads", labelEn: "My Leads", icon: "TrendingUp" },
+      { to: "/pro/leads", label: "Mes rendez-vous garantis", labelEn: "My Guaranteed Appointments", icon: "CalendarCheck" },
       { to: "/pro/appointments", label: "Mes rendez-vous", labelEn: "My Appointments", icon: "CalendarDays" },
       { to: "/pro/reviews", label: "Mes avis", labelEn: "My Reviews", icon: "MessageSquare" },
       { to: "/pro/billing", label: "Plans & facturation", labelEn: "Plans & Billing", icon: "CreditCard" },
@@ -175,7 +175,7 @@ export function getStateActions(ctx: NavigationContext): NavItem[] {
       items.push({ to: "/pro/billing", label: "Activer mon profil", labelEn: "Activate My Profile", icon: "CreditCard", badge: "Action requise", badgeVariant: "urgent", priority: 100 });
     }
     if (co.unreadLeadsCount > 0) {
-      items.push({ to: "/pro/leads", label: `${co.unreadLeadsCount} nouvelles opportunités`, labelEn: `${co.unreadLeadsCount} New Opportunities`, icon: "TrendingUp", badge: co.unreadLeadsCount, badgeVariant: "new", priority: 90 });
+      items.push({ to: "/pro/leads", label: `${co.unreadLeadsCount} nouveaux rendez-vous`, labelEn: `${co.unreadLeadsCount} New Appointments`, icon: "CalendarCheck", badge: co.unreadLeadsCount, badgeVariant: "new", priority: 90 });
     }
     if (co.aippScore != null && co.aippScore < 50) {
       items.push({ to: "/pro/aipp-score", label: "Améliorer mon score AIPP", labelEn: "Improve My AIPP Score", icon: "Star", badge: "Score faible", badgeVariant: "warning", priority: 70 });
@@ -207,7 +207,7 @@ export const mobileTabsByRole: Record<UserRole | "guest", NavItem[]> = {
   contractor: [
     { to: "/pro", label: "Accueil", labelEn: "Home", icon: "Home" },
     { to: "/pro/profile", label: "Profil", labelEn: "Profile", icon: "User" },
-    { to: "/pro/leads", label: "Leads", icon: "TrendingUp" },
+    { to: "/pro/leads", label: "RDV garantis", icon: "CalendarCheck" },
     { to: "/pro/appointments", label: "RDV", labelEn: "Appts", icon: "CalendarDays" },
     { to: "/alex", label: "Alex", icon: "Sparkles" },
   ],
@@ -221,7 +221,7 @@ export const mobileTabsByRole: Record<UserRole | "guest", NavItem[]> = {
   admin: [
     { to: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
     { to: "/admin/users", label: "Users", icon: "Users" },
-    { to: "/admin/leads", label: "Leads", icon: "TrendingUp" },
+    { to: "/admin/leads", label: "RDV garantis", icon: "CalendarCheck" },
     { to: "/admin/contractors", label: "Pros", icon: "Briefcase" },
     { to: "/admin/agents", label: "Système", labelEn: "System", icon: "Brain" },
   ],
@@ -250,7 +250,7 @@ export function getDrawerItems(ctx: NavigationContext): NavItem[] {
     return [
       { to: "/pro/profile", label: "Mon profil entreprise", labelEn: "My Business Profile", icon: "User" },
       { to: "/pro/aipp-score", label: "Mon score AIPP", icon: "Star" },
-      { to: "/pro/leads", label: "Mes opportunités", labelEn: "My Opportunities", icon: "TrendingUp" },
+      { to: "/pro/leads", label: "Mes rendez-vous garantis", labelEn: "My Guaranteed Appointments", icon: "CalendarCheck" },
       { to: "/pro/appointments", label: "Mes rendez-vous", labelEn: "My Appointments", icon: "CalendarDays" },
       { to: "/pro/reviews", label: "Mes avis", labelEn: "My Reviews", icon: "MessageSquare" },
       { to: "/pro/territories", label: "Mes territoires", labelEn: "My Territories", icon: "MapPin" },

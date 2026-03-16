@@ -35,7 +35,7 @@ export default function StepCompleteMissing({ data, onContinue }: Props) {
       { key: "emergencyService", label: "Emergency 24/7?", placeholder: "Yes / No", missing: data.emergencyService.state === "missing", impact: "+3 AIPP" },
     ]},
     { icon: Target, label: "Growth Objectives", sublabel: "Powers your personalized plan", accent: "text-secondary", fields: [
-      { key: "monthlyObjective", label: "Desired monthly leads", placeholder: "e.g. 20", missing: true, impact: "" },
+      { key: "monthlyObjective", label: "Desired monthly appointments", placeholder: "e.g. 20", missing: true, impact: "" },
       { key: "targetRegion", label: "Target growth region", placeholder: "e.g. Rive-Sud", missing: true, impact: "" },
     ]},
   ];

@@ -13,7 +13,7 @@ export interface ContractorPlan {
   monthlyStripePriceId: string;
   yearlyStripePriceId: string;
   features: string[];
-  leadAccessLevel: "limited" | "standard" | "priority" | "premium" | "exclusive";
+  appointmentAccessLevel: "limited" | "standard" | "priority" | "premium" | "exclusive";
   priorityLevel: number;
   matchingBoost: number;
   highlighted?: boolean;
@@ -29,11 +29,11 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     yearlyStripePriceId: "price_1T9X6oCvZwK1QnPVG3tLbNqY",
     features: [
       "Profil public de base",
-      "Jusqu'à 5 leads par mois",
+      "Rendez-vous garantis classes S et M",
       "Score AIPP visible",
       "Support par courriel",
     ],
-    leadAccessLevel: "limited",
+    appointmentAccessLevel: "limited",
     priorityLevel: 1,
     matchingBoost: 0,
   },
@@ -46,12 +46,12 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     yearlyStripePriceId: "price_1T9X6pCvZwK1QnPVfBlT13Ly",
     features: [
       "Profil public complet",
-      "Leads illimités",
+      "Rendez-vous garantis S, M, L",
       "Visibilité améliorée dans la recherche",
       "Badge Pro sur le profil",
       "Support prioritaire",
     ],
-    leadAccessLevel: "standard",
+    appointmentAccessLevel: "standard",
     priorityLevel: 2,
     matchingBoost: 0.1,
     highlighted: true,
@@ -65,12 +65,12 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     yearlyStripePriceId: "price_1T9X6qCvZwK1QnPV8V4P18ty",
     features: [
       "Tout le plan Pro",
-      "Priorité dans le matching",
-      "Visibilité accrue",
+      "Rendez-vous garantis S à XL",
+      "Auto-acceptation des projets",
       "Statistiques avancées",
       "Badge Premium",
     ],
-    leadAccessLevel: "priority",
+    appointmentAccessLevel: "priority",
     priorityLevel: 3,
     matchingBoost: 0.2,
   },
@@ -83,12 +83,12 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     yearlyStripePriceId: "price_1T9X6sCvZwK1QnPV2ZwYQOGY",
     features: [
       "Tout le plan Premium",
-      "Haute visibilité dans la recherche",
-      "Priorité maximale de matching",
+      "Tous les rendez-vous garantis (S à XXL)",
+      "Auto-acceptation + analytics avancés",
       "Support dédié",
       "Badge Élite",
     ],
-    leadAccessLevel: "premium",
+    appointmentAccessLevel: "premium",
     priorityLevel: 4,
     matchingBoost: 0.35,
   },
@@ -103,10 +103,10 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
       "Tout le plan Élite",
       "Exclusivité territoriale éligible",
       "Accompagnement personnalisé",
-      "Visibilité maximale",
+      "Rapports sur mesure",
       "Badge Signature",
     ],
-    leadAccessLevel: "exclusive",
+    appointmentAccessLevel: "exclusive",
     priorityLevel: 5,
     matchingBoost: 0.5,
   },

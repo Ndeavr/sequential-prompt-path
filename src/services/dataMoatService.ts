@@ -42,7 +42,7 @@ export const DATA_ASSET_MAP = {
   },
   project_request_submitted: {
     tables: ["projects"],
-    feeds: ["matching_engine", "lead_generation", "neighborhood_trends"],
+    feeds: ["matching_engine", "appointment_distribution", "neighborhood_trends"],
     description: "Demande de projet structurée. Alimente le matching et les signaux de demande locale.",
   },
   contractor_matched: {

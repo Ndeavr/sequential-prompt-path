@@ -21,10 +21,10 @@ const plans = [
   },
   {
     id: "pro", name: "Pro", icon: TrendingUp, badge: "Solid foundation",
-    positioning: "Strengthen credibility and improve lead readiness.",
+    positioning: "Strengthen credibility and improve appointment readiness.",
     bestFor: "Existing businesses needing stronger trust & conversions",
     monthlyPrice: 99, yearlyPrice: 999,
-    actions: ["Everything in Recrue", "Stronger trust layer", "Improved profile clarity", "Improved lead-readiness", "Better customer-facing positioning", "Stronger review & contact presentation"],
+    actions: ["Everything in Recrue", "Stronger trust layer", "Improved profile clarity", "Better appointment conversion", "Better customer-facing positioning", "Stronger review & contact presentation"],
     timeline: "Results in 1–3 months",
     upgradePath: "Premium",
   },
