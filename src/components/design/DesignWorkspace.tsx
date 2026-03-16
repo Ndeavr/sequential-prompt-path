@@ -11,6 +11,7 @@ import DesignCanvas from "./DesignCanvas";
 import DesignControls from "./DesignControls";
 import DesignCompare from "./DesignCompare";
 import DesignShare from "./DesignShare";
+import DesignUpgradeModal from "./DesignUpgradeModal";
 import type { DesignVersion } from "./data";
 
 interface Props {
