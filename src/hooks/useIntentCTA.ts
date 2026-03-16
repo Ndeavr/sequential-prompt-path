@@ -5,6 +5,7 @@
  */
 
 import { useMemo, useCallback } from "react";
+import { slugToDisplayName } from "@/lib/displayFormatters";
 import { useLocation } from "react-router-dom";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { useLanguage } from "@/components/ui/LanguageToggle";
