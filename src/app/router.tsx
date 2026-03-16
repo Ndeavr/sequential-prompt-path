@@ -155,6 +155,7 @@ import AdminUOS from "@/pages/admin/AdminUOS";
 
 export const AppRouter = () => (
   <BrowserRouter>
+    <ScrollRestoration />
     <Routes>
       {/* Public */}
       <Route path="/" element={<Home />} />

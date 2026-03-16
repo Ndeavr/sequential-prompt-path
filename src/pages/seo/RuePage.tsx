@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCityBySlug } from "@/seo/data/cities";
+import { slugToDisplayName } from "@/lib/displayFormatters";
 import NotFound from "@/pages/NotFound";
 
 const RuePage = () => {

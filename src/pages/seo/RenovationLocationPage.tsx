@@ -116,7 +116,7 @@ const RenovationLocationPage = () => {
             <span>/</span>
             <span>{data.categoryLabel}</span>
             <span>/</span>
-            <span className="text-foreground font-medium">{citySlug}</span>
+            <span className="text-foreground font-medium">{slugToDisplayName(citySlug || "")}</span>
           </div>
 
           <h1 className="text-3xl md:text-4xl font-bold text-foreground font-display leading-tight">
