@@ -597,7 +597,7 @@ async function insertRelations(relations: NonNullable<UnproGraphPayload["relatio
       .filter(r => pMap.has(r.problem_slug) && prMap.has(r.profession_slug))
       .map(r => ({ problem_id: pMap.get(r.problem_slug)!, profession_id: prMap.get(r.profession_slug)!, relevance_score: r.relevance_score ?? 1 }));
     if (rows.length) {
-      const { error } = await supabase.from("home_problem_profession_edges").upsert(rows as any, { onConflict: "problem_id,profession_id", ignoreDuplicates: true });
+      const { error } = await supabase.from("problem_professionals").upsert(rows as any, { onConflict: "problem_id,profession_id", ignoreDuplicates: true });
       if (!error) count += rows.length;
     }
   }
