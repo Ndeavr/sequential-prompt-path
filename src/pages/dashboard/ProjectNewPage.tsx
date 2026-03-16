@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import PropertySelect from "@/components/shared/PropertySelect";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/shared";
 import { Button } from "@/components/ui/button";
