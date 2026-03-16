@@ -221,7 +221,7 @@ export const mobileTabsByRole: Record<UserRole | "guest", NavItem[]> = {
   admin: [
     { to: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
     { to: "/admin/users", label: "Users", icon: "Users" },
-    { to: "/admin/leads", label: "Leads", icon: "TrendingUp" },
+    { to: "/admin/leads", label: "RDV garantis", icon: "CalendarCheck" },
     { to: "/admin/contractors", label: "Pros", icon: "Briefcase" },
     { to: "/admin/agents", label: "Système", labelEn: "System", icon: "Brain" },
   ],
