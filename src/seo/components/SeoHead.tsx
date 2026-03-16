@@ -1,6 +1,6 @@
 /**
  * UNPRO — SEO Head Component
- * Sets document title and meta tags for SEO pages.
+ * Sets document title, meta tags, Open Graph, and Twitter Card for SEO pages.
  */
 
 import { useEffect } from "react";
@@ -10,9 +10,11 @@ interface SeoHeadProps {
   description: string;
   canonical?: string;
   noindex?: boolean;
+  ogImage?: string;
+  ogType?: string;
 }
 
-const SeoHead = ({ title, description, canonical, noindex }: SeoHeadProps) => {
+const SeoHead = ({ title, description, canonical, noindex, ogImage, ogType = "website" }: SeoHeadProps) => {
   useEffect(() => {
     document.title = title;
 
@@ -47,8 +49,21 @@ const SeoHead = ({ title, description, canonical, noindex }: SeoHeadProps) => {
     // Open Graph
     setMeta("og:title", title, "property");
     setMeta("og:description", description, "property");
-    setMeta("og:type", "website", "property");
-  }, [title, description, canonical, noindex]);
+    setMeta("og:type", ogType, "property");
+    setMeta("og:site_name", "UNPRO", "property");
+    if (canonical) setMeta("og:url", canonical, "property");
+    if (ogImage) {
+      setMeta("og:image", ogImage, "property");
+      setMeta("og:image:width", "1200", "property");
+      setMeta("og:image:height", "630", "property");
+    }
+
+    // Twitter Card
+    setMeta("twitter:card", ogImage ? "summary_large_image" : "summary");
+    setMeta("twitter:title", title);
+    setMeta("twitter:description", description);
+    if (ogImage) setMeta("twitter:image", ogImage);
+  }, [title, description, canonical, noindex, ogImage, ogType]);
 
   return null;
 };

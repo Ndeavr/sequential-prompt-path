@@ -1,6 +1,6 @@
 /**
  * UNPRO — Service Location SEO Page
- * With cost estimates, professional recommendations, and JSON-LD structured data.
+ * With hero image, cost estimates, professional recommendations, and JSON-LD structured data.
  */
 
 import { useParams, Link } from "react-router-dom";
@@ -11,9 +11,10 @@ import SeoCta from "@/seo/components/SeoCta";
 import SeoFaqSection from "@/seo/components/SeoFaqSection";
 import SeoInternalLinks from "@/seo/components/SeoInternalLinks";
 import { buildServiceLocationPage } from "@/seo/services/seoContentService";
+import { getServiceImage } from "@/seo/data/serviceImages";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, AlertTriangle, DollarSign, MapPin, Shield, Star, ArrowRight } from "lucide-react";
+import { CheckCircle, AlertTriangle, DollarSign, MapPin, Shield, Star, ArrowRight, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import NotFound from "@/pages/NotFound";
 import GrowthCtaBlock from "@/components/growth/GrowthCtaBlock";
@@ -28,6 +29,7 @@ const fadeUp = {
 const ServiceLocationPage = () => {
   const { category, city } = useParams<{ category: string; city: string }>();
   const data = category && city ? buildServiceLocationPage(category, city) : null;
+  const imageSet = category ? getServiceImage(category) : null;
 
   // Inject JSON-LD
   useEffect(() => {
@@ -44,15 +46,22 @@ const ServiceLocationPage = () => {
   if (!data) return <NotFound />;
 
   const fmt = (n: number) => n.toLocaleString("fr-CA");
+  const canonicalUrl = `https://unpro.ca/services/${category}/${city}`;
 
   return (
     <MainLayout>
-      <SeoHead title={data.metaTitle} description={data.metaDescription} />
+      <SeoHead
+        title={data.metaTitle}
+        description={data.metaDescription}
+        canonical={canonicalUrl}
+        ogImage={imageSet?.hero}
+        ogType="article"
+      />
 
       <article className="mesh-gradient noise-overlay">
         <div className="relative z-10 max-w-4xl mx-auto px-4 py-8 md:py-12 space-y-10">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-sm text-muted-foreground">
+          <nav className="flex items-center gap-2 text-sm text-muted-foreground" aria-label="Fil d'Ariane">
             <Link to="/" className="hover:text-primary transition-colors">Accueil</Link>
             <span className="text-border">/</span>
             <Link to="/services" className="hover:text-primary transition-colors">Services</Link>
@@ -60,9 +69,37 @@ const ServiceLocationPage = () => {
             <span className="text-foreground font-medium">{data.h1}</span>
           </nav>
 
-          {/* H1 */}
+          {/* Hero Image */}
+          {imageSet && (
+            <motion.div initial="hidden" animate="visible" variants={fadeUp} className="rounded-2xl overflow-hidden shadow-soft">
+              <div className="relative">
+                <img
+                  src={imageSet.hero}
+                  alt={imageSet.alt}
+                  className="w-full h-[280px] md:h-[380px] object-cover"
+                  loading="eager"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+                  <h1 className="text-2xl md:text-4xl font-bold text-white leading-tight drop-shadow-lg">{data.h1}</h1>
+                  <div className="flex items-center gap-3 mt-3">
+                    <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm">
+                      <MapPin className="h-3 w-3 mr-1" /> {city}
+                    </Badge>
+                    <Badge className="bg-primary/80 text-white border-0 backdrop-blur-sm">
+                      {fmt(data.costEstimate.low)} $ — {fmt(data.costEstimate.high)} $
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* H1 (fallback if no image) + Intro */}
           <motion.header initial="hidden" animate="visible" variants={fadeUp}>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">{data.h1}</h1>
+            {!imageSet && (
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">{data.h1}</h1>
+            )}
             <p className="mt-4 text-lg text-muted-foreground leading-relaxed">{data.intro}</p>
           </motion.header>
 
