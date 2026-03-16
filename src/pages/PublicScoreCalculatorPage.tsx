@@ -103,13 +103,15 @@ export default function PublicScoreCalculatorPage() {
 
             {/* Search */}
             <div className="flex gap-2 max-w-md mx-auto">
-              <Input
-                type="text"
-                placeholder="Entrez une adresse..."
+              <GooglePlacesInput
                 value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                onChange={setAddress}
+                onPlaceSelect={(place) => {
+                  setAddress(place.address);
+                  if (place.city) setCity(place.city);
+                }}
+                placeholder="Entrez une adresse..."
                 className="flex-1"
-                onKeyDown={(e) => e.key === "Enter" && address.length > 5 && lookupMutation.mutate()}
               />
               <Button
                 onClick={() => lookupMutation.mutate()}

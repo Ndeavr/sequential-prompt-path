@@ -154,7 +154,16 @@ export default function DescribeProjectPage() {
               <div className="space-y-5">
                 <div className="space-y-2">
                   <Label className="text-meta font-semibold">Adresse de la propriété</Label>
-                  <Input placeholder="123 rue Exemple" value={form.address} onChange={(e) => update("address", e.target.value)} className="rounded-xl" />
+                  <GooglePlacesInput
+                    value={form.address}
+                    onChange={(v) => update("address", v)}
+                    onPlaceSelect={(place) => {
+                      update("address", place.address);
+                      if (place.city) update("city", place.city);
+                      if (place.postalCode) update("postalCode", place.postalCode);
+                    }}
+                    placeholder="123 rue Exemple"
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">

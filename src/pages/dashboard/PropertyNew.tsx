@@ -45,7 +45,19 @@ const PropertyNew = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="address">Adresse *</Label>
-              <Input id="address" value={form.address} onChange={set("address")} required placeholder="123 rue Principale" />
+              <GooglePlacesInput
+                value={form.address}
+                onChange={(v) => setForm((f) => ({ ...f, address: v }))}
+                onPlaceSelect={(place) => {
+                  setForm((f) => ({
+                    ...f,
+                    address: place.address,
+                    city: place.city || f.city,
+                    postal_code: place.postalCode || f.postal_code,
+                  }));
+                }}
+                placeholder="123 rue Principale"
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
