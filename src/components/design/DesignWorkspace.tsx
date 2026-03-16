@@ -24,12 +24,14 @@ interface Props {
   error: string | null;
   projectId: string | null;
   shareToken: string | null;
+  usageLimitHit: { current: number; limit: number } | null;
   onBack: () => void;
   onGenerate: (prompt: string, options?: any) => void;
   onFreeze: (id: string) => void;
   onDuplicate: (id: string) => void;
   onSelectVersion: (id: string) => void;
   onCreateShare: (privacyType: string) => Promise<string | null>;
+  onClearUsageLimit: () => void;
 }
 
 export default function DesignWorkspace({
@@ -42,12 +44,14 @@ export default function DesignWorkspace({
   error,
   projectId,
   shareToken,
+  usageLimitHit,
   onBack,
   onGenerate,
   onFreeze,
   onDuplicate,
   onSelectVersion,
   onCreateShare,
+  onClearUsageLimit,
 }: Props) {
   const [isComparing, setIsComparing] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
