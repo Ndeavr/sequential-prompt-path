@@ -796,7 +796,7 @@ const ContractorProfile = () => {
           )}
 
           {/* ═══ 9. AIPP SCORE ═══ */}
-          {aippValidated && aippBreakdown && (
+          {aippValidated && effectiveAippBreakdown && (
             <motion.div variants={fadeUp}>
               <Card className="glass-card border-0 shadow-sm">
                 <CardContent className="p-5">
