@@ -20,7 +20,7 @@ const fallbackContractors = [
   { id: "5", business_name: "CUISINE DESIGN", specialty: "Ébénisterie", city: "Sherbrooke", province: "QC", aipp_score: 87, rating: 4.6, review_count: 23, years_experience: 10, verification_status: "verified", description: null, logo_url: null },
 ];
 
-const AUTOPLAY_MS = 4000;
+const AUTOPLAY_MS = 6500;
 
 /* ── Premium Release-Trigger Button ── */
 const PremiumProfileButton = ({ contractorId }: { contractorId: string }) => {

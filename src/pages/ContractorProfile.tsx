@@ -40,6 +40,67 @@ import { useState } from "react";
 import heroHouse from "@/assets/hero-house.jpg";
 import WhyThisContractorIsRecommended from "@/components/contractor/WhyThisContractorIsRecommended";
 
+/* ── Demo / fallback contractor data for carousel "Voir profil" ── */
+const DEMO_CONTRACTORS: Record<string, any> = {
+  "1": {
+    id: "1", business_name: "TOITURE EXPERT", specialty: "Toiture & Couverture", city: "Montréal", province: "QC",
+    aipp_score: 92, rating: 4.9, review_count: 47, years_experience: 18, verification_status: "verified", admin_verified: true,
+    description: "Spécialistes en toiture résidentielle et commerciale depuis 2006. Expertise en bardeaux d'asphalte, toiture métallique et membrane élastomère. Service d'urgence 24h disponible.",
+    phone: "(514) 555-0101", email: "info@toiture-expert.ca", website: "https://toiture-expert.ca",
+    address: "1234 Rue Saint-Denis", postal_code: "H2J 2L1",
+    logo_url: null,
+  },
+  "2": {
+    id: "2", business_name: "PLOMBERIE PRO", specialty: "Plomberie", city: "Laval", province: "QC",
+    aipp_score: 88, rating: 4.8, review_count: 34, years_experience: 12, verification_status: "verified", admin_verified: true,
+    description: "Service de plomberie résidentielle complet : réparations, installations, débouchage et rénovation de salles de bain. Détenteur de licence RBQ.",
+    phone: "(450) 555-0202", email: "contact@plomberie-pro.ca", website: "https://plomberie-pro.ca",
+    address: "567 Boul. des Laurentides", postal_code: "H7G 2T8",
+    logo_url: null,
+  },
+  "3": {
+    id: "3", business_name: "RÉNO MAÎTRE", specialty: "Rénovation générale", city: "Québec", province: "QC",
+    aipp_score: 85, rating: 4.7, review_count: 29, years_experience: 15, verification_status: "verified", admin_verified: true,
+    description: "Entrepreneur général spécialisé en rénovation résidentielle haut de gamme. Cuisines, salles de bain, sous-sols et agrandissements. Estimation gratuite.",
+    phone: "(418) 555-0303", email: "info@renomaster.ca", website: "https://renomaster.ca",
+    address: "890 Chemin Sainte-Foy", postal_code: "G1S 2L3",
+    logo_url: null,
+  },
+  "4": {
+    id: "4", business_name: "ÉLECTRO PLUS", specialty: "Électricité", city: "Gatineau", province: "QC",
+    aipp_score: 90, rating: 4.9, review_count: 52, years_experience: 20, verification_status: "verified", admin_verified: true,
+    description: "Maître-électricien certifié. Panneaux électriques, éclairage, bornes de recharge VÉ, domotique et mise aux normes. Résidentiel et commercial.",
+    phone: "(819) 555-0404", email: "info@electro-plus.ca", website: "https://electro-plus.ca",
+    address: "234 Boul. Maloney", postal_code: "J8T 5R4",
+    logo_url: null,
+  },
+  "5": {
+    id: "5", business_name: "CUISINE DESIGN", specialty: "Ébénisterie", city: "Sherbrooke", province: "QC",
+    aipp_score: 87, rating: 4.6, review_count: 23, years_experience: 10, verification_status: "verified", admin_verified: true,
+    description: "Fabrication et installation d'armoires de cuisine sur mesure. Design contemporain et classique. Comptoirs en quartz, granit et bois massif. Showroom disponible sur rendez-vous.",
+    phone: "(819) 555-0505", email: "info@cuisine-design.ca", website: "https://cuisine-design.ca",
+    address: "456 Rue King Ouest", postal_code: "J1H 1R4",
+    logo_url: null,
+  },
+};
+
+const DEMO_AIPP_BREAKDOWN = (score: number) => ({
+  total_score: score,
+  is_current: true,
+  identity_score: Math.round(score * 0.2),
+  trust_score: Math.round(score * 0.19),
+  visibility_score: Math.round(score * 0.18),
+  conversion_score: Math.round(score * 0.22),
+  ai_seo_readiness_score: Math.round(score * 0.21),
+});
+
+const DEMO_REVIEWS = (name: string) => [
+  { id: "r1", rating: 5, content: `${name} a fait un travail exceptionnel. Très professionnel, respectueux des délais et du budget. Je recommande sans hésitation.`, reviewer_name: "Martin L.", created_at: "2026-01-15", title: "Travail impeccable" },
+  { id: "r2", rating: 5, content: "Excellent service du début à la fin. Communication claire et résultat impeccable.", reviewer_name: "Sophie B.", created_at: "2025-11-20", title: "Service 5 étoiles" },
+  { id: "r3", rating: 4, content: "Bon travail dans l'ensemble. Quelques jours de retard mais le résultat final est de qualité.", reviewer_name: "Jean-François D.", created_at: "2025-09-08", title: "Satisfait" },
+  { id: "r4", rating: 5, content: "Très satisfait ! L'équipe est arrivée à l'heure, a protégé nos meubles et a laissé le chantier propre.", reviewer_name: "Isabelle T.", created_at: "2025-07-22", title: "Propre et professionnel" },
+];
+
 /* ── Animations ── */
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -90,24 +151,31 @@ const buildFallbackFAQ = (name: string, specialty: string | null, city: string |
 
 const ContractorProfile = () => {
   const { id } = useParams<{ id: string }>();
-  const { data: profileData, isLoading, isError } = useContractorFullProfile(id);
-  const { data: reviews } = usePublicContractorReviews(id);
-  const { data: publicScores } = useContractorPublicScores(id);
-  const { data: reviewInsights } = useReviewInsights(id);
+  const isDemo = !!(id && DEMO_CONTRACTORS[id]);
+  const { data: profileData, isLoading, isError } = useContractorFullProfile(isDemo ? undefined : id);
+  const { data: reviews } = usePublicContractorReviews(isDemo ? undefined : id);
+  const { data: publicScores } = useContractorPublicScores(isDemo ? undefined : id);
+  const { data: reviewInsights } = useReviewInsights(isDemo ? undefined : id);
   const { user, role } = useAuth();
 
-  const contractor = profileData?.contractor ?? profileData;
+  // Use demo data for fallback carousel contractors
+  const demoContractor = isDemo ? DEMO_CONTRACTORS[id!] : null;
+  const contractor = demoContractor ?? profileData?.contractor ?? profileData;
   const contractorId = contractor?.id;
 
-  const { data: aippBreakdown } = useContractorAIPPBreakdown(contractorId);
-  const { data: reviewDimensions } = useContractorReviewDimensions(contractorId);
-  const { data: reviewAggregate } = useContractorReviewAggregate(contractorId);
+  const { data: aippBreakdown } = useContractorAIPPBreakdown(isDemo ? undefined : contractorId);
+  const { data: reviewDimensions } = useContractorReviewDimensions(isDemo ? undefined : contractorId);
+  const { data: reviewAggregate } = useContractorReviewAggregate(isDemo ? undefined : contractorId);
+
+  // Demo overrides
+  const effectiveAippBreakdown = isDemo ? DEMO_AIPP_BREAKDOWN(demoContractor.aipp_score) : aippBreakdown;
+  const effectiveReviews = isDemo ? DEMO_REVIEWS(demoContractor.business_name) : reviews;
 
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
   /* ── Loading ── */
-  if (isLoading) {
+  if (isLoading && !isDemo) {
     return (
       <MainLayout>
         <div className="flex min-h-screen items-center justify-center">
@@ -156,8 +224,8 @@ const ContractorProfile = () => {
   const enrichedComparables: any[] = profileData?.comparables ?? [];
   const publicPage = profileData?.public_page ?? null;
 
-  const aippScore = aippBreakdown?.total_score ?? contractor.aipp_score ?? publicScores?.aipp_score ?? null;
-  const aippValidated = aippBreakdown != null && aippBreakdown.is_current;
+  const aippScore = effectiveAippBreakdown?.total_score ?? contractor.aipp_score ?? publicScores?.aipp_score ?? null;
+  const aippValidated = effectiveAippBreakdown != null && effectiveAippBreakdown.is_current;
   const tier = aippScore && aippScore > 0 ? getAIPPTier(aippScore) : null;
 
   const unproScore = publicScores?.unpro_score ?? null;
@@ -728,7 +796,7 @@ const ContractorProfile = () => {
           )}
 
           {/* ═══ 9. AIPP SCORE ═══ */}
-          {aippValidated && aippBreakdown && (
+          {aippValidated && effectiveAippBreakdown && (
             <motion.div variants={fadeUp}>
               <Card className="glass-card border-0 shadow-sm">
                 <CardContent className="p-5">
@@ -746,7 +814,7 @@ const ContractorProfile = () => {
                   </div>
                   <div className="space-y-3">
                     {AIPP_PILLARS.map(pillar => {
-                      const score = (aippBreakdown as any)?.[pillar.key] ?? 0;
+                      const score = (effectiveAippBreakdown as any)?.[pillar.key] ?? 0;
                       const pct = Math.round((score / pillar.max) * 100);
                       return (
                         <div key={pillar.key} className="flex items-center gap-3">
@@ -764,9 +832,9 @@ const ContractorProfile = () => {
                       );
                     })}
                   </div>
-                  {aippBreakdown.score_confidence != null && (
+                  {(effectiveAippBreakdown as any).score_confidence != null && (
                     <p className="mt-3 text-[10px] text-muted-foreground text-center">
-                      Confiance du calcul : {Math.round(aippBreakdown.score_confidence * 100)}%
+                      Confiance du calcul : {Math.round((effectiveAippBreakdown as any).score_confidence * 100)}%
                     </p>
                   )}
                 </CardContent>
@@ -803,7 +871,7 @@ const ContractorProfile = () => {
           ) : null}
 
           {/* ═══ 10. REVIEWS + AI ANALYSIS ═══ */}
-          {((reviews && reviews.length > 0) || reviewDimensions?.length || reviewConfidence) && (
+          {((effectiveReviews && effectiveReviews.length > 0) || reviewDimensions?.length || reviewConfidence) && (
             <motion.div variants={fadeUp}>
               <Card className="glass-card border-0 shadow-sm overflow-hidden">
                 <CardContent className="p-5">
@@ -892,11 +960,11 @@ const ContractorProfile = () => {
                   )}
 
                   {/* Individual reviews */}
-                  {reviews && reviews.length > 0 && (
+                  {effectiveReviews && effectiveReviews.length > 0 && (
                     <>
                       <Separator className="my-4" />
                       <div className="space-y-4">
-                        {(showAllReviews ? reviews : reviews.slice(0, 3)).map((review: any, i: number) => (
+                        {(showAllReviews ? effectiveReviews : effectiveReviews.slice(0, 3)).map((review: any, i: number) => (
                           <div key={review.id}>
                             {i > 0 && <Separator className="mb-4" />}
                             <div className="space-y-2">
@@ -915,12 +983,12 @@ const ContractorProfile = () => {
                             </div>
                           </div>
                         ))}
-                        {reviews.length > 3 && !showAllReviews && (
+                        {effectiveReviews.length > 3 && !showAllReviews && (
                           <button
                             onClick={() => setShowAllReviews(true)}
                             className="w-full text-center text-xs font-semibold text-primary py-2 hover:underline flex items-center justify-center gap-1"
                           >
-                            Voir tous les {reviews.length} avis <ChevronDown className="h-3 w-3" />
+                            Voir tous les {effectiveReviews.length} avis <ChevronDown className="h-3 w-3" />
                           </button>
                         )}
                       </div>
