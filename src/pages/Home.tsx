@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { Helmet } from "react-helmet-async";
 import {
   Shield, ArrowRight, Star, Brain,
   MessageCircle, Heart, HardHat,
@@ -7,7 +8,7 @@ import {
   BarChart3, Zap, ShieldCheck, Camera,
   Award, Users, FolderOpen,
   Building, Vote, Wrench, PiggyBank, ClipboardList,
-  Droplets, Leaf, Sparkles,
+  Droplets, Leaf, Sparkles, XCircle, Clock, DollarSign,
 } from "lucide-react";
 import FeaturedCarousel from "@/components/home/FeaturedCarousel";
 import HeroSection from "@/components/home/HeroSection";
