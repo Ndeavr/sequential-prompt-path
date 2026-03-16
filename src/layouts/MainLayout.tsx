@@ -38,7 +38,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <SmartHeader />
-      <main className="flex-1 pb-16 lg:pb-0">{children}</main>
+      <main className="flex-1 pb-16 lg:pb-0 relative z-0">{children}</main>
       {showSEOGrid && <FooterSEOGrid />}
       <SmartFooter />
       <MobileBottomNav />
