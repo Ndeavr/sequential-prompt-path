@@ -31,8 +31,8 @@ export interface CTAConfig {
 const INTENT_CTA_MAP: Record<UserIntent, CTAConfig> = {
   find_contractor: {
     intent: "find_contractor",
-    primary: { label: "Trouver un entrepreneur", labelEn: "Find a Contractor", to: "/recherche" },
-    secondary: { label: "Comparer des entrepreneurs", labelEn: "Compare Contractors", to: "/recherche" },
+    primary: { label: "Trouver un entrepreneur", labelEn: "Find a Contractor", to: "/search" },
+    secondary: { label: "Comparer des entrepreneurs", labelEn: "Compare Contractors", to: "/search" },
   },
   verify_contractor: {
     intent: "verify_contractor",
@@ -42,12 +42,12 @@ const INTENT_CTA_MAP: Record<UserIntent, CTAConfig> = {
   manage_property: {
     intent: "manage_property",
     primary: { label: "Créer mon Passeport Maison", labelEn: "Create My Home Passport", to: "/signup" },
-    secondary: { label: "Ajouter ma propriété", labelEn: "Add My Property", to: "/dashboard/proprietes/nouvelle" },
+    secondary: { label: "Ajouter ma propriété", labelEn: "Add My Property", to: "/dashboard/properties/new" },
   },
   offer_services: {
     intent: "offer_services",
-    primary: { label: "Créer mon profil professionnel", labelEn: "Create My Pro Profile", to: "/devenir-entrepreneur" },
-    secondary: { label: "Voir les plans disponibles", labelEn: "View Plans", to: "/tarifs" },
+    primary: { label: "Créer mon profil professionnel", labelEn: "Create My Pro Profile", to: "/entrepreneurs/creer-mon-profil" },
+    secondary: { label: "Voir les plans disponibles", labelEn: "View Plans", to: "/pricing" },
   },
   research_problem: {
     intent: "research_problem",
@@ -57,7 +57,7 @@ const INTENT_CTA_MAP: Record<UserIntent, CTAConfig> = {
   explore_city: {
     intent: "explore_city",
     primary: { label: "Voir le score de votre maison", labelEn: "See Your Home Score", to: "/score-maison" },
-    secondary: { label: "Trouver un entrepreneur", labelEn: "Find a Contractor", to: "/recherche" },
+    secondary: { label: "Trouver un entrepreneur", labelEn: "Find a Contractor", to: "/search" },
   },
   create_project: {
     intent: "create_project",
@@ -67,7 +67,7 @@ const INTENT_CTA_MAP: Record<UserIntent, CTAConfig> = {
   default: {
     intent: "default",
     primary: { label: "Créer un Projet", labelEn: "Create Project", to: "/signup" },
-    secondary: { label: "Trouver un entrepreneur", labelEn: "Find a Contractor", to: "/recherche" },
+    secondary: { label: "Trouver un entrepreneur", labelEn: "Find a Contractor", to: "/search" },
   },
 };
 
@@ -77,7 +77,7 @@ const ROLE_CTA_OVERRIDES: Record<string, Partial<CTAConfig>> = {
     primary: { label: "Voir les demandes", labelEn: "View Project Requests", to: "/pro/leads" },
   },
   homeowner: {
-    primary: { label: "Ajouter une propriété", labelEn: "Add a Property", to: "/dashboard/proprietes/nouvelle" },
+    primary: { label: "Ajouter une propriété", labelEn: "Add a Property", to: "/dashboard/properties/new" },
   },
   admin: {
     primary: { label: "Tableau de bord", labelEn: "Dashboard", to: "/admin" },

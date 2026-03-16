@@ -1,34 +1,28 @@
 /**
- * UNPRO — Mobile Bottom Navigation
- * Premium 5-tab bar with CTA, role-aware.
+ * UNPRO — Mobile Bottom Navigation (Role-Aware)
+ * Uses mobileTabsByRole config. Shows for all users on mobile.
  */
 
 import { Link, useLocation } from "react-router-dom";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { useLanguage } from "@/components/ui/LanguageToggle";
-import { Home, Search, Building, Sparkles, Plus } from "lucide-react";
-
-const guestTabs = [
-  { to: "/", label: "Accueil", labelEn: "Home", icon: Home },
-  { to: "/problemes", label: "Explorer", labelEn: "Explore", icon: Search },
-  { to: "/signup", label: "Projet", labelEn: "Project", icon: Plus, isCTA: true },
-  { to: "/condo", label: "Condo", icon: Building },
-  { to: "/alex", label: "Alex", icon: Sparkles },
-];
+import { mobileTabsByRole } from "@/config/navigationConfig";
+import { resolveIcon } from "./IconResolver";
+import type { UserRole } from "@/types/navigation";
 
 const MobileBottomNav = () => {
   const { activeRole } = useNavigationContext();
   const { pathname } = useLocation();
   const { lang } = useLanguage();
 
-  // Only show for guests on public pages
-  const isAppPage = pathname.startsWith("/dashboard") || pathname.startsWith("/pro") || pathname.startsWith("/admin");
-  if (isAppPage) return null;
+  // Hide on specific full-screen pages
+  const hiddenPaths = ["/alex", "/login", "/signup", "/start"];
+  if (hiddenPaths.some((p) => pathname === p)) return null;
 
-  const tabs = guestTabs;
+  const tabs = mobileTabsByRole[(activeRole as UserRole | "guest")] || mobileTabsByRole.guest;
 
   const isActive = (to: string) => {
-    if (to === "/") return pathname === "/";
+    if (to === "/" || to === "/dashboard" || to === "/pro" || to === "/admin") return pathname === to;
     return pathname.startsWith(to);
   };
 
@@ -37,24 +31,7 @@ const MobileBottomNav = () => {
       <div className="flex items-center justify-around h-16 px-2">
         {tabs.map((tab) => {
           const active = isActive(tab.to);
-          const Icon = tab.icon;
-
-          if (tab.isCTA) {
-            return (
-              <Link
-                key={tab.to}
-                to={tab.to}
-                className="flex flex-col items-center justify-center -mt-4"
-              >
-                <div className="h-12 w-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <span className="text-[10px] font-semibold text-primary mt-0.5">
-                  {lang === "en" && tab.labelEn ? tab.labelEn : tab.label}
-                </span>
-              </Link>
-            );
-          }
+          const Icon = resolveIcon(tab.icon);
 
           return (
             <Link
@@ -68,6 +45,9 @@ const MobileBottomNav = () => {
               <span className="text-[10px] font-medium leading-none">
                 {lang === "en" && tab.labelEn ? tab.labelEn : tab.label}
               </span>
+              {tab.badge && (
+                <span className="absolute -top-0.5 right-0.5 h-2 w-2 rounded-full bg-primary" />
+              )}
             </Link>
           );
         })}

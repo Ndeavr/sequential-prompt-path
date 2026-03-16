@@ -1,58 +1,14 @@
 /**
- * UNPRO — Strategic Footer (5-column, premium)
+ * UNPRO — Strategic Footer (Role-Aware)
+ * Uses getFooterSections from config. Fixes "lead" terminology.
  */
 
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/components/ui/LanguageToggle";
+import { useNavigationContext } from "@/hooks/useNavigationContext";
+import { getFooterSections } from "@/config/navigationConfig";
+import type { UserRole } from "@/types/navigation";
 import unproLogo from "@/assets/unpro-logo.png";
-
-const footerColumns = [
-  {
-    title: "Propriétaires", titleEn: "Homeowners",
-    items: [
-      { to: "/proprietaires/passeport-maison", label: "Passeport Maison", labelEn: "Home Passport" },
-      { to: "/proprietaires/score-maison", label: "Mon Score Maison", labelEn: "My Home Score" },
-      { to: "/verifier-entrepreneur", label: "Vérifier une entreprise", labelEn: "Verify a Company" },
-      { to: "/compare-quotes", label: "Comparer mes soumissions", labelEn: "Compare My Quotes" },
-      { to: "/alex?intent=diagnostic", label: "Diagnostiquer un problème", labelEn: "Diagnose a Problem" },
-      { to: "/dashboard/documents/upload", label: "Documents maison", labelEn: "Home Documents" },
-    ],
-  },
-  {
-    title: "Entrepreneurs", titleEn: "Contractors",
-    items: [
-      { to: "/entrepreneurs/creer-mon-profil", label: "Activer mon profil", labelEn: "Activate My Profile" },
-      { to: "/pricing", label: "Plans et tarifs", labelEn: "Plans & Pricing" },
-      { to: "/entrepreneurs/score-aipp", label: "Score AIPP", labelEn: "AIPP Score" },
-      { to: "/entrepreneurs/demo", label: "Démo", labelEn: "Demo" },
-      { to: "/pro/leads", label: "Leads qualifiés", labelEn: "Qualified Leads" },
-      { to: "/entrepreneurs/pages-ia", label: "Pages IA / SEO", labelEn: "AI / SEO Pages" },
-      { to: "/ambassadeurs", label: "Ambassadeurs", labelEn: "Ambassadors" },
-    ],
-  },
-  {
-    title: "Explorer", titleEn: "Explore",
-    items: [
-      { to: "/problemes", label: "Problèmes maison", labelEn: "Home Problems" },
-      { to: "/services", label: "Services", labelEn: "Services" },
-      { to: "/professionnels", label: "Professionnels", labelEn: "Professionals" },
-      { to: "/villes", label: "Villes", labelEn: "Cities" },
-      { to: "/blog", label: "Blog", labelEn: "Blog" },
-      { to: "/faq", label: "FAQ", labelEn: "FAQ" },
-    ],
-  },
-  {
-    title: "Entreprise", titleEn: "Company",
-    items: [
-      { to: "/a-propos", label: "À propos", labelEn: "About" },
-      { to: "/partenaires", label: "Partenaires", labelEn: "Partners" },
-      { to: "/contact", label: "Contact", labelEn: "Contact" },
-      { to: "/conditions", label: "Conditions", labelEn: "Terms" },
-      { to: "/confidentialite", label: "Confidentialité", labelEn: "Privacy" },
-      { to: "/cookies", label: "Cookies", labelEn: "Cookies" },
-    ],
-  },
-];
 
 const socialLinks = [
   { href: "#", label: "Facebook", icon: "f" },
@@ -62,11 +18,13 @@ const socialLinks = [
 
 const SmartFooter = () => {
   const { lang } = useLanguage();
+  const { activeRole } = useNavigationContext();
+
+  const sections = getFooterSections(activeRole as UserRole | "guest");
 
   return (
     <footer className="border-t border-border/20 bg-card/50">
       <div className="mx-auto max-w-7xl px-4 lg:px-6 py-12 lg:py-16">
-        {/* Main grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-10 mb-12">
           {/* Brand column */}
           <div className="col-span-2 sm:col-span-3 lg:col-span-1">
@@ -81,8 +39,8 @@ const SmartFooter = () => {
             </Link>
             <p className="text-meta text-muted-foreground mb-4 max-w-[220px] leading-relaxed">
               {lang === "en"
-                ? "Real estate intelligence for everyone."
-                : "Intelligence immobilière pour tous."}
+                ? "Exclusive guaranteed appointments. Not shared leads."
+                : "Des rendez-vous garantis exclusifs. Pas des leads partagés."}
             </p>
             <div className="space-y-1.5 text-caption text-muted-foreground/70">
               <p>🏠 {lang === "en" ? "Home Passport" : "Passeport Maison"}</p>
@@ -91,8 +49,8 @@ const SmartFooter = () => {
             </div>
           </div>
 
-          {/* Dynamic columns */}
-          {footerColumns.map((col) => (
+          {/* Dynamic columns from config */}
+          {sections.map((col) => (
             <div key={col.title}>
               <h4 className="text-caption font-bold text-foreground uppercase tracking-wider mb-4">
                 {lang === "en" && col.titleEn ? col.titleEn : col.title}
@@ -125,7 +83,6 @@ const SmartFooter = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Social */}
             <div className="flex items-center gap-2">
               {socialLinks.map((s) => (
                 <a
@@ -139,11 +96,12 @@ const SmartFooter = () => {
               ))}
             </div>
 
-            {/* Utility links */}
             <div className="flex items-center gap-3 text-caption text-muted-foreground/50">
-              <Link to="/sitemap" className="hover:text-foreground transition-colors">Sitemap</Link>
-              <Link to="/accessibilite" className="hover:text-foreground transition-colors">
-                {lang === "en" ? "Accessibility" : "Accessibilité"}
+              <Link to="/conditions" className="hover:text-foreground transition-colors">
+                {lang === "en" ? "Terms" : "Conditions"}
+              </Link>
+              <Link to="/confidentialite" className="hover:text-foreground transition-colors">
+                {lang === "en" ? "Privacy" : "Confidentialité"}
               </Link>
             </div>
           </div>

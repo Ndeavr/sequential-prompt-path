@@ -93,7 +93,7 @@ const megaMenus: Record<string, MegaMenuConfig> = {
       {
         title: "Acquisition clients", titleEn: "Client Acquisition",
         items: [
-          { to: "/pro/leads", label: "Leads qualifiés", labelEn: "Qualified Leads", icon: TrendingUp },
+          { to: "/pro/leads", label: "Rendez-vous garantis", labelEn: "Guaranteed Appointments", icon: CalendarDays },
           { to: "/entrepreneurs/matching", label: "Matching propriétaires", labelEn: "Homeowner Matching", icon: Heart },
           { to: "/pro/appointments", label: "Booking intelligent", labelEn: "Smart Booking", icon: CalendarDays },
           { to: "/pro/territories", label: "Demandes locales", labelEn: "Local Requests", icon: Search },

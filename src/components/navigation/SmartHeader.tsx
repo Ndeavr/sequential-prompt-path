@@ -1,6 +1,6 @@
 /**
- * UNPRO — Premium Header (Unicorn Proptech)
- * Stripe/Linear inspired. MegaMenus, Alex Orb, Smart Search, dynamic CTA.
+ * UNPRO — Premium Header (Role-Aware Navigation)
+ * Adapts nav items, CTA, logo destination, and mobile menu by auth state + role.
  */
 
 import { Link, useLocation } from "react-router-dom";
@@ -8,6 +8,7 @@ import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
+import { headerNavByRole } from "@/config/navigationConfig";
 import { Menu, X, Bell, ChevronDown } from "lucide-react";
 import ProfileMenu from "./ProfileMenu";
 import AlexNavOrb from "./AlexNavOrb";
@@ -16,13 +17,25 @@ import MegaMenuPanel from "./MegaMenu";
 import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
 import SmartCTA from "@/components/cta/SmartCTA";
 import unproLogo from "@/assets/unpro-logo.png";
+import type { UserRole } from "@/types/navigation";
 
-const mainNavItems = [
-  { key: "maison", label: "Maison", labelEn: "Home", megaKey: "maison" },
-  { key: "entreprises", label: "Entreprises", labelEn: "Business", megaKey: "entreprises" },
-  { key: "condo", label: "Condo", labelEn: "Condo", megaKey: "condo" },
-  { key: "explorer", label: "Explorer", labelEn: "Explore", megaKey: "explorer" },
+/** Mega menus only for guests — logged-in users get direct nav links */
+const guestMegaKeys = [
+  { key: "maison", label: "Maison", labelEn: "Home" },
+  { key: "entreprises", label: "Entreprises", labelEn: "Business" },
+  { key: "condo", label: "Condo", labelEn: "Condo" },
+  { key: "explorer", label: "Explorer", labelEn: "Explore" },
 ] as const;
+
+function getLogoDestination(role: UserRole | "guest"): string {
+  switch (role) {
+    case "homeowner": return "/dashboard";
+    case "contractor": return "/pro";
+    case "admin": return "/admin";
+    case "partner": return "/dashboard";
+    default: return "/";
+  }
+}
 
 const SmartHeader = () => {
   const { ctx, activeRole } = useNavigationContext();
@@ -34,7 +47,11 @@ const SmartHeader = () => {
   const handleMegaEnter = useCallback((key: string) => setActiveMega(key), []);
   const handleMegaLeave = useCallback(() => setActiveMega(null), []);
 
-  // Context label
+  const isGuest = !ctx;
+  const logoTo = getLogoDestination(activeRole as UserRole | "guest");
+  const navItems = headerNavByRole[activeRole as UserRole | "guest"] || headerNavByRole.guest;
+
+  // Context label for logged-in users
   const contextLabel = ctx
     ? activeRole === "contractor" && ctx.contractor?.businessName
       ? ctx.contractor.businessName
@@ -48,8 +65,8 @@ const SmartHeader = () => {
       <header className="sticky top-0 z-50 border-b border-border/20 bg-background/80 backdrop-blur-2xl">
         <div className="mx-auto max-w-7xl px-4 lg:px-6">
           <div className="flex items-center justify-between h-16">
-            {/* Left: Logo */}
-            <Link to="/" className="flex items-center gap-2 shrink-0 group">
+            {/* Logo */}
+            <Link to={logoTo} className="flex items-center gap-2 shrink-0 group">
               <img
                 src={unproLogo}
                 alt="UNPRO"
@@ -59,43 +76,69 @@ const SmartHeader = () => {
               <span className="font-display text-xl font-bold text-foreground tracking-tight">UNPRO</span>
             </Link>
 
-            {/* Center left: Nav items with mega menus */}
+            {/* Desktop nav */}
             <nav className="hidden lg:flex items-center gap-0.5 ml-8" role="navigation" aria-label="Main">
-              {mainNavItems.map((item) => (
-                <div
-                  key={item.key}
-                  className="relative"
-                  onMouseEnter={() => handleMegaEnter(item.megaKey)}
-                >
-                  <button
-                    className={`flex items-center gap-1 px-3.5 py-2 text-meta font-medium rounded-lg transition-all duration-200 ${
-                      activeMega === item.megaKey
-                        ? "text-foreground bg-muted/50"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
-                    }`}
-                    aria-expanded={activeMega === item.megaKey}
-                    aria-haspopup="true"
+              {isGuest ? (
+                /* Guests get mega-menu dropdowns */
+                guestMegaKeys.map((item) => (
+                  <div
+                    key={item.key}
+                    className="relative"
+                    onMouseEnter={() => handleMegaEnter(item.key)}
                   >
-                    {lang === "en" && item.labelEn ? item.labelEn : item.label}
-                    <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${activeMega === item.megaKey ? "rotate-180" : ""}`} />
-                  </button>
-                </div>
-              ))}
+                    <button
+                      className={`flex items-center gap-1 px-3.5 py-2 text-meta font-medium rounded-lg transition-all duration-200 ${
+                        activeMega === item.key
+                          ? "text-foreground bg-muted/50"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                      }`}
+                      aria-expanded={activeMega === item.key}
+                      aria-haspopup="true"
+                    >
+                      {lang === "en" && item.labelEn ? item.labelEn : item.label}
+                      <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${activeMega === item.key ? "rotate-180" : ""}`} />
+                    </button>
+                  </div>
+                ))
+              ) : (
+                /* Logged-in users get direct nav links from config */
+                navItems.map((item) => {
+                  const active = item.to === "/" || item.to === "/dashboard" || item.to === "/pro" || item.to === "/admin"
+                    ? pathname === item.to
+                    : pathname.startsWith(item.to);
+                  return (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      className={`flex items-center gap-1.5 px-3.5 py-2 text-meta font-medium rounded-lg transition-all duration-200 ${
+                        active
+                          ? "text-primary bg-primary/5"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                      }`}
+                    >
+                      {lang === "en" && item.labelEn ? item.labelEn : item.label}
+                      {item.badge && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                          {item.badge}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })
+              )}
             </nav>
 
-            {/* Center: Search */}
+            {/* Search */}
             <div className="flex-1 mx-4 hidden md:block max-w-lg">
               <HeaderSearch lang={lang} />
             </div>
 
-            {/* Right: Actions */}
+            {/* Right actions */}
             <div className="flex items-center gap-2">
-              {/* Alex orb */}
               <div className="hidden sm:block">
                 <AlexNavOrb lang={lang} />
               </div>
 
-              {/* Language */}
               <div className="hidden sm:block">
                 <LanguageToggle lang={lang} onChange={setLang} />
               </div>
@@ -142,9 +185,9 @@ const SmartHeader = () => {
           </div>
         </div>
 
-        {/* Mega Menu panels */}
+        {/* Mega Menu panels — only for guests */}
         <AnimatePresence>
-          {activeMega && (
+          {isGuest && activeMega && (
             <MegaMenuPanel menuKey={activeMega} lang={lang} onClose={handleMegaLeave} />
           )}
         </AnimatePresence>
@@ -162,9 +205,11 @@ const SmartHeader = () => {
 
 export default SmartHeader;
 
-/* ─── Mobile Menu Overlay ─── */
+/* ─── Mobile Menu Overlay (Role-Aware) ─── */
 
 import { useAuth } from "@/hooks/useAuth";
+import { getDrawerItems, getStateActions } from "@/config/navigationConfig";
+import { resolveIcon } from "./IconResolver";
 import MegaMenuMobileSection from "./MobileMenu";
 
 function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
@@ -176,6 +221,14 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
   const { signOut } = useAuth();
   const { setLang } = useLanguage();
 
+  const isGuest = !ctx;
+  const drawerItems = ctx ? getDrawerItems(ctx) : [];
+  const stateActions = ctx ? getStateActions(ctx).slice(0, 2) : [];
+
+  const dashboardTo = activeRole === "admin" ? "/admin"
+    : activeRole === "contractor" ? "/pro"
+    : "/dashboard";
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -183,10 +236,8 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-40 lg:hidden"
     >
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-background/95 backdrop-blur-xl" onClick={onClose} />
 
-      {/* Panel */}
       <motion.div
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
@@ -208,34 +259,101 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
             <HeaderSearch lang={lang} variant="mobile" onClose={onClose} />
           </div>
 
-          {/* Quick actions */}
-          <div className="space-y-1 mb-6">
-            <p className="text-caption font-bold text-muted-foreground uppercase tracking-wider mb-2">
-              {lang === "en" ? "Quick Actions" : "Actions rapides"}
-            </p>
-            <Link to="/signup" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-meta">
-              {lang === "en" ? "Create My Project" : "Créer mon projet"}
-            </Link>
-            <Link to="/alex" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-meta border border-primary/20">
-              ✨ {lang === "en" ? "Talk to Alex" : "Parler à Alex"}
-            </Link>
-            <Link to="/proprietaires/passeport-maison" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-muted/40 text-foreground font-medium text-meta">
-              {lang === "en" ? "Create My Home Passport" : "Créer mon Passeport Maison"}
-            </Link>
-          </div>
+          {/* ── LOGGED-IN: Role-aware quick actions + drawer ── */}
+          {!isGuest ? (
+            <>
+              {/* Urgent state actions */}
+              {stateActions.length > 0 && (
+                <div className="space-y-1 mb-4">
+                  <p className="text-caption font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                    {lang === "en" ? "Priority" : "Priorité"}
+                  </p>
+                  {stateActions.map((item) => {
+                    const Icon = resolveIcon(item.icon);
+                    return (
+                      <Link
+                        key={item.to + item.label}
+                        to={item.to}
+                        onClick={onClose}
+                        className="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary/5 border border-primary/10 text-foreground font-medium text-meta"
+                      >
+                        <Icon className="h-4 w-4 text-primary" />
+                        <span className="flex-1">{lang === "en" && item.labelEn ? item.labelEn : item.label}</span>
+                        {item.badge && (
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                            item.badgeVariant === "urgent" ? "bg-destructive/10 text-destructive"
+                            : "bg-primary/10 text-primary"
+                          }`}>{item.badge}</span>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
 
-          {/* Navigation sections */}
-          <MegaMenuMobileSection lang={lang} onClose={onClose} />
+              {/* Dashboard link */}
+              <Link
+                to={dashboardTo}
+                onClick={onClose}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-meta mb-1"
+              >
+                {lang === "en" ? "Dashboard" : "Tableau de bord"}
+              </Link>
 
-          {/* Account */}
+              {/* Drawer items from config */}
+              <div className="space-y-0.5 mb-4">
+                {drawerItems.map((item) => {
+                  const Icon = resolveIcon(item.icon);
+                  return (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      onClick={onClose}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-meta text-foreground hover:bg-muted/40 transition-colors"
+                    >
+                      <Icon className="h-4 w-4 text-muted-foreground" />
+                      {lang === "en" && item.labelEn ? item.labelEn : item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* Alex */}
+              <Link to="/alex" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-meta border border-primary/20 mb-4">
+                ✨ {lang === "en" ? "Talk to Alex" : "Parler à Alex"}
+              </Link>
+            </>
+          ) : (
+            /* ── GUEST: Discovery-focused ── */
+            <>
+              <div className="space-y-1 mb-6">
+                <p className="text-caption font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                  {lang === "en" ? "Quick Actions" : "Actions rapides"}
+                </p>
+                <Link to="/signup" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-meta">
+                  {lang === "en" ? "Get Started Free" : "Commencer gratuitement"}
+                </Link>
+                <Link to="/alex" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-meta border border-primary/20">
+                  ✨ {lang === "en" ? "Talk to Alex" : "Parler à Alex"}
+                </Link>
+                <Link to="/proprietaires/passeport-maison" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-muted/40 text-foreground font-medium text-meta">
+                  {lang === "en" ? "Create My Home Passport" : "Créer mon Passeport Maison"}
+                </Link>
+              </div>
+
+              <MegaMenuMobileSection lang={lang} onClose={onClose} />
+            </>
+          )}
+
+          {/* Account section */}
           <div className="border-t border-border/20 pt-4 mt-4 space-y-1">
             <p className="text-caption font-bold text-muted-foreground uppercase tracking-wider mb-2">
               {lang === "en" ? "Account" : "Compte"}
             </p>
             {ctx ? (
               <>
-                <Link to="/dashboard" onClick={onClose} className="block px-3 py-2.5 text-meta text-foreground rounded-lg hover:bg-muted/40">
-                  {lang === "en" ? "Dashboard" : "Tableau de bord"}
+                <Link to={activeRole === "contractor" ? "/pro/account" : "/dashboard/account"} onClick={onClose} className="block px-3 py-2.5 text-meta text-foreground rounded-lg hover:bg-muted/40">
+                  {lang === "en" ? "My Account" : "Mon compte"}
                 </Link>
                 <button onClick={() => { signOut(); onClose(); }} className="w-full text-left px-3 py-2.5 text-meta text-destructive rounded-lg hover:bg-destructive/5">
                   {lang === "en" ? "Sign Out" : "Déconnexion"}
@@ -252,7 +370,6 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
               </>
             )}
 
-            {/* Language */}
             <div className="flex items-center gap-2 px-3 py-2">
               <span className="text-meta text-muted-foreground">
                 {lang === "en" ? "Language" : "Langue"}
