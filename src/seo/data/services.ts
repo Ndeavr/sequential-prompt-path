@@ -343,6 +343,18 @@ export const SEO_SERVICES: SeoService[] = [
     relatedProblems: ["infiltration-sous-sol", "humidite-excessive"],
     relatedServices: ["impermeabilisation-fondation", "electricite", "plomberie"],
   },
+  {
+    slug: "isolation-grenier",
+    name: "Isolation de grenier",
+    shortDescription: "L'isolation du grenier empêche les pertes de chaleur par le haut de la maison et protège contre l'humidité, la condensation et les barrages de glace.",
+    whyItMatters: "Le grenier est la zone où les pertes thermiques sont les plus importantes. Une isolation inadéquate entraîne une surconsommation de chauffage, des barrages de glace en hiver et un risque élevé de moisissure causée par la condensation.",
+    pricingFactors: ["Superficie du grenier", "Type d'isolant (cellulose soufflée, laine minérale, polyuréthane giclé)", "Épaisseur d'isolant visée (R-41 minimum recommandé)", "Retrait d'ancien isolant contaminé ou vermiculite", "Correction de ventilation et pare-vapeur"],
+    whenToAct: ["Factures de chauffage anormalement élevées", "Barrages de glace ou glaçons excessifs sur le toit", "Grenier visiblement sous-isolé (moins de 14 pouces)", "Température inégale entre les étages", "Présence de moisissure ou d'humidité au grenier"],
+    costEstimate: { low: 1800, high: 5500, unit: "projet" },
+    contractorType: "isolation",
+    relatedProblems: ["moisissure-grenier", "barrage-glace", "condensation-entretoit", "perte-chaleur"],
+    relatedServices: ["isolation-entretoit", "ventilation-entretoit", "couvreur", "inspection-batiment"],
+  },
 ];
 
 export const getServiceBySlug = (slug: string): SeoService | undefined =>
