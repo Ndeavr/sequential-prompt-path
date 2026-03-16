@@ -279,9 +279,9 @@ const Home = () => {
       <section className="px-5 py-12 md:py-20">
         <div className="max-w-3xl mx-auto">
           <motion.div variants={sectionFade} initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-10">
-            <p className="section-label">Analyse IA des soumissions</p>
-            <h2 className="section-title">Comparez 3 soumissions en 30 secondes</h2>
-            <p className="section-desc">Notre intelligence artificielle analyse prix, matériaux, couverture et clauses contractuelles.</p>
+             <p className="section-label">Analyse IA des soumissions</p>
+             <h2 className="section-title">Vous avez déjà reçu 3 soumissions?</h2>
+             <p className="section-desc">Nous pouvons vous aider à y voir clair! Notre intelligence artificielle analyse prix, matériaux, couverture et clauses contractuelles.</p>
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
