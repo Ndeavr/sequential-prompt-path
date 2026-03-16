@@ -575,7 +575,7 @@ async function insertRelations(relations: NonNullable<UnproGraphPayload["relatio
       .filter(r => pMap.has(r.problem_slug) && caMap.has(r.cause_slug))
       .map(r => ({ problem_id: pMap.get(r.problem_slug)!, cause_id: caMap.get(r.cause_slug)!, weight: r.weight ?? 1 }));
     if (rows.length) {
-      const { error } = await supabase.from("home_problem_cause_edges").upsert(rows as any, { onConflict: "problem_id,cause_id", ignoreDuplicates: true });
+      const { error } = await supabase.from("home_problem_causes").upsert(rows as any, { onConflict: "problem_id,cause_id", ignoreDuplicates: true });
       if (!error) count += rows.length;
     }
   }
