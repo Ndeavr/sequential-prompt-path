@@ -814,7 +814,7 @@ const ContractorProfile = () => {
                   </div>
                   <div className="space-y-3">
                     {AIPP_PILLARS.map(pillar => {
-                      const score = (aippBreakdown as any)?.[pillar.key] ?? 0;
+                      const score = (effectiveAippBreakdown as any)?.[pillar.key] ?? 0;
                       const pct = Math.round((score / pillar.max) * 100);
                       return (
                         <div key={pillar.key} className="flex items-center gap-3">
