@@ -133,13 +133,20 @@ export default function ContractorOnboardingPage() {
             {/* Step 1: Entreprise */}
             {step === 1 && (
               <div className="space-y-5">
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold">Nom de l'entreprise *</Label>
-                  <Input placeholder="Ex: Toiture Expert Inc." value={form.businessName} onChange={(e) => update("businessName", e.target.value)} className="rounded-xl h-12" />
-                </div>
+                <BusinessNameSearch
+                  value={form.businessName}
+                  onChange={(v) => update("businessName", v)}
+                  onBusinessSelected={handleBusinessSelected}
+                />
+
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold">Ville *</Label>
                   <Input placeholder="Montréal" value={form.city} onChange={(e) => update("city", e.target.value)} className="rounded-xl h-12" />
+                  {form.city && (
+                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-emerald-500" /> Ville détectée
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold">Catégorie principale *</Label>
@@ -159,6 +166,11 @@ export default function ContractorOnboardingPage() {
                       </button>
                     ))}
                   </div>
+                  {form.category && (
+                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-emerald-500" /> Catégorie suggérée par Google Maps
+                    </p>
+                  )}
                 </div>
               </div>
             )}
