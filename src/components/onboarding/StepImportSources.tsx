@@ -20,6 +20,15 @@ export default function StepImportSources({ onImport, onManual }: Props) {
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
   const canImport = form.businessName.trim().length > 1;
 
+  const handleBusinessSelected = (result: BusinessSearchResult) => {
+    setForm(p => ({
+      ...p,
+      businessName: result.business_name,
+      city: result.city || p.city,
+      website: result.website ? (result.website.startsWith("http") ? result.website : `https://${result.website}`) : p.website,
+    }));
+  };
+
   const sources = [
     { icon: MapPin, label: "Google", color: "text-red-400", bg: "bg-red-400/10", active: !!form.googleUrl },
     { icon: Facebook, label: "Facebook", color: "text-blue-400", bg: "bg-blue-400/10", active: !!form.facebookUrl },
