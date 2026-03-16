@@ -39,13 +39,17 @@ export default function DesignWorkspace({
   activeVersion,
   isGenerating,
   error,
+  projectId,
+  shareToken,
   onBack,
   onGenerate,
   onFreeze,
   onDuplicate,
   onSelectVersion,
+  onCreateShare,
 }: Props) {
   const [isComparing, setIsComparing] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
