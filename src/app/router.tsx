@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import PlaceholderPage from "@/pages/PlaceholderPage";
 import StartPage from "@/pages/StartPage";
+import ScrollRestoration from "@/components/ScrollRestoration";
 
 // Public
 import Home from "@/pages/Home";
