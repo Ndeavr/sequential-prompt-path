@@ -86,7 +86,14 @@ export default function StepImportSources({ onImport, onManual }: Props) {
         {/* Form */}
         <motion.div {...fadeUp} transition={{ delay: 0.35 }}>
           <div className="rounded-2xl border border-border/50 bg-card/40 backdrop-blur-xl p-5 space-y-3 shadow-[var(--shadow-lg)]">
-            <FieldRow icon={Building2} placeholder="Business name *" value={form.businessName} onChange={v => set("businessName", v)} focused={focused === "name"} onFocus={() => setFocused("name")} onBlur={() => setFocused(null)} highlight />
+            <BusinessNameSearch
+              value={form.businessName}
+              onChange={(v) => set("businessName", v)}
+              onBusinessSelected={handleBusinessSelected}
+              label=""
+              placeholder="Business name *"
+              minChars={3}
+            />
             <div className="h-px bg-border/30 my-1" />
             <FieldRow icon={Globe} placeholder="Website URL" value={form.website} onChange={v => set("website", v)} focused={focused === "web"} onFocus={() => setFocused("web")} onBlur={() => setFocused(null)} />
             <FieldRow icon={MapPin} placeholder="Google Business Profile URL" value={form.googleUrl} onChange={v => set("googleUrl", v)} focused={focused === "google"} onFocus={() => setFocused("google")} onBlur={() => setFocused(null)} />
