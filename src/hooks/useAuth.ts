@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { User, Session } from "@supabase/supabase-js";
+import type { Session } from "@supabase/supabase-js";
 
 export const useAuth = () => {
   const queryClient = useQueryClient();
@@ -9,6 +9,7 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Bootstrap: restore persisted session first
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
@@ -33,7 +34,6 @@ export const useAuth = () => {
         .eq("user_id", session.user.id);
       if (error) throw error;
       if (!data || data.length === 0) return null;
-      // Priority: admin > contractor > homeowner
       const roles = data.map((r) => r.role);
       if (roles.includes("admin")) return "admin";
       if (roles.includes("contractor")) return "contractor";
@@ -41,32 +41,6 @@ export const useAuth = () => {
     },
     enabled: !!session?.user?.id,
   });
-
-  const signUp = useCallback(async (
-    email: string,
-    password: string,
-    fullName: string,
-    userRole: string,
-    meta?: { salutation?: string; first_name?: string; last_name?: string; account_type?: string }
-  ) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-          role: userRole,
-          ...meta,
-        },
-      },
-    });
-    return { data, error };
-  }, []);
-
-  const signIn = useCallback(async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    return { data, error };
-  }, []);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
@@ -79,8 +53,6 @@ export const useAuth = () => {
     isLoading: loading,
     isAuthenticated: !!session?.user,
     role: role as string | null,
-    signUp,
-    signIn,
     signOut,
   };
 };

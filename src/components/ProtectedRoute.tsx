@@ -1,15 +1,16 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { saveAuthIntent } from "@/services/auth/authIntentService";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRole?: string;
-  /** If true, allow any authenticated user regardless of role */
   anyRole?: boolean;
 }
 
 const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps) => {
   const { isAuthenticated, isLoading, role } = useAuth();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -20,12 +21,17 @@ const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/start?intent=passeport-maison" replace />;
+    // Preserve intent before redirecting to login
+    saveAuthIntent({
+      returnPath: location.pathname + location.search,
+      action: "access_protected",
+      roleHint: requiredRole,
+    });
+    return <Navigate to="/login" replace />;
   }
 
   // If anyRole is set, skip role check. Admins can access any route.
   if (!anyRole && requiredRole && role !== requiredRole && role !== "admin") {
-    // Redirect to role-appropriate dashboard
     if (role === "contractor") return <Navigate to="/pro" replace />;
     return <Navigate to="/dashboard" replace />;
   }

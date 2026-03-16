@@ -1,32 +1,47 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+/**
+ * UNPRO — Login Page (No Password)
+ * Primary: Google + Apple OAuth
+ * Secondary: Phone OTP
+ */
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import OAuthButtons from "@/components/auth/OAuthButtons";
+import AuthDivider from "@/components/auth/AuthDivider";
+import PhoneOtpForm from "@/components/auth/PhoneOtpForm";
+import { saveAuthIntent, consumeAuthIntent, getDefaultRedirectForRole } from "@/services/auth/authIntentService";
+import { Smartphone, Lock } from "lucide-react";
+import logo from "@/assets/unpro-robot.png";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const [showPhone, setShowPhone] = useState(false);
+  const { isAuthenticated, role, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    const { error } = await signIn(email, password);
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Connexion réussie !");
-      navigate("/");
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      const intent = consumeAuthIntent();
+      const from = (location.state as any)?.from;
+      const target = intent?.returnPath || from || getDefaultRedirectForRole(role);
+      navigate(target, { replace: true });
     }
+  }, [isAuthenticated, isLoading, role, navigate, location]);
+
+  const handlePhoneSuccess = () => {
+    // Auth state change will trigger redirect via useEffect
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center" style={{ background: "linear-gradient(180deg, #F7FBFF 0%, #EAF4FF 58%, #DCEEFF 100%)" }}>
+        <p style={{ color: "#6C7A92" }}>Chargement…</p>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -46,42 +61,47 @@ const Login = () => {
         className="relative z-10 w-full max-w-md"
       >
         <Card style={{ background: "rgba(255,255,255,0.92)", border: "1px solid #DFE9F5", boxShadow: "0 8px 32px -6px hsl(220 40% 30% / 0.1)" }}>
-          <CardHeader className="text-center pb-2">
-            <CardTitle className="text-2xl font-bold" style={{ color: "#3F7BFF" }}>UNPRO</CardTitle>
-            <CardDescription style={{ color: "#6C7A92" }}>Connectez-vous à votre compte</CardDescription>
+          <CardHeader className="text-center pb-2 pt-8">
+            <div className="flex justify-center mb-3">
+              <img src={logo} alt="UNPRO" className="h-14 w-14 object-contain" />
+            </div>
+            <h1 className="text-2xl font-bold" style={{ color: "#0B1533" }}>
+              Connectez-vous
+            </h1>
+            <p className="text-sm mt-1" style={{ color: "#6C7A92" }}>
+              Aucun mot de passe requis
+            </p>
           </CardHeader>
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" style={{ color: "#0B1533" }}>Courriel</Label>
-                <Input
-                  id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
-                  placeholder="vous@exemple.com"
-                  style={{ background: "white", border: "1px solid #DFE9F5", color: "#0B1533" }}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password" style={{ color: "#0B1533" }}>Mot de passe</Label>
-                <Input
-                  id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
-                  placeholder="••••••••"
-                  style={{ background: "white", border: "1px solid #DFE9F5", color: "#0B1533" }}
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="flex flex-col gap-4">
-              <Button
-                type="submit" className="w-full" disabled={loading}
-                style={{ background: "linear-gradient(135deg, #2563EB, #3B82F6)", color: "white" }}
+
+          <CardContent className="space-y-1 pb-8">
+            {/* OAuth buttons - primary */}
+            <OAuthButtons />
+
+            <AuthDivider text="ou connectez-vous par téléphone" />
+
+            {/* Phone OTP - secondary */}
+            {showPhone ? (
+              <PhoneOtpForm onSuccess={handlePhoneSuccess} />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowPhone(true)}
+                className="w-full h-11 flex items-center justify-center gap-2 rounded-xl text-sm font-medium transition-colors hover:bg-[hsl(220_20%_96%)]"
+                style={{ border: "1px solid #DFE9F5", color: "#0B1533", background: "white" }}
               >
-                {loading ? "Connexion…" : "Se connecter"}
-              </Button>
-              <p className="text-sm" style={{ color: "#6C7A92" }}>
-                Pas encore de compte ?{" "}
-                <Link to="/signup" className="font-medium hover:underline" style={{ color: "#3F7BFF" }}>Créer un compte</Link>
-              </p>
-            </CardFooter>
-          </form>
+                <Smartphone className="h-4 w-4" style={{ color: "#6C7A92" }} />
+                Continuer avec mon téléphone
+              </button>
+            )}
+
+            {/* Trust signal */}
+            <div className="flex items-center justify-center gap-1.5 pt-4">
+              <Lock className="h-3 w-3" style={{ color: "#6C7A92" }} />
+              <span className="text-xs" style={{ color: "#6C7A92" }}>
+                Connexion sécurisée · Restez connecté sans effort
+              </span>
+            </div>
+          </CardContent>
         </Card>
       </motion.div>
     </div>
