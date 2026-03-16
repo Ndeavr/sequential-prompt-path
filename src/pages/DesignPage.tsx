@@ -10,6 +10,7 @@ import { useDesignProject } from "@/hooks/useDesignProject";
 
 export default function DesignPage() {
   const {
+    projectId,
     originalImage,
     roomType,
     versions,
@@ -17,12 +18,14 @@ export default function DesignPage() {
     activeVersionId,
     isGenerating,
     error,
+    shareToken,
     uploadPhoto,
     generate,
     freezeVersion,
     duplicateVersion,
     selectVersion,
     reset,
+    createShare,
   } = useDesignProject();
 
   const handleUpload = useCallback(
