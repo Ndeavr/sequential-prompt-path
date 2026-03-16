@@ -7,6 +7,7 @@ import AutomationAgentTable from "@/components/automation/AutomationAgentTable";
 import AutomationJobQueue from "@/components/automation/AutomationJobQueue";
 import AutomationRunHistory from "@/components/automation/AutomationRunHistory";
 import AutomationAlertsList from "@/components/automation/AutomationAlertsList";
+import AdaptiveFrequencyPanel from "@/components/automation/AdaptiveFrequencyPanel";
 import {
   useAutomationAgents, useAutomationJobs, useAutomationRuns,
   useAutomationAlerts, useAutomationStats, useToggleAgent,
