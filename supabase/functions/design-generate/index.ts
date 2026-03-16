@@ -298,6 +298,213 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ─── ACTION: create_share ───
+    if (action === "create_share") {
+      if (!userId) {
+        return new Response(
+          JSON.stringify({ error: "Authentification requise" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { projectId: pid, privacyType: pt } = body;
+      if (!pid) {
+        return new Response(
+          JSON.stringify({ error: "Project ID requis" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Verify ownership
+      const { data: proj } = await supabase
+        .from("design_projects")
+        .select("id")
+        .eq("id", pid)
+        .eq("user_id", userId)
+        .single();
+
+      if (!proj) {
+        return new Response(
+          JSON.stringify({ error: "Projet non trouvé" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Generate unique token
+      const shareToken = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+
+      const { data: share, error: shareErr } = await supabase
+        .from("design_shares")
+        .insert({
+          project_id: pid,
+          share_token: shareToken,
+          privacy_type: pt || "private",
+        })
+        .select()
+        .single();
+
+      if (shareErr) {
+        return new Response(
+          JSON.stringify({ error: shareErr.message }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(JSON.stringify({ share }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ─── ACTION: get_shared_project ───
+    if (action === "get_shared_project") {
+      const { shareToken: st } = body;
+      if (!st) {
+        return new Response(
+          JSON.stringify({ error: "Token requis" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Find share
+      const { data: share } = await supabase
+        .from("design_shares")
+        .select("*")
+        .eq("share_token", st)
+        .single();
+
+      if (!share) {
+        return new Response(
+          JSON.stringify({ error: "Lien invalide ou expiré" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Check expiry
+      if (share.expires_at && new Date(share.expires_at) < new Date()) {
+        return new Response(
+          JSON.stringify({ error: "Ce lien a expiré" }),
+          { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Get project + versions
+      const { data: project } = await supabase
+        .from("design_projects")
+        .select("title, room_type, original_image_url")
+        .eq("id", share.project_id)
+        .single();
+
+      const { data: versions } = await supabase
+        .from("design_versions")
+        .select("*")
+        .eq("project_id", share.project_id)
+        .order("created_at", { ascending: true });
+
+      // Get vote counts per version
+      const { data: votes } = await supabase
+        .from("design_votes")
+        .select("version_id, vote_type")
+        .eq("project_id", share.project_id);
+
+      const voteCounts: Record<string, { love: number; like: number; nope: number }> = {};
+      for (const v of versions || []) {
+        voteCounts[v.id] = { love: 0, like: 0, nope: 0 };
+      }
+      for (const vote of votes || []) {
+        if (voteCounts[vote.version_id]) {
+          const t = vote.vote_type as "love" | "like" | "nope";
+          if (t in voteCounts[vote.version_id]) {
+            voteCounts[vote.version_id][t]++;
+          }
+        }
+      }
+
+      const enrichedVersions = (versions || []).map((v: any) => ({
+        ...v,
+        vote_counts: voteCounts[v.id] || { love: 0, like: 0, nope: 0 },
+      }));
+
+      return new Response(
+        JSON.stringify({
+          project: {
+            ...project,
+            versions: enrichedVersions,
+            privacy_type: share.privacy_type,
+          },
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ─── ACTION: cast_vote ───
+    if (action === "cast_vote") {
+      const { shareToken: st, versionId, voterName, voteType, fingerprint: fp, comment } = body;
+
+      if (!st || !versionId || !voterName || !voteType) {
+        return new Response(
+          JSON.stringify({ error: "Données manquantes" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Validate share token
+      const { data: share } = await supabase
+        .from("design_shares")
+        .select("project_id")
+        .eq("share_token", st)
+        .single();
+
+      if (!share) {
+        return new Response(
+          JSON.stringify({ error: "Lien invalide" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Check duplicate vote by fingerprint
+      if (fp) {
+        const { data: existing } = await supabase
+          .from("design_votes")
+          .select("id")
+          .eq("project_id", share.project_id)
+          .eq("version_id", versionId)
+          .eq("fingerprint", fp)
+          .maybeSingle();
+
+        if (existing) {
+          // Update existing vote
+          await supabase
+            .from("design_votes")
+            .update({ vote_type: voteType, voter_name: voterName, comment: comment || null })
+            .eq("id", existing.id);
+
+          return new Response(JSON.stringify({ updated: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      const { error: voteErr } = await supabase.from("design_votes").insert({
+        project_id: share.project_id,
+        version_id: versionId,
+        voter_name: voterName,
+        vote_type: voteType,
+        fingerprint: fp || null,
+        comment: comment || null,
+      });
+
+      if (voteErr) {
+        return new Response(
+          JSON.stringify({ error: voteErr.message }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(
       JSON.stringify({ error: "Action non reconnue" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
