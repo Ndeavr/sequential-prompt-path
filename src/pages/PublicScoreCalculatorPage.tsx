@@ -10,6 +10,7 @@ import MainLayout from "@/layouts/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import GooglePlacesInput from "@/components/property/GooglePlacesInput";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { findPropertyByAddress, createProperty } from "@/services/property/propertyService";
