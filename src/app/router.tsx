@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import PlaceholderPage from "@/pages/PlaceholderPage";
+import StartPage from "@/pages/StartPage";
 
 // Public
 import Home from "@/pages/Home";
@@ -160,6 +161,7 @@ export const AppRouter = () => (
       <Route path="/contractors/:id" element={<ContractorProfile />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/start" element={<StartPage />} />
       <Route path="/homeowners" element={<HomeownersPage />} />
       <Route path="/proprietaires" element={<HomeownersPage />} />
       <Route path="/professionals" element={<ProfessionalsPage />} />

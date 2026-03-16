@@ -20,7 +20,7 @@ const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/start?intent=passeport-maison" replace />;
   }
 
   // If anyRole is set, skip role check. Admins can access any route.
