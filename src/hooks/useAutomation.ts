@@ -20,10 +20,10 @@ export const useAutomationJobs = (statusFilter?: string) =>
   useQuery<AutomationJob[]>({ queryKey: ["automation-jobs", statusFilter], queryFn: () => fetchJobs(200, statusFilter), staleTime: STALE });
 
 export const useAutomationRuns = () =>
-  useQuery<AutomationRun[]>({ queryKey: ["automation-runs"], queryFn: fetchRuns, staleTime: STALE });
+  useQuery<AutomationRun[]>({ queryKey: ["automation-runs"], queryFn: () => fetchRuns(), staleTime: STALE });
 
 export const useAutomationAlerts = () =>
-  useQuery<AutomationAlert[]>({ queryKey: ["automation-alerts"], queryFn: fetchAlerts, staleTime: STALE });
+  useQuery<AutomationAlert[]>({ queryKey: ["automation-alerts"], queryFn: () => fetchAlerts(), staleTime: STALE });
 
 export const useAutomationStats = () =>
   useQuery<AutomationStats>({ queryKey: ["automation-stats"], queryFn: fetchStats, staleTime: STALE });

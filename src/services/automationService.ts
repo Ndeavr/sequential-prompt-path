@@ -239,7 +239,7 @@ export async function markAlertRead(alertId: string) {
 export async function upsertSetting(key: string, value: Record<string, unknown>) {
   const { error } = await supabase
     .from("automation_settings")
-    .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: "key" });
+    .upsert({ key, value, updated_at: new Date().toISOString() } as any, { onConflict: "key" });
   if (error) throw error;
 }
 
