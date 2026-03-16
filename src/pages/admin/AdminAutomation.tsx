@@ -1,7 +1,7 @@
 import { useState } from "react";
 import AdminLayout from "@/layouts/AdminLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bot, ListTodo, History, AlertTriangle, BarChart3, Loader2 } from "lucide-react";
+import { Bot, ListTodo, History, AlertTriangle, Zap, Loader2 } from "lucide-react";
 import AutomationStatsCards from "@/components/automation/AutomationStatsCards";
 import AutomationAgentTable from "@/components/automation/AutomationAgentTable";
 import AutomationJobQueue from "@/components/automation/AutomationJobQueue";
