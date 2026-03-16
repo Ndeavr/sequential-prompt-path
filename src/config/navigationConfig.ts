@@ -28,8 +28,8 @@ export const headerNavByRole: Record<UserRole | "guest", NavItem[]> = {
   contractor: [
     { to: "/pro", label: "Accueil", labelEn: "Home", icon: "Home" },
     { to: "/pro/profile", label: "Mon profil", labelEn: "My Profile", icon: "User" },
-    { to: "/pro/leads", label: "Opportunités", labelEn: "Opportunities", icon: "TrendingUp" },
-    { to: "/pro/appointments", label: "Rendez-vous", labelEn: "Appointments", icon: "CalendarDays" },
+    { to: "/pro/leads", label: "Rendez-vous garantis", labelEn: "Guaranteed Appointments", icon: "CalendarCheck" },
+    { to: "/pro/appointments", label: "Mes rendez-vous", labelEn: "My Appointments", icon: "CalendarDays" },
     { to: "/alex", label: "Alex", labelEn: "Alex", icon: "Sparkles" },
   ],
   partner: [
