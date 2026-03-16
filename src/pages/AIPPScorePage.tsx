@@ -95,10 +95,11 @@ export default function AIPPScorePage() {
                 exit={{ opacity: 0, y: -20 }}
                 className="glass-card-elevated rounded-3xl p-6 md:p-8 space-y-5"
               >
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold">Nom de l'entreprise *</Label>
-                  <Input placeholder="Ex: Toiture Expert Inc." value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} className="rounded-xl h-12" />
-                </div>
+                <BusinessNameSearch
+                  value={form.name}
+                  onChange={(v) => setForm(f => ({ ...f, name: v }))}
+                  onBusinessSelected={handleBusinessSelected}
+                />
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold">Ville *</Label>
                   <Input placeholder="Montréal" value={form.city} onChange={(e) => setForm(f => ({ ...f, city: e.target.value }))} className="rounded-xl h-12" />
