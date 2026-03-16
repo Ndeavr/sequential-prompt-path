@@ -18,7 +18,7 @@ import NotFound from "@/pages/NotFound";
 const RuePage = () => {
   const { ville, rue } = useParams<{ ville: string; rue: string }>();
   const city = getCityBySlug(ville || "");
-  const streetName = rue?.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || "";
+  const streetName = slugToDisplayName(rue || "");
 
   // Fetch properties on this street
   const { data: properties, isLoading } = useQuery({
