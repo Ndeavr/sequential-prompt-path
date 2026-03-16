@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCityBySlug } from "@/seo/data/cities";
+import { slugToDisplayName } from "@/lib/displayFormatters";
 import NotFound from "@/pages/NotFound";
 
 const QuartierPage = () => {
@@ -68,7 +69,7 @@ const QuartierPage = () => {
     return <NotFound />;
   }
 
-  const quartierName = quartier?.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || "";
+  const quartierName = slugToDisplayName(quartier || "");
   const pageTitle = `${quartierName}, ${city.name} — UNPRO`;
   const pageDesc = `Découvrez le quartier ${quartierName} à ${city.name}. Tendances de rénovation, professionnels locaux et intelligence immobilière.`;
 

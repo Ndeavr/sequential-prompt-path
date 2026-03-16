@@ -5,6 +5,7 @@
  */
 
 import { useMemo, useCallback } from "react";
+import { slugToDisplayName } from "@/lib/displayFormatters";
 import { useLocation } from "react-router-dom";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { useLanguage } from "@/components/ui/LanguageToggle";
@@ -196,7 +197,7 @@ export function useIntentCTA() {
     // Enrich with city name
     const cityMatch = p.match(/\/ville\/([^/]+)/);
     if (cityMatch && cta.intent === "explore_city") {
-      const city = decodeURIComponent(cityMatch[1]).replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      const city = slugToDisplayName(decodeURIComponent(cityMatch[1]));
       cta.primary = {
         ...cta.primary,
         label: `Voir le score à ${city}`,
@@ -224,7 +225,7 @@ export function useIntentCTA() {
     // Enrich with problem
     const problemMatch = p.match(/\/probleme\/([^/]+)/);
     if (problemMatch && cta.intent === "research_problem") {
-      const problem = decodeURIComponent(problemMatch[1]).replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      const problem = slugToDisplayName(decodeURIComponent(problemMatch[1]));
       cta.primary = {
         ...cta.primary,
         label: `Trouver un expert : ${problem}`,
