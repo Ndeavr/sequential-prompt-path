@@ -93,6 +93,15 @@ export default function DesignWorkspace({
           >
             Comparer
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs h-8 gap-1.5"
+            onClick={() => setIsSharing(true)}
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Partager</span>
+          </Button>
           <Button size="sm" className="text-xs h-8 gap-1.5">
             <Sparkles className="w-3.5 h-3.5" />
             Créer le brief
