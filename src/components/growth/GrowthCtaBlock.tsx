@@ -19,7 +19,7 @@ const GrowthCtaBlock = ({ showAlex = false, cityName }: GrowthCtaBlockProps) => 
   const actions = [
     {
       icon: Upload,
-      title: "Analyser 3 soumissions",
+      title: "Analyser mes soumissions",
       description: "Comparez vos devis gratuitement avec notre IA",
       to: "/dashboard/quotes/upload",
     },

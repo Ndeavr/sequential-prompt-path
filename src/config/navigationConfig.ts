@@ -61,7 +61,7 @@ export const subNavConfig: Record<string, NavItem[]> = {
   ],
   "/dashboard/projects": [
     { to: "/dashboard/projects/new", label: "Projets actifs", labelEn: "Active Projects", icon: "FolderOpen" },
-    { to: "/compare-quotes", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
+    { to: "/compare-quotes", label: "Analyser mes soumissions", labelEn: "Analyze My Quotes", icon: "Scale" },
     { to: "/dashboard/quotes", label: "Soumissions reçues", labelEn: "Received Quotes", icon: "FileText" },
     { to: "/dashboard/appointments", label: "Rendez-vous", labelEn: "Appointments", icon: "CalendarDays" },
   ],
@@ -88,7 +88,7 @@ export const subNavConfig: Record<string, NavItem[]> = {
     { to: "/proprietaires", label: "Aperçu", labelEn: "Overview", icon: "Home" },
     { to: "/proprietaires/passeport-maison", label: "Passeport Maison", icon: "FileText" },
     { to: "/proprietaires/score-maison", label: "Score Maison", icon: "BarChart3" },
-    { to: "/proprietaires/comparer-3-soumissions", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
+    { to: "/proprietaires/analyser-soumissions", label: "Analyser mes soumissions", labelEn: "Analyze My Quotes", icon: "Scale" },
     { to: "/proprietaires/verifier-entrepreneur", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", icon: "ShieldCheck" },
   ],
   "/entrepreneurs": [
@@ -118,7 +118,7 @@ export function getProfileActions(ctx: NavigationContext): NavItem[] {
       { to: "/dashboard/home-score", label: "Mon Home Score", labelEn: "My Home Score", icon: "BarChart3" },
       { to: "/dashboard/appointments", label: "Mes rendez-vous", labelEn: "My Appointments", icon: "CalendarDays" },
       { to: "/dashboard/documents/upload", label: "Mes documents", labelEn: "My Documents", icon: "FileText" },
-      { to: "/compare-quotes", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
+      { to: "/compare-quotes", label: "Analyser mes soumissions", labelEn: "Analyze My Quotes", icon: "Scale" },
     );
   }
 
@@ -241,7 +241,7 @@ export function getDrawerItems(ctx: NavigationContext): NavItem[] {
       { to: "/dashboard/documents/upload", label: "Mes documents", labelEn: "My Documents", icon: "FileText" },
       { to: "/dashboard/appointments", label: "Mes rendez-vous", labelEn: "My Appointments", icon: "CalendarDays" },
       { to: "/dashboard/quotes", label: "Mes soumissions", labelEn: "My Quotes", icon: "FileText" },
-      { to: "/compare-quotes", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
+      { to: "/compare-quotes", label: "Analyser mes soumissions", labelEn: "Analyze My Quotes", icon: "Scale" },
       { to: "/search", label: "Trouver un entrepreneur", labelEn: "Find a Contractor", icon: "Search" },
     ];
   }
@@ -276,7 +276,7 @@ export function getDrawerItems(ctx: NavigationContext): NavItem[] {
     { to: "/proprietaires", label: "Propriétaires", labelEn: "Homeowners", icon: "Building2" },
     { to: "/entrepreneurs", label: "Entrepreneurs", labelEn: "Contractors", icon: "Briefcase" },
     { to: "/condo", label: "Condo / Immeubles", labelEn: "Condos", icon: "Building" },
-    { to: "/compare-quotes", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
+    { to: "/compare-quotes", label: "Analyser des soumissions", labelEn: "Analyze Quotes", icon: "Scale" },
     { to: "/search", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", icon: "ShieldCheck" },
     { to: "/score-maison", label: "Score Maison", labelEn: "Home Score", icon: "BarChart3" },
     { to: "/aipp-score", label: "Score AIPP", icon: "Star" },
@@ -313,7 +313,7 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
         titleEn: "Homeowners",
         items: [
           { to: "/proprietaires", label: "Passeport Maison", icon: "FileText" },
-          { to: "/compare-quotes", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
+          { to: "/compare-quotes", label: "Analyser des soumissions", labelEn: "Analyze Quotes", icon: "Scale" },
           { to: "/search", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", icon: "ShieldCheck" },
           { to: "/score-maison", label: "Score Maison", labelEn: "Home Score", icon: "BarChart3" },
         ],
@@ -338,7 +338,7 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
         titleEn: "My Space",
         items: [
           { to: "/dashboard/properties", label: "Mes propriétés", labelEn: "My Properties", icon: "Building2" },
-          { to: "/compare-quotes", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
+          { to: "/compare-quotes", label: "Analyser mes soumissions", labelEn: "Analyze My Quotes", icon: "Scale" },
           { to: "/search", label: "Trouver un entrepreneur", labelEn: "Find a Contractor", icon: "Search" },
           { to: "/dashboard/home-score", label: "Home Score", icon: "BarChart3" },
         ],

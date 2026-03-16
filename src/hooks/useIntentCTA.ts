@@ -52,7 +52,7 @@ const INTENT_CTA_MAP: Record<UserIntent, CTAConfig> = {
   research_problem: {
     intent: "research_problem",
     primary: { label: "Voir les solutions recommandées", labelEn: "See Recommended Solutions", to: "/alex" },
-    secondary: { label: "Trouver un expert", labelEn: "Find an Expert", to: "/recherche" },
+    secondary: { label: "Trouver un expert", labelEn: "Find an Expert", to: "/search" },
   },
   explore_city: {
     intent: "explore_city",

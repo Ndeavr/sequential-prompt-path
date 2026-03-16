@@ -177,7 +177,7 @@ const megaMenus: Record<string, MegaMenuConfig> = {
           { to: "/comment-ca-marche", label: "Comment fonctionne UNPRO", labelEn: "How UNPRO Works", icon: HelpCircle },
           { to: "/verification", label: "Vérification entreprises", labelEn: "Company Verification", icon: ShieldCheck },
           { to: "/nos-standards", label: "Nos standards", labelEn: "Our Standards", icon: Award },
-          { to: "/pourquoi-pas-3-soumissions", label: "Pourquoi éviter les 3 soumissions", labelEn: "Why Avoid 3 Quotes", icon: Scale },
+          { to: "/pourquoi-pas-3-soumissions", label: "Pourquoi le rendez-vous exclusif", labelEn: "Why Exclusive Appointments", icon: Scale },
         ],
       },
     ],
