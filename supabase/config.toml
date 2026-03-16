@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.alex-renovation]
 verify_jwt = false
+
+[functions.business-lookup]
+verify_jwt = false
