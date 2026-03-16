@@ -156,12 +156,18 @@ export default function AdminHomeGraph() {
         <StatsGrid stats={stats} />
 
         <Tabs defaultValue="explorer" className="w-full">
-          <TabsList className="w-full grid grid-cols-5 h-9 rounded-xl">
+          <TabsList className="w-full grid grid-cols-7 h-9 rounded-xl">
             <TabsTrigger value="explorer" className="text-xs gap-1 rounded-lg">
               <Network className="h-3.5 w-3.5" /><span className="hidden sm:inline">Graphe</span>
             </TabsTrigger>
             <TabsTrigger value="blueprints" className="text-xs gap-1 rounded-lg">
               <FileText className="h-3.5 w-3.5" /><span className="hidden sm:inline">Blueprints</span>
+            </TabsTrigger>
+            <TabsTrigger value="massive" className="text-xs gap-1 rounded-lg">
+              <Rocket className="h-3.5 w-3.5" /><span className="hidden sm:inline">Massive</span>
+            </TabsTrigger>
+            <TabsTrigger value="import" className="text-xs gap-1 rounded-lg">
+              <Upload className="h-3.5 w-3.5" /><span className="hidden sm:inline">Import</span>
             </TabsTrigger>
             <TabsTrigger value="quickwins" className="text-xs gap-1 rounded-lg">
               <Zap className="h-3.5 w-3.5" /><span className="hidden sm:inline">Quick Wins</span>
