@@ -68,7 +68,7 @@ const QuartierPage = () => {
     return <NotFound />;
   }
 
-  const quartierName = quartier?.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || "";
+  const quartierName = slugToDisplayName(quartier || "");
   const pageTitle = `${quartierName}, ${city.name} — UNPRO`;
   const pageDesc = `Découvrez le quartier ${quartierName} à ${city.name}. Tendances de rénovation, professionnels locaux et intelligence immobilière.`;
 
