@@ -69,12 +69,13 @@ export default function GooglePlacesInput({
   const autocompleteRef = useRef<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   // Load Google Maps
   useEffect(() => {
+    let cancelled = false;
     async function init() {
       try {
-        // Try VITE env first, then fetch from edge function
         let apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
         if (!apiKey) {
           const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
@@ -82,14 +83,17 @@ export default function GooglePlacesInput({
           const data = await res.json();
           apiKey = data?.key;
         }
-        if (!apiKey) { setLoadError(true); return; }
+        if (!apiKey) { if (!cancelled) { setLoadError(true); setIsInitializing(false); } return; }
         await loadGoogleMapsScript(apiKey);
-        setIsLoaded(true);
+        if (!cancelled) { setIsLoaded(true); setIsInitializing(false); }
       } catch {
-        setLoadError(true);
+        if (!cancelled) { setLoadError(true); setIsInitializing(false); }
       }
     }
     init();
+    // Fallback: stop waiting after 5s
+    const timeout = setTimeout(() => { if (!cancelled) setIsInitializing(false); }, 5000);
+    return () => { cancelled = true; clearTimeout(timeout); };
   }, []);
 
   // Initialize autocomplete
