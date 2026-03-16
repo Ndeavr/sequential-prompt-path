@@ -40,6 +40,7 @@ import RuePage from "@/pages/seo/RuePage";
 import ProblemeLocationFrPage from "@/pages/seo/ProblemeLocationFrPage";
 import PropertyGraphPage from "@/pages/PropertyGraphPage";
 import AlexChat from "@/pages/AlexChat";
+import DesignPage from "@/pages/DesignPage";
 import FlywheelPage from "@/pages/FlywheelPage";
 import EnergyPage from "@/pages/EnergyPage";
 import PreventiveMaintenancePage from "@/pages/PreventiveMaintenancePage";
