@@ -4509,6 +4509,288 @@ export type Database = {
           },
         ]
       }
+      design_edits: {
+        Row: {
+          created_at: string
+          edit_type: string
+          id: string
+          metadata: Json | null
+          prompt: string | null
+          target_zone: string | null
+          version_id: string
+        }
+        Insert: {
+          created_at?: string
+          edit_type?: string
+          id?: string
+          metadata?: Json | null
+          prompt?: string | null
+          target_zone?: string | null
+          version_id: string
+        }
+        Update: {
+          created_at?: string
+          edit_type?: string
+          id?: string
+          metadata?: Json | null
+          prompt?: string | null
+          target_zone?: string | null
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_edits_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "design_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      design_material_preferences: {
+        Row: {
+          backsplash_type: string | null
+          cabinets_color: string | null
+          countertop_type: string | null
+          created_at: string
+          floor_type: string | null
+          hardware_finish: string | null
+          id: string
+          project_id: string
+          style_tags: string[] | null
+          updated_at: string
+          wall_color: string | null
+        }
+        Insert: {
+          backsplash_type?: string | null
+          cabinets_color?: string | null
+          countertop_type?: string | null
+          created_at?: string
+          floor_type?: string | null
+          hardware_finish?: string | null
+          id?: string
+          project_id: string
+          style_tags?: string[] | null
+          updated_at?: string
+          wall_color?: string | null
+        }
+        Update: {
+          backsplash_type?: string | null
+          cabinets_color?: string | null
+          countertop_type?: string | null
+          created_at?: string
+          floor_type?: string | null
+          hardware_finish?: string | null
+          id?: string
+          project_id?: string
+          style_tags?: string[] | null
+          updated_at?: string
+          wall_color?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_material_preferences_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "design_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      design_projects: {
+        Row: {
+          created_at: string
+          id: string
+          original_image_url: string | null
+          property_id: string | null
+          room_type: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+          visibility: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          original_image_url?: string | null
+          property_id?: string | null
+          room_type?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+          visibility?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          original_image_url?: string | null
+          property_id?: string | null
+          room_type?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_projects_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "design_projects_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      design_shares: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          privacy_type: string
+          project_id: string
+          share_token: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          privacy_type?: string
+          project_id: string
+          share_token?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          privacy_type?: string
+          project_id?: string
+          share_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_shares_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "design_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      design_versions: {
+        Row: {
+          budget_mode: string | null
+          created_at: string
+          frozen: boolean
+          id: string
+          image_url: string | null
+          parent_version_id: string | null
+          project_id: string
+          prompt_used: string | null
+          style_label: string | null
+          version_number: string
+        }
+        Insert: {
+          budget_mode?: string | null
+          created_at?: string
+          frozen?: boolean
+          id?: string
+          image_url?: string | null
+          parent_version_id?: string | null
+          project_id: string
+          prompt_used?: string | null
+          style_label?: string | null
+          version_number?: string
+        }
+        Update: {
+          budget_mode?: string | null
+          created_at?: string
+          frozen?: boolean
+          id?: string
+          image_url?: string | null
+          parent_version_id?: string | null
+          project_id?: string
+          prompt_used?: string | null
+          style_label?: string | null
+          version_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_versions_parent_version_id_fkey"
+            columns: ["parent_version_id"]
+            isOneToOne: false
+            referencedRelation: "design_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "design_versions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "design_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      design_votes: {
+        Row: {
+          comment: string | null
+          created_at: string
+          fingerprint: string | null
+          id: string
+          project_id: string
+          version_id: string
+          vote_type: string
+          voter_email: string | null
+          voter_name: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          fingerprint?: string | null
+          id?: string
+          project_id: string
+          version_id: string
+          vote_type?: string
+          voter_email?: string | null
+          voter_name?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          fingerprint?: string | null
+          id?: string
+          project_id?: string
+          version_id?: string
+          vote_type?: string
+          voter_email?: string | null
+          voter_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_votes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "design_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "design_votes_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "design_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dna_fit_results: {
         Row: {
           compatibility_label: string
@@ -7261,6 +7543,51 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      project_briefs: {
+        Row: {
+          brief_json: Json
+          created_at: string
+          design_project_id: string
+          id: string
+          ready_for_matching: boolean
+          selected_version_id: string | null
+          user_id: string
+        }
+        Insert: {
+          brief_json?: Json
+          created_at?: string
+          design_project_id: string
+          id?: string
+          ready_for_matching?: boolean
+          selected_version_id?: string | null
+          user_id: string
+        }
+        Update: {
+          brief_json?: Json
+          created_at?: string
+          design_project_id?: string
+          id?: string
+          ready_for_matching?: boolean
+          selected_version_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_briefs_design_project_id_fkey"
+            columns: ["design_project_id"]
+            isOneToOne: false
+            referencedRelation: "design_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_briefs_selected_version_id_fkey"
+            columns: ["selected_version_id"]
+            isOneToOne: false
+            referencedRelation: "design_versions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_context_snapshots: {
         Row: {
