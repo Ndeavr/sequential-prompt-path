@@ -151,18 +151,25 @@ const buildFallbackFAQ = (name: string, specialty: string | null, city: string |
 
 const ContractorProfile = () => {
   const { id } = useParams<{ id: string }>();
-  const { data: profileData, isLoading, isError } = useContractorFullProfile(id);
-  const { data: reviews } = usePublicContractorReviews(id);
-  const { data: publicScores } = useContractorPublicScores(id);
-  const { data: reviewInsights } = useReviewInsights(id);
+  const isDemo = !!(id && DEMO_CONTRACTORS[id]);
+  const { data: profileData, isLoading, isError } = useContractorFullProfile(isDemo ? undefined : id);
+  const { data: reviews } = usePublicContractorReviews(isDemo ? undefined : id);
+  const { data: publicScores } = useContractorPublicScores(isDemo ? undefined : id);
+  const { data: reviewInsights } = useReviewInsights(isDemo ? undefined : id);
   const { user, role } = useAuth();
 
-  const contractor = profileData?.contractor ?? profileData;
+  // Use demo data for fallback carousel contractors
+  const demoContractor = isDemo ? DEMO_CONTRACTORS[id!] : null;
+  const contractor = demoContractor ?? profileData?.contractor ?? profileData;
   const contractorId = contractor?.id;
 
-  const { data: aippBreakdown } = useContractorAIPPBreakdown(contractorId);
-  const { data: reviewDimensions } = useContractorReviewDimensions(contractorId);
-  const { data: reviewAggregate } = useContractorReviewAggregate(contractorId);
+  const { data: aippBreakdown } = useContractorAIPPBreakdown(isDemo ? undefined : contractorId);
+  const { data: reviewDimensions } = useContractorReviewDimensions(isDemo ? undefined : contractorId);
+  const { data: reviewAggregate } = useContractorReviewAggregate(isDemo ? undefined : contractorId);
+
+  // Demo overrides
+  const effectiveAippBreakdown = isDemo ? DEMO_AIPP_BREAKDOWN(demoContractor.aipp_score) : aippBreakdown;
+  const effectiveReviews = isDemo ? DEMO_REVIEWS(demoContractor.business_name) : reviews;
 
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
