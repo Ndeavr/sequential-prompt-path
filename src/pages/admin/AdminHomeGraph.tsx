@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/layouts/AdminLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import {
   Network, FileText, Zap, AlertTriangle, Copy, Loader2,
   Bug, TrendingUp, Globe, Brain, HelpCircle, Tag, MapPin, BookOpen,
+  Rocket, Upload,
 } from "lucide-react";
 import {
   fetchGraphStats, fetchGraphProblems, fetchBlueprints,
@@ -18,6 +19,9 @@ import {
   generateGraphPrompt,
   type GraphStats, type GraphProblem, type GraphBlueprint,
 } from "@/services/homeGraphService";
+
+const MassiveBlueprintPanel = lazy(() => import("@/components/homeGraph/MassiveBlueprintPanel"));
+const JsonImportPipeline = lazy(() => import("@/components/homeGraph/JsonImportPipeline"));
 
 // ─── Stats Cards ─────────────────────────────────────────────────
 
@@ -146,12 +150,18 @@ export default function AdminHomeGraph() {
         <StatsGrid stats={stats} />
 
         <Tabs defaultValue="explorer" className="w-full">
-          <TabsList className="w-full grid grid-cols-5 h-9 rounded-xl">
+          <TabsList className="w-full grid grid-cols-7 h-9 rounded-xl">
             <TabsTrigger value="explorer" className="text-xs gap-1 rounded-lg">
               <Network className="h-3.5 w-3.5" /><span className="hidden sm:inline">Graphe</span>
             </TabsTrigger>
             <TabsTrigger value="blueprints" className="text-xs gap-1 rounded-lg">
               <FileText className="h-3.5 w-3.5" /><span className="hidden sm:inline">Blueprints</span>
+            </TabsTrigger>
+            <TabsTrigger value="massive" className="text-xs gap-1 rounded-lg">
+              <Rocket className="h-3.5 w-3.5" /><span className="hidden sm:inline">Massive</span>
+            </TabsTrigger>
+            <TabsTrigger value="import" className="text-xs gap-1 rounded-lg">
+              <Upload className="h-3.5 w-3.5" /><span className="hidden sm:inline">Import</span>
             </TabsTrigger>
             <TabsTrigger value="quickwins" className="text-xs gap-1 rounded-lg">
               <Zap className="h-3.5 w-3.5" /><span className="hidden sm:inline">Quick Wins</span>
@@ -290,6 +300,20 @@ export default function AdminHomeGraph() {
                 </Table>
               </div>
             )}
+          </TabsContent>
+
+          {/* ── Massive Generation ── */}
+          <TabsContent value="massive" className="mt-4">
+            <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}>
+              <MassiveBlueprintPanel />
+            </Suspense>
+          </TabsContent>
+
+          {/* ── JSON Import ── */}
+          <TabsContent value="import" className="mt-4">
+            <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}>
+              <JsonImportPipeline />
+            </Suspense>
           </TabsContent>
 
           {/* ── Quick Wins ── */}
