@@ -132,6 +132,10 @@ export function useDesignProject() {
 
         if (!resp.ok) {
           const err = await resp.json().catch(() => ({ error: "Erreur" }));
+          if (err.usage_limit) {
+            setUsageLimitHit({ current: err.current_count, limit: err.limit });
+            return;
+          }
           setError(err.error || "La génération a échoué.");
           return;
         }
