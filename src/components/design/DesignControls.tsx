@@ -1,18 +1,18 @@
 /**
  * UNPRO Design — Right Panel Controls
- * Prompt bar, style presets, materials, budget, actions
+ * Prompt bar, inspiration uploads, materials, colors, style presets, budget, actions
  */
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Mic, Sparkles, Paintbrush, Layers, DollarSign,
-  Wand2, X, ChevronDown
+  Wand2, X, ChevronDown, ImagePlus, Palette, Gem
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Badge } from "@/components/ui/badge";
 import {
   STYLE_PRESETS, BUDGET_FILTERS, SLIDERS, EDITABLE_ZONES, ZONE_LABELS,
+  MATERIAL_OPTIONS, COLOR_PALETTES,
 } from "./data";
 
 interface Props {
@@ -21,6 +21,9 @@ interface Props {
     budget?: string;
     zones?: string[];
     sliders?: Record<string, number>;
+    inspirationImages?: string[];
+    materials?: string[];
+    colorPalette?: string;
   }) => void;
   isGenerating: boolean;
   roomType: string | null;
@@ -31,6 +34,9 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [selectedBudget, setSelectedBudget] = useState<string | null>(null);
   const [selectedZones, setSelectedZones] = useState<string[]>([]);
+  const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
+  const [selectedColorPalette, setSelectedColorPalette] = useState<string | null>(null);
+  const [inspirationImages, setInspirationImages] = useState<string[]>([]);
   const [sliderValues, setSliderValues] = useState<Record<string, number>>({
     brightness: 50,
     warmth: 50,
@@ -38,15 +44,19 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
     intensity: 50,
   });
   const [expandedSection, setExpandedSection] = useState<string | null>("prompt");
+  const inspoInputRef = useRef<HTMLInputElement>(null);
 
   const handleSend = () => {
-    if (!prompt.trim() && !selectedStyle) return;
-    const finalPrompt = prompt.trim() || `Style ${selectedStyle}`;
+    if (!prompt.trim() && !selectedStyle && inspirationImages.length === 0) return;
+    const finalPrompt = prompt.trim() || (inspirationImages.length > 0 ? "Reproduire ce style d'inspiration" : `Style ${selectedStyle}`);
     onSendPrompt(finalPrompt, {
       style: selectedStyle ?? undefined,
       budget: selectedBudget ?? undefined,
       zones: selectedZones.length > 0 ? selectedZones : undefined,
       sliders: sliderValues,
+      inspirationImages: inspirationImages.length > 0 ? inspirationImages : undefined,
+      materials: selectedMaterials.length > 0 ? selectedMaterials : undefined,
+      colorPalette: selectedColorPalette ?? undefined,
     });
     setPrompt("");
   };
@@ -57,14 +67,40 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
     );
   };
 
+  const toggleMaterial = (mat: string) => {
+    setSelectedMaterials((prev) =>
+      prev.includes(mat) ? prev.filter((m) => m !== mat) : prev.length < 3 ? [...prev, mat] : prev
+    );
+  };
+
+  const handleInspirationUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).slice(0, 3 - inspirationImages.length).forEach((file) => {
+      if (!file.type.startsWith("image/")) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        setInspirationImages((prev) => prev.length < 3 ? [...prev, reader.result as string] : prev);
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  }, [inspirationImages.length]);
+
+  const removeInspiration = (index: number) => {
+    setInspirationImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const SectionToggle = ({
     icon: Icon,
     label,
     sectionKey,
+    badge,
   }: {
     icon: any;
     label: string;
     sectionKey: string;
+    badge?: number;
   }) => (
     <button
       onClick={() => setExpandedSection(expandedSection === sectionKey ? null : sectionKey)}
@@ -73,6 +109,11 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
       <div className="flex items-center gap-2">
         <Icon className="w-4 h-4 text-muted-foreground" />
         {label}
+        {badge && badge > 0 ? (
+          <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+            {badge}
+          </span>
+        ) : null}
       </div>
       <ChevronDown
         className={`w-4 h-4 text-muted-foreground transition-transform ${
@@ -126,7 +167,7 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
 
             <Button
               onClick={handleSend}
-              disabled={isGenerating || (!prompt.trim() && !selectedStyle)}
+              disabled={isGenerating || (!prompt.trim() && !selectedStyle && inspirationImages.length === 0)}
               className="w-full gap-2"
               size="sm"
             >
@@ -146,10 +187,10 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
             {/* Quick Prompts */}
             <div className="flex flex-wrap gap-1.5">
               {[
+                "J'en veux une comme ça",
                 "Peindre les murs en blanc",
                 "Armoires vertes",
                 "Comptoir en granit",
-                "Ajouter un dosseret",
                 "Moderniser",
               ].map((qp) => (
                 <button
@@ -164,8 +205,132 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
           </motion.div>
         )}
 
+        {/* ─── Inspiration Upload ─── */}
+        <SectionToggle icon={ImagePlus} label="Inspiration" sectionKey="inspiration" badge={inspirationImages.length} />
+        {expandedSection === "inspiration" && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            className="space-y-3 pb-3"
+          >
+            <p className="text-xs text-muted-foreground">
+              Téléversez des photos de référence (max 3). L'IA reproduira le style.
+            </p>
+
+            {/* Inspiration grid */}
+            <div className="grid grid-cols-3 gap-2">
+              {inspirationImages.map((img, i) => (
+                <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-border group">
+                  <img src={img} alt={`Inspo ${i + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    onClick={() => removeInspiration(i)}
+                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-3 h-3 text-foreground" />
+                  </button>
+                </div>
+              ))}
+              {inspirationImages.length < 3 && (
+                <button
+                  onClick={() => inspoInputRef.current?.click()}
+                  className="aspect-square rounded-xl border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-1 transition-colors"
+                >
+                  <ImagePlus className="w-5 h-5 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground">Ajouter</span>
+                </button>
+              )}
+            </div>
+
+            <input
+              ref={inspoInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleInspirationUpload}
+            />
+
+            {inspirationImages.length > 0 && (
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-primary/5 border border-primary/20">
+                <Sparkles className="w-4 h-4 text-primary shrink-0" />
+                <p className="text-xs text-foreground">
+                  <span className="font-medium">J'en veux une comme ça !</span> — L'IA utilisera ces photos comme référence de style.
+                </p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* ─── Materials ─── */}
+        <SectionToggle icon={Gem} label="Matériaux" sectionKey="materials" badge={selectedMaterials.length} />
+        {expandedSection === "materials" && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            className="pb-3 space-y-2"
+          >
+            <p className="text-xs text-muted-foreground">Sélectionnez jusqu'à 3 matériaux préférés.</p>
+            <div className="flex flex-wrap gap-1.5">
+              {MATERIAL_OPTIONS.map((mat) => (
+                <button
+                  key={mat.key}
+                  onClick={() => toggleMaterial(mat.key)}
+                  className={`
+                    px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1
+                    ${selectedMaterials.includes(mat.key)
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }
+                  `}
+                >
+                  <span>{mat.emoji}</span>
+                  {mat.label}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* ─── Colors ─── */}
+        <SectionToggle icon={Palette} label="Couleurs" sectionKey="colors" />
+        {expandedSection === "colors" && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            className="pb-3 space-y-2"
+          >
+            <p className="text-xs text-muted-foreground">Choisissez une palette de couleurs.</p>
+            <div className="space-y-2">
+              {COLOR_PALETTES.map((palette) => (
+                <button
+                  key={palette.key}
+                  onClick={() => setSelectedColorPalette(selectedColorPalette === palette.key ? null : palette.key)}
+                  className={`
+                    w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left
+                    ${selectedColorPalette === palette.key
+                      ? "bg-primary/10 border-2 border-primary/30"
+                      : "bg-muted/30 border-2 border-transparent hover:bg-muted/50"
+                    }
+                  `}
+                >
+                  <div className="flex gap-1">
+                    {palette.colors.map((color, i) => (
+                      <div
+                        key={i}
+                        className="w-5 h-5 rounded-full border border-border/50"
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs font-medium text-foreground">{palette.label}</span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {/* Zones */}
-        <SectionToggle icon={Layers} label="Zones à modifier" sectionKey="zones" />
+        <SectionToggle icon={Layers} label="Zones à modifier" sectionKey="zones" badge={selectedZones.length} />
         {expandedSection === "zones" && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
