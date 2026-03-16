@@ -46,7 +46,7 @@ const AdminAutomation = () => {
         <AutomationStatsCards stats={stats} />
 
         <Tabs defaultValue="agents" className="w-full">
-          <TabsList className="w-full grid grid-cols-4 h-9 rounded-xl">
+          <TabsList className="w-full grid grid-cols-5 h-9 rounded-xl">
             <TabsTrigger value="agents" className="text-xs gap-1 rounded-lg">
               <Bot className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Agents</span>
@@ -61,6 +61,10 @@ const AdminAutomation = () => {
             <TabsTrigger value="runs" className="text-xs gap-1 rounded-lg">
               <History className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Runs</span>
+            </TabsTrigger>
+            <TabsTrigger value="adaptive" className="text-xs gap-1 rounded-lg">
+              <Zap className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Adaptatif</span>
             </TabsTrigger>
             <TabsTrigger value="alerts" className="text-xs gap-1 rounded-lg">
               <AlertTriangle className="h-3.5 w-3.5" />
