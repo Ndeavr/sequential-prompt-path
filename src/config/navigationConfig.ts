@@ -355,7 +355,7 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
         items: [
           { to: "/pro/profile", label: "Mon profil", labelEn: "My Profile", icon: "User" },
           { to: "/pro/aipp-score", label: "Score AIPP", icon: "Star" },
-          { to: "/pro/leads", label: "Leads", icon: "TrendingUp" },
+          { to: "/pro/leads", label: "Rendez-vous garantis", labelEn: "Guaranteed Appointments", icon: "CalendarCheck" },
           { to: "/pro/billing", label: "Plans", icon: "CreditCard" },
           { to: "/pro/reviews", label: "Avis", labelEn: "Reviews", icon: "MessageSquare" },
         ],

@@ -77,7 +77,7 @@ const ROLE_CTA_OVERRIDES: Record<string, Partial<CTAConfig>> = {
     primary: { label: "Voir les demandes", labelEn: "View Project Requests", to: "/pro/leads" },
   },
   homeowner: {
-    primary: { label: "Ajouter une propriété", labelEn: "Add a Property", to: "/dashboard/proprietes/nouvelle" },
+    primary: { label: "Ajouter une propriété", labelEn: "Add a Property", to: "/dashboard/properties/new" },
   },
   admin: {
     primary: { label: "Tableau de bord", labelEn: "Dashboard", to: "/admin" },
