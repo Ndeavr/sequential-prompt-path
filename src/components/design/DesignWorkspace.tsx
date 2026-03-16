@@ -1,15 +1,16 @@
 /**
  * UNPRO Design — Main Workspace Layout
- * Orchestrates Sidebar + Canvas + Controls + Compare
+ * Orchestrates Sidebar + Canvas + Controls + Compare + Share
  */
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, ArrowLeft, Sparkles } from "lucide-react";
+import { Menu, ArrowLeft, Sparkles, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DesignSidebar from "./DesignSidebar";
 import DesignCanvas from "./DesignCanvas";
 import DesignControls from "./DesignControls";
 import DesignCompare from "./DesignCompare";
+import DesignShare from "./DesignShare";
 import type { DesignVersion } from "./data";
 
 interface Props {
@@ -20,11 +21,14 @@ interface Props {
   activeVersion: DesignVersion | null;
   isGenerating: boolean;
   error: string | null;
+  projectId: string | null;
+  shareToken: string | null;
   onBack: () => void;
   onGenerate: (prompt: string, options?: any) => void;
   onFreeze: (id: string) => void;
   onDuplicate: (id: string) => void;
   onSelectVersion: (id: string) => void;
+  onCreateShare: (privacyType: string) => Promise<string | null>;
 }
 
 export default function DesignWorkspace({
