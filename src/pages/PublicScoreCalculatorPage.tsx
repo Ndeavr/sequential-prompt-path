@@ -10,6 +10,7 @@ import MainLayout from "@/layouts/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import GooglePlacesInput from "@/components/property/GooglePlacesInput";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { findPropertyByAddress, createProperty } from "@/services/property/propertyService";
@@ -103,13 +104,15 @@ export default function PublicScoreCalculatorPage() {
 
             {/* Search */}
             <div className="flex gap-2 max-w-md mx-auto">
-              <Input
-                type="text"
-                placeholder="Entrez une adresse..."
+              <GooglePlacesInput
                 value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                onChange={setAddress}
+                onPlaceSelect={(place) => {
+                  setAddress(place.address);
+                  if (place.city) setCity(place.city);
+                }}
+                placeholder="Entrez une adresse..."
                 className="flex-1"
-                onKeyDown={(e) => e.key === "Enter" && address.length > 5 && lookupMutation.mutate()}
               />
               <Button
                 onClick={() => lookupMutation.mutate()}

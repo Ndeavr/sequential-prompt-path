@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import GooglePlacesInput from "@/components/property/GooglePlacesInput";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -154,7 +155,17 @@ const CondoOnboardingPage = () => {
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Adresse *</Label>
-                    <Input value={form.address} onChange={e => update("address", e.target.value)} placeholder="123 rue Principale" className="rounded-xl mt-1" />
+                    <GooglePlacesInput
+                      value={form.address}
+                      onChange={(v) => update("address", v)}
+                      onPlaceSelect={(place) => {
+                        update("address", place.address);
+                        if (place.city) update("city", place.city);
+                        if (place.postalCode) update("postal_code", place.postalCode);
+                      }}
+                      placeholder="123 rue Principale"
+                      className="mt-1"
+                    />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>

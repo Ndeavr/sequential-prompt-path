@@ -4,6 +4,7 @@ import { PageHeader, LoadingState } from "@/components/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import GooglePlacesInput from "@/components/property/GooglePlacesInput";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useContractorProfile, useUpsertContractorProfile } from "@/hooks/useContractor";
@@ -82,7 +83,21 @@ const ProProfile = () => {
             </div>
             <div className="space-y-2"><Label>Site web</Label><Input value={form.website} onChange={set("website")} placeholder="https://abc.com" /></div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Adresse</Label><Input value={form.address} onChange={set("address")} /></div>
+              <div className="space-y-2">
+                <Label>Adresse</Label>
+                <GooglePlacesInput
+                  value={form.address}
+                  onChange={(v) => setForm((f) => ({ ...f, address: v }))}
+                  onPlaceSelect={(place) => {
+                    setForm((f) => ({
+                      ...f,
+                      address: place.address,
+                      city: place.city || f.city,
+                      postal_code: place.postalCode || f.postal_code,
+                    }));
+                  }}
+                />
+              </div>
               <div className="space-y-2"><Label>Ville</Label><Input value={form.city} onChange={set("city")} placeholder="Montréal" /></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

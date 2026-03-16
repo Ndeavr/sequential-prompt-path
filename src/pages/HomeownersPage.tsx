@@ -491,9 +491,11 @@ export default function HomeownersPage() {
 
               <div className="max-w-sm mx-auto space-y-3">
                 <div className="flex gap-2">
-                  <Input
+                  <GooglePlacesInput
+                    value=""
+                    onChange={() => {}}
                     placeholder="Votre adresse"
-                    className="h-13 rounded-2xl bg-card border-border/40 text-base px-5 flex-1 shadow-sm"
+                    className="flex-1"
                   />
                   <Button
                     asChild
