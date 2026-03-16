@@ -4,6 +4,7 @@ import { Globe, MapPin, Facebook, Instagram, Phone, Building2, ArrowRight, Shiel
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PremiumMagneticButton } from "@/components/ui/PremiumMagneticButton";
+import BusinessNameSearch, { type BusinessSearchResult } from "@/components/contractor/BusinessNameSearch";
 
 interface Props {
   onImport: (data: { businessName: string; website: string; googleUrl: string; facebookUrl: string; instagramUrl: string; phone: string; city: string }) => void;
