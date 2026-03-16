@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Shield, ArrowRight, Search, Phone, Building2, FileText, Globe, MapPin, RotateCcw, AlertTriangle } from "lucide-react";
 import { useVerifyContractor } from "@/hooks/useVerifyContractor";
+import BusinessNameSearch, { type BusinessSearchResult } from "@/components/contractor/BusinessNameSearch";
 import VerificationProgressSteps from "@/components/verify/VerificationProgressSteps";
 import { VerificationResultsLayout } from "@/components/verification";
 import EvidenceUploadPanel from "@/components/verify/EvidenceUploadPanel";
