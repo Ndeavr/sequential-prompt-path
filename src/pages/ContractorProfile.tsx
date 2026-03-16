@@ -871,7 +871,7 @@ const ContractorProfile = () => {
           ) : null}
 
           {/* ═══ 10. REVIEWS + AI ANALYSIS ═══ */}
-          {((reviews && reviews.length > 0) || reviewDimensions?.length || reviewConfidence) && (
+          {((effectiveReviews && effectiveReviews.length > 0) || reviewDimensions?.length || reviewConfidence) && (
             <motion.div variants={fadeUp}>
               <Card className="glass-card border-0 shadow-sm overflow-hidden">
                 <CardContent className="p-5">
