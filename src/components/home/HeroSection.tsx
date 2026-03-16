@@ -223,8 +223,22 @@ export default function HeroSection() {
               </h1>
 
               <p className="relative z-10 max-w-[220px] sm:max-w-[420px] text-base leading-7 md:text-xl md:leading-10 drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]" style={{ color: "#6C7A92" }}>
-                Comparez, évaluez et choisissez en toute confiance.
+                Tanné des plateformes à 3 soumissions ? UnPRO vous connecte directement avec le bon entrepreneur.
               </p>
+
+              {/* Anti-3-soumissions bullet points */}
+              <ul className="relative z-10 mt-4 space-y-2 max-w-[400px]">
+                {[
+                  "Rendez-vous exclusif avec un professionnel",
+                  "Entrepreneurs analysés selon leur réputation et expertise",
+                  "Diagnostic clair pour votre propriété",
+                ].map((point) => (
+                  <li key={point} className="flex items-start gap-2 text-sm md:text-base" style={{ color: "#3A4A63" }}>
+                    <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+                    <span className="font-medium">{point}</span>
+                  </li>
+                ))}
+              </ul>
 
               {/* ═══ INLINE ANIMATED ORB ═══ */}
               <div className="mt-8 flex flex-col items-center md:items-start">
