@@ -20,7 +20,7 @@ import unproLogo from "@/assets/unpro-logo.png";
 const mainNavItems = [
   { key: "maison", label: "Maison", labelEn: "Home", megaKey: "maison" },
   { key: "entreprises", label: "Entreprises", labelEn: "Business", megaKey: "entreprises" },
-  { key: "condo", label: "Condo", megaKey: "condo" },
+  { key: "condo", label: "Condo", labelEn: "Condo", megaKey: "condo" },
   { key: "explorer", label: "Explorer", labelEn: "Explore", megaKey: "explorer" },
 ] as const;
 
