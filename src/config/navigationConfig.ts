@@ -43,7 +43,7 @@ export const headerNavByRole: Record<UserRole | "guest", NavItem[]> = {
     { to: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
     { to: "/admin/users", label: "Utilisateurs", labelEn: "Users", icon: "Users" },
     { to: "/admin/contractors", label: "Entrepreneurs", labelEn: "Contractors", icon: "Briefcase" },
-    { to: "/admin/leads", label: "Leads", icon: "TrendingUp" },
+    { to: "/admin/leads", label: "Rendez-vous", icon: "CalendarCheck" },
     { to: "/admin/agents", label: "Système", labelEn: "System", icon: "Brain" },
   ],
 };
