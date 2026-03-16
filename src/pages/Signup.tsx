@@ -8,44 +8,51 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Check, Home, Building2, Briefcase, Wrench, Truck } from "lucide-react";
+import { Check, Home, Building2, Briefcase, Wrench, Handshake, Gift, Building } from "lucide-react";
 import logo from "@/assets/unpro-robot.png";
 
 const ACCOUNT_TYPES = [
   {
     value: "homeowner",
     label: "Propriétaire",
-    description: "Gérer mes projets et ma propriété",
+    description: "Gérer mes projets et protéger ma propriété",
     icon: Home,
     roleForDb: "homeowner",
   },
   {
     value: "property_manager",
     label: "Gestionnaire immobilier",
-    description: "Administrer des immeubles et copropriétés",
-    icon: Building2,
+    description: "Administrer des copropriétés ou immeubles",
+    icon: Building,
     roleForDb: "homeowner",
   },
   {
     value: "professional",
     label: "Professionnel",
-    description: "Offrir des services spécialisés",
+    description: "Offrir des services spécialisés aux propriétaires",
     icon: Briefcase,
     roleForDb: "contractor",
   },
   {
     value: "contractor",
     label: "Entrepreneur",
-    description: "Présenter mon entreprise et recevoir des opportunités",
+    description: "Recevoir des rendez-vous exclusifs et bâtir ma réputation",
     icon: Wrench,
     roleForDb: "contractor",
   },
   {
-    value: "service_provider",
-    label: "Fournisseur de services",
-    description: "Proposer des services aux propriétaires",
-    icon: Truck,
-    roleForDb: "contractor",
+    value: "partner",
+    label: "Partenaire",
+    description: "Municipalités, médias, organismes et collaborateurs",
+    icon: Handshake,
+    roleForDb: "homeowner",
+  },
+  {
+    value: "ambassador",
+    label: "Ambassadeur",
+    description: "Référez, gagnez des récompenses et des revenus récurrents",
+    icon: Gift,
+    roleForDb: "homeowner",
   },
 ] as const;
 
