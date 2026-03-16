@@ -251,6 +251,8 @@ export function useDesignProject() {
     [projectId, session, authHeaders]
   );
 
+  const clearUsageLimit = useCallback(() => setUsageLimitHit(null), []);
+
   return {
     // State
     projectId,
@@ -263,6 +265,7 @@ export function useDesignProject() {
     isIdentifying,
     error,
     shareToken,
+    usageLimitHit,
     // Actions
     uploadPhoto,
     generate,
@@ -272,5 +275,6 @@ export function useDesignProject() {
     setActiveVersionId,
     reset,
     createShare,
+    clearUsageLimit,
   };
 }
