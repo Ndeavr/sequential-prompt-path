@@ -214,6 +214,32 @@ export function useDesignProject() {
     setError(null);
   }, []);
 
+  // ─── Share management ───
+  const [shareToken, setShareToken] = useState<string | null>(null);
+
+  const createShare = useCallback(
+    async (privacyType: string): Promise<string | null> => {
+      if (!projectId || !session?.access_token) return null;
+      try {
+        const resp = await fetch(DESIGN_URL, {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({ action: "create_share", projectId, privacyType }),
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          const token = data.share?.share_token || null;
+          setShareToken(token);
+          return token;
+        }
+      } catch (err) {
+        console.error("Share creation failed:", err);
+      }
+      return null;
+    },
+    [projectId, session, authHeaders]
+  );
+
   return {
     // State
     projectId,
@@ -225,6 +251,7 @@ export function useDesignProject() {
     isGenerating,
     isIdentifying,
     error,
+    shareToken,
     // Actions
     uploadPhoto,
     generate,
@@ -233,5 +260,6 @@ export function useDesignProject() {
     selectVersion,
     setActiveVersionId,
     reset,
+    createShare,
   };
 }
