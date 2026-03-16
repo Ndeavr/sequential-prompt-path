@@ -550,6 +550,43 @@ const Home = () => {
         </div>
       </section>
 
+      {/* ═══ FAQ SEO ═══ */}
+      <section className="px-5 py-12 md:py-16">
+        <div className="max-w-3xl mx-auto">
+          <motion.div variants={sectionFade} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            <h2 className="font-display text-section sm:text-title font-bold text-foreground mb-8">
+              Questions fréquentes
+            </h2>
+            <div className="space-y-4">
+              {[
+                {
+                  q: "Pourquoi UnPRO ne fonctionne pas avec 3 soumissions ?",
+                  a: "Les plateformes de soumissions vendent souvent la même demande à plusieurs entrepreneurs. UnPRO privilégie une approche différente : identifier le bon professionnel et offrir un rendez-vous exclusif.",
+                },
+                {
+                  q: "Les entrepreneurs sont-ils vérifiés ?",
+                  a: "Les professionnels sont analysés selon plusieurs signaux incluant réputation, expertise et engagement dans leur domaine.",
+                },
+                {
+                  q: "Les rendez-vous sont-ils partagés ?",
+                  a: "Non. Chaque projet est envoyé à un seul entrepreneur à la fois. C'est le principe fondamental d'UnPRO.",
+                },
+              ].map((faq) => (
+                <details key={faq.q} className="group premium-card rounded-2xl overflow-hidden">
+                  <summary className="flex items-center justify-between cursor-pointer px-5 py-4 text-body font-semibold text-foreground hover:bg-muted/30 transition-colors">
+                    {faq.q}
+                    <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 transition-transform group-open:rotate-90" />
+                  </summary>
+                  <div className="px-5 pb-4 text-meta leading-relaxed text-muted-foreground">
+                    {faq.a}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ═══ FINAL CTA ═══ */}
       <section className="px-5 py-16">
         <div className="max-w-3xl mx-auto">
@@ -564,22 +601,22 @@ const Home = () => {
                 <div className="h-14 w-14 mx-auto rounded-2xl flex items-center justify-center bg-gradient-to-br from-primary to-accent shadow-lg">
                   <Sparkles className="h-6 w-6 text-white" />
                 </div>
-                <h2 className="section-title">Lancez votre projet en toute confiance.</h2>
+                <h2 className="section-title">Tanné des 3 soumissions ?<br/>UnPRO change les règles.</h2>
                 <p className="text-body max-w-md mx-auto text-muted-foreground">
-                  Créez votre compte gratuit et commencez à comparer les soumissions.
+                  Rendez-vous exclusif. Pas de compétition entre entrepreneurs. Pas de leads partagés.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <button
-                    onClick={() => handleCta("/describe-project", "Décrire mon projet")}
+                    onClick={() => handleCta("/search", "Trouver un entrepreneur compétent")}
                     className="h-13 rounded-full px-8 text-sm font-bold cta-gradient"
                   >
-                    Décrire mon projet <ArrowRight className="h-4 w-4 ml-1.5 inline" />
+                    Trouver un entrepreneur compétent <ArrowRight className="h-4 w-4 ml-1.5 inline" />
                   </button>
                   <button
-                    onClick={() => handleCta("/dashboard/quotes/upload", "Comparer des soumissions")}
+                    onClick={() => handleCta("/dashboard/appointments", "Prendre un rendez-vous")}
                     className="h-13 rounded-full px-8 text-sm font-bold bg-card border-2 border-border text-foreground hover:border-primary/30 transition-all active:scale-[0.97]"
                   >
-                    Comparer des soumissions
+                    Prendre un rendez-vous
                   </button>
                 </div>
                 <div className="trust-row pt-2">
