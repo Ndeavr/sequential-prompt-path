@@ -46,8 +46,52 @@ const Home = () => {
     }
   };
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "UnPRO",
+    "url": "https://unpro.ca",
+    "description": "Plateforme qui connecte les propriétaires avec des entrepreneurs compétents grâce à une analyse de réputation, expertise et engagement.",
+    "areaServed": "Quebec",
+    "knowsAbout": ["entrepreneurs", "renovation", "home services", "construction", "property maintenance"]
+  };
+
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Pourquoi UnPRO ne fonctionne pas avec 3 soumissions ?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Les plateformes de soumissions vendent souvent la même demande à plusieurs entrepreneurs. UnPRO privilégie une approche différente : identifier le bon professionnel et offrir un rendez-vous exclusif."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Les entrepreneurs sont-ils vérifiés ?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Les professionnels sont analysés selon plusieurs signaux incluant réputation, expertise et engagement dans leur domaine."
+        }
+      }
+    ]
+  };
+
   return (
     <MainLayout>
+      <Helmet>
+        <title>Tanné des plateformes à 3 soumissions ? | Rendez-vous exclusif | UnPRO</title>
+        <meta name="description" content="Tanné de courir après 3 soumissions inutiles ? UnPRO vous connecte directement avec le bon entrepreneur. Rendez-vous exclusif, sans compétition entre entrepreneurs." />
+        <meta property="og:title" content="Tanné des 3 soumissions ? UnPRO change les règles" />
+        <meta property="og:description" content="UnPRO abolit le modèle des 3 soumissions et vous connecte directement avec des entrepreneurs compétents. Rendez-vous exclusif et diagnostic clair." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://unpro.ca" />
+        <link rel="canonical" href="https://unpro.ca" />
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+        <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
+      </Helmet>
     <div className="flex flex-col bg-background text-foreground">
 
       {/* ═══ HERO ═══ */}
