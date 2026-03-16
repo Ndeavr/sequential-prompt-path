@@ -47,6 +47,28 @@ export const SLIDERS = [
   { key: "intensity", min: "Subtil", max: "Dramatique" },
 ] as const;
 
+export const MATERIAL_OPTIONS = [
+  { key: "marble", label: "Marbre", emoji: "🪨" },
+  { key: "wood", label: "Bois naturel", emoji: "🪵" },
+  { key: "concrete", label: "Béton", emoji: "🧱" },
+  { key: "ceramic", label: "Céramique", emoji: "🏺" },
+  { key: "granite", label: "Granit", emoji: "💎" },
+  { key: "quartz", label: "Quartz", emoji: "✨" },
+  { key: "glass", label: "Verre", emoji: "🪟" },
+  { key: "metal", label: "Métal", emoji: "⚙️" },
+  { key: "terrazzo", label: "Terrazzo", emoji: "🎨" },
+  { key: "brick", label: "Brique", emoji: "🧱" },
+] as const;
+
+export const COLOR_PALETTES = [
+  { key: "neutral", label: "Neutres", colors: ["#F5F0EB", "#C4B5A4", "#8B7D6B", "#4A4039"] },
+  { key: "warm", label: "Chauds", colors: ["#FFF3E0", "#E8A87C", "#D35D6E", "#C06C84"] },
+  { key: "cool", label: "Froids", colors: ["#E3F2FD", "#90CAF9", "#5C6BC0", "#283593"] },
+  { key: "earth", label: "Terre", colors: ["#EFEBE9", "#A1887F", "#6D4C41", "#3E2723"] },
+  { key: "sage", label: "Sauge", colors: ["#E8F5E9", "#A5D6A7", "#66BB6A", "#2E7D32"] },
+  { key: "moody", label: "Sombre", colors: ["#263238", "#37474F", "#455A64", "#1B1B2F"] },
+] as const;
+
 export interface DesignVersion {
   id: string;
   versionNumber: string;
