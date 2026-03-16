@@ -175,7 +175,7 @@ export function getStateActions(ctx: NavigationContext): NavItem[] {
       items.push({ to: "/pro/billing", label: "Activer mon profil", labelEn: "Activate My Profile", icon: "CreditCard", badge: "Action requise", badgeVariant: "urgent", priority: 100 });
     }
     if (co.unreadLeadsCount > 0) {
-      items.push({ to: "/pro/leads", label: `${co.unreadLeadsCount} nouvelles opportunités`, labelEn: `${co.unreadLeadsCount} New Opportunities`, icon: "TrendingUp", badge: co.unreadLeadsCount, badgeVariant: "new", priority: 90 });
+      items.push({ to: "/pro/leads", label: `${co.unreadLeadsCount} nouveaux rendez-vous`, labelEn: `${co.unreadLeadsCount} New Appointments`, icon: "CalendarCheck", badge: co.unreadLeadsCount, badgeVariant: "new", priority: 90 });
     }
     if (co.aippScore != null && co.aippScore < 50) {
       items.push({ to: "/pro/aipp-score", label: "Améliorer mon score AIPP", labelEn: "Improve My AIPP Score", icon: "Star", badge: "Score faible", badgeVariant: "warning", priority: 70 });
