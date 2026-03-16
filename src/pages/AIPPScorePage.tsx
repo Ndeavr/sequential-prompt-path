@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ScoreRing from "@/components/ui/score-ring";
+import BusinessNameSearch, { type BusinessSearchResult } from "@/components/contractor/BusinessNameSearch";
 
 const CATEGORIES = [
   "Toiture", "Isolation", "Électricité", "Plomberie",
@@ -32,6 +33,15 @@ const fadeUp = {
 export default function AIPPScorePage() {
   const [form, setForm] = useState({ name: "", city: "", category: "" });
   const [calculated, setCalculated] = useState(false);
+
+  const handleBusinessSelected = (result: BusinessSearchResult) => {
+    setForm(f => ({
+      ...f,
+      name: result.business_name,
+      city: result.city || f.city,
+      category: result.primary_category || f.category,
+    }));
+  };
 
   // Simulation sliders
   const [addProjects, setAddProjects] = useState(0);
@@ -85,10 +95,11 @@ export default function AIPPScorePage() {
                 exit={{ opacity: 0, y: -20 }}
                 className="glass-card-elevated rounded-3xl p-6 md:p-8 space-y-5"
               >
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold">Nom de l'entreprise *</Label>
-                  <Input placeholder="Ex: Toiture Expert Inc." value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} className="rounded-xl h-12" />
-                </div>
+                <BusinessNameSearch
+                  value={form.name}
+                  onChange={(v) => setForm(f => ({ ...f, name: v }))}
+                  onBusinessSelected={handleBusinessSelected}
+                />
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold">Ville *</Label>
                   <Input placeholder="Montréal" value={form.city} onChange={(e) => setForm(f => ({ ...f, city: e.target.value }))} className="rounded-xl h-12" />

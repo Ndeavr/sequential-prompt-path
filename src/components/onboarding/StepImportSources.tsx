@@ -4,6 +4,7 @@ import { Globe, MapPin, Facebook, Instagram, Phone, Building2, ArrowRight, Shiel
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PremiumMagneticButton } from "@/components/ui/PremiumMagneticButton";
+import BusinessNameSearch, { type BusinessSearchResult } from "@/components/contractor/BusinessNameSearch";
 
 interface Props {
   onImport: (data: { businessName: string; website: string; googleUrl: string; facebookUrl: string; instagramUrl: string; phone: string; city: string }) => void;
@@ -18,6 +19,15 @@ export default function StepImportSources({ onImport, onManual }: Props) {
 
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
   const canImport = form.businessName.trim().length > 1;
+
+  const handleBusinessSelected = (result: BusinessSearchResult) => {
+    setForm(p => ({
+      ...p,
+      businessName: result.business_name,
+      city: result.city || p.city,
+      website: result.website ? (result.website.startsWith("http") ? result.website : `https://${result.website}`) : p.website,
+    }));
+  };
 
   const sources = [
     { icon: MapPin, label: "Google", color: "text-red-400", bg: "bg-red-400/10", active: !!form.googleUrl },
@@ -76,7 +86,14 @@ export default function StepImportSources({ onImport, onManual }: Props) {
         {/* Form */}
         <motion.div {...fadeUp} transition={{ delay: 0.35 }}>
           <div className="rounded-2xl border border-border/50 bg-card/40 backdrop-blur-xl p-5 space-y-3 shadow-[var(--shadow-lg)]">
-            <FieldRow icon={Building2} placeholder="Business name *" value={form.businessName} onChange={v => set("businessName", v)} focused={focused === "name"} onFocus={() => setFocused("name")} onBlur={() => setFocused(null)} highlight />
+            <BusinessNameSearch
+              value={form.businessName}
+              onChange={(v) => set("businessName", v)}
+              onBusinessSelected={handleBusinessSelected}
+              label=""
+              placeholder="Business name *"
+              minChars={3}
+            />
             <div className="h-px bg-border/30 my-1" />
             <FieldRow icon={Globe} placeholder="Website URL" value={form.website} onChange={v => set("website", v)} focused={focused === "web"} onFocus={() => setFocused("web")} onBlur={() => setFocused(null)} />
             <FieldRow icon={MapPin} placeholder="Google Business Profile URL" value={form.googleUrl} onChange={v => set("googleUrl", v)} focused={focused === "google"} onFocus={() => setFocused("google")} onBlur={() => setFocused(null)} />
