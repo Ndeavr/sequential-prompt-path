@@ -209,24 +209,36 @@ export default function VerifierEntrepreneurPage() {
                   <div className="space-y-3">
                     {INPUT_FIELDS.map(({ key, label, icon: Icon, placeholder, autoComplete }) => (
                       <div key={key}>
-                        <label
-                          htmlFor={`verify-${key}`}
-                          className="text-xs font-medium text-muted-foreground mb-1 block"
-                        >
-                          {label}
-                        </label>
-                        <div className="relative">
-                          <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" aria-hidden="true" />
-                          <Input
-                            id={`verify-${key}`}
-                            value={form[key] || ""}
-                            onChange={(e) => updateField(key, e.target.value)}
+                        {key === "business_name" ? (
+                          <BusinessNameSearch
+                            value={form.business_name || ""}
+                            onChange={(v) => updateField("business_name", v)}
+                            onBusinessSelected={handleBusinessSelected}
+                            label={label}
                             placeholder={placeholder}
-                            autoComplete={autoComplete}
-                            className="pl-10 h-11 text-sm bg-background/50 focus-visible:ring-2 focus-visible:ring-primary/40"
-                            onKeyDown={(e) => e.key === "Enter" && handleVerify()}
                           />
-                        </div>
+                        ) : (
+                          <>
+                            <label
+                              htmlFor={`verify-${key}`}
+                              className="text-xs font-medium text-muted-foreground mb-1 block"
+                            >
+                              {label}
+                            </label>
+                            <div className="relative">
+                              <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" aria-hidden="true" />
+                              <Input
+                                id={`verify-${key}`}
+                                value={form[key] || ""}
+                                onChange={(e) => updateField(key, e.target.value)}
+                                placeholder={placeholder}
+                                autoComplete={autoComplete}
+                                className="pl-10 h-11 text-sm bg-background/50 focus-visible:ring-2 focus-visible:ring-primary/40"
+                                onKeyDown={(e) => e.key === "Enter" && handleVerify()}
+                              />
+                            </div>
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>
