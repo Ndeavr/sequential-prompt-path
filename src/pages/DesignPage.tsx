@@ -1,32 +1,36 @@
 /**
  * UNPRO Design — Main Page
- * Routes between upload and workspace states
+ * Routes between upload and workspace states, using useDesignProject hook
  */
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { Helmet } from "react-helmet-async";
 import DesignUpload from "@/components/design/DesignUpload";
 import DesignWorkspace from "@/components/design/DesignWorkspace";
+import { useDesignProject } from "@/hooks/useDesignProject";
 
 export default function DesignPage() {
-  const [originalImage, setOriginalImage] = useState<string | null>(null);
-  const [roomType, setRoomType] = useState<string | null>(null);
-  const [isWorkspace, setIsWorkspace] = useState(false);
+  const {
+    originalImage,
+    roomType,
+    versions,
+    activeVersion,
+    activeVersionId,
+    isGenerating,
+    error,
+    uploadPhoto,
+    generate,
+    freezeVersion,
+    duplicateVersion,
+    selectVersion,
+    reset,
+  } = useDesignProject();
 
-  const handleUpload = useCallback((file: File, selectedRoom?: string) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      setOriginalImage(reader.result as string);
-      setRoomType(selectedRoom ?? null);
-      setIsWorkspace(true);
-    };
-    reader.readAsDataURL(file);
-  }, []);
-
-  const handleBack = useCallback(() => {
-    setIsWorkspace(false);
-    setOriginalImage(null);
-    setRoomType(null);
-  }, []);
+  const handleUpload = useCallback(
+    (file: File, selectedRoom?: string) => {
+      uploadPhoto(file, selectedRoom);
+    },
+    [uploadPhoto]
+  );
 
   return (
     <>
@@ -38,11 +42,20 @@ export default function DesignPage() {
         />
       </Helmet>
 
-      {isWorkspace && originalImage ? (
+      {originalImage ? (
         <DesignWorkspace
           originalImage={originalImage}
           roomType={roomType}
-          onBack={handleBack}
+          versions={versions}
+          activeVersionId={activeVersionId}
+          activeVersion={activeVersion}
+          isGenerating={isGenerating}
+          error={error}
+          onBack={reset}
+          onGenerate={generate}
+          onFreeze={freezeVersion}
+          onDuplicate={duplicateVersion}
+          onSelectVersion={selectVersion}
         />
       ) : (
         <DesignUpload onUpload={handleUpload} />

@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.business-lookup]
 verify_jwt = false
+
+[functions.design-generate]
+verify_jwt = false
