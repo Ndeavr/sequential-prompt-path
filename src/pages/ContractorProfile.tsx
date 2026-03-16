@@ -960,11 +960,11 @@ const ContractorProfile = () => {
                   )}
 
                   {/* Individual reviews */}
-                  {reviews && reviews.length > 0 && (
+                  {effectiveReviews && effectiveReviews.length > 0 && (
                     <>
                       <Separator className="my-4" />
                       <div className="space-y-4">
-                        {(showAllReviews ? reviews : reviews.slice(0, 3)).map((review: any, i: number) => (
+                        {(showAllReviews ? effectiveReviews : effectiveReviews.slice(0, 3)).map((review: any, i: number) => (
                           <div key={review.id}>
                             {i > 0 && <Separator className="mb-4" />}
                             <div className="space-y-2">
