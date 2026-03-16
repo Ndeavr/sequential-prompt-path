@@ -38,6 +38,7 @@ interface SharedProject {
 
 export default function DesignSharePage() {
   const { token } = useParams<{ token: string }>();
+  const { isAuthenticated, user } = useAuth();
   const [project, setProject] = useState<SharedProject | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +47,7 @@ export default function DesignSharePage() {
   const [userVotes, setUserVotes] = useState<Record<string, string>>({});
   const [commentingId, setCommentingId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState("");
-  const [hasEnteredName, setHasEnteredName] = useState(false);
+  const hasEnteredName = isAuthenticated;
 
   // Fingerprint for vote uniqueness
   const fingerprint = useCallback(() => {
