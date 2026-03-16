@@ -95,10 +95,10 @@ const DEMO_AIPP_BREAKDOWN = (score: number) => ({
 });
 
 const DEMO_REVIEWS = (name: string) => [
-  { id: "r1", rating: 5, comment: `${name} a fait un travail exceptionnel. Très professionnel, respectueux des délais et du budget. Je recommande sans hésitation.`, reviewer_name: "Martin L.", created_at: "2026-01-15", work_quality: 5, communication: 5, professionalism: 5, schedule: 5, budget: 5, cleanliness: 4 },
-  { id: "r2", rating: 5, comment: "Excellent service du début à la fin. Communication claire et résultat impeccable.", reviewer_name: "Sophie B.", created_at: "2025-11-20", work_quality: 5, communication: 5, professionalism: 5, schedule: 4, budget: 5, cleanliness: 5 },
-  { id: "r3", rating: 4, comment: "Bon travail dans l'ensemble. Quelques jours de retard mais le résultat final est de qualité.", reviewer_name: "Jean-François D.", created_at: "2025-09-08", work_quality: 5, communication: 4, professionalism: 4, schedule: 3, budget: 4, cleanliness: 4 },
-  { id: "r4", rating: 5, comment: "Très satisfait ! L'équipe est arrivée à l'heure, a protégé nos meubles et a laissé le chantier propre.", reviewer_name: "Isabelle T.", created_at: "2025-07-22", work_quality: 5, communication: 5, professionalism: 5, schedule: 5, budget: 5, cleanliness: 5 },
+  { id: "r1", rating: 5, content: `${name} a fait un travail exceptionnel. Très professionnel, respectueux des délais et du budget. Je recommande sans hésitation.`, reviewer_name: "Martin L.", created_at: "2026-01-15", title: "Travail impeccable" },
+  { id: "r2", rating: 5, content: "Excellent service du début à la fin. Communication claire et résultat impeccable.", reviewer_name: "Sophie B.", created_at: "2025-11-20", title: "Service 5 étoiles" },
+  { id: "r3", rating: 4, content: "Bon travail dans l'ensemble. Quelques jours de retard mais le résultat final est de qualité.", reviewer_name: "Jean-François D.", created_at: "2025-09-08", title: "Satisfait" },
+  { id: "r4", rating: 5, content: "Très satisfait ! L'équipe est arrivée à l'heure, a protégé nos meubles et a laissé le chantier propre.", reviewer_name: "Isabelle T.", created_at: "2025-07-22", title: "Propre et professionnel" },
 ];
 
 /* ── Animations ── */
