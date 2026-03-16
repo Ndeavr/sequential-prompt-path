@@ -203,11 +203,11 @@ export default function MegaMenuPanel({ menuKey, lang, onClose }: MegaMenuPanelP
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
       transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
-      className="absolute left-0 right-0 top-full z-50"
+      className="absolute left-0 right-0 top-full z-[999]"
       onMouseLeave={onClose}
     >
       <div className="mx-auto max-w-6xl px-4 pt-2 pb-4">
-        <div className="rounded-2xl border border-border/30 bg-card/98 backdrop-blur-xl shadow-xl p-6">
+        <div className="rounded-2xl border border-border/30 bg-card shadow-2xl backdrop-blur-xl p-6">
           <div className={`grid gap-8 ${config.sections.length === 4 ? "grid-cols-4" : config.sections.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
             {config.sections.map((section) => (
               <div key={section.title}>
