@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      adaptive_frequency_scores: {
+        Row: {
+          agent_key: string | null
+          category: string | null
+          city: string | null
+          cluster_key: string
+          cluster_type: string
+          computed_at: string
+          content_quality_score: number
+          created_at: string
+          demand_score: number
+          frequency_multiplier: number
+          id: string
+          is_active: boolean
+          metadata: Json | null
+          opportunity_score: number | null
+          profession: string | null
+          profitability_score: number
+          recommended_action: string | null
+          seo_potential_score: number
+          supply_score: number
+          updated_at: string
+        }
+        Insert: {
+          agent_key?: string | null
+          category?: string | null
+          city?: string | null
+          cluster_key: string
+          cluster_type?: string
+          computed_at?: string
+          content_quality_score?: number
+          created_at?: string
+          demand_score?: number
+          frequency_multiplier?: number
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          opportunity_score?: number | null
+          profession?: string | null
+          profitability_score?: number
+          recommended_action?: string | null
+          seo_potential_score?: number
+          supply_score?: number
+          updated_at?: string
+        }
+        Update: {
+          agent_key?: string | null
+          category?: string | null
+          city?: string | null
+          cluster_key?: string
+          cluster_type?: string
+          computed_at?: string
+          content_quality_score?: number
+          created_at?: string
+          demand_score?: number
+          frequency_multiplier?: number
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          opportunity_score?: number | null
+          profession?: string | null
+          profitability_score?: number
+          recommended_action?: string | null
+          seo_potential_score?: number
+          supply_score?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_action_logs: {
         Row: {
           action_type: string
@@ -780,12 +849,17 @@ export type Database = {
       }
       automation_agents: {
         Row: {
+          adaptive_frequency_enabled: boolean | null
+          auto_pause_threshold: number | null
+          base_frequency_value: number | null
           category: string
           config: Json | null
           created_at: string | null
           cron_expression: string | null
+          current_frequency_multiplier: number | null
           description: string | null
           duplicate_similarity_threshold: number | null
+          error_streak: number | null
           frequency_type: string
           frequency_value: number | null
           id: string
@@ -806,12 +880,17 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          adaptive_frequency_enabled?: boolean | null
+          auto_pause_threshold?: number | null
+          base_frequency_value?: number | null
           category: string
           config?: Json | null
           created_at?: string | null
           cron_expression?: string | null
+          current_frequency_multiplier?: number | null
           description?: string | null
           duplicate_similarity_threshold?: number | null
+          error_streak?: number | null
           frequency_type: string
           frequency_value?: number | null
           id?: string
@@ -832,12 +911,17 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          adaptive_frequency_enabled?: boolean | null
+          auto_pause_threshold?: number | null
+          base_frequency_value?: number | null
           category?: string
           config?: Json | null
           created_at?: string | null
           cron_expression?: string | null
+          current_frequency_multiplier?: number | null
           description?: string | null
           duplicate_similarity_threshold?: number | null
+          error_streak?: number | null
           frequency_type?: string
           frequency_value?: number | null
           id?: string
