@@ -19,6 +19,7 @@ export function useDesignProject() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isIdentifying, setIsIdentifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [usageLimitHit, setUsageLimitHit] = useState<{ current: number; limit: number } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const authHeaders = useCallback(
@@ -131,6 +132,10 @@ export function useDesignProject() {
 
         if (!resp.ok) {
           const err = await resp.json().catch(() => ({ error: "Erreur" }));
+          if (err.usage_limit) {
+            setUsageLimitHit({ current: err.current_count, limit: err.limit });
+            return;
+          }
           setError(err.error || "La génération a échoué.");
           return;
         }
@@ -246,6 +251,8 @@ export function useDesignProject() {
     [projectId, session, authHeaders]
   );
 
+  const clearUsageLimit = useCallback(() => setUsageLimitHit(null), []);
+
   return {
     // State
     projectId,
@@ -258,6 +265,7 @@ export function useDesignProject() {
     isIdentifying,
     error,
     shareToken,
+    usageLimitHit,
     // Actions
     uploadPhoto,
     generate,
@@ -267,5 +275,6 @@ export function useDesignProject() {
     setActiveVersionId,
     reset,
     createShare,
+    clearUsageLimit,
   };
 }

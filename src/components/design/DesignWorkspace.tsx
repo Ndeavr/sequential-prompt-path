@@ -11,6 +11,7 @@ import DesignCanvas from "./DesignCanvas";
 import DesignControls from "./DesignControls";
 import DesignCompare from "./DesignCompare";
 import DesignShare from "./DesignShare";
+import DesignUpgradeModal from "./DesignUpgradeModal";
 import type { DesignVersion } from "./data";
 
 interface Props {
@@ -23,12 +24,14 @@ interface Props {
   error: string | null;
   projectId: string | null;
   shareToken: string | null;
+  usageLimitHit: { current: number; limit: number } | null;
   onBack: () => void;
   onGenerate: (prompt: string, options?: any) => void;
   onFreeze: (id: string) => void;
   onDuplicate: (id: string) => void;
   onSelectVersion: (id: string) => void;
   onCreateShare: (privacyType: string) => Promise<string | null>;
+  onClearUsageLimit: () => void;
 }
 
 export default function DesignWorkspace({
@@ -41,12 +44,14 @@ export default function DesignWorkspace({
   error,
   projectId,
   shareToken,
+  usageLimitHit,
   onBack,
   onGenerate,
   onFreeze,
   onDuplicate,
   onSelectVersion,
   onCreateShare,
+  onClearUsageLimit,
 }: Props) {
   const [isComparing, setIsComparing] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -191,6 +196,13 @@ export default function DesignWorkspace({
             onClose={() => setIsSharing(false)}
             onCreateShare={onCreateShare}
             existingToken={shareToken}
+          />
+        )}
+        {usageLimitHit && (
+          <DesignUpgradeModal
+            currentCount={usageLimitHit.current}
+            limit={usageLimitHit.limit}
+            onClose={onClearUsageLimit}
           />
         )}
       </AnimatePresence>

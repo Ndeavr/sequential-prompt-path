@@ -4686,6 +4686,36 @@ export type Database = {
           },
         ]
       }
+      design_usage: {
+        Row: {
+          created_at: string
+          generation_count: number
+          id: string
+          is_subscribed: boolean
+          month_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          generation_count?: number
+          id?: string
+          is_subscribed?: boolean
+          month_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          generation_count?: number
+          id?: string
+          is_subscribed?: boolean
+          month_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       design_versions: {
         Row: {
           budget_mode: string | null

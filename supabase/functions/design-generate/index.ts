@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,6 +40,66 @@ Deno.serve(async (req) => {
           JSON.stringify({ error: "Image requise" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
+      }
+
+      // ─── Usage limit check ───
+      const FREE_LIMIT = 3;
+      const monthKey = new Date().toISOString().slice(0, 7); // '2026-03'
+      let isSubscribed = false;
+
+      if (userId) {
+        // Check Stripe subscription
+        const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+        if (stripeKey) {
+          try {
+            const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+            const { data: profile } = await supabase.from("profiles").select("email").eq("user_id", userId).single();
+            if (profile?.email) {
+              const customers = await stripe.customers.list({ email: profile.email, limit: 1 });
+              if (customers.data.length > 0) {
+                const subs = await stripe.subscriptions.list({ customer: customers.data[0].id, status: "active", limit: 1 });
+                isSubscribed = subs.data.length > 0;
+              }
+            }
+          } catch (e) {
+            console.error("Stripe check failed:", e);
+          }
+        }
+
+        // Get or create usage record
+        const { data: usage } = await supabase
+          .from("design_usage")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("month_key", monthKey)
+          .maybeSingle();
+
+        const currentCount = usage?.generation_count || 0;
+
+        if (!isSubscribed && currentCount >= FREE_LIMIT) {
+          return new Response(
+            JSON.stringify({
+              error: "Limite atteinte",
+              usage_limit: true,
+              current_count: currentCount,
+              limit: FREE_LIMIT,
+              message: `Vous avez utilisé vos ${FREE_LIMIT} designs gratuits ce mois-ci. Passez à Design+ pour des designs illimités.`,
+            }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Increment usage
+        if (usage) {
+          await supabase
+            .from("design_usage")
+            .update({ generation_count: currentCount + 1, is_subscribed: isSubscribed })
+            .eq("id", usage.id);
+        } else {
+          await supabase
+            .from("design_usage")
+            .insert({ user_id: userId, month_key: monthKey, generation_count: 1, is_subscribed: isSubscribed });
+        }
       }
 
       // Build the transformation prompt

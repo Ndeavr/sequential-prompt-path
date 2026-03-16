@@ -19,6 +19,7 @@ export default function DesignPage() {
     isGenerating,
     error,
     shareToken,
+    usageLimitHit,
     uploadPhoto,
     generate,
     freezeVersion,
@@ -26,6 +27,7 @@ export default function DesignPage() {
     selectVersion,
     reset,
     createShare,
+    clearUsageLimit,
   } = useDesignProject();
 
   const handleUpload = useCallback(
@@ -56,12 +58,14 @@ export default function DesignPage() {
           error={error}
           projectId={projectId}
           shareToken={shareToken}
+          usageLimitHit={usageLimitHit}
           onBack={reset}
           onGenerate={generate}
           onFreeze={freezeVersion}
           onDuplicate={duplicateVersion}
           onSelectVersion={selectVersion}
           onCreateShare={createShare}
+          onClearUsageLimit={clearUsageLimit}
         />
       ) : (
         <DesignUpload onUpload={handleUpload} />
