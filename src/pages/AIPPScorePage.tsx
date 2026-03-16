@@ -34,6 +34,15 @@ export default function AIPPScorePage() {
   const [form, setForm] = useState({ name: "", city: "", category: "" });
   const [calculated, setCalculated] = useState(false);
 
+  const handleBusinessSelected = (result: BusinessSearchResult) => {
+    setForm(f => ({
+      ...f,
+      name: result.business_name,
+      city: result.city || f.city,
+      category: result.primary_category || f.category,
+    }));
+  };
+
   // Simulation sliders
   const [addProjects, setAddProjects] = useState(0);
   const [addCerts, setAddCerts] = useState(0);
