@@ -58,12 +58,14 @@ export default function DesignPage() {
           error={error}
           projectId={projectId}
           shareToken={shareToken}
+          usageLimitHit={usageLimitHit}
           onBack={reset}
           onGenerate={generate}
           onFreeze={freezeVersion}
           onDuplicate={duplicateVersion}
           onSelectVersion={selectVersion}
           onCreateShare={createShare}
+          onClearUsageLimit={clearUsageLimit}
         />
       ) : (
         <DesignUpload onUpload={handleUpload} />
