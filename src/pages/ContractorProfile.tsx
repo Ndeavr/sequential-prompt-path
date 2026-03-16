@@ -175,7 +175,7 @@ const ContractorProfile = () => {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
   /* ── Loading ── */
-  if (isLoading) {
+  if (isLoading && !isDemo) {
     return (
       <MainLayout>
         <div className="flex min-h-screen items-center justify-center">
