@@ -224,7 +224,7 @@ export function useIntentCTA() {
     // Enrich with problem
     const problemMatch = p.match(/\/probleme\/([^/]+)/);
     if (problemMatch && cta.intent === "research_problem") {
-      const problem = decodeURIComponent(problemMatch[1]).replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      const problem = slugToDisplayName(decodeURIComponent(problemMatch[1]));
       cta.primary = {
         ...cta.primary,
         label: `Trouver un expert : ${problem}`,

@@ -5,6 +5,7 @@
  */
 
 import { useParams, Link } from "react-router-dom";
+import { slugToDisplayName } from "@/lib/displayFormatters";
 import { useMemo, useEffect } from "react";
 import { buildRenovationPage } from "@/seo/services/renovationContentService";
 import SeoHead from "@/seo/components/SeoHead";
