@@ -207,7 +207,7 @@ export const mobileTabsByRole: Record<UserRole | "guest", NavItem[]> = {
   contractor: [
     { to: "/pro", label: "Accueil", labelEn: "Home", icon: "Home" },
     { to: "/pro/profile", label: "Profil", labelEn: "Profile", icon: "User" },
-    { to: "/pro/leads", label: "Leads", icon: "TrendingUp" },
+    { to: "/pro/leads", label: "RDV garantis", icon: "CalendarCheck" },
     { to: "/pro/appointments", label: "RDV", labelEn: "Appts", icon: "CalendarDays" },
     { to: "/alex", label: "Alex", icon: "Sparkles" },
   ],
