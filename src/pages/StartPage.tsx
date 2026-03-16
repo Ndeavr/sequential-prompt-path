@@ -27,7 +27,7 @@ const INTENT_TYPE_MAP: Record<string, "homeowner" | "contractor" | "ambassador">
   "diagnostic": "homeowner",
   "upload-soumission": "homeowner",
   "matching": "homeowner",
-  "leads": "contractor",
+  "rendez-vous": "contractor",
   "profil-entreprise": "contractor",
   "plans": "contractor",
   "ambassadeur": "ambassador",
