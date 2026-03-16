@@ -156,7 +156,7 @@ export default function HeroSection() {
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-8 md:px-10 md:pt-12">
           <div className="relative md:grid md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8 md:items-start">
             {/* Mobile background image — pushed right & behind text */}
-            <div className="absolute top-0 right-0 w-[62%] h-[280px] md:hidden pointer-events-none">
+            <div className="absolute top-0 right-0 w-[62%] h-[320px] md:hidden pointer-events-none">
               <AnimatePresence mode="wait">
                 <motion.img key={current.image} src={current.image} alt={current.action}
                   className="w-full h-full object-cover rounded-[20px]" loading="eager"
@@ -164,20 +164,21 @@ export default function HeroSection() {
                   transition={{ duration: 0.9, ease: "easeInOut" }}
                 />
               </AnimatePresence>
-              {/* Irregular dissolve: 100% opaque right → 5% left, organic wavy edge */}
+              {/* Irregular dissolve */}
               <div className="absolute inset-0 rounded-[20px]"
                 style={{
                   background: `
                     linear-gradient(95deg, hsl(213 60% 97%) 0%, hsl(213 60% 97% / 0.92) 12%, hsl(213 60% 97% / 0.6) 25%, hsl(213 60% 97% / 0.15) 45%, transparent 65%),
                     linear-gradient(130deg, hsl(213 60% 97% / 0.85) 0%, hsl(213 60% 97% / 0.4) 18%, transparent 40%),
                     linear-gradient(75deg, hsl(213 60% 97% / 0.7) 0%, transparent 30%),
-                    linear-gradient(to bottom, transparent 60%, hsl(213 60% 97% / 0.7) 82%, hsl(213 60% 97%) 100%),
+                    linear-gradient(to bottom, transparent 50%, hsl(213 60% 97% / 0.7) 75%, hsl(213 60% 97%) 95%),
                     linear-gradient(to top, transparent 70%, hsl(213 60% 97% / 0.4) 90%, hsl(213 60% 97%) 100%)
                   `
                 }}
               />
+              {/* Robot at bottom of image */}
               <motion.img src={unproRobot} alt="Alex UNPRO"
-                className="absolute right-2 bottom-[10px] w-[80px] drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)]"
+                className="absolute right-2 -bottom-[12px] w-[90px] drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)]"
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               />
@@ -185,11 +186,11 @@ export default function HeroSection() {
 
             {/* Left column */}
             <div className="relative z-20 min-w-0">
-              <h1 className="relative z-10 text-[34px] font-extrabold leading-[1.12] tracking-[-0.03em] sm:text-[46px] md:text-[64px]" style={{ color: "#0B1533" }}>
+              <h1 className="relative z-10 text-[38px] font-extrabold leading-[1.08] tracking-[-0.03em] sm:text-[46px] md:text-[64px]" style={{ color: "#0B1533" }}>
                 <span>Trouvez</span>
                 <br />
-                {/* Fixed-height container for rotating label — prevents layout shift */}
-                <span className="block" style={{ minHeight: "2.3em" }}>
+                {/* Rotating label */}
+                <span className="block" style={{ minHeight: "1.15em" }}>
                   <AnimatePresence mode="wait">
                     <motion.span
                       key={current.label}
@@ -202,10 +203,10 @@ export default function HeroSection() {
                       {current.label}
                     </motion.span>
                   </AnimatePresence>
-                  <br />
-                  <span className="inline" style={{ color: "#0B1533" }}>{current.qualifier}</span>
                 </span>
-                {/* Fixed-height container for rotating action — prevents layout shift */}
+                <span className="inline" style={{ color: "#0B1533" }}>{current.qualifier}</span>
+                <br />
+                {/* Rotating action */}
                 <span className="block" style={{ minHeight: "2.3em" }}>
                   <AnimatePresence mode="wait">
                     <motion.span
@@ -222,23 +223,25 @@ export default function HeroSection() {
                 </span>
               </h1>
 
-              <p className="relative z-10 max-w-[220px] sm:max-w-[420px] text-base leading-7 md:text-xl md:leading-10 drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]" style={{ color: "#6C7A92" }}>
-                Tanné des plateformes à 3 soumissions ? UnPRO vous connecte directement avec le bon entrepreneur.
-              </p>
+              {/* Card with subtitle + bullet points */}
+              <div className="relative z-10 mt-5 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 max-w-[420px] shadow-sm">
+                <p className="text-sm leading-6 md:text-base md:leading-7 font-medium" style={{ color: "#6C7A92" }}>
+                  Fini les 3 soumissions identiques. UnPRO analyse et connecte directement avec le bon entrepreneur pour votre projet.
+                </p>
 
-              {/* Anti-3-soumissions bullet points */}
-              <ul className="relative z-10 mt-4 space-y-2 max-w-[400px]">
-                {[
-                  "Rendez-vous exclusif avec un professionnel",
-                  "Entrepreneurs analysés selon leur réputation et expertise",
-                  "Diagnostic clair pour votre propriété",
-                ].map((point) => (
-                  <li key={point} className="flex items-start gap-2 text-sm md:text-base" style={{ color: "#3A4A63" }}>
-                    <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
-                    <span className="font-medium">{point}</span>
-                  </li>
-                ))}
-              </ul>
+                <ul className="mt-3 space-y-2">
+                  {[
+                    "Rendez-vous exclusif avec un professionnel",
+                    "Entrepreneurs analysés selon leur réputation et expertise",
+                    "Diagnostic clair pour votre propriété",
+                  ].map((point) => (
+                    <li key={point} className="flex items-start gap-2 text-sm md:text-base" style={{ color: "#3A4A63" }}>
+                      <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+                      <span className="font-medium">{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
               {/* ═══ INLINE ANIMATED ORB ═══ */}
               <div className="mt-8 flex flex-col items-center md:items-start">
