@@ -23,3 +23,9 @@ verify_jwt = false
 
 [functions.design-generate]
 verify_jwt = false
+
+[functions.design-checkout]
+verify_jwt = false
+
+[functions.design-check-subscription]
+verify_jwt = false
