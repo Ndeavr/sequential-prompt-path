@@ -27,6 +27,7 @@ const footerColumns = [
       { to: "/entrepreneurs/demo", label: "Démo", labelEn: "Demo" },
       { to: "/pro/leads", label: "Leads qualifiés", labelEn: "Qualified Leads" },
       { to: "/entrepreneurs/pages-ia", label: "Pages IA / SEO", labelEn: "AI / SEO Pages" },
+      { to: "/ambassadeurs", label: "Ambassadeurs", labelEn: "Ambassadors" },
     ],
   },
   {

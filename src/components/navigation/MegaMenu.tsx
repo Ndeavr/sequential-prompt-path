@@ -115,6 +115,7 @@ const megaMenus: Record<string, MegaMenuConfig> = {
           { to: "/entrepreneurs/demo", label: "Démo", labelEn: "Demo", icon: Globe },
           { to: "/aide", label: "Centre d'aide", labelEn: "Help Center", icon: HelpCircle },
           { to: "/entrepreneurs/ambassadeur", label: "Programme ambassadeur", labelEn: "Ambassador Program", icon: Users },
+          { to: "/ambassadeurs", label: "Devenir ambassadeur", labelEn: "Become an Ambassador", icon: Award },
         ],
       },
     ],
