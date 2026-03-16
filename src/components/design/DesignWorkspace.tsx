@@ -198,6 +198,13 @@ export default function DesignWorkspace({
             existingToken={shareToken}
           />
         )}
+        {usageLimitHit && (
+          <DesignUpgradeModal
+            currentCount={usageLimitHit.current}
+            limit={usageLimitHit.limit}
+            onClose={onClearUsageLimit}
+          />
+        )}
       </AnimatePresence>
     </div>
   );
