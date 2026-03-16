@@ -313,7 +313,7 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
         titleEn: "Homeowners",
         items: [
           { to: "/proprietaires", label: "Passeport Maison", icon: "FileText" },
-          { to: "/compare-quotes", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
+          { to: "/compare-quotes", label: "Analyser des soumissions", labelEn: "Analyze Quotes", icon: "Scale" },
           { to: "/search", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", icon: "ShieldCheck" },
           { to: "/score-maison", label: "Score Maison", labelEn: "Home Score", icon: "BarChart3" },
         ],
