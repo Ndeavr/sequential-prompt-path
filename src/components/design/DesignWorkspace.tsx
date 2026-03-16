@@ -152,7 +152,7 @@ export default function DesignWorkspace({
           error={error}
           onFreeze={() => activeVersionId && onFreeze(activeVersionId)}
           onDuplicate={() => activeVersionId && onDuplicate(activeVersionId)}
-          onShare={() => {}}
+          onShare={() => setIsSharing(true)}
         />
 
         {/* Right Controls */}
