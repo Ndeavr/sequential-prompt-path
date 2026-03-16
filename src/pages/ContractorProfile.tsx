@@ -101,6 +101,13 @@ const DEMO_REVIEWS = (name: string) => [
   { id: "r4", rating: 5, comment: "Très satisfait ! L'équipe est arrivée à l'heure, a protégé nos meubles et a laissé le chantier propre.", reviewer_name: "Isabelle T.", created_at: "2025-07-22", work_quality: 5, communication: 5, professionalism: 5, schedule: 5, budget: 5, cleanliness: 5 },
 ];
 
+/* ── Animations ── */
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.45 } },
+};
+const stagger = { visible: { transition: { staggerChildren: 0.07 } } };
+
 /* ── Helpers ── */
 const getAIPPTier = (score: number) => {
   if (score >= 90) return { label: "Élite", color: "text-primary", bg: "bg-primary/10" };
