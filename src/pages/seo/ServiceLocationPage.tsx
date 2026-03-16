@@ -135,7 +135,7 @@ const ServiceLocationPage = () => {
               </div>
               <div className="mt-4 p-3 rounded-xl bg-primary/5 border border-primary/10">
                 <p className="text-xs text-muted-foreground">
-                  💡 <strong>Conseil UNPRO :</strong> Obtenez au minimum 3 soumissions détaillées pour comparer les prix et les approches. Notre IA peut analyser vos soumissions gratuitement.
+                  💡 <strong>Conseil UNPRO :</strong> Vous avez déjà plusieurs soumissions et aimeriez un dernier avis? Prenez rendez-vous avec UNPRO, nous pourrons vous aider à démêler tout ça.
                 </p>
               </div>
             </CardContent>
