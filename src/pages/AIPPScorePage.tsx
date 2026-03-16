@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ScoreRing from "@/components/ui/score-ring";
+import BusinessNameSearch, { type BusinessSearchResult } from "@/components/contractor/BusinessNameSearch";
 
 const CATEGORIES = [
   "Toiture", "Isolation", "Électricité", "Plomberie",
