@@ -8,14 +8,14 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Check, Home, Building2, Briefcase, Wrench, Handshake, Gift, Building } from "lucide-react";
+import { Check, Home, Building, Wrench, Briefcase, Handshake, Gift } from "lucide-react";
 import logo from "@/assets/unpro-robot.png";
 
 const ACCOUNT_TYPES = [
   {
     value: "homeowner",
     label: "Propriétaire",
-    description: "Gérer mes projets et protéger ma propriété",
+    description: "Gérer ma propriété et mes projets",
     icon: Home,
     roleForDb: "homeowner",
   },
@@ -27,17 +27,17 @@ const ACCOUNT_TYPES = [
     roleForDb: "homeowner",
   },
   {
+    value: "contractor",
+    label: "Entrepreneur",
+    description: "Développer mon entreprise et recevoir des rendez-vous exclusifs",
+    icon: Wrench,
+    roleForDb: "contractor",
+  },
+  {
     value: "professional",
     label: "Professionnel",
     description: "Offrir des services spécialisés aux propriétaires",
     icon: Briefcase,
-    roleForDb: "contractor",
-  },
-  {
-    value: "contractor",
-    label: "Entrepreneur",
-    description: "Recevoir des rendez-vous exclusifs et bâtir ma réputation",
-    icon: Wrench,
     roleForDb: "contractor",
   },
   {
@@ -50,7 +50,7 @@ const ACCOUNT_TYPES = [
   {
     value: "ambassador",
     label: "Ambassadeur",
-    description: "Référez, gagnez des récompenses et des revenus récurrents",
+    description: "Recommander UNPRO et gagner des récompenses",
     icon: Gift,
     roleForDb: "homeowner",
   },

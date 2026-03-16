@@ -58,7 +58,7 @@ const USER_TYPES = [
   {
     key: "contractor" as const,
     label: "Entrepreneur",
-    description: "Développer mon entreprise et recevoir des opportunités",
+    description: "Développer mon entreprise et recevoir des rendez-vous exclusifs",
     icon: Wrench,
     roleForDb: "contractor",
     accountType: "contractor",
