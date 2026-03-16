@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import PropertySelect from "@/components/shared/PropertySelect";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/shared";
 import { Button } from "@/components/ui/button";
@@ -137,40 +138,11 @@ const ProjectNewPage = () => {
             {/* Property */}
             <div className="space-y-2">
               <Label htmlFor="property">Propriété *</Label>
-              {(properties ?? []).length === 0 ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full justify-start gap-2 text-muted-foreground"
-                  onClick={() => navigate("/dashboard/properties/new")}
-                >
-                  <Plus className="h-4 w-4 text-primary" />
-                  Ajouter une propriété
-                </Button>
-              ) : (
-                <Select value={form.property_id} onValueChange={(v) => {
-                  if (v === "__new__") {
-                    navigate("/dashboard/properties/new");
-                    return;
-                  }
-                  setForm((f) => ({ ...f, property_id: v }));
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionnez une propriété" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(properties ?? []).map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.address}</SelectItem>
-                    ))}
-                    <SelectItem value="__new__">
-                      <span className="flex items-center gap-2 text-primary">
-                        <Plus className="h-3.5 w-3.5" />
-                        Ajouter une propriété
-                      </span>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
+              <PropertySelect
+                value={form.property_id}
+                onChange={(v) => setForm((f) => ({ ...f, property_id: v }))}
+                properties={properties}
+              />
             </div>
 
             {/* Category */}

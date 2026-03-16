@@ -16,6 +16,7 @@ import { CalendarIcon, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import PropertySelect from "@/components/shared/PropertySelect";
 
 const timeWindows = [
   { value: "morning", label: "Matin (8h–12h)" },
@@ -142,22 +143,14 @@ const BookingPage = () => {
                 </Select>
               </div>
 
-              {/* Property */}
               <div className="space-y-2">
                 <Label>Propriété (optionnelle)</Label>
-                <Select value={form.property_id} onValueChange={set("property_id")}>
-                  <SelectTrigger><SelectValue placeholder="Sélectionner une propriété" /></SelectTrigger>
-                  <SelectContent>
-                    {properties?.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.address}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {!properties?.length && (
-                  <p className="text-xs text-muted-foreground">
-                    Pas de propriété? <Link to="/dashboard/properties/new" className="text-primary underline">Ajoutez-en une</Link> ou continuez sans.
-                  </p>
-                )}
+                <PropertySelect
+                  value={form.property_id}
+                  onChange={set("property_id")}
+                  properties={properties}
+                  optional
+                />
               </div>
 
               {/* Budget */}

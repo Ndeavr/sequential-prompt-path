@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Upload, FileText, Check } from "lucide-react";
+import PropertySelect from "@/components/shared/PropertySelect";
 import { motion } from "framer-motion";
 
 const DOCUMENT_TYPES = [
@@ -117,16 +118,11 @@ const DocumentUploadPage = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="property">Propriété *</Label>
-              <Select value={form.property_id} onValueChange={(v) => setForm((f) => ({ ...f, property_id: v }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionnez une propriété" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(properties ?? []).map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.address}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <PropertySelect
+                value={form.property_id}
+                onChange={(v) => setForm((f) => ({ ...f, property_id: v }))}
+                properties={properties}
+              />
             </div>
 
             <div className="space-y-2">

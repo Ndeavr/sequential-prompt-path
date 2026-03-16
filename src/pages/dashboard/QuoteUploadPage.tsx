@@ -12,6 +12,7 @@ import { useProperties } from "@/hooks/useProperties";
 import { useCreateQuote, useUploadQuoteFile } from "@/hooks/useQuotes";
 import { toast } from "sonner";
 import { Upload } from "lucide-react";
+import PropertySelect from "@/components/shared/PropertySelect";
 
 const QuoteUploadPage = () => {
   const navigate = useNavigate();
@@ -54,15 +55,11 @@ const QuoteUploadPage = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label>Propriété *</Label>
-              <Select value={form.property_id} onValueChange={(v) => setForm((f) => ({ ...f, property_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner une propriété" /></SelectTrigger>
-                <SelectContent>
-                  {properties?.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.address}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {!properties?.length && <p className="text-xs text-muted-foreground">Ajoutez d'abord une propriété.</p>}
+              <PropertySelect
+                value={form.property_id}
+                onChange={(v) => setForm((f) => ({ ...f, property_id: v }))}
+                properties={properties}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="title">Titre *</Label>
