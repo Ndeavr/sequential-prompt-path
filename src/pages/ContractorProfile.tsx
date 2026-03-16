@@ -832,9 +832,9 @@ const ContractorProfile = () => {
                       );
                     })}
                   </div>
-                  {aippBreakdown.score_confidence != null && (
+                  {(effectiveAippBreakdown as any).score_confidence != null && (
                     <p className="mt-3 text-[10px] text-muted-foreground text-center">
-                      Confiance du calcul : {Math.round(aippBreakdown.score_confidence * 100)}%
+                      Confiance du calcul : {Math.round((effectiveAippBreakdown as any).score_confidence * 100)}%
                     </p>
                   )}
                 </CardContent>
