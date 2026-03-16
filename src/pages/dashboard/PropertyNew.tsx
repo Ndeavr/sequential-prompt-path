@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { useCreateProperty } from "@/hooks/useProperties";
 import { toast } from "sonner";
+import GooglePlacesInput from "@/components/property/GooglePlacesInput";
 
 const PropertyNew = () => {
   const navigate = useNavigate();
