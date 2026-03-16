@@ -146,6 +146,7 @@ import AdminVerificationRunDetail from "@/pages/admin/AdminVerificationRunDetail
 import AdminAlerts from "@/pages/admin/AdminAlerts";
 import AdminVerifiedContractors from "@/pages/admin/AdminVerifiedContractors";
 import AdminDuplicates from "@/pages/admin/AdminDuplicates";
+import AdminAutomation from "@/pages/admin/AdminAutomation";
 
 export const AppRouter = () => (
   <BrowserRouter>
