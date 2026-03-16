@@ -148,6 +148,7 @@ import AdminVerifiedContractors from "@/pages/admin/AdminVerifiedContractors";
 import AdminDuplicates from "@/pages/admin/AdminDuplicates";
 import AdminAutomation from "@/pages/admin/AdminAutomation";
 import AdminHomeGraph from "@/pages/admin/AdminHomeGraph";
+import AdminUOS from "@/pages/admin/AdminUOS";
 
 export const AppRouter = () => (
   <BrowserRouter>
@@ -293,6 +294,7 @@ export const AppRouter = () => (
       <Route path="/admin/duplicates" element={<ProtectedRoute requiredRole="admin"><AdminDuplicates /></ProtectedRoute>} />
       <Route path="/admin/automation" element={<ProtectedRoute requiredRole="admin"><AdminAutomation /></ProtectedRoute>} />
       <Route path="/admin/home-graph" element={<ProtectedRoute requiredRole="admin"><AdminHomeGraph /></ProtectedRoute>} />
+      <Route path="/admin/uos" element={<ProtectedRoute requiredRole="admin"><AdminUOS /></ProtectedRoute>} />
 
       {/* Condos — Public SEO */}
       <Route path="/condo" element={<CondoHomePage />} />

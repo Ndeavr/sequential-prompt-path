@@ -34,6 +34,7 @@ const navItems = [
   { to: "/admin/verified-contractors", label: "Entrepreneurs vérifiés", icon: Shield },
   { to: "/admin/automation", label: "Automatisation", icon: Bot },
   { to: "/admin/home-graph", label: "Problem Graph", icon: Network },
+  { to: "/admin/uos", label: "UNPRO OS", icon: Sparkles },
 ];
 
 const NavLinks = ({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) => (
