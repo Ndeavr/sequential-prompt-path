@@ -41,6 +41,7 @@ import ProblemeLocationFrPage from "@/pages/seo/ProblemeLocationFrPage";
 import PropertyGraphPage from "@/pages/PropertyGraphPage";
 import AlexChat from "@/pages/AlexChat";
 import DesignPage from "@/pages/DesignPage";
+import DesignSharePage from "@/pages/DesignSharePage";
 import FlywheelPage from "@/pages/FlywheelPage";
 import EnergyPage from "@/pages/EnergyPage";
 import PreventiveMaintenancePage from "@/pages/PreventiveMaintenancePage";
