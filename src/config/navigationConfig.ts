@@ -118,7 +118,7 @@ export function getProfileActions(ctx: NavigationContext): NavItem[] {
       { to: "/dashboard/home-score", label: "Mon Home Score", labelEn: "My Home Score", icon: "BarChart3" },
       { to: "/dashboard/appointments", label: "Mes rendez-vous", labelEn: "My Appointments", icon: "CalendarDays" },
       { to: "/dashboard/documents/upload", label: "Mes documents", labelEn: "My Documents", icon: "FileText" },
-      { to: "/compare-quotes", label: "Comparer 3 soumissions", labelEn: "Compare 3 Quotes", icon: "Scale" },
+      { to: "/compare-quotes", label: "Analyser mes soumissions", labelEn: "Analyze My Quotes", icon: "Scale" },
     );
   }
 
