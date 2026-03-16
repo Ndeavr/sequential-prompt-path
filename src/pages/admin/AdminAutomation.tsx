@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import AdminLayout from "@/layouts/AdminLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bot, ListTodo, History, AlertTriangle, Zap, Loader2 } from "lucide-react";
+import { Bot, ListTodo, History, AlertTriangle, Zap, Loader2, FileText, Sparkles } from "lucide-react";
 import AutomationStatsCards from "@/components/automation/AutomationStatsCards";
 import AutomationAgentTable from "@/components/automation/AutomationAgentTable";
 import AutomationJobQueue from "@/components/automation/AutomationJobQueue";
@@ -13,6 +13,11 @@ import {
   useAutomationAlerts, useAutomationStats, useToggleAgent,
   useRunAgent, useUpdateJob, useMarkAlertRead,
 } from "@/hooks/useAutomation";
+
+const GeneratedPagesPanel = lazy(() => import("@/components/automation/GeneratedPagesPanel"));
+const UnicornSuggestionsPanel = lazy(() => import("@/components/automation/UnicornSuggestionsPanel"));
+
+const Fallback = () => <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
 const AdminAutomation = () => {
   const [jobFilter, setJobFilter] = useState("all");
@@ -46,7 +51,7 @@ const AdminAutomation = () => {
         <AutomationStatsCards stats={stats} />
 
         <Tabs defaultValue="agents" className="w-full">
-          <TabsList className="w-full grid grid-cols-5 h-9 rounded-xl">
+          <TabsList className="w-full grid grid-cols-4 sm:grid-cols-7 h-9 rounded-xl">
             <TabsTrigger value="agents" className="text-xs gap-1 rounded-lg">
               <Bot className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Agents</span>
@@ -62,7 +67,11 @@ const AdminAutomation = () => {
               <History className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Runs</span>
             </TabsTrigger>
-            <TabsTrigger value="adaptive" className="text-xs gap-1 rounded-lg">
+            <TabsTrigger value="pages" className="text-xs gap-1 rounded-lg">
+              <FileText className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Pages</span>
+            </TabsTrigger>
+            <TabsTrigger value="adaptive" className="text-xs gap-1 rounded-lg hidden sm:flex">
               <Zap className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Adaptatif</span>
             </TabsTrigger>
@@ -73,12 +82,14 @@ const AdminAutomation = () => {
                 <span className="ml-1 bg-destructive text-white text-[9px] px-1.5 rounded-full">{unreadAlerts}</span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="unicorn" className="text-xs gap-1 rounded-lg hidden sm:flex">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Unicorn</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="agents" className="mt-4">
-            {loadingAgents ? (
-              <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-            ) : (
+            {loadingAgents ? <Fallback /> : (
               <AutomationAgentTable
                 agents={agents}
                 onToggle={(id, v) => toggleMutation.mutate({ id, enabled: v })}
@@ -102,12 +113,24 @@ const AdminAutomation = () => {
             <AutomationRunHistory runs={runs} />
           </TabsContent>
 
+          <TabsContent value="pages" className="mt-4">
+            <Suspense fallback={<Fallback />}>
+              <GeneratedPagesPanel />
+            </Suspense>
+          </TabsContent>
+
           <TabsContent value="adaptive" className="mt-4">
             <AdaptiveFrequencyPanel />
           </TabsContent>
 
           <TabsContent value="alerts" className="mt-4">
             <AutomationAlertsList alerts={alerts} onMarkRead={id => alertMutation.mutate(id)} />
+          </TabsContent>
+
+          <TabsContent value="unicorn" className="mt-4">
+            <Suspense fallback={<Fallback />}>
+              <UnicornSuggestionsPanel agents={agents} stats={stats} />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </div>
