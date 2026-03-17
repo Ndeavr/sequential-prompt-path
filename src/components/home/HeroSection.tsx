@@ -156,7 +156,7 @@ export default function HeroSection() {
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-8 md:px-10 md:pt-12">
           <div className="relative md:grid md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8 md:items-start">
             {/* Mobile background image — full-width, organic dissolve */}
-            <div className="absolute top-0 left-0 right-0 h-[480px] md:hidden pointer-events-none">
+            <div className="absolute top-0 left-0 right-0 h-[340px] md:hidden pointer-events-none">
               <AnimatePresence mode="wait">
                 <motion.img key={current.image} src={current.image} alt={current.action}
                   className="w-full h-full object-cover" loading="eager"
