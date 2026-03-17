@@ -1,79 +1,57 @@
 /**
- * UNPRO Authority Score — Mock data & types
+ * UNPRO Authority Score V2 — Updated data layer
+ * Now uses 8 real performance dimensions instead of 6 vanity metrics.
  */
-import { Camera, MessageSquare, MapPin, ShieldCheck } from "lucide-react";
+import type { AuthorityDimensions } from "@/services/authorityScoreV2";
+import { DIMENSION_META, TIER_META } from "@/services/authorityScoreV2";
+import { Camera, MessageSquare, MapPin, ShieldCheck, Zap, Clock, Users, Target } from "lucide-react";
 
-export const SCORE_TOTAL = 1000;
-export const SCORE_CURRENT = 400;
-export const SCORE_POTENTIAL = 620;
+export { DIMENSION_META, TIER_META };
+export const SCORE_TOTAL = 100;
 
-export interface ScoreFactor {
-  key: string;
+export interface ScoreFactorV2 {
+  key: keyof AuthorityDimensions;
   label: string;
   value: number;
-  max: number;
+  weight: number;
   color: string;
 }
 
-export const factors: ScoreFactor[] = [
-  { key: "expertise", label: "Expertise", value: 160, max: 250, color: "hsl(234 89% 74%)" },
-  { key: "activite", label: "Activité", value: 90, max: 150, color: "hsl(222 100% 65%)" },
-  { key: "zone", label: "Zone desservie", value: 80, max: 150, color: "hsl(185 80% 55%)" },
-  { key: "ia", label: "Priorité IA", value: 30, max: 200, color: "hsl(265 85% 68%)" },
-  { key: "rarete", label: "Rareté", value: 25, max: 150, color: "hsl(38 85% 55%)" },
-  { key: "credibilite", label: "Crédibilité", value: 15, max: 100, color: "hsl(152 69% 50%)" },
-];
+export function dimensionsToFactors(dims: AuthorityDimensions): ScoreFactorV2[] {
+  return (Object.keys(DIMENSION_META) as (keyof AuthorityDimensions)[]).map((key) => ({
+    key,
+    label: DIMENSION_META[key].label,
+    value: dims[key],
+    weight: DIMENSION_META[key].weight,
+    color: DIMENSION_META[key].color,
+  }));
+}
 
 export const suggestions = [
   {
-    points: 40,
-    title: "Ajouter 5 photos de projets",
-    desc: "Montrez vos réalisations réelles pour renforcer votre expertise.",
-    icon: Camera,
+    points: 8,
+    title: "Compléter 3 projets sans annulation",
+    desc: "Améliorez votre taux de complétion pour renforcer votre score de performance.",
+    icon: Target,
   },
   {
-    points: 30,
-    title: "Répondre aux avis Google",
-    desc: "Un profil actif inspire davantage confiance.",
+    points: 6,
+    title: "Obtenir 5 avis vérifiés",
+    desc: "Les avis vérifiés récents ont un impact majeur sur la qualité perçue.",
     icon: MessageSquare,
   },
   {
-    points: 50,
-    title: "Compléter les villes desservies",
-    desc: "Améliorez votre couverture et vos opportunités de correspondance.",
-    icon: MapPin,
+    points: 5,
+    title: "Répondre aux leads en moins de 30 min",
+    desc: "La réactivité améliore directement votre score et votre priorité de matching.",
+    icon: Clock,
   },
   {
-    points: 100,
-    title: "Renforcer les preuves de crédibilité",
-    desc: "Ajoutez licences, certifications, années d'expérience et éléments de confiance.",
-    icon: ShieldCheck,
+    points: 4,
+    title: "Collaborer avec des sous-traitants fiables",
+    desc: "Renforcez votre réseau de partenaires pour améliorer votre score réseau.",
+    icon: Users,
   },
-];
-
-export const historyData = [
-  { month: "Jan", score: 280, type: "actual" },
-  { month: "Fév", score: 310, type: "actual" },
-  { month: "Mar", score: 355, type: "actual" },
-  { month: "Avr", score: 400, type: "actual" },
-  { month: "Proj.", score: 470, type: "projection" },
-  { month: "Opt.", score: 620, type: "projection" },
-];
-
-export const projectionSteps = [
-  { label: "Ajouter 5 photos de projets", points: 40 },
-  { label: "Répondre aux avis Google", points: 30 },
-  { label: "Compléter les villes desservies", points: 50 },
-  { label: "Renforcer les preuves de crédibilité", points: 100 },
-];
-
-export const radarData = [
-  { axis: "Expertise", value: 64 },
-  { axis: "Activité", value: 60 },
-  { axis: "Zone", value: 53 },
-  { axis: "Priorité IA", value: 15 },
-  { axis: "Rareté", value: 17 },
-  { axis: "Crédibilité", value: 15 },
 ];
 
 export const sidebarItems = [
