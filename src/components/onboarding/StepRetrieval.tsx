@@ -84,7 +84,7 @@ export default function StepRetrieval({ modules, overallProgress }: Props) {
               exit={{ opacity: 0, y: -8 }}
               className="text-sm text-muted-foreground text-center font-medium"
             >
-              {currentMsg || "Preparing analysis…"}
+              {currentMsg || "Préparation de l'analyse…"}
             </motion.p>
           </AnimatePresence>
 
