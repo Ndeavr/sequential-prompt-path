@@ -74,7 +74,7 @@ const SmartHeader = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-border/20 bg-background/80 backdrop-blur-2xl">
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-2xl">
         <div className="mx-auto max-w-7xl px-4 lg:px-6">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
