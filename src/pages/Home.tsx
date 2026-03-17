@@ -48,12 +48,22 @@ const Home = () => {
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "UnPRO",
+    "@type": "Service",
+    "name": "UNPRO",
+    "description": "Service intelligent de jumelage avec rendez-vous garantis entre propriétaires et entrepreneurs vérifiés au Québec.",
     "url": "https://unpro.ca",
-    "description": "Plateforme qui connecte les propriétaires avec des entrepreneurs compétents grâce à une analyse de réputation, expertise et engagement.",
-    "areaServed": "Quebec",
-    "knowsAbout": ["entrepreneurs", "renovation", "home services", "construction", "property maintenance"]
+    "areaServed": { "@type": "Place", "name": "Quebec" },
+    "provider": { "@type": "Organization", "name": "UNPRO", "url": "https://unpro.ca" },
+    "serviceType": "Jumelage entrepreneur résidentiel",
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Services résidentiels",
+      "itemListElement": [
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Rendez-vous garanti avec entrepreneur vérifié" } },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Analyse IA de soumissions" } },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Vérification d'entrepreneurs" } },
+      ]
+    }
   };
 
   const faqJsonLd = {
@@ -62,18 +72,34 @@ const Home = () => {
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "Pourquoi UnPRO ne fonctionne pas avec 3 soumissions ?",
+        "name": "Pourquoi éviter les 3 soumissions ?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Les plateformes de soumissions vendent souvent la même demande à plusieurs entrepreneurs. UnPRO privilégie une approche différente : identifier le bon professionnel et offrir un rendez-vous exclusif."
+          "text": "Comparer des prix ne garantit pas la qualité. UNPRO sélectionne directement le bon entrepreneur selon votre projet grâce à un système intelligent de jumelage."
         }
       },
       {
         "@type": "Question",
-        "name": "Les entrepreneurs sont-ils vérifiés ?",
+        "name": "Est-ce que le rendez-vous est garanti ?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Les professionnels sont analysés selon plusieurs signaux incluant réputation, expertise et engagement dans leur domaine."
+          "text": "Oui. Chaque demande est transformée en rendez-vous confirmé avec un entrepreneur qualifié et vérifié."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Comment UNPRO choisit l'entrepreneur ?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Le système intelligent analyse votre projet, votre localisation et la disponibilité des professionnels pour trouver le meilleur match."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Est-ce plus rapide que les soumissions ?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Oui. Au lieu d'attendre plusieurs réponses, vous obtenez un rendez-vous garanti directement avec le bon entrepreneur."
         }
       }
     ]
@@ -82,10 +108,10 @@ const Home = () => {
   return (
     <MainLayout>
       <Helmet>
-        <title>Tanné des plateformes à 3 soumissions ? | Rendez-vous exclusif | UnPRO</title>
-        <meta name="description" content="Tanné de courir après 3 soumissions inutiles ? UnPRO vous connecte directement avec le bon entrepreneur. Rendez-vous exclusif, sans compétition entre entrepreneurs." />
-        <meta property="og:title" content="Tanné des 3 soumissions ? UnPRO change les règles" />
-        <meta property="og:description" content="UnPRO abolit le modèle des 3 soumissions et vous connecte directement avec des entrepreneurs compétents. Rendez-vous exclusif et diagnostic clair." />
+        <title>UNPRO — Rendez-vous garantis avec entrepreneurs vérifiés | IA 24/7</title>
+        <meta name="description" content="Fini les 3 soumissions inutiles. Décrivez votre projet et obtenez un rendez-vous confirmé avec un entrepreneur qualifié. IA Alex 24/7." />
+        <meta property="og:title" content="UNPRO — Rendez-vous garantis avec entrepreneurs vérifiés" />
+        <meta property="og:description" content="UNPRO remplace les soumissions multiples par un rendez-vous garanti avec le bon entrepreneur. Système intelligent de jumelage." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://unpro.ca" />
         <link rel="canonical" href="https://unpro.ca" />
