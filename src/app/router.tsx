@@ -161,6 +161,8 @@ import AdminHomeGraph from "@/pages/admin/AdminHomeGraph";
 import AdminUOS from "@/pages/admin/AdminUOS";
 import AdminGrowthEngine from "@/pages/admin/AdminGrowthEngine";
 import AdminPricingPage from "@/pages/admin/AdminPricingPage";
+import AdminRefusalSeoPage from "@/pages/admin/AdminRefusalSeoPage";
+import RefusalSeoPage from "@/pages/seo/RefusalSeoPage";
 
 export const AppRouter = () => (
   <BrowserRouter>
