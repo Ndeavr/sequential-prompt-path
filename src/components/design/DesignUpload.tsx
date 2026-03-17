@@ -176,10 +176,6 @@ export default function DesignUpload({ onUpload }: Props) {
               <Upload className="w-5 h-5" />
               Commencer maintenant
             </Button>
-            <Button variant="outline" size="lg" className="gap-2 h-12 text-base px-8" onClick={scrollToUpload}>
-              Voir les exemples
-              <ArrowRight className="w-4 h-4" />
-            </Button>
           </div>
         </motion.div>
 
