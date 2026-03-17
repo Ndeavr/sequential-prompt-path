@@ -264,7 +264,7 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-card border-l border-border/20 overflow-y-auto"
+        className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-card overflow-y-auto"
       >
         <div className="p-5">
           {/* Close */}
