@@ -175,6 +175,8 @@ import AdminDeepLinkAnalytics from "@/pages/admin/AdminDeepLinkAnalytics";
 import AdminAIGrowthInsights from "@/pages/admin/AdminAIGrowthInsights";
 import AdminAIGrowthDashboard from "@/pages/admin/AdminAIGrowthDashboard";
 import AdminCampaignLab from "@/pages/admin/AdminCampaignLab";
+import AdminAutopilotDashboard from "@/pages/admin/AdminAutopilotDashboard";
+import AdminSeoDominationDashboard from "@/pages/admin/AdminSeoDominationDashboard";
 import RefusalSeoPage from "@/pages/seo/RefusalSeoPage";
 import MyPlacementsPage from "@/pages/dashboard/MyPlacementsPage";
 
