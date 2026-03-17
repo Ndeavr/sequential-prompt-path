@@ -9,13 +9,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { headerNavByRole } from "@/config/navigationConfig";
-import { Menu, X, Bell, ChevronDown } from "lucide-react";
+import { Menu, X, Bell, ChevronDown, QrCode } from "lucide-react";
 import ProfileMenu from "./ProfileMenu";
 import AlexNavOrb from "./AlexNavOrb";
 import HeaderSearch from "./HeaderSearch";
 import MegaMenuPanel from "./MegaMenu";
 import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
 import SmartCTA from "@/components/cta/SmartCTA";
+import QRShareModal from "@/components/sharing/QRShareModal";
 import unproLogo from "@/assets/unpro-logo.png";
 import type { UserRole } from "@/types/navigation";
 
