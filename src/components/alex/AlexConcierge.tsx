@@ -168,7 +168,7 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
     const category = detectCategory(message);
     const recs = getRecommendations(intent, { hasProperties: (properties ?? []).length > 0, category });
     setRecommendations(recs);
-    sendMessage(message, { properties, homeScore, currentPage: pathname });
+    sendMessage(message, { properties, homeScore, currentPage: pathname, propertyFamily, propertyType, occupancyStatus });
   };
 
   const handleReset = () => {
