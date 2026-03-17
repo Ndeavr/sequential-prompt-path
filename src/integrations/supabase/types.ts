@@ -1702,6 +1702,160 @@ export type Database = {
           },
         ]
       }
+      contractor_authority_events: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          delta_score: number | null
+          event_category: string
+          event_type: string
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          delta_score?: number | null
+          event_category: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          delta_score?: number | null
+          event_category?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_authority_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_authority_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_authority_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_authority_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_authority_scores: {
+        Row: {
+          completion_performance: number
+          computed_at: string
+          confidence_level: number
+          contractor_id: string
+          created_at: string
+          execution_model: number
+          id: string
+          is_current: boolean
+          learning_reliability: number
+          matching_precision: number
+          metrics_json: Json | null
+          overall_score: number
+          responsiveness: number
+          review_quality: number
+          stability: number
+          subcontract_network: number
+          tags: string[] | null
+          tier: string | null
+          updated_at: string
+        }
+        Insert: {
+          completion_performance?: number
+          computed_at?: string
+          confidence_level?: number
+          contractor_id: string
+          created_at?: string
+          execution_model?: number
+          id?: string
+          is_current?: boolean
+          learning_reliability?: number
+          matching_precision?: number
+          metrics_json?: Json | null
+          overall_score?: number
+          responsiveness?: number
+          review_quality?: number
+          stability?: number
+          subcontract_network?: number
+          tags?: string[] | null
+          tier?: string | null
+          updated_at?: string
+        }
+        Update: {
+          completion_performance?: number
+          computed_at?: string
+          confidence_level?: number
+          contractor_id?: string
+          created_at?: string
+          execution_model?: number
+          id?: string
+          is_current?: boolean
+          learning_reliability?: number
+          matching_precision?: number
+          metrics_json?: Json | null
+          overall_score?: number
+          responsiveness?: number
+          review_quality?: number
+          stability?: number
+          subcontract_network?: number
+          tags?: string[] | null
+          tier?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_authority_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_authority_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_authority_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_authority_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_category_assignments: {
         Row: {
           admin_approved: boolean | null
@@ -2533,6 +2687,77 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractor_verification_runs"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_match_metrics: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          id: string
+          leads_accepted: number
+          leads_received: number
+          leads_refused_invalid: number
+          leads_refused_valid: number
+          mismatch_rate: number | null
+          period_end: string
+          period_start: string
+          precision_score: number | null
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          id?: string
+          leads_accepted?: number
+          leads_received?: number
+          leads_refused_invalid?: number
+          leads_refused_valid?: number
+          mismatch_rate?: number | null
+          period_end: string
+          period_start: string
+          precision_score?: number | null
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          leads_accepted?: number
+          leads_received?: number
+          leads_refused_invalid?: number
+          leads_refused_valid?: number
+          mismatch_rate?: number | null
+          period_end?: string
+          period_start?: string
+          precision_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_match_metrics_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_match_metrics_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_match_metrics_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_match_metrics_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
         ]
       }
@@ -3589,6 +3814,99 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "home_solutions"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_subcontract_network: {
+        Row: {
+          collaborations_count: number
+          contractor_id: string
+          created_at: string
+          id: string
+          last_collaboration_at: string | null
+          partner_contractor_id: string
+          partner_rating: number | null
+          success_rate: number | null
+          updated_at: string
+        }
+        Insert: {
+          collaborations_count?: number
+          contractor_id: string
+          created_at?: string
+          id?: string
+          last_collaboration_at?: string | null
+          partner_contractor_id: string
+          partner_rating?: number | null
+          success_rate?: number | null
+          updated_at?: string
+        }
+        Update: {
+          collaborations_count?: number
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          last_collaboration_at?: string | null
+          partner_contractor_id?: string
+          partner_rating?: number | null
+          success_rate?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_subcontract_network_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_subcontract_network_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_subcontract_network_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_subcontract_network_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_subcontract_network_partner_contractor_id_fkey"
+            columns: ["partner_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_subcontract_network_partner_contractor_id_fkey"
+            columns: ["partner_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_subcontract_network_partner_contractor_id_fkey"
+            columns: ["partner_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_subcontract_network_partner_contractor_id_fkey"
+            columns: ["partner_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
         ]
       }
@@ -12691,6 +13009,10 @@ export type Database = {
           namespace: string
           rank: number
         }[]
+      }
+      set_current_authority_score: {
+        Args: { _contractor_id: string; _score_id: string }
+        Returns: undefined
       }
       set_current_contractor_aipp_score: {
         Args: { _contractor_id: string; _score_id: string }
