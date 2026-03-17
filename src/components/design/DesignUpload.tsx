@@ -51,10 +51,16 @@ function BeforeAfterSlider({ before, after }: { before: string; after: string })
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
-      <img src={after} alt="Après" className="absolute inset-0 w-full h-full object-cover" />
-      <div className="absolute inset-0 overflow-hidden" style={{ width: `${pos}%` }}>
-        <img src={before} alt="Avant" className="h-full object-cover" style={{ width: sliderRef.current?.clientWidth || "100%" }} />
+      {/* Before = static base layer */}
+      <img src={before} alt="Avant" className="absolute inset-0 w-full h-full object-cover" />
+      {/* After = revealed from the right with clip-path */}
+      <div
+        className="absolute inset-0 overflow-hidden"
+        style={{ clipPath: `inset(0 0 0 ${pos}%)` }}
+      >
+        <img src={after} alt="Après" className="absolute inset-0 w-full h-full object-cover" />
       </div>
+      {/* Slider handle */}
       <div className="absolute top-0 bottom-0 w-0.5 bg-white/90 shadow-lg" style={{ left: `${pos}%` }}>
         <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-white shadow-lg flex items-center justify-center">
           <div className="flex gap-0.5">
