@@ -780,6 +780,316 @@ export type Database = {
         }
         Relationships: []
       }
+      appointment_credits: {
+        Row: {
+          appointment_id: string | null
+          contractor_id: string
+          created_at: string
+          credit_amount_cents: number
+          credit_reason: string
+          credit_status: string
+          id: string
+          price_calculation_id: string | null
+          requested_at: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          contractor_id: string
+          created_at?: string
+          credit_amount_cents: number
+          credit_reason: string
+          credit_status?: string
+          id?: string
+          price_calculation_id?: string | null
+          requested_at?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          contractor_id?: string
+          created_at?: string
+          credit_amount_cents?: number
+          credit_reason?: string
+          credit_status?: string
+          id?: string
+          price_calculation_id?: string | null
+          requested_at?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_credits_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_credits_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_credits_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_credits_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_credits_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "appointment_credits_price_calculation_id_fkey"
+            columns: ["price_calculation_id"]
+            isOneToOne: false
+            referencedRelation: "appointment_price_calculations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appointment_price_calculations: {
+        Row: {
+          admin_override: boolean
+          admin_override_by: string | null
+          admin_override_price_cents: number | null
+          admin_override_reason: string | null
+          appointment_id: string | null
+          availability_multiplier: number
+          base_price_cents: number
+          city_slug: string | null
+          combined_multiplier: number
+          competition_multiplier: number
+          complexity_level: string | null
+          complexity_multiplier: number
+          contractor_id: string
+          created_at: string
+          demand_multiplier: number
+          estimated_project_value_cents: number | null
+          final_price_cents: number
+          id: string
+          is_surge: boolean
+          match_quality_score: number | null
+          plan_tier: string
+          precision_multiplier: number
+          price_ceiling_cents: number
+          price_floor_cents: number
+          price_justification_json: Json | null
+          project_request_id: string | null
+          project_value_multiplier: number
+          surge_reason: string | null
+          trade_slug: string | null
+          urgency_level: string | null
+          urgency_multiplier: number
+        }
+        Insert: {
+          admin_override?: boolean
+          admin_override_by?: string | null
+          admin_override_price_cents?: number | null
+          admin_override_reason?: string | null
+          appointment_id?: string | null
+          availability_multiplier?: number
+          base_price_cents: number
+          city_slug?: string | null
+          combined_multiplier?: number
+          competition_multiplier?: number
+          complexity_level?: string | null
+          complexity_multiplier?: number
+          contractor_id: string
+          created_at?: string
+          demand_multiplier?: number
+          estimated_project_value_cents?: number | null
+          final_price_cents: number
+          id?: string
+          is_surge?: boolean
+          match_quality_score?: number | null
+          plan_tier: string
+          precision_multiplier?: number
+          price_ceiling_cents?: number
+          price_floor_cents?: number
+          price_justification_json?: Json | null
+          project_request_id?: string | null
+          project_value_multiplier?: number
+          surge_reason?: string | null
+          trade_slug?: string | null
+          urgency_level?: string | null
+          urgency_multiplier?: number
+        }
+        Update: {
+          admin_override?: boolean
+          admin_override_by?: string | null
+          admin_override_price_cents?: number | null
+          admin_override_reason?: string | null
+          appointment_id?: string | null
+          availability_multiplier?: number
+          base_price_cents?: number
+          city_slug?: string | null
+          combined_multiplier?: number
+          competition_multiplier?: number
+          complexity_level?: string | null
+          complexity_multiplier?: number
+          contractor_id?: string
+          created_at?: string
+          demand_multiplier?: number
+          estimated_project_value_cents?: number | null
+          final_price_cents?: number
+          id?: string
+          is_surge?: boolean
+          match_quality_score?: number | null
+          plan_tier?: string
+          precision_multiplier?: number
+          price_ceiling_cents?: number
+          price_floor_cents?: number
+          price_justification_json?: Json | null
+          project_request_id?: string | null
+          project_value_multiplier?: number
+          surge_reason?: string | null
+          trade_slug?: string | null
+          urgency_level?: string | null
+          urgency_multiplier?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_price_calculations_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_price_calculations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_price_calculations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_price_calculations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_price_calculations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      appointment_pricing_rules: {
+        Row: {
+          base_value: number
+          created_at: string
+          description_fr: string | null
+          id: string
+          is_active: boolean
+          label_fr: string
+          max_value: number
+          metadata: Json | null
+          min_value: number
+          rule_category: string
+          rule_key: string
+          updated_at: string
+        }
+        Insert: {
+          base_value?: number
+          created_at?: string
+          description_fr?: string | null
+          id?: string
+          is_active?: boolean
+          label_fr: string
+          max_value?: number
+          metadata?: Json | null
+          min_value?: number
+          rule_category: string
+          rule_key: string
+          updated_at?: string
+        }
+        Update: {
+          base_value?: number
+          created_at?: string
+          description_fr?: string | null
+          id?: string
+          is_active?: boolean
+          label_fr?: string
+          max_value?: number
+          metadata?: Json | null
+          min_value?: number
+          rule_category?: string
+          rule_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      appointment_surge_events: {
+        Row: {
+          city_slug: string
+          created_at: string
+          demand_count: number
+          ended_at: string | null
+          id: string
+          is_active: boolean
+          started_at: string
+          supply_count: number
+          surge_multiplier: number
+          trade_slug: string
+        }
+        Insert: {
+          city_slug: string
+          created_at?: string
+          demand_count?: number
+          ended_at?: string | null
+          id?: string
+          is_active?: boolean
+          started_at?: string
+          supply_count?: number
+          surge_multiplier?: number
+          trade_slug: string
+        }
+        Update: {
+          city_slug?: string
+          created_at?: string
+          demand_count?: number
+          ended_at?: string | null
+          id?: string
+          is_active?: boolean
+          started_at?: string
+          supply_count?: number
+          surge_multiplier?: number
+          trade_slug?: string
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           budget_range: string | null
