@@ -17441,13 +17441,28 @@ export type Database = {
           category_slug: string
           city_name: string
           city_slug: string
+          competition_score: number | null
           created_at: string
-          elite_slots: number
+          demand_score: number | null
+          generation_source: string | null
           id: string
           is_active: boolean
-          max_contractors: number
-          premium_slots: number
-          signature_slots: number
+          market_tier: string
+          max_entrepreneurs: number
+          occupied_elite: number
+          occupied_premium: number
+          occupied_pro: number
+          occupied_recrue: number
+          occupied_signature: number
+          province_code: string
+          region_name: string | null
+          slots_elite: number
+          slots_premium: number
+          slots_pro: number
+          slots_recrue: number
+          slots_signature: number
+          status: string
+          strategic_score: number | null
           updated_at: string
         }
         Insert: {
@@ -17455,13 +17470,28 @@ export type Database = {
           category_slug: string
           city_name: string
           city_slug: string
+          competition_score?: number | null
           created_at?: string
-          elite_slots?: number
+          demand_score?: number | null
+          generation_source?: string | null
           id?: string
           is_active?: boolean
-          max_contractors?: number
-          premium_slots?: number
-          signature_slots?: number
+          market_tier?: string
+          max_entrepreneurs?: number
+          occupied_elite?: number
+          occupied_premium?: number
+          occupied_pro?: number
+          occupied_recrue?: number
+          occupied_signature?: number
+          province_code?: string
+          region_name?: string | null
+          slots_elite?: number
+          slots_premium?: number
+          slots_pro?: number
+          slots_recrue?: number
+          slots_signature?: number
+          status?: string
+          strategic_score?: number | null
           updated_at?: string
         }
         Update: {
@@ -17469,13 +17499,28 @@ export type Database = {
           category_slug?: string
           city_name?: string
           city_slug?: string
+          competition_score?: number | null
           created_at?: string
-          elite_slots?: number
+          demand_score?: number | null
+          generation_source?: string | null
           id?: string
           is_active?: boolean
-          max_contractors?: number
-          premium_slots?: number
-          signature_slots?: number
+          market_tier?: string
+          max_entrepreneurs?: number
+          occupied_elite?: number
+          occupied_premium?: number
+          occupied_pro?: number
+          occupied_recrue?: number
+          occupied_signature?: number
+          province_code?: string
+          region_name?: string | null
+          slots_elite?: number
+          slots_premium?: number
+          slots_pro?: number
+          slots_recrue?: number
+          slots_signature?: number
+          status?: string
+          strategic_score?: number | null
           updated_at?: string
         }
         Relationships: []
