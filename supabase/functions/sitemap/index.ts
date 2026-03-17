@@ -15,7 +15,7 @@ const BASE_URL = "https://unpro.ca";
 const SEGMENTS = ["static", "cities", "problems", "solutions", "service-locations", "problem-locations", "guides"];
 
 // Inline data for edge function (avoid importing frontend modules)
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
