@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import {
   STYLE_PRESETS, BUDGET_FILTERS, SLIDERS, EDITABLE_ZONES, ZONE_LABELS,
-  MATERIAL_OPTIONS, COLOR_PALETTES,
+  MATERIAL_OPTIONS, COLOR_PALETTES, ZONES_BY_ROOM,
 } from "./data";
 
 interface Props {
