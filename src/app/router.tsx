@@ -62,6 +62,7 @@ import PropertyGrantsPage from "@/pages/dashboard/PropertyGrantsPage";
 import MessageCenterPage from "@/pages/dashboard/MessageCenterPage";
 import ProjectMatchesPage from "@/pages/dashboard/ProjectMatchesPage";
 import QrScanPage from "@/pages/QrScanPage";
+import ReferralLandingPage from "@/pages/ReferralLandingPage";
 import ContributionApprovalPage from "@/pages/dashboard/ContributionApprovalPage";
 import ListingImportPage from "@/pages/ListingImportPage";
 import PublicScoreCalculatorPage from "@/pages/PublicScoreCalculatorPage";
