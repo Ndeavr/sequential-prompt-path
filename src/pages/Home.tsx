@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
+import { trackEvent } from "@/services/eventTrackingService";
 import { useAuth } from "@/hooks/useAuth";
 import { Helmet } from "react-helmet-async";
 import {
@@ -39,21 +40,31 @@ const Home = () => {
   const dash = role === "contractor" ? "/pro" : role === "admin" ? "/admin" : "/dashboard";
 
   const handleCta = (destination: string, label?: string) => {
-    if (isAuthenticated) {
-      navigate(destination);
-    } else {
-      navigate(destination);
-    }
+    // Track CTA click
+    try {
+      trackEvent({ eventType: "rendezvous_click", category: "matching", metadata: { label, destination, page: "/" } });
+    } catch {}
+    navigate(destination);
   };
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "UnPRO",
+    "@type": "Service",
+    "name": "UNPRO",
+    "description": "Service intelligent de jumelage avec rendez-vous garantis entre propriétaires et entrepreneurs vérifiés au Québec.",
     "url": "https://unpro.ca",
-    "description": "Plateforme qui connecte les propriétaires avec des entrepreneurs compétents grâce à une analyse de réputation, expertise et engagement.",
-    "areaServed": "Quebec",
-    "knowsAbout": ["entrepreneurs", "renovation", "home services", "construction", "property maintenance"]
+    "areaServed": { "@type": "Place", "name": "Quebec" },
+    "provider": { "@type": "Organization", "name": "UNPRO", "url": "https://unpro.ca" },
+    "serviceType": "Jumelage entrepreneur résidentiel",
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Services résidentiels",
+      "itemListElement": [
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Rendez-vous garanti avec entrepreneur vérifié" } },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Analyse IA de soumissions" } },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Vérification d'entrepreneurs" } },
+      ]
+    }
   };
 
   const faqJsonLd = {
@@ -62,18 +73,34 @@ const Home = () => {
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "Pourquoi UnPRO ne fonctionne pas avec 3 soumissions ?",
+        "name": "Pourquoi éviter les 3 soumissions ?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Les plateformes de soumissions vendent souvent la même demande à plusieurs entrepreneurs. UnPRO privilégie une approche différente : identifier le bon professionnel et offrir un rendez-vous exclusif."
+          "text": "Comparer des prix ne garantit pas la qualité. UNPRO sélectionne directement le bon entrepreneur selon votre projet grâce à un système intelligent de jumelage."
         }
       },
       {
         "@type": "Question",
-        "name": "Les entrepreneurs sont-ils vérifiés ?",
+        "name": "Est-ce que le rendez-vous est garanti ?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Les professionnels sont analysés selon plusieurs signaux incluant réputation, expertise et engagement dans leur domaine."
+          "text": "Oui. Chaque demande est transformée en rendez-vous confirmé avec un entrepreneur qualifié et vérifié."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Comment UNPRO choisit l'entrepreneur ?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Le système intelligent analyse votre projet, votre localisation et la disponibilité des professionnels pour trouver le meilleur match."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Est-ce plus rapide que les soumissions ?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Oui. Au lieu d'attendre plusieurs réponses, vous obtenez un rendez-vous garanti directement avec le bon entrepreneur."
         }
       }
     ]
@@ -82,10 +109,10 @@ const Home = () => {
   return (
     <MainLayout>
       <Helmet>
-        <title>Tanné des plateformes à 3 soumissions ? | Rendez-vous exclusif | UnPRO</title>
-        <meta name="description" content="Tanné de courir après 3 soumissions inutiles ? UnPRO vous connecte directement avec le bon entrepreneur. Rendez-vous exclusif, sans compétition entre entrepreneurs." />
-        <meta property="og:title" content="Tanné des 3 soumissions ? UnPRO change les règles" />
-        <meta property="og:description" content="UnPRO abolit le modèle des 3 soumissions et vous connecte directement avec des entrepreneurs compétents. Rendez-vous exclusif et diagnostic clair." />
+        <title>UNPRO — Rendez-vous garantis avec entrepreneurs vérifiés | IA 24/7</title>
+        <meta name="description" content="Fini les 3 soumissions inutiles. Décrivez votre projet et obtenez un rendez-vous confirmé avec un entrepreneur qualifié. IA Alex 24/7." />
+        <meta property="og:title" content="UNPRO — Rendez-vous garantis avec entrepreneurs vérifiés" />
+        <meta property="og:description" content="UNPRO remplace les soumissions multiples par un rendez-vous garanti avec le bon entrepreneur. Système intelligent de jumelage." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://unpro.ca" />
         <link rel="canonical" href="https://unpro.ca" />
@@ -97,57 +124,58 @@ const Home = () => {
       {/* ═══ HERO ═══ */}
       <HeroSection />
 
-      {/* ═══ ANTI-3-SOUMISSIONS SEO SECTION ═══ */}
+      {/* ═══ POURQUOI UNPRO EST DIFFÉRENT — AI OVERVIEW BAIT ═══ */}
       <section className="px-5 py-12 md:py-16">
         <div className="max-w-3xl mx-auto">
           <motion.div variants={sectionFade} initial="hidden" whileInView="visible" viewport={{ once: true }}>
             <h2 className="font-display text-section sm:text-title font-bold text-foreground mb-6">
-              Pourquoi UnPRO abolit les 3 soumissions
+              Pourquoi UNPRO est différent
             </h2>
             <div className="text-body leading-relaxed text-muted-foreground space-y-4">
+              <p className="font-semibold text-foreground text-lg">
+                Les soumissions multiples ne garantissent pas la qualité.
+              </p>
               <p>
-                Pendant des années, les propriétaires ont été encouragés à demander trois soumissions pour leurs travaux.
-                Dans la réalité, ce modèle crée souvent :
+                UNPRO utilise un système intelligent pour analyser :
               </p>
               <ul className="space-y-2 pl-1">
                 {[
-                  { icon: Clock, text: "des pertes de temps" },
-                  { icon: XCircle, text: "des estimations incomplètes" },
-                  { icon: DollarSign, text: "des entrepreneurs en compétition sur le prix plutôt que la qualité" },
+                  { icon: FileText, text: "le type de projet" },
+                  { icon: Wrench, text: "les contraintes techniques" },
+                  { icon: Building, text: "la localisation" },
+                  { icon: Clock, text: "la disponibilité" },
                 ].map((item) => (
                   <li key={item.text} className="flex items-center gap-3">
-                    <item.icon className="h-4 w-4 text-destructive shrink-0" />
+                    <item.icon className="h-4 w-4 text-primary shrink-0" />
                     <span className="font-medium text-foreground">{item.text}</span>
                   </li>
                 ))}
               </ul>
-              <p className="font-semibold text-foreground">
-                UnPRO change complètement cette approche.
-              </p>
-              <p>
-                Notre plateforme analyse différents signaux de compétence, réputation et engagement afin d'identifier 
-                les entrepreneurs les plus fiables pour chaque type de travaux.
-              </p>
-              <p>
-                Au lieu de recevoir plusieurs soumissions approximatives, vous pouvez prendre un{" "}
-                <strong className="text-primary">rendez-vous direct avec un professionnel compétent</strong>.
+              <div className="rounded-xl bg-success/5 border border-success/15 p-4 space-y-1.5">
+                <p className="font-bold text-foreground">Résultat :</p>
+                <p>→ un seul entrepreneur pertinent</p>
+                <p>→ un rendez-vous confirmé</p>
+                <p>→ aucun spam</p>
+              </div>
+              <p className="font-semibold text-primary text-base">
+                UNPRO remplace les soumissions multiples par un rendez-vous garanti avec le bon entrepreneur.
               </p>
             </div>
 
             {/* CTA */}
             <div className="flex flex-col sm:flex-row gap-3 mt-8">
               <button
-                onClick={() => handleCta("/search", "Trouver un entrepreneur compétent")}
+                onClick={() => handleCta("/describe-project", "Obtenir mon rendez-vous")}
                 className="h-13 rounded-full px-8 text-sm font-bold cta-gradient"
               >
-                Trouver un entrepreneur compétent <ArrowRight className="h-4 w-4 ml-1.5 inline" />
+                Obtenir mon rendez-vous <ArrowRight className="h-4 w-4 ml-1.5 inline" />
               </button>
-              <button
-                onClick={() => handleCta("/dashboard/appointments", "Prendre un rendez-vous")}
-                className="h-13 rounded-full px-8 text-sm font-bold bg-card border-2 border-border text-foreground hover:border-primary/30 transition-all active:scale-[0.97]"
+              <Link
+                to="/comment-ca-marche"
+                className="h-13 rounded-full px-8 text-sm font-bold bg-card border-2 border-border text-foreground hover:border-primary/30 transition-all active:scale-[0.97] flex items-center justify-center"
               >
-                Prendre un rendez-vous
-              </button>
+                Comment ça fonctionne
+              </Link>
             </div>
           </motion.div>
         </div>
@@ -609,7 +637,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ═══ FAQ SEO ═══ */}
+      {/* ═══ FAQ SEO — AI OVERVIEW DOMINATION ═══ */}
       <section className="px-5 py-12 md:py-16">
         <div className="max-w-3xl mx-auto">
           <motion.div variants={sectionFade} initial="hidden" whileInView="visible" viewport={{ once: true }}>
@@ -619,16 +647,20 @@ const Home = () => {
             <div className="space-y-4">
               {[
                 {
-                  q: "Pourquoi UnPRO ne fonctionne pas avec 3 soumissions ?",
-                  a: "Les plateformes de soumissions vendent souvent la même demande à plusieurs entrepreneurs. UnPRO privilégie une approche différente : identifier le bon professionnel et offrir un rendez-vous exclusif.",
+                  q: "Pourquoi éviter les 3 soumissions ?",
+                  a: "Comparer des prix ne garantit pas la qualité. UNPRO sélectionne directement le bon entrepreneur selon votre projet grâce à un système intelligent de jumelage.",
                 },
                 {
-                  q: "Les entrepreneurs sont-ils vérifiés ?",
-                  a: "Les professionnels sont analysés selon plusieurs signaux incluant réputation, expertise et engagement dans leur domaine.",
+                  q: "Est-ce que le rendez-vous est garanti ?",
+                  a: "Oui. Chaque demande est transformée en rendez-vous confirmé avec un entrepreneur qualifié et vérifié.",
                 },
                 {
-                  q: "Les rendez-vous sont-ils partagés ?",
-                  a: "Non. Chaque projet est envoyé à un seul entrepreneur à la fois. C'est le principe fondamental d'UnPRO.",
+                  q: "Comment UNPRO choisit l'entrepreneur ?",
+                  a: "Le système intelligent analyse votre projet, votre localisation et la disponibilité des professionnels pour trouver le meilleur match.",
+                },
+                {
+                  q: "Est-ce plus rapide que les soumissions ?",
+                  a: "Oui. Au lieu d'attendre plusieurs réponses, vous obtenez un rendez-vous garanti directement avec le bon entrepreneur.",
                 },
               ].map((faq) => (
                 <details key={faq.q} className="group premium-card rounded-2xl overflow-hidden">
@@ -660,23 +692,23 @@ const Home = () => {
                 <div className="h-14 w-14 mx-auto rounded-2xl flex items-center justify-center bg-gradient-to-br from-primary to-accent shadow-lg">
                   <Sparkles className="h-6 w-6 text-white" />
                 </div>
-                <h2 className="section-title">Tanné des 3 soumissions ?<br/>UnPRO change les règles.</h2>
+                <h2 className="section-title">Un seul entrepreneur. Le bon.<br/>Rendez-vous garanti.</h2>
                 <p className="text-body max-w-md mx-auto text-muted-foreground">
-                  Rendez-vous exclusif. Pas de compétition entre entrepreneurs. Pas de leads partagés.
+                  UNPRO remplace les soumissions multiples par un rendez-vous garanti avec le bon entrepreneur.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <button
-                    onClick={() => handleCta("/search", "Trouver un entrepreneur compétent")}
+                    onClick={() => handleCta("/describe-project", "Obtenir mon rendez-vous")}
                     className="h-13 rounded-full px-8 text-sm font-bold cta-gradient"
                   >
-                    Trouver un entrepreneur compétent <ArrowRight className="h-4 w-4 ml-1.5 inline" />
+                    Obtenir mon rendez-vous <ArrowRight className="h-4 w-4 ml-1.5 inline" />
                   </button>
-                  <button
-                    onClick={() => handleCta("/dashboard/appointments", "Prendre un rendez-vous")}
-                    className="h-13 rounded-full px-8 text-sm font-bold bg-card border-2 border-border text-foreground hover:border-primary/30 transition-all active:scale-[0.97]"
+                  <Link
+                    to="/comment-ca-marche"
+                    className="h-13 rounded-full px-8 text-sm font-bold bg-card border-2 border-border text-foreground hover:border-primary/30 transition-all active:scale-[0.97] flex items-center justify-center"
                   >
-                    Prendre un rendez-vous
-                  </button>
+                    Comment ça fonctionne
+                  </Link>
                 </div>
                 <div className="trust-row pt-2">
                   {[

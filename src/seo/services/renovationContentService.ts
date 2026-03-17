@@ -45,8 +45,8 @@ export function buildRenovationPage(
   if (!renovation || !city) return null;
 
   const h1 = `${renovation.nameFr} à ${city.name}`;
-  const metaTitle = `${renovation.nameFr} à ${city.name} | Idées, budget et entrepreneurs | UNPRO`;
-  const metaDescription = `Découvrez des idées de ${renovation.nameFr.toLowerCase()} à ${city.name}. Estimez votre budget, obtenez des conseils design et trouvez des entrepreneurs vérifiés. ${city.region}, Québec.`;
+  const metaTitle = `${renovation.nameFr} ${city.name} — Rendez-vous garanti | Entrepreneur vérifié | UNPRO`;
+  const metaDescription = `Trouvez un entrepreneur fiable pour ${renovation.nameFr.toLowerCase()} à ${city.name}. Aucun spam, aucun comparatif inutile. Rendez-vous confirmé avec un professionnel qualifié.`;
 
   const categoryInfo = RENOVATION_CATEGORIES.find((c) => c.slug === renovation.category);
   const categoryLabel = categoryInfo?.labelFr ?? renovation.category;

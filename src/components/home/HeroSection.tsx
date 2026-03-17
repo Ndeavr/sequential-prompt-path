@@ -197,63 +197,37 @@ export default function HeroSection() {
                     color: "#0B1533",
                     textShadow: "0 0 20px rgba(255,255,255,0.95), 0 0 40px rgba(255,255,255,0.7), 0 2px 4px rgba(255,255,255,0.9)",
                   }}
-                >Trouvez</span>
+                >Un seul entrepreneur.</span>
                 <br />
-                {/* Rotating label */}
-                <span className="block" style={{ minHeight: "1.15em" }}>
-                  <AnimatePresence mode="wait">
-                    <motion.span
-                      key={current.label}
-                      variants={textVariants}
-                      initial="enter" animate="center" exit="exit"
-                      transition={{ duration: 0.38, ease: "easeOut" }}
-                      className="inline-block"
-                      style={{
-                        color: "#3F7BFF",
-                        textShadow: "0 0 20px rgba(255,255,255,0.95), 0 0 40px rgba(255,255,255,0.7), 0 2px 4px rgba(255,255,255,0.9)",
-                      }}
-                    >
-                      {current.label}
-                    </motion.span>
-                  </AnimatePresence>
-                </span>
+                <span
+                  className="inline-block"
+                  style={{
+                    color: "#3F7BFF",
+                    textShadow: "0 0 20px rgba(255,255,255,0.95), 0 0 40px rgba(255,255,255,0.7), 0 2px 4px rgba(255,255,255,0.9)",
+                  }}
+                >Le bon.</span>
+                <br />
                 <span
                   className="inline-block"
                   style={{
                     color: "#0B1533",
                     textShadow: "0 0 20px rgba(255,255,255,0.95), 0 0 40px rgba(255,255,255,0.7), 0 2px 4px rgba(255,255,255,0.9)",
                   }}
-                >{current.qualifier}</span>
-                <br />
-                {/* Rotating action */}
-                <span className="block" style={{ minHeight: "2.3em" }}>
-                  <AnimatePresence mode="wait">
-                    <motion.span
-                      key={current.action}
-                      variants={textVariants}
-                      initial="enter" animate="center" exit="exit"
-                      transition={{ duration: 0.38, ease: "easeOut", delay: 0.42 }}
-                      className="inline-block whitespace-pre-line"
-                      style={{
-                        color: "#3F7BFF",
-                        textShadow: "0 0 20px rgba(255,255,255,0.95), 0 0 40px rgba(255,255,255,0.7), 0 2px 4px rgba(255,255,255,0.9)",
-                      }}
-                    >
-                      {current.action}
-                    </motion.span>
-                  </AnimatePresence>
-                </span>
+                >Rendez-vous garanti.</span>
               </h1>
 
               {/* Card with bullet points */}
               <div className="relative z-30 md:mt-5 rounded-2xl bg-card/95 backdrop-blur-md p-4 max-w-[420px] shadow-soft"
                 style={{ marginTop: "calc(75vw - 240px)" }}
               >
+                <p className="text-sm md:text-base font-medium mb-3" style={{ color: "#3A4A63" }}>
+                  Arrêtez de comparer 3 soumissions. UNPRO vous connecte directement au bon professionnel.
+                </p>
                 <ul className="space-y-2">
                   {[
-                    "Rendez-vous exclusif avec un professionnel",
-                    "Entrepreneurs analysés selon leur réputation et expertise",
-                    "Diagnostic clair pour votre propriété",
+                    "Rendez-vous garanti avec un entrepreneur vérifié",
+                    "Jumelage précis selon votre projet",
+                    "Aucun spam, aucun comparatif inutile",
                   ].map((point) => (
                     <li key={point} className="flex items-start gap-2 text-sm md:text-base" style={{ color: "#3A4A63" }}>
                       <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
