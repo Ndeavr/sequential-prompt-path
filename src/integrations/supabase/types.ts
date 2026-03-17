@@ -14388,6 +14388,36 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_admin_queue: {
+        Row: {
+          city: string | null
+          created_at: string | null
+          id: string
+          payload: Json | null
+          slug: string | null
+          status: string | null
+          type: string
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          payload?: Json | null
+          slug?: string | null
+          status?: string | null
+          type: string
+        }
+        Update: {
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          payload?: Json | null
+          slug?: string | null
+          status?: string | null
+          type?: string
+        }
+        Relationships: []
+      }
       seo_generation_queue: {
         Row: {
           city: string
@@ -14434,6 +14464,150 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      seo_local_generation_logs: {
+        Row: {
+          batch_name: string | null
+          city: string | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          status: string | null
+          total_pages: number | null
+        }
+        Insert: {
+          batch_name?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          status?: string | null
+          total_pages?: number | null
+        }
+        Update: {
+          batch_name?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          status?: string | null
+          total_pages?: number | null
+        }
+        Relationships: []
+      }
+      seo_local_links: {
+        Row: {
+          anchor_text: string | null
+          created_at: string | null
+          from_slug: string
+          id: string
+          to_slug: string
+        }
+        Insert: {
+          anchor_text?: string | null
+          created_at?: string | null
+          from_slug: string
+          id?: string
+          to_slug: string
+        }
+        Update: {
+          anchor_text?: string | null
+          created_at?: string | null
+          from_slug?: string
+          id?: string
+          to_slug?: string
+        }
+        Relationships: []
+      }
+      seo_local_pages: {
+        Row: {
+          batch_name: string | null
+          causes: string | null
+          city: string
+          cluster: string | null
+          conversion_score: number | null
+          cost_range: string | null
+          created_at: string | null
+          diagnostic: string | null
+          faq: Json | null
+          h1: string | null
+          hero_image_prompt: string | null
+          id: string
+          intent_score: number | null
+          intro: string | null
+          meta_description: string | null
+          meta_title: string | null
+          problem: string
+          published: boolean | null
+          related_slugs: Json | null
+          schema_json_ld: Json | null
+          seo_score: number | null
+          service_category: string | null
+          slug: string
+          solution: string | null
+          timing: string | null
+          updated_at: string | null
+          urgency: string | null
+        }
+        Insert: {
+          batch_name?: string | null
+          causes?: string | null
+          city: string
+          cluster?: string | null
+          conversion_score?: number | null
+          cost_range?: string | null
+          created_at?: string | null
+          diagnostic?: string | null
+          faq?: Json | null
+          h1?: string | null
+          hero_image_prompt?: string | null
+          id?: string
+          intent_score?: number | null
+          intro?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          problem: string
+          published?: boolean | null
+          related_slugs?: Json | null
+          schema_json_ld?: Json | null
+          seo_score?: number | null
+          service_category?: string | null
+          slug: string
+          solution?: string | null
+          timing?: string | null
+          updated_at?: string | null
+          urgency?: string | null
+        }
+        Update: {
+          batch_name?: string | null
+          causes?: string | null
+          city?: string
+          cluster?: string | null
+          conversion_score?: number | null
+          cost_range?: string | null
+          created_at?: string | null
+          diagnostic?: string | null
+          faq?: Json | null
+          h1?: string | null
+          hero_image_prompt?: string | null
+          id?: string
+          intent_score?: number | null
+          intro?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          problem?: string
+          published?: boolean | null
+          related_slugs?: Json | null
+          schema_json_ld?: Json | null
+          seo_score?: number | null
+          service_category?: string | null
+          slug?: string
+          solution?: string | null
+          timing?: string | null
+          updated_at?: string | null
+          urgency?: string | null
+        }
+        Relationships: []
       }
       seo_metrics: {
         Row: {
