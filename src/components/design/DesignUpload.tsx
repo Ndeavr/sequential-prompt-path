@@ -361,19 +361,12 @@ export default function DesignUpload({ onUpload }: Props) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.12, duration: 0.5 }}
-                className="group rounded-2xl overflow-hidden border border-border bg-card shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] transition-shadow"
+                className="rounded-2xl overflow-hidden border border-border bg-card shadow-[var(--shadow-sm)]"
               >
-                <div className="relative aspect-[4/3] overflow-hidden">
-                  <img src={s.before} alt="Avant" className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700 group-hover:opacity-0" />
-                  <img src={s.after} alt="Après" className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
-                  <div className="absolute top-3 left-3 px-2.5 py-1 rounded-md text-xs font-semibold bg-background/80 backdrop-blur-sm text-muted-foreground group-hover:text-primary transition-colors">
-                    <span className="group-hover:hidden">Avant</span>
-                    <span className="hidden group-hover:inline">✨ Après</span>
-                  </div>
-                </div>
+                <BeforeAfterSlider before={s.before} after={s.after} />
                 <div className="p-3 text-center">
                   <span className="text-sm font-medium text-foreground">{s.label}</span>
-                  <p className="text-xs text-muted-foreground mt-0.5">Survolez pour voir le résultat</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Glissez pour comparer</p>
                 </div>
               </motion.div>
             ))}
