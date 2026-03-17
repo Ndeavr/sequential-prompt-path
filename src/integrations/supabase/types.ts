@@ -2166,6 +2166,83 @@ export type Database = {
           },
         ]
       }
+      contractor_capabilities: {
+        Row: {
+          building_type: string | null
+          capability_type: string
+          category_slug: string | null
+          confidence: number | null
+          contractor_id: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          material_slug: string | null
+          service_slug: string | null
+          source: string | null
+          structure_type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          building_type?: string | null
+          capability_type?: string
+          category_slug?: string | null
+          confidence?: number | null
+          contractor_id: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          material_slug?: string | null
+          service_slug?: string | null
+          source?: string | null
+          structure_type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          building_type?: string | null
+          capability_type?: string
+          category_slug?: string | null
+          confidence?: number | null
+          contractor_id?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          material_slug?: string | null
+          service_slug?: string | null
+          source?: string | null
+          structure_type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_capabilities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_capabilities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_capabilities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_capabilities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_category_assignments: {
         Row: {
           admin_approved: boolean | null
@@ -2839,6 +2916,151 @@ export type Database = {
           },
           {
             foreignKeyName: "contractor_entity_flags_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_exclusions: {
+        Row: {
+          building_type: string | null
+          category_slug: string | null
+          contractor_id: string
+          created_at: string | null
+          exclusion_type: string
+          id: string
+          is_active: boolean | null
+          material_slug: string | null
+          reason_en: string | null
+          reason_fr: string | null
+          service_slug: string | null
+          source: string | null
+          structure_type: string | null
+        }
+        Insert: {
+          building_type?: string | null
+          category_slug?: string | null
+          contractor_id: string
+          created_at?: string | null
+          exclusion_type?: string
+          id?: string
+          is_active?: boolean | null
+          material_slug?: string | null
+          reason_en?: string | null
+          reason_fr?: string | null
+          service_slug?: string | null
+          source?: string | null
+          structure_type?: string | null
+        }
+        Update: {
+          building_type?: string | null
+          category_slug?: string | null
+          contractor_id?: string
+          created_at?: string | null
+          exclusion_type?: string
+          id?: string
+          is_active?: boolean | null
+          material_slug?: string | null
+          reason_en?: string | null
+          reason_fr?: string | null
+          service_slug?: string | null
+          source?: string | null
+          structure_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_exclusions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_exclusions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_exclusions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_exclusions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_execution_models: {
+        Row: {
+          accepts_subcontractors: boolean | null
+          availability_status: string | null
+          contractor_id: string
+          execution_mode: string
+          id: string
+          max_distance_km: number | null
+          notes: string | null
+          preferred_project_sizes: string[] | null
+          updated_at: string | null
+          works_as_subcontractor: boolean | null
+        }
+        Insert: {
+          accepts_subcontractors?: boolean | null
+          availability_status?: string | null
+          contractor_id: string
+          execution_mode?: string
+          id?: string
+          max_distance_km?: number | null
+          notes?: string | null
+          preferred_project_sizes?: string[] | null
+          updated_at?: string | null
+          works_as_subcontractor?: boolean | null
+        }
+        Update: {
+          accepts_subcontractors?: boolean | null
+          availability_status?: string | null
+          contractor_id?: string
+          execution_mode?: string
+          id?: string
+          max_distance_km?: number | null
+          notes?: string | null
+          preferred_project_sizes?: string[] | null
+          updated_at?: string | null
+          works_as_subcontractor?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_execution_models_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_execution_models_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_execution_models_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_execution_models_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
@@ -3768,6 +3990,111 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractor_verification_runs"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_relationships: {
+        Row: {
+          collaboration_count: number | null
+          contractor_id: string
+          created_at: string | null
+          id: string
+          internal_rating: number | null
+          is_blocked: boolean | null
+          is_favorite: boolean | null
+          partner_contractor_id: string
+          private_notes: string | null
+          relationship_type: string | null
+          status: string | null
+          success_rate: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          collaboration_count?: number | null
+          contractor_id: string
+          created_at?: string | null
+          id?: string
+          internal_rating?: number | null
+          is_blocked?: boolean | null
+          is_favorite?: boolean | null
+          partner_contractor_id: string
+          private_notes?: string | null
+          relationship_type?: string | null
+          status?: string | null
+          success_rate?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          collaboration_count?: number | null
+          contractor_id?: string
+          created_at?: string | null
+          id?: string
+          internal_rating?: number | null
+          is_blocked?: boolean | null
+          is_favorite?: boolean | null
+          partner_contractor_id?: string
+          private_notes?: string | null
+          relationship_type?: string | null
+          status?: string | null
+          success_rate?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_relationships_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_relationships_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_relationships_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_relationships_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_relationships_partner_contractor_id_fkey"
+            columns: ["partner_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_relationships_partner_contractor_id_fkey"
+            columns: ["partner_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_relationships_partner_contractor_id_fkey"
+            columns: ["partner_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_relationships_partner_contractor_id_fkey"
+            columns: ["partner_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
         ]
       }
@@ -8709,6 +9036,150 @@ export type Database = {
           },
         ]
       }
+      project_team_members: {
+        Row: {
+          accepted_at: string | null
+          contractor_id: string
+          created_at: string | null
+          id: string
+          role_label: string
+          scope_slugs: string[] | null
+          status: string | null
+          team_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          contractor_id: string
+          created_at?: string | null
+          id?: string
+          role_label: string
+          scope_slugs?: string[] | null
+          status?: string | null
+          team_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          contractor_id?: string
+          created_at?: string | null
+          id?: string
+          role_label?: string
+          scope_slugs?: string[] | null
+          status?: string | null
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_team_members_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_team_members_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_team_members_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_team_members_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "project_team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "project_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_teams: {
+        Row: {
+          appointment_id: string | null
+          compatibility_score: number | null
+          confidence_score: number | null
+          created_at: string | null
+          id: string
+          lead_contractor_id: string
+          project_id: string | null
+          status: string | null
+          team_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          compatibility_score?: number | null
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          lead_contractor_id: string
+          project_id?: string | null
+          status?: string | null
+          team_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          compatibility_score?: number | null
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          lead_contractor_id?: string
+          project_id?: string | null
+          status?: string | null
+          team_name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_teams_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_teams_lead_contractor_id_fkey"
+            columns: ["lead_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_teams_lead_contractor_id_fkey"
+            columns: ["lead_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_teams_lead_contractor_id_fkey"
+            columns: ["lead_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_teams_lead_contractor_id_fkey"
+            columns: ["lead_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       project_votes: {
         Row: {
           concept_id: string
@@ -11474,6 +11945,103 @@ export type Database = {
           },
         ]
       }
+      smart_decline_logs: {
+        Row: {
+          appointment_id: string | null
+          contractor_id: string
+          created_at: string | null
+          decline_type: string
+          id: string
+          reason_code: string | null
+          reason_text: string | null
+          redirect_contractor_id: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          contractor_id: string
+          created_at?: string | null
+          decline_type?: string
+          id?: string
+          reason_code?: string | null
+          reason_text?: string | null
+          redirect_contractor_id?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          contractor_id?: string
+          created_at?: string | null
+          decline_type?: string
+          id?: string
+          reason_code?: string | null
+          reason_text?: string | null
+          redirect_contractor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_decline_logs_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_decline_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_decline_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_decline_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_decline_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "smart_decline_logs_redirect_contractor_id_fkey"
+            columns: ["redirect_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_decline_logs_redirect_contractor_id_fkey"
+            columns: ["redirect_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_decline_logs_redirect_contractor_id_fkey"
+            columns: ["redirect_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_decline_logs_redirect_contractor_id_fkey"
+            columns: ["redirect_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       storage_documents: {
         Row: {
           bucket: string
@@ -11512,6 +12080,118 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      subcontract_requests: {
+        Row: {
+          appointment_id: string | null
+          city_slug: string | null
+          created_at: string | null
+          id: string
+          matched_contractor_id: string | null
+          material_slugs: string[] | null
+          project_id: string | null
+          requesting_contractor_id: string
+          scope_description: string
+          scope_slugs: string[] | null
+          status: string | null
+          structure_type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          city_slug?: string | null
+          created_at?: string | null
+          id?: string
+          matched_contractor_id?: string | null
+          material_slugs?: string[] | null
+          project_id?: string | null
+          requesting_contractor_id: string
+          scope_description: string
+          scope_slugs?: string[] | null
+          status?: string | null
+          structure_type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          city_slug?: string | null
+          created_at?: string | null
+          id?: string
+          matched_contractor_id?: string | null
+          material_slugs?: string[] | null
+          project_id?: string | null
+          requesting_contractor_id?: string
+          scope_description?: string
+          scope_slugs?: string[] | null
+          status?: string | null
+          structure_type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontract_requests_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_requests_matched_contractor_id_fkey"
+            columns: ["matched_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_requests_matched_contractor_id_fkey"
+            columns: ["matched_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_requests_matched_contractor_id_fkey"
+            columns: ["matched_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_requests_matched_contractor_id_fkey"
+            columns: ["matched_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "subcontract_requests_requesting_contractor_id_fkey"
+            columns: ["requesting_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_requests_requesting_contractor_id_fkey"
+            columns: ["requesting_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_requests_requesting_contractor_id_fkey"
+            columns: ["requesting_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_requests_requesting_contractor_id_fkey"
+            columns: ["requesting_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
       }
       subscription_accounts: {
         Row: {
