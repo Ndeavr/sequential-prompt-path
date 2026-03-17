@@ -127,7 +127,7 @@ interface AlexConciergeProps {
   occupancyStatus?: string | null;
 }
 
-const AlexConcierge = ({ properties, homeScore }: AlexConciergeProps) => {
+const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, occupancyStatus }: AlexConciergeProps) => {
   const isHomePage = useLocation().pathname === "/";
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated } = useAuth();
