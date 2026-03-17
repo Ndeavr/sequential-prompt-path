@@ -35,6 +35,13 @@ export default function DeepLinkPage() {
         const result = await resolveDeepLink(code);
         setResolved(result);
 
+        // Track events
+        if (result.valid && result.link) {
+          setActiveDeepLinkId(result.link.id);
+          trackDeepLinkEvent("qr_scanned", result.link.id, { code, feature: result.link.feature });
+          trackDeepLinkEvent("landing_viewed", result.link.id, { feature: result.link.feature });
+        }
+
         // Auto-redirect if no auth needed or already logged in
         if (result.valid && (!result.requiresAuth || isAuthenticated)) {
           navigate(result.targetPath, { replace: true });
