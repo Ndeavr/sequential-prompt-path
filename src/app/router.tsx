@@ -420,6 +420,7 @@ export const AppRouter = () => (
       <Route path="/admin/nexus" element={<ProtectedRoute requiredRole="admin"><AdminNexusDashboard /></ProtectedRoute>} />
       <Route path="/admin/dispatch-center" element={<ProtectedRoute requiredRole="admin"><AdminDispatchCenter /></ProtectedRoute>} />
       <Route path="/emergency" element={<EmergencyPage />} />
+      <Route path="/emergency/track/:id" element={<EmergencyTrackingPage />} />
 
       {/* Refusal SEO public pages */}
       <Route path="/refusal/:slug" element={<RefusalSeoPage />} />
