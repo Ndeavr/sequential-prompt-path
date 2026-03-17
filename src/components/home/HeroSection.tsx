@@ -156,7 +156,7 @@ export default function HeroSection() {
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-8 md:px-10 md:pt-12">
           <div className="relative md:grid md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8 md:items-start">
             {/* Mobile background image — pushed right & behind text */}
-            <div className="absolute top-0 right-0 w-[62%] h-[320px] md:hidden pointer-events-none">
+            <div className="absolute top-0 right-0 w-[62%] h-[360px] md:hidden pointer-events-none">
               <AnimatePresence mode="wait">
                 <motion.img key={current.image} src={current.image} alt={current.action}
                   className="w-full h-full object-cover rounded-[20px]" loading="eager"
@@ -186,7 +186,7 @@ export default function HeroSection() {
 
             {/* Left column */}
             <div className="relative z-20 min-w-0">
-              <h1 className="relative z-10 text-[38px] font-extrabold leading-[1.08] tracking-[-0.03em] sm:text-[46px] md:text-[64px]" style={{ color: "#0B1533" }}>
+              <h1 className="relative z-10 text-[42px] font-extrabold leading-[1.06] tracking-[-0.03em] sm:text-[46px] md:text-[64px] max-w-[65%] md:max-w-none" style={{ color: "#0B1533" }}>
                 <span>Trouvez</span>
                 <br />
                 {/* Rotating label */}
@@ -197,7 +197,7 @@ export default function HeroSection() {
                       variants={textVariants}
                       initial="enter" animate="center" exit="exit"
                       transition={{ duration: 0.38, ease: "easeOut" }}
-                      className="inline whitespace-nowrap"
+                      className="inline"
                       style={{ color: "#3F7BFF" }}
                     >
                       {current.label}
@@ -224,7 +224,7 @@ export default function HeroSection() {
               </h1>
 
               {/* Card with bullet points — under image on mobile */}
-              <div className="relative z-10 mt-[140px] md:mt-5 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 max-w-[420px] shadow-sm">
+              <div className="relative z-10 mt-[100px] md:mt-5 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 max-w-[420px] shadow-sm">
                 <ul className="space-y-2">
                   {[
                     "Rendez-vous exclusif avec un professionnel",
