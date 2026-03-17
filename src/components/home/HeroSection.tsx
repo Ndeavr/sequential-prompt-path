@@ -238,13 +238,10 @@ export default function HeroSection() {
                       variants={textVariants}
                       initial="enter" animate="center" exit="exit"
                       transition={{ duration: 0.38, ease: "easeOut", delay: 0.42 }}
-                      className="inline-block whitespace-pre-line px-2 py-0.5 rounded-lg md:px-0 md:py-0 md:bg-transparent"
+                      className="inline-block whitespace-pre-line"
                       style={{
                         color: "#3F7BFF",
-                        background: "linear-gradient(135deg, rgba(247,251,255,0.88) 0%, rgba(234,244,255,0.82) 100%)",
-                        backdropFilter: "blur(8px)",
-                        WebkitBackdropFilter: "blur(8px)",
-                        textShadow: "0 1px 12px rgba(247,251,255,0.95), 0 2px 20px rgba(234,244,255,0.85)",
+                        textShadow: "0 0 20px rgba(255,255,255,0.95), 0 0 40px rgba(255,255,255,0.7), 0 2px 4px rgba(255,255,255,0.9)",
                       }}
                     >
                       {current.action}
