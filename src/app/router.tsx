@@ -173,6 +173,7 @@ import AdminSalesPsychology from "@/pages/admin/AdminSalesPsychology";
 import AdminRewardRules from "@/pages/admin/AdminRewardRules";
 import AdminDeepLinkAnalytics from "@/pages/admin/AdminDeepLinkAnalytics";
 import AdminAIGrowthInsights from "@/pages/admin/AdminAIGrowthInsights";
+import AdminAIGrowthDashboard from "@/pages/admin/AdminAIGrowthDashboard";
 import RefusalSeoPage from "@/pages/seo/RefusalSeoPage";
 import MyPlacementsPage from "@/pages/dashboard/MyPlacementsPage";
 
