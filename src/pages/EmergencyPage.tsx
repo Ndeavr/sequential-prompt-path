@@ -52,6 +52,7 @@ export default function EmergencyPage() {
   const [description, setDescription] = useState("");
   const [whenStarted, setWhenStarted] = useState("");
   const [gettingWorse, setGettingWorse] = useState(false);
+  const [fullName, setFullName] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [preferredContact, setPreferredContact] = useState("chat");
