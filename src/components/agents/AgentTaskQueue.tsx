@@ -143,37 +143,87 @@ const AgentTaskQueue = ({ tasks, isLoading, onApprove, onReject, onExecute }: Pr
         )}
       </div>
 
-      {/* Approved & Rejected summary */}
-      {(approved.length > 0 || rejected.length > 0) && (
-        <div className="grid grid-cols-2 gap-3">
-          {approved.length > 0 && (
-            <div>
-              <h4 className="text-xs font-semibold text-foreground mb-1.5 flex items-center gap-1">
-                <Check className="h-3 w-3 text-green-400" /> Approuvées ({approved.length})
-              </h4>
-              <div className="space-y-1">
-                {approved.slice(0, 3).map(t => (
-                  <div key={t.id} className="p-2 rounded-lg bg-green-500/5 border border-green-500/20">
-                    <p className="text-[10px] font-medium text-foreground truncate">{t.task_title}</p>
-                  </div>
-                ))}
+      {/* Approved — with Execute button */}
+      {approved.length > 0 && (
+        <div>
+          <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+            <Check className="h-4 w-4 text-green-400" />
+            Approuvées — en attente d'exécution ({approved.length})
+          </h3>
+          <div className="space-y-1">
+            {approved.map(t => (
+              <div key={t.id} className="p-2 rounded-lg bg-green-500/5 border border-green-500/20 flex items-center justify-between">
+                <p className="text-[10px] font-medium text-foreground truncate flex-1">{t.task_title}</p>
+                {onExecute && (
+                  <Button size="sm" className="h-6 text-[9px] px-2 rounded-lg ml-2" onClick={() => onExecute(t.id)}>
+                    Exécuter
+                  </Button>
+                )}
               </div>
-            </div>
-          )}
-          {rejected.length > 0 && (
-            <div>
-              <h4 className="text-xs font-semibold text-foreground mb-1.5 flex items-center gap-1">
-                <X className="h-3 w-3 text-muted-foreground" /> Rejetées ({rejected.length})
-              </h4>
-              <div className="space-y-1">
-                {rejected.slice(0, 3).map(t => (
-                  <div key={t.id} className="p-2 rounded-lg bg-muted/30 border border-border/30">
-                    <p className="text-[10px] font-medium text-foreground truncate line-through opacity-60">{t.task_title}</p>
-                  </div>
-                ))}
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Completed with results */}
+      {completed.length > 0 && (
+        <div>
+          <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+            <Check className="h-4 w-4 text-primary" />
+            Exécutées ({completed.length})
+          </h3>
+          <div className="space-y-1">
+            {completed.slice(0, 5).map(t => {
+              const result = t.execution_result as any;
+              return (
+                <div key={t.id} className="p-2 rounded-lg bg-primary/5 border border-primary/20">
+                  <p className="text-[10px] font-medium text-foreground truncate">{t.task_title}</p>
+                  {result?.summary && (
+                    <p className="text-[9px] text-muted-foreground mt-0.5">{result.summary}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Failed */}
+      {failed.length > 0 && (
+        <div>
+          <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            Échouées ({failed.length})
+          </h3>
+          <div className="space-y-1">
+            {failed.slice(0, 3).map(t => {
+              const result = t.execution_result as any;
+              return (
+                <div key={t.id} className="p-2 rounded-lg bg-destructive/5 border border-destructive/20">
+                  <p className="text-[10px] font-medium text-foreground truncate">{t.task_title}</p>
+                  {result?.summary && (
+                    <p className="text-[9px] text-destructive mt-0.5">{result.summary}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Rejected */}
+      {rejected.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold text-foreground mb-1.5 flex items-center gap-1">
+            <X className="h-3 w-3 text-muted-foreground" /> Rejetées ({rejected.length})
+          </h4>
+          <div className="space-y-1">
+            {rejected.slice(0, 3).map(t => (
+              <div key={t.id} className="p-2 rounded-lg bg-muted/30 border border-border/30">
+                <p className="text-[10px] font-medium text-foreground truncate line-through opacity-60">{t.task_title}</p>
               </div>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
       )}
     </div>
