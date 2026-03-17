@@ -450,6 +450,146 @@ async function getAdminEditorialDashboard() {
   };
 }
 
+// ===== ACTION: run_full_pipeline =====
+async function runFullPipeline(topicId: string, scheduledFor?: string) {
+  const steps: string[] = [];
+  
+  // Step 1: Generate article
+  const genResult = await generateArticleFromTopic(topicId);
+  steps.push(`generated: ${genResult.slug} (${genResult.wordCount} words)`);
+  const articleId = genResult.articleId;
+
+  // Step 2: Magnetic rewrite
+  try {
+    const rewriteResult = await rewriteArticleMagnetic(articleId);
+    steps.push(`rewritten: ${rewriteResult.wordCount} words`);
+  } catch (e) { steps.push(`rewrite skipped: ${e}`); }
+
+  // Step 3: FAQ + JSON-LD
+  try {
+    const faqResult = await generateFaqAndSchema(articleId);
+    steps.push(`faq: ${faqResult.faqCount} questions`);
+  } catch (e) { steps.push(`faq skipped: ${e}`); }
+
+  // Step 4: Internal links
+  try {
+    const linkResult = await generateInternalLinks(articleId);
+    steps.push(`links: ${linkResult.linkCount}`);
+  } catch (e) { steps.push(`links skipped: ${e}`); }
+
+  // Step 5: Add placeholder images (metadata)
+  const sb = supabaseAdmin();
+  const { data: article } = await sb.from("blog_articles").select("title, city, category").eq("id", articleId).single();
+  if (article) {
+    const imgAlts = [
+      `entrepreneur ${article.category} ${article.city || "québec"} professionnel vérifié`,
+      `rénovation ${article.category} ${article.city || "québec"} résidentielle`,
+    ];
+    for (const alt of imgAlts) {
+      await sb.from("blog_article_images").insert({
+        article_id: articleId,
+        image_url: `https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800`,
+        alt_text: alt,
+        display_order: imgAlts.indexOf(alt),
+      });
+    }
+    steps.push(`images: 2 placeholders`);
+  }
+
+  // Step 6: Update content_html with CTA injections
+  const { data: fullArticle } = await sb.from("blog_articles").select("content_html, content_markdown").eq("id", articleId).single();
+  if (fullArticle?.content_html) {
+    const ctaBlock = `<div class="cta-block"><h3>Besoin d'un entrepreneur fiable?</h3><p>UNPRO remplace les soumissions multiples par un rendez-vous garanti avec le bon entrepreneur.</p><a href="/alex" class="cta-primary">Obtenir mon rendez-vous</a> <a href="/comment-ca-marche" class="cta-secondary">Comment ça fonctionne</a></div>`;
+    const paragraphs = fullArticle.content_html.split('</p>');
+    if (paragraphs.length > 4) {
+      paragraphs.splice(2, 0, `</p>${ctaBlock}`);
+      paragraphs.splice(Math.floor(paragraphs.length / 2), 0, ctaBlock);
+    }
+    const htmlWithCta = paragraphs.join('</p>') + ctaBlock;
+    await sb.from("blog_articles").update({ content_html: htmlWithCta }).eq("id", articleId);
+    steps.push(`cta: injected`);
+  }
+
+  // Step 7: Enqueue if scheduled
+  if (scheduledFor) {
+    const enqResult = await enqueueArticle(articleId, scheduledFor);
+    steps.push(`enqueue: ${enqResult.success ? 'ok' : JSON.stringify(enqResult.errors)}`);
+  }
+
+  return { articleId, steps };
+}
+
+// ===== ACTION: run_daily_batch =====
+async function runDailyBatch() {
+  const sb = supabaseAdmin();
+  const publishTimes = ["08:30", "13:00", "19:30"];
+  const results: any[] = [];
+
+  // Get 3 pending topics
+  const { data: topics } = await sb.from("topic_backlog")
+    .select("*")
+    .eq("status", "pending")
+    .order("priority", { ascending: false })
+    .order("created_at")
+    .limit(3);
+
+  if (!topics?.length) {
+    return { generated: 0, message: "No topics in backlog" };
+  }
+
+  // Schedule each at different times tomorrow
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const dateStr = tomorrow.toISOString().split("T")[0];
+
+  for (let i = 0; i < Math.min(topics.length, 3); i++) {
+    const scheduledFor = `${dateStr}T${publishTimes[i]}:00.000Z`;
+    try {
+      const result = await runFullPipeline(topics[i].id, scheduledFor);
+      results.push({ topicId: topics[i].id, ...result });
+    } catch (e) {
+      results.push({ topicId: topics[i].id, error: e instanceof Error ? e.message : "Unknown" });
+    }
+  }
+
+  // Also publish any pending scheduled articles
+  const publishResult = await publishScheduledArticles();
+
+  return { generated: results.length, results, published: publishResult };
+}
+
+// ===== ACTION: generate_social_posts =====
+async function generateSocialPosts(articleId: string) {
+  const sb = supabaseAdmin();
+  const { data: article } = await sb.from("blog_articles").select("title, subtitle, slug, category, city").eq("id", articleId).single();
+  if (!article) throw new Error("Article not found");
+
+  const aiData = await aiCall(
+    `Tu es un community manager pour UNPRO, plateforme de jumelage intelligent entre propriétaires et entrepreneurs au Québec. Génère des posts sociaux accrocheurs en français.`,
+    `Article : "${article.title}"\nSous-titre : "${article.subtitle}"\nURL : https://unpro.ca/blog/${article.slug}\n\nGénère un post Facebook, une caption Instagram et un post LinkedIn court.`,
+    [{
+      type: "function",
+      function: {
+        name: "social_posts",
+        description: "Social media posts",
+        parameters: {
+          type: "object",
+          properties: {
+            facebook: { type: "string" },
+            instagram: { type: "string" },
+            linkedin: { type: "string" },
+            video_script_30s: { type: "string", description: "30-second video script" },
+          },
+          required: ["facebook", "instagram", "linkedin", "video_script_30s"],
+        },
+      },
+    }],
+    { type: "function", function: { name: "social_posts" } }
+  );
+
+  return extractToolArgs(aiData);
+}
+
 // ===== ROUTER =====
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -484,6 +624,15 @@ serve(async (req) => {
         break;
       case "get_admin_editorial_dashboard":
         result = await getAdminEditorialDashboard();
+        break;
+      case "run_full_pipeline":
+        result = await runFullPipeline(body.topic_id, body.scheduled_for);
+        break;
+      case "run_daily_batch":
+        result = await runDailyBatch();
+        break;
+      case "generate_social_posts":
+        result = await generateSocialPosts(body.article_id);
         break;
       default:
         return new Response(JSON.stringify({ error: "Unknown action: " + action }), {
