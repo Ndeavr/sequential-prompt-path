@@ -41,7 +41,7 @@ export function trackFlywheelSignal(event: FlywheelEvent) {
       entity_type: event.entityType ?? null,
       entity_id: event.entityId ?? null,
       title: formatSignalTitle(event),
-      metadata: event.metadata ?? {},
+      metadata: (event.metadata ?? {}) as any,
       status: "auto_completed",
     }])
     .then(({ error }) => {
