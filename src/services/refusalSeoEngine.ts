@@ -174,7 +174,7 @@ export function generateRefusalPageContent(signals: RefusalSignal[]): Partial<Re
     correct_solution: solutionLabel
       ? `La solution recommandée est ${solutionLabel}${materialLabel ? ` avec ${materialLabel}` : ""}. Un professionnel qualifié pourra évaluer votre situation et proposer une approche adaptée.`
       : null,
-    recommended_professional: primary.profession_slug || null,
+    recommended_professional: null,
     materials_detail: materialLabel || null,
     structure_context: structureLabel || null,
     faq_json: faqs,
