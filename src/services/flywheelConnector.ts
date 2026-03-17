@@ -33,10 +33,9 @@ interface FlywheelEvent {
  * These events feed into the growth_events table for the dashboard.
  */
 export function trackFlywheelSignal(event: FlywheelEvent) {
-  // Non-blocking insert
   supabase
     .from("growth_events")
-    .insert({
+    .insert([{
       event_type: event.signal,
       source_engine: "flywheel_connector",
       entity_type: event.entityType ?? null,
@@ -44,7 +43,7 @@ export function trackFlywheelSignal(event: FlywheelEvent) {
       title: formatSignalTitle(event),
       metadata: event.metadata ?? {},
       status: "auto_completed",
-    })
+    }])
     .then(({ error }) => {
       if (error) console.warn("[Flywheel]", error.message);
     });
