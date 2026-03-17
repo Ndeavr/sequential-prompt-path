@@ -1069,7 +1069,6 @@ serve(async (req) => {
 
     // ===== ACTION: CRON (called by pg_cron daily) =====
     if (action === "cron") {
-      // 1. Analyze
       const analyzeResp = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/agent-orchestrator`, {
         method: "POST",
         headers: {
@@ -1088,6 +1087,132 @@ serve(async (req) => {
           stored: analyzeData.stored ?? 0,
           execution: analyzeData.execution ?? null,
         },
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ===== ACTION: SEED_TEST =====
+    if (action === "seed_test") {
+      const results: Record<string, any> = {};
+
+      // 1. Clear old test tasks
+      await supabase.from("agent_tasks").delete().like("task_title", "%[TEST]%");
+      await supabase.from("agent_logs").delete().like("message", "%[TEST]%");
+
+      // 2. Create test tasks covering all 5 flows
+      const testTasks = [
+        {
+          agent_name: "SEO Page Generator", agent_key: "op-seo-page-gen", agent_domain: "seo",
+          task_title: "[TEST] Générer pages SEO manquantes",
+          task_description: "Test: vérifier la création de pages SEO brouillon pour territoires sans contenu.",
+          action_plan: ["Identifier territoires vides", "Créer pages brouillon", "Valider statut"],
+          impact_score: 70, urgency: "medium", auto_executable: true, execution_mode: "semi_auto", status: "proposed",
+        },
+        {
+          agent_name: "FAQ Generator Agent", agent_key: "micro-faq-generator", agent_domain: "seo",
+          task_title: "[TEST] Générer FAQs manquantes",
+          task_description: "Test: identifier pages SEO publiées sans FAQ et signaler.",
+          action_plan: ["Scanner pages sans faq_json", "Lister slugs concernés"],
+          impact_score: 65, urgency: "medium", auto_executable: true, execution_mode: "semi_auto", status: "proposed",
+        },
+        {
+          agent_name: "AI Operations Director", agent_key: "exec-operations", agent_domain: "operations",
+          task_title: "[TEST] Vérifier profils incomplets",
+          task_description: "Test: créer des notifications admin pour entrepreneurs non vérifiés.",
+          action_plan: ["Lister entrepreneurs non vérifiés", "Créer notifications admin"],
+          impact_score: 80, urgency: "high", auto_executable: true, execution_mode: "semi_auto", status: "approved",
+        },
+        {
+          agent_name: "AI Lead Director", agent_key: "exec-leads", agent_domain: "leads",
+          task_title: "[TEST] Escalader leads en attente",
+          task_description: "Test: vérifier les rendez-vous en attente depuis plus de 24h.",
+          action_plan: ["Scanner rendez-vous 'requested'", "Escalader > 24h"],
+          impact_score: 90, urgency: "critical", auto_executable: true, execution_mode: "semi_auto", status: "proposed",
+        },
+        {
+          agent_name: "AI Growth Director", agent_key: "exec-growth", agent_domain: "growth",
+          task_title: "[TEST] Analyser croissance et conversion",
+          task_description: "Test: évaluer le taux de conversion et proposer des optimisations.",
+          action_plan: ["Calculer taux conversion", "Proposer A/B tests", "Recommander canaux"],
+          impact_score: 80, urgency: "high", auto_executable: false, execution_mode: "manual", status: "proposed",
+        },
+      ];
+
+      const { data: insertedTasks, error: taskErr } = await supabase
+        .from("agent_tasks")
+        .insert(testTasks)
+        .select("id, task_title, status, agent_key");
+
+      results.tasks_created = insertedTasks ?? [];
+      results.tasks_error = taskErr?.message ?? null;
+
+      // 3. Log the seed
+      await supabase.from("agent_logs").insert({
+        agent_name: "chief-orchestrator",
+        log_type: "test_seed",
+        message: `[TEST] Données de test créées: ${testTasks.length} tâches.`,
+        metadata: { test: true, count: testTasks.length },
+      });
+
+      results.log_created = true;
+
+      return new Response(JSON.stringify({ success: true, ...results }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ===== ACTION: CLEANUP_TEST =====
+    if (action === "cleanup_test") {
+      const { count: tasksDeleted } = await supabase.from("agent_tasks").delete().like("task_title", "%[TEST]%").select("id", { count: "exact", head: true });
+      const { count: logsDeleted } = await supabase.from("agent_logs").delete().like("message", "%[TEST]%").select("id", { count: "exact", head: true });
+
+      return new Response(JSON.stringify({
+        success: true,
+        tasks_deleted: tasksDeleted ?? 0,
+        logs_deleted: logsDeleted ?? 0,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ===== ACTION: DEBUG =====
+    if (action === "debug") {
+      // Return full diagnostic info
+      const [tasksRes, logsRes, metricsRes, agentsRes, memRes] = await Promise.all([
+        supabase.from("agent_tasks").select("id, task_title, status, agent_key, agent_domain, urgency, impact_score, auto_executable, execution_mode, executed_at, execution_result, proposed_at").order("proposed_at", { ascending: false }).limit(50),
+        supabase.from("agent_logs").select("*").order("created_at", { ascending: false }).limit(50),
+        supabase.from("agent_metrics").select("*").order("snapshot_at", { ascending: false }).limit(30),
+        supabase.from("agent_registry").select("agent_key, agent_name, layer, domain, autonomy_level, status, tasks_executed, tasks_succeeded, success_rate").order("layer").limit(50),
+        supabase.from("agent_memory").select("*").order("created_at", { ascending: false }).limit(10),
+      ]);
+
+      const tasksByStatus: Record<string, number> = {};
+      for (const t of (tasksRes.data ?? [])) {
+        tasksByStatus[t.status] = (tasksByStatus[t.status] ?? 0) + 1;
+      }
+
+      const handlersAvailable = Object.keys(TASK_HANDLERS);
+      const agentKeys = (agentsRes.data ?? []).map((a: any) => a.agent_key);
+      const agentsWithHandlers = agentKeys.filter((k: string) => handlersAvailable.includes(k));
+      const agentsWithoutHandlers = agentKeys.filter((k: string) => !handlersAvailable.includes(k));
+
+      return new Response(JSON.stringify({
+        summary: {
+          total_tasks: (tasksRes.data ?? []).length,
+          tasks_by_status: tasksByStatus,
+          total_logs: (logsRes.data ?? []).length,
+          total_metrics_snapshots: (metricsRes.data ?? []).length,
+          total_agents: (agentsRes.data ?? []).length,
+          handlers_registered: handlersAvailable.length,
+          agents_with_handlers: agentsWithHandlers.length,
+          agents_without_handlers: agentsWithoutHandlers.length,
+        },
+        handlers: handlersAvailable,
+        agents_missing_handlers: agentsWithoutHandlers,
+        tasks: tasksRes.data ?? [],
+        recent_logs: (logsRes.data ?? []).slice(0, 20),
+        agents: agentsRes.data ?? [],
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
