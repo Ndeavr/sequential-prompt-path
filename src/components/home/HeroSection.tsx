@@ -460,8 +460,49 @@ export default function HeroSection() {
                     </div>
                   </motion.div>
                 )}
-              </AnimatePresence>
-            </div>
+               </AnimatePresence>
+
+               {/* Emergency 3D Button */}
+               {!voiceActive && (
+                 <motion.div
+                   initial={{ opacity: 0, y: 12 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   transition={{ delay: 0.4, duration: 0.5 }}
+                   className="mt-6 flex justify-center md:justify-start"
+                 >
+                   <Link to="/emergency">
+                     <motion.button
+                       className="group relative flex items-center gap-2.5 rounded-2xl px-6 py-3.5 text-sm font-bold text-white overflow-hidden"
+                       style={{
+                         background: "linear-gradient(135deg, #EF4444 0%, #DC2626 50%, #B91C1C 100%)",
+                         boxShadow: "0 8px 24px -4px rgba(239,68,68,0.45), 0 4px 12px -2px rgba(185,28,28,0.3), inset 0 1px 1px rgba(255,255,255,0.2), inset 0 -2px 4px rgba(0,0,0,0.15)",
+                         border: "1px solid rgba(255,255,255,0.15)",
+                       }}
+                       whileHover={{ scale: 1.05, y: -2 }}
+                       whileTap={{ scale: 0.97 }}
+                       transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                     >
+                       {/* Shine sweep */}
+                       <motion.div
+                         className="absolute inset-0 pointer-events-none"
+                         style={{ background: "linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.2) 50%, transparent 70%)" }}
+                         animate={{ x: ["-150%", "150%"] }}
+                         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", repeatDelay: 4 }}
+                       />
+                       {/* Pulse ring */}
+                       <motion.div
+                         className="absolute inset-0 rounded-2xl pointer-events-none"
+                         style={{ border: "2px solid rgba(239,68,68,0.4)" }}
+                         animate={{ scale: [1, 1.08, 1], opacity: [0.7, 0, 0.7] }}
+                         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                       />
+                       <AlertTriangle className="h-5 w-5 relative z-10 drop-shadow-sm" />
+                       <span className="relative z-10">Urgence à la maison ?</span>
+                     </motion.button>
+                   </Link>
+                 </motion.div>
+               )}
+             </div>
 
             {/* Right column: desktop image */}
             <div className="relative hidden md:block w-full">
