@@ -154,7 +154,7 @@ export default function HeroSection() {
         </div>
 
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-8 md:px-10 md:pt-12">
-          <div className="relative md:grid md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8 md:items-start">
+          <div className="relative md:grid md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8 md:items-start" style={{ minHeight: "100vw" }}>
             {/* Mobile background image — top-right, square, rounded right only */}
             <div className="absolute top-0 right-0 w-[100vw] h-[100vw] md:hidden pointer-events-none overflow-hidden z-0"
               style={{ borderRadius: "0 1.25rem 1.25rem 0" }}
