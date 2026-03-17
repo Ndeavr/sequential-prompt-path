@@ -133,6 +133,10 @@ import ProLeadDetail from "@/pages/pro/ProLeadDetail";
 import ProBilling from "@/pages/pro/ProBilling";
 import ProTerritories from "@/pages/pro/ProTerritories";
 import ProAuthorityScore from "@/pages/pro/ProAuthorityScore";
+import ProIncomingProjects from "@/pages/pro/ProIncomingProjects";
+import ProPartnerNetwork from "@/pages/pro/ProPartnerNetwork";
+import ProExpertise from "@/pages/pro/ProExpertise";
+import ProTeams from "@/pages/pro/ProTeams";
 
 // Admin
 import AdminDashboard from "@/pages/admin/AdminDashboard";
@@ -348,6 +352,10 @@ export const AppRouter = () => (
       <Route path="/pro/alignment" element={<ProtectedRoute requiredRole="contractor"><AlignmentQuestionnairePage /></ProtectedRoute>} />
       <Route path="/pro/questionnaire" element={<ProtectedRoute requiredRole="contractor"><ContractorQuestionnairePage /></ProtectedRoute>} />
       <Route path="/pro/authority-score" element={<ProtectedRoute requiredRole="contractor"><ProAuthorityScore /></ProtectedRoute>} />
+      <Route path="/pro/incoming" element={<ProtectedRoute requiredRole="contractor"><ProIncomingProjects /></ProtectedRoute>} />
+      <Route path="/pro/partners" element={<ProtectedRoute requiredRole="contractor"><ProPartnerNetwork /></ProtectedRoute>} />
+      <Route path="/pro/expertise" element={<ProtectedRoute requiredRole="contractor"><ProExpertise /></ProtectedRoute>} />
+      <Route path="/pro/teams" element={<ProtectedRoute requiredRole="contractor"><ProTeams /></ProtectedRoute>} />
 
       {/* Admin */}
       <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />

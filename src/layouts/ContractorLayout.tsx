@@ -6,15 +6,19 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, User, Star, FileText, Shield, CalendarDays, TrendingUp, LogOut, CreditCard, MapPin, Sparkles, MessageSquare } from "lucide-react";
+import { LayoutDashboard, User, Star, FileText, Shield, CalendarDays, TrendingUp, LogOut, CreditCard, MapPin, Sparkles, MessageSquare, Inbox, Users, Wrench, UsersRound } from "lucide-react";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import type { ReactNode } from "react";
 
 const navItems = [
   { to: "/pro", label: "Tableau de bord", icon: LayoutDashboard },
+  { to: "/pro/incoming", label: "Projets entrants", icon: Inbox },
   { to: "/pro/profile", label: "Mon profil", icon: User },
+  { to: "/pro/expertise", label: "Champ d'expertise", icon: Wrench },
   { to: "/pro/leads", label: "Opportunités", icon: TrendingUp },
   { to: "/pro/territories", label: "Territoires", icon: MapPin },
+  { to: "/pro/partners", label: "Réseau partenaires", icon: UsersRound },
+  { to: "/pro/teams", label: "Équipes projet", icon: Users },
   { to: "/pro/appointments", label: "Rendez-vous", icon: CalendarDays },
   { to: "/pro/aipp-score", label: "Score AIPP", icon: Star },
   { to: "/pro/reviews", label: "Avis clients", icon: MessageSquare },
