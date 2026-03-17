@@ -1,6 +1,7 @@
 /**
  * UNPRO — Signup Page (No Password)
  * Step 1: Choose account type
+ * Step 1b: Choose property type (homeowner/property_manager only)
  * Step 2: OAuth / Phone OTP (no password)
  */
 import { useState, useEffect } from "react";
@@ -25,9 +26,18 @@ const ACCOUNT_TYPES = [
   { value: "ambassador", label: "Ambassadeur", description: "Recommander UNPRO et gagner des récompenses", icon: Gift, roleForDb: "homeowner" },
 ] as const;
 
+const PROPERTY_TYPES = [
+  { value: "unifamiliale", label: "Unifamiliale", icon: Home },
+  { value: "condo", label: "Condo / copropriété", icon: Building },
+  { value: "multilogement", label: "Multilogement", icon: Building },
+] as const;
+
+const NEEDS_PROPERTY_TYPE = ["homeowner", "property_manager"];
+
 const Signup = () => {
   const [accountType, setAccountType] = useState<string>("homeowner");
-  const [step, setStep] = useState<1 | 2>(1);
+  const [propertyType, setPropertyType] = useState<string>("");
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const { isAuthenticated, role, isLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -38,6 +48,14 @@ const Signup = () => {
     }
   }, [isAuthenticated, isLoading, role, navigate]);
 
+  const handleContinueFromStep1 = () => {
+    if (NEEDS_PROPERTY_TYPE.includes(accountType)) {
+      setStep(2);
+    } else {
+      setStep(3);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center" style={{ background: "linear-gradient(180deg, #F7FBFF 0%, #EAF4FF 58%, #DCEEFF 100%)" }}>
@@ -45,6 +63,13 @@ const Signup = () => {
       </div>
     );
   }
+
+  const stepTitle = step === 1 ? "Créez votre compte" : step === 2 ? "Type de propriété" : "Connexion rapide";
+  const stepDesc = step === 1
+    ? "Choisissez votre profil"
+    : step === 2
+      ? "Quel type de propriété possédez-vous ?"
+      : `En tant que ${ACCOUNT_TYPES.find((t) => t.value === accountType)?.label}`;
 
   return (
     <div
@@ -68,10 +93,10 @@ const Signup = () => {
               <img src={logo} alt="UNPRO" className="h-14 w-14 object-contain" />
             </div>
             <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#0B1533" }}>
-              {step === 1 ? "Créez votre compte" : "Connexion rapide"}
+              {stepTitle}
             </h1>
             <p className="text-sm" style={{ color: "#6C7A92" }}>
-              {step === 1 ? "Choisissez votre profil" : `En tant que ${ACCOUNT_TYPES.find((t) => t.value === accountType)?.label}`}
+              {stepDesc}
             </p>
           </CardHeader>
 
@@ -115,7 +140,7 @@ const Signup = () => {
                   <Button
                     className="w-full h-11 text-sm font-bold rounded-xl gap-2"
                     style={{ background: "linear-gradient(135deg, #2563EB, #3B82F6)", color: "white" }}
-                    onClick={() => setStep(2)}
+                    onClick={handleContinueFromStep1}
                   >
                     Continuer <ArrowRight className="h-4 w-4" />
                   </Button>
@@ -125,8 +150,55 @@ const Signup = () => {
                     <Link to="/login" className="font-medium hover:underline" style={{ color: "#3F7BFF" }}>Se connecter</Link>
                   </p>
                 </motion.div>
+              ) : step === 2 ? (
+                <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
+                  <div className="grid gap-3">
+                    {PROPERTY_TYPES.map((type) => {
+                      const isSelected = propertyType === type.value;
+                      const Icon = type.icon;
+                      return (
+                        <button
+                          key={type.value}
+                          type="button"
+                          onClick={() => setPropertyType(type.value)}
+                          className="relative flex items-center gap-3 rounded-xl p-4 text-left transition-all duration-200 cursor-pointer"
+                          style={{
+                            background: isSelected ? "hsl(218 100% 97%)" : "white",
+                            border: isSelected ? "2px solid #3F7BFF" : "1.5px solid #DFE9F5",
+                            boxShadow: isSelected
+                              ? "0 0 0 3px hsl(218 100% 61% / 0.12), 0 2px 8px -2px hsl(220 40% 30% / 0.08)"
+                              : "0 1px 4px -1px hsl(220 40% 30% / 0.06)",
+                          }}
+                        >
+                          {isSelected && (
+                            <div className="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full" style={{ background: "#3F7BFF" }}>
+                              <Check className="h-3 w-3 text-white" />
+                            </div>
+                          )}
+                          <Icon className="h-5 w-5 shrink-0" style={{ color: isSelected ? "#3F7BFF" : "#6C7A92" }} />
+                          <span className="text-sm font-semibold" style={{ color: isSelected ? "#2563EB" : "#0B1533" }}>{type.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <Button
+                    className="w-full h-11 text-sm font-bold rounded-xl gap-2"
+                    style={{ background: "linear-gradient(135deg, #2563EB, #3B82F6)", color: "white" }}
+                    onClick={() => setStep(3)}
+                    disabled={!propertyType}
+                  >
+                    Continuer <ArrowRight className="h-4 w-4" />
+                  </Button>
+
+                  <div className="text-center">
+                    <button type="button" onClick={() => setStep(1)} className="text-sm hover:underline flex items-center gap-1 mx-auto" style={{ color: "#3F7BFF" }}>
+                      <ArrowLeft className="h-3 w-3" /> Retour
+                    </button>
+                  </div>
+                </motion.div>
               ) : (
-                <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-1">
+                <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-1">
                   <OAuthButtons />
 
                   <AuthDivider text="ou par téléphone" />
@@ -139,8 +211,8 @@ const Signup = () => {
                   </div>
 
                   <div className="pt-2 text-center">
-                    <button type="button" onClick={() => setStep(1)} className="text-sm hover:underline flex items-center gap-1 mx-auto" style={{ color: "#3F7BFF" }}>
-                      <ArrowLeft className="h-3 w-3" /> Changer de profil
+                    <button type="button" onClick={() => setStep(NEEDS_PROPERTY_TYPE.includes(accountType) ? 2 : 1)} className="text-sm hover:underline flex items-center gap-1 mx-auto" style={{ color: "#3F7BFF" }}>
+                      <ArrowLeft className="h-3 w-3" /> Retour
                     </button>
                   </div>
                 </motion.div>
