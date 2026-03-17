@@ -44,3 +44,9 @@ verify_jwt = false
 
 [functions.seo-generator]
 verify_jwt = false
+
+[functions.market-allocator]
+verify_jwt = false
+
+[functions.nexus-scorer]
+verify_jwt = false

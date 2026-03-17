@@ -2640,6 +2640,74 @@ export type Database = {
           },
         ]
       }
+      contractor_budgets: {
+        Row: {
+          boost_active: boolean | null
+          boost_multiplier: number | null
+          contractor_id: string
+          created_at: string | null
+          id: string
+          monthly_budget_cents: number | null
+          period_end: string | null
+          period_start: string | null
+          remaining_budget_cents: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          boost_active?: boolean | null
+          boost_multiplier?: number | null
+          contractor_id: string
+          created_at?: string | null
+          id?: string
+          monthly_budget_cents?: number | null
+          period_end?: string | null
+          period_start?: string | null
+          remaining_budget_cents?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          boost_active?: boolean | null
+          boost_multiplier?: number | null
+          contractor_id?: string
+          created_at?: string | null
+          id?: string
+          monthly_budget_cents?: number | null
+          period_end?: string | null
+          period_start?: string | null
+          remaining_budget_cents?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_budgets_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_budgets_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_budgets_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_budgets_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_capabilities: {
         Row: {
           building_type: string | null
@@ -6673,6 +6741,48 @@ export type Database = {
           },
         ]
       }
+      dynamic_pricing: {
+        Row: {
+          base_price_cents: number | null
+          city: string
+          demand_multiplier: number | null
+          final_price_cents: number | null
+          id: string
+          is_active: boolean | null
+          problem_type: string
+          sample_size: number | null
+          supply_multiplier: number | null
+          updated_at: string | null
+          urgency_multiplier: number | null
+        }
+        Insert: {
+          base_price_cents?: number | null
+          city: string
+          demand_multiplier?: number | null
+          final_price_cents?: number | null
+          id?: string
+          is_active?: boolean | null
+          problem_type: string
+          sample_size?: number | null
+          supply_multiplier?: number | null
+          updated_at?: string | null
+          urgency_multiplier?: number | null
+        }
+        Update: {
+          base_price_cents?: number | null
+          city?: string
+          demand_multiplier?: number | null
+          final_price_cents?: number | null
+          id?: string
+          is_active?: boolean | null
+          problem_type?: string
+          sample_size?: number | null
+          supply_multiplier?: number | null
+          updated_at?: string | null
+          urgency_multiplier?: number | null
+        }
+        Relationships: []
+      }
       extraction_jobs: {
         Row: {
           completed_at: string | null
@@ -8371,6 +8481,60 @@ export type Database = {
           },
         ]
       }
+      market_opportunities: {
+        Row: {
+          city: string | null
+          created_at: string | null
+          estimated_value_cents: number | null
+          id: string
+          metadata: Json | null
+          problem_type: string
+          property_id: string | null
+          status: string | null
+          updated_at: string | null
+          urgency: string | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string | null
+          estimated_value_cents?: number | null
+          id?: string
+          metadata?: Json | null
+          problem_type?: string
+          property_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          urgency?: string | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string | null
+          estimated_value_cents?: number | null
+          id?: string
+          metadata?: Json | null
+          problem_type?: string
+          property_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          urgency?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_opportunities_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_opportunities_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       market_price_benchmarks: {
         Row: {
           avg_cost_per_unit: number
@@ -8781,6 +8945,207 @@ export type Database = {
           top_renovation_types?: Json | null
         }
         Relationships: []
+      }
+      nexus_events: {
+        Row: {
+          created_at: string | null
+          delta_score: number | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          delta_score?: number | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          delta_score?: number | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      nexus_levels: {
+        Row: {
+          badge_color: string | null
+          created_at: string | null
+          id: string
+          level_name: string
+          min_score: number | null
+          perks_json: Json | null
+          role: string
+        }
+        Insert: {
+          badge_color?: string | null
+          created_at?: string | null
+          id?: string
+          level_name: string
+          min_score?: number | null
+          perks_json?: Json | null
+          role: string
+        }
+        Update: {
+          badge_color?: string | null
+          created_at?: string | null
+          id?: string
+          level_name?: string
+          min_score?: number | null
+          perks_json?: Json | null
+          role?: string
+        }
+        Relationships: []
+      }
+      nexus_profiles: {
+        Row: {
+          breakdown_json: Json | null
+          created_at: string | null
+          global_score: number | null
+          id: string
+          is_active: boolean | null
+          level: string | null
+          role: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          breakdown_json?: Json | null
+          created_at?: string | null
+          global_score?: number | null
+          id?: string
+          is_active?: boolean | null
+          level?: string | null
+          role?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          breakdown_json?: Json | null
+          created_at?: string | null
+          global_score?: number | null
+          id?: string
+          is_active?: boolean | null
+          level?: string | null
+          role?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      nexus_signals: {
+        Row: {
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          signal_type: string
+          source: string | null
+          user_id: string
+          value: number | null
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          signal_type: string
+          source?: string | null
+          user_id: string
+          value?: number | null
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          signal_type?: string
+          source?: string | null
+          user_id?: string
+          value?: number | null
+          weight?: number | null
+        }
+        Relationships: []
+      }
+      opportunity_allocations: {
+        Row: {
+          allocation_mode: string | null
+          allocation_score: number | null
+          contractor_id: string
+          conversion_result: string | null
+          created_at: string | null
+          id: string
+          opportunity_id: string
+          price_charged_cents: number | null
+          responded_at: string | null
+          status: string | null
+        }
+        Insert: {
+          allocation_mode?: string | null
+          allocation_score?: number | null
+          contractor_id: string
+          conversion_result?: string | null
+          created_at?: string | null
+          id?: string
+          opportunity_id: string
+          price_charged_cents?: number | null
+          responded_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          allocation_mode?: string | null
+          allocation_score?: number | null
+          contractor_id?: string
+          conversion_result?: string | null
+          created_at?: string | null
+          id?: string
+          opportunity_id?: string
+          price_charged_cents?: number | null
+          responded_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_allocations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_allocations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_allocations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_allocations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "opportunity_allocations_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "market_opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       optimization_actions: {
         Row: {
