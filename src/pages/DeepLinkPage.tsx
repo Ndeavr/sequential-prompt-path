@@ -1,6 +1,6 @@
 /**
  * UNPRO — Smart Deep Link Landing Page
- * /i/{code} — Resolves deep links to feature experiences.
+ * /i/{code} — Resolves deep links with Alex AI Concierge integration.
  */
 
 import { useState, useEffect } from "react";
@@ -16,6 +16,7 @@ import {
   ArrowRight, AlertCircle, Sparkles,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import AlexLandingConcierge from "@/components/alex/AlexLandingConcierge";
 
 const ICON_MAP: Record<string, React.ElementType> = {
   Palette, BarChart3, CalendarCheck, Shield, Zap, Bot,
@@ -35,14 +36,12 @@ export default function DeepLinkPage() {
         const result = await resolveDeepLink(code);
         setResolved(result);
 
-        // Track events
         if (result.valid && result.link) {
           setActiveDeepLinkId(result.link.id);
           trackDeepLinkEvent("qr_scanned", result.link.id, { code, feature: result.link.feature });
           trackDeepLinkEvent("landing_viewed", result.link.id, { feature: result.link.feature });
         }
 
-        // Auto-redirect if no auth needed or already logged in
         if (result.valid && (!result.requiresAuth || isAuthenticated)) {
           navigate(result.targetPath, { replace: true });
           return;
@@ -71,7 +70,6 @@ export default function DeepLinkPage() {
     return <InvalidDeepLink />;
   }
 
-  // If we're here, auth is required but user is not logged in — show landing
   return <DeepLinkLanding resolved={resolved} />;
 }
 
@@ -97,7 +95,6 @@ function DeepLinkLanding({ resolved }: { resolved: ResolvedDeepLink }) {
         className="w-full max-w-sm"
       >
         <Card className="glass-card border-0 overflow-hidden">
-          {/* Preview visual */}
           <div className={`h-32 bg-gradient-to-br ${meta.previewColor} flex items-center justify-center`}>
             <motion.div
               initial={{ scale: 0.8 }}
@@ -112,9 +109,7 @@ function DeepLinkLanding({ resolved }: { resolved: ResolvedDeepLink }) {
           <CardContent className="p-6 space-y-4">
             <div className="text-center space-y-2">
               <h1 className="text-xl font-bold text-foreground">{meta.headline}</h1>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {meta.description}
-              </p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{meta.description}</p>
               {resolved.link?.sub_feature && (
                 <p className="text-xs text-primary font-medium capitalize">
                   {resolved.link.sub_feature.replace(/_/g, " ")}
@@ -137,6 +132,13 @@ function DeepLinkLanding({ resolved }: { resolved: ResolvedDeepLink }) {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Alex AI Concierge — integrated in QR flow */}
+      <AlexLandingConcierge
+        feature={feature}
+        deepLinkId={resolved.link?.id}
+        onCtaClick={handleCta}
+      />
     </div>
   );
 }
@@ -150,9 +152,7 @@ function InvalidDeepLink() {
             <AlertCircle className="h-7 w-7 text-destructive" />
           </div>
           <h2 className="text-lg font-bold text-foreground">Lien invalide</h2>
-          <p className="text-sm text-muted-foreground">
-            Ce lien n'existe pas ou a expiré.
-          </p>
+          <p className="text-sm text-muted-foreground">Ce lien n'existe pas ou a expiré.</p>
           <Button asChild className="w-full rounded-xl">
             <Link to="/">Découvrir UNPRO</Link>
           </Button>
