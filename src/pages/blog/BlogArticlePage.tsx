@@ -11,6 +11,7 @@ import { motion } from "framer-motion";
 import { CalendarDays, Clock, Tag, ArrowRight, ChevronDown, MapPin } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useEngagementTracking } from "@/hooks/useEngagementTracking";
+import LikeShareButtons from "@/components/shared/LikeShareButtons";
 
 export default function BlogArticlePage() {
   const { slug } = useParams<{ slug: string }>();
