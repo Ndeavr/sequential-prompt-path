@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.design-check-subscription]
 verify_jwt = false
+
+[functions.growth-optimizer]
+verify_jwt = false
