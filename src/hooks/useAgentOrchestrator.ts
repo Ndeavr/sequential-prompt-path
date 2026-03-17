@@ -125,10 +125,33 @@ export const useAgentOrchestrator = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      toast.success("Tâche approuvée");
+    onSuccess: (data) => {
+      if (data?.executed) {
+        toast.success(`Approuvée et exécutée: ${data.execution?.summary ?? "OK"}`);
+      } else {
+        toast.success("Tâche approuvée");
+      }
       queryClient.invalidateQueries({ queryKey: ["agent-orchestrator-status"] });
     },
+  });
+
+  const executeMutation = useMutation({
+    mutationFn: async (taskId?: string) => {
+      const { data, error } = await supabase.functions.invoke("agent-orchestrator", {
+        body: { action: "execute", ...(taskId ? { task_id: taskId } : {}) },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data?.result) {
+        toast.success(data.result.summary);
+      } else {
+        toast.success(`Exécution: ${data.succeeded ?? 0} réussies, ${data.failed ?? 0} échouées`);
+      }
+      queryClient.invalidateQueries({ queryKey: ["agent-orchestrator-status"] });
+    },
+    onError: () => toast.error("Erreur lors de l'exécution"),
   });
 
   const rejectMutation = useMutation({
@@ -180,6 +203,8 @@ export const useAgentOrchestrator = () => {
     isAnalyzing: analyzeMutation.isPending,
     approveTask: approveMutation.mutate,
     rejectTask: rejectMutation.mutate,
+    executeTask: executeMutation.mutate,
+    isExecuting: executeMutation.isPending,
     toggleAgent: toggleAgentMutation.mutate,
     createAgent: createAgentMutation.mutate,
   };

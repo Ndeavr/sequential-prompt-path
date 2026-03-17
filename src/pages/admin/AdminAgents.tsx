@@ -6,12 +6,13 @@ import AgentTaskQueue from "@/components/agents/AgentTaskQueue";
 import AgentMetricsPanel from "@/components/agents/AgentMetricsPanel";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Play, Loader2, Network, ListTodo, BarChart3 } from "lucide-react";
+import { Brain, Play, Loader2, Network, ListTodo, BarChart3, Zap } from "lucide-react";
 
 const AdminAgents = () => {
   const {
     status, isLoading, runAnalysis, isAnalyzing,
     approveTask, rejectTask, toggleAgent,
+    executeTask, isExecuting,
   } = useAgentOrchestrator();
   const [selectedLayer, setSelectedLayer] = useState<string | null>(null);
 
@@ -38,15 +39,27 @@ const AdminAgents = () => {
               {activeAgents} agents actifs · {proposedTasks} propositions · 4 couches
             </p>
           </div>
-          <Button
-            onClick={() => runAnalysis()}
-            disabled={isAnalyzing}
-            className="gap-2 rounded-xl text-sm"
-            size="sm"
-          >
-            {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-            {isAnalyzing ? "Analyse..." : "Analyser"}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => runAnalysis()}
+              disabled={isAnalyzing || isExecuting}
+              className="gap-2 rounded-xl text-sm"
+              size="sm"
+            >
+              {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              {isAnalyzing ? "Analyse..." : "Analyser"}
+            </Button>
+            <Button
+              onClick={() => executeTask(undefined)}
+              disabled={isExecuting || isAnalyzing}
+              variant="outline"
+              className="gap-2 rounded-xl text-sm"
+              size="sm"
+            >
+              {isExecuting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+              {isExecuting ? "Exécution..." : "Exécuter"}
+            </Button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -89,6 +102,7 @@ const AdminAgents = () => {
               isLoading={isLoading}
               onApprove={approveTask}
               onReject={rejectTask}
+              onExecute={executeTask}
             />
           </TabsContent>
 
