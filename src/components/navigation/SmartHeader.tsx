@@ -43,6 +43,7 @@ const SmartHeader = () => {
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeMega, setActiveMega] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const { lang, setLang } = useLanguage();
 
   const handleMegaEnter = useCallback((key: string) => setActiveMega(key), []);
