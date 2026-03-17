@@ -51,6 +51,18 @@ const SmartHeader = () => {
   const logoTo = getLogoDestination(activeRole as UserRole | "guest");
   const navItems = headerNavByRole[activeRole as UserRole | "guest"] || headerNavByRole.guest;
 
+  // Detect returning visitor via localStorage
+  const isReturningVisitor = (() => {
+    try {
+      const visited = localStorage.getItem("unpro_visited");
+      if (!visited) {
+        localStorage.setItem("unpro_visited", "1");
+        return false;
+      }
+      return true;
+    } catch { return false; }
+  })();
+
   // Context label for logged-in users
   const contextLabel = ctx
     ? activeRole === "contractor" && ctx.contractor?.businessName
