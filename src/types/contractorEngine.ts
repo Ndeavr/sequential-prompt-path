@@ -7,12 +7,12 @@
 export interface ContractorCapability {
   id: string;
   contractor_id: string;
-  capability_type: "service" | "material" | "structure" | "building";
-  category_slug?: string;
-  service_slug?: string;
-  material_slug?: string;
-  structure_type?: string;
-  building_type?: string;
+  capability_type: string;
+  category_slug?: string | null;
+  service_slug?: string | null;
+  material_slug?: string | null;
+  structure_type?: string | null;
+  building_type?: string | null;
   confidence: number;
   source: "declared" | "verified" | "inferred";
   is_active: boolean;
