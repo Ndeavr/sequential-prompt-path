@@ -1092,30 +1092,30 @@ const ContractorProfile = () => {
                 <h2 className="text-sm font-bold text-foreground mb-3">Coordonnées</h2>
                 <div className="space-y-2.5">
                   {contractor.city && (
-                    <div className="flex items-center gap-3 text-[13px]">
+                    <button onClick={() => trackContactClick("location")} className="flex items-center gap-3 text-[13px] w-full text-left hover:bg-muted/50 rounded-lg p-1 -m-1 transition-colors">
                       <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0"><MapPin className="h-3.5 w-3.5 text-muted-foreground" /></div>
                       <span className="text-foreground">{contractor.city}{contractor.province ? `, ${contractor.province}` : ""}{contractor.postal_code ? ` ${contractor.postal_code}` : ""}</span>
-                    </div>
+                    </button>
                   )}
                   {contractor.phone && (
-                    <div className="flex items-center gap-3 text-[13px]">
+                    <a href={`tel:${contractor.phone}`} onClick={() => trackContactClick("phone")} className="flex items-center gap-3 text-[13px] w-full hover:bg-muted/50 rounded-lg p-1 -m-1 transition-colors">
                       <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0"><Phone className="h-3.5 w-3.5 text-muted-foreground" /></div>
                       <span className="text-foreground">{contractor.phone}</span>
-                    </div>
+                    </a>
                   )}
                   {contractor.email && (
-                    <div className="flex items-center gap-3 text-[13px]">
+                    <a href={`mailto:${contractor.email}`} onClick={() => trackContactClick("email")} className="flex items-center gap-3 text-[13px] w-full hover:bg-muted/50 rounded-lg p-1 -m-1 transition-colors">
                       <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0"><Mail className="h-3.5 w-3.5 text-muted-foreground" /></div>
                       <span className="text-foreground">{contractor.email}</span>
-                    </div>
+                    </a>
                   )}
                   {contractor.website && (
-                    <div className="flex items-center gap-3 text-[13px]">
+                    <a href={contractor.website} target="_blank" rel="noopener noreferrer" onClick={() => trackContactClick("website")} className="flex items-center gap-3 text-[13px] w-full hover:bg-muted/50 rounded-lg p-1 -m-1 transition-colors">
                       <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0"><Globe className="h-3.5 w-3.5 text-muted-foreground" /></div>
-                      <a href={contractor.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate">
+                      <span className="text-primary hover:underline truncate">
                         {contractor.website.replace(/^https?:\/\//, "")}
-                      </a>
-                    </div>
+                      </span>
+                    </a>
                   )}
                 </div>
               </CardContent>
