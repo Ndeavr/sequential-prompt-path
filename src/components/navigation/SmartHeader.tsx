@@ -296,7 +296,7 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
                         key={item.to + item.label}
                         to={item.to}
                         onClick={onClose}
-                        className="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary/5 border border-primary/10 text-foreground font-medium text-meta"
+                        className="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary/5 text-foreground font-medium text-meta"
                       >
                         <Icon className="h-4 w-4 text-primary" />
                         <span className="flex-1">{lang === "en" && item.labelEn ? item.labelEn : item.label}</span>
