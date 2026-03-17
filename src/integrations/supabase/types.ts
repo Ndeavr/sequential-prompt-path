@@ -3760,6 +3760,345 @@ export type Database = {
           },
         ]
       }
+      contractor_domain_admin_notes: {
+        Row: {
+          admin_user_id: string
+          contractor_domain_id: string
+          created_at: string | null
+          id: string
+          note: string
+          note_type: string | null
+        }
+        Insert: {
+          admin_user_id: string
+          contractor_domain_id: string
+          created_at?: string | null
+          id?: string
+          note: string
+          note_type?: string | null
+        }
+        Update: {
+          admin_user_id?: string
+          contractor_domain_id?: string
+          created_at?: string | null
+          id?: string
+          note?: string
+          note_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_domain_admin_notes_contractor_domain_id_fkey"
+            columns: ["contractor_domain_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_domain_checks: {
+        Row: {
+          accessibility_json: Json | null
+          aiseo_json: Json | null
+          authority_json: Json | null
+          check_completed_at: string | null
+          check_started_at: string | null
+          contractor_domain_id: string
+          created_at: string | null
+          dns_json: Json | null
+          final_status: string | null
+          generated_homepage_seo_json: Json | null
+          hosting_json: Json | null
+          id: string
+          indexability_json: Json | null
+          raw_headers_json: Json | null
+          raw_html_excerpt: string | null
+          recommendations_json: Json | null
+          run_status: string | null
+          seo_json: Json | null
+          ssl_json: Json | null
+          structured_data_json: Json | null
+        }
+        Insert: {
+          accessibility_json?: Json | null
+          aiseo_json?: Json | null
+          authority_json?: Json | null
+          check_completed_at?: string | null
+          check_started_at?: string | null
+          contractor_domain_id: string
+          created_at?: string | null
+          dns_json?: Json | null
+          final_status?: string | null
+          generated_homepage_seo_json?: Json | null
+          hosting_json?: Json | null
+          id?: string
+          indexability_json?: Json | null
+          raw_headers_json?: Json | null
+          raw_html_excerpt?: string | null
+          recommendations_json?: Json | null
+          run_status?: string | null
+          seo_json?: Json | null
+          ssl_json?: Json | null
+          structured_data_json?: Json | null
+        }
+        Update: {
+          accessibility_json?: Json | null
+          aiseo_json?: Json | null
+          authority_json?: Json | null
+          check_completed_at?: string | null
+          check_started_at?: string | null
+          contractor_domain_id?: string
+          created_at?: string | null
+          dns_json?: Json | null
+          final_status?: string | null
+          generated_homepage_seo_json?: Json | null
+          hosting_json?: Json | null
+          id?: string
+          indexability_json?: Json | null
+          raw_headers_json?: Json | null
+          raw_html_excerpt?: string | null
+          recommendations_json?: Json | null
+          run_status?: string | null
+          seo_json?: Json | null
+          ssl_json?: Json | null
+          structured_data_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_domain_checks_contractor_domain_id_fkey"
+            columns: ["contractor_domain_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_domain_deltas: {
+        Row: {
+          aiseo_delta: number | null
+          authority_delta: number | null
+          contractor_domain_id: string
+          created_at: string | null
+          current_check_id: string | null
+          id: string
+          key_improvements_json: Json | null
+          new_issues_json: Json | null
+          previous_check_id: string | null
+          seo_delta: number | null
+          technical_delta: number | null
+        }
+        Insert: {
+          aiseo_delta?: number | null
+          authority_delta?: number | null
+          contractor_domain_id: string
+          created_at?: string | null
+          current_check_id?: string | null
+          id?: string
+          key_improvements_json?: Json | null
+          new_issues_json?: Json | null
+          previous_check_id?: string | null
+          seo_delta?: number | null
+          technical_delta?: number | null
+        }
+        Update: {
+          aiseo_delta?: number | null
+          authority_delta?: number | null
+          contractor_domain_id?: string
+          created_at?: string | null
+          current_check_id?: string | null
+          id?: string
+          key_improvements_json?: Json | null
+          new_issues_json?: Json | null
+          previous_check_id?: string | null
+          seo_delta?: number | null
+          technical_delta?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_domain_deltas_contractor_domain_id_fkey"
+            columns: ["contractor_domain_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_domain_deltas_current_check_id_fkey"
+            columns: ["current_check_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_domain_checks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_domain_deltas_previous_check_id_fkey"
+            columns: ["previous_check_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_domain_checks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_domain_events: {
+        Row: {
+          contractor_domain_id: string
+          created_at: string | null
+          event_payload_json: Json | null
+          event_type: string
+          id: string
+        }
+        Insert: {
+          contractor_domain_id: string
+          created_at?: string | null
+          event_payload_json?: Json | null
+          event_type: string
+          id?: string
+        }
+        Update: {
+          contractor_domain_id?: string
+          created_at?: string | null
+          event_payload_json?: Json | null
+          event_type?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_domain_events_contractor_domain_id_fkey"
+            columns: ["contractor_domain_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_domains: {
+        Row: {
+          aiseo_score: number | null
+          authority_score: number | null
+          confidence_score: number | null
+          contractor_id: string
+          created_at: string | null
+          dns_status: string | null
+          final_url: string | null
+          full_url: string | null
+          hosting_confidence: number | null
+          hosting_provider: string | null
+          id: string
+          indexability_status: string | null
+          indexing_readiness_score: number | null
+          is_primary: boolean | null
+          is_www: boolean | null
+          last_checked_at: string | null
+          live_status: string | null
+          normalized_domain: string
+          notes: string | null
+          preferred_hostname: string | null
+          protocol_detected: string | null
+          raw_input: string
+          root_domain: string | null
+          seo_score: number | null
+          ssl_status: string | null
+          structured_data_status: string | null
+          subdomain_if_any: string | null
+          submitted_path: string | null
+          technical_score: number | null
+          updated_at: string | null
+          verification_status: string | null
+        }
+        Insert: {
+          aiseo_score?: number | null
+          authority_score?: number | null
+          confidence_score?: number | null
+          contractor_id: string
+          created_at?: string | null
+          dns_status?: string | null
+          final_url?: string | null
+          full_url?: string | null
+          hosting_confidence?: number | null
+          hosting_provider?: string | null
+          id?: string
+          indexability_status?: string | null
+          indexing_readiness_score?: number | null
+          is_primary?: boolean | null
+          is_www?: boolean | null
+          last_checked_at?: string | null
+          live_status?: string | null
+          normalized_domain: string
+          notes?: string | null
+          preferred_hostname?: string | null
+          protocol_detected?: string | null
+          raw_input: string
+          root_domain?: string | null
+          seo_score?: number | null
+          ssl_status?: string | null
+          structured_data_status?: string | null
+          subdomain_if_any?: string | null
+          submitted_path?: string | null
+          technical_score?: number | null
+          updated_at?: string | null
+          verification_status?: string | null
+        }
+        Update: {
+          aiseo_score?: number | null
+          authority_score?: number | null
+          confidence_score?: number | null
+          contractor_id?: string
+          created_at?: string | null
+          dns_status?: string | null
+          final_url?: string | null
+          full_url?: string | null
+          hosting_confidence?: number | null
+          hosting_provider?: string | null
+          id?: string
+          indexability_status?: string | null
+          indexing_readiness_score?: number | null
+          is_primary?: boolean | null
+          is_www?: boolean | null
+          last_checked_at?: string | null
+          live_status?: string | null
+          normalized_domain?: string
+          notes?: string | null
+          preferred_hostname?: string | null
+          protocol_detected?: string | null
+          raw_input?: string
+          root_domain?: string | null
+          seo_score?: number | null
+          ssl_status?: string | null
+          structured_data_status?: string | null
+          subdomain_if_any?: string | null
+          submitted_path?: string | null
+          technical_score?: number | null
+          updated_at?: string | null
+          verification_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_domains_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_domains_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_domains_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_domains_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_duplicate_candidates: {
         Row: {
           candidate_contractor_id: string
