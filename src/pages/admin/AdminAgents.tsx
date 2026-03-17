@@ -6,7 +6,7 @@ import AgentTaskQueue from "@/components/agents/AgentTaskQueue";
 import AgentMetricsPanel from "@/components/agents/AgentMetricsPanel";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Play, Loader2, Network, ListTodo, BarChart3 } from "lucide-react";
+import { Brain, Play, Loader2, Network, ListTodo, BarChart3, Zap } from "lucide-react";
 
 const AdminAgents = () => {
   const {
