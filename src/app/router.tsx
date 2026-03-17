@@ -155,6 +155,7 @@ import AdminDuplicates from "@/pages/admin/AdminDuplicates";
 import AdminAutomation from "@/pages/admin/AdminAutomation";
 import AdminHomeGraph from "@/pages/admin/AdminHomeGraph";
 import AdminUOS from "@/pages/admin/AdminUOS";
+import AdminGrowthEngine from "@/pages/admin/AdminGrowthEngine";
 
 export const AppRouter = () => (
   <BrowserRouter>
