@@ -9,12 +9,12 @@ interface Props {
 }
 
 const statusConfig: Record<string, { icon: any; color: string; bg: string; label: string }> = {
-  waiting: { icon: Clock, color: "text-muted-foreground/50", bg: "bg-muted/20", label: "Waiting" },
-  scanning: { icon: Loader2, color: "text-accent", bg: "bg-accent/10", label: "Scanning" },
-  found: { icon: Check, color: "text-success", bg: "bg-success/10", label: "Found" },
-  completed: { icon: Check, color: "text-success", bg: "bg-success/10", label: "Complete" },
-  partial: { icon: AlertTriangle, color: "text-warning", bg: "bg-warning/10", label: "Partial" },
-  missing: { icon: X, color: "text-destructive/70", bg: "bg-destructive/10", label: "Missing" },
+  waiting: { icon: Clock, color: "text-muted-foreground/50", bg: "bg-muted/20", label: "En attente" },
+  scanning: { icon: Loader2, color: "text-accent", bg: "bg-accent/10", label: "Analyse" },
+  found: { icon: Check, color: "text-success", bg: "bg-success/10", label: "Trouvé" },
+  completed: { icon: Check, color: "text-success", bg: "bg-success/10", label: "Complété" },
+  partial: { icon: AlertTriangle, color: "text-warning", bg: "bg-warning/10", label: "Partiel" },
+  missing: { icon: X, color: "text-destructive/70", bg: "bg-destructive/10", label: "Absent" },
 };
 
 const moduleIcons: Record<string, any> = {
