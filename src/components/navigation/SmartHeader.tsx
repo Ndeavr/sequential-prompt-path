@@ -51,6 +51,18 @@ const SmartHeader = () => {
   const logoTo = getLogoDestination(activeRole as UserRole | "guest");
   const navItems = headerNavByRole[activeRole as UserRole | "guest"] || headerNavByRole.guest;
 
+  // Detect returning visitor via localStorage
+  const isReturningVisitor = (() => {
+    try {
+      const visited = localStorage.getItem("unpro_visited");
+      if (!visited) {
+        localStorage.setItem("unpro_visited", "1");
+        return false;
+      }
+      return true;
+    } catch { return false; }
+  })();
+
   // Context label for logged-in users
   const contextLabel = ctx
     ? activeRole === "contractor" && ctx.contractor?.businessName
@@ -164,6 +176,15 @@ const SmartHeader = () => {
                 <ProfileMenu />
               ) : (
                 <>
+                  {/* Mobile: show contextual CTA */}
+                  <Button asChild size="sm" className="rounded-full h-8 text-xs px-4 font-semibold sm:hidden">
+                    <Link to={isReturningVisitor ? "/login" : "/signup"}>
+                      {isReturningVisitor
+                        ? (lang === "en" ? "Sign In" : "Connexion")
+                        : (lang === "en" ? "Create Account" : "Créer un compte")}
+                    </Link>
+                  </Button>
+                  {/* Desktop: keep existing */}
                   <Button asChild variant="ghost" size="sm" className="rounded-full h-9 text-meta px-4 hidden sm:inline-flex text-muted-foreground hover:text-foreground">
                     <Link to="/login">{lang === "en" ? "Sign In" : "Connexion"}</Link>
                   </Button>
