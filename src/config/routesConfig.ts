@@ -49,6 +49,7 @@ export const ROUTES = {
   PRO_TERRITORIES: "/pro/territories",
   PRO_DOCUMENTS: "/pro/documents",
   PRO_ACCOUNT: "/pro/account",
+  PRO_DOMAIN_INTELLIGENCE: "/pro/domain-intelligence",
 
   // Admin
   ADMIN_DASHBOARD: "/admin",
