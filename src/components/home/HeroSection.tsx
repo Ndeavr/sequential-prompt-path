@@ -173,13 +173,14 @@ export default function HeroSection() {
                   transition={{ duration: 1.1, ease: "easeInOut" }}
                 />
               </AnimatePresence>
-              {/* Robot — on top, bottom-right of image, feet on bottom edge */}
-              <motion.img src={unproRobot} alt="Alex UNPRO"
-                className="absolute right-4 bottom-0 w-[100px] z-30 drop-shadow-[0_6px_20px_rgba(63,123,255,0.25)]"
-                animate={{ y: [0, -8, 0], rotate: [0, 3, -2, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              />
             </div>
+            {/* Robot — ON TOP of everything, bottom-right of image area */}
+            <motion.img src={unproRobot} alt="Alex UNPRO"
+              className="absolute md:hidden z-40 w-[100px] drop-shadow-[0_6px_20px_rgba(63,123,255,0.25)]"
+              style={{ top: "calc(75vw - 110px)", right: "0px" }}
+              animate={{ y: [0, -8, 0], rotate: [0, 3, -2, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            />
 
             {/* Left column — text overlays on top of image */}
             <div className="relative z-20 min-w-0">
@@ -245,7 +246,9 @@ export default function HeroSection() {
               </h1>
 
               {/* Card with bullet points */}
-              <div className="relative z-10 mt-4 md:mt-5 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 max-w-[420px] shadow-sm">
+              <div className="relative z-10 md:mt-5 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 max-w-[420px] shadow-sm"
+                style={{ marginTop: "calc(75vw - 220px)" }}
+              >
                 <ul className="space-y-2">
                   {[
                     "Rendez-vous exclusif avec un professionnel",
