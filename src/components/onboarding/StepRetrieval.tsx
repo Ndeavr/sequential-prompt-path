@@ -64,7 +64,7 @@ export default function StepRetrieval({ modules, overallProgress }: Props) {
               >
                 {overallProgress}%
               </motion.span>
-              <span className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground font-medium mt-0.5">Scanning</span>
+              <span className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground font-medium mt-0.5">Analyse</span>
             </div>
             {/* Orbiting dot */}
             <motion.div
