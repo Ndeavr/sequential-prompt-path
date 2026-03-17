@@ -159,7 +159,7 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
     const category = detectCategory(trimmed);
     const recs = getRecommendations(intent, { hasProperties: (properties ?? []).length > 0, hasQuotes: false, category });
     setRecommendations(recs);
-    await sendMessage(trimmed, { properties, homeScore, currentPage: pathname });
+    await sendMessage(trimmed, { properties, homeScore, currentPage: pathname, propertyFamily, propertyType, occupancyStatus });
   };
 
   const handleQuickAction = (message: string) => {
