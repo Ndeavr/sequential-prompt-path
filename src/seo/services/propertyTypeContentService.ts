@@ -129,8 +129,8 @@ export function buildPropertyTypeHubPage(typeSlug: string): PropertyTypeHubPageD
   return {
     propertyType: pt,
     h1: `${pt.nameFr} au Québec — Problèmes, entretien et entrepreneurs`,
-    metaTitle: `${pt.nameFr} | Problèmes fréquents et entrepreneurs vérifiés | UNPRO`,
-    metaDescription: `${pt.shortDescriptionFr} Trouvez les problèmes courants, les coûts estimés et des entrepreneurs qualifiés pour votre ${pt.nameFr.toLowerCase()}.`,
+    metaTitle: `${pt.nameFr} — Rendez-vous garanti | Entrepreneur vérifié | UNPRO`,
+    metaDescription: `Trouvez un entrepreneur fiable pour votre ${pt.nameFr.toLowerCase()}. Aucun spam, aucun comparatif inutile. Rendez-vous confirmé avec un professionnel qualifié.`,
     intro: pickVariation(pt.contentVariations.introTemplates, pt.slug),
     topProblems: pt.topProblems,
     familyLabel,
