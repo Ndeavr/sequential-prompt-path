@@ -284,8 +284,8 @@ export default function EmergencyPage() {
 
               {/* Address + Phone */}
               <div>
-                <Label htmlFor="addr" className="text-sm font-medium">Adresse</Label>
-                <Input id="addr" value={address} onChange={e => setAddress(e.target.value)} placeholder="123 rue Principale, Montréal" className="mt-1" />
+                <Label className="text-sm font-medium">Adresse</Label>
+                <GooglePlacesInput value={address} onChange={setAddress} placeholder="123 rue Principale, Montréal" className="mt-1" />
               </div>
               <div>
                 <Label htmlFor="ph" className="text-sm font-medium">Téléphone</Label>
