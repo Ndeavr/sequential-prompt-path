@@ -120,11 +120,14 @@ const getContextSuggestions = (pathname: string, isAuthenticated: boolean): Cont
 };
 
 interface AlexConciergeProps {
-  properties?: Array<{ address: string; city?: string | null }>;
+  properties?: Array<{ address: string; city?: string | null; property_type?: string | null; property_family?: string | null; year_built?: number | null }>;
   homeScore?: number | null;
+  propertyFamily?: string | null;
+  propertyType?: string | null;
+  occupancyStatus?: string | null;
 }
 
-const AlexConcierge = ({ properties, homeScore }: AlexConciergeProps) => {
+const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, occupancyStatus }: AlexConciergeProps) => {
   const isHomePage = useLocation().pathname === "/";
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated } = useAuth();
@@ -156,7 +159,7 @@ const AlexConcierge = ({ properties, homeScore }: AlexConciergeProps) => {
     const category = detectCategory(trimmed);
     const recs = getRecommendations(intent, { hasProperties: (properties ?? []).length > 0, hasQuotes: false, category });
     setRecommendations(recs);
-    await sendMessage(trimmed, { properties, homeScore, currentPage: pathname });
+    await sendMessage(trimmed, { properties, homeScore, currentPage: pathname, propertyFamily, propertyType, occupancyStatus });
   };
 
   const handleQuickAction = (message: string) => {
@@ -165,7 +168,7 @@ const AlexConcierge = ({ properties, homeScore }: AlexConciergeProps) => {
     const category = detectCategory(message);
     const recs = getRecommendations(intent, { hasProperties: (properties ?? []).length > 0, category });
     setRecommendations(recs);
-    sendMessage(message, { properties, homeScore, currentPage: pathname });
+    sendMessage(message, { properties, homeScore, currentPage: pathname, propertyFamily, propertyType, occupancyStatus });
   };
 
   const handleReset = () => {

@@ -99,6 +99,56 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
   peinture: ["peinture", "peindre", "peintre"],
 };
 
+// ===== PROPERTY TYPE DETECTION =====
+export type PropertyFamily = "single_family" | "condominium_strata" | "multi_family";
+export type PropertyTypeSlug =
+  | "bungalow" | "cottage" | "chalet" | "jumele" | "maison_rangee"
+  | "split_level" | "shoebox" | "bi_generation" | "unifamiliale_autre"
+  | "condo_divise" | "condo_indivise"
+  | "duplex" | "triplex" | "plex" | "immeuble_revenus";
+
+interface PropertyTypeDetection {
+  family: PropertyFamily;
+  type: PropertyTypeSlug;
+}
+
+const PROPERTY_TYPE_KEYWORDS: Array<{ type: PropertyTypeSlug; family: PropertyFamily; keywords: string[] }> = [
+  { type: "bungalow", family: "single_family", keywords: ["bungalow", "plain-pied", "plain pied", "maison plain-pied"] },
+  { type: "cottage", family: "single_family", keywords: ["cottage", "maison a etages", "maison deux etages", "maison 2 etages"] },
+  { type: "chalet", family: "single_family", keywords: ["chalet", "chalet 4 saisons", "chalet 3 saisons"] },
+  { type: "jumele", family: "single_family", keywords: ["jumele", "maison jumelee"] },
+  { type: "maison_rangee", family: "single_family", keywords: ["maison en rangee", "maison de ville", "townhouse"] },
+  { type: "split_level", family: "single_family", keywords: ["split level", "split-level", "niveau partage"] },
+  { type: "shoebox", family: "single_family", keywords: ["shoebox"] },
+  { type: "bi_generation", family: "single_family", keywords: ["bi-generation", "bigeneration", "intergeneration", "maison intergeneration", "intergenerationnelle", "bi generation"] },
+  { type: "condo_divise", family: "condominium_strata", keywords: ["condo divise", "condo", "copropriete", "copropriete divise", "condominium"] },
+  { type: "condo_indivise", family: "condominium_strata", keywords: ["condo indivise", "copropriete indivise", "indivis"] },
+  { type: "duplex", family: "multi_family", keywords: ["duplex", "2 logements"] },
+  { type: "triplex", family: "multi_family", keywords: ["triplex", "3 logements"] },
+  { type: "plex", family: "multi_family", keywords: ["plex", "4plex", "5plex", "6plex", "quadruplex"] },
+  { type: "immeuble_revenus", family: "multi_family", keywords: ["immeuble a revenus", "immeuble locatif", "immeuble a logements", "immeuble 4 logements", "multilogement 4", "immeuble revenus", "6 logements", "8 logements", "12 logements"] },
+];
+
+export const detectPropertyType = (message: string): PropertyTypeDetection | null => {
+  const lower = message.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  let bestMatch: PropertyTypeDetection | null = null;
+  let bestScore = 0;
+
+  for (const entry of PROPERTY_TYPE_KEYWORDS) {
+    let score = 0;
+    for (const kw of entry.keywords) {
+      const normalizedKw = kw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (lower.includes(normalizedKw)) score++;
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = { family: entry.family, type: entry.type };
+    }
+  }
+
+  return bestMatch;
+};
+
 export const detectCategory = (message: string): string | null => {
   const lower = message.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
