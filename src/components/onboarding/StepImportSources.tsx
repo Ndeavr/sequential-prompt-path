@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Globe, MapPin, Facebook, Instagram, Phone, Building2, ArrowRight, Shield, Sparkles, Search, Zap } from "lucide-react";
+import { Globe, MapPin, Facebook, Instagram, Phone, ArrowRight, Shield, Sparkles, Search, Zap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PremiumMagneticButton } from "@/components/ui/PremiumMagneticButton";
@@ -32,7 +32,7 @@ export default function StepImportSources({ onImport, onManual }: Props) {
   const sources = [
     { icon: MapPin, label: "Google", color: "text-red-400", bg: "bg-red-400/10", active: !!form.googleUrl },
     { icon: Facebook, label: "Facebook", color: "text-blue-400", bg: "bg-blue-400/10", active: !!form.facebookUrl },
-    { icon: Globe, label: "Website", color: "text-accent", bg: "bg-accent/10", active: !!form.website },
+    { icon: Globe, label: "Site web", color: "text-accent", bg: "bg-accent/10", active: !!form.website },
     { icon: Instagram, label: "Instagram", color: "text-pink-400", bg: "bg-pink-400/10", active: !!form.instagramUrl },
   ];
 
@@ -48,20 +48,20 @@ export default function StepImportSources({ onImport, onManual }: Props) {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold tracking-wide uppercase"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            AI-Powered Import
+            Importation intelligente
           </motion.div>
           <h1 className="text-3xl sm:text-4xl font-bold font-display tracking-tight text-foreground leading-[1.15]">
-            Import your<br />
+            Importez votre<br />
             <span className="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-              business presence
+              présence en ligne
             </span>
           </h1>
           <p className="text-muted-foreground text-sm max-w-sm mx-auto leading-relaxed">
-            We'll retrieve what already exists online, build your profile, calculate your AIPP score, and show your best growth path.
+            On récupère ce qui existe déjà en ligne, on construit votre profil, on calcule votre score AIPP et on vous montre votre meilleur chemin de croissance.
           </p>
         </motion.div>
 
-        {/* Source icons — animated connection indicators */}
+        {/* Source icons */}
         <motion.div {...fadeUp} transition={{ delay: 0.2 }} className="flex justify-center gap-3">
           {sources.map((s, i) => (
             <motion.div
@@ -91,17 +91,17 @@ export default function StepImportSources({ onImport, onManual }: Props) {
               onChange={(v) => set("businessName", v)}
               onBusinessSelected={handleBusinessSelected}
               label=""
-              placeholder="Business name *"
+              placeholder="Nom de l'entreprise *"
               minChars={3}
             />
             <div className="h-px bg-border/30 my-1" />
-            <FieldRow icon={Globe} placeholder="Website URL" value={form.website} onChange={v => set("website", v)} focused={focused === "web"} onFocus={() => setFocused("web")} onBlur={() => setFocused(null)} />
-            <FieldRow icon={MapPin} placeholder="Google Business Profile URL" value={form.googleUrl} onChange={v => set("googleUrl", v)} focused={focused === "google"} onFocus={() => setFocused("google")} onBlur={() => setFocused(null)} />
-            <FieldRow icon={Facebook} placeholder="Facebook Page URL" value={form.facebookUrl} onChange={v => set("facebookUrl", v)} focused={focused === "fb"} onFocus={() => setFocused("fb")} onBlur={() => setFocused(null)} />
-            <FieldRow icon={Instagram} placeholder="Instagram URL (optional)" value={form.instagramUrl} onChange={v => set("instagramUrl", v)} focused={focused === "ig"} onFocus={() => setFocused("ig")} onBlur={() => setFocused(null)} />
+            <FieldRow icon={Globe} placeholder="URL du site web" value={form.website} onChange={v => set("website", v)} focused={focused === "web"} onFocus={() => setFocused("web")} onBlur={() => setFocused(null)} />
+            <FieldRow icon={MapPin} placeholder="URL du profil Google Business" value={form.googleUrl} onChange={v => set("googleUrl", v)} focused={focused === "google"} onFocus={() => setFocused("google")} onBlur={() => setFocused(null)} />
+            <FieldRow icon={Facebook} placeholder="URL de la page Facebook" value={form.facebookUrl} onChange={v => set("facebookUrl", v)} focused={focused === "fb"} onFocus={() => setFocused("fb")} onBlur={() => setFocused(null)} />
+            <FieldRow icon={Instagram} placeholder="URL Instagram (optionnel)" value={form.instagramUrl} onChange={v => set("instagramUrl", v)} focused={focused === "ig"} onFocus={() => setFocused("ig")} onBlur={() => setFocused(null)} />
             <div className="h-px bg-border/30 my-1" />
-            <FieldRow icon={Phone} placeholder="Phone number (optional)" value={form.phone} onChange={v => set("phone", v)} focused={focused === "phone"} onFocus={() => setFocused("phone")} onBlur={() => setFocused(null)} />
-            <FieldRow icon={Search} placeholder="City / main service area" value={form.city} onChange={v => set("city", v)} focused={focused === "city"} onFocus={() => setFocused("city")} onBlur={() => setFocused(null)} />
+            <FieldRow icon={Phone} placeholder="Numéro de téléphone (optionnel)" value={form.phone} onChange={v => set("phone", v)} focused={focused === "phone"} onFocus={() => setFocused("phone")} onBlur={() => setFocused(null)} />
+            <FieldRow icon={Search} placeholder="Ville / zone de service principale" value={form.city} onChange={v => set("city", v)} focused={focused === "city"} onFocus={() => setFocused("city")} onBlur={() => setFocused(null)} />
           </div>
         </motion.div>
 
@@ -116,10 +116,10 @@ export default function StepImportSources({ onImport, onManual }: Props) {
             className="h-13 text-base font-semibold"
           >
             <Zap className="w-4 h-4" />
-            Import & Analyze
+            Importer et analyser
           </PremiumMagneticButton>
           <Button variant="ghost" onClick={onManual} className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors">
-            I'll fill it manually →
+            Je préfère remplir manuellement →
           </Button>
         </motion.div>
 
@@ -127,12 +127,12 @@ export default function StepImportSources({ onImport, onManual }: Props) {
         <motion.div {...fadeUp} transition={{ delay: 0.6 }} className="flex flex-col items-center gap-3">
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground/70">
             <Shield className="w-3.5 h-3.5 text-success/70" />
-            <span>We only retrieve public business information needed to build your profile.</span>
+            <span>Nous récupérons uniquement les informations publiques nécessaires pour créer votre profil.</span>
           </div>
           <div className="flex items-center gap-4 text-[10px] text-muted-foreground/50">
-            <span>🔒 Encrypted</span>
-            <span>⚡ 30-second scan</span>
-            <span>✓ No access required</span>
+            <span>🔒 Chiffré</span>
+            <span>⚡ Analyse en 30 secondes</span>
+            <span>✓ Aucun accès requis</span>
           </div>
         </motion.div>
       </div>
@@ -140,9 +140,9 @@ export default function StepImportSources({ onImport, onManual }: Props) {
   );
 }
 
-function FieldRow({ icon: Icon, placeholder, value, onChange, focused, onFocus, onBlur, highlight }: {
+function FieldRow({ icon: Icon, placeholder, value, onChange, focused, onFocus, onBlur }: {
   icon: any; placeholder: string; value: string; onChange: (v: string) => void;
-  focused?: boolean; onFocus?: () => void; onBlur?: () => void; highlight?: boolean;
+  focused?: boolean; onFocus?: () => void; onBlur?: () => void;
 }) {
   return (
     <div className={`relative transition-all duration-200 rounded-xl ${focused ? "ring-1 ring-primary/30" : ""}`}>
@@ -153,7 +153,7 @@ function FieldRow({ icon: Icon, placeholder, value, onChange, focused, onFocus, 
         onFocus={onFocus}
         onBlur={onBlur}
         placeholder={placeholder}
-        className={`pl-10 h-11 border-0 bg-muted/20 rounded-xl text-sm placeholder:text-muted-foreground/40 focus-visible:ring-0 focus-visible:bg-muted/30 transition-colors ${highlight && !value ? "bg-muted/30" : ""}`}
+        className={`pl-10 h-11 border-0 bg-muted/20 rounded-xl text-sm placeholder:text-muted-foreground/40 focus-visible:ring-0 focus-visible:bg-muted/30 transition-colors`}
       />
       {value && (
         <motion.div

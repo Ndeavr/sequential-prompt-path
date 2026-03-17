@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Lock, CreditCard, ChevronRight, Shield, Check, Sparkles, ArrowRight, Award, Clock } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Lock, ChevronRight, Shield, Check, Sparkles, ArrowRight, Award, Clock, ExternalLink } from "lucide-react";
 import { PremiumMagneticButton } from "@/components/ui/PremiumMagneticButton";
 
 interface Props {
@@ -15,11 +13,11 @@ interface Props {
 }
 
 const addOns = [
-  { id: "city-pages", label: "Extra city pages", desc: "Expand to more cities", price: 29 },
-  { id: "review-campaign", label: "Review campaign", desc: "Automated review collection", price: 49 },
-  { id: "photo-enhance", label: "Photo enhancement", desc: "AI-optimized portfolio", price: 39 },
-  { id: "logo-redesign", label: "Logo redesign", desc: "Professional brand refresh", price: 149 },
-  { id: "faq-pack", label: "Authority FAQ pack", desc: "SEO-rich FAQ content", price: 59 },
+  { id: "city-pages", label: "Pages ville supplémentaires", desc: "Étendez votre présence à plus de villes", price: 29 },
+  { id: "review-campaign", label: "Campagne d'avis", desc: "Collecte automatisée d'avis clients", price: 49 },
+  { id: "photo-enhance", label: "Amélioration photos", desc: "Portfolio optimisé par IA", price: 39 },
+  { id: "logo-redesign", label: "Refonte du logo", desc: "Image de marque professionnelle", price: 149 },
+  { id: "faq-pack", label: "Pack FAQ Autorité", desc: "Contenu FAQ optimisé pour le SEO", price: 59 },
 ];
 
 export default function StepPayment({ planName, price, interval, aippScore, objective, onPay }: Props) {
@@ -35,10 +33,10 @@ export default function StepPayment({ planName, price, interval, aippScore, obje
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/10 border border-success/20 text-success text-xs font-semibold uppercase tracking-wide">
-            <Lock className="w-3 h-3" /> Secure Checkout
+            <Lock className="w-3 h-3" /> Paiement sécurisé
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold font-display text-foreground">
-            Complete Your Order
+            Finalisez votre commande
           </h2>
         </motion.div>
 
@@ -47,12 +45,12 @@ export default function StepPayment({ planName, price, interval, aippScore, obje
           className="rounded-2xl border border-border/40 bg-gradient-to-br from-card/60 to-primary/[0.03] backdrop-blur-xl p-5 space-y-4 shadow-[var(--shadow-lg)]">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-base font-bold text-foreground">{planName} Plan</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{interval === "year" ? "Annual billing" : "Monthly billing"}</p>
+              <p className="text-base font-bold text-foreground">Plan {planName}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{interval === "year" ? "Facturation annuelle" : "Facturation mensuelle"}</p>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-foreground">${price}</p>
-              <p className="text-[10px] text-muted-foreground">/{interval === "month" ? "mo" : "yr"}</p>
+              <p className="text-2xl font-bold text-foreground">{price}$</p>
+              <p className="text-[10px] text-muted-foreground">/{interval === "month" ? "mois" : "an"}</p>
             </div>
           </div>
           <div className="h-px bg-border/20" />
@@ -60,7 +58,7 @@ export default function StepPayment({ planName, price, interval, aippScore, obje
             <div className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/10 border border-border/20">
               <Award className="w-4 h-4 text-primary" />
               <div>
-                <p className="text-[10px] text-muted-foreground">AIPP Score</p>
+                <p className="text-[10px] text-muted-foreground">Score AIPP</p>
                 <p className="text-xs font-bold text-foreground">{aippScore} → <span className="text-success">{targetAipp}</span></p>
               </div>
             </div>
@@ -68,7 +66,7 @@ export default function StepPayment({ planName, price, interval, aippScore, obje
               <Clock className="w-4 h-4 text-accent" />
               <div>
                 <p className="text-[10px] text-muted-foreground">Activation</p>
-                <p className="text-xs font-bold text-foreground">Immediate</p>
+                <p className="text-xs font-bold text-foreground">Immédiate</p>
               </div>
             </div>
           </div>
@@ -78,7 +76,7 @@ export default function StepPayment({ planName, price, interval, aippScore, obje
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
           className="rounded-xl border border-border/30 bg-card/30 backdrop-blur-sm p-4 space-y-2.5">
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-            <Sparkles className="w-3 h-3 text-primary" /> Optional Add-ons
+            <Sparkles className="w-3 h-3 text-primary" /> Options supplémentaires
           </p>
           {addOns.map(addon => (
             <button key={addon.id} onClick={() => toggleAddOn(addon.id)}
@@ -98,45 +96,30 @@ export default function StepPayment({ planName, price, interval, aippScore, obje
                 <span className="text-sm font-medium text-foreground">{addon.label}</span>
                 <p className="text-[10px] text-muted-foreground/60">{addon.desc}</p>
               </div>
-              <span className="text-sm font-semibold text-muted-foreground">+${addon.price}</span>
+              <span className="text-sm font-semibold text-muted-foreground">+{addon.price}$</span>
             </button>
           ))}
-        </motion.div>
-
-        {/* Payment fields */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-          className="rounded-xl border border-border/30 bg-card/30 backdrop-blur-sm p-4 space-y-3">
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Payment Details</p>
-          <div className="grid grid-cols-2 gap-3">
-            <Input placeholder="Business name" className="h-11 bg-muted/10 border-border/20 rounded-xl text-sm focus-visible:ring-1 focus-visible:ring-primary/30" />
-            <Input placeholder="Contact name" className="h-11 bg-muted/10 border-border/20 rounded-xl text-sm focus-visible:ring-1 focus-visible:ring-primary/30" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Input placeholder="Email" className="h-11 bg-muted/10 border-border/20 rounded-xl text-sm focus-visible:ring-1 focus-visible:ring-primary/30" />
-            <Input placeholder="Phone" className="h-11 bg-muted/10 border-border/20 rounded-xl text-sm focus-visible:ring-1 focus-visible:ring-primary/30" />
-          </div>
-          <Input placeholder="Postal code" className="h-11 bg-muted/10 border-border/20 rounded-xl text-sm focus-visible:ring-1 focus-visible:ring-primary/30" />
-          <div className="h-px bg-border/20 my-1" />
-          <div className="relative">
-            <CreditCard className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
-            <Input placeholder="Card number" className="pl-10 h-11 bg-muted/10 border-border/20 rounded-xl text-sm focus-visible:ring-1 focus-visible:ring-primary/30" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Input placeholder="MM / YY" className="h-11 bg-muted/10 border-border/20 rounded-xl text-sm focus-visible:ring-1 focus-visible:ring-primary/30" />
-            <Input placeholder="CVC" className="h-11 bg-muted/10 border-border/20 rounded-xl text-sm focus-visible:ring-1 focus-visible:ring-primary/30" />
-          </div>
         </motion.div>
 
         {/* Total + CTA */}
         <div className="rounded-xl border border-border/30 bg-card/30 p-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-muted-foreground">Total today</p>
-            <p className="text-2xl font-bold text-foreground">${total}<span className="text-sm text-muted-foreground font-normal">/{interval === "month" ? "mo" : "yr"}</span></p>
+            <p className="text-xs text-muted-foreground">Total aujourd'hui</p>
+            <p className="text-2xl font-bold text-foreground">{total}$<span className="text-sm text-muted-foreground font-normal">/{interval === "month" ? "mois" : "an"}</span></p>
           </div>
           {selectedAddOns.length > 0 && (
-            <p className="text-[10px] text-muted-foreground">+{selectedAddOns.length} add-on{selectedAddOns.length > 1 ? "s" : ""}</p>
+            <p className="text-[10px] text-muted-foreground">+{selectedAddOns.length} option{selectedAddOns.length > 1 ? "s" : ""}</p>
           )}
         </div>
+
+        {/* Stripe Checkout info */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+          className="rounded-xl border border-accent/20 bg-accent/[0.04] p-3.5 flex items-start gap-3">
+          <ExternalLink className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Vous serez redirigé vers notre page de paiement sécurisée Stripe pour compléter votre achat.
+          </p>
+        </motion.div>
 
         <PremiumMagneticButton
           onReleaseAction={onPay}
@@ -146,15 +129,15 @@ export default function StepPayment({ planName, price, interval, aippScore, obje
           className="h-14 text-base font-bold"
         >
           <Lock className="w-4 h-4" />
-          Pay & Activate Now
+          Payer et activer maintenant
         </PremiumMagneticButton>
 
         {/* Trust signals */}
         <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[10px] text-muted-foreground/50 pb-4">
-          <span className="inline-flex items-center gap-1"><Shield className="w-3 h-3 text-success/50" /> 256-bit encryption</span>
-          <span className="inline-flex items-center gap-1"><Check className="w-3 h-3" /> Cancel anytime</span>
-          <span className="inline-flex items-center gap-1"><Sparkles className="w-3 h-3" /> Instant activation</span>
-          <span className="inline-flex items-center gap-1"><Clock className="w-3 h-3" /> 30-day guarantee</span>
+          <span className="inline-flex items-center gap-1"><Shield className="w-3 h-3 text-success/50" /> Chiffrement 256-bit</span>
+          <span className="inline-flex items-center gap-1"><Check className="w-3 h-3" /> Annulation sans frais</span>
+          <span className="inline-flex items-center gap-1"><Sparkles className="w-3 h-3" /> Activation instantanée</span>
+          <span className="inline-flex items-center gap-1"><Clock className="w-3 h-3" /> Garantie 30 jours</span>
         </div>
       </div>
     </div>

@@ -9,12 +9,12 @@ interface Props {
 }
 
 const statusConfig: Record<string, { icon: any; color: string; bg: string; label: string }> = {
-  waiting: { icon: Clock, color: "text-muted-foreground/50", bg: "bg-muted/20", label: "Waiting" },
-  scanning: { icon: Loader2, color: "text-accent", bg: "bg-accent/10", label: "Scanning" },
-  found: { icon: Check, color: "text-success", bg: "bg-success/10", label: "Found" },
-  completed: { icon: Check, color: "text-success", bg: "bg-success/10", label: "Complete" },
-  partial: { icon: AlertTriangle, color: "text-warning", bg: "bg-warning/10", label: "Partial" },
-  missing: { icon: X, color: "text-destructive/70", bg: "bg-destructive/10", label: "Missing" },
+  waiting: { icon: Clock, color: "text-muted-foreground/50", bg: "bg-muted/20", label: "En attente" },
+  scanning: { icon: Loader2, color: "text-accent", bg: "bg-accent/10", label: "Analyse" },
+  found: { icon: Check, color: "text-success", bg: "bg-success/10", label: "Trouvé" },
+  completed: { icon: Check, color: "text-success", bg: "bg-success/10", label: "Complété" },
+  partial: { icon: AlertTriangle, color: "text-warning", bg: "bg-warning/10", label: "Partiel" },
+  missing: { icon: X, color: "text-destructive/70", bg: "bg-destructive/10", label: "Absent" },
 };
 
 const moduleIcons: Record<string, any> = {
@@ -64,7 +64,7 @@ export default function StepRetrieval({ modules, overallProgress }: Props) {
               >
                 {overallProgress}%
               </motion.span>
-              <span className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground font-medium mt-0.5">Scanning</span>
+              <span className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground font-medium mt-0.5">Analyse</span>
             </div>
             {/* Orbiting dot */}
             <motion.div
@@ -84,7 +84,7 @@ export default function StepRetrieval({ modules, overallProgress }: Props) {
               exit={{ opacity: 0, y: -8 }}
               className="text-sm text-muted-foreground text-center font-medium"
             >
-              {currentMsg || "Preparing analysis…"}
+              {currentMsg || "Préparation de l'analyse…"}
             </motion.p>
           </AnimatePresence>
 
@@ -92,15 +92,15 @@ export default function StepRetrieval({ modules, overallProgress }: Props) {
           <div className="flex items-center gap-6 text-xs">
             <div className="flex items-center gap-1.5 text-success">
               <span className="w-1.5 h-1.5 rounded-full bg-success" />
-              {completedCount} found
+              {completedCount} trouvé{completedCount > 1 ? "s" : ""}
             </div>
             <div className="flex items-center gap-1.5 text-accent">
               <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-              {modules.filter(m => m.status === "scanning").length} scanning
+              {modules.filter(m => m.status === "scanning").length} en cours
             </div>
             <div className="flex items-center gap-1.5 text-muted-foreground/50">
               <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
-              {modules.filter(m => m.status === "waiting").length} pending
+              {modules.filter(m => m.status === "waiting").length} en attente
             </div>
           </div>
         </motion.div>
@@ -187,7 +187,7 @@ export default function StepRetrieval({ modules, overallProgress }: Props) {
           transition={{ delay: 1 }}
           className="text-center text-[10px] text-muted-foreground/40"
         >
-          🔒 All data is encrypted and only used to build your UNPRO profile
+          🔒 Toutes les données sont chiffrées et utilisées uniquement pour créer votre profil UNPRO
         </motion.div>
       </div>
     </div>
