@@ -342,7 +342,7 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
             className="pb-3"
           >
             <div className="flex flex-wrap gap-1.5">
-              {EDITABLE_ZONES.map((zone) => (
+              {(roomType && ZONES_BY_ROOM[roomType] ? ZONES_BY_ROOM[roomType] : EDITABLE_ZONES).map((zone) => (
                 <button
                   key={zone}
                   onClick={() => toggleZone(zone)}
