@@ -94,6 +94,11 @@ export default function EmergencyPage() {
       return;
     }
 
+    if (!fullName.trim()) {
+      toast({ title: "Nom requis", description: "Veuillez entrer votre nom complet.", variant: "destructive" });
+      return;
+    }
+
     setStep("submitting");
 
     try {
