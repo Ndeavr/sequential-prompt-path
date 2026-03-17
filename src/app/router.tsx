@@ -211,6 +211,7 @@ export const AppRouter = () => (
       <Route path="/analyser-document" element={<AnalyzeDocumentPage />} />
       <Route path="/verifier-:tradeSlug/:citySlug" element={<VerificationSeoPage />} />
       <Route path="/qr/:token" element={<QrScanPage />} />
+      <Route path="/r/:refCode" element={<ReferralLandingPage />} />
 
       {/* Public Property Page */}
       <Route path="/maison/:slug" element={<PublicPropertyPage />} />
