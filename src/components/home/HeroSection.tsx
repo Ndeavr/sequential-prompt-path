@@ -155,32 +155,31 @@ export default function HeroSection() {
 
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-8 md:px-10 md:pt-12">
           <div className="relative md:grid md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8 md:items-start">
-            {/* Mobile background image — pushed right & behind text */}
-            <div className="absolute top-0 right-0 w-[62%] h-[360px] md:hidden pointer-events-none">
+            {/* Mobile background image — full-width, organic dissolve */}
+            <div className="absolute top-0 left-0 right-0 h-[480px] md:hidden pointer-events-none">
               <AnimatePresence mode="wait">
                 <motion.img key={current.image} src={current.image} alt={current.action}
-                  className="w-full h-full object-cover rounded-[20px]" loading="eager"
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  transition={{ duration: 0.9, ease: "easeInOut" }}
+                  className="w-full h-full object-cover" loading="eager"
+                  initial={{ opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ duration: 1.1, ease: "easeInOut" }}
                 />
               </AnimatePresence>
-              {/* Irregular dissolve */}
-              <div className="absolute inset-0 rounded-[20px]"
+              {/* Organic multi-layer dissolve — left for text readability */}
+              <div className="absolute inset-0"
                 style={{
                   background: `
-                    linear-gradient(95deg, hsl(213 60% 97%) 0%, hsl(213 60% 97% / 0.92) 12%, hsl(213 60% 97% / 0.6) 25%, hsl(213 60% 97% / 0.15) 45%, transparent 65%),
-                    linear-gradient(130deg, hsl(213 60% 97% / 0.85) 0%, hsl(213 60% 97% / 0.4) 18%, transparent 40%),
-                    linear-gradient(75deg, hsl(213 60% 97% / 0.7) 0%, transparent 30%),
-                    linear-gradient(to bottom, transparent 50%, hsl(213 60% 97% / 0.7) 75%, hsl(213 60% 97%) 95%),
-                    linear-gradient(to top, transparent 70%, hsl(213 60% 97% / 0.4) 90%, hsl(213 60% 97%) 100%)
+                    radial-gradient(ellipse 70% 60% at 15% 50%, hsl(213 60% 97%) 0%, hsl(213 60% 97% / 0.85) 30%, transparent 70%),
+                    linear-gradient(105deg, hsl(213 60% 97%) 0%, hsl(213 60% 97% / 0.9) 15%, hsl(213 60% 97% / 0.5) 30%, transparent 55%),
+                    linear-gradient(to bottom, transparent 40%, hsl(213 60% 97% / 0.4) 60%, hsl(213 60% 97% / 0.85) 78%, hsl(213 60% 97%) 92%),
+                    linear-gradient(to top, transparent 80%, hsl(213 60% 97% / 0.5) 92%, hsl(213 60% 97%) 100%)
                   `
                 }}
               />
-              {/* Robot at bottom of image */}
+              {/* Robot floating at top-right */}
               <motion.img src={unproRobot} alt="Alex UNPRO"
-                className="absolute right-2 -bottom-[12px] w-[90px] drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)]"
-                animate={{ y: [0, -6, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute right-4 top-3 w-[72px] z-30 drop-shadow-[0_6px_20px_rgba(63,123,255,0.25)]"
+                animate={{ y: [0, -8, 0], rotate: [0, 3, -2, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               />
             </div>
 
