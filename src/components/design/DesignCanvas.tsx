@@ -203,7 +203,7 @@ export default function DesignCanvas({
                     </div>
                   )}
                 </div>
-            </motion.div>
+              )
           ) : (
             <motion.div
               key="empty"
