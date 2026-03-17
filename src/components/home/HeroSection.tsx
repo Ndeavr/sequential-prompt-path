@@ -177,7 +177,7 @@ export default function HeroSection() {
             {/* Robot — ON TOP of everything, bottom-right of image area */}
             <motion.img src={unproRobot} alt="Alex UNPRO"
               className="absolute md:hidden z-50 w-[100px] drop-shadow-[0_6px_20px_rgba(63,123,255,0.25)]"
-              style={{ top: "calc(75vw - 130px)", right: "4px" }}
+              style={{ top: "calc(75vw - 100px)", right: "12px" }}
               animate={{ y: [0, -8, 0], rotate: [0, 3, -2, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             />
