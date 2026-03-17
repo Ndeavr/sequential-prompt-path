@@ -187,7 +187,7 @@ export default function StepRetrieval({ modules, overallProgress }: Props) {
           transition={{ delay: 1 }}
           className="text-center text-[10px] text-muted-foreground/40"
         >
-          🔒 All data is encrypted and only used to build your UNPRO profile
+          🔒 Toutes les données sont chiffrées et utilisées uniquement pour créer votre profil UNPRO
         </motion.div>
       </div>
     </div>
