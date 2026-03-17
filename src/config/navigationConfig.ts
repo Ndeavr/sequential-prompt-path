@@ -88,6 +88,7 @@ export const subNavConfig: Record<string, NavItem[]> = {
     { to: "/proprietaires", label: "Aperçu", labelEn: "Overview", icon: "Home" },
     { to: "/proprietaires/passeport-maison", label: "Passeport Maison", icon: "FileText" },
     { to: "/proprietaires/score-maison", label: "Score Maison", icon: "BarChart3" },
+    { to: "/design", label: "UNPRO Design", icon: "Palette" },
     { to: "/proprietaires/analyser-soumissions", label: "Analyser mes soumissions", labelEn: "Analyze My Quotes", icon: "Scale" },
     { to: "/proprietaires/verifier-entrepreneur", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", icon: "ShieldCheck" },
   ],
