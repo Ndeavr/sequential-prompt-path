@@ -115,7 +115,7 @@ export default function DesignWorkspace({
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex min-h-0">
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
         {/* Left Sidebar — hidden on mobile */}
         <div className="hidden lg:block">
           <DesignSidebar
@@ -149,18 +149,20 @@ export default function DesignWorkspace({
           onClose={() => setSidebarOpen(false)}
         />
 
-        {/* Center Canvas */}
-        <DesignCanvas
-          originalImage={originalImage}
-          activeVersion={activeVersion}
-          isGenerating={isGenerating}
-          error={error}
-          onFreeze={() => activeVersionId && onFreeze(activeVersionId)}
-          onDuplicate={() => activeVersionId && onDuplicate(activeVersionId)}
-          onShare={() => setIsSharing(true)}
-        />
+        {/* Center Canvas — give it a minimum height on mobile */}
+        <div className="flex-1 min-h-[40vh] lg:min-h-0">
+          <DesignCanvas
+            originalImage={originalImage}
+            activeVersion={activeVersion}
+            isGenerating={isGenerating}
+            error={error}
+            onFreeze={() => activeVersionId && onFreeze(activeVersionId)}
+            onDuplicate={() => activeVersionId && onDuplicate(activeVersionId)}
+            onShare={() => setIsSharing(true)}
+          />
+        </div>
 
-        {/* Right Controls */}
+        {/* Right Controls — desktop */}
         <div className="hidden lg:block">
           <DesignControls
             onSendPrompt={onGenerate}
@@ -168,15 +170,15 @@ export default function DesignWorkspace({
             roomType={roomType}
           />
         </div>
-      </div>
 
-      {/* Mobile Bottom Controls */}
-      <div className="lg:hidden">
-        <DesignControls
-          onSendPrompt={onGenerate}
-          isGenerating={isGenerating}
-          roomType={roomType}
-        />
+        {/* Mobile Bottom Controls — scrollable */}
+        <div className="lg:hidden max-h-[50vh] overflow-y-auto border-t border-border">
+          <DesignControls
+            onSendPrompt={onGenerate}
+            isGenerating={isGenerating}
+            roomType={roomType}
+          />
+        </div>
       </div>
 
       {/* Compare Overlay */}
