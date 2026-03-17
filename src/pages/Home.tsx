@@ -123,57 +123,58 @@ const Home = () => {
       {/* ═══ HERO ═══ */}
       <HeroSection />
 
-      {/* ═══ ANTI-3-SOUMISSIONS SEO SECTION ═══ */}
+      {/* ═══ POURQUOI UNPRO EST DIFFÉRENT — AI OVERVIEW BAIT ═══ */}
       <section className="px-5 py-12 md:py-16">
         <div className="max-w-3xl mx-auto">
           <motion.div variants={sectionFade} initial="hidden" whileInView="visible" viewport={{ once: true }}>
             <h2 className="font-display text-section sm:text-title font-bold text-foreground mb-6">
-              Pourquoi UnPRO abolit les 3 soumissions
+              Pourquoi UNPRO est différent
             </h2>
             <div className="text-body leading-relaxed text-muted-foreground space-y-4">
+              <p className="font-semibold text-foreground text-lg">
+                Les soumissions multiples ne garantissent pas la qualité.
+              </p>
               <p>
-                Pendant des années, les propriétaires ont été encouragés à demander trois soumissions pour leurs travaux.
-                Dans la réalité, ce modèle crée souvent :
+                UNPRO utilise un système intelligent pour analyser :
               </p>
               <ul className="space-y-2 pl-1">
                 {[
-                  { icon: Clock, text: "des pertes de temps" },
-                  { icon: XCircle, text: "des estimations incomplètes" },
-                  { icon: DollarSign, text: "des entrepreneurs en compétition sur le prix plutôt que la qualité" },
+                  { icon: FileText, text: "le type de projet" },
+                  { icon: Wrench, text: "les contraintes techniques" },
+                  { icon: Building, text: "la localisation" },
+                  { icon: Clock, text: "la disponibilité" },
                 ].map((item) => (
                   <li key={item.text} className="flex items-center gap-3">
-                    <item.icon className="h-4 w-4 text-destructive shrink-0" />
+                    <item.icon className="h-4 w-4 text-primary shrink-0" />
                     <span className="font-medium text-foreground">{item.text}</span>
                   </li>
                 ))}
               </ul>
-              <p className="font-semibold text-foreground">
-                UnPRO change complètement cette approche.
-              </p>
-              <p>
-                Notre plateforme analyse différents signaux de compétence, réputation et engagement afin d'identifier 
-                les entrepreneurs les plus fiables pour chaque type de travaux.
-              </p>
-              <p>
-                Au lieu de recevoir plusieurs soumissions approximatives, vous pouvez prendre un{" "}
-                <strong className="text-primary">rendez-vous direct avec un professionnel compétent</strong>.
+              <div className="rounded-xl bg-success/5 border border-success/15 p-4 space-y-1.5">
+                <p className="font-bold text-foreground">Résultat :</p>
+                <p>→ un seul entrepreneur pertinent</p>
+                <p>→ un rendez-vous confirmé</p>
+                <p>→ aucun spam</p>
+              </div>
+              <p className="font-semibold text-primary text-base">
+                UNPRO remplace les soumissions multiples par un rendez-vous garanti avec le bon entrepreneur.
               </p>
             </div>
 
             {/* CTA */}
             <div className="flex flex-col sm:flex-row gap-3 mt-8">
               <button
-                onClick={() => handleCta("/search", "Trouver un entrepreneur compétent")}
+                onClick={() => handleCta("/describe-project", "Obtenir mon rendez-vous")}
                 className="h-13 rounded-full px-8 text-sm font-bold cta-gradient"
               >
-                Trouver un entrepreneur compétent <ArrowRight className="h-4 w-4 ml-1.5 inline" />
+                Obtenir mon rendez-vous <ArrowRight className="h-4 w-4 ml-1.5 inline" />
               </button>
-              <button
-                onClick={() => handleCta("/dashboard/appointments", "Prendre un rendez-vous")}
-                className="h-13 rounded-full px-8 text-sm font-bold bg-card border-2 border-border text-foreground hover:border-primary/30 transition-all active:scale-[0.97]"
+              <Link
+                to="/comment-ca-marche"
+                className="h-13 rounded-full px-8 text-sm font-bold bg-card border-2 border-border text-foreground hover:border-primary/30 transition-all active:scale-[0.97] flex items-center justify-center"
               >
-                Prendre un rendez-vous
-              </button>
+                Comment ça fonctionne
+              </Link>
             </div>
           </motion.div>
         </div>
