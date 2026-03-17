@@ -249,11 +249,14 @@ export default function HeroSection() {
               <div className="relative z-30 md:mt-5 rounded-2xl bg-card/95 backdrop-blur-md p-4 max-w-[420px] shadow-soft"
                 style={{ marginTop: "calc(75vw - 240px)" }}
               >
+                <p className="text-sm md:text-base font-medium mb-3" style={{ color: "#3A4A63" }}>
+                  Arrêtez de comparer 3 soumissions. UNPRO vous connecte directement au bon professionnel.
+                </p>
                 <ul className="space-y-2">
                   {[
-                    "Rendez-vous exclusif avec un professionnel",
-                    "Entrepreneurs analysés selon leur réputation et expertise",
-                    "Diagnostic clair pour votre propriété",
+                    "Rendez-vous garanti avec un entrepreneur vérifié",
+                    "Jumelage précis selon votre projet",
+                    "Aucun spam, aucun comparatif inutile",
                   ].map((point) => (
                     <li key={point} className="flex items-start gap-2 text-sm md:text-base" style={{ color: "#3A4A63" }}>
                       <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-primary" />

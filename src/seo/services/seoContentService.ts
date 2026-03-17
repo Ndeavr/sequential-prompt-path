@@ -42,13 +42,13 @@ export function buildServiceLocationPage(
   const city = getCityBySlug(citySlug);
   if (!service || !city) return null;
 
-  const h1 = `${service.name} à ${city.name}`;
-  const metaTitle = `${service.name} à ${city.name} | Entrepreneurs vérifiés | UNPRO`;
-  const metaDescription = `Trouvez un entrepreneur en ${service.name.toLowerCase()} à ${city.name}. Comparez les soumissions, vérifiez les licences et obtenez le meilleur prix. ${city.region}, ${city.province}.`;
+  const h1 = `${service.name} à ${city.name} — Rendez-vous garanti`;
+  const metaTitle = `${service.name} ${city.name} — Rendez-vous garanti | Entrepreneur vérifié | UNPRO`;
+  const metaDescription = `Trouvez un entrepreneur fiable pour ${service.name.toLowerCase()} à ${city.name}. Aucun spam, aucun comparatif inutile. Rendez-vous confirmé avec un professionnel qualifié.`;
 
-  const intro = `Vous cherchez un professionnel en ${service.name.toLowerCase()} à ${city.name} ? ${service.shortDescription} Dans la région de ${city.region}, les conditions climatiques particulières (${city.climateTags.join(", ")}) rendent ce service d'autant plus important.`;
+  const intro = `Besoin d'un professionnel en ${service.name.toLowerCase()} à ${city.name} ? UNPRO remplace les soumissions multiples par un rendez-vous garanti avec le bon entrepreneur. ${service.shortDescription} Dans la région de ${city.region}, les conditions climatiques particulières (${city.climateTags.join(", ")}) rendent ce service d'autant plus important.`;
 
-  const localContext = `${city.housingHints} Dans la région de ${city.name}, les ${city.climateTags.join(" et ")} influencent directement les besoins en ${service.name.toLowerCase()}. Il est essentiel de choisir un entrepreneur qui connaît bien les particularités de la région.`;
+  const localContext = `${city.housingHints} Dans la région de ${city.name}, les ${city.climateTags.join(" et ")} influencent directement les besoins en ${service.name.toLowerCase()}. Notre système intelligent sélectionne un entrepreneur vérifié qui connaît les particularités de votre région.`;
 
   const faqs = getFaqsByTopics([service.contractorType, service.slug, "general"], 5);
 

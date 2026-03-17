@@ -691,23 +691,23 @@ const Home = () => {
                 <div className="h-14 w-14 mx-auto rounded-2xl flex items-center justify-center bg-gradient-to-br from-primary to-accent shadow-lg">
                   <Sparkles className="h-6 w-6 text-white" />
                 </div>
-                <h2 className="section-title">Tanné des 3 soumissions ?<br/>UnPRO change les règles.</h2>
+                <h2 className="section-title">Un seul entrepreneur. Le bon.<br/>Rendez-vous garanti.</h2>
                 <p className="text-body max-w-md mx-auto text-muted-foreground">
-                  Rendez-vous exclusif. Pas de compétition entre entrepreneurs. Pas de leads partagés.
+                  UNPRO remplace les soumissions multiples par un rendez-vous garanti avec le bon entrepreneur.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <button
-                    onClick={() => handleCta("/search", "Trouver un entrepreneur compétent")}
+                    onClick={() => handleCta("/describe-project", "Obtenir mon rendez-vous")}
                     className="h-13 rounded-full px-8 text-sm font-bold cta-gradient"
                   >
-                    Trouver un entrepreneur compétent <ArrowRight className="h-4 w-4 ml-1.5 inline" />
+                    Obtenir mon rendez-vous <ArrowRight className="h-4 w-4 ml-1.5 inline" />
                   </button>
-                  <button
-                    onClick={() => handleCta("/dashboard/appointments", "Prendre un rendez-vous")}
-                    className="h-13 rounded-full px-8 text-sm font-bold bg-card border-2 border-border text-foreground hover:border-primary/30 transition-all active:scale-[0.97]"
+                  <Link
+                    to="/comment-ca-marche"
+                    className="h-13 rounded-full px-8 text-sm font-bold bg-card border-2 border-border text-foreground hover:border-primary/30 transition-all active:scale-[0.97] flex items-center justify-center"
                   >
-                    Prendre un rendez-vous
-                  </button>
+                    Comment ça fonctionne
+                  </Link>
                 </div>
                 <div className="trust-row pt-2">
                   {[
