@@ -161,6 +161,8 @@ import AdminHomeGraph from "@/pages/admin/AdminHomeGraph";
 import AdminUOS from "@/pages/admin/AdminUOS";
 import AdminGrowthEngine from "@/pages/admin/AdminGrowthEngine";
 import AdminPricingPage from "@/pages/admin/AdminPricingPage";
+import AdminRefusalSeoPage from "@/pages/admin/AdminRefusalSeoPage";
+import RefusalSeoPage from "@/pages/seo/RefusalSeoPage";
 
 export const AppRouter = () => (
   <BrowserRouter>
@@ -374,6 +376,10 @@ export const AppRouter = () => (
       <Route path="/admin/uos" element={<ProtectedRoute requiredRole="admin"><AdminUOS /></ProtectedRoute>} />
       <Route path="/admin/growth-engine" element={<ProtectedRoute requiredRole="admin"><AdminGrowthEngine /></ProtectedRoute>} />
       <Route path="/admin/pricing" element={<ProtectedRoute requiredRole="admin"><AdminPricingPage /></ProtectedRoute>} />
+      <Route path="/admin/refusal-seo" element={<ProtectedRoute requiredRole="admin"><AdminRefusalSeoPage /></ProtectedRoute>} />
+
+      {/* Refusal SEO public pages */}
+      <Route path="/refusal/:slug" element={<RefusalSeoPage />} />
 
       {/* Condos — Public SEO */}
       <Route path="/condo" element={<CondoHomePage />} />

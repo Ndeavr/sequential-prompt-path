@@ -3635,6 +3635,89 @@ export type Database = {
           },
         ]
       }
+      contractor_refusal_signals: {
+        Row: {
+          city_slug: string | null
+          confidence: number
+          contractor_id: string | null
+          created_at: string
+          frequency: number
+          id: string
+          material: string | null
+          metadata: Json | null
+          problem_slug: string | null
+          refusal_type: string
+          seo_opportunity_generated: boolean
+          signal_text: string
+          solution_slug: string | null
+          structure_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          city_slug?: string | null
+          confidence?: number
+          contractor_id?: string | null
+          created_at?: string
+          frequency?: number
+          id?: string
+          material?: string | null
+          metadata?: Json | null
+          problem_slug?: string | null
+          refusal_type?: string
+          seo_opportunity_generated?: boolean
+          signal_text: string
+          solution_slug?: string | null
+          structure_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city_slug?: string | null
+          confidence?: number
+          contractor_id?: string | null
+          created_at?: string
+          frequency?: number
+          id?: string
+          material?: string | null
+          metadata?: Json | null
+          problem_slug?: string | null
+          refusal_type?: string
+          seo_opportunity_generated?: boolean
+          signal_text?: string
+          solution_slug?: string | null
+          structure_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_refusal_signals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_refusal_signals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_refusal_signals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_refusal_signals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_registry_validations: {
         Row: {
           created_at: string
@@ -10568,6 +10651,117 @@ export type Database = {
           role?: string | null
           target_type?: string | null
           user_agent?: string | null
+        }
+        Relationships: []
+      }
+      refusal_seo_pages: {
+        Row: {
+          city_name: string | null
+          city_slug: string | null
+          conversions: number
+          correct_solution: string | null
+          cost_estimate_max: number | null
+          cost_estimate_min: number | null
+          cost_unit: string | null
+          created_at: string
+          demand_score: number | null
+          faq_json: Json | null
+          h1: string
+          id: string
+          internal_links_json: Json | null
+          json_ld: Json | null
+          material: string | null
+          materials_detail: string | null
+          meta_description: string
+          meta_title: string
+          page_type: string
+          problem_explanation: string | null
+          problem_slug: string | null
+          profession_slug: string | null
+          published_at: string | null
+          recommended_professional: string | null
+          signal_count: number
+          slug: string
+          solution_slug: string | null
+          source_signal_ids: string[] | null
+          status: string
+          structure_context: string | null
+          structure_type: string | null
+          updated_at: string
+          views: number
+          why_contractors_refuse: string | null
+        }
+        Insert: {
+          city_name?: string | null
+          city_slug?: string | null
+          conversions?: number
+          correct_solution?: string | null
+          cost_estimate_max?: number | null
+          cost_estimate_min?: number | null
+          cost_unit?: string | null
+          created_at?: string
+          demand_score?: number | null
+          faq_json?: Json | null
+          h1: string
+          id?: string
+          internal_links_json?: Json | null
+          json_ld?: Json | null
+          material?: string | null
+          materials_detail?: string | null
+          meta_description: string
+          meta_title: string
+          page_type?: string
+          problem_explanation?: string | null
+          problem_slug?: string | null
+          profession_slug?: string | null
+          published_at?: string | null
+          recommended_professional?: string | null
+          signal_count?: number
+          slug: string
+          solution_slug?: string | null
+          source_signal_ids?: string[] | null
+          status?: string
+          structure_context?: string | null
+          structure_type?: string | null
+          updated_at?: string
+          views?: number
+          why_contractors_refuse?: string | null
+        }
+        Update: {
+          city_name?: string | null
+          city_slug?: string | null
+          conversions?: number
+          correct_solution?: string | null
+          cost_estimate_max?: number | null
+          cost_estimate_min?: number | null
+          cost_unit?: string | null
+          created_at?: string
+          demand_score?: number | null
+          faq_json?: Json | null
+          h1?: string
+          id?: string
+          internal_links_json?: Json | null
+          json_ld?: Json | null
+          material?: string | null
+          materials_detail?: string | null
+          meta_description?: string
+          meta_title?: string
+          page_type?: string
+          problem_explanation?: string | null
+          problem_slug?: string | null
+          profession_slug?: string | null
+          published_at?: string | null
+          recommended_professional?: string | null
+          signal_count?: number
+          slug?: string
+          solution_slug?: string | null
+          source_signal_ids?: string[] | null
+          status?: string
+          structure_context?: string | null
+          structure_type?: string | null
+          updated_at?: string
+          views?: number
+          why_contractors_refuse?: string | null
         }
         Relationships: []
       }
