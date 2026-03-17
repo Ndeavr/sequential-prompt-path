@@ -186,7 +186,7 @@ export default function HeroSection() {
 
             {/* Left column */}
             <div className="relative z-20 min-w-0">
-              <h1 className="relative z-10 text-[38px] font-extrabold leading-[1.08] tracking-[-0.03em] sm:text-[46px] md:text-[64px]" style={{ color: "#0B1533" }}>
+              <h1 className="relative z-10 text-[42px] font-extrabold leading-[1.06] tracking-[-0.03em] sm:text-[46px] md:text-[64px] max-w-[65%] md:max-w-none" style={{ color: "#0B1533" }}>
                 <span>Trouvez</span>
                 <br />
                 {/* Rotating label */}
@@ -197,7 +197,7 @@ export default function HeroSection() {
                       variants={textVariants}
                       initial="enter" animate="center" exit="exit"
                       transition={{ duration: 0.38, ease: "easeOut" }}
-                      className="inline whitespace-nowrap"
+                      className="inline"
                       style={{ color: "#3F7BFF" }}
                     >
                       {current.label}
