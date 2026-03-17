@@ -345,6 +345,7 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
           { to: "/compare-quotes", label: "Analyser mes soumissions", labelEn: "Analyze My Quotes", icon: "Scale" },
           { to: "/search", label: "Trouver un entrepreneur", labelEn: "Find a Contractor", icon: "Search" },
           { to: "/dashboard/home-score", label: "Home Score", icon: "BarChart3" },
+          { to: "/design", label: "UNPRO Design", icon: "Palette" },
         ],
       },
       seoSection,
