@@ -4,7 +4,7 @@
  */
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, Camera, MessageCircle, Bot, CalendarClock, Upload, Phone, ChevronRight, Shield, Zap, X } from "lucide-react";
+import { AlertTriangle, Camera, MessageCircle, Bot, CalendarClock, Upload, Phone, ChevronRight, Shield, Zap, X, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
+import GooglePlacesInput from "@/components/property/GooglePlacesInput";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -51,6 +52,7 @@ export default function EmergencyPage() {
   const [description, setDescription] = useState("");
   const [whenStarted, setWhenStarted] = useState("");
   const [gettingWorse, setGettingWorse] = useState(false);
+  const [fullName, setFullName] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [preferredContact, setPreferredContact] = useState("chat");
@@ -89,6 +91,11 @@ export default function EmergencyPage() {
     if (!user) {
       toast({ title: "Connexion requise", description: "Connectez-vous pour soumettre votre urgence.", variant: "destructive" });
       navigate("/login?redirect=/emergency");
+      return;
+    }
+
+    if (!fullName.trim()) {
+      toast({ title: "Nom requis", description: "Veuillez entrer votre nom complet.", variant: "destructive" });
       return;
     }
 
@@ -248,6 +255,13 @@ export default function EmergencyPage() {
                 </div>
               </div>
 
+              {/* Full Name */}
+              <div>
+                <Label htmlFor="fullname" className="text-sm font-medium">Votre nom complet *</Label>
+                <Input id="fullname" value={fullName} onChange={e => setFullName(e.target.value)}
+                  placeholder="Ex: Jean Tremblay" className="mt-1" />
+              </div>
+
               {/* Description */}
               <div>
                 <Label htmlFor="desc" className="text-sm font-medium">Décrivez le problème</Label>
@@ -270,8 +284,8 @@ export default function EmergencyPage() {
 
               {/* Address + Phone */}
               <div>
-                <Label htmlFor="addr" className="text-sm font-medium">Adresse</Label>
-                <Input id="addr" value={address} onChange={e => setAddress(e.target.value)} placeholder="123 rue Principale, Montréal" className="mt-1" />
+                <Label className="text-sm font-medium">Adresse</Label>
+                <GooglePlacesInput value={address} onChange={setAddress} placeholder="123 rue Principale, Montréal" className="mt-1" />
               </div>
               <div>
                 <Label htmlFor="ph" className="text-sm font-medium">Téléphone</Label>
