@@ -239,7 +239,7 @@ export async function fetchRefusalSeoPageBySlug(slug: string) {
     .single();
 
   if (error) return null;
-  return data as RefusalSeoPage;
+  return data as unknown as RefusalSeoPage;
 }
 
 export async function updateRefusalSeoPageStatus(id: string, status: string) {

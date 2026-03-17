@@ -182,7 +182,7 @@ const RefusalSeoPage = () => {
         )}
 
         {/* Growth CTA */}
-        <GrowthCtaBlock context="refusal_seo" problemSlug={page.problem_slug || undefined} citySlug={page.city_slug || undefined} />
+        <GrowthCtaBlock cityName={page.city_name || undefined} />
 
         {/* Footer SEO maillage */}
         <InternalLinkBlock pageType="problem" slug={page.problem_slug || undefined} city={page.city_slug || undefined} />
