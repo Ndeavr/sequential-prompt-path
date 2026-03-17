@@ -155,8 +155,8 @@ export default function HeroSection() {
 
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-8 md:px-10 md:pt-12">
           <div className="relative md:grid md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8 md:items-start">
-            {/* Mobile background image — full screen width, fixed aspect ratio */}
-            <div className="relative w-[100vw] -ml-5 h-[100vw] md:hidden pointer-events-none overflow-visible">
+            {/* Mobile background image — full screen width, fixed square, behind text */}
+            <div className="absolute top-0 left-0 right-0 w-[100vw] -ml-5 h-[100vw] md:hidden pointer-events-none overflow-visible z-0">
               <AnimatePresence mode="wait">
                 <motion.img key={current.image} src={current.image} alt={current.action}
                   className="w-full h-full object-cover"
@@ -179,8 +179,11 @@ export default function HeroSection() {
               />
             </div>
 
+            {/* Spacer for mobile to reserve image height */}
+            <div className="md:hidden" style={{ height: "100vw" }} />
+
             {/* Left column */}
-            <div className="relative z-20 min-w-0">
+            <div className="relative z-20 min-w-0 md:mt-0 -mt-[100vw]">
               <h1
                 className="relative z-10 text-[38px] font-extrabold leading-[1.08] tracking-[-0.03em] sm:text-[46px] md:text-[64px] max-w-[65%] md:max-w-none"
                 style={{
@@ -242,8 +245,8 @@ export default function HeroSection() {
                 </span>
               </h1>
 
-              {/* Card with bullet points — under image on mobile */}
-              <div className="relative z-10 mt-[100px] md:mt-5 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 max-w-[420px] shadow-sm">
+              {/* Card with bullet points */}
+              <div className="relative z-10 mt-4 md:mt-5 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 max-w-[420px] shadow-sm">
                 <ul className="space-y-2">
                   {[
                     "Rendez-vous exclusif avec un professionnel",
