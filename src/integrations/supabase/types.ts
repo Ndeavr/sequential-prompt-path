@@ -17589,6 +17589,13 @@ export type Database = {
             referencedRelation: "territories"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "territory_assignments_territory_id_fkey"
+            columns: ["territory_id"]
+            isOneToOne: false
+            referencedRelation: "v_territories"
+            referencedColumns: ["id"]
+          },
         ]
       }
       territory_generation_logs: {
@@ -17689,6 +17696,13 @@ export type Database = {
             columns: ["territory_id"]
             isOneToOne: false
             referencedRelation: "territories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "territory_waitlist_territory_id_fkey"
+            columns: ["territory_id"]
+            isOneToOne: false
+            referencedRelation: "v_territories"
             referencedColumns: ["id"]
           },
         ]
@@ -18514,6 +18528,120 @@ export type Database = {
         }
         Relationships: []
       }
+      v_territories: {
+        Row: {
+          available_elite: number | null
+          available_premium: number | null
+          available_pro: number | null
+          available_recrue: number | null
+          available_signature: number | null
+          available_total: number | null
+          category_name: string | null
+          category_slug: string | null
+          city_name: string | null
+          city_slug: string | null
+          competition_score: number | null
+          created_at: string | null
+          demand_score: number | null
+          generation_source: string | null
+          id: string | null
+          is_active: boolean | null
+          is_overbooked: boolean | null
+          market_tier: string | null
+          max_entrepreneurs: number | null
+          occupied_elite: number | null
+          occupied_premium: number | null
+          occupied_pro: number | null
+          occupied_recrue: number | null
+          occupied_signature: number | null
+          occupied_total: number | null
+          province_code: string | null
+          region_name: string | null
+          slots_elite: number | null
+          slots_premium: number | null
+          slots_pro: number | null
+          slots_recrue: number | null
+          slots_signature: number | null
+          status: string | null
+          strategic_score: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          available_elite?: never
+          available_premium?: never
+          available_pro?: never
+          available_recrue?: never
+          available_signature?: never
+          available_total?: never
+          category_name?: string | null
+          category_slug?: string | null
+          city_name?: string | null
+          city_slug?: string | null
+          competition_score?: number | null
+          created_at?: string | null
+          demand_score?: number | null
+          generation_source?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_overbooked?: never
+          market_tier?: string | null
+          max_entrepreneurs?: number | null
+          occupied_elite?: number | null
+          occupied_premium?: number | null
+          occupied_pro?: number | null
+          occupied_recrue?: number | null
+          occupied_signature?: number | null
+          occupied_total?: never
+          province_code?: string | null
+          region_name?: string | null
+          slots_elite?: number | null
+          slots_premium?: number | null
+          slots_pro?: number | null
+          slots_recrue?: number | null
+          slots_signature?: number | null
+          status?: string | null
+          strategic_score?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          available_elite?: never
+          available_premium?: never
+          available_pro?: never
+          available_recrue?: never
+          available_signature?: never
+          available_total?: never
+          category_name?: string | null
+          category_slug?: string | null
+          city_name?: string | null
+          city_slug?: string | null
+          competition_score?: number | null
+          created_at?: string | null
+          demand_score?: number | null
+          generation_source?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_overbooked?: never
+          market_tier?: string | null
+          max_entrepreneurs?: number | null
+          occupied_elite?: number | null
+          occupied_premium?: number | null
+          occupied_pro?: number | null
+          occupied_recrue?: number | null
+          occupied_signature?: number | null
+          occupied_total?: never
+          province_code?: string | null
+          region_name?: string | null
+          slots_elite?: number | null
+          slots_premium?: number | null
+          slots_pro?: number | null
+          slots_recrue?: number | null
+          slots_signature?: number | null
+          status?: string | null
+          strategic_score?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_unpro_checkout_totals: {
@@ -18524,6 +18652,17 @@ export type Database = {
           _discount_value?: number
           _setup_fee?: number
           _tax_rate?: number
+        }
+        Returns: Json
+      }
+      generate_territories: {
+        Args: {
+          p_category_slugs?: string[]
+          p_city_slugs?: string[]
+          p_executed_by?: string
+          p_generation_source?: string
+          p_mode?: string
+          p_overwrite_existing_capacities?: boolean
         }
         Returns: Json
       }
@@ -18559,6 +18698,21 @@ export type Database = {
       get_service_limit: {
         Args: { plan_code: string; service_type?: string }
         Returns: number
+      }
+      get_territory_capacity: {
+        Args: {
+          p_allow_signature_in_micro?: boolean
+          p_category_slug: string
+          p_market_tier: string
+        }
+        Returns: {
+          max_entrepreneurs: number
+          slots_elite: number
+          slots_premium: number
+          slots_pro: number
+          slots_recrue: number
+          slots_signature: number
+        }[]
       }
       get_upgrade_recommendations: {
         Args: { _contractor_id: string }
