@@ -1,23 +1,78 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Loader2, Sparkles } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
   onComplete: () => void;
 }
 
 const steps = [
-  { label: "Securing your category footprint", microcopy: "Mapping your competitive landscape…", emoji: "🗺️" },
-  { label: "Syncing your business signals", microcopy: "Standardizing service and category signals…", emoji: "📡" },
-  { label: "Building your verified identity graph", microcopy: "Cross-referencing trust markers across sources…", emoji: "🔗" },
-  { label: "Enriching with trust signals", microcopy: "Strengthening trust and conversion layers…", emoji: "🛡️" },
-  { label: "Generating ranking opportunities", microcopy: "Generating your optimized profile structure…", emoji: "📊" },
-  { label: "Activating your UNPRO presence", microcopy: "Your business profile is now activating…", emoji: "⚡" },
+  { label: "Sécurisation de votre catégorie", microcopy: "Cartographie du paysage concurrentiel…", emoji: "🗺️" },
+  { label: "Synchronisation des signaux", microcopy: "Normalisation des signaux de service et catégorie…", emoji: "📡" },
+  { label: "Construction du graphe d'identité", microcopy: "Croisement des marqueurs de confiance…", emoji: "🔗" },
+  { label: "Enrichissement des signaux de confiance", microcopy: "Renforcement des couches de confiance…", emoji: "🛡️" },
+  { label: "Génération des opportunités", microcopy: "Génération de votre structure de profil optimisée…", emoji: "📊" },
+  { label: "Activation de votre présence UNPRO", microcopy: "Votre profil est en cours d'activation…", emoji: "⚡" },
 ];
 
 export default function StepActivation({ onComplete }: Props) {
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [profilePct, setProfilePct] = useState(12);
+  const [contractorCreated, setContractorCreated] = useState(false);
+
+  // Create contractor profile on activation
+  useEffect(() => {
+    if (!user?.id || contractorCreated) return;
+    (async () => {
+      try {
+        // Check if contractor already exists
+        const { data: existing } = await supabase
+          .from("contractors")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (!existing) {
+          // Get onboarding session data
+          const { data: session } = await supabase
+            .from("contractor_onboarding_sessions")
+            .select("*")
+            .eq("user_id", user.id)
+            .is("completed_at", null)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          const businessData = (session?.business_data as Record<string, any>) || {};
+          const businessName = session?.business_name || user.email || "Mon Entreprise";
+
+          // Create contractor
+          const { error } = await supabase
+            .from("contractors")
+            .insert({
+              user_id: user.id,
+              business_name: businessName,
+              phone: businessData.phone?.value || null,
+              email: businessData.email?.value || user.email || null,
+              website: businessData.website?.value || null,
+              city: businessData.city?.value || null,
+              description: typeof businessData.description?.value === "string" ? businessData.description.value : null,
+              specialty: typeof businessData.category?.value === "string" ? businessData.category.value : null,
+            });
+
+          if (error) console.error("Failed to create contractor:", error);
+          else setContractorCreated(true);
+        } else {
+          setContractorCreated(true);
+        }
+      } catch (err) {
+        console.error("Activation contractor creation error:", err);
+      }
+    })();
+  }, [user?.id, contractorCreated]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -83,7 +138,7 @@ export default function StepActivation({ onComplete }: Props) {
                 {profilePct}%
               </motion.span>
               <span className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground/60 font-medium">
-                {isComplete ? "Ready" : "Building"}
+                {isComplete ? "Prêt" : "Construction"}
               </span>
             </div>
           </div>
@@ -98,7 +153,7 @@ export default function StepActivation({ onComplete }: Props) {
               className="text-center space-y-1"
             >
               <p className="text-sm font-medium text-foreground">{steps[currentStep]?.microcopy}</p>
-              <p className="text-[10px] text-muted-foreground/40">Step {currentStep + 1} of {steps.length}</p>
+              <p className="text-[10px] text-muted-foreground/40">Étape {currentStep + 1} de {steps.length}</p>
             </motion.div>
           </AnimatePresence>
         </div>
@@ -158,7 +213,7 @@ export default function StepActivation({ onComplete }: Props) {
                 transition={{ type: "spring", delay: 1, stiffness: 200 }}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-primary via-accent to-secondary text-white text-sm font-bold shadow-[var(--shadow-glow-lg)]"
               >
-                <Sparkles className="w-4 h-4" /> Profile Activated
+                <Sparkles className="w-4 h-4" /> Profil activé
               </motion.div>
               <motion.p
                 initial={{ opacity: 0 }}
@@ -166,7 +221,7 @@ export default function StepActivation({ onComplete }: Props) {
                 transition={{ delay: 1.5 }}
                 className="text-xs text-muted-foreground/60"
               >
-                Redirecting to your dashboard…
+                Redirection vers votre tableau de bord…
               </motion.p>
             </motion.div>
           )}
