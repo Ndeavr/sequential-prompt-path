@@ -48,8 +48,8 @@ const ShareActionsRow = ({ url, referralCode, shareTitle, shareText }: ShareActi
   return (
     <div className="flex flex-col gap-2 w-full">
       {/* URL display */}
-      <div className="flex items-center gap-2 p-2.5 bg-muted/40 rounded-xl border border-border/20">
-        <span className="text-sm text-muted-foreground truncate flex-1 font-mono">{url}</span>
+      <div className="flex items-center gap-2 p-2.5 bg-muted/40 rounded-xl border border-border/20 min-w-0">
+        <span className="text-xs sm:text-sm text-muted-foreground truncate flex-1 font-mono min-w-0">{url}</span>
         <Button variant="ghost" size="icon" onClick={handleCopy} className="h-8 w-8 shrink-0">
           {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
         </Button>

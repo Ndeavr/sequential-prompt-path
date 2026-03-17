@@ -79,14 +79,14 @@ const QRShareModal = ({ open, onOpenChange }: QRShareModalProps) => {
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent className={`sm:max-w-md rounded-2xl ${ROLE_ACCENT[role]}`}>
+      <DialogContent className={`w-[calc(100vw-2rem)] max-w-md rounded-2xl p-4 sm:p-6 ${ROLE_ACCENT[role]}`}>
         <DialogHeader>
-          <DialogTitle className="text-center text-xl font-display">
+          <DialogTitle className="text-center text-lg sm:text-xl font-display">
             {TITLES[role]}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col items-center gap-6 py-4">
+        <div className="flex flex-col items-center gap-4 sm:gap-6 py-2 sm:py-4 w-full overflow-hidden">
           {/* Contractor toggle */}
           {role === "contractor" && (
             <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 w-full">
@@ -104,6 +104,7 @@ const QRShareModal = ({ open, onOpenChange }: QRShareModalProps) => {
           {/* QR Code */}
           <QRCodeCard
             url={url}
+            size={200}
             label={role === "contractor" && !appointmentMode
               ? "Scannez pour voir le profil"
               : "Scannez pour rejoindre UNPRO"}
