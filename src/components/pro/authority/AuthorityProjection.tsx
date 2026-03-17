@@ -1,39 +1,45 @@
 /**
- * Score Projection — step chart + suggestion cards
+ * Score Projection V2 — step chart + suggestion cards on /100 scale
  */
 import { motion } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
-import { SCORE_CURRENT, SCORE_POTENTIAL, projectionSteps, suggestions } from "./data";
+import { suggestions, SCORE_TOTAL } from "./data";
 import { ArrowRight } from "lucide-react";
 
-const chartData = (() => {
-  let cumulative = SCORE_CURRENT;
-  const points = [{ label: "Actuel", score: cumulative }];
-  projectionSteps.forEach((s) => {
-    cumulative += s.points;
-    points.push({ label: `+${s.points}`, score: cumulative });
-  });
-  return points;
-})();
+interface Props {
+  currentScore: number;
+}
 
-export default function AuthorityProjection() {
+export default function AuthorityProjection({ currentScore }: Props) {
+  const projectionSteps = suggestions.map(s => ({ label: s.title.slice(0, 20) + "…", points: s.points }));
+  const potentialScore = Math.min(SCORE_TOTAL, currentScore + suggestions.reduce((s, x) => s + x.points, 0));
+
+  const chartData = (() => {
+    let cumulative = currentScore;
+    const points = [{ label: "Actuel", score: cumulative }];
+    projectionSteps.forEach((s) => {
+      cumulative = Math.min(100, cumulative + s.points);
+      points.push({ label: `+${s.points}`, score: cumulative });
+    });
+    return points;
+  })();
+
   return (
     <div className="space-y-5">
-      {/* Projection chart */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6, duration: 0.5 }}
         className="rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm p-5"
       >
-        <div className="flex items-baseline justify-between mb-1">
+        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 mb-1">
           <div>
             <h3 className="font-display text-sm font-semibold text-foreground">Projection du score</h3>
-            <p className="text-xs text-muted-foreground">Visualisez votre progression potentielle sur UNPRO</p>
+            <p className="text-xs text-muted-foreground">Actions concrètes pour progresser</p>
           </div>
           <div className="flex items-center gap-4 text-xs">
-            <span className="text-muted-foreground">Actuel <span className="text-foreground font-bold ml-1">{SCORE_CURRENT}</span></span>
-            <span className="text-muted-foreground">Potentiel <span className="text-success font-bold ml-1">{SCORE_POTENTIAL}</span></span>
+            <span className="text-muted-foreground">Actuel <span className="text-foreground font-bold ml-1">{currentScore}</span></span>
+            <span className="text-muted-foreground">Potentiel <span className="text-success font-bold ml-1">{potentialScore}</span></span>
           </div>
         </div>
 
@@ -56,7 +62,7 @@ export default function AuthorityProjection() {
                 tick={{ fill: "hsl(220 14% 50%)", fontSize: 10 }}
                 axisLine={false}
                 tickLine={false}
-                domain={[350, 650]}
+                domain={[0, 100]}
               />
               <Tooltip
                 contentStyle={{

@@ -1,12 +1,21 @@
 /**
- * Score History — line chart with projection
+ * Score History V2 — line chart on /100 scale
  */
 import { motion } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
-import { historyData } from "./data";
 import { useState } from "react";
 
 const filters = ["30 jours", "90 jours", "12 mois"] as const;
+
+// Demo data — will be replaced by DB events when available
+const historyData = [
+  { month: "Jan", score: 42 },
+  { month: "Fév", score: 48 },
+  { month: "Mar", score: 55 },
+  { month: "Avr", score: 61 },
+  { month: "Mai", score: 65 },
+  { month: "Juin", score: 68 },
+];
 
 export default function AuthorityHistory() {
   const [active, setActive] = useState<string>("90 jours");
@@ -21,7 +30,7 @@ export default function AuthorityHistory() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
           <h3 className="font-display text-sm font-semibold text-foreground">Historique du score</h3>
-          <p className="text-xs text-muted-foreground">Suivez l'évolution de votre Authority Score</p>
+          <p className="text-xs text-muted-foreground">Suivez l'évolution de votre Authority Score V2</p>
         </div>
         <div className="flex gap-1 p-0.5 rounded-lg bg-muted/30 border border-border/30">
           {filters.map((f) => (
@@ -59,7 +68,7 @@ export default function AuthorityHistory() {
               tick={{ fill: "hsl(220 14% 50%)", fontSize: 11 }}
               axisLine={false}
               tickLine={false}
-              domain={[200, 700]}
+              domain={[0, 100]}
             />
             <Tooltip
               contentStyle={{
@@ -83,7 +92,7 @@ export default function AuthorityHistory() {
       </div>
 
       <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
-        Votre score progresse régulièrement. La plus forte opportunité d'accélération se situe dans la crédibilité et la Priorité IA.
+        Score basé sur la performance réelle : complétion de projets, qualité des avis, précision du matching et réactivité.
       </p>
     </motion.div>
   );
