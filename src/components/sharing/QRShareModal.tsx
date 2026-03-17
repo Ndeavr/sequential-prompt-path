@@ -164,7 +164,7 @@ const QRShareModal = ({ open, onOpenChange, feature = "general", previewImage, s
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-md rounded-2xl p-0 overflow-hidden border-0 shadow-2xl">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-md rounded-2xl p-0 overflow-hidden border-0 shadow-2xl mx-auto left-[50%] translate-x-[-50%]">
         {/* ── Preview Card Header ── */}
         <div className={`relative bg-gradient-to-b ${config.gradient} px-5 pt-5 pb-4`}>
           <DialogHeader className="sr-only">

@@ -36,9 +36,9 @@ const QRCodeCard = ({ url, size = 200, label }: QRCodeCardProps) => {
   };
 
   return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="p-4 bg-white rounded-2xl shadow-lg border border-border/10">
-        <canvas ref={canvasRef} className="rounded-lg" />
+    <div className="flex flex-col items-center gap-3 w-full">
+      <div className="p-3 bg-white rounded-2xl shadow-lg border border-border/10 max-w-[calc(100%-2rem)] mx-auto">
+        <canvas ref={canvasRef} className="rounded-lg w-full h-auto max-w-[200px] mx-auto" />
       </div>
       {label && (
         <p className="text-caption text-muted-foreground text-center max-w-[200px]">{label}</p>
