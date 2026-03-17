@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Upload, Camera, Image, Sparkles, ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ROOM_TYPES } from "./data";
+import LikeShareButtons from "@/components/shared/LikeShareButtons";
 
 import before1 from "@/assets/design-before-1.jpg";
 import after1 from "@/assets/design-after-1.jpg";
@@ -412,9 +413,19 @@ export default function DesignUpload({ onUpload }: Props) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.12, duration: 0.5 }}
-                className="rounded-2xl overflow-hidden border border-border bg-card shadow-[var(--shadow-sm)]"
+                className="relative rounded-2xl overflow-hidden border border-border bg-card shadow-[var(--shadow-sm)]"
               >
-                <BeforeAfterSlider before={s.before} after={s.after} />
+                <div className="relative">
+                  <BeforeAfterSlider before={s.before} after={s.after} />
+                  <div className="absolute top-3 right-3 z-20">
+                    <LikeShareButtons
+                      entityType="design_image"
+                      entityId={`showcase-${s.room}`}
+                      size="sm"
+                      shareTitle={`Transformation ${s.label} — UNPRO Design`}
+                    />
+                  </div>
+                </div>
                 <div className="p-3 text-center">
                   <span className="text-sm font-medium text-foreground">{s.label}</span>
                   <p className="text-xs text-muted-foreground mt-0.5">Glissez pour comparer</p>

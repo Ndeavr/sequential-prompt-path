@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Snowflake, Copy, Share2, RotateCcw, ZoomIn, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import LikeShareButtons from "@/components/shared/LikeShareButtons";
 import type { DesignVersion } from "./data";
 
 interface Props {
@@ -186,11 +187,22 @@ export default function DesignCanvas({
                   </div>
                 </div>
               ) : (
-                <img
-                  src={renderImage}
-                  alt="Version active"
-                  className="max-w-full max-h-full rounded-2xl object-contain shadow-[var(--shadow-xl)]"
-                />
+                <div className="relative">
+                  <img
+                    src={renderImage}
+                    alt="Version active"
+                    className="max-w-full max-h-full rounded-2xl object-contain shadow-[var(--shadow-xl)]"
+                  />
+                  {activeVersion?.id && (
+                    <div className="absolute bottom-4 right-4 z-20">
+                      <LikeShareButtons
+                        entityType="design_image"
+                        entityId={activeVersion.id}
+                        shareTitle={`Design UNPRO — Version ${activeVersion.versionNumber}`}
+                      />
+                    </div>
+                  )}
+                </div>
               )}
             </motion.div>
           ) : (
