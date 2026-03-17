@@ -20,7 +20,7 @@ export interface CompletionTask {
 /** Master task definitions — used to seed tasks for new properties */
 const TASK_DEFINITIONS: Array<Omit<CompletionTask, "id" | "status">> = [
   // Basic info
-  { task_key: "add_property_type", title_fr: "Ajouter le type de propriété", description_fr: "Maison, condo, duplex...", section_key: "basic_info", field_key: "property_type", priority: 90, estimated_minutes: 1, points: 10 },
+  { task_key: "add_property_type", title_fr: "Ajouter le type de propriété", description_fr: "Unifamiliale, condo, multilogement", section_key: "basic_info", field_key: "property_type", priority: 90, estimated_minutes: 1, points: 10 },
   { task_key: "add_year_built", title_fr: "Ajouter l'année de construction", description_fr: null, section_key: "basic_info", field_key: "year_built", priority: 85, estimated_minutes: 1, points: 10 },
   { task_key: "add_square_footage", title_fr: "Ajouter la superficie", description_fr: "En pieds carrés", section_key: "basic_info", field_key: "square_footage", priority: 80, estimated_minutes: 1, points: 10 },
   { task_key: "add_lot_size", title_fr: "Ajouter la taille du terrain", description_fr: null, section_key: "basic_info", field_key: "lot_size", priority: 60, estimated_minutes: 1, points: 5 },
