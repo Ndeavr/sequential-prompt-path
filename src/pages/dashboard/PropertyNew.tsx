@@ -79,11 +79,9 @@ const PropertyNew = () => {
                 <Select value={form.property_type} onValueChange={(v) => setForm((f) => ({ ...f, property_type: v }))}>
                   <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="maison">Maison</SelectItem>
-                    <SelectItem value="condo">Condo</SelectItem>
-                    <SelectItem value="duplex">Duplex</SelectItem>
-                    <SelectItem value="triplex">Triplex</SelectItem>
-                    <SelectItem value="commercial">Commercial</SelectItem>
+                    <SelectItem value="unifamiliale">Unifamiliale</SelectItem>
+                    <SelectItem value="condo">Condo / copropriété</SelectItem>
+                    <SelectItem value="multilogement">Multilogement</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
