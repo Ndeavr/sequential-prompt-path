@@ -243,6 +243,7 @@ export function getDrawerItems(ctx: NavigationContext): NavItem[] {
       { to: "/dashboard/appointments", label: "Mes rendez-vous", labelEn: "My Appointments", icon: "CalendarDays" },
       { to: "/dashboard/quotes", label: "Mes soumissions", labelEn: "My Quotes", icon: "FileText" },
       { to: "/compare-quotes", label: "Analyser mes soumissions", labelEn: "Analyze My Quotes", icon: "Scale" },
+      { to: "/design", label: "UNPRO Design", icon: "Palette" },
       { to: "/search", label: "Trouver un entrepreneur", labelEn: "Find a Contractor", icon: "Search" },
     ];
   }
