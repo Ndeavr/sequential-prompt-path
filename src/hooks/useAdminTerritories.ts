@@ -54,10 +54,15 @@ export const useCreateTerritory = () => {
       city_name: string;
       category_slug: string;
       category_name: string;
-      max_contractors?: number;
-      signature_slots?: number;
-      elite_slots?: number;
-      premium_slots?: number;
+      max_entrepreneurs?: number;
+      slots_signature?: number;
+      slots_elite?: number;
+      slots_premium?: number;
+      slots_pro?: number;
+      slots_recrue?: number;
+      province_code?: string;
+      region_name?: string;
+      market_tier?: string;
     }) => {
       const { error } = await supabase.from("territories").insert(territory);
       if (error) throw error;
@@ -75,15 +80,19 @@ export const useUpdateTerritory = () => {
       ...updates
     }: {
       id: string;
-      max_contractors?: number;
-      signature_slots?: number;
-      elite_slots?: number;
-      premium_slots?: number;
+      max_entrepreneurs?: number;
+      slots_signature?: number;
+      slots_elite?: number;
+      slots_premium?: number;
+      slots_pro?: number;
+      slots_recrue?: number;
       is_active?: boolean;
+      status?: string;
+      market_tier?: string;
     }) => {
       const { error } = await supabase
         .from("territories")
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update(updates)
         .eq("id", id);
       if (error) throw error;
     },
@@ -121,7 +130,6 @@ export const useApproveFromWaitlist = () => {
       slotType: string;
       planLevel: string;
     }) => {
-      // Create assignment
       const { error: assignErr } = await supabase
         .from("territory_assignments")
         .insert({
@@ -133,7 +141,6 @@ export const useApproveFromWaitlist = () => {
         });
       if (assignErr) throw assignErr;
 
-      // Remove from waitlist
       const { error: wlErr } = await supabase
         .from("territory_waitlist")
         .delete()
@@ -143,6 +150,79 @@ export const useApproveFromWaitlist = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-territory-assignments"] });
       qc.invalidateQueries({ queryKey: ["admin-territory-waitlist"] });
+    },
+  });
+};
+
+/* ── Admin: categories ── */
+export const useCategories = () =>
+  useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("is_active", true)
+        .order("priority");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+/* ── Admin: service areas ── */
+export const useServiceAreas = () =>
+  useQuery({
+    queryKey: ["service-areas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("service_areas")
+        .select("*")
+        .eq("is_active", true)
+        .order("city_name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+/* ── Admin: generation logs ── */
+export const useGenerationLogs = () =>
+  useQuery({
+    queryKey: ["generation-logs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("territory_generation_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+/* ── Admin: generate territories via RPC ── */
+export const useGenerateTerritories = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      p_city_slugs?: string[] | null;
+      p_category_slugs?: string[] | null;
+      p_mode: string;
+      p_overwrite_existing_capacities?: boolean;
+      p_generation_source?: string;
+    }) => {
+      const { data, error } = await supabase.rpc("generate_territories", {
+        p_city_slugs: params.p_city_slugs ?? null,
+        p_category_slugs: params.p_category_slugs ?? null,
+        p_mode: params.p_mode,
+        p_overwrite_existing_capacities: params.p_overwrite_existing_capacities ?? false,
+        p_generation_source: params.p_generation_source ?? "admin_ui",
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-territories"] });
+      qc.invalidateQueries({ queryKey: ["generation-logs"] });
     },
   });
 };
