@@ -133,6 +133,11 @@ import ProLeadDetail from "@/pages/pro/ProLeadDetail";
 import ProBilling from "@/pages/pro/ProBilling";
 import ProTerritories from "@/pages/pro/ProTerritories";
 import ProAuthorityScore from "@/pages/pro/ProAuthorityScore";
+import ProIncomingProjects from "@/pages/pro/ProIncomingProjects";
+import ProPartnerNetwork from "@/pages/pro/ProPartnerNetwork";
+import ProExpertise from "@/pages/pro/ProExpertise";
+import ProTeams from "@/pages/pro/ProTeams";
+import ProAuthorityScore from "@/pages/pro/ProAuthorityScore";
 
 // Admin
 import AdminDashboard from "@/pages/admin/AdminDashboard";
