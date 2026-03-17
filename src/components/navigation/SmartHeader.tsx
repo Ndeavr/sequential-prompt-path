@@ -340,7 +340,7 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
               </div>
 
               {/* Alex */}
-              <Link to="/alex" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-meta border border-primary/20 mb-4">
+              <Link to="/alex" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-meta mb-4">
                 ✨ {lang === "en" ? "Talk to Alex" : "Parler à Alex"}
               </Link>
             </>
