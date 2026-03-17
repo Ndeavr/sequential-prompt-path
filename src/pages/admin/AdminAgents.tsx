@@ -12,6 +12,7 @@ const AdminAgents = () => {
   const {
     status, isLoading, runAnalysis, isAnalyzing,
     approveTask, rejectTask, toggleAgent,
+    executeTask, isExecuting,
   } = useAgentOrchestrator();
   const [selectedLayer, setSelectedLayer] = useState<string | null>(null);
 
