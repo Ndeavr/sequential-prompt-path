@@ -1354,6 +1354,45 @@ export type Database = {
           },
         ]
       }
+      auto_campaigns: {
+        Row: {
+          created_at: string
+          expected_lift_pct: number | null
+          feature: string | null
+          id: string
+          name: string
+          placement_type: string | null
+          source_pattern: Json | null
+          status: string
+          target_city: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expected_lift_pct?: number | null
+          feature?: string | null
+          id?: string
+          name: string
+          placement_type?: string | null
+          source_pattern?: Json | null
+          status?: string
+          target_city?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expected_lift_pct?: number | null
+          feature?: string | null
+          id?: string
+          name?: string
+          placement_type?: string | null
+          source_pattern?: Json | null
+          status?: string
+          target_city?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       automation_agents: {
         Row: {
           adaptive_frequency_enabled: boolean | null
@@ -1678,6 +1717,74 @@ export type Database = {
           key?: string
           updated_at?: string | null
           value?: Json
+        }
+        Relationships: []
+      }
+      campaign_generations: {
+        Row: {
+          auto_campaign_id: string
+          created_at: string
+          generated_assets: Json | null
+          id: string
+          rules_applied: Json | null
+          status: string
+        }
+        Insert: {
+          auto_campaign_id: string
+          created_at?: string
+          generated_assets?: Json | null
+          id?: string
+          rules_applied?: Json | null
+          status?: string
+        }
+        Update: {
+          auto_campaign_id?: string
+          created_at?: string
+          generated_assets?: Json | null
+          id?: string
+          rules_applied?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_generations_auto_campaign_id_fkey"
+            columns: ["auto_campaign_id"]
+            isOneToOne: false
+            referencedRelation: "auto_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_templates_ai: {
+        Row: {
+          config_json: Json | null
+          created_at: string
+          feature: string | null
+          id: string
+          is_active: boolean | null
+          performance_score: number | null
+          placement_type: string | null
+          template_type: string
+        }
+        Insert: {
+          config_json?: Json | null
+          created_at?: string
+          feature?: string | null
+          id?: string
+          is_active?: boolean | null
+          performance_score?: number | null
+          placement_type?: string | null
+          template_type?: string
+        }
+        Update: {
+          config_json?: Json | null
+          created_at?: string
+          feature?: string | null
+          id?: string
+          is_active?: boolean | null
+          performance_score?: number | null
+          placement_type?: string | null
+          template_type?: string
         }
         Relationships: []
       }
@@ -14561,6 +14668,68 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      voice_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "voice_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_sessions: {
+        Row: {
+          context_json: Json | null
+          created_at: string
+          deep_link_id: string | null
+          feature: string
+          id: string
+          transcript: string | null
+          user_id: string | null
+        }
+        Insert: {
+          context_json?: Json | null
+          created_at?: string
+          deep_link_id?: string | null
+          feature?: string
+          id?: string
+          transcript?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          context_json?: Json | null
+          created_at?: string
+          deep_link_id?: string | null
+          feature?: string
+          id?: string
+          transcript?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
