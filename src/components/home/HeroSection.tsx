@@ -156,25 +156,29 @@ export default function HeroSection() {
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-8 md:px-10 md:pt-12">
           <div className="relative md:grid md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8 md:items-start">
             {/* Mobile background image — full-width, organic dissolve */}
-            <div className="absolute top-0 left-0 right-0 h-[340px] md:hidden pointer-events-none">
+            <div className="absolute top-0 left-0 right-0 h-[340px] md:hidden pointer-events-none overflow-visible">
               <AnimatePresence mode="wait">
                 <motion.img key={current.image} src={current.image} alt={current.action}
-                  className="w-full h-full object-cover" loading="eager"
+                  className="w-full h-full object-cover"
+                  loading="eager"
+                  style={{
+                    WebkitMaskImage: `
+                      linear-gradient(to bottom, black 0%, black 45%, transparent 100%),
+                      linear-gradient(to right, transparent 0%, black 35%, black 100%),
+                      linear-gradient(to top, transparent 95%, black 100%)
+                    `,
+                    WebkitMaskComposite: 'source-in, source-over',
+                    maskImage: `
+                      linear-gradient(to bottom, black 0%, black 45%, transparent 100%),
+                      linear-gradient(to right, transparent 0%, black 35%, black 100%),
+                      linear-gradient(to top, transparent 95%, black 100%)
+                    `,
+                    maskComposite: 'intersect, add',
+                  }}
                   initial={{ opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
                   transition={{ duration: 1.1, ease: "easeInOut" }}
                 />
               </AnimatePresence>
-              {/* Organic multi-layer dissolve — left for text readability */}
-              <div className="absolute inset-0"
-                style={{
-                  background: `
-                    radial-gradient(ellipse 70% 60% at 15% 50%, hsl(213 60% 97%) 0%, hsl(213 60% 97% / 0.85) 30%, transparent 70%),
-                    linear-gradient(105deg, hsl(213 60% 97%) 0%, hsl(213 60% 97% / 0.9) 15%, hsl(213 60% 97% / 0.5) 30%, transparent 55%),
-                    linear-gradient(to bottom, transparent 40%, hsl(213 60% 97% / 0.4) 60%, hsl(213 60% 97% / 0.85) 78%, hsl(213 60% 97%) 92%),
-                    linear-gradient(to top, transparent 80%, hsl(213 60% 97% / 0.5) 92%, hsl(213 60% 97%) 100%)
-                  `
-                }}
-              />
               {/* Robot floating at bottom-right */}
               <motion.img src={unproRobot} alt="Alex UNPRO"
                 className="absolute right-4 bottom-8 w-[72px] z-30 drop-shadow-[0_6px_20px_rgba(63,123,255,0.25)]"
