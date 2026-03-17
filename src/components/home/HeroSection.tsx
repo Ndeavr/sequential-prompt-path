@@ -214,51 +214,6 @@ export default function HeroSection() {
                     textShadow: "0 0 20px rgba(255,255,255,0.95), 0 0 40px rgba(255,255,255,0.7), 0 2px 4px rgba(255,255,255,0.9)",
                   }}
                 >Rendez-vous garanti.</span>
-                <br />
-                {/* Rotating label */}
-                <span className="block" style={{ minHeight: "1.15em" }}>
-                  <AnimatePresence mode="wait">
-                    <motion.span
-                      key={current.label}
-                      variants={textVariants}
-                      initial="enter" animate="center" exit="exit"
-                      transition={{ duration: 0.38, ease: "easeOut" }}
-                      className="inline-block"
-                      style={{
-                        color: "#3F7BFF",
-                        textShadow: "0 0 20px rgba(255,255,255,0.95), 0 0 40px rgba(255,255,255,0.7), 0 2px 4px rgba(255,255,255,0.9)",
-                      }}
-                    >
-                      {current.label}
-                    </motion.span>
-                  </AnimatePresence>
-                </span>
-                <span
-                  className="inline-block"
-                  style={{
-                    color: "#0B1533",
-                    textShadow: "0 0 20px rgba(255,255,255,0.95), 0 0 40px rgba(255,255,255,0.7), 0 2px 4px rgba(255,255,255,0.9)",
-                  }}
-                >{current.qualifier}</span>
-                <br />
-                {/* Rotating action */}
-                <span className="block" style={{ minHeight: "2.3em" }}>
-                  <AnimatePresence mode="wait">
-                    <motion.span
-                      key={current.action}
-                      variants={textVariants}
-                      initial="enter" animate="center" exit="exit"
-                      transition={{ duration: 0.38, ease: "easeOut", delay: 0.42 }}
-                      className="inline-block whitespace-pre-line"
-                      style={{
-                        color: "#3F7BFF",
-                        textShadow: "0 0 20px rgba(255,255,255,0.95), 0 0 40px rgba(255,255,255,0.7), 0 2px 4px rgba(255,255,255,0.9)",
-                      }}
-                    >
-                      {current.action}
-                    </motion.span>
-                  </AnimatePresence>
-                </span>
               </h1>
 
               {/* Card with bullet points */}
