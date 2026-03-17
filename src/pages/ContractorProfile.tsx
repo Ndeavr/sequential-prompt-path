@@ -176,6 +176,15 @@ const ContractorProfile = () => {
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
+  const trackContactClick = useCallback((method: string) => {
+    if (!contractorId) return;
+    supabase.from("contractor_contact_clicks").insert({
+      contractor_id: contractorId,
+      contact_method: method,
+      user_id: user?.id || null,
+    } as any).then(() => {});
+  }, [contractorId, user?.id]);
+
   /* ── Loading ── */
   if (isLoading && !isDemo) {
     return (
