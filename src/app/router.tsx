@@ -155,6 +155,7 @@ import AdminDuplicates from "@/pages/admin/AdminDuplicates";
 import AdminAutomation from "@/pages/admin/AdminAutomation";
 import AdminHomeGraph from "@/pages/admin/AdminHomeGraph";
 import AdminUOS from "@/pages/admin/AdminUOS";
+import AdminGrowthEngine from "@/pages/admin/AdminGrowthEngine";
 
 export const AppRouter = () => (
   <BrowserRouter>
@@ -360,6 +361,7 @@ export const AppRouter = () => (
       <Route path="/admin/automation" element={<ProtectedRoute requiredRole="admin"><AdminAutomation /></ProtectedRoute>} />
       <Route path="/admin/home-graph" element={<ProtectedRoute requiredRole="admin"><AdminHomeGraph /></ProtectedRoute>} />
       <Route path="/admin/uos" element={<ProtectedRoute requiredRole="admin"><AdminUOS /></ProtectedRoute>} />
+      <Route path="/admin/growth-engine" element={<ProtectedRoute requiredRole="admin"><AdminGrowthEngine /></ProtectedRoute>} />
 
       {/* Condos — Public SEO */}
       <Route path="/condo" element={<CondoHomePage />} />

@@ -5433,6 +5433,84 @@ export type Database = {
           },
         ]
       }
+      growth_engine_metrics: {
+        Row: {
+          created_at: string
+          dimension_key: string | null
+          dimension_value: string | null
+          id: string
+          metadata: Json | null
+          metric_date: string
+          metric_type: string
+          metric_value: number
+        }
+        Insert: {
+          created_at?: string
+          dimension_key?: string | null
+          dimension_value?: string | null
+          id?: string
+          metadata?: Json | null
+          metric_date?: string
+          metric_type: string
+          metric_value?: number
+        }
+        Update: {
+          created_at?: string
+          dimension_key?: string | null
+          dimension_value?: string | null
+          id?: string
+          metadata?: Json | null
+          metric_date?: string
+          metric_type?: string
+          metric_value?: number
+        }
+        Relationships: []
+      }
+      growth_events: {
+        Row: {
+          created_at: string
+          description: string | null
+          entity_id: string | null
+          entity_type: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_engine: string
+          status: string
+          title: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_engine: string
+          status?: string
+          title?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_engine?: string
+          status?: string
+          title?: string | null
+        }
+        Relationships: []
+      }
       home_problem_causes: {
         Row: {
           cause_id: string
