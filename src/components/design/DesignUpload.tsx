@@ -20,6 +20,55 @@ const SHOWCASES = [
   { before: before3, after: after3, label: "Salon", room: "living_room" },
 ];
 
+function BeforeAfterSlider({ before, after }: { before: string; after: string }) {
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState(50);
+  const [dragging, setDragging] = useState(false);
+
+  const update = useCallback((clientX: number) => {
+    if (!sliderRef.current) return;
+    const rect = sliderRef.current.getBoundingClientRect();
+    setPos(Math.max(2, Math.min(98, ((clientX - rect.left) / rect.width) * 100)));
+  }, []);
+
+  const onPointerDown = useCallback((e: React.PointerEvent) => {
+    setDragging(true);
+    update(e.clientX);
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+  }, [update]);
+
+  const onPointerMove = useCallback((e: React.PointerEvent) => {
+    if (dragging) update(e.clientX);
+  }, [dragging, update]);
+
+  const onPointerUp = useCallback(() => setDragging(false), []);
+
+  return (
+    <div
+      ref={sliderRef}
+      className="relative aspect-[4/3] overflow-hidden cursor-col-resize select-none touch-none"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+    >
+      <img src={after} alt="Après" className="absolute inset-0 w-full h-full object-cover" />
+      <div className="absolute inset-0 overflow-hidden" style={{ width: `${pos}%` }}>
+        <img src={before} alt="Avant" className="h-full object-cover" style={{ width: sliderRef.current?.clientWidth || "100%" }} />
+      </div>
+      <div className="absolute top-0 bottom-0 w-0.5 bg-white/90 shadow-lg" style={{ left: `${pos}%` }}>
+        <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-white shadow-lg flex items-center justify-center">
+          <div className="flex gap-0.5">
+            <div className="w-0.5 h-2.5 bg-muted-foreground/50 rounded-full" />
+            <div className="w-0.5 h-2.5 bg-muted-foreground/50 rounded-full" />
+          </div>
+        </div>
+      </div>
+      <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-background/80 backdrop-blur-sm text-muted-foreground">Avant</div>
+      <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-primary/90 backdrop-blur-sm text-primary-foreground">✨ Après</div>
+    </div>
+  );
+}
+
 interface Props {
   onUpload: (file: File, roomType?: string) => void;
 }
