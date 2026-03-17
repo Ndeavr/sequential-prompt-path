@@ -144,10 +144,10 @@ export default function DesignUpload({ onUpload }: Props) {
                   src={showAfter ? current.after : current.before}
                   alt={showAfter ? "Après" : "Avant"}
                   className="absolute inset-0 w-full h-full object-cover"
-                  initial={{ opacity: 0, scale: 1.04 }}
+                  initial={{ opacity: 0, scale: 1.03 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1] }}
                 />
               </AnimatePresence>
 
