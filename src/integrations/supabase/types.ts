@@ -693,6 +693,120 @@ export type Database = {
           },
         ]
       }
+      ai_optimization_logs: {
+        Row: {
+          applied: boolean
+          applied_at: string | null
+          applied_by: string | null
+          change_description: string
+          change_json: Json
+          created_at: string
+          data_used_json: Json | null
+          id: string
+          impact_estimate_json: Json | null
+          optimization_type: string
+          reason: string
+          rollback_json: Json | null
+          rolled_back: boolean | null
+          target_category: string | null
+          target_city: string | null
+        }
+        Insert: {
+          applied?: boolean
+          applied_at?: string | null
+          applied_by?: string | null
+          change_description: string
+          change_json: Json
+          created_at?: string
+          data_used_json?: Json | null
+          id?: string
+          impact_estimate_json?: Json | null
+          optimization_type: string
+          reason: string
+          rollback_json?: Json | null
+          rolled_back?: boolean | null
+          target_category?: string | null
+          target_city?: string | null
+        }
+        Update: {
+          applied?: boolean
+          applied_at?: string | null
+          applied_by?: string | null
+          change_description?: string
+          change_json?: Json
+          created_at?: string
+          data_used_json?: Json | null
+          id?: string
+          impact_estimate_json?: Json | null
+          optimization_type?: string
+          reason?: string
+          rollback_json?: Json | null
+          rolled_back?: boolean | null
+          target_category?: string | null
+          target_city?: string | null
+        }
+        Relationships: []
+      }
+      ai_recommendations: {
+        Row: {
+          auto_applicable: boolean | null
+          category: string | null
+          city: string | null
+          confidence_score: number
+          created_at: string
+          description_fr: string
+          expected_impact_fr: string | null
+          expires_at: string | null
+          id: string
+          priority: string
+          recommendation_type: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          suggested_change_json: Json | null
+          title_fr: string
+        }
+        Insert: {
+          auto_applicable?: boolean | null
+          category?: string | null
+          city?: string | null
+          confidence_score?: number
+          created_at?: string
+          description_fr: string
+          expected_impact_fr?: string | null
+          expires_at?: string | null
+          id?: string
+          priority?: string
+          recommendation_type: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          suggested_change_json?: Json | null
+          title_fr: string
+        }
+        Update: {
+          auto_applicable?: boolean | null
+          category?: string | null
+          city?: string | null
+          confidence_score?: number
+          created_at?: string
+          description_fr?: string
+          expected_impact_fr?: string | null
+          expires_at?: string | null
+          id?: string
+          priority?: string
+          recommendation_type?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          suggested_change_json?: Json | null
+          title_fr?: string
+        }
+        Relationships: []
+      }
       aipp_scores: {
         Row: {
           calculated_at: string
@@ -3489,6 +3603,92 @@ export type Database = {
           },
         ]
       }
+      contractor_dispatch_stats: {
+        Row: {
+          acceptance_rate: number | null
+          avg_eta_accuracy_pct: number | null
+          avg_response_time_sec: number | null
+          contractor_id: string
+          emergency_fit_score: number | null
+          id: string
+          last_acceptance_at: string | null
+          last_dispatch_at: string | null
+          no_response_streak: number | null
+          reliability_score: number | null
+          total_accepted: number
+          total_completed: number
+          total_dispatched: number
+          total_no_response: number
+          total_refused: number
+          updated_at: string
+        }
+        Insert: {
+          acceptance_rate?: number | null
+          avg_eta_accuracy_pct?: number | null
+          avg_response_time_sec?: number | null
+          contractor_id: string
+          emergency_fit_score?: number | null
+          id?: string
+          last_acceptance_at?: string | null
+          last_dispatch_at?: string | null
+          no_response_streak?: number | null
+          reliability_score?: number | null
+          total_accepted?: number
+          total_completed?: number
+          total_dispatched?: number
+          total_no_response?: number
+          total_refused?: number
+          updated_at?: string
+        }
+        Update: {
+          acceptance_rate?: number | null
+          avg_eta_accuracy_pct?: number | null
+          avg_response_time_sec?: number | null
+          contractor_id?: string
+          emergency_fit_score?: number | null
+          id?: string
+          last_acceptance_at?: string | null
+          last_dispatch_at?: string | null
+          no_response_streak?: number | null
+          reliability_score?: number | null
+          total_accepted?: number
+          total_completed?: number
+          total_dispatched?: number
+          total_no_response?: number
+          total_refused?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_dispatch_stats_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_dispatch_stats_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_dispatch_stats_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_dispatch_stats_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_dna_profiles: {
         Row: {
           confidence: number
@@ -6084,6 +6284,71 @@ export type Database = {
           },
         ]
       }
+      contractor_wallet: {
+        Row: {
+          balance_cents: number
+          contractor_id: string
+          created_at: string
+          id: string
+          last_top_up_at: string | null
+          lifetime_credited_cents: number
+          lifetime_spent_cents: number
+          low_balance_alerted: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          balance_cents?: number
+          contractor_id: string
+          created_at?: string
+          id?: string
+          last_top_up_at?: string | null
+          lifetime_credited_cents?: number
+          lifetime_spent_cents?: number
+          low_balance_alerted?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          balance_cents?: number
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          last_top_up_at?: string | null
+          lifetime_credited_cents?: number
+          lifetime_spent_cents?: number
+          low_balance_alerted?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_wallet_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_wallet_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_wallet_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_wallet_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractors: {
         Row: {
           address: string | null
@@ -7132,6 +7397,138 @@ export type Database = {
         }
         Relationships: []
       }
+      dynamic_pricing_logs: {
+        Row: {
+          admin_override: boolean | null
+          admin_override_reason: string | null
+          base_price_cents: number
+          cap_applied: boolean | null
+          combined_multiplier: number
+          contractor_id: string | null
+          created_at: string
+          demand_multiplier: number
+          final_price_cents: number
+          id: string
+          intent_multiplier: number
+          multipliers_json: Json | null
+          request_id: string | null
+          sla_surcharge_cents: number | null
+          sla_tier: string | null
+          storm_multiplier: number
+          supply_multiplier: number
+          time_multiplier: number
+          urgency_multiplier: number
+        }
+        Insert: {
+          admin_override?: boolean | null
+          admin_override_reason?: string | null
+          base_price_cents: number
+          cap_applied?: boolean | null
+          combined_multiplier?: number
+          contractor_id?: string | null
+          created_at?: string
+          demand_multiplier?: number
+          final_price_cents: number
+          id?: string
+          intent_multiplier?: number
+          multipliers_json?: Json | null
+          request_id?: string | null
+          sla_surcharge_cents?: number | null
+          sla_tier?: string | null
+          storm_multiplier?: number
+          supply_multiplier?: number
+          time_multiplier?: number
+          urgency_multiplier?: number
+        }
+        Update: {
+          admin_override?: boolean | null
+          admin_override_reason?: string | null
+          base_price_cents?: number
+          cap_applied?: boolean | null
+          combined_multiplier?: number
+          contractor_id?: string | null
+          created_at?: string
+          demand_multiplier?: number
+          final_price_cents?: number
+          id?: string
+          intent_multiplier?: number
+          multipliers_json?: Json | null
+          request_id?: string | null
+          sla_surcharge_cents?: number | null
+          sla_tier?: string | null
+          storm_multiplier?: number
+          supply_multiplier?: number
+          time_multiplier?: number
+          urgency_multiplier?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dynamic_pricing_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dynamic_pricing_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dynamic_pricing_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dynamic_pricing_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "dynamic_pricing_logs_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "emergency_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dynamic_pricing_settings: {
+        Row: {
+          description_fr: string | null
+          id: string
+          label_fr: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          description_fr?: string | null
+          id?: string
+          label_fr: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          description_fr?: string | null
+          id?: string
+          label_fr?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       emergency_assignments: {
         Row: {
           accepted_at: string | null
@@ -7206,6 +7603,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      emergency_demand_metrics: {
+        Row: {
+          acceptance_count: number
+          avg_price_cents: number | null
+          avg_time_to_arrival_sec: number | null
+          avg_time_to_assignment_sec: number | null
+          category: string
+          city_slug: string | null
+          contractor_supply_count: number | null
+          created_at: string
+          demand_supply_ratio: number | null
+          id: string
+          period_end: string
+          period_start: string
+          refusal_count: number
+          request_count: number
+          storm_active: boolean | null
+        }
+        Insert: {
+          acceptance_count?: number
+          avg_price_cents?: number | null
+          avg_time_to_arrival_sec?: number | null
+          avg_time_to_assignment_sec?: number | null
+          category: string
+          city_slug?: string | null
+          contractor_supply_count?: number | null
+          created_at?: string
+          demand_supply_ratio?: number | null
+          id?: string
+          period_end: string
+          period_start: string
+          refusal_count?: number
+          request_count?: number
+          storm_active?: boolean | null
+        }
+        Update: {
+          acceptance_count?: number
+          avg_price_cents?: number | null
+          avg_time_to_arrival_sec?: number | null
+          avg_time_to_assignment_sec?: number | null
+          category?: string
+          city_slug?: string | null
+          contractor_supply_count?: number | null
+          created_at?: string
+          demand_supply_ratio?: number | null
+          id?: string
+          period_end?: string
+          period_start?: string
+          refusal_count?: number
+          request_count?: number
+          storm_active?: boolean | null
+        }
+        Relationships: []
       }
       emergency_events: {
         Row: {
@@ -7313,6 +7764,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      emergency_pricing_base: {
+        Row: {
+          avg_job_value_cents: number | null
+          base_price_cents: number
+          category: string
+          city_slug: string | null
+          competition_level: string | null
+          created_at: string
+          historical_acceptance_rate: number | null
+          id: string
+          is_active: boolean
+          region: string | null
+          updated_at: string
+        }
+        Insert: {
+          avg_job_value_cents?: number | null
+          base_price_cents?: number
+          category: string
+          city_slug?: string | null
+          competition_level?: string | null
+          created_at?: string
+          historical_acceptance_rate?: number | null
+          id?: string
+          is_active?: boolean
+          region?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avg_job_value_cents?: number | null
+          base_price_cents?: number
+          category?: string
+          city_slug?: string | null
+          competition_level?: string | null
+          created_at?: string
+          historical_acceptance_rate?: number | null
+          id?: string
+          is_active?: boolean
+          region?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       emergency_requests: {
         Row: {
@@ -10263,6 +10756,98 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      pricing_transactions: {
+        Row: {
+          amount_cents: number
+          balance_after_cents: number | null
+          contractor_id: string
+          created_at: string
+          description_fr: string | null
+          id: string
+          metadata: Json | null
+          pricing_log_id: string | null
+          request_id: string | null
+          transaction_type: string
+          wallet_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          balance_after_cents?: number | null
+          contractor_id: string
+          created_at?: string
+          description_fr?: string | null
+          id?: string
+          metadata?: Json | null
+          pricing_log_id?: string | null
+          request_id?: string | null
+          transaction_type: string
+          wallet_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          balance_after_cents?: number | null
+          contractor_id?: string
+          created_at?: string
+          description_fr?: string | null
+          id?: string
+          metadata?: Json | null
+          pricing_log_id?: string | null
+          request_id?: string | null
+          transaction_type?: string
+          wallet_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_transactions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_transactions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_transactions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_transactions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "pricing_transactions_pricing_log_id_fkey"
+            columns: ["pricing_log_id"]
+            isOneToOne: false
+            referencedRelation: "dynamic_pricing_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_transactions_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "emergency_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_wallet"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       problem_causes: {
         Row: {
@@ -14145,6 +14730,111 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sla_assignments: {
+        Row: {
+          achieved: boolean | null
+          actual_response_minutes: number | null
+          breach_reason: string | null
+          created_at: string
+          guaranteed_response_minutes: number
+          id: string
+          refund_amount_cents: number | null
+          refund_issued: boolean | null
+          request_id: string
+          resolved_at: string | null
+          sla_tier_id: string
+          sla_tier_name: string
+        }
+        Insert: {
+          achieved?: boolean | null
+          actual_response_minutes?: number | null
+          breach_reason?: string | null
+          created_at?: string
+          guaranteed_response_minutes: number
+          id?: string
+          refund_amount_cents?: number | null
+          refund_issued?: boolean | null
+          request_id: string
+          resolved_at?: string | null
+          sla_tier_id: string
+          sla_tier_name: string
+        }
+        Update: {
+          achieved?: boolean | null
+          actual_response_minutes?: number | null
+          breach_reason?: string | null
+          created_at?: string
+          guaranteed_response_minutes?: number
+          id?: string
+          refund_amount_cents?: number | null
+          refund_issued?: boolean | null
+          request_id?: string
+          resolved_at?: string | null
+          sla_tier_id?: string
+          sla_tier_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sla_assignments_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "emergency_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sla_assignments_sla_tier_id_fkey"
+            columns: ["sla_tier_id"]
+            isOneToOne: false
+            referencedRelation: "sla_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sla_tiers: {
+        Row: {
+          created_at: string
+          dispatch_rules_override: Json | null
+          display_order: number
+          id: string
+          is_active: boolean
+          label_fr: string
+          name: string
+          price_multiplier: number
+          priority_boost: number
+          response_time_minutes: number
+          surcharge_cents: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dispatch_rules_override?: Json | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          label_fr: string
+          name: string
+          price_multiplier?: number
+          priority_boost?: number
+          response_time_minutes: number
+          surcharge_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dispatch_rules_override?: Json | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          label_fr?: string
+          name?: string
+          price_multiplier?: number
+          priority_boost?: number
+          response_time_minutes?: number
+          surcharge_cents?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       smart_decline_logs: {
         Row: {
