@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Upload, Camera, Image, Sparkles, ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ROOM_TYPES } from "./data";
+import LikeShareButtons from "@/components/shared/LikeShareButtons";
 
 import before1 from "@/assets/design-before-1.jpg";
 import after1 from "@/assets/design-after-1.jpg";
