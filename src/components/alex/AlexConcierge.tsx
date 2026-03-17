@@ -120,8 +120,11 @@ const getContextSuggestions = (pathname: string, isAuthenticated: boolean): Cont
 };
 
 interface AlexConciergeProps {
-  properties?: Array<{ address: string; city?: string | null }>;
+  properties?: Array<{ address: string; city?: string | null; property_type?: string | null; property_family?: string | null; year_built?: number | null }>;
   homeScore?: number | null;
+  propertyFamily?: string | null;
+  propertyType?: string | null;
+  occupancyStatus?: string | null;
 }
 
 const AlexConcierge = ({ properties, homeScore }: AlexConciergeProps) => {
