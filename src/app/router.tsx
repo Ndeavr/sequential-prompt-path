@@ -138,6 +138,8 @@ import ProIncomingProjects from "@/pages/pro/ProIncomingProjects";
 import ProPartnerNetwork from "@/pages/pro/ProPartnerNetwork";
 import ProExpertise from "@/pages/pro/ProExpertise";
 import ProTeams from "@/pages/pro/ProTeams";
+import ProEmergencySettings from "@/pages/pro/ProEmergencySettings";
+import EmergencyTrackingPage from "@/pages/EmergencyTrackingPage";
 
 // Admin
 import AdminDashboard from "@/pages/admin/AdminDashboard";
@@ -374,6 +376,7 @@ export const AppRouter = () => (
       <Route path="/pro/partners" element={<ProtectedRoute requiredRole="contractor"><ProPartnerNetwork /></ProtectedRoute>} />
       <Route path="/pro/expertise" element={<ProtectedRoute requiredRole="contractor"><ProExpertise /></ProtectedRoute>} />
       <Route path="/pro/teams" element={<ProtectedRoute requiredRole="contractor"><ProTeams /></ProtectedRoute>} />
+      <Route path="/pro/emergency-settings" element={<ProtectedRoute requiredRole="contractor"><ProEmergencySettings /></ProtectedRoute>} />
 
       {/* Admin */}
       <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
@@ -417,6 +420,7 @@ export const AppRouter = () => (
       <Route path="/admin/nexus" element={<ProtectedRoute requiredRole="admin"><AdminNexusDashboard /></ProtectedRoute>} />
       <Route path="/admin/dispatch-center" element={<ProtectedRoute requiredRole="admin"><AdminDispatchCenter /></ProtectedRoute>} />
       <Route path="/emergency" element={<EmergencyPage />} />
+      <Route path="/emergency/track/:id" element={<EmergencyTrackingPage />} />
 
       {/* Refusal SEO public pages */}
       <Route path="/refusal/:slug" element={<RefusalSeoPage />} />

@@ -110,7 +110,7 @@ export default function EmergencyPage() {
         if (!error) photoUrls.push(path);
       }
 
-      const { error } = await supabase.from("emergency_requests").insert({
+      const { data: inserted, error } = await supabase.from("emergency_requests").insert({
         user_id: user.id,
         category: category || "autre",
         description,
@@ -124,12 +124,12 @@ export default function EmergencyPage() {
         intent_score: intentScore,
         photo_urls: photoUrls,
         status: "new",
-      });
+      }).select("id").single();
 
       if (error) throw error;
 
-      setStep("done");
       toast({ title: "Urgence soumise ✅", description: "Nous cherchons le meilleur entrepreneur pour vous." });
+      navigate(`/emergency/track/${inserted.id}`);
     } catch (err: any) {
       toast({ title: "Erreur", description: err.message, variant: "destructive" });
       setStep("intake");

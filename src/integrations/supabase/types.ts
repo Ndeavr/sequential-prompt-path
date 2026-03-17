@@ -2640,6 +2640,170 @@ export type Database = {
           },
         ]
       }
+      contractor_auto_accept_events: {
+        Row: {
+          capacity_snapshot: Json | null
+          contractor_id: string
+          created_at: string
+          decision: string
+          evaluation_details: Json | null
+          id: string
+          reason: string | null
+          request_id: string | null
+          rule_snapshot: Json | null
+        }
+        Insert: {
+          capacity_snapshot?: Json | null
+          contractor_id: string
+          created_at?: string
+          decision: string
+          evaluation_details?: Json | null
+          id?: string
+          reason?: string | null
+          request_id?: string | null
+          rule_snapshot?: Json | null
+        }
+        Update: {
+          capacity_snapshot?: Json | null
+          contractor_id?: string
+          created_at?: string
+          decision?: string
+          evaluation_details?: Json | null
+          id?: string
+          reason?: string | null
+          request_id?: string | null
+          rule_snapshot?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_auto_accept_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_auto_accept_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_auto_accept_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_auto_accept_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_auto_accept_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "emergency_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_auto_accept_settings: {
+        Row: {
+          admin_disabled: boolean | null
+          admin_disabled_reason: string | null
+          categories: string[] | null
+          confidence_threshold: number | null
+          contractor_id: string
+          created_at: string
+          enabled: boolean
+          excluded_types: string[] | null
+          id: string
+          max_radius_km: number | null
+          preset_key: string | null
+          requires_callback: boolean | null
+          requires_photo: boolean | null
+          severities: string[] | null
+          storm_mode: string | null
+          subtypes: string[] | null
+          time_windows: Json | null
+          updated_at: string
+        }
+        Insert: {
+          admin_disabled?: boolean | null
+          admin_disabled_reason?: string | null
+          categories?: string[] | null
+          confidence_threshold?: number | null
+          contractor_id: string
+          created_at?: string
+          enabled?: boolean
+          excluded_types?: string[] | null
+          id?: string
+          max_radius_km?: number | null
+          preset_key?: string | null
+          requires_callback?: boolean | null
+          requires_photo?: boolean | null
+          severities?: string[] | null
+          storm_mode?: string | null
+          subtypes?: string[] | null
+          time_windows?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          admin_disabled?: boolean | null
+          admin_disabled_reason?: string | null
+          categories?: string[] | null
+          confidence_threshold?: number | null
+          contractor_id?: string
+          created_at?: string
+          enabled?: boolean
+          excluded_types?: string[] | null
+          id?: string
+          max_radius_km?: number | null
+          preset_key?: string | null
+          requires_callback?: boolean | null
+          requires_photo?: boolean | null
+          severities?: string[] | null
+          storm_mode?: string | null
+          subtypes?: string[] | null
+          time_windows?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_auto_accept_settings_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_auto_accept_settings_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_auto_accept_settings_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_auto_accept_settings_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_budgets: {
         Row: {
           boost_active: boolean | null
@@ -2780,6 +2944,116 @@ export type Database = {
             foreignKeyName: "contractor_capabilities_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_capacity_state: {
+        Row: {
+          active_count: number | null
+          after_hours_limit: number | null
+          arrived_count: number | null
+          availability_status: string
+          completed_today: number | null
+          contractor_id: string
+          daily_emergency_limit: number | null
+          emergency_radius_km: number | null
+          en_route_count: number | null
+          id: string
+          last_reset_date: string | null
+          max_active_emergencies: number | null
+          max_parallel_callbacks: number | null
+          max_pending_accepted: number | null
+          overnight_limit: number | null
+          overnight_mode: boolean | null
+          paused_until: string | null
+          pending_count: number | null
+          storm_accept: boolean | null
+          storm_capacity_boost: number | null
+          storm_categories: string[] | null
+          storm_radius_km: number | null
+          updated_at: string
+          weekend_limit: number | null
+        }
+        Insert: {
+          active_count?: number | null
+          after_hours_limit?: number | null
+          arrived_count?: number | null
+          availability_status?: string
+          completed_today?: number | null
+          contractor_id: string
+          daily_emergency_limit?: number | null
+          emergency_radius_km?: number | null
+          en_route_count?: number | null
+          id?: string
+          last_reset_date?: string | null
+          max_active_emergencies?: number | null
+          max_parallel_callbacks?: number | null
+          max_pending_accepted?: number | null
+          overnight_limit?: number | null
+          overnight_mode?: boolean | null
+          paused_until?: string | null
+          pending_count?: number | null
+          storm_accept?: boolean | null
+          storm_capacity_boost?: number | null
+          storm_categories?: string[] | null
+          storm_radius_km?: number | null
+          updated_at?: string
+          weekend_limit?: number | null
+        }
+        Update: {
+          active_count?: number | null
+          after_hours_limit?: number | null
+          arrived_count?: number | null
+          availability_status?: string
+          completed_today?: number | null
+          contractor_id?: string
+          daily_emergency_limit?: number | null
+          emergency_radius_km?: number | null
+          en_route_count?: number | null
+          id?: string
+          last_reset_date?: string | null
+          max_active_emergencies?: number | null
+          max_parallel_callbacks?: number | null
+          max_pending_accepted?: number | null
+          overnight_limit?: number | null
+          overnight_mode?: boolean | null
+          paused_until?: string | null
+          pending_count?: number | null
+          storm_accept?: boolean | null
+          storm_capacity_boost?: number | null
+          storm_categories?: string[] | null
+          storm_radius_km?: number | null
+          updated_at?: string
+          weekend_limit?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_capacity_state_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_capacity_state_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_capacity_state_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_capacity_state_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
           },
@@ -6861,6 +7135,8 @@ export type Database = {
       emergency_assignments: {
         Row: {
           accepted_at: string | null
+          auto_accept_event_id: string | null
+          auto_accepted: boolean | null
           contractor_id: string
           eta_minutes: number | null
           id: string
@@ -6871,6 +7147,8 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          auto_accept_event_id?: string | null
+          auto_accepted?: boolean | null
           contractor_id: string
           eta_minutes?: number | null
           id?: string
@@ -6881,6 +7159,8 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          auto_accept_event_id?: string | null
+          auto_accepted?: boolean | null
           contractor_id?: string
           eta_minutes?: number | null
           id?: string
