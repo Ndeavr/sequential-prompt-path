@@ -425,18 +425,17 @@ export default function DesignUpload({ onUpload }: Props) {
         </div>
       </section>
 
-      {/* ─── Final CTA ─── */}
-      <section className="relative py-20 px-4 overflow-hidden">
+      {/* ─── Vote Section ─── */}
+      <section className="relative py-16 px-4 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute bottom-0 left-[30%] w-[40vw] h-[30vw] rounded-full bg-primary/6 blur-[100px]" />
         </div>
         <div className="relative z-10 text-center max-w-lg mx-auto">
-          <Sparkles className="w-8 h-8 text-primary mx-auto mb-4" />
           <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-3">
-            Prêt à transformer votre espace ?
+            Votez sur des projets récents
           </h2>
           <p className="text-muted-foreground mb-6">
-            C'est gratuit, instantané, et sans inscription.
+            C'est gratuit et instantané.
           </p>
           <Button size="lg" className="gap-2 h-12 text-base font-semibold px-10" onClick={scrollToUpload}>
             <Upload className="w-5 h-5" />
