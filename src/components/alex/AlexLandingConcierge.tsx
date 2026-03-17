@@ -4,7 +4,7 @@
  * Handles: post-scan greeting, pre-login reassurance, flow guidance.
  */
 import { useState, useEffect, useCallback } from "react";
-import AlexOrb from "./AlexOrb";
+import AlexConciergeOrb from "./AlexConciergeOrb";
 import AlexOverlay, { type AlexAction } from "./AlexOverlay";
 import AlexFlowEngine, { type AlexFeature } from "./AlexFlowEngine";
 import { saveAlexResumeIntent } from "@/hooks/useAlexResume";
