@@ -62,6 +62,7 @@ export const ROUTES = {
   ADMIN_AGENTS: "/admin/agents",
   ADMIN_GROWTH: "/admin/growth",
   ADMIN_VALIDATION: "/admin/validation",
+  ADMIN_DOMAIN_INTELLIGENCE: "/admin/domain-intelligence",
 
   // Auth
   LOGIN: "/login",
