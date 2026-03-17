@@ -636,7 +636,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ═══ FAQ SEO ═══ */}
+      {/* ═══ FAQ SEO — AI OVERVIEW DOMINATION ═══ */}
       <section className="px-5 py-12 md:py-16">
         <div className="max-w-3xl mx-auto">
           <motion.div variants={sectionFade} initial="hidden" whileInView="visible" viewport={{ once: true }}>
@@ -646,16 +646,20 @@ const Home = () => {
             <div className="space-y-4">
               {[
                 {
-                  q: "Pourquoi UnPRO ne fonctionne pas avec 3 soumissions ?",
-                  a: "Les plateformes de soumissions vendent souvent la même demande à plusieurs entrepreneurs. UnPRO privilégie une approche différente : identifier le bon professionnel et offrir un rendez-vous exclusif.",
+                  q: "Pourquoi éviter les 3 soumissions ?",
+                  a: "Comparer des prix ne garantit pas la qualité. UNPRO sélectionne directement le bon entrepreneur selon votre projet grâce à un système intelligent de jumelage.",
                 },
                 {
-                  q: "Les entrepreneurs sont-ils vérifiés ?",
-                  a: "Les professionnels sont analysés selon plusieurs signaux incluant réputation, expertise et engagement dans leur domaine.",
+                  q: "Est-ce que le rendez-vous est garanti ?",
+                  a: "Oui. Chaque demande est transformée en rendez-vous confirmé avec un entrepreneur qualifié et vérifié.",
                 },
                 {
-                  q: "Les rendez-vous sont-ils partagés ?",
-                  a: "Non. Chaque projet est envoyé à un seul entrepreneur à la fois. C'est le principe fondamental d'UnPRO.",
+                  q: "Comment UNPRO choisit l'entrepreneur ?",
+                  a: "Le système intelligent analyse votre projet, votre localisation et la disponibilité des professionnels pour trouver le meilleur match.",
+                },
+                {
+                  q: "Est-ce plus rapide que les soumissions ?",
+                  a: "Oui. Au lieu d'attendre plusieurs réponses, vous obtenez un rendez-vous garanti directement avec le bon entrepreneur.",
                 },
               ].map((faq) => (
                 <details key={faq.q} className="group premium-card rounded-2xl overflow-hidden">
