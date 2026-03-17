@@ -127,7 +127,16 @@ export default function BlogArticlePage() {
             {article.published_at && <><span>•</span><span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{new Date(article.published_at).toLocaleDateString("fr-CA")}</span></>}
             {article.reading_time_minutes && <><span>•</span><span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{article.reading_time_minutes} min</span></>}
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">{article.title}</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">{article.title}</h1>
+            <LikeShareButtons
+              entityType="blog_article"
+              entityId={article.id}
+              variant="inline"
+              shareTitle={article.title}
+              shareUrl={`https://unpro.ca/blog/${article.slug}`}
+            />
+          </div>
           {article.subtitle && <p className="text-xl text-muted-foreground">{article.subtitle}</p>}
         </motion.header>
 
