@@ -86,7 +86,7 @@ export default function AlexLandingConcierge({ feature, deepLinkId, onCtaClick }
 
   return (
     <>
-      {showOrb && <AlexOrb onClick={handleOrbClick} hasMessage={phase === "idle"} />}
+      {showOrb && <AlexConciergeOrb onClick={handleOrbClick} hasMessage={phase === "idle"} />}
 
       <AlexOverlay
         isOpen={phase === "greeting"}
