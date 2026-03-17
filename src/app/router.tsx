@@ -62,6 +62,7 @@ import PropertyGrantsPage from "@/pages/dashboard/PropertyGrantsPage";
 import MessageCenterPage from "@/pages/dashboard/MessageCenterPage";
 import ProjectMatchesPage from "@/pages/dashboard/ProjectMatchesPage";
 import QrScanPage from "@/pages/QrScanPage";
+import ReferralLandingPage from "@/pages/ReferralLandingPage";
 import ContributionApprovalPage from "@/pages/dashboard/ContributionApprovalPage";
 import ListingImportPage from "@/pages/ListingImportPage";
 import PublicScoreCalculatorPage from "@/pages/PublicScoreCalculatorPage";
@@ -210,6 +211,7 @@ export const AppRouter = () => (
       <Route path="/analyser-document" element={<AnalyzeDocumentPage />} />
       <Route path="/verifier-:tradeSlug/:citySlug" element={<VerificationSeoPage />} />
       <Route path="/qr/:token" element={<QrScanPage />} />
+      <Route path="/r/:refCode" element={<ReferralLandingPage />} />
 
       {/* Public Property Page */}
       <Route path="/maison/:slug" element={<PublicPropertyPage />} />

@@ -9,13 +9,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { headerNavByRole } from "@/config/navigationConfig";
-import { Menu, X, Bell, ChevronDown } from "lucide-react";
+import { Menu, X, Bell, ChevronDown, QrCode } from "lucide-react";
 import ProfileMenu from "./ProfileMenu";
 import AlexNavOrb from "./AlexNavOrb";
 import HeaderSearch from "./HeaderSearch";
 import MegaMenuPanel from "./MegaMenu";
 import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
 import SmartCTA from "@/components/cta/SmartCTA";
+import QRShareModal from "@/components/sharing/QRShareModal";
 import unproLogo from "@/assets/unpro-logo.png";
 import type { UserRole } from "@/types/navigation";
 
@@ -42,6 +43,7 @@ const SmartHeader = () => {
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeMega, setActiveMega] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const { lang, setLang } = useLanguage();
 
   const handleMegaEnter = useCallback((key: string) => setActiveMega(key), []);
@@ -155,6 +157,19 @@ const SmartHeader = () => {
                 <LanguageToggle lang={lang} onChange={setLang} />
               </div>
 
+              {/* Share QR button — logged-in users only */}
+              {ctx && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                  onClick={() => setShareOpen(true)}
+                  aria-label="Partager"
+                >
+                  <QrCode className="h-4 w-4" />
+                </Button>
+              )}
+
               {/* Notifications */}
               {ctx && ctx.system.notificationsCount > 0 && (
                 <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground">
@@ -220,6 +235,9 @@ const SmartHeader = () => {
           <MobileMenuOverlay lang={lang} onClose={() => setMobileOpen(false)} ctx={ctx} activeRole={activeRole} />
         )}
       </AnimatePresence>
+
+      {/* QR Share Modal */}
+      <QRShareModal open={shareOpen} onOpenChange={setShareOpen} />
     </>
   );
 };
