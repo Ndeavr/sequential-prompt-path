@@ -197,7 +197,23 @@ export default function HeroSection() {
                     color: "#0B1533",
                     textShadow: "0 0 20px rgba(255,255,255,0.95), 0 0 40px rgba(255,255,255,0.7), 0 2px 4px rgba(255,255,255,0.9)",
                   }}
-                >Trouvez</span>
+                >Un seul entrepreneur.</span>
+                <br />
+                <span
+                  className="inline-block"
+                  style={{
+                    color: "#3F7BFF",
+                    textShadow: "0 0 20px rgba(255,255,255,0.95), 0 0 40px rgba(255,255,255,0.7), 0 2px 4px rgba(255,255,255,0.9)",
+                  }}
+                >Le bon.</span>
+                <br />
+                <span
+                  className="inline-block"
+                  style={{
+                    color: "#0B1533",
+                    textShadow: "0 0 20px rgba(255,255,255,0.95), 0 0 40px rgba(255,255,255,0.7), 0 2px 4px rgba(255,255,255,0.9)",
+                  }}
+                >Rendez-vous garanti.</span>
                 <br />
                 {/* Rotating label */}
                 <span className="block" style={{ minHeight: "1.15em" }}>
