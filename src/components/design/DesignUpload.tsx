@@ -34,7 +34,7 @@ export default function DesignUpload({ onUpload }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef<HTMLDivElement>(null);
 
-  // Auto-cycle showcases
+  // Auto-cycle showcases — slower rhythm
   useEffect(() => {
     const interval = setInterval(() => {
       setShowAfter(true);
@@ -42,9 +42,9 @@ export default function DesignUpload({ onUpload }: Props) {
         setShowAfter(false);
         setTimeout(() => {
           setActiveShowcase((p) => (p + 1) % SHOWCASES.length);
-        }, 400);
-      }, 2800);
-    }, 4500);
+        }, 600);
+      }, 4500);
+    }, 7000);
     return () => clearInterval(interval);
   }, []);
 
