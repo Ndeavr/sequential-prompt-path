@@ -138,11 +138,11 @@ export function buildProblemLocationPage(
   const city = getCityBySlug(citySlug);
   if (!problem || !city) return null;
 
-  const h1 = `${problem.name} à ${city.name}`;
-  const metaTitle = `${problem.name} à ${city.name} | Solutions et entrepreneurs | UNPRO`;
-  const metaDescription = `${problem.name} à ${city.name} : symptômes, causes, coûts estimés et solutions. Trouvez un entrepreneur vérifié pour résoudre ce problème. ${city.region}.`;
+  const h1 = `${problem.name} à ${city.name} — Rendez-vous garanti`;
+  const metaTitle = `${problem.name} ${city.name} — Rendez-vous garanti | Entrepreneur vérifié | UNPRO`;
+  const metaDescription = `Trouvez un entrepreneur fiable pour ${problem.name.toLowerCase()} à ${city.name}. Aucun spam, aucun comparatif inutile. Rendez-vous confirmé avec un professionnel qualifié.`;
 
-  const intro = `${problem.shortDescription} À ${city.name}, les conditions locales (${city.climateTags.join(", ")}) peuvent aggraver ce problème. Voici comment identifier, comprendre et résoudre ce problème.`;
+  const intro = `${problem.shortDescription} À ${city.name}, les conditions locales (${city.climateTags.join(", ")}) peuvent aggraver ce problème. UNPRO vous connecte directement au bon entrepreneur pour un rendez-vous garanti — sans soumissions multiples.`;
 
   const localContext = `${city.housingHints} Le climat de ${city.name} (${city.climateTags.join(", ")}) peut contribuer directement à ce type de problème. Une intervention adaptée aux conditions locales est essentielle.`;
 
