@@ -157,7 +157,7 @@ const FeaturedCarousel = () => {
                 {/* Image area */}
                 <div className="relative h-44 sm:h-56 overflow-hidden">
                   <img
-                    src={c.logo_url || heroHouse}
+                    src={c.logo_url || FALLBACK_IMAGES[c.id] || carouselRenovation}
                     alt={`${c.business_name} — ${c.city}`}
                     className="w-full h-full object-cover"
                   />
