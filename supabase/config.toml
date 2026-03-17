@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.nexus-scorer]
 verify_jwt = false
+
+[functions.emergency-triage]
+verify_jwt = false
