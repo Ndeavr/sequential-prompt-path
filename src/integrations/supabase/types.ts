@@ -14,6 +14,140 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_campaigns: {
+        Row: {
+          ad_copy: Json | null
+          budget_daily_cents: number | null
+          budget_total_cents: number | null
+          campaign_name: string
+          city_slug: string | null
+          clicks: number | null
+          conversions: number | null
+          cost_per_appointment_cents: number | null
+          cpc_cents: number | null
+          created_at: string | null
+          ctr: number | null
+          id: string
+          impressions: number | null
+          keywords: Json | null
+          landing_page_url: string | null
+          optimization_notes: string | null
+          platform: string
+          source_fingerprint_id: string | null
+          source_seo_page_id: string | null
+          spend_cents: number | null
+          status: string
+          targeting: Json | null
+          trade_slug: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ad_copy?: Json | null
+          budget_daily_cents?: number | null
+          budget_total_cents?: number | null
+          campaign_name: string
+          city_slug?: string | null
+          clicks?: number | null
+          conversions?: number | null
+          cost_per_appointment_cents?: number | null
+          cpc_cents?: number | null
+          created_at?: string | null
+          ctr?: number | null
+          id?: string
+          impressions?: number | null
+          keywords?: Json | null
+          landing_page_url?: string | null
+          optimization_notes?: string | null
+          platform?: string
+          source_fingerprint_id?: string | null
+          source_seo_page_id?: string | null
+          spend_cents?: number | null
+          status?: string
+          targeting?: Json | null
+          trade_slug?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ad_copy?: Json | null
+          budget_daily_cents?: number | null
+          budget_total_cents?: number | null
+          campaign_name?: string
+          city_slug?: string | null
+          clicks?: number | null
+          conversions?: number | null
+          cost_per_appointment_cents?: number | null
+          cpc_cents?: number | null
+          created_at?: string | null
+          ctr?: number | null
+          id?: string
+          impressions?: number | null
+          keywords?: Json | null
+          landing_page_url?: string | null
+          optimization_notes?: string | null
+          platform?: string
+          source_fingerprint_id?: string | null
+          source_seo_page_id?: string | null
+          spend_cents?: number | null
+          status?: string
+          targeting?: Json | null
+          trade_slug?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ad_groups: {
+        Row: {
+          ad_variants: Json | null
+          campaign_id: string
+          clicks: number | null
+          conversions: number | null
+          created_at: string | null
+          group_name: string
+          id: string
+          impressions: number | null
+          keywords: Json | null
+          negative_keywords: Json | null
+          service_slug: string | null
+          status: string
+        }
+        Insert: {
+          ad_variants?: Json | null
+          campaign_id: string
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          group_name: string
+          id?: string
+          impressions?: number | null
+          keywords?: Json | null
+          negative_keywords?: Json | null
+          service_slug?: string | null
+          status?: string
+        }
+        Update: {
+          ad_variants?: Json | null
+          campaign_id?: string
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          group_name?: string
+          id?: string
+          impressions?: number | null
+          keywords?: Json | null
+          negative_keywords?: Json | null
+          service_slug?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_groups_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "ad_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       adaptive_frequency_scores: {
         Row: {
           agent_key: string | null
@@ -1787,6 +1921,69 @@ export type Database = {
           province?: string
           province_slug?: string
           slug?: string
+        }
+        Relationships: []
+      }
+      city_service_demand_grid: {
+        Row: {
+          city_slug: string
+          created_at: string | null
+          demand_score: number | null
+          estimated_value_cents: number | null
+          gap_score: number | null
+          has_ad_campaign: boolean | null
+          has_contractors: boolean | null
+          has_seo_page: boolean | null
+          id: string
+          last_analyzed_at: string | null
+          priority_rank: number | null
+          recommended_actions: Json | null
+          season: string | null
+          service_slug: string | null
+          supply_score: number | null
+          trade_slug: string
+          updated_at: string | null
+          urgency_level: string | null
+        }
+        Insert: {
+          city_slug: string
+          created_at?: string | null
+          demand_score?: number | null
+          estimated_value_cents?: number | null
+          gap_score?: number | null
+          has_ad_campaign?: boolean | null
+          has_contractors?: boolean | null
+          has_seo_page?: boolean | null
+          id?: string
+          last_analyzed_at?: string | null
+          priority_rank?: number | null
+          recommended_actions?: Json | null
+          season?: string | null
+          service_slug?: string | null
+          supply_score?: number | null
+          trade_slug: string
+          updated_at?: string | null
+          urgency_level?: string | null
+        }
+        Update: {
+          city_slug?: string
+          created_at?: string | null
+          demand_score?: number | null
+          estimated_value_cents?: number | null
+          gap_score?: number | null
+          has_ad_campaign?: boolean | null
+          has_contractors?: boolean | null
+          has_seo_page?: boolean | null
+          id?: string
+          last_analyzed_at?: string | null
+          priority_rank?: number | null
+          recommended_actions?: Json | null
+          season?: string | null
+          service_slug?: string | null
+          supply_score?: number | null
+          trade_slug?: string
+          updated_at?: string | null
+          urgency_level?: string | null
         }
         Relationships: []
       }
@@ -11705,6 +11902,60 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      sales_microcopy: {
+        Row: {
+          ab_test_variant: string | null
+          audience: string
+          clicks: number | null
+          context: string
+          conversion_rate: number | null
+          created_at: string | null
+          id: string
+          impressions: number | null
+          is_active: boolean | null
+          placement: string
+          priority: number | null
+          psychology_principle: string | null
+          text_en: string | null
+          text_fr: string
+          updated_at: string | null
+        }
+        Insert: {
+          ab_test_variant?: string | null
+          audience?: string
+          clicks?: number | null
+          context: string
+          conversion_rate?: number | null
+          created_at?: string | null
+          id?: string
+          impressions?: number | null
+          is_active?: boolean | null
+          placement: string
+          priority?: number | null
+          psychology_principle?: string | null
+          text_en?: string | null
+          text_fr: string
+          updated_at?: string | null
+        }
+        Update: {
+          ab_test_variant?: string | null
+          audience?: string
+          clicks?: number | null
+          context?: string
+          conversion_rate?: number | null
+          created_at?: string | null
+          id?: string
+          impressions?: number | null
+          is_active?: boolean | null
+          placement?: string
+          priority?: number | null
+          psychology_principle?: string | null
+          text_en?: string | null
+          text_fr?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       seo_pages: {
         Row: {
