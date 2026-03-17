@@ -102,10 +102,10 @@ const RefusalSeoPage = () => {
         {/* Why Contractors Refuse */}
         {page.why_contractors_refuse && (
           <motion.section variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            <Card className="border-amber-500/30 bg-amber-500/5">
+            <Card className="border-accent/30 bg-accent/5">
               <CardContent className="pt-6">
                 <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-                  <HelpCircle className="h-5 w-5 text-amber-500" /> Pourquoi certains entrepreneurs refusent
+                  <HelpCircle className="h-5 w-5 text-accent-foreground" /> Pourquoi certains entrepreneurs refusent
                 </h2>
                 <p className="text-muted-foreground leading-relaxed">{page.why_contractors_refuse}</p>
               </CardContent>
