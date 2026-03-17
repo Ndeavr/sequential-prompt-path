@@ -354,7 +354,7 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
                 <Link to="/signup" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-meta">
                   {lang === "en" ? "Get Started Free" : "Commencer gratuitement"}
                 </Link>
-                <Link to="/alex" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-meta border border-primary/20">
+                <Link to="/alex" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-meta">
                   ✨ {lang === "en" ? "Talk to Alex" : "Parler à Alex"}
                 </Link>
                 <Link to="/proprietaires/passeport-maison" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-muted/40 text-foreground font-medium text-meta">
