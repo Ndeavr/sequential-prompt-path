@@ -1831,6 +1831,65 @@ export type Database = {
           },
         ]
       }
+      contractor_contact_clicks: {
+        Row: {
+          contact_method: string
+          contractor_id: string
+          created_at: string
+          id: string
+          referrer: string | null
+          user_id: string | null
+          visitor_fingerprint: string | null
+        }
+        Insert: {
+          contact_method: string
+          contractor_id: string
+          created_at?: string
+          id?: string
+          referrer?: string | null
+          user_id?: string | null
+          visitor_fingerprint?: string | null
+        }
+        Update: {
+          contact_method?: string
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          referrer?: string | null
+          user_id?: string | null
+          visitor_fingerprint?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_contact_clicks_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_contact_clicks_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_contact_clicks_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_contact_clicks_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_contributions: {
         Row: {
           contractor_id: string | null
