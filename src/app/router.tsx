@@ -376,6 +376,10 @@ export const AppRouter = () => (
       <Route path="/admin/uos" element={<ProtectedRoute requiredRole="admin"><AdminUOS /></ProtectedRoute>} />
       <Route path="/admin/growth-engine" element={<ProtectedRoute requiredRole="admin"><AdminGrowthEngine /></ProtectedRoute>} />
       <Route path="/admin/pricing" element={<ProtectedRoute requiredRole="admin"><AdminPricingPage /></ProtectedRoute>} />
+      <Route path="/admin/refusal-seo" element={<ProtectedRoute requiredRole="admin"><AdminRefusalSeoPage /></ProtectedRoute>} />
+
+      {/* Refusal SEO public pages */}
+      <Route path="/refusal/:slug" element={<RefusalSeoPage />} />
 
       {/* Condos — Public SEO */}
       <Route path="/condo" element={<CondoHomePage />} />
