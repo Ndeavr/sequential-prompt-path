@@ -6252,6 +6252,48 @@ export type Database = {
         }
         Relationships: []
       }
+      demand_spike_metrics: {
+        Row: {
+          acceptance_rate: number | null
+          active_queue_count: number | null
+          available_contractors: number | null
+          avg_response_seconds: number | null
+          calculated_at: string
+          category: string | null
+          city: string | null
+          id: string
+          region: string | null
+          request_count_hour: number | null
+          shortage_state: string | null
+        }
+        Insert: {
+          acceptance_rate?: number | null
+          active_queue_count?: number | null
+          available_contractors?: number | null
+          avg_response_seconds?: number | null
+          calculated_at?: string
+          category?: string | null
+          city?: string | null
+          id?: string
+          region?: string | null
+          request_count_hour?: number | null
+          shortage_state?: string | null
+        }
+        Update: {
+          acceptance_rate?: number | null
+          active_queue_count?: number | null
+          available_contractors?: number | null
+          avg_response_seconds?: number | null
+          calculated_at?: string
+          category?: string | null
+          city?: string | null
+          id?: string
+          region?: string | null
+          request_count_hour?: number | null
+          shortage_state?: string | null
+        }
+        Relationships: []
+      }
       design_edits: {
         Row: {
           created_at: string
@@ -6564,6 +6606,39 @@ export type Database = {
           },
         ]
       }
+      dispatch_rules: {
+        Row: {
+          category: string | null
+          created_at: string
+          description_fr: string | null
+          id: string
+          is_active: boolean | null
+          rule_key: string
+          rule_value: Json
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description_fr?: string | null
+          id?: string
+          is_active?: boolean | null
+          rule_key: string
+          rule_value?: Json
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description_fr?: string | null
+          id?: string
+          is_active?: boolean | null
+          rule_key?: string
+          rule_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       dna_fit_results: {
         Row: {
           compatibility_label: string
@@ -6782,6 +6857,343 @@ export type Database = {
           urgency_multiplier?: number | null
         }
         Relationships: []
+      }
+      emergency_assignments: {
+        Row: {
+          accepted_at: string | null
+          contractor_id: string
+          eta_minutes: number | null
+          id: string
+          note: string | null
+          request_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          contractor_id: string
+          eta_minutes?: number | null
+          id?: string
+          note?: string | null
+          request_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          contractor_id?: string
+          eta_minutes?: number | null
+          id?: string
+          note?: string | null
+          request_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emergency_assignments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emergency_assignments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emergency_assignments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emergency_assignments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "emergency_assignments_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "emergency_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emergency_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json | null
+          request_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          payload?: Json | null
+          request_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json | null
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emergency_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "emergency_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emergency_matches: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          dispatch_order: number
+          id: string
+          match_score: number
+          refusal_reason: string | null
+          request_id: string
+          responded_at: string | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          dispatch_order?: number
+          id?: string
+          match_score?: number
+          refusal_reason?: string | null
+          request_id: string
+          responded_at?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          dispatch_order?: number
+          id?: string
+          match_score?: number
+          refusal_reason?: string | null
+          request_id?: string
+          responded_at?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emergency_matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emergency_matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emergency_matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emergency_matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "emergency_matches_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "emergency_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emergency_requests: {
+        Row: {
+          address: string | null
+          asap_requested: boolean | null
+          callback_requested: boolean | null
+          category: string
+          created_at: string
+          current_dispatch_index: number | null
+          description: string | null
+          dispatch_delay_seconds: number | null
+          dispatch_mode: string | null
+          getting_worse: boolean | null
+          id: string
+          intent_score: number
+          next_dispatch_at: string | null
+          phone: string | null
+          photo_urls: string[] | null
+          preferred_contact: string | null
+          property_id: string | null
+          severity: string
+          shortage_zone: boolean | null
+          sla_accept_due_at: string | null
+          sla_first_dispatch_due_at: string | null
+          sla_response_due_at: string | null
+          sla_status: string | null
+          status: string
+          storm_pattern: string | null
+          storm_priority_score: number | null
+          storm_related: boolean | null
+          storm_session_id: string | null
+          triage_json: Json | null
+          triage_summary: string | null
+          updated_at: string
+          urgency_level: string
+          user_id: string | null
+          when_started: string | null
+          widened_radius_used: boolean | null
+        }
+        Insert: {
+          address?: string | null
+          asap_requested?: boolean | null
+          callback_requested?: boolean | null
+          category?: string
+          created_at?: string
+          current_dispatch_index?: number | null
+          description?: string | null
+          dispatch_delay_seconds?: number | null
+          dispatch_mode?: string | null
+          getting_worse?: boolean | null
+          id?: string
+          intent_score?: number
+          next_dispatch_at?: string | null
+          phone?: string | null
+          photo_urls?: string[] | null
+          preferred_contact?: string | null
+          property_id?: string | null
+          severity?: string
+          shortage_zone?: boolean | null
+          sla_accept_due_at?: string | null
+          sla_first_dispatch_due_at?: string | null
+          sla_response_due_at?: string | null
+          sla_status?: string | null
+          status?: string
+          storm_pattern?: string | null
+          storm_priority_score?: number | null
+          storm_related?: boolean | null
+          storm_session_id?: string | null
+          triage_json?: Json | null
+          triage_summary?: string | null
+          updated_at?: string
+          urgency_level?: string
+          user_id?: string | null
+          when_started?: string | null
+          widened_radius_used?: boolean | null
+        }
+        Update: {
+          address?: string | null
+          asap_requested?: boolean | null
+          callback_requested?: boolean | null
+          category?: string
+          created_at?: string
+          current_dispatch_index?: number | null
+          description?: string | null
+          dispatch_delay_seconds?: number | null
+          dispatch_mode?: string | null
+          getting_worse?: boolean | null
+          id?: string
+          intent_score?: number
+          next_dispatch_at?: string | null
+          phone?: string | null
+          photo_urls?: string[] | null
+          preferred_contact?: string | null
+          property_id?: string | null
+          severity?: string
+          shortage_zone?: boolean | null
+          sla_accept_due_at?: string | null
+          sla_first_dispatch_due_at?: string | null
+          sla_response_due_at?: string | null
+          sla_status?: string | null
+          status?: string
+          storm_pattern?: string | null
+          storm_priority_score?: number | null
+          storm_related?: boolean | null
+          storm_session_id?: string | null
+          triage_json?: Json | null
+          triage_summary?: string | null
+          updated_at?: string
+          urgency_level?: string
+          user_id?: string | null
+          when_started?: string | null
+          widened_radius_used?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emergency_requests_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emergency_requests_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emergency_status_events: {
+        Row: {
+          assignment_id: string
+          created_at: string
+          id: string
+          note: string | null
+          status: string
+        }
+        Insert: {
+          assignment_id: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          status: string
+        }
+        Update: {
+          assignment_id?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emergency_status_events_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "emergency_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       extraction_jobs: {
         Row: {
@@ -13587,6 +13999,90 @@ export type Database = {
           id?: string
           storage_path?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      storm_mode_sessions: {
+        Row: {
+          activation_type: string
+          admin_note: string | null
+          auto_expire: boolean | null
+          categories: string[] | null
+          created_at: string
+          created_by: string | null
+          ends_at: string | null
+          id: string
+          name: string
+          scope_type: string
+          scope_values: string[] | null
+          severity_level: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          activation_type?: string
+          admin_note?: string | null
+          auto_expire?: boolean | null
+          categories?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          name: string
+          scope_type?: string
+          scope_values?: string[] | null
+          severity_level?: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          activation_type?: string
+          admin_note?: string | null
+          auto_expire?: boolean | null
+          categories?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          name?: string
+          scope_type?: string
+          scope_values?: string[] | null
+          severity_level?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      storm_rules: {
+        Row: {
+          action_json: Json
+          category: string | null
+          condition_json: Json
+          created_at: string
+          id: string
+          is_active: boolean | null
+          region: string | null
+          rule_name: string
+        }
+        Insert: {
+          action_json?: Json
+          category?: string | null
+          condition_json?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          region?: string | null
+          rule_name: string
+        }
+        Update: {
+          action_json?: Json
+          category?: string | null
+          condition_json?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          region?: string | null
+          rule_name?: string
         }
         Relationships: []
       }
