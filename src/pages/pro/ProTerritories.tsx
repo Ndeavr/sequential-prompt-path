@@ -170,7 +170,7 @@ const ProTerritories = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {(territories ?? []).map((t: any) => {
             const occupancy = getOccupancyForTerritory(t.id);
-            const ratio = t.max_contractors > 0 ? occupancy.total_used / t.max_contractors : 0;
+            const ratio = t.max_entrepreneurs > 0 ? occupancy.occupied_total / t.max_entrepreneurs : 0;
             const demand = getDemandLevel(ratio);
             const slotType = getSlotTypeForPlan(planId ?? "recrue");
             const available = hasAvailableSlot(t, occupancy, slotType);
