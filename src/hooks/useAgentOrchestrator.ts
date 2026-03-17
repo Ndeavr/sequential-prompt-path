@@ -203,6 +203,8 @@ export const useAgentOrchestrator = () => {
     isAnalyzing: analyzeMutation.isPending,
     approveTask: approveMutation.mutate,
     rejectTask: rejectMutation.mutate,
+    executeTask: executeMutation.mutate,
+    isExecuting: executeMutation.isPending,
     toggleAgent: toggleAgentMutation.mutate,
     createAgent: createAgentMutation.mutate,
   };
