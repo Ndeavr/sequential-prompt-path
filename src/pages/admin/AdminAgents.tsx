@@ -4,9 +4,10 @@ import { useAgentOrchestrator } from "@/hooks/useAgentOrchestrator";
 import AgentHierarchyTree from "@/components/agents/AgentHierarchyTree";
 import AgentTaskQueue from "@/components/agents/AgentTaskQueue";
 import AgentMetricsPanel from "@/components/agents/AgentMetricsPanel";
+import AgentSandbox from "@/components/agents/AgentSandbox";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Play, Loader2, Network, ListTodo, BarChart3, Zap } from "lucide-react";
+import { Brain, Play, Loader2, Network, ListTodo, BarChart3, Zap, FlaskConical } from "lucide-react";
 
 const AdminAgents = () => {
   const {
@@ -64,7 +65,7 @@ const AdminAgents = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="hierarchy" className="w-full">
-          <TabsList className="w-full grid grid-cols-3 h-9 rounded-xl">
+          <TabsList className="w-full grid grid-cols-4 h-9 rounded-xl">
             <TabsTrigger value="hierarchy" className="text-xs gap-1.5 rounded-lg">
               <Network className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Hiérarchie</span>
@@ -84,6 +85,11 @@ const AdminAgents = () => {
               <BarChart3 className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Métriques</span>
               <span className="sm:hidden">Stats</span>
+            </TabsTrigger>
+            <TabsTrigger value="sandbox" className="text-xs gap-1.5 rounded-lg">
+              <FlaskConical className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Sandbox</span>
+              <span className="sm:hidden">Test</span>
             </TabsTrigger>
           </TabsList>
 
@@ -112,6 +118,10 @@ const AdminAgents = () => {
               logs={logs}
               memory={memory}
             />
+          </TabsContent>
+
+          <TabsContent value="sandbox" className="mt-4">
+            <AgentSandbox />
           </TabsContent>
         </Tabs>
       </div>
