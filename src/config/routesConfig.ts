@@ -49,6 +49,7 @@ export const ROUTES = {
   PRO_TERRITORIES: "/pro/territories",
   PRO_DOCUMENTS: "/pro/documents",
   PRO_ACCOUNT: "/pro/account",
+  PRO_DOMAIN_INTELLIGENCE: "/pro/domain-intelligence",
 
   // Admin
   ADMIN_DASHBOARD: "/admin",
@@ -61,6 +62,7 @@ export const ROUTES = {
   ADMIN_AGENTS: "/admin/agents",
   ADMIN_GROWTH: "/admin/growth",
   ADMIN_VALIDATION: "/admin/validation",
+  ADMIN_DOMAIN_INTELLIGENCE: "/admin/domain-intelligence",
 
   // Auth
   LOGIN: "/login",

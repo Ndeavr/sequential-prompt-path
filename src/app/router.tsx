@@ -144,6 +144,7 @@ import ProPartnerNetwork from "@/pages/pro/ProPartnerNetwork";
 import ProExpertise from "@/pages/pro/ProExpertise";
 import ProTeams from "@/pages/pro/ProTeams";
 import ProEmergencySettings from "@/pages/pro/ProEmergencySettings";
+import ProDomainIntelligence from "@/pages/pro/ProDomainIntelligence";
 import EmergencyTrackingPage from "@/pages/EmergencyTrackingPage";
 
 // Admin
@@ -187,6 +188,7 @@ import AdminSeoDominationDashboard from "@/pages/admin/AdminSeoDominationDashboa
 import AdminMarketEngine from "@/pages/admin/AdminMarketEngine";
 import AdminNexusDashboard from "@/pages/admin/AdminNexusDashboard";
 import AdminDispatchCenter from "@/pages/admin/AdminDispatchCenter";
+import AdminDomainIntelligence from "@/pages/admin/AdminDomainIntelligence";
 import EmergencyPage from "@/pages/EmergencyPage";
 import RefusalSeoPage from "@/pages/seo/RefusalSeoPage";
 import MyPlacementsPage from "@/pages/dashboard/MyPlacementsPage";
@@ -382,6 +384,7 @@ export const AppRouter = () => (
       <Route path="/pro/expertise" element={<ProtectedRoute requiredRole="contractor"><ProExpertise /></ProtectedRoute>} />
       <Route path="/pro/teams" element={<ProtectedRoute requiredRole="contractor"><ProTeams /></ProtectedRoute>} />
       <Route path="/pro/emergency-settings" element={<ProtectedRoute requiredRole="contractor"><ProEmergencySettings /></ProtectedRoute>} />
+      <Route path="/pro/domain-intelligence" element={<ProtectedRoute requiredRole="contractor"><ProDomainIntelligence /></ProtectedRoute>} />
 
       {/* Admin */}
       <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
@@ -424,6 +427,7 @@ export const AppRouter = () => (
       <Route path="/admin/market-engine" element={<ProtectedRoute requiredRole="admin"><AdminMarketEngine /></ProtectedRoute>} />
       <Route path="/admin/nexus" element={<ProtectedRoute requiredRole="admin"><AdminNexusDashboard /></ProtectedRoute>} />
       <Route path="/admin/dispatch-center" element={<ProtectedRoute requiredRole="admin"><AdminDispatchCenter /></ProtectedRoute>} />
+      <Route path="/admin/domain-intelligence" element={<ProtectedRoute requiredRole="admin"><AdminDomainIntelligence /></ProtectedRoute>} />
       <Route path="/admin/seo-articles" element={<ProtectedRoute requiredRole="admin"><AdminSeoArticles /></ProtectedRoute>} />
       <Route path="/articles/:slug" element={<SeoArticlePage />} />
       <Route path="/emergency" element={<EmergencyPage />} />
