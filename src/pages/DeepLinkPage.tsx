@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { resolveDeepLink, saveDeepLinkIntent, FEATURE_META, type ResolvedDeepLink } from "@/services/deepLinks";
+import { trackDeepLinkEvent, setActiveDeepLinkId } from "@/services/deepLinkTracking";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
