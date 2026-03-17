@@ -181,7 +181,7 @@ export default function HeroSection() {
               </AnimatePresence>
               {/* Robot floating at bottom-right */}
               <motion.img src={unproRobot} alt="Alex UNPRO"
-                className="absolute right-4 bottom-8 w-[72px] z-30 drop-shadow-[0_6px_20px_rgba(63,123,255,0.25)]"
+                className="absolute right-3 -bottom-4 w-[100px] z-30 drop-shadow-[0_6px_20px_rgba(63,123,255,0.25)]"
                 animate={{ y: [0, -8, 0], rotate: [0, 3, -2, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               />
