@@ -189,8 +189,21 @@ export default function HeroSection() {
 
             {/* Left column */}
             <div className="relative z-20 min-w-0">
-              <h1 className="relative z-10 text-[42px] font-extrabold leading-[1.06] tracking-[-0.03em] sm:text-[46px] md:text-[64px] max-w-[65%] md:max-w-none" style={{ color: "#0B1533" }}>
-                <span>Trouvez</span>
+              <h1
+                className="relative z-10 text-[38px] font-extrabold leading-[1.08] tracking-[-0.03em] sm:text-[46px] md:text-[64px] max-w-[65%] md:max-w-none"
+                style={{
+                  color: "#0B1533",
+                  textShadow: "0 1px 12px rgba(247,251,255,0.95), 0 2px 24px rgba(247,251,255,0.8), 0 0 40px rgba(234,244,255,0.9)",
+                }}
+              >
+                <span
+                  className="inline-block px-2 py-0.5 rounded-lg md:px-0 md:py-0 md:bg-transparent"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(247,251,255,0.88) 0%, rgba(234,244,255,0.82) 100%)",
+                    backdropFilter: "blur(8px)",
+                    WebkitBackdropFilter: "blur(8px)",
+                  }}
+                >Trouvez</span>
                 <br />
                 {/* Rotating label */}
                 <span className="block" style={{ minHeight: "1.15em" }}>
@@ -200,14 +213,28 @@ export default function HeroSection() {
                       variants={textVariants}
                       initial="enter" animate="center" exit="exit"
                       transition={{ duration: 0.38, ease: "easeOut" }}
-                      className="inline"
-                      style={{ color: "#3F7BFF" }}
+                      className="inline-block px-2 py-0.5 rounded-lg md:px-0 md:py-0 md:bg-transparent"
+                      style={{
+                        color: "#3F7BFF",
+                        background: "linear-gradient(135deg, rgba(247,251,255,0.88) 0%, rgba(234,244,255,0.82) 100%)",
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                        textShadow: "0 1px 12px rgba(247,251,255,0.95), 0 2px 20px rgba(234,244,255,0.85)",
+                      }}
                     >
                       {current.label}
                     </motion.span>
                   </AnimatePresence>
                 </span>
-                <span className="inline" style={{ color: "#0B1533" }}>{current.qualifier}</span>
+                <span
+                  className="inline-block px-2 py-0.5 rounded-lg md:px-0 md:py-0 md:bg-transparent"
+                  style={{
+                    color: "#0B1533",
+                    background: "linear-gradient(135deg, rgba(247,251,255,0.88) 0%, rgba(234,244,255,0.82) 100%)",
+                    backdropFilter: "blur(8px)",
+                    WebkitBackdropFilter: "blur(8px)",
+                  }}
+                >{current.qualifier}</span>
                 <br />
                 {/* Rotating action */}
                 <span className="block" style={{ minHeight: "2.3em" }}>
@@ -217,8 +244,14 @@ export default function HeroSection() {
                       variants={textVariants}
                       initial="enter" animate="center" exit="exit"
                       transition={{ duration: 0.38, ease: "easeOut", delay: 0.42 }}
-                      className="inline whitespace-pre-line"
-                      style={{ color: "#3F7BFF" }}
+                      className="inline-block whitespace-pre-line px-2 py-0.5 rounded-lg md:px-0 md:py-0 md:bg-transparent"
+                      style={{
+                        color: "#3F7BFF",
+                        background: "linear-gradient(135deg, rgba(247,251,255,0.88) 0%, rgba(234,244,255,0.82) 100%)",
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                        textShadow: "0 1px 12px rgba(247,251,255,0.95), 0 2px 20px rgba(234,244,255,0.85)",
+                      }}
                     >
                       {current.action}
                     </motion.span>
