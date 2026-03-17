@@ -4868,6 +4868,54 @@ export type Database = {
           },
         ]
       }
+      contractor_onboarding_sessions: {
+        Row: {
+          aipp_score: Json | null
+          audit_sections: Json | null
+          business_data: Json | null
+          business_name: string | null
+          completed_at: string | null
+          created_at: string
+          current_step: number
+          id: string
+          import_form: Json | null
+          objective: string | null
+          selected_plan: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          aipp_score?: Json | null
+          audit_sections?: Json | null
+          business_data?: Json | null
+          business_name?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_step?: number
+          id?: string
+          import_form?: Json | null
+          objective?: string | null
+          selected_plan?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          aipp_score?: Json | null
+          audit_sections?: Json | null
+          business_data?: Json | null
+          business_name?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_step?: number
+          id?: string
+          import_form?: Json | null
+          objective?: string | null
+          selected_plan?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       contractor_performance_metrics: {
         Row: {
           appointment_show_rate: number | null
