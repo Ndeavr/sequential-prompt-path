@@ -74,7 +74,7 @@ const SmartHeader = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-border/20 bg-background/80 backdrop-blur-2xl">
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-2xl">
         <div className="mx-auto max-w-7xl px-4 lg:px-6">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
@@ -165,7 +165,7 @@ const SmartHeader = () => {
 
               {/* Context label */}
               {contextLabel && (
-                <div className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/30 border border-border/20">
+                <div className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/30">
                   <div className="h-1.5 w-1.5 rounded-full bg-success" />
                   <span className="text-caption font-medium text-muted-foreground truncate max-w-32">{contextLabel}</span>
                 </div>
@@ -264,7 +264,7 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-card border-l border-border/20 overflow-y-auto"
+        className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-card overflow-y-auto"
       >
         <div className="p-5">
           {/* Close */}
@@ -296,7 +296,7 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
                         key={item.to + item.label}
                         to={item.to}
                         onClick={onClose}
-                        className="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary/5 border border-primary/10 text-foreground font-medium text-meta"
+                        className="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary/5 text-foreground font-medium text-meta"
                       >
                         <Icon className="h-4 w-4 text-primary" />
                         <span className="flex-1">{lang === "en" && item.labelEn ? item.labelEn : item.label}</span>
@@ -340,7 +340,7 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
               </div>
 
               {/* Alex */}
-              <Link to="/alex" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-meta border border-primary/20 mb-4">
+              <Link to="/alex" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-meta mb-4">
                 ✨ {lang === "en" ? "Talk to Alex" : "Parler à Alex"}
               </Link>
             </>
@@ -354,7 +354,7 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
                 <Link to="/signup" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-meta">
                   {lang === "en" ? "Get Started Free" : "Commencer gratuitement"}
                 </Link>
-                <Link to="/alex" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-meta border border-primary/20">
+                <Link to="/alex" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-meta">
                   ✨ {lang === "en" ? "Talk to Alex" : "Parler à Alex"}
                 </Link>
                 <Link to="/proprietaires/passeport-maison" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-muted/40 text-foreground font-medium text-meta">
