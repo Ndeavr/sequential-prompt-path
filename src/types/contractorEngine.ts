@@ -21,14 +21,14 @@ export interface ContractorCapability {
 export interface ContractorExclusion {
   id: string;
   contractor_id: string;
-  exclusion_type: "service" | "material" | "structure" | "building";
-  category_slug?: string;
-  service_slug?: string;
-  material_slug?: string;
-  structure_type?: string;
-  building_type?: string;
-  reason_fr?: string;
-  reason_en?: string;
+  exclusion_type: string;
+  category_slug?: string | null;
+  service_slug?: string | null;
+  material_slug?: string | null;
+  structure_type?: string | null;
+  building_type?: string | null;
+  reason_fr?: string | null;
+  reason_en?: string | null;
   source: string;
   is_active: boolean;
 }
