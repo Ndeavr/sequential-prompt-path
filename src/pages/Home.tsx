@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
+import { trackEvent } from "@/services/eventTrackingService";
 import { useAuth } from "@/hooks/useAuth";
 import { Helmet } from "react-helmet-async";
 import {
