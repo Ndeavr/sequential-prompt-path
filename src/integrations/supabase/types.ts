@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      ab_test_variants: {
+        Row: {
+          config_json: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          traffic_split: number
+          type: string
+          variant_key: string
+        }
+        Insert: {
+          config_json?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          traffic_split?: number
+          type: string
+          variant_key: string
+        }
+        Update: {
+          config_json?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          traffic_split?: number
+          type?: string
+          variant_key?: string
+        }
+        Relationships: []
+      }
       ad_campaigns: {
         Row: {
           ad_copy: Json | null
@@ -8504,6 +8534,114 @@ export type Database = {
           top_renovation_types?: Json | null
         }
         Relationships: []
+      }
+      optimization_actions: {
+        Row: {
+          action_type: string
+          applied_at: string | null
+          created_at: string
+          id: string
+          insight_id: string
+          new_value: Json | null
+          old_value: Json | null
+          status: string
+          target_placement_id: string | null
+          target_rule_id: string | null
+        }
+        Insert: {
+          action_type: string
+          applied_at?: string | null
+          created_at?: string
+          id?: string
+          insight_id: string
+          new_value?: Json | null
+          old_value?: Json | null
+          status?: string
+          target_placement_id?: string | null
+          target_rule_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          applied_at?: string | null
+          created_at?: string
+          id?: string
+          insight_id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          status?: string
+          target_placement_id?: string | null
+          target_rule_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "optimization_actions_insight_id_fkey"
+            columns: ["insight_id"]
+            isOneToOne: false
+            referencedRelation: "optimization_insights"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "optimization_actions_target_placement_id_fkey"
+            columns: ["target_placement_id"]
+            isOneToOne: false
+            referencedRelation: "qr_placements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "optimization_actions_target_rule_id_fkey"
+            columns: ["target_rule_id"]
+            isOneToOne: false
+            referencedRelation: "reward_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      optimization_insights: {
+        Row: {
+          city: string | null
+          confidence_score: number
+          created_at: string
+          feature: string | null
+          id: string
+          insight_type: string
+          metric_type: string
+          metric_value: number
+          placement_id: string | null
+          role: string | null
+        }
+        Insert: {
+          city?: string | null
+          confidence_score?: number
+          created_at?: string
+          feature?: string | null
+          id?: string
+          insight_type: string
+          metric_type: string
+          metric_value?: number
+          placement_id?: string | null
+          role?: string | null
+        }
+        Update: {
+          city?: string | null
+          confidence_score?: number
+          created_at?: string
+          feature?: string | null
+          id?: string
+          insight_type?: string
+          metric_type?: string
+          metric_value?: number
+          placement_id?: string | null
+          role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "optimization_insights_placement_id_fkey"
+            columns: ["placement_id"]
+            isOneToOne: false
+            referencedRelation: "qr_placements"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       page_scores: {
         Row: {
