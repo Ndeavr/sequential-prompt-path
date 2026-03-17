@@ -188,6 +188,7 @@ import AdminSeoDominationDashboard from "@/pages/admin/AdminSeoDominationDashboa
 import AdminMarketEngine from "@/pages/admin/AdminMarketEngine";
 import AdminNexusDashboard from "@/pages/admin/AdminNexusDashboard";
 import AdminDispatchCenter from "@/pages/admin/AdminDispatchCenter";
+import AdminDomainIntelligence from "@/pages/admin/AdminDomainIntelligence";
 import EmergencyPage from "@/pages/EmergencyPage";
 import RefusalSeoPage from "@/pages/seo/RefusalSeoPage";
 import MyPlacementsPage from "@/pages/dashboard/MyPlacementsPage";
