@@ -5836,6 +5836,44 @@ export type Database = {
           },
         ]
       }
+      deep_link_events: {
+        Row: {
+          created_at: string
+          deep_link_id: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          deep_link_id?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          deep_link_id?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deep_link_events_deep_link_id_fkey"
+            columns: ["deep_link_id"]
+            isOneToOne: false
+            referencedRelation: "deep_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deep_links: {
         Row: {
           code: string
@@ -8532,6 +8570,80 @@ export type Database = {
           },
         ]
       }
+      placement_assets: {
+        Row: {
+          asset_type: string
+          created_at: string
+          file_url: string | null
+          id: string
+          metadata: Json | null
+          placement_id: string
+        }
+        Insert: {
+          asset_type: string
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          metadata?: Json | null
+          placement_id: string
+        }
+        Update: {
+          asset_type?: string
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          metadata?: Json | null
+          placement_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placement_assets_placement_id_fkey"
+            columns: ["placement_id"]
+            isOneToOne: false
+            referencedRelation: "qr_placements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      placement_deep_links: {
+        Row: {
+          created_at: string
+          deep_link_id: string | null
+          id: string
+          mode: string
+          placement_id: string
+        }
+        Insert: {
+          created_at?: string
+          deep_link_id?: string | null
+          id?: string
+          mode?: string
+          placement_id: string
+        }
+        Update: {
+          created_at?: string
+          deep_link_id?: string | null
+          id?: string
+          mode?: string
+          placement_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placement_deep_links_deep_link_id_fkey"
+            columns: ["deep_link_id"]
+            isOneToOne: false
+            referencedRelation: "deep_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "placement_deep_links_placement_id_fkey"
+            columns: ["placement_id"]
+            isOneToOne: false
+            referencedRelation: "qr_placements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plan_catalog: {
         Row: {
           active: boolean
@@ -10780,6 +10892,119 @@ export type Database = {
           },
         ]
       }
+      qr_bundle_cards: {
+        Row: {
+          bundle_id: string
+          card_order: number
+          created_at: string
+          cta_text: string
+          deep_link_code: string | null
+          description: string | null
+          feature: string
+          gradient: string | null
+          headline: string
+          icon: string | null
+          id: string
+          sub_feature: string | null
+        }
+        Insert: {
+          bundle_id: string
+          card_order?: number
+          created_at?: string
+          cta_text?: string
+          deep_link_code?: string | null
+          description?: string | null
+          feature: string
+          gradient?: string | null
+          headline: string
+          icon?: string | null
+          id?: string
+          sub_feature?: string | null
+        }
+        Update: {
+          bundle_id?: string
+          card_order?: number
+          created_at?: string
+          cta_text?: string
+          deep_link_code?: string | null
+          description?: string | null
+          feature?: string
+          gradient?: string | null
+          headline?: string
+          icon?: string | null
+          id?: string
+          sub_feature?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_bundle_cards_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "qr_bundle_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qr_bundle_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          owner_role: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          owner_role?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          owner_role?: string
+        }
+        Relationships: []
+      }
+      qr_placements: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          owner_user_id: string
+          placement_type: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          owner_user_id: string
+          placement_type: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          owner_user_id?: string
+          placement_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qr_scan_events: {
         Row: {
           created_at: string
@@ -10817,6 +11042,47 @@ export type Database = {
             columns: ["qr_code_id"]
             isOneToOne: false
             referencedRelation: "property_qr_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qualified_conversions: {
+        Row: {
+          conversion_type: string
+          created_at: string
+          deep_link_id: string | null
+          id: string
+          invited_user_id: string | null
+          inviter_user_id: string | null
+          is_qualified: boolean
+          qualified_at: string | null
+        }
+        Insert: {
+          conversion_type: string
+          created_at?: string
+          deep_link_id?: string | null
+          id?: string
+          invited_user_id?: string | null
+          inviter_user_id?: string | null
+          is_qualified?: boolean
+          qualified_at?: string | null
+        }
+        Update: {
+          conversion_type?: string
+          created_at?: string
+          deep_link_id?: string | null
+          id?: string
+          invited_user_id?: string | null
+          inviter_user_id?: string | null
+          is_qualified?: boolean
+          qualified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qualified_conversions_deep_link_id_fkey"
+            columns: ["deep_link_id"]
+            isOneToOne: false
+            referencedRelation: "deep_links"
             referencedColumns: ["id"]
           },
         ]
@@ -11352,6 +11618,36 @@ export type Database = {
           role?: string | null
           target_type?: string | null
           user_agent?: string | null
+        }
+        Relationships: []
+      }
+      referral_progress: {
+        Row: {
+          current_count: number
+          id: string
+          milestone_key: string
+          target_count: number
+          unlocked: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          current_count?: number
+          id?: string
+          milestone_key: string
+          target_count: number
+          unlocked?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          current_count?: number
+          id?: string
+          milestone_key?: string
+          target_count?: number
+          unlocked?: boolean
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -11935,6 +12231,81 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      reward_rules: {
+        Row: {
+          city: string | null
+          conversion_type: string
+          created_at: string
+          feature: string | null
+          id: string
+          is_active: boolean
+          name: string
+          owner_role: string
+          priority: number
+          required_count: number
+          reward_type: string
+          reward_value: Json
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          conversion_type: string
+          created_at?: string
+          feature?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          owner_role?: string
+          priority?: number
+          required_count: number
+          reward_type: string
+          reward_value?: Json
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          conversion_type?: string
+          created_at?: string
+          feature?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          owner_role?: string
+          priority?: number
+          required_count?: number
+          reward_type?: string
+          reward_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rewards: {
+        Row: {
+          created_at: string
+          id: string
+          reward_type: string
+          reward_value: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reward_type: string
+          reward_value?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reward_type?: string
+          reward_value?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       sales_microcopy: {
         Row: {
