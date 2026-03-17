@@ -170,7 +170,10 @@ import AdminRefusalSeoPage from "@/pages/admin/AdminRefusalSeoPage";
 import AdminAdsEngine from "@/pages/admin/AdminAdsEngine";
 import AdminDemandGrid from "@/pages/admin/AdminDemandGrid";
 import AdminSalesPsychology from "@/pages/admin/AdminSalesPsychology";
+import AdminRewardRules from "@/pages/admin/AdminRewardRules";
+import AdminDeepLinkAnalytics from "@/pages/admin/AdminDeepLinkAnalytics";
 import RefusalSeoPage from "@/pages/seo/RefusalSeoPage";
+import MyPlacementsPage from "@/pages/dashboard/MyPlacementsPage";
 
 export const AppRouter = () => (
   <BrowserRouter>
