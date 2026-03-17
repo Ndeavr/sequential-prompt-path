@@ -184,7 +184,7 @@ const ProTerritories = () => {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Occupation: {occupancy.total_used} / {t.max_contractors}</span>
+                    <span>Occupation: {occupancy.occupied_total} / {t.max_entrepreneurs}</span>
                     <Badge variant={demand === "Élevée" ? "destructive" : demand === "Moyenne" ? "secondary" : "outline"} className="text-xs">
                       {demand}
                     </Badge>
