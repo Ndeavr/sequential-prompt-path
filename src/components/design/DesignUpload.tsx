@@ -20,6 +20,55 @@ const SHOWCASES = [
   { before: before3, after: after3, label: "Salon", room: "living_room" },
 ];
 
+function BeforeAfterSlider({ before, after }: { before: string; after: string }) {
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState(50);
+  const [dragging, setDragging] = useState(false);
+
+  const update = useCallback((clientX: number) => {
+    if (!sliderRef.current) return;
+    const rect = sliderRef.current.getBoundingClientRect();
+    setPos(Math.max(2, Math.min(98, ((clientX - rect.left) / rect.width) * 100)));
+  }, []);
+
+  const onPointerDown = useCallback((e: React.PointerEvent) => {
+    setDragging(true);
+    update(e.clientX);
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+  }, [update]);
+
+  const onPointerMove = useCallback((e: React.PointerEvent) => {
+    if (dragging) update(e.clientX);
+  }, [dragging, update]);
+
+  const onPointerUp = useCallback(() => setDragging(false), []);
+
+  return (
+    <div
+      ref={sliderRef}
+      className="relative aspect-[4/3] overflow-hidden cursor-col-resize select-none touch-none"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+    >
+      <img src={after} alt="Après" className="absolute inset-0 w-full h-full object-cover" />
+      <div className="absolute inset-0 overflow-hidden" style={{ width: `${pos}%` }}>
+        <img src={before} alt="Avant" className="h-full object-cover" style={{ width: sliderRef.current?.clientWidth || "100%" }} />
+      </div>
+      <div className="absolute top-0 bottom-0 w-0.5 bg-white/90 shadow-lg" style={{ left: `${pos}%` }}>
+        <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-white shadow-lg flex items-center justify-center">
+          <div className="flex gap-0.5">
+            <div className="w-0.5 h-2.5 bg-muted-foreground/50 rounded-full" />
+            <div className="w-0.5 h-2.5 bg-muted-foreground/50 rounded-full" />
+          </div>
+        </div>
+      </div>
+      <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-background/80 backdrop-blur-sm text-muted-foreground">Avant</div>
+      <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-primary/90 backdrop-blur-sm text-primary-foreground">✨ Après</div>
+    </div>
+  );
+}
+
 interface Props {
   onUpload: (file: File, roomType?: string) => void;
 }
@@ -34,7 +83,7 @@ export default function DesignUpload({ onUpload }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef<HTMLDivElement>(null);
 
-  // Auto-cycle showcases
+  // Auto-cycle showcases — slower rhythm
   useEffect(() => {
     const interval = setInterval(() => {
       setShowAfter(true);
@@ -42,9 +91,9 @@ export default function DesignUpload({ onUpload }: Props) {
         setShowAfter(false);
         setTimeout(() => {
           setActiveShowcase((p) => (p + 1) % SHOWCASES.length);
-        }, 400);
-      }, 2800);
-    }, 4500);
+        }, 600);
+      }, 4500);
+    }, 7000);
     return () => clearInterval(interval);
   }, []);
 
@@ -144,10 +193,10 @@ export default function DesignUpload({ onUpload }: Props) {
                   src={showAfter ? current.after : current.before}
                   alt={showAfter ? "Après" : "Avant"}
                   className="absolute inset-0 w-full h-full object-cover"
-                  initial={{ opacity: 0, scale: 1.04 }}
+                  initial={{ opacity: 0, scale: 1.03 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1] }}
                 />
               </AnimatePresence>
 
@@ -361,19 +410,12 @@ export default function DesignUpload({ onUpload }: Props) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.12, duration: 0.5 }}
-                className="group rounded-2xl overflow-hidden border border-border bg-card shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] transition-shadow"
+                className="rounded-2xl overflow-hidden border border-border bg-card shadow-[var(--shadow-sm)]"
               >
-                <div className="relative aspect-[4/3] overflow-hidden">
-                  <img src={s.before} alt="Avant" className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700 group-hover:opacity-0" />
-                  <img src={s.after} alt="Après" className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
-                  <div className="absolute top-3 left-3 px-2.5 py-1 rounded-md text-xs font-semibold bg-background/80 backdrop-blur-sm text-muted-foreground group-hover:text-primary transition-colors">
-                    <span className="group-hover:hidden">Avant</span>
-                    <span className="hidden group-hover:inline">✨ Après</span>
-                  </div>
-                </div>
+                <BeforeAfterSlider before={s.before} after={s.after} />
                 <div className="p-3 text-center">
                   <span className="text-sm font-medium text-foreground">{s.label}</span>
-                  <p className="text-xs text-muted-foreground mt-0.5">Survolez pour voir le résultat</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Glissez pour comparer</p>
                 </div>
               </motion.div>
             ))}
