@@ -260,7 +260,7 @@ const PropertyTypeProblemPage = () => {
         <GrowthCtaBlock />
       </section>
       <ContractorLandingCta />
-      <SeoCta />
+      <SeoCta searchUrl={`/search?specialty=${data.contractorCategory}&city=${cityData.name}`} cityName={cityData.name} />
     </MainLayout>
   );
 };

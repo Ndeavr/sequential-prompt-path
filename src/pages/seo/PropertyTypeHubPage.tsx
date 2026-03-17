@@ -148,7 +148,7 @@ const PropertyTypeHubPage = () => {
         <GrowthCtaBlock />
       </section>
 
-      <SeoCta />
+      <SeoCta searchUrl="/search" />
     </MainLayout>
   );
 };

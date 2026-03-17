@@ -168,7 +168,7 @@ const PropertyTypeCityPage = () => {
         <GrowthCtaBlock />
       </section>
       <ContractorLandingCta />
-      <SeoCta />
+      <SeoCta searchUrl={`/search?city=${cityData.name}`} cityName={cityData.name} />
     </MainLayout>
   );
 };
