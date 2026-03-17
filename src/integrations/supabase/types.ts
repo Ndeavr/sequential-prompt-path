@@ -1974,6 +1974,297 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_analytics: {
+        Row: {
+          article_id: string
+          avg_position: number | null
+          avg_time_on_page_seconds: number | null
+          bounce_rate: number | null
+          clicks: number | null
+          created_at: string
+          date: string
+          id: string
+          impressions: number | null
+          scroll_depth_avg: number | null
+          signups: number | null
+          subscriptions: number | null
+          unlocks: number | null
+        }
+        Insert: {
+          article_id: string
+          avg_position?: number | null
+          avg_time_on_page_seconds?: number | null
+          bounce_rate?: number | null
+          clicks?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          impressions?: number | null
+          scroll_depth_avg?: number | null
+          signups?: number | null
+          subscriptions?: number | null
+          unlocks?: number | null
+        }
+        Update: {
+          article_id?: string
+          avg_position?: number | null
+          avg_time_on_page_seconds?: number | null
+          bounce_rate?: number | null
+          clicks?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          impressions?: number | null
+          scroll_depth_avg?: number | null
+          signups?: number | null
+          subscriptions?: number | null
+          unlocks?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_analytics_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "blog_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_article_images: {
+        Row: {
+          alt_text: string
+          article_id: string
+          caption: string | null
+          created_at: string
+          display_order: number
+          height: number | null
+          id: string
+          image_url: string
+          is_featured: boolean
+          width: number | null
+        }
+        Insert: {
+          alt_text?: string
+          article_id: string
+          caption?: string | null
+          created_at?: string
+          display_order?: number
+          height?: number | null
+          id?: string
+          image_url: string
+          is_featured?: boolean
+          width?: number | null
+        }
+        Update: {
+          alt_text?: string
+          article_id?: string
+          caption?: string | null
+          created_at?: string
+          display_order?: number
+          height?: number | null
+          id?: string
+          image_url?: string
+          is_featured?: boolean
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_article_images_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "blog_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_articles: {
+        Row: {
+          audience_type: string
+          author_name: string | null
+          category: string
+          city: string | null
+          content_html: string | null
+          content_markdown: string | null
+          created_at: string
+          cta_variant: string | null
+          faq_json: Json | null
+          featured_image_url: string | null
+          generation_run_id: string | null
+          id: string
+          internal_linking_json: Json | null
+          is_gated: boolean
+          meta_description: string | null
+          published_at: string | null
+          reading_time_minutes: number | null
+          scheduled_at: string | null
+          schema_json: Json | null
+          seo_title: string | null
+          slug: string
+          status: string
+          subtitle: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          word_count: number | null
+        }
+        Insert: {
+          audience_type?: string
+          author_name?: string | null
+          category?: string
+          city?: string | null
+          content_html?: string | null
+          content_markdown?: string | null
+          created_at?: string
+          cta_variant?: string | null
+          faq_json?: Json | null
+          featured_image_url?: string | null
+          generation_run_id?: string | null
+          id?: string
+          internal_linking_json?: Json | null
+          is_gated?: boolean
+          meta_description?: string | null
+          published_at?: string | null
+          reading_time_minutes?: number | null
+          scheduled_at?: string | null
+          schema_json?: Json | null
+          seo_title?: string | null
+          slug: string
+          status?: string
+          subtitle?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          word_count?: number | null
+        }
+        Update: {
+          audience_type?: string
+          author_name?: string | null
+          category?: string
+          city?: string | null
+          content_html?: string | null
+          content_markdown?: string | null
+          created_at?: string
+          cta_variant?: string | null
+          faq_json?: Json | null
+          featured_image_url?: string | null
+          generation_run_id?: string | null
+          id?: string
+          internal_linking_json?: Json | null
+          is_gated?: boolean
+          meta_description?: string | null
+          published_at?: string | null
+          reading_time_minutes?: number | null
+          scheduled_at?: string | null
+          schema_json?: Json | null
+          seo_title?: string | null
+          slug?: string
+          status?: string
+          subtitle?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          word_count?: number | null
+        }
+        Relationships: []
+      }
+      blog_internal_links: {
+        Row: {
+          anchor_text: string
+          created_at: string
+          id: string
+          position_in_content: string | null
+          relevance_score: number | null
+          source_article_id: string
+          target_article_id: string | null
+          target_type: string
+          target_url: string
+        }
+        Insert: {
+          anchor_text: string
+          created_at?: string
+          id?: string
+          position_in_content?: string | null
+          relevance_score?: number | null
+          source_article_id: string
+          target_article_id?: string | null
+          target_type?: string
+          target_url: string
+        }
+        Update: {
+          anchor_text?: string
+          created_at?: string
+          id?: string
+          position_in_content?: string | null
+          relevance_score?: number | null
+          source_article_id?: string
+          target_article_id?: string | null
+          target_type?: string
+          target_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_internal_links_source_article_id_fkey"
+            columns: ["source_article_id"]
+            isOneToOne: false
+            referencedRelation: "blog_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_internal_links_target_article_id_fkey"
+            columns: ["target_article_id"]
+            isOneToOne: false
+            referencedRelation: "blog_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_publish_queue: {
+        Row: {
+          article_id: string
+          attempts: number
+          created_at: string
+          error_message: string | null
+          id: string
+          max_attempts: number
+          published_at: string | null
+          scheduled_for: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          article_id: string
+          attempts?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          max_attempts?: number
+          published_at?: string | null
+          scheduled_for: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          article_id?: string
+          attempts?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          max_attempts?: number
+          published_at?: string | null
+          scheduled_for?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_publish_queue_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "blog_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_generations: {
         Row: {
           auto_campaign_id: string
@@ -2436,6 +2727,66 @@ export type Database = {
             columns: ["syndicate_id"]
             isOneToOne: true
             referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_generation_runs: {
+        Row: {
+          article_id: string | null
+          completed_at: string | null
+          created_at: string
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          input_json: Json | null
+          output_json: Json | null
+          run_type: string
+          started_at: string | null
+          status: string
+          topic_id: string | null
+        }
+        Insert: {
+          article_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          input_json?: Json | null
+          output_json?: Json | null
+          run_type?: string
+          started_at?: string | null
+          status?: string
+          topic_id?: string | null
+        }
+        Update: {
+          article_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          input_json?: Json | null
+          output_json?: Json | null
+          run_type?: string
+          started_at?: string | null
+          status?: string
+          topic_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_generation_runs_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "blog_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_generation_runs_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topic_backlog"
             referencedColumns: ["id"]
           },
         ]
@@ -8506,6 +8857,44 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      gated_unlock_events: {
+        Row: {
+          article_id: string
+          converted_to_signup: boolean | null
+          converted_to_subscription: boolean | null
+          created_at: string
+          id: string
+          unlock_method: string
+          user_id: string | null
+        }
+        Insert: {
+          article_id: string
+          converted_to_signup?: boolean | null
+          converted_to_subscription?: boolean | null
+          created_at?: string
+          id?: string
+          unlock_method?: string
+          user_id?: string | null
+        }
+        Update: {
+          article_id?: string
+          converted_to_signup?: boolean | null
+          converted_to_subscription?: boolean | null
+          created_at?: string
+          id?: string
+          unlock_method?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gated_unlock_events_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "blog_articles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -17118,6 +17507,95 @@ export type Database = {
           },
         ]
       }
+      title_tests: {
+        Row: {
+          article_id: string
+          clicks: number | null
+          created_at: string
+          ctr: number | null
+          id: string
+          impressions: number | null
+          is_winner: boolean | null
+          variant_index: number
+          variant_title: string
+        }
+        Insert: {
+          article_id: string
+          clicks?: number | null
+          created_at?: string
+          ctr?: number | null
+          id?: string
+          impressions?: number | null
+          is_winner?: boolean | null
+          variant_index?: number
+          variant_title: string
+        }
+        Update: {
+          article_id?: string
+          clicks?: number | null
+          created_at?: string
+          ctr?: number | null
+          id?: string
+          impressions?: number | null
+          is_winner?: boolean | null
+          variant_index?: number
+          variant_title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "title_tests_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "blog_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topic_backlog: {
+        Row: {
+          angle: string | null
+          audience_type: string
+          category: string
+          city: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          priority: number
+          source: string | null
+          status: string
+          title_suggestion: string
+          updated_at: string
+        }
+        Insert: {
+          angle?: string | null
+          audience_type?: string
+          category?: string
+          city?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          priority?: number
+          source?: string | null
+          status?: string
+          title_suggestion: string
+          updated_at?: string
+        }
+        Update: {
+          angle?: string | null
+          audience_type?: string
+          category?: string
+          city?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          priority?: number
+          source?: string | null
+          status?: string
+          title_suggestion?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_notifications: {
         Row: {
           channel: string
@@ -17915,6 +18393,10 @@ export type Database = {
         Returns: undefined
       }
       unpro_aipp_tier: { Args: { score: number }; Returns: string }
+      validate_article_readiness: {
+        Args: { _article_id: string }
+        Returns: Json
+      }
       validate_unpro_promo_code: {
         Args: { _code: string; _contractor_id?: string; _plan_code: string }
         Returns: Json
