@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Snowflake, Copy, Share2, RotateCcw, ZoomIn, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import LikeShareButtons from "@/components/shared/LikeShareButtons";
 import type { DesignVersion } from "./data";
 
 interface Props {
