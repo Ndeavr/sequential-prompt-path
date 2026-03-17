@@ -227,7 +227,7 @@ export async function fetchRefusalSeoPages(opts?: { status?: string; limit?: num
 
   const { data, error } = await query;
   if (error) throw error;
-  return (data || []) as RefusalSeoPage[];
+  return (data || []) as unknown as RefusalSeoPage[];
 }
 
 export async function fetchRefusalSeoPageBySlug(slug: string) {
