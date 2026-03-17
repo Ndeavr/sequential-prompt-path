@@ -229,6 +229,11 @@ export const AppRouter = () => (
       <Route path="/guides/:topic" element={<GuidePage />} />
       <Route path="/renovation/:projectSlug/:citySlug" element={<RenovationLocationPage />} />
 
+      {/* Property Type SEO Pages */}
+      <Route path="/types-de-propriete/:type" element={<PropertyTypeHubPage />} />
+      <Route path="/:city/:type/:problem" element={<PropertyTypeProblemPage />} />
+      <Route path="/:city/:type" element={<PropertyTypeCityPage />} />
+
       {/* Legacy English routes */}
       <Route path="/problems/:slug" element={<ProblemPage />} />
       <Route path="/problems/:problem/:city" element={<ProblemLocationPage />} />
