@@ -38,3 +38,9 @@ verify_jwt = false
 
 [functions.campaign-generator]
 verify_jwt = false
+
+[functions.property-autopilot]
+verify_jwt = false
+
+[functions.seo-generator]
+verify_jwt = false
