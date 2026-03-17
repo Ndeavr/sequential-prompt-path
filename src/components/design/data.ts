@@ -24,6 +24,32 @@ export const ZONE_LABELS: Record<string, string> = {
   countertop: "Comptoir", backsplash: "Dosseret", island: "Îlot",
   sink: "Évier", faucet: "Robinetterie", appliances: "Électroménagers",
   lighting: "Éclairage", trim: "Moulures", windows: "Fenêtres", decor: "Décor",
+  // Bathroom
+  shower: "Douche", bathtub: "Baignoire", vanity: "Vanité", mirror: "Miroir", tiles: "Tuiles",
+  // Facade
+  siding: "Revêtement", roof: "Toiture", door: "Porte", garage_door: "Porte de garage",
+  brick: "Brique", stone: "Pierre", gutters: "Gouttières", porch: "Porche", landscaping: "Aménagement",
+  // Living room
+  fireplace: "Foyer", sofa: "Sofa", shelving: "Étagères", curtains: "Rideaux", rug: "Tapis", tv_wall: "Mur TV",
+  // Bedroom
+  bed: "Lit", closet: "Garde-robe", nightstand: "Table de chevet", headboard: "Tête de lit",
+  // Basement
+  ceiling: "Plafond", bar: "Bar", stairs: "Escalier", storage: "Rangement",
+  // Outdoor
+  fence: "Clôture", patio: "Patio", pool: "Piscine", pergola: "Pergola", plants: "Plantes",
+  railing: "Rampe", planks: "Planches",
+};
+
+/** Room-specific zone lists */
+export const ZONES_BY_ROOM: Record<string, string[]> = {
+  kitchen: ["walls", "cabinets", "floor", "countertop", "backsplash", "island", "sink", "faucet", "appliances", "lighting", "trim", "windows", "decor"],
+  bathroom: ["walls", "floor", "tiles", "shower", "bathtub", "vanity", "sink", "faucet", "mirror", "lighting", "trim", "windows", "decor"],
+  living_room: ["walls", "floor", "fireplace", "sofa", "shelving", "curtains", "rug", "tv_wall", "lighting", "trim", "windows", "decor"],
+  bedroom: ["walls", "floor", "bed", "headboard", "closet", "nightstand", "curtains", "lighting", "trim", "windows", "decor"],
+  basement: ["walls", "floor", "ceiling", "stairs", "bar", "storage", "lighting", "trim", "windows", "decor"],
+  facade: ["siding", "brick", "stone", "roof", "windows", "door", "garage_door", "gutters", "porch", "lighting", "landscaping", "trim"],
+  backyard: ["fence", "patio", "pool", "pergola", "plants", "landscaping", "lighting", "decor"],
+  deck: ["planks", "railing", "pergola", "lighting", "plants", "decor"],
 };
 
 export const STYLE_PRESETS = [
