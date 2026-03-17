@@ -39,15 +39,27 @@ const AdminAgents = () => {
               {activeAgents} agents actifs · {proposedTasks} propositions · 4 couches
             </p>
           </div>
-          <Button
-            onClick={() => runAnalysis()}
-            disabled={isAnalyzing}
-            className="gap-2 rounded-xl text-sm"
-            size="sm"
-          >
-            {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-            {isAnalyzing ? "Analyse..." : "Analyser"}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => runAnalysis()}
+              disabled={isAnalyzing || isExecuting}
+              className="gap-2 rounded-xl text-sm"
+              size="sm"
+            >
+              {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              {isAnalyzing ? "Analyse..." : "Analyser"}
+            </Button>
+            <Button
+              onClick={() => executeTask(undefined)}
+              disabled={isExecuting || isAnalyzing}
+              variant="outline"
+              className="gap-2 rounded-xl text-sm"
+              size="sm"
+            >
+              {isExecuting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+              {isExecuting ? "Exécution..." : "Exécuter"}
+            </Button>
+          </div>
         </div>
 
         {/* Tabs */}
