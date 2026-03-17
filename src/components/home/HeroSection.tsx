@@ -154,14 +154,17 @@ export default function HeroSection() {
         </div>
 
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-8 md:px-10 md:pt-12">
-          <div className="relative md:grid md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8 md:items-start">
-            {/* Mobile background image — full screen width, fixed square, behind text */}
-            <div className="absolute top-0 left-0 right-0 w-[100vw] -ml-5 h-[100vw] md:hidden pointer-events-none overflow-visible z-0">
+          <div className="relative md:grid md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8 md:items-start" style={{ minHeight: "100vw" }}>
+            {/* Mobile background image — top-right, square, rounded right only */}
+            <div className="absolute top-0 right-0 w-[100vw] h-[100vw] md:hidden pointer-events-none overflow-hidden z-0"
+              style={{ borderRadius: "0 1.25rem 1.25rem 0" }}
+            >
               <AnimatePresence mode="wait">
                 <motion.img key={current.image} src={current.image} alt={current.action}
                   className="w-full h-full object-cover"
                   loading="eager"
                   style={{
+                    borderRadius: "0 1.25rem 1.25rem 0",
                     WebkitMaskImage: `linear-gradient(to right, transparent 0%, black 30%), linear-gradient(to top, transparent 5%, black 35%)`,
                     maskImage: `linear-gradient(to right, transparent 0%, black 30%), linear-gradient(to top, transparent 5%, black 35%)`,
                     WebkitMaskComposite: "destination-in",
@@ -179,11 +182,8 @@ export default function HeroSection() {
               />
             </div>
 
-            {/* Spacer for mobile to reserve image height */}
-            <div className="md:hidden" style={{ height: "100vw" }} />
-
-            {/* Left column */}
-            <div className="relative z-20 min-w-0 md:mt-0 -mt-[100vw]">
+            {/* Left column — text overlays on top of image */}
+            <div className="relative z-20 min-w-0">
               <h1
                 className="relative z-10 text-[38px] font-extrabold leading-[1.08] tracking-[-0.03em] sm:text-[46px] md:text-[64px] max-w-[65%] md:max-w-none"
                 style={{
