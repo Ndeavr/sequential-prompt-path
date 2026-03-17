@@ -156,14 +156,17 @@ export default function HeroSection() {
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-8 md:px-10 md:pt-12">
           <div className="relative md:grid md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8 md:items-start">
             {/* Mobile background image — full-width, organic dissolve */}
-            <div className="absolute top-0 right-0 w-[200px] h-[200px] md:hidden pointer-events-none overflow-visible">
+            <div className="absolute top-0 right-0 w-[55vw] h-[55vw] md:hidden pointer-events-none overflow-visible">
               <AnimatePresence mode="wait">
                 <motion.img key={current.image} src={current.image} alt={current.action}
-                  className="w-[200px] h-[200px] object-cover rounded-3xl"
+                  className="w-full h-full object-cover"
                   loading="eager"
                   style={{
-                    WebkitMaskImage: `linear-gradient(to bottom left, black 40%, transparent 100%)`,
-                    maskImage: `linear-gradient(to bottom left, black 40%, transparent 100%)`,
+                    borderRadius: "0 1.25rem 1.25rem 0",
+                    WebkitMaskImage: `linear-gradient(to right, transparent 0%, black 35%), linear-gradient(to top, transparent 5%, black 40%)`,
+                    maskImage: `linear-gradient(to right, transparent 0%, black 35%), linear-gradient(to top, transparent 5%, black 40%)`,
+                    WebkitMaskComposite: "destination-in",
+                    maskComposite: "intersect",
                   }}
                   initial={{ opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
                   transition={{ duration: 1.1, ease: "easeInOut" }}
