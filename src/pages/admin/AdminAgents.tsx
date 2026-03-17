@@ -102,6 +102,7 @@ const AdminAgents = () => {
               isLoading={isLoading}
               onApprove={approveTask}
               onReject={rejectTask}
+              onExecute={executeTask}
             />
           </TabsContent>
 
