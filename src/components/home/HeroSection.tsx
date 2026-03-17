@@ -197,11 +197,10 @@ export default function HeroSection() {
                 }}
               >
                 <span
-                  className="inline-block px-2 py-0.5 rounded-lg md:px-0 md:py-0 md:bg-transparent"
+                  className="inline-block"
                   style={{
-                    background: "linear-gradient(135deg, rgba(247,251,255,0.88) 0%, rgba(234,244,255,0.82) 100%)",
-                    backdropFilter: "blur(8px)",
-                    WebkitBackdropFilter: "blur(8px)",
+                    color: "#0B1533",
+                    textShadow: "0 0 20px rgba(255,255,255,0.95), 0 0 40px rgba(255,255,255,0.7), 0 2px 4px rgba(255,255,255,0.9)",
                   }}
                 >Trouvez</span>
                 <br />
