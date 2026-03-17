@@ -14418,6 +14418,87 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_articles: {
+        Row: {
+          city: string
+          content_html: string | null
+          content_sections: Json | null
+          conversion_score: number | null
+          created_at: string | null
+          faq: Json | null
+          generation_model: string | null
+          generation_status: string | null
+          h1: string | null
+          hero_image_prompt: string | null
+          id: string
+          intent_score: number | null
+          internal_links: Json | null
+          meta_description: string | null
+          meta_title: string | null
+          problem_slug: string | null
+          published: boolean | null
+          schema_json_ld: Json | null
+          seo_score: number | null
+          service_category: string | null
+          slug: string
+          title: string
+          updated_at: string | null
+          word_count: number | null
+        }
+        Insert: {
+          city: string
+          content_html?: string | null
+          content_sections?: Json | null
+          conversion_score?: number | null
+          created_at?: string | null
+          faq?: Json | null
+          generation_model?: string | null
+          generation_status?: string | null
+          h1?: string | null
+          hero_image_prompt?: string | null
+          id?: string
+          intent_score?: number | null
+          internal_links?: Json | null
+          meta_description?: string | null
+          meta_title?: string | null
+          problem_slug?: string | null
+          published?: boolean | null
+          schema_json_ld?: Json | null
+          seo_score?: number | null
+          service_category?: string | null
+          slug: string
+          title: string
+          updated_at?: string | null
+          word_count?: number | null
+        }
+        Update: {
+          city?: string
+          content_html?: string | null
+          content_sections?: Json | null
+          conversion_score?: number | null
+          created_at?: string | null
+          faq?: Json | null
+          generation_model?: string | null
+          generation_status?: string | null
+          h1?: string | null
+          hero_image_prompt?: string | null
+          id?: string
+          intent_score?: number | null
+          internal_links?: Json | null
+          meta_description?: string | null
+          meta_title?: string | null
+          problem_slug?: string | null
+          published?: boolean | null
+          schema_json_ld?: Json | null
+          seo_score?: number | null
+          service_category?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string | null
+          word_count?: number | null
+        }
+        Relationships: []
+      }
       seo_generation_queue: {
         Row: {
           city: string

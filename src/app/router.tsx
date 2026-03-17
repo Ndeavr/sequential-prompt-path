@@ -31,7 +31,9 @@ import GuidePage from "@/pages/seo/GuidePage";
 import CityHubPage from "@/pages/seo/CityHubPage";
 import LocalSeoPage from "@/pages/seo/LocalSeoPage";
 import AdminLocalSeo from "@/pages/admin/AdminLocalSeo";
+import AdminSeoArticles from "@/pages/admin/AdminSeoArticles";
 import SeoDirectoryPage from "@/pages/seo/SeoDirectoryPage";
+import SeoArticlePage from "@/pages/seo/SeoArticlePage";
 import ProblemPage from "@/pages/seo/ProblemPage";
 import ProblemGraphPage from "@/pages/seo/ProblemGraphPage";
 import SolutionPage from "@/pages/seo/SolutionPage";
@@ -422,6 +424,8 @@ export const AppRouter = () => (
       <Route path="/admin/market-engine" element={<ProtectedRoute requiredRole="admin"><AdminMarketEngine /></ProtectedRoute>} />
       <Route path="/admin/nexus" element={<ProtectedRoute requiredRole="admin"><AdminNexusDashboard /></ProtectedRoute>} />
       <Route path="/admin/dispatch-center" element={<ProtectedRoute requiredRole="admin"><AdminDispatchCenter /></ProtectedRoute>} />
+      <Route path="/admin/seo-articles" element={<ProtectedRoute requiredRole="admin"><AdminSeoArticles /></ProtectedRoute>} />
+      <Route path="/articles/:slug" element={<SeoArticlePage />} />
       <Route path="/emergency" element={<EmergencyPage />} />
       <Route path="/emergency/track/:id" element={<EmergencyTrackingPage />} />
 
