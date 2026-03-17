@@ -2333,6 +2333,42 @@ export type Database = {
         }
         Relationships: []
       }
+      categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          priority: number
+          service_group: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          priority?: number
+          service_group?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          priority?: number
+          service_group?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       category_problem_links: {
         Row: {
           category_id: string
@@ -15688,6 +15724,45 @@ export type Database = {
         }
         Relationships: []
       }
+      service_areas: {
+        Row: {
+          city_name: string
+          city_slug: string
+          created_at: string
+          id: string
+          is_active: boolean
+          market_tier: string
+          population: number | null
+          province_code: string
+          region_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          city_name: string
+          city_slug: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          market_tier?: string
+          population?: number | null
+          province_code?: string
+          region_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city_name?: string
+          city_slug?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          market_tier?: string
+          population?: number | null
+          province_code?: string
+          region_name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       service_categories: {
         Row: {
           ai_keywords: string[] | null
@@ -17339,6 +17414,27 @@ export type Database = {
         }
         Relationships: []
       }
+      system_settings: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       territories: {
         Row: {
           category_name: string
@@ -17449,6 +17545,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      territory_generation_logs: {
+        Row: {
+          categories_count: number
+          cities_count: number
+          created_at: string
+          created_count: number
+          error_count: number
+          executed_by: string | null
+          id: string
+          mode: string
+          payload: Json | null
+          skipped_count: number
+          total_combinations: number
+          updated_count: number
+        }
+        Insert: {
+          categories_count?: number
+          cities_count?: number
+          created_at?: string
+          created_count?: number
+          error_count?: number
+          executed_by?: string | null
+          id?: string
+          mode: string
+          payload?: Json | null
+          skipped_count?: number
+          total_combinations?: number
+          updated_count?: number
+        }
+        Update: {
+          categories_count?: number
+          cities_count?: number
+          created_at?: string
+          created_count?: number
+          error_count?: number
+          executed_by?: string | null
+          id?: string
+          mode?: string
+          payload?: Json | null
+          skipped_count?: number
+          total_combinations?: number
+          updated_count?: number
+        }
+        Relationships: []
       }
       territory_waitlist: {
         Row: {
