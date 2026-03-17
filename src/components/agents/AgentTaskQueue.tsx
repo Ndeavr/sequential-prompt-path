@@ -30,6 +30,7 @@ interface Props {
   isLoading: boolean;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
+  onExecute?: (id: string) => void;
 }
 
 const AgentTaskQueue = ({ tasks, isLoading, onApprove, onReject }: Props) => {
