@@ -251,6 +251,24 @@ export default function LocalSeoPage() {
               </div>
             </section>
           )}
+          {/* Internal Links from DB */}
+          {internalLinks.length > 0 && (
+            <section className="space-y-4">
+              <h2 className="text-xl font-bold text-foreground">Voir aussi</h2>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {internalLinks.map(link => (
+                  <Link
+                    key={link.to_slug}
+                    to={`/services/${cityLower}/${link.to_slug}`}
+                    className="flex items-center gap-2 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors text-sm"
+                  >
+                    <ChevronRight className="h-3 w-3 text-primary shrink-0" />
+                    <span className="text-foreground">{link.anchor_text}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
 
         {/* Sticky CTA Bar */}
