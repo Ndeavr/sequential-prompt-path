@@ -15,6 +15,7 @@ export interface ContractorCapability {
   building_type?: string | null;
   confidence: number;
   source: string;
+  is_active: boolean;
 }
 
 export interface ContractorExclusion {
