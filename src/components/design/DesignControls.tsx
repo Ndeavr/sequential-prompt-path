@@ -59,6 +59,10 @@ export default function DesignControls({ onSendPrompt, isGenerating, roomType }:
       colorPalette: selectedColorPalette ?? undefined,
     });
     setPrompt("");
+    // Scroll back up so user sees the transformation
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
   };
 
   const toggleZone = (zone: string) => {
