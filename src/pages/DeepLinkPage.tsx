@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { resolveDeepLink, saveDeepLinkIntent, FEATURE_META, type ResolvedDeepLink } from "@/services/deepLinks";
+import { trackDeepLinkEvent, setActiveDeepLinkId } from "@/services/deepLinkTracking";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,6 +34,13 @@ export default function DeepLinkPage() {
       try {
         const result = await resolveDeepLink(code);
         setResolved(result);
+
+        // Track events
+        if (result.valid && result.link) {
+          setActiveDeepLinkId(result.link.id);
+          trackDeepLinkEvent("qr_scanned", result.link.id, { code, feature: result.link.feature });
+          trackDeepLinkEvent("landing_viewed", result.link.id, { feature: result.link.feature });
+        }
 
         // Auto-redirect if no auth needed or already logged in
         if (result.valid && (!result.requiresAuth || isAuthenticated)) {
@@ -74,6 +82,8 @@ function DeepLinkLanding({ resolved }: { resolved: ResolvedDeepLink }) {
   const IconComponent = ICON_MAP[meta.icon] ?? Sparkles;
 
   const handleCta = () => {
+    trackDeepLinkEvent("cta_clicked", resolved.link?.id, { feature });
+    trackDeepLinkEvent("auth_started", resolved.link?.id, { feature });
     saveDeepLinkIntent(resolved);
     navigate("/login");
   };

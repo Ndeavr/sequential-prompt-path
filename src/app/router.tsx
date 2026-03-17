@@ -170,7 +170,10 @@ import AdminRefusalSeoPage from "@/pages/admin/AdminRefusalSeoPage";
 import AdminAdsEngine from "@/pages/admin/AdminAdsEngine";
 import AdminDemandGrid from "@/pages/admin/AdminDemandGrid";
 import AdminSalesPsychology from "@/pages/admin/AdminSalesPsychology";
+import AdminRewardRules from "@/pages/admin/AdminRewardRules";
+import AdminDeepLinkAnalytics from "@/pages/admin/AdminDeepLinkAnalytics";
 import RefusalSeoPage from "@/pages/seo/RefusalSeoPage";
+import MyPlacementsPage from "@/pages/dashboard/MyPlacementsPage";
 
 export const AppRouter = () => (
   <BrowserRouter>
@@ -340,6 +343,7 @@ export const AppRouter = () => (
       <Route path="/dashboard/syndicates/:id/votes" element={<ProtectedRoute requiredRole="homeowner"><SyndicateVotes /></ProtectedRoute>} />
       <Route path="/dashboard/syndicates/:id/votes/new" element={<ProtectedRoute requiredRole="homeowner"><SyndicateVoteCreate /></ProtectedRoute>} />
       <Route path="/dashboard/syndicates/:id/growth" element={<ProtectedRoute requiredRole="homeowner"><SyndicateGrowthDashboard /></ProtectedRoute>} />
+      <Route path="/dashboard/placements" element={<ProtectedRoute requiredRole="homeowner"><MyPlacementsPage /></ProtectedRoute>} />
 
       {/* Contractor Pro */}
       <Route path="/pro" element={<ProtectedRoute requiredRole="contractor"><ProDashboard /></ProtectedRoute>} />
@@ -393,6 +397,8 @@ export const AppRouter = () => (
       <Route path="/admin/ads-engine" element={<ProtectedRoute requiredRole="admin"><AdminAdsEngine /></ProtectedRoute>} />
       <Route path="/admin/demand-grid" element={<ProtectedRoute requiredRole="admin"><AdminDemandGrid /></ProtectedRoute>} />
       <Route path="/admin/sales-psychology" element={<ProtectedRoute requiredRole="admin"><AdminSalesPsychology /></ProtectedRoute>} />
+      <Route path="/admin/reward-rules" element={<ProtectedRoute requiredRole="admin"><AdminRewardRules /></ProtectedRoute>} />
+      <Route path="/admin/deep-link-analytics" element={<ProtectedRoute requiredRole="admin"><AdminDeepLinkAnalytics /></ProtectedRoute>} />
 
       {/* Refusal SEO public pages */}
       <Route path="/refusal/:slug" element={<RefusalSeoPage />} />
