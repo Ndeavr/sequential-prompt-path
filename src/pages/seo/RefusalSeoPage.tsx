@@ -156,7 +156,7 @@ const RefusalSeoPage = () => {
         {/* FAQ */}
         {faqs.length > 0 && (
           <motion.section variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            <SeoFaqSection faqs={faqs.map(f => ({ question: f.question, answer: f.answer }))} />
+            <SeoFaqSection faqs={faqs.map(f => ({ question: f.question, answer: f.answer, topics: [page.problem_slug || "general"] }))} />
           </motion.section>
         )}
 
