@@ -13,7 +13,7 @@ interface QRCodeCardProps {
   label?: string;
 }
 
-const QRCodeCard = ({ url, size = 240, label }: QRCodeCardProps) => {
+const QRCodeCard = ({ url, size = 200, label }: QRCodeCardProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
