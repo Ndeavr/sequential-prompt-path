@@ -170,7 +170,7 @@ const ProTerritories = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {(territories ?? []).map((t: any) => {
             const occupancy = getOccupancyForTerritory(t.id);
-            const ratio = t.max_contractors > 0 ? occupancy.total_used / t.max_contractors : 0;
+            const ratio = t.max_entrepreneurs > 0 ? occupancy.occupied_total / t.max_entrepreneurs : 0;
             const demand = getDemandLevel(ratio);
             const slotType = getSlotTypeForPlan(planId ?? "recrue");
             const available = hasAvailableSlot(t, occupancy, slotType);
@@ -184,18 +184,18 @@ const ProTerritories = () => {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Occupation: {occupancy.total_used} / {t.max_contractors}</span>
+                    <span>Occupation: {occupancy.occupied_total} / {t.max_entrepreneurs}</span>
                     <Badge variant={demand === "Élevée" ? "destructive" : demand === "Moyenne" ? "secondary" : "outline"} className="text-xs">
                       {demand}
                     </Badge>
                   </div>
                   <Progress value={ratio * 100} className="h-1.5" />
                   <div className="flex flex-wrap gap-1 text-xs text-muted-foreground">
-                    <span>Sig: {occupancy.signature_used}/{t.signature_slots}</span>
+                    <span>Sig: {occupancy.occupied_signature}/{t.slots_signature}</span>
                     <span>·</span>
-                    <span>Éli: {occupancy.elite_used}/{t.elite_slots}</span>
+                    <span>Éli: {occupancy.occupied_elite}/{t.slots_elite}</span>
                     <span>·</span>
-                    <span>Pre: {occupancy.premium_used}/{t.premium_slots}</span>
+                    <span>Pre: {occupancy.occupied_premium}/{t.slots_premium}</span>
                   </div>
 
                   {isAssigned ? (

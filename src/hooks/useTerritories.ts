@@ -94,7 +94,6 @@ export const useRequestTerritory = () => {
     mutationFn: async (territoryId: string) => {
       if (!contractor?.id) throw new Error("No contractor profile");
 
-      // Check availability: fetch all assignments for this territory
       const { data: assignments } = await supabase
         .from("territory_assignments")
         .select("slot_type, active")
@@ -110,10 +109,20 @@ export const useRequestTerritory = () => {
 
       const slotType = getSlotTypeForPlan(planId ?? "recrue");
       const occupancy = computeOccupancy(assignments ?? []);
-      const available = hasAvailableSlot(territory, occupancy, slotType);
+      const available = hasAvailableSlot(
+        {
+          slots_signature: territory.slots_signature,
+          slots_elite: territory.slots_elite,
+          slots_premium: territory.slots_premium,
+          slots_pro: territory.slots_pro,
+          slots_recrue: territory.slots_recrue,
+          max_entrepreneurs: territory.max_entrepreneurs,
+        },
+        occupancy,
+        slotType
+      );
 
       if (!available) {
-        // Add to waitlist instead
         const { error: wlErr } = await supabase
           .from("territory_waitlist")
           .insert({
@@ -124,7 +133,6 @@ export const useRequestTerritory = () => {
         return { waitlisted: true };
       }
 
-      // Assign
       const { error } = await supabase.from("territory_assignments").insert({
         contractor_id: contractor.id,
         territory_id: territoryId,

@@ -1,44 +1,49 @@
 /**
  * UNPRO — Territory Service
  * Handles territory availability, slot checking, and lead distribution logic.
+ * Updated to match new DB schema (slots_signature, slots_elite, etc.)
  */
 
 export interface TerritorySlotConfig {
-  signature_slots: number;
-  elite_slots: number;
-  premium_slots: number;
-  max_contractors: number;
+  slots_signature: number;
+  slots_elite: number;
+  slots_premium: number;
+  slots_pro: number;
+  slots_recrue: number;
+  max_entrepreneurs: number;
 }
 
 export interface TerritoryOccupancy {
-  signature_used: number;
-  elite_used: number;
-  premium_used: number;
-  standard_used: number;
-  total_used: number;
+  occupied_signature: number;
+  occupied_elite: number;
+  occupied_premium: number;
+  occupied_pro: number;
+  occupied_recrue: number;
+  occupied_total: number;
 }
 
 const PLAN_TO_SLOT: Record<string, string> = {
   signature: "signature",
   elite: "elite",
   premium: "premium",
-  pro: "standard",
-  recrue: "standard",
+  pro: "pro",
+  recrue: "recrue",
 };
 
 export const getSlotTypeForPlan = (planId: string): string =>
-  PLAN_TO_SLOT[planId] ?? "standard";
+  PLAN_TO_SLOT[planId] ?? "recrue";
 
 export const computeOccupancy = (
   assignments: Array<{ slot_type: string; active: boolean }>
 ): TerritoryOccupancy => {
   const active = assignments.filter((a) => a.active);
   return {
-    signature_used: active.filter((a) => a.slot_type === "signature").length,
-    elite_used: active.filter((a) => a.slot_type === "elite").length,
-    premium_used: active.filter((a) => a.slot_type === "premium").length,
-    standard_used: active.filter((a) => a.slot_type === "standard").length,
-    total_used: active.length,
+    occupied_signature: active.filter((a) => a.slot_type === "signature").length,
+    occupied_elite: active.filter((a) => a.slot_type === "elite").length,
+    occupied_premium: active.filter((a) => a.slot_type === "premium").length,
+    occupied_pro: active.filter((a) => a.slot_type === "pro").length,
+    occupied_recrue: active.filter((a) => a.slot_type === "recrue").length,
+    occupied_total: active.length,
   };
 };
 
@@ -47,13 +52,12 @@ export const hasAvailableSlot = (
   occupancy: TerritoryOccupancy,
   slotType: string
 ): boolean => {
-  if (slotType === "signature") return occupancy.signature_used < config.signature_slots;
-  if (slotType === "elite") return occupancy.elite_used < config.elite_slots;
-  if (slotType === "premium") return occupancy.premium_used < config.premium_slots;
-  // Standard: limited by max_contractors minus all occupied slots
-  const reservedSlots = config.signature_slots + config.elite_slots + config.premium_slots;
-  const standardCap = config.max_contractors - reservedSlots;
-  return occupancy.standard_used < standardCap;
+  if (slotType === "signature") return occupancy.occupied_signature < config.slots_signature;
+  if (slotType === "elite") return occupancy.occupied_elite < config.slots_elite;
+  if (slotType === "premium") return occupancy.occupied_premium < config.slots_premium;
+  if (slotType === "pro") return occupancy.occupied_pro < config.slots_pro;
+  if (slotType === "recrue") return occupancy.occupied_recrue < config.slots_recrue;
+  return false;
 };
 
 export const getDemandLevel = (occupancyRatio: number): string => {
@@ -74,10 +78,11 @@ export const rankContractorsForLead = (
   }>
 ): string[] => {
   const slotPriority: Record<string, number> = {
-    signature: 4,
-    elite: 3,
-    premium: 2,
-    standard: 1,
+    signature: 5,
+    elite: 4,
+    premium: 3,
+    pro: 2,
+    recrue: 1,
   };
 
   return contractors
