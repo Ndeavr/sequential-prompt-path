@@ -23,10 +23,16 @@ export const useAlex = (options?: UseAlexOptions) => {
     async (
       input: string,
       context?: {
-        properties?: Array<{ address: string; city?: string | null }>;
+        properties?: Array<{ address: string; city?: string | null; property_type?: string | null; property_family?: string | null; year_built?: number | null }>;
         homeScore?: number | null;
         currentPage?: string;
         voiceMode?: boolean;
+        /** Active property family for context */
+        propertyFamily?: string | null;
+        /** Active property type for context */
+        propertyType?: string | null;
+        /** Occupancy status */
+        occupancyStatus?: string | null;
         /** Contractor verification context for trust-aware responses */
         contractorVerification?: AlexContractorVerificationContext | null;
       }

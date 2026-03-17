@@ -612,10 +612,13 @@ serve(async (req) => {
       if (context.properties?.length) {
         ctxParts.push(
           `Propriétés : ${context.properties.map((p: any) =>
-            `${p.address}${p.city ? ` (${p.city})` : ""}${p.year_built ? `, construite en ${p.year_built}` : ""}`
+            `${p.address}${p.city ? ` (${p.city})` : ""}${p.year_built ? `, construite en ${p.year_built}` : ""}${p.property_type ? `, type: ${p.property_type}` : ""}${p.property_family ? `, famille: ${p.property_family}` : ""}`
           ).join("; ")}`
         );
       }
+      if (context.propertyFamily) ctxParts.push(`Famille de propriété active : ${context.propertyFamily}`);
+      if (context.propertyType) ctxParts.push(`Type de propriété actif : ${context.propertyType}`);
+      if (context.occupancyStatus) ctxParts.push(`Statut d'occupation : ${context.occupancyStatus}`);
       if (context.homeScore != null) ctxParts.push(`Score Maison actuel : ${context.homeScore}/100`);
       if (context.currentPage) ctxParts.push(`Page actuelle : ${context.currentPage}`);
       if (context.isAuthenticated !== undefined) ctxParts.push(`Utilisateur ${context.isAuthenticated ? "connecté" : "non connecté"}`);
