@@ -4,7 +4,7 @@
  */
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, Camera, MessageCircle, Bot, CalendarClock, Upload, Phone, ChevronRight, Shield, Zap, X } from "lucide-react";
+import { AlertTriangle, Camera, MessageCircle, Bot, CalendarClock, Upload, Phone, ChevronRight, Shield, Zap, X, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
