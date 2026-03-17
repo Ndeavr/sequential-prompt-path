@@ -5,6 +5,8 @@
  * SEO-ready (JSON-LD), LLM-ready, mobile premium, graceful fallbacks.
  */
 
+import { supabase } from "@/integrations/supabase/client";
+
 import { useParams, Link } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
