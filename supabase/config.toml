@@ -32,3 +32,9 @@ verify_jwt = false
 
 [functions.growth-optimizer]
 verify_jwt = false
+
+[functions.alex-voice]
+verify_jwt = false
+
+[functions.campaign-generator]
+verify_jwt = false
