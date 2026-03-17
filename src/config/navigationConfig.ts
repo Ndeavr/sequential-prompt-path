@@ -319,6 +319,7 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
           { to: "/compare-quotes", label: "Analyser des soumissions", labelEn: "Analyze Quotes", icon: "Scale" },
           { to: "/search", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", icon: "ShieldCheck" },
           { to: "/score-maison", label: "Score Maison", labelEn: "Home Score", icon: "BarChart3" },
+          { to: "/design", label: "UNPRO Design", icon: "Palette" },
         ],
       },
       {
