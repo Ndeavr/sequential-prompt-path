@@ -227,6 +227,39 @@ export type Database = {
           },
         ]
       }
+      affiliate_attributions: {
+        Row: {
+          conversion_type: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          referral_code: string
+          referred_user_id: string | null
+          referrer_user_id: string | null
+          role_origin: string | null
+        }
+        Insert: {
+          conversion_type?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          referral_code: string
+          referred_user_id?: string | null
+          referrer_user_id?: string | null
+          role_origin?: string | null
+        }
+        Update: {
+          conversion_type?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          referral_code?: string
+          referred_user_id?: string | null
+          referrer_user_id?: string | null
+          role_origin?: string | null
+        }
+        Relationships: []
+      }
       agent_logs: {
         Row: {
           agent_name: string
@@ -7672,42 +7705,51 @@ export type Database = {
       profiles: {
         Row: {
           account_type: string | null
+          affiliate_code: string | null
           avatar_url: string | null
           created_at: string
           email: string | null
           first_name: string | null
           full_name: string | null
           id: string
+          invited_by_user_id: string | null
           last_name: string | null
           phone: string | null
+          referral_code: string | null
           salutation: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           account_type?: string | null
+          affiliate_code?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
           first_name?: string | null
           full_name?: string | null
           id?: string
+          invited_by_user_id?: string | null
           last_name?: string | null
           phone?: string | null
+          referral_code?: string | null
           salutation?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           account_type?: string | null
+          affiliate_code?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
           first_name?: string | null
           full_name?: string | null
           id?: string
+          invited_by_user_id?: string | null
           last_name?: string | null
           phone?: string | null
+          referral_code?: string | null
           salutation?: string | null
           updated_at?: string
           user_id?: string
@@ -9861,6 +9903,45 @@ export type Database = {
             referencedColumns: ["code"]
           },
         ]
+      }
+      referral_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          ip_hash: string | null
+          metadata: Json | null
+          referral_code: string
+          referrer_user_id: string | null
+          role: string | null
+          target_type: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json | null
+          referral_code: string
+          referrer_user_id?: string | null
+          role?: string | null
+          target_type?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json | null
+          referral_code?: string
+          referrer_user_id?: string | null
+          role?: string | null
+          target_type?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
       }
       renovation_concepts: {
         Row: {
