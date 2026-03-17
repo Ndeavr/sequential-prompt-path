@@ -1720,6 +1720,146 @@ export type Database = {
         }
         Relationships: []
       }
+      autopilot_actions: {
+        Row: {
+          action_type: string
+          created_at: string
+          event_id: string | null
+          id: string
+          payload_json: Json | null
+          property_id: string
+          status: string
+        }
+        Insert: {
+          action_type?: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          payload_json?: Json | null
+          property_id: string
+          status?: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          payload_json?: Json | null
+          property_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopilot_actions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "autopilot_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopilot_actions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopilot_actions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autopilot_events: {
+        Row: {
+          event_type: string
+          id: string
+          metadata: Json | null
+          property_id: string
+          rule_id: string | null
+          status: string
+          triggered_at: string
+        }
+        Insert: {
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          property_id: string
+          rule_id?: string | null
+          status?: string
+          triggered_at?: string
+        }
+        Update: {
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          property_id?: string
+          rule_id?: string | null
+          status?: string
+          triggered_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopilot_events_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopilot_events_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopilot_events_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "autopilot_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autopilot_rules: {
+        Row: {
+          action_type: string
+          condition_json: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          label_fr: string | null
+          priority: number
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          action_type?: string
+          condition_json?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label_fr?: string | null
+          priority?: number
+          trigger_type?: string
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          condition_json?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label_fr?: string | null
+          priority?: number
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       campaign_generations: {
         Row: {
           auto_campaign_id: string
@@ -12606,6 +12746,86 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_generation_queue: {
+        Row: {
+          city: string
+          created_at: string
+          error_message: string | null
+          id: string
+          problem: string
+          processed_at: string | null
+          property_type: string | null
+          result_page_id: string | null
+          status: string
+          template_id: string | null
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          problem: string
+          processed_at?: string | null
+          property_type?: string | null
+          result_page_id?: string | null
+          status?: string
+          template_id?: string | null
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          problem?: string
+          processed_at?: string | null
+          property_type?: string | null
+          result_page_id?: string | null
+          status?: string
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_generation_queue_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "seo_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_metrics: {
+        Row: {
+          avg_rank: number | null
+          clicks: number
+          conversions: number
+          id: string
+          impressions: number
+          page_id: string
+          page_type: string
+          updated_at: string
+        }
+        Insert: {
+          avg_rank?: number | null
+          clicks?: number
+          conversions?: number
+          id?: string
+          impressions?: number
+          page_id: string
+          page_type?: string
+          updated_at?: string
+        }
+        Update: {
+          avg_rank?: number | null
+          clicks?: number
+          conversions?: number
+          id?: string
+          impressions?: number
+          page_id?: string
+          page_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       seo_pages: {
         Row: {
           category_id: string | null
@@ -12770,6 +12990,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      seo_templates: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          structure_json: Json
+          template_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          structure_json?: Json
+          template_type?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          structure_json?: Json
+          template_type?: string
+        }
+        Relationships: []
       }
       service_categories: {
         Row: {
@@ -14400,6 +14644,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_notifications: {
+        Row: {
+          channel: string
+          created_at: string
+          id: string
+          message: string
+          metadata: Json | null
+          status: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          status?: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          status?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
