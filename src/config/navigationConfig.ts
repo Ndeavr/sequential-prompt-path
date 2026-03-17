@@ -298,14 +298,27 @@ export interface FooterSection {
 }
 
 export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
-  const seoSection: FooterSection = {
-    title: "Découvrir",
-    titleEn: "Explore",
+  const discoverSection: FooterSection = {
+    title: "Découvrez",
+    titleEn: "Discover",
     items: [
       { to: "/probleme/infiltration-eau", label: "Problèmes maison", labelEn: "Home Problems", icon: "AlertTriangle" },
-      { to: "/ville/montreal", label: "Villes", labelEn: "Cities", icon: "MapPin" },
-      { to: "/services", label: "Services", icon: "Wrench" },
+      { to: "/ville/montreal", label: "Villes desservies", labelEn: "Served Cities", icon: "MapPin" },
+      { to: "/services/laval", label: "Services à Laval", icon: "Wrench" },
+      { to: "/services/terrebonne", label: "Services à Terrebonne", icon: "Wrench" },
       { to: "/profession/plombier", label: "Professionnels", labelEn: "Professionals", icon: "Users" },
+      { to: "/entretien-preventif", label: "Entretien préventif", labelEn: "Preventive Maintenance", icon: "Shield" },
+    ],
+  };
+
+  const blogSection: FooterSection = {
+    title: "Blog",
+    titleEn: "Blog",
+    items: [
+      { to: "/blog", label: "Derniers articles", labelEn: "Latest Articles", icon: "FileText" },
+      { to: "/blog/renovation", label: "Guides rénovation", labelEn: "Renovation Guides", icon: "Wrench" },
+      { to: "/blog/entretien", label: "Conseils entretien", labelEn: "Maintenance Tips", icon: "Shield" },
+      { to: "/blog/condo", label: "Vie en condo", labelEn: "Condo Living", icon: "Building" },
     ],
   };
 
@@ -318,8 +331,8 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
           { to: "/proprietaires", label: "Passeport Maison", icon: "FileText" },
           { to: "/compare-quotes", label: "Analyser des soumissions", labelEn: "Analyze Quotes", icon: "Scale" },
           { to: "/search", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", icon: "ShieldCheck" },
-          { to: "/score-maison", label: "Score Maison", labelEn: "Home Score", icon: "BarChart3" },
-          { to: "/design", label: "UNPRO Design", icon: "Palette" },
+          { to: "/decrire-projet", label: "Décrire mon projet", labelEn: "Describe My Project", icon: "PenLine" },
+          { to: "/alex", label: "Parler à Alex", labelEn: "Talk to Alex", icon: "Sparkles" },
         ],
       },
       {
@@ -331,7 +344,8 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
           { to: "/pricing", label: "Plans", icon: "CreditCard" },
         ],
       },
-      seoSection,
+      discoverSection,
+      blogSection,
     ];
   }
 
@@ -344,11 +358,12 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
           { to: "/dashboard/properties", label: "Mes propriétés", labelEn: "My Properties", icon: "Building2" },
           { to: "/compare-quotes", label: "Analyser mes soumissions", labelEn: "Analyze My Quotes", icon: "Scale" },
           { to: "/search", label: "Trouver un entrepreneur", labelEn: "Find a Contractor", icon: "Search" },
-          { to: "/dashboard/home-score", label: "Home Score", icon: "BarChart3" },
-          { to: "/design", label: "UNPRO Design", icon: "Palette" },
+          { to: "/decrire-projet", label: "Décrire mon projet", labelEn: "Describe My Project", icon: "PenLine" },
+          { to: "/alex", label: "Parler à Alex", labelEn: "Talk to Alex", icon: "Sparkles" },
         ],
       },
-      seoSection,
+      discoverSection,
+      blogSection,
     ];
   }
 
@@ -365,11 +380,12 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
           { to: "/pro/reviews", label: "Avis", labelEn: "Reviews", icon: "MessageSquare" },
         ],
       },
-      seoSection,
+      discoverSection,
+      blogSection,
     ];
   }
 
-  return [seoSection];
+  return [discoverSection, blogSection];
 }
 
 /** Legacy flat footer links — kept for backward compatibility */
