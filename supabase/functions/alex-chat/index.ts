@@ -595,7 +595,7 @@ serve(async (req) => {
     }
 
     // ===== BUILD SYSTEM PROMPT =====
-    let systemPrompt = ALEX_IDENTITY_PROMPT + "\n\n" + ALEX_INTELLIGENCE_PROMPT;
+    let systemPrompt = ALEX_IDENTITY_PROMPT + "\n\n" + ALEX_INTELLIGENCE_PROMPT + "\n\n" + ALEX_PROPERTY_PROMPT;
     systemPrompt += isVoiceMode ? VOICE_MODE_RULES : TEXT_MODE_RULES;
     systemPrompt += getFrustrationPrompt(frustrationLevel);
     systemPrompt += getUrgencyPrompt(lastUserMessage);
