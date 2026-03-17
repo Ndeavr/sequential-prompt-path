@@ -5836,6 +5836,39 @@ export type Database = {
           },
         ]
       }
+      deep_links: {
+        Row: {
+          code: string
+          context_json: Json | null
+          created_at: string
+          created_by: string | null
+          feature: string
+          id: string
+          role: string | null
+          sub_feature: string | null
+        }
+        Insert: {
+          code: string
+          context_json?: Json | null
+          created_at?: string
+          created_by?: string | null
+          feature: string
+          id?: string
+          role?: string | null
+          sub_feature?: string | null
+        }
+        Update: {
+          code?: string
+          context_json?: Json | null
+          created_at?: string
+          created_by?: string | null
+          feature?: string
+          id?: string
+          role?: string | null
+          sub_feature?: string | null
+        }
+        Relationships: []
+      }
       design_edits: {
         Row: {
           created_at: string
