@@ -33,9 +33,11 @@ interface Props {
   onExecute?: (id: string) => void;
 }
 
-const AgentTaskQueue = ({ tasks, isLoading, onApprove, onReject }: Props) => {
+const AgentTaskQueue = ({ tasks, isLoading, onApprove, onReject, onExecute }: Props) => {
   const proposed = tasks.filter(t => t.status === "proposed");
   const approved = tasks.filter(t => t.status === "approved");
+  const completed = tasks.filter(t => t.status === "completed");
+  const failed = tasks.filter(t => t.status === "failed");
   const rejected = tasks.filter(t => t.status === "rejected");
 
   if (isLoading) {
