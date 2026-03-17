@@ -191,11 +191,11 @@ const ProTerritories = () => {
                   </div>
                   <Progress value={ratio * 100} className="h-1.5" />
                   <div className="flex flex-wrap gap-1 text-xs text-muted-foreground">
-                    <span>Sig: {occupancy.signature_used}/{t.signature_slots}</span>
+                    <span>Sig: {occupancy.occupied_signature}/{t.slots_signature}</span>
                     <span>·</span>
-                    <span>Éli: {occupancy.elite_used}/{t.elite_slots}</span>
+                    <span>Éli: {occupancy.occupied_elite}/{t.slots_elite}</span>
                     <span>·</span>
-                    <span>Pre: {occupancy.premium_used}/{t.premium_slots}</span>
+                    <span>Pre: {occupancy.occupied_premium}/{t.slots_premium}</span>
                   </div>
 
                   {isAssigned ? (
