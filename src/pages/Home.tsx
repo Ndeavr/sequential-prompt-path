@@ -39,11 +39,11 @@ const Home = () => {
   const dash = role === "contractor" ? "/pro" : role === "admin" ? "/admin" : "/dashboard";
 
   const handleCta = (destination: string, label?: string) => {
-    if (isAuthenticated) {
-      navigate(destination);
-    } else {
-      navigate(destination);
-    }
+    // Track CTA click
+    try {
+      trackEvent({ eventType: "rendezvous_click", category: "matching", metadata: { label, destination, page: "/" } });
+    } catch {}
+    navigate(destination);
   };
 
   const jsonLd = {

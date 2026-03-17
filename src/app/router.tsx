@@ -301,7 +301,7 @@ export const AppRouter = () => (
       <Route path="/blog" element={<PlaceholderPage />} />
       <Route path="/conseils-renovation" element={<PlaceholderPage />} />
       <Route path="/faq" element={<PlaceholderPage />} />
-      <Route path="/comment-ca-marche" element={<PlaceholderPage />} />
+      <Route path="/comment-ca-marche" element={<CommentCaMarchePage />} />
       <Route path="/verification" element={<PlaceholderPage />} />
       <Route path="/nos-standards" element={<PlaceholderPage />} />
       <Route path="/pourquoi-pas-3-soumissions" element={<PlaceholderPage />} />
