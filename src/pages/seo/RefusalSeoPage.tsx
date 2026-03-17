@@ -148,10 +148,8 @@ const RefusalSeoPage = () => {
         {/* CTA */}
         <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           <SeoCta
-            title="Trouvez le bon spécialiste"
-            description={`Obtenez une soumission d'un entrepreneur vérifié${page.city_name ? ` à ${page.city_name}` : ""}.`}
-            ctaText="Trouver un entrepreneur"
-            ctaLink="/search"
+            searchUrl="/search"
+            cityName={page.city_name || undefined}
           />
         </motion.div>
 
