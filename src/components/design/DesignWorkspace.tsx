@@ -220,6 +220,12 @@ export default function DesignWorkspace({
           />
         )}
       </AnimatePresence>
+
+      {/* Signup prompt during generation */}
+      <DesignSignupPrompt
+        isOpen={showSignup}
+        onClose={() => setShowSignup(false)}
+      />
     </div>
   );
 }
