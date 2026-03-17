@@ -165,7 +165,7 @@ const SmartHeader = () => {
 
               {/* Context label */}
               {contextLabel && (
-                <div className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/30 border border-border/20">
+                <div className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/30">
                   <div className="h-1.5 w-1.5 rounded-full bg-success" />
                   <span className="text-caption font-medium text-muted-foreground truncate max-w-32">{contextLabel}</span>
                 </div>
