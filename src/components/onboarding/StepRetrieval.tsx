@@ -92,15 +92,15 @@ export default function StepRetrieval({ modules, overallProgress }: Props) {
           <div className="flex items-center gap-6 text-xs">
             <div className="flex items-center gap-1.5 text-success">
               <span className="w-1.5 h-1.5 rounded-full bg-success" />
-              {completedCount} found
+              {completedCount} trouvé{completedCount > 1 ? "s" : ""}
             </div>
             <div className="flex items-center gap-1.5 text-accent">
               <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-              {modules.filter(m => m.status === "scanning").length} scanning
+              {modules.filter(m => m.status === "scanning").length} en cours
             </div>
             <div className="flex items-center gap-1.5 text-muted-foreground/50">
               <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
-              {modules.filter(m => m.status === "waiting").length} pending
+              {modules.filter(m => m.status === "waiting").length} en attente
             </div>
           </div>
         </motion.div>
