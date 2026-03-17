@@ -1,17 +1,19 @@
 /**
  * UNPRO Design — Main Workspace Layout
- * Orchestrates Sidebar + Canvas + Controls + Compare + Share
+ * Orchestrates Sidebar + Canvas + Controls + Compare + Share + SignupPrompt
  */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, ArrowLeft, Sparkles, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 import DesignSidebar from "./DesignSidebar";
 import DesignCanvas from "./DesignCanvas";
 import DesignControls from "./DesignControls";
 import DesignCompare from "./DesignCompare";
 import DesignShare from "./DesignShare";
 import DesignUpgradeModal from "./DesignUpgradeModal";
+import DesignSignupPrompt from "./DesignSignupPrompt";
 import type { DesignVersion } from "./data";
 
 interface Props {
