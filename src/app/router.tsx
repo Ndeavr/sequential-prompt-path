@@ -400,6 +400,7 @@ export const AppRouter = () => (
       <Route path="/admin/sales-psychology" element={<ProtectedRoute requiredRole="admin"><AdminSalesPsychology /></ProtectedRoute>} />
       <Route path="/admin/reward-rules" element={<ProtectedRoute requiredRole="admin"><AdminRewardRules /></ProtectedRoute>} />
       <Route path="/admin/deep-link-analytics" element={<ProtectedRoute requiredRole="admin"><AdminDeepLinkAnalytics /></ProtectedRoute>} />
+      <Route path="/admin/ai-growth" element={<ProtectedRoute requiredRole="admin"><AdminAIGrowthInsights /></ProtectedRoute>} />
 
       {/* Refusal SEO public pages */}
       <Route path="/refusal/:slug" element={<RefusalSeoPage />} />
