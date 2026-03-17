@@ -9,7 +9,19 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShieldCheck, Star, MapPin, Clock, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { usePublicContractorSearch } from "@/hooks/usePublicContractors";
-import heroHouse from "@/assets/hero-house.jpg";
+import carouselToiture from "@/assets/carousel-toiture.jpg";
+import carouselPlomberie from "@/assets/carousel-plomberie.jpg";
+import carouselRenovation from "@/assets/carousel-renovation.jpg";
+import carouselElectricien from "@/assets/carousel-electricien.jpg";
+import carouselEbeniste from "@/assets/carousel-ebeniste.jpg";
+
+const FALLBACK_IMAGES: Record<string, string> = {
+  "1": carouselToiture,
+  "2": carouselPlomberie,
+  "3": carouselRenovation,
+  "4": carouselElectricien,
+  "5": carouselEbeniste,
+};
 
 /* Fallback data when no contractors in DB yet */
 const fallbackContractors = [
@@ -145,7 +157,7 @@ const FeaturedCarousel = () => {
                 {/* Image area */}
                 <div className="relative h-44 sm:h-56 overflow-hidden">
                   <img
-                    src={c.logo_url || heroHouse}
+                    src={c.logo_url || FALLBACK_IMAGES[c.id] || carouselRenovation}
                     alt={`${c.business_name} — ${c.city}`}
                     className="w-full h-full object-cover"
                   />
