@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import PlaceholderPage from "@/pages/PlaceholderPage";
+import CommentCaMarchePage from "@/pages/CommentCaMarchePage";
 import StartPage from "@/pages/StartPage";
 import ScrollRestoration from "@/components/ScrollRestoration";
 
