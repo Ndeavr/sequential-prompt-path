@@ -176,8 +176,8 @@ export default function HeroSection() {
             </div>
             {/* Robot — ON TOP of everything, bottom-right of image area */}
             <motion.img src={unproRobot} alt="Alex UNPRO"
-              className="absolute md:hidden z-40 w-[100px] drop-shadow-[0_6px_20px_rgba(63,123,255,0.25)]"
-              style={{ top: "calc(75vw - 110px)", right: "0px" }}
+              className="absolute md:hidden z-50 w-[100px] drop-shadow-[0_6px_20px_rgba(63,123,255,0.25)]"
+              style={{ top: "calc(75vw - 130px)", right: "4px" }}
               animate={{ y: [0, -8, 0], rotate: [0, 3, -2, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             />
@@ -246,8 +246,8 @@ export default function HeroSection() {
               </h1>
 
               {/* Card with bullet points */}
-              <div className="relative z-10 md:mt-5 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 max-w-[420px] shadow-sm"
-                style={{ marginTop: "calc(75vw - 220px)" }}
+              <div className="relative z-30 md:mt-5 rounded-2xl border border-border/40 bg-card/90 backdrop-blur-sm p-4 max-w-[420px] shadow-sm"
+                style={{ marginTop: "calc(75vw - 280px)" }}
               >
                 <ul className="space-y-2">
                   {[
