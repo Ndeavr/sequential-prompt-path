@@ -1,17 +1,19 @@
 /**
  * UNPRO Design — Main Workspace Layout
- * Orchestrates Sidebar + Canvas + Controls + Compare + Share
+ * Orchestrates Sidebar + Canvas + Controls + Compare + Share + SignupPrompt
  */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, ArrowLeft, Sparkles, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 import DesignSidebar from "./DesignSidebar";
 import DesignCanvas from "./DesignCanvas";
 import DesignControls from "./DesignControls";
 import DesignCompare from "./DesignCompare";
 import DesignShare from "./DesignShare";
 import DesignUpgradeModal from "./DesignUpgradeModal";
+import DesignSignupPrompt from "./DesignSignupPrompt";
 import type { DesignVersion } from "./data";
 
 interface Props {
@@ -53,9 +55,19 @@ export default function DesignWorkspace({
   onCreateShare,
   onClearUsageLimit,
 }: Props) {
+  const { user } = useAuth();
   const [isComparing, setIsComparing] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
+
+  // Show signup prompt when generation starts (if not logged in)
+  useEffect(() => {
+    if (isGenerating && !user) {
+      const timer = setTimeout(() => setShowSignup(true), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isGenerating, user]);
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
@@ -208,6 +220,12 @@ export default function DesignWorkspace({
           />
         )}
       </AnimatePresence>
+
+      {/* Signup prompt during generation */}
+      <DesignSignupPrompt
+        isOpen={showSignup}
+        onClose={() => setShowSignup(false)}
+      />
     </div>
   );
 }
