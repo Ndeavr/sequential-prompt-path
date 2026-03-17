@@ -85,7 +85,10 @@ import PropertyMapPage from "@/pages/PropertyMapPage";
 import VerificationSeoPage from "@/pages/seo/VerificationSeoPage";
 import AlignmentQuestionnairePage from "@/pages/AlignmentQuestionnairePage";
 
-// Condos
+// Blog
+import BlogIndexPage from "@/pages/blog/BlogIndexPage";
+import BlogArticlePage from "@/pages/blog/BlogArticlePage";
+
 import CondoHomePage from "@/pages/condos/CondoHomePage";
 import CondoLoi16Page from "@/pages/condos/CondoLoi16Page";
 import CondoCarnetPage from "@/pages/condos/CondoCarnetPage";
@@ -298,7 +301,10 @@ export const AppRouter = () => (
       <Route path="/professionnels" element={<PlaceholderPage />} />
       <Route path="/villes" element={<PlaceholderPage />} />
       <Route path="/guides" element={<PlaceholderPage />} />
-      <Route path="/blog" element={<PlaceholderPage />} />
+      <Route path="/blog" element={<BlogIndexPage />} />
+      <Route path="/blog/:slug" element={<BlogArticlePage />} />
+      <Route path="/blog/category/:category" element={<BlogIndexPage />} />
+      <Route path="/blog/city/:city" element={<BlogIndexPage />} />
       <Route path="/conseils-renovation" element={<PlaceholderPage />} />
       <Route path="/faq" element={<PlaceholderPage />} />
       <Route path="/comment-ca-marche" element={<CommentCaMarchePage />} />
