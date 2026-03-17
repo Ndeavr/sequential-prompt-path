@@ -301,7 +301,10 @@ export const AppRouter = () => (
       <Route path="/professionnels" element={<PlaceholderPage />} />
       <Route path="/villes" element={<PlaceholderPage />} />
       <Route path="/guides" element={<PlaceholderPage />} />
-      <Route path="/blog" element={<PlaceholderPage />} />
+      <Route path="/blog" element={<BlogIndexPage />} />
+      <Route path="/blog/:slug" element={<BlogArticlePage />} />
+      <Route path="/blog/category/:category" element={<BlogIndexPage />} />
+      <Route path="/blog/city/:city" element={<BlogIndexPage />} />
       <Route path="/conseils-renovation" element={<PlaceholderPage />} />
       <Route path="/faq" element={<PlaceholderPage />} />
       <Route path="/comment-ca-marche" element={<CommentCaMarchePage />} />
