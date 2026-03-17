@@ -187,12 +187,22 @@ export default function DesignCanvas({
                   </div>
                 </div>
               ) : (
-                <img
-                  src={renderImage}
-                  alt="Version active"
-                  className="max-w-full max-h-full rounded-2xl object-contain shadow-[var(--shadow-xl)]"
-                />
-              )}
+                <div className="relative">
+                  <img
+                    src={renderImage}
+                    alt="Version active"
+                    className="max-w-full max-h-full rounded-2xl object-contain shadow-[var(--shadow-xl)]"
+                  />
+                  {activeVersion?.id && (
+                    <div className="absolute bottom-4 right-4 z-20">
+                      <LikeShareButtons
+                        entityType="design_image"
+                        entityId={activeVersion.id}
+                        shareTitle={`Design UNPRO — Version ${activeVersion.versionNumber}`}
+                      />
+                    </div>
+                  )}
+                </div>
             </motion.div>
           ) : (
             <motion.div
