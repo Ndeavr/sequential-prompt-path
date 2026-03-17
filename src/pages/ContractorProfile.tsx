@@ -38,7 +38,7 @@ import { useContractorPublicScores, useReviewInsights } from "@/hooks/useMatchin
 import { UnproVerifiedBadge } from "@/components/contractor/UnproVerifiedBadge";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import heroHouse from "@/assets/hero-house.jpg";
 import WhyThisContractorIsRecommended from "@/components/contractor/WhyThisContractorIsRecommended";
 
