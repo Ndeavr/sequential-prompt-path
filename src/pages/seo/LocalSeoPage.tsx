@@ -57,6 +57,18 @@ export default function LocalSeoPage() {
     enabled: !!page?.related_slugs,
   });
 
+  const { data: internalLinks = [] } = useQuery({
+    queryKey: ["seo-internal-links", fullSlug],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("seo_local_links")
+        .select("to_slug, anchor_text")
+        .eq("from_slug", fullSlug);
+      return data || [];
+    },
+    enabled: !!fullSlug,
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background p-6 space-y-6 max-w-4xl mx-auto">
