@@ -246,22 +246,22 @@ const Home = () => {
                 </p>
                 <div className="flex items-center justify-center">
                   {[
-                    { x: "5%", y: "10%" },
-                    { x: "18%", y: "10%" },
-                    { x: "32%", y: "10%" },
-                    { x: "46%", y: "10%" },
-                    { x: "60%", y: "10%" },
-                    { x: "74%", y: "10%" },
-                  ].map((pos, i) => (
+                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop&crop=face",
+                    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&h=120&fit=crop&crop=face",
+                    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&h=120&fit=crop&crop=face",
+                    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&h=120&fit=crop&crop=face",
+                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&h=120&fit=crop&crop=face",
+                    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&h=120&fit=crop&crop=face",
+                  ].map((src, i) => (
                     <div
                       key={i}
                       className="h-12 w-12 sm:h-14 sm:w-14 rounded-full overflow-hidden -ml-3 first:ml-0 border-[3px] border-white/60 shadow-md"
                     >
                       <img
-                        src={avatarsGroup}
+                        src={src}
                         alt={`Client ${i + 1}`}
-                        className="w-[600%] h-[200%] max-w-none"
-                        style={{ objectFit: "cover", objectPosition: `${pos.x} ${pos.y}` }}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
                       />
                     </div>
                   ))}
