@@ -154,19 +154,18 @@ export default function HeroSection() {
         </div>
 
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-8 md:px-10 md:pt-12">
-          <div className="relative md:grid md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8 md:items-start" style={{ minHeight: "100vw" }}>
-            {/* Mobile background image — top-right, square, rounded right only */}
-            <div className="absolute top-0 right-0 w-[100vw] h-[100vw] md:hidden pointer-events-none overflow-hidden z-0"
-              style={{ borderRadius: "0 1.25rem 1.25rem 0" }}
+          <div className="relative md:grid md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8 md:items-start">
+            {/* Mobile image — square, top-right, rounded corners right only */}
+            <div className="absolute top-0 right-[-20px] w-[75vw] h-[75vw] md:hidden pointer-events-none z-0"
+              style={{ borderRadius: "0 1.25rem 1.25rem 0", overflow: "hidden" }}
             >
               <AnimatePresence mode="wait">
                 <motion.img key={current.image} src={current.image} alt={current.action}
                   className="w-full h-full object-cover"
                   loading="eager"
                   style={{
-                    borderRadius: "0 1.25rem 1.25rem 0",
-                    WebkitMaskImage: `linear-gradient(to right, transparent 0%, black 30%), linear-gradient(to top, transparent 5%, black 35%)`,
-                    maskImage: `linear-gradient(to right, transparent 0%, black 30%), linear-gradient(to top, transparent 5%, black 35%)`,
+                    WebkitMaskImage: `linear-gradient(to right, transparent 0%, black 35%), linear-gradient(to top, transparent 0%, black 40%)`,
+                    maskImage: `linear-gradient(to right, transparent 0%, black 35%), linear-gradient(to top, transparent 0%, black 40%)`,
                     WebkitMaskComposite: "destination-in",
                     maskComposite: "intersect",
                   }}
@@ -174,9 +173,9 @@ export default function HeroSection() {
                   transition={{ duration: 1.1, ease: "easeInOut" }}
                 />
               </AnimatePresence>
-              {/* Robot — feet aligned to bottom edge of image */}
+              {/* Robot — on top, bottom-right of image, feet on bottom edge */}
               <motion.img src={unproRobot} alt="Alex UNPRO"
-                className="absolute right-6 bottom-0 w-[110px] z-30 drop-shadow-[0_6px_20px_rgba(63,123,255,0.25)]"
+                className="absolute right-4 bottom-0 w-[100px] z-30 drop-shadow-[0_6px_20px_rgba(63,123,255,0.25)]"
                 animate={{ y: [0, -8, 0], rotate: [0, 3, -2, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               />
