@@ -88,6 +88,7 @@ export const subNavConfig: Record<string, NavItem[]> = {
     { to: "/proprietaires", label: "Aperçu", labelEn: "Overview", icon: "Home" },
     { to: "/proprietaires/passeport-maison", label: "Passeport Maison", icon: "FileText" },
     { to: "/proprietaires/score-maison", label: "Score Maison", icon: "BarChart3" },
+    { to: "/design", label: "UNPRO Design", icon: "Palette" },
     { to: "/proprietaires/analyser-soumissions", label: "Analyser mes soumissions", labelEn: "Analyze My Quotes", icon: "Scale" },
     { to: "/proprietaires/verifier-entrepreneur", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", icon: "ShieldCheck" },
   ],
@@ -242,6 +243,7 @@ export function getDrawerItems(ctx: NavigationContext): NavItem[] {
       { to: "/dashboard/appointments", label: "Mes rendez-vous", labelEn: "My Appointments", icon: "CalendarDays" },
       { to: "/dashboard/quotes", label: "Mes soumissions", labelEn: "My Quotes", icon: "FileText" },
       { to: "/compare-quotes", label: "Analyser mes soumissions", labelEn: "Analyze My Quotes", icon: "Scale" },
+      { to: "/design", label: "UNPRO Design", icon: "Palette" },
       { to: "/search", label: "Trouver un entrepreneur", labelEn: "Find a Contractor", icon: "Search" },
     ];
   }
@@ -276,6 +278,7 @@ export function getDrawerItems(ctx: NavigationContext): NavItem[] {
     { to: "/proprietaires", label: "Propriétaires", labelEn: "Homeowners", icon: "Building2" },
     { to: "/entrepreneurs", label: "Entrepreneurs", labelEn: "Contractors", icon: "Briefcase" },
     { to: "/condo", label: "Condo / Immeubles", labelEn: "Condos", icon: "Building" },
+    { to: "/design", label: "UNPRO Design", icon: "Palette" },
     { to: "/compare-quotes", label: "Analyser des soumissions", labelEn: "Analyze Quotes", icon: "Scale" },
     { to: "/search", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", icon: "ShieldCheck" },
     { to: "/score-maison", label: "Score Maison", labelEn: "Home Score", icon: "BarChart3" },
@@ -316,6 +319,7 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
           { to: "/compare-quotes", label: "Analyser des soumissions", labelEn: "Analyze Quotes", icon: "Scale" },
           { to: "/search", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", icon: "ShieldCheck" },
           { to: "/score-maison", label: "Score Maison", labelEn: "Home Score", icon: "BarChart3" },
+          { to: "/design", label: "UNPRO Design", icon: "Palette" },
         ],
       },
       {
@@ -341,6 +345,7 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
           { to: "/compare-quotes", label: "Analyser mes soumissions", labelEn: "Analyze My Quotes", icon: "Scale" },
           { to: "/search", label: "Trouver un entrepreneur", labelEn: "Find a Contractor", icon: "Search" },
           { to: "/dashboard/home-score", label: "Home Score", icon: "BarChart3" },
+          { to: "/design", label: "UNPRO Design", icon: "Palette" },
         ],
       },
       seoSection,

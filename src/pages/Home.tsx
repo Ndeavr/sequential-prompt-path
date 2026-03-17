@@ -475,6 +475,65 @@ const Home = () => {
         </div>
       </section>
 
+      {/* ═══ UNPRO DESIGN ═══ */}
+      <section className="relative px-5 py-16 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-background to-primary/5" />
+        <div className="relative z-10 max-w-3xl mx-auto">
+          <motion.div variants={sectionFade} initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-10">
+            <p className="section-label !text-accent">Design IA</p>
+            <h2 className="section-title">Visualisez votre rénovation avant de commencer</h2>
+            <p className="section-desc max-w-lg">
+              Téléversez une photo de votre pièce et laissez l'IA générer des concepts de design. Comparez les versions, partagez et votez.
+            </p>
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
+            <div className="premium-card rounded-3xl p-5 sm:p-8 space-y-5">
+              {/* Before / After mockup */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl overflow-hidden aspect-[4/3] bg-muted/50 border border-border/50 flex items-center justify-center relative">
+                  <Camera className="h-8 w-8 text-muted-foreground/40" />
+                  <span className="absolute bottom-2 left-2 text-caption font-bold text-muted-foreground bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded-md">Avant</span>
+                </div>
+                <div className="rounded-2xl overflow-hidden aspect-[4/3] bg-gradient-to-br from-accent/10 to-primary/10 border border-accent/20 flex items-center justify-center relative">
+                  <Sparkles className="h-8 w-8 text-accent/50" />
+                  <span className="absolute bottom-2 left-2 text-caption font-bold text-accent bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded-md">Après IA</span>
+                </div>
+              </div>
+
+              {/* Features */}
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { icon: Camera, label: "Upload photo", color: "text-primary" },
+                  { icon: Sparkles, label: "Génération IA", color: "text-accent" },
+                  { icon: Vote, label: "Partagez & votez", color: "text-warning" },
+                ].map(f => (
+                  <div key={f.label} className="text-center p-3 rounded-xl bg-muted/40 border border-border/40">
+                    <f.icon className={`h-5 w-5 mx-auto mb-1.5 ${f.color}`} />
+                    <p className="text-caption font-semibold text-foreground">{f.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-accent/5 border border-accent/15">
+                <Sparkles className="h-5 w-5 text-accent shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-meta font-bold text-foreground">3 générations gratuites par mois</p>
+                  <p className="text-caption mt-0.5 leading-relaxed text-muted-foreground">Passez à Design+ pour un accès illimité à 14,99$/mois.</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => handleCta("/design", "Essayer UNPRO Design")}
+                className="w-full h-12 rounded-xl flex items-center justify-center gap-2 text-meta font-bold cta-gradient"
+              >
+                <Sparkles className="h-4 w-4" /> Essayer UNPRO Design <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ═══ CONDO / SYNDICATE SECTION ═══ */}
       <section className="px-5 py-16 md:py-20">
         <div className="max-w-3xl mx-auto">
