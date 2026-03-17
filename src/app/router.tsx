@@ -179,6 +179,8 @@ import AdminAutopilotDashboard from "@/pages/admin/AdminAutopilotDashboard";
 import AdminSeoDominationDashboard from "@/pages/admin/AdminSeoDominationDashboard";
 import AdminMarketEngine from "@/pages/admin/AdminMarketEngine";
 import AdminNexusDashboard from "@/pages/admin/AdminNexusDashboard";
+import AdminDispatchCenter from "@/pages/admin/AdminDispatchCenter";
+import EmergencyPage from "@/pages/EmergencyPage";
 import RefusalSeoPage from "@/pages/seo/RefusalSeoPage";
 import MyPlacementsPage from "@/pages/dashboard/MyPlacementsPage";
 
@@ -413,6 +415,8 @@ export const AppRouter = () => (
       <Route path="/admin/seo-domination" element={<ProtectedRoute requiredRole="admin"><AdminSeoDominationDashboard /></ProtectedRoute>} />
       <Route path="/admin/market-engine" element={<ProtectedRoute requiredRole="admin"><AdminMarketEngine /></ProtectedRoute>} />
       <Route path="/admin/nexus" element={<ProtectedRoute requiredRole="admin"><AdminNexusDashboard /></ProtectedRoute>} />
+      <Route path="/admin/dispatch-center" element={<ProtectedRoute requiredRole="admin"><AdminDispatchCenter /></ProtectedRoute>} />
+      <Route path="/emergency" element={<EmergencyPage />} />
 
       {/* Refusal SEO public pages */}
       <Route path="/refusal/:slug" element={<RefusalSeoPage />} />
