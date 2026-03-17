@@ -5400,6 +5400,7 @@ export type Database = {
           priority_score: number | null
           problem_id: string | null
           profession_id: string | null
+          property_type_slug: string | null
           question_id: string | null
           related_keywords: Json | null
           schema_type: string | null
@@ -5423,6 +5424,7 @@ export type Database = {
           priority_score?: number | null
           problem_id?: string | null
           profession_id?: string | null
+          property_type_slug?: string | null
           question_id?: string | null
           related_keywords?: Json | null
           schema_type?: string | null
@@ -5446,6 +5448,7 @@ export type Database = {
           priority_score?: number | null
           problem_id?: string | null
           profession_id?: string | null
+          property_type_slug?: string | null
           question_id?: string | null
           related_keywords?: Json | null
           schema_type?: string | null
@@ -10382,6 +10385,114 @@ export type Database = {
             columns: ["city_id"]
             isOneToOne: false
             referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_property_type_pages: {
+        Row: {
+          canonical_url: string | null
+          city_id: string | null
+          city_slug: string | null
+          content_blocks: Json | null
+          content_quality_score: number | null
+          created_at: string | null
+          faq: Json | null
+          generation_status: string | null
+          h1: string
+          id: string
+          internal_links: Json | null
+          is_indexed: boolean | null
+          is_published: boolean | null
+          last_crawled_at: string | null
+          meta_description: string | null
+          meta_title: string | null
+          page_type: string
+          priority_score: number | null
+          problem_id: string | null
+          problem_slug: string | null
+          property_family: string
+          property_type_slug: string
+          published_at: string | null
+          schema_json: Json | null
+          slug: string
+          target_keyword: string | null
+          uniqueness_score: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          canonical_url?: string | null
+          city_id?: string | null
+          city_slug?: string | null
+          content_blocks?: Json | null
+          content_quality_score?: number | null
+          created_at?: string | null
+          faq?: Json | null
+          generation_status?: string | null
+          h1: string
+          id?: string
+          internal_links?: Json | null
+          is_indexed?: boolean | null
+          is_published?: boolean | null
+          last_crawled_at?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          page_type?: string
+          priority_score?: number | null
+          problem_id?: string | null
+          problem_slug?: string | null
+          property_family: string
+          property_type_slug: string
+          published_at?: string | null
+          schema_json?: Json | null
+          slug: string
+          target_keyword?: string | null
+          uniqueness_score?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          canonical_url?: string | null
+          city_id?: string | null
+          city_slug?: string | null
+          content_blocks?: Json | null
+          content_quality_score?: number | null
+          created_at?: string | null
+          faq?: Json | null
+          generation_status?: string | null
+          h1?: string
+          id?: string
+          internal_links?: Json | null
+          is_indexed?: boolean | null
+          is_published?: boolean | null
+          last_crawled_at?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          page_type?: string
+          priority_score?: number | null
+          problem_id?: string | null
+          problem_slug?: string | null
+          property_family?: string
+          property_type_slug?: string
+          published_at?: string | null
+          schema_json?: Json | null
+          slug?: string
+          target_keyword?: string | null
+          uniqueness_score?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_property_type_pages_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_property_type_pages_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "home_problems"
             referencedColumns: ["id"]
           },
         ]

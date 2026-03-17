@@ -38,6 +38,9 @@ import VillePage from "@/pages/seo/VillePage";
 import QuartierPage from "@/pages/seo/QuartierPage";
 import RuePage from "@/pages/seo/RuePage";
 import ProblemeLocationFrPage from "@/pages/seo/ProblemeLocationFrPage";
+import PropertyTypeHubPage from "@/pages/seo/PropertyTypeHubPage";
+import PropertyTypeCityPage from "@/pages/seo/PropertyTypeCityPage";
+import PropertyTypeProblemPage from "@/pages/seo/PropertyTypeProblemPage";
 import PropertyGraphPage from "@/pages/PropertyGraphPage";
 import AlexChat from "@/pages/AlexChat";
 import DesignPage from "@/pages/DesignPage";
@@ -225,6 +228,11 @@ export const AppRouter = () => (
       <Route path="/rue/:ville/:rue" element={<RuePage />} />
       <Route path="/guides/:topic" element={<GuidePage />} />
       <Route path="/renovation/:projectSlug/:citySlug" element={<RenovationLocationPage />} />
+
+      {/* Property Type SEO Pages */}
+      <Route path="/types-de-propriete/:type" element={<PropertyTypeHubPage />} />
+      <Route path="/:city/:type/:problem" element={<PropertyTypeProblemPage />} />
+      <Route path="/:city/:type" element={<PropertyTypeCityPage />} />
 
       {/* Legacy English routes */}
       <Route path="/problems/:slug" element={<ProblemPage />} />
