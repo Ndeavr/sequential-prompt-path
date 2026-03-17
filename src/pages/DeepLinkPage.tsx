@@ -82,6 +82,8 @@ function DeepLinkLanding({ resolved }: { resolved: ResolvedDeepLink }) {
   const IconComponent = ICON_MAP[meta.icon] ?? Sparkles;
 
   const handleCta = () => {
+    trackDeepLinkEvent("cta_clicked", resolved.link?.id, { feature });
+    trackDeepLinkEvent("auth_started", resolved.link?.id, { feature });
     saveDeepLinkIntent(resolved);
     navigate("/login");
   };
