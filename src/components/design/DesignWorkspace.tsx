@@ -55,9 +55,19 @@ export default function DesignWorkspace({
   onCreateShare,
   onClearUsageLimit,
 }: Props) {
+  const { user } = useAuth();
   const [isComparing, setIsComparing] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
+
+  // Show signup prompt when generation starts (if not logged in)
+  useEffect(() => {
+    if (isGenerating && !user) {
+      const timer = setTimeout(() => setShowSignup(true), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isGenerating, user]);
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
