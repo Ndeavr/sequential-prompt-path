@@ -160,6 +160,7 @@ import AdminAutomation from "@/pages/admin/AdminAutomation";
 import AdminHomeGraph from "@/pages/admin/AdminHomeGraph";
 import AdminUOS from "@/pages/admin/AdminUOS";
 import AdminGrowthEngine from "@/pages/admin/AdminGrowthEngine";
+import AdminPricingPage from "@/pages/admin/AdminPricingPage";
 
 export const AppRouter = () => (
   <BrowserRouter>
