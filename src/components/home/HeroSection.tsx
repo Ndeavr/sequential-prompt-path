@@ -246,7 +246,9 @@ export default function HeroSection() {
               </h1>
 
               {/* Card with bullet points */}
-              <div className="relative z-10 mt-4 md:mt-5 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 max-w-[420px] shadow-sm">
+              <div className="relative z-10 md:mt-5 rounded-2xl border border-border/40 bg-card/80 backdrop-blur-sm p-4 max-w-[420px] shadow-sm"
+                style={{ marginTop: "calc(75vw - 220px)" }}
+              >
                 <ul className="space-y-2">
                   {[
                     "Rendez-vous exclusif avec un professionnel",
