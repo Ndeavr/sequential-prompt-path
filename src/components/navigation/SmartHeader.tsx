@@ -235,6 +235,9 @@ const SmartHeader = () => {
           <MobileMenuOverlay lang={lang} onClose={() => setMobileOpen(false)} ctx={ctx} activeRole={activeRole} />
         )}
       </AnimatePresence>
+
+      {/* QR Share Modal */}
+      <QRShareModal open={shareOpen} onOpenChange={setShareOpen} />
     </>
   );
 };
