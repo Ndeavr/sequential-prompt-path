@@ -241,7 +241,7 @@ const QRShareModal = ({ open, onOpenChange, feature = "general", previewImage, s
                   <QrCode className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-foreground leading-none">{stats?.totalScans ?? 0}</p>
+                  <p className="text-lg font-bold text-foreground leading-none">{stats?.totalViews ?? 0}</p>
                   <p className="text-[10px] text-muted-foreground mt-0.5">Scans</p>
                 </div>
               </div>
