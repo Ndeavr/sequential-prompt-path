@@ -255,6 +255,13 @@ export default function EmergencyPage() {
                 </div>
               </div>
 
+              {/* Full Name */}
+              <div>
+                <Label htmlFor="fullname" className="text-sm font-medium">Votre nom complet *</Label>
+                <Input id="fullname" value={fullName} onChange={e => setFullName(e.target.value)}
+                  placeholder="Ex: Jean Tremblay" className="mt-1" />
+              </div>
+
               {/* Description */}
               <div>
                 <Label htmlFor="desc" className="text-sm font-medium">Décrivez le problème</Label>
