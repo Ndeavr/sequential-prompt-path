@@ -93,11 +93,7 @@ export default function FounderLockScreen({ refCode, onUnlock }: FounderLockScre
     }
   };
 
-  // Auto-submit when 4 digits entered
   const fullPin = pin.join("");
-  if (fullPin.length === 4 && !loading && !error) {
-    setTimeout(handleSubmit, 100);
-  }
 
   return (
     <motion.div
