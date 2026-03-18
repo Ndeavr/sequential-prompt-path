@@ -68,7 +68,7 @@ export default function DashPipeline({ appointments }: Props) {
                     {appt.preferred_date && (
                       <p className="text-[9px] text-muted-foreground">{appt.preferred_date}</p>
                     )}
-                    {col.key === "pending" && (
+                    {col.key === "requested" && (
                       <div className="flex gap-1 mt-1">
                         <Button size="sm" className="h-5 text-[9px] px-2 rounded bg-primary/15 text-primary hover:bg-primary/25">Accepter</Button>
                         <Button size="sm" variant="ghost" className="h-5 text-[9px] px-2 rounded text-muted-foreground">Refuser</Button>
