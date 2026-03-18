@@ -912,6 +912,89 @@ export type Database = {
         }
         Relationships: []
       }
+      ambassador_claims: {
+        Row: {
+          activated_at: string | null
+          claimed_at: string | null
+          id: string
+          intent_slug: string
+          offer_id: string
+          referrer_user_id: string | null
+          status: string
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          claimed_at?: string | null
+          id?: string
+          intent_slug?: string
+          offer_id: string
+          referrer_user_id?: string | null
+          status?: string
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          claimed_at?: string | null
+          id?: string
+          intent_slug?: string
+          offer_id?: string
+          referrer_user_id?: string | null
+          status?: string
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ambassador_claims_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "ambassador_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ambassador_offers: {
+        Row: {
+          benefits_json: Json | null
+          claimed_count: number
+          created_at: string | null
+          id: string
+          intent_slug: string
+          is_active: boolean | null
+          offer_description_fr: string | null
+          offer_label_fr: string | null
+          total_slots: number
+          updated_at: string | null
+        }
+        Insert: {
+          benefits_json?: Json | null
+          claimed_count?: number
+          created_at?: string | null
+          id?: string
+          intent_slug?: string
+          is_active?: boolean | null
+          offer_description_fr?: string | null
+          offer_label_fr?: string | null
+          total_slots?: number
+          updated_at?: string | null
+        }
+        Update: {
+          benefits_json?: Json | null
+          claimed_count?: number
+          created_at?: string | null
+          id?: string
+          intent_slug?: string
+          is_active?: boolean | null
+          offer_description_fr?: string | null
+          offer_label_fr?: string | null
+          total_slots?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       answer_logs: {
         Row: {
           answer_mode: string
@@ -13811,6 +13894,119 @@ export type Database = {
         }
         Relationships: []
       }
+      qr_conversions: {
+        Row: {
+          conversion_type: string
+          converted_at: string | null
+          converted_user_id: string | null
+          id: string
+          intent_slug: string
+          metadata: Json | null
+          referrer_user_id: string | null
+          scan_id: string | null
+        }
+        Insert: {
+          conversion_type: string
+          converted_at?: string | null
+          converted_user_id?: string | null
+          id?: string
+          intent_slug: string
+          metadata?: Json | null
+          referrer_user_id?: string | null
+          scan_id?: string | null
+        }
+        Update: {
+          conversion_type?: string
+          converted_at?: string | null
+          converted_user_id?: string | null
+          id?: string
+          intent_slug?: string
+          metadata?: Json | null
+          referrer_user_id?: string | null
+          scan_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_conversions_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "qr_scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qr_intents: {
+        Row: {
+          badge_text: string | null
+          copy_variants: Json | null
+          created_at: string | null
+          cta_en: string | null
+          cta_fr: string | null
+          destination_path: string
+          display_order: number | null
+          gradient_class: string | null
+          icon_name: string | null
+          id: string
+          intent_slug: string
+          is_active: boolean | null
+          is_restricted: boolean | null
+          label_en: string | null
+          label_fr: string
+          limit_total: number | null
+          role_target: string | null
+          style_preset: string | null
+          subtitle_en: string | null
+          subtitle_fr: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          badge_text?: string | null
+          copy_variants?: Json | null
+          created_at?: string | null
+          cta_en?: string | null
+          cta_fr?: string | null
+          destination_path?: string
+          display_order?: number | null
+          gradient_class?: string | null
+          icon_name?: string | null
+          id?: string
+          intent_slug: string
+          is_active?: boolean | null
+          is_restricted?: boolean | null
+          label_en?: string | null
+          label_fr: string
+          limit_total?: number | null
+          role_target?: string | null
+          style_preset?: string | null
+          subtitle_en?: string | null
+          subtitle_fr?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          badge_text?: string | null
+          copy_variants?: Json | null
+          created_at?: string | null
+          cta_en?: string | null
+          cta_fr?: string | null
+          destination_path?: string
+          display_order?: number | null
+          gradient_class?: string | null
+          icon_name?: string | null
+          id?: string
+          intent_slug?: string
+          is_active?: boolean | null
+          is_restricted?: boolean | null
+          label_en?: string | null
+          label_fr?: string
+          limit_total?: number | null
+          role_target?: string | null
+          style_preset?: string | null
+          subtitle_en?: string | null
+          subtitle_fr?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       qr_placements: {
         Row: {
           campaign_id: string | null
@@ -13884,6 +14080,89 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      qr_scans: {
+        Row: {
+          id: string
+          intent_slug: string
+          ip_hash: string | null
+          link_id: string | null
+          medium: string | null
+          referrer_user_id: string | null
+          scanned_at: string | null
+          session_id: string | null
+          source: string | null
+          user_agent: string | null
+          variant: string | null
+        }
+        Insert: {
+          id?: string
+          intent_slug: string
+          ip_hash?: string | null
+          link_id?: string | null
+          medium?: string | null
+          referrer_user_id?: string | null
+          scanned_at?: string | null
+          session_id?: string | null
+          source?: string | null
+          user_agent?: string | null
+          variant?: string | null
+        }
+        Update: {
+          id?: string
+          intent_slug?: string
+          ip_hash?: string | null
+          link_id?: string | null
+          medium?: string | null
+          referrer_user_id?: string | null
+          scanned_at?: string | null
+          session_id?: string | null
+          source?: string | null
+          user_agent?: string | null
+          variant?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_scans_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "qr_user_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qr_user_links: {
+        Row: {
+          created_at: string | null
+          destination_url: string
+          id: string
+          intent_slug: string
+          is_active: boolean | null
+          short_code: string
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          destination_url: string
+          id?: string
+          intent_slug: string
+          is_active?: boolean | null
+          short_code?: string
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          destination_url?: string
+          id?: string
+          intent_slug?: string
+          is_active?: boolean | null
+          short_code?: string
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
       }
       qualified_conversions: {
         Row: {
@@ -14486,6 +14765,48 @@ export type Database = {
           target_count?: number
           unlocked?: boolean
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      referral_rewards: {
+        Row: {
+          claimed_at: string | null
+          created_at: string | null
+          description_fr: string | null
+          id: string
+          is_claimed: boolean | null
+          label_fr: string
+          metadata: Json | null
+          reward_level: string
+          reward_type: string
+          trigger_count: number
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          created_at?: string | null
+          description_fr?: string | null
+          id?: string
+          is_claimed?: boolean | null
+          label_fr: string
+          metadata?: Json | null
+          reward_level: string
+          reward_type: string
+          trigger_count: number
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string | null
+          created_at?: string | null
+          description_fr?: string | null
+          id?: string
+          is_claimed?: boolean | null
+          label_fr?: string
+          metadata?: Json | null
+          reward_level?: string
+          reward_type?: string
+          trigger_count?: number
           user_id?: string
         }
         Relationships: []
