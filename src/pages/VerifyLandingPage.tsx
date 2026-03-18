@@ -394,6 +394,27 @@ export default function VerifyLandingPage() {
             </p>
           </div>
         </section>
+
+        {/* ─── QR Code Section ─── */}
+        <Section muted id="qr-code">
+          <SectionTitle
+            eyebrow="Partager"
+            title="QR Code — Vérifier un entrepreneur"
+            subtitle="Scannez ou partagez ce code pour accéder directement à l'outil de vérification UnPRO."
+          />
+          <div className="flex flex-col items-center gap-6">
+            <div className="rounded-2xl border border-border/30 bg-card p-6 shadow-lg">
+              <QRCodeCard
+                url={`${window.location.origin}/verifier-entrepreneur`}
+                size={200}
+                label="Vérifier un entrepreneur au Québec — UnPRO"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground text-center max-w-sm">
+              Imprimez ce QR code sur vos documents, cartes d'affaires ou affiches pour permettre à vos clients de vérifier votre entreprise instantanément.
+            </p>
+          </div>
+        </Section>
       </div>
     </MainLayout>
   );
