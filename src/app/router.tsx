@@ -70,6 +70,8 @@ import ProjectMatchesPage from "@/pages/dashboard/ProjectMatchesPage";
 import QrScanPage from "@/pages/QrScanPage";
 import DeepLinkPage from "@/pages/DeepLinkPage";
 import ReferralLandingPage from "@/pages/ReferralLandingPage";
+import UnlockPage from "@/pages/UnlockPage";
+import MyQRPerformancePage from "@/pages/MyQRPerformancePage";
 import ContributionApprovalPage from "@/pages/dashboard/ContributionApprovalPage";
 import ListingImportPage from "@/pages/ListingImportPage";
 import PublicScoreCalculatorPage from "@/pages/PublicScoreCalculatorPage";
