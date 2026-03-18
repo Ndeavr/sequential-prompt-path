@@ -43,8 +43,7 @@ const QRCodeCard = ({ url, size = 220, label }: QRCodeCardProps) => {
   return (
     <div className="flex flex-col items-center gap-3 w-full">
       <div
-        className="p-4 bg-white rounded-2xl shadow-lg border border-border/10 inline-flex"
-        style={{ maxWidth: "min(100%, 90vw)", maxHeight: "60vh" }}
+        className="p-3 bg-white rounded-2xl shadow-lg border border-border/10 inline-flex"
       >
         {dataUrl ? (
           <img
@@ -52,18 +51,17 @@ const QRCodeCard = ({ url, size = 220, label }: QRCodeCardProps) => {
             alt="QR Code UNPRO"
             width={size}
             height={size}
-            className="rounded-lg block w-full h-auto"
+            className="rounded-lg block"
             style={{
               imageRendering: "pixelated",
-              maxWidth: `min(${size}px, calc(90vw - 2rem))`,
-              maxHeight: "calc(60vh - 2rem)",
-              objectFit: "contain",
+              width: Math.min(size, 200),
+              height: Math.min(size, 200),
             }}
           />
         ) : (
           <div
             className="rounded-lg bg-muted/30 animate-pulse"
-            style={{ width: size, height: size, maxWidth: "100%" }}
+            style={{ width: Math.min(size, 200), height: Math.min(size, 200) }}
           />
         )}
       </div>
