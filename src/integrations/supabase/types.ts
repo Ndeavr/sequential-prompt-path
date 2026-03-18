@@ -19580,6 +19580,16 @@ export type Database = {
         }
         Returns: Json
       }
+      get_avg_job_value: {
+        Args: {
+          p_city_slug?: string
+          p_is_emergency?: boolean
+          p_is_premium?: boolean
+          p_specialty_slug?: string
+          p_trade_slug: string
+        }
+        Returns: Json
+      }
       get_ccai_answer_pairs: {
         Args: {
           p_contractor_id: string
