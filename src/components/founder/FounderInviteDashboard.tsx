@@ -1,14 +1,16 @@
 /**
  * UNPRO — Founder Invite Dashboard
  * Ambassador view: generate invites, view QR, copy PIN, track usage.
+ * Bilingual FR/EN support.
  */
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Plus, Copy, RefreshCw, QrCode, Key, Link2, Check, Users, Clock } from "lucide-react";
+import { Plus, Copy, QrCode, Key, Check, Users, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/components/ui/LanguageToggle";
 import QRCodeCard from "@/components/sharing/QRCodeCard";
 import { toast } from "sonner";
 
@@ -33,6 +35,31 @@ function generateRefCode(): string {
     .slice(0, 8);
 }
 
+const t = {
+  title: { fr: "Invitations fondateur", en: "Founder invitations" },
+  create: { fr: "Créer une invitation", en: "Create an invitation" },
+  createError: { fr: "Erreur lors de la création de l'invitation", en: "Error creating invitation" },
+  createSuccess: { fr: "Invitation créée !", en: "Invitation created!" },
+  copied: { fr: "Copié !", en: "Copied!" },
+  activeInvite: { fr: "Invitation active", en: "Active invitation" },
+  uses: { fr: "utilisations", en: "uses" },
+  scanLabel: { fr: "Scanner pour accéder à l'offre fondateur", en: "Scan to access the founder offer" },
+  privateLink: { fr: "Lien privé", en: "Private link" },
+  copy: { fr: "Copier", en: "Copy" },
+  pinLabel: {
+    fr: "Code PIN (à transmettre séparément)",
+    en: "PIN code (share separately)",
+  },
+  expiresOn: { fr: "Expire le", en: "Expires on" },
+  active: { fr: "Active", en: "Active" },
+  expired: { fr: "Expirée", en: "Expired" },
+  noInvites: { fr: "Aucune invitation créée", en: "No invitations created" },
+  noInvitesSub: {
+    fr: "Créez votre première invitation pour partager l'offre fondateur.",
+    en: "Create your first invitation to share the founder offer.",
+  },
+};
+
 interface Invite {
   id: string;
   referral_code: string;
@@ -45,6 +72,7 @@ interface Invite {
 }
 
 export default function FounderInviteDashboard() {
+  const { lang } = useLanguage();
   const { user } = useAuth();
   const [invites, setInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,9 +112,9 @@ export default function FounderInviteDashboard() {
       .single();
 
     if (error) {
-      toast.error("Erreur lors de la création de l'invitation");
+      toast.error(t.createError[lang]);
     } else {
-      toast.success("Invitation créée !");
+      toast.success(t.createSuccess[lang]);
       setSelectedInvite(data as any);
       fetchInvites();
     }
@@ -96,7 +124,7 @@ export default function FounderInviteDashboard() {
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
-    toast.success("Copié !");
+    toast.success(t.copied[lang]);
     setTimeout(() => setCopiedField(null), 2000);
   };
 
@@ -115,10 +143,10 @@ export default function FounderInviteDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-foreground">Invitations fondateur</h2>
+        <h2 className="text-xl font-bold text-foreground">{t.title[lang]}</h2>
         <Button onClick={createInvite} disabled={creating} className="gap-2 rounded-xl">
           <Plus className="h-4 w-4" />
-          Créer une invitation
+          {t.create[lang]}
         </Button>
       </div>
 
@@ -132,21 +160,21 @@ export default function FounderInviteDashboard() {
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-foreground flex items-center gap-2">
               <Key className="h-4 w-4 text-primary" />
-              Invitation active
+              {t.activeInvite[lang]}
             </h3>
             <Badge variant="outline" className="text-primary border-primary/30">
-              {selectedInvite.used_count}/{selectedInvite.max_uses} utilisations
+              {selectedInvite.used_count}/{selectedInvite.max_uses} {t.uses[lang]}
             </Badge>
           </div>
 
-          {/* QR Code - always visible, contained in viewport */}
+          {/* QR Code */}
           <div className="flex justify-center">
-            <QRCodeCard url={getInviteUrl(selectedInvite.referral_code)} size={180} label="Scanner pour accéder à l'offre fondateur" />
+            <QRCodeCard url={getInviteUrl(selectedInvite.referral_code)} size={180} label={t.scanLabel[lang]} />
           </div>
 
           {/* Link */}
           <div className="space-y-2">
-            <label className="text-xs text-muted-foreground font-medium">Lien privé</label>
+            <label className="text-xs text-muted-foreground font-medium">{t.privateLink[lang]}</label>
             <div className="flex items-center gap-2">
               <div className="flex-1 px-3 py-2.5 rounded-xl bg-muted/30 border border-border/30 text-sm text-foreground truncate font-mono">
                 {getInviteUrl(selectedInvite.referral_code)}
@@ -158,14 +186,14 @@ export default function FounderInviteDashboard() {
                 className="shrink-0 gap-1.5 rounded-xl"
               >
                 {copiedField === `link-${selectedInvite.id}` ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                Copier
+                {t.copy[lang]}
               </Button>
             </div>
           </div>
 
           {/* PIN */}
           <div className="space-y-2">
-            <label className="text-xs text-muted-foreground font-medium">Code PIN (à transmettre séparément)</label>
+            <label className="text-xs text-muted-foreground font-medium">{t.pinLabel[lang]}</label>
             <div className="flex items-center gap-2">
               <div className="flex gap-2">
                 {selectedInvite.access_pin.split("").map((d, i) => (
@@ -181,7 +209,7 @@ export default function FounderInviteDashboard() {
                 className="shrink-0 gap-1.5 rounded-xl"
               >
                 {copiedField === `pin-${selectedInvite.id}` ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                Copier
+                {t.copy[lang]}
               </Button>
             </div>
           </div>
@@ -190,7 +218,7 @@ export default function FounderInviteDashboard() {
           {selectedInvite.expires_at && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Clock className="h-3.5 w-3.5" />
-              Expire le {new Date(selectedInvite.expires_at).toLocaleDateString("fr-CA")}
+              {t.expiresOn[lang]} {new Date(selectedInvite.expires_at).toLocaleDateString(lang === "fr" ? "fr-CA" : "en-CA")}
             </div>
           )}
         </motion.div>
@@ -216,13 +244,13 @@ export default function FounderInviteDashboard() {
                 <div>
                   <p className="text-sm font-medium text-foreground font-mono">{inv.referral_code}</p>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(inv.created_at).toLocaleDateString("fr-CA")}
+                    {new Date(inv.created_at).toLocaleDateString(lang === "fr" ? "fr-CA" : "en-CA")}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant={inv.status === "active" ? "default" : "secondary"} className="text-xs">
-                  {inv.status === "active" ? "Active" : "Expirée"}
+                  {inv.status === "active" ? t.active[lang] : t.expired[lang]}
                 </Badge>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Users className="h-3.5 w-3.5" />
@@ -236,8 +264,8 @@ export default function FounderInviteDashboard() {
         {invites.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
             <QrCode className="h-10 w-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">Aucune invitation créée</p>
-            <p className="text-xs mt-1">Créez votre première invitation pour partager l'offre fondateur.</p>
+            <p className="text-sm">{t.noInvites[lang]}</p>
+            <p className="text-xs mt-1">{t.noInvitesSub[lang]}</p>
           </div>
         )}
       </div>

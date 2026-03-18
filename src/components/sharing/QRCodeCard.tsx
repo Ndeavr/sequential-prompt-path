@@ -2,12 +2,18 @@
  * UNPRO — QR Code Card
  * Renders a large, scannable QR code with download capability.
  * Uses toDataURL for reliable cross-browser rendering.
- * Always fits within the viewport with responsive sizing.
+ * Bilingual FR/EN support.
  */
 import { useEffect, useState } from "react";
 import QRCodeLib from "qrcode";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import { useLanguage } from "@/components/ui/LanguageToggle";
+
+const t = {
+  download: { fr: "Télécharger le QR", en: "Download QR" },
+  alt: { fr: "Code QR UNPRO", en: "UNPRO QR Code" },
+};
 
 interface QRCodeCardProps {
   url: string;
@@ -16,12 +22,13 @@ interface QRCodeCardProps {
 }
 
 const QRCodeCard = ({ url, size = 220, label }: QRCodeCardProps) => {
+  const { lang } = useLanguage();
   const [dataUrl, setDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!url) return;
     QRCodeLib.toDataURL(url, {
-      width: size * 2, // retina
+      width: size * 2,
       margin: 2,
       color: { dark: "#1a1a2e", light: "#ffffff" },
       errorCorrectionLevel: "H",
@@ -42,13 +49,11 @@ const QRCodeCard = ({ url, size = 220, label }: QRCodeCardProps) => {
 
   return (
     <div className="flex flex-col items-center gap-3 w-full">
-      <div
-        className="p-3 bg-white rounded-2xl shadow-lg border border-border/10 inline-flex"
-      >
+      <div className="p-3 bg-white rounded-2xl shadow-lg border border-border/10 inline-flex">
         {dataUrl ? (
           <img
             src={dataUrl}
-            alt="QR Code UNPRO"
+            alt={t.alt[lang]}
             width={size}
             height={size}
             className="rounded-lg block"
@@ -76,7 +81,7 @@ const QRCodeCard = ({ url, size = 220, label }: QRCodeCardProps) => {
         disabled={!dataUrl}
       >
         <Download className="h-3.5 w-3.5" />
-        Télécharger le QR
+        {t.download[lang]}
       </Button>
     </div>
   );

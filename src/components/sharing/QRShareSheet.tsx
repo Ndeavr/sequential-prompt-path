@@ -1,6 +1,7 @@
 /**
  * UNPRO — QR Share Sheet (Full-Screen Intent-Based)
  * Mobile-first bottom sheet with intent selector, dynamic QR, sharing actions.
+ * Bilingual FR/EN support.
  */
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,6 +13,7 @@ import { useReferralProfile } from "@/hooks/useReferralProfile";
 import { QR_INTENTS, getIntentsForRole, type QrIntent } from "@/config/qrIntents";
 import { buildUnlockUrl, getUserQrStats } from "@/services/qrSharing";
 import { trackReferralEvent } from "@/hooks/useReferralAttribution";
+import { useLanguage } from "@/components/ui/LanguageToggle";
 import QRCodeCard from "./QRCodeCard";
 import ShareActionsRow from "./ShareActionsRow";
 import {
@@ -23,6 +25,14 @@ import { useQuery } from "@tanstack/react-query";
 
 const ICON_MAP: Record<string, React.ElementType> = {
   ChefHat, Bath, Search, AlertTriangle, Palette, Building2, UserPlus, Award, Crown, Sparkles,
+};
+
+const t = {
+  dialogTitle: { fr: "Partager UNPRO", en: "Share UNPRO" },
+  subtitle: { fr: "Choisis pourquoi tu partages", en: "Choose why you're sharing" },
+  scans: { fr: "Scans", en: "Scans" },
+  signups: { fr: "Inscriptions", en: "Signups" },
+  appointments: { fr: "RDV", en: "Appts" },
 };
 
 interface QRShareSheetProps {
@@ -38,7 +48,6 @@ const QRShareSheet = ({ open, onOpenChange }: QRShareSheetProps) => {
   const effectiveRole = (role || "guest") as "homeowner" | "contractor" | "admin" | "guest";
   const intents = useMemo(() => getIntentsForRole(effectiveRole), [effectiveRole]);
 
-  // Reset selection when closing
   useEffect(() => {
     if (!open) setSelectedIntent(null);
   }, [open]);
@@ -73,7 +82,7 @@ const QRShareSheet = ({ open, onOpenChange }: QRShareSheetProps) => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100vw-1rem)] max-w-lg max-h-[95vh] rounded-3xl p-0 overflow-y-auto border-0 shadow-2xl bg-card">
         <DialogHeader className="sr-only">
-          <DialogTitle>Partager UNPRO</DialogTitle>
+          <DialogTitle>{t.dialogTitle.fr}</DialogTitle>
         </DialogHeader>
 
         <AnimatePresence mode="wait">
@@ -117,6 +126,8 @@ function IntentSelector({
   onSelect: (i: QrIntent) => void;
   onClose: () => void;
 }) {
+  const { lang } = useLanguage();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -127,8 +138,8 @@ function IntentSelector({
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-5 pb-3">
         <div>
-          <h2 className="text-lg font-bold text-foreground font-display">Partager UNPRO</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Choisis pourquoi tu partages</p>
+          <h2 className="text-lg font-bold text-foreground font-display">{t.dialogTitle[lang]}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">{t.subtitle[lang]}</p>
         </div>
         <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-full">
           <X className="h-4 w-4" />
@@ -138,9 +149,9 @@ function IntentSelector({
       {/* Stats bar */}
       {stats && (stats.totalScans > 0 || stats.totalSignups > 0) && (
         <div className="flex gap-3 px-5 pb-3">
-          <StatPill icon={<Eye className="h-3 w-3" />} value={stats.totalScans} label="Scans" />
-          <StatPill icon={<MousePointerClick className="h-3 w-3" />} value={stats.totalSignups} label="Inscriptions" />
-          <StatPill icon={<CalendarCheck className="h-3 w-3" />} value={stats.totalBookings} label="RDV" />
+          <StatPill icon={<Eye className="h-3 w-3" />} value={stats.totalScans} label={t.scans[lang]} />
+          <StatPill icon={<MousePointerClick className="h-3 w-3" />} value={stats.totalSignups} label={t.signups[lang]} />
+          <StatPill icon={<CalendarCheck className="h-3 w-3" />} value={stats.totalBookings} label={t.appointments[lang]} />
         </div>
       )}
 
@@ -150,6 +161,8 @@ function IntentSelector({
           {intents.map((intent) => {
             const Icon = ICON_MAP[intent.icon] || Sparkles;
             const isPremium = intent.stylePreset === "premium";
+            const label = lang === "en" && (intent as any).labelEn ? (intent as any).labelEn : intent.labelFr;
+            const sub = lang === "en" && (intent as any).subtitleEn ? (intent as any).subtitleEn : intent.subtitleFr;
             return (
               <button
                 key={intent.slug}
@@ -179,8 +192,8 @@ function IntentSelector({
                   <Icon className={`h-4.5 w-4.5 ${isPremium ? "text-amber-600 dark:text-amber-400" : "text-primary"}`} />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-foreground leading-tight">{intent.labelFr}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">{intent.subtitleFr}</p>
+                  <p className="text-sm font-semibold text-foreground leading-tight">{label}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">{sub}</p>
                 </div>
               </button>
             );
@@ -208,9 +221,12 @@ function QRView({
   onBack: () => void;
   onClose: () => void;
 }) {
+  const { lang } = useLanguage();
   const Icon = ICON_MAP[intent.icon] || Sparkles;
   const isPremium = intent.stylePreset === "premium";
   const randomCopy = intent.copyVariants[Math.floor(Math.random() * intent.copyVariants.length)];
+  const label = lang === "en" && (intent as any).labelEn ? (intent as any).labelEn : intent.labelFr;
+  const sub = lang === "en" && (intent as any).subtitleEn ? (intent as any).subtitleEn : intent.subtitleFr;
 
   return (
     <motion.div
@@ -227,7 +243,7 @@ function QRView({
           </Button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-foreground truncate">{intent.labelFr}</h2>
+              <h2 className="text-base font-bold text-foreground truncate">{label}</h2>
               {intent.badge && (
                 <Badge className={`text-[10px] shrink-0 border-0 ${
                   isPremium ? "bg-amber-500/15 text-amber-600 dark:text-amber-400" : "bg-primary/10 text-primary"
@@ -259,21 +275,21 @@ function QRView({
 
       {/* QR + actions */}
       <div className="flex flex-col items-center gap-4 px-5 pb-5 pt-3">
-        <QRCodeCard url={url} size={200} label={intent.subtitleFr} />
+        <QRCodeCard url={url} size={200} label={sub} />
 
         <ShareActionsRow
           url={url}
           referralCode={referralCode}
-          shareTitle={intent.labelFr}
+          shareTitle={label}
           shareText={randomCopy}
         />
 
         {/* Stats */}
         <div className="w-full pt-3 border-t border-border/10">
           <div className="grid grid-cols-3 gap-2">
-            <MiniStat icon={<QrCode className="h-3.5 w-3.5 text-primary" />} value={stats?.totalScans ?? 0} label="Scans" />
-            <MiniStat icon={<MousePointerClick className="h-3.5 w-3.5 text-success" />} value={stats?.totalSignups ?? 0} label="Inscriptions" />
-            <MiniStat icon={<CalendarCheck className="h-3.5 w-3.5 text-secondary" />} value={stats?.totalBookings ?? 0} label="RDV" />
+            <MiniStat icon={<QrCode className="h-3.5 w-3.5 text-primary" />} value={stats?.totalScans ?? 0} label={t.scans[lang]} />
+            <MiniStat icon={<MousePointerClick className="h-3.5 w-3.5 text-success" />} value={stats?.totalSignups ?? 0} label={t.signups[lang]} />
+            <MiniStat icon={<CalendarCheck className="h-3.5 w-3.5 text-secondary" />} value={stats?.totalBookings ?? 0} label={t.appointments[lang]} />
           </div>
         </div>
       </div>

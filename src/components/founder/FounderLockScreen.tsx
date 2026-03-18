@@ -1,12 +1,38 @@
 /**
  * UNPRO — Founder Lock Screen
  * Glassmorphism overlay with 4-digit PIN input.
+ * Bilingual FR/EN support.
  */
 import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Lock, ShieldCheck, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/components/ui/LanguageToggle";
+
+const t = {
+  title: { fr: "Accès privé", en: "Private access" },
+  subtitle: {
+    fr: "Ce lien nécessite un code à 4 chiffres transmis par votre contact.",
+    en: "This link requires a 4-digit code provided by your contact.",
+  },
+  enter4: { fr: "Entrez les 4 chiffres", en: "Enter all 4 digits" },
+  tooMany: {
+    fr: "Trop de tentatives. Réessayez dans 15 minutes.",
+    en: "Too many attempts. Try again in 15 minutes.",
+  },
+  incorrect: { fr: "Code incorrect", en: "Incorrect code" },
+  connectionError: { fr: "Erreur de connexion", en: "Connection error" },
+  unlock: { fr: "Déverrouiller l'accès", en: "Unlock access" },
+  footer: {
+    fr: "Le code est personnel et ne doit pas être partagé publiquement.",
+    en: "The code is personal and should not be shared publicly.",
+  },
+  remaining: {
+    fr: (n: number) => `(${n} essai${n > 1 ? "s" : ""} restant${n > 1 ? "s" : ""})`,
+    en: (n: number) => `(${n} attempt${n > 1 ? "s" : ""} remaining)`,
+  },
+};
 
 interface FounderLockScreenProps {
   refCode: string;
@@ -14,6 +40,7 @@ interface FounderLockScreenProps {
 }
 
 export default function FounderLockScreen({ refCode, onUnlock }: FounderLockScreenProps) {
+  const { lang } = useLanguage();
   const [pin, setPin] = useState(["", "", "", ""]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -54,11 +81,11 @@ export default function FounderLockScreen({ refCode, onUnlock }: FounderLockScre
   const handleSubmit = async () => {
     const code = pin.join("");
     if (code.length !== 4) {
-      setError("Entrez les 4 chiffres");
+      setError(t.enter4[lang]);
       return;
     }
     if (locked) {
-      setError("Trop de tentatives. Réessayez dans 15 minutes.");
+      setError(t.tooMany[lang]);
       return;
     }
 
@@ -78,7 +105,7 @@ export default function FounderLockScreen({ refCode, onUnlock }: FounderLockScre
         if (errData.remaining_attempts !== undefined) {
           setRemaining(errData.remaining_attempts);
         }
-        setError(errData.error || "Code incorrect");
+        setError(errData.error || t.incorrect[lang]);
         setShake(true);
         setTimeout(() => setShake(false), 600);
         setPin(["", "", "", ""]);
@@ -87,7 +114,7 @@ export default function FounderLockScreen({ refCode, onUnlock }: FounderLockScre
         onUnlock(data.access_token);
       }
     } catch {
-      setError("Erreur de connexion");
+      setError(t.connectionError[lang]);
     } finally {
       setLoading(false);
     }
@@ -103,31 +130,24 @@ export default function FounderLockScreen({ refCode, onUnlock }: FounderLockScre
       transition={{ duration: 0.3 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
     >
-      {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-      {/* Glassmorphism card */}
       <motion.div
         animate={shake ? { x: [-12, 12, -8, 8, -4, 4, 0] } : {}}
         transition={{ duration: 0.5 }}
         className="relative z-10 w-full max-w-sm rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl p-8 space-y-6"
       >
-        {/* Icon */}
         <div className="flex justify-center">
           <div className="h-16 w-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
             <Lock className="h-7 w-7 text-primary" />
           </div>
         </div>
 
-        {/* Title */}
         <div className="text-center space-y-2">
-          <h2 className="text-xl font-bold text-white">Accès privé</h2>
-          <p className="text-sm text-white/60 leading-relaxed">
-            Ce lien nécessite un code à 4 chiffres transmis par votre contact.
-          </p>
+          <h2 className="text-xl font-bold text-white">{t.title[lang]}</h2>
+          <p className="text-sm text-white/60 leading-relaxed">{t.subtitle[lang]}</p>
         </div>
 
-        {/* PIN inputs */}
         <div className="flex justify-center gap-3" onPaste={handlePaste}>
           {pin.map((digit, i) => (
             <input
@@ -149,7 +169,6 @@ export default function FounderLockScreen({ refCode, onUnlock }: FounderLockScre
           ))}
         </div>
 
-        {/* Error */}
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
@@ -159,12 +178,11 @@ export default function FounderLockScreen({ refCode, onUnlock }: FounderLockScre
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
             {remaining !== null && remaining > 0 && (
-              <span className="text-white/40">({remaining} essai{remaining > 1 ? "s" : ""} restant{remaining > 1 ? "s" : ""})</span>
+              <span className="text-white/40">{t.remaining[lang](remaining)}</span>
             )}
           </motion.div>
         )}
 
-        {/* Submit button */}
         <Button
           onClick={handleSubmit}
           disabled={fullPin.length < 4 || loading || locked}
@@ -175,15 +193,12 @@ export default function FounderLockScreen({ refCode, onUnlock }: FounderLockScre
           ) : (
             <>
               <ShieldCheck className="h-4 w-4" />
-              Déverrouiller l'accès
+              {t.unlock[lang]}
             </>
           )}
         </Button>
 
-        {/* Footer */}
-        <p className="text-center text-[11px] text-white/30">
-          Le code est personnel et ne doit pas être partagé publiquement.
-        </p>
+        <p className="text-center text-[11px] text-white/30">{t.footer[lang]}</p>
       </motion.div>
     </motion.div>
   );
