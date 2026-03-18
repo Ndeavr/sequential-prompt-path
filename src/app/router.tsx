@@ -88,6 +88,7 @@ import VerificationSeoPage from "@/pages/seo/VerificationSeoPage";
 import AlignmentQuestionnairePage from "@/pages/AlignmentQuestionnairePage";
 import FounderPage from "@/pages/FounderPage";
 import AdminFounderInvites from "@/pages/admin/AdminFounderInvites";
+import ContractorAvailabilityPage from "@/pages/ContractorAvailabilityPage";
 
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
@@ -228,6 +229,7 @@ export const AppRouter = () => (
       <Route path="/proprietaires" element={<HomeownersPage />} />
       <Route path="/professionals" element={<ProfessionalsPage />} />
       <Route path="/entrepreneurs" element={<ProfessionalsPage />} />
+      <Route path="/entrepreneurs/disponibilite-categorie-specialite-ville" element={<ContractorAvailabilityPage />} />
       <Route path="/partners" element={<PartnersPage />} />
       <Route path="/describe-project" element={<DescribeProjectPage />} />
       <Route path="/compare-quotes" element={<CompareQuotesPage />} />
