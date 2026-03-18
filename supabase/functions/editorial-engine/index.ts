@@ -519,6 +519,51 @@ async function runFullPipeline(topicId: string, scheduledFor?: string) {
   return { articleId, steps };
 }
 
+// ===== ACTION: run_bulk_pipeline =====
+async function runBulkPipeline(source: string, limit: number = 10) {
+  const sb = supabaseAdmin();
+  const results: any[] = [];
+
+  const { data: topics } = await sb.from("topic_backlog")
+    .select("*")
+    .eq("status", "pending")
+    .eq("source", source)
+    .order("priority", { ascending: false })
+    .order("created_at")
+    .limit(limit);
+
+  if (!topics?.length) return { generated: 0, message: "No topics found for source: " + source };
+
+  // Stagger publish times across today and tomorrow
+  const publishSlots = [
+    "06:00", "07:30", "09:00", "10:30", "12:00",
+    "13:30", "15:00", "16:30", "18:00", "19:30",
+  ];
+
+  const today = new Date();
+  const dateStr = today.toISOString().split("T")[0];
+
+  for (let i = 0; i < topics.length; i++) {
+    const slotIdx = i % publishSlots.length;
+    const dayOffset = Math.floor(i / publishSlots.length);
+    const schedDate = new Date(today);
+    schedDate.setDate(schedDate.getDate() + dayOffset);
+    const scheduledFor = `${schedDate.toISOString().split("T")[0]}T${publishSlots[slotIdx]}:00.000Z`;
+
+    try {
+      const result = await runFullPipeline(topics[i].id, scheduledFor);
+      results.push({ topicId: topics[i].id, title: topics[i].title_suggestion, ...result, scheduledFor });
+    } catch (e) {
+      results.push({ topicId: topics[i].id, title: topics[i].title_suggestion, error: e instanceof Error ? e.message : "Unknown" });
+    }
+  }
+
+  // Publish any that are ready now
+  const publishResult = await publishScheduledArticles();
+
+  return { generated: results.filter(r => !r.error).length, failed: results.filter(r => r.error).length, results, published: publishResult };
+}
+
 // ===== ACTION: run_daily_batch =====
 async function runDailyBatch() {
   const sb = supabaseAdmin();
