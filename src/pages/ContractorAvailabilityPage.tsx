@@ -84,16 +84,16 @@ const COMPARISON = [
 
 /* ─── Animations ─── */
 const fadeUp = {
-  initial: { opacity: 0, y: 24 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: "-60px" },
-  transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+  initial: { opacity: 0, y: 24 } as const,
+  whileInView: { opacity: 1, y: 0 } as const,
+  viewport: { once: true, margin: "-60px" as const },
+  transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
 };
 
 const stagger = {
-  initial: { opacity: 0, y: 16 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: "-40px" },
+  initial: { opacity: 0, y: 16 } as const,
+  whileInView: { opacity: 1, y: 0 } as const,
+  viewport: { once: true, margin: "-40px" as const },
 };
 
 /* ─── FAQ Schema ─── */
