@@ -141,9 +141,7 @@ export default function FounderInviteDashboard() {
 
           {/* QR Code - always visible, contained in viewport */}
           <div className="flex justify-center">
-            <div className="max-w-[280px] w-full">
-              <QRCodeCard url={getInviteUrl(selectedInvite.referral_code)} size={200} label="Scanner pour accéder à l'offre fondateur" />
-            </div>
+            <QRCodeCard url={getInviteUrl(selectedInvite.referral_code)} size={180} label="Scanner pour accéder à l'offre fondateur" />
           </div>
 
           {/* Link */}
