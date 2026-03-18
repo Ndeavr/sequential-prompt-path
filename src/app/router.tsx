@@ -70,6 +70,8 @@ import ProjectMatchesPage from "@/pages/dashboard/ProjectMatchesPage";
 import QrScanPage from "@/pages/QrScanPage";
 import DeepLinkPage from "@/pages/DeepLinkPage";
 import ReferralLandingPage from "@/pages/ReferralLandingPage";
+import UnlockPage from "@/pages/UnlockPage";
+import MyQRPerformancePage from "@/pages/MyQRPerformancePage";
 import ContributionApprovalPage from "@/pages/dashboard/ContributionApprovalPage";
 import ListingImportPage from "@/pages/ListingImportPage";
 import PublicScoreCalculatorPage from "@/pages/PublicScoreCalculatorPage";
@@ -249,6 +251,7 @@ export const AppRouter = () => (
       <Route path="/qr/:token" element={<QrScanPage />} />
       <Route path="/r/:refCode" element={<ReferralLandingPage />} />
       <Route path="/i/:code" element={<DeepLinkPage />} />
+      <Route path="/unlock" element={<UnlockPage />} />
 
       {/* Public Property Page */}
       <Route path="/maison/:slug" element={<PublicPropertyPage />} />
@@ -369,6 +372,7 @@ export const AppRouter = () => (
       <Route path="/dashboard/syndicates/:id/votes/new" element={<ProtectedRoute requiredRole="homeowner"><SyndicateVoteCreate /></ProtectedRoute>} />
       <Route path="/dashboard/syndicates/:id/growth" element={<ProtectedRoute requiredRole="homeowner"><SyndicateGrowthDashboard /></ProtectedRoute>} />
       <Route path="/dashboard/placements" element={<ProtectedRoute requiredRole="homeowner"><MyPlacementsPage /></ProtectedRoute>} />
+      <Route path="/dashboard/qr-performance" element={<ProtectedRoute requiredRole="homeowner"><MyQRPerformancePage /></ProtectedRoute>} />
 
       {/* Contractor Pro */}
       <Route path="/pro" element={<ProtectedRoute requiredRole="contractor"><ProDashboard /></ProtectedRoute>} />
@@ -392,6 +396,7 @@ export const AppRouter = () => (
       <Route path="/pro/teams" element={<ProtectedRoute requiredRole="contractor"><ProTeams /></ProtectedRoute>} />
       <Route path="/pro/emergency-settings" element={<ProtectedRoute requiredRole="contractor"><ProEmergencySettings /></ProtectedRoute>} />
       <Route path="/pro/domain-intelligence" element={<ProtectedRoute requiredRole="contractor"><ProDomainIntelligence /></ProtectedRoute>} />
+      <Route path="/pro/qr-performance" element={<ProtectedRoute requiredRole="contractor"><MyQRPerformancePage /></ProtectedRoute>} />
 
       {/* Admin */}
       <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />

@@ -16,7 +16,7 @@ import HeaderSearch from "./HeaderSearch";
 import MegaMenuPanel from "./MegaMenu";
 import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
 import SmartCTA from "@/components/cta/SmartCTA";
-import QRShareModal from "@/components/sharing/QRShareModal";
+import QRShareSheet from "@/components/sharing/QRShareSheet";
 import unproLogo from "@/assets/unpro-logo.png";
 import type { UserRole } from "@/types/navigation";
 
@@ -157,18 +157,16 @@ const SmartHeader = () => {
                 <LanguageToggle lang={lang} onChange={setLang} />
               </div>
 
-              {/* Share QR button — logged-in users only */}
-              {ctx && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
-                  onClick={() => setShareOpen(true)}
-                  aria-label="Partager"
-                >
-                  <QrCode className="h-4 w-4" />
-                </Button>
-              )}
+              {/* Share QR button — all users */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                onClick={() => setShareOpen(true)}
+                aria-label="Partager"
+              >
+                <QrCode className="h-4 w-4" />
+              </Button>
 
               {/* Notifications */}
               {ctx && ctx.system.notificationsCount > 0 && (
@@ -236,8 +234,8 @@ const SmartHeader = () => {
         )}
       </AnimatePresence>
 
-      {/* QR Share Modal */}
-      <QRShareModal open={shareOpen} onOpenChange={setShareOpen} />
+      {/* QR Share Sheet */}
+      <QRShareSheet open={shareOpen} onOpenChange={setShareOpen} />
     </>
   );
 };
