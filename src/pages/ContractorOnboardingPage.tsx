@@ -1,8 +1,8 @@
 /**
  * UNPRO — Contractor Onboarding (5-step conversion-optimized wizard)
  */
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,14 +17,33 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import BusinessNameSearch, { type BusinessSearchResult } from "@/components/contractor/BusinessNameSearch";
+import TagInput from "@/components/ui/tag-input";
 import { toast } from "sonner";
 import ScoreRing from "@/components/ui/score-ring";
+import { peekAuthIntent } from "@/services/auth/authIntentService";
 
-const CATEGORIES = [
+const ALL_CATEGORIES = [
   "Toiture", "Isolation", "Électricité", "Plomberie",
   "Drainage", "Fondation", "CVC / Chauffage", "Menuiserie",
   "Peinture", "Maçonnerie", "Rénovation générale",
+  "Fenêtres & Portes", "Revêtement extérieur", "Aménagement paysager",
+  "Excavation", "Béton", "Décontamination", "Ébénisterie",
+  "Plancher", "Démolition",
 ];
+
+/** Map intents/referral contexts to suggested categories */
+const INTENT_CATEGORY_MAP: Record<string, string[]> = {
+  kitchen: ["Ébénisterie", "Plomberie", "Électricité"],
+  bathroom: ["Plomberie", "Rénovation générale", "Électricité"],
+  roof: ["Toiture", "Isolation"],
+  emergency: ["Plomberie", "Électricité", "CVC / Chauffage"],
+  insulation: ["Isolation", "Fenêtres & Portes", "CVC / Chauffage"],
+  renovation: ["Rénovation générale", "Peinture", "Plancher"],
+  construction: ["Fondation", "Béton", "Excavation"],
+  plumbing: ["Plomberie", "Drainage"],
+  electrical: ["Électricité"],
+  register_business: ["Rénovation générale"],
+};
 
 const SERVICE_TYPES = ["Installation", "Réparation", "Inspection", "Urgence"];
 const CERTIFICATIONS = ["RBQ", "CCA", "ASP Construction", "Autre"];
@@ -37,15 +56,18 @@ const STEPS = [
   { id: 5, title: "Projets", icon: Camera },
 ];
 
+const MAX_CATEGORIES = 3;
+
 export default function ContractorOnboardingPage() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState(1);
 
   const [form, setForm] = useState({
     businessName: "",
     city: "",
-    category: "",
+    categories: [] as string[],
     // territory
     territoryCity: "",
     radius: "20",
@@ -60,11 +82,34 @@ export default function ContractorOnboardingPage() {
 
   const update = (field: string, value: any) => setForm((f) => ({ ...f, [field]: value }));
 
+  // Derive recommended categories from intent or URL params
+  const recommendedCategories = useMemo(() => {
+    // Check URL param
+    const intentParam = searchParams.get("intent") || searchParams.get("i");
+    if (intentParam && INTENT_CATEGORY_MAP[intentParam]) {
+      return INTENT_CATEGORY_MAP[intentParam];
+    }
+    // Check auth intent
+    const authIntent = peekAuthIntent();
+    const intentSlug = authIntent?.metadata?.intent as string | undefined;
+    if (intentSlug && INTENT_CATEGORY_MAP[intentSlug]) {
+      return INTENT_CATEGORY_MAP[intentSlug];
+    }
+    return [];
+  }, [searchParams]);
+
   const handleBusinessSelected = (result: BusinessSearchResult) => {
     update("businessName", result.business_name);
     if (result.city) update("city", result.city);
-    if (result.primary_category) update("category", result.primary_category);
-    // Auto-fill territory city too
+    // Auto-add detected category from Google
+    if (result.primary_category) {
+      const match = ALL_CATEGORIES.find(
+        (c) => c.toLowerCase() === result.primary_category!.toLowerCase(),
+      );
+      if (match && !form.categories.includes(match)) {
+        update("categories", [...form.categories, match].slice(0, MAX_CATEGORIES));
+      }
+    }
     if (result.city) update("territoryCity", result.city);
   };
 
@@ -76,7 +121,7 @@ export default function ContractorOnboardingPage() {
   };
 
   const canAdvance = () => {
-    if (step === 1) return form.businessName && form.city && form.category;
+    if (step === 1) return form.businessName && form.city && form.categories.length > 0;
     if (step === 2) return form.territoryCity;
     return true;
   };
@@ -91,7 +136,6 @@ export default function ContractorOnboardingPage() {
     navigate("/pro");
   };
 
-  // Simulated AIPP score for final step
   const currentScore = 61;
   const potentialScore = 82;
 
@@ -148,27 +192,24 @@ export default function ContractorOnboardingPage() {
                     </p>
                   )}
                 </div>
+
                 <div className="space-y-2">
-                  <Label className="text-xs font-semibold">Catégorie principale *</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {CATEGORIES.map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => update("category", c)}
-                        className={`rounded-xl px-3 py-3 text-xs font-medium text-left transition-all ${
-                          form.category === c
-                            ? "bg-secondary text-secondary-foreground shadow-[0_0_16px_-4px_hsl(252,100%,65%,0.3)]"
-                            : "bg-muted/40 text-muted-foreground hover:bg-muted/60"
-                        }`}
-                      >
-                        {c}
-                      </button>
-                    ))}
-                  </div>
-                  {form.category && (
+                  <Label className="text-xs font-semibold">Catégories *</Label>
+                  <TagInput
+                    value={form.categories}
+                    suggestions={ALL_CATEGORIES}
+                    onChange={(tags) => update("categories", tags)}
+                    max={MAX_CATEGORIES}
+                    placeholder="Tapez une catégorie…"
+                    limitLabel="Inclus dans votre forfait"
+                    recommended={recommendedCategories}
+                  />
+                  {form.categories.length > 0 && (
                     <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3 text-emerald-500" /> Catégorie suggérée par Google Maps
+                      <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                      {form.categories.length === 1
+                        ? "1 catégorie sélectionnée"
+                        : `${form.categories.length} catégories sélectionnées`}
                     </p>
                   )}
                 </div>
@@ -204,7 +245,9 @@ export default function ContractorOnboardingPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-success" />
-                        <span className="text-xs font-medium text-foreground">{form.category || "Catégorie"} — {form.territoryCity}</span>
+                        <span className="text-xs font-medium text-foreground">
+                          {form.categories.length > 0 ? form.categories.join(", ") : "Catégorie"} — {form.territoryCity}
+                        </span>
                       </div>
                       <Badge className="bg-success/15 text-success border-success/20 text-[10px]">3 places restantes</Badge>
                     </div>
