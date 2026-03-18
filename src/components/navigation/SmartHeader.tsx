@@ -285,12 +285,15 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
         className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-card overflow-y-auto"
       >
         <div className="p-5">
-          {/* Close */}
+          {/* Close + Language */}
           <div className="flex items-center justify-between mb-6">
             <span className="font-display text-lg font-bold text-foreground">UNPRO</span>
-            <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9 rounded-lg">
-              <X className="h-5 w-5" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <LanguageToggle lang={lang} onChange={setLang} />
+              <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9 rounded-lg">
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
 
           {/* Search */}
