@@ -66,13 +66,17 @@ const useVoiceInput = (onResult: (text: string) => void) => {
 };
 
 const AlexChat = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, session } = useAuth();
   const { pathname } = useLocation();
   const { messages, isStreaming, sendMessage, reset } = useAlex();
   const [input, setInput] = useState("");
   const [recommendations, setRecommendations] = useState<AlexRecommendation[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const userName = session?.user?.user_metadata?.full_name?.split(" ")[0]
+    || session?.user?.user_metadata?.first_name
+    || null;
 
   const handleVoiceResult = useCallback((text: string) => {
     setInput(text);
