@@ -5047,6 +5047,92 @@ export type Database = {
           },
         ]
       }
+      contractor_live_scores: {
+        Row: {
+          acceptance_rate: number | null
+          activity_frequency: number | null
+          booking_rate: number | null
+          calculated_at: string
+          client_rating: number | null
+          composite_score: number | null
+          contractor_id: string
+          created_at: string
+          id: string
+          last_warning_at: string | null
+          profile_quality_score: number | null
+          response_rate: number | null
+          risk_level: string | null
+          status: string
+          updated_at: string
+          visibility_reduced: boolean | null
+        }
+        Insert: {
+          acceptance_rate?: number | null
+          activity_frequency?: number | null
+          booking_rate?: number | null
+          calculated_at?: string
+          client_rating?: number | null
+          composite_score?: number | null
+          contractor_id: string
+          created_at?: string
+          id?: string
+          last_warning_at?: string | null
+          profile_quality_score?: number | null
+          response_rate?: number | null
+          risk_level?: string | null
+          status?: string
+          updated_at?: string
+          visibility_reduced?: boolean | null
+        }
+        Update: {
+          acceptance_rate?: number | null
+          activity_frequency?: number | null
+          booking_rate?: number | null
+          calculated_at?: string
+          client_rating?: number | null
+          composite_score?: number | null
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          last_warning_at?: string | null
+          profile_quality_score?: number | null
+          response_rate?: number | null
+          risk_level?: string | null
+          status?: string
+          updated_at?: string
+          visibility_reduced?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_live_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_live_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_live_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_live_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_match_metrics: {
         Row: {
           contractor_id: string
@@ -18546,22 +18632,58 @@ export type Database = {
       }
       territory_waitlist: {
         Row: {
+          activated_at: string | null
+          cluster: string | null
           contractor_id: string
           created_at: string
           id: string
+          niche_demand_score: number | null
+          notes: string | null
+          profile_completeness: number | null
+          replaced_contractor_id: string | null
+          specialty: string | null
+          specialty_scarcity_score: number | null
+          status: string
           territory_id: string
+          trust_signals_score: number | null
+          updated_at: string
+          waitlist_score: number | null
         }
         Insert: {
+          activated_at?: string | null
+          cluster?: string | null
           contractor_id: string
           created_at?: string
           id?: string
+          niche_demand_score?: number | null
+          notes?: string | null
+          profile_completeness?: number | null
+          replaced_contractor_id?: string | null
+          specialty?: string | null
+          specialty_scarcity_score?: number | null
+          status?: string
           territory_id: string
+          trust_signals_score?: number | null
+          updated_at?: string
+          waitlist_score?: number | null
         }
         Update: {
+          activated_at?: string | null
+          cluster?: string | null
           contractor_id?: string
           created_at?: string
           id?: string
+          niche_demand_score?: number | null
+          notes?: string | null
+          profile_completeness?: number | null
+          replaced_contractor_id?: string | null
+          specialty?: string | null
+          specialty_scarcity_score?: number | null
+          status?: string
           territory_id?: string
+          trust_signals_score?: number | null
+          updated_at?: string
+          waitlist_score?: number | null
         }
         Relationships: [
           {
@@ -18588,6 +18710,34 @@ export type Database = {
           {
             foreignKeyName: "territory_waitlist_contractor_id_fkey"
             columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "territory_waitlist_replaced_contractor_id_fkey"
+            columns: ["replaced_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "territory_waitlist_replaced_contractor_id_fkey"
+            columns: ["replaced_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "territory_waitlist_replaced_contractor_id_fkey"
+            columns: ["replaced_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "territory_waitlist_replaced_contractor_id_fkey"
+            columns: ["replaced_contractor_id"]
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
@@ -19111,6 +19261,123 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist_replacements: {
+        Row: {
+          activated_contractor_id: string | null
+          activated_from_waitlist_id: string | null
+          activated_score: number | null
+          created_at: string
+          executed_by: string | null
+          id: string
+          removed_contractor_id: string
+          removed_reason: string
+          removed_score: number | null
+          territory_id: string
+        }
+        Insert: {
+          activated_contractor_id?: string | null
+          activated_from_waitlist_id?: string | null
+          activated_score?: number | null
+          created_at?: string
+          executed_by?: string | null
+          id?: string
+          removed_contractor_id: string
+          removed_reason?: string
+          removed_score?: number | null
+          territory_id: string
+        }
+        Update: {
+          activated_contractor_id?: string | null
+          activated_from_waitlist_id?: string | null
+          activated_score?: number | null
+          created_at?: string
+          executed_by?: string | null
+          id?: string
+          removed_contractor_id?: string
+          removed_reason?: string
+          removed_score?: number | null
+          territory_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_replacements_activated_contractor_id_fkey"
+            columns: ["activated_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_replacements_activated_contractor_id_fkey"
+            columns: ["activated_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_replacements_activated_contractor_id_fkey"
+            columns: ["activated_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_replacements_activated_contractor_id_fkey"
+            columns: ["activated_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "waitlist_replacements_activated_from_waitlist_id_fkey"
+            columns: ["activated_from_waitlist_id"]
+            isOneToOne: false
+            referencedRelation: "territory_waitlist"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_replacements_removed_contractor_id_fkey"
+            columns: ["removed_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_replacements_removed_contractor_id_fkey"
+            columns: ["removed_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_replacements_removed_contractor_id_fkey"
+            columns: ["removed_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_replacements_removed_contractor_id_fkey"
+            columns: ["removed_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "waitlist_replacements_territory_id_fkey"
+            columns: ["territory_id"]
+            isOneToOne: false
+            referencedRelation: "territories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_replacements_territory_id_fkey"
+            columns: ["territory_id"]
+            isOneToOne: false
+            referencedRelation: "v_territories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       ccai_answer_matrix: {
@@ -19558,6 +19825,10 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_contractor_live_score: {
+        Args: { p_contractor_id: string }
+        Returns: Json
+      }
       calculate_unpro_checkout_totals: {
         Args: {
           _addons_total?: number
@@ -19567,6 +19838,10 @@ export type Database = {
           _setup_fee?: number
           _tax_rate?: number
         }
+        Returns: Json
+      }
+      calculate_waitlist_score: {
+        Args: { p_waitlist_id: string }
         Returns: Json
       }
       generate_territories: {
@@ -19679,6 +19954,10 @@ export type Database = {
       owns_verification_run: {
         Args: { _run_id: string; _user_id: string }
         Returns: boolean
+      }
+      process_waitlist_replacement: {
+        Args: { p_territory_id: string; p_threshold?: number }
+        Returns: Json
       }
       resolve_qr_token: { Args: { _token: string }; Returns: Json }
       search_rag_chunks_text: {
