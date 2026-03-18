@@ -18,6 +18,7 @@ import DashUpsell from "@/components/pro-dashboard/DashUpsell";
 import DashNotifications from "@/components/pro-dashboard/DashNotifications";
 import DashPerformance from "@/components/pro-dashboard/DashPerformance";
 import DashObjective from "@/components/pro-dashboard/DashObjective";
+import DashWaitlistStatus from "@/components/pro-dashboard/DashWaitlistStatus";
 import { motion } from "framer-motion";
 
 const ProDashboard = () => {
@@ -54,7 +55,7 @@ const ProDashboard = () => {
         <DashChecklist profile={profile} reviewCount={reviewCount} />
         <DashPipeline appointments={appts} />
         <DashAippScore aipp={aipp} completeness={completeness} profile={profile} />
-        <DashAutoAccept plan={currentPlan} />
+        <DashWaitlistStatus />
         <DashAiRecommendations completeness={completeness} plan={currentPlan} aipp={aipp} />
         <DashUpsell plan={currentPlan} />
         <DashNotifications />
