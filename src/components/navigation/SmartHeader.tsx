@@ -157,18 +157,16 @@ const SmartHeader = () => {
                 <LanguageToggle lang={lang} onChange={setLang} />
               </div>
 
-              {/* Share QR button — logged-in users only */}
-              {ctx && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
-                  onClick={() => setShareOpen(true)}
-                  aria-label="Partager"
-                >
-                  <QrCode className="h-4 w-4" />
-                </Button>
-              )}
+              {/* Share QR button — all users */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                onClick={() => setShareOpen(true)}
+                aria-label="Partager"
+              >
+                <QrCode className="h-4 w-4" />
+              </Button>
 
               {/* Notifications */}
               {ctx && ctx.system.notificationsCount > 0 && (
