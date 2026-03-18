@@ -161,8 +161,8 @@ export function useSaveCalculatorSession() {
       trade_id?: string;
       specialty_id?: string;
       city_id?: string;
-      inputs: Record<string, unknown>;
-      outputs: Record<string, unknown>;
+      inputs: Record<string, string | number | boolean | null>;
+      outputs: Record<string, string | number | boolean | null>;
       recommended_plan?: string;
     }) => {
       const { data: userData } = await supabase.auth.getUser();
