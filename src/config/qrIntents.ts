@@ -24,6 +24,26 @@ export interface QrIntent {
 
 export const QR_INTENTS: QrIntent[] = [
   {
+    slug: "verify-contractor",
+    labelFr: "Vérifier un entrepreneur",
+    labelEn: "Verify a Contractor",
+    subtitleFr: "Vérifie si un entrepreneur est fiable avant de signer.",
+    subtitleEn: "Check if a contractor is trustworthy before signing.",
+    ctaFr: "Vérifier",
+    ctaEn: "Verify",
+    icon: "ShieldCheck",
+    roleTarget: "all",
+    destinationPath: "/verifier-entrepreneur",
+    gradient: "from-emerald-500/15 via-green-500/5 to-transparent",
+    badge: "Confiance",
+    copyVariants: [
+      "Vérifie si un entrepreneur est fiable avant de signer.",
+      "RBQ, NEQ, avis… tout est vérifié en un clic.",
+      "Avant de payer, vérifie.",
+    ],
+    stylePreset: "default",
+  },
+  {
     slug: "kitchen-dream",
     labelFr: "Cuisine de rêve",
     labelEn: "Kitchen Dream",
