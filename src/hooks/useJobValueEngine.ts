@@ -166,15 +166,15 @@ export function useSaveCalculatorSession() {
       recommended_plan?: string;
     }) => {
       const { data: userData } = await supabase.auth.getUser();
-      const { error } = await supabase.from("jve_calculator_sessions").insert({
-        user_id: userData?.user?.id ?? null,
-        trade_id: session.trade_id ?? null,
-        specialty_id: session.specialty_id ?? null,
-        city_id: session.city_id ?? null,
+      const { error } = await supabase.from("jve_calculator_sessions").insert([{
+        user_id: userData?.user?.id ?? undefined,
+        trade_id: session.trade_id ?? undefined,
+        specialty_id: session.specialty_id ?? undefined,
+        city_id: session.city_id ?? undefined,
         inputs: session.inputs,
         outputs: session.outputs,
-        recommended_plan: session.recommended_plan ?? null,
-      });
+        recommended_plan: session.recommended_plan ?? undefined,
+      }]);
       if (error) throw error;
     },
     onSuccess: () => {
