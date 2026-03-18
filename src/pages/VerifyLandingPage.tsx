@@ -12,11 +12,12 @@ import SeoFaqSection from "@/seo/components/SeoFaqSection";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import QRCodeCard from "@/components/sharing/QRCodeCard";
 import {
   Shield, Search, ArrowRight, Upload, FileText, Building2,
   Fingerprint, Eye, Phone, Globe, CheckCircle2, AlertCircle,
   MessageSquare, ShieldCheck, ShieldAlert, UserCheck, FileSearch,
-  Scale, HelpCircle, ChevronRight, Zap, Lock, ExternalLink,
+  Scale, HelpCircle, ChevronRight, Zap, Lock, ExternalLink, QrCode,
 } from "lucide-react";
 
 /* ─── Animation ─── */
