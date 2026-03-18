@@ -174,10 +174,10 @@ export default function HeroSection() {
                 />
               </AnimatePresence>
             </div>
-            {/* Robot — ON TOP of everything, bottom-right of image area */}
+            {/* Robot — behind card, bottom-right of image area */}
             <motion.img src={unproRobot} alt="Alex UNPRO"
-              className="absolute md:hidden z-50 w-[100px] drop-shadow-[0_6px_20px_rgba(63,123,255,0.25)]"
-              style={{ top: "calc(75vw - 100px)", right: "12px" }}
+              className="absolute md:hidden z-10 w-[80px] drop-shadow-[0_6px_20px_rgba(63,123,255,0.25)]"
+              style={{ top: "calc(75vw - 90px)", right: "20px" }}
               animate={{ y: [0, -8, 0], rotate: [0, 3, -2, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             />
