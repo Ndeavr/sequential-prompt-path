@@ -457,6 +457,7 @@ export const AppRouter = () => (
       <Route path="/admin/domain-intelligence" element={<ProtectedRoute requiredRole="admin"><AdminDomainIntelligence /></ProtectedRoute>} />
       <Route path="/admin/seo-articles" element={<ProtectedRoute requiredRole="admin"><AdminSeoArticles /></ProtectedRoute>} />
       <Route path="/admin/bulk-articles" element={<ProtectedRoute requiredRole="admin"><AdminBulkArticlesPage /></ProtectedRoute>} />
+      <Route path="/admin/founder-invites" element={<ProtectedRoute requiredRole="admin"><AdminFounderInvites /></ProtectedRoute>} />
       <Route path="/articles/:slug" element={<SeoArticlePage />} />
       <Route path="/emergency" element={<EmergencyPage />} />
       <Route path="/emergency/track/:id" element={<EmergencyTrackingPage />} />

@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.domain-intelligence]
 verify_jwt = false
+
+[functions.founder-pin-verify]
+verify_jwt = false
