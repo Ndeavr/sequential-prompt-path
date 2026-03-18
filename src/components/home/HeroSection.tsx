@@ -188,7 +188,7 @@ export default function HeroSection() {
             {/* Left column — text overlays on top of image */}
             <div className="relative z-20 min-w-0">
               <h1
-                className="relative z-10 text-[32px] font-extrabold leading-[1.08] tracking-[-0.03em] sm:text-[40px] md:text-[64px] max-w-[65%] md:max-w-none"
+                className="relative z-10 text-[32px] font-extrabold leading-[1.08] tracking-[-0.03em] sm:text-[40px] md:text-[64px] max-w-[58%] md:max-w-none"
                 style={{
                   color: "#0B1533",
                   textShadow: "0 1px 12px rgba(247,251,255,0.95), 0 2px 24px rgba(247,251,255,0.8), 0 0 40px rgba(234,244,255,0.9)",
