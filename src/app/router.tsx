@@ -251,6 +251,7 @@ export const AppRouter = () => (
       <Route path="/qr/:token" element={<QrScanPage />} />
       <Route path="/r/:refCode" element={<ReferralLandingPage />} />
       <Route path="/i/:code" element={<DeepLinkPage />} />
+      <Route path="/unlock" element={<UnlockPage />} />
 
       {/* Public Property Page */}
       <Route path="/maison/:slug" element={<PublicPropertyPage />} />
