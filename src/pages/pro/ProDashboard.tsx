@@ -33,7 +33,7 @@ const ProDashboard = () => {
   const reviewCount = reviews?.length ?? 0;
   const avgRating = profile?.rating ?? 0;
   const appts = appointments ?? [];
-  const newAppts = appts.filter(a => a.status === "pending").length;
+  const newAppts = appts.filter(a => a.status === "requested" || a.status === "under_review").length;
   const acceptedAppts = appts.filter(a => a.status === "accepted" || a.status === "scheduled").length;
   const completedAppts = appts.filter(a => a.status === "completed").length;
   const currentPlan = "recrue"; // TODO: from subscription
