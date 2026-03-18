@@ -86,6 +86,8 @@ import TrendingPage from "@/pages/TrendingPage";
 import PropertyMapPage from "@/pages/PropertyMapPage";
 import VerificationSeoPage from "@/pages/seo/VerificationSeoPage";
 import AlignmentQuestionnairePage from "@/pages/AlignmentQuestionnairePage";
+import FounderPage from "@/pages/FounderPage";
+import AdminFounderInvites from "@/pages/admin/AdminFounderInvites";
 
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
