@@ -88,6 +88,7 @@ import VerificationSeoPage from "@/pages/seo/VerificationSeoPage";
 import AlignmentQuestionnairePage from "@/pages/AlignmentQuestionnairePage";
 import FounderPage from "@/pages/FounderPage";
 import AdminFounderInvites from "@/pages/admin/AdminFounderInvites";
+import ContractorAvailabilityPage from "@/pages/ContractorAvailabilityPage";
 
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
