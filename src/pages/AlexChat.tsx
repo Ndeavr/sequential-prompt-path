@@ -19,11 +19,20 @@ const ICON_MAP: Record<string, typeof Search> = {
   home: Home, chart: BarChart3, star: Star,
 };
 
-const QUICK_ACTIONS = [
+const GUEST_ACTIONS = [
   { emoji: "🏠", label: "Décrire un projet", message: "J'ai un problème avec ma maison et j'aimerais de l'aide." },
   { emoji: "🔍", label: "Trouver un entrepreneur", message: "Je cherche un entrepreneur pour des travaux." },
   { emoji: "📄", label: "Analyser une soumission", message: "J'ai reçu une soumission et j'aimerais la faire analyser." },
   { emoji: "🔧", label: "Entretien maison", message: "Quels entretiens devrais-je faire pour ma maison?" },
+];
+
+const AUTH_ACTIONS = [
+  { emoji: "🏠", label: "Mon Home Score", message: "Quel est le score de ma maison et comment l'améliorer?" },
+  { emoji: "📋", label: "Mon passeport maison", message: "Aide-moi à compléter mon passeport maison." },
+  { emoji: "🔍", label: "Trouver un pro", message: "Je cherche un entrepreneur de confiance pour mes travaux." },
+  { emoji: "📄", label: "Analyser une soumission", message: "J'ai reçu une soumission, peux-tu l'analyser?" },
+  { emoji: "🔧", label: "Entretien préventif", message: "Quels entretiens devrais-je planifier pour ma maison?" },
+  { emoji: "🚨", label: "Urgence maison", message: "J'ai une urgence à la maison, aide-moi!" },
 ];
 
 /* ─── Voice hook using Web Speech API ─── */
@@ -66,13 +75,17 @@ const useVoiceInput = (onResult: (text: string) => void) => {
 };
 
 const AlexChat = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, session } = useAuth();
   const { pathname } = useLocation();
   const { messages, isStreaming, sendMessage, reset } = useAlex();
   const [input, setInput] = useState("");
   const [recommendations, setRecommendations] = useState<AlexRecommendation[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const userName = session?.user?.user_metadata?.full_name?.split(" ")[0]
+    || session?.user?.user_metadata?.first_name
+    || null;
 
   const handleVoiceResult = useCallback((text: string) => {
     setInput(text);
@@ -133,20 +146,24 @@ const AlexChat = () => {
               className="flex flex-col items-center text-center pt-8 space-y-6"
             >
               {/* Orb */}
-              <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary via-secondary to-accent flex items-center justify-center shadow-glow alex-orb">
-                <Sparkles className="text-primary-foreground h-8 w-8" />
+              <div className="h-24 w-24 rounded-full bg-gradient-to-br from-primary via-secondary to-accent flex items-center justify-center shadow-glow alex-orb">
+                <Sparkles className="text-primary-foreground h-10 w-10" />
               </div>
 
               <div className="space-y-2">
-                <h2 className="text-xl font-bold text-foreground">Bonjour, je suis Alex</h2>
+                <h2 className="text-xl font-bold text-foreground">
+                  {userName ? `Bonjour ${userName} 👋` : "Bonjour, je suis Alex"}
+                </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
-                  Votre concierge IA UNPRO. Posez vos questions sur vos travaux, votre maison ou trouvez un entrepreneur.
+                  {userName
+                    ? "Comment puis-je vous aider aujourd'hui?"
+                    : "Votre concierge IA UNPRO. Posez vos questions sur vos travaux, votre maison ou trouvez un entrepreneur."}
                 </p>
               </div>
 
-              {/* Quick actions */}
-              <div className="grid grid-cols-2 gap-2 w-full max-w-sm">
-                {QUICK_ACTIONS.map((qa) => (
+              {/* Quick action pills */}
+              <div className={`grid gap-2 w-full max-w-sm ${isAuthenticated ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"}`}>
+                {(isAuthenticated ? AUTH_ACTIONS : GUEST_ACTIONS).map((qa) => (
                   <button
                     key={qa.label}
                     onClick={() => handleSend(qa.message)}
