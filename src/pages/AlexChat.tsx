@@ -146,20 +146,24 @@ const AlexChat = () => {
               className="flex flex-col items-center text-center pt-8 space-y-6"
             >
               {/* Orb */}
-              <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary via-secondary to-accent flex items-center justify-center shadow-glow alex-orb">
-                <Sparkles className="text-primary-foreground h-8 w-8" />
+              <div className="h-24 w-24 rounded-full bg-gradient-to-br from-primary via-secondary to-accent flex items-center justify-center shadow-glow alex-orb">
+                <Sparkles className="text-primary-foreground h-10 w-10" />
               </div>
 
               <div className="space-y-2">
-                <h2 className="text-xl font-bold text-foreground">Bonjour, je suis Alex</h2>
+                <h2 className="text-xl font-bold text-foreground">
+                  {userName ? `Bonjour ${userName} 👋` : "Bonjour, je suis Alex"}
+                </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
-                  Votre concierge IA UNPRO. Posez vos questions sur vos travaux, votre maison ou trouvez un entrepreneur.
+                  {userName
+                    ? "Comment puis-je vous aider aujourd'hui?"
+                    : "Votre concierge IA UNPRO. Posez vos questions sur vos travaux, votre maison ou trouvez un entrepreneur."}
                 </p>
               </div>
 
-              {/* Quick actions */}
-              <div className="grid grid-cols-2 gap-2 w-full max-w-sm">
-                {QUICK_ACTIONS.map((qa) => (
+              {/* Quick action pills */}
+              <div className={`grid gap-2 w-full max-w-sm ${isAuthenticated ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"}`}>
+                {(isAuthenticated ? AUTH_ACTIONS : GUEST_ACTIONS).map((qa) => (
                   <button
                     key={qa.label}
                     onClick={() => handleSend(qa.message)}

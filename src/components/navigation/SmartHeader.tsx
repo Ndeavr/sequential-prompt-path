@@ -412,12 +412,6 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
               </>
             )}
 
-            <div className="flex items-center gap-2 px-3 py-2">
-              <span className="text-meta text-muted-foreground">
-                {lang === "en" ? "Language" : "Langue"}
-              </span>
-              <LanguageToggle lang={lang} onChange={setLang} />
-            </div>
           </div>
         </div>
       </motion.div>
