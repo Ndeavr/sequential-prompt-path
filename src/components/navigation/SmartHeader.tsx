@@ -234,8 +234,8 @@ const SmartHeader = () => {
         )}
       </AnimatePresence>
 
-      {/* QR Share Modal */}
-      <QRShareModal open={shareOpen} onOpenChange={setShareOpen} />
+      {/* QR Share Sheet */}
+      <QRShareSheet open={shareOpen} onOpenChange={setShareOpen} />
     </>
   );
 };
