@@ -195,6 +195,7 @@ import AdminMarketEngine from "@/pages/admin/AdminMarketEngine";
 import AdminNexusDashboard from "@/pages/admin/AdminNexusDashboard";
 import AdminDispatchCenter from "@/pages/admin/AdminDispatchCenter";
 import AdminDomainIntelligence from "@/pages/admin/AdminDomainIntelligence";
+import AdminBulkArticlesPage from "@/pages/admin/AdminBulkArticlesPage";
 import EmergencyPage from "@/pages/EmergencyPage";
 import RefusalSeoPage from "@/pages/seo/RefusalSeoPage";
 import MyPlacementsPage from "@/pages/dashboard/MyPlacementsPage";
@@ -441,6 +442,7 @@ export const AppRouter = () => (
       <Route path="/admin/dispatch-center" element={<ProtectedRoute requiredRole="admin"><AdminDispatchCenter /></ProtectedRoute>} />
       <Route path="/admin/domain-intelligence" element={<ProtectedRoute requiredRole="admin"><AdminDomainIntelligence /></ProtectedRoute>} />
       <Route path="/admin/seo-articles" element={<ProtectedRoute requiredRole="admin"><AdminSeoArticles /></ProtectedRoute>} />
+      <Route path="/admin/bulk-articles" element={<ProtectedRoute requiredRole="admin"><AdminBulkArticlesPage /></ProtectedRoute>} />
       <Route path="/articles/:slug" element={<SeoArticlePage />} />
       <Route path="/emergency" element={<EmergencyPage />} />
       <Route path="/emergency/track/:id" element={<EmergencyTrackingPage />} />
