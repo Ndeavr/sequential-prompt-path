@@ -156,7 +156,8 @@ export default function HeroSection() {
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-8 md:px-10 md:pt-12">
           <div className="relative md:grid md:grid-cols-[minmax(0,1.08fr)_420px] md:gap-8 md:items-start">
             {/* Mobile image — square, top-right, rounded corners right only */}
-            <div className="absolute top-0 right-[-20px] w-[75vw] h-[75vw] md:hidden pointer-events-none z-0"
+            <div
+              className="absolute top-0 right-[-20px] w-[75vw] h-[75vw] md:hidden pointer-events-none z-0"
               style={{ borderRadius: "0 1.25rem 1.25rem 0", overflow: "hidden" }}
             >
               <AnimatePresence mode="wait">
@@ -173,14 +174,14 @@ export default function HeroSection() {
                   transition={{ duration: 1.1, ease: "easeInOut" }}
                 />
               </AnimatePresence>
+
+              {/* Robot — clipped inside image area to avoid text overlap */}
+              <motion.img src={unproRobot} alt="Alex UNPRO"
+                className="absolute z-10 w-[72px] right-3 bottom-3 drop-shadow-[0_6px_20px_hsl(222_100%_61%_/_0.25)]"
+                animate={{ y: [0, -6, 0], rotate: [0, 2, -2, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              />
             </div>
-            {/* Robot — behind card, bottom-right of image area */}
-            <motion.img src={unproRobot} alt="Alex UNPRO"
-              className="absolute md:hidden z-10 w-[80px] drop-shadow-[0_6px_20px_rgba(63,123,255,0.25)]"
-              style={{ top: "calc(75vw - 90px)", right: "20px" }}
-              animate={{ y: [0, -8, 0], rotate: [0, 3, -2, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            />
 
             {/* Left column — text overlays on top of image */}
             <div className="relative z-20 min-w-0">
