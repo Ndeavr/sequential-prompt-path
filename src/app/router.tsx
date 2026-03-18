@@ -266,6 +266,7 @@ export const AppRouter = () => (
       <Route path="/r/:refCode" element={<ReferralLandingPage />} />
       <Route path="/i/:code" element={<DeepLinkPage />} />
       <Route path="/unlock" element={<UnlockPage />} />
+      <Route path="/fondateur" element={<FounderPage />} />
 
       {/* Public Property Page */}
       <Route path="/maison/:slug" element={<PublicPropertyPage />} />
