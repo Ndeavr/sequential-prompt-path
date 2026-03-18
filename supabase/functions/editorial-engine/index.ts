@@ -679,6 +679,9 @@ serve(async (req) => {
       case "generate_social_posts":
         result = await generateSocialPosts(body.article_id);
         break;
+      case "run_bulk_pipeline":
+        result = await runBulkPipeline(body.source || "seo_bulk_march2026", body.limit || 10);
+        break;
       default:
         return new Response(JSON.stringify({ error: "Unknown action: " + action }), {
           status: 400,
