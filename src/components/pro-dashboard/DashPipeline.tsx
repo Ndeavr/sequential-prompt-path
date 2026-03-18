@@ -49,8 +49,8 @@ export default function DashPipeline({ appointments }: Props) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {COLUMNS.map(col => {
             const items = appointments.filter(a =>
+              col.key === "requested" ? (a.status === "requested" || a.status === "under_review") :
               col.key === "accepted" ? (a.status === "accepted") :
-              col.key === "scheduled" ? (a.status === "scheduled") :
               a.status === col.key
             );
             return (
