@@ -229,6 +229,7 @@ export const AppRouter = () => (
       <Route path="/proprietaires" element={<HomeownersPage />} />
       <Route path="/professionals" element={<ProfessionalsPage />} />
       <Route path="/entrepreneurs" element={<ProfessionalsPage />} />
+      <Route path="/entrepreneurs/disponibilite-categorie-specialite-ville" element={<ContractorAvailabilityPage />} />
       <Route path="/partners" element={<PartnersPage />} />
       <Route path="/describe-project" element={<DescribeProjectPage />} />
       <Route path="/compare-quotes" element={<CompareQuotesPage />} />
