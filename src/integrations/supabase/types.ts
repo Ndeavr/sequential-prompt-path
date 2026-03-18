@@ -16824,6 +16824,89 @@ export type Database = {
           },
         ]
       }
+      signature_requests: {
+        Row: {
+          category: string
+          city: string
+          company_name: string
+          contact_name: string
+          contractor_id: string | null
+          created_at: string
+          email: string
+          id: string
+          message: string | null
+          monthly_budget: string | null
+          phone: string | null
+          specialty: string | null
+          status: string
+          wants_exclusivity: boolean | null
+          website: string | null
+        }
+        Insert: {
+          category: string
+          city: string
+          company_name: string
+          contact_name: string
+          contractor_id?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          message?: string | null
+          monthly_budget?: string | null
+          phone?: string | null
+          specialty?: string | null
+          status?: string
+          wants_exclusivity?: boolean | null
+          website?: string | null
+        }
+        Update: {
+          category?: string
+          city?: string
+          company_name?: string
+          contact_name?: string
+          contractor_id?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string | null
+          monthly_budget?: string | null
+          phone?: string | null
+          specialty?: string | null
+          status?: string
+          wants_exclusivity?: boolean | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signature_requests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signature_requests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signature_requests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signature_requests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       sla_assignments: {
         Row: {
           achieved: boolean | null
