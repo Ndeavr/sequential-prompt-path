@@ -20,7 +20,7 @@ interface Props {
 }
 
 const COLUMNS = [
-  { key: "pending", label: "Nouveaux", icon: Clock, color: "text-warning" },
+  { key: "requested", label: "Nouveaux", icon: Clock, color: "text-warning" },
   { key: "accepted", label: "Acceptés", icon: CheckCircle2, color: "text-primary" },
   { key: "scheduled", label: "Planifiés", icon: CalendarDays, color: "text-accent" },
   { key: "completed", label: "Complétés", icon: Trophy, color: "text-success" },
