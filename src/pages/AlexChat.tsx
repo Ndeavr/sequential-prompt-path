@@ -19,11 +19,20 @@ const ICON_MAP: Record<string, typeof Search> = {
   home: Home, chart: BarChart3, star: Star,
 };
 
-const QUICK_ACTIONS = [
+const GUEST_ACTIONS = [
   { emoji: "🏠", label: "Décrire un projet", message: "J'ai un problème avec ma maison et j'aimerais de l'aide." },
   { emoji: "🔍", label: "Trouver un entrepreneur", message: "Je cherche un entrepreneur pour des travaux." },
   { emoji: "📄", label: "Analyser une soumission", message: "J'ai reçu une soumission et j'aimerais la faire analyser." },
   { emoji: "🔧", label: "Entretien maison", message: "Quels entretiens devrais-je faire pour ma maison?" },
+];
+
+const AUTH_ACTIONS = [
+  { emoji: "🏠", label: "Mon Home Score", message: "Quel est le score de ma maison et comment l'améliorer?" },
+  { emoji: "📋", label: "Mon passeport maison", message: "Aide-moi à compléter mon passeport maison." },
+  { emoji: "🔍", label: "Trouver un pro", message: "Je cherche un entrepreneur de confiance pour mes travaux." },
+  { emoji: "📄", label: "Analyser une soumission", message: "J'ai reçu une soumission, peux-tu l'analyser?" },
+  { emoji: "🔧", label: "Entretien préventif", message: "Quels entretiens devrais-je planifier pour ma maison?" },
+  { emoji: "🚨", label: "Urgence maison", message: "J'ai une urgence à la maison, aide-moi!" },
 ];
 
 /* ─── Voice hook using Web Speech API ─── */
