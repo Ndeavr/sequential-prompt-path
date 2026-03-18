@@ -8979,6 +8979,80 @@ export type Database = {
           },
         ]
       }
+      founder_invite_access_logs: {
+        Row: {
+          created_at: string
+          entered_pin: string
+          founder_invite_id: string
+          id: string
+          ip_address: string | null
+          success: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          entered_pin: string
+          founder_invite_id: string
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          entered_pin?: string
+          founder_invite_id?: string
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "founder_invite_access_logs_founder_invite_id_fkey"
+            columns: ["founder_invite_id"]
+            isOneToOne: false
+            referencedRelation: "founder_invites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      founder_invites: {
+        Row: {
+          access_pin: string
+          ambassador_user_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          max_uses: number
+          referral_code: string
+          status: string
+          used_count: number
+        }
+        Insert: {
+          access_pin: string
+          ambassador_user_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number
+          referral_code: string
+          status?: string
+          used_count?: number
+        }
+        Update: {
+          access_pin?: string
+          ambassador_user_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number
+          referral_code?: string
+          status?: string
+          used_count?: number
+        }
+        Relationships: []
+      }
       gated_unlock_events: {
         Row: {
           article_id: string

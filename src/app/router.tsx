@@ -86,6 +86,8 @@ import TrendingPage from "@/pages/TrendingPage";
 import PropertyMapPage from "@/pages/PropertyMapPage";
 import VerificationSeoPage from "@/pages/seo/VerificationSeoPage";
 import AlignmentQuestionnairePage from "@/pages/AlignmentQuestionnairePage";
+import FounderPage from "@/pages/FounderPage";
+import AdminFounderInvites from "@/pages/admin/AdminFounderInvites";
 
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
@@ -264,6 +266,7 @@ export const AppRouter = () => (
       <Route path="/r/:refCode" element={<ReferralLandingPage />} />
       <Route path="/i/:code" element={<DeepLinkPage />} />
       <Route path="/unlock" element={<UnlockPage />} />
+      <Route path="/fondateur" element={<FounderPage />} />
 
       {/* Public Property Page */}
       <Route path="/maison/:slug" element={<PublicPropertyPage />} />
@@ -454,6 +457,7 @@ export const AppRouter = () => (
       <Route path="/admin/domain-intelligence" element={<ProtectedRoute requiredRole="admin"><AdminDomainIntelligence /></ProtectedRoute>} />
       <Route path="/admin/seo-articles" element={<ProtectedRoute requiredRole="admin"><AdminSeoArticles /></ProtectedRoute>} />
       <Route path="/admin/bulk-articles" element={<ProtectedRoute requiredRole="admin"><AdminBulkArticlesPage /></ProtectedRoute>} />
+      <Route path="/admin/founder-invites" element={<ProtectedRoute requiredRole="admin"><AdminFounderInvites /></ProtectedRoute>} />
       <Route path="/articles/:slug" element={<SeoArticlePage />} />
       <Route path="/emergency" element={<EmergencyPage />} />
       <Route path="/emergency/track/:id" element={<EmergencyTrackingPage />} />
