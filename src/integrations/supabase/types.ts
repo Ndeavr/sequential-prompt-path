@@ -10476,6 +10476,512 @@ export type Database = {
         }
         Relationships: []
       }
+      jve_calculator_sessions: {
+        Row: {
+          city_id: string | null
+          contractor_id: string | null
+          created_at: string | null
+          id: string
+          inputs: Json
+          outputs: Json
+          recommended_exclusivity: string | null
+          recommended_plan: string | null
+          specialty_id: string | null
+          trade_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          city_id?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          id?: string
+          inputs?: Json
+          outputs?: Json
+          recommended_exclusivity?: string | null
+          recommended_plan?: string | null
+          specialty_id?: string | null
+          trade_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          city_id?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          id?: string
+          inputs?: Json
+          outputs?: Json
+          recommended_exclusivity?: string | null
+          recommended_plan?: string | null
+          specialty_id?: string | null
+          trade_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jve_calculator_sessions_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "jve_cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jve_calculator_sessions_specialty_id_fkey"
+            columns: ["specialty_id"]
+            isOneToOne: false
+            referencedRelation: "jve_trade_specialties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jve_calculator_sessions_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "jve_trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jve_cities: {
+        Row: {
+          competition_index: number | null
+          cost_index: number | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name_fr: string
+          population: number | null
+          region_id: string
+          seasonality_index: number | null
+          slug: string
+        }
+        Insert: {
+          competition_index?: number | null
+          cost_index?: number | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name_fr: string
+          population?: number | null
+          region_id: string
+          seasonality_index?: number | null
+          slug: string
+        }
+        Update: {
+          competition_index?: number | null
+          cost_index?: number | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name_fr?: string
+          population?: number | null
+          region_id?: string
+          seasonality_index?: number | null
+          slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jve_cities_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "jve_regions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jve_contractor_overrides: {
+        Row: {
+          avg_job_value_override: number | null
+          closing_rate_override: number | null
+          contractor_id: string
+          created_at: string | null
+          id: string
+          monthly_capacity_override: number | null
+          profit_margin_override: number | null
+          specialty_id: string | null
+          trade_id: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          avg_job_value_override?: number | null
+          closing_rate_override?: number | null
+          contractor_id: string
+          created_at?: string | null
+          id?: string
+          monthly_capacity_override?: number | null
+          profit_margin_override?: number | null
+          specialty_id?: string | null
+          trade_id: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          avg_job_value_override?: number | null
+          closing_rate_override?: number | null
+          contractor_id?: string
+          created_at?: string | null
+          id?: string
+          monthly_capacity_override?: number | null
+          profit_margin_override?: number | null
+          specialty_id?: string | null
+          trade_id?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jve_contractor_overrides_specialty_id_fkey"
+            columns: ["specialty_id"]
+            isOneToOne: false
+            referencedRelation: "jve_trade_specialties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jve_contractor_overrides_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "jve_trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jve_estimation_audit_log: {
+        Row: {
+          base_avg_value: number | null
+          calculator_session_id: string | null
+          city_multiplier: number | null
+          competition_multiplier: number | null
+          created_at: string | null
+          final_estimated_value: number | null
+          id: string
+          reasoning: Json | null
+          seasonality_multiplier: number | null
+          urgency_multiplier: number | null
+        }
+        Insert: {
+          base_avg_value?: number | null
+          calculator_session_id?: string | null
+          city_multiplier?: number | null
+          competition_multiplier?: number | null
+          created_at?: string | null
+          final_estimated_value?: number | null
+          id?: string
+          reasoning?: Json | null
+          seasonality_multiplier?: number | null
+          urgency_multiplier?: number | null
+        }
+        Update: {
+          base_avg_value?: number | null
+          calculator_session_id?: string | null
+          city_multiplier?: number | null
+          competition_multiplier?: number | null
+          created_at?: string | null
+          final_estimated_value?: number | null
+          id?: string
+          reasoning?: Json | null
+          seasonality_multiplier?: number | null
+          urgency_multiplier?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jve_estimation_audit_log_calculator_session_id_fkey"
+            columns: ["calculator_session_id"]
+            isOneToOne: false
+            referencedRelation: "jve_calculator_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jve_regions: {
+        Row: {
+          base_cost_index: number | null
+          created_at: string | null
+          id: string
+          market_type: string | null
+          name_fr: string
+          slug: string
+        }
+        Insert: {
+          base_cost_index?: number | null
+          created_at?: string | null
+          id?: string
+          market_type?: string | null
+          name_fr: string
+          slug: string
+        }
+        Update: {
+          base_cost_index?: number | null
+          created_at?: string | null
+          id?: string
+          market_type?: string | null
+          name_fr?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      jve_trade_city_factors: {
+        Row: {
+          city_id: string
+          city_multiplier: number | null
+          competition_multiplier: number | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          seasonality_multiplier: number | null
+          specialty_id: string | null
+          trade_id: string
+          urgency_multiplier: number | null
+        }
+        Insert: {
+          city_id: string
+          city_multiplier?: number | null
+          competition_multiplier?: number | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          seasonality_multiplier?: number | null
+          specialty_id?: string | null
+          trade_id: string
+          urgency_multiplier?: number | null
+        }
+        Update: {
+          city_id?: string
+          city_multiplier?: number | null
+          competition_multiplier?: number | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          seasonality_multiplier?: number | null
+          specialty_id?: string | null
+          trade_id?: string
+          urgency_multiplier?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jve_trade_city_factors_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "jve_cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jve_trade_city_factors_specialty_id_fkey"
+            columns: ["specialty_id"]
+            isOneToOne: false
+            referencedRelation: "jve_trade_specialties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jve_trade_city_factors_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "jve_trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jve_trade_performance_defaults: {
+        Row: {
+          created_at: string | null
+          default_closing_rate: number | null
+          default_monthly_capacity: number | null
+          default_profit_margin: number | null
+          high_closing_rate: number | null
+          high_monthly_capacity: number | null
+          high_profit_margin: number | null
+          id: string
+          low_closing_rate: number | null
+          low_monthly_capacity: number | null
+          low_profit_margin: number | null
+          specialty_id: string | null
+          trade_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          default_closing_rate?: number | null
+          default_monthly_capacity?: number | null
+          default_profit_margin?: number | null
+          high_closing_rate?: number | null
+          high_monthly_capacity?: number | null
+          high_profit_margin?: number | null
+          id?: string
+          low_closing_rate?: number | null
+          low_monthly_capacity?: number | null
+          low_profit_margin?: number | null
+          specialty_id?: string | null
+          trade_id: string
+        }
+        Update: {
+          created_at?: string | null
+          default_closing_rate?: number | null
+          default_monthly_capacity?: number | null
+          default_profit_margin?: number | null
+          high_closing_rate?: number | null
+          high_monthly_capacity?: number | null
+          high_profit_margin?: number | null
+          id?: string
+          low_closing_rate?: number | null
+          low_monthly_capacity?: number | null
+          low_profit_margin?: number | null
+          specialty_id?: string | null
+          trade_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jve_trade_performance_defaults_specialty_id_fkey"
+            columns: ["specialty_id"]
+            isOneToOne: false
+            referencedRelation: "jve_trade_specialties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jve_trade_performance_defaults_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "jve_trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jve_trade_specialties: {
+        Row: {
+          created_at: string | null
+          description_fr: string | null
+          id: string
+          is_active: boolean | null
+          name_en: string | null
+          name_fr: string
+          slug: string
+          trade_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description_fr?: string | null
+          id?: string
+          is_active?: boolean | null
+          name_en?: string | null
+          name_fr: string
+          slug: string
+          trade_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description_fr?: string | null
+          id?: string
+          is_active?: boolean | null
+          name_en?: string | null
+          name_fr?: string
+          slug?: string
+          trade_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jve_trade_specialties_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "jve_trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jve_trade_value_benchmarks: {
+        Row: {
+          benchmark_scope: string
+          confidence_score: number | null
+          created_at: string | null
+          currency: string | null
+          default_avg_value: number
+          emergency_value: number | null
+          id: string
+          max_value: number
+          median_value: number
+          min_value: number
+          premium_value: number | null
+          source_type: string | null
+          specialty_id: string | null
+          trade_id: string
+        }
+        Insert: {
+          benchmark_scope?: string
+          confidence_score?: number | null
+          created_at?: string | null
+          currency?: string | null
+          default_avg_value: number
+          emergency_value?: number | null
+          id?: string
+          max_value: number
+          median_value: number
+          min_value: number
+          premium_value?: number | null
+          source_type?: string | null
+          specialty_id?: string | null
+          trade_id: string
+        }
+        Update: {
+          benchmark_scope?: string
+          confidence_score?: number | null
+          created_at?: string | null
+          currency?: string | null
+          default_avg_value?: number
+          emergency_value?: number | null
+          id?: string
+          max_value?: number
+          median_value?: number
+          min_value?: number
+          premium_value?: number | null
+          source_type?: string | null
+          specialty_id?: string | null
+          trade_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jve_trade_value_benchmarks_specialty_id_fkey"
+            columns: ["specialty_id"]
+            isOneToOne: false
+            referencedRelation: "jve_trade_specialties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jve_trade_value_benchmarks_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "jve_trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jve_trades: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name_en: string | null
+          name_fr: string
+          slug: string
+          sort_order: number | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name_en?: string | null
+          name_fr: string
+          slug: string
+          sort_order?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name_en?: string | null
+          name_fr?: string
+          slug?: string
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       lead_qualifications: {
         Row: {
           appointment_id: string
@@ -19034,6 +19540,19 @@ export type Database = {
           status?: string | null
           strategic_score?: number | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      vw_jve_trade_estimation_defaults: {
+        Row: {
+          city_slug: string | null
+          confidence_score: number | null
+          estimated_avg_value: number | null
+          estimated_capacity: number | null
+          estimated_closing_rate: number | null
+          estimated_profit_margin: number | null
+          specialty_slug: string | null
+          trade_slug: string | null
         }
         Relationships: []
       }
