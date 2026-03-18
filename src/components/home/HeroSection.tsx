@@ -175,18 +175,20 @@ export default function HeroSection() {
                 />
               </AnimatePresence>
 
-              {/* Robot — clipped inside image area to avoid text overlap */}
-              <motion.img src={unproRobot} alt="Alex UNPRO"
-                className="absolute z-10 w-[72px] right-3 bottom-3 drop-shadow-[0_6px_20px_hsl(222_100%_61%_/_0.25)]"
-                animate={{ y: [0, -6, 0], rotate: [0, 2, -2, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              />
             </div>
+
+            {/* Robot — positioned above card, always visible */}
+            <motion.img src={unproRobot} alt="Alex UNPRO"
+              className="absolute z-30 w-[72px] right-4 md:hidden drop-shadow-[0_6px_20px_hsl(222_100%_61%_/_0.25)]"
+              style={{ top: "calc(75vw - 80px)" }}
+              animate={{ y: [0, -6, 0], rotate: [0, 2, -2, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            />
 
             {/* Left column — text overlays on top of image */}
             <div className="relative z-20 min-w-0">
               <h1
-                className="relative z-10 text-[32px] font-extrabold leading-[1.08] tracking-[-0.03em] sm:text-[40px] md:text-[64px] max-w-[65%] md:max-w-none"
+                className="relative z-10 text-[32px] font-extrabold leading-[1.08] tracking-[-0.03em] sm:text-[40px] md:text-[64px] max-w-[58%] md:max-w-none"
                 style={{
                   color: "#0B1533",
                   textShadow: "0 1px 12px rgba(247,251,255,0.95), 0 2px 24px rgba(247,251,255,0.8), 0 0 40px rgba(234,244,255,0.9)",
