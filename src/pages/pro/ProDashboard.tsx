@@ -55,7 +55,7 @@ const ProDashboard = () => {
         <DashChecklist profile={profile} reviewCount={reviewCount} />
         <DashPipeline appointments={appts} />
         <DashAippScore aipp={aipp} completeness={completeness} profile={profile} />
-        <DashAutoAccept plan={currentPlan} />
+        <DashWaitlistStatus />
         <DashAiRecommendations completeness={completeness} plan={currentPlan} aipp={aipp} />
         <DashUpsell plan={currentPlan} />
         <DashNotifications />
