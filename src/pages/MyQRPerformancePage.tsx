@@ -26,7 +26,7 @@ const MyQRPerformancePage = () => {
     enabled: !!user?.id,
   });
 
-  if (isLoading) return <DashboardLayout><LoadingState message="Chargement..." /></DashboardLayout>;
+  if (isLoading) return <DashboardLayout><LoadingState /></DashboardLayout>;
 
   const topIntentConfig = stats?.topIntent
     ? QR_INTENTS.find((i) => i.slug === stats.topIntent)
