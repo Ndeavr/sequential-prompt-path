@@ -47,6 +47,7 @@ import ProblemeLocationFrPage from "@/pages/seo/ProblemeLocationFrPage";
 import PropertyTypeHubPage from "@/pages/seo/PropertyTypeHubPage";
 import PropertyTypeCityPage from "@/pages/seo/PropertyTypeCityPage";
 import PropertyTypeProblemPage from "@/pages/seo/PropertyTypeProblemPage";
+import SeoPageRenderer from "@/pages/seo/SeoPageRenderer";
 import PropertyGraphPage from "@/pages/PropertyGraphPage";
 import AlexChat from "@/pages/AlexChat";
 import DesignPage from "@/pages/DesignPage";
@@ -299,6 +300,9 @@ export const AppRouter = () => (
       <Route path="/types-de-propriete/:type" element={<PropertyTypeHubPage />} />
       <Route path="/:city/:type/:problem" element={<PropertyTypeProblemPage />} />
       <Route path="/:city/:type" element={<PropertyTypeCityPage />} />
+
+      {/* Programmatic SEO Pages */}
+      <Route path="/s/:slug" element={<SeoPageRenderer />} />
 
       {/* Legacy English routes */}
       <Route path="/problems/:slug" element={<ProblemPage />} />

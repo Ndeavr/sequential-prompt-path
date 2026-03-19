@@ -16946,43 +16946,79 @@ export type Database = {
       }
       seo_pages: {
         Row: {
+          body_md: string | null
           category_id: string | null
+          city: string | null
           city_id: string | null
           content_data: Json | null
           created_at: string
+          faq_json: Json | null
+          h1: string | null
           id: string
+          intent: string | null
+          internal_links: Json | null
           is_published: boolean
           meta_description: string | null
           page_type: string
+          profession: string | null
+          published_at: string | null
+          schema_json: Json | null
           slug: string
+          specialty: string | null
+          status: string | null
           title: string
           updated_at: string
+          views: number | null
         }
         Insert: {
+          body_md?: string | null
           category_id?: string | null
+          city?: string | null
           city_id?: string | null
           content_data?: Json | null
           created_at?: string
+          faq_json?: Json | null
+          h1?: string | null
           id?: string
+          intent?: string | null
+          internal_links?: Json | null
           is_published?: boolean
           meta_description?: string | null
           page_type: string
+          profession?: string | null
+          published_at?: string | null
+          schema_json?: Json | null
           slug: string
+          specialty?: string | null
+          status?: string | null
           title: string
           updated_at?: string
+          views?: number | null
         }
         Update: {
+          body_md?: string | null
           category_id?: string | null
+          city?: string | null
           city_id?: string | null
           content_data?: Json | null
           created_at?: string
+          faq_json?: Json | null
+          h1?: string | null
           id?: string
+          intent?: string | null
+          internal_links?: Json | null
           is_published?: boolean
           meta_description?: string | null
           page_type?: string
+          profession?: string | null
+          published_at?: string | null
+          schema_json?: Json | null
           slug?: string
+          specialty?: string | null
+          status?: string | null
           title?: string
           updated_at?: string
+          views?: number | null
         }
         Relationships: [
           {
