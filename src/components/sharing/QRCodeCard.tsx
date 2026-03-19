@@ -48,8 +48,8 @@ const QRCodeCard = ({ url, size = 220, label }: QRCodeCardProps) => {
           width: Math.max(size, 220),
           margin: 2,
           color: {
-            dark: "hsl(222 47% 11%)",
-            light: "hsl(0 0% 100%)",
+            dark: "#1e293b",
+            light: "#ffffff",
           },
           errorCorrectionLevel: "M",
         });
@@ -62,9 +62,9 @@ const QRCodeCard = ({ url, size = 220, label }: QRCodeCardProps) => {
           const svg = await QRCodeLib.toString(url, {
             type: "svg",
             margin: 2,
-            color: {
-              dark: "hsl(222 47% 11%)",
-              light: "hsl(0 0% 100%)",
+          color: {
+              dark: "#1e293b",
+              light: "#ffffff",
             },
             errorCorrectionLevel: "M",
           });
