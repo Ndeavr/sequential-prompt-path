@@ -11337,6 +11337,7 @@ export type Database = {
       }
       leads: {
         Row: {
+          assigned_match_id: string | null
           budget_max: number | null
           budget_min: number | null
           city: string | null
@@ -11345,6 +11346,7 @@ export type Database = {
           intent: string | null
           language: string | null
           lead_type: string
+          matching_status: string | null
           owner_profile_id: string | null
           payload: Json | null
           project_category: string | null
@@ -11355,6 +11357,7 @@ export type Database = {
           urgency: string | null
         }
         Insert: {
+          assigned_match_id?: string | null
           budget_max?: number | null
           budget_min?: number | null
           city?: string | null
@@ -11363,6 +11366,7 @@ export type Database = {
           intent?: string | null
           language?: string | null
           lead_type: string
+          matching_status?: string | null
           owner_profile_id?: string | null
           payload?: Json | null
           project_category?: string | null
@@ -11373,6 +11377,7 @@ export type Database = {
           urgency?: string | null
         }
         Update: {
+          assigned_match_id?: string | null
           budget_max?: number | null
           budget_min?: number | null
           city?: string | null
@@ -11381,6 +11386,7 @@ export type Database = {
           intent?: string | null
           language?: string | null
           lead_type?: string
+          matching_status?: string | null
           owner_profile_id?: string | null
           payload?: Json | null
           project_category?: string | null
@@ -11735,6 +11741,8 @@ export type Database = {
           match_type: string
           rank_position: number | null
           reasons: Json | null
+          responded_at: string | null
+          response_status: string | null
           score: number
           status: string | null
         }
@@ -11747,6 +11755,8 @@ export type Database = {
           match_type: string
           rank_position?: number | null
           reasons?: Json | null
+          responded_at?: string | null
+          response_status?: string | null
           score: number
           status?: string | null
         }
@@ -11759,6 +11769,8 @@ export type Database = {
           match_type?: string
           rank_position?: number | null
           reasons?: Json | null
+          responded_at?: string | null
+          response_status?: string | null
           score?: number
           status?: string | null
         }
