@@ -56,6 +56,7 @@ const STATUS_CONFIG: Record<string, { label: string; icon: typeof CheckCircle2; 
   accepted: { label: "Accepté", icon: CheckCircle2, color: "text-emerald-500" },
   declined: { label: "Décliné", icon: AlertCircle, color: "text-destructive" },
   expired: { label: "Expiré", icon: Clock, color: "text-muted-foreground" },
+  promoted: { label: "Promu", icon: CheckCircle2, color: "text-primary" },
 };
 
 export default function LeadResults() {
@@ -116,8 +117,16 @@ export default function LeadResults() {
               Entrepreneurs suggérés pour votre projet
             </p>
           </div>
-          <Badge variant={lead.matching_status === "matched" ? "default" : "secondary"} className="text-xs">
-            {lead.matching_status === "matched" ? "Matchés" : lead.matching_status === "empty" ? "Aucun match" : "En cours"}
+          <Badge variant={
+            lead.matching_status === "accepted" || lead.matching_status === "booked" ? "default" :
+            lead.matching_status === "matched" ? "default" : "secondary"
+          } className="text-xs">
+            {lead.matching_status === "booked" ? "Rendez-vous planifié" :
+             lead.matching_status === "accepted" ? "Entrepreneur trouvé" :
+             lead.matching_status === "matched" ? "Matchés" :
+             lead.matching_status === "escalated" ? "En escalade" :
+             lead.matching_status === "needs_review" ? "En révision" :
+             lead.matching_status === "empty" ? "Aucun match" : "En cours"}
           </Badge>
         </div>
 

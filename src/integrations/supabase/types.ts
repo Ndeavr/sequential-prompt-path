@@ -1457,8 +1457,10 @@ export type Database = {
           contact_preference: string | null
           contractor_id: string
           created_at: string
+          created_by: string | null
           homeowner_user_id: string
           id: string
+          lead_id: string | null
           notes: string | null
           preferred_date: string | null
           preferred_time_window: string | null
@@ -1475,8 +1477,10 @@ export type Database = {
           contact_preference?: string | null
           contractor_id: string
           created_at?: string
+          created_by?: string | null
           homeowner_user_id: string
           id?: string
+          lead_id?: string | null
           notes?: string | null
           preferred_date?: string | null
           preferred_time_window?: string | null
@@ -1493,8 +1497,10 @@ export type Database = {
           contact_preference?: string | null
           contractor_id?: string
           created_at?: string
+          created_by?: string | null
           homeowner_user_id?: string
           id?: string
+          lead_id?: string | null
           notes?: string | null
           preferred_date?: string | null
           preferred_time_window?: string | null
@@ -1534,6 +1540,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "appointments_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "appointments_property_id_fkey"
@@ -11337,7 +11350,9 @@ export type Database = {
       }
       leads: {
         Row: {
+          assigned_contractor_id: string | null
           assigned_match_id: string | null
+          booked_at: string | null
           budget_max: number | null
           budget_min: number | null
           city: string | null
@@ -11345,6 +11360,7 @@ export type Database = {
           id: string
           intent: string | null
           language: string | null
+          last_matched_at: string | null
           lead_type: string
           matching_status: string | null
           owner_profile_id: string | null
@@ -11357,7 +11373,9 @@ export type Database = {
           urgency: string | null
         }
         Insert: {
+          assigned_contractor_id?: string | null
           assigned_match_id?: string | null
+          booked_at?: string | null
           budget_max?: number | null
           budget_min?: number | null
           city?: string | null
@@ -11365,6 +11383,7 @@ export type Database = {
           id?: string
           intent?: string | null
           language?: string | null
+          last_matched_at?: string | null
           lead_type: string
           matching_status?: string | null
           owner_profile_id?: string | null
@@ -11377,7 +11396,9 @@ export type Database = {
           urgency?: string | null
         }
         Update: {
+          assigned_contractor_id?: string | null
           assigned_match_id?: string | null
+          booked_at?: string | null
           budget_max?: number | null
           budget_min?: number | null
           city?: string | null
@@ -11385,6 +11406,7 @@ export type Database = {
           id?: string
           intent?: string | null
           language?: string | null
+          last_matched_at?: string | null
           lead_type?: string
           matching_status?: string | null
           owner_profile_id?: string | null
@@ -11397,6 +11419,34 @@ export type Database = {
           urgency?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "leads_assigned_contractor_id_fkey"
+            columns: ["assigned_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_assigned_contractor_id_fkey"
+            columns: ["assigned_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_assigned_contractor_id_fkey"
+            columns: ["assigned_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_assigned_contractor_id_fkey"
+            columns: ["assigned_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
           {
             foreignKeyName: "leads_owner_profile_id_fkey"
             columns: ["owner_profile_id"]
@@ -11602,6 +11652,85 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      match_decisions: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          decision: string
+          decline_code: string | null
+          decline_reason: string | null
+          id: string
+          lead_id: string
+          match_id: string
+          notes: string | null
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          decision: string
+          decline_code?: string | null
+          decline_reason?: string | null
+          id?: string
+          lead_id: string
+          match_id: string
+          notes?: string | null
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          decision?: string
+          decline_code?: string | null
+          decline_reason?: string | null
+          id?: string
+          lead_id?: string
+          match_id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_decisions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_decisions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_decisions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_decisions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "match_decisions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_decisions_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       match_evaluations: {
         Row: {
