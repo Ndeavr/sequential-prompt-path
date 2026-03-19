@@ -18,9 +18,15 @@ import AnalyzePropertyButton from "@/components/property/AnalyzePropertyButton";
 const PropertyDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { data: property, isLoading, error } = useProperty(id);
-  const { data: score } = usePropertyScore(id);
-  const { data: recommendations = [] } = usePropertyRecommendations(id);
-  const { data: events = [] } = usePropertyEvents(id);
+  const { data: score, refetch: refetchScore } = usePropertyScore(id);
+  const { data: recommendations = [], refetch: refetchRecs } = usePropertyRecommendations(id);
+  const { data: events = [], refetch: refetchEvents } = usePropertyEvents(id);
+
+  const handleAnalysisDone = () => {
+    refetchScore();
+    refetchRecs();
+    refetchEvents();
+  };
 
   if (isLoading) return <DashboardLayout><LoadingState /></DashboardLayout>;
   if (error || !property) return <DashboardLayout><ErrorState message="Propriété introuvable." /></DashboardLayout>;
