@@ -11477,6 +11477,36 @@ export type Database = {
           },
         ]
       }
+      market_capacity: {
+        Row: {
+          active_slots: number
+          city: string
+          id: string
+          max_slots: number
+          specialty: string
+          updated_at: string | null
+          waiting_list_count: number
+        }
+        Insert: {
+          active_slots?: number
+          city: string
+          id?: string
+          max_slots?: number
+          specialty: string
+          updated_at?: string | null
+          waiting_list_count?: number
+        }
+        Update: {
+          active_slots?: number
+          city?: string
+          id?: string
+          max_slots?: number
+          specialty?: string
+          updated_at?: string | null
+          waiting_list_count?: number
+        }
+        Relationships: []
+      }
       market_opportunities: {
         Row: {
           city: string | null
