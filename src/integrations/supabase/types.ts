@@ -2348,6 +2348,112 @@ export type Database = {
           },
         ]
       }
+      broker_profiles: {
+        Row: {
+          agency_name: string | null
+          avg_price_max: number | null
+          avg_price_min: number | null
+          bio: string | null
+          city: string | null
+          created_at: string | null
+          id: string
+          languages: string[] | null
+          license_number: string | null
+          profile_id: string | null
+          service_areas: string[] | null
+          specialties: string[] | null
+          style: string | null
+          updated_at: string | null
+          years_experience: number | null
+        }
+        Insert: {
+          agency_name?: string | null
+          avg_price_max?: number | null
+          avg_price_min?: number | null
+          bio?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          languages?: string[] | null
+          license_number?: string | null
+          profile_id?: string | null
+          service_areas?: string[] | null
+          specialties?: string[] | null
+          style?: string | null
+          updated_at?: string | null
+          years_experience?: number | null
+        }
+        Update: {
+          agency_name?: string | null
+          avg_price_max?: number | null
+          avg_price_min?: number | null
+          bio?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          languages?: string[] | null
+          license_number?: string | null
+          profile_id?: string | null
+          service_areas?: string[] | null
+          specialties?: string[] | null
+          style?: string | null
+          updated_at?: string | null
+          years_experience?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broker_profiles_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      broker_scores: {
+        Row: {
+          acceptance_rate: number | null
+          avg_review_score: number | null
+          broker_id: string
+          conversion_rate: number | null
+          id: string
+          profile_completeness_score: number | null
+          ranking_score: number | null
+          response_speed_score: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          acceptance_rate?: number | null
+          avg_review_score?: number | null
+          broker_id: string
+          conversion_rate?: number | null
+          id?: string
+          profile_completeness_score?: number | null
+          ranking_score?: number | null
+          response_speed_score?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          acceptance_rate?: number | null
+          avg_review_score?: number | null
+          broker_id?: string
+          conversion_rate?: number | null
+          id?: string
+          profile_completeness_score?: number | null
+          ranking_score?: number | null
+          response_speed_score?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broker_scores_broker_id_fkey"
+            columns: ["broker_id"]
+            isOneToOne: false
+            referencedRelation: "broker_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_generations: {
         Row: {
           auto_campaign_id: string
@@ -6270,6 +6376,71 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contractor_verification_runs"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_scores: {
+        Row: {
+          acceptance_rate: number | null
+          avg_review_score: number | null
+          close_rate: number | null
+          contractor_id: string
+          id: string
+          profile_completeness_score: number | null
+          ranking_score: number | null
+          response_speed_score: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          acceptance_rate?: number | null
+          avg_review_score?: number | null
+          close_rate?: number | null
+          contractor_id: string
+          id?: string
+          profile_completeness_score?: number | null
+          ranking_score?: number | null
+          response_speed_score?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          acceptance_rate?: number | null
+          avg_review_score?: number | null
+          close_rate?: number | null
+          contractor_id?: string
+          id?: string
+          profile_completeness_score?: number | null
+          ranking_score?: number | null
+          response_speed_score?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
         ]
       }
@@ -11164,6 +11335,85 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          budget_max: number | null
+          budget_min: number | null
+          city: string | null
+          created_at: string | null
+          id: string
+          intent: string | null
+          language: string | null
+          lead_type: string
+          owner_profile_id: string | null
+          payload: Json | null
+          project_category: string | null
+          property_id: string | null
+          seriousness_score: number | null
+          specialty_needed: string | null
+          status: string | null
+          urgency: string | null
+        }
+        Insert: {
+          budget_max?: number | null
+          budget_min?: number | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          intent?: string | null
+          language?: string | null
+          lead_type: string
+          owner_profile_id?: string | null
+          payload?: Json | null
+          project_category?: string | null
+          property_id?: string | null
+          seriousness_score?: number | null
+          specialty_needed?: string | null
+          status?: string | null
+          urgency?: string | null
+        }
+        Update: {
+          budget_max?: number | null
+          budget_min?: number | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          intent?: string | null
+          language?: string | null
+          lead_type?: string
+          owner_profile_id?: string | null
+          payload?: Json | null
+          project_category?: string | null
+          property_id?: string | null
+          seriousness_score?: number | null
+          specialty_needed?: string | null
+          status?: string | null
+          urgency?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_owner_profile_id_fkey"
+            columns: ["owner_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "leads_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listing_imports: {
         Row: {
           confidence_score: number | null
@@ -11441,6 +11691,88 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matches: {
+        Row: {
+          broker_id: string | null
+          contractor_id: string | null
+          created_at: string | null
+          id: string
+          lead_id: string
+          match_type: string
+          rank_position: number | null
+          reasons: Json | null
+          score: number
+          status: string | null
+        }
+        Insert: {
+          broker_id?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          id?: string
+          lead_id: string
+          match_type: string
+          rank_position?: number | null
+          reasons?: Json | null
+          score: number
+          status?: string | null
+        }
+        Update: {
+          broker_id?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          id?: string
+          lead_id?: string
+          match_type?: string
+          rank_position?: number | null
+          reasons?: Json | null
+          score?: number
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matches_broker_id_fkey"
+            columns: ["broker_id"]
+            isOneToOne: false
+            referencedRelation: "broker_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "matches_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
         ]
@@ -14367,6 +14699,66 @@ export type Database = {
           },
           {
             foreignKeyName: "property_qr_codes_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_recommendations: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          estimated_cost_max: number | null
+          estimated_cost_min: number | null
+          id: string
+          priority: string | null
+          property_id: string
+          reasoning: Json | null
+          recommended_profession: string | null
+          recommended_timeline: string | null
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          estimated_cost_max?: number | null
+          estimated_cost_min?: number | null
+          id?: string
+          priority?: string | null
+          property_id: string
+          reasoning?: Json | null
+          recommended_profession?: string | null
+          recommended_timeline?: string | null
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          estimated_cost_max?: number | null
+          estimated_cost_min?: number | null
+          id?: string
+          priority?: string | null
+          property_id?: string
+          reasoning?: Json | null
+          recommended_profession?: string | null
+          recommended_timeline?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_recommendations_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_recommendations_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "v_property_map_markers"
