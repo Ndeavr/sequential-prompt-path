@@ -1,9 +1,13 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { PropertyRecommendation } from "@/types/property";
 import { formatCurrency } from "@/types/property";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, CheckCircle, Clock, Zap, UserSearch } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { AlertTriangle, CheckCircle, Clock, Zap, UserSearch, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const PRIORITY_CONFIG: Record<string, { color: string; icon: typeof Zap }> = {
   urgent: { color: "bg-destructive/10 text-destructive border-destructive/20", icon: Zap },
@@ -20,13 +24,80 @@ export default function PropertyRecommendations({
   propertyId?: string;
 }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [loadingRecId, setLoadingRecId] = useState<string | null>(null);
 
-  function handleFindContractor(rec: PropertyRecommendation) {
-    const params = new URLSearchParams();
-    if (propertyId) params.set("property_id", propertyId);
-    if (rec.category) params.set("category", rec.category);
-    if (rec.recommended_profession) params.set("profession", rec.recommended_profession);
-    navigate(`/dashboard/projects/new?${params.toString()}`);
+  async function handleFindContractor(rec: PropertyRecommendation) {
+    if (!user || !propertyId) {
+      toast.error("Veuillez vous connecter pour continuer");
+      return;
+    }
+
+    setLoadingRecId(rec.id);
+
+    try {
+      // 1. Get property for city info
+      const { data: property } = await supabase
+        .from("properties")
+        .select("city")
+        .eq("id", propertyId)
+        .single();
+
+      // 2. Create lead
+      const { data: lead, error: leadError } = await supabase
+        .from("leads")
+        .insert({
+          owner_profile_id: user.id,
+          property_id: propertyId,
+          lead_type: "contractor",
+          city: property?.city ?? null,
+          intent: "improve_home",
+          project_category: rec.category,
+          specialty_needed: rec.recommended_profession ?? rec.category,
+          budget_min: rec.estimated_cost_min ?? null,
+          budget_max: rec.estimated_cost_max ?? null,
+          urgency: rec.priority === "urgent" ? "urgent" : rec.priority === "high" ? "high" : "medium",
+          language: "fr",
+          seriousness_score: rec.priority === "urgent" ? 90 : rec.priority === "high" ? 78 : 65,
+          matching_status: "pending",
+          payload: {
+            source: "property_recommendation",
+            recommendation_id: rec.id,
+            recommendation_title: rec.title,
+          },
+        })
+        .select("id")
+        .single();
+
+      if (leadError || !lead) {
+        throw new Error(leadError?.message ?? "Erreur lors de la création du lead");
+      }
+
+      // 3. Invoke matching engine
+      const { data: matchResult, error: matchError } = await supabase.functions.invoke("match-lead", {
+        body: { leadId: lead.id },
+      });
+
+      if (matchError) {
+        console.warn("Matching error (non-blocking):", matchError);
+        // Still redirect — the lead is created, matching can be retried
+      }
+
+      const matchCount = matchResult?.matches_count ?? 0;
+      toast.success(
+        matchCount > 0
+          ? `${matchCount} entrepreneur${matchCount > 1 ? "s" : ""} trouvé${matchCount > 1 ? "s" : ""} !`
+          : "Lead créé — recherche d'entrepreneurs en cours"
+      );
+
+      // 4. Redirect to results
+      navigate(`/dashboard/leads/${lead.id}/results`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erreur inattendue";
+      toast.error(msg);
+    } finally {
+      setLoadingRecId(null);
+    }
   }
 
   if (items.length === 0) {
@@ -54,6 +125,8 @@ export default function PropertyRecommendations({
         {items.map((item) => {
           const config = PRIORITY_CONFIG[item.priority ?? "medium"] ?? PRIORITY_CONFIG.medium;
           const Icon = config.icon;
+          const isLoading = loadingRecId === item.id;
+
           return (
             <div key={item.id} className="rounded-xl border border-border/30 bg-background/50 p-4">
               <div className="flex items-start justify-between gap-3">
@@ -98,10 +171,15 @@ export default function PropertyRecommendations({
                   size="sm"
                   variant="outline"
                   className="w-full text-xs"
+                  disabled={isLoading || !!loadingRecId}
                   onClick={() => handleFindContractor(item)}
                 >
-                  <UserSearch className="h-3.5 w-3.5 mr-1.5" />
-                  Trouver un entrepreneur
+                  {isLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                  ) : (
+                    <UserSearch className="h-3.5 w-3.5 mr-1.5" />
+                  )}
+                  {isLoading ? "Recherche en cours…" : "Trouver un entrepreneur"}
                 </Button>
               </div>
             </div>

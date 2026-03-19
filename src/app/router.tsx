@@ -142,6 +142,7 @@ import SyndicateMaintenance from "@/pages/dashboard/SyndicateMaintenance";
 import SyndicateVotes from "@/pages/dashboard/SyndicateVotes";
 import SyndicateVoteCreate from "@/pages/dashboard/SyndicateVoteCreate";
 import SyndicateGrowthDashboard from "@/pages/dashboard/SyndicateGrowthDashboard";
+import LeadResults from "@/pages/dashboard/LeadResults";
 
 // Contractor Pro
 import ProDashboard from "@/pages/pro/ProDashboard";
@@ -391,6 +392,7 @@ export const AppRouter = () => (
       <Route path="/dashboard/documents/upload" element={<ProtectedRoute requiredRole="homeowner"><DocumentUploadPage /></ProtectedRoute>} />
       <Route path="/dashboard/projects/new" element={<ProtectedRoute requiredRole="homeowner"><ProjectNewPage /></ProtectedRoute>} />
       <Route path="/dashboard/projects/:projectId/matches" element={<ProtectedRoute requiredRole="homeowner"><ProjectMatchesPage /></ProtectedRoute>} />
+      <Route path="/dashboard/leads/:id/results" element={<ProtectedRoute requiredRole="homeowner"><LeadResults /></ProtectedRoute>} />
       <Route path="/dashboard/syndicates" element={<ProtectedRoute requiredRole="homeowner"><SyndicateDashboard /></ProtectedRoute>} />
       <Route path="/dashboard/syndicates/:id" element={<ProtectedRoute requiredRole="homeowner"><SyndicateDetailDashboard /></ProtectedRoute>} />
       <Route path="/dashboard/syndicates/:id/reserve" element={<ProtectedRoute requiredRole="homeowner"><SyndicateReserveFund /></ProtectedRoute>} />
