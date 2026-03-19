@@ -167,3 +167,45 @@ export const useUploadPropertyDocument = () => {
     onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ["property-documents", vars.propertyId] }),
   });
 };
+
+export const useDeletePropertyDocument = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, propertyId, storagePath }: {
+      id: string;
+      propertyId: string;
+      storagePath: string | null;
+    }) => {
+      if (storagePath) {
+        await supabase.storage.from("property-documents").remove([storagePath]);
+      }
+      const { error } = await supabase.from("property_documents").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ["property-documents", vars.propertyId] }),
+  });
+};
+
+export const useCreatePropertyEvent = () => {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (event: {
+      property_id: string;
+      event_type: string;
+      title: string;
+      description?: string;
+      event_date?: string;
+      cost?: number;
+    }) => {
+      const { data, error } = await supabase
+        .from("property_events")
+        .insert({ ...event, user_id: user!.id })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ["property-events", vars.property_id] }),
+  });
+};
