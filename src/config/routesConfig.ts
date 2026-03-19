@@ -64,6 +64,14 @@ export const ROUTES = {
   ADMIN_VALIDATION: "/admin/validation",
   ADMIN_DOMAIN_INTELLIGENCE: "/admin/domain-intelligence",
 
+  // Broker / Courtier
+  COURTIERS: "/courtiers",
+  COURTIERS_ONBOARDING: "/courtiers/onboarding",
+  BROKER_DASHBOARD: "/broker",
+  BROKER_LEADS: "/broker/leads",
+  BROKER_PROFILE: "/broker/profile",
+  BROKER_APPOINTMENTS: "/broker/appointments",
+
   // Auth
   LOGIN: "/login",
   SIGNUP: "/signup",
