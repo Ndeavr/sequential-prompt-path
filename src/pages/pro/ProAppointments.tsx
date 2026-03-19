@@ -1,11 +1,9 @@
 import ContractorLayout from "@/layouts/ContractorLayout";
 import { PageHeader, LoadingState, EmptyState } from "@/components/shared";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useContractorAppointments, useUpdateAppointmentStatus } from "@/hooks/useAppointments";
-import { toast } from "sonner";
+import { useContractorAppointments } from "@/hooks/useAppointments";
+import AppointmentActions from "@/components/appointments/AppointmentActions";
 
 const statusLabels: Record<string, string> = {
   requested: "Demandé",
@@ -13,6 +11,8 @@ const statusLabels: Record<string, string> = {
   accepted: "Accepté",
   declined: "Refusé",
   scheduled: "Planifié",
+  confirmed: "Confirmé",
+  reschedule_requested: "Replanification demandée",
   completed: "Terminé",
   cancelled: "Annulé",
 };
@@ -23,22 +23,14 @@ const statusVariants: Record<string, "default" | "secondary" | "destructive" | "
   accepted: "default",
   declined: "destructive",
   scheduled: "default",
+  confirmed: "default",
+  reschedule_requested: "outline",
   completed: "default",
   cancelled: "destructive",
 };
 
 const ProAppointments = () => {
-  const { data: appointments, isLoading } = useContractorAppointments();
-  const updateStatus = useUpdateAppointmentStatus();
-
-  const handleStatusChange = async (id: string, status: string) => {
-    try {
-      await updateStatus.mutateAsync({ id, status });
-      toast.success("Statut mis à jour.");
-    } catch {
-      toast.error("Erreur lors de la mise à jour.");
-    }
-  };
+  const { data: appointments, isLoading, refetch } = useContractorAppointments();
 
   return (
     <ContractorLayout>
@@ -56,7 +48,7 @@ const ProAppointments = () => {
                 <TableHead>Contact</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead>Reçu le</TableHead>
-                <TableHead>Action</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -77,24 +69,12 @@ const ProAppointments = () => {
                     {new Date(a.created_at).toLocaleDateString("fr-CA")}
                   </TableCell>
                   <TableCell>
-                    {["requested", "under_review", "accepted"].includes(a.status) && (
-                      <Select onValueChange={(v) => handleStatusChange(a.id, v)}>
-                        <SelectTrigger className="w-[140px] h-8 text-xs">
-                          <SelectValue placeholder="Changer…" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {a.status === "requested" && <SelectItem value="under_review">En révision</SelectItem>}
-                          {["requested", "under_review"].includes(a.status) && (
-                            <>
-                              <SelectItem value="accepted">Accepter</SelectItem>
-                              <SelectItem value="declined">Refuser</SelectItem>
-                            </>
-                          )}
-                          {a.status === "accepted" && <SelectItem value="scheduled">Planifier</SelectItem>}
-                          {["accepted", "scheduled"].includes(a.status) && <SelectItem value="completed">Terminé</SelectItem>}
-                        </SelectContent>
-                      </Select>
-                    )}
+                    <AppointmentActions
+                      appointmentId={a.id}
+                      status={a.status}
+                      role="contractor"
+                      onDone={() => refetch()}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
