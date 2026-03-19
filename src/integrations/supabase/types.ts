@@ -14056,6 +14056,7 @@ export type Database = {
         Row: {
           created_at: string
           document_type: string
+          extracted_json: Json | null
           file_size: number | null
           file_url: string | null
           id: string
@@ -14069,6 +14070,7 @@ export type Database = {
         Insert: {
           created_at?: string
           document_type?: string
+          extracted_json?: Json | null
           file_size?: number | null
           file_url?: string | null
           id?: string
@@ -14082,6 +14084,7 @@ export type Database = {
         Update: {
           created_at?: string
           document_type?: string
+          extracted_json?: Json | null
           file_size?: number | null
           file_url?: string | null
           id?: string
@@ -14749,6 +14752,8 @@ export type Database = {
           reasoning: Json | null
           recommended_profession: string | null
           recommended_timeline: string | null
+          source: string | null
+          source_ref: string | null
           title: string
         }
         Insert: {
@@ -14763,6 +14768,8 @@ export type Database = {
           reasoning?: Json | null
           recommended_profession?: string | null
           recommended_timeline?: string | null
+          source?: string | null
+          source_ref?: string | null
           title: string
         }
         Update: {
@@ -14777,6 +14784,8 @@ export type Database = {
           reasoning?: Json | null
           recommended_profession?: string | null
           recommended_timeline?: string | null
+          source?: string | null
+          source_ref?: string | null
           title?: string
         }
         Relationships: [
@@ -14806,6 +14815,7 @@ export type Database = {
           overall_score: number
           property_id: string
           score_type: string
+          source: string | null
           user_id: string
         }
         Insert: {
@@ -14817,6 +14827,7 @@ export type Database = {
           overall_score?: number
           property_id: string
           score_type?: string
+          source?: string | null
           user_id: string
         }
         Update: {
@@ -14828,6 +14839,7 @@ export type Database = {
           overall_score?: number
           property_id?: string
           score_type?: string
+          source?: string | null
           user_id?: string
         }
         Relationships: [
