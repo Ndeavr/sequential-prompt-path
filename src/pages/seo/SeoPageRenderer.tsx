@@ -80,8 +80,8 @@ export default function SeoPageRenderer() {
     );
   }
 
-  const faqItems: FaqItem[] = (page.faq_json as FaqItem[]) || [];
-  const internalLinks: string[] = (page.internal_links as string[]) || [];
+  const faqItems: FaqItem[] = (page.faq_json as unknown as FaqItem[]) || [];
+  const internalLinks: string[] = (page.internal_links as unknown as string[]) || [];
   const schemaJson = page.schema_json || {};
 
   return (
