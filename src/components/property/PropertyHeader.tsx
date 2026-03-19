@@ -22,6 +22,7 @@ export default function PropertyHeader({
           </Link>
         </Button>
         <div className="flex items-center gap-2">
+          <SharePropertyDialog propertyId={property.id} />
           <EditPropertyDialog property={property} onUpdated={onUpdated} />
           <Badge variant="outline" className="text-xs">
             {property.certification_status === "certified" ? "✓ Certifié UNPRO" : "Passeport Maison"}
