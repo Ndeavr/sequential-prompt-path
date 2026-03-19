@@ -65,3 +65,116 @@ export function calculateHomeScore(input: PropertyInput) {
     confidence_score: 72,
   };
 }
+
+export interface HomeScoreResult {
+  overall_score: number;
+  structure_score: number;
+  insulation_score: number;
+  roof_score: number;
+  humidity_score: number;
+  windows_score: number;
+  heating_score: number;
+  electrical_score: number;
+  plumbing_score: number;
+  confidence_score: number;
+}
+
+export interface Recommendation {
+  category: string;
+  priority: "low" | "medium" | "high" | "urgent";
+  title: string;
+  description: string;
+  recommended_timeline: string;
+  recommended_profession: string;
+}
+
+export function buildRecommendations(score: HomeScoreResult): Recommendation[] {
+  const recs: Recommendation[] = [];
+
+  if (score.roof_score < 45) {
+    recs.push({
+      category: "roof",
+      priority: "high",
+      title: "Faire inspecter la toiture",
+      description:
+        "Le score toiture suggère une usure ou un risque plus élevé.",
+      recommended_timeline: "0-12 mois",
+      recommended_profession: "Couvreur",
+    });
+  }
+
+  if (score.humidity_score < 50) {
+    recs.push({
+      category: "humidity",
+      priority: "urgent",
+      title: "Évaluer l\u2019humidité et la ventilation",
+      description:
+        "Présence potentielle de condensation, infiltration ou ventilation inadéquate.",
+      recommended_timeline: "0-3 mois",
+      recommended_profession:
+        "Spécialiste en isolation / ventilation / bâtiment",
+    });
+  }
+
+  if (score.insulation_score < 50) {
+    recs.push({
+      category: "insulation",
+      priority: "medium",
+      title: "Améliorer l\u2019isolation",
+      description:
+        "L\u2019isolation semble insuffisante par rapport au potentiel énergétique du bâtiment.",
+      recommended_timeline: "3-12 mois",
+      recommended_profession: "Entrepreneur en isolation",
+    });
+  }
+
+  if (score.windows_score < 50) {
+    recs.push({
+      category: "windows",
+      priority: "medium",
+      title: "Remplacer ou améliorer les fenêtres",
+      description:
+        "Les fenêtres actuelles peuvent causer des pertes énergétiques importantes.",
+      recommended_timeline: "6-18 mois",
+      recommended_profession: "Entrepreneur en portes et fenêtres",
+    });
+  }
+
+  if (score.electrical_score < 60) {
+    recs.push({
+      category: "electrical",
+      priority: "high",
+      title: "Faire vérifier le système électrique",
+      description:
+        "Le système électrique pourrait nécessiter une mise à niveau.",
+      recommended_timeline: "0-6 mois",
+      recommended_profession: "Électricien",
+    });
+  }
+
+  if (score.plumbing_score < 60) {
+    recs.push({
+      category: "plumbing",
+      priority: "medium",
+      title: "Évaluer la plomberie",
+      description:
+        "La plomberie pourrait bénéficier d\u2019une inspection ou mise à jour.",
+      recommended_timeline: "3-12 mois",
+      recommended_profession: "Plombier",
+    });
+  }
+
+  if (score.heating_score < 60) {
+    recs.push({
+      category: "heating",
+      priority: "medium",
+      title: "Optimiser le système de chauffage",
+      description:
+        "Le système de chauffage pourrait être amélioré pour plus d\u2019efficacité.",
+      recommended_timeline: "6-12 mois",
+      recommended_profession: "Technicien CVAC",
+    });
+  }
+
+  return recs;
+}
