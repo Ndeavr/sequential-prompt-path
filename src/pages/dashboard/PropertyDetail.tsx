@@ -14,10 +14,12 @@ import PropertyRecommendations from "@/components/property/PropertyRecommendatio
 import PropertyTimeline from "@/components/property/PropertyTimeline";
 import PropertyDocuments from "@/components/property/PropertyDocuments";
 import AnalyzePropertyButton from "@/components/property/AnalyzePropertyButton";
+import { useQueryClient } from "@tanstack/react-query";
 
 const PropertyDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const { data: property, isLoading, error } = useProperty(id);
+  const qc = useQueryClient();
+  const { data: property, isLoading, error, refetch: refetchProperty } = useProperty(id);
   const { data: score, refetch: refetchScore } = usePropertyScore(id);
   const { data: recommendations = [], refetch: refetchRecs } = usePropertyRecommendations(id);
   const { data: events = [], refetch: refetchEvents } = usePropertyEvents(id);
@@ -28,13 +30,18 @@ const PropertyDetail = () => {
     refetchEvents();
   };
 
+  const handlePropertyUpdated = () => {
+    refetchProperty();
+    qc.invalidateQueries({ queryKey: ["properties"] });
+  };
+
   if (isLoading) return <DashboardLayout><LoadingState /></DashboardLayout>;
   if (error || !property) return <DashboardLayout><ErrorState message="Propriété introuvable." /></DashboardLayout>;
 
   return (
     <DashboardLayout>
       <div className="space-y-5">
-        <PropertyHeader property={property} />
+        <PropertyHeader property={property} onUpdated={handlePropertyUpdated} />
 
         {/* Score section */}
         <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
@@ -47,11 +54,11 @@ const PropertyDetail = () => {
 
         {/* Content sections */}
         <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-          <PropertyRecommendations items={recommendations} />
+          <PropertyRecommendations items={recommendations} propertyId={property.id} />
           <PropertyDocuments propertyId={property.id} />
         </div>
 
-        <PropertyTimeline items={events} />
+        <PropertyTimeline items={events} propertyId={property.id} />
       </div>
     </DashboardLayout>
   );
