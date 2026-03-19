@@ -1,16 +1,34 @@
 import type { PropertyRecommendation } from "@/types/property";
 import { formatCurrency } from "@/types/property";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, CheckCircle, Clock, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, CheckCircle, Clock, Zap, UserSearch } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const PRIORITY_CONFIG: Record<string, { color: string; icon: typeof Zap }> = {
   urgent: { color: "bg-destructive/10 text-destructive border-destructive/20", icon: Zap },
   high: { color: "bg-orange-500/10 text-orange-500 border-orange-500/20", icon: AlertTriangle },
   medium: { color: "bg-amber-500/10 text-amber-500 border-amber-500/20", icon: Clock },
-  low: { color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", icon: CheckCircle },
+  low: { color: "bg-primary/10 text-primary border-primary/20", icon: CheckCircle },
 };
 
-export default function PropertyRecommendations({ items }: { items: PropertyRecommendation[] }) {
+export default function PropertyRecommendations({
+  items,
+  propertyId,
+}: {
+  items: PropertyRecommendation[];
+  propertyId?: string;
+}) {
+  const navigate = useNavigate();
+
+  function handleFindContractor(rec: PropertyRecommendation) {
+    const params = new URLSearchParams();
+    if (propertyId) params.set("property_id", propertyId);
+    if (rec.category) params.set("category", rec.category);
+    if (rec.recommended_profession) params.set("profession", rec.recommended_profession);
+    navigate(`/dashboard/projects/new?${params.toString()}`);
+  }
+
   if (items.length === 0) {
     return (
       <div className="rounded-2xl border border-border/40 bg-card p-5">
@@ -72,6 +90,19 @@ export default function PropertyRecommendations({ items }: { items: PropertyReco
                     💰 {formatCurrency(item.estimated_cost_min)} — {formatCurrency(item.estimated_cost_max)}
                   </span>
                 )}
+              </div>
+
+              {/* CTA: Trouver un entrepreneur */}
+              <div className="mt-3 pt-3 border-t border-border/20">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full text-xs"
+                  onClick={() => handleFindContractor(item)}
+                >
+                  <UserSearch className="h-3.5 w-3.5 mr-1.5" />
+                  Trouver un entrepreneur
+                </Button>
               </div>
             </div>
           );

@@ -3,8 +3,15 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Calendar, Ruler, Home, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import EditPropertyDialog from "./EditPropertyDialog";
 
-export default function PropertyHeader({ property }: { property: Property }) {
+export default function PropertyHeader({
+  property,
+  onUpdated,
+}: {
+  property: Property;
+  onUpdated?: () => void;
+}) {
   return (
     <div className="rounded-2xl border border-border/40 bg-gradient-to-br from-primary/5 via-card to-card p-5 sm:p-6">
       <div className="flex items-start justify-between gap-4 mb-4">
@@ -13,9 +20,12 @@ export default function PropertyHeader({ property }: { property: Property }) {
             <ArrowLeft className="h-4 w-4 mr-1" /> Mes propriétés
           </Link>
         </Button>
-        <Badge variant="outline" className="text-xs">
-          {property.certification_status === "certified" ? "✓ Certifié UNPRO" : "Passeport Maison"}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <EditPropertyDialog property={property} onUpdated={onUpdated} />
+          <Badge variant="outline" className="text-xs">
+            {property.certification_status === "certified" ? "✓ Certifié UNPRO" : "Passeport Maison"}
+          </Badge>
+        </div>
       </div>
 
       <div className="flex items-start gap-4">

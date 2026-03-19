@@ -1,12 +1,14 @@
-import { usePropertyDocuments } from "@/hooks/usePropertyPassport";
+import { usePropertyDocuments, useDeletePropertyDocument } from "@/hooks/usePropertyPassport";
 import PropertyDocumentUpload from "./PropertyDocumentUpload";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, ExternalLink, Loader2 } from "lucide-react";
+import { FileText, ExternalLink, Loader2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function PropertyDocuments({ propertyId }: { propertyId: string }) {
   const { data: docs = [], isLoading } = usePropertyDocuments(propertyId);
+  const deleteDoc = useDeletePropertyDocument();
 
   async function openDocument(storagePath: string | null, fileUrl: string | null) {
     if (fileUrl) {
@@ -19,6 +21,16 @@ export default function PropertyDocuments({ propertyId }: { propertyId: string }
       .createSignedUrl(storagePath, 60);
     if (!error && data?.signedUrl) {
       window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    }
+  }
+
+  async function handleDelete(id: string, storagePath: string | null) {
+    if (!confirm("Supprimer ce document ?")) return;
+    try {
+      await deleteDoc.mutateAsync({ id, propertyId, storagePath });
+      toast.success("Document supprimé.");
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de la suppression.");
     }
   }
 
@@ -59,13 +71,24 @@ export default function PropertyDocuments({ propertyId }: { propertyId: string }
                     </p>
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => openDocument(doc.storage_path, doc.file_url)}
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => openDocument(doc.storage_path, doc.file_url)}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => handleDelete(doc.id, doc.storage_path)}
+                    disabled={deleteDoc.isPending}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
