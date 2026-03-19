@@ -117,8 +117,16 @@ export default function LeadResults() {
               Entrepreneurs suggérés pour votre projet
             </p>
           </div>
-          <Badge variant={lead.matching_status === "matched" ? "default" : "secondary"} className="text-xs">
-            {lead.matching_status === "matched" ? "Matchés" : lead.matching_status === "empty" ? "Aucun match" : "En cours"}
+          <Badge variant={
+            lead.matching_status === "accepted" || lead.matching_status === "booked" ? "default" :
+            lead.matching_status === "matched" ? "default" : "secondary"
+          } className="text-xs">
+            {lead.matching_status === "booked" ? "Rendez-vous planifié" :
+             lead.matching_status === "accepted" ? "Entrepreneur trouvé" :
+             lead.matching_status === "matched" ? "Matchés" :
+             lead.matching_status === "escalated" ? "En escalade" :
+             lead.matching_status === "needs_review" ? "En révision" :
+             lead.matching_status === "empty" ? "Aucun match" : "En cours"}
           </Badge>
         </div>
 
