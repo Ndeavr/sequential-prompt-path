@@ -65,3 +65,9 @@ verify_jwt = false
 
 [functions.match-lead]
 verify_jwt = false
+
+[functions.contractor-respond-to-lead]
+verify_jwt = false
+
+[functions.create-appointment-from-match]
+verify_jwt = false

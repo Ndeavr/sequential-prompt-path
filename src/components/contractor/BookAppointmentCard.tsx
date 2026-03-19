@@ -32,6 +32,7 @@ export default function BookAppointmentCard({ matchId, responseStatus, projectCa
   const [booked, setBooked] = useState(false);
 
   if (responseStatus !== "accepted") return null;
+
   if (booked) {
     return (
       <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 flex items-center gap-2">
