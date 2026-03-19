@@ -14,6 +14,7 @@ import PropertyRecommendations from "@/components/property/PropertyRecommendatio
 import PropertyTimeline from "@/components/property/PropertyTimeline";
 import PropertyDocuments from "@/components/property/PropertyDocuments";
 import AnalyzePropertyButton from "@/components/property/AnalyzePropertyButton";
+import ExportPassportButton from "@/components/property/ExportPassportButton";
 import { useQueryClient } from "@tanstack/react-query";
 
 const PropertyDetail = () => {
@@ -42,6 +43,16 @@ const PropertyDetail = () => {
     <DashboardLayout>
       <div className="space-y-5">
         <PropertyHeader property={property} onUpdated={handlePropertyUpdated} />
+
+        {/* Export button */}
+        <div className="flex justify-end">
+          <ExportPassportButton
+            property={property}
+            score={score}
+            recommendations={recommendations}
+            events={events}
+          />
+        </div>
 
         {/* Score section */}
         <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
