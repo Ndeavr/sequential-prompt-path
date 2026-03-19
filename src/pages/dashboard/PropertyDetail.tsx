@@ -38,7 +38,10 @@ const PropertyDetail = () => {
 
         {/* Score section */}
         <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
-          <PropertyScoreCard score={score} />
+          <div className="space-y-5">
+            <PropertyScoreCard score={score} />
+            <AnalyzePropertyButton propertyId={property.id} onDone={handleAnalysisDone} />
+          </div>
           <PropertyScoreGrid score={score} />
         </div>
 
