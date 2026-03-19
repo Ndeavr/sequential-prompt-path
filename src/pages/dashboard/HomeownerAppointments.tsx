@@ -5,8 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAppointments, useUpdateAppointmentStatus } from "@/hooks/useAppointments";
+import AppointmentActions from "@/components/appointments/AppointmentActions";
+import AppointmentFeedbackForm from "@/components/appointments/AppointmentFeedbackForm";
 import { Search } from "lucide-react";
 import { toast } from "sonner";
+import { useState } from "react";
 
 const statusLabels: Record<string, string> = {
   requested: "Demandé",
@@ -14,6 +17,8 @@ const statusLabels: Record<string, string> = {
   accepted: "Accepté",
   declined: "Refusé",
   scheduled: "Planifié",
+  confirmed: "Confirmé",
+  reschedule_requested: "Replanification demandée",
   completed: "Terminé",
   cancelled: "Annulé",
 };
@@ -24,22 +29,15 @@ const statusVariants: Record<string, "default" | "secondary" | "destructive" | "
   accepted: "default",
   declined: "destructive",
   scheduled: "default",
+  confirmed: "default",
+  reschedule_requested: "outline",
   completed: "default",
   cancelled: "destructive",
 };
 
 const HomeownerAppointments = () => {
-  const { data: appointments, isLoading } = useAppointments();
-  const updateStatus = useUpdateAppointmentStatus();
-
-  const handleCancel = async (id: string) => {
-    try {
-      await updateStatus.mutateAsync({ id, status: "cancelled" });
-      toast.success("Rendez-vous annulé.");
-    } catch {
-      toast.error("Erreur lors de l'annulation.");
-    }
-  };
+  const { data: appointments, isLoading, refetch } = useAppointments();
+  const [feedbackFor, setFeedbackFor] = useState<string | null>(null);
 
   return (
     <DashboardLayout>
@@ -58,49 +56,68 @@ const HomeownerAppointments = () => {
           action={<Button asChild><Link to="/search">Trouver un entrepreneur</Link></Button>}
         />
       ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Entrepreneur</TableHead>
-                <TableHead>Propriété</TableHead>
-                <TableHead>Date souhaitée</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Demandé le</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {appointments.map((a: any) => (
-                <TableRow key={a.id}>
-                  <TableCell className="font-medium">
-                    <Link to={`/contractors/${a.contractor_id}`} className="hover:underline text-primary">
-                      {a.contractors?.business_name || "—"}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{a.properties?.address || "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {a.preferred_date ? new Date(a.preferred_date).toLocaleDateString("fr-CA") : "—"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={statusVariants[a.status] ?? "secondary"}>
-                      {statusLabels[a.status] ?? a.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {new Date(a.created_at).toLocaleDateString("fr-CA")}
-                  </TableCell>
-                  <TableCell>
-                    {a.status === "requested" && (
-                      <Button variant="ghost" size="sm" onClick={() => handleCancel(a.id)} disabled={updateStatus.isPending}>
-                        Annuler
-                      </Button>
-                    )}
-                  </TableCell>
+        <div className="space-y-4">
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Entrepreneur</TableHead>
+                  <TableHead>Propriété</TableHead>
+                  <TableHead>Date souhaitée</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Demandé le</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {appointments.map((a: any) => (
+                  <TableRow key={a.id}>
+                    <TableCell className="font-medium">
+                      <Link to={`/contractors/${a.contractor_id}`} className="hover:underline text-primary">
+                        {a.contractors?.business_name || "—"}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{a.properties?.address || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {a.preferred_date ? new Date(a.preferred_date).toLocaleDateString("fr-CA") : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={statusVariants[a.status] ?? "secondary"}>
+                        {statusLabels[a.status] ?? a.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {new Date(a.created_at).toLocaleDateString("fr-CA")}
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-2">
+                        <AppointmentActions
+                          appointmentId={a.id}
+                          status={a.status}
+                          role="homeowner"
+                          onDone={() => refetch()}
+                        />
+                        {a.status === "completed" && (
+                          <Button size="sm" variant="outline" onClick={() => setFeedbackFor(a.id)}>
+                            Laisser un avis
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {feedbackFor && (
+            <div className="max-w-md">
+              <AppointmentFeedbackForm
+                appointmentId={feedbackFor}
+                onDone={() => { setFeedbackFor(null); refetch(); }}
+              />
+            </div>
+          )}
         </div>
       )}
     </DashboardLayout>

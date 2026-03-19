@@ -71,3 +71,12 @@ verify_jwt = false
 
 [functions.create-appointment-from-match]
 verify_jwt = false
+
+[functions.homeowner-manage-appointment]
+verify_jwt = false
+
+[functions.contractor-manage-appointment]
+verify_jwt = false
+
+[functions.submit-appointment-feedback]
+verify_jwt = false

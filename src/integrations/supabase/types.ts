@@ -1229,6 +1229,115 @@ export type Database = {
           },
         ]
       }
+      appointment_feedback: {
+        Row: {
+          appointment_id: string
+          comment: string | null
+          contractor_id: string | null
+          created_at: string
+          homeowner_profile_id: string | null
+          id: string
+          lead_id: string
+          property_id: string | null
+          rating: number
+          was_on_time: boolean | null
+          was_professional: boolean | null
+          would_recommend: boolean | null
+        }
+        Insert: {
+          appointment_id: string
+          comment?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          homeowner_profile_id?: string | null
+          id?: string
+          lead_id: string
+          property_id?: string | null
+          rating: number
+          was_on_time?: boolean | null
+          was_professional?: boolean | null
+          would_recommend?: boolean | null
+        }
+        Update: {
+          appointment_id?: string
+          comment?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          homeowner_profile_id?: string | null
+          id?: string
+          lead_id?: string
+          property_id?: string | null
+          rating?: number
+          was_on_time?: boolean | null
+          was_professional?: boolean | null
+          would_recommend?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_feedback_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: true
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_feedback_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_feedback_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_feedback_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_feedback_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "appointment_feedback_homeowner_profile_id_fkey"
+            columns: ["homeowner_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_feedback_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_feedback_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_feedback_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_price_calculations: {
         Row: {
           admin_override: boolean
@@ -1454,10 +1563,14 @@ export type Database = {
       appointments: {
         Row: {
           budget_range: string | null
+          cancellation_reason: string | null
+          completed_at: string | null
           contact_preference: string | null
+          contractor_confirmed: boolean | null
           contractor_id: string
           created_at: string
           created_by: string | null
+          homeowner_confirmed: boolean | null
           homeowner_user_id: string
           id: string
           lead_id: string | null
@@ -1466,6 +1579,7 @@ export type Database = {
           preferred_time_window: string | null
           project_category: string | null
           property_id: string | null
+          reschedule_reason: string | null
           scheduled_at: string | null
           status: Database["public"]["Enums"]["appointment_status"]
           timeline: string | null
@@ -1474,10 +1588,14 @@ export type Database = {
         }
         Insert: {
           budget_range?: string | null
+          cancellation_reason?: string | null
+          completed_at?: string | null
           contact_preference?: string | null
+          contractor_confirmed?: boolean | null
           contractor_id: string
           created_at?: string
           created_by?: string | null
+          homeowner_confirmed?: boolean | null
           homeowner_user_id: string
           id?: string
           lead_id?: string | null
@@ -1486,6 +1604,7 @@ export type Database = {
           preferred_time_window?: string | null
           project_category?: string | null
           property_id?: string | null
+          reschedule_reason?: string | null
           scheduled_at?: string | null
           status?: Database["public"]["Enums"]["appointment_status"]
           timeline?: string | null
@@ -1494,10 +1613,14 @@ export type Database = {
         }
         Update: {
           budget_range?: string | null
+          cancellation_reason?: string | null
+          completed_at?: string | null
           contact_preference?: string | null
+          contractor_confirmed?: boolean | null
           contractor_id?: string
           created_at?: string
           created_by?: string | null
+          homeowner_confirmed?: boolean | null
           homeowner_user_id?: string
           id?: string
           lead_id?: string | null
@@ -1506,6 +1629,7 @@ export type Database = {
           preferred_time_window?: string | null
           project_category?: string | null
           property_id?: string | null
+          reschedule_reason?: string | null
           scheduled_at?: string | null
           status?: Database["public"]["Enums"]["appointment_status"]
           timeline?: string | null
@@ -6395,34 +6519,46 @@ export type Database = {
       contractor_scores: {
         Row: {
           acceptance_rate: number | null
+          appointments_cancelled: number | null
+          appointments_completed: number | null
           avg_review_score: number | null
           close_rate: number | null
           contractor_id: string
           id: string
+          on_time_rate: number | null
           profile_completeness_score: number | null
           ranking_score: number | null
+          recommendation_rate: number | null
           response_speed_score: number | null
           updated_at: string | null
         }
         Insert: {
           acceptance_rate?: number | null
+          appointments_cancelled?: number | null
+          appointments_completed?: number | null
           avg_review_score?: number | null
           close_rate?: number | null
           contractor_id: string
           id?: string
+          on_time_rate?: number | null
           profile_completeness_score?: number | null
           ranking_score?: number | null
+          recommendation_rate?: number | null
           response_speed_score?: number | null
           updated_at?: string | null
         }
         Update: {
           acceptance_rate?: number | null
+          appointments_cancelled?: number | null
+          appointments_completed?: number | null
           avg_review_score?: number | null
           close_rate?: number | null
           contractor_id?: string
           id?: string
+          on_time_rate?: number | null
           profile_completeness_score?: number | null
           ranking_score?: number | null
+          recommendation_rate?: number | null
           response_speed_score?: number | null
           updated_at?: string | null
         }
@@ -20751,6 +20887,8 @@ export type Database = {
         | "scheduled"
         | "completed"
         | "cancelled"
+        | "confirmed"
+        | "reschedule_requested"
       compatibility_result: "compatible" | "partial" | "verify" | "incompatible"
       contribution_status: "pending" | "approved" | "rejected" | "expired"
       duplicate_review_status:
@@ -20957,6 +21095,8 @@ export const Constants = {
         "scheduled",
         "completed",
         "cancelled",
+        "confirmed",
+        "reschedule_requested",
       ],
       compatibility_result: ["compatible", "partial", "verify", "incompatible"],
       contribution_status: ["pending", "approved", "rejected", "expired"],
