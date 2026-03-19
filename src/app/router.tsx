@@ -90,6 +90,13 @@ import FounderPage from "@/pages/FounderPage";
 import AdminFounderInvites from "@/pages/admin/AdminFounderInvites";
 import ContractorAvailabilityPage from "@/pages/ContractorAvailabilityPage";
 
+// Broker / Courtier
+import CourtiersLandingPage from "@/pages/courtiers/CourtiersLandingPage";
+import BrokerOnboardingPage from "@/pages/courtiers/BrokerOnboardingPage";
+import BrokerDashboardPage from "@/pages/courtiers/BrokerDashboardPage";
+import BrokerLeadsPage from "@/pages/courtiers/BrokerLeadsPage";
+import BrokerProfilePage from "@/pages/courtiers/BrokerProfilePage";
+
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
 import BlogArticlePage from "@/pages/blog/BlogArticlePage";
