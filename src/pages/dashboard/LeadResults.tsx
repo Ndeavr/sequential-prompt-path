@@ -56,6 +56,7 @@ const STATUS_CONFIG: Record<string, { label: string; icon: typeof CheckCircle2; 
   accepted: { label: "Accepté", icon: CheckCircle2, color: "text-emerald-500" },
   declined: { label: "Décliné", icon: AlertCircle, color: "text-destructive" },
   expired: { label: "Expiré", icon: Clock, color: "text-muted-foreground" },
+  promoted: { label: "Promu", icon: CheckCircle2, color: "text-primary" },
 };
 
 export default function LeadResults() {
