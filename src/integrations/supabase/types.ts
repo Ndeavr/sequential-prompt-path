@@ -14859,6 +14859,57 @@ export type Database = {
           },
         ]
       }
+      property_shares: {
+        Row: {
+          accepted_at: string | null
+          id: string
+          invited_at: string
+          owner_user_id: string
+          property_id: string
+          role: string
+          shared_with_email: string
+          shared_with_user_id: string | null
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          id?: string
+          invited_at?: string
+          owner_user_id: string
+          property_id: string
+          role?: string
+          shared_with_email: string
+          shared_with_user_id?: string | null
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          id?: string
+          invited_at?: string
+          owner_user_id?: string
+          property_id?: string
+          role?: string
+          shared_with_email?: string
+          shared_with_user_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_shares_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_shares_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_source_links: {
         Row: {
           extraction_id: string | null
