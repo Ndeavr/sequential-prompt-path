@@ -13,6 +13,7 @@ import PropertyScoreGrid from "@/components/property/PropertyScoreGrid";
 import PropertyRecommendations from "@/components/property/PropertyRecommendations";
 import PropertyTimeline from "@/components/property/PropertyTimeline";
 import PropertyDocuments from "@/components/property/PropertyDocuments";
+import AnalyzePropertyButton from "@/components/property/AnalyzePropertyButton";
 
 const PropertyDetail = () => {
   const { id } = useParams<{ id: string }>();
