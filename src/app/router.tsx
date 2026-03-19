@@ -90,6 +90,13 @@ import FounderPage from "@/pages/FounderPage";
 import AdminFounderInvites from "@/pages/admin/AdminFounderInvites";
 import ContractorAvailabilityPage from "@/pages/ContractorAvailabilityPage";
 
+// Broker / Courtier
+import CourtiersLandingPage from "@/pages/courtiers/CourtiersLandingPage";
+import BrokerOnboardingPage from "@/pages/courtiers/BrokerOnboardingPage";
+import BrokerDashboardPage from "@/pages/courtiers/BrokerDashboardPage";
+import BrokerLeadsPage from "@/pages/courtiers/BrokerLeadsPage";
+import BrokerProfilePage from "@/pages/courtiers/BrokerProfilePage";
+
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
 import BlogArticlePage from "@/pages/blog/BlogArticlePage";
@@ -463,6 +470,14 @@ export const AppRouter = () => (
       <Route path="/articles/:slug" element={<SeoArticlePage />} />
       <Route path="/emergency" element={<EmergencyPage />} />
       <Route path="/emergency/track/:id" element={<EmergencyTrackingPage />} />
+
+      {/* Broker / Courtier */}
+      <Route path="/courtiers" element={<CourtiersLandingPage />} />
+      <Route path="/courtiers/onboarding" element={<ProtectedRoute requiredRole="homeowner"><BrokerOnboardingPage /></ProtectedRoute>} />
+      <Route path="/broker" element={<ProtectedRoute requiredRole="homeowner"><BrokerDashboardPage /></ProtectedRoute>} />
+      <Route path="/broker/leads" element={<ProtectedRoute requiredRole="homeowner"><BrokerLeadsPage /></ProtectedRoute>} />
+      <Route path="/broker/profile" element={<ProtectedRoute requiredRole="homeowner"><BrokerProfilePage /></ProtectedRoute>} />
+      <Route path="/broker/appointments" element={<PlaceholderPage />} />
 
       {/* Refusal SEO public pages */}
       <Route path="/refusal/:slug" element={<RefusalSeoPage />} />
