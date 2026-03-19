@@ -301,6 +301,9 @@ export const AppRouter = () => (
       <Route path="/:city/:type/:problem" element={<PropertyTypeProblemPage />} />
       <Route path="/:city/:type" element={<PropertyTypeCityPage />} />
 
+      {/* Programmatic SEO Pages */}
+      <Route path="/s/:slug" element={<SeoPageRenderer />} />
+
       {/* Legacy English routes */}
       <Route path="/problems/:slug" element={<ProblemPage />} />
       <Route path="/problems/:problem/:city" element={<ProblemLocationPage />} />
