@@ -211,13 +211,29 @@ Deno.serve(async (req) => {
         score: m.score,
         rank_position: i + 1,
         reasons: m.reasons,
-        status: "suggested",
+        status: i === 0 ? "primary" : "suggested",
+        response_status: "pending",
       }));
 
-      await supabase.from("matches").insert(matchRows);
+      const { data: insertedMatches } = await supabase.from("matches").insert(matchRows).select("id, rank_position");
+      
+      const primaryMatchId = insertedMatches?.find((m: any) => m.rank_position === 1)?.id ?? null;
+      
       await supabase
         .from("leads")
-        .update({ status: "matched" })
+        .update({ 
+          status: "matched",
+          matching_status: "matched",
+          assigned_match_id: primaryMatchId,
+        })
+        .eq("id", leadId);
+    } else {
+      await supabase
+        .from("leads")
+        .update({ 
+          status: "no_match",
+          matching_status: "empty",
+        })
         .eq("id", leadId);
     }
 
