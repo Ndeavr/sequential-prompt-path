@@ -70,9 +70,9 @@ export default function AnalyzePropertyButton({ propertyId, onDone }: Props) {
       </Button>
 
       {message && (
-        <div className="mt-4 flex items-start gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
-          <CheckCircle className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />
-          <p className="text-sm text-emerald-300">{message}</p>
+        <div className="mt-4 flex items-start gap-2 rounded-xl border border-primary/20 bg-primary/10 p-3">
+          <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+          <p className="text-sm text-primary">{message}</p>
         </div>
       )}
 
