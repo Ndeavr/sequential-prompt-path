@@ -40,7 +40,7 @@ const NotificationPreferences = () => {
         .select("*")
         .eq("profile_id", user!.id);
       if (error) throw error;
-      return (data || []) as Preference[];
+      return (data || []) as unknown as Preference[];
     },
     enabled: !!user?.id,
   });
