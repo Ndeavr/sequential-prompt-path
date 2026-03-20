@@ -80,3 +80,12 @@ verify_jwt = false
 
 [functions.submit-appointment-feedback]
 verify_jwt = false
+
+[functions.notify-appointment-created]
+verify_jwt = false
+
+[functions.contractor-on-the-way]
+verify_jwt = false
+
+[functions.send-feedback-request]
+verify_jwt = false

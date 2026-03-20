@@ -118,6 +118,19 @@ serve(async (req) => {
       if (appointment.lead_id) {
         await serviceSupabase.from('leads').update({ status: 'closed' }).eq('id', appointment.lead_id)
       }
+
+      // Trigger feedback request notification
+      try {
+        await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-feedback-request`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+          },
+          body: JSON.stringify({ appointmentId }),
+        })
+      } catch (_) { /* non-blocking */ }
+
       return new Response(JSON.stringify({ ok: true, action }), { headers: corsHeaders })
     }
 

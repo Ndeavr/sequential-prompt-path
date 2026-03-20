@@ -1567,6 +1567,7 @@ export type Database = {
           completed_at: string | null
           contact_preference: string | null
           contractor_confirmed: boolean | null
+          contractor_en_route_at: string | null
           contractor_id: string
           created_at: string
           created_by: string | null
@@ -1592,6 +1593,7 @@ export type Database = {
           completed_at?: string | null
           contact_preference?: string | null
           contractor_confirmed?: boolean | null
+          contractor_en_route_at?: string | null
           contractor_id: string
           created_at?: string
           created_by?: string | null
@@ -1617,6 +1619,7 @@ export type Database = {
           completed_at?: string | null
           contact_preference?: string | null
           contractor_confirmed?: boolean | null
+          contractor_en_route_at?: string | null
           contractor_id?: string
           created_at?: string
           created_by?: string | null
@@ -12456,6 +12459,59 @@ export type Database = {
           weight?: number | null
         }
         Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          channel: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          metadata: Json
+          profile_id: string | null
+          read_at: string | null
+          status: string
+          title: string
+          type: string
+        }
+        Insert: {
+          body?: string | null
+          channel?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          metadata?: Json
+          profile_id?: string | null
+          read_at?: string | null
+          status?: string
+          title: string
+          type: string
+        }
+        Update: {
+          body?: string | null
+          channel?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          metadata?: Json
+          profile_id?: string | null
+          read_at?: string | null
+          status?: string
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       opportunity_allocations: {
         Row: {

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useContractorAppointments } from "@/hooks/useAppointments";
 import AppointmentActions from "@/components/appointments/AppointmentActions";
+import OnTheWayButton from "@/components/contractor/OnTheWayButton";
 
 const statusLabels: Record<string, string> = {
   requested: "Demandé",
@@ -69,12 +70,21 @@ const ProAppointments = () => {
                     {new Date(a.created_at).toLocaleDateString("fr-CA")}
                   </TableCell>
                   <TableCell>
-                    <AppointmentActions
-                      appointmentId={a.id}
-                      status={a.status}
-                      role="contractor"
-                      onDone={() => refetch()}
-                    />
+                    <div className="space-y-2">
+                      <AppointmentActions
+                        appointmentId={a.id}
+                        status={a.status}
+                        role="contractor"
+                        onDone={() => refetch()}
+                      />
+                      {["confirmed", "scheduled"].includes(a.status) && (
+                        <OnTheWayButton
+                          appointmentId={a.id}
+                          alreadyEnRoute={!!a.contractor_en_route_at}
+                          onDone={() => refetch()}
+                        />
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

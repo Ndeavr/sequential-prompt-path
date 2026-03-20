@@ -67,6 +67,7 @@ import PublicPropertyPage from "@/pages/PublicPropertyPage";
 import PropertyPassportPage from "@/pages/dashboard/PropertyPassportPage";
 import PropertyGrantsPage from "@/pages/dashboard/PropertyGrantsPage";
 import MessageCenterPage from "@/pages/dashboard/MessageCenterPage";
+import NotificationsPage from "@/pages/dashboard/NotificationsPage";
 import ProjectMatchesPage from "@/pages/dashboard/ProjectMatchesPage";
 import QrScanPage from "@/pages/QrScanPage";
 import DeepLinkPage from "@/pages/DeepLinkPage";
@@ -403,6 +404,7 @@ export const AppRouter = () => (
       <Route path="/dashboard/syndicates/:id/votes/new" element={<ProtectedRoute requiredRole="homeowner"><SyndicateVoteCreate /></ProtectedRoute>} />
       <Route path="/dashboard/syndicates/:id/growth" element={<ProtectedRoute requiredRole="homeowner"><SyndicateGrowthDashboard /></ProtectedRoute>} />
       <Route path="/dashboard/placements" element={<ProtectedRoute requiredRole="homeowner"><MyPlacementsPage /></ProtectedRoute>} />
+      <Route path="/dashboard/notifications" element={<ProtectedRoute requiredRole="homeowner"><NotificationsPage /></ProtectedRoute>} />
       <Route path="/dashboard/qr-performance" element={<ProtectedRoute requiredRole="homeowner"><MyQRPerformancePage /></ProtectedRoute>} />
 
       {/* Contractor Pro */}
@@ -429,6 +431,7 @@ export const AppRouter = () => (
       <Route path="/pro/domain-intelligence" element={<ProtectedRoute requiredRole="contractor"><ProDomainIntelligence /></ProtectedRoute>} />
       <Route path="/pro/qr-performance" element={<ProtectedRoute requiredRole="contractor"><MyQRPerformancePage /></ProtectedRoute>} />
       <Route path="/pro/matched-leads" element={<ProtectedRoute requiredRole="contractor"><ProMatchedLeads /></ProtectedRoute>} />
+      <Route path="/pro/notifications" element={<ProtectedRoute requiredRole="contractor"><NotificationsPage /></ProtectedRoute>} />
 
       {/* Admin */}
       <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
