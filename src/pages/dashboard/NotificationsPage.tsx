@@ -106,6 +106,9 @@ const NotificationsPage = () => {
                     </Badge>
                   )}
                 </TabsTrigger>
+                <TabsTrigger value="preferences" className="gap-1">
+                  <Settings className="h-3 w-3" /> Préférences
+                </TabsTrigger>
               </TabsList>
             </Tabs>
 
