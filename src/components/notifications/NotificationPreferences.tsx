@@ -5,19 +5,19 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Bell, MessageSquare, Mail, Phone } from "lucide-react";
+import { Bell, Mail, Phone } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 type Preference = {
-  id?: string;
+  id: string;
   channel: string;
   notification_type: string;
   is_enabled: boolean;
-  phone_number?: string | null;
-  email_override?: string | null;
+  phone_number: string | null;
+  email_override: string | null;
 };
 
 const CHANNELS = [
@@ -36,7 +36,7 @@ const NotificationPreferences = () => {
     queryKey: ["notification-preferences", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("notification_preferences")
+        .from("notification_preferences" as any)
         .select("*")
         .eq("profile_id", user!.id);
       if (error) throw error;
@@ -59,7 +59,7 @@ const NotificationPreferences = () => {
 
       if (existing?.id) {
         const { error } = await supabase
-          .from("notification_preferences")
+          .from("notification_preferences" as any)
           .update({
             is_enabled: pref.is_enabled,
             phone_number: pref.phone_number || null,
@@ -70,7 +70,7 @@ const NotificationPreferences = () => {
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from("notification_preferences")
+          .from("notification_preferences" as any)
           .insert({
             profile_id: user!.id,
             channel: pref.channel,
