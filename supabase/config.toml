@@ -89,3 +89,12 @@ verify_jwt = false
 
 [functions.send-feedback-request]
 verify_jwt = false
+
+[functions.schedule-reminders]
+verify_jwt = false
+
+[functions.process-reminders]
+verify_jwt = false
+
+[functions.notification-digest]
+verify_jwt = false

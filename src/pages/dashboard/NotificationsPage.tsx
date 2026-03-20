@@ -4,14 +4,15 @@ import { PageHeader, LoadingState, EmptyState } from "@/components/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
+import NotificationPreferences from "@/components/notifications/NotificationPreferences";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import {
-  Bell, Calendar, Check, CheckCheck, MessageSquare,
-  Navigation, Star, ChevronRight,
+  Bell, Calendar, Check, CheckCheck, Clock,
+  Navigation, Star, ChevronRight, Settings,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -19,6 +20,9 @@ const typeConfig: Record<string, { icon: typeof Bell; label: string }> = {
   appointment_created: { icon: Calendar, label: "Rendez-vous" },
   contractor_on_the_way: { icon: Navigation, label: "En route" },
   feedback_requested: { icon: Star, label: "Feedback" },
+  reminder_24h_before: { icon: Clock, label: "Rappel 24h" },
+  reminder_1h_before: { icon: Clock, label: "Rappel 1h" },
+  digest: { icon: Bell, label: "Résumé" },
 };
 
 const NotificationsPage = () => {
@@ -102,6 +106,9 @@ const NotificationsPage = () => {
                     </Badge>
                   )}
                 </TabsTrigger>
+                <TabsTrigger value="preferences" className="gap-1">
+                  <Settings className="h-3 w-3" /> Préférences
+                </TabsTrigger>
               </TabsList>
             </Tabs>
 
@@ -112,7 +119,9 @@ const NotificationsPage = () => {
             )}
           </div>
 
-          {filtered.length === 0 ? (
+          {tab === "preferences" ? (
+            <NotificationPreferences />
+          ) : filtered.length === 0 ? (
             <EmptyState
               message={tab === "unread" ? "Aucune notification non lue." : "Aucune notification pour le moment."}
               action={

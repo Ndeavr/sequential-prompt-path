@@ -153,6 +153,18 @@ Deno.serve(async (req) => {
       });
     } catch (_) { /* non-blocking */ }
 
+    // Schedule reminders (24h + 1h before)
+    try {
+      await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/schedule-reminders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify({ appointmentId: appointment.id }),
+      });
+    } catch (_) { /* non-blocking */ }
+
     return new Response(
       JSON.stringify({ ok: true, appointment }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
