@@ -20,6 +20,9 @@ const typeConfig: Record<string, { icon: typeof Bell; label: string }> = {
   appointment_created: { icon: Calendar, label: "Rendez-vous" },
   contractor_on_the_way: { icon: Navigation, label: "En route" },
   feedback_requested: { icon: Star, label: "Feedback" },
+  reminder_24h_before: { icon: Clock, label: "Rappel 24h" },
+  reminder_1h_before: { icon: Clock, label: "Rappel 1h" },
+  digest: { icon: Bell, label: "Résumé" },
 };
 
 const NotificationsPage = () => {
