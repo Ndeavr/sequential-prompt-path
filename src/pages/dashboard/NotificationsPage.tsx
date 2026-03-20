@@ -119,7 +119,9 @@ const NotificationsPage = () => {
             )}
           </div>
 
-          {filtered.length === 0 ? (
+          {tab === "preferences" ? (
+            <NotificationPreferences />
+          ) : filtered.length === 0 ? (
             <EmptyState
               message={tab === "unread" ? "Aucune notification non lue." : "Aucune notification pour le moment."}
               action={
