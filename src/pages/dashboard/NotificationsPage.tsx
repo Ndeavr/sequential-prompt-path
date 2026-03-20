@@ -11,8 +11,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import {
-  Bell, Calendar, Check, CheckCheck, MessageSquare,
-  Navigation, Star, ChevronRight,
+  Bell, Calendar, Check, CheckCheck, Clock,
+  Navigation, Star, ChevronRight, Settings,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
