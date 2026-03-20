@@ -12460,6 +12460,91 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_digests: {
+        Row: {
+          channel: string
+          created_at: string
+          digest_type: string
+          id: string
+          notification_ids: string[]
+          profile_id: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          digest_type?: string
+          id?: string
+          notification_ids?: string[]
+          profile_id: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          digest_type?: string
+          id?: string
+          notification_ids?: string[]
+          profile_id?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_digests_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_preferences: {
+        Row: {
+          channel: string
+          created_at: string
+          email_override: string | null
+          id: string
+          is_enabled: boolean
+          notification_type: string
+          phone_number: string | null
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          email_override?: string | null
+          id?: string
+          is_enabled?: boolean
+          notification_type?: string
+          phone_number?: string | null
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          email_override?: string | null
+          id?: string
+          is_enabled?: boolean
+          notification_type?: string
+          phone_number?: string | null
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string | null
@@ -12471,6 +12556,8 @@ export type Database = {
           metadata: Json
           profile_id: string | null
           read_at: string | null
+          sms_sent_at: string | null
+          sms_status: string | null
           status: string
           title: string
           type: string
@@ -12485,6 +12572,8 @@ export type Database = {
           metadata?: Json
           profile_id?: string | null
           read_at?: string | null
+          sms_sent_at?: string | null
+          sms_status?: string | null
           status?: string
           title: string
           type: string
@@ -12499,6 +12588,8 @@ export type Database = {
           metadata?: Json
           profile_id?: string | null
           read_at?: string | null
+          sms_sent_at?: string | null
+          sms_status?: string | null
           status?: string
           title?: string
           type?: string
@@ -17004,6 +17095,70 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      scheduled_reminders: {
+        Row: {
+          appointment_id: string
+          channel: string
+          created_at: string
+          id: string
+          metadata: Json
+          notification_id: string | null
+          profile_id: string
+          reminder_type: string
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          appointment_id: string
+          channel?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          notification_id?: string | null
+          profile_id: string
+          reminder_type: string
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          appointment_id?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          notification_id?: string | null
+          profile_id?: string
+          reminder_type?: string
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_reminders_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_reminders_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_reminders_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       seo_admin_queue: {
         Row: {
