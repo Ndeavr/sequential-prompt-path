@@ -37,12 +37,20 @@ export default function BrokerAppointmentsPage() {
   const { data: appointments, isLoading } = useQuery({
     queryKey: ["broker-appointments", broker?.id],
     queryFn: async () => {
-      const res: any = await supabase
+      // Get leads matched to this broker
+      const { data: matchData } = await supabase
+        .from("matches")
+        .select("lead_id")
+        .eq("broker_id", broker!.id)
+        .eq("response_status", "accepted");
+      const leadIds = (matchData ?? []).map((m: any) => m.lead_id).filter(Boolean);
+      if (!leadIds.length) return [];
+      const { data } = await supabase
         .from("appointments")
         .select("*")
-        .eq("broker_id", broker!.id)
-        .order("scheduled_at", { ascending: false });
-      return (res.data ?? []) as any[];
+        .in("lead_id", leadIds)
+        .order("created_at", { ascending: false });
+      return (data ?? []) as any[];
     },
     enabled: !!broker?.id,
   });
