@@ -169,8 +169,11 @@ serve(async (req) => {
       // Shape spoken greeting for human delivery
       const shaped = shapeTextForHumanSpeech(greetingResult.spokenGreeting, speechStyle);
 
-      // Normalize for TTS
+      // Normalize for TTS only (pronunciation layer)
       const greetingForTTS = normalizeTextForFrenchTts(shaped);
+
+      // ── TRANSCRIPT PARITY: display = shaped (what Alex actually says) ──
+      const greetingDisplayText = shaped;
 
       // Build voice settings (support A/B profiles)
       const voiceSettings = voiceProfile
@@ -185,7 +188,7 @@ serve(async (req) => {
           session_id: data.id,
           event_type: "greeting",
           metadata: {
-            display_text: greetingResult.displayGreeting,
+            display_text: greetingDisplayText,
             spoken_text: greetingResult.spokenGreeting,
             is_returning: isReturning,
             voice_profile: voiceProfile || "default",
@@ -195,7 +198,7 @@ serve(async (req) => {
 
       return new Response(JSON.stringify({
         sessionId: data.id,
-        greeting: greetingResult.displayGreeting,
+        greeting: greetingDisplayText,
         greetingAudio: greetingBase64,
         isReturning,
       }), {
