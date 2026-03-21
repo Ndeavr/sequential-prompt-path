@@ -37,12 +37,12 @@ export default function BrokerAppointmentsPage() {
   const { data: appointments, isLoading } = useQuery({
     queryKey: ["broker-appointments", broker?.id],
     queryFn: async () => {
-      const { data } = await supabase
+      const res: any = await supabase
         .from("appointments")
         .select("*")
         .eq("broker_id", broker!.id)
-        .order("scheduled_at", { ascending: false }) as { data: any[] | null };
-      return data ?? [];
+        .order("scheduled_at", { ascending: false });
+      return (res.data ?? []) as any[];
     },
     enabled: !!broker?.id,
   });
