@@ -76,6 +76,93 @@ export function buildGreeting(ctx: GreetingContext): string {
   return buildAlexGreeting(ctx).displayGreeting;
 }
 
+// ─── 1b. Voice Response Composer ───
+// Assembles a natural spoken reply from discrete parts.
+// Enforces: max 4 short sentences, max 1 question, conversational flow.
+
+export interface ComposeVoiceReplyInput {
+  /** Greeting sentence (from buildAlexGreeting). Omit on non-first turns. */
+  greeting?: string | null;
+  /** Short acknowledgment / bridge sentence (e.g. "Je suis là.", "On reprend.") */
+  acknowledgment?: string | null;
+  /** Core useful info — one short sentence */
+  shortAnswer?: string | null;
+  /** Follow-up question — at most one */
+  nextQuestion?: string | null;
+}
+
+export interface ComposeVoiceReplyResult {
+  /** Full text for UI transcript */
+  displayText: string;
+  /** Full text for TTS (same content, may differ if spoken name used) */
+  spokenText: string;
+  /** Individual sentences for chunked TTS */
+  sentences: string[];
+}
+
+export function composeAlexVoiceReply(
+  input: ComposeVoiceReplyInput,
+  /** Optional: spoken-name variant of greeting for TTS */
+  spokenGreeting?: string | null,
+): ComposeVoiceReplyResult {
+  const displayParts: string[] = [];
+  const spokenParts: string[] = [];
+
+  // 1. Greeting (first sentence, first turn only)
+  if (input.greeting) {
+    displayParts.push(cleanSentence(input.greeting));
+    spokenParts.push(cleanSentence(spokenGreeting ?? input.greeting));
+  }
+
+  // 2. Acknowledgment / bridge
+  if (input.acknowledgment) {
+    const ack = cleanSentence(input.acknowledgment);
+    displayParts.push(ack);
+    spokenParts.push(ack);
+  }
+
+  // 3. Short answer
+  if (input.shortAnswer) {
+    const ans = cleanSentence(input.shortAnswer);
+    displayParts.push(ans);
+    spokenParts.push(ans);
+  }
+
+  // 4. Question (max 1, always last)
+  if (input.nextQuestion) {
+    const q = ensureQuestionMark(cleanSentence(input.nextQuestion));
+    displayParts.push(q);
+    spokenParts.push(q);
+  }
+
+  // Guard: cap at 4 sentences
+  const cappedDisplay = displayParts.slice(0, 4);
+  const cappedSpoken = spokenParts.slice(0, 4);
+
+  return {
+    displayText: cappedDisplay.join(" "),
+    spokenText: cappedSpoken.join(" "),
+    sentences: cappedSpoken,
+  };
+}
+
+/** Trim and ensure sentence ends with punctuation */
+function cleanSentence(s: string): string {
+  const trimmed = s.trim();
+  if (!trimmed) return "";
+  if (/[.!?…]$/.test(trimmed)) return trimmed;
+  return trimmed + ".";
+}
+
+/** Ensure a question ends with ? */
+function ensureQuestionMark(s: string): string {
+  const trimmed = s.trim();
+  if (trimmed.endsWith("?")) return trimmed;
+  // Replace trailing period with question mark
+  if (trimmed.endsWith(".")) return trimmed.slice(0, -1) + "?";
+  return trimmed + "?";
+}
+
 // ─── 2. Spoken French Rewrite ───
 // Converts written French into natural spoken phrasing.
 
