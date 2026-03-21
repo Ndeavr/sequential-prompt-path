@@ -98,3 +98,6 @@ verify_jwt = false
 
 [functions.notification-digest]
 verify_jwt = false
+
+[functions.broker-respond-to-lead]
+verify_jwt = false
