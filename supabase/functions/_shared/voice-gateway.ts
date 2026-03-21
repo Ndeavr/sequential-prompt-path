@@ -15,6 +15,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { alexVoiceBrain, AlexBrainError } from "./alex-voice-brain.ts";
 import {
+  buildAlexGreeting,
+  processAlexResponse,
+  normalizeTextForFrenchTts,
+  ALEX_VOICE_CONFIG,
+} from "./alex-french-voice.ts";
+import {
+  prepareAlexSpeechStyle,
+  shapeTextForHumanSpeech,
+} from "./alex-human-voice.ts";
+import {
   createSession,
   transitionState,
   addUserMessage,
