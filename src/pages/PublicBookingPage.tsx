@@ -17,6 +17,7 @@ import { DateSelector } from "@/components/booking/DateSelector";
 import { RankedTimeSlotGrid } from "@/components/booking/RankedTimeSlotGrid";
 import { BookingSummaryCard } from "@/components/booking/BookingSummaryCard";
 import { BookingConfirmationCard } from "@/components/booking/BookingConfirmationCard";
+import { SignatureFooter } from "@/components/booking/SignatureFooter";
 
 import {
   computeSmartSlots,
@@ -457,6 +458,15 @@ export default function PublicBookingPage() {
             </div>
           )}
         </div>
+
+        {/* Signature Footer */}
+        <SignatureFooter
+          companyName={contractor.business_name}
+          phone={contractor.phone ?? undefined}
+          city={contractor.city ?? undefined}
+          bookingUrl={window.location.href}
+          variant={step === "confirmed" ? "confirmation" : "page"}
+        />
       </div>
     </>
   );
