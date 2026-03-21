@@ -13,13 +13,13 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
+import { alexVoiceBrain, AlexBrainError } from "./alex-voice-brain.ts";
 import {
   createSession,
   transitionState,
   addUserMessage,
   addAssistantMessage,
   recordInterrupt,
-  buildContextString,
   type VoiceSessionContext,
 } from "./voice-session.ts";
 import {
@@ -30,35 +30,10 @@ import {
 } from "./stt-provider.ts";
 
 // ─── Config ───
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const VOICE_ID = "FGY2WhTYpPnrIDTdsKH5"; // Laura
-
-const ALEX_SYSTEM = `Tu es Alex, la concierge vocale premium de la plateforme UNPRO.
-IDENTITÉ :
-- Tu es une femme. Utilise le féminin : « je suis ravie », « bien sûr ».
-- Tu ne dis JAMAIS que tu es une IA ou un robot.
-- Spécialiste construction, rénovation, habitation, copropriété, immobilier, services aux propriétaires, gestion d'entrepreneurs.
-STYLE VOCAL :
-- Réponses TRÈS COURTES. Maximum 2-3 phrases.
-- Une seule question à la fois.
-- Français québécois naturel, ton calme, chaleureux, sharp, premium.
-- Pas de listes. Pas de markdown.
-- Si on t'interrompt, tu t'arrêtes immédiatement.
-ACTIONS UI (entre balises) :
-<ui_action type="navigate" target="/dashboard/properties" />
-<ui_action type="open_upload" />
-<ui_action type="show_score" />
-<ui_action type="show_pricing" />
-<ui_action type="open_booking" />
-<ui_action type="scroll_to" target="recommendations" />
-<ui_action type="show_chips" items="option1,option2,option3" />
-RÈGLES :
-- Réponds en 1-3 phrases max.
-- Termine par une question OU une suggestion d'action.
-- N'invente rien.`;
 
 // ─── Types ───
 export type WsIncoming =
@@ -231,49 +206,30 @@ export class VoiceGateway {
     this.abortController = new AbortController();
 
     try {
-      // Call AI
-      const contextStr = buildContextString(this.session);
-      const aiMessages = [
-        { role: "system", content: ALEX_SYSTEM + contextStr },
-        ...this.session.messages,
-      ];
-
-      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
+      // Call Alex brain
+      const brainResult = await alexVoiceBrain(
+        {
+          transcript: userText,
+          messages: this.session.messages.slice(0, -1), // exclude the just-added user msg
+          userId: this.session.userId,
+          sessionId: this.session.sessionId,
+          userName: this.session.userName,
+          pageContext: {
+            currentPage: this.session.currentPage,
+            activeProperty: this.session.activeProperty,
+            isAuthenticated: this.session.isAuthenticated,
+            userRole: this.session.userRole,
+            hasScore: this.session.hasScore,
+          },
         },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: aiMessages,
-        }),
-        signal: this.abortController.signal,
-      });
+        { signal: this.abortController.signal }
+      );
 
-      if (!aiResponse.ok) {
-        const status = aiResponse.status;
-        if (status === 429) {
-          this.send({ type: "error", message: "Rate limit exceeded" });
-        } else if (status === 402) {
-          this.send({ type: "error", message: "Payment required" });
-        } else {
-          this.send({ type: "error", message: `AI error: ${status}` });
-        }
-        transitionState(this.session, "listening");
-        this.send({ type: "state.change", state: "listening" });
-        return;
-      }
-
-      const aiData = await aiResponse.json();
-      const rawText = aiData.choices?.[0]?.message?.content || "Je suis là pour vous aider.";
-
-      // Extract UI actions
-      const { cleanText, actions } = this.extractUIActions(rawText);
-      addAssistantMessage(this.session, cleanText);
+      const { alexText, uiActions, nextBestAction } = brainResult;
+      addAssistantMessage(this.session, alexText);
 
       // Send text immediately
-      this.send({ type: "response.text", text: cleanText, uiActions: actions });
+      this.send({ type: "response.text", text: alexText, uiActions: uiActions as Array<Record<string, string>> });
 
       // Check if interrupted before TTS
       if (this.abortController.signal.aborted) return;
@@ -283,7 +239,7 @@ export class VoiceGateway {
       this.send({ type: "state.change", state: "speaking" });
 
       // Generate TTS in sentence chunks
-      const sentences = cleanText.match(/[^.!?]+[.!?]+/g) || [cleanText];
+      const sentences = alexText.match(/[^.!?]+[.!?]+/g) || [alexText];
       const validSentences = sentences.filter((s) => s.trim().length >= 3);
 
       for (let i = 0; i < validSentences.length; i++) {
@@ -312,16 +268,21 @@ export class VoiceGateway {
         event_type: "ws_response",
         metadata: {
           user_message: userText,
-          alex_text: cleanText,
-          ui_actions: actions,
+          alex_text: alexText,
+          ui_actions: uiActions,
+          next_best_action: nextBestAction,
           turn: this.session.turnCount,
         },
       }).catch(() => {});
 
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
-      console.error("voice-gateway error:", err);
-      this.send({ type: "error", message: err instanceof Error ? err.message : "Unknown error" });
+      if (err instanceof AlexBrainError) {
+        this.send({ type: "error", message: err.message });
+      } else {
+        console.error("voice-gateway error:", err);
+        this.send({ type: "error", message: err instanceof Error ? err.message : "Unknown error" });
+      }
       if (this.session) {
         transitionState(this.session, "listening");
         this.send({ type: "state.change", state: "listening" });
@@ -377,23 +338,6 @@ export class VoiceGateway {
     }
   }
 
-  // ─── UI action extractor ───
-  private extractUIActions(text: string): { cleanText: string; actions: Array<Record<string, string>> } {
-    const actions: Array<Record<string, string>> = [];
-    const regex = /<ui_action\s+([^/>]+)\s*\/>/g;
-    let match;
-    while ((match = regex.exec(text)) !== null) {
-      const attrs: Record<string, string> = {};
-      const attrRegex = /(\w+)="([^"]+)"/g;
-      let attrMatch;
-      while ((attrMatch = attrRegex.exec(match[1])) !== null) {
-        attrs[attrMatch[1]] = attrMatch[2];
-      }
-      if (attrs.type) actions.push(attrs);
-    }
-    const cleanText = text.replace(/<ui_action[^/>]*\/>/g, "").trim();
-    return { cleanText, actions };
-  }
 
   cleanup() {
     if (this.abortController) {
