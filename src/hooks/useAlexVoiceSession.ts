@@ -89,11 +89,33 @@ export function useAlexVoiceSession() {
     sttRunningRef.current = false;
   }, [clearSilenceTimer]);
 
+  const isRestartingTooFast = useCallback(() => {
+    const now = Date.now();
+    restartTimestamps.current = restartTimestamps.current.filter(t => now - t < RAPID_RESTART_WINDOW_MS);
+    if (restartTimestamps.current.length >= MAX_RAPID_RESTARTS) {
+      console.warn("[VoiceSession] rapid restart loop detected, backing off");
+      return true;
+    }
+    restartTimestamps.current.push(now);
+    return false;
+  }, []);
+
   const startSTT = useCallback(() => {
     if (sttRunningRef.current) return;
     if (!recRef.current || !sessionRef.current) return;
     if (isPlayingRef.current) return;
+    if (isRestartingTooFast()) {
+      // Back off and retry once after a longer delay
+      setTimeout(() => {
+        restartTimestamps.current = [];
+        if (sessionRef.current && !isPlayingRef.current && !sttRunningRef.current && stateRef.current === "listening") {
+          startSTT();
+        }
+      }, 2000);
+      return;
+    }
     finalTranscriptRef.current = "";
+    gotSpeechThisCycle.current = false;
     sttRunningRef.current = true;
     try {
       recRef.current.start();
@@ -101,7 +123,7 @@ export function useAlexVoiceSession() {
     } catch {
       sttRunningRef.current = false;
     }
-  }, []);
+  }, [isRestartingTooFast]);
 
   // ─── Prepare next listen cycle (called after Alex finishes speaking) ───
   const prepareNextListenCycle = useCallback(() => {
