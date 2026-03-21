@@ -1,18 +1,25 @@
 /**
  * UNPRO — Alex Voice Edge Function (Production)
  * 
- * Full voice pipeline:
- * User speaks → client STT → this function (AI brain + TTS) → base64 audio response
+ * Full premium voice pipeline:
+ * User speaks → client STT → this function (greeting/AI brain + French pipeline + TTS) → base64 audio
  * 
  * Actions:
- * - create-session: create voice session, return greeting + TTS
- * - respond-stream: text → AI response → sentence-by-sentence TTS
+ * - create-session: deterministic greeting + TTS
+ * - respond-stream: text → AI → French voice pipeline → sentence-by-sentence TTS
  * - get-scribe-token: ElevenLabs realtime STT token
  * - save-messages: persist conversation to DB
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
+import {
+  buildGreeting,
+  processAlexResponse,
+  ttsNormalize,
+  ALEX_VOICE_CONFIG,
+  ALEX_VOICE_SYSTEM_PROMPT,
+} from "../_shared/alex-french-voice.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,82 +32,13 @@ const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-// Laura — warm, calm, natural French-friendly feminine voice
-const VOICE_ID = "FGY2WhTYpPnrIDTdsKH5";
-
-const ALEX_VOICE_SYSTEM = `Tu es Alex, la concierge vocale premium de la plateforme UNPRO.
-
-IDENTITÉ :
-- Tu es une femme. Utilise le féminin : « je suis ravie », « bien sûr ».
-- Tu ne dis JAMAIS que tu es une IA ou un robot. Tu dis « je suis Alex » ou « je suis votre concierge ».
-- Tu es spécialiste en construction, rénovation, habitation, copropriété, immobilier, services aux propriétaires, et gestion d'entrepreneurs.
-- Tu as de l'expérience terrain, en vente, en gouvernance de copropriété, en réalités de quorum/syndicat.
-
-STYLE VOCAL :
-- Réponses TRÈS COURTES. Maximum 2-3 phrases.
-- Une seule question à la fois. Jamais plus.
-- Français québécois naturel, ton calme, chaleureux, sharp, premium.
-- Pas de longs paragraphes. Pas de listes à puces. Pas de markdown.
-- Tu parles comme dans une vraie conversation téléphonique premium.
-- Si on t'interrompt, tu t'arrêtes immédiatement et tu écoutes.
-
-ACCUEIL :
-- Matin (avant 12h) : "Bonjour [Prénom]."
-- Après-midi (12h-17h) : "Bon après-midi [Prénom]."
-- Soir (après 17h) : "Bonsoir [Prénom]."
-- Deuxième visite : "Rebonjour [Prénom]."
-- Sans prénom : "Bonjour, je suis Alex."
-
-COMPORTEMENT :
-- Par défaut, l'utilisateur est un propriétaire.
-- Si clairement un entrepreneur → guide vers forfaits et croissance.
-- Pose UNE question précise à la fois. Jamais plus.
-- Suggère des actions concrètes : upload photo, voir score, comparer plans, réserver, vérifier entrepreneur.
-- Détecte stress → rassure. Détecte urgence → accélère. Détecte hésitation → simplifie.
-- Préfère toujours le mouvement vers la prochaine action. Ne bloque jamais le progrès.
-- Adapte-toi à la sensibilité budgétaire.
-
-INTELLIGENCE ÉMOTIONNELLE :
-- Rassurante quand stress détecté.
-- Plus rapide quand urgence détectée.
-- Maximum une petite erreur amusante par jour.
-
-ACTIONS UI DISPONIBLES (retourne-les dans ta réponse entre balises) :
-<ui_action type="navigate" target="/dashboard/properties" />
-<ui_action type="open_upload" />
-<ui_action type="show_score" />
-<ui_action type="show_pricing" />
-<ui_action type="show_plan_recommendation" target="elite" />
-<ui_action type="open_booking" />
-<ui_action type="scroll_to" target="recommendations" />
-<ui_action type="highlight" target="[data-plan='elite']" />
-<ui_action type="draw_circle" target="[data-plan='premium']" />
-<ui_action type="show_chips" items="option1,option2,option3" />
-
-PROCHAINE MEILLEURE ACTION :
-À la fin de ta réponse, ajoute une balise indiquant ce que l'utilisateur devrait faire ensuite :
-<next_action>description courte de l'action</next_action>
-
-RÈGLES ABSOLUES :
-- Réponds en 1-3 phrases max. C'est de la voix, pas du texte.
-- Ne fais jamais de liste à puces en mode vocal.
-- Termine toujours par une question OU une suggestion d'action.
-- Ne bloque jamais le progrès.
-- N'invente rien.`;
-
-function getGreeting(userName?: string | null, isReturning = false): string {
-  const hour = new Date().getUTCHours() - 5; // EST approximation
-  const name = userName ? ` ${userName}` : "";
-  if (isReturning && userName) return `Rebonjour${name}.`;
-  if (hour < 12) return `Bonjour${name}.`;
-  if (hour < 17) return `Bon après-midi${name}.`;
-  return `Bonsoir${name}.`;
-}
+// ─── TTS Generation ───
 
 async function generateTTS(text: string): Promise<ArrayBuffer | null> {
   try {
+    const { voiceId, modelId, outputFormat, voiceSettings } = ALEX_VOICE_CONFIG;
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}/stream?output_format=mp3_22050_32`,
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream?output_format=${outputFormat}`,
       {
         method: "POST",
         headers: {
@@ -109,51 +47,36 @@ async function generateTTS(text: string): Promise<ArrayBuffer | null> {
         },
         body: JSON.stringify({
           text,
-          model_id: "eleven_turbo_v2_5",
-          voice_settings: {
-            stability: 0.55,
-            similarity_boost: 0.78,
-            style: 0.15,
-            use_speaker_boost: true,
-            speed: 1.05,
-          },
+          model_id: modelId,
+          voice_settings: voiceSettings,
         }),
       }
     );
     if (!response.ok) {
-      console.error("TTS error:", response.status, await response.text());
+      console.error("[alex-voice] TTS error:", response.status, await response.text());
       return null;
     }
     return await response.arrayBuffer();
   } catch (e) {
-    console.error("TTS fetch error:", e);
+    console.error("[alex-voice] TTS fetch error:", e);
     return null;
   }
 }
 
-function extractUIActions(text: string): { cleanText: string; actions: Array<Record<string, string>> } {
-  const actions: Array<Record<string, string>> = [];
-  const regex = /<ui_action\s+([^/>]+)\s*\/>/g;
-  let match;
-  while ((match = regex.exec(text)) !== null) {
-    const attrs: Record<string, string> = {};
-    const attrRegex = /(\w+)="([^"]+)"/g;
-    let attrMatch;
-    while ((attrMatch = attrRegex.exec(match[1])) !== null) {
-      attrs[attrMatch[1]] = attrMatch[2];
-    }
-    if (attrs.type) actions.push(attrs);
-  }
-  const cleanText = text.replace(/<ui_action[^/>]*\/>/g, "").trim();
-  return { cleanText, actions };
-}
+// ─── Context builder ───
 
-function extractNextAction(text: string): { cleanText: string; nextAction: string | null } {
-  const regex = /<next_action>([\s\S]*?)<\/next_action>/;
-  const match = regex.exec(text);
-  const nextAction = match ? match[1].trim() : null;
-  const cleanText = text.replace(/<next_action>[\s\S]*?<\/next_action>/g, "").trim();
-  return { cleanText, nextAction };
+function buildContextString(ctx: Record<string, any> | undefined, userName?: string | null): string {
+  if (!ctx && !userName) return "";
+  const parts: string[] = [];
+  if (ctx?.currentPage) parts.push(`Page: ${ctx.currentPage}`);
+  if (ctx?.activeProperty) parts.push(`Propriété: ${ctx.activeProperty}`);
+  if (ctx?.isAuthenticated) parts.push(`Connecté: oui`);
+  if (ctx?.userRole) parts.push(`Rôle: ${ctx.userRole}`);
+  if (ctx?.hasScore) parts.push(`Score existant: oui`);
+  if (ctx?.hasPendingBooking) parts.push(`RDV en attente: oui`);
+  if (ctx?.hasUploadedImage) parts.push(`Image uploadée: oui`);
+  if (userName) parts.push(`Prénom: ${userName}`);
+  return parts.length > 0 ? "\n\nCONTEXTE:\n" + parts.join("\n") : "";
 }
 
 serve(async (req) => {
@@ -183,7 +106,6 @@ serve(async (req) => {
     if (action === "create-session") {
       const { userId, feature, userName, context } = body;
 
-      // Check for returning user
       let isReturning = false;
       if (userId) {
         const { count } = await supabase
@@ -206,24 +128,29 @@ serve(async (req) => {
 
       if (error) throw error;
 
-      const greeting = getGreeting(userName, isReturning);
-      const fullGreeting = greeting + " Comment puis-je vous aider?";
+      // Deterministic greeting via builder
+      const greeting = buildGreeting({
+        userName,
+        isReturning,
+        utcOffset: -5,
+      });
 
-      const greetingAudio = await generateTTS(fullGreeting);
+      // TTS normalize greeting for clean pronunciation
+      const greetingForTTS = ttsNormalize(greeting);
+      const greetingAudio = await generateTTS(greetingForTTS);
       const greetingBase64 = greetingAudio ? base64Encode(greetingAudio) : null;
 
-      // Persist greeting as first message
       try {
         await supabase.from("voice_events").insert({
           session_id: data.id,
           event_type: "greeting",
-          metadata: { alex_text: fullGreeting, is_returning: isReturning },
+          metadata: { alex_text: greeting, is_returning: isReturning },
         });
-      } catch (_) {}
+      } catch (_) { /* non-blocking */ }
 
       return new Response(JSON.stringify({
         sessionId: data.id,
-        greeting: fullGreeting,
+        greeting,
         greetingAudio: greetingBase64,
         isReturning,
       }), {
@@ -231,27 +158,19 @@ serve(async (req) => {
       });
     }
 
-    // ─── RESPOND-STREAM: Full pipeline ───
+    // ─── RESPOND-STREAM ───
     if (action === "respond" || action === "respond-stream") {
       const { sessionId, userMessage, messages, context, userName } = body;
 
-      let contextStr = "";
-      if (context?.currentPage) contextStr += `\nPage actuelle: ${context.currentPage}`;
-      if (context?.activeProperty) contextStr += `\nPropriété active: ${context.activeProperty}`;
-      if (context?.isAuthenticated) contextStr += `\nUtilisateur connecté: oui`;
-      if (context?.userRole) contextStr += `\nRôle: ${context.userRole}`;
-      if (context?.hasScore) contextStr += `\nScore maison existant: oui`;
-      if (context?.hasPendingBooking) contextStr += `\nRendez-vous en attente: oui`;
-      if (context?.hasUploadedImage) contextStr += `\nImage uploadée: oui`;
-      if (userName) contextStr += `\nPrénom: ${userName}`;
+      const contextStr = buildContextString(context, userName);
 
       const conversationMessages = [
-        { role: "system", content: ALEX_VOICE_SYSTEM + contextStr },
+        { role: "system", content: ALEX_VOICE_SYSTEM_PROMPT + contextStr },
         ...(messages || []),
         ...(userMessage ? [{ role: "user", content: userMessage }] : []),
       ];
 
-      // Call AI brain
+      // AI brain call
       const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -280,13 +199,12 @@ serve(async (req) => {
       }
 
       const aiData = await aiResponse.json();
-      let rawText = aiData.choices?.[0]?.message?.content || "Je suis là pour vous aider.";
+      const rawText = aiData.choices?.[0]?.message?.content || "Je suis là pour vous aider.";
 
-      // Extract next action then UI actions
-      const { cleanText: afterNextAction, nextAction } = extractNextAction(rawText);
-      const { cleanText, actions } = extractUIActions(afterNextAction);
+      // Full French voice pipeline
+      const { displayText, ttsSentences, uiActions, nextAction } = processAlexResponse(rawText);
 
-      // Persist conversation to DB
+      // Persist
       if (sessionId) {
         try {
           await supabase.from("voice_events").insert({
@@ -294,49 +212,44 @@ serve(async (req) => {
             event_type: "conversation_turn",
             metadata: {
               user_message: userMessage,
-              alex_text: cleanText,
-              ui_actions: actions,
+              alex_text: displayText,
+              ui_actions: uiActions,
               next_action: nextAction,
             },
           });
-        } catch (_) {}
+        } catch (_) { /* non-blocking */ }
 
-        // Update session transcript
         try {
           await supabase.from("voice_sessions").update({
-            transcript: cleanText,
+            transcript: displayText,
             context_json: {
               last_user_message: userMessage,
-              last_alex_response: cleanText,
+              last_alex_response: displayText,
               updated_at: new Date().toISOString(),
             },
           }).eq("id", sessionId);
-        } catch (_) {}
+        } catch (_) { /* non-blocking */ }
       }
 
-      // Generate TTS — split into sentences for chunked playback
-      const sentences = cleanText.match(/[^.!?]+[.!?]+/g) || [cleanText];
+      // Generate TTS for each sentence (already normalized by pipeline)
       const audioChunks: string[] = [];
-
-      for (const sentence of sentences) {
-        const trimmed = sentence.trim();
-        if (trimmed.length < 3) continue;
-        const audio = await generateTTS(trimmed);
+      for (const sentence of ttsSentences) {
+        const audio = await generateTTS(sentence);
         if (audio) audioChunks.push(base64Encode(audio));
       }
 
       return new Response(JSON.stringify({
-        text: cleanText,
+        text: displayText,
         audioChunks,
         audioAvailable: audioChunks.length > 0,
-        uiActions: actions,
+        uiActions,
         nextAction,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // ─── SAVE MESSAGES (batch persist) ───
+    // ─── SAVE MESSAGES ───
     if (action === "save-messages") {
       const { sessionId, conversationMessages } = body;
       if (sessionId && conversationMessages?.length) {
@@ -346,7 +259,7 @@ serve(async (req) => {
             event_type: "conversation_history",
             metadata: { messages: conversationMessages },
           });
-        } catch (_) {}
+        } catch (_) { /* non-blocking */ }
       }
       return new Response(JSON.stringify({ ok: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -357,7 +270,7 @@ serve(async (req) => {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    console.error("alex-voice error:", e);
+    console.error("[alex-voice] error:", e);
     return new Response(JSON.stringify({
       error: e instanceof Error ? e.message : "Unknown error",
     }), {
