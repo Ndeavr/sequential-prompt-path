@@ -15,6 +15,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { alexVoiceBrain, AlexBrainError } from "./alex-voice-brain.ts";
 import {
+  buildAlexGreeting,
+  processAlexResponse,
+  normalizeTextForFrenchTts,
+  ALEX_VOICE_CONFIG,
+} from "./alex-french-voice.ts";
+import {
+  prepareAlexSpeechStyle,
+  shapeTextForHumanSpeech,
+} from "./alex-human-voice.ts";
+import {
   createSession,
   transitionState,
   addUserMessage,
@@ -33,7 +43,6 @@ import {
 const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const VOICE_ID = "gCr8TeSJgJaeaIoV4RWH"; // Alex — locked, no fallback
 
 // ─── Types ───
 export type WsIncoming =
@@ -145,16 +154,17 @@ export class VoiceGateway {
       },
     }).catch(() => {});
 
-    // Generate greeting
-    const hour = new Date().getUTCHours() - 5;
-    const name = msg.userName ? ` ${msg.userName}` : "";
-    let greeting: string;
-    if (hour < 12) greeting = `Bonjour${name}.`;
-    else if (hour < 17) greeting = `Bon après-midi${name}.`;
-    else greeting = `Bonsoir${name}.`;
-    greeting += " Comment puis-je vous aider?";
+    // Deterministic greeting via builder
+    const greetingResult = buildAlexGreeting({
+      firstName: msg.userName,
+      localHour: null, // will use UTC offset
+      utcOffset: -5,
+    });
+    const greeting = greetingResult.spokenGreeting;
 
-    const greetingAudio = await this.generateTTS(greeting);
+    // TTS normalize for pronunciation, then generate
+    const greetingForTTS = normalizeTextForFrenchTts(greeting);
+    const greetingAudio = await this.generateTTS(greetingForTTS);
 
     this.send({
       type: "session.ready",
@@ -226,10 +236,13 @@ export class VoiceGateway {
       );
 
       const { alexText, uiActions, nextBestAction } = brainResult;
-      addAssistantMessage(this.session, alexText);
 
-      // Send text immediately
-      this.send({ type: "response.text", text: alexText, uiActions: uiActions as Array<Record<string, string>> });
+      // ── Full French Voice Pipeline ──
+      const { displayText, ttsSentences } = processAlexResponse(alexText);
+      addAssistantMessage(this.session, displayText);
+
+      // Send display text immediately (transcript parity)
+      this.send({ type: "response.text", text: displayText, uiActions: uiActions as Array<Record<string, string>> });
 
       // Check if interrupted before TTS
       if (this.abortController.signal.aborted) return;
@@ -238,20 +251,20 @@ export class VoiceGateway {
       transitionState(this.session, "speaking");
       this.send({ type: "state.change", state: "speaking" });
 
-      // Generate TTS in sentence chunks
-      const sentences = alexText.match(/[^.!?]+[.!?]+/g) || [alexText];
-      const validSentences = sentences.filter((s) => s.trim().length >= 3);
+      // Human voice shaping per sentence
+      const speechStyle = prepareAlexSpeechStyle({ mode: "neutral" });
+      const shapedSentences = ttsSentences.map(s => shapeTextForHumanSpeech(s, speechStyle));
 
-      for (let i = 0; i < validSentences.length; i++) {
+      for (let i = 0; i < shapedSentences.length; i++) {
         if (this.abortController.signal.aborted) break;
 
-        const audioBase64 = await this.generateTTS(validSentences[i].trim());
+        const audioBase64 = await this.generateTTS(shapedSentences[i]);
         if (audioBase64 && !this.abortController.signal.aborted) {
           this.send({
             type: "response.audio",
             chunk: audioBase64,
             index: i,
-            total: validSentences.length,
+            total: shapedSentences.length,
           });
         }
       }
@@ -268,7 +281,7 @@ export class VoiceGateway {
         event_type: "ws_response",
         metadata: {
           user_message: userText,
-          alex_text: alexText,
+          alex_text: displayText,
           ui_actions: uiActions,
           next_best_action: nextBestAction,
           turn: this.session.turnCount,
@@ -306,11 +319,12 @@ export class VoiceGateway {
     this.send({ type: "state.change", state: "listening" });
   }
 
-  // ─── TTS helper ───
+  // ─── TTS helper (uses locked ALEX_VOICE_CONFIG) ───
   private async generateTTS(text: string): Promise<string | null> {
     try {
+      const { voiceId, modelId, outputFormat, voiceSettings } = ALEX_VOICE_CONFIG;
       const response = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}/stream?output_format=mp3_22050_32`,
+        `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream?output_format=${outputFormat}`,
         {
           method: "POST",
           headers: {
@@ -319,14 +333,8 @@ export class VoiceGateway {
           },
           body: JSON.stringify({
             text,
-            model_id: "eleven_turbo_v2_5",
-            voice_settings: {
-              stability: 0.55,
-              similarity_boost: 0.78,
-              style: 0.15,
-              use_speaker_boost: true,
-              speed: 1.05,
-            },
+            model_id: modelId,
+            voice_settings: voiceSettings,
           }),
         }
       );

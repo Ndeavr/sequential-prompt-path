@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const DEFAULT_VOICE_ID = "cgSgspJ2msm6clMCkdW9"; // Jessica — dynamic & confident feminine voice
+const DEFAULT_VOICE_ID = "gCr8TeSJgJaeaIoV4RWH"; // Alex — locked, no fallback
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
