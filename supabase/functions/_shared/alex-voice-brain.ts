@@ -14,7 +14,10 @@ export interface VoiceBrainInput {
   messages?: Array<{ role: "user" | "assistant"; content: string }>;
   userId?: string | null;
   sessionId?: string | null;
+  /** Display name (for UI) */
   userName?: string | null;
+  /** Preferred spoken name (for TTS — may differ from userName) */
+  preferredSpokenName?: string | null;
   pageContext?: {
     currentPage?: string;
     activeProperty?: string;
@@ -54,7 +57,8 @@ function buildContextBlock(input: VoiceBrainInput): string {
   if (ctx?.hasScore) parts.push(`Score maison existant: oui`);
   if (ctx?.hasPendingBooking) parts.push(`Rendez-vous en attente: oui`);
   if (ctx?.hasUploadedImage) parts.push(`Image uploadée: oui`);
-  if (input.userName) parts.push(`Prénom: ${input.userName}`);
+  if (input.preferredSpokenName) parts.push(`Prénom pour la voix: ${input.preferredSpokenName}`);
+  else if (input.userName) parts.push(`Prénom: ${input.userName}`);
   return parts.length > 0 ? "\n" + parts.join("\n") : "";
 }
 

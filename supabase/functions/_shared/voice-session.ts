@@ -10,7 +10,10 @@ export type VoiceSessionState = "idle" | "listening" | "thinking" | "speaking";
 export interface VoiceSessionContext {
   sessionId: string;
   userId: string | null;
+  /** Display name for UI transcript */
   userName: string | null;
+  /** Preferred spoken name for TTS (may differ from userName) */
+  preferredSpokenName: string | null;
   state: VoiceSessionState;
   messages: Array<{ role: "user" | "assistant"; content: string }>;
   currentPage?: string;
@@ -28,12 +31,14 @@ export function createSession(params: {
   sessionId: string;
   userId?: string | null;
   userName?: string | null;
+  preferredSpokenName?: string | null;
   context?: Record<string, unknown>;
 }): VoiceSessionContext {
   return {
     sessionId: params.sessionId,
     userId: params.userId ?? null,
     userName: params.userName ?? null,
+    preferredSpokenName: params.preferredSpokenName ?? params.userName ?? null,
     state: "idle",
     messages: [],
     currentPage: (params.context?.currentPage as string) ?? undefined,
@@ -91,6 +96,7 @@ export function buildContextString(session: VoiceSessionContext): string {
   if (session.isAuthenticated) parts.push(`Utilisateur connecté: oui`);
   if (session.userRole) parts.push(`Rôle: ${session.userRole}`);
   if (session.hasScore) parts.push(`Score maison existant: oui`);
-  if (session.userName) parts.push(`Prénom: ${session.userName}`);
+  if (session.preferredSpokenName) parts.push(`Prénom pour la voix: ${session.preferredSpokenName}`);
+  else if (session.userName) parts.push(`Prénom: ${session.userName}`);
   return parts.length > 0 ? "\n" + parts.join("\n") : "";
 }
