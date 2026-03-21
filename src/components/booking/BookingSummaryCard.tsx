@@ -136,13 +136,24 @@ export function BookingSummaryCard({
       </div>
 
       {/* Actions */}
-      <div className="p-5 border-t border-border/40 flex gap-3">
-        <Button variant="outline" onClick={onBack} className="flex-1" disabled={isSubmitting}>
-          Modifier
-        </Button>
-        <Button onClick={onConfirm} className="flex-1" disabled={isSubmitting}>
-          {isSubmitting ? "Confirmation..." : "Confirmer le rendez-vous"}
-        </Button>
+      <div className="p-5 border-t border-border/40 space-y-3">
+        {!appointmentType.is_free && appointmentType.price_amount > 0 && (
+          <p className="text-xs text-muted-foreground text-center">
+            Paiement sécurisé par Stripe. Vous serez redirigé vers la page de paiement.
+          </p>
+        )}
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={onBack} className="flex-1" disabled={isSubmitting}>
+            Modifier
+          </Button>
+          <Button onClick={onConfirm} className="flex-1" disabled={isSubmitting}>
+            {isSubmitting
+              ? "Traitement..."
+              : !appointmentType.is_free && appointmentType.price_amount > 0
+                ? `Payer ${(appointmentType.price_amount / 100).toFixed(0)}$ et réserver`
+                : "Confirmer le rendez-vous"}
+          </Button>
+        </div>
       </div>
     </div>
   );
