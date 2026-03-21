@@ -98,6 +98,7 @@ import BrokerOnboardingPage from "@/pages/courtiers/BrokerOnboardingPage";
 import BrokerDashboardPage from "@/pages/courtiers/BrokerDashboardPage";
 import BrokerLeadsPage from "@/pages/courtiers/BrokerLeadsPage";
 import BrokerProfilePage from "@/pages/courtiers/BrokerProfilePage";
+import BrokerAppointmentsPage from "@/pages/courtiers/BrokerAppointmentsPage";
 
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
@@ -488,7 +489,7 @@ export const AppRouter = () => (
       <Route path="/broker" element={<ProtectedRoute requiredRole="homeowner"><BrokerDashboardPage /></ProtectedRoute>} />
       <Route path="/broker/leads" element={<ProtectedRoute requiredRole="homeowner"><BrokerLeadsPage /></ProtectedRoute>} />
       <Route path="/broker/profile" element={<ProtectedRoute requiredRole="homeowner"><BrokerProfilePage /></ProtectedRoute>} />
-      <Route path="/broker/appointments" element={<PlaceholderPage />} />
+      <Route path="/broker/appointments" element={<ProtectedRoute requiredRole="homeowner"><BrokerAppointmentsPage /></ProtectedRoute>} />
 
       {/* Refusal SEO public pages */}
       <Route path="/refusal/:slug" element={<RefusalSeoPage />} />

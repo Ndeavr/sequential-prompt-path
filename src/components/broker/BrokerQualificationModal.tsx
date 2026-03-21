@@ -198,7 +198,17 @@ export default function BrokerQualificationModal({ open, onOpenChange }: Props) 
                     </p>
                   </div>
                 </div>
-                <Button variant="outline" className="w-full" onClick={() => {
+                <Button variant="outline" className="w-full" onClick={async () => {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (user) {
+                    const citySlug = city.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-");
+                    await supabase.from("broker_waitlist" as any).insert({
+                      profile_id: user.id,
+                      city: citySlug,
+                      specialty: specialties[0]?.toLowerCase() || "residentiel",
+                      volume: volume,
+                    });
+                  }
                   toast.info("Vous serez notifié dès qu'une place se libère.");
                   onOpenChange(false);
                 }}>
