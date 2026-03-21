@@ -4,10 +4,10 @@
  * Uses ElevenLabs Input Streaming API (WebSocket) for ultra-low latency
  * sentence-by-sentence audio delivery.
  *
- * Voice: Laura (FGY2WhTYpPnrIDTdsKH5) — warm, intelligent, premium French delivery.
+ * Voice: Alex (gCr8TeSJgJaeaIoV4RWH) — locked, no fallback.
  */
 
-const DEFAULT_VOICE_ID = "FGY2WhTYpPnrIDTdsKH5"; // Laura
+const DEFAULT_VOICE_ID = "gCr8TeSJgJaeaIoV4RWH"; // Alex — locked, no fallback
 const MODEL_ID = "eleven_turbo_v2_5";
 const OUTPUT_FORMAT = "mp3_44100_128";
 
@@ -20,9 +20,9 @@ export interface TtsVoiceSettings {
 }
 
 const DEFAULT_VOICE_SETTINGS: TtsVoiceSettings = {
-  stability: 0.50,
-  similarity_boost: 0.78,
-  style: 0.20,
+  stability: 0.70,
+  similarity_boost: 0.86,
+  style: 0.14,
   use_speaker_boost: true,
   speed: 0.92,
 };
