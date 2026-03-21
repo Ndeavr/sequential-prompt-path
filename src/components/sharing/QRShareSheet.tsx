@@ -80,7 +80,7 @@ const QRShareSheet = ({ open, onOpenChange }: QRShareSheetProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-1rem)] max-w-lg max-h-[95vh] rounded-3xl p-0 overflow-y-auto border-0 shadow-2xl bg-card">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-lg max-h-[95vh] rounded-3xl p-0 overflow-y-auto overflow-x-hidden border-0 shadow-2xl bg-card">
         <DialogHeader className="sr-only">
           <DialogTitle>{t.dialogTitle.fr}</DialogTitle>
         </DialogHeader>
