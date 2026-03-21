@@ -164,17 +164,18 @@ function ensureQuestionMark(s: string): string {
 }
 
 // ─── 2. Spoken French Rewrite ───
-// Converts written French into natural spoken phrasing.
+// Converts stiff/formal/corporate French into natural spoken phrasing.
+// Two modes: "soft" (light cleanup) and "full" (aggressive conversational rewrite).
 
-const SPOKEN_REPLACEMENTS: [RegExp, string][] = [
-  // Remove markdown artifacts the model might slip in
+const SPOKEN_REPLACEMENTS_CORE: [RegExp, string][] = [
+  // ── Markdown artifacts ──
   [/\*\*([^*]+)\*\*/g, "$1"],
   [/\*([^*]+)\*/g, "$1"],
   [/#{1,3}\s*/g, ""],
   [/- /g, ""],
   [/•\s*/g, ""],
 
-  // Written → spoken contractions
+  // ── Written → spoken contractions ──
   [/\bIl y a\b/g, "Y'a"],
   [/\bil y a\b/g, "y'a"],
   [/\bJe ne\b/g, "Je"],
@@ -185,28 +186,111 @@ const SPOKEN_REPLACEMENTS: [RegExp, string][] = [
   [/\bIl ne faut pas\b/g, "Faut pas"],
   [/\bil ne faut pas\b/g, "faut pas"],
 
-  // Overly formal → natural
+  // ── Overly formal → natural ──
   [/\bje vous en prie\b/gi, "bien sûr"],
   [/\bn'hésitez pas à\b/gi, ""],
   [/\bveuillez\b/gi, ""],
   [/\bje vous recommande de\b/gi, "je vous suggère de"],
 
-  // Remove filler the model loves
+  // ── Model filler removal ──
   [/\bEn effet,?\s*/gi, ""],
   [/\bTout à fait,?\s*/gi, ""],
   [/\bAbsolument,?\s*/gi, ""],
   [/\bBien entendu,?\s*/gi, ""],
-
-  // Clean trailing/leading spaces
-  [/\s{2,}/g, " "],
+  [/\bEffectivement,?\s*/gi, ""],
+  [/\bÉvidemment,?\s*/gi, ""],
+  [/\bBien sûr,?\s*/gi, ""],
+  [/\bParfait,?\s*/gi, ""],
 ];
 
-export function spokenFrenchRewrite(text: string): string {
+// ── Banned corporate / assistant phrasing → natural replacements ──
+const SPOKEN_REPLACEMENTS_FULL: [RegExp, string][] = [
+  // "Afin de" → "Pour"
+  [/\bAfin de\b/g, "Pour"],
+  [/\bafin de\b/g, "pour"],
+  // "Permettez-moi de" → ""
+  [/\bPermettez-moi de\b/gi, ""],
+  // "Je suis en mesure de" → "Je peux"
+  [/\bJe suis en mesure de\b/g, "Je peux"],
+  [/\bje suis en mesure de\b/g, "je peux"],
+  // "Il serait pertinent de" → "Le mieux, c'est de"
+  [/\bIl serait pertinent de\b/g, "Le mieux, c'est de"],
+  [/\bil serait pertinent de\b/g, "le mieux, c'est de"],
+  // "Nous allons procéder" → "On va faire ça"
+  [/\bNous allons procéder\b/g, "On va faire ça"],
+  [/\bnous allons procéder\b/g, "on va faire ça"],
+  // "Dans votre situation actuelle" → ""
+  [/\bDans votre situation actuelle,?\s*/gi, ""],
+  // "Merci pour cette précision" → "D'accord"
+  [/\bMerci pour cette précision\.?\s*/gi, "D'accord. "],
+  // "Je vous propose les options suivantes" → "On peut"
+  [/\bJe vous propose les options suivantes\s*:?\s*/gi, "On peut "],
+  // Additional corporate fluff
+  [/\bJe me permets de\b/gi, ""],
+  [/\bIl convient de noter que\b/gi, ""],
+  [/\bIl est important de souligner que\b/gi, ""],
+  [/\bDans le cadre de\b/g, "Pour"],
+  [/\bdans le cadre de\b/g, "pour"],
+  [/\bEn ce qui concerne\b/g, "Pour"],
+  [/\ben ce qui concerne\b/g, "pour"],
+  [/\bNous allons voir ensemble\b/gi, "On va voir"],
+  [/\bJe tiens à vous informer que\b/gi, ""],
+  [/\bComme mentionné précédemment,?\s*/gi, ""],
+  [/\bSuite à votre demande,?\s*/gi, ""],
+  // "nous" → "on" (spoken Québec)
+  [/\bNous pouvons\b/g, "On peut"],
+  [/\bnous pouvons\b/g, "on peut"],
+  [/\bNous allons\b/g, "On va"],
+  [/\bnous allons\b/g, "on va"],
+];
+
+// Final cleanup (always applied last)
+const SPOKEN_CLEANUP: [RegExp, string][] = [
+  [/\s{2,}/g, " "],
+  [/\.\s*\./g, "."],
+  [/^\s+/g, ""],
+];
+
+export type SpokenRewriteMode = "soft" | "full";
+
+/**
+ * Rewrites text from formal/written French to natural spoken French.
+ *
+ * @param text  Raw AI output text
+ * @param mode  "soft" = light cleanup (markdown, filler, basic contractions)
+ *              "full" = aggressive rewrite (corporate phrases, nous→on, etc.)
+ *
+ * Examples (mode "full"):
+ *   "Afin de vous aider, permettez-moi de vérifier."
+ *     → "Pour vous aider, vérifier."
+ *   "Je suis en mesure de vous accompagner dans le cadre de votre projet."
+ *     → "Je peux vous accompagner pour votre projet."
+ *   "Merci pour cette précision. Il serait pertinent de regarder le budget."
+ *     → "D'accord. Le mieux, c'est de regarder le budget."
+ */
+export function rewriteAlexToSpokenFrench(text: string, mode: SpokenRewriteMode = "full"): string {
   let result = text;
-  for (const [pattern, replacement] of SPOKEN_REPLACEMENTS) {
-    result = result.replace(pattern, replacement);
+
+  for (const [p, r] of SPOKEN_REPLACEMENTS_CORE) {
+    result = result.replace(p, r);
   }
+
+  if (mode === "full") {
+    for (const [p, r] of SPOKEN_REPLACEMENTS_FULL) {
+      result = result.replace(p, r);
+    }
+  }
+
+  for (const [p, r] of SPOKEN_CLEANUP) {
+    result = result.replace(p, r);
+  }
+
   return result.trim();
+}
+
+/** @deprecated Use rewriteAlexToSpokenFrench instead */
+export function spokenFrenchRewrite(text: string): string {
+  return rewriteAlexToSpokenFrench(text, "full");
 }
 
 // ─── 3. TTS Text Normalizer ───
