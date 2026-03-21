@@ -20,7 +20,6 @@ import {
   addUserMessage,
   addAssistantMessage,
   recordInterrupt,
-  buildContextString,
   type VoiceSessionContext,
 } from "./voice-session.ts";
 import {
