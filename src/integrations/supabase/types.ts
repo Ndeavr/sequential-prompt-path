@@ -2553,34 +2553,43 @@ export type Database = {
       broker_scores: {
         Row: {
           acceptance_rate: number | null
+          appointments_completed: number | null
           avg_review_score: number | null
           broker_id: string
           conversion_rate: number | null
           id: string
+          on_time_rate: number | null
           profile_completeness_score: number | null
           ranking_score: number | null
+          recommendation_rate: number | null
           response_speed_score: number | null
           updated_at: string | null
         }
         Insert: {
           acceptance_rate?: number | null
+          appointments_completed?: number | null
           avg_review_score?: number | null
           broker_id: string
           conversion_rate?: number | null
           id?: string
+          on_time_rate?: number | null
           profile_completeness_score?: number | null
           ranking_score?: number | null
+          recommendation_rate?: number | null
           response_speed_score?: number | null
           updated_at?: string | null
         }
         Update: {
           acceptance_rate?: number | null
+          appointments_completed?: number | null
           avg_review_score?: number | null
           broker_id?: string
           conversion_rate?: number | null
           id?: string
+          on_time_rate?: number | null
           profile_completeness_score?: number | null
           ranking_score?: number | null
+          recommendation_rate?: number | null
           response_speed_score?: number | null
           updated_at?: string | null
         }
@@ -2590,6 +2599,47 @@ export type Database = {
             columns: ["broker_id"]
             isOneToOne: false
             referencedRelation: "broker_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broker_waitlist: {
+        Row: {
+          activated_at: string | null
+          city: string
+          created_at: string
+          id: string
+          profile_id: string
+          specialty: string
+          status: string
+          volume: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          city: string
+          created_at?: string
+          id?: string
+          profile_id: string
+          specialty: string
+          status?: string
+          volume?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          city?: string
+          created_at?: string
+          id?: string
+          profile_id?: string
+          specialty?: string
+          status?: string
+          volume?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broker_waitlist_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
