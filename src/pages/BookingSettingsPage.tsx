@@ -11,6 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DEFAULT_APPOINTMENT_TEMPLATES, type AppointmentType } from "@/services/bookingSlotEngine";
 import { useAuth } from "@/hooks/useAuth";
+import { useContractorPlan } from "@/hooks/useContractorPlan";
+import { SignatureLockedOverlay } from "@/components/booking/SignatureLockedOverlay";
+import { SignatureDowngradeBanner } from "@/components/booking/SignatureDowngradeBanner";
 
 const LOCATION_MODES = [
   { value: "client_address", label: "Sur place (chez le client)" },
