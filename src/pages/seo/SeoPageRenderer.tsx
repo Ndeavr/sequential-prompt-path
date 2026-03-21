@@ -1,6 +1,6 @@
 /**
  * UNPRO — Dynamic SEO Page Renderer
- * Renders any seo_pages entry with full SEO: H1, intro, body, FAQ, CTA, JSON-LD, internal links.
+ * Renders any seo_pages entry with full SEO: H1, intro, body, FAQ accordion, CTA, JSON-LD, internal links.
  * Route: /s/:slug
  */
 import { useParams, Link } from "react-router-dom";
@@ -12,6 +12,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { ArrowRight, ChevronRight, HelpCircle, MapPin, Wrench } from "lucide-react";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
@@ -82,7 +88,14 @@ export default function SeoPageRenderer() {
 
   const faqItems: FaqItem[] = (page.faq_json as unknown as FaqItem[]) || [];
   const internalLinks: string[] = (page.internal_links as unknown as string[]) || [];
-  const schemaJson = page.schema_json || {};
+  const schemaJson = page.schema_json;
+
+  // Build JSON-LD script content
+  const jsonLdContent = Array.isArray(schemaJson)
+    ? schemaJson.map((s: any) => JSON.stringify(s))
+    : schemaJson && typeof schemaJson === "object" && Object.keys(schemaJson).length > 0
+    ? [JSON.stringify(schemaJson)]
+    : [];
 
   return (
     <MainLayout>
@@ -90,14 +103,18 @@ export default function SeoPageRenderer() {
         <title>{page.title}</title>
         {page.meta_description && <meta name="description" content={page.meta_description} />}
         <link rel="canonical" href={`https://unpro.ca/s/${page.slug}`} />
-        {Object.keys(schemaJson).length > 0 && (
-          <script type="application/ld+json">{JSON.stringify(schemaJson)}</script>
-        )}
+        <meta property="og:title" content={page.title} />
+        {page.meta_description && <meta property="og:description" content={page.meta_description} />}
+        <meta property="og:url" content={`https://unpro.ca/s/${page.slug}`} />
+        <meta property="og:type" content="article" />
+        {jsonLdContent.map((ld, i) => (
+          <script key={i} type="application/ld+json">{ld}</script>
+        ))}
       </Helmet>
 
       <article className="max-w-4xl mx-auto px-5 py-12">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1 text-sm text-muted-foreground mb-6">
+        <nav className="flex items-center gap-1 text-sm text-muted-foreground mb-6" aria-label="Breadcrumb">
           <Link to="/" className="hover:text-foreground">Accueil</Link>
           <ChevronRight className="h-3 w-3" />
           {page.page_type === "profession_city" && (
@@ -108,11 +125,17 @@ export default function SeoPageRenderer() {
           )}
           {page.page_type === "problem_city" && (
             <>
-              <Link to="/problemes" className="hover:text-foreground">Problèmes</Link>
+              <Link to="/problemes-maison" className="hover:text-foreground">Problèmes</Link>
               <ChevronRight className="h-3 w-3" />
             </>
           )}
-          <span className="text-foreground">{page.h1 || page.title}</span>
+          {page.city && (
+            <>
+              <Link to={`/villes/${page.city.toLowerCase().replace(/\s+/g, "-")}`} className="hover:text-foreground">{page.city}</Link>
+              <ChevronRight className="h-3 w-3" />
+            </>
+          )}
+          <span className="text-foreground truncate max-w-[200px]">{page.h1 || page.title}</span>
         </nav>
 
         {/* H1 + Badges */}
@@ -128,14 +151,14 @@ export default function SeoPageRenderer() {
               <Badge variant="outline"><Wrench className="h-3 w-3 mr-1" />{page.profession}</Badge>
             )}
             {page.page_type && (
-              <Badge variant="secondary">{page.page_type.replace("_", " ")}</Badge>
+              <Badge variant="secondary">{page.page_type.replace(/_/g, " ")}</Badge>
             )}
           </div>
         </motion.div>
 
         {/* Body */}
         {page.body_md && (
-          <div className="prose prose-sm md:prose-base max-w-none text-foreground mb-12">
+          <div className="prose prose-sm md:prose-base max-w-none text-foreground mb-12 prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-li:text-muted-foreground">
             <ReactMarkdown>{page.body_md}</ReactMarkdown>
           </div>
         )}
@@ -143,28 +166,39 @@ export default function SeoPageRenderer() {
         {/* CTA mid-page */}
         <Card className="mb-12 border-primary/20 bg-primary/5">
           <CardContent className="p-6 text-center">
-            <h2 className="text-xl font-bold text-foreground mb-2">Besoin d'aide pour votre projet?</h2>
-            <p className="text-sm text-muted-foreground mb-4">Décrivez votre situation et recevez des profils vérifiés en quelques secondes.</p>
-            <Button asChild><Link to="/alex">Parler à Alex <ArrowRight className="h-4 w-4 ml-2" /></Link></Button>
+            <h2 className="text-xl font-bold text-foreground mb-2">
+              {page.profession
+                ? `Besoin d'un ${page.profession.toLowerCase()}${page.city ? ` à ${page.city}` : ""}?`
+                : "Besoin d'aide pour votre projet?"
+              }
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Décrivez votre situation et recevez des profils vérifiés en quelques secondes.
+            </p>
+            <Button asChild>
+              <Link to="/alex">Parler à Alex <ArrowRight className="h-4 w-4 ml-2" /></Link>
+            </Button>
           </CardContent>
         </Card>
 
-        {/* FAQ */}
+        {/* FAQ Accordion */}
         {faqItems.length > 0 && (
           <section className="mb-12">
             <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
               <HelpCircle className="h-5 w-5 text-primary" /> Questions fréquentes
             </h2>
-            <div className="space-y-4">
+            <Accordion type="single" collapsible className="w-full">
               {faqItems.map((faq, i) => (
-                <Card key={i}>
-                  <CardContent className="p-5">
-                    <h3 className="font-semibold text-foreground mb-2">{faq.question}</h3>
-                    <p className="text-sm text-muted-foreground">{faq.answer}</p>
-                  </CardContent>
-                </Card>
+                <AccordionItem key={i} value={`faq-${i}`}>
+                  <AccordionTrigger className="text-left font-semibold text-foreground">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
               ))}
-            </div>
+            </Accordion>
           </section>
         )}
 
@@ -175,7 +209,10 @@ export default function SeoPageRenderer() {
             <div className="flex flex-wrap gap-2">
               {internalLinks.map((link) => (
                 <Button key={link} asChild variant="outline" size="sm">
-                  <Link to={link}>{link.replace(/\//g, " ").trim()} <ChevronRight className="h-3 w-3 ml-1" /></Link>
+                  <Link to={link}>
+                    {link.replace(/^\/s\//, "").replace(/-/g, " ").replace(/^\//g, "").trim()}
+                    <ChevronRight className="h-3 w-3 ml-1" />
+                  </Link>
                 </Button>
               ))}
             </div>
