@@ -193,10 +193,31 @@ export default function BookingSettingsPage() {
 
   const DAY_LABELS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
+  if (planLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Chargement...</div>
+      </div>
+    );
+  }
+
+  if (!canAccessBooking) {
+    return (
+      <>
+        <Helmet>
+          <title>Réservation Signature | UNPRO</title>
+        </Helmet>
+        <div className="min-h-screen bg-background">
+          <SignatureLockedOverlay currentPlan={planCode} planLabel={planLabel} />
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <Helmet>
-        <title>Paramètres de réservation | UNPRO</title>
+        <title>Réservation Signature | UNPRO</title>
       </Helmet>
 
       <div className="min-h-screen bg-background">
@@ -204,9 +225,9 @@ export default function BookingSettingsPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-title text-foreground">Moteur de réservation</h1>
+              <h1 className="text-title text-foreground">Réservation Signature</h1>
               <p className="text-body text-muted-foreground mt-1">
-                Configurez vos types de rendez-vous et disponibilités
+                Votre système de rendez-vous intelligent
               </p>
             </div>
             <Button onClick={handleSave} disabled={saving} className="gap-2">
