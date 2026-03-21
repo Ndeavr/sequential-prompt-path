@@ -4687,6 +4687,363 @@ export type Database = {
           },
         ]
       }
+      contractor_coach_insights: {
+        Row: {
+          contractor_id: string
+          generated_at: string
+          id: string
+          insight_type: string
+          related_action_codes: Json | null
+          related_badges: Json | null
+          severity: string | null
+          summary: string | null
+          title: string
+        }
+        Insert: {
+          contractor_id: string
+          generated_at?: string
+          id?: string
+          insight_type: string
+          related_action_codes?: Json | null
+          related_badges?: Json | null
+          severity?: string | null
+          summary?: string | null
+          title: string
+        }
+        Update: {
+          contractor_id?: string
+          generated_at?: string
+          id?: string
+          insight_type?: string
+          related_action_codes?: Json | null
+          related_badges?: Json | null
+          severity?: string | null
+          summary?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_coach_insights_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_insights_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_insights_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_insights_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_coach_memory: {
+        Row: {
+          contractor_id: string
+          id: string
+          key: string
+          updated_at: string
+          value_json: Json
+        }
+        Insert: {
+          contractor_id: string
+          id?: string
+          key: string
+          updated_at?: string
+          value_json?: Json
+        }
+        Update: {
+          contractor_id?: string
+          id?: string
+          key?: string
+          updated_at?: string
+          value_json?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_coach_memory_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_memory_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_memory_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_memory_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_coach_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message_text: string
+          role: string
+          session_id: string
+          structured_context_json: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_text: string
+          role: string
+          session_id: string
+          structured_context_json?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_text?: string
+          role?: string
+          session_id?: string
+          structured_context_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_coach_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_coach_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_coach_nudges: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          id: string
+          is_dismissed: boolean | null
+          is_read: boolean | null
+          message: string | null
+          nudge_type: string
+          priority: string | null
+          title: string
+          trigger_context_json: Json | null
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          message?: string | null
+          nudge_type: string
+          priority?: string | null
+          title: string
+          trigger_context_json?: Json | null
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          message?: string | null
+          nudge_type?: string
+          priority?: string | null
+          title?: string
+          trigger_context_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_coach_nudges_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_nudges_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_nudges_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_nudges_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_coach_recommendations: {
+        Row: {
+          confidence_score: number | null
+          contractor_id: string
+          cta_label: string | null
+          cta_target: string | null
+          description: string | null
+          generated_at: string
+          id: string
+          impact_aipp: string | null
+          impact_badges: string | null
+          impact_rank: string | null
+          impact_routing: string | null
+          recommendation_type: string
+          status: string
+          title: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          contractor_id: string
+          cta_label?: string | null
+          cta_target?: string | null
+          description?: string | null
+          generated_at?: string
+          id?: string
+          impact_aipp?: string | null
+          impact_badges?: string | null
+          impact_rank?: string | null
+          impact_routing?: string | null
+          recommendation_type: string
+          status?: string
+          title: string
+        }
+        Update: {
+          confidence_score?: number | null
+          contractor_id?: string
+          cta_label?: string | null
+          cta_target?: string | null
+          description?: string | null
+          generated_at?: string
+          id?: string
+          impact_aipp?: string | null
+          impact_badges?: string | null
+          impact_rank?: string | null
+          impact_routing?: string | null
+          recommendation_type?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_coach_recommendations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_recommendations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_recommendations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_recommendations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_coach_sessions: {
+        Row: {
+          contractor_id: string
+          current_context: Json | null
+          ended_at: string | null
+          id: string
+          session_type: string
+          started_at: string
+        }
+        Insert: {
+          contractor_id: string
+          current_context?: Json | null
+          ended_at?: string | null
+          id?: string
+          session_type?: string
+          started_at?: string
+        }
+        Update: {
+          contractor_id?: string
+          current_context?: Json | null
+          ended_at?: string | null
+          id?: string
+          session_type?: string
+          started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_coach_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_coach_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_comparables: {
         Row: {
           comparable_contractor_id: string

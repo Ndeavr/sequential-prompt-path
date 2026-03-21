@@ -15,6 +15,8 @@ import DashAippScore from "@/components/pro-dashboard/DashAippScore";
 import DashAutoAccept from "@/components/pro-dashboard/DashAutoAccept";
 import DashAiRecommendations from "@/components/pro-dashboard/DashAiRecommendations";
 import DashMatchActivity from "@/components/pro-dashboard/DashMatchActivity";
+import CoachPanel from "@/components/pro-dashboard/CoachPanel";
+import CoachNudges from "@/components/pro-dashboard/CoachNudges";
 import DashUpsell from "@/components/pro-dashboard/DashUpsell";
 import DashNotifications from "@/components/pro-dashboard/DashNotifications";
 import DashPerformance from "@/components/pro-dashboard/DashPerformance";
@@ -57,6 +59,8 @@ const ProDashboard = () => {
         <DashPipeline appointments={appts} />
         <DashAippScore aipp={aipp} completeness={completeness} profile={profile} />
         <DashWaitlistStatus />
+        <CoachPanel />
+        <CoachNudges completeness={completeness} aipp={aipp} reviewCount={reviewCount} plan={currentPlan} />
         <DashMatchActivity />
         <DashAiRecommendations completeness={completeness} plan={currentPlan} aipp={aipp} />
         <DashUpsell plan={currentPlan} />
