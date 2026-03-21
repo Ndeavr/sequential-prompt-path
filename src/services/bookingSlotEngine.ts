@@ -1,6 +1,7 @@
 /**
- * UNPRO Smart Booking Slot Engine
+ * UNPRO Booking Intelligence — Smart Slot Engine
  * Computes, ranks, and recommends available appointment slots.
+ * Conversion-first: prioritizes closing probability, not just availability.
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -96,6 +97,23 @@ export interface SlotEngineOutput {
   alternativeTypes: AppointmentType[];
 }
 
+// ─── Smart Defaults ───
+
+export const SLOT_DEFAULTS = {
+  bufferBefore: 15,
+  bufferAfter: 15,
+  travelPadding: 15,
+  roundingMinutes: 15,
+  minNoticeHoursStandard: 12,
+  minNoticeHoursUrgency: 2,
+  lunchStart: "12:00",
+  lunchEnd: "13:00",
+  lunchBlockEnabled: true,
+  maxHeavyPerDay: 3,
+  bookingHorizonDays: 30,
+  serviceRadiusKm: 50,
+} as const;
+
 // ─── Day labels ───
 
 const DAY_LABELS_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
@@ -150,6 +168,21 @@ export async function fetchExistingBookings(contractorId: string, from: Date, to
   return (data ?? []) as unknown as ExistingBooking[];
 }
 
+// ─── Lunch Block Helper ───
+
+function isInLunchBlock(slotStart: Date, slotEnd: Date): boolean {
+  if (!SLOT_DEFAULTS.lunchBlockEnabled) return false;
+  const [lsH, lsM] = SLOT_DEFAULTS.lunchStart.split(":").map(Number);
+  const [leH, leM] = SLOT_DEFAULTS.lunchEnd.split(":").map(Number);
+
+  const lunchStart = new Date(slotStart);
+  lunchStart.setHours(lsH, lsM, 0, 0);
+  const lunchEnd = new Date(slotStart);
+  lunchEnd.setHours(leH, leM, 0, 0);
+
+  return slotStart < lunchEnd && slotEnd > lunchStart;
+}
+
 // ─── Core Slot Engine ───
 
 export async function computeSmartSlots(input: SlotEngineInput): Promise<SlotEngineOutput> {
@@ -169,13 +202,12 @@ export async function computeSmartSlots(input: SlotEngineInput): Promise<SlotEng
   const bufferBefore = appointmentType.buffer_before_minutes;
   const bufferAfter = appointmentType.buffer_after_minutes;
   const travelPadding = appointmentType.travel_padding_minutes;
-  const minNoticeMs = appointmentType.min_notice_hours * 60 * 60 * 1000;
-  const roundingMin = 15; // default rounding
+  const minNoticeMs = appointmentType.min_notice_hours * 3600000;
+  const roundingMin = SLOT_DEFAULTS.roundingMinutes;
   const now = new Date();
 
   const rawSlots: SlotCandidate[] = [];
 
-  // Iterate each day in range
   const currentDate = new Date(input.dateFrom);
   while (currentDate <= input.dateTo) {
     const dayOfWeek = currentDate.getDay();
@@ -186,36 +218,51 @@ export async function computeSmartSlots(input: SlotEngineInput): Promise<SlotEng
       continue;
     }
 
-    // Parse availability times
     const [startH, startM] = dayAvail.start_time.split(":").map(Number);
     const [endH, endM] = dayAvail.end_time.split(":").map(Number);
 
     const dayStart = new Date(currentDate);
     dayStart.setHours(startH, startM, 0, 0);
-
     const dayEnd = new Date(currentDate);
     dayEnd.setHours(endH, endM, 0, 0);
 
-    // Generate candidate slots every roundingMin minutes
+    // Count heavy bookings already on this day
+    const slotDay = currentDate.toISOString().split("T")[0];
+    const heavyOnDay = existingBookings.filter((eb) => {
+      const ebDay = new Date(eb.scheduled_start).toISOString().split("T")[0];
+      return ebDay === slotDay;
+    }).length;
+
     const cursor = new Date(dayStart);
     while (cursor.getTime() + duration * 60000 <= dayEnd.getTime()) {
       const slotStart = new Date(cursor);
       const slotEnd = new Date(slotStart.getTime() + duration * 60000);
 
-      // Check min notice
+      // Min notice check
       if (slotStart.getTime() - now.getTime() < minNoticeMs) {
         cursor.setMinutes(cursor.getMinutes() + roundingMin);
         continue;
       }
 
-      // Check same-day
+      // Same-day check
       if (!appointmentType.allows_same_day) {
         const todayStr = now.toISOString().split("T")[0];
-        const slotStr = slotStart.toISOString().split("T")[0];
-        if (todayStr === slotStr) {
+        if (todayStr === slotDay) {
           cursor.setMinutes(cursor.getMinutes() + roundingMin);
           continue;
         }
+      }
+
+      // Lunch block check
+      if (isInLunchBlock(slotStart, slotEnd)) {
+        cursor.setMinutes(cursor.getMinutes() + roundingMin);
+        continue;
+      }
+
+      // Max daily heavy appointments
+      if (duration >= 90 && heavyOnDay >= SLOT_DEFAULTS.maxHeavyPerDay) {
+        cursor.setMinutes(cursor.getMinutes() + roundingMin);
+        continue;
       }
 
       // Expanded block with buffers
@@ -246,9 +293,8 @@ export async function computeSmartSlots(input: SlotEngineInput): Promise<SlotEng
         continue;
       }
 
-      // Score the slot
       const score = scoreSlot(slotStart, appointmentType, input, existingBookings);
-      const badges = computeBadges(slotStart, score, input);
+      const badges = computeBadges(slotStart, score, input, existingBookings);
 
       rawSlots.push({
         start: slotStart,
@@ -269,29 +315,34 @@ export async function computeSmartSlots(input: SlotEngineInput): Promise<SlotEng
   // Sort by score descending
   rawSlots.sort((a, b) => b.score - a.score);
 
-  // Mark top slot as recommended
+  // Mark top slot
   if (rawSlots.length > 0) {
     rawSlots[0].isRecommended = true;
-    rawSlots[0].badges.push("best_overall");
+    if (!rawSlots[0].badges.includes("best_overall")) {
+      rawSlots[0].badges.unshift("best_overall");
+    }
   }
 
-  // Limit to reasonable count per day
+  // Limit per day
   const maxPerDay = appointmentType.max_daily_count;
   const dayCount: Record<string, number> = {};
   const filteredSlots = rawSlots.filter((s) => {
     const dayKey = s.start.toISOString().split("T")[0];
     dayCount[dayKey] = (dayCount[dayKey] || 0) + 1;
-    return dayCount[dayKey] <= maxPerDay * 2; // allow some overflow for ranking
+    return dayCount[dayKey] <= maxPerDay * 2;
   });
+
+  // Re-sort chronologically for display, keeping score info
+  filteredSlots.sort((a, b) => a.start.getTime() - b.start.getTime());
 
   return {
     slots: filteredSlots.slice(0, 50),
-    recommendedSlot: filteredSlots[0] ?? null,
+    recommendedSlot: rawSlots[0] ?? null,
     alternativeTypes: allTypes.filter((t) => t.id !== input.appointmentTypeId).slice(0, 3),
   };
 }
 
-// ─── Scoring ───
+// ─── Conversion-First Scoring ───
 
 function scoreSlot(
   slotStart: Date,
@@ -300,50 +351,87 @@ function scoreSlot(
   existing: ExistingBooking[]
 ): number {
   let score = 50;
-
-  // Prefer morning slots (operational efficiency)
   const hour = slotStart.getHours();
-  if (hour >= 8 && hour <= 10) score += 10;
-  else if (hour >= 10 && hour <= 12) score += 8;
-  else if (hour >= 13 && hour <= 15) score += 6;
 
-  // Urgency boost for earlier slots
+  // Morning prime time — highest closing probability
+  if (hour >= 8 && hour <= 10) score += 12;
+  else if (hour >= 10 && hour < 12) score += 8;
+  else if (hour >= 13 && hour <= 15) score += 6;
+  else if (hour >= 15 && hour < 17) score += 3;
+
+  // Urgency boost
   if (input.urgencyLevel === "urgent" || input.urgencyLevel === "emergency") {
-    const hoursFromNow = (slotStart.getTime() - Date.now()) / (1000 * 60 * 60);
-    if (hoursFromNow < 24) score += 20;
-    else if (hoursFromNow < 48) score += 12;
-    else if (hoursFromNow < 72) score += 6;
+    const hoursFromNow = (slotStart.getTime() - Date.now()) / 3600000;
+    if (hoursFromNow < 6) score += 25;
+    else if (hoursFromNow < 24) score += 18;
+    else if (hoursFromNow < 48) score += 10;
+    else if (hoursFromNow < 72) score += 5;
   }
 
-  // Day density — prefer days with existing appointments (clustering)
+  // Day clustering — operational efficiency
   const slotDay = slotStart.toISOString().split("T")[0];
   const sameDayBookings = existing.filter(
     (eb) => new Date(eb.scheduled_start).toISOString().split("T")[0] === slotDay
   ).length;
-  if (sameDayBookings > 0 && sameDayBookings < 4) score += 5 * sameDayBookings;
+  if (sameDayBookings > 0 && sameDayBookings < 4) score += 4 * sameDayBookings;
 
-  // DNA match boost
-  if (input.dnaMatchScore && input.dnaMatchScore > 70) score += 8;
+  // Adjacent slot bonus — reduced travel
+  const adjacentBonus = existing.some((eb) => {
+    const ebEnd = new Date(eb.scheduled_end);
+    const gap = Math.abs(slotStart.getTime() - ebEnd.getTime()) / 60000;
+    return gap > 0 && gap < 90;
+  });
+  if (adjacentBonus) score += 8;
 
-  // Avoid late Friday / Saturday slots
+  // DNA compatibility
+  if (input.dnaMatchScore) {
+    if (input.dnaMatchScore > 80) score += 10;
+    else if (input.dnaMatchScore > 60) score += 5;
+  }
+
+  // Day-of-week preferences
   const dayOfWeek = slotStart.getDay();
-  if (dayOfWeek === 5 && hour >= 15) score -= 5;
-  if (dayOfWeek === 6) score -= 3;
+  if (dayOfWeek >= 1 && dayOfWeek <= 4) score += 3; // Mon-Thu slightly preferred
+  if (dayOfWeek === 5 && hour >= 15) score -= 5; // Late Friday penalty
+  if (dayOfWeek === 6) score -= 4; // Saturday slight penalty
+  if (dayOfWeek === 0) score -= 8; // Sunday penalty
+
+  // Sooner is better for non-urgent (reduces no-show)
+  const daysFromNow = (slotStart.getTime() - Date.now()) / 86400000;
+  if (daysFromNow <= 3) score += 5;
+  else if (daysFromNow <= 7) score += 2;
+  else if (daysFromNow > 14) score -= 3;
 
   return Math.max(0, Math.min(100, score));
 }
 
-function computeBadges(slotStart: Date, score: number, input: SlotEngineInput): SlotBadge[] {
+function computeBadges(
+  slotStart: Date,
+  score: number,
+  input: SlotEngineInput,
+  existing: ExistingBooking[]
+): SlotBadge[] {
   const badges: SlotBadge[] = [];
+  const hoursFromNow = (slotStart.getTime() - Date.now()) / 3600000;
 
-  const hoursFromNow = (slotStart.getTime() - Date.now()) / (1000 * 60 * 60);
   if (hoursFromNow < 24) badges.push("fastest");
 
   if (input.urgencyLevel === "urgent" || input.urgencyLevel === "emergency") {
     if (hoursFromNow < 48) badges.push("urgency_optimized");
   }
 
-  if (score >= 80) badges.push("most_convenient");
+  // Reduced travel — adjacent to existing booking
+  const slotDay = slotStart.toISOString().split("T")[0];
+  const hasAdjacent = existing.some((eb) => {
+    const ebDay = new Date(eb.scheduled_start).toISOString().split("T")[0];
+    if (ebDay !== slotDay) return false;
+    const ebEnd = new Date(eb.scheduled_end);
+    const gap = Math.abs(slotStart.getTime() - ebEnd.getTime()) / 60000;
+    return gap > 0 && gap < 90;
+  });
+  if (hasAdjacent) badges.push("reduced_travel");
+
+  if (score >= 78) badges.push("most_convenient");
 
   return badges;
 }
@@ -365,7 +453,7 @@ export const DEFAULT_APPOINTMENT_TEMPLATES: Partial<AppointmentType>[] = [
     category: "estimate",
     short_description: "Évaluation sur place sans frais ni engagement",
     duration_minutes: 90,
-    buffer_before_minutes: 0,
+    buffer_before_minutes: 15,
     buffer_after_minutes: 15,
     travel_padding_minutes: 20,
     color: "#3B82F6",
@@ -376,7 +464,7 @@ export const DEFAULT_APPOINTMENT_TEMPLATES: Partial<AppointmentType>[] = [
     location_mode: "client_address",
     availability_mode: "standard",
     allows_same_day: false,
-    min_notice_hours: 4,
+    min_notice_hours: 12,
     max_daily_count: 4,
     sort_order: 0,
   },
@@ -402,6 +490,27 @@ export const DEFAULT_APPOINTMENT_TEMPLATES: Partial<AppointmentType>[] = [
     sort_order: 1,
   },
   {
+    title: "Visite express",
+    slug: "visite-express",
+    category: "quick_visit",
+    short_description: "Visite rapide d'évaluation sur place",
+    duration_minutes: 45,
+    buffer_before_minutes: 10,
+    buffer_after_minutes: 10,
+    travel_padding_minutes: 15,
+    color: "#F97316",
+    icon: "zap",
+    price_type: "free",
+    price_amount: 0,
+    is_free: true,
+    location_mode: "client_address",
+    availability_mode: "standard",
+    allows_same_day: true,
+    min_notice_hours: 4,
+    max_daily_count: 6,
+    sort_order: 2,
+  },
+  {
     title: "Consultation vidéo",
     slug: "consultation-video",
     category: "consult",
@@ -420,15 +529,15 @@ export const DEFAULT_APPOINTMENT_TEMPLATES: Partial<AppointmentType>[] = [
     allows_same_day: true,
     min_notice_hours: 2,
     max_daily_count: 6,
-    sort_order: 2,
+    sort_order: 3,
   },
   {
-    title: "Urgence",
+    title: "Urgence prioritaire",
     slug: "urgence",
     category: "emergency",
     short_description: "Intervention rapide pour situation urgente",
     duration_minutes: 60,
-    buffer_before_minutes: 0,
+    buffer_before_minutes: 10,
     buffer_after_minutes: 10,
     travel_padding_minutes: 15,
     color: "#EF4444",
@@ -439,17 +548,17 @@ export const DEFAULT_APPOINTMENT_TEMPLATES: Partial<AppointmentType>[] = [
     location_mode: "client_address",
     availability_mode: "emergency",
     allows_same_day: true,
-    min_notice_hours: 1,
+    min_notice_hours: 2,
     max_daily_count: 3,
-    sort_order: 3,
+    sort_order: 4,
   },
   {
-    title: "Visite de suivi",
+    title: "Suivi / 2e visite",
     slug: "visite-suivi",
     category: "follow_up",
     short_description: "Deuxième visite ou vérification après travaux",
     duration_minutes: 45,
-    buffer_before_minutes: 0,
+    buffer_before_minutes: 10,
     buffer_after_minutes: 10,
     travel_padding_minutes: 15,
     color: "#F59E0B",
@@ -462,16 +571,16 @@ export const DEFAULT_APPOINTMENT_TEMPLATES: Partial<AppointmentType>[] = [
     allows_same_day: false,
     min_notice_hours: 12,
     max_daily_count: 4,
-    sort_order: 4,
+    sort_order: 5,
   },
   {
-    title: "Rencontre copropriété",
+    title: "Rencontre condo / gestionnaire",
     slug: "rencontre-condo",
     category: "condo",
     short_description: "Rencontre pour projets de copropriété ou syndicat",
     duration_minutes: 60,
-    buffer_before_minutes: 10,
-    buffer_after_minutes: 10,
+    buffer_before_minutes: 15,
+    buffer_after_minutes: 15,
     travel_padding_minutes: 20,
     color: "#06B6D4",
     icon: "building",
@@ -483,6 +592,6 @@ export const DEFAULT_APPOINTMENT_TEMPLATES: Partial<AppointmentType>[] = [
     allows_same_day: false,
     min_notice_hours: 24,
     max_daily_count: 3,
-    sort_order: 5,
+    sort_order: 6,
   },
 ];
