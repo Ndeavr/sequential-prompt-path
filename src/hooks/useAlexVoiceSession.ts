@@ -11,11 +11,17 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type VoiceState = "idle" | "listening" | "thinking" | "speaking";
+export type VoiceState = "idle" | "listening" | "relistening" | "thinking" | "speaking";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 const VOICE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-voice`;
+
+// Configurable timing
+const END_OF_SPEECH_SILENCE_MS = 1500;
+const INTERIM_SILENCE_MS = 2000;
+const RESTART_DELAY_MS = 600;
+const RELISTEN_DELAY_MS = 300;
 
 /** Get auth info lazily without hooks */
 async function getAuthInfo() {
@@ -52,6 +58,7 @@ export function useAlexVoiceSession() {
   // STT
   const recRef = useRef<any>(null);
   const sttSupported = useRef(false);
+  const sttRunningRef = useRef(false);
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const finalTranscriptRef = useRef("");
 
@@ -61,19 +68,65 @@ export function useAlexVoiceSession() {
     setState(s);
   }, []);
 
+  // ─── Silence timer helper ───
+  const clearSilenceTimer = useCallback(() => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+  }, []);
+
+  // ─── STT ───
+  const stopSTT = useCallback(() => {
+    clearSilenceTimer();
+    if (sttRunningRef.current) {
+      try { recRef.current?.stop(); } catch { /* */ }
+    }
+    sttRunningRef.current = false;
+  }, [clearSilenceTimer]);
+
+  const startSTT = useCallback(() => {
+    if (sttRunningRef.current) return;
+    if (!recRef.current || !sessionRef.current) return;
+    if (isPlayingRef.current) return;
+    finalTranscriptRef.current = "";
+    sttRunningRef.current = true;
+    try {
+      recRef.current.start();
+      console.log("[VoiceSession] stt_opened");
+    } catch {
+      sttRunningRef.current = false;
+    }
+  }, []);
+
+  // ─── Prepare next listen cycle (called after Alex finishes speaking) ───
+  const prepareNextListenCycle = useCallback(() => {
+    finalTranscriptRef.current = "";
+    clearSilenceTimer();
+    if (!sessionRef.current) {
+      safeSetState("idle");
+      return;
+    }
+    safeSetState("relistening");
+    console.log("[VoiceSession] stt_restarted (relistening)");
+    setTimeout(() => {
+      if (sessionRef.current && !isPlayingRef.current) {
+        safeSetState("listening");
+        startSTT();
+      }
+    }, RELISTEN_DELAY_MS);
+  }, [clearSilenceTimer, safeSetState, startSTT]);
+
   // ─── Playback Queue ───
   const playNext = useCallback(() => {
     const token = playbackTokenRef.current;
     if (audioQueueRef.current.length === 0) {
       isPlayingRef.current = false;
       currentAudioRef.current = null;
+      console.log("[VoiceSession] tts_finished");
+      // Use prepareNextListenCycle instead of direct startSTT
       if (sessionRef.current) {
-        setTimeout(() => {
-          if (sessionRef.current && playbackTokenRef.current === token) {
-            safeSetState("listening");
-            startSTT();
-          }
-        }, 200);
+        prepareNextListenCycle();
       } else {
         safeSetState("idle");
       }
@@ -98,7 +151,7 @@ export function useAlexVoiceSession() {
       currentAudioRef.current = null;
       playNext();
     });
-  }, []);
+  }, [prepareNextListenCycle, safeSetState]);
 
   const stopPlayback = useCallback(() => {
     playbackTokenRef.current++;
@@ -113,10 +166,17 @@ export function useAlexVoiceSession() {
   }, []);
 
   const enqueueAudio = useCallback((base64: string) => {
+    // Stop STT when audio starts playing (echo protection)
+    if (sttRunningRef.current) {
+      stopSTT();
+    }
     const audio = new Audio(`data:audio/mpeg;base64,${base64}`);
     audioQueueRef.current.push(audio);
-    if (!isPlayingRef.current) playNext();
-  }, [playNext]);
+    if (!isPlayingRef.current) {
+      console.log("[VoiceSession] tts_started");
+      playNext();
+    }
+  }, [playNext, stopSTT]);
 
   // ─── API Call ───
   const callVoice = useCallback(async (action: string, payload: Record<string, any> = {}) => {
@@ -139,19 +199,6 @@ export function useAlexVoiceSession() {
     return resp.json();
   }, []);
 
-  // ─── STT ───
-  const stopSTT = useCallback(() => {
-    if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
-    try { recRef.current?.stop(); } catch { /* */ }
-  }, []);
-
-  const startSTT = useCallback(() => {
-    if (!recRef.current || !sessionRef.current) return;
-    if (isPlayingRef.current) return;
-    finalTranscriptRef.current = "";
-    try { recRef.current.start(); } catch { /* already started */ }
-  }, []);
-
   // ─── Send user message via alex-voice ───
   const sendUserMessage = useCallback(async (text: string) => {
     if (!text.trim() || !sessionRef.current) return;
@@ -159,6 +206,7 @@ export function useAlexVoiceSession() {
     stopSTT();
     safeSetState("thinking");
     setIsStreaming(true);
+    console.log("[VoiceSession] alex_thinking");
 
     const userMsg: Msg = { role: "user", content: text.trim() };
     const updated = [...messagesRef.current, userMsg];
@@ -192,22 +240,22 @@ export function useAlexVoiceSession() {
       } else if (data.audio) {
         enqueueAudio(data.audio);
       } else {
-        if (sessionRef.current) {
-          safeSetState("listening");
-          startSTT();
-        }
+        // No audio — go straight to listening
+        prepareNextListenCycle();
       }
     } catch (e: any) {
       setIsStreaming(false);
       if (e.name !== "AbortError") {
         console.error("[VoiceSession] Error:", e.message);
+        // Recovery: go back to listening
         if (sessionRef.current) {
-          safeSetState("listening");
-          startSTT();
+          console.log("[VoiceSession] recovery_started");
+          prepareNextListenCycle();
+          console.log("[VoiceSession] recovery_completed");
         }
       }
     }
-  }, [callVoice, stopPlayback, stopSTT, enqueueAudio, safeSetState, startSTT]);
+  }, [callVoice, stopPlayback, stopSTT, enqueueAudio, safeSetState, prepareNextListenCycle]);
 
   // ─── STT Setup ───
   useEffect(() => {
@@ -220,9 +268,15 @@ export function useAlexVoiceSession() {
     r.continuous = true;
     r.interimResults = true;
 
+    r.onstart = () => {
+      sttRunningRef.current = true;
+    };
+
     r.onresult = (e: any) => {
       if (!sessionRef.current) return;
+      // Barge-in: if user speaks while Alex is speaking, interrupt immediately
       if (isPlayingRef.current) {
+        console.log("[VoiceSession] interrupt_received");
         stopPlayback();
         safeSetState("listening");
       }
@@ -236,54 +290,64 @@ export function useAlexVoiceSession() {
 
       if (final) {
         finalTranscriptRef.current += final;
-        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+        console.log("[VoiceSession] final_received:", final);
+        clearSilenceTimer();
         silenceTimerRef.current = setTimeout(() => {
           const text = finalTranscriptRef.current.trim();
           if (text && sessionRef.current) {
+            console.log("[VoiceSession] stt_finalized");
             finalTranscriptRef.current = "";
-            try { r.stop(); } catch { /* */ }
+            stopSTT();
             sendUserMessage(text);
           }
-        }, 1500);
+        }, END_OF_SPEECH_SILENCE_MS);
       } else if (interim) {
-        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+        console.log("[VoiceSession] partial_received:", interim);
+        clearSilenceTimer();
         silenceTimerRef.current = setTimeout(() => {
           const text = finalTranscriptRef.current.trim();
           if (text && sessionRef.current) {
+            console.log("[VoiceSession] stt_finalized (from interim timeout)");
             finalTranscriptRef.current = "";
-            try { r.stop(); } catch { /* */ }
+            stopSTT();
             sendUserMessage(text);
           }
-        }, 2000);
+        }, INTERIM_SILENCE_MS);
       }
     };
 
     r.onerror = (e: any) => {
+      sttRunningRef.current = false;
       if (e.error === "not-allowed" || e.error === "service-not-allowed") {
         safeSetState("idle");
         return;
       }
-      if (sessionRef.current && stateRef.current === "listening") {
+      // Recoverable error — restart after delay if still in listening state
+      if (sessionRef.current && stateRef.current === "listening" && !isPlayingRef.current) {
+        console.log("[VoiceSession] recovery_started (stt error:", e.error, ")");
         setTimeout(() => {
-          if (sessionRef.current && stateRef.current === "listening" && !isPlayingRef.current) {
+          if (sessionRef.current && stateRef.current === "listening" && !isPlayingRef.current && !sttRunningRef.current) {
             startSTT();
+            console.log("[VoiceSession] recovery_completed");
           }
-        }, 500);
+        }, RESTART_DELAY_MS);
       }
     };
 
     r.onend = () => {
+      sttRunningRef.current = false;
+      // Only restart if we're supposed to be listening and nothing else is happening
       if (sessionRef.current && stateRef.current === "listening" && !isPlayingRef.current) {
         setTimeout(() => {
-          if (sessionRef.current && stateRef.current === "listening" && !isPlayingRef.current) {
+          if (sessionRef.current && stateRef.current === "listening" && !isPlayingRef.current && !sttRunningRef.current) {
             startSTT();
           }
-        }, 300);
+        }, RESTART_DELAY_MS);
       }
     };
 
     recRef.current = r;
-  }, [safeSetState, stopPlayback, sendUserMessage, startSTT]);
+  }, [safeSetState, stopPlayback, sendUserMessage, startSTT, stopSTT, clearSilenceTimer]);
 
   // ─── Open Session ───
   const openSession = useCallback(async (greetingText?: string) => {
@@ -295,6 +359,7 @@ export function useAlexVoiceSession() {
     messagesRef.current = [];
     setMessages([]);
     safeSetState("thinking");
+    console.log("[VoiceSession] session_start");
 
     try {
       const auth = await getAuthInfo();
@@ -319,8 +384,7 @@ export function useAlexVoiceSession() {
       if (data.greetingAudio) {
         enqueueAudio(data.greetingAudio);
       } else {
-        safeSetState("listening");
-        startSTT();
+        prepareNextListenCycle();
       }
     } catch (e: any) {
       console.error("[VoiceSession] Session open error:", e.message);
@@ -329,10 +393,9 @@ export function useAlexVoiceSession() {
         messagesRef.current = [msg];
         setMessages([msg]);
       }
-      safeSetState("listening");
-      startSTT();
+      prepareNextListenCycle();
     }
-  }, [callVoice, enqueueAudio, safeSetState, startSTT]);
+  }, [callVoice, enqueueAudio, safeSetState, prepareNextListenCycle]);
 
   // ─── Close Session ───
   const closeSession = useCallback(async () => {
@@ -347,18 +410,20 @@ export function useAlexVoiceSession() {
     // Persist conversation
     if (sessionIdRef.current && messagesRef.current.length > 0) {
       const auth = await getAuthInfo();
-      fetch(VOICE_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.accessToken}`,
-        },
-        body: JSON.stringify({
-          action: "save-messages",
-          sessionId: sessionIdRef.current,
-          conversationMessages: messagesRef.current.map(m => ({ role: m.role, content: m.content })),
-        }),
-      }).catch(() => {});
+      try {
+        await fetch(VOICE_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${auth.accessToken}`,
+          },
+          body: JSON.stringify({
+            action: "save-messages",
+            sessionId: sessionIdRef.current,
+            conversationMessages: messagesRef.current.map(m => ({ role: m.role, content: m.content })),
+          }),
+        });
+      } catch { /* silent */ }
     }
 
     sessionIdRef.current = null;
@@ -368,18 +433,14 @@ export function useAlexVoiceSession() {
 
   // ─── Mute / interrupt ───
   const muteSpeech = useCallback(() => {
+    console.log("[VoiceSession] interrupt_received (manual)");
     stopPlayback();
     abortRef.current?.abort();
     setIsStreaming(false);
     if (sessionRef.current) {
-      setTimeout(() => {
-        if (sessionRef.current) {
-          safeSetState("listening");
-          startSTT();
-        }
-      }, 200);
+      prepareNextListenCycle();
     }
-  }, [stopPlayback, safeSetState, startSTT]);
+  }, [stopPlayback, prepareNextListenCycle]);
 
   // Cleanup on unmount
   useEffect(() => {
