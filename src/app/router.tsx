@@ -168,6 +168,7 @@ import ProTeams from "@/pages/pro/ProTeams";
 import ProEmergencySettings from "@/pages/pro/ProEmergencySettings";
 import ProDomainIntelligence from "@/pages/pro/ProDomainIntelligence";
 import ProMatchedLeads from "@/pages/pro/ProMatchedLeads";
+import ProSetupWizard from "@/pages/pro/ProSetupWizard";
 import EmergencyTrackingPage from "@/pages/EmergencyTrackingPage";
 
 // Admin
@@ -436,6 +437,7 @@ export const AppRouter = () => (
       <Route path="/pro/qr-performance" element={<ProtectedRoute requiredRole="contractor"><MyQRPerformancePage /></ProtectedRoute>} />
       <Route path="/pro/matched-leads" element={<ProtectedRoute requiredRole="contractor"><ProMatchedLeads /></ProtectedRoute>} />
       <Route path="/pro/notifications" element={<ProtectedRoute requiredRole="contractor"><NotificationsPage /></ProtectedRoute>} />
+      <Route path="/pro/setup" element={<ProtectedRoute requiredRole="contractor"><ProSetupWizard /></ProtectedRoute>} />
 
       {/* Admin */}
       <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
