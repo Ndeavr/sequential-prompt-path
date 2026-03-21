@@ -4,9 +4,13 @@
  * Uses the `alex-voice` edge function directly (AI + TTS in one call).
  * STT via Web Speech API with continuous mode and silence detection.
  * Interrupt-safe playback with session tokens.
+ *
+ * NOTE: Does NOT call useAuth internally to avoid React render-order bugs
+ * when composed with other hooks that also use useAuth/useQuery.
+ * Auth data is read lazily from the Supabase client.
  */
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export type VoiceState = "idle" | "listening" | "thinking" | "speaking";
 
@@ -15,7 +19,6 @@ type Msg = { role: "user" | "assistant"; content: string };
 const VOICE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-voice`;
 
 export function useAlexVoiceSession() {
-  const { session, isAuthenticated, role } = useAuth();
   const [state, setState] = useState<VoiceState>("idle");
   const [sessionActive, setSessionActive] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
