@@ -293,56 +293,216 @@ export function spokenFrenchRewrite(text: string): string {
   return rewriteAlexToSpokenFrench(text, "full");
 }
 
-// ─── 3. TTS Text Normalizer ───
-// Prepares text specifically for ElevenLabs pronunciation.
+// ─── 3. French TTS Normalization Layer ───
+// Prepares text for natural French Quebec ElevenLabs pronunciation.
+// Applied AFTER spoken rewrite, BEFORE sending to TTS.
+
+// ── 3a. Quebec Place Names & Proper Nouns ──
+
+const FRENCH_NAME_NORMALIZATIONS: [RegExp, string][] = [
+  // Cities & boroughs — accent-corrected for TTS
+  [/\bMontreal\b/g, "Montréal"],
+  [/\bQuebec\b/g, "Québec"],
+  [/\bLevis\b/g, "Lévis"],
+  [/\bLaval\b/g, "Laval"],
+  [/\bLongueuil\b/g, "Longueuil"],
+  [/\bTrois-Rivieres\b/g, "Trois-Rivières"],
+  [/\bSherbrooke\b/g, "Sherbrooke"],
+  [/\bGatineau\b/g, "Gatineau"],
+  [/\bSaguenay\b/g, "Saguenay"],
+  [/\bIle des Soeurs\b/gi, "Île-des-Sœurs"],
+  [/\bIle-des-Soeurs\b/gi, "Île-des-Sœurs"],
+  [/\bSt-/g, "Saint-"],
+  [/\bSte-/g, "Sainte-"],
+  [/\bMont-Royal\b/g, "Mont-Royal"],
+  [/\bOutremont\b/g, "Outremont"],
+  [/\bRosemont\b/g, "Rosemont"],
+  [/\bVerdun\b/g, "Verdun"],
+  [/\bLaSalle\b/g, "LaSalle"],
+  [/\bAnjou\b/g, "Anjou"],
+  // Common misspellings in transcripts
+  [/\bChateauguay\b/g, "Châteauguay"],
+  [/\bBecancour\b/g, "Bécancour"],
+  [/\bNicolet\b/g, "Nicolet"],
+];
+
+export function normalizeFrenchNamesForSpeech(text: string): string {
+  let result = text;
+  for (const [p, r] of FRENCH_NAME_NORMALIZATIONS) {
+    result = result.replace(p, r);
+  }
+  return result;
+}
+
+// ── 3b. Abbreviations, Numbers, Symbols ──
 
 const TTS_NORMALIZATIONS: [RegExp, string][] = [
-  // Numbers → words for clean pronunciation
-  [/\b(\d+)\s*\$/g, (_m, n) => `${n} dollars`],
-  [/\$\s*(\d+)/g, (_m, n) => `${n} dollars`],
+  // ── Time & schedule ──
+  [/\b24\/7\b/g, "24 sur 7"],
+  [/\b7\/7\b/g, "7 sur 7"],
+  [/\b(\d{1,2})h(\d{2})?\b/g, (_m: string, h: string, min: string) =>
+    min && min !== "00" ? `${h} heures ${min}` : `${h} heures`
+  ],
+
+  // ── Currency ──
+  [/\b(\d[\d\s]*)\s*\$/g, (_m: string, n: string) => `${n.trim()} dollars`],
+  [/\$\s*(\d[\d\s]*)/g, (_m: string, n: string) => `${n.trim()} dollars`],
+  [/\b(\d[\d\s]*)\s*¢/g, (_m: string, n: string) => `${n.trim()} cents`],
+
+  // ── Percentages ──
   [/(\d+)\s*%/g, "$1 pour cent"],
 
-  // Common abbreviations
+  // ── Measurements ──
   [/\bm²/g, "mètres carrés"],
+  [/\bm2\b/g, "mètres carrés"],
   [/\bpi²/g, "pieds carrés"],
+  [/\bpi2\b/g, "pieds carrés"],
+  [/\bpi\.\s*ca\./g, "pieds carrés"],
+  [/\bkm\b/g, "kilomètres"],
+  [/\bkg\b/g, "kilogrammes"],
+  [/\bcm\b/g, "centimètres"],
+  [/\bmm\b/g, "millimètres"],
+
+  // ── Quebec construction / industry acronyms ──
   [/\bRBQ\b/g, "R B Q"],
   [/\bCCQ\b/g, "C C Q"],
-  [/\bUNPRO\b/g, "UNPRO"],
-  [/\bAIPP\b/g, "A I P P"],
+  [/\bCSSST\b/g, "C S S S T"],
+  [/\bCNESSST\b/g, "C N E S S T"],
+  [/\bSHQ\b/g, "S H Q"],
+  [/\bSCHL\b/g, "S C H L"],
+  [/\bACQ\b/g, "A C Q"],
+  [/\bAPCHQ\b/g, "A P C H Q"],
+  [/\bOIQ\b/g, "O I Q"],
+  [/\bOAQ\b/g, "O A Q"],
 
-  // URLs and emails — skip or simplify
+  // ── UNPRO-specific ──
+  [/\bUNPRO\b/g, "UNPRO"],
+  [/\bAIPP\b/g, "A I double P"],
+
+  // ── Common abbreviations ──
+  [/\bétc\.\b/gi, "et cétéra"],
+  [/\betc\.\b/gi, "et cétéra"],
+  [/\bex\.\s*/gi, "par exemple "],
+  [/\bex\s*:\s*/gi, "par exemple "],
+  [/\bvs\.?\b/gi, "versus"],
+  [/\bno\.\s*/gi, "numéro "],
+  [/\bNo\.\s*/gi, "numéro "],
+  [/\bN°\s*/g, "numéro "],
+  [/\bn°\s*/g, "numéro "],
+  [/\btel\.\s*/gi, "téléphone "],
+  [/\bapp\.\s*/gi, "appartement "],
+
+  // ── Ordinals ──
+  [/\b1er\b/g, "premier"],
+  [/\b1re\b/g, "première"],
+  [/\b1ère\b/g, "première"],
+  [/\b2e\b/g, "deuxième"],
+  [/\b3e\b/g, "troisième"],
+
+  // ── URLs and emails ──
   [/https?:\/\/\S+/g, "le lien"],
   [/\S+@\S+\.\S+/g, "l'adresse courriel"],
 
-  // Punctuation for natural pauses
-  [/\.\.\./g, "..."], // Keep ellipsis for ElevenLabs pause
-  [/\s*—\s*/g, "... "], // Em-dash → pause
-  [/\s*–\s*/g, "... "], // En-dash → pause
+  // ── Punctuation for natural pauses ──
+  [/\.\.\./g, "..."],        // Keep ellipsis for ElevenLabs pause
+  [/\s*—\s*/g, "... "],      // Em-dash → pause
+  [/\s*–\s*/g, "... "],      // En-dash → pause
+  [/\s*;\s*/g, "... "],      // Semicolon → pause
+  [/\s*:\s*/g, "... "],      // Colon → pause (unless time, handled above)
 
-  // Remove parenthetical asides (too complex for voice)
-  [/\([^)]{0,60}\)/g, ""],
+  // ── Remove parenthetical asides ──
+  [/\([^)]{0,80}\)/g, ""],
 
-  // Clean up
+  // ── Repeated punctuation cleanup ──
+  [/([!?.])\1+/g, "$1"],     // "!!!" → "!"
+  [/\s*[,]\s*[,]+/g, ","],   // ",," → ","
+
+  // ── Formatting symbols ──
+  [/[*_~`#]/g, ""],          // Remove markdown symbols
+  [/\|/g, ""],               // Remove pipe characters
+  [/\[([^\]]*)\]/g, "$1"],   // [text] → text
+  [/\{[^}]*\}/g, ""],        // Remove {braces}
+
+  // ── Final cleanup ──
   [/\s{2,}/g, " "],
 ];
 
-export function ttsNormalize(text: string): string {
-  let result = text;
+/**
+ * Full French TTS normalization.
+ * Expands abbreviations, fixes names, cleans punctuation.
+ *
+ * Examples:
+ *   "RBQ valide, 24/7, Ile des Soeurs"
+ *     → "R B Q valide... 24 sur 7... Île-des-Sœurs"
+ *   "500$ pour 200pi² à Montreal"
+ *     → "500 dollars pour 200 pieds carrés à Montréal"
+ *   "AIPP score: 85%"
+ *     → "A I double P score... 85 pour cent"
+ */
+export function normalizeTextForFrenchTts(text: string): string {
+  // 1. Fix proper nouns first
+  let result = normalizeFrenchNamesForSpeech(text);
+
+  // 2. Apply all TTS normalizations
   for (const [pattern, replacement] of TTS_NORMALIZATIONS) {
     result = result.replace(pattern, replacement as string);
   }
+
   return result.trim();
 }
 
-// ─── 4. Sentence Splitter (for chunked TTS) ───
-// Splits text into natural breath-group sentences.
+/** @deprecated Use normalizeTextForFrenchTts instead */
+export function ttsNormalize(text: string): string {
+  return normalizeTextForFrenchTts(text);
+}
 
+// ─── 4. Speech Splitter ───
+// Splits text into breath-friendly TTS segments.
+// Targets ~60-80 chars per segment for natural rhythm.
+
+/**
+ * Split text into short spoken segments for chunked TTS.
+ * Splits on sentence boundaries first, then breaks long sentences
+ * at natural pause points (commas, conjunctions).
+ *
+ * @param text  Normalized text ready for TTS
+ * @param maxLen  Max characters per segment (default 80)
+ */
+export function splitForSpeech(text: string, maxLen = 80): string[] {
+  // First pass: split on sentence-ending punctuation
+  const sentences = text.match(/[^.!?]+[.!?…]+/g) || [text];
+
+  const segments: string[] = [];
+  for (const sentence of sentences) {
+    const trimmed = sentence.trim();
+    if (trimmed.length < 3) continue;
+
+    if (trimmed.length <= maxLen) {
+      segments.push(trimmed);
+      continue;
+    }
+
+    // Break long sentences at natural pause points
+    const subParts = trimmed.split(/(?<=,)\s+|(?<=\.\.\.)\s*/);
+    let buffer = "";
+
+    for (const part of subParts) {
+      if (buffer && (buffer.length + part.length + 1) > maxLen) {
+        segments.push(buffer.trim());
+        buffer = part;
+      } else {
+        buffer = buffer ? `${buffer} ${part}` : part;
+      }
+    }
+    if (buffer.trim()) segments.push(buffer.trim());
+  }
+
+  return segments.filter(s => s.length >= 3);
+}
+
+/** @deprecated Use splitForSpeech instead */
 export function splitIntoSentences(text: string): string[] {
-  // Split on sentence-ending punctuation, keeping the punctuation
-  const raw = text.match(/[^.!?]+[.!?]+/g) || [text];
-  return raw
-    .map(s => s.trim())
-    .filter(s => s.length >= 3);
+  return splitForSpeech(text);
 }
 
 // ─── 5. Full Pipeline ───
