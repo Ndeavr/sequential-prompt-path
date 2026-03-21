@@ -48,6 +48,8 @@ import PropertyTypeHubPage from "@/pages/seo/PropertyTypeHubPage";
 import PropertyTypeCityPage from "@/pages/seo/PropertyTypeCityPage";
 import PropertyTypeProblemPage from "@/pages/seo/PropertyTypeProblemPage";
 import SeoPageRenderer from "@/pages/seo/SeoPageRenderer";
+import SeoSitemapPage from "@/pages/seo/SeoSitemapPage";
+import AdminSeoGenerator from "@/pages/admin/AdminSeoGenerator";
 import PropertyGraphPage from "@/pages/PropertyGraphPage";
 import AlexChat from "@/pages/AlexChat";
 import DesignPage from "@/pages/DesignPage";
@@ -307,6 +309,7 @@ export const AppRouter = () => (
 
       {/* Programmatic SEO Pages */}
       <Route path="/s/:slug" element={<SeoPageRenderer />} />
+      <Route path="/plan-du-site" element={<SeoSitemapPage />} />
 
       {/* Legacy English routes */}
       <Route path="/problems/:slug" element={<ProblemPage />} />
@@ -468,6 +471,7 @@ export const AppRouter = () => (
       <Route path="/admin/reward-rules" element={<ProtectedRoute requiredRole="admin"><AdminRewardRules /></ProtectedRoute>} />
       <Route path="/admin/deep-link-analytics" element={<ProtectedRoute requiredRole="admin"><AdminDeepLinkAnalytics /></ProtectedRoute>} />
       <Route path="/admin/ai-growth" element={<ProtectedRoute requiredRole="admin"><AdminAIGrowthInsights /></ProtectedRoute>} />
+      <Route path="/admin/seo-generator" element={<ProtectedRoute requiredRole="admin"><AdminSeoGenerator /></ProtectedRoute>} />
       <Route path="/admin/ai-dashboard" element={<ProtectedRoute requiredRole="admin"><AdminAIGrowthDashboard /></ProtectedRoute>} />
       <Route path="/admin/campaign-lab" element={<ProtectedRoute requiredRole="admin"><AdminCampaignLab /></ProtectedRoute>} />
       <Route path="/admin/autopilot" element={<ProtectedRoute requiredRole="admin"><AdminAutopilotDashboard /></ProtectedRoute>} />
