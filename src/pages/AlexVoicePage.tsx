@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAlexVoiceFull, type VoiceState, type UIAction } from "@/hooks/useAlexVoice";
 import { useAuth } from "@/hooks/useAuth";
+import { dispatchAlexActions, cleanupAlexOverlays, type AlexUIAction, type DispatcherDeps } from "@/lib/alexUiActionDispatcher";
 
 // ─── Quick action chip data ───
 const QUICK_ACTIONS = [
@@ -210,25 +211,19 @@ export default function AlexVoicePage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Cleanup overlays on unmount
+  useEffect(() => () => cleanupAlexOverlays(), []);
+
+  const [dynamicChips, setDynamicChips] = useState<string[]>([]);
+
+  const dispatcherDeps: DispatcherDeps = {
+    navigate,
+    onShowChips: (items) => setDynamicChips(items),
+  };
+
   const handleUIAction = useCallback(
     (action: UIAction) => {
-      switch (action.type) {
-        case "navigate":
-          if (action.target) navigate(action.target);
-          break;
-        case "open_upload":
-          navigate("/dashboard/quotes/upload");
-          break;
-        case "show_score":
-          navigate("/dashboard/home-score");
-          break;
-        case "show_pricing":
-          navigate("/pricing");
-          break;
-        case "open_booking":
-          navigate("/dashboard/booking");
-          break;
-      }
+      dispatchAlexActions([action as AlexUIAction], dispatcherDeps);
     },
     [navigate]
   );
