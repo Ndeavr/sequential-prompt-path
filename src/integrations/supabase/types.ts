@@ -20094,6 +20094,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_voice_profiles: {
+        Row: {
+          created_at: string
+          embedding_json: Json | null
+          id: string
+          is_active: boolean
+          last_sample_at: string | null
+          metadata: Json
+          profile_name: string
+          provider: string
+          sample_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          embedding_json?: Json | null
+          id?: string
+          is_active?: boolean
+          last_sample_at?: string | null
+          metadata?: Json
+          profile_name?: string
+          provider?: string
+          sample_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          embedding_json?: Json | null
+          id?: string
+          is_active?: boolean
+          last_sample_at?: string | null
+          metadata?: Json
+          profile_name?: string
+          provider?: string
+          sample_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       validation_findings: {
         Row: {
           actual_behavior: string | null
