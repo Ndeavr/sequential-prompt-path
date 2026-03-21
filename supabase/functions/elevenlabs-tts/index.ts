@@ -1,12 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { ALEX_VOICE_CONFIG, getAlexVoiceSettings, type AlexVoiceProfile } from "../_shared/alex-french-voice.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
-const DEFAULT_VOICE_ID = "gCr8TeSJgJaeaIoV4RWH"; // Alex — locked, no fallback
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -19,7 +18,7 @@ serve(async (req) => {
       throw new Error("ELEVENLABS_API_KEY is not configured");
     }
 
-    const { text, voiceId } = await req.json();
+    const { text, voiceProfile } = await req.json();
     if (!text || typeof text !== "string") {
       return new Response(JSON.stringify({ error: "text is required" }), {
         status: 400,
@@ -27,10 +26,14 @@ serve(async (req) => {
       });
     }
 
-    const voice = voiceId || DEFAULT_VOICE_ID;
+    // Always use locked Alex voice — no fallback
+    const { voiceId, modelId, outputFormat, chunkLengthSchedule } = ALEX_VOICE_CONFIG;
+    const voiceSettings = voiceProfile
+      ? getAlexVoiceSettings(voiceProfile as AlexVoiceProfile)
+      : ALEX_VOICE_CONFIG.voiceSettings;
 
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${voice}?output_format=mp3_44100_128`,
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=${outputFormat}`,
       {
         method: "POST",
         headers: {
@@ -39,14 +42,9 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           text,
-          model_id: "eleven_multilingual_v2",
-          voice_settings: {
-            stability: 0.50,
-            similarity_boost: 0.78,
-            style: 0.25,
-            use_speaker_boost: true,
-            speed: 0.92,
-          },
+          model_id: modelId,
+          voice_settings: voiceSettings,
+          chunk_length_schedule: chunkLengthSchedule,
         }),
       }
     );

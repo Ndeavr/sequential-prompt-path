@@ -5,27 +5,10 @@
  * sentence-by-sentence audio delivery.
  *
  * Voice: Alex (gCr8TeSJgJaeaIoV4RWH) — locked, no fallback.
+ * Settings sourced from ALEX_VOICE_CONFIG — single source of truth.
  */
 
-const DEFAULT_VOICE_ID = "gCr8TeSJgJaeaIoV4RWH"; // Alex — locked, no fallback
-const MODEL_ID = "eleven_turbo_v2_5";
-const OUTPUT_FORMAT = "mp3_44100_128";
-
-export interface TtsVoiceSettings {
-  stability?: number;
-  similarity_boost?: number;
-  style?: number;
-  use_speaker_boost?: boolean;
-  speed?: number;
-}
-
-const DEFAULT_VOICE_SETTINGS: TtsVoiceSettings = {
-  stability: 0.70,
-  similarity_boost: 0.86,
-  style: 0.14,
-  use_speaker_boost: true,
-  speed: 0.92,
-};
+import { ALEX_VOICE_CONFIG, getAlexVoiceSettings, type AlexVoiceProfile } from "./alex-french-voice.ts";
 
 export type OnAudioChunk = (base64Audio: string) => void;
 
@@ -40,28 +23,20 @@ function splitSentences(text: string): string[] {
 
 export class ElevenLabsTtsProvider {
   private apiKey: string;
-  private voiceId: string;
-  private voiceSettings: TtsVoiceSettings;
 
-  constructor(options?: {
-    apiKey?: string;
-    voiceId?: string;
-    voiceSettings?: Partial<TtsVoiceSettings>;
-  }) {
+  constructor(options?: { apiKey?: string }) {
     this.apiKey = options?.apiKey || Deno.env.get("ELEVENLABS_API_KEY") || "";
-    this.voiceId = options?.voiceId || DEFAULT_VOICE_ID;
-    this.voiceSettings = { ...DEFAULT_VOICE_SETTINGS, ...options?.voiceSettings };
   }
 
   /**
    * Stream TTS audio chunks for the given text via WebSocket input streaming.
    * Calls onChunk with base64-encoded MP3 data as chunks arrive.
-   * Returns a promise that resolves when all audio has been delivered.
    */
   async streamText(
     text: string,
     onChunk: OnAudioChunk,
     signal?: AbortSignal,
+    voiceProfile?: AlexVoiceProfile,
   ): Promise<void> {
     if (!this.apiKey) {
       throw new Error("ELEVENLABS_API_KEY is not configured");
@@ -69,10 +44,15 @@ export class ElevenLabsTtsProvider {
 
     if (!text.trim()) return;
 
+    const { voiceId, modelId, outputFormat } = ALEX_VOICE_CONFIG;
+    const voiceSettings = voiceProfile
+      ? getAlexVoiceSettings(voiceProfile)
+      : ALEX_VOICE_CONFIG.voiceSettings;
+
     const wsUrl =
-      `wss://api.elevenlabs.io/v1/text-to-speech/${this.voiceId}/stream-input` +
-      `?model_id=${MODEL_ID}` +
-      `&output_format=${OUTPUT_FORMAT}`;
+      `wss://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream-input` +
+      `?model_id=${modelId}` +
+      `&output_format=${outputFormat}`;
 
     return new Promise<void>((resolve, reject) => {
       if (signal?.aborted) {
@@ -106,14 +86,14 @@ export class ElevenLabsTtsProvider {
         const bos = {
           text: " ",
           voice_settings: {
-            stability: this.voiceSettings.stability,
-            similarity_boost: this.voiceSettings.similarity_boost,
-            style: this.voiceSettings.style,
-            use_speaker_boost: this.voiceSettings.use_speaker_boost,
+            stability: voiceSettings.stability,
+            similarity_boost: voiceSettings.similarity_boost,
+            style: voiceSettings.style,
+            use_speaker_boost: voiceSettings.use_speaker_boost,
           },
           xi_api_key: this.apiKey,
           generation_config: {
-            chunk_length_schedule: [50, 90, 120, 150, 200],
+            chunk_length_schedule: ALEX_VOICE_CONFIG.chunkLengthSchedule,
           },
         };
         ws.send(JSON.stringify(bos));
@@ -169,7 +149,7 @@ export class ElevenLabsTtsProvider {
    * Simple non-streaming fallback via REST API.
    * Returns full base64-encoded audio.
    */
-  async generateFull(text: string): Promise<string> {
+  async generateFull(text: string, voiceProfile?: AlexVoiceProfile): Promise<string> {
     if (!this.apiKey) throw new Error("ELEVENLABS_API_KEY is not configured");
     if (!text.trim()) return "";
 
@@ -177,8 +157,13 @@ export class ElevenLabsTtsProvider {
       "https://deno.land/std@0.168.0/encoding/base64.ts"
     );
 
+    const { voiceId, modelId, outputFormat, chunkLengthSchedule } = ALEX_VOICE_CONFIG;
+    const voiceSettings = voiceProfile
+      ? getAlexVoiceSettings(voiceProfile)
+      : ALEX_VOICE_CONFIG.voiceSettings;
+
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${this.voiceId}?output_format=${OUTPUT_FORMAT}`,
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=${outputFormat}`,
       {
         method: "POST",
         headers: {
@@ -187,13 +172,14 @@ export class ElevenLabsTtsProvider {
         },
         body: JSON.stringify({
           text,
-          model_id: MODEL_ID,
+          model_id: modelId,
           voice_settings: {
-            stability: this.voiceSettings.stability,
-            similarity_boost: this.voiceSettings.similarity_boost,
-            style: this.voiceSettings.style,
-            use_speaker_boost: this.voiceSettings.use_speaker_boost,
+            stability: voiceSettings.stability,
+            similarity_boost: voiceSettings.similarity_boost,
+            style: voiceSettings.style,
+            use_speaker_boost: voiceSettings.use_speaker_boost,
           },
+          chunk_length_schedule: chunkLengthSchedule,
         }),
       },
     );
