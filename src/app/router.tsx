@@ -252,6 +252,8 @@ export const AppRouter = () => (
       <Route path="/entrepreneurs/disponibilite-categorie-specialite-ville" element={<ContractorAvailabilityPage />} />
       <Route path="/book/:slug" element={<PublicBookingPage />} />
       <Route path="/book/:slug/:typeSlug" element={<PublicBookingPage />} />
+      <Route path="/book/success" element={<BookingPaymentSuccess />} />
+      <Route path="/book/cancel" element={<BookingPaymentCancel />} />
       <Route path="/partners" element={<PartnersPage />} />
       <Route path="/describe-project" element={<DescribeProjectPage />} />
       <Route path="/compare-quotes" element={<CompareQuotesPage />} />
