@@ -355,6 +355,7 @@ const TTS_NORMALIZATIONS: [RegExp, string][] = [
   // ── Measurements ──
   [/\bm²/g, "mètres carrés"],
   [/\bm2\b/g, "mètres carrés"],
+  [/(\d)pi²/g, "$1 pieds carrés"],
   [/\bpi²/g, "pieds carrés"],
   [/\bpi2\b/g, "pieds carrés"],
   [/\bpi\.\s*ca\./g, "pieds carrés"],
