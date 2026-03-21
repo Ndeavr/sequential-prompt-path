@@ -213,11 +213,13 @@ serve(async (req) => {
       const greetingBase64 = greetingAudio ? base64Encode(greetingAudio) : null;
 
       // Persist greeting as first message
-      await supabase.from("voice_events").insert({
-        session_id: data.id,
-        event_type: "greeting",
-        metadata: { alex_text: fullGreeting, is_returning: isReturning },
-      }).catch(() => {});
+      try {
+        await supabase.from("voice_events").insert({
+          session_id: data.id,
+          event_type: "greeting",
+          metadata: { alex_text: fullGreeting, is_returning: isReturning },
+        });
+      } catch (_) {}
 
       return new Response(JSON.stringify({
         sessionId: data.id,
