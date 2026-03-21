@@ -59,7 +59,7 @@ export default function SetupStepZones({ contractorId, onNext, onBack }: Props) 
     await supabase.from("contractor_service_areas").delete().eq("contractor_id", contractorId);
     const payload = zones.map(city => ({
       contractor_id: contractorId,
-      city,
+      city_name: city,
       city_slug: city.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-"),
       radius_km: radius,
       is_primary: zones.indexOf(city) === 0,
