@@ -14,7 +14,7 @@ interface Props {
 export function PaidAppointmentBadge({ priceType, priceCents, refundable, applyToInvoice }: Props) {
   if (priceType === "free" || priceCents === 0) {
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-[11px] font-semibold">
+      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-accent/15 text-accent-foreground text-[11px] font-semibold">
         <Gift className="w-3 h-3" />
         Gratuit
       </span>
