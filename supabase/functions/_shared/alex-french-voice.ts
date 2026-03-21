@@ -521,15 +521,20 @@ export interface VoicePipelineResult {
 export function processAlexResponse(rawAiText: string): VoicePipelineResult {
   // 1. Extract structured tags
   const { cleanText: afterNext, nextAction } = extractNextAction(rawAiText);
-  const { cleanText: displayText, actions: uiActions } = extractUIActions(afterNext);
+  const { cleanText: tagFreeText, actions: uiActions } = extractUIActions(afterNext);
 
   // 2. Spoken French rewrite (aggressive mode — corporate → conversational)
-  const spoken = rewriteAlexToSpokenFrench(displayText, "full");
+  const spoken = rewriteAlexToSpokenFrench(tagFreeText, "full");
 
-  // 3. Name pronunciation normalization
+  // 3. Name pronunciation normalization (applied to both display AND TTS)
   const namedFixed = normalizeFrenchNamesForSpeech(spoken);
 
-  // 4. Full TTS normalization (abbreviations, currency, punctuation)
+  // ── CRITICAL: displayText = spoken-rewritten text ──
+  // This ensures the UI transcript matches what Alex actually says.
+  // TTS normalization (abbreviation expansion, unit spelling) is pronunciation-only.
+  const displayText = namedFixed;
+
+  // 4. Full TTS normalization (abbreviations, currency, punctuation — TTS only)
   const normalized = normalizeTextForFrenchTts(namedFixed);
 
   // 5. Split into breath-friendly TTS segments
