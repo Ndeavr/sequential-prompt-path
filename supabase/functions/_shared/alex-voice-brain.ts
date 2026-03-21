@@ -4,11 +4,7 @@
  * Separates the "thinking" from the gateway so the brain logic can be
  * reused by both the WebSocket gateway and the REST alex-voice function.
  *
- * Responsibilities:
- * - Build context-aware prompt
- * - Call AI gateway
- * - Extract UI actions + next best action
- * - Enforce voice-specific rules (short, one question, movement-oriented)
+ * Uses the shared French voice pipeline for consistent output processing.
  */
 
 // ─── Types ───
