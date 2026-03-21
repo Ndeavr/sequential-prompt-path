@@ -207,49 +207,30 @@ export class VoiceGateway {
     this.abortController = new AbortController();
 
     try {
-      // Call AI
-      const contextStr = buildContextString(this.session);
-      const aiMessages = [
-        { role: "system", content: ALEX_SYSTEM + contextStr },
-        ...this.session.messages,
-      ];
-
-      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
+      // Call Alex brain
+      const brainResult = await alexVoiceBrain(
+        {
+          transcript: userText,
+          messages: this.session.messages.slice(0, -1), // exclude the just-added user msg
+          userId: this.session.userId,
+          sessionId: this.session.sessionId,
+          userName: this.session.userName,
+          pageContext: {
+            currentPage: this.session.currentPage,
+            activeProperty: this.session.activeProperty,
+            isAuthenticated: this.session.isAuthenticated,
+            userRole: this.session.userRole,
+            hasScore: this.session.hasScore,
+          },
         },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: aiMessages,
-        }),
-        signal: this.abortController.signal,
-      });
+        { signal: this.abortController.signal }
+      );
 
-      if (!aiResponse.ok) {
-        const status = aiResponse.status;
-        if (status === 429) {
-          this.send({ type: "error", message: "Rate limit exceeded" });
-        } else if (status === 402) {
-          this.send({ type: "error", message: "Payment required" });
-        } else {
-          this.send({ type: "error", message: `AI error: ${status}` });
-        }
-        transitionState(this.session, "listening");
-        this.send({ type: "state.change", state: "listening" });
-        return;
-      }
-
-      const aiData = await aiResponse.json();
-      const rawText = aiData.choices?.[0]?.message?.content || "Je suis là pour vous aider.";
-
-      // Extract UI actions
-      const { cleanText, actions } = this.extractUIActions(rawText);
-      addAssistantMessage(this.session, cleanText);
+      const { alexText, uiActions, nextBestAction } = brainResult;
+      addAssistantMessage(this.session, alexText);
 
       // Send text immediately
-      this.send({ type: "response.text", text: cleanText, uiActions: actions });
+      this.send({ type: "response.text", text: alexText, uiActions: uiActions as Array<Record<string, string>> });
 
       // Check if interrupted before TTS
       if (this.abortController.signal.aborted) return;
@@ -259,7 +240,7 @@ export class VoiceGateway {
       this.send({ type: "state.change", state: "speaking" });
 
       // Generate TTS in sentence chunks
-      const sentences = cleanText.match(/[^.!?]+[.!?]+/g) || [cleanText];
+      const sentences = alexText.match(/[^.!?]+[.!?]+/g) || [alexText];
       const validSentences = sentences.filter((s) => s.trim().length >= 3);
 
       for (let i = 0; i < validSentences.length; i++) {
@@ -288,16 +269,21 @@ export class VoiceGateway {
         event_type: "ws_response",
         metadata: {
           user_message: userText,
-          alex_text: cleanText,
-          ui_actions: actions,
+          alex_text: alexText,
+          ui_actions: uiActions,
+          next_best_action: nextBestAction,
           turn: this.session.turnCount,
         },
       }).catch(() => {});
 
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
-      console.error("voice-gateway error:", err);
-      this.send({ type: "error", message: err instanceof Error ? err.message : "Unknown error" });
+      if (err instanceof AlexBrainError) {
+        this.send({ type: "error", message: err.message });
+      } else {
+        console.error("voice-gateway error:", err);
+        this.send({ type: "error", message: err instanceof Error ? err.message : "Unknown error" });
+      }
       if (this.session) {
         transitionState(this.session, "listening");
         this.send({ type: "state.change", state: "listening" });
