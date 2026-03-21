@@ -236,10 +236,13 @@ export class VoiceGateway {
       );
 
       const { alexText, uiActions, nextBestAction } = brainResult;
-      addAssistantMessage(this.session, alexText);
 
-      // Send text immediately
-      this.send({ type: "response.text", text: alexText, uiActions: uiActions as Array<Record<string, string>> });
+      // ── Full French Voice Pipeline ──
+      const { displayText, ttsSentences } = processAlexResponse(alexText);
+      addAssistantMessage(this.session, displayText);
+
+      // Send display text immediately (transcript parity)
+      this.send({ type: "response.text", text: displayText, uiActions: uiActions as Array<Record<string, string>> });
 
       // Check if interrupted before TTS
       if (this.abortController.signal.aborted) return;
@@ -248,20 +251,20 @@ export class VoiceGateway {
       transitionState(this.session, "speaking");
       this.send({ type: "state.change", state: "speaking" });
 
-      // Generate TTS in sentence chunks
-      const sentences = alexText.match(/[^.!?]+[.!?]+/g) || [alexText];
-      const validSentences = sentences.filter((s) => s.trim().length >= 3);
+      // Human voice shaping per sentence
+      const speechStyle = prepareAlexSpeechStyle({ mode: "neutral" });
+      const shapedSentences = ttsSentences.map(s => shapeTextForHumanSpeech(s, speechStyle));
 
-      for (let i = 0; i < validSentences.length; i++) {
+      for (let i = 0; i < shapedSentences.length; i++) {
         if (this.abortController.signal.aborted) break;
 
-        const audioBase64 = await this.generateTTS(validSentences[i].trim());
+        const audioBase64 = await this.generateTTS(shapedSentences[i]);
         if (audioBase64 && !this.abortController.signal.aborted) {
           this.send({
             type: "response.audio",
             chunk: audioBase64,
             index: i,
-            total: validSentences.length,
+            total: shapedSentences.length,
           });
         }
       }
