@@ -340,11 +340,13 @@ serve(async (req) => {
     if (action === "save-messages") {
       const { sessionId, conversationMessages } = body;
       if (sessionId && conversationMessages?.length) {
-        await supabase.from("voice_events").insert({
-          session_id: sessionId,
-          event_type: "conversation_history",
-          metadata: { messages: conversationMessages },
-        }).catch(() => {});
+        try {
+          await supabase.from("voice_events").insert({
+            session_id: sessionId,
+            event_type: "conversation_history",
+            metadata: { messages: conversationMessages },
+          });
+        } catch (_) {}
       }
       return new Response(JSON.stringify({ ok: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
