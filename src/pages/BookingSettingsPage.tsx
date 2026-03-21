@@ -425,6 +425,16 @@ export default function BookingSettingsPage() {
             </div>
           </section>
 
+          {/* Revenue Analytics */}
+          <section className="space-y-4">
+            <RevenueAnalyticsDashboard />
+          </section>
+
+          {/* Pricing Rules */}
+          <section className="space-y-4">
+            <PricingRulesManager />
+          </section>
+
           {/* Save */}
           <div className="flex justify-end">
             <Button onClick={handleSave} disabled={saving} className="gap-2" size="lg">
