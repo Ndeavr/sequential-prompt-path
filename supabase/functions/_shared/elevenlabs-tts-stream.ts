@@ -20,9 +20,9 @@ export interface TtsVoiceSettings {
 }
 
 const DEFAULT_VOICE_SETTINGS: TtsVoiceSettings = {
-  stability: 0.50,
-  similarity_boost: 0.78,
-  style: 0.20,
+  stability: 0.70,
+  similarity_boost: 0.86,
+  style: 0.14,
   use_speaker_boost: true,
   speed: 0.92,
 };
