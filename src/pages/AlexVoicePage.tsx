@@ -173,7 +173,7 @@ export default function AlexVoicePage() {
     stopPlayback,
     interrupt,
     reset,
-  } = useAlexVoice({
+  } = useAlexVoiceFull({
     onUIAction: handleUIAction,
     currentPage: pathname,
   });
