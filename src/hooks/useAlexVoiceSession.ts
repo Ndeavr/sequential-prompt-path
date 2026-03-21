@@ -20,8 +20,10 @@ const VOICE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-voice`
 // Configurable timing
 const END_OF_SPEECH_SILENCE_MS = 1500;
 const INTERIM_SILENCE_MS = 2000;
-const RESTART_DELAY_MS = 600;
-const RELISTEN_DELAY_MS = 300;
+const RESTART_DELAY_MS = 800;
+const RELISTEN_DELAY_MS = 400;
+const MAX_RAPID_RESTARTS = 3;
+const RAPID_RESTART_WINDOW_MS = 4000;
 
 /** Get auth info lazily without hooks */
 async function getAuthInfo() {
@@ -61,6 +63,8 @@ export function useAlexVoiceSession() {
   const sttRunningRef = useRef(false);
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const finalTranscriptRef = useRef("");
+  const restartTimestamps = useRef<number[]>([]);
+  const gotSpeechThisCycle = useRef(false);
 
   // ─── Safe state ───
   const safeSetState = useCallback((s: VoiceState) => {
@@ -85,11 +89,33 @@ export function useAlexVoiceSession() {
     sttRunningRef.current = false;
   }, [clearSilenceTimer]);
 
+  const isRestartingTooFast = useCallback(() => {
+    const now = Date.now();
+    restartTimestamps.current = restartTimestamps.current.filter(t => now - t < RAPID_RESTART_WINDOW_MS);
+    if (restartTimestamps.current.length >= MAX_RAPID_RESTARTS) {
+      console.warn("[VoiceSession] rapid restart loop detected, backing off");
+      return true;
+    }
+    restartTimestamps.current.push(now);
+    return false;
+  }, []);
+
   const startSTT = useCallback(() => {
     if (sttRunningRef.current) return;
     if (!recRef.current || !sessionRef.current) return;
     if (isPlayingRef.current) return;
+    if (isRestartingTooFast()) {
+      // Back off and retry once after a longer delay
+      setTimeout(() => {
+        restartTimestamps.current = [];
+        if (sessionRef.current && !isPlayingRef.current && !sttRunningRef.current && stateRef.current === "listening") {
+          startSTT();
+        }
+      }, 2000);
+      return;
+    }
     finalTranscriptRef.current = "";
+    gotSpeechThisCycle.current = false;
     sttRunningRef.current = true;
     try {
       recRef.current.start();
@@ -97,7 +123,7 @@ export function useAlexVoiceSession() {
     } catch {
       sttRunningRef.current = false;
     }
-  }, []);
+  }, [isRestartingTooFast]);
 
   // ─── Prepare next listen cycle (called after Alex finishes speaking) ───
   const prepareNextListenCycle = useCallback(() => {
@@ -265,15 +291,20 @@ export function useAlexVoiceSession() {
 
     const r = new SR();
     r.lang = "fr-CA";
-    r.continuous = true;
+    r.continuous = false;
     r.interimResults = true;
 
     r.onstart = () => {
       sttRunningRef.current = true;
     };
 
+    r.onspeechstart = () => {
+      gotSpeechThisCycle.current = true;
+    };
+
     r.onresult = (e: any) => {
       if (!sessionRef.current) return;
+      gotSpeechThisCycle.current = true;
       // Barge-in: if user speaks while Alex is speaking, interrupt immediately
       if (isPlayingRef.current) {
         console.log("[VoiceSession] interrupt_received");
@@ -292,6 +323,8 @@ export function useAlexVoiceSession() {
         finalTranscriptRef.current += final;
         console.log("[VoiceSession] final_received:", final);
         clearSilenceTimer();
+        // With continuous:false, onend fires after final result.
+        // Submit after silence timer.
         silenceTimerRef.current = setTimeout(() => {
           const text = finalTranscriptRef.current.trim();
           if (text && sessionRef.current) {
@@ -322,7 +355,18 @@ export function useAlexVoiceSession() {
         safeSetState("idle");
         return;
       }
-      // Recoverable error — restart after delay if still in listening state
+      if (e.error === "no-speech") {
+        // No speech detected — just restart cleanly if still listening
+        if (sessionRef.current && stateRef.current === "listening" && !isPlayingRef.current) {
+          setTimeout(() => {
+            if (sessionRef.current && stateRef.current === "listening" && !isPlayingRef.current && !sttRunningRef.current) {
+              startSTT();
+            }
+          }, RESTART_DELAY_MS);
+        }
+        return;
+      }
+      // Other recoverable error
       if (sessionRef.current && stateRef.current === "listening" && !isPlayingRef.current) {
         console.log("[VoiceSession] recovery_started (stt error:", e.error, ")");
         setTimeout(() => {
@@ -336,14 +380,20 @@ export function useAlexVoiceSession() {
 
     r.onend = () => {
       sttRunningRef.current = false;
-      // Only restart if we're supposed to be listening and nothing else is happening
-      if (sessionRef.current && stateRef.current === "listening" && !isPlayingRef.current) {
-        setTimeout(() => {
-          if (sessionRef.current && stateRef.current === "listening" && !isPlayingRef.current && !sttRunningRef.current) {
-            startSTT();
-          }
-        }, RESTART_DELAY_MS);
-      }
+      // With continuous:false, onend fires after each utterance or silence timeout.
+      // Only restart if we're in listening state, no pending finalization, and session is active.
+      if (!sessionRef.current) return;
+      if (stateRef.current !== "listening") return;
+      if (isPlayingRef.current) return;
+      // If there's a pending silence timer (user spoke), let the timer handle submission
+      if (silenceTimerRef.current) return;
+
+      // No speech was detected this cycle — restart with delay
+      setTimeout(() => {
+        if (sessionRef.current && stateRef.current === "listening" && !isPlayingRef.current && !sttRunningRef.current) {
+          startSTT();
+        }
+      }, gotSpeechThisCycle.current ? RESTART_DELAY_MS : RESTART_DELAY_MS * 2);
     };
 
     recRef.current = r;
