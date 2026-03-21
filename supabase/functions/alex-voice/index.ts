@@ -1,9 +1,19 @@
 /**
  * UNPRO — Alex Voice Edge Function (Production)
- * 
+ *
  * Full premium voice pipeline:
  * User speaks → client STT → this function (greeting/AI brain + French pipeline + TTS) → base64 audio
- * 
+ *
+ * Pipeline per turn:
+ *   AI raw text
+ *   → extractTags
+ *   → rewriteAlexToSpokenFrench
+ *   → normalizeFrenchNamesForSpeech
+ *   → normalizeTextForFrenchTts
+ *   → shapeTextForHumanSpeech
+ *   → splitForSpeech
+ *   → ElevenLabs TTS (voice gCr8TeSJgJaeaIoV4RWH)
+ *
  * Actions:
  * - create-session: deterministic greeting + TTS
  * - respond-stream: text → AI → French voice pipeline → sentence-by-sentence TTS
@@ -14,12 +24,19 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import {
-  buildGreeting,
+  buildAlexGreeting,
   processAlexResponse,
-  ttsNormalize,
+  normalizeTextForFrenchTts,
   ALEX_VOICE_CONFIG,
   ALEX_VOICE_SYSTEM_PROMPT,
+  type AlexVoiceProfile,
+  getAlexVoiceSettings,
 } from "../_shared/alex-french-voice.ts";
+import {
+  prepareAlexSpeechStyle,
+  shapeTextForHumanSpeech,
+  type AlexSpeechMode,
+} from "../_shared/alex-human-voice.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,9 +51,13 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 // ─── TTS Generation ───
 
-async function generateTTS(text: string): Promise<ArrayBuffer | null> {
+async function generateTTS(
+  text: string,
+  voiceSettingsOverride?: Record<string, unknown>
+): Promise<ArrayBuffer | null> {
   try {
-    const { voiceId, modelId, outputFormat, voiceSettings } = ALEX_VOICE_CONFIG;
+    const { voiceId, modelId, outputFormat, chunkLengthSchedule } = ALEX_VOICE_CONFIG;
+    const voiceSettings = voiceSettingsOverride ?? ALEX_VOICE_CONFIG.voiceSettings;
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream?output_format=${outputFormat}`,
       {
@@ -49,6 +70,7 @@ async function generateTTS(text: string): Promise<ArrayBuffer | null> {
           text,
           model_id: modelId,
           voice_settings: voiceSettings,
+          chunk_length_schedule: chunkLengthSchedule,
         }),
       }
     );
