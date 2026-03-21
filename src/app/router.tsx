@@ -168,6 +168,7 @@ import ProTeams from "@/pages/pro/ProTeams";
 import ProEmergencySettings from "@/pages/pro/ProEmergencySettings";
 import ProDomainIntelligence from "@/pages/pro/ProDomainIntelligence";
 import ProMatchedLeads from "@/pages/pro/ProMatchedLeads";
+import ProSetupWizard from "@/pages/pro/ProSetupWizard";
 import EmergencyTrackingPage from "@/pages/EmergencyTrackingPage";
 
 // Admin
