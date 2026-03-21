@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mic, MicOff, Square, X, Send, MessageCircle, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAlexVoice, type VoiceState, type UIAction } from "@/hooks/useAlexVoice";
+import { useAlexVoiceFull, type VoiceState, type UIAction } from "@/hooks/useAlexVoice";
 import { useAuth } from "@/hooks/useAuth";
 
 // ─── Animated orb that reacts to voice state ───
