@@ -338,23 +338,6 @@ export class VoiceGateway {
     }
   }
 
-  // ─── UI action extractor ───
-  private extractUIActions(text: string): { cleanText: string; actions: Array<Record<string, string>> } {
-    const actions: Array<Record<string, string>> = [];
-    const regex = /<ui_action\s+([^/>]+)\s*\/>/g;
-    let match;
-    while ((match = regex.exec(text)) !== null) {
-      const attrs: Record<string, string> = {};
-      const attrRegex = /(\w+)="([^"]+)"/g;
-      let attrMatch;
-      while ((attrMatch = attrRegex.exec(match[1])) !== null) {
-        attrs[attrMatch[1]] = attrMatch[2];
-      }
-      if (attrs.type) actions.push(attrs);
-    }
-    const cleanText = text.replace(/<ui_action[^/>]*\/>/g, "").trim();
-    return { cleanText, actions };
-  }
 
   cleanup() {
     if (this.abortController) {
