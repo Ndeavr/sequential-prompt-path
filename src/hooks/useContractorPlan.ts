@@ -46,10 +46,10 @@ export function useContractorPlan(): ContractorPlanData {
 
       if (!contractor) return null;
 
-      // Get active subscription
+      // Get active subscription — plan_id stores the plan code string
       const { data: sub } = await supabase
         .from("contractor_subscriptions")
-        .select("plan_code")
+        .select("plan_id")
         .eq("contractor_id", contractor.id)
         .eq("status", "active")
         .order("created_at", { ascending: false })
@@ -58,7 +58,7 @@ export function useContractorPlan(): ContractorPlanData {
 
       return {
         contractorId: contractor.id,
-        planCode: (sub?.plan_code as PlanCode) ?? "recrue",
+        planCode: (sub?.plan_id as PlanCode) ?? "recrue",
       };
     },
     enabled: !!session?.user?.id,
