@@ -213,11 +213,13 @@ serve(async (req) => {
       const greetingBase64 = greetingAudio ? base64Encode(greetingAudio) : null;
 
       // Persist greeting as first message
-      await supabase.from("voice_events").insert({
-        session_id: data.id,
-        event_type: "greeting",
-        metadata: { alex_text: fullGreeting, is_returning: isReturning },
-      }).catch(() => {});
+      try {
+        await supabase.from("voice_events").insert({
+          session_id: data.id,
+          event_type: "greeting",
+          metadata: { alex_text: fullGreeting, is_returning: isReturning },
+        });
+      } catch (_) {}
 
       return new Response(JSON.stringify({
         sessionId: data.id,
@@ -286,26 +288,30 @@ serve(async (req) => {
 
       // Persist conversation to DB
       if (sessionId) {
-        await supabase.from("voice_events").insert({
-          session_id: sessionId,
-          event_type: "conversation_turn",
-          metadata: {
-            user_message: userMessage,
-            alex_text: cleanText,
-            ui_actions: actions,
-            next_action: nextAction,
-          },
-        }).catch(() => {});
+        try {
+          await supabase.from("voice_events").insert({
+            session_id: sessionId,
+            event_type: "conversation_turn",
+            metadata: {
+              user_message: userMessage,
+              alex_text: cleanText,
+              ui_actions: actions,
+              next_action: nextAction,
+            },
+          });
+        } catch (_) {}
 
         // Update session transcript
-        await supabase.from("voice_sessions").update({
-          transcript: supabase.rpc ? undefined : cleanText,
-          context_json: {
-            last_user_message: userMessage,
-            last_alex_response: cleanText,
-            updated_at: new Date().toISOString(),
-          },
-        }).eq("id", sessionId).catch(() => {});
+        try {
+          await supabase.from("voice_sessions").update({
+            transcript: cleanText,
+            context_json: {
+              last_user_message: userMessage,
+              last_alex_response: cleanText,
+              updated_at: new Date().toISOString(),
+            },
+          }).eq("id", sessionId);
+        } catch (_) {}
       }
 
       // Generate TTS — split into sentences for chunked playback
@@ -334,11 +340,13 @@ serve(async (req) => {
     if (action === "save-messages") {
       const { sessionId, conversationMessages } = body;
       if (sessionId && conversationMessages?.length) {
-        await supabase.from("voice_events").insert({
-          session_id: sessionId,
-          event_type: "conversation_history",
-          metadata: { messages: conversationMessages },
-        }).catch(() => {});
+        try {
+          await supabase.from("voice_events").insert({
+            session_id: sessionId,
+            event_type: "conversation_history",
+            metadata: { messages: conversationMessages },
+          });
+        } catch (_) {}
       }
       return new Response(JSON.stringify({ ok: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
