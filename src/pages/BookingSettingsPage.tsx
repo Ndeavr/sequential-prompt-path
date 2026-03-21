@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { Plus, Trash2, GripVertical, Save, Clock, MapPin, DollarSign, Zap } from "lucide-react";
+import { Plus, Trash2, GripVertical, Save, Clock, MapPin, DollarSign, Zap, BarChart3, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +14,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useContractorPlan } from "@/hooks/useContractorPlan";
 import { SignatureLockedOverlay } from "@/components/booking/SignatureLockedOverlay";
 import { SignatureDowngradeBanner } from "@/components/booking/SignatureDowngradeBanner";
+import { RevenueAnalyticsDashboard } from "@/components/booking/RevenueAnalyticsDashboard";
+import { PricingRulesManager } from "@/components/booking/PricingRulesManager";
+import { RevenueSplitPreview } from "@/components/booking/RevenueSplitPreview";
 
 const LOCATION_MODES = [
   { value: "client_address", label: "Sur place (chez le client)" },
@@ -316,9 +319,12 @@ export default function BookingSettingsPage() {
                     </div>
 
                     {type.price_type !== "free" && type.price_type !== "hidden" && (
-                      <div className="space-y-2">
-                        <Label>Montant (en cents)</Label>
-                        <Input type="number" value={type.price_amount ?? 0} onChange={(e) => updateType(i, { price_amount: Number(e.target.value) })} />
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <Label>Montant (en cents)</Label>
+                          <Input type="number" value={type.price_amount ?? 0} onChange={(e) => updateType(i, { price_amount: Number(e.target.value) })} />
+                        </div>
+                        <RevenueSplitPreview priceCents={type.price_amount ?? 0} priceType={type.price_type ?? "free"} />
                       </div>
                     )}
 
@@ -420,6 +426,16 @@ export default function BookingSettingsPage() {
                 );
               })}
             </div>
+          </section>
+
+          {/* Revenue Analytics */}
+          <section className="space-y-4">
+            <RevenueAnalyticsDashboard />
+          </section>
+
+          {/* Pricing Rules */}
+          <section className="space-y-4">
+            <PricingRulesManager />
           </section>
 
           {/* Save */}

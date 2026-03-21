@@ -2491,13 +2491,16 @@ export type Database = {
       booking_appointment_types: {
         Row: {
           allows_same_day: boolean | null
+          apply_to_final_invoice: boolean | null
           availability_mode: string | null
           buffer_after_minutes: number | null
           buffer_before_minutes: number | null
+          cancellation_policy: string | null
           category: string | null
           color: string | null
           contractor_id: string
           created_at: string | null
+          deposit_amount_cents: number | null
           duration_minutes: number
           icon: string | null
           id: string
@@ -2509,6 +2512,7 @@ export type Database = {
           min_notice_hours: number | null
           price_amount: number | null
           price_type: string | null
+          refundable: boolean | null
           requires_deposit: boolean | null
           requires_documents: boolean | null
           requires_manual_approval: boolean | null
@@ -2525,13 +2529,16 @@ export type Database = {
         }
         Insert: {
           allows_same_day?: boolean | null
+          apply_to_final_invoice?: boolean | null
           availability_mode?: string | null
           buffer_after_minutes?: number | null
           buffer_before_minutes?: number | null
+          cancellation_policy?: string | null
           category?: string | null
           color?: string | null
           contractor_id: string
           created_at?: string | null
+          deposit_amount_cents?: number | null
           duration_minutes?: number
           icon?: string | null
           id?: string
@@ -2543,6 +2550,7 @@ export type Database = {
           min_notice_hours?: number | null
           price_amount?: number | null
           price_type?: string | null
+          refundable?: boolean | null
           requires_deposit?: boolean | null
           requires_documents?: boolean | null
           requires_manual_approval?: boolean | null
@@ -2559,13 +2567,16 @@ export type Database = {
         }
         Update: {
           allows_same_day?: boolean | null
+          apply_to_final_invoice?: boolean | null
           availability_mode?: string | null
           buffer_after_minutes?: number | null
           buffer_before_minutes?: number | null
+          cancellation_policy?: string | null
           category?: string | null
           color?: string | null
           contractor_id?: string
           created_at?: string | null
+          deposit_amount_cents?: number | null
           duration_minutes?: number
           icon?: string | null
           id?: string
@@ -2577,6 +2588,7 @@ export type Database = {
           min_notice_hours?: number | null
           price_amount?: number | null
           price_type?: string | null
+          refundable?: boolean | null
           requires_deposit?: boolean | null
           requires_documents?: boolean | null
           requires_manual_approval?: boolean | null
@@ -2959,6 +2971,157 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      booking_pricing_rules: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          description_fr: string | null
+          id: string
+          is_active: boolean
+          rule_key: string
+          rule_type: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          description_fr?: string | null
+          id?: string
+          is_active?: boolean
+          rule_key: string
+          rule_type: string
+          updated_at?: string
+          value?: number
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          description_fr?: string | null
+          id?: string
+          is_active?: boolean
+          rule_key?: string
+          rule_type?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: []
+      }
+      booking_slot_scores: {
+        Row: {
+          booking_id: string | null
+          breakdown_json: Json | null
+          close_probability: number | null
+          contractor_id: string
+          created_at: string
+          dna_match_score: number | null
+          estimated_job_value_cents: number | null
+          id: string
+          score: number
+          travel_efficiency: number | null
+          urgency_bonus: number | null
+        }
+        Insert: {
+          booking_id?: string | null
+          breakdown_json?: Json | null
+          close_probability?: number | null
+          contractor_id: string
+          created_at?: string
+          dna_match_score?: number | null
+          estimated_job_value_cents?: number | null
+          id?: string
+          score?: number
+          travel_efficiency?: number | null
+          urgency_bonus?: number | null
+        }
+        Update: {
+          booking_id?: string | null
+          breakdown_json?: Json | null
+          close_probability?: number | null
+          contractor_id?: string
+          created_at?: string
+          dna_match_score?: number | null
+          estimated_job_value_cents?: number | null
+          id?: string
+          score?: number
+          travel_efficiency?: number | null
+          urgency_bonus?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_slot_scores_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "smart_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_transactions: {
+        Row: {
+          amount_total_cents: number
+          booking_id: string | null
+          contractor_amount_cents: number
+          contractor_id: string
+          created_at: string
+          currency: string
+          fee_rate: number
+          id: string
+          notes: string | null
+          payment_method: string | null
+          payment_reference: string | null
+          refund_amount_cents: number | null
+          refunded: boolean
+          status: string
+          unpro_fee_cents: number
+          updated_at: string
+        }
+        Insert: {
+          amount_total_cents?: number
+          booking_id?: string | null
+          contractor_amount_cents?: number
+          contractor_id: string
+          created_at?: string
+          currency?: string
+          fee_rate?: number
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          refund_amount_cents?: number | null
+          refunded?: boolean
+          status?: string
+          unpro_fee_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          amount_total_cents?: number
+          booking_id?: string | null
+          contractor_amount_cents?: number
+          contractor_id?: string
+          created_at?: string
+          currency?: string
+          fee_rate?: number
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          refund_amount_cents?: number | null
+          refunded?: boolean
+          status?: string
+          unpro_fee_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "smart_bookings"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -18615,6 +18778,7 @@ export type Database = {
         Row: {
           address_line1: string | null
           alex_session_id: string | null
+          amount_total_cents: number | null
           appointment_quality_score: number | null
           appointment_type_id: string | null
           booking_rank_score: number | null
@@ -18626,18 +18790,22 @@ export type Database = {
           client_email: string | null
           client_name: string
           client_phone: string | null
+          close_probability: number | null
           close_probability_score: number | null
           completed_at: string | null
           confirmed_at: string | null
+          contractor_amount_cents: number | null
           contractor_id: string
           created_at: string | null
           dna_match_score: number | null
           estimated_job_value: number | null
+          estimated_job_value_cents: number | null
           google_calendar_event_id: string | null
           id: string
           internal_summary: string | null
           lat: number | null
           lng: number | null
+          payment_status: string | null
           postal_code: string | null
           property_type: string | null
           province: string | null
@@ -18651,12 +18819,14 @@ export type Database = {
           status: string | null
           travel_minutes_after: number | null
           travel_minutes_before: number | null
+          unpro_fee_cents: number | null
           updated_at: string | null
           urgency_level: string | null
         }
         Insert: {
           address_line1?: string | null
           alex_session_id?: string | null
+          amount_total_cents?: number | null
           appointment_quality_score?: number | null
           appointment_type_id?: string | null
           booking_rank_score?: number | null
@@ -18668,18 +18838,22 @@ export type Database = {
           client_email?: string | null
           client_name: string
           client_phone?: string | null
+          close_probability?: number | null
           close_probability_score?: number | null
           completed_at?: string | null
           confirmed_at?: string | null
+          contractor_amount_cents?: number | null
           contractor_id: string
           created_at?: string | null
           dna_match_score?: number | null
           estimated_job_value?: number | null
+          estimated_job_value_cents?: number | null
           google_calendar_event_id?: string | null
           id?: string
           internal_summary?: string | null
           lat?: number | null
           lng?: number | null
+          payment_status?: string | null
           postal_code?: string | null
           property_type?: string | null
           province?: string | null
@@ -18693,12 +18867,14 @@ export type Database = {
           status?: string | null
           travel_minutes_after?: number | null
           travel_minutes_before?: number | null
+          unpro_fee_cents?: number | null
           updated_at?: string | null
           urgency_level?: string | null
         }
         Update: {
           address_line1?: string | null
           alex_session_id?: string | null
+          amount_total_cents?: number | null
           appointment_quality_score?: number | null
           appointment_type_id?: string | null
           booking_rank_score?: number | null
@@ -18710,18 +18886,22 @@ export type Database = {
           client_email?: string | null
           client_name?: string
           client_phone?: string | null
+          close_probability?: number | null
           close_probability_score?: number | null
           completed_at?: string | null
           confirmed_at?: string | null
+          contractor_amount_cents?: number | null
           contractor_id?: string
           created_at?: string | null
           dna_match_score?: number | null
           estimated_job_value?: number | null
+          estimated_job_value_cents?: number | null
           google_calendar_event_id?: string | null
           id?: string
           internal_summary?: string | null
           lat?: number | null
           lng?: number | null
+          payment_status?: string | null
           postal_code?: string | null
           property_type?: string | null
           province?: string | null
@@ -18735,6 +18915,7 @@ export type Database = {
           status?: string | null
           travel_minutes_after?: number | null
           travel_minutes_before?: number | null
+          unpro_fee_cents?: number | null
           updated_at?: string | null
           urgency_level?: string | null
         }

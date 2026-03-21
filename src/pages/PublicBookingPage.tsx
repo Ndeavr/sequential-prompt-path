@@ -18,7 +18,8 @@ import { RankedTimeSlotGrid } from "@/components/booking/RankedTimeSlotGrid";
 import { BookingSummaryCard } from "@/components/booking/BookingSummaryCard";
 import { BookingConfirmationCard } from "@/components/booking/BookingConfirmationCard";
 import { SignatureFooter } from "@/components/booking/SignatureFooter";
-
+import { PaidAppointmentBadge } from "@/components/booking/PaidAppointmentBadge";
+import { PaidValueProposition } from "@/components/booking/PaidValueProposition";
 import {
   computeSmartSlots,
   fetchAppointmentTypes,
@@ -293,6 +294,15 @@ export default function PublicBookingPage() {
           {/* Step: Date */}
           {step === "date" && selectedType && (
             <div className="space-y-4">
+              {/* Value proposition for paid types */}
+              {!selectedType.is_free && selectedType.price_amount > 0 && (
+                <PaidValueProposition
+                  appointmentTitle={selectedType.title}
+                  priceCents={selectedType.price_amount}
+                  category={selectedType.category}
+                />
+              )}
+
               <div className="rounded-xl border border-border/60 bg-card p-4">
                 <DateSelector
                   selectedDate={selectedDate}
