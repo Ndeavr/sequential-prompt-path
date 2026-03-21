@@ -3076,6 +3076,8 @@ export type Database = {
           refund_amount_cents: number | null
           refunded: boolean
           status: string
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
           unpro_fee_cents: number
           updated_at: string
         }
@@ -3094,6 +3096,8 @@ export type Database = {
           refund_amount_cents?: number | null
           refunded?: boolean
           status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           unpro_fee_cents?: number
           updated_at?: string
         }
@@ -3112,6 +3116,8 @@ export type Database = {
           refund_amount_cents?: number | null
           refunded?: boolean
           status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           unpro_fee_cents?: number
           updated_at?: string
         }
