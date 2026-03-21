@@ -94,6 +94,8 @@ import AlignmentQuestionnairePage from "@/pages/AlignmentQuestionnairePage";
 import FounderPage from "@/pages/FounderPage";
 import AdminFounderInvites from "@/pages/admin/AdminFounderInvites";
 import ContractorAvailabilityPage from "@/pages/ContractorAvailabilityPage";
+import PublicBookingPage from "@/pages/PublicBookingPage";
+import BookingSettingsPage from "@/pages/BookingSettingsPage";
 
 // Broker / Courtier
 import CourtiersLandingPage from "@/pages/courtiers/CourtiersLandingPage";
