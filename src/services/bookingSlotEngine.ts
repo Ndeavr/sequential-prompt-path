@@ -14,6 +14,7 @@ export interface AppointmentType {
   slug: string;
   category: string;
   short_description: string | null;
+  long_description: string | null;
   duration_minutes: number;
   buffer_before_minutes: number;
   buffer_after_minutes: number;
@@ -28,6 +29,10 @@ export interface AppointmentType {
   requires_photos: boolean;
   requires_documents: boolean;
   requires_prequalification: boolean;
+  requires_deposit: boolean;
+  requires_manual_approval: boolean;
+  supports_alex_booking: boolean;
+  supports_qr_booking: boolean;
   allows_same_day: boolean;
   min_notice_hours: number;
   max_daily_count: number;
