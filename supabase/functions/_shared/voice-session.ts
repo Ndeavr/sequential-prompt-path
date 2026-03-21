@@ -10,7 +10,10 @@ export type VoiceSessionState = "idle" | "listening" | "thinking" | "speaking";
 export interface VoiceSessionContext {
   sessionId: string;
   userId: string | null;
+  /** Display name for UI transcript */
   userName: string | null;
+  /** Preferred spoken name for TTS (may differ from userName) */
+  preferredSpokenName: string | null;
   state: VoiceSessionState;
   messages: Array<{ role: "user" | "assistant"; content: string }>;
   currentPage?: string;
@@ -28,12 +31,14 @@ export function createSession(params: {
   sessionId: string;
   userId?: string | null;
   userName?: string | null;
+  preferredSpokenName?: string | null;
   context?: Record<string, unknown>;
 }): VoiceSessionContext {
   return {
     sessionId: params.sessionId,
     userId: params.userId ?? null,
     userName: params.userName ?? null,
+    preferredSpokenName: params.preferredSpokenName ?? params.userName ?? null,
     state: "idle",
     messages: [],
     currentPage: (params.context?.currentPage as string) ?? undefined,
