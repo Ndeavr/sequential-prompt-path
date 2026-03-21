@@ -41,7 +41,7 @@ export default function BrokerAppointmentsPage() {
         .from("appointments")
         .select("*")
         .eq("broker_id", broker!.id)
-        .order("scheduled_at", { ascending: false });
+        .order("scheduled_at", { ascending: false }) as { data: any[] | null };
       return data ?? [];
     },
     enabled: !!broker?.id,
