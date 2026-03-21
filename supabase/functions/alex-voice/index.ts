@@ -1,12 +1,14 @@
 /**
  * UNPRO — Alex Voice Edge Function (Production)
  * 
+ * Full voice pipeline:
+ * User speaks → client STT → this function (AI brain + TTS) → base64 audio response
+ * 
  * Actions:
- * - create-session: create voice session in DB
- * - respond: STT text → AI response → TTS audio (streamed base64)
- * - respond-stream: STT text → streaming AI + TTS pipeline
+ * - create-session: create voice session, return greeting + TTS
+ * - respond-stream: text → AI response → sentence-by-sentence TTS
  * - get-scribe-token: ElevenLabs realtime STT token
- * - ui-action: parse AI response for UI commands
+ * - save-messages: persist conversation to DB
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
@@ -32,12 +34,13 @@ IDENTITÉ :
 - Tu es une femme. Utilise le féminin : « je suis ravie », « bien sûr ».
 - Tu ne dis JAMAIS que tu es une IA ou un robot. Tu dis « je suis Alex » ou « je suis votre concierge ».
 - Tu es spécialiste en construction, rénovation, habitation, copropriété, immobilier, services aux propriétaires, et gestion d'entrepreneurs.
+- Tu as de l'expérience terrain, en vente, en gouvernance de copropriété, en réalités de quorum/syndicat.
 
 STYLE VOCAL :
 - Réponses TRÈS COURTES. Maximum 2-3 phrases.
-- Une seule question à la fois.
+- Une seule question à la fois. Jamais plus.
 - Français québécois naturel, ton calme, chaleureux, sharp, premium.
-- Pas de longs paragraphes. Pas de listes. Pas de markdown.
+- Pas de longs paragraphes. Pas de listes à puces. Pas de markdown.
 - Tu parles comme dans une vraie conversation téléphonique premium.
 - Si on t'interrompt, tu t'arrêtes immédiatement et tu écoutes.
 
@@ -52,8 +55,10 @@ COMPORTEMENT :
 - Par défaut, l'utilisateur est un propriétaire.
 - Si clairement un entrepreneur → guide vers forfaits et croissance.
 - Pose UNE question précise à la fois. Jamais plus.
-- Suggère des actions concrètes : upload photo, voir score, comparer plans, réserver.
+- Suggère des actions concrètes : upload photo, voir score, comparer plans, réserver, vérifier entrepreneur.
 - Détecte stress → rassure. Détecte urgence → accélère. Détecte hésitation → simplifie.
+- Préfère toujours le mouvement vers la prochaine action. Ne bloque jamais le progrès.
+- Adapte-toi à la sensibilité budgétaire.
 
 INTELLIGENCE ÉMOTIONNELLE :
 - Rassurante quand stress détecté.
@@ -65,9 +70,16 @@ ACTIONS UI DISPONIBLES (retourne-les dans ta réponse entre balises) :
 <ui_action type="open_upload" />
 <ui_action type="show_score" />
 <ui_action type="show_pricing" />
+<ui_action type="show_plan_recommendation" target="elite" />
 <ui_action type="open_booking" />
 <ui_action type="scroll_to" target="recommendations" />
+<ui_action type="highlight" target="[data-plan='elite']" />
+<ui_action type="draw_circle" target="[data-plan='premium']" />
 <ui_action type="show_chips" items="option1,option2,option3" />
+
+PROCHAINE MEILLEURE ACTION :
+À la fin de ta réponse, ajoute une balise indiquant ce que l'utilisateur devrait faire ensuite :
+<next_action>description courte de l'action</next_action>
 
 RÈGLES ABSOLUES :
 - Réponds en 1-3 phrases max. C'est de la voix, pas du texte.
@@ -79,9 +91,7 @@ RÈGLES ABSOLUES :
 function getGreeting(userName?: string | null, isReturning = false): string {
   const hour = new Date().getUTCHours() - 5; // EST approximation
   const name = userName ? ` ${userName}` : "";
-  
   if (isReturning && userName) return `Rebonjour${name}.`;
-  
   if (hour < 12) return `Bonjour${name}.`;
   if (hour < 17) return `Bon après-midi${name}.`;
   return `Bonsoir${name}.`;
@@ -110,12 +120,10 @@ async function generateTTS(text: string): Promise<ArrayBuffer | null> {
         }),
       }
     );
-
     if (!response.ok) {
       console.error("TTS error:", response.status, await response.text());
       return null;
     }
-
     return await response.arrayBuffer();
   } catch (e) {
     console.error("TTS fetch error:", e);
@@ -123,12 +131,10 @@ async function generateTTS(text: string): Promise<ArrayBuffer | null> {
   }
 }
 
-// Extract UI actions from Alex's response
 function extractUIActions(text: string): { cleanText: string; actions: Array<Record<string, string>> } {
   const actions: Array<Record<string, string>> = [];
   const regex = /<ui_action\s+([^/>]+)\s*\/>/g;
   let match;
-  
   while ((match = regex.exec(text)) !== null) {
     const attrs: Record<string, string> = {};
     const attrRegex = /(\w+)="([^"]+)"/g;
@@ -138,9 +144,16 @@ function extractUIActions(text: string): { cleanText: string; actions: Array<Rec
     }
     if (attrs.type) actions.push(attrs);
   }
-  
   const cleanText = text.replace(/<ui_action[^/>]*\/>/g, "").trim();
   return { cleanText, actions };
+}
+
+function extractNextAction(text: string): { cleanText: string; nextAction: string | null } {
+  const regex = /<next_action>([\s\S]*?)<\/next_action>/;
+  const match = regex.exec(text);
+  const nextAction = match ? match[1].trim() : null;
+  const cleanText = text.replace(/<next_action>[\s\S]*?<\/next_action>/g, "").trim();
+  return { cleanText, nextAction };
 }
 
 serve(async (req) => {
@@ -157,14 +170,9 @@ serve(async (req) => {
     if (action === "get-scribe-token") {
       const response = await fetch(
         "https://api.elevenlabs.io/v1/single-use-token/realtime_scribe",
-        {
-          method: "POST",
-          headers: { "xi-api-key": ELEVENLABS_API_KEY },
-        }
+        { method: "POST", headers: { "xi-api-key": ELEVENLABS_API_KEY } }
       );
-      if (!response.ok) {
-        throw new Error(`Scribe token error: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Scribe token error: ${response.status}`);
       const { token } = await response.json();
       return new Response(JSON.stringify({ token }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -174,7 +182,17 @@ serve(async (req) => {
     // ─── CREATE SESSION ───
     if (action === "create-session") {
       const { userId, feature, userName, context } = body;
-      
+
+      // Check for returning user
+      let isReturning = false;
+      if (userId) {
+        const { count } = await supabase
+          .from("voice_sessions")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId);
+        isReturning = (count ?? 0) > 0;
+      }
+
       const { data, error } = await supabase.from("voice_sessions").insert({
         user_id: userId || null,
         feature: feature || "general",
@@ -188,32 +206,41 @@ serve(async (req) => {
 
       if (error) throw error;
 
-      const greeting = getGreeting(userName, false);
+      const greeting = getGreeting(userName, isReturning);
+      const fullGreeting = greeting + " Comment puis-je vous aider?";
 
-      // Generate greeting TTS
-      const greetingAudio = await generateTTS(greeting + " Comment puis-je vous aider?");
+      const greetingAudio = await generateTTS(fullGreeting);
       const greetingBase64 = greetingAudio ? base64Encode(greetingAudio) : null;
+
+      // Persist greeting as first message
+      await supabase.from("voice_events").insert({
+        session_id: data.id,
+        event_type: "greeting",
+        metadata: { alex_text: fullGreeting, is_returning: isReturning },
+      }).catch(() => {});
 
       return new Response(JSON.stringify({
         sessionId: data.id,
-        greeting: greeting + " Comment puis-je vous aider?",
+        greeting: fullGreeting,
         greetingAudio: greetingBase64,
+        isReturning,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // ─── RESPOND (non-streaming, fast) ───
-    if (action === "respond") {
+    // ─── RESPOND-STREAM: Full pipeline ───
+    if (action === "respond" || action === "respond-stream") {
       const { sessionId, userMessage, messages, context, userName } = body;
 
-      // Build context string
       let contextStr = "";
       if (context?.currentPage) contextStr += `\nPage actuelle: ${context.currentPage}`;
       if (context?.activeProperty) contextStr += `\nPropriété active: ${context.activeProperty}`;
       if (context?.isAuthenticated) contextStr += `\nUtilisateur connecté: oui`;
       if (context?.userRole) contextStr += `\nRôle: ${context.userRole}`;
       if (context?.hasScore) contextStr += `\nScore maison existant: oui`;
+      if (context?.hasPendingBooking) contextStr += `\nRendez-vous en attente: oui`;
+      if (context?.hasUploadedImage) contextStr += `\nImage uploadée: oui`;
       if (userName) contextStr += `\nPrénom: ${userName}`;
 
       const conversationMessages = [
@@ -222,7 +249,7 @@ serve(async (req) => {
         ...(userMessage ? [{ role: "user", content: userMessage }] : []),
       ];
 
-      // AI Response
+      // Call AI brain
       const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -232,137 +259,56 @@ serve(async (req) => {
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
           messages: conversationMessages,
-        }),
-      });
-
-      if (!aiResponse.ok) {
-        if (aiResponse.status === 429) {
-          return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
-            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        if (aiResponse.status === 402) {
-          return new Response(JSON.stringify({ error: "Payment required" }), {
-            status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        throw new Error(`AI error: ${aiResponse.status}`);
-      }
-
-      const aiData = await aiResponse.json();
-      const rawText = aiData.choices?.[0]?.message?.content || "Je suis là pour vous aider.";
-      
-      // Extract UI actions
-      const { cleanText, actions } = extractUIActions(rawText);
-
-      // Log voice event
-      if (sessionId) {
-        await supabase.from("voice_events").insert({
-          session_id: sessionId,
-          event_type: "ai_response",
-          metadata: { 
-            user_message: userMessage,
-            alex_text: cleanText, 
-            ui_actions: actions,
-          },
-        }).catch(() => {});
-      }
-
-      // Generate TTS
-      const audioBuffer = await generateTTS(cleanText);
-      const audioBase64 = audioBuffer ? base64Encode(audioBuffer) : null;
-
-      return new Response(JSON.stringify({
-        text: cleanText,
-        audio: audioBase64,
-        audioAvailable: !!audioBase64,
-        uiActions: actions,
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // ─── RESPOND-STREAM: Sentence-by-sentence TTS ───
-    if (action === "respond-stream") {
-      const { sessionId, userMessage, messages, context, userName } = body;
-
-      let contextStr = "";
-      if (context?.currentPage) contextStr += `\nPage actuelle: ${context.currentPage}`;
-      if (context?.activeProperty) contextStr += `\nPropriété active: ${context.activeProperty}`;
-      if (context?.isAuthenticated) contextStr += `\nUtilisateur connecté: oui`;
-      if (context?.userRole) contextStr += `\nRôle: ${context.userRole}`;
-      if (userName) contextStr += `\nPrénom: ${userName}`;
-
-      const conversationMessages = [
-        { role: "system", content: ALEX_VOICE_SYSTEM + contextStr },
-        ...(messages || []),
-        ...(userMessage ? [{ role: "user", content: userMessage }] : []),
-      ];
-
-      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: conversationMessages,
-          stream: true,
         }),
       });
 
       if (!aiResponse.ok) {
         const status = aiResponse.status;
-        if (status === 429 || status === 402) {
-          return new Response(JSON.stringify({ error: status === 429 ? "Rate limit" : "Payment required" }), {
-            status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        if (status === 429) {
+          return new Response(JSON.stringify({ error: "Trop de requêtes. Réessayez dans quelques secondes." }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
-        throw new Error(`AI stream error: ${status}`);
-      }
-
-      // Stream AI response, collect full text, then TTS
-      const reader = aiResponse.body!.getReader();
-      const decoder = new TextDecoder();
-      let fullText = "";
-      let textBuffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        textBuffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (!line.startsWith("data: ")) continue;
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") break;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) fullText += content;
-          } catch { /* partial */ }
+        if (status === 402) {
+          return new Response(JSON.stringify({ error: "Crédits insuffisants." }), {
+            status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
         }
+        throw new Error(`AI error: ${status}`);
       }
 
-      if (!fullText) fullText = "Je suis là pour vous aider.";
+      const aiData = await aiResponse.json();
+      let rawText = aiData.choices?.[0]?.message?.content || "Je suis là pour vous aider.";
 
-      const { cleanText, actions } = extractUIActions(fullText);
+      // Extract next action then UI actions
+      const { cleanText: afterNextAction, nextAction } = extractNextAction(rawText);
+      const { cleanText, actions } = extractUIActions(afterNextAction);
 
-      // Log
+      // Persist conversation to DB
       if (sessionId) {
         await supabase.from("voice_events").insert({
           session_id: sessionId,
-          event_type: "ai_response_stream",
-          metadata: { user_message: userMessage, alex_text: cleanText, ui_actions: actions },
+          event_type: "conversation_turn",
+          metadata: {
+            user_message: userMessage,
+            alex_text: cleanText,
+            ui_actions: actions,
+            next_action: nextAction,
+          },
         }).catch(() => {});
+
+        // Update session transcript
+        await supabase.from("voice_sessions").update({
+          transcript: supabase.rpc ? undefined : cleanText,
+          context_json: {
+            last_user_message: userMessage,
+            last_alex_response: cleanText,
+            updated_at: new Date().toISOString(),
+          },
+        }).eq("id", sessionId).catch(() => {});
       }
 
-      // Split into sentences for chunked TTS
+      // Generate TTS — split into sentences for chunked playback
       const sentences = cleanText.match(/[^.!?]+[.!?]+/g) || [cleanText];
       const audioChunks: string[] = [];
 
@@ -378,7 +324,23 @@ serve(async (req) => {
         audioChunks,
         audioAvailable: audioChunks.length > 0,
         uiActions: actions,
+        nextAction,
       }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ─── SAVE MESSAGES (batch persist) ───
+    if (action === "save-messages") {
+      const { sessionId, conversationMessages } = body;
+      if (sessionId && conversationMessages?.length) {
+        await supabase.from("voice_events").insert({
+          session_id: sessionId,
+          event_type: "conversation_history",
+          metadata: { messages: conversationMessages },
+        }).catch(() => {});
+      }
+      return new Response(JSON.stringify({ ok: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -388,8 +350,8 @@ serve(async (req) => {
     });
   } catch (e) {
     console.error("alex-voice error:", e);
-    return new Response(JSON.stringify({ 
-      error: e instanceof Error ? e.message : "Unknown error" 
+    return new Response(JSON.stringify({
+      error: e instanceof Error ? e.message : "Unknown error",
     }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
