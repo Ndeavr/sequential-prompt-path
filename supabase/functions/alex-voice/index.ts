@@ -126,7 +126,7 @@ serve(async (req) => {
 
     // ─── CREATE SESSION ───
     if (action === "create-session") {
-      const { userId, feature, userName, context } = body;
+      const { userId, feature, userName, preferredSpokenName, context, voiceProfile, localHour } = body;
 
       let isReturning = false;
       if (userId) {
@@ -136,6 +136,72 @@ serve(async (req) => {
           .eq("user_id", userId);
         isReturning = (count ?? 0) > 0;
       }
+
+      const { data, error } = await supabase.from("voice_sessions").insert({
+        user_id: userId || null,
+        feature: feature || "general",
+        transcript: "",
+        context_json: {
+          userName: userName || null,
+          preferredSpokenName: preferredSpokenName || null,
+          ...context,
+          created_at: new Date().toISOString(),
+        },
+      }).select("id").single();
+
+      if (error) throw error;
+
+      // Deterministic greeting via builder
+      const greetingResult = buildAlexGreeting({
+        firstName: userName,
+        preferredSpokenName: preferredSpokenName || null,
+        isReturningUser: isReturning,
+        localHour: localHour ?? null,
+        utcOffset: -5,
+      });
+
+      // Prepare speech style for greeting
+      const speechStyle = prepareAlexSpeechStyle({
+        mode: "neutral",
+        isReturningUser: isReturning,
+      });
+
+      // Shape spoken greeting for human delivery
+      const shaped = shapeTextForHumanSpeech(greetingResult.spokenGreeting, speechStyle);
+
+      // Normalize for TTS
+      const greetingForTTS = normalizeTextForFrenchTts(shaped);
+
+      // Build voice settings (support A/B profiles)
+      const voiceSettings = voiceProfile
+        ? getAlexVoiceSettings(voiceProfile as AlexVoiceProfile)
+        : { ...ALEX_VOICE_CONFIG.voiceSettings, speed: speechStyle.speed };
+
+      const greetingAudio = await generateTTS(greetingForTTS, voiceSettings);
+      const greetingBase64 = greetingAudio ? base64Encode(greetingAudio) : null;
+
+      try {
+        await supabase.from("voice_events").insert({
+          session_id: data.id,
+          event_type: "greeting",
+          metadata: {
+            display_text: greetingResult.displayGreeting,
+            spoken_text: greetingResult.spokenGreeting,
+            is_returning: isReturning,
+            voice_profile: voiceProfile || "default",
+          },
+        });
+      } catch (_) { /* non-blocking */ }
+
+      return new Response(JSON.stringify({
+        sessionId: data.id,
+        greeting: greetingResult.displayGreeting,
+        greetingAudio: greetingBase64,
+        isReturning,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
       const { data, error } = await supabase.from("voice_sessions").insert({
         user_id: userId || null,
