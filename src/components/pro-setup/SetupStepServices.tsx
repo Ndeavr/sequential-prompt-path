@@ -31,9 +31,9 @@ export default function SetupStepServices({ contractorId, onNext, onBack }: Prop
 
   useEffect(() => {
     if (!contractorId) return;
-    supabase.from("contractor_services").select("service_name").eq("contractor_id", contractorId).eq("is_active", true)
+    supabase.from("contractor_services").select("service_name_fr").eq("contractor_id", contractorId).eq("is_active", true)
       .then(({ data }) => {
-        if (data?.length) setSelected(data.map((d: any) => d.service_name));
+        if (data?.length) setSelected(data.map((d: any) => d.service_name_fr).filter(Boolean));
       });
   }, [contractorId]);
 

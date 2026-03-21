@@ -31,9 +31,9 @@ export default function SetupStepZones({ contractorId, onNext, onBack }: Props) 
 
   useEffect(() => {
     if (!contractorId) return;
-    supabase.from("contractor_service_areas").select("city").eq("contractor_id", contractorId)
+    supabase.from("contractor_service_areas").select("city_name").eq("contractor_id", contractorId)
       .then(({ data }) => {
-        if (data?.length) setZones(data.map((d: any) => d.city).filter(Boolean));
+        if (data?.length) setZones(data.map((d: any) => d.city_name).filter(Boolean));
       });
   }, [contractorId]);
 
