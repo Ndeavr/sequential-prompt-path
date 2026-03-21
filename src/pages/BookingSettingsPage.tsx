@@ -14,6 +14,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useContractorPlan } from "@/hooks/useContractorPlan";
 import { SignatureLockedOverlay } from "@/components/booking/SignatureLockedOverlay";
 import { SignatureDowngradeBanner } from "@/components/booking/SignatureDowngradeBanner";
+import { RevenueAnalyticsDashboard } from "@/components/booking/RevenueAnalyticsDashboard";
+import { PricingRulesManager } from "@/components/booking/PricingRulesManager";
+import { RevenueSplitPreview } from "@/components/booking/RevenueSplitPreview";
 
 const LOCATION_MODES = [
   { value: "client_address", label: "Sur place (chez le client)" },
