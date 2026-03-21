@@ -1,12 +1,16 @@
 /**
  * useAlexVoice — Production voice hook for Alex Voice Mode
  * 
+ * Full pipeline:
+ * User speaks → Web Speech API STT → alex-voice edge function (AI + TTS) → base64 audio playback
+ * 
  * Features:
  * - Web Speech API STT (fr-CA)
  * - Interrupt-safe playback queue
  * - Session management with Supabase
  * - UI action dispatch
  * - Context awareness
+ * - Conversation history persistence
  * 
  * Also exports legacy API (isSpeaking, speak, stop) for backward compatibility.
  */
@@ -32,9 +36,12 @@ type VoiceMessage = {
 
 interface UseAlexVoiceFullOptions {
   onUIAction?: (action: UIAction) => void;
+  onNextAction?: (nextAction: string) => void;
   currentPage?: string;
   activeProperty?: string;
   hasScore?: boolean;
+  hasPendingBooking?: boolean;
+  hasUploadedImage?: boolean;
 }
 
 // ─── Full voice mode hook ───
@@ -45,6 +52,7 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
   const [transcript, setTranscript] = useState("");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [nextAction, setNextAction] = useState<string | null>(null);
 
   const recognitionRef = useRef<any>(null);
   const audioQueueRef = useRef<HTMLAudioElement[]>([]);
@@ -53,13 +61,15 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
   const optionsRef = useRef(options);
   optionsRef.current = options;
   const abortRef = useRef<AbortController | null>(null);
+  const playbackTokenRef = useRef(0);
 
   const userName = session?.user?.user_metadata?.full_name?.split(" ")[0]
     || session?.user?.user_metadata?.first_name
     || null;
 
-  // ─── Audio Playback Queue ───
+  // ─── Audio Playback Queue (interrupt-safe) ───
   const playNext = useCallback(() => {
+    const token = playbackTokenRef.current;
     if (audioQueueRef.current.length === 0) {
       isPlayingRef.current = false;
       currentAudioRef.current = null;
@@ -70,12 +80,25 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
     setState("speaking");
     const audio = audioQueueRef.current.shift()!;
     currentAudioRef.current = audio;
-    audio.onended = () => { currentAudioRef.current = null; playNext(); };
-    audio.onerror = () => { currentAudioRef.current = null; playNext(); };
-    audio.play().catch(() => { currentAudioRef.current = null; playNext(); });
+    audio.onended = () => {
+      if (playbackTokenRef.current !== token) return; // stale
+      currentAudioRef.current = null;
+      playNext();
+    };
+    audio.onerror = () => {
+      if (playbackTokenRef.current !== token) return;
+      currentAudioRef.current = null;
+      playNext();
+    };
+    audio.play().catch(() => {
+      if (playbackTokenRef.current !== token) return;
+      currentAudioRef.current = null;
+      playNext();
+    });
   }, []);
 
   const stopPlayback = useCallback(() => {
+    playbackTokenRef.current++; // invalidate stale chunks
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
       currentAudioRef.current.src = "";
@@ -122,7 +145,14 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
         userId: session?.user?.id || null,
         userName,
         feature: "general",
-        context: { currentPage: optionsRef.current?.currentPage, isAuthenticated, userRole: role },
+        context: {
+          currentPage: optionsRef.current?.currentPage,
+          isAuthenticated,
+          userRole: role,
+          hasScore: optionsRef.current?.hasScore,
+          hasPendingBooking: optionsRef.current?.hasPendingBooking,
+          hasUploadedImage: optionsRef.current?.hasUploadedImage,
+        },
       });
       setSessionId(data.sessionId);
       if (data.greeting) {
@@ -144,6 +174,7 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
     stopPlayback();
     setError(null);
     setState("thinking");
+    setNextAction(null);
     const userMsg: VoiceMessage = { role: "user", content: text.trim(), timestamp: Date.now() };
     setMessages(prev => [...prev, userMsg]);
     setTranscript("");
@@ -161,11 +192,17 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
           isAuthenticated,
           userRole: role,
           hasScore: optionsRef.current?.hasScore,
+          hasPendingBooking: optionsRef.current?.hasPendingBooking,
+          hasUploadedImage: optionsRef.current?.hasUploadedImage,
         },
       });
 
       if (data.text) {
         setMessages(prev => [...prev, { role: "assistant", content: data.text, timestamp: Date.now() }]);
+      }
+      if (data.nextAction) {
+        setNextAction(data.nextAction);
+        optionsRef.current?.onNextAction?.(data.nextAction);
       }
       if (data.uiActions?.length && optionsRef.current?.onUIAction) {
         for (const action of data.uiActions) optionsRef.current.onUIAction(action as UIAction);
@@ -182,7 +219,7 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
     }
   }, [callVoice, sessionId, messages, userName, isAuthenticated, role, stopPlayback, enqueueAudio]);
 
-  // ─── Speech Recognition ───
+  // ─── Speech Recognition (Web Speech API) ───
   const startListening = useCallback(() => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) { setError("Reconnaissance vocale non supportée."); return; }
@@ -203,7 +240,10 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
       if (final) { setTranscript(final); recognition.stop(); sendMessage(final); }
       else setTranscript(interim);
     };
-    recognition.onerror = (e: any) => { if (e.error !== "aborted" && e.error !== "no-speech") console.error("Speech:", e.error); setState("idle"); };
+    recognition.onerror = (e: any) => {
+      if (e.error !== "aborted" && e.error !== "no-speech") console.error("Speech:", e.error);
+      setState("idle");
+    };
     recognition.onend = () => { recognitionRef.current = null; };
 
     recognitionRef.current = recognition;
@@ -230,23 +270,40 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
     setSessionId(null);
     setTranscript("");
     setError(null);
+    setNextAction(null);
   }, [interrupt]);
 
+  // Persist conversation on unmount
   useEffect(() => {
-    return () => { stopPlayback(); recognitionRef.current?.stop(); abortRef.current?.abort(); };
-  }, []);
+    return () => {
+      stopPlayback();
+      recognitionRef.current?.stop();
+      abortRef.current?.abort();
+      // Fire-and-forget persist
+      if (sessionId && messages.length > 0) {
+        fetch(VOICE_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "save-messages",
+            sessionId,
+            conversationMessages: messages.map(m => ({ role: m.role, content: m.content })),
+          }),
+        }).catch(() => {});
+      }
+    };
+  }, [sessionId, messages]);
 
   const isSupported = typeof window !== "undefined" &&
     !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
 
   return {
-    state, messages, transcript, sessionId, error, isSupported,
+    state, messages, transcript, sessionId, error, isSupported, nextAction,
     startSession, sendMessage, startListening, stopListening, stopPlayback, interrupt, reset,
   };
 }
 
 // ─── Legacy API (backward compatible) ───
-/** Split text into sentence-boundary chunks for streaming TTS */
 function splitIntoChunks(text: string, maxLen: number): string[] {
   if (text.length <= maxLen) return [text];
   const chunks: string[] = [];

@@ -5,8 +5,9 @@
  * - Hold-to-talk (press & hold mic)
  * - Animated VoiceOrb reacting to state
  * - Live transcript cards
- * - Quick action chips
- * - Optional contextual panels
+ * - Quick action chips + dynamic chips from Alex
+ * - Next action suggestion bar
+ * - UI action dispatcher integration
  */
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -18,13 +19,13 @@ import {
   X,
   Send,
   MessageCircle,
-  Volume2,
   VolumeX,
   Camera,
   BarChart3,
   CalendarCheck,
   ShieldCheck,
   ChevronRight,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,99 +50,98 @@ function VoiceOrb({ state }: { state: VoiceState }) {
     <div className="relative flex items-center justify-center" style={{ width: 220, height: 220 }}>
       {/* Outer glow */}
       <motion.div
-        className="absolute rounded-full"
-        style={{
-          background: `radial-gradient(circle, hsl(var(--primary) / 0.15) 0%, transparent 70%)`,
-        }}
         animate={{
-          width: baseSize + 80,
-          height: baseSize + 80,
-          opacity: state === "idle" ? 0.3 : 0.6,
-        }}
-        transition={{ duration: 0.6, ease: "easeInOut" }}
-      />
-
-      {/* Mid ring */}
-      <motion.div
-        className="absolute rounded-full border border-primary/20"
-        animate={{
-          width: baseSize + 40,
-          height: baseSize + 40,
-          opacity: state === "listening" ? 0.8 : 0.4,
-          scale:
-            state === "listening"
-              ? [1, 1.08, 1]
-              : state === "speaking"
-              ? [1, 1.05, 1]
-              : 1,
+          scale: state === "listening" ? [1, 1.15, 1] : state === "speaking" ? [1, 1.08, 1] : 1,
+          opacity: state === "idle" ? 0.2 : 0.5,
         }}
         transition={{
-          duration: state === "listening" ? 1.2 : state === "speaking" ? 0.8 : 0.6,
-          repeat: state === "listening" || state === "speaking" ? Infinity : 0,
+          duration: state === "listening" ? 1.2 : 2,
+          repeat: Infinity,
           ease: "easeInOut",
         }}
+        className="absolute rounded-full"
+        style={{
+          width: baseSize + 60,
+          height: baseSize + 60,
+          background: `radial-gradient(circle, hsl(var(--primary) / 0.15) 0%, transparent 70%)`,
+        }}
+      />
+
+      {/* Middle ring */}
+      <motion.div
+        animate={{
+          scale: state === "speaking" ? [1, 1.05, 1] : state === "listening" ? [1, 1.1, 1] : 1,
+        }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute rounded-full border border-primary/20"
+        style={{ width: baseSize + 30, height: baseSize + 30 }}
       />
 
       {/* Core orb */}
       <motion.div
-        className="relative rounded-full flex items-center justify-center"
-        style={{
-          background: `linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)`,
-          boxShadow: `0 0 40px -8px hsl(var(--primary) / 0.4), 0 0 80px -16px hsl(var(--primary) / 0.2)`,
-        }}
         animate={{
           width: baseSize,
           height: baseSize,
-          scale:
-            state === "speaking"
-              ? [1, 1.04, 0.97, 1.02, 1]
-              : state === "listening"
-              ? [1, 1.06, 1]
-              : 1,
+          scale: state === "thinking" ? [1, 0.95, 1] : 1,
         }}
         transition={{
-          duration: state === "speaking" ? 0.6 : state === "listening" ? 1.5 : 0.4,
-          repeat: state === "speaking" || state === "listening" ? Infinity : 0,
-          ease: "easeInOut",
+          width: { type: "spring", stiffness: 200, damping: 20 },
+          height: { type: "spring", stiffness: 200, damping: 20 },
+          scale: { duration: 0.8, repeat: state === "thinking" ? Infinity : 0, ease: "easeInOut" },
+        }}
+        className="rounded-full flex items-center justify-center shadow-2xl"
+        style={{
+          background: `radial-gradient(circle at 35% 35%, hsl(var(--primary) / 0.9), hsl(var(--primary) / 0.6))`,
+          boxShadow: `0 0 ${state === "idle" ? 20 : 40}px hsl(var(--primary) / ${state === "idle" ? 0.15 : 0.3})`,
         }}
       >
-        {/* Inner shimmer */}
-        <motion.div
-          className="absolute inset-2 rounded-full"
-          style={{
-            background: `radial-gradient(circle at 35% 35%, hsl(0 0% 100% / 0.2) 0%, transparent 60%)`,
-          }}
-        />
-
-        {/* State icon */}
         <AnimatePresence mode="wait">
-          <motion.div
-            key={state}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.2 }}
-          >
-            {state === "listening" && <Mic className="w-10 h-10 text-primary-foreground" />}
-            {state === "thinking" && (
-              <motion.div
-                className="flex gap-1.5"
-                animate={{ opacity: [0.4, 1, 0.4] }}
-                transition={{ duration: 1.2, repeat: Infinity }}
-              >
+          {state === "listening" && (
+            <motion.div
+              key="listening"
+              initial={{ scale: 0 }}
+              animate={{ scale: [1, 1.2, 1] }}
+              exit={{ scale: 0 }}
+              transition={{ scale: { duration: 1, repeat: Infinity } }}
+            >
+              <Mic className="w-10 h-10 text-primary-foreground" />
+            </motion.div>
+          )}
+          {state === "thinking" && (
+            <motion.div
+              key="thinking"
+              initial={{ opacity: 0, rotate: 0 }}
+              animate={{ opacity: 1, rotate: 360 }}
+              exit={{ opacity: 0 }}
+              transition={{ rotate: { duration: 2, repeat: Infinity, ease: "linear" } }}
+            >
+              <Sparkles className="w-9 h-9 text-primary-foreground" />
+            </motion.div>
+          )}
+          {state === "speaking" && (
+            <motion.div
+              key="speaking"
+              initial={{ scale: 0.8 }}
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 0.6, repeat: Infinity }}
+            >
+              <div className="flex items-center gap-1">
                 {[0, 1, 2].map((i) => (
                   <motion.div
                     key={i}
-                    className="w-2.5 h-2.5 rounded-full bg-primary-foreground"
-                    animate={{ y: [0, -6, 0] }}
-                    transition={{ duration: 0.6, delay: i * 0.15, repeat: Infinity }}
+                    animate={{ height: [8, 20, 8] }}
+                    transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.15 }}
+                    className="w-1.5 bg-primary-foreground rounded-full"
                   />
                 ))}
-              </motion.div>
-            )}
-            {state === "speaking" && <Volume2 className="w-10 h-10 text-primary-foreground" />}
-            {state === "idle" && <Mic className="w-10 h-10 text-primary-foreground/60" />}
-          </motion.div>
+              </div>
+            </motion.div>
+          )}
+          {state === "idle" && (
+            <motion.div key="idle" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
+              <Mic className="w-10 h-10 text-primary-foreground/60" />
+            </motion.div>
+          )}
         </AnimatePresence>
       </motion.div>
     </div>
@@ -174,13 +174,7 @@ function StateLabel({ state, holding }: { state: VoiceState; holding: boolean })
 }
 
 // ─── Transcript card ───
-function TranscriptCard({
-  role,
-  text,
-}: {
-  role: "user" | "assistant";
-  text: string;
-}) {
+function TranscriptCard({ role, text }: { role: "user" | "assistant"; text: string }) {
   if (!text) return null;
   const isUser = role === "user";
   return (
@@ -193,9 +187,7 @@ function TranscriptCard({
           : "self-start bg-card border border-border/60 text-foreground"
       }`}
     >
-      {!isUser && (
-        <span className="text-xs font-semibold text-primary mb-1 block">Alex</span>
-      )}
+      {!isUser && <span className="text-xs font-semibold text-primary mb-1 block">Alex</span>}
       <p className="text-sm leading-relaxed">{text}</p>
     </motion.div>
   );
@@ -208,13 +200,12 @@ export default function AlexVoicePage() {
   const [showText, setShowText] = useState(false);
   const [textInput, setTextInput] = useState("");
   const [holding, setHolding] = useState(false);
+  const [dynamicChips, setDynamicChips] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Cleanup overlays on unmount
   useEffect(() => () => cleanupAlexOverlays(), []);
-
-  const [dynamicChips, setDynamicChips] = useState<string[]>([]);
 
   const dispatcherDeps: DispatcherDeps = {
     navigate,
@@ -234,6 +225,7 @@ export default function AlexVoicePage() {
     transcript,
     error,
     isSupported,
+    nextAction,
     startSession,
     sendMessage,
     startListening,
@@ -261,16 +253,12 @@ export default function AlexVoicePage() {
   // ─── Hold-to-talk handlers ───
   const handlePointerDown = useCallback(() => {
     if (!isSupported || state === "thinking") return;
-
-    // Interrupt Alex if speaking
-    if (state === "speaking") {
-      stopPlayback();
-    }
+    if (state === "speaking") stopPlayback();
 
     holdTimerRef.current = setTimeout(() => {
       setHolding(true);
       startListening();
-    }, 120); // Short debounce to avoid accidental taps
+    }, 120);
   }, [state, isSupported, startListening, stopPlayback]);
 
   const handlePointerUp = useCallback(() => {
@@ -278,26 +266,21 @@ export default function AlexVoicePage() {
       clearTimeout(holdTimerRef.current);
       holdTimerRef.current = null;
     }
-
     if (holding) {
       setHolding(false);
       stopListening();
     }
   }, [holding, stopListening]);
 
-  // Cancel hold on pointer leave
   const handlePointerLeave = useCallback(() => {
     handlePointerUp();
   }, [handlePointerUp]);
 
-  // Tap action (non-hold)
   const handleTap = useCallback(() => {
     if (state === "speaking") {
       stopPlayback();
-    } else if (state === "listening") {
-      stopListening();
     }
-  }, [state, stopPlayback, stopListening]);
+  }, [state, stopPlayback]);
 
   const handleTextSend = useCallback(() => {
     const trimmed = textInput.trim();
@@ -308,9 +291,26 @@ export default function AlexVoicePage() {
 
   const handleChipAction = useCallback(
     (chip: (typeof QUICK_ACTIONS)[0]) => {
-      handleUIAction({ type: chip.action, target: chip.target } as UIAction);
+      // Send as a voice message to Alex for context
+      if (chip.action === "open_upload") {
+        sendMessage("Je veux envoyer une photo de ma propriété");
+      } else if (chip.action === "show_score") {
+        sendMessage("Montre-moi mon score maison");
+      } else if (chip.action === "open_booking") {
+        sendMessage("Je veux prendre un rendez-vous");
+      } else {
+        handleUIAction({ type: chip.action, target: chip.target } as UIAction);
+      }
     },
-    [handleUIAction]
+    [handleUIAction, sendMessage]
+  );
+
+  const handleDynamicChip = useCallback(
+    (label: string) => {
+      setDynamicChips([]);
+      sendMessage(label);
+    },
+    [sendMessage]
   );
 
   return (
@@ -327,12 +327,7 @@ export default function AlexVoicePage() {
         {/* ─── Header ─── */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-              className="rounded-full"
-            >
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full">
               <X className="w-5 h-5" />
             </Button>
             <div>
@@ -340,14 +335,8 @@ export default function AlexVoicePage() {
               <p className="text-xs text-muted-foreground">Concierge vocale</p>
             </div>
           </div>
-
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowText((v) => !v)}
-              className="rounded-full"
-            >
+            <Button variant="ghost" size="icon" onClick={() => setShowText((v) => !v)} className="rounded-full">
               <MessageCircle className="w-4 h-4" />
             </Button>
           </div>
@@ -355,7 +344,6 @@ export default function AlexVoicePage() {
 
         {/* ─── Main area ─── */}
         <div className="flex-1 flex flex-col items-center justify-between relative overflow-hidden">
-          {/* Background gradient */}
           <div
             className="absolute inset-0 opacity-30 pointer-events-none"
             style={{
@@ -408,6 +396,23 @@ export default function AlexVoicePage() {
               <StateLabel state={state} holding={holding} />
             </div>
 
+            {/* Next action suggestion */}
+            <AnimatePresence>
+              {nextAction && state === "idle" && (
+                <motion.button
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => sendMessage(nextAction)}
+                  className="mt-3 flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {nextAction}
+                  <ChevronRight className="w-3 h-3" />
+                </motion.button>
+              )}
+            </AnimatePresence>
+
             {/* Error */}
             <AnimatePresence>
               {error && (
@@ -426,7 +431,29 @@ export default function AlexVoicePage() {
           {/* ─── Quick action chips ─── */}
           <div className="w-full px-4 pb-2 relative z-10">
             <AnimatePresence>
-              {state === "idle" && messages.length === 0 && (
+              {/* Dynamic chips from Alex */}
+              {dynamicChips.length > 0 && state === "idle" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 12 }}
+                  className="flex flex-wrap justify-center gap-2 mb-2"
+                >
+                  {dynamicChips.map((chip) => (
+                    <button
+                      key={chip}
+                      onClick={() => handleDynamicChip(chip)}
+                      className="flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3.5 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary/20 active:scale-95"
+                    >
+                      {chip}
+                      <ChevronRight className="w-3 h-3" />
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+
+              {/* Default chips (only when no conversation and no dynamic chips) */}
+              {state === "idle" && messages.length <= 1 && dynamicChips.length === 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -484,12 +511,7 @@ export default function AlexVoicePage() {
           {/* Action row */}
           <div className="flex items-center justify-center gap-4">
             {state === "speaking" && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={stopPlayback}
-                className="rounded-full gap-2"
-              >
+              <Button variant="outline" size="sm" onClick={stopPlayback} className="rounded-full gap-2">
                 <VolumeX className="w-4 h-4" />
                 Arrêter
               </Button>
