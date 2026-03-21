@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAlexVoiceFull, type VoiceState, type UIAction } from "@/hooks/useAlexVoice";
 import { useAuth } from "@/hooks/useAuth";
+import { dispatchAlexActions, cleanupAlexOverlays, type AlexUIAction, type DispatcherDeps } from "@/lib/alexUiActionDispatcher";
 
 // ─── Quick action chip data ───
 const QUICK_ACTIONS = [
