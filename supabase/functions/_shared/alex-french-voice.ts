@@ -12,30 +12,49 @@
 // ─── 1. Deterministic Greeting Builder ───
 
 export interface GreetingContext {
+  /** Display name for UI transcript */
+  firstName?: string | null;
+  /** Preferred spoken name for TTS (overrides firstName in audio) */
+  preferredSpokenName?: string | null;
+  /** Legacy alias — mapped to firstName internally */
   userName?: string | null;
+  isReturningUser?: boolean;
+  /** Also accept legacy key */
   isReturning?: boolean;
-  /** UTC offset in hours, e.g. -5 for EST */
+  /** Local hour 0-23 (client-provided). Falls back to UTC-5 estimate. */
+  localHour?: number | null;
+  /** Legacy: UTC offset in hours */
   utcOffset?: number;
-  /** Override hour (0-23) for testing */
+  /** Legacy: override hour for testing */
   overrideHour?: number;
 }
 
-export function buildGreeting(ctx: GreetingContext): string {
-  const offset = ctx.utcOffset ?? -5;
-  const hour = ctx.overrideHour ?? ((new Date().getUTCHours() + offset + 24) % 24);
-  const name = ctx.userName ? ` ${ctx.userName}` : "";
+export interface GreetingResult {
+  /** Greeting for visible UI transcript */
+  displayGreeting: string;
+  /** Greeting optimized for TTS (may use preferredSpokenName) */
+  spokenGreeting: string;
+}
 
-  if (ctx.isReturning && ctx.userName) {
-    return `Rebonjour${name}. Contente de vous retrouver.`;
-  }
+export function buildAlexGreeting(ctx: GreetingContext): GreetingResult {
+  const returning = ctx.isReturningUser ?? ctx.isReturning ?? false;
+  const displayName = ctx.firstName ?? ctx.userName ?? null;
+  const spokenName = ctx.preferredSpokenName ?? displayName;
 
-  let timeGreeting: string;
-  if (hour >= 5 && hour < 12) {
-    timeGreeting = `Bonjour${name}.`;
-  } else if (hour >= 12 && hour < 17) {
-    timeGreeting = `Bon après-midi${name}.`;
-  } else {
-    timeGreeting = `Bonsoir${name}.`;
+  // Resolve hour: prefer explicit localHour, then legacy overrideHour, then UTC offset estimate
+  const hour =
+    ctx.localHour != null
+      ? ctx.localHour
+      : ctx.overrideHour != null
+        ? ctx.overrideHour
+        : (new Date().getUTCHours() + (ctx.utcOffset ?? -5) + 24) % 24;
+
+  function greet(name: string | null): string {
+    const suffix = name ? ` ${name}` : "";
+    if (returning) return `Rebonjour${suffix}.`;
+    if (hour >= 5 && hour < 12) return `Bonjour${suffix}.`;
+    if (hour >= 12 && hour < 18) return `Bon après-midi${suffix}.`;
+    return `Bonsoir${suffix}.`;
   }
 
   // Follow-up varies to avoid robotic repetition
@@ -46,7 +65,15 @@ export function buildGreeting(ctx: GreetingContext): string {
   ];
   const followUp = followUps[Math.floor(Math.random() * followUps.length)];
 
-  return `${timeGreeting} ${followUp}`;
+  return {
+    displayGreeting: `${greet(displayName)} ${followUp}`,
+    spokenGreeting: `${greet(spokenName)} ${followUp}`,
+  };
+}
+
+/** @deprecated Use buildAlexGreeting instead */
+export function buildGreeting(ctx: GreetingContext): string {
+  return buildAlexGreeting(ctx).displayGreeting;
 }
 
 // ─── 2. Spoken French Rewrite ───
