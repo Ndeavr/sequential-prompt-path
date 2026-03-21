@@ -43,7 +43,6 @@ import {
 const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const VOICE_ID = "gCr8TeSJgJaeaIoV4RWH"; // Alex — locked, no fallback
 
 // ─── Types ───
 export type WsIncoming =
