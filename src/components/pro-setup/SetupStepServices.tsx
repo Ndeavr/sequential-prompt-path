@@ -60,10 +60,11 @@ export default function SetupStepServices({ contractorId, onNext, onBack }: Prop
     await supabase.from("contractor_services").delete().eq("contractor_id", contractorId);
     const payload = selected.map((s, i) => ({
       contractor_id: contractorId,
-      service_name: s,
+      service_name_fr: s,
       service_slug: s.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
       service_type: i === 0 ? "primary" : "secondary",
       is_active: true,
+      is_primary: i === 0,
     }));
     const { error } = await supabase.from("contractor_services").insert(payload);
     if (error) {
