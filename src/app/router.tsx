@@ -48,6 +48,8 @@ import PropertyTypeHubPage from "@/pages/seo/PropertyTypeHubPage";
 import PropertyTypeCityPage from "@/pages/seo/PropertyTypeCityPage";
 import PropertyTypeProblemPage from "@/pages/seo/PropertyTypeProblemPage";
 import SeoPageRenderer from "@/pages/seo/SeoPageRenderer";
+import SeoSitemapPage from "@/pages/seo/SeoSitemapPage";
+import AdminSeoGenerator from "@/pages/admin/AdminSeoGenerator";
 import PropertyGraphPage from "@/pages/PropertyGraphPage";
 import AlexChat from "@/pages/AlexChat";
 import DesignPage from "@/pages/DesignPage";
