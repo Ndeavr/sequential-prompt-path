@@ -319,11 +319,12 @@ export class VoiceGateway {
     this.send({ type: "state.change", state: "listening" });
   }
 
-  // ─── TTS helper ───
+  // ─── TTS helper (uses locked ALEX_VOICE_CONFIG) ───
   private async generateTTS(text: string): Promise<string | null> {
     try {
+      const { voiceId, modelId, outputFormat, voiceSettings } = ALEX_VOICE_CONFIG;
       const response = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}/stream?output_format=mp3_22050_32`,
+        `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream?output_format=${outputFormat}`,
         {
           method: "POST",
           headers: {
@@ -332,14 +333,8 @@ export class VoiceGateway {
           },
           body: JSON.stringify({
             text,
-            model_id: "eleven_turbo_v2_5",
-            voice_settings: {
-              stability: 0.55,
-              similarity_boost: 0.78,
-              style: 0.15,
-              use_speaker_boost: true,
-              speed: 1.05,
-            },
+            model_id: modelId,
+            voice_settings: voiceSettings,
           }),
         }
       );
