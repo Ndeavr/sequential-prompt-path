@@ -288,16 +288,18 @@ serve(async (req) => {
 
       // Persist conversation to DB
       if (sessionId) {
-        await supabase.from("voice_events").insert({
-          session_id: sessionId,
-          event_type: "conversation_turn",
-          metadata: {
-            user_message: userMessage,
-            alex_text: cleanText,
-            ui_actions: actions,
-            next_action: nextAction,
-          },
-        }).catch(() => {});
+        try {
+          await supabase.from("voice_events").insert({
+            session_id: sessionId,
+            event_type: "conversation_turn",
+            metadata: {
+              user_message: userMessage,
+              alex_text: cleanText,
+              ui_actions: actions,
+              next_action: nextAction,
+            },
+          });
+        } catch (_) {}
 
         // Update session transcript
         await supabase.from("voice_sessions").update({
