@@ -602,7 +602,7 @@ export function getAlexVoiceSettings(profile: AlexVoiceProfile = "default") {
 export const ALEX_VOICE_CONFIG = {
   voiceId: "gCr8TeSJgJaeaIoV4RWH",
   modelId: "eleven_turbo_v2_5",
-  outputFormat: "mp3_22050_32",
+  outputFormat: "mp3_44100_128",
   chunkLengthSchedule: [70, 110, 150],
   voiceSettings: VOICE_PROFILES.default,
 } as const;
