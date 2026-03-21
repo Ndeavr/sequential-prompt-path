@@ -291,15 +291,20 @@ export function useAlexVoiceSession() {
 
     const r = new SR();
     r.lang = "fr-CA";
-    r.continuous = true;
+    r.continuous = false;
     r.interimResults = true;
 
     r.onstart = () => {
       sttRunningRef.current = true;
     };
 
+    r.onspeechstart = () => {
+      gotSpeechThisCycle.current = true;
+    };
+
     r.onresult = (e: any) => {
       if (!sessionRef.current) return;
+      gotSpeechThisCycle.current = true;
       // Barge-in: if user speaks while Alex is speaking, interrupt immediately
       if (isPlayingRef.current) {
         console.log("[VoiceSession] interrupt_received");
@@ -318,6 +323,8 @@ export function useAlexVoiceSession() {
         finalTranscriptRef.current += final;
         console.log("[VoiceSession] final_received:", final);
         clearSilenceTimer();
+        // With continuous:false, onend fires after final result.
+        // Submit after silence timer.
         silenceTimerRef.current = setTimeout(() => {
           const text = finalTranscriptRef.current.trim();
           if (text && sessionRef.current) {
@@ -348,7 +355,18 @@ export function useAlexVoiceSession() {
         safeSetState("idle");
         return;
       }
-      // Recoverable error — restart after delay if still in listening state
+      if (e.error === "no-speech") {
+        // No speech detected — just restart cleanly if still listening
+        if (sessionRef.current && stateRef.current === "listening" && !isPlayingRef.current) {
+          setTimeout(() => {
+            if (sessionRef.current && stateRef.current === "listening" && !isPlayingRef.current && !sttRunningRef.current) {
+              startSTT();
+            }
+          }, RESTART_DELAY_MS);
+        }
+        return;
+      }
+      // Other recoverable error
       if (sessionRef.current && stateRef.current === "listening" && !isPlayingRef.current) {
         console.log("[VoiceSession] recovery_started (stt error:", e.error, ")");
         setTimeout(() => {
@@ -362,14 +380,20 @@ export function useAlexVoiceSession() {
 
     r.onend = () => {
       sttRunningRef.current = false;
-      // Only restart if we're supposed to be listening and nothing else is happening
-      if (sessionRef.current && stateRef.current === "listening" && !isPlayingRef.current) {
-        setTimeout(() => {
-          if (sessionRef.current && stateRef.current === "listening" && !isPlayingRef.current && !sttRunningRef.current) {
-            startSTT();
-          }
-        }, RESTART_DELAY_MS);
-      }
+      // With continuous:false, onend fires after each utterance or silence timeout.
+      // Only restart if we're in listening state, no pending finalization, and session is active.
+      if (!sessionRef.current) return;
+      if (stateRef.current !== "listening") return;
+      if (isPlayingRef.current) return;
+      // If there's a pending silence timer (user spoke), let the timer handle submission
+      if (silenceTimerRef.current) return;
+
+      // No speech was detected this cycle — restart with delay
+      setTimeout(() => {
+        if (sessionRef.current && stateRef.current === "listening" && !isPlayingRef.current && !sttRunningRef.current) {
+          startSTT();
+        }
+      }, gotSpeechThisCycle.current ? RESTART_DELAY_MS : RESTART_DELAY_MS * 2);
     };
 
     recRef.current = r;
