@@ -7561,6 +7561,53 @@ export type Database = {
           },
         ]
       }
+      contractor_reviews_snapshot: {
+        Row: {
+          bbb_present: boolean | null
+          contractor_id: string
+          created_at: string
+          facebook_present: boolean | null
+          google_present: boolean | null
+          id: string
+          other_sources: Json | null
+          rating: number | null
+          review_count: number | null
+          review_velocity_90d: number | null
+        }
+        Insert: {
+          bbb_present?: boolean | null
+          contractor_id: string
+          created_at?: string
+          facebook_present?: boolean | null
+          google_present?: boolean | null
+          id?: string
+          other_sources?: Json | null
+          rating?: number | null
+          review_count?: number | null
+          review_velocity_90d?: number | null
+        }
+        Update: {
+          bbb_present?: boolean | null
+          contractor_id?: string
+          created_at?: string
+          facebook_present?: boolean | null
+          google_present?: boolean | null
+          id?: string
+          other_sources?: Json | null
+          rating?: number | null
+          review_count?: number | null
+          review_velocity_90d?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_reviews_snapshot_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_risk_signals: {
         Row: {
           created_at: string
@@ -7833,6 +7880,86 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_site_snapshot: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          extracted_signals: Json | null
+          h1: string | null
+          h2_count: number | null
+          has_before_after: boolean | null
+          has_blog: boolean | null
+          has_cta: boolean | null
+          has_financing: boolean | null
+          has_local_pages: boolean | null
+          has_reviews_section: boolean | null
+          has_schema: boolean | null
+          html_excerpt: string | null
+          id: string
+          meta_description: string | null
+          mobile_friendly: boolean | null
+          page_speed_estimate: number | null
+          screenshot_url: string | null
+          title: string | null
+          website: string | null
+          word_count: number | null
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          extracted_signals?: Json | null
+          h1?: string | null
+          h2_count?: number | null
+          has_before_after?: boolean | null
+          has_blog?: boolean | null
+          has_cta?: boolean | null
+          has_financing?: boolean | null
+          has_local_pages?: boolean | null
+          has_reviews_section?: boolean | null
+          has_schema?: boolean | null
+          html_excerpt?: string | null
+          id?: string
+          meta_description?: string | null
+          mobile_friendly?: boolean | null
+          page_speed_estimate?: number | null
+          screenshot_url?: string | null
+          title?: string | null
+          website?: string | null
+          word_count?: number | null
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          extracted_signals?: Json | null
+          h1?: string | null
+          h2_count?: number | null
+          has_before_after?: boolean | null
+          has_blog?: boolean | null
+          has_cta?: boolean | null
+          has_financing?: boolean | null
+          has_local_pages?: boolean | null
+          has_reviews_section?: boolean | null
+          has_schema?: boolean | null
+          html_excerpt?: string | null
+          id?: string
+          meta_description?: string | null
+          mobile_friendly?: boolean | null
+          page_speed_estimate?: number | null
+          screenshot_url?: string | null
+          title?: string | null
+          website?: string | null
+          word_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_site_snapshot_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_prospects"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -8866,6 +8993,147 @@ export type Database = {
           verified_at?: string | null
           website?: string | null
           years_experience?: number | null
+        }
+        Relationships: []
+      }
+      contractors_prospects: {
+        Row: {
+          ai_score: number | null
+          aipp_score: number | null
+          branding_score: number | null
+          business_name: string
+          category: string | null
+          city: string | null
+          competitor_gap: Json | null
+          content_score: number | null
+          conversion_score: number | null
+          created_at: string
+          diagnostic: Json | null
+          diagnostic_summary: string | null
+          domain: string | null
+          email: string | null
+          estimated_monthly_loss_max: number | null
+          estimated_monthly_loss_min: number | null
+          google_maps_url: string | null
+          id: string
+          is_running_ads: boolean | null
+          landing_slug: string | null
+          landing_url: string | null
+          legal_name: string | null
+          local_score: number | null
+          loom_script: string | null
+          loom_status: string | null
+          notes: string | null
+          paid_intent_confidence: number | null
+          phone: string | null
+          priority_tier: string
+          quick_wins: Json | null
+          region: string | null
+          reviews_score: number | null
+          score_confidence: number | null
+          screenshot_mobile_url: string | null
+          screenshot_url: string | null
+          seo_score: number | null
+          service_area: string | null
+          source: string | null
+          source_detail: string | null
+          status: string
+          subcategory: string | null
+          trust_score: number | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          ai_score?: number | null
+          aipp_score?: number | null
+          branding_score?: number | null
+          business_name: string
+          category?: string | null
+          city?: string | null
+          competitor_gap?: Json | null
+          content_score?: number | null
+          conversion_score?: number | null
+          created_at?: string
+          diagnostic?: Json | null
+          diagnostic_summary?: string | null
+          domain?: string | null
+          email?: string | null
+          estimated_monthly_loss_max?: number | null
+          estimated_monthly_loss_min?: number | null
+          google_maps_url?: string | null
+          id?: string
+          is_running_ads?: boolean | null
+          landing_slug?: string | null
+          landing_url?: string | null
+          legal_name?: string | null
+          local_score?: number | null
+          loom_script?: string | null
+          loom_status?: string | null
+          notes?: string | null
+          paid_intent_confidence?: number | null
+          phone?: string | null
+          priority_tier?: string
+          quick_wins?: Json | null
+          region?: string | null
+          reviews_score?: number | null
+          score_confidence?: number | null
+          screenshot_mobile_url?: string | null
+          screenshot_url?: string | null
+          seo_score?: number | null
+          service_area?: string | null
+          source?: string | null
+          source_detail?: string | null
+          status?: string
+          subcategory?: string | null
+          trust_score?: number | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          ai_score?: number | null
+          aipp_score?: number | null
+          branding_score?: number | null
+          business_name?: string
+          category?: string | null
+          city?: string | null
+          competitor_gap?: Json | null
+          content_score?: number | null
+          conversion_score?: number | null
+          created_at?: string
+          diagnostic?: Json | null
+          diagnostic_summary?: string | null
+          domain?: string | null
+          email?: string | null
+          estimated_monthly_loss_max?: number | null
+          estimated_monthly_loss_min?: number | null
+          google_maps_url?: string | null
+          id?: string
+          is_running_ads?: boolean | null
+          landing_slug?: string | null
+          landing_url?: string | null
+          legal_name?: string | null
+          local_score?: number | null
+          loom_script?: string | null
+          loom_status?: string | null
+          notes?: string | null
+          paid_intent_confidence?: number | null
+          phone?: string | null
+          priority_tier?: string
+          quick_wins?: Json | null
+          region?: string | null
+          reviews_score?: number | null
+          score_confidence?: number | null
+          screenshot_mobile_url?: string | null
+          screenshot_url?: string | null
+          seo_score?: number | null
+          service_area?: string | null
+          source?: string | null
+          source_detail?: string | null
+          status?: string
+          subcategory?: string | null
+          trust_score?: number | null
+          updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }
@@ -16504,6 +16772,318 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      prospect_bookings: {
+        Row: {
+          booked_at: string | null
+          category: string | null
+          city: string | null
+          company: string | null
+          contractor_id: string | null
+          email: string | null
+          id: string
+          name: string | null
+          notes: string | null
+          phone: string | null
+          preferred_time: string | null
+          project_type: string | null
+          source: string | null
+          status: string | null
+        }
+        Insert: {
+          booked_at?: string | null
+          category?: string | null
+          city?: string | null
+          company?: string | null
+          contractor_id?: string | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          phone?: string | null
+          preferred_time?: string | null
+          project_type?: string | null
+          source?: string | null
+          status?: string | null
+        }
+        Update: {
+          booked_at?: string | null
+          category?: string | null
+          city?: string | null
+          company?: string | null
+          contractor_id?: string | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          phone?: string | null
+          preferred_time?: string | null
+          project_type?: string | null
+          source?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_bookings_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_email_campaigns: {
+        Row: {
+          body_html: string | null
+          body_text: string | null
+          bounced: boolean | null
+          campaign_name: string | null
+          click_count: number | null
+          contractor_id: string
+          created_at: string
+          from_email: string | null
+          from_name: string | null
+          id: string
+          open_count: number | null
+          replied: boolean | null
+          sent_at: string | null
+          subject: string | null
+          tracking_id: string | null
+        }
+        Insert: {
+          body_html?: string | null
+          body_text?: string | null
+          bounced?: boolean | null
+          campaign_name?: string | null
+          click_count?: number | null
+          contractor_id: string
+          created_at?: string
+          from_email?: string | null
+          from_name?: string | null
+          id?: string
+          open_count?: number | null
+          replied?: boolean | null
+          sent_at?: string | null
+          subject?: string | null
+          tracking_id?: string | null
+        }
+        Update: {
+          body_html?: string | null
+          body_text?: string | null
+          bounced?: boolean | null
+          campaign_name?: string | null
+          click_count?: number | null
+          contractor_id?: string
+          created_at?: string
+          from_email?: string | null
+          from_name?: string | null
+          id?: string
+          open_count?: number | null
+          replied?: boolean | null
+          sent_at?: string | null
+          subject?: string | null
+          tracking_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_email_campaigns_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_email_events: {
+        Row: {
+          campaign_id: string | null
+          contractor_id: string | null
+          created_at: string
+          event_meta: Json | null
+          event_type: string
+          id: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          event_meta?: Json | null
+          event_type: string
+          id?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          event_meta?: Json | null
+          event_type?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_email_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_email_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_email_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_import_jobs: {
+        Row: {
+          errors: Json | null
+          failed_count: number | null
+          file_name: string | null
+          finished_at: string | null
+          id: string
+          imported_count: number | null
+          row_count: number | null
+          started_at: string | null
+          status: string | null
+          storage_path: string | null
+        }
+        Insert: {
+          errors?: Json | null
+          failed_count?: number | null
+          file_name?: string | null
+          finished_at?: string | null
+          id?: string
+          imported_count?: number | null
+          row_count?: number | null
+          started_at?: string | null
+          status?: string | null
+          storage_path?: string | null
+        }
+        Update: {
+          errors?: Json | null
+          failed_count?: number | null
+          file_name?: string | null
+          finished_at?: string | null
+          id?: string
+          imported_count?: number | null
+          row_count?: number | null
+          started_at?: string | null
+          status?: string | null
+          storage_path?: string | null
+        }
+        Relationships: []
+      }
+      prospect_loom_jobs: {
+        Row: {
+          contractor_id: string | null
+          created_at: string | null
+          finished_at: string | null
+          id: string
+          personalized_intro: string | null
+          screenshot_url: string | null
+          script: string | null
+          status: string | null
+          thumbnail_url: string | null
+          video_url: string | null
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string | null
+          finished_at?: string | null
+          id?: string
+          personalized_intro?: string | null
+          screenshot_url?: string | null
+          script?: string | null
+          status?: string | null
+          thumbnail_url?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string | null
+          finished_at?: string | null
+          id?: string
+          personalized_intro?: string | null
+          screenshot_url?: string | null
+          script?: string | null
+          status?: string | null
+          thumbnail_url?: string | null
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_loom_jobs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_scraper_jobs: {
+        Row: {
+          category: string | null
+          city: string | null
+          created_at: string | null
+          finished_at: string | null
+          id: string
+          logs: Json | null
+          query: string | null
+          source: string | null
+          status: string | null
+          total_found: number | null
+          total_inserted: number | null
+        }
+        Insert: {
+          category?: string | null
+          city?: string | null
+          created_at?: string | null
+          finished_at?: string | null
+          id?: string
+          logs?: Json | null
+          query?: string | null
+          source?: string | null
+          status?: string | null
+          total_found?: number | null
+          total_inserted?: number | null
+        }
+        Update: {
+          category?: string | null
+          city?: string | null
+          created_at?: string | null
+          finished_at?: string | null
+          id?: string
+          logs?: Json | null
+          query?: string | null
+          source?: string | null
+          status?: string | null
+          total_found?: number | null
+          total_inserted?: number | null
+        }
+        Relationships: []
+      }
+      prospect_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string | null
+          value: Json | null
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string | null
+          value?: Json | null
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: Json | null
+        }
+        Relationships: []
       }
       qr_bundle_cards: {
         Row: {
