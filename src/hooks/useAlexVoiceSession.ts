@@ -20,8 +20,10 @@ const VOICE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-voice`
 // Configurable timing
 const END_OF_SPEECH_SILENCE_MS = 1500;
 const INTERIM_SILENCE_MS = 2000;
-const RESTART_DELAY_MS = 600;
-const RELISTEN_DELAY_MS = 300;
+const RESTART_DELAY_MS = 800;
+const RELISTEN_DELAY_MS = 400;
+const MAX_RAPID_RESTARTS = 3;
+const RAPID_RESTART_WINDOW_MS = 4000;
 
 /** Get auth info lazily without hooks */
 async function getAuthInfo() {
