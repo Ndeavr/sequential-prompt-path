@@ -93,6 +93,9 @@ import VerificationSeoPage from "@/pages/seo/VerificationSeoPage";
 import AlignmentQuestionnairePage from "@/pages/AlignmentQuestionnairePage";
 import FounderPage from "@/pages/FounderPage";
 import AdminFounderInvites from "@/pages/admin/AdminFounderInvites";
+import AdminProspects from "@/pages/admin/AdminProspects";
+import AdminProspectImport from "@/pages/admin/AdminProspectImport";
+import AuditLandingPage from "@/pages/AuditLandingPage";
 import ContractorAvailabilityPage from "@/pages/ContractorAvailabilityPage";
 import PublicBookingPage from "@/pages/PublicBookingPage";
 import BookingSettingsPage from "@/pages/BookingSettingsPage";
@@ -496,6 +499,9 @@ export const AppRouter = () => (
       <Route path="/admin/seo-articles" element={<ProtectedRoute requiredRole="admin"><AdminSeoArticles /></ProtectedRoute>} />
       <Route path="/admin/bulk-articles" element={<ProtectedRoute requiredRole="admin"><AdminBulkArticlesPage /></ProtectedRoute>} />
       <Route path="/admin/founder-invites" element={<ProtectedRoute requiredRole="admin"><AdminFounderInvites /></ProtectedRoute>} />
+      <Route path="/admin/prospects" element={<ProtectedRoute requiredRole="admin"><AdminProspects /></ProtectedRoute>} />
+      <Route path="/admin/prospects/import" element={<ProtectedRoute requiredRole="admin"><AdminProspectImport /></ProtectedRoute>} />
+      <Route path="/audit/:slug" element={<AuditLandingPage />} />
       <Route path="/articles/:slug" element={<SeoArticlePage />} />
       <Route path="/emergency" element={<EmergencyPage />} />
       <Route path="/emergency/track/:id" element={<EmergencyTrackingPage />} />
