@@ -96,6 +96,7 @@ export function buildContextString(session: VoiceSessionContext): string {
   if (session.isAuthenticated) parts.push(`Utilisateur connecté: oui`);
   if (session.userRole) parts.push(`Rôle: ${session.userRole}`);
   if (session.hasScore) parts.push(`Score maison existant: oui`);
-  if (session.userName) parts.push(`Prénom: ${session.userName}`);
+  if (session.preferredSpokenName) parts.push(`Prénom pour la voix: ${session.preferredSpokenName}`);
+  else if (session.userName) parts.push(`Prénom: ${session.userName}`);
   return parts.length > 0 ? "\n" + parts.join("\n") : "";
 }
