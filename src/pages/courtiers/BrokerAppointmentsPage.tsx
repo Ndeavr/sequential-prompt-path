@@ -39,7 +39,7 @@ export default function BrokerAppointmentsPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("appointments")
-        .select("*, leads(city, project_category, intent)")
+        .select("*")
         .eq("broker_id", broker!.id)
         .order("scheduled_at", { ascending: false });
       return data ?? [];
