@@ -14,6 +14,7 @@ import DashPipeline from "@/components/pro-dashboard/DashPipeline";
 import DashAippScore from "@/components/pro-dashboard/DashAippScore";
 import DashAutoAccept from "@/components/pro-dashboard/DashAutoAccept";
 import DashAiRecommendations from "@/components/pro-dashboard/DashAiRecommendations";
+import DashMatchActivity from "@/components/pro-dashboard/DashMatchActivity";
 import DashUpsell from "@/components/pro-dashboard/DashUpsell";
 import DashNotifications from "@/components/pro-dashboard/DashNotifications";
 import DashPerformance from "@/components/pro-dashboard/DashPerformance";
