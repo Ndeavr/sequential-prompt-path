@@ -116,7 +116,7 @@ function PlanCard({ plan, index, isRecommended, onCheckout }: {
   const isHighlighted = isRecommended || plan.highlight;
 
   return (
-    <motion.div variants={fadeUp} custom={index} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+    <motion.div variants={fadeUp} custom={index} initial="hidden" whileInView="visible" viewport={{ once: true }} data-plan={plan.id} data-section={`plan-${plan.id}`}>
       <div className={`rounded-2xl p-6 h-full flex flex-col transition-all duration-300 hover:-translate-y-1 relative ${
         isHighlighted
           ? "bg-card border-2 border-primary/30 shadow-glow"
