@@ -28,8 +28,8 @@ function timeAgo(dateStr: string) {
 export default function DashNotifications() {
   const { data: notifications, isLoading } = useContractorNotifications();
 
-  const items = notifications ?? [];
-  const unreadCount = items.filter(n => n.status === "unread" || !n.read_at).length;
+  const items = (notifications ?? []) as any[];
+  const unreadCount = items.filter((n: any) => n.status === "unread" || !n.read_at).length;
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}
