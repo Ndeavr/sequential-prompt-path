@@ -154,16 +154,17 @@ export class VoiceGateway {
       },
     }).catch(() => {});
 
-    // Generate greeting
-    const hour = new Date().getUTCHours() - 5;
-    const name = msg.userName ? ` ${msg.userName}` : "";
-    let greeting: string;
-    if (hour < 12) greeting = `Bonjour${name}.`;
-    else if (hour < 17) greeting = `Bon après-midi${name}.`;
-    else greeting = `Bonsoir${name}.`;
-    greeting += " Comment puis-je vous aider?";
+    // Deterministic greeting via builder
+    const greetingResult = buildAlexGreeting({
+      firstName: msg.userName,
+      localHour: null, // will use UTC offset
+      utcOffset: -5,
+    });
+    const greeting = greetingResult.spokenGreeting;
 
-    const greetingAudio = await this.generateTTS(greeting);
+    // TTS normalize for pronunciation, then generate
+    const greetingForTTS = normalizeTextForFrenchTts(greeting);
+    const greetingAudio = await this.generateTTS(greetingForTTS);
 
     this.send({
       type: "session.ready",
