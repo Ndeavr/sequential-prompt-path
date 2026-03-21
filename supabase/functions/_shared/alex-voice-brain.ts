@@ -95,7 +95,7 @@ export async function alexVoiceBrain(
   const contextBlock = buildContextBlock(input);
 
   const conversationMessages = [
-    { role: "system", content: ALEX_VOICE_SYSTEM + contextBlock },
+    { role: "system", content: ALEX_VOICE_SYSTEM_PROMPT + contextBlock },
     ...(input.messages || []),
     { role: "user", content: input.transcript },
   ];
