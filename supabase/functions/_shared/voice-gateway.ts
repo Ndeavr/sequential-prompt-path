@@ -281,7 +281,7 @@ export class VoiceGateway {
         event_type: "ws_response",
         metadata: {
           user_message: userText,
-          alex_text: alexText,
+          alex_text: displayText,
           ui_actions: uiActions,
           next_best_action: nextBestAction,
           turn: this.session.turnCount,
