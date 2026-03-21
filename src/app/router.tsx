@@ -96,6 +96,8 @@ import AdminFounderInvites from "@/pages/admin/AdminFounderInvites";
 import ContractorAvailabilityPage from "@/pages/ContractorAvailabilityPage";
 import PublicBookingPage from "@/pages/PublicBookingPage";
 import BookingSettingsPage from "@/pages/BookingSettingsPage";
+import BookingPaymentSuccess from "@/pages/BookingPaymentSuccess";
+import BookingPaymentCancel from "@/pages/BookingPaymentCancel";
 
 // Broker / Courtier
 import CourtiersLandingPage from "@/pages/courtiers/CourtiersLandingPage";
