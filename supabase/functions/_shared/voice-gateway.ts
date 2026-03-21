@@ -3,11 +3,12 @@
  *
  * Handles:
  * - session.start  → initialize session, return session.ready
+ * - audio.chunk    → forward to STT provider
  * - audio.stop     → finalize transcript, get AI response, stream TTS
  * - interrupt      → cancel generation, return to listening
  *
- * audio.chunk is acknowledged but transcript accumulation happens client-side
- * (Web Speech API). The final transcript arrives with audio.stop.
+ * Uses pluggable SttProvider abstraction so the transcription engine can be
+ * swapped without rewriting session logic.
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
@@ -21,6 +22,12 @@ import {
   buildContextString,
   type VoiceSessionContext,
 } from "./voice-session.ts";
+import {
+  PassthroughSttProvider,
+  type SttProvider,
+  type SttEvent,
+  type SttProviderFactory,
+} from "./stt-provider.ts";
 
 // ─── Config ───
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
@@ -57,13 +64,15 @@ RÈGLES :
 export type WsIncoming =
   | { type: "session.start"; userId?: string; userName?: string; context?: Record<string, unknown> }
   | { type: "audio.chunk"; data?: string }
-  | { type: "audio.stop"; transcript: string }
+  | { type: "audio.stop"; transcript?: string }
   | { type: "interrupt" };
 
 export type WsOutgoing =
   | { type: "session.ready"; sessionId: string; greeting: string; greetingAudio: string | null }
   | { type: "state.change"; state: string }
   | { type: "audio.chunk.ack" }
+  | { type: "transcript.partial"; text: string }
+  | { type: "transcript.final"; text: string }
   | { type: "response.text"; text: string; uiActions: Array<Record<string, string>> }
   | { type: "response.audio"; chunk: string; index: number; total: number }
   | { type: "response.done" }
@@ -76,9 +85,13 @@ export class VoiceGateway {
   private session: VoiceSessionContext | null = null;
   private abortController: AbortController | null = null;
   private supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  private sttProvider: SttProvider | null = null;
+  private sttFactory: SttProviderFactory;
 
-  constructor(ws: WebSocket) {
+  constructor(ws: WebSocket, sttFactory?: SttProviderFactory) {
     this.ws = ws;
+    // Default to PassthroughSttProvider; override with real provider via factory
+    this.sttFactory = sttFactory ?? ((onEvent) => new PassthroughSttProvider(onEvent));
   }
 
   send(msg: WsOutgoing) {
@@ -101,7 +114,7 @@ export class VoiceGateway {
         await this.handleSessionStart(msg);
         break;
       case "audio.chunk":
-        this.send({ type: "audio.chunk.ack" });
+        this.handleAudioChunk(msg);
         break;
       case "audio.stop":
         await this.handleAudioStop(msg);
@@ -110,7 +123,22 @@ export class VoiceGateway {
         this.handleInterrupt();
         break;
       default:
-        this.send({ type: "error", message: `Unknown message type` });
+        this.send({ type: "error", message: "Unknown message type" });
+    }
+  }
+
+  // ─── STT event handler ───
+  private handleSttEvent(event: SttEvent) {
+    switch (event.type) {
+      case "transcript.partial":
+        this.send({ type: "transcript.partial", text: event.text });
+        break;
+      case "transcript.final":
+        this.send({ type: "transcript.final", text: event.text });
+        break;
+      case "transcript.error":
+        this.send({ type: "error", message: event.message });
+        break;
     }
   }
 
@@ -124,6 +152,10 @@ export class VoiceGateway {
       context: msg.context,
     });
     transitionState(this.session, "listening");
+
+    // Initialize STT provider for this session
+    this.sttProvider?.close();
+    this.sttProvider = this.sttFactory((event) => this.handleSttEvent(event));
 
     // Persist session
     await this.supabase.from("voice_sessions").insert({
@@ -158,6 +190,14 @@ export class VoiceGateway {
     this.send({ type: "state.change", state: "listening" });
   }
 
+  // ─── audio.chunk ───
+  private handleAudioChunk(msg: Extract<WsIncoming, { type: "audio.chunk" }>) {
+    if (msg.data && this.sttProvider) {
+      this.sttProvider.pushAudioChunk(msg.data);
+    }
+    this.send({ type: "audio.chunk.ack" });
+  }
+
   // ─── audio.stop ───
   private async handleAudioStop(msg: Extract<WsIncoming, { type: "audio.stop" }>) {
     if (!this.session) {
@@ -165,7 +205,18 @@ export class VoiceGateway {
       return;
     }
 
-    const userText = msg.transcript?.trim();
+    // If client sent transcript directly (Web Speech API), feed it to the provider
+    if (msg.transcript && this.sttProvider instanceof PassthroughSttProvider) {
+      (this.sttProvider as PassthroughSttProvider).setExternalTranscript(msg.transcript);
+    }
+
+    // Finalize STT
+    if (this.sttProvider) {
+      await this.sttProvider.finalize();
+    }
+
+    // Use transcript from message or wait for STT (passthrough uses external)
+    const userText = msg.transcript?.trim() || "";
     if (!userText) {
       this.send({ type: "state.change", state: "listening" });
       return;
@@ -268,10 +319,7 @@ export class VoiceGateway {
       }).catch(() => {});
 
     } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") {
-        // Interrupted — handled by handleInterrupt
-        return;
-      }
+      if (err instanceof DOMException && err.name === "AbortError") return;
       console.error("voice-gateway error:", err);
       this.send({ type: "error", message: err instanceof Error ? err.message : "Unknown error" });
       if (this.session) {
@@ -352,5 +400,7 @@ export class VoiceGateway {
       this.abortController.abort();
       this.abortController = null;
     }
+    this.sttProvider?.close();
+    this.sttProvider = null;
   }
 }
