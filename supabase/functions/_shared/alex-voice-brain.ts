@@ -39,8 +39,7 @@ export interface VoiceBrainOutput {
   nextBestAction: string | null;
 }
 
-// ─── System prompt ───
-
+// ─── System prompt (imported from shared French voice pipeline) ───
 import { ALEX_VOICE_SYSTEM_PROMPT } from "./alex-french-voice.ts";
 
 // ─── Helpers ───
