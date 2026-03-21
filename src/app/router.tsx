@@ -309,6 +309,7 @@ export const AppRouter = () => (
 
       {/* Programmatic SEO Pages */}
       <Route path="/s/:slug" element={<SeoPageRenderer />} />
+      <Route path="/plan-du-site" element={<SeoSitemapPage />} />
 
       {/* Legacy English routes */}
       <Route path="/problems/:slug" element={<ProblemPage />} />
