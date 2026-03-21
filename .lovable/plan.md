@@ -1,71 +1,86 @@
 
 
-# Fix Alex Voice — Diagnosis and Repair Plan
+# Fix: Alex Voice STT Restart Loop
 
-## What's Wrong
+## Root Cause
 
-There are **two disconnected voice systems** that create confusion and bugs:
+The STT restart loop has three interacting bugs in `useAlexVoiceSession.ts`:
 
-1. **AlexAssistantSheet** (the bottom sheet on homepage) — uses `useAlexVoiceSession` which chains `useAlex` (→ `alex-chat`) + `useAlexVoice` (→ `elevenlabs-tts` separately). This is what you're currently using based on console logs.
+1. **No running guard on STT**: `startSTT()` calls `recognition.start()` without checking if it's already running. The browser throws silently or fires duplicate `onend` events.
 
-2. **AlexVoicePage** (`/alex/voice`) — uses `useAlexVoiceFull` (→ `alex-voice` unified function). This is the production-ready path but isn't the default entry point.
+2. **`onend` fires too eagerly**: With `continuous: true`, Chrome fires `onend` after ~5-10s of silence, then the 300ms restart timer fires, creating a visible flicker. The `startSTT()` call from `playNext` completion AND the `onend` handler compete, causing double-start attempts.
 
-### Specific Issues Found
+3. **STT not properly stopped during thinking/speaking**: When `sendUserMessage` calls `r.stop()`, the `onend` handler fires 300ms later and tries to restart STT even though state is now "thinking". The guard `stateRef.current === "listening"` catches most cases but race conditions exist.
 
-1. **The `useAlexVoiceSession` state machine is fragile**: STT uses `continuous: false` + `interimResults: false`, which means each utterance requires a full restart cycle. The anti-loop guard can freeze the session if state changes happen too fast.
+## Fix (single file: `src/hooks/useAlexVoiceSession.ts`)
 
-2. **TTS is sequential and slow**: The legacy `useAlexVoice` hook calls `elevenlabs-tts` edge function per sentence chunk via separate HTTP requests (not streaming). Each chunk waits for the previous to finish before even starting the next TTS request.
+### Change 1: Add `sttRunningRef` guard
+- Track whether STT engine is actively running
+- `startSTT()`: return early if already running, set flag to true
+- `onstart`: set flag to true  
+- `onend`: set flag to false
+- `onerror`: set flag to false
 
-3. **Session dies quickly**: The session opened at 3:27:00 and closed at 3:27:21 (21 seconds). The STT `onend` → restart loop can fail silently, leaving the session in limbo.
+### Change 2: Debounce STT restart in `onend`
+- Increase restart delay from 300ms to 600ms
+- Add full guard: check `sttRunningRef` is false, `sessionRef` is true, state is "listening", not playing
 
-4. **No unified pipeline**: The sheet voice mode doesn't use the `alex-voice` edge function which handles AI + TTS in one call and returns pre-generated audio chunks. Instead it makes 2+ separate round trips (AI streaming via `alex-chat`, then TTS per sentence via `elevenlabs-tts`).
+### Change 3: Remove duplicate `startSTT()` call from `playNext`
+- `playNext` completion sets state to "listening" but does NOT call `startSTT()` directly
+- Instead, the `onend` handler or a dedicated `prepareNextListenCycle()` handles restart
+- Add `prepareNextListenCycle()` that clears transcript buffer, waits 300ms, then starts STT only if conditions met
 
-5. **Echo protection is timing-based** (350ms delay) rather than proper audio-based, which can cause Alex to hear herself or miss user input.
+### Change 4: Expand state type
+- Add `"relistening"` state for the transition between speaking→listening
+- `prepareNextListenCycle` sets "relistening" briefly, then "listening" + STT start
 
-## Plan
+### Change 5: Stop STT during audio playback
+- In `enqueueAudio` / when first audio chunk starts playing, explicitly stop STT
+- Prevents echo/self-hearing
 
-### Step 1: Unify voice session onto the production `alex-voice` pipeline
+### Change 6: Clean transcript buffer between turns
+- `finalTranscriptRef.current = ""` in `prepareNextListenCycle()`
+- Clear silence timer
 
-Rewrite `useAlexVoiceSession` to use the `alex-voice` edge function directly (like `useAlexVoiceFull` does) instead of chaining `useAlex` + `useAlexVoice` separately. This gives:
-- Single request for AI + TTS (faster)
-- Pre-chunked base64 audio ready for immediate playback
-- Consistent behavior between sheet and full-page voice
+## Technical Implementation
 
-### Step 2: Fix STT reliability
+```text
+State flow per turn:
+  idle → thinking (create-session)
+    → speaking (greeting audio)
+    → relistening (queue empty, 300ms buffer)
+    → listening (STT started)
+    → thinking (user speech finalized, sendUserMessage)
+    → speaking (audio chunks enqueued)
+    → relistening → listening → ... (loop)
+```
 
-- Switch to `continuous: true` with `interimResults: true` for smoother recognition
-- Add proper silence detection timeout (auto-send after 2s of silence)
-- Remove anti-loop guard (it masks the real bug — the state oscillation won't happen with a proper pipeline)
+Key guard logic in `startSTT()`:
+```typescript
+if (sttRunningRef.current) return;
+if (!sessionRef.current) return;
+if (isPlayingRef.current) return;
+sttRunningRef.current = true;
+```
 
-### Step 3: Fix playback queue
+`prepareNextListenCycle()` called from `playNext` when queue is empty:
+```typescript
+function prepareNextListenCycle() {
+  finalTranscriptRef.current = "";
+  clearSilenceTimer();
+  safeSetState("relistening");
+  setTimeout(() => {
+    if (sessionRef.current && !isPlayingRef.current) {
+      safeSetState("listening");
+      startSTT();
+    }
+  }, 300);
+}
+```
 
-- Use the interrupt-safe `playbackToken` pattern from `useAlexVoiceFull` in the sheet voice mode
-- Pre-enqueue all audio chunks returned by `alex-voice` instead of fetching TTS per sentence
-
-### Step 4: Improve echo protection
-
-- Disable STT microphone during playback (not just a timer delay)
-- Re-enable STT only after last audio chunk finishes playing + 200ms buffer
-
-### Step 5: Connect the sheet voice mode to the same session/context
-
-- Pass `currentPage`, `activeProperty`, authentication context to `alex-voice`
-- Store conversation history for continuity
-
-### Files to Modify
+## Files Modified
 
 | File | Change |
 |------|--------|
-| `src/hooks/useAlexVoiceSession.ts` | Rewrite to use `alex-voice` edge function directly, fix STT, fix playback |
-| `src/components/alex/AlexAssistantSheet.tsx` | Minor updates for new hook API |
-| `src/components/home/HeroSection.tsx` | Ensure voice mode uses updated session |
-
-### Technical Details
-
-The new `useAlexVoiceSession` will:
-- Call `alex-voice` with `action: "create-session"` on open (gets greeting + audio)
-- Call `alex-voice` with `action: "respond-stream"` on user speech (gets text + audio chunks)
-- Use `playbackToken` for interrupt safety
-- Use `continuous: true` STT with proper barge-in detection
-- Remove dependency on `useAlex` and `useAlexVoice` legacy hooks
+| `src/hooks/useAlexVoiceSession.ts` | Add sttRunningRef, prepareNextListenCycle, expand states, fix guards |
 
