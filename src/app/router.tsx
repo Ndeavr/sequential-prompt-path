@@ -98,6 +98,7 @@ import BrokerOnboardingPage from "@/pages/courtiers/BrokerOnboardingPage";
 import BrokerDashboardPage from "@/pages/courtiers/BrokerDashboardPage";
 import BrokerLeadsPage from "@/pages/courtiers/BrokerLeadsPage";
 import BrokerProfilePage from "@/pages/courtiers/BrokerProfilePage";
+import BrokerAppointmentsPage from "@/pages/courtiers/BrokerAppointmentsPage";
 
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
