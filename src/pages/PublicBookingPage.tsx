@@ -294,6 +294,15 @@ export default function PublicBookingPage() {
           {/* Step: Date */}
           {step === "date" && selectedType && (
             <div className="space-y-4">
+              {/* Value proposition for paid types */}
+              {!selectedType.is_free && selectedType.price_amount > 0 && (
+                <PaidValueProposition
+                  appointmentTitle={selectedType.title}
+                  priceCents={selectedType.price_amount}
+                  category={selectedType.category}
+                />
+              )}
+
               <div className="rounded-xl border border-border/60 bg-card p-4">
                 <DateSelector
                   selectedDate={selectedDate}
