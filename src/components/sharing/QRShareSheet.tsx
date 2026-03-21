@@ -233,16 +233,16 @@ function QRView({
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -40 }}
-      className="flex flex-col"
+      className="flex flex-col overflow-hidden max-w-full"
     >
       {/* Header */}
-      <div className={`relative bg-gradient-to-b ${intent.gradient} px-5 pt-4 pb-4`}>
-        <div className="flex items-center gap-2 mb-3">
-          <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8 rounded-full -ml-1">
+      <div className={`relative bg-gradient-to-b ${intent.gradient} px-4 pt-4 pb-4 overflow-hidden`}>
+        <div className="flex items-center gap-2 mb-3 min-w-0">
+          <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8 rounded-full shrink-0 -ml-1">
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <div className="flex items-center gap-2 min-w-0">
               <h2 className="text-base font-bold text-foreground truncate">{label}</h2>
               {intent.badge && (
                 <Badge className={`text-[10px] shrink-0 border-0 ${
@@ -253,28 +253,28 @@ function QRView({
               )}
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-full">
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-full shrink-0">
             <X className="h-4 w-4" />
           </Button>
         </div>
 
         {/* Copy variant */}
-        <div className="flex items-start gap-3">
-          <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${
+        <div className="flex items-start gap-3 min-w-0">
+          <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${
             isPremium
               ? "bg-gradient-to-br from-amber-500/20 to-yellow-500/10 shadow-[0_0_16px_-4px_hsl(38_92%_50%/0.3)]"
               : "bg-background/60 backdrop-blur-sm ring-1 ring-border/10"
           }`}>
-            <Icon className={`h-6 w-6 ${isPremium ? "text-amber-500" : "text-primary"}`} />
+            <Icon className={`h-5 w-5 ${isPremium ? "text-amber-500" : "text-primary"}`} />
           </div>
-          <p className="text-sm text-muted-foreground leading-relaxed italic">
+          <p className="text-sm text-muted-foreground leading-relaxed italic min-w-0 break-words">
             « {randomCopy} »
           </p>
         </div>
       </div>
 
       {/* QR + actions */}
-      <div className="flex flex-col items-center gap-4 px-5 pb-5 pt-3">
+      <div className="flex flex-col items-center gap-4 px-4 pb-5 pt-3 max-w-full overflow-hidden">
         <QRCodeCard url={url} size={200} label={sub} />
 
         <ShareActionsRow
