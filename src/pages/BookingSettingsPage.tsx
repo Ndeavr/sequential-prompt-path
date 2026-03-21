@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { Plus, Trash2, GripVertical, Save, Clock, MapPin, DollarSign, Zap } from "lucide-react";
+import { Plus, Trash2, GripVertical, Save, Clock, MapPin, DollarSign, Zap, BarChart3, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
