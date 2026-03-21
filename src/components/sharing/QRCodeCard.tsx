@@ -99,42 +99,28 @@ const QRCodeCard = ({ url, size = 220, label }: QRCodeCardProps) => {
 
   if (!url) return null;
 
-  const visualSize = Math.min(size, 220);
-
   return (
-    <div className="flex flex-col items-center gap-3 w-full">
-      <div className="p-3 bg-card rounded-2xl shadow-lg border border-border inline-flex">
+    <div className="flex flex-col items-center gap-3 w-full max-w-full overflow-hidden">
+      <div className="p-3 bg-card rounded-2xl shadow-lg border border-border inline-flex max-w-full">
         {dataUrl ? (
           <img
             src={dataUrl}
             alt={t.alt[lang]}
-            width={visualSize}
-            height={visualSize}
             loading="eager"
             decoding="sync"
-            className="rounded-lg block"
-            style={{
-              imageRendering: "pixelated",
-              width: visualSize,
-              height: visualSize,
-            }}
+            className="rounded-lg block w-full h-auto max-w-[200px]"
+            style={{ imageRendering: "pixelated", aspectRatio: "1/1" }}
           />
         ) : isGenerating ? (
-          <div
-            className="rounded-lg bg-muted/40 animate-pulse"
-            style={{ width: visualSize, height: visualSize }}
-          />
+          <div className="rounded-lg bg-muted/40 animate-pulse w-full max-w-[200px] aspect-square" />
         ) : (
-          <div
-            className="rounded-lg bg-muted/20 border border-dashed border-border flex items-center justify-center px-3"
-            style={{ width: visualSize, height: visualSize }}
-          >
+          <div className="rounded-lg bg-muted/20 border border-dashed border-border flex items-center justify-center px-3 w-full max-w-[200px] aspect-square">
             <span className="text-[11px] text-muted-foreground text-center">{t.unavailable[lang]}</span>
           </div>
         )}
       </div>
 
-      {label && <p className="text-[11px] text-muted-foreground text-center max-w-[220px]">{label}</p>}
+      {label && <p className="text-[11px] text-muted-foreground text-center max-w-full px-2">{label}</p>}
 
       <Button
         variant="outline"
