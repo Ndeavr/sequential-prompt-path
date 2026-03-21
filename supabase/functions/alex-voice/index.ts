@@ -1,9 +1,19 @@
 /**
  * UNPRO — Alex Voice Edge Function (Production)
- * 
+ *
  * Full premium voice pipeline:
  * User speaks → client STT → this function (greeting/AI brain + French pipeline + TTS) → base64 audio
- * 
+ *
+ * Pipeline per turn:
+ *   AI raw text
+ *   → extractTags
+ *   → rewriteAlexToSpokenFrench
+ *   → normalizeFrenchNamesForSpeech
+ *   → normalizeTextForFrenchTts
+ *   → shapeTextForHumanSpeech
+ *   → splitForSpeech
+ *   → ElevenLabs TTS (voice gCr8TeSJgJaeaIoV4RWH)
+ *
  * Actions:
  * - create-session: deterministic greeting + TTS
  * - respond-stream: text → AI → French voice pipeline → sentence-by-sentence TTS
@@ -14,12 +24,19 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import {
-  buildGreeting,
+  buildAlexGreeting,
   processAlexResponse,
-  ttsNormalize,
+  normalizeTextForFrenchTts,
   ALEX_VOICE_CONFIG,
   ALEX_VOICE_SYSTEM_PROMPT,
+  type AlexVoiceProfile,
+  getAlexVoiceSettings,
 } from "../_shared/alex-french-voice.ts";
+import {
+  prepareAlexSpeechStyle,
+  shapeTextForHumanSpeech,
+  type AlexSpeechMode,
+} from "../_shared/alex-human-voice.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,9 +51,13 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 // ─── TTS Generation ───
 
-async function generateTTS(text: string): Promise<ArrayBuffer | null> {
+async function generateTTS(
+  text: string,
+  voiceSettingsOverride?: Record<string, unknown>
+): Promise<ArrayBuffer | null> {
   try {
-    const { voiceId, modelId, outputFormat, voiceSettings } = ALEX_VOICE_CONFIG;
+    const { voiceId, modelId, outputFormat, chunkLengthSchedule } = ALEX_VOICE_CONFIG;
+    const voiceSettings = voiceSettingsOverride ?? ALEX_VOICE_CONFIG.voiceSettings;
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream?output_format=${outputFormat}`,
       {
@@ -49,6 +70,7 @@ async function generateTTS(text: string): Promise<ArrayBuffer | null> {
           text,
           model_id: modelId,
           voice_settings: voiceSettings,
+          chunk_length_schedule: chunkLengthSchedule,
         }),
       }
     );
@@ -104,7 +126,7 @@ serve(async (req) => {
 
     // ─── CREATE SESSION ───
     if (action === "create-session") {
-      const { userId, feature, userName, context } = body;
+      const { userId, feature, userName, preferredSpokenName, context, voiceProfile, localHour } = body;
 
       let isReturning = false;
       if (userId) {
@@ -121,6 +143,7 @@ serve(async (req) => {
         transcript: "",
         context_json: {
           userName: userName || null,
+          preferredSpokenName: preferredSpokenName || null,
           ...context,
           created_at: new Date().toISOString(),
         },
@@ -129,28 +152,50 @@ serve(async (req) => {
       if (error) throw error;
 
       // Deterministic greeting via builder
-      const greeting = buildGreeting({
-        userName,
-        isReturning,
+      const greetingResult = buildAlexGreeting({
+        firstName: userName,
+        preferredSpokenName: preferredSpokenName || null,
+        isReturningUser: isReturning,
+        localHour: localHour ?? null,
         utcOffset: -5,
       });
 
-      // TTS normalize greeting for clean pronunciation
-      const greetingForTTS = ttsNormalize(greeting);
-      const greetingAudio = await generateTTS(greetingForTTS);
+      // Prepare speech style for greeting
+      const speechStyle = prepareAlexSpeechStyle({
+        mode: "neutral",
+        isReturningUser: isReturning,
+      });
+
+      // Shape spoken greeting for human delivery
+      const shaped = shapeTextForHumanSpeech(greetingResult.spokenGreeting, speechStyle);
+
+      // Normalize for TTS
+      const greetingForTTS = normalizeTextForFrenchTts(shaped);
+
+      // Build voice settings (support A/B profiles)
+      const voiceSettings = voiceProfile
+        ? getAlexVoiceSettings(voiceProfile as AlexVoiceProfile)
+        : { ...ALEX_VOICE_CONFIG.voiceSettings, speed: speechStyle.speed };
+
+      const greetingAudio = await generateTTS(greetingForTTS, voiceSettings);
       const greetingBase64 = greetingAudio ? base64Encode(greetingAudio) : null;
 
       try {
         await supabase.from("voice_events").insert({
           session_id: data.id,
           event_type: "greeting",
-          metadata: { alex_text: greeting, is_returning: isReturning },
+          metadata: {
+            display_text: greetingResult.displayGreeting,
+            spoken_text: greetingResult.spokenGreeting,
+            is_returning: isReturning,
+            voice_profile: voiceProfile || "default",
+          },
         });
       } catch (_) { /* non-blocking */ }
 
       return new Response(JSON.stringify({
         sessionId: data.id,
-        greeting,
+        greeting: greetingResult.displayGreeting,
         greetingAudio: greetingBase64,
         isReturning,
       }), {
@@ -160,9 +205,9 @@ serve(async (req) => {
 
     // ─── RESPOND-STREAM ───
     if (action === "respond" || action === "respond-stream") {
-      const { sessionId, userMessage, messages, context, userName } = body;
+      const { sessionId, userMessage, messages, context, userName, preferredSpokenName, voiceProfile, mode } = body;
 
-      const contextStr = buildContextString(context, userName);
+      const contextStr = buildContextString(context, preferredSpokenName || userName);
 
       const conversationMessages = [
         { role: "system", content: ALEX_VOICE_SYSTEM_PROMPT + contextStr },
@@ -201,8 +246,26 @@ serve(async (req) => {
       const aiData = await aiResponse.json();
       const rawText = aiData.choices?.[0]?.message?.content || "Je suis là pour vous aider.";
 
-      // Full French voice pipeline
+      // ── Full French Voice Pipeline ──
+      // Step 1-5: extract tags → spoken rewrite → name normalize → TTS normalize → split
       const { displayText, ttsSentences, uiActions, nextAction } = processAlexResponse(rawText);
+
+      // Step 6: Human voice layer — prepare speech style
+      const speechMode = (mode as AlexSpeechMode) || "neutral";
+      const speechStyle = prepareAlexSpeechStyle({
+        mode: speechMode,
+        stressLevel: context?.stressLevel ?? 0,
+        urgencyLevel: context?.urgencyLevel ?? 0,
+        isReturningUser: context?.isReturning ?? false,
+      });
+
+      // Step 7: Shape each sentence for human delivery
+      const shapedSentences = ttsSentences.map(s => shapeTextForHumanSpeech(s, speechStyle));
+
+      // Build voice settings
+      const voiceSettings = voiceProfile
+        ? getAlexVoiceSettings(voiceProfile as AlexVoiceProfile)
+        : { ...ALEX_VOICE_CONFIG.voiceSettings, speed: speechStyle.speed };
 
       // Persist
       if (sessionId) {
@@ -215,6 +278,8 @@ serve(async (req) => {
               alex_text: displayText,
               ui_actions: uiActions,
               next_action: nextAction,
+              speech_style: speechStyle.label,
+              voice_profile: voiceProfile || "default",
             },
           });
         } catch (_) { /* non-blocking */ }
@@ -231,10 +296,10 @@ serve(async (req) => {
         } catch (_) { /* non-blocking */ }
       }
 
-      // Generate TTS for each sentence (already normalized by pipeline)
+      // Step 8: Generate TTS for each shaped sentence
       const audioChunks: string[] = [];
-      for (const sentence of ttsSentences) {
-        const audio = await generateTTS(sentence);
+      for (const sentence of shapedSentences) {
+        const audio = await generateTTS(sentence, voiceSettings);
         if (audio) audioChunks.push(base64Encode(audio));
       }
 
@@ -244,6 +309,7 @@ serve(async (req) => {
         audioAvailable: audioChunks.length > 0,
         uiActions,
         nextAction,
+        speechStyle: speechStyle.label,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
