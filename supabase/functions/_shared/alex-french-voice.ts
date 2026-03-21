@@ -561,19 +561,42 @@ function extractNextAction(text: string): { cleanText: string; nextAction: strin
 }
 
 // ─── 6. ElevenLabs Voice Config ───
-// Optimized for natural French Quebec female voice.
+// Locked voice ID: gCr8TeSJgJaeaIoV4RWH
+// Do NOT change without explicit approval.
+
+export type AlexVoiceProfile = "default" | "profile_a" | "profile_b";
+
+const VOICE_PROFILES = {
+  default: {
+    stability: 0.70,
+    similarity_boost: 0.86,
+    style: 0.14,
+    use_speaker_boost: true,
+  },
+  profile_a: {
+    stability: 0.72,
+    similarity_boost: 0.85,
+    style: 0.15,
+    use_speaker_boost: true,
+  },
+  profile_b: {
+    stability: 0.76,
+    similarity_boost: 0.87,
+    style: 0.08,
+    use_speaker_boost: true,
+  },
+} as const;
+
+export function getAlexVoiceSettings(profile: AlexVoiceProfile = "default") {
+  return { ...VOICE_PROFILES[profile] };
+}
 
 export const ALEX_VOICE_CONFIG = {
-  voiceId: "FGY2WhTYpPnrIDTdsKH5", // Laura — warm, natural
+  voiceId: "gCr8TeSJgJaeaIoV4RWH",
   modelId: "eleven_turbo_v2_5",
   outputFormat: "mp3_22050_32",
-  voiceSettings: {
-    stability: 0.62,        // Slightly higher for calm consistency
-    similarity_boost: 0.80,  // Strong voice identity
-    style: 0.08,             // Very low — avoid theatrical delivery
-    use_speaker_boost: true,
-    speed: 0.95,             // Slightly slower than default for clarity + warmth
-  },
+  chunkLengthSchedule: [70, 110, 150],
+  voiceSettings: VOICE_PROFILES.default,
 } as const;
 
 // ─── 7. System Prompt (voice-optimized) ───
