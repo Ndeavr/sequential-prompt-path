@@ -63,6 +63,8 @@ export function useAlexVoiceSession() {
   const sttRunningRef = useRef(false);
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const finalTranscriptRef = useRef("");
+  const restartTimestamps = useRef<number[]>([]);
+  const gotSpeechThisCycle = useRef(false);
 
   // ─── Safe state ───
   const safeSetState = useCallback((s: VoiceState) => {
