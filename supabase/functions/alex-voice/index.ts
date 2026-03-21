@@ -302,14 +302,16 @@ serve(async (req) => {
         } catch (_) {}
 
         // Update session transcript
-        await supabase.from("voice_sessions").update({
-          transcript: supabase.rpc ? undefined : cleanText,
-          context_json: {
-            last_user_message: userMessage,
-            last_alex_response: cleanText,
-            updated_at: new Date().toISOString(),
-          },
-        }).eq("id", sessionId).catch(() => {});
+        try {
+          await supabase.from("voice_sessions").update({
+            transcript: cleanText,
+            context_json: {
+              last_user_message: userMessage,
+              last_alex_response: cleanText,
+              updated_at: new Date().toISOString(),
+            },
+          }).eq("id", sessionId);
+        } catch (_) {}
       }
 
       // Generate TTS — split into sentences for chunked playback
