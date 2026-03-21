@@ -7,21 +7,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useContractorProfile } from "./useContractor";
 
-/** Real notifications from DB */
+/** Real notifications from DB — uses `as any` since notifications table may not be in generated types */
 export const useContractorNotifications = () => {
   const { user } = useAuth();
-  return useQuery({
+  return useQuery<any[]>({
     queryKey: ["contractor-notifications", user?.id],
     queryFn: async () => {
-      // Try notifications table - field may be profile_id or recipient_user_id
-      const { data, error } = await supabase
-        .from("notifications" as any)
+      const { data, error } = await (supabase as any)
+        .from("notifications")
         .select("*")
         .eq("recipient_user_id", user!.id)
         .order("created_at", { ascending: false })
         .limit(10);
       if (error) {
-        // Fallback: return empty if table doesn't have expected schema
         console.warn("Notifications query failed:", error.message);
         return [];
       }
