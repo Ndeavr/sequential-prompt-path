@@ -1,22 +1,48 @@
 /**
  * AlexVoicePage — Premium voice-first UI for Alex
- * 
- * Full-screen immersive voice experience.
- * Feels like ChatGPT Voice or Perplexity Voice mode.
+ *
+ * Full-screen immersive experience with:
+ * - Hold-to-talk (press & hold mic)
+ * - Animated VoiceOrb reacting to state
+ * - Live transcript cards
+ * - Quick action chips
+ * - Optional contextual panels
  */
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, MicOff, Square, X, Send, MessageCircle, Volume2, VolumeX } from "lucide-react";
+import {
+  Mic,
+  Square,
+  X,
+  Send,
+  MessageCircle,
+  Volume2,
+  VolumeX,
+  Camera,
+  BarChart3,
+  CalendarCheck,
+  ShieldCheck,
+  ChevronRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAlexVoiceFull, type VoiceState, type UIAction } from "@/hooks/useAlexVoice";
 import { useAuth } from "@/hooks/useAuth";
 
-// ─── Animated orb that reacts to voice state ───
+// ─── Quick action chip data ───
+const QUICK_ACTIONS = [
+  { label: "Envoyer une photo", icon: Camera, action: "open_upload" },
+  { label: "Voir mon score", icon: BarChart3, action: "show_score" },
+  { label: "Prendre rendez-vous", icon: CalendarCheck, action: "open_booking" },
+  { label: "Vérifier un entrepreneur", icon: ShieldCheck, action: "navigate", target: "/verifier-entrepreneur" },
+];
+
+// ─── Animated orb ───
 function VoiceOrb({ state }: { state: VoiceState }) {
-  const baseSize = state === "listening" ? 180 : state === "speaking" ? 160 : state === "thinking" ? 140 : 120;
+  const baseSize =
+    state === "listening" ? 180 : state === "speaking" ? 160 : state === "thinking" ? 140 : 120;
 
   return (
     <div className="relative flex items-center justify-center" style={{ width: 220, height: 220 }}>
@@ -41,7 +67,12 @@ function VoiceOrb({ state }: { state: VoiceState }) {
           width: baseSize + 40,
           height: baseSize + 40,
           opacity: state === "listening" ? 0.8 : 0.4,
-          scale: state === "listening" ? [1, 1.08, 1] : state === "speaking" ? [1, 1.05, 1] : 1,
+          scale:
+            state === "listening"
+              ? [1, 1.08, 1]
+              : state === "speaking"
+              ? [1, 1.05, 1]
+              : 1,
         }}
         transition={{
           duration: state === "listening" ? 1.2 : state === "speaking" ? 0.8 : 0.6,
@@ -60,7 +91,12 @@ function VoiceOrb({ state }: { state: VoiceState }) {
         animate={{
           width: baseSize,
           height: baseSize,
-          scale: state === "speaking" ? [1, 1.04, 0.97, 1.02, 1] : state === "listening" ? [1, 1.06, 1] : 1,
+          scale:
+            state === "speaking"
+              ? [1, 1.04, 0.97, 1.02, 1]
+              : state === "listening"
+              ? [1, 1.06, 1]
+              : 1,
         }}
         transition={{
           duration: state === "speaking" ? 0.6 : state === "listening" ? 1.5 : 0.4,
@@ -92,7 +128,7 @@ function VoiceOrb({ state }: { state: VoiceState }) {
                 animate={{ opacity: [0.4, 1, 0.4] }}
                 transition={{ duration: 1.2, repeat: Infinity }}
               >
-                {[0, 1, 2].map(i => (
+                {[0, 1, 2].map((i) => (
                   <motion.div
                     key={i}
                     className="w-2.5 h-2.5 rounded-full bg-primary-foreground"
@@ -112,23 +148,55 @@ function VoiceOrb({ state }: { state: VoiceState }) {
 }
 
 // ─── State label ───
-function StateLabel({ state }: { state: VoiceState }) {
-  const labels: Record<VoiceState, string> = {
-    idle: "Appuyez pour parler",
-    listening: "Je vous écoute…",
-    thinking: "Je réfléchis…",
-    speaking: "Alex parle…",
-  };
+function StateLabel({ state, holding }: { state: VoiceState; holding: boolean }) {
+  const label =
+    holding
+      ? "Parlez maintenant…"
+      : state === "idle"
+      ? "Maintenez pour parler"
+      : state === "listening"
+      ? "Je vous écoute…"
+      : state === "thinking"
+      ? "Je réfléchis…"
+      : "Alex parle…";
 
   return (
     <motion.p
-      key={state}
+      key={`${state}-${holding}`}
       initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
       className="text-sm text-muted-foreground font-medium tracking-wide"
     >
-      {labels[state]}
+      {label}
     </motion.p>
+  );
+}
+
+// ─── Transcript card ───
+function TranscriptCard({
+  role,
+  text,
+}: {
+  role: "user" | "assistant";
+  text: string;
+}) {
+  if (!text) return null;
+  const isUser = role === "user";
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`rounded-2xl px-4 py-3 max-w-[85%] ${
+        isUser
+          ? "self-end bg-primary/10 text-foreground"
+          : "self-start bg-card border border-border/60 text-foreground"
+      }`}
+    >
+      {!isUser && (
+        <span className="text-xs font-semibold text-primary mb-1 block">Alex</span>
+      )}
+      <p className="text-sm leading-relaxed">{text}</p>
+    </motion.div>
   );
 }
 
@@ -138,27 +206,32 @@ export default function AlexVoicePage() {
   const { isAuthenticated } = useAuth();
   const [showText, setShowText] = useState(false);
   const [textInput, setTextInput] = useState("");
+  const [holding, setHolding] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleUIAction = useCallback((action: UIAction) => {
-    switch (action.type) {
-      case "navigate":
-        if (action.target) navigate(action.target);
-        break;
-      case "open_upload":
-        navigate("/dashboard/quotes/upload");
-        break;
-      case "show_score":
-        navigate("/dashboard/home-score");
-        break;
-      case "show_pricing":
-        navigate("/pricing");
-        break;
-      case "open_booking":
-        navigate("/dashboard/booking");
-        break;
-    }
-  }, [navigate]);
+  const handleUIAction = useCallback(
+    (action: UIAction) => {
+      switch (action.type) {
+        case "navigate":
+          if (action.target) navigate(action.target);
+          break;
+        case "open_upload":
+          navigate("/dashboard/quotes/upload");
+          break;
+        case "show_score":
+          navigate("/dashboard/home-score");
+          break;
+        case "show_pricing":
+          navigate("/pricing");
+          break;
+        case "open_booking":
+          navigate("/dashboard/booking");
+          break;
+      }
+    },
+    [navigate]
+  );
 
   const {
     state,
@@ -183,22 +256,53 @@ export default function AlexVoicePage() {
     startSession();
   }, []);
 
-  // Auto-scroll messages
+  // Auto-scroll
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
 
-  const handleMicPress = useCallback(() => {
-    if (state === "listening") {
-      stopListening();
-    } else if (state === "speaking") {
+  // ─── Hold-to-talk handlers ───
+  const handlePointerDown = useCallback(() => {
+    if (!isSupported || state === "thinking") return;
+
+    // Interrupt Alex if speaking
+    if (state === "speaking") {
       stopPlayback();
-    } else {
-      startListening();
     }
-  }, [state, startListening, stopListening, stopPlayback]);
+
+    holdTimerRef.current = setTimeout(() => {
+      setHolding(true);
+      startListening();
+    }, 120); // Short debounce to avoid accidental taps
+  }, [state, isSupported, startListening, stopPlayback]);
+
+  const handlePointerUp = useCallback(() => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+
+    if (holding) {
+      setHolding(false);
+      stopListening();
+    }
+  }, [holding, stopListening]);
+
+  // Cancel hold on pointer leave
+  const handlePointerLeave = useCallback(() => {
+    handlePointerUp();
+  }, [handlePointerUp]);
+
+  // Tap action (non-hold)
+  const handleTap = useCallback(() => {
+    if (state === "speaking") {
+      stopPlayback();
+    } else if (state === "listening") {
+      stopListening();
+    }
+  }, [state, stopPlayback, stopListening]);
 
   const handleTextSend = useCallback(() => {
     const trimmed = textInput.trim();
@@ -207,16 +311,26 @@ export default function AlexVoicePage() {
     sendMessage(trimmed);
   }, [textInput, sendMessage]);
 
+  const handleChipAction = useCallback(
+    (chip: (typeof QUICK_ACTIONS)[0]) => {
+      handleUIAction({ type: chip.action, target: chip.target } as UIAction);
+    },
+    [handleUIAction]
+  );
+
   return (
     <>
       <Helmet>
         <title>Alex Voice — Concierge vocale | UNPRO</title>
-        <meta name="description" content="Parlez directement à Alex, votre concierge vocale intelligente pour la maison et la rénovation." />
+        <meta
+          name="description"
+          content="Parlez directement à Alex, votre concierge vocale intelligente pour la maison et la rénovation."
+        />
       </Helmet>
 
       <div className="fixed inset-0 z-50 flex flex-col bg-background">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+        {/* ─── Header ─── */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -232,11 +346,11 @@ export default function AlexVoicePage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setShowText(!showText)}
+              onClick={() => setShowText((v) => !v)}
               className="rounded-full"
             >
               <MessageCircle className="w-4 h-4" />
@@ -244,97 +358,106 @@ export default function AlexVoicePage() {
           </div>
         </div>
 
-        {/* Main area */}
-        <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden">
-          {/* Subtle background gradient */}
-          <div 
-            className="absolute inset-0 opacity-30"
+        {/* ─── Main area ─── */}
+        <div className="flex-1 flex flex-col items-center justify-between relative overflow-hidden">
+          {/* Background gradient */}
+          <div
+            className="absolute inset-0 opacity-30 pointer-events-none"
             style={{
               background: `radial-gradient(ellipse at 50% 40%, hsl(var(--primary) / 0.08) 0%, transparent 60%)`,
             }}
           />
 
-          {/* Conversation transcript (floating) */}
-          <AnimatePresence>
-            {messages.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="absolute top-4 left-4 right-4 max-h-[30vh] overflow-y-auto rounded-2xl"
-                ref={scrollRef}
-              >
-                <div className="space-y-2 p-3">
-                  {messages.slice(-4).map((msg, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.05 }}
-                      className={`text-sm leading-relaxed ${
-                        msg.role === "user"
-                          ? "text-muted-foreground text-right"
-                          : "text-foreground"
-                      }`}
-                    >
-                      {msg.role === "assistant" && (
-                        <span className="text-primary font-medium text-xs mr-1.5">Alex</span>
-                      )}
-                      {msg.content}
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* ─── Conversation cards ─── */}
+          <div
+            ref={scrollRef}
+            className="w-full max-w-md flex-shrink-0 max-h-[28vh] overflow-y-auto px-4 pt-4 relative z-10"
+          >
+            <div className="flex flex-col gap-2">
+              {messages.slice(-6).map((msg, i) => (
+                <TranscriptCard key={i} role={msg.role} text={msg.content} />
+              ))}
+            </div>
+          </div>
 
-          {/* Voice Orb */}
-          <div className="relative z-10">
+          {/* ─── Orb center ─── */}
+          <div className="flex-1 flex flex-col items-center justify-center relative z-10 min-h-0">
             <button
-              onClick={handleMicPress}
-              className="focus:outline-none cursor-pointer"
+              onPointerDown={handlePointerDown}
+              onPointerUp={handlePointerUp}
+              onPointerLeave={handlePointerLeave}
+              onClick={handleTap}
+              className="focus:outline-none cursor-pointer select-none touch-none"
               disabled={state === "thinking"}
+              aria-label="Maintenez pour parler"
             >
-              <VoiceOrb state={state} />
+              <VoiceOrb state={holding ? "listening" : state} />
             </button>
+
+            {/* Live transcript preview */}
+            <AnimatePresence>
+              {transcript && (
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="mt-3 text-sm text-foreground/70 italic max-w-xs text-center px-4"
+                >
+                  &ldquo;{transcript}&rdquo;
+                </motion.p>
+              )}
+            </AnimatePresence>
+
+            {/* State label */}
+            <div className="mt-4">
+              <StateLabel state={state} holding={holding} />
+            </div>
+
+            {/* Error */}
+            <AnimatePresence>
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="mt-2 text-xs text-destructive"
+                >
+                  {error}
+                </motion.p>
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* Live transcript */}
-          <AnimatePresence>
-            {transcript && (
-              <motion.p
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="mt-4 text-sm text-foreground/80 italic max-w-xs text-center px-4"
-              >
-                "{transcript}"
-              </motion.p>
-            )}
-          </AnimatePresence>
-
-          {/* State label */}
-          <div className="mt-6">
-            <StateLabel state={state} />
+          {/* ─── Quick action chips ─── */}
+          <div className="w-full px-4 pb-2 relative z-10">
+            <AnimatePresence>
+              {state === "idle" && messages.length === 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 12 }}
+                  className="flex flex-wrap justify-center gap-2"
+                >
+                  {QUICK_ACTIONS.map((chip) => (
+                    <button
+                      key={chip.label}
+                      onClick={() => handleChipAction(chip)}
+                      className="flex items-center gap-1.5 rounded-full border border-border/60 bg-card/80 px-3.5 py-2 text-xs font-medium text-foreground transition-colors hover:bg-accent/10 hover:border-primary/30 active:scale-95"
+                    >
+                      <chip.icon className="w-3.5 h-3.5 text-primary" />
+                      {chip.label}
+                      <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-
-          {/* Error */}
-          <AnimatePresence>
-            {error && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="mt-3 text-xs text-destructive"
-              >
-                {error}
-              </motion.p>
-            )}
-          </AnimatePresence>
         </div>
 
-        {/* Bottom controls */}
-        <div className="px-4 pb-6 pt-2 space-y-3">
-          {/* Text input toggle */}
+        {/* ─── Bottom controls ─── */}
+        <div className="px-4 pb-6 pt-2 space-y-3 border-t border-border/20">
+          {/* Text input */}
           <AnimatePresence>
             {showText && (
               <motion.div
@@ -345,8 +468,8 @@ export default function AlexVoicePage() {
               >
                 <Input
                   value={textInput}
-                  onChange={e => setTextInput(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && handleTextSend()}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleTextSend()}
                   placeholder="Écrire à Alex…"
                   className="flex-1 rounded-full bg-muted/50"
                   disabled={state === "thinking"}
@@ -363,7 +486,7 @@ export default function AlexVoicePage() {
             )}
           </AnimatePresence>
 
-          {/* Action buttons */}
+          {/* Action row */}
           <div className="flex items-center justify-center gap-4">
             {state === "speaking" && (
               <Button
@@ -377,27 +500,30 @@ export default function AlexVoicePage() {
               </Button>
             )}
 
-            <Button
-              variant={state === "listening" ? "destructive" : "default"}
-              size="lg"
-              onClick={handleMicPress}
-              disabled={state === "thinking" || !isSupported}
-              className="rounded-full w-16 h-16 shadow-lg"
-            >
-              {state === "listening" ? (
-                <Square className="w-6 h-6" />
-              ) : (
-                <Mic className="w-6 h-6" />
-              )}
-            </Button>
+            <div className="flex flex-col items-center gap-1">
+              <Button
+                variant={state === "listening" || holding ? "destructive" : "default"}
+                size="lg"
+                onPointerDown={handlePointerDown}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerLeave}
+                disabled={state === "thinking" || !isSupported}
+                className="rounded-full w-16 h-16 shadow-lg"
+                aria-label="Maintenez pour parler"
+              >
+                {state === "listening" || holding ? (
+                  <Square className="w-6 h-6" />
+                ) : (
+                  <Mic className="w-6 h-6" />
+                )}
+              </Button>
+              <span className="text-[10px] text-muted-foreground">
+                {holding ? "Relâchez" : "Maintenez"}
+              </span>
+            </div>
 
             {messages.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={reset}
-                className="rounded-full"
-              >
+              <Button variant="outline" size="sm" onClick={reset} className="rounded-full">
                 Nouveau
               </Button>
             )}
