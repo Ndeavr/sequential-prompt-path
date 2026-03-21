@@ -38,6 +38,7 @@ const AVAILABILITY_MODES = [
 
 export default function BookingSettingsPage() {
   const { session } = useAuth();
+  const { canAccessBooking, planCode, planLabel, isLoading: planLoading } = useContractorPlan();
   const [contractorId, setContractorId] = useState<string | null>(null);
   const [types, setTypes] = useState<Partial<AppointmentType>[]>([]);
   const [saving, setSaving] = useState(false);
