@@ -458,6 +458,15 @@ export default function PublicBookingPage() {
             </div>
           )}
         </div>
+
+        {/* Signature Footer */}
+        <SignatureFooter
+          companyName={contractor.business_name}
+          phone={contractor.phone ?? undefined}
+          city={contractor.city ?? undefined}
+          bookingUrl={window.location.href}
+          variant={step === "confirmed" ? "confirmation" : "page"}
+        />
       </div>
     </>
   );
