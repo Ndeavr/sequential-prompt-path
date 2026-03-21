@@ -18,7 +18,8 @@ import { RankedTimeSlotGrid } from "@/components/booking/RankedTimeSlotGrid";
 import { BookingSummaryCard } from "@/components/booking/BookingSummaryCard";
 import { BookingConfirmationCard } from "@/components/booking/BookingConfirmationCard";
 import { SignatureFooter } from "@/components/booking/SignatureFooter";
-
+import { PaidAppointmentBadge } from "@/components/booking/PaidAppointmentBadge";
+import { PaidValueProposition } from "@/components/booking/PaidValueProposition";
 import {
   computeSmartSlots,
   fetchAppointmentTypes,

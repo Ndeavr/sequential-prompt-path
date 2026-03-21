@@ -319,9 +319,12 @@ export default function BookingSettingsPage() {
                     </div>
 
                     {type.price_type !== "free" && type.price_type !== "hidden" && (
-                      <div className="space-y-2">
-                        <Label>Montant (en cents)</Label>
-                        <Input type="number" value={type.price_amount ?? 0} onChange={(e) => updateType(i, { price_amount: Number(e.target.value) })} />
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <Label>Montant (en cents)</Label>
+                          <Input type="number" value={type.price_amount ?? 0} onChange={(e) => updateType(i, { price_amount: Number(e.target.value) })} />
+                        </div>
+                        <RevenueSplitPreview priceCents={type.price_amount ?? 0} priceType={type.price_type ?? "free"} />
                       </div>
                     )}
 
