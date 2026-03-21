@@ -154,6 +154,8 @@ export default function PublicBookingPage() {
     setIsSubmitting(true);
 
     try {
+      const isPaid = !selectedType.is_free && selectedType.price_amount > 0;
+
       const { data, error } = await supabase
         .from("smart_bookings")
         .insert({
@@ -171,13 +173,39 @@ export default function PublicBookingPage() {
           buffer_before_minutes: selectedType.buffer_before_minutes,
           buffer_after_minutes: selectedType.buffer_after_minutes,
           travel_minutes_before: selectedType.travel_padding_minutes,
-          status: "pending",
+          status: isPaid ? "pending_payment" : "pending",
           urgency_level: "normal",
         })
         .select("id")
         .single();
 
       if (error) throw error;
+
+      if (isPaid) {
+        // Redirect to Stripe checkout
+        const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
+          "create-booking-checkout",
+          {
+            body: {
+              booking_id: data.id,
+              contractor_id: contractor.id,
+              appointment_type_title: selectedType.title,
+              price_cents: selectedType.price_amount,
+              client_email: clientEmail.trim() || null,
+              client_name: contractor.business_name,
+            },
+          }
+        );
+
+        if (checkoutError || !checkoutData?.url) {
+          throw new Error(checkoutError?.message || "Erreur Stripe");
+        }
+
+        window.location.href = checkoutData.url;
+        return;
+      }
+
+      // Free appointment — show confirmation
       setBookingId(data.id);
       setStep("confirmed");
       toast.success("Rendez-vous confirmé!");
