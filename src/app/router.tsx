@@ -94,6 +94,8 @@ import AlignmentQuestionnairePage from "@/pages/AlignmentQuestionnairePage";
 import FounderPage from "@/pages/FounderPage";
 import AdminFounderInvites from "@/pages/admin/AdminFounderInvites";
 import ContractorAvailabilityPage from "@/pages/ContractorAvailabilityPage";
+import PublicBookingPage from "@/pages/PublicBookingPage";
+import BookingSettingsPage from "@/pages/BookingSettingsPage";
 
 // Broker / Courtier
 import CourtiersLandingPage from "@/pages/courtiers/CourtiersLandingPage";
@@ -246,6 +248,8 @@ export const AppRouter = () => (
       <Route path="/professionals" element={<ProfessionalsPage />} />
       <Route path="/entrepreneurs" element={<ProfessionalsPage />} />
       <Route path="/entrepreneurs/disponibilite-categorie-specialite-ville" element={<ContractorAvailabilityPage />} />
+      <Route path="/book/:slug" element={<PublicBookingPage />} />
+      <Route path="/book/:slug/:typeSlug" element={<PublicBookingPage />} />
       <Route path="/partners" element={<PartnersPage />} />
       <Route path="/describe-project" element={<DescribeProjectPage />} />
       <Route path="/compare-quotes" element={<CompareQuotesPage />} />
@@ -440,6 +444,7 @@ export const AppRouter = () => (
       <Route path="/pro/matched-leads" element={<ProtectedRoute requiredRole="contractor"><ProMatchedLeads /></ProtectedRoute>} />
       <Route path="/pro/notifications" element={<ProtectedRoute requiredRole="contractor"><NotificationsPage /></ProtectedRoute>} />
       <Route path="/pro/setup" element={<ProtectedRoute requiredRole="contractor"><ProSetupWizard /></ProtectedRoute>} />
+      <Route path="/pro/booking-settings" element={<ProtectedRoute requiredRole="contractor"><BookingSettingsPage /></ProtectedRoute>} />
 
       {/* Admin */}
       <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />

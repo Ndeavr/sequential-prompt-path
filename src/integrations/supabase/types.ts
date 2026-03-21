@@ -2488,6 +2488,510 @@ export type Database = {
           },
         ]
       }
+      booking_appointment_types: {
+        Row: {
+          allows_same_day: boolean | null
+          availability_mode: string | null
+          buffer_after_minutes: number | null
+          buffer_before_minutes: number | null
+          category: string | null
+          color: string | null
+          contractor_id: string
+          created_at: string | null
+          duration_minutes: number
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          is_free: boolean | null
+          location_mode: string | null
+          long_description: string | null
+          max_daily_count: number | null
+          min_notice_hours: number | null
+          price_amount: number | null
+          price_type: string | null
+          requires_deposit: boolean | null
+          requires_documents: boolean | null
+          requires_manual_approval: boolean | null
+          requires_photos: boolean | null
+          requires_prequalification: boolean | null
+          short_description: string | null
+          slug: string
+          sort_order: number | null
+          supports_alex_booking: boolean | null
+          supports_qr_booking: boolean | null
+          title: string
+          travel_padding_minutes: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          allows_same_day?: boolean | null
+          availability_mode?: string | null
+          buffer_after_minutes?: number | null
+          buffer_before_minutes?: number | null
+          category?: string | null
+          color?: string | null
+          contractor_id: string
+          created_at?: string | null
+          duration_minutes?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_free?: boolean | null
+          location_mode?: string | null
+          long_description?: string | null
+          max_daily_count?: number | null
+          min_notice_hours?: number | null
+          price_amount?: number | null
+          price_type?: string | null
+          requires_deposit?: boolean | null
+          requires_documents?: boolean | null
+          requires_manual_approval?: boolean | null
+          requires_photos?: boolean | null
+          requires_prequalification?: boolean | null
+          short_description?: string | null
+          slug: string
+          sort_order?: number | null
+          supports_alex_booking?: boolean | null
+          supports_qr_booking?: boolean | null
+          title: string
+          travel_padding_minutes?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          allows_same_day?: boolean | null
+          availability_mode?: string | null
+          buffer_after_minutes?: number | null
+          buffer_before_minutes?: number | null
+          category?: string | null
+          color?: string | null
+          contractor_id?: string
+          created_at?: string | null
+          duration_minutes?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_free?: boolean | null
+          location_mode?: string | null
+          long_description?: string | null
+          max_daily_count?: number | null
+          min_notice_hours?: number | null
+          price_amount?: number | null
+          price_type?: string | null
+          requires_deposit?: boolean | null
+          requires_documents?: boolean | null
+          requires_manual_approval?: boolean | null
+          requires_photos?: boolean | null
+          requires_prequalification?: boolean | null
+          short_description?: string | null
+          slug?: string
+          sort_order?: number | null
+          supports_alex_booking?: boolean | null
+          supports_qr_booking?: boolean | null
+          title?: string
+          travel_padding_minutes?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_appointment_types_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_appointment_types_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_appointment_types_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_appointment_types_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      booking_availability: {
+        Row: {
+          contractor_id: string
+          created_at: string | null
+          day_of_week: number
+          end_time: string
+          id: string
+          is_active: boolean | null
+          start_time: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string | null
+          day_of_week: number
+          end_time?: string
+          id?: string
+          is_active?: boolean | null
+          start_time?: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string | null
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_active?: boolean | null
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_availability_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_availability_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_availability_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_availability_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      booking_blackouts: {
+        Row: {
+          contractor_id: string
+          created_at: string | null
+          end_at: string
+          id: string
+          reason: string | null
+          source: string | null
+          start_at: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string | null
+          end_at: string
+          id?: string
+          reason?: string | null
+          source?: string | null
+          start_at: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string | null
+          end_at?: string
+          id?: string
+          reason?: string | null
+          source?: string | null
+          start_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_blackouts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_blackouts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_blackouts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_blackouts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      booking_calendar_integrations: {
+        Row: {
+          contractor_id: string
+          created_at: string | null
+          id: string
+          metadata_secure: Json | null
+          provider: string | null
+          selected_calendar_id: string | null
+          status: string | null
+          sync_read_busy: boolean | null
+          sync_write_events: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string | null
+          id?: string
+          metadata_secure?: Json | null
+          provider?: string | null
+          selected_calendar_id?: string | null
+          status?: string | null
+          sync_read_busy?: boolean | null
+          sync_write_events?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string | null
+          id?: string
+          metadata_secure?: Json | null
+          provider?: string | null
+          selected_calendar_id?: string | null
+          status?: string | null
+          sync_read_busy?: boolean | null
+          sync_write_events?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_calendar_integrations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_calendar_integrations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_calendar_integrations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_calendar_integrations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      booking_files: {
+        Row: {
+          booking_id: string
+          created_at: string | null
+          file_label: string | null
+          file_type: string | null
+          file_url: string
+          id: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string | null
+          file_label?: string | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string | null
+          file_label?: string | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_files_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "smart_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_intake_answers: {
+        Row: {
+          booking_id: string
+          created_at: string | null
+          field_key: string
+          field_value: Json
+          id: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string | null
+          field_key: string
+          field_value?: Json
+          id?: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string | null
+          field_key?: string
+          field_value?: Json
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_intake_answers_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "smart_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_links: {
+        Row: {
+          alex_mode: boolean | null
+          appointment_type_id: string | null
+          booking_count: number | null
+          city: string | null
+          contractor_id: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          qr_code_url: string | null
+          scan_count: number | null
+          service: string | null
+          slug: string
+          source_tag: string | null
+          title: string | null
+        }
+        Insert: {
+          alex_mode?: boolean | null
+          appointment_type_id?: string | null
+          booking_count?: number | null
+          city?: string | null
+          contractor_id: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          qr_code_url?: string | null
+          scan_count?: number | null
+          service?: string | null
+          slug: string
+          source_tag?: string | null
+          title?: string | null
+        }
+        Update: {
+          alex_mode?: boolean | null
+          appointment_type_id?: string | null
+          booking_count?: number | null
+          city?: string | null
+          contractor_id?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          qr_code_url?: string | null
+          scan_count?: number | null
+          service?: string | null
+          slug?: string
+          source_tag?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_links_appointment_type_id_fkey"
+            columns: ["appointment_type_id"]
+            isOneToOne: false
+            referencedRelation: "booking_appointment_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_links_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_links_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_links_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_links_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      booking_travel_cache: {
+        Row: {
+          created_at: string | null
+          destination_hash: string
+          distance_meters: number | null
+          duration_minutes: number
+          id: string
+          origin_hash: string
+          traffic_mode: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          destination_hash: string
+          distance_meters?: number | null
+          duration_minutes: number
+          id?: string
+          origin_hash: string
+          traffic_mode?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          destination_hash?: string
+          distance_meters?: number | null
+          duration_minutes?: number
+          id?: string
+          origin_hash?: string
+          traffic_mode?: string | null
+        }
+        Relationships: []
+      }
       broker_profiles: {
         Row: {
           agency_name: string | null
@@ -7671,6 +8175,16 @@ export type Database = {
           admin_note: string | null
           admin_verified: boolean | null
           aipp_score: number | null
+          booking_base_lat: number | null
+          booking_base_lng: number | null
+          booking_default_rounding_minutes: number | null
+          booking_enabled: boolean | null
+          booking_horizon_days: number | null
+          booking_min_notice_hours: number | null
+          booking_mode: string | null
+          booking_page_published: boolean | null
+          booking_service_radius_km: number | null
+          booking_timezone: string | null
           business_name: string
           city: string | null
           created_at: string
@@ -7678,6 +8192,8 @@ export type Database = {
           email: string | null
           facebook_page_url: string | null
           google_business_url: string | null
+          google_calendar_connected: boolean | null
+          google_calendar_id: string | null
           id: string
           insurance_info: string | null
           internal_verified_at: string | null
@@ -7716,6 +8232,16 @@ export type Database = {
           admin_note?: string | null
           admin_verified?: boolean | null
           aipp_score?: number | null
+          booking_base_lat?: number | null
+          booking_base_lng?: number | null
+          booking_default_rounding_minutes?: number | null
+          booking_enabled?: boolean | null
+          booking_horizon_days?: number | null
+          booking_min_notice_hours?: number | null
+          booking_mode?: string | null
+          booking_page_published?: boolean | null
+          booking_service_radius_km?: number | null
+          booking_timezone?: string | null
           business_name: string
           city?: string | null
           created_at?: string
@@ -7723,6 +8249,8 @@ export type Database = {
           email?: string | null
           facebook_page_url?: string | null
           google_business_url?: string | null
+          google_calendar_connected?: boolean | null
+          google_calendar_id?: string | null
           id?: string
           insurance_info?: string | null
           internal_verified_at?: string | null
@@ -7761,6 +8289,16 @@ export type Database = {
           admin_note?: string | null
           admin_verified?: boolean | null
           aipp_score?: number | null
+          booking_base_lat?: number | null
+          booking_base_lng?: number | null
+          booking_default_rounding_minutes?: number | null
+          booking_enabled?: boolean | null
+          booking_horizon_days?: number | null
+          booking_min_notice_hours?: number | null
+          booking_mode?: string | null
+          booking_page_published?: boolean | null
+          booking_service_radius_km?: number | null
+          booking_timezone?: string | null
           business_name?: string
           city?: string | null
           created_at?: string
@@ -7768,6 +8306,8 @@ export type Database = {
           email?: string | null
           facebook_page_url?: string | null
           google_business_url?: string | null
+          google_calendar_connected?: boolean | null
+          google_calendar_id?: string | null
           id?: string
           insurance_info?: string | null
           internal_verified_at?: string | null
@@ -18070,6 +18610,171 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      smart_bookings: {
+        Row: {
+          address_line1: string | null
+          alex_session_id: string | null
+          appointment_quality_score: number | null
+          appointment_type_id: string | null
+          booking_rank_score: number | null
+          buffer_after_minutes: number | null
+          buffer_before_minutes: number | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          city: string | null
+          client_email: string | null
+          client_name: string
+          client_phone: string | null
+          close_probability_score: number | null
+          completed_at: string | null
+          confirmed_at: string | null
+          contractor_id: string
+          created_at: string | null
+          dna_match_score: number | null
+          estimated_job_value: number | null
+          google_calendar_event_id: string | null
+          id: string
+          internal_summary: string | null
+          lat: number | null
+          lng: number | null
+          postal_code: string | null
+          property_type: string | null
+          province: string | null
+          qr_id: string | null
+          requested_notes: string | null
+          scheduled_end: string
+          scheduled_start: string
+          source: string | null
+          source_campaign: string | null
+          source_detail: string | null
+          status: string | null
+          travel_minutes_after: number | null
+          travel_minutes_before: number | null
+          updated_at: string | null
+          urgency_level: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          alex_session_id?: string | null
+          appointment_quality_score?: number | null
+          appointment_type_id?: string | null
+          booking_rank_score?: number | null
+          buffer_after_minutes?: number | null
+          buffer_before_minutes?: number | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          city?: string | null
+          client_email?: string | null
+          client_name: string
+          client_phone?: string | null
+          close_probability_score?: number | null
+          completed_at?: string | null
+          confirmed_at?: string | null
+          contractor_id: string
+          created_at?: string | null
+          dna_match_score?: number | null
+          estimated_job_value?: number | null
+          google_calendar_event_id?: string | null
+          id?: string
+          internal_summary?: string | null
+          lat?: number | null
+          lng?: number | null
+          postal_code?: string | null
+          property_type?: string | null
+          province?: string | null
+          qr_id?: string | null
+          requested_notes?: string | null
+          scheduled_end: string
+          scheduled_start: string
+          source?: string | null
+          source_campaign?: string | null
+          source_detail?: string | null
+          status?: string | null
+          travel_minutes_after?: number | null
+          travel_minutes_before?: number | null
+          updated_at?: string | null
+          urgency_level?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          alex_session_id?: string | null
+          appointment_quality_score?: number | null
+          appointment_type_id?: string | null
+          booking_rank_score?: number | null
+          buffer_after_minutes?: number | null
+          buffer_before_minutes?: number | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          city?: string | null
+          client_email?: string | null
+          client_name?: string
+          client_phone?: string | null
+          close_probability_score?: number | null
+          completed_at?: string | null
+          confirmed_at?: string | null
+          contractor_id?: string
+          created_at?: string | null
+          dna_match_score?: number | null
+          estimated_job_value?: number | null
+          google_calendar_event_id?: string | null
+          id?: string
+          internal_summary?: string | null
+          lat?: number | null
+          lng?: number | null
+          postal_code?: string | null
+          property_type?: string | null
+          province?: string | null
+          qr_id?: string | null
+          requested_notes?: string | null
+          scheduled_end?: string
+          scheduled_start?: string
+          source?: string | null
+          source_campaign?: string | null
+          source_detail?: string | null
+          status?: string | null
+          travel_minutes_after?: number | null
+          travel_minutes_before?: number | null
+          updated_at?: string | null
+          urgency_level?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_bookings_appointment_type_id_fkey"
+            columns: ["appointment_type_id"]
+            isOneToOne: false
+            referencedRelation: "booking_appointment_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_bookings_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_bookings_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_bookings_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_bookings_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
       }
       smart_decline_logs: {
         Row: {
