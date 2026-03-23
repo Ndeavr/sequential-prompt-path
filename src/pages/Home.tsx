@@ -485,7 +485,7 @@ const Home = () => {
       </section>
 
       {/* ═══ ALEX AI SECTION ═══ */}
-      <section className="relative px-5 py-12 overflow-hidden">
+      <section ref={alexSectionRef} className="relative px-5 py-12 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-background to-secondary/5" />
         <div className="relative z-10 max-w-3xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
