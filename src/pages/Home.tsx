@@ -16,7 +16,8 @@ import HeroSection from "@/components/home/HeroSection";
 import VerificationFeatureCard from "@/components/home/VerificationFeatureCard";
 import MainLayout from "@/layouts/MainLayout";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import FloatingAlexRobot from "@/components/home/FloatingAlexRobot";
 import unproRobot from "@/assets/unpro-robot.png";
 import avatarsGroup from "@/assets/avatars-group.jpg";
 
@@ -37,6 +38,7 @@ const sectionFade = {
 const Home = () => {
   const { isAuthenticated, role } = useAuth();
   const navigate = useNavigate();
+  const alexSectionRef = useRef<HTMLElement>(null);
   const dash = role === "contractor" ? "/pro" : role === "admin" ? "/admin" : "/dashboard";
 
   const handleCta = (destination: string, label?: string) => {
@@ -120,6 +122,7 @@ const Home = () => {
         <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
       </Helmet>
     <div className="flex flex-col bg-background text-foreground">
+      <FloatingAlexRobot alexSectionRef={alexSectionRef} />
 
       {/* ═══ HERO ═══ */}
       <HeroSection />
@@ -482,7 +485,7 @@ const Home = () => {
       </section>
 
       {/* ═══ ALEX AI SECTION ═══ */}
-      <section className="relative px-5 py-12 overflow-hidden">
+      <section ref={alexSectionRef} className="relative px-5 py-12 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-background to-secondary/5" />
         <div className="relative z-10 max-w-3xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
