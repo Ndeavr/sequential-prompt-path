@@ -840,6 +840,180 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_experiments: {
+        Row: {
+          confidence: number | null
+          created_at: string | null
+          ended_at: string | null
+          experiment_key: string
+          experiment_type: string
+          id: string
+          is_active: boolean | null
+          variant_a: Json | null
+          variant_a_conversions: number | null
+          variant_a_impressions: number | null
+          variant_b: Json | null
+          variant_b_conversions: number | null
+          variant_b_impressions: number | null
+          winner: string | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string | null
+          ended_at?: string | null
+          experiment_key: string
+          experiment_type: string
+          id?: string
+          is_active?: boolean | null
+          variant_a?: Json | null
+          variant_a_conversions?: number | null
+          variant_a_impressions?: number | null
+          variant_b?: Json | null
+          variant_b_conversions?: number | null
+          variant_b_impressions?: number | null
+          winner?: string | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string | null
+          ended_at?: string | null
+          experiment_key?: string
+          experiment_type?: string
+          id?: string
+          is_active?: boolean | null
+          variant_a?: Json | null
+          variant_a_conversions?: number | null
+          variant_a_impressions?: number | null
+          variant_b?: Json | null
+          variant_b_conversions?: number | null
+          variant_b_impressions?: number | null
+          winner?: string | null
+        }
+        Relationships: []
+      }
+      alex_interactions: {
+        Row: {
+          action_taken: string | null
+          alex_text: string | null
+          context: Json | null
+          conversion_type: string | null
+          created_at: string | null
+          emotional_state: string | null
+          friction_detected: boolean | null
+          id: string
+          page: string | null
+          role: string | null
+          session_id: string | null
+          success: boolean | null
+          time_to_action_ms: number | null
+          user_id: string | null
+          user_response: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          alex_text?: string | null
+          context?: Json | null
+          conversion_type?: string | null
+          created_at?: string | null
+          emotional_state?: string | null
+          friction_detected?: boolean | null
+          id?: string
+          page?: string | null
+          role?: string | null
+          session_id?: string | null
+          success?: boolean | null
+          time_to_action_ms?: number | null
+          user_id?: string | null
+          user_response?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          alex_text?: string | null
+          context?: Json | null
+          conversion_type?: string | null
+          created_at?: string | null
+          emotional_state?: string | null
+          friction_detected?: boolean | null
+          id?: string
+          page?: string | null
+          role?: string | null
+          session_id?: string | null
+          success?: boolean | null
+          time_to_action_ms?: number | null
+          user_id?: string | null
+          user_response?: string | null
+        }
+        Relationships: []
+      }
+      alex_learning_memory: {
+        Row: {
+          applied: boolean | null
+          applied_at: string | null
+          confidence: number | null
+          created_at: string | null
+          id: string
+          improvement: string | null
+          metadata: Json | null
+          pattern_description: string | null
+          pattern_key: string
+          reversible: boolean | null
+        }
+        Insert: {
+          applied?: boolean | null
+          applied_at?: string | null
+          confidence?: number | null
+          created_at?: string | null
+          id?: string
+          improvement?: string | null
+          metadata?: Json | null
+          pattern_description?: string | null
+          pattern_key: string
+          reversible?: boolean | null
+        }
+        Update: {
+          applied?: boolean | null
+          applied_at?: string | null
+          confidence?: number | null
+          created_at?: string | null
+          id?: string
+          improvement?: string | null
+          metadata?: Json | null
+          pattern_description?: string | null
+          pattern_key?: string
+          reversible?: boolean | null
+        }
+        Relationships: []
+      }
+      alex_performance_metrics: {
+        Row: {
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          metric_type: string
+          metric_value: number
+          segment: string | null
+          timeframe: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          metric_type: string
+          metric_value?: number
+          segment?: string | null
+          timeframe?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          metric_type?: string
+          metric_value?: number
+          segment?: string | null
+          timeframe?: string | null
+        }
+        Relationships: []
+      }
       alex_sessions: {
         Row: {
           created_at: string
