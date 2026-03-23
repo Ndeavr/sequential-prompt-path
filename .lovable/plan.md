@@ -1,46 +1,44 @@
 
 
-# Fix Blog Articles: Empty Content, Missing Images, Broken FAQs
+# Enrichir les FAQ avec liens programmes, CTA admissibilité et détails
 
-## Problems Found
+## Problème
+Les FAQ (blog articles et pages SEO) mentionnent des programmes gouvernementaux (Rénoclimat, LogisVert, Canada Greener Homes) en texte brut. Aucun lien vers le programme, aucun CTA "Vérifier mon admissibilité", aucun détail.
 
-1. **FAQ items show empty** — Data uses `{q, a}` keys but `FaqItem` component reads `{question, answer}`. That's why the accordion shows but with no text.
-2. **25 of 55 published articles have no body content** (`content_html` is null/empty).
-3. **All 55 articles have no featured image** (`featured_image_url` is null).
+## Solution
 
-## Plan
+### 1. Créer un service de détection et enrichissement de programmes
+**Fichier:** `src/services/grantLinkingService.ts`
 
-### Step 1 — Fix FAQ key mismatch in BlogArticlePage
-Update the `FaqItem` mapping to handle both `{q, a}` and `{question, answer}` formats. One-line fix in the component:
-```tsx
-<FaqItem question={faq.question || faq.q} answer={faq.answer || faq.a} />
-```
+- Dictionnaire des programmes connus avec: nom, URL officielle, route UNPRO (`/dashboard/properties/:id/grants`), description courte
+- Fonction `enrichTextWithGrantLinks(text: string): EnrichedSegment[]` qui détecte les noms de programmes dans du texte et retourne des segments (texte brut + liens)
+- Programmes: Rénoclimat, LogisVert, Canada Greener Homes, Chauffez vert, Novoclimat, SCHL
 
-### Step 2 — Fix FAQ data in database
-Run a migration to normalize all `faq_json` entries from `{q, a}` to `{question, answer}` format across `blog_articles` so all consumers work consistently.
+### 2. Créer un composant `GrantMentionCard`
+**Fichier:** `src/components/grants/GrantMentionCard.tsx`
 
-### Step 3 — Generate missing article content
-Create and run an edge function (`blog-content-generator`) that:
-- Queries articles where `content_html` is null/empty
-- Uses Gemini to generate SEO-optimized French content (800-1200 words) based on the article's `title`, `category`, `city`
-- Saves the generated HTML back to `content_html`
-- Processes in batches of 5 to avoid timeouts
+- Card compacte affichée quand un programme est mentionné dans une FAQ
+- Contenu: nom du programme, description 1 ligne, lien officiel externe, CTA "Vérifier mon admissibilité" (vers `/dashboard/properties` ou login si non connecté)
+- Style premium, cohérent avec le design existant
 
-### Step 4 — Generate featured images
-Create an edge function (`blog-image-generator`) that:
-- Queries articles missing `featured_image_url`
-- Uses the AI image generation model to create contextual hero images
-- Uploads to Supabase Storage and updates the article record
-- Processes in batches
+### 3. Créer un composant `EnrichedFaqAnswer`
+**Fichier:** `src/components/grants/EnrichedFaqAnswer.tsx`
 
-### Step 5 — Register as automation agents
-Add `blog-content-generator` and `blog-image-generator` to `automation_agents` with scheduled runs so new articles automatically get content and images.
+- Remplace le texte brut des réponses FAQ
+- Détecte les mentions de programmes via `grantLinkingService`
+- Rend les noms de programmes comme liens cliquables
+- Affiche un `GrantMentionCard` groupé sous la réponse si des programmes sont détectés
 
-## Technical Details
+### 4. Mettre à jour `BlogArticlePage` FaqItem
+Modifier le composant `FaqItem` dans `BlogArticlePage.tsx` pour utiliser `EnrichedFaqAnswer` au lieu de rendre la réponse en texte brut.
 
-- FAQ fix: both component-side (graceful fallback) and data-side (normalize keys)
-- Content generation: edge function using `google/gemini-2.5-flash` via Lovable AI gateway
-- Image generation: edge function using `google/gemini-2.5-flash-image` model
-- Storage: images saved to `blog-images` bucket in Supabase Storage
-- All agents registered with `next_run_at` for autonomous operation
+### 5. Mettre à jour `SeoFaqSection`
+Modifier `SeoFaqSection.tsx` pour utiliser `EnrichedFaqAnswer` dans `AccordionContent`, enrichissant toutes les pages SEO (problèmes, villes, services, rénovations).
+
+## Résultat
+- Chaque mention de programme dans une FAQ devient un lien
+- Un mini-card apparaît avec "Voir les détails" + "Vérifier mon admissibilité"
+- Fonctionne sur toutes les pages (blog + SEO) automatiquement
+- Les liens officiels ouvrent dans un nouvel onglet
+- Le CTA admissibilité dirige vers le dashboard propriétaire
 
