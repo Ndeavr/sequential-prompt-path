@@ -26,7 +26,7 @@ interface Message {
   content: string;
 }
 
-export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onDismiss }: AlexVoiceProps) {
+export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onDismiss, inline = false, autoStart = false }: AlexVoiceProps) {
   const [mode, setMode] = useState<"voice" | "text">("voice");
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
