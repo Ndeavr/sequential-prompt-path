@@ -16,7 +16,9 @@ export type AlexUIActionType =
   | "show_pricing"
   | "scroll_to"
   | "open_booking"
-  | "show_chips";
+  | "show_chips"
+  | "show_trust"
+  | "show_prediction";
 
 export interface AlexUIAction {
   type: AlexUIActionType | string;
@@ -162,6 +164,15 @@ export function dispatchAlexAction(action: AlexUIAction, deps: DispatcherDeps) {
       if (action.items && deps.onShowChips) {
         deps.onShowChips(action.items.split(",").map((s) => s.trim()));
       }
+      break;
+
+    // ── Trust / Prediction ──
+    case "show_trust":
+      deps.navigate(action.target || "/dashboard/trust");
+      break;
+
+    case "show_prediction":
+      deps.navigate(action.target || "/dashboard/predictions");
       break;
 
     default:
