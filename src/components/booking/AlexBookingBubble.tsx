@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X, Sparkles } from "lucide-react";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 interface AlexBookingBubbleProps {
   contextHint?: string;
