@@ -225,6 +225,7 @@ import AdminDispatchCenter from "@/pages/admin/AdminDispatchCenter";
 import AdminDomainIntelligence from "@/pages/admin/AdminDomainIntelligence";
 import AdminBulkArticlesPage from "@/pages/admin/AdminBulkArticlesPage";
 import AdminProspectCampaigns from "@/pages/admin/AdminProspectCampaigns";
+import AdminRoadmapExecution from "@/pages/admin/AdminRoadmapExecution";
 import MesProprietesPage from "@/pages/MesProprietesPage";
 import AnalyserSoumissionsPage from "@/pages/AnalyserSoumissionsPage";
 import TrouverEntrepreneurPage from "@/pages/TrouverEntrepreneurPage";
@@ -507,6 +508,7 @@ export const AppRouter = () => (
       <Route path="/admin/prospects" element={<ProtectedRoute requiredRole="admin"><AdminProspects /></ProtectedRoute>} />
       <Route path="/admin/prospects/import" element={<ProtectedRoute requiredRole="admin"><AdminProspectImport /></ProtectedRoute>} />
       <Route path="/admin/prospects/campaigns" element={<ProtectedRoute requiredRole="admin"><AdminProspectCampaigns /></ProtectedRoute>} />
+      <Route path="/admin/roadmap-execution" element={<ProtectedRoute requiredRole="admin"><AdminRoadmapExecution /></ProtectedRoute>} />
       <Route path="/audit/:slug" element={<AuditLandingPage />} />
       <Route path="/articles/:slug" element={<SeoArticlePage />} />
       <Route path="/emergency" element={<EmergencyPage />} />
