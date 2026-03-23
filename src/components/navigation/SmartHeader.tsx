@@ -258,6 +258,7 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
 }) {
   const { signOut } = useAuth();
   const { setLang } = useLanguage();
+  const alexVoice = useAlexVoice();
 
   const isGuest = !ctx;
   const drawerItems = ctx ? getDrawerItems(ctx) : [];
