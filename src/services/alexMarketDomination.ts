@@ -327,8 +327,8 @@ export class AlexContentGenerator {
         answer: `Vérifiez la licence RBQ, les avis récents, l'expérience locale et le score AIPP sur UNPRO. Comparez au moins 2-3 professionnels avant de décider.`,
       },
       {
-        question: 'Qu'est-ce que le score AIPP ?',
-        answer: 'Le score AIPP (AI-Indexed Professional Profile) mesure la visibilité numérique, la crédibilité et la capacité de conversion d\'un entrepreneur sur une échelle de 0 à 100. Plus le score est élevé, plus le professionnel est bien positionné pour être découvert et choisi.',
+        question: "Qu'est-ce que le score AIPP ?",
+        answer: "Le score AIPP (AI-Indexed Professional Profile) mesure la visibilité numérique, la crédibilité et la capacité de conversion d'un entrepreneur sur une échelle de 0 à 100. Plus le score est élevé, plus le professionnel est bien positionné pour être découvert et choisi.",
       },
       {
         question: `Quelle est la différence entre UNPRO et les autres plateformes à ${cityLabel} ?`,
