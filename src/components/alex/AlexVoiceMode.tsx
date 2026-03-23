@@ -15,6 +15,10 @@ interface AlexVoiceProps {
   deepLinkId?: string;
   onFlowComplete: (context: Record<string, string>) => void;
   onDismiss: () => void;
+  /** Render inline (inside a card) instead of fixed floating */
+  inline?: boolean;
+  /** Auto-start listening on mount */
+  autoStart?: boolean;
 }
 
 interface Message {
