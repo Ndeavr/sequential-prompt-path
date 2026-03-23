@@ -13,6 +13,8 @@ import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import NotFound from "@/pages/NotFound";
 import HomeownersPage from "@/pages/HomeownersPage";
+import OwnerMenuPreviewPage from "@/pages/OwnerMenuPreviewPage";
+import MenuIntelligenceAdminPage from "@/pages/admin/MenuIntelligenceAdminPage";
 import ProfessionalsPage from "@/pages/ProfessionalsPage";
 import PartnersPage from "@/pages/PartnersPage";
 import DescribeProjectPage from "@/pages/DescribeProjectPage";
@@ -251,6 +253,7 @@ export const AppRouter = () => (
       <Route path="/start" element={<StartPage />} />
       <Route path="/homeowners" element={<HomeownersPage />} />
       <Route path="/proprietaires" element={<HomeownersPage />} />
+      <Route path="/owner-universe" element={<OwnerMenuPreviewPage />} />
       <Route path="/professionals" element={<ProfessionalsPage />} />
       <Route path="/entrepreneurs" element={<ProfessionalsPage />} />
       <Route path="/entrepreneurs/disponibilite-categorie-specialite-ville" element={<ContractorAvailabilityPage />} />
@@ -455,6 +458,7 @@ export const AppRouter = () => (
       <Route path="/pro/booking-settings" element={<ProtectedRoute requiredRole="contractor"><BookingSettingsPage /></ProtectedRoute>} />
 
       {/* Admin */}
+      <Route path="/admin/menu-intelligence" element={<ProtectedRoute requiredRole="admin"><MenuIntelligenceAdminPage /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><AdminUsers /></ProtectedRoute>} />
       <Route path="/admin/contractors" element={<ProtectedRoute requiredRole="admin"><AdminContractors /></ProtectedRoute>} />
