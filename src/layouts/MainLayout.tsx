@@ -4,7 +4,6 @@
 
 import type { ReactNode } from "react";
 import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
 import SmartHeader from "@/components/navigation/SmartHeader";
 import SmartFooter from "@/components/navigation/SmartFooter";
 import FooterSEOGrid from "@/components/navigation/FooterSEOGrid";
@@ -19,7 +18,6 @@ interface MainLayoutProps {
 
 const MainLayout = ({ children }: MainLayoutProps) => {
   const { pathname } = useLocation();
-  const { lang } = useLanguage();
   const { lang } = useLanguage();
 
   // Theme is now user-controlled via ThemeToggle
