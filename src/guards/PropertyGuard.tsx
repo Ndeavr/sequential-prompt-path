@@ -16,12 +16,12 @@ export default function PropertyGuard({ children }: PropertyGuardProps) {
   const { data: properties, isLoading } = useQuery({
     queryKey: ["user-properties-count", user?.id],
     queryFn: async () => {
-      const { count, error } = await supabase
-        .from("properties")
+      const { count, error } = await (supabase
+        .from("properties") as any)
         .select("id", { count: "exact", head: true })
         .eq("owner_profile_id", user!.id);
       if (error) throw error;
-      return count ?? 0;
+      return (count ?? 0) as number;
     },
     enabled: !!user?.id && role === "homeowner",
   });
