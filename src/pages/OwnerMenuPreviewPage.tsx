@@ -20,6 +20,7 @@ export default function OwnerMenuPreviewPage() {
   const [intent, setIntent] = useState("");
   const [showUniverse, setShowUniverse] = useState(false);
   const navigate = useNavigate();
+  const { openAlex } = useAlexVoice();
 
   const handleItemClick = (item: MenuItemDef) => {
     // Future: navigate to service page or open drawer
