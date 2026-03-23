@@ -9,6 +9,7 @@ import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import { CalendarDays, Clock, ArrowRight, Tag } from "lucide-react";
 import { useEngagementTracking } from "@/hooks/useEngagementTracking";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 const CATEGORIES = [
   { key: "all", label: "Tous" },
@@ -26,6 +27,7 @@ export default function BlogIndexPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const category = searchParams.get("category") || "all";
   useEngagementTracking();
+  const alexVoice = useAlexVoice();
 
   const { data: articles, isLoading } = useQuery({
     queryKey: ["blog-articles", category],
@@ -171,9 +173,9 @@ export default function BlogIndexPage() {
           <h2 className="text-2xl font-bold text-foreground">Besoin d'un entrepreneur maintenant?</h2>
           <p className="text-muted-foreground">UNPRO remplace les soumissions multiples par un rendez-vous garanti avec le bon entrepreneur.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/alex" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition">
+            <button onClick={() => alexVoice.openAlex("general")} className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition">
               Obtenir mon rendez-vous <ArrowRight className="h-4 w-4" />
-            </Link>
+            </button>
             <Link to="/comment-ca-marche" className="inline-flex items-center gap-2 border border-border px-6 py-3 rounded-lg font-medium hover:bg-accent transition text-foreground">
               Comment ça fonctionne
             </Link>

@@ -25,6 +25,7 @@ import {
   type VerificationTrade,
 } from "@/seo/data/verificationTrades";
 import { useState } from "react";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 // ─── Helpers ───
 
@@ -53,6 +54,7 @@ const GlassCard = ({ children, className = "" }: { children: React.ReactNode; cl
 const VerificationSeoPage = () => {
   const { tradeSlug, citySlug } = useParams<{ tradeSlug: string; citySlug: string }>();
   const navigate = useNavigate();
+  const alexVoice = useAlexVoice();
   const [searchQuery, setSearchQuery] = useState("");
 
   const trade = findTrade(tradeSlug ?? "entrepreneur") ?? VERIFICATION_TRADES[0];
@@ -222,10 +224,8 @@ const VerificationSeoPage = () => {
             </Card>
 
             <div className="flex justify-center">
-              <Button asChild variant="ghost" size="sm" className="text-xs">
-                <Link to="/alex">
-                  <Sparkles className="w-3.5 h-3.5 mr-1" /> Parler à Alex pour de l'aide
-                </Link>
+              <Button variant="ghost" size="sm" className="text-xs" onClick={() => alexVoice.openAlex("general")}>
+                <Sparkles className="w-3.5 h-3.5 mr-1" /> Parler à Alex pour de l'aide
               </Button>
             </div>
           </section>

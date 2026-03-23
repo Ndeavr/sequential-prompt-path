@@ -22,6 +22,7 @@ import { getStatusLabel } from "@/services/property/propertyService";
 import { calculateHomeScore, type HomeScoreInput, type HomeScoreOutput } from "@/services/homeScoreService";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import {
   Home, Wrench, Hammer, Zap, FileText, ShieldCheck,
   CheckCircle2, X, Clock, Sparkles, Trophy,
@@ -36,6 +37,7 @@ import DocumentVault from "@/components/passport/DocumentVault";
 
 export default function PropertyPassportPage() {
   const { id } = useParams<{ id: string }>();
+  const alexVoice = useAlexVoice();
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -374,10 +376,8 @@ export default function PropertyPassportPage() {
               <Wrench className="w-3 h-3" /> Trouver un entrepreneur
             </Link>
           </Button>
-          <Button asChild variant="outline" size="sm" className="text-xs gap-1">
-            <Link to="/alex">
-              <Sparkles className="w-3 h-3" /> Parler à Alex
-            </Link>
+          <Button variant="outline" size="sm" className="text-xs gap-1" onClick={() => alexVoice.openAlex("general")}>
+            <Sparkles className="w-3 h-3" /> Parler à Alex
           </Button>
           <Button asChild variant="outline" size="sm" className="text-xs gap-1">
             <Link to="/describe-project">

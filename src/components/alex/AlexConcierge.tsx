@@ -261,14 +261,13 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
                 <Button variant="ghost" size="icon" className="h-7 w-7 rounded-xl text-muted-foreground" onClick={handleReset} title="Nouvelle conversation">
                   <RotateCcw className="h-3 w-3" />
                 </Button>
-                <Link
-                  to="/alex"
+                <button
                   className="h-7 w-7 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                   title="Plein écran"
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => { setIsOpen(false); openAlexVoice("general"); }}
                 >
                   <MessageCircle className="h-3 w-3" />
-                </Link>
+                </button>
                 <Button variant="ghost" size="icon" className="h-7 w-7 rounded-xl text-muted-foreground" onClick={() => setIsOpen(false)}>
                   <X className="h-3.5 w-3.5" />
                 </Button>

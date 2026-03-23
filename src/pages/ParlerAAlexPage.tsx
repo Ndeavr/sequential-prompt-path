@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles, MessageCircle, Camera, ArrowRight, Upload, Shield, Zap, Brain } from "lucide-react";
 import { motion } from "framer-motion";
 import PageHero from "@/components/shared/PageHero";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 const SUGGESTED_PROMPTS = [
   "J'ai une infiltration d'eau au sous-sol",
@@ -18,6 +19,8 @@ const SUGGESTED_PROMPTS = [
 ];
 
 export default function ParlerAAlexPage() {
+  const { openAlex } = useAlexVoice();
+
   return (
     <>
       <Helmet>
@@ -44,8 +47,8 @@ export default function ParlerAAlexPage() {
               <p className="text-muted-foreground max-w-lg mx-auto">
                 Alex analyse vos problèmes de maison, compare les solutions, estime les coûts et vous guide vers le bon professionnel. Pensé pour les propriétaires du Québec.
               </p>
-              <Button asChild size="lg" className="gap-2">
-                <Link to="/alex">Parler maintenant <ArrowRight className="h-4 w-4" /></Link>
+              <Button size="lg" className="gap-2" onClick={() => openAlex("general")}>
+                Parler maintenant <ArrowRight className="h-4 w-4" />
               </Button>
             </CardContent>
           </Card>
@@ -56,14 +59,14 @@ export default function ParlerAAlexPage() {
           <h2 className="text-xl font-bold text-foreground font-display">Exemples de questions</h2>
           <div className="grid gap-2 md:grid-cols-2">
             {SUGGESTED_PROMPTS.map((prompt) => (
-              <Link key={prompt} to="/alex">
+              <button key={prompt} onClick={() => openAlex("general")} className="text-left">
                 <Card className="hover:border-primary/30 hover:shadow-md transition-all group cursor-pointer">
                   <CardContent className="p-4 flex items-center gap-3">
                     <MessageCircle className="h-4 w-4 text-primary shrink-0" />
                     <span className="text-sm text-foreground group-hover:text-primary transition-colors">{prompt}</span>
                   </CardContent>
                 </Card>
-              </Link>
+              </button>
             ))}
           </div>
         </div>
@@ -89,8 +92,8 @@ export default function ParlerAAlexPage() {
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button asChild size="lg" className="gap-2">
-            <Link to="/alex">Parler à Alex <Sparkles className="h-4 w-4" /></Link>
+          <Button size="lg" className="gap-2" onClick={() => openAlex("general")}>
+            Parler à Alex <Sparkles className="h-4 w-4" />
           </Button>
           <Button asChild variant="outline" size="lg" className="gap-2">
             <Link to="/decrire-mon-projet">Décrire mon projet <ArrowRight className="h-4 w-4" /></Link>

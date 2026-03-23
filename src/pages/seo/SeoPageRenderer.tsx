@@ -22,6 +22,7 @@ import { ArrowRight, ChevronRight, HelpCircle, MapPin, Wrench } from "lucide-rea
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import ContractorLandingCta from "@/components/growth/ContractorLandingCta";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 interface FaqItem {
   question: string;
@@ -30,6 +31,7 @@ interface FaqItem {
 
 export default function SeoPageRenderer() {
   const { slug } = useParams<{ slug: string }>();
+  const alexVoice = useAlexVoice();
 
   const { data: page, isLoading } = useQuery({
     queryKey: ["seo-page", slug],
@@ -175,8 +177,8 @@ export default function SeoPageRenderer() {
             <p className="text-sm text-muted-foreground mb-4">
               Décrivez votre situation et recevez des profils vérifiés en quelques secondes.
             </p>
-            <Button asChild>
-              <Link to="/alex">Parler à Alex <ArrowRight className="h-4 w-4 ml-2" /></Link>
+            <Button onClick={() => alexVoice.openAlex("general")}>
+              Parler à Alex <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </CardContent>
         </Card>

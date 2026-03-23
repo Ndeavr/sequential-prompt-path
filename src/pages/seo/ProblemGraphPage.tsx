@@ -19,6 +19,7 @@ import {
 import { SEO_PROBLEMS, type SeoProblem, getAllContractorTypes } from "@/seo/data/problems";
 import { SEO_CITIES } from "@/seo/data/cities";
 import { motion } from "framer-motion";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 // ─── Category groups for visual clustering ───
 const PROBLEM_CATEGORIES: { key: string; labelFr: string; icon: React.ElementType; types: string[] }[] = [
@@ -100,6 +101,7 @@ function ProblemCard({ problem }: { problem: SeoProblem }) {
 export default function ProblemGraphPage() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const alexVoice = useAlexVoice();
 
   const filteredProblems = useMemo(() => {
     let results = SEO_PROBLEMS;
@@ -261,8 +263,8 @@ export default function ProblemGraphPage() {
               <CardContent className="p-5 text-center space-y-2">
                 <h3 className="text-sm font-bold text-foreground">Parler à Alex</h3>
                 <p className="text-xs text-muted-foreground">Notre concierge IA vous aide à identifier votre problème.</p>
-                <Button asChild size="sm" variant="default">
-                  <Link to="/alex">Démarrer <ArrowRight className="h-3 w-3 ml-1" /></Link>
+                <Button size="sm" variant="default" onClick={() => alexVoice.openAlex("general")}>
+                  Démarrer <ArrowRight className="h-3 w-3 ml-1" />
                 </Button>
               </CardContent>
             </Card>

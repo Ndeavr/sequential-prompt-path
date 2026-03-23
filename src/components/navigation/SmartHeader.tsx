@@ -13,6 +13,7 @@ import { Menu, X, Bell, ChevronDown, QrCode } from "lucide-react";
 import ProfileMenu from "./ProfileMenu";
 import AlexNavOrb from "./AlexNavOrb";
 import HeaderSearch from "./HeaderSearch";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import MegaMenuPanel from "./MegaMenu";
 import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
 import SmartCTA from "@/components/cta/SmartCTA";
@@ -257,6 +258,7 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
 }) {
   const { signOut } = useAuth();
   const { setLang } = useLanguage();
+  const alexVoice = useAlexVoice();
 
   const isGuest = !ctx;
   const drawerItems = ctx ? getDrawerItems(ctx) : [];
@@ -359,9 +361,9 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
               </div>
 
               {/* Alex */}
-              <Link to="/alex" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-meta mb-4">
+              <button onClick={() => { onClose(); alexVoice.openAlex("general"); }} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-meta mb-4 w-full text-left">
                 ✨ {lang === "en" ? "Talk to Alex" : "Parler à Alex"}
-              </Link>
+              </button>
             </>
           ) : (
             /* ── GUEST: Discovery-focused ── */
@@ -373,9 +375,9 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
                 <Link to="/signup" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-meta">
                   {lang === "en" ? "Get Started Free" : "Commencer gratuitement"}
                 </Link>
-                <Link to="/alex" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-meta">
+                <button onClick={() => { onClose(); alexVoice.openAlex("general"); }} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-meta w-full text-left">
                   ✨ {lang === "en" ? "Talk to Alex" : "Parler à Alex"}
-                </Link>
+                </button>
                 <Link to="/proprietaires/passeport-maison" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-muted/40 text-foreground font-medium text-meta">
                   {lang === "en" ? "Create My Home Passport" : "Créer mon Passeport Maison"}
                 </Link>

@@ -37,6 +37,7 @@ import {
 import { useContractorPublicScores, useReviewInsights } from "@/hooks/useMatchingEngine";
 import { UnproVerifiedBadge } from "@/components/contractor/UnproVerifiedBadge";
 import { useAuth } from "@/hooks/useAuth";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { motion } from "framer-motion";
 import { useState, useCallback } from "react";
 import heroHouse from "@/assets/hero-house.jpg";
@@ -153,6 +154,7 @@ const buildFallbackFAQ = (name: string, specialty: string | null, city: string |
 
 const ContractorProfile = () => {
   const { id } = useParams<{ id: string }>();
+  const alexVoice = useAlexVoice();
   const isDemo = !!(id && DEMO_CONTRACTORS[id]);
   const { data: profileData, isLoading, isError } = useContractorFullProfile(isDemo ? undefined : id);
   const { data: reviews } = usePublicContractorReviews(isDemo ? undefined : id);
@@ -1174,8 +1176,8 @@ const ContractorProfile = () => {
                       <Button asChild variant="outline" size="sm" className="rounded-xl gap-1.5">
                         <Link to="/search"><Users className="h-3.5 w-3.5" /> Comparer</Link>
                       </Button>
-                      <Button asChild variant="ghost" size="sm" className="rounded-xl gap-1.5">
-                        <Link to="/alex"><MessageSquare className="h-3.5 w-3.5" /> Parler à Alex</Link>
+                      <Button variant="ghost" size="sm" className="rounded-xl gap-1.5" onClick={() => alexVoice.openAlex("general")}>
+                        <MessageSquare className="h-3.5 w-3.5" /> Parler à Alex
                       </Button>
                     </>
                   ) : (

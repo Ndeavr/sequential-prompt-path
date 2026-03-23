@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { motion, AnimatePresence } from "framer-motion";
 import MainLayout from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -254,6 +255,7 @@ function AlexConversation() {
 
 /* ─── Page ─── */
 export default function PreventiveMaintenancePage() {
+  const alexVoice = useAlexVoice();
   return (
     <MainLayout>
       {/* ─── Hero ─── */}
@@ -470,10 +472,8 @@ export default function PreventiveMaintenancePage() {
                 ))}
               </div>
               <div className="mt-6">
-                <Button asChild variant="soft" size="sm">
-                  <Link to="/alex">
-                    Parler à Alex <ChevronRight className="h-3.5 w-3.5 ml-1" />
-                  </Link>
+                <Button variant="soft" size="sm" onClick={() => alexVoice.openAlex("general")}>
+                  Parler à Alex <ChevronRight className="h-3.5 w-3.5 ml-1" />
                 </Button>
               </div>
             </motion.div>
