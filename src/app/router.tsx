@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HelpPopup from "@/components/shared/HelpPopup";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import PlaceholderPage from "@/pages/PlaceholderPage";
+import Unsubscribe from "@/pages/Unsubscribe";
 import CommentCaMarchePage from "@/pages/CommentCaMarchePage";
 import StartPage from "@/pages/StartPage";
 import ScrollRestoration from "@/components/ScrollRestoration";
