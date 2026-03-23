@@ -286,6 +286,8 @@ export const AppRouter = () => (
       <Route path="/comparer" element={<ContractorComparisonPage />} />
       <Route path="/decision" element={<ProtectedRoute requiredRole="homeowner"><DecisionAssistantPage /></ProtectedRoute>} />
       <Route path="/alignment" element={<ProtectedRoute requiredRole="homeowner"><AlignmentQuestionnairePage /></ProtectedRoute>} />
+      <Route path="/recommendation" element={<ProtectedRoute requiredRole="homeowner"><SmartRecommendationPage /></ProtectedRoute>} />
+      <Route path="/dna-profile" element={<ProtectedRoute requiredRole="homeowner"><DNAProfilePage /></ProtectedRoute>} />
 
       {/* Property Graph */}
       <Route path="/property-graph" element={<PropertyGraphPage />} />
