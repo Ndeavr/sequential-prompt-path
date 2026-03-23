@@ -317,6 +317,7 @@ export const AppRouter = () => (
       <Route path="/qr/:token" element={<QrScanPage />} />
       <Route path="/r/:refCode" element={<ReferralLandingPage />} />
       <Route path="/i/:code" element={<DeepLinkPage />} />
+      <Route path="/unsubscribe" element={<Unsubscribe />} />
       <Route path="/unlock" element={<UnlockPage />} />
       <Route path="/fondateur" element={<FounderPage />} />
 

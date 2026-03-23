@@ -47,9 +47,17 @@ export default function HelpPopup() {
     if (!comment.trim()) return;
     setSending(true);
     try {
-      // Best-effort send via mailto fallback — in prod this would call an edge function
-      const mailto = `mailto:dde@unpro.ca?subject=${encodeURIComponent("Message depuis unpro.ca")}&body=${encodeURIComponent(comment)}`;
-      window.open(mailto, "_blank");
+      await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "contact-comment",
+          recipientEmail: "dde@unpro.ca",
+          idempotencyKey: `contact-popup-${Date.now()}`,
+          templateData: {
+            message: comment.trim(),
+            page: window.location.pathname,
+          },
+        },
+      });
       setMode("sent");
     } catch {
       setMode("sent");
