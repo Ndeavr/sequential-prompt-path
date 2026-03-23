@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import HelpPopup from "@/components/shared/HelpPopup";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import PlaceholderPage from "@/pages/PlaceholderPage";
 import CommentCaMarchePage from "@/pages/CommentCaMarchePage";
@@ -568,5 +569,6 @@ export const AppRouter = () => (
 
       <Route path="*" element={<NotFound />} />
     </Routes>
+    <HelpPopup />
   </BrowserRouter>
 );
