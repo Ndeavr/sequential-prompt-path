@@ -15,6 +15,10 @@ interface AlexVoiceProps {
   deepLinkId?: string;
   onFlowComplete: (context: Record<string, string>) => void;
   onDismiss: () => void;
+  /** Render inline (inside a card) instead of fixed floating */
+  inline?: boolean;
+  /** Auto-start listening on mount */
+  autoStart?: boolean;
 }
 
 interface Message {
@@ -22,7 +26,7 @@ interface Message {
   content: string;
 }
 
-export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onDismiss }: AlexVoiceProps) {
+export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onDismiss, inline = false, autoStart = false }: AlexVoiceProps) {
   const [mode, setMode] = useState<"voice" | "text">("voice");
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -45,6 +49,14 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
       } catch { /* ignore */ }
     })();
   }, [feature]);
+
+  // Auto-start listening if requested
+  useEffect(() => {
+    if (autoStart && sessionId) {
+      const timer = setTimeout(() => startListening(), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [autoStart, sessionId]);
 
   // Speech recognition setup
   const startListening = useCallback(() => {
@@ -170,12 +182,15 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: inline ? 10 : 30 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 20 }}
-      className="fixed bottom-24 right-6 z-50 w-[360px] max-w-[calc(100vw-3rem)]"
+      exit={{ opacity: 0, y: inline ? -10 : 20 }}
+      className={inline
+        ? "w-full"
+        : "fixed bottom-24 right-6 z-50 w-[360px] max-w-[calc(100vw-3rem)]"
+      }
     >
-      <div className="relative bg-card/95 backdrop-blur-xl border border-border/60 rounded-2xl shadow-[var(--shadow-2xl)] overflow-hidden">
+      <div className={`relative backdrop-blur-xl border border-border/60 rounded-2xl shadow-[var(--shadow-2xl)] overflow-hidden ${inline ? "bg-card" : "bg-card/95"}`}>
         {/* Top glow */}
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
 
