@@ -168,7 +168,7 @@ export default function BlogArticlePage() {
             <h2 className="text-2xl font-bold text-foreground">Questions fréquentes</h2>
             <div className="space-y-2">
               {faqs.map((faq: any, i: number) => (
-                <FaqItem key={i} question={faq.question} answer={faq.answer} />
+                <FaqItem key={i} question={faq.question || faq.q} answer={faq.answer || faq.a} />
               ))}
             </div>
           </motion.section>
