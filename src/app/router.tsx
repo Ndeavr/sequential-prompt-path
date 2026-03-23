@@ -27,6 +27,8 @@ import AIPPScorePage from "@/pages/AIPPScorePage";
 import MatchingResultsPage from "@/pages/MatchingResultsPage";
 import ContractorComparisonPage from "@/pages/ContractorComparisonPage";
 import DecisionAssistantPage from "@/pages/DecisionAssistantPage";
+import SmartRecommendationPage from "@/pages/SmartRecommendationPage";
+import DNAProfilePage from "@/pages/DNAProfilePage";
 
 // SEO Pages
 import ServiceLocationPage from "@/pages/seo/ServiceLocationPage";
@@ -284,6 +286,8 @@ export const AppRouter = () => (
       <Route path="/comparer" element={<ContractorComparisonPage />} />
       <Route path="/decision" element={<ProtectedRoute requiredRole="homeowner"><DecisionAssistantPage /></ProtectedRoute>} />
       <Route path="/alignment" element={<ProtectedRoute requiredRole="homeowner"><AlignmentQuestionnairePage /></ProtectedRoute>} />
+      <Route path="/recommendation" element={<ProtectedRoute requiredRole="homeowner"><SmartRecommendationPage /></ProtectedRoute>} />
+      <Route path="/dna-profile" element={<ProtectedRoute requiredRole="homeowner"><DNAProfilePage /></ProtectedRoute>} />
 
       {/* Property Graph */}
       <Route path="/property-graph" element={<PropertyGraphPage />} />
