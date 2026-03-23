@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import { CalendarDays, MapPin, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect } from "react";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 export default function SeoArticlePage() {
   const { slug } = useParams<{ slug: string }>();
