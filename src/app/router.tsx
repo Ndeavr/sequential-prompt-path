@@ -225,6 +225,7 @@ import AdminDispatchCenter from "@/pages/admin/AdminDispatchCenter";
 import AdminDomainIntelligence from "@/pages/admin/AdminDomainIntelligence";
 import AdminBulkArticlesPage from "@/pages/admin/AdminBulkArticlesPage";
 import AdminProspectCampaigns from "@/pages/admin/AdminProspectCampaigns";
+import AdminRoadmapExecution from "@/pages/admin/AdminRoadmapExecution";
 import MesProprietesPage from "@/pages/MesProprietesPage";
 import AnalyserSoumissionsPage from "@/pages/AnalyserSoumissionsPage";
 import TrouverEntrepreneurPage from "@/pages/TrouverEntrepreneurPage";
