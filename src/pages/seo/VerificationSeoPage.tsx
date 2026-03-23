@@ -25,6 +25,7 @@ import {
   type VerificationTrade,
 } from "@/seo/data/verificationTrades";
 import { useState } from "react";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 // ─── Helpers ───
 
