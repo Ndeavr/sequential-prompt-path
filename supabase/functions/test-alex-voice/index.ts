@@ -133,10 +133,10 @@ function testGreetingBuilder(): TestResult[] {
     results.push({ name: "greeting_legacy_userName", passed: false, error: e.message });
   }
 
-  // Edge: hour exactly 12
+  // Edge: hour exactly 12 — Quebec French uses "Bonjour" until 18h
   try {
     const g = buildAlexGreeting({ firstName: "Test", localHour: 12 });
-    assert(g.displayGreeting.startsWith("Bon après-midi"), `Hour 12 should be afternoon`);
+    assert(g.displayGreeting.startsWith("Bonjour"), `Hour 12 should be Bonjour (QC French)`);
     results.push({ name: "greeting_hour_boundary_12", passed: true });
   } catch (e) {
     results.push({ name: "greeting_hour_boundary_12", passed: false, error: e.message });
