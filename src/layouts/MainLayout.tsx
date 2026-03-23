@@ -23,10 +23,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const { theme, setTheme } = useTheme();
   const { lang } = useLanguage();
 
-  // Force light mode on public pages
-  useEffect(() => {
-    if (theme !== "light") setTheme("light");
-  }, [theme, setTheme]);
+  // Theme is now user-controlled via ThemeToggle
 
   const showAlex = pathname !== "/alex";
 
