@@ -120,7 +120,7 @@ export default function DecrireMonProjetPage() {
         </div>
 
         <RelatedLinksSection links={[
-          { to: "/trouver-un-entrepreneur", label: "Trouver un entrepreneur" },
+          { to: "/search", label: "Trouver un entrepreneur" },
           { to: "/parler-a-alex", label: "Parler à Alex" },
           { to: "/problemes-maison", label: "Problèmes maison" },
         ]} />

@@ -237,7 +237,7 @@ import AdminProspectCampaigns from "@/pages/admin/AdminProspectCampaigns";
 import AdminRoadmapExecution from "@/pages/admin/AdminRoadmapExecution";
 import MesProprietesPage from "@/pages/MesProprietesPage";
 import AnalyserSoumissionsPage from "@/pages/AnalyserSoumissionsPage";
-import TrouverEntrepreneurPage from "@/pages/TrouverEntrepreneurPage";
+// import TrouverEntrepreneurPage from "@/pages/TrouverEntrepreneurPage"; // Hidden for now
 import DecrireMonProjetPage from "@/pages/DecrireMonProjetPage";
 import ParlerAAlexPage from "@/pages/ParlerAAlexPage";
 import ProblemesMaisonPage from "@/pages/ProblemesMaisonPage";
