@@ -19,7 +19,7 @@ interface MainLayoutProps {
 
 const MainLayout = ({ children }: MainLayoutProps) => {
   const { pathname } = useLocation();
-  const { theme, setTheme } = useTheme();
+  const { lang } = useLanguage();
   const { lang } = useLanguage();
 
   // Theme is now user-controlled via ThemeToggle
