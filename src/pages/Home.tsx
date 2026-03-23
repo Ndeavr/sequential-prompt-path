@@ -39,6 +39,7 @@ const sectionFade = {
 const Home = () => {
   const { isAuthenticated, role } = useAuth();
   const navigate = useNavigate();
+  const { openAlex } = useAlexVoice();
   const alexSectionRef = useRef<HTMLElement>(null);
   const dash = role === "contractor" ? "/pro" : role === "admin" ? "/admin" : "/dashboard";
 
