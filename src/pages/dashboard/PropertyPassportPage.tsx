@@ -37,6 +37,7 @@ import DocumentVault from "@/components/passport/DocumentVault";
 
 export default function PropertyPassportPage() {
   const { id } = useParams<{ id: string }>();
+  const alexVoice = useAlexVoice();
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();

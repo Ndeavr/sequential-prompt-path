@@ -255,6 +255,7 @@ function AlexConversation() {
 
 /* ─── Page ─── */
 export default function PreventiveMaintenancePage() {
+  const alexVoice = useAlexVoice();
   return (
     <MainLayout>
       {/* ─── Hero ─── */}

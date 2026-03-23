@@ -264,7 +264,7 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
                 <button
                   className="h-7 w-7 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                   title="Plein écran"
-                  onClick={() => { setIsOpen(false); openAlex("general"); }}
+                  onClick={() => { setIsOpen(false); openAlexVoice("general"); }}
                 >
                   <MessageCircle className="h-3 w-3" />
                 </button>
