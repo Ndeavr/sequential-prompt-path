@@ -1,6 +1,7 @@
 /**
  * UNPRO — Mobile Bottom Navigation (Role-Aware)
  * Uses mobileTabsByRole config. Shows for all users on mobile.
+ * The "Alex" tab triggers the voice orb instead of navigating.
  */
 
 import { Link, useLocation } from "react-router-dom";
@@ -8,12 +9,14 @@ import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { mobileTabsByRole } from "@/config/navigationConfig";
 import { resolveIcon } from "./IconResolver";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import type { UserRole } from "@/types/navigation";
 
 const MobileBottomNav = () => {
   const { activeRole } = useNavigationContext();
   const { pathname } = useLocation();
   const { lang } = useLanguage();
+  const { openAlex } = useAlexVoice();
 
   // Hide on specific full-screen pages
   const hiddenPaths = ["/alex", "/login", "/signup", "/start"];
@@ -32,6 +35,22 @@ const MobileBottomNav = () => {
         {tabs.map((tab) => {
           const active = isActive(tab.to);
           const Icon = resolveIcon(tab.icon);
+          const isAlexTab = tab.label === "Alex";
+
+          if (isAlexTab) {
+            return (
+              <button
+                key="alex-voice"
+                onClick={() => openAlex("general")}
+                className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2 rounded-lg transition-colors text-muted-foreground"
+              >
+                <Icon className="h-5 w-5" />
+                <span className="text-[10px] font-medium leading-none">
+                  {lang === "en" && tab.labelEn ? tab.labelEn : tab.label}
+                </span>
+              </button>
+            );
+          }
 
           return (
             <Link
