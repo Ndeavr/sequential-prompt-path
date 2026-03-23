@@ -1,6 +1,7 @@
 /**
  * AlexCommandCenterPage — Premium unified Alex experience.
  * Voice-first, text-fallback, quick actions, transcript, next action.
+ * Integrates God Mode, Autopilot, Reality Engine, and Session Timeline.
  * Mobile-first immersive full-screen.
  */
 import { useState, useCallback, useRef, useEffect } from "react";
@@ -10,20 +11,29 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Mic, Square, X, Send, MessageCircle, VolumeX,
   Camera, BarChart3, CalendarCheck, ShieldCheck,
-  ChevronRight, Sparkles, ArrowLeft,
+  ChevronRight, Sparkles, ArrowLeft, Briefcase,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAlexVoiceFull, type VoiceState, type UIAction } from "@/hooks/useAlexVoice";
 import { useAuth } from "@/hooks/useAuth";
 import { dispatchAlexActions, cleanupAlexOverlays, type AlexUIAction, type DispatcherDeps } from "@/lib/alexUiActionDispatcher";
+import AlexSuggestionBanner from "@/components/alex/AlexSuggestionBanner";
+import AlexDecisionCard from "@/components/alex/AlexDecisionCard";
+import AlexSessionTimeline, { type TimelineEvent } from "@/components/alex/AlexSessionTimeline";
 
-// ─── Quick actions ───
+// ─── Quick actions by role ───
 const OWNER_ACTIONS = [
   { label: "Envoyer une photo", icon: Camera, action: "open_upload" },
   { label: "Voir mon score", icon: BarChart3, action: "show_score" },
   { label: "Prendre rendez-vous", icon: CalendarCheck, action: "open_booking" },
   { label: "Vérifier un entrepreneur", icon: ShieldCheck, action: "navigate", target: "/verifier-entrepreneur" },
+];
+
+const CONTRACTOR_ACTIONS = [
+  { label: "Mon score AIPP", icon: BarChart3, action: "show_score" },
+  { label: "Comparer les plans", icon: Sparkles, action: "show_plan_recommendation" },
+  { label: "Mon profil", icon: Briefcase, action: "navigate", target: "/dashboard/contractor" },
 ];
 
 // ─── Voice Orb ───
@@ -33,7 +43,6 @@ function CommandOrb({ state, holding }: { state: VoiceState; holding: boolean })
 
   return (
     <div className="relative flex items-center justify-center" style={{ width: 200, height: 200 }}>
-      {/* Outer pulse */}
       <motion.div
         animate={{
           scale: visualState === "listening" ? [1, 1.2, 1] : visualState === "speaking" ? [1, 1.1, 1] : 1,
@@ -43,8 +52,6 @@ function CommandOrb({ state, holding }: { state: VoiceState; holding: boolean })
         className="absolute rounded-full"
         style={{ width: size + 50, height: size + 50, background: `radial-gradient(circle, hsl(var(--primary) / 0.12) 0%, transparent 70%)` }}
       />
-
-      {/* Core */}
       <motion.div
         animate={{ width: size, height: size, scale: visualState === "thinking" ? [1, 0.94, 1] : 1 }}
         transition={{
@@ -89,7 +96,6 @@ function CommandOrb({ state, holding }: { state: VoiceState; holding: boolean })
   );
 }
 
-// ─── State label ───
 function StateLabel({ state, holding }: { state: VoiceState; holding: boolean }) {
   const label = holding ? "Parlez maintenant…"
     : state === "listening" ? "Je vous écoute…"
@@ -105,7 +111,6 @@ function StateLabel({ state, holding }: { state: VoiceState; holding: boolean })
   );
 }
 
-// ─── Transcript bubble ───
 function Bubble({ role, text }: { role: "user" | "assistant"; text: string }) {
   if (!text) return null;
   const isUser = role === "user";
@@ -121,11 +126,13 @@ function Bubble({ role, text }: { role: "user" | "assistant"; text: string }) {
 export default function AlexCommandCenterPage() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, role } = useAuth();
   const [showText, setShowText] = useState(false);
   const [textInput, setTextInput] = useState("");
   const [holding, setHolding] = useState(false);
   const [dynamicChips, setDynamicChips] = useState<string[]>([]);
+  const [sessionEvents, setSessionEvents] = useState<TimelineEvent[]>([]);
+  const [proactiveSuggestion, setProactiveSuggestion] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -138,6 +145,14 @@ export default function AlexCommandCenterPage() {
 
   const handleUIAction = useCallback((action: UIAction) => {
     dispatchAlexActions([action as AlexUIAction], dispatcherDeps);
+    // Track in session timeline
+    setSessionEvents(prev => [...prev, {
+      id: `${Date.now()}`,
+      type: "action",
+      label: action.type,
+      timestamp: new Date(),
+      completed: true,
+    }]);
   }, [navigate]);
 
   const {
@@ -155,6 +170,25 @@ export default function AlexCommandCenterPage() {
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
+
+  // Track messages in timeline
+  useEffect(() => {
+    if (messages.length > 0) {
+      const last = messages[messages.length - 1];
+      setSessionEvents(prev => {
+        if (prev.length > 0 && prev[prev.length - 1].label === last.content.slice(0, 40)) return prev;
+        return [...prev, {
+          id: `msg-${messages.length}`,
+          type: "message",
+          label: last.content.slice(0, 40) + (last.content.length > 40 ? "…" : ""),
+          timestamp: new Date(),
+          completed: true,
+        }];
+      });
+    }
+  }, [messages.length]);
+
+  const activeActions = role === "contractor" ? CONTRACTOR_ACTIONS : OWNER_ACTIONS;
 
   // ─── Hold-to-talk ───
   const handlePointerDown = useCallback(() => {
@@ -184,8 +218,9 @@ export default function AlexCommandCenterPage() {
 
   const handleChipAction = useCallback((chip: typeof OWNER_ACTIONS[0]) => {
     if (chip.action === "open_upload") sendMessage("Je veux envoyer une photo de ma propriété");
-    else if (chip.action === "show_score") sendMessage("Montre-moi mon score maison");
+    else if (chip.action === "show_score") sendMessage("Montre-moi mon score");
     else if (chip.action === "open_booking") sendMessage("Je veux prendre un rendez-vous");
+    else if (chip.action === "show_plan_recommendation") sendMessage("Compare les plans pour moi");
     else handleUIAction({ type: chip.action, target: chip.target } as UIAction);
   }, [handleUIAction, sendMessage]);
 
@@ -213,12 +248,20 @@ export default function AlexCommandCenterPage() {
               <MessageCircle className="w-4 h-4" />
             </Button>
             {messages.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={reset} className="rounded-full text-xs h-8 px-3">
+              <Button variant="ghost" size="sm" onClick={() => { reset(); setSessionEvents([]); }} className="rounded-full text-xs h-8 px-3">
                 Nouveau
               </Button>
             )}
           </div>
         </div>
+
+        {/* Proactive suggestion banner */}
+        <AlexSuggestionBanner
+          text={proactiveSuggestion || ""}
+          visible={!!proactiveSuggestion && state === "idle"}
+          onAct={() => { if (proactiveSuggestion) sendMessage(proactiveSuggestion); setProactiveSuggestion(null); }}
+          onDismiss={() => setProactiveSuggestion(null)}
+        />
 
         {/* Main */}
         <div className="flex-1 flex flex-col items-center justify-between relative overflow-hidden">
@@ -300,7 +343,7 @@ export default function AlexCommandCenterPage() {
               {state === "idle" && messages.length <= 1 && dynamicChips.length === 0 && (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
                   className="flex flex-wrap justify-center gap-2">
-                  {OWNER_ACTIONS.map(chip => (
+                  {activeActions.map(chip => (
                     <button key={chip.label} onClick={() => handleChipAction(chip)}
                       className="flex items-center gap-1.5 rounded-full border border-border/50 bg-card/80 px-3 py-2 text-xs font-medium text-foreground hover:bg-accent/10 hover:border-primary/30 active:scale-95 transition-all">
                       <chip.icon className="w-3.5 h-3.5 text-primary" />
