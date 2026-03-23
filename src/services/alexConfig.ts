@@ -412,7 +412,6 @@ export const ALEX_MODE_TEMPLATES: Record<AlexMode, string[]> = {
  */
 export const ALEX_QA_TEST_PHRASES = [
   "Bonjour Yann.",
-  "Bon après-midi Yann.",
   "Rebonjour Yann.",
   "Je suis là.",
   "Qu'est-ce qui se passe exactement ?",
