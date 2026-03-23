@@ -148,6 +148,9 @@ const ProAIPPScore = () => {
           </Card>
         )}
 
+        {/* Score Evolution */}
+        <AIPPScoreEvolution />
+
         <Separator />
 
         {/* Recommendations */}
