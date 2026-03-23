@@ -153,8 +153,9 @@ export function shapeTextForHumanSpeech(text: string, style: AlexSpeechStyle): s
   let result = text;
 
   // Add comma after short openers (natural breath point)
+  // Exclude "Bon " when followed by après-midi/soir/jour to avoid "Bon, après-midi"
   result = result.replace(
-    /^(OK|D'accord|Bon|Compris|Je vois|C'est noté|Parfait)\s+/i,
+    /^(OK|D'accord|Bon|Compris|Je vois|C'est noté|Parfait)\s+(?!après-midi|soir|jour)/i,
     "$1, "
   );
 
