@@ -42,6 +42,7 @@ const Home = () => {
   const navigate = useNavigate();
   const { openAlex } = useAlexVoice();
   const alexSectionRef = useRef<HTMLElement>(null);
+  const [alexInlineOpen, setAlexInlineOpen] = useState(false);
   const dash = role === "contractor" ? "/pro" : role === "admin" ? "/admin" : "/dashboard";
 
   const handleCta = (destination: string, label?: string) => {
