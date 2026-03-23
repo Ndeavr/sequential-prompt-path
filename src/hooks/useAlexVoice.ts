@@ -4,15 +4,12 @@
  * Full pipeline:
  * User speaks → Web Speech API STT → alex-voice edge function (AI + TTS) → base64 audio playback
  * 
- * Features:
- * - Web Speech API STT (fr-CA)
- * - Interrupt-safe playback queue
- * - Session management with Supabase
- * - UI action dispatch
- * - Context awareness
- * - Conversation history persistence
- * 
- * Also exports legacy API (isSpeaking, speak, stop) for backward compatibility.
+ * Anti-loop protections:
+ * - turnId lock: only one turn at a time
+ * - echo guard: ignore STT results that match last Alex speech
+ * - post-playback delay: 300ms before re-enabling listening
+ * - STT blocked while speaking
+ * - buffer clear after each turn
  */
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -44,6 +41,18 @@ interface UseAlexVoiceFullOptions {
   hasUploadedImage?: boolean;
 }
 
+// ─── Echo similarity check ───
+function isSimilarToLastSpeech(text: string, lastSpeech: string): boolean {
+  if (!lastSpeech || !text) return false;
+  const a = text.toLowerCase().trim();
+  const b = lastSpeech.toLowerCase().trim();
+  if (a === b) return true;
+  // Check if STT captured a fragment of what Alex said
+  if (b.includes(a) && a.length > 3) return true;
+  if (a.includes(b) && b.length > 3) return true;
+  return false;
+}
+
 // ─── Full voice mode hook ───
 export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
   const { session, isAuthenticated, role } = useAuth();
@@ -63,6 +72,12 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
   const abortRef = useRef<AbortController | null>(null);
   const playbackTokenRef = useRef(0);
 
+  // ─── Anti-loop guards ───
+  const turnIdRef = useRef(0);
+  const turnActiveRef = useRef(false);
+  const lastAlexSpeechRef = useRef("");
+  const postPlaybackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const userName = session?.user?.user_metadata?.full_name?.split(" ")[0]
     || session?.user?.user_metadata?.first_name
     || null;
@@ -73,7 +88,11 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
     if (audioQueueRef.current.length === 0) {
       isPlayingRef.current = false;
       currentAudioRef.current = null;
-      setState(prev => prev === "speaking" ? "idle" : prev);
+      turnActiveRef.current = false;
+      // Post-playback delay before going idle
+      postPlaybackTimerRef.current = setTimeout(() => {
+        setState(prev => prev === "speaking" ? "idle" : prev);
+      }, 300);
       return;
     }
     isPlayingRef.current = true;
@@ -81,7 +100,7 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
     const audio = audioQueueRef.current.shift()!;
     currentAudioRef.current = audio;
     audio.onended = () => {
-      if (playbackTokenRef.current !== token) return; // stale
+      if (playbackTokenRef.current !== token) return;
       currentAudioRef.current = null;
       playNext();
     };
@@ -98,7 +117,11 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
   }, []);
 
   const stopPlayback = useCallback(() => {
-    playbackTokenRef.current++; // invalidate stale chunks
+    playbackTokenRef.current++;
+    if (postPlaybackTimerRef.current) {
+      clearTimeout(postPlaybackTimerRef.current);
+      postPlaybackTimerRef.current = null;
+    }
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
       currentAudioRef.current.src = "";
@@ -107,6 +130,7 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
     audioQueueRef.current.forEach(a => { a.pause(); a.src = ""; });
     audioQueueRef.current = [];
     isPlayingRef.current = false;
+    turnActiveRef.current = false;
     setState(prev => prev === "speaking" ? "idle" : prev);
   }, []);
 
@@ -156,6 +180,7 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
       });
       setSessionId(data.sessionId);
       if (data.greeting) {
+        lastAlexSpeechRef.current = data.greeting;
         setMessages([{ role: "assistant", content: data.greeting, timestamp: Date.now() }]);
       }
       if (data.greetingAudio) {
@@ -171,13 +196,20 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
   // ─── Send User Message ───
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim()) return;
+
+    // Turn lock: prevent concurrent turns
+    if (turnActiveRef.current) return;
+    turnActiveRef.current = true;
+    const currentTurn = ++turnIdRef.current;
+
     stopPlayback();
     setError(null);
     setState("thinking");
     setNextAction(null);
+    setTranscript("");
+
     const userMsg: VoiceMessage = { role: "user", content: text.trim(), timestamp: Date.now() };
     setMessages(prev => [...prev, userMsg]);
-    setTranscript("");
 
     try {
       const conversationHistory = messages.map(m => ({ role: m.role, content: m.content }));
@@ -197,7 +229,11 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
         },
       });
 
+      // Stale turn guard
+      if (turnIdRef.current !== currentTurn) return;
+
       if (data.text) {
+        lastAlexSpeechRef.current = data.text;
         setMessages(prev => [...prev, { role: "assistant", content: data.text, timestamp: Date.now() }]);
       }
       if (data.nextAction) {
@@ -212,10 +248,13 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
       } else if (data.audio) {
         enqueueAudio(data.audio);
       } else {
+        turnActiveRef.current = false;
         setState("idle");
       }
     } catch (e: any) {
-      if (e.name !== "AbortError") { setError(e.message); setState("idle"); }
+      if (e.name !== "AbortError") { setError(e.message); }
+      turnActiveRef.current = false;
+      setState("idle");
     }
   }, [callVoice, sessionId, messages, userName, isAuthenticated, role, stopPlayback, enqueueAudio]);
 
@@ -223,6 +262,10 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
   const startListening = useCallback(() => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) { setError("Reconnaissance vocale non supportée."); return; }
+
+    // Block STT while speaking or processing
+    if (isPlayingRef.current || turnActiveRef.current) return;
+
     stopPlayback();
 
     const recognition = new SR();
@@ -237,8 +280,18 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
         if (e.results[i].isFinal) final += e.results[i][0].transcript;
         else interim += e.results[i][0].transcript;
       }
-      if (final) { setTranscript(final); recognition.stop(); sendMessage(final); }
-      else setTranscript(interim);
+      if (final) {
+        // Echo guard: ignore if STT captured Alex's own speech
+        if (isSimilarToLastSpeech(final, lastAlexSpeechRef.current)) {
+          setTranscript("");
+          return;
+        }
+        setTranscript(final);
+        recognition.stop();
+        sendMessage(final);
+      } else {
+        setTranscript(interim);
+      }
     };
     recognition.onerror = (e: any) => {
       if (e.error !== "aborted" && e.error !== "no-speech") console.error("Speech:", e.error);
@@ -261,6 +314,7 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
     stopPlayback();
     stopListening();
     abortRef.current?.abort();
+    turnActiveRef.current = false;
     setState("idle");
   }, [stopPlayback, stopListening]);
 
@@ -271,15 +325,17 @@ export function useAlexVoiceFull(options?: UseAlexVoiceFullOptions) {
     setTranscript("");
     setError(null);
     setNextAction(null);
+    lastAlexSpeechRef.current = "";
+    turnIdRef.current = 0;
   }, [interrupt]);
 
-  // Persist conversation on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
+      if (postPlaybackTimerRef.current) clearTimeout(postPlaybackTimerRef.current);
       stopPlayback();
       recognitionRef.current?.stop();
       abortRef.current?.abort();
-      // Fire-and-forget persist
       if (sessionId && messages.length > 0) {
         fetch(VOICE_URL, {
           method: "POST",
