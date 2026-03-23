@@ -18965,6 +18965,198 @@ export type Database = {
         }
         Relationships: []
       }
+      roadmap_execution_decisions: {
+        Row: {
+          created_at: string
+          decided_by: string | null
+          decision_reason: string | null
+          decision_type: string
+          id: string
+          module_slug: string
+        }
+        Insert: {
+          created_at?: string
+          decided_by?: string | null
+          decision_reason?: string | null
+          decision_type: string
+          id?: string
+          module_slug: string
+        }
+        Update: {
+          created_at?: string
+          decided_by?: string | null
+          decision_reason?: string | null
+          decision_type?: string
+          id?: string
+          module_slug?: string
+        }
+        Relationships: []
+      }
+      roadmap_execution_queue: {
+        Row: {
+          created_at: string
+          id: string
+          module_slug: string
+          queue_position: number
+          queue_status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          module_slug: string
+          queue_position: number
+          queue_status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          module_slug?: string
+          queue_position?: number
+          queue_status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      roadmap_execution_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          module_slug: string
+          prompt_generated: string | null
+          run_notes: string | null
+          run_status: string
+          run_type: string
+          started_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          module_slug: string
+          prompt_generated?: string | null
+          run_notes?: string | null
+          run_status?: string
+          run_type?: string
+          started_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          module_slug?: string
+          prompt_generated?: string | null
+          run_notes?: string | null
+          run_status?: string
+          run_type?: string
+          started_at?: string | null
+        }
+        Relationships: []
+      }
+      roadmap_implementation_evidence: {
+        Row: {
+          created_at: string
+          evidence_notes: string | null
+          evidence_reference: string | null
+          evidence_type: string
+          id: string
+          module_slug: string
+        }
+        Insert: {
+          created_at?: string
+          evidence_notes?: string | null
+          evidence_reference?: string | null
+          evidence_type: string
+          id?: string
+          module_slug: string
+        }
+        Update: {
+          created_at?: string
+          evidence_notes?: string | null
+          evidence_reference?: string | null
+          evidence_type?: string
+          id?: string
+          module_slug?: string
+        }
+        Relationships: []
+      }
+      roadmap_module_dependencies: {
+        Row: {
+          created_at: string
+          dependency_type: string
+          depends_on_module_slug: string
+          id: string
+          module_slug: string
+        }
+        Insert: {
+          created_at?: string
+          dependency_type?: string
+          depends_on_module_slug: string
+          id?: string
+          module_slug: string
+        }
+        Update: {
+          created_at?: string
+          dependency_type?: string
+          depends_on_module_slug?: string
+          id?: string
+          module_slug?: string
+        }
+        Relationships: []
+      }
+      roadmap_modules: {
+        Row: {
+          approval_required: boolean
+          build_status: string
+          created_at: string
+          dependency_status: string
+          id: string
+          implementation_confidence: string
+          is_required: boolean
+          module_description: string | null
+          module_name: string
+          module_order: number
+          module_slug: string
+          phase_order: number
+          phase_slug: string
+          updated_at: string
+        }
+        Insert: {
+          approval_required?: boolean
+          build_status?: string
+          created_at?: string
+          dependency_status?: string
+          id?: string
+          implementation_confidence?: string
+          is_required?: boolean
+          module_description?: string | null
+          module_name: string
+          module_order: number
+          module_slug: string
+          phase_order: number
+          phase_slug: string
+          updated_at?: string
+        }
+        Update: {
+          approval_required?: boolean
+          build_status?: string
+          created_at?: string
+          dependency_status?: string
+          id?: string
+          implementation_confidence?: string
+          is_required?: boolean
+          module_description?: string | null
+          module_name?: string
+          module_order?: number
+          module_slug?: string
+          phase_order?: number
+          phase_slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sales_microcopy: {
         Row: {
           ab_test_variant: string | null
