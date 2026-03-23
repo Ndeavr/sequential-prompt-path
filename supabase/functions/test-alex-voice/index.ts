@@ -536,7 +536,7 @@ async function testApiIntegration(): Promise<TestResult[]> {
     } else {
       assert(data.sessionId, "Should return sessionId");
       assert(data.greeting, "Should return greeting");
-      assert(data.greeting.includes("Bonjour") || data.greeting.includes("Rebonjour") || data.greeting.includes("Bon après-midi") || data.greeting.includes("Bonsoir"),
+      assert(data.greeting.includes("Bonjour") || data.greeting.includes("Rebonjour") || data.greeting.includes("Bonsoir"),
         `Greeting should start with proper French salutation: '${data.greeting}'`);
       results.push({ name: "api_create_session", passed: true, details: `sessionId=${data.sessionId}, greeting='${data.greeting}'` });
 
