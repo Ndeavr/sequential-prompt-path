@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { ArrowLeft, MessageCircle } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { BookingHeroCard } from "@/components/booking/BookingHeroCard";
 import { TrustStrip } from "@/components/booking/TrustStrip";
@@ -20,6 +21,9 @@ import { BookingConfirmationCard } from "@/components/booking/BookingConfirmatio
 import { SignatureFooter } from "@/components/booking/SignatureFooter";
 import { PaidAppointmentBadge } from "@/components/booking/PaidAppointmentBadge";
 import { PaidValueProposition } from "@/components/booking/PaidValueProposition";
+import { BookingPhotoUpload } from "@/components/booking/BookingPhotoUpload";
+import { AlexBookingBubble } from "@/components/booking/AlexBookingBubble";
+import { BookingStickySummary } from "@/components/booking/BookingStickySummary";
 import {
   computeSmartSlots,
   fetchAppointmentTypes,
@@ -29,7 +33,7 @@ import {
   type AvailabilitySlot,
 } from "@/services/bookingSlotEngine";
 
-type BookingStep = "types" | "date" | "slots" | "info" | "summary" | "confirmed";
+type BookingStep = "types" | "date" | "slots" | "info" | "photos" | "summary" | "confirmed";
 
 interface ContractorInfo {
   id: string;
@@ -44,6 +48,25 @@ interface ContractorInfo {
   slug: string | null;
   phone: string | null;
 }
+
+const stepAnimation = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -8 },
+  transition: { duration: 0.3, ease: "easeOut" as const },
+};
+
+const STEP_LABELS: Record<BookingStep, string> = {
+  types: "Choisir le type",
+  date: "Choisir la date",
+  slots: "Choisir l'heure",
+  info: "Vos informations",
+  photos: "Photos",
+  summary: "Confirmation",
+  confirmed: "Confirmé!",
+};
+
+const PROGRESS_STEPS: BookingStep[] = ["types", "date", "slots", "info", "photos", "summary"];
 
 export default function PublicBookingPage() {
   const { slug, typeSlug } = useParams<{ slug: string; typeSlug?: string }>();
@@ -60,6 +83,7 @@ export default function PublicBookingPage() {
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<File[]>([]);
 
   // Form fields
   const [clientName, setClientName] = useState("");
@@ -68,6 +92,9 @@ export default function PublicBookingPage() {
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [notes, setNotes] = useState("");
+
+  // Signature tier — fallback to true for premium experience
+  const isSignature = true;
 
   // Load contractor + types
   useEffect(() => {
@@ -91,7 +118,6 @@ export default function PublicBookingPage() {
       const a = await fetchAvailability(c.id);
       setAvailability(a);
 
-      // Auto-select if typeSlug provided
       if (typeSlug) {
         const match = t.find((tp) => tp.slug === typeSlug);
         if (match) {
@@ -146,6 +172,15 @@ export default function PublicBookingPage() {
       toast.error("Veuillez entrer un téléphone ou courriel");
       return;
     }
+    // Go to photo step if type requires photos or always show for Signature
+    if (selectedType?.requires_photos || isSignature) {
+      setStep("photos");
+    } else {
+      setStep("summary");
+    }
+  };
+
+  const handlePhotosNext = () => {
     setStep("summary");
   };
 
@@ -182,7 +217,6 @@ export default function PublicBookingPage() {
       if (error) throw error;
 
       if (isPaid) {
-        // Redirect to Stripe checkout
         const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
           "create-booking-checkout",
           {
@@ -205,7 +239,6 @@ export default function PublicBookingPage() {
         return;
       }
 
-      // Free appointment — show confirmation
       setBookingId(data.id);
       setStep("confirmed");
       toast.success("Rendez-vous confirmé!");
@@ -221,18 +254,41 @@ export default function PublicBookingPage() {
     if (step === "date") setStep("types");
     else if (step === "slots") setStep("date");
     else if (step === "info") setStep("slots");
-    else if (step === "summary") setStep("info");
+    else if (step === "photos") setStep("info");
+    else if (step === "summary") {
+      if (selectedType?.requires_photos || isSignature) setStep("photos");
+      else setStep("info");
+    }
   };
 
   const availableDays = availability.filter((a) => a.is_active).map((a) => a.day_of_week);
 
+  // Sticky summary visibility
+  const showSticky = step === "slots" && !!selectedType;
+
+  // Alex context hint per step
+  const alexHints: Partial<Record<BookingStep, string>> = {
+    types: "Vous hésitez entre les types? Je peux vous aider à choisir le bon rendez-vous.",
+    date: "Les dates les plus proches offrent souvent la meilleure disponibilité.",
+    slots: "Les plages recommandées optimisent le déplacement de l'entrepreneur.",
+    info: "Vos informations restent confidentielles et servent uniquement à préparer la visite.",
+  };
+
   if (!contractor) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Chargement...</div>
+        <motion.div
+          animate={{ opacity: [0.4, 1, 0.4] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+          className="text-muted-foreground"
+        >
+          Chargement...
+        </motion.div>
       </div>
     );
   }
+
+  const currentStepIndex = PROGRESS_STEPS.indexOf(step);
 
   return (
     <>
@@ -241,7 +297,7 @@ export default function PublicBookingPage() {
         <meta name="description" content={`Prenez rendez-vous avec ${contractor.business_name}. Réservation intelligente et rapide.`} />
       </Helmet>
 
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pb-20 md:pb-0">
         {/* Header */}
         <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border/40">
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -251,22 +307,22 @@ export default function PublicBookingPage() {
               </Button>
             )}
             <span className="text-meta font-medium text-muted-foreground">
-              {step === "types" && "Choisir le type"}
-              {step === "date" && "Choisir la date"}
-              {step === "slots" && "Choisir l'heure"}
-              {step === "info" && "Vos informations"}
-              {step === "summary" && "Confirmation"}
-              {step === "confirmed" && "Confirmé!"}
+              {STEP_LABELS[step]}
             </span>
 
-            {/* Progress dots */}
+            {/* Progress bar */}
             <div className="ml-auto flex gap-1.5">
-              {["types", "date", "slots", "info", "summary"].map((s, i) => (
-                <div
+              {PROGRESS_STEPS.map((s, i) => (
+                <motion.div
                   key={s}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    step === s ? "bg-primary w-4" : "bg-border"
-                  }`}
+                  className="h-1.5 rounded-full transition-all"
+                  animate={{
+                    width: i === currentStepIndex ? 16 : 8,
+                    backgroundColor: i <= currentStepIndex
+                      ? "hsl(var(--primary))"
+                      : "hsl(var(--border))",
+                  }}
+                  transition={{ duration: 0.3 }}
                 />
               ))}
             </div>
@@ -274,9 +330,13 @@ export default function PublicBookingPage() {
         </div>
 
         <div className="max-w-lg mx-auto px-4 py-6 space-y-5">
-          {/* Hero — always visible except on confirmation */}
+          {/* Hero */}
           {step !== "confirmed" && (
-            <>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: "easeOut" }}
+            >
               <BookingHeroCard
                 companyName={contractor.business_name}
                 specialty={contractor.specialty ?? undefined}
@@ -288,213 +348,235 @@ export default function PublicBookingPage() {
                 isVerified={contractor.admin_verified ?? false}
               />
               <TrustStrip />
-            </>
+            </motion.div>
           )}
 
-          {/* Step: Types */}
-          {step === "types" && (
-            <div className="space-y-3">
-              <SmartRecommendationBanner
-                message="Nous vous proposons d'abord les options les plus pertinentes"
-                subMessage="Les plages affichées tiennent déjà compte du déplacement"
-              />
-
-              {types.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-body text-muted-foreground">
-                    Aucun type de rendez-vous disponible pour le moment.
-                  </p>
-                </div>
-              ) : (
-                types.map((type, i) => (
-                  <AppointmentTypeCard
-                    key={type.id}
-                    type={type}
-                    isSelected={selectedType?.id === type.id}
-                    onSelect={handleSelectType}
-                    recommended={i === 0}
+          <AnimatePresence mode="wait">
+            {/* Step: Types */}
+            {step === "types" && (
+              <motion.div key="types" {...stepAnimation} className="space-y-3">
+                {isSignature && (
+                  <SmartRecommendationBanner
+                    message="Voici les meilleures options pour votre situation"
+                    subMessage="Les plages affichées tiennent compte des disponibilités réelles"
                   />
-                ))
-              )}
-            </div>
-          )}
-
-          {/* Step: Date */}
-          {step === "date" && selectedType && (
-            <div className="space-y-4">
-              {/* Value proposition for paid types */}
-              {!selectedType.is_free && selectedType.price_amount > 0 && (
-                <PaidValueProposition
-                  appointmentTitle={selectedType.title}
-                  priceCents={selectedType.price_amount}
-                  category={selectedType.category}
-                />
-              )}
-
-              <div className="rounded-xl border border-border/60 bg-card p-4">
-                <DateSelector
-                  selectedDate={selectedDate}
-                  onSelect={(d) => setSelectedDate(d)}
-                  availableDays={availableDays.length > 0 ? availableDays : [1, 2, 3, 4, 5]}
-                  horizonDays={30}
-                  minNoticeHours={selectedType.min_notice_hours}
-                />
-              </div>
-
-              {isLoadingSlots && (
-                <div className="text-center py-6">
-                  <div className="animate-pulse text-meta text-muted-foreground">
-                    Calcul des disponibilités...
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Step: Slots */}
-          {step === "slots" && (
-            <div className="space-y-4">
-              {slots.length > 0 && (
-                <SmartRecommendationBanner
-                  message="Plages classées par pertinence"
-                  subMessage="Déplacement, disponibilité et efficacité sont pris en compte"
-                />
-              )}
-
-              <div className="rounded-xl border border-border/60 bg-card p-4">
-                <RankedTimeSlotGrid
-                  slots={slots}
-                  selectedSlot={selectedSlot}
-                  onSelect={handleSelectSlot}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Step: Info */}
-          {step === "info" && (
-            <form onSubmit={handleInfoSubmit} className="space-y-4">
-              <div className="rounded-xl border border-border/60 bg-card p-5 space-y-4">
-                <h3 className="text-body font-semibold text-foreground">Vos informations</h3>
-
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nom complet *</Label>
-                  <Input
-                    id="name"
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    placeholder="Ex: Marie Tremblay"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Téléphone</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={clientPhone}
-                    onChange={(e) => setClientPhone(e.target.value)}
-                    placeholder="514-555-1234"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Courriel</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={clientEmail}
-                    onChange={(e) => setClientEmail(e.target.value)}
-                    placeholder="marie@exemple.com"
-                  />
-                </div>
-
-                {selectedType?.location_mode === "client_address" && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="address">Adresse</Label>
-                      <Input
-                        id="address"
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        placeholder="123 rue Principale"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="city">Ville</Label>
-                      <Input
-                        id="city"
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        placeholder="Montréal"
-                      />
-                    </div>
-                  </>
                 )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes ou détails du projet</Label>
-                  <Textarea
-                    id="notes"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Décrivez brièvement votre situation..."
-                    rows={3}
+                {types.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-body text-muted-foreground">
+                      Aucun type de rendez-vous disponible pour le moment.
+                    </p>
+                  </div>
+                ) : (
+                  types.map((type, i) => (
+                    <motion.div
+                      key={type.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.08, duration: 0.3 }}
+                    >
+                      <AppointmentTypeCard
+                        type={type}
+                        isSelected={selectedType?.id === type.id}
+                        onSelect={handleSelectType}
+                        recommended={i === 0}
+                      />
+                    </motion.div>
+                  ))
+                )}
+              </motion.div>
+            )}
+
+            {/* Step: Date */}
+            {step === "date" && selectedType && (
+              <motion.div key="date" {...stepAnimation} className="space-y-4">
+                {!selectedType.is_free && selectedType.price_amount > 0 && (
+                  <PaidValueProposition
+                    appointmentTitle={selectedType.title}
+                    priceCents={selectedType.price_amount}
+                    category={selectedType.category}
+                  />
+                )}
+
+                <div className="rounded-xl border border-border/60 bg-card p-4">
+                  <DateSelector
+                    selectedDate={selectedDate}
+                    onSelect={(d) => setSelectedDate(d)}
+                    availableDays={availableDays.length > 0 ? availableDays : [1, 2, 3, 4, 5]}
+                    horizonDays={30}
+                    minNoticeHours={selectedType.min_notice_hours}
                   />
                 </div>
-              </div>
 
-              <Button type="submit" className="w-full">
-                Voir le récapitulatif
-              </Button>
-            </form>
-          )}
+                {isLoadingSlots && (
+                  <motion.div
+                    animate={{ opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    className="text-center py-6 text-meta text-muted-foreground"
+                  >
+                    Calcul des disponibilités...
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
 
-          {/* Step: Summary */}
-          {step === "summary" && selectedType && selectedSlot && (
-            <BookingSummaryCard
-              appointmentType={selectedType}
-              selectedSlot={selectedSlot}
-              clientName={clientName}
-              clientPhone={clientPhone || undefined}
-              clientEmail={clientEmail || undefined}
-              address={address || undefined}
-              notes={notes || undefined}
-              onConfirm={handleConfirm}
-              onBack={() => setStep("info")}
-              isSubmitting={isSubmitting}
-            />
-          )}
+            {/* Step: Slots */}
+            {step === "slots" && (
+              <motion.div key="slots" {...stepAnimation} className="space-y-4">
+                {slots.length > 0 && isSignature && (
+                  <SmartRecommendationBanner
+                    message="Plages classées par pertinence"
+                    subMessage="Déplacement, disponibilité et efficacité sont pris en compte"
+                  />
+                )}
 
-          {/* Step: Confirmed */}
-          {step === "confirmed" && selectedType && selectedSlot && bookingId && (
-            <BookingConfirmationCard
-              companyName={contractor.business_name}
-              appointmentTitle={selectedType.title}
-              date={selectedSlot.start.toLocaleDateString("fr-CA", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
-              time={`${selectedSlot.start.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })} – ${selectedSlot.end.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}`}
-              address={address || undefined}
-              phone={contractor.phone ?? undefined}
-              bookingId={bookingId}
-              onDone={() => navigate("/")}
-            />
-          )}
+                <div className="rounded-xl border border-border/60 bg-card p-4">
+                  <RankedTimeSlotGrid
+                    slots={slots}
+                    selectedSlot={selectedSlot}
+                    onSelect={handleSelectSlot}
+                  />
+                </div>
+              </motion.div>
+            )}
 
-          {/* Alex CTA */}
-          {step !== "confirmed" && (
-            <div className="text-center pt-2">
-              <button className="inline-flex items-center gap-2 text-meta text-muted-foreground hover:text-primary transition-colors">
-                <MessageCircle className="w-4 h-4" />
-                Besoin d'aide? Parlez à Alex
-              </button>
-            </div>
-          )}
+            {/* Step: Info */}
+            {step === "info" && (
+              <motion.div key="info" {...stepAnimation}>
+                <form onSubmit={handleInfoSubmit} className="space-y-4">
+                  <div className="rounded-xl border border-border/60 bg-card p-5 space-y-4">
+                    <h3 className="text-body font-semibold text-foreground">
+                      Quelques détails pour préparer votre rendez-vous
+                    </h3>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Nom complet *</Label>
+                      <Input
+                        id="name"
+                        value={clientName}
+                        onChange={(e) => setClientName(e.target.value)}
+                        placeholder="Ex: Marie Tremblay"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Téléphone</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={clientPhone}
+                        onChange={(e) => setClientPhone(e.target.value)}
+                        placeholder="514-555-1234"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Courriel</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={clientEmail}
+                        onChange={(e) => setClientEmail(e.target.value)}
+                        placeholder="marie@exemple.com"
+                      />
+                    </div>
+
+                    {selectedType?.location_mode === "client_address" && (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="address">Adresse</Label>
+                          <Input
+                            id="address"
+                            value={address}
+                            onChange={(e) => setAddress(e.target.value)}
+                            placeholder="123 rue Principale"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="city">Ville</Label>
+                          <Input
+                            id="city"
+                            value={city}
+                            onChange={(e) => setCity(e.target.value)}
+                            placeholder="Montréal"
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <div className="space-y-2">
+                      <Label htmlFor="notes">Décrivez brièvement votre besoin</Label>
+                      <Textarea
+                        id="notes"
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="Décrivez brièvement votre situation..."
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="w-full">
+                    Continuer
+                  </Button>
+                </form>
+              </motion.div>
+            )}
+
+            {/* Step: Photos */}
+            {step === "photos" && (
+              <motion.div key="photos" {...stepAnimation} className="space-y-4">
+                <BookingPhotoUpload
+                  photos={photos}
+                  onPhotosChange={setPhotos}
+                />
+                <Button onClick={handlePhotosNext} className="w-full">
+                  {photos.length > 0 ? "Continuer avec les photos" : "Passer cette étape"}
+                </Button>
+              </motion.div>
+            )}
+
+            {/* Step: Summary */}
+            {step === "summary" && selectedType && selectedSlot && (
+              <motion.div key="summary" {...stepAnimation}>
+                <BookingSummaryCard
+                  appointmentType={selectedType}
+                  selectedSlot={selectedSlot}
+                  clientName={clientName}
+                  clientPhone={clientPhone || undefined}
+                  clientEmail={clientEmail || undefined}
+                  address={address || undefined}
+                  notes={notes || undefined}
+                  onConfirm={handleConfirm}
+                  onBack={() => setStep("info")}
+                  isSubmitting={isSubmitting}
+                />
+              </motion.div>
+            )}
+
+            {/* Step: Confirmed */}
+            {step === "confirmed" && selectedType && selectedSlot && bookingId && (
+              <motion.div key="confirmed" {...stepAnimation}>
+                <BookingConfirmationCard
+                  companyName={contractor.business_name}
+                  appointmentTitle={selectedType.title}
+                  date={selectedSlot.start.toLocaleDateString("fr-CA", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                  time={`${selectedSlot.start.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })} – ${selectedSlot.end.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}`}
+                  address={address || undefined}
+                  phone={contractor.phone ?? undefined}
+                  bookingId={bookingId}
+                  onDone={() => navigate("/")}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Signature Footer */}
@@ -505,6 +587,19 @@ export default function PublicBookingPage() {
           bookingUrl={window.location.href}
           variant={step === "confirmed" ? "confirmation" : "page"}
         />
+
+        {/* Sticky summary (mobile) */}
+        <BookingStickySummary
+          visible={showSticky}
+          appointmentTitle={selectedType?.title}
+          dateLabel={selectedDate?.toLocaleDateString("fr-CA", { day: "numeric", month: "short" })}
+          onContinue={() => selectedSlot && handleSelectSlot(selectedSlot)}
+        />
+
+        {/* Alex bubble (Signature only) */}
+        {isSignature && step !== "confirmed" && (
+          <AlexBookingBubble contextHint={alexHints[step]} />
+        )}
       </div>
     </>
   );
