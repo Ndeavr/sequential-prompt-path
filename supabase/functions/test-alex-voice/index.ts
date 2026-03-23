@@ -643,7 +643,6 @@ function testQAPhrases(): TestResult[] {
   
   const acceptedPhrases = [
     "Bonjour Yann.",
-    "Bon après-midi Yann.",
     "Rebonjour Yann.",
     "Je suis là.",
     "Qu'est-ce qui se passe exactement?",
