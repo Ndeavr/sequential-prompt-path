@@ -445,7 +445,7 @@ function AlexHelpBubble({ isSignature }: { isSignature: boolean }) {
   if (!isSignature) return null;
   return (
     <motion.button animate={{ y: [0, -3, 0] }} transition={{ repeat: Infinity, duration: 3.6, ease: "easeInOut" }}
-      className="fixed bottom-24 right-4 z-40 inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-3 text-sm font-semibold text-background shadow-[0_18px_40px_hsl(var(--foreground)/0.2)] md:bottom-6">
+      className="fixed bottom-20 right-4 z-40 inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-3 text-sm font-semibold text-background shadow-[0_18px_40px_hsl(var(--foreground)/0.2)] lg:bottom-6">
       <MessageCircle className="h-4 w-4" /> Besoin d'aide? Alex vous guide
     </motion.button>
   );
