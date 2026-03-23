@@ -189,7 +189,7 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
             exit={{ scale: 0, opacity: 0 }}
             transition={{ delay: 1.5, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             onClick={() => openAlexVoice("general")}
-            className="fixed bottom-36 right-5 z-50 group"
+            className="fixed bottom-20 right-5 z-50 group lg:bottom-8"
             aria-label="Ouvrir Alex"
           >
             {/* Ambient glow */}
