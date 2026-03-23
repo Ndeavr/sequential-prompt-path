@@ -101,6 +101,7 @@ import AdminProspectImport from "@/pages/admin/AdminProspectImport";
 import AuditLandingPage from "@/pages/AuditLandingPage";
 import ContractorAvailabilityPage from "@/pages/ContractorAvailabilityPage";
 import PublicBookingPage from "@/pages/PublicBookingPage";
+import BookingClientDemoPage from "@/pages/BookingClientDemoPage";
 import BookingSettingsPage from "@/pages/BookingSettingsPage";
 import BookingPaymentSuccess from "@/pages/BookingPaymentSuccess";
 import BookingPaymentCancel from "@/pages/BookingPaymentCancel";
