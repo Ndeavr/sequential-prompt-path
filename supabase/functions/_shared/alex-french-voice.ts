@@ -58,7 +58,7 @@ export function buildAlexGreeting(ctx: GreetingContext): GreetingResult {
 
   // Follow-up varies to avoid robotic repetition
   const followUps = [
-    "Comment puis-je vous aider?",
+    "Comment je peux vous aider?",
     "Qu'est-ce que je peux faire pour vous?",
     "Je vous écoute.",
   ];

@@ -80,7 +80,7 @@ export default function HelpPopup() {
             <div className="space-y-4">
               <div>
                 <p className="text-lg font-semibold text-foreground">
-                  Comment pouvons-nous vous aider?
+                  Comment on peut vous aider?
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Choisissez votre profil ou laissez-nous un message.

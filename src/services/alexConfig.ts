@@ -211,7 +211,7 @@ export function buildAlexGreeting(input: AlexGreetingInput): string {
   }
 
   if (hour < 18) {
-    return spokenName ? `Bon après-midi ${spokenName}.` : "Bon après-midi.";
+    return spokenName ? `Bonjour ${spokenName}.` : "Bonjour.";
   }
 
   return spokenName ? `Bonsoir ${spokenName}.` : "Bonsoir.";
