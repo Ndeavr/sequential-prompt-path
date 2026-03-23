@@ -10,6 +10,7 @@ import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import { CalendarDays, Clock, Tag, ArrowRight, ChevronDown, MapPin } from "lucide-react";
 import { useState, useEffect } from "react";
+import EnrichedFaqAnswer from "@/components/grants/EnrichedFaqAnswer";
 import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import LikeShareButtons from "@/components/shared/LikeShareButtons";
 

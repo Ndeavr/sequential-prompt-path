@@ -52,8 +52,8 @@ const SeoFaqSection = ({ faqs, heading = "Questions fréquentes" }: SeoFaqSectio
             <AccordionTrigger className="text-left text-foreground">
               {faq.question}
             </AccordionTrigger>
-            <AccordionContent className="text-muted-foreground leading-relaxed">
-              {faq.answer}
+            <AccordionContent>
+              <EnrichedFaqAnswer text={faq.answer} />
             </AccordionContent>
           </AccordionItem>
         ))}
