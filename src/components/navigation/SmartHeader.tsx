@@ -155,8 +155,9 @@ const SmartHeader = () => {
                 <AlexNavOrb lang={lang} />
               </div>
 
-              <div className="hidden sm:block">
+              <div className="hidden sm:flex items-center gap-1.5">
                 <LanguageToggle lang={lang} onChange={setLang} />
+                <ThemeToggle />
               </div>
 
               {/* Share QR button — all users */}
