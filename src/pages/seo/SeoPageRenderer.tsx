@@ -22,6 +22,7 @@ import { ArrowRight, ChevronRight, HelpCircle, MapPin, Wrench } from "lucide-rea
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import ContractorLandingCta from "@/components/growth/ContractorLandingCta";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 interface FaqItem {
   question: string;
