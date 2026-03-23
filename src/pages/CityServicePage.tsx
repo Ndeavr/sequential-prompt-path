@@ -82,7 +82,7 @@ export default function CityServicePage() {
           <h2 className="text-xl font-bold text-foreground font-display">Services disponibles</h2>
           <div className="grid gap-3 grid-cols-2 md:grid-cols-5">
             {SERVICE_CATEGORIES.map((s) => (
-              <Link key={s} to={`/trouver-un-entrepreneur`}>
+              <Link key={s} to={`/search`}>
                 <Card className="hover:border-primary/30 hover:shadow-md transition-all group">
                   <CardContent className="p-4 text-center">
                     <Wrench className="h-5 w-5 text-primary mx-auto mb-1" />
@@ -134,7 +134,7 @@ export default function CityServicePage() {
         <RelatedLinksSection links={[
           { to: "/problemes-maison", label: "Problèmes maison" },
           { to: "/blog", label: "Blog" },
-          { to: "/trouver-un-entrepreneur", label: "Trouver un entrepreneur" },
+          { to: "/search", label: "Trouver un entrepreneur" },
           { to: "/villes-desservies", label: "Autres villes" },
         ]} />
       </div>
