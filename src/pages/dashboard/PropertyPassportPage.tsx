@@ -374,10 +374,8 @@ export default function PropertyPassportPage() {
               <Wrench className="w-3 h-3" /> Trouver un entrepreneur
             </Link>
           </Button>
-          <Button asChild variant="outline" size="sm" className="text-xs gap-1">
-            <Link to="/alex">
-              <Sparkles className="w-3 h-3" /> Parler à Alex
-            </Link>
+          <Button variant="outline" size="sm" className="text-xs gap-1" onClick={() => alexVoice.openAlex("general")}>
+            <Sparkles className="w-3 h-3" /> Parler à Alex
           </Button>
           <Button asChild variant="outline" size="sm" className="text-xs gap-1">
             <Link to="/describe-project">

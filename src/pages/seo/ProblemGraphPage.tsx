@@ -261,8 +261,8 @@ export default function ProblemGraphPage() {
               <CardContent className="p-5 text-center space-y-2">
                 <h3 className="text-sm font-bold text-foreground">Parler à Alex</h3>
                 <p className="text-xs text-muted-foreground">Notre concierge IA vous aide à identifier votre problème.</p>
-                <Button asChild size="sm" variant="default">
-                  <Link to="/alex">Démarrer <ArrowRight className="h-3 w-3 ml-1" /></Link>
+                <Button size="sm" variant="default" onClick={() => alexVoice.openAlex("general")}>
+                  Démarrer <ArrowRight className="h-3 w-3 ml-1" />
                 </Button>
               </CardContent>
             </Card>

@@ -222,10 +222,8 @@ const VerificationSeoPage = () => {
             </Card>
 
             <div className="flex justify-center">
-              <Button asChild variant="ghost" size="sm" className="text-xs">
-                <Link to="/alex">
-                  <Sparkles className="w-3.5 h-3.5 mr-1" /> Parler à Alex pour de l'aide
-                </Link>
+              <Button variant="ghost" size="sm" className="text-xs" onClick={() => alexVoice.openAlex("general")}>
+                <Sparkles className="w-3.5 h-3.5 mr-1" /> Parler à Alex pour de l'aide
               </Button>
             </div>
           </section>

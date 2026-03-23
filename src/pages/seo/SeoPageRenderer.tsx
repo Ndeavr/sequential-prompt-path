@@ -175,8 +175,8 @@ export default function SeoPageRenderer() {
             <p className="text-sm text-muted-foreground mb-4">
               Décrivez votre situation et recevez des profils vérifiés en quelques secondes.
             </p>
-            <Button asChild>
-              <Link to="/alex">Parler à Alex <ArrowRight className="h-4 w-4 ml-2" /></Link>
+            <Button onClick={() => alexVoice.openAlex("general")}>
+              Parler à Alex <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </CardContent>
         </Card>

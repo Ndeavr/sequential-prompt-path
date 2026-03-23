@@ -38,12 +38,12 @@ export function AlexBookingBubble({ contextHint }: AlexBookingBubbleProps) {
             <p className="text-caption text-muted-foreground leading-relaxed">
               {contextHint || "Besoin d'aide pour choisir? Je peux vous guider vers la meilleure option pour votre situation."}
             </p>
-            <a
-              href="/alex"
-              className="block text-center text-caption font-medium text-primary hover:underline"
+            <button
+              onClick={() => { setOpen(false); openAlex("general"); }}
+              className="block w-full text-center text-caption font-medium text-primary hover:underline"
             >
               Parler à Alex →
-            </a>
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

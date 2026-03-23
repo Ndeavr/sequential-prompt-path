@@ -470,10 +470,8 @@ export default function PreventiveMaintenancePage() {
                 ))}
               </div>
               <div className="mt-6">
-                <Button asChild variant="soft" size="sm">
-                  <Link to="/alex">
-                    Parler à Alex <ChevronRight className="h-3.5 w-3.5 ml-1" />
-                  </Link>
+                <Button variant="soft" size="sm" onClick={() => alexVoice.openAlex("general")}>
+                  Parler à Alex <ChevronRight className="h-3.5 w-3.5 ml-1" />
                 </Button>
               </div>
             </motion.div>

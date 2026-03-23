@@ -123,12 +123,12 @@ export default function SeoArticlePage() {
         >
           <h3 className="text-lg font-semibold text-foreground">Besoin d'aide avec ce problème?</h3>
           <p className="text-muted-foreground text-sm">Décrivez votre situation à Alex, notre assistant IA, et trouvez un professionnel vérifié.</p>
-          <Link
-            to="/alex"
+          <button
+            onClick={() => alexVoice.openAlex("general")}
             className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-lg font-medium hover:bg-primary/90 transition"
           >
             Parler à Alex <ArrowRight className="h-4 w-4" />
-          </Link>
+          </button>
         </motion.div>
       </article>
     </>

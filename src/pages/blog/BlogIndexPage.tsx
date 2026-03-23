@@ -171,9 +171,9 @@ export default function BlogIndexPage() {
           <h2 className="text-2xl font-bold text-foreground">Besoin d'un entrepreneur maintenant?</h2>
           <p className="text-muted-foreground">UNPRO remplace les soumissions multiples par un rendez-vous garanti avec le bon entrepreneur.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/alex" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition">
+            <button onClick={() => alexVoice.openAlex("general")} className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition">
               Obtenir mon rendez-vous <ArrowRight className="h-4 w-4" />
-            </Link>
+            </button>
             <Link to="/comment-ca-marche" className="inline-flex items-center gap-2 border border-border px-6 py-3 rounded-lg font-medium hover:bg-accent transition text-foreground">
               Comment ça fonctionne
             </Link>

@@ -1174,8 +1174,8 @@ const ContractorProfile = () => {
                       <Button asChild variant="outline" size="sm" className="rounded-xl gap-1.5">
                         <Link to="/search"><Users className="h-3.5 w-3.5" /> Comparer</Link>
                       </Button>
-                      <Button asChild variant="ghost" size="sm" className="rounded-xl gap-1.5">
-                        <Link to="/alex"><MessageSquare className="h-3.5 w-3.5" /> Parler à Alex</Link>
+                      <Button variant="ghost" size="sm" className="rounded-xl gap-1.5" onClick={() => alexVoice.openAlex("general")}>
+                        <MessageSquare className="h-3.5 w-3.5" /> Parler à Alex
                       </Button>
                     </>
                   ) : (
