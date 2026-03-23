@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
+import EnrichedFaqAnswer from "@/components/grants/EnrichedFaqAnswer";
 
 interface FAQItem {
   question: string;
