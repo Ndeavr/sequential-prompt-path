@@ -984,6 +984,44 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          message_type: string | null
+          metadata: Json | null
+          sender: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          message_type?: string | null
+          metadata?: Json | null
+          sender?: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          message_type?: string | null
+          metadata?: Json | null
+          sender?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alex_performance_metrics: {
         Row: {
           created_at: string | null
@@ -12321,6 +12359,59 @@ export type Database = {
           },
         ]
       }
+      homeowner_profiles: {
+        Row: {
+          adn_score: Json | null
+          budget_range: string | null
+          created_at: string
+          home_age_range: string | null
+          id: string
+          ownership_status: string | null
+          profile_id: string
+          project_intent: string | null
+          property_type: string | null
+          timeline: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          adn_score?: Json | null
+          budget_range?: string | null
+          created_at?: string
+          home_age_range?: string | null
+          id?: string
+          ownership_status?: string | null
+          profile_id: string
+          project_intent?: string | null
+          property_type?: string | null
+          timeline?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          adn_score?: Json | null
+          budget_range?: string | null
+          created_at?: string
+          home_age_range?: string | null
+          id?: string
+          ownership_status?: string | null
+          profile_id?: string
+          project_intent?: string | null
+          property_type?: string | null
+          timeline?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homeowner_profiles_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homeowner_questions: {
         Row: {
           cost_note_fr: string | null
@@ -15331,16 +15422,23 @@ export type Database = {
       profiles: {
         Row: {
           account_type: string | null
+          address_line_1: string | null
           affiliate_code: string | null
           avatar_url: string | null
+          city: string | null
+          country: string | null
           created_at: string
           email: string | null
           first_name: string | null
           full_name: string | null
           id: string
           invited_by_user_id: string | null
+          language: string | null
           last_name: string | null
+          onboarding_completed: boolean | null
           phone: string | null
+          postal_code: string | null
+          province: string | null
           referral_code: string | null
           salutation: string | null
           updated_at: string
@@ -15348,16 +15446,23 @@ export type Database = {
         }
         Insert: {
           account_type?: string | null
+          address_line_1?: string | null
           affiliate_code?: string | null
           avatar_url?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           email?: string | null
           first_name?: string | null
           full_name?: string | null
           id?: string
           invited_by_user_id?: string | null
+          language?: string | null
           last_name?: string | null
+          onboarding_completed?: boolean | null
           phone?: string | null
+          postal_code?: string | null
+          province?: string | null
           referral_code?: string | null
           salutation?: string | null
           updated_at?: string
@@ -15365,16 +15470,23 @@ export type Database = {
         }
         Update: {
           account_type?: string | null
+          address_line_1?: string | null
           affiliate_code?: string | null
           avatar_url?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           email?: string | null
           first_name?: string | null
           full_name?: string | null
           id?: string
           invited_by_user_id?: string | null
+          language?: string | null
           last_name?: string | null
+          onboarding_completed?: boolean | null
           phone?: string | null
+          postal_code?: string | null
+          province?: string | null
           referral_code?: string | null
           salutation?: string | null
           updated_at?: string
