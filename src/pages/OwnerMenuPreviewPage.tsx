@@ -74,7 +74,7 @@ export default function OwnerMenuPreviewPage() {
                     <div className="text-sm font-semibold text-foreground">Pas certain ?</div>
                     <p className="text-xs text-muted-foreground">Alex peut vous guider vers le bon service.</p>
                   </div>
-                  <Button variant="outline" size="sm" className="rounded-lg text-xs shrink-0" onClick={() => { const { openAlex } = useAlexVoice(); openAlex("general"); }}>
+                  <Button variant="outline" size="sm" className="rounded-lg text-xs shrink-0" onClick={() => openAlex("general")}>
                     Parler à Alex
                   </Button>
                 </motion.div>

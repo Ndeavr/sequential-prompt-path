@@ -6,6 +6,7 @@
 import { useState, useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import MainLayout from "@/layouts/MainLayout";
 import SeoHead from "@/seo/components/SeoHead";
 import SeoFaqSection from "@/seo/components/SeoFaqSection";
