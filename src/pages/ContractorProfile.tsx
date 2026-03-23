@@ -154,6 +154,7 @@ const buildFallbackFAQ = (name: string, specialty: string | null, city: string |
 
 const ContractorProfile = () => {
   const { id } = useParams<{ id: string }>();
+  const alexVoice = useAlexVoice();
   const isDemo = !!(id && DEMO_CONTRACTORS[id]);
   const { data: profileData, isLoading, isError } = useContractorFullProfile(isDemo ? undefined : id);
   const { data: reviews } = usePublicContractorReviews(isDemo ? undefined : id);

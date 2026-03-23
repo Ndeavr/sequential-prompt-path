@@ -31,6 +31,7 @@ interface FaqItem {
 
 export default function SeoPageRenderer() {
   const { slug } = useParams<{ slug: string }>();
+  const alexVoice = useAlexVoice();
 
   const { data: page, isLoading } = useQuery({
     queryKey: ["seo-page", slug],

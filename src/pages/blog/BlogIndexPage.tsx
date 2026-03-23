@@ -27,6 +27,7 @@ export default function BlogIndexPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const category = searchParams.get("category") || "all";
   useEngagementTracking();
+  const alexVoice = useAlexVoice();
 
   const { data: articles, isLoading } = useQuery({
     queryKey: ["blog-articles", category],

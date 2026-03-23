@@ -5,7 +5,7 @@
  */
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

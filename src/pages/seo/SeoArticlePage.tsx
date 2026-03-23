@@ -16,6 +16,7 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 export default function SeoArticlePage() {
   const { slug } = useParams<{ slug: string }>();
+  const alexVoice = useAlexVoice();
 
   const { data: article, isLoading } = useQuery({
     queryKey: ["seo-article", slug],

@@ -54,6 +54,7 @@ const GlassCard = ({ children, className = "" }: { children: React.ReactNode; cl
 const VerificationSeoPage = () => {
   const { tradeSlug, citySlug } = useParams<{ tradeSlug: string; citySlug: string }>();
   const navigate = useNavigate();
+  const alexVoice = useAlexVoice();
   const [searchQuery, setSearchQuery] = useState("");
 
   const trade = findTrade(tradeSlug ?? "entrepreneur") ?? VERIFICATION_TRADES[0];

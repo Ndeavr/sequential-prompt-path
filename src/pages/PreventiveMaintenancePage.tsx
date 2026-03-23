@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { motion, AnimatePresence } from "framer-motion";
 import MainLayout from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";

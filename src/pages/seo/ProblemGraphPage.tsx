@@ -101,6 +101,7 @@ function ProblemCard({ problem }: { problem: SeoProblem }) {
 export default function ProblemGraphPage() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const alexVoice = useAlexVoice();
 
   const filteredProblems = useMemo(() => {
     let results = SEO_PROBLEMS;
