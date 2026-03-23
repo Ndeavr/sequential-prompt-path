@@ -5,6 +5,7 @@
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import MainLayout from "@/layouts/MainLayout";
 import OwnerIntentHero from "@/components/menu/OwnerIntentHero";
 import SeasonalSuggestionsBar from "@/components/menu/SeasonalSuggestionsBar";
@@ -19,6 +20,7 @@ export default function OwnerMenuPreviewPage() {
   const [intent, setIntent] = useState("");
   const [showUniverse, setShowUniverse] = useState(false);
   const navigate = useNavigate();
+  const { openAlex } = useAlexVoice();
 
   const handleItemClick = (item: MenuItemDef) => {
     // Future: navigate to service page or open drawer
@@ -72,7 +74,7 @@ export default function OwnerMenuPreviewPage() {
                     <div className="text-sm font-semibold text-foreground">Pas certain ?</div>
                     <p className="text-xs text-muted-foreground">Alex peut vous guider vers le bon service.</p>
                   </div>
-                  <Button variant="outline" size="sm" className="rounded-lg text-xs shrink-0" onClick={() => navigate("/alex")}>
+                  <Button variant="outline" size="sm" className="rounded-lg text-xs shrink-0" onClick={() => openAlex("general")}>
                     Parler à Alex
                   </Button>
                 </motion.div>

@@ -1,22 +1,24 @@
 /**
  * UNPRO — Alex Navigation Orb
  * Distinctive AI copilot element in the header.
+ * Opens the global Alex voice overlay instead of navigating.
  */
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, MessageCircle, Camera, Search, Phone } from "lucide-react";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 const alexActions = [
-  { to: "/alex", label: "Parler avec Alex", labelEn: "Talk to Alex", icon: MessageCircle },
-  { to: "/alex?intent=diagnostic", label: "Diagnostiquer un problème", labelEn: "Diagnose a Problem", icon: Search },
-  { to: "/alex?intent=find", label: "Trouver un entrepreneur", labelEn: "Find a Contractor", icon: Phone },
-  { to: "/alex?intent=photo", label: "Analyser une photo", labelEn: "Analyze a Photo", icon: Camera },
+  { feature: "general", label: "Parler avec Alex", labelEn: "Talk to Alex", icon: MessageCircle },
+  { feature: "diagnostic", label: "Diagnostiquer un problème", labelEn: "Diagnose a Problem", icon: Search },
+  { feature: "find", label: "Trouver un entrepreneur", labelEn: "Find a Contractor", icon: Phone },
+  { feature: "photo", label: "Analyser une photo", labelEn: "Analyze a Photo", icon: Camera },
 ];
 
 export default function AlexNavOrb({ lang = "fr" }: { lang?: "fr" | "en" }) {
   const [open, setOpen] = useState(false);
+  const { openAlex } = useAlexVoice();
 
   return (
     <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
@@ -62,15 +64,17 @@ export default function AlexNavOrb({ lang = "fr" }: { lang?: "fr" | "en" }) {
               </p>
             </div>
             {alexActions.map(action => (
-              <Link
-                key={action.to}
-                to={action.to}
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-meta text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+              <button
+                key={action.feature}
+                onClick={() => {
+                  setOpen(false);
+                  openAlex(action.feature);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-meta text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
               >
                 <action.icon className="h-3.5 w-3.5" />
                 {lang === "en" && action.labelEn ? action.labelEn : action.label}
-              </Link>
+              </button>
             ))}
           </motion.div>
         )}

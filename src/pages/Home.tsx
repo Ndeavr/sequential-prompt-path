@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { trackEvent } from "@/services/eventTrackingService";
 import { useAuth } from "@/hooks/useAuth";
 import { Helmet } from "react-helmet-async";
@@ -38,6 +39,7 @@ const sectionFade = {
 const Home = () => {
   const { isAuthenticated, role } = useAuth();
   const navigate = useNavigate();
+  const { openAlex } = useAlexVoice();
   const alexSectionRef = useRef<HTMLElement>(null);
   const dash = role === "contractor" ? "/pro" : role === "admin" ? "/admin" : "/dashboard";
 
@@ -496,7 +498,7 @@ const Home = () => {
                 <p className="text-meta mt-1 leading-relaxed text-muted-foreground">Besoin d'aide pour décrire votre projet? Alex est là pour vous guider.</p>
               </div>
               <button
-                onClick={() => navigate("/alex")}
+                onClick={() => openAlex("general")}
                 className="shrink-0 h-11 rounded-xl px-5 flex items-center gap-2 text-meta font-bold bg-card border-2 border-primary/25 text-primary hover:border-primary/40 transition-all active:scale-[0.97]"
               >
                 <MessageCircle className="h-4 w-4" /> Parler avec Alex

@@ -6,6 +6,7 @@
 import { useState, useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import MainLayout from "@/layouts/MainLayout";
 import SeoHead from "@/seo/components/SeoHead";
 import SeoFaqSection from "@/seo/components/SeoFaqSection";
@@ -109,6 +110,7 @@ const RISKS = [
 /* ─── Page ─── */
 export default function VerifyLandingPage() {
   const navigate = useNavigate();
+  const { openAlex } = useAlexVoice();
   const [heroInput, setHeroInput] = useState("");
 
   const handleVerify = () => {
@@ -366,7 +368,7 @@ export default function VerifyLandingPage() {
                 <Button size="lg" variant="outline" className="gap-2 font-semibold h-12 px-6" onClick={() => navigate("/analyser-document")}>
                   <Upload className="w-4 h-4" /> Analyser une soumission
                 </Button>
-                <Button size="lg" variant="ghost" className="gap-2 font-semibold h-12 px-6 text-primary" onClick={() => navigate("/alex")}>
+                <Button size="lg" variant="ghost" className="gap-2 font-semibold h-12 px-6 text-primary" onClick={() => openAlex("general")}>
                   <MessageSquare className="w-4 h-4" /> Parler à Alex
                 </Button>
               </motion.div>

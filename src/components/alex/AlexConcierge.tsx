@@ -4,6 +4,7 @@
  * Context-aware suggestions based on current route.
  */
 import { useState, useRef, useEffect, useMemo } from "react";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { useLocation, Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
@@ -131,6 +132,7 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
   const isHomePage = useLocation().pathname === "/";
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated } = useAuth();
+  const { openAlex: openAlexVoice } = useAlexVoice();
   const { pathname } = useLocation();
   const { messages, isStreaming, sendMessage, reset } = useAlex();
   const [input, setInput] = useState("");
@@ -186,7 +188,7 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             transition={{ delay: 1.5, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            onClick={() => setIsOpen(true)}
+            onClick={() => openAlexVoice("general")}
             className="fixed bottom-36 right-5 z-50 group"
             aria-label="Ouvrir Alex"
           >
