@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/accordion";
 import type { SeoFaq } from "../data/faqs";
 import { useEffect } from "react";
+import EnrichedFaqAnswer from "@/components/grants/EnrichedFaqAnswer";
 
 interface SeoFaqSectionProps {
   faqs: SeoFaq[];
