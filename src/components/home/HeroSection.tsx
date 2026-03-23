@@ -177,13 +177,7 @@ export default function HeroSection() {
 
             </div>
 
-            {/* Robot — positioned above card, always visible */}
-            <motion.img src={unproRobot} alt="Alex UNPRO"
-              className="absolute z-30 w-[72px] right-4 md:hidden drop-shadow-[0_6px_20px_hsl(222_100%_61%_/_0.25)]"
-              style={{ top: "calc(75vw - 80px)" }}
-              animate={{ y: [0, -6, 0], rotate: [0, 2, -2, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            />
+            {/* Robot removed — now handled by FloatingAlexRobot in Home.tsx */}
 
             {/* Left column — text overlays on top of image */}
             <div className="relative z-20 min-w-0">
