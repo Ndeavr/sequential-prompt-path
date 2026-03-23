@@ -1,32 +1,46 @@
 
 
-## Fix: QR codes visibility on mobile
+# Fix Blog Articles: Empty Content, Missing Images, Broken FAQs
 
-### Problem
-From the screenshot, the QR code in QRShareSheet's QRView is overflowing to the right on mobile (384px viewport). The QR image is partially clipped and the "Want to see..." label is cut off.
+## Problems Found
 
-### Root Causes
-1. **QRCodeCard** uses a fixed `visualSize` of `Math.min(size, 220)` = 200px, plus `p-3` padding on the wrapper = ~224px total. This is fine width-wise but the parent dialog may not be constraining properly.
-2. **QRShareSheet DialogContent** uses `w-[calc(100vw-1rem)]` which is correct, but the QR view content doesn't properly center/constrain within it.
-3. The header area in QRView has the icon + italic text that can push content wide.
+1. **FAQ items show empty** — Data uses `{q, a}` keys but `FaqItem` component reads `{question, answer}`. That's why the accordion shows but with no text.
+2. **25 of 55 published articles have no body content** (`content_html` is null/empty).
+3. **All 55 articles have no featured image** (`featured_image_url` is null).
 
-### Fixes
+## Plan
 
-**1. QRCodeCard.tsx**
-- Make the QR size responsive: use `min(size, calc(100% available))` approach
-- Remove hard `Math.min(size, 220)` cap — instead use a responsive max based on container
-- Ensure the wrapper uses `max-w-full` and `overflow-hidden`
+### Step 1 — Fix FAQ key mismatch in BlogArticlePage
+Update the `FaqItem` mapping to handle both `{q, a}` and `{question, answer}` formats. One-line fix in the component:
+```tsx
+<FaqItem question={faq.question || faq.q} answer={faq.answer || faq.a} />
+```
 
-**2. QRShareSheet.tsx — QRView**
-- Add `overflow-hidden` to the main container
-- Ensure the header gradient section constrains text with proper truncation
-- Center the QR code properly with `w-full` and `items-center`
-- Add `max-w-full` constraints to prevent any horizontal overflow
+### Step 2 — Fix FAQ data in database
+Run a migration to normalize all `faq_json` entries from `{q, a}` to `{question, answer}` format across `blog_articles` so all consumers work consistently.
 
-**3. QRShareSheet.tsx — DialogContent**
-- Ensure `overflow-x-hidden` on the dialog to prevent horizontal scroll
+### Step 3 — Generate missing article content
+Create and run an edge function (`blog-content-generator`) that:
+- Queries articles where `content_html` is null/empty
+- Uses Gemini to generate SEO-optimized French content (800-1200 words) based on the article's `title`, `category`, `city`
+- Saves the generated HTML back to `content_html`
+- Processes in batches of 5 to avoid timeouts
 
-### Changes
-- `src/components/sharing/QRCodeCard.tsx`: Make size responsive, add `max-w-full overflow-hidden` on wrapper
-- `src/components/sharing/QRShareSheet.tsx`: Add overflow constraints to QRView, fix header text truncation
+### Step 4 — Generate featured images
+Create an edge function (`blog-image-generator`) that:
+- Queries articles missing `featured_image_url`
+- Uses the AI image generation model to create contextual hero images
+- Uploads to Supabase Storage and updates the article record
+- Processes in batches
+
+### Step 5 — Register as automation agents
+Add `blog-content-generator` and `blog-image-generator` to `automation_agents` with scheduled runs so new articles automatically get content and images.
+
+## Technical Details
+
+- FAQ fix: both component-side (graceful fallback) and data-side (normalize keys)
+- Content generation: edge function using `google/gemini-2.5-flash` via Lovable AI gateway
+- Image generation: edge function using `google/gemini-2.5-flash-image` model
+- Storage: images saved to `blog-images` bucket in Supabase Storage
+- All agents registered with `next_run_at` for autonomous operation
 
