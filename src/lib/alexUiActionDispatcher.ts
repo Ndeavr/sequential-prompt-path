@@ -166,6 +166,15 @@ export function dispatchAlexAction(action: AlexUIAction, deps: DispatcherDeps) {
       }
       break;
 
+    // ── Trust / Prediction ──
+    case "show_trust":
+      deps.navigate(action.target || "/dashboard/trust");
+      break;
+
+    case "show_prediction":
+      deps.navigate(action.target || "/dashboard/predictions");
+      break;
+
     default:
       console.warn("[AlexDispatcher] Unknown action type:", action.type);
   }
