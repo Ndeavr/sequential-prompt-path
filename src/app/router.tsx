@@ -133,6 +133,13 @@ import CondoReserveFundPage from "@/pages/condos/CondoReserveFundPage";
 import CondoQuotesPage from "@/pages/condos/CondoQuotesPage";
 import CondoReportsPage from "@/pages/condos/CondoReportsPage";
 import CondoBillingPage from "@/pages/condos/CondoBillingPage";
+import CondoRequestsPage from "@/pages/condos/CondoRequestsPage";
+import CondoVotingPage from "@/pages/condos/CondoVotingPage";
+import CondoFinancialsPage from "@/pages/condos/CondoFinancialsPage";
+import CondoUnitsPage from "@/pages/condos/CondoUnitsPage";
+import CondoIncidentsPage from "@/pages/condos/CondoIncidentsPage";
+import CondoContractorsPage from "@/pages/condos/CondoContractorsPage";
+import CondoCalendarPage from "@/pages/condos/CondoCalendarPage";
 
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
