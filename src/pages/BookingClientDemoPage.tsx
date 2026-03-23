@@ -379,35 +379,65 @@ function BookingSummaryStickyCard({ profile, appointmentType, selectedDay, selec
   onSubmit: () => void;
   isSignature: boolean;
 }) {
+  const summaryParts = [
+    appointmentType?.title,
+    selectedDay ? `${selectedDay.dayLabel} ${selectedDay.dateLabel}` : null,
+    selectedSlot?.timeLabel,
+  ].filter(Boolean);
+
   return (
-    <motion.aside initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
-      className="sticky bottom-4 self-start rounded-[28px] border border-border bg-card p-4 shadow-[0_20px_60px_hsl(var(--foreground)/0.08)] md:top-6 md:bottom-auto md:p-5">
-      <div className="space-y-4">
-        <div>
-          <p className="text-sm font-medium uppercase tracking-[0.14em] text-muted-foreground">Résumé</p>
-          <p className="mt-1 text-xl font-semibold tracking-tight text-foreground">Votre réservation</p>
-        </div>
-        {isSignature && (
-          <div className="rounded-2xl border border-primary/15 bg-primary/5 p-3 text-sm text-primary">
-            Les meilleures options sont mises en avant pour simplifier votre choix.
+    <>
+      {/* Desktop sidebar */}
+      <motion.aside initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+        className="hidden lg:block sticky top-6 self-start rounded-[28px] border border-border bg-card p-5 shadow-[0_20px_60px_hsl(var(--foreground)/0.08)]">
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm font-medium uppercase tracking-[0.14em] text-muted-foreground">Résumé</p>
+            <p className="mt-1 text-xl font-semibold tracking-tight text-foreground">Votre réservation</p>
           </div>
-        )}
-        <div className="space-y-3 text-sm">
-          <SummaryRow icon={Building2} label="Entreprise" value={profile.companyName} />
-          <SummaryRow icon={Clock3} label="Rendez-vous" value={appointmentType?.title || "À sélectionner"} />
-          <SummaryRow icon={CalendarDays} label="Date" value={selectedDay ? `${selectedDay.dayLabel} ${selectedDay.dateLabel}` : "À sélectionner"} />
-          <SummaryRow icon={Zap} label="Heure" value={selectedSlot?.timeLabel || "À sélectionner"} />
-          <SummaryRow icon={MapPin} label="Adresse" value={address || "À compléter"} />
+          {isSignature && (
+            <div className="rounded-2xl border border-primary/15 bg-primary/5 p-3 text-sm text-primary">
+              Les meilleures options sont mises en avant pour simplifier votre choix.
+            </div>
+          )}
+          <div className="space-y-3 text-sm">
+            <SummaryRow icon={Building2} label="Entreprise" value={profile.companyName} />
+            <SummaryRow icon={Clock3} label="Rendez-vous" value={appointmentType?.title || "À sélectionner"} />
+            <SummaryRow icon={CalendarDays} label="Date" value={selectedDay ? `${selectedDay.dayLabel} ${selectedDay.dateLabel}` : "À sélectionner"} />
+            <SummaryRow icon={Zap} label="Heure" value={selectedSlot?.timeLabel || "À sélectionner"} />
+            <SummaryRow icon={MapPin} label="Adresse" value={address || "À compléter"} />
+          </div>
+          <button onClick={onSubmit} disabled={!canSubmit}
+            className={cn(
+              "w-full rounded-2xl px-4 py-3.5 text-sm font-semibold transition",
+              canSubmit ? "bg-foreground text-background shadow-lg hover:opacity-90" : "cursor-not-allowed bg-muted text-muted-foreground"
+            )}>
+            Confirmer mon rendez-vous
+          </button>
         </div>
-        <button onClick={onSubmit} disabled={!canSubmit}
-          className={cn(
-            "w-full rounded-2xl px-4 py-3.5 text-sm font-semibold transition",
-            canSubmit ? "bg-foreground text-background shadow-lg hover:opacity-90" : "cursor-not-allowed bg-muted text-muted-foreground"
-          )}>
-          Confirmer mon rendez-vous
-        </button>
+      </motion.aside>
+
+      {/* Mobile sticky bottom bar */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur-xl p-3 shadow-[0_-8px_30px_hsl(var(--foreground)/0.08)] lg:hidden">
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-1">
+            {summaryParts.length > 0 ? (
+              <p className="truncate text-sm font-medium text-foreground">{summaryParts.join(" · ")}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground">Complétez votre réservation</p>
+            )}
+            <p className="text-xs text-muted-foreground">{profile.companyName}</p>
+          </div>
+          <button onClick={onSubmit} disabled={!canSubmit}
+            className={cn(
+              "shrink-0 rounded-2xl px-5 py-3 text-sm font-semibold transition",
+              canSubmit ? "bg-foreground text-background shadow-lg hover:opacity-90" : "cursor-not-allowed bg-muted text-muted-foreground"
+            )}>
+            Confirmer
+          </button>
+        </div>
       </div>
-    </motion.aside>
+    </>
   );
 }
 
