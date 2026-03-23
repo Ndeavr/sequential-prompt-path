@@ -249,7 +249,7 @@ export class AlexContentGenerator {
       },
       {
         id: 'checklist',
-        heading: 'Quoi vérifier avant d'engager un professionnel',
+        heading: "Quoi vérifier avant d'engager un professionnel",
         body: `• Licence RBQ valide\n• Assurance responsabilité\n• Références locales vérifiables\n• Soumission détaillée et écrite\n• Garantie sur les travaux\n• Score AIPP sur UNPRO`,
         type: 'checklist',
       },
