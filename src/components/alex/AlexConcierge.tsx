@@ -132,6 +132,7 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
   const isHomePage = useLocation().pathname === "/";
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated } = useAuth();
+  const { openAlex: openAlexVoice } = useAlexVoice();
   const { pathname } = useLocation();
   const { messages, isStreaming, sendMessage, reset } = useAlex();
   const [input, setInput] = useState("");
