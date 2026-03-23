@@ -555,12 +555,12 @@ export default function BookingClientDemoPage() {
       <Helmet><title>Réserver — {contractorPublicProfile.companyName} | UNPRO</title></Helmet>
       <AlexHelpBubble isSignature={isSignature} />
 
-      <div className="mx-auto max-w-7xl px-4 py-5 md:px-6 md:py-8">
-        {/* Plan Mode Switcher */}
+      <div className="mx-auto max-w-7xl px-4 py-5 pb-24 md:px-6 md:py-8 lg:pb-8">
+        {/* Plan Mode Switcher — entrepreneur preview only */}
         <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-3 shadow-sm">
           <div>
-            <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Mode aperçu</p>
-            <p className="text-sm font-semibold text-foreground">Comparez Premium et Signature</p>
+            <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Aperçu entrepreneur</p>
+            <p className="text-sm font-semibold text-foreground">Voir le rendu client</p>
           </div>
           <div className="inline-flex rounded-2xl border border-border bg-muted p-1">
             {([{ id: "premium" as const, label: "Premium" }, { id: "signature" as const, label: "Signature" }]).map((mode) => (
