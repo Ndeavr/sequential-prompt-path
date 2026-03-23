@@ -106,6 +106,9 @@ const AdminProspects = () => {
         <Link to="/admin/prospects/import">
           <Button variant="outline" size="sm"><Upload className="h-3.5 w-3.5 mr-1.5" />Importer CSV</Button>
         </Link>
+        <Link to="/admin/prospects/campaigns">
+          <Button variant="outline" size="sm"><Mail className="h-3.5 w-3.5 mr-1.5" />Campagnes email</Button>
+        </Link>
       </div>
 
       {/* Filters */}

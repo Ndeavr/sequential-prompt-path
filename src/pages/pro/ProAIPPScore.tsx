@@ -11,6 +11,7 @@ import {
   CheckCircle, XCircle, AlertTriangle, ArrowRight,
   ShieldCheck, Eye, TrendingUp, Briefcase,
 } from "lucide-react";
+import AIPPScoreEvolution from "@/components/pro/AIPPScoreEvolution";
 
 const gradeColor = (grade: string) => {
   switch (grade) {
@@ -146,6 +147,9 @@ const ProAIPPScore = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Score Evolution */}
+        <AIPPScoreEvolution />
 
         <Separator />
 
