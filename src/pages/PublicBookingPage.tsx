@@ -47,7 +47,6 @@ interface ContractorInfo {
   admin_verified: boolean | null;
   slug: string | null;
   phone: string | null;
-  plan_code?: string | null;
 }
 
 const stepAnimation = {
