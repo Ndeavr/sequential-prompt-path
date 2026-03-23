@@ -16,7 +16,8 @@ import HeroSection from "@/components/home/HeroSection";
 import VerificationFeatureCard from "@/components/home/VerificationFeatureCard";
 import MainLayout from "@/layouts/MainLayout";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import FloatingAlexRobot from "@/components/home/FloatingAlexRobot";
 import unproRobot from "@/assets/unpro-robot.png";
 import avatarsGroup from "@/assets/avatars-group.jpg";
 
