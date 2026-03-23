@@ -101,6 +101,7 @@ import AdminProspectImport from "@/pages/admin/AdminProspectImport";
 import AuditLandingPage from "@/pages/AuditLandingPage";
 import ContractorAvailabilityPage from "@/pages/ContractorAvailabilityPage";
 import PublicBookingPage from "@/pages/PublicBookingPage";
+import BookingClientDemoPage from "@/pages/BookingClientDemoPage";
 import BookingSettingsPage from "@/pages/BookingSettingsPage";
 import BookingPaymentSuccess from "@/pages/BookingPaymentSuccess";
 import BookingPaymentCancel from "@/pages/BookingPaymentCancel";
@@ -269,6 +270,7 @@ export const AppRouter = () => (
       <Route path="/book/:slug" element={<PublicBookingPage />} />
       <Route path="/book/:slug/:typeSlug" element={<PublicBookingPage />} />
       <Route path="/book/success" element={<BookingPaymentSuccess />} />
+      <Route path="/book/demo" element={<BookingClientDemoPage />} />
       <Route path="/book/cancel" element={<BookingPaymentCancel />} />
       <Route path="/partners" element={<PartnersPage />} />
       <Route path="/describe-project" element={<DescribeProjectPage />} />
