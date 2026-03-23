@@ -1,7 +1,7 @@
 /**
  * UNPRO — Alex Voice Mode
  * Real-time voice interaction with STT + TTS.
- * Breathing orb, live transcript, voice/text toggle.
+ * Alex ENGAGES the conversation first with a greeting, then auto-listens.
  */
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,7 +17,7 @@ interface AlexVoiceProps {
   onDismiss: () => void;
   /** Render inline (inside a card) instead of fixed floating */
   inline?: boolean;
-  /** Auto-start listening on mount */
+  /** Auto-start listening on mount (legacy, greeting now handles this) */
   autoStart?: boolean;
 }
 
@@ -35,28 +35,73 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
   const [messages, setMessages] = useState<Message[]>([]);
   const [textInput, setTextInput] = useState("");
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [greetingDone, setGreetingDone] = useState(false);
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const greetingAttempted = useRef(false);
 
-  // Create session on mount
+  // Create session on mount — greeting is handled in a separate effect
   useEffect(() => {
     (async () => {
       try {
         const { data } = await supabase.functions.invoke("alex-voice", {
           body: { action: "create-session", feature },
         });
-        if (data?.sessionId) setSessionId(data.sessionId);
-      } catch { /* ignore */ }
+        if (data?.sessionId) {
+          setSessionId(data.sessionId);
+
+          // Play greeting audio + display greeting text immediately
+          if (data.greeting) {
+            setMessages([{ role: "assistant", content: data.greeting }]);
+          }
+          if (data.greetingAudio) {
+            playGreetingAudio(data.greetingAudio);
+          } else {
+            // No audio — just mark greeting done and start listening
+            setGreetingDone(true);
+          }
+        }
+      } catch {
+        // Fallback greeting if backend fails
+        setMessages([{ role: "assistant", content: "Bonjour! Comment puis-je vous aider?" }]);
+        setGreetingDone(true);
+      }
     })();
   }, [feature]);
 
-  // Auto-start listening if requested
+  // Auto-start listening after greeting finishes
   useEffect(() => {
-    if (autoStart && sessionId) {
-      const timer = setTimeout(() => startListening(), 400);
+    if (greetingDone && sessionId && mode === "voice") {
+      const timer = setTimeout(() => startListening(), 300);
       return () => clearTimeout(timer);
     }
-  }, [autoStart, sessionId]);
+  }, [greetingDone, sessionId, mode]);
+
+  // Play greeting audio, then trigger listening
+  const playGreetingAudio = useCallback((base64Audio: string) => {
+    try {
+      setIsSpeaking(true);
+      const audioUrl = `data:audio/mpeg;base64,${base64Audio}`;
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      audio.onended = () => {
+        setIsSpeaking(false);
+        setGreetingDone(true);
+      };
+      audio.onerror = () => {
+        setIsSpeaking(false);
+        setGreetingDone(true);
+      };
+      audio.play().catch(() => {
+        // Autoplay blocked — mark done so user can manually interact
+        setIsSpeaking(false);
+        setGreetingDone(true);
+      });
+    } catch {
+      setIsSpeaking(false);
+      setGreetingDone(true);
+    }
+  }, []);
 
   // Speech recognition setup
   const startListening = useCallback(() => {
@@ -106,6 +151,33 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
     setIsListening(false);
   }, []);
 
+  // Play response audio chunks sequentially
+  const playAudioChunks = useCallback((chunks: string[], onDone: () => void) => {
+    let index = 0;
+    const playNext = () => {
+      if (index >= chunks.length) {
+        onDone();
+        return;
+      }
+      const audioUrl = `data:audio/mpeg;base64,${chunks[index]}`;
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      audio.onended = () => {
+        index++;
+        playNext();
+      };
+      audio.onerror = () => {
+        index++;
+        playNext();
+      };
+      audio.play().catch(() => {
+        index++;
+        playNext();
+      });
+    };
+    playNext();
+  }, []);
+
   // Send message to Alex and get voice response
   const handleUserMessage = useCallback(async (text: string) => {
     setIsProcessing(true);
@@ -150,15 +222,23 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
         setMessages(prev => [...prev, { role: "assistant", content: data.text }]);
       }
 
-      // Play audio if available
-      if (data.audioAvailable && data.audio && mode === "voice") {
+      // Play audio chunks if available
+      if (data.audioAvailable && data.audioChunks?.length && mode === "voice") {
+        setIsSpeaking(true);
+        playAudioChunks(data.audioChunks, () => {
+          setIsSpeaking(false);
+          if (mode === "voice") {
+            setTimeout(() => startListening(), 300);
+          }
+        });
+      } else if (data.audioAvailable && data.audio && mode === "voice") {
+        // Legacy single audio field
         setIsSpeaking(true);
         const audioUrl = `data:audio/mpeg;base64,${data.audio}`;
         const audio = new Audio(audioUrl);
         audioRef.current = audio;
         audio.onended = () => {
           setIsSpeaking(false);
-          // Auto-restart listening after Alex speaks
           if (mode === "voice") {
             setTimeout(() => startListening(), 300);
           }
@@ -171,7 +251,7 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
     } finally {
       setIsProcessing(false);
     }
-  }, [messages, sessionId, feature, mode, startListening]);
+  }, [messages, sessionId, feature, mode, startListening, playAudioChunks]);
 
   const handleTextSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -203,7 +283,7 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
             <div>
               <p className="text-[11px] font-semibold text-primary">Alex Voice</p>
               <p className="text-[9px] text-muted-foreground">
-                {isListening ? "Écoute..." : isSpeaking ? "Parle..." : isProcessing ? "Réfléchit..." : "Prêt"}
+                {isSpeaking ? "Alex parle..." : isListening ? "Écoute..." : isProcessing ? "Réfléchit..." : greetingDone ? "À vous" : "Connexion..."}
               </p>
             </div>
           </div>
@@ -222,10 +302,10 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
 
         {/* Messages */}
         <div className="max-h-48 overflow-y-auto p-3 space-y-2">
-          {messages.length === 0 && (
-            <p className="text-xs text-muted-foreground text-center py-4">
-              {mode === "voice" ? "Appuie sur le micro pour parler" : "Écris ton message"}
-            </p>
+          {messages.length === 0 && !greetingDone && (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-5 w-5 animate-spin text-primary/60" />
+            </div>
           )}
           {messages.map((msg, i) => (
             <motion.div
@@ -277,6 +357,8 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
               >
                 {isProcessing ? (
                   <Loader2 className="h-6 w-6 animate-spin" />
+                ) : isSpeaking ? (
+                  <Volume2 className="h-6 w-6" />
                 ) : isListening ? (
                   <MicOff className="h-6 w-6" />
                 ) : (
