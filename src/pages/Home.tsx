@@ -38,6 +38,7 @@ const sectionFade = {
 const Home = () => {
   const { isAuthenticated, role } = useAuth();
   const navigate = useNavigate();
+  const alexSectionRef = useRef<HTMLElement>(null);
   const dash = role === "contractor" ? "/pro" : role === "admin" ? "/admin" : "/dashboard";
 
   const handleCta = (destination: string, label?: string) => {
