@@ -3,10 +3,24 @@
  * Perplexity / Command Search style with suggestions.
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, ArrowRight, Home, Wrench, Users, Globe, HelpCircle, FileText, Sparkles } from "lucide-react";
+
+const DAILY_EMOJIS = [
+  "🏠", "🔧", "🏗️", "🌿", "⚡", "🪠", "🧱", "🎨",
+  "🏡", "🔨", "🪟", "❄️", "🔥", "🪵", "🛠️", "🏢",
+  "🌡️", "💡", "🪜", "🧹", "🏘️", "🪴", "🚿", "🪨",
+  "🏕️", "🌇", "🏙️", "🌄", "🏔️", "🌅", "🌃",
+];
+
+function getDailyEmoji() {
+  const dayOfYear = Math.floor(
+    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
+  );
+  return DAILY_EMOJIS[dayOfYear % DAILY_EMOJIS.length];
+}
 
 interface SearchSuggestion {
   type: "problem" | "service" | "professional" | "city" | "faq" | "tool";
