@@ -9,6 +9,7 @@ import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import { CalendarDays, Clock, ArrowRight, Tag } from "lucide-react";
 import { useEngagementTracking } from "@/hooks/useEngagementTracking";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 const CATEGORIES = [
   { key: "all", label: "Tous" },
