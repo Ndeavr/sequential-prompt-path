@@ -19,6 +19,7 @@ import {
 import { SEO_PROBLEMS, type SeoProblem, getAllContractorTypes } from "@/seo/data/problems";
 import { SEO_CITIES } from "@/seo/data/cities";
 import { motion } from "framer-motion";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 // ─── Category groups for visual clustering ───
 const PROBLEM_CATEGORIES: { key: string; labelFr: string; icon: React.ElementType; types: string[] }[] = [
