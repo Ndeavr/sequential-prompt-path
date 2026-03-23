@@ -6,6 +6,9 @@ import Unsubscribe from "@/pages/Unsubscribe";
 import CommentCaMarchePage from "@/pages/CommentCaMarchePage";
 import StartPage from "@/pages/StartPage";
 import ScrollRestoration from "@/components/ScrollRestoration";
+import AuthCallbackPage from "@/pages/AuthCallbackPage";
+import OnboardingPageUnpro from "@/pages/OnboardingPageUnpro";
+import LoginPageUnpro from "@/pages/LoginPageUnpro";
 
 // Public
 import Home from "@/pages/Home";
@@ -262,8 +265,10 @@ export const AppRouter = () => (
       <Route path="/" element={<Home />} />
       <Route path="/search" element={<Search />} />
       <Route path="/contractors/:id" element={<ContractorProfile />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
+      <Route path="/login" element={<LoginPageUnpro />} />
+      <Route path="/auth/callback" element={<AuthCallbackPage />} />
+      <Route path="/signup" element={<LoginPageUnpro />} />
+      <Route path="/onboarding" element={<OnboardingPageUnpro />} />
       <Route path="/start" element={<StartPage />} />
       <Route path="/homeowners" element={<HomeownersPage />} />
       <Route path="/proprietaires" element={<HomeownersPage />} />
