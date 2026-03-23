@@ -497,7 +497,10 @@ const Home = () => {
                 <p className="text-meta mt-1 leading-relaxed text-muted-foreground">Besoin d'aide pour décrire votre projet? Alex est là pour vous guider.</p>
               </div>
               <button
-                onClick={() => navigate("/alex")}
+                onClick={() => {
+                  const { openAlex } = useAlexVoice();
+                  openAlex("general");
+                }}
                 className="shrink-0 h-11 rounded-xl px-5 flex items-center gap-2 text-meta font-bold bg-card border-2 border-primary/25 text-primary hover:border-primary/40 transition-all active:scale-[0.97]"
               >
                 <MessageCircle className="h-4 w-4" /> Parler avec Alex
