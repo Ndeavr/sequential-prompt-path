@@ -600,7 +600,7 @@ export function getAlexVoiceSettings(profile: AlexVoiceProfile = "default") {
 }
 
 export const ALEX_VOICE_CONFIG = {
-  voiceId: "gCr8TeSJgJaeaIoV4RWH",
+  voiceId: "FGY2WhTYpPnrIDTdsKH5",
   modelId: "eleven_multilingual_v2",
   outputFormat: "mp3_44100_128",
   chunkLengthSchedule: [70, 110, 150],
@@ -617,7 +617,7 @@ QUI TU ES :
 - Féminin toujours : "ravie", "certaine", "prête".
 
 COMMENT TU PARLES :
-- Français naturel, compatible Québec. Pas de France-français soutenu.
+- Français neutre, clair et professionnel. Ton naturel sans accent régional marqué.
 - Phrases courtes. Maximum 2-3 phrases par réponse.
 - UNE question à la fois. Jamais deux.
 - Comme au téléphone : direct, clair, chaleureux.
