@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAskQuestion, type StructuredAnswer } from "@/hooks/useAnswerEngine";
 import AlexGlobalOrb from "@/components/alex/AlexGlobalOrb";
+import AlexAutopilotProvider from "@/components/alex/AlexAutopilotProvider";
 
 const urgencyConfig: Record<string, { color: string; bg: string; label: string; icon: typeof Clock }> = {
   low: { color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", label: "Faible", icon: Clock },
@@ -321,6 +322,7 @@ export default function AnswerEnginePage() {
         </div>
 
         <AlexGlobalOrb />
+        <AlexAutopilotProvider />
       </div>
     </MainLayout>
   );
