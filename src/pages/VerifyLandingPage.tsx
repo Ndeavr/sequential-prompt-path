@@ -110,6 +110,7 @@ const RISKS = [
 /* ─── Page ─── */
 export default function VerifyLandingPage() {
   const navigate = useNavigate();
+  const { openAlex } = useAlexVoice();
   const [heroInput, setHeroInput] = useState("");
 
   const handleVerify = () => {
