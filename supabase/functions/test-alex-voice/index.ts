@@ -78,10 +78,10 @@ function testGreetingBuilder(): TestResult[] {
     results.push({ name: "greeting_morning_with_name", passed: false, error: e.message });
   }
 
-  // Afternoon greeting
+   // Afternoon greeting — Quebec French uses "Bonjour" all day
   try {
     const g = buildAlexGreeting({ firstName: "Yann", localHour: 14 });
-    assert(g.displayGreeting.startsWith("Bon après-midi Yann."), `Expected afternoon greeting, got '${g.displayGreeting}'`);
+    assert(g.displayGreeting.startsWith("Bonjour Yann."), `Expected 'Bonjour Yann.' for afternoon (QC French), got '${g.displayGreeting}'`);
     results.push({ name: "greeting_afternoon", passed: true });
   } catch (e) {
     results.push({ name: "greeting_afternoon", passed: false, error: e.message });
