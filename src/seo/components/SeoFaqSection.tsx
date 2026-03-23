@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/accordion";
 import type { SeoFaq } from "../data/faqs";
 import { useEffect } from "react";
+import EnrichedFaqAnswer from "@/components/grants/EnrichedFaqAnswer";
 
 interface SeoFaqSectionProps {
   faqs: SeoFaq[];
@@ -51,8 +52,8 @@ const SeoFaqSection = ({ faqs, heading = "Questions fréquentes" }: SeoFaqSectio
             <AccordionTrigger className="text-left text-foreground">
               {faq.question}
             </AccordionTrigger>
-            <AccordionContent className="text-muted-foreground leading-relaxed">
-              {faq.answer}
+            <AccordionContent>
+              <EnrichedFaqAnswer text={faq.answer} />
             </AccordionContent>
           </AccordionItem>
         ))}

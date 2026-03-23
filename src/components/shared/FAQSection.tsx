@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
+import EnrichedFaqAnswer from "@/components/grants/EnrichedFaqAnswer";
 
 interface FAQItem {
   question: string;
@@ -37,7 +38,7 @@ export default function FAQSection({ title = "Questions fréquentes", items }: F
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden"
                 >
-                  <p className="px-4 pb-4 text-sm text-muted-foreground leading-relaxed">{item.answer}</p>
+                  <div className="px-4 pb-4"><EnrichedFaqAnswer text={item.answer} /></div>
                 </motion.div>
               )}
             </AnimatePresence>

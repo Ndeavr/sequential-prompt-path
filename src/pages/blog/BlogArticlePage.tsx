@@ -10,6 +10,7 @@ import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import { CalendarDays, Clock, Tag, ArrowRight, ChevronDown, MapPin } from "lucide-react";
 import { useState, useEffect } from "react";
+import EnrichedFaqAnswer from "@/components/grants/EnrichedFaqAnswer";
 import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import LikeShareButtons from "@/components/shared/LikeShareButtons";
 
@@ -244,7 +245,7 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
         <span className="font-medium text-foreground text-sm">{question}</span>
         <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
-      {open && <div className="px-4 pb-4 text-sm text-muted-foreground">{answer}</div>}
+      {open && <div className="px-4 pb-4"><EnrichedFaqAnswer text={answer} /></div>}
     </div>
   );
 }
