@@ -13,6 +13,7 @@ import { Menu, X, Bell, ChevronDown, QrCode } from "lucide-react";
 import ProfileMenu from "./ProfileMenu";
 import AlexNavOrb from "./AlexNavOrb";
 import HeaderSearch from "./HeaderSearch";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import MegaMenuPanel from "./MegaMenu";
 import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
 import SmartCTA from "@/components/cta/SmartCTA";
