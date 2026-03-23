@@ -133,6 +133,13 @@ import CondoReserveFundPage from "@/pages/condos/CondoReserveFundPage";
 import CondoQuotesPage from "@/pages/condos/CondoQuotesPage";
 import CondoReportsPage from "@/pages/condos/CondoReportsPage";
 import CondoBillingPage from "@/pages/condos/CondoBillingPage";
+import CondoRequestsPage from "@/pages/condos/CondoRequestsPage";
+import CondoVotingPage from "@/pages/condos/CondoVotingPage";
+import CondoFinancialsPage from "@/pages/condos/CondoFinancialsPage";
+import CondoUnitsPage from "@/pages/condos/CondoUnitsPage";
+import CondoIncidentsPage from "@/pages/condos/CondoIncidentsPage";
+import CondoContractorsPage from "@/pages/condos/CondoContractorsPage";
+import CondoCalendarPage from "@/pages/condos/CondoCalendarPage";
 
 // Homeowner Dashboard
 import DashboardHome from "@/pages/dashboard/DashboardHome";
@@ -539,13 +546,20 @@ export const AppRouter = () => (
       <Route path="/condos/tarifs" element={<CondoTarifsPage />} />
       <Route path="/condos/onboarding" element={<ProtectedRoute requiredRole="homeowner"><CondoOnboardingPage /></ProtectedRoute>} />
 
-      {/* Condos — Authenticated Dashboard */}
+      {/* Condos — Authenticated Dashboard (multi-role) */}
       <Route path="/condos/dashboard" element={<ProtectedRoute requiredRole="homeowner"><CondoDashboardPage /></ProtectedRoute>} />
       <Route path="/condos/building" element={<ProtectedRoute requiredRole="homeowner"><CondoBuildingPage /></ProtectedRoute>} />
+      <Route path="/condos/units" element={<ProtectedRoute requiredRole="homeowner"><CondoUnitsPage /></ProtectedRoute>} />
       <Route path="/condos/components" element={<ProtectedRoute requiredRole="homeowner"><CondoComponentsPage /></ProtectedRoute>} />
       <Route path="/condos/maintenance" element={<ProtectedRoute requiredRole="homeowner"><CondoMaintenancePage /></ProtectedRoute>} />
+      <Route path="/condos/requests" element={<ProtectedRoute requiredRole="homeowner"><CondoRequestsPage /></ProtectedRoute>} />
+      <Route path="/condos/incidents" element={<ProtectedRoute requiredRole="homeowner"><CondoIncidentsPage /></ProtectedRoute>} />
+      <Route path="/condos/contractors" element={<ProtectedRoute requiredRole="homeowner"><CondoContractorsPage /></ProtectedRoute>} />
       <Route path="/condos/documents" element={<ProtectedRoute requiredRole="homeowner"><CondoDocumentsPage /></ProtectedRoute>} />
+      <Route path="/condos/financials" element={<ProtectedRoute requiredRole="homeowner"><CondoFinancialsPage /></ProtectedRoute>} />
       <Route path="/condos/reserve-fund" element={<ProtectedRoute requiredRole="homeowner"><CondoReserveFundPage /></ProtectedRoute>} />
+      <Route path="/condos/voting" element={<ProtectedRoute requiredRole="homeowner"><CondoVotingPage /></ProtectedRoute>} />
+      <Route path="/condos/calendar" element={<ProtectedRoute requiredRole="homeowner"><CondoCalendarPage /></ProtectedRoute>} />
       <Route path="/condos/quotes" element={<ProtectedRoute requiredRole="homeowner"><CondoQuotesPage /></ProtectedRoute>} />
       <Route path="/condos/reports" element={<ProtectedRoute requiredRole="homeowner"><CondoReportsPage /></ProtectedRoute>} />
       <Route path="/condos/billing" element={<ProtectedRoute requiredRole="homeowner"><CondoBillingPage /></ProtectedRoute>} />
