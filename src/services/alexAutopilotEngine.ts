@@ -109,6 +109,7 @@ export function selectMode(
   frictionSignals: FrictionSignal[],
   emotionalHints: string[]
 ): AutopilotMode {
+  // SAFETY: Only escalate to urgent on genuine emergency signals
   const hasUrgency = emotionalHints.some(h =>
     ["urgent", "emergency", "leak", "damage", "flood", "fire"].includes(h)
   );
@@ -116,9 +117,12 @@ export function selectMode(
 
   const frictionWeight = frictionSignals.reduce((s, f) => s + f.weight, 0);
 
-  if (momentum === "ready_to_convert") return "assertive";
-  if (momentum === "active" && frictionWeight > 1.0) return "guiding";
-  if (momentum === "active") return "assertive";
+  // SAFETY: Never be assertive too early.
+  // Assertive only when momentum is at peak AND friction is low (clear intent).
+  // High friction = user is hesitant → guide, don't push.
+  if (momentum === "ready_to_convert" && frictionWeight <= 1.0) return "assertive";
+  if (momentum === "ready_to_convert" && frictionWeight > 1.0) return "guiding";
+  if (momentum === "active") return "guiding";
   if (momentum === "warming") return "guiding";
   return "passive";
 }
