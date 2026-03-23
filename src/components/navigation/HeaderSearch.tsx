@@ -104,13 +104,17 @@ export default function HeaderSearch({ lang, variant = "desktop", onClose }: Hea
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setFocused(true)}
             placeholder={lang === "en" ? "Describe your problem or project…" : "Décrivez votre problème ou votre projet…"}
-            className="w-full h-9 pl-10 pr-4 bg-transparent text-meta text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+            className="w-full h-9 pl-10 pr-10 bg-transparent text-meta text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
             aria-label={lang === "en" ? "Search" : "Rechercher"}
           />
-          {query && (
+          {query ? (
             <button type="submit" className="absolute right-2 h-6 w-6 flex items-center justify-center rounded-full bg-primary text-primary-foreground">
               <ArrowRight className="h-3 w-3" />
             </button>
+          ) : (
+            <span className="absolute right-2.5 text-base select-none" aria-hidden="true">
+              {getDailyEmoji()}
+            </span>
           )}
         </div>
       </form>
