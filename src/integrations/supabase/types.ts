@@ -13643,6 +13643,233 @@ export type Database = {
         }
         Relationships: []
       }
+      menu_items: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          icon_name: string | null
+          id: string
+          is_active: boolean | null
+          is_popular: boolean | null
+          is_seasonal: boolean | null
+          item_type: string | null
+          name: string
+          section_id: string
+          slug: string
+          sort_order: number | null
+          updated_at: string | null
+          visibility_state: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_popular?: boolean | null
+          is_seasonal?: boolean | null
+          item_type?: string | null
+          name: string
+          section_id: string
+          slug: string
+          sort_order?: number | null
+          updated_at?: string | null
+          visibility_state?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_popular?: boolean | null
+          is_seasonal?: boolean | null
+          item_type?: string | null
+          name?: string
+          section_id?: string
+          slug?: string
+          sort_order?: number | null
+          updated_at?: string | null
+          visibility_state?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_items_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "menu_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_profiles: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          icon_name: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      menu_seasonal_rules: {
+        Row: {
+          active_months: number[] | null
+          created_at: string | null
+          id: string
+          item_id: string
+          off_season_behavior: string | null
+          priority_weight: number | null
+          region_slug: string | null
+          upcoming_months: number[] | null
+        }
+        Insert: {
+          active_months?: number[] | null
+          created_at?: string | null
+          id?: string
+          item_id: string
+          off_season_behavior?: string | null
+          priority_weight?: number | null
+          region_slug?: string | null
+          upcoming_months?: number[] | null
+        }
+        Update: {
+          active_months?: number[] | null
+          created_at?: string | null
+          id?: string
+          item_id?: string
+          off_season_behavior?: string | null
+          priority_weight?: number | null
+          region_slug?: string | null
+          upcoming_months?: number[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_seasonal_rules_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_sections: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          icon_name: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          profile_slug: string
+          slug: string
+          sort_order: number | null
+          updated_at: string | null
+          visibility_state: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          profile_slug: string
+          slug: string
+          sort_order?: number | null
+          updated_at?: string | null
+          visibility_state?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          profile_slug?: string
+          slug?: string
+          sort_order?: number | null
+          updated_at?: string | null
+          visibility_state?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_sections_profile_slug_fkey"
+            columns: ["profile_slug"]
+            isOneToOne: false
+            referencedRelation: "menu_profiles"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      menu_visibility_rules: {
+        Row: {
+          created_at: string | null
+          enable_progressive_reveal: boolean | null
+          id: string
+          max_visible_items_per_section: number | null
+          max_visible_sections: number | null
+          profile_slug: string
+          show_popular_now: boolean | null
+          show_upcoming_soon: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          enable_progressive_reveal?: boolean | null
+          id?: string
+          max_visible_items_per_section?: number | null
+          max_visible_sections?: number | null
+          profile_slug: string
+          show_popular_now?: boolean | null
+          show_upcoming_soon?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          enable_progressive_reveal?: boolean | null
+          id?: string
+          max_visible_items_per_section?: number | null
+          max_visible_sections?: number | null
+          profile_slug?: string
+          show_popular_now?: boolean | null
+          show_upcoming_soon?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_visibility_rules_profile_slug_fkey"
+            columns: ["profile_slug"]
+            isOneToOne: false
+            referencedRelation: "menu_profiles"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       message_frequency_rules: {
         Row: {
           category: string
