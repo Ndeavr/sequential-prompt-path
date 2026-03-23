@@ -368,7 +368,7 @@ export default function VerifyLandingPage() {
                 <Button size="lg" variant="outline" className="gap-2 font-semibold h-12 px-6" onClick={() => navigate("/analyser-document")}>
                   <Upload className="w-4 h-4" /> Analyser une soumission
                 </Button>
-                <Button size="lg" variant="ghost" className="gap-2 font-semibold h-12 px-6 text-primary" onClick={() => navigate("/alex")}>
+                <Button size="lg" variant="ghost" className="gap-2 font-semibold h-12 px-6 text-primary" onClick={() => openAlex("general")}>
                   <MessageSquare className="w-4 h-4" /> Parler à Alex
                 </Button>
               </motion.div>
