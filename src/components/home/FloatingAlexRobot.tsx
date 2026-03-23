@@ -1,7 +1,7 @@
 /**
  * FloatingAlexRobot — The robot floats on the right side of the screen,
  * following scroll, until it reaches the Alex AI section where it docks.
- * Mobile only (hidden on md+).
+ * Mobile only (hidden on md+). Stays solid — no blinking.
  */
 import { useState } from "react";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
@@ -18,9 +18,10 @@ export default function FloatingAlexRobot({ alexSectionRef }: FloatingAlexRobotP
   useMotionValueEvent(scrollY, "change", () => {
     if (!alexSectionRef.current) return;
     const rect = alexSectionRef.current.getBoundingClientRect();
-    // Dock when the Alex section robot image is roughly in view
-    setDocked(rect.top < window.innerHeight * 0.65);
+    setDocked(rect.top < window.innerHeight * 0.6);
   });
+
+  if (docked) return null;
 
   return (
     <motion.img
@@ -28,16 +29,16 @@ export default function FloatingAlexRobot({ alexSectionRef }: FloatingAlexRobotP
       alt="Alex UNPRO"
       className="fixed z-40 w-[72px] right-4 md:hidden drop-shadow-[0_6px_20px_hsl(222_100%_61%_/_0.25)] pointer-events-none"
       style={{ top: "42vh" }}
-      animate={
-        docked
-          ? { opacity: 0, scale: 0.5, y: 60 }
-          : { opacity: 1, scale: 1, y: [0, -6, 0], rotate: [0, 2, -2, 0] }
-      }
-      transition={
-        docked
-          ? { duration: 0.4, ease: "easeInOut" }
-          : { duration: 4, repeat: Infinity, ease: "easeInOut" }
-      }
+      initial={{ opacity: 1 }}
+      animate={{
+        y: [0, -6, 0],
+        rotate: [0, 1.5, -1.5, 0],
+      }}
+      transition={{
+        duration: 4,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
     />
   );
 }
