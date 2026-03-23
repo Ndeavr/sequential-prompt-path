@@ -16,7 +16,7 @@ import HeaderSearch from "./HeaderSearch";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import MegaMenuPanel from "./MegaMenu";
 import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
-import SmartCTA from "@/components/cta/SmartCTA";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import QRShareSheet from "@/components/sharing/QRShareSheet";
 import unproLogo from "@/assets/unpro-logo.png";
 import type { UserRole } from "@/types/navigation";
