@@ -27,6 +27,8 @@ import AIPPScorePage from "@/pages/AIPPScorePage";
 import MatchingResultsPage from "@/pages/MatchingResultsPage";
 import ContractorComparisonPage from "@/pages/ContractorComparisonPage";
 import DecisionAssistantPage from "@/pages/DecisionAssistantPage";
+import SmartRecommendationPage from "@/pages/SmartRecommendationPage";
+import DNAProfilePage from "@/pages/DNAProfilePage";
 
 // SEO Pages
 import ServiceLocationPage from "@/pages/seo/ServiceLocationPage";
