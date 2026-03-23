@@ -1,5 +1,8 @@
 project_id = "clmaqdnphbndvmmqvpff"
 
+[functions.scheduler-runner]
+verify_jwt = false
+
 [functions.validation-orchestrator]
 verify_jwt = false
 
