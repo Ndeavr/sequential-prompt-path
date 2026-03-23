@@ -13,6 +13,7 @@ interface AlexBookingBubbleProps {
 
 export function AlexBookingBubble({ contextHint }: AlexBookingBubbleProps) {
   const [open, setOpen] = useState(false);
+  const { openAlex } = useAlexVoice();
 
   return (
     <div className="fixed bottom-6 right-4 z-50 md:hidden">
