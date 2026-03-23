@@ -600,7 +600,7 @@ export function getAlexVoiceSettings(profile: AlexVoiceProfile = "default") {
 }
 
 export const ALEX_VOICE_CONFIG = {
-  voiceId: "gCr8TeSJgJaeaIoV4RWH",
+  voiceId: "FGY2WhTYpPnrIDTdsKH5",
   modelId: "eleven_multilingual_v2",
   outputFormat: "mp3_44100_128",
   chunkLengthSchedule: [70, 110, 150],
