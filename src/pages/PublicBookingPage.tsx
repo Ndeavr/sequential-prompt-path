@@ -94,8 +94,8 @@ export default function PublicBookingPage() {
   const [city, setCity] = useState("");
   const [notes, setNotes] = useState("");
 
-  // Signature tier detection
-  const isSignature = contractor?.plan_code === "signature";
+  // Signature tier — fallback to true for premium experience
+  const isSignature = true;
 
   // Load contractor + types
   useEffect(() => {
