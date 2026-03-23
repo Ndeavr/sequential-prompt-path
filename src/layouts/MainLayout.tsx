@@ -4,8 +4,6 @@
 
 import type { ReactNode } from "react";
 import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
-import { useTheme } from "next-themes";
 import SmartHeader from "@/components/navigation/SmartHeader";
 import SmartFooter from "@/components/navigation/SmartFooter";
 import FooterSEOGrid from "@/components/navigation/FooterSEOGrid";
@@ -20,13 +18,9 @@ interface MainLayoutProps {
 
 const MainLayout = ({ children }: MainLayoutProps) => {
   const { pathname } = useLocation();
-  const { theme, setTheme } = useTheme();
   const { lang } = useLanguage();
 
-  // Force light mode on public pages
-  useEffect(() => {
-    if (theme !== "light") setTheme("light");
-  }, [theme, setTheme]);
+  // Theme is now user-controlled via ThemeToggle
 
   const showAlex = pathname !== "/alex";
 
