@@ -153,7 +153,7 @@ const VerificationFeatureCard = () => {
                 </div>
 
                 {/* Right — animated demo */}
-                <div className="rounded-xl bg-muted/30 border border-border/40 p-3.5">
+                <div className="rounded-xl bg-muted/30 border border-border/40 p-3.5 min-h-[160px]">
                   <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
                     Vérification en cours
                   </p>
