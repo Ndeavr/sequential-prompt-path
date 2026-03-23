@@ -6,6 +6,9 @@ import Unsubscribe from "@/pages/Unsubscribe";
 import CommentCaMarchePage from "@/pages/CommentCaMarchePage";
 import StartPage from "@/pages/StartPage";
 import ScrollRestoration from "@/components/ScrollRestoration";
+import AuthCallbackPage from "@/pages/AuthCallbackPage";
+import OnboardingPageUnpro from "@/pages/OnboardingPageUnpro";
+import LoginPageUnpro from "@/pages/LoginPageUnpro";
 
 // Public
 import Home from "@/pages/Home";
