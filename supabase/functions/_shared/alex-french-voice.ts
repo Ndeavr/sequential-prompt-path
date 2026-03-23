@@ -52,14 +52,13 @@ export function buildAlexGreeting(ctx: GreetingContext): GreetingResult {
   function greet(name: string | null): string {
     const suffix = name ? ` ${name}` : "";
     if (returning) return `Rebonjour${suffix}.`;
-    if (hour >= 5 && hour < 12) return `Bonjour${suffix}.`;
-    if (hour >= 12 && hour < 18) return `Bon après-midi${suffix}.`;
+    if (hour >= 5 && hour < 18) return `Bonjour${suffix}.`;
     return `Bonsoir${suffix}.`;
   }
 
   // Follow-up varies to avoid robotic repetition
   const followUps = [
-    "Comment puis-je vous aider?",
+    "Comment je peux vous aider?",
     "Qu'est-ce que je peux faire pour vous?",
     "Je vous écoute.",
   ];

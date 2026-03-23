@@ -78,10 +78,10 @@ function testGreetingBuilder(): TestResult[] {
     results.push({ name: "greeting_morning_with_name", passed: false, error: e.message });
   }
 
-  // Afternoon greeting
+   // Afternoon greeting — Quebec French uses "Bonjour" all day
   try {
     const g = buildAlexGreeting({ firstName: "Yann", localHour: 14 });
-    assert(g.displayGreeting.startsWith("Bon après-midi Yann."), `Expected afternoon greeting, got '${g.displayGreeting}'`);
+    assert(g.displayGreeting.startsWith("Bonjour Yann."), `Expected 'Bonjour Yann.' for afternoon (QC French), got '${g.displayGreeting}'`);
     results.push({ name: "greeting_afternoon", passed: true });
   } catch (e) {
     results.push({ name: "greeting_afternoon", passed: false, error: e.message });
@@ -133,10 +133,10 @@ function testGreetingBuilder(): TestResult[] {
     results.push({ name: "greeting_legacy_userName", passed: false, error: e.message });
   }
 
-  // Edge: hour exactly 12
+  // Edge: hour exactly 12 — Quebec French uses "Bonjour" until 18h
   try {
     const g = buildAlexGreeting({ firstName: "Test", localHour: 12 });
-    assert(g.displayGreeting.startsWith("Bon après-midi"), `Hour 12 should be afternoon`);
+    assert(g.displayGreeting.startsWith("Bonjour"), `Hour 12 should be Bonjour (QC French)`);
     results.push({ name: "greeting_hour_boundary_12", passed: true });
   } catch (e) {
     results.push({ name: "greeting_hour_boundary_12", passed: false, error: e.message });
@@ -536,7 +536,7 @@ async function testApiIntegration(): Promise<TestResult[]> {
     } else {
       assert(data.sessionId, "Should return sessionId");
       assert(data.greeting, "Should return greeting");
-      assert(data.greeting.includes("Bonjour") || data.greeting.includes("Rebonjour") || data.greeting.includes("Bon après-midi") || data.greeting.includes("Bonsoir"),
+      assert(data.greeting.includes("Bonjour") || data.greeting.includes("Rebonjour") || data.greeting.includes("Bonsoir"),
         `Greeting should start with proper French salutation: '${data.greeting}'`);
       results.push({ name: "api_create_session", passed: true, details: `sessionId=${data.sessionId}, greeting='${data.greeting}'` });
 
@@ -643,7 +643,6 @@ function testQAPhrases(): TestResult[] {
   
   const acceptedPhrases = [
     "Bonjour Yann.",
-    "Bon après-midi Yann.",
     "Rebonjour Yann.",
     "Je suis là.",
     "Qu'est-ce qui se passe exactement?",

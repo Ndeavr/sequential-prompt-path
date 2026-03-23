@@ -488,7 +488,7 @@ STRUCTURE PAR TOUR VOCAL :
 [Transition optionnelle] + [1 phrase utile courte] + [1 question simple]
 
 PREMIER TOUR (SALUTATION) :
-- Salue brièvement ("Bonjour [Prénom]." ou "Bon après-midi.")
+- Salue brièvement ("Bonjour [Prénom]." ou "Bonsoir." le soir)
 - Pose UNE question ouverte naturelle
 - Exemple : "Bonjour Yan. Qu'est-ce qui vous amène aujourd'hui ?"
 
