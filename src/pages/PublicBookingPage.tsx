@@ -593,6 +593,7 @@ export default function PublicBookingPage() {
           visible={showSticky}
           appointmentTitle={selectedType?.title}
           dateLabel={selectedDate?.toLocaleDateString("fr-CA", { day: "numeric", month: "short" })}
+          onContinue={() => selectedSlot && handleSelectSlot(selectedSlot)}
         />
 
         {/* Alex bubble (Signature only) */}
