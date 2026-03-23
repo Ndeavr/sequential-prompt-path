@@ -360,9 +360,9 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
               </div>
 
               {/* Alex */}
-              <Link to="/alex" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-meta mb-4">
+              <button onClick={() => { onClose(); alexVoice.openAlex("general"); }} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-meta mb-4 w-full text-left">
                 ✨ {lang === "en" ? "Talk to Alex" : "Parler à Alex"}
-              </Link>
+              </button>
             </>
           ) : (
             /* ── GUEST: Discovery-focused ── */
