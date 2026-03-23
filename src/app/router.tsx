@@ -55,6 +55,7 @@ import AdminSeoGenerator from "@/pages/admin/AdminSeoGenerator";
 import PropertyGraphPage from "@/pages/PropertyGraphPage";
 import AlexChat from "@/pages/AlexChat";
 import AlexVoicePage from "@/pages/AlexVoicePage";
+import AlexCommandCenterPage from "@/pages/AlexCommandCenterPage";
 import DesignPage from "@/pages/DesignPage";
 import DesignSharePage from "@/pages/DesignSharePage";
 import FlywheelPage from "@/pages/FlywheelPage";
