@@ -1,44 +1,36 @@
 
 
-# Enrichir les FAQ avec liens programmes, CTA admissibilité et détails
+# Alex doit engager la conversation en premier — partout
 
 ## Problème
-Les FAQ (blog articles et pages SEO) mentionnent des programmes gouvernementaux (Rénoclimat, LogisVert, Canada Greener Homes) en texte brut. Aucun lien vers le programme, aucun CTA "Vérifier mon admissibilité", aucun détail.
+Quand l'utilisateur ouvre Alex (menu, orb, bouton), Alex attend passivement que l'utilisateur parle ou écrive. Alex ne dit rien. L'utilisateur voit juste un micro et doit deviner quoi faire.
 
 ## Solution
+Alex doit envoyer un message de bienvenue automatiquement dès l'ouverture, puis démarrer l'écoute après avoir parlé.
 
-### 1. Créer un service de détection et enrichissement de programmes
-**Fichier:** `src/services/grantLinkingService.ts`
+### Step 1 — Ajouter un greeting automatique dans AlexVoiceMode
+Quand le composant monte et que le `sessionId` est prêt, envoyer automatiquement un message système d'introduction à l'endpoint `alex-voice` avec `action: "greet"` (ou réutiliser `action: "respond"` avec un message d'amorce interne). Alex génère sa salutation contextuelle (heure, page, rôle) et la joue en audio. Après la lecture audio, le micro s'active automatiquement.
 
-- Dictionnaire des programmes connus avec: nom, URL officielle, route UNPRO (`/dashboard/properties/:id/grants`), description courte
-- Fonction `enrichTextWithGrantLinks(text: string): EnrichedSegment[]` qui détecte les noms de programmes dans du texte et retourne des segments (texte brut + liens)
-- Programmes: Rénoclimat, LogisVert, Canada Greener Homes, Chauffez vert, Novoclimat, SCHL
+Concrètement dans `AlexVoiceMode.tsx`:
+- Nouveau `useEffect` qui se déclenche quand `sessionId` est prêt
+- Appelle `handleGreeting()` qui envoie une requête `action: "greet"` au backend
+- Le backend retourne texte + audio de salutation
+- Le texte s'affiche comme message assistant
+- L'audio se joue
+- Après `audio.onended`, `startListening()` se déclenche
 
-### 2. Créer un composant `GrantMentionCard`
-**Fichier:** `src/components/grants/GrantMentionCard.tsx`
+### Step 2 — Mettre à jour GlobalAlexOverlay
+Passer `autoStart={false}` explicitement — le greeting gère maintenant le démarrage. L'utilisateur n'a plus besoin d'appuyer sur le micro.
 
-- Card compacte affichée quand un programme est mentionné dans une FAQ
-- Contenu: nom du programme, description 1 ligne, lien officiel externe, CTA "Vérifier mon admissibilité" (vers `/dashboard/properties` ou login si non connecté)
-- Style premium, cohérent avec le design existant
+### Step 3 — Mettre à jour l'inline Home
+Même logique: quand Alex s'ouvre inline sur la Home, le greeting se joue immédiatement.
 
-### 3. Créer un composant `EnrichedFaqAnswer`
-**Fichier:** `src/components/grants/EnrichedFaqAnswer.tsx`
-
-- Remplace le texte brut des réponses FAQ
-- Détecte les mentions de programmes via `grantLinkingService`
-- Rend les noms de programmes comme liens cliquables
-- Affiche un `GrantMentionCard` groupé sous la réponse si des programmes sont détectés
-
-### 4. Mettre à jour `BlogArticlePage` FaqItem
-Modifier le composant `FaqItem` dans `BlogArticlePage.tsx` pour utiliser `EnrichedFaqAnswer` au lieu de rendre la réponse en texte brut.
-
-### 5. Mettre à jour `SeoFaqSection`
-Modifier `SeoFaqSection.tsx` pour utiliser `EnrichedFaqAnswer` dans `AccordionContent`, enrichissant toutes les pages SEO (problèmes, villes, services, rénovations).
+### Step 4 — Fallback si le backend greeting échoue
+Si l'appel greeting échoue, afficher un message local par défaut ("Bonjour! Comment puis-je vous aider?") et démarrer l'écoute quand même.
 
 ## Résultat
-- Chaque mention de programme dans une FAQ devient un lien
-- Un mini-card apparaît avec "Voir les détails" + "Vérifier mon admissibilité"
-- Fonctionne sur toutes les pages (blog + SEO) automatiquement
-- Les liens officiels ouvrent dans un nouvel onglet
-- Le CTA admissibilité dirige vers le dashboard propriétaire
+- Alex parle en premier partout (menu, orb, inline, mobile)
+- L'utilisateur entend immédiatement Alex
+- Le micro s'active après qu'Alex ait fini de parler
+- Aucune attente passive
 
