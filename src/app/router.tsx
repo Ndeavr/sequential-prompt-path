@@ -15,7 +15,6 @@ import NotFound from "@/pages/NotFound";
 import HomeownersPage from "@/pages/HomeownersPage";
 import OwnerMenuPreviewPage from "@/pages/OwnerMenuPreviewPage";
 import MenuIntelligenceAdminPage from "@/pages/admin/MenuIntelligenceAdminPage";
-import HomeownersPage from "@/pages/HomeownersPage";
 import ProfessionalsPage from "@/pages/ProfessionalsPage";
 import PartnersPage from "@/pages/PartnersPage";
 import DescribeProjectPage from "@/pages/DescribeProjectPage";
