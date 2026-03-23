@@ -4,6 +4,7 @@
  * Context-aware suggestions based on current route.
  */
 import { useState, useRef, useEffect, useMemo } from "react";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { useLocation, Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
