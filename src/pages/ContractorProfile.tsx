@@ -37,6 +37,7 @@ import {
 import { useContractorPublicScores, useReviewInsights } from "@/hooks/useMatchingEngine";
 import { UnproVerifiedBadge } from "@/components/contractor/UnproVerifiedBadge";
 import { useAuth } from "@/hooks/useAuth";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { motion } from "framer-motion";
 import { useState, useCallback } from "react";
 import heroHouse from "@/assets/hero-house.jpg";
