@@ -322,6 +322,7 @@ export default function AnswerEnginePage() {
         </div>
 
         <AlexGlobalOrb />
+        <AlexAutopilotProvider />
       </div>
     </MainLayout>
   );
