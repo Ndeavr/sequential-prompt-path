@@ -360,9 +360,13 @@ export async function getTuning(role: string): Promise<{
       .limit(10);
 
     // Default safe tuning
-    const tuning = {
+  const tuning: {
+      maxSentences: number;
+      pushLevel: "gentle" | "moderate" | "direct";
+      preferredActionOrder: string[];
+    } = {
       maxSentences: 3,
-      pushLevel: "gentle" as const,
+      pushLevel: "gentle",
       preferredActionOrder: role === "contractor"
         ? ["show_score", "show_plan_recommendation", "open_booking"]
         : ["open_upload", "show_score", "open_booking"],
