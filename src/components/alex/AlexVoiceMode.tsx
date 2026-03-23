@@ -50,6 +50,14 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
     })();
   }, [feature]);
 
+  // Auto-start listening if requested
+  useEffect(() => {
+    if (autoStart && sessionId) {
+      const timer = setTimeout(() => startListening(), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [autoStart, sessionId]);
+
   // Speech recognition setup
   const startListening = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
