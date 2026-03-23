@@ -16,7 +16,9 @@ export type AlexUIActionType =
   | "show_pricing"
   | "scroll_to"
   | "open_booking"
-  | "show_chips";
+  | "show_chips"
+  | "show_trust"
+  | "show_prediction";
 
 export interface AlexUIAction {
   type: AlexUIActionType | string;
