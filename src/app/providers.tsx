@@ -10,6 +10,7 @@ import { ThemeProvider } from "next-themes";
 import { HelmetProvider } from "react-helmet-async";
 import { AlexVoiceProvider } from "@/contexts/AlexVoiceContext";
 import GlobalAlexOverlay from "@/components/alex/GlobalAlexOverlay";
+import HelpPopup from "@/components/shared/HelpPopup";
 import type { ReactNode } from "react";
 
 const queryClient = new QueryClient({
