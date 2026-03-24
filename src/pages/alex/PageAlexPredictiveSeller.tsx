@@ -162,7 +162,7 @@ export default function PageAlexPredictiveSeller() {
             profitValue={pred?.predicted_profit_value}
             contractValue={pred?.predicted_contract_value}
             dynamicPriceCents={price?.final_price_cents}
-            riskLevel={risk?.overall_risk_level}
+            riskLevel={risk?.risk_level ?? undefined}
           />
         </div>
 
