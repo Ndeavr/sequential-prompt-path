@@ -101,7 +101,7 @@ export default function PageAlexGoalsStrategy() {
     setSaving(true);
     await saveObjectives();
     setSaving(false);
-    navigate(`/pricing?plan=${plan}`);
+    navigate(`/checkout?plan=${plan}`);
   };
 
   const canAdvance = step === 0 ? !!primaryObjective : true;

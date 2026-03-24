@@ -298,6 +298,9 @@ export const AppRouter = () => (
       <Route path="/compare-quotes" element={<CompareQuotesPage />} />
       <Route path="/contractor-onboarding" element={<ContractorOnboardingPage />} />
       <Route path="/goals" element={<PageAlexGoalsStrategy />} />
+      <Route path="/checkout" element={<PageCheckoutStripe />} />
+      <Route path="/checkout/success" element={<PageCheckoutSuccess />} />
+      <Route path="/activation" element={<PageActivationStart />} />
       <Route path="/onboarding" element={<OnboardingFlow />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/aipp-score" element={<AIPPScorePage />} />
