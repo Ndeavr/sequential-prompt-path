@@ -210,36 +210,60 @@ export default function ContractorOnboardingPage() {
                   onBusinessSelected={handleBusinessSelected}
                 />
 
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold">Ville *</Label>
-                  <Input placeholder="Montréal" value={form.city} onChange={(e) => update("city", e.target.value)} className="rounded-xl h-12" />
-                  {form.city && (
-                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3 text-emerald-500" /> Ville détectée
-                    </p>
-                  )}
-                </div>
+                {/* Ville — shown only if not auto-filled */}
+                {!form.city ? (
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold">Ville *</Label>
+                    <Input placeholder="Montréal" value={form.city} onChange={(e) => update("city", e.target.value)} className="rounded-xl h-12" />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-xl bg-muted/50 px-4 py-3">
+                    <MapPin className="h-4 w-4 text-primary shrink-0" />
+                    <span className="text-sm font-medium text-foreground">{form.city}</span>
+                    <CheckCircle2 className="h-3.5 w-3.5 text-success ml-auto" />
+                    <button type="button" className="text-[10px] text-muted-foreground underline" onClick={() => update("city", "")}>Modifier</button>
+                  </div>
+                )}
 
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold">Catégories *</Label>
-                  <TagInput
-                    value={form.categories}
-                    suggestions={ALL_CATEGORIES}
-                    onChange={(tags) => update("categories", tags)}
-                    max={MAX_CATEGORIES}
-                    placeholder="Tapez une catégorie…"
-                    limitLabel="Inclus dans votre forfait"
-                    recommended={recommendedCategories}
-                  />
-                  {form.categories.length > 0 && (
+                {/* Categories — auto-filled from GMB, fallback to manual */}
+                {form.categories.length > 0 ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-semibold">Catégories détectées</Label>
+                      <span className="text-[10px] text-muted-foreground">{form.categories.length}/{MAX_CATEGORIES}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {form.categories.map((cat, i) => (
+                        <Badge
+                          key={cat}
+                          variant={i === 0 ? "default" : "secondary"}
+                          className={`text-xs px-3 py-1 ${i === 0 ? "bg-primary text-primary-foreground" : ""}`}
+                        >
+                          {i === 0 && <Sparkles className="h-3 w-3 mr-1" />}
+                          {cat}
+                          {i === 0 && <span className="ml-1 text-[9px] opacity-80">principale</span>}
+                        </Badge>
+                      ))}
+                    </div>
                     <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                      {form.categories.length === 1
-                        ? "1 catégorie sélectionnée"
-                        : `${form.categories.length} catégories sélectionnées`}
+                      <CheckCircle2 className="h-3 w-3 text-success" />
+                      Catégories importées automatiquement depuis Google
                     </p>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold">Catégories *</Label>
+                    <TagInput
+                      value={form.categories}
+                      suggestions={ALL_CATEGORIES}
+                      onChange={(tags) => update("categories", tags)}
+                      max={MAX_CATEGORIES}
+                      placeholder="Tapez une catégorie…"
+                      limitLabel="Inclus dans votre forfait"
+                      recommended={recommendedCategories}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
