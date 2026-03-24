@@ -152,6 +152,9 @@ import AdminDynamicMarketPricing from "@/pages/admin/AdminDynamicMarketPricing";
 // Predictive Market Board
 import AdminPredictiveMarketBoard from "@/pages/admin/AdminPredictiveMarketBoard";
 
+// Alex Predictive Seller
+import PageAlexPredictiveSeller from "@/pages/alex/PageAlexPredictiveSeller";
+
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
 import BlogArticlePage from "@/pages/blog/BlogArticlePage";
