@@ -38,60 +38,81 @@ serve(async (req) => {
         }
       );
 
-    let resolvedAgentId = agentId;
-    let response = await fetchConversationToken(resolvedAgentId);
-    let upstreamErrorText = "";
+    const fetchSignedUrl = (targetAgentId: string) =>
+      fetch(
+        `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${targetAgentId}`,
+        {
+          headers: { "xi-api-key": ELEVENLABS_API_KEY },
+        }
+      );
 
-    if (!response.ok) {
-      upstreamErrorText = await response.text();
-
-      let upstreamCode: string | undefined;
+    const getUpstreamCode = (errorText: string): string | undefined => {
       try {
-        upstreamCode = JSON.parse(upstreamErrorText)?.detail?.code;
+        return JSON.parse(errorText)?.detail?.code;
       } catch {
-        // noop
+        return undefined;
       }
+    };
 
-      if (response.status === 404 && upstreamCode === "agent_not_found") {
-        console.warn("[alex-conversation-token] Agent not found, trying first available agent");
-        const agentsResponse = await fetch(
-          "https://api.elevenlabs.io/v1/convai/agents?page_size=1",
-          { headers: { "xi-api-key": ELEVENLABS_API_KEY } }
-        );
+    const getUpstreamMessage = (errorText: string, fallback: string): string => {
+      try {
+        return JSON.parse(errorText)?.detail?.message ?? fallback;
+      } catch {
+        return fallback;
+      }
+    };
 
-        if (agentsResponse.ok) {
-          const agentsPayload = await agentsResponse.json();
-          const fallbackAgentId = agentsPayload?.agents?.[0]?.agent_id as string | undefined;
+    let resolvedAgentId = agentId;
+    let tokenResponse = await fetchConversationToken(resolvedAgentId);
+    let signedUrlResponse = await fetchSignedUrl(resolvedAgentId);
+    let tokenErrorText = tokenResponse.ok ? "" : await tokenResponse.text();
+    let signedUrlErrorText = signedUrlResponse.ok ? "" : await signedUrlResponse.text();
 
-          if (fallbackAgentId) {
-            resolvedAgentId = fallbackAgentId;
-            response = await fetchConversationToken(resolvedAgentId);
-            if (!response.ok) {
-              upstreamErrorText = await response.text();
-            }
-          }
+    const shouldFallbackAgent =
+      (tokenResponse.status === 404 && getUpstreamCode(tokenErrorText) === "agent_not_found") ||
+      (signedUrlResponse.status === 404 && getUpstreamCode(signedUrlErrorText) === "agent_not_found");
+
+    if (shouldFallbackAgent) {
+      console.warn("[alex-conversation-token] Agent not found, trying first available agent");
+      const agentsResponse = await fetch(
+        "https://api.elevenlabs.io/v1/convai/agents?page_size=1",
+        { headers: { "xi-api-key": ELEVENLABS_API_KEY } }
+      );
+
+      if (agentsResponse.ok) {
+        const agentsPayload = await agentsResponse.json();
+        const fallbackAgentId = agentsPayload?.agents?.[0]?.agent_id as string | undefined;
+
+        if (fallbackAgentId) {
+          resolvedAgentId = fallbackAgentId;
+          tokenResponse = await fetchConversationToken(resolvedAgentId);
+          signedUrlResponse = await fetchSignedUrl(resolvedAgentId);
+          tokenErrorText = tokenResponse.ok ? "" : await tokenResponse.text();
+          signedUrlErrorText = signedUrlResponse.ok ? "" : await signedUrlResponse.text();
         }
       }
     }
 
-    if (!response.ok) {
-      console.error("[alex-conversation-token] ElevenLabs error:", response.status, upstreamErrorText);
-      let message = "Failed to get conversation token";
-      try {
-        message = JSON.parse(upstreamErrorText)?.detail?.message ?? message;
-      } catch {
-        // noop
-      }
+    if (!tokenResponse.ok && !signedUrlResponse.ok) {
+      console.error(
+        "[alex-conversation-token] ElevenLabs errors:",
+        tokenResponse.status,
+        tokenErrorText,
+        signedUrlResponse.status,
+        signedUrlErrorText
+      );
 
+      const message = getUpstreamMessage(tokenErrorText || signedUrlErrorText, "Failed to get conversation credentials");
       return new Response(
         JSON.stringify({ error: message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const { token } = await response.json();
+    const token = tokenResponse.ok ? (await tokenResponse.json()).token : null;
+    const signedUrl = signedUrlResponse.ok ? (await signedUrlResponse.json()).signed_url : null;
 
-    return new Response(JSON.stringify({ token, agentId: resolvedAgentId }), {
+    return new Response(JSON.stringify({ token, signedUrl, agentId: resolvedAgentId }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

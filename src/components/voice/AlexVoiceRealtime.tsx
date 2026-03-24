@@ -111,20 +111,29 @@ export default function AlexVoiceRealtime({ agentId, onClose, userName, classNam
     setIsConnecting(true);
     try {
       // Parallelize permission + token fetch for faster startup
-      const [, tokenResult] = await Promise.all([
+      const [, sessionResult] = await Promise.all([
         navigator.mediaDevices.getUserMedia({ audio: true }),
         supabase.functions.invoke("alex-conversation-token", {
           body: agentId ? { agentId } : {},
         }),
       ]);
 
-      const { data, error } = tokenResult;
+      const { data, error } = sessionResult;
 
-      if (error || !data?.token) {
-        throw new Error(error?.message || "Impossible d'obtenir le token de conversation");
+      if (error || (!data?.signedUrl && !data?.token)) {
+        throw new Error(error?.message || "Impossible d'obtenir les credentials de conversation");
       }
 
-      // Start the real-time conversation
+      // Prefer WebSocket signed URL to avoid unstable WebRTC validation path on some networks/devices
+      if (data?.signedUrl) {
+        await conversation.startSession({
+          signedUrl: data.signedUrl,
+          connectionType: "websocket",
+        });
+        return;
+      }
+
+      // Fallback to WebRTC token if signed URL is not available
       await conversation.startSession({
         conversationToken: data.token,
         connectionType: "webrtc",
