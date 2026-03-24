@@ -31,10 +31,6 @@ export function useCurrentScreenContext(): ScreenContext | null {
   return useMemo(() => {
     if (!catalog) return null;
 
-    for (const entry of SCREEN_ROUTE_MAP) {
-      // unused, iterate catalog instead
-    }
-
     for (const screen of catalog) {
       const mapping = SCREEN_ROUTE_MAP[screen.screen_key];
       if (!mapping) continue;
