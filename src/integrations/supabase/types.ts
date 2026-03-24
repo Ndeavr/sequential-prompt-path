@@ -14315,6 +14315,93 @@ export type Database = {
         }
         Relationships: []
       }
+      market_dynamic_prices: {
+        Row: {
+          base_cpl_cents: number
+          base_price_cents: number
+          city_slug: string
+          combined_multiplier: number
+          competition_multiplier: number
+          confidence_score: number
+          created_at: string
+          demand_multiplier: number
+          fallback_used: boolean
+          final_price_cents: number
+          id: string
+          is_active: boolean
+          justification_json: Json | null
+          maximum_price_cents: number
+          minimum_price_cents: number
+          predicted_value_multiplier: number
+          price_sensitivity_multiplier: number
+          scarcity_multiplier: number
+          seasonality_multiplier: number
+          specialty_slug: string | null
+          trade_slug: string
+          unpro_markup_percent: number
+          updated_at: string
+          urgency_multiplier: number
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          base_cpl_cents?: number
+          base_price_cents?: number
+          city_slug: string
+          combined_multiplier?: number
+          competition_multiplier?: number
+          confidence_score?: number
+          created_at?: string
+          demand_multiplier?: number
+          fallback_used?: boolean
+          final_price_cents?: number
+          id?: string
+          is_active?: boolean
+          justification_json?: Json | null
+          maximum_price_cents?: number
+          minimum_price_cents?: number
+          predicted_value_multiplier?: number
+          price_sensitivity_multiplier?: number
+          scarcity_multiplier?: number
+          seasonality_multiplier?: number
+          specialty_slug?: string | null
+          trade_slug: string
+          unpro_markup_percent?: number
+          updated_at?: string
+          urgency_multiplier?: number
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          base_cpl_cents?: number
+          base_price_cents?: number
+          city_slug?: string
+          combined_multiplier?: number
+          competition_multiplier?: number
+          confidence_score?: number
+          created_at?: string
+          demand_multiplier?: number
+          fallback_used?: boolean
+          final_price_cents?: number
+          id?: string
+          is_active?: boolean
+          justification_json?: Json | null
+          maximum_price_cents?: number
+          minimum_price_cents?: number
+          predicted_value_multiplier?: number
+          price_sensitivity_multiplier?: number
+          scarcity_multiplier?: number
+          seasonality_multiplier?: number
+          specialty_slug?: string | null
+          trade_slug?: string
+          unpro_markup_percent?: number
+          updated_at?: string
+          urgency_multiplier?: number
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       market_feedback_events: {
         Row: {
           actual_close_days: number | null
@@ -14689,6 +14776,110 @@ export type Database = {
           sample_count?: number | null
           unit_type?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      market_price_served_log: {
+        Row: {
+          context_json: Json | null
+          contractor_id: string | null
+          id: string
+          lead_id: string | null
+          price_id: string | null
+          price_served_cents: number
+          served_at: string
+        }
+        Insert: {
+          context_json?: Json | null
+          contractor_id?: string | null
+          id?: string
+          lead_id?: string | null
+          price_id?: string | null
+          price_served_cents: number
+          served_at?: string
+        }
+        Update: {
+          context_json?: Json | null
+          contractor_id?: string | null
+          id?: string
+          lead_id?: string | null
+          price_id?: string | null
+          price_served_cents?: number
+          served_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_price_served_log_price_id_fkey"
+            columns: ["price_id"]
+            isOneToOne: false
+            referencedRelation: "market_dynamic_prices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      market_signal_snapshots: {
+        Row: {
+          active_contractors: number
+          active_leads: number
+          avg_close_rate: number | null
+          avg_job_value_cents: number | null
+          city_slug: string
+          competition_index: number
+          created_at: string
+          demand_score: number
+          google_cpl_estimate_cents: number | null
+          id: string
+          scarcity_index: number
+          seasonality_index: number
+          signal_type: string
+          signals_json: Json | null
+          snapshot_at: string
+          specialty_slug: string | null
+          supply_score: number
+          trade_slug: string
+          urgency_index: number
+        }
+        Insert: {
+          active_contractors?: number
+          active_leads?: number
+          avg_close_rate?: number | null
+          avg_job_value_cents?: number | null
+          city_slug: string
+          competition_index?: number
+          created_at?: string
+          demand_score?: number
+          google_cpl_estimate_cents?: number | null
+          id?: string
+          scarcity_index?: number
+          seasonality_index?: number
+          signal_type?: string
+          signals_json?: Json | null
+          snapshot_at?: string
+          specialty_slug?: string | null
+          supply_score?: number
+          trade_slug: string
+          urgency_index?: number
+        }
+        Update: {
+          active_contractors?: number
+          active_leads?: number
+          avg_close_rate?: number | null
+          avg_job_value_cents?: number | null
+          city_slug?: string
+          competition_index?: number
+          created_at?: string
+          demand_score?: number
+          google_cpl_estimate_cents?: number | null
+          id?: string
+          scarcity_index?: number
+          seasonality_index?: number
+          signal_type?: string
+          signals_json?: Json | null
+          snapshot_at?: string
+          specialty_slug?: string | null
+          supply_score?: number
+          trade_slug?: string
+          urgency_index?: number
         }
         Relationships: []
       }
