@@ -3,6 +3,8 @@ import { Sparkles, Check, ArrowUp, ArrowDown, Crown, Shield, Zap, Star } from "l
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getPlanById, formatPlanPrice } from "@/config/contractorPlans";
+import AppointmentUpsellCard from "./AppointmentUpsellCard";
+import type { PackTier } from "@/lib/appointmentPricing";
 
 const PLAN_META: Record<string, { icon: typeof Shield; projects: string; color: string }> = {
   recrue: { icon: Shield, projects: "S/M", color: "text-muted-foreground" },
