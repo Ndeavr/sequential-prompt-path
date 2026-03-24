@@ -30,6 +30,14 @@ export default function PageCheckoutStripe() {
   const [loading, setLoading] = useState(false);
   const [billingInterval, setBillingInterval] = useState<BillingInterval>("month");
 
+  // Appointment pack from goals funnel
+  const initialPack = useMemo(() => {
+    try {
+      const raw = sessionStorage.getItem("unpro_appointment_pack");
+      return raw ? JSON.parse(raw) as PackTier : null;
+    } catch { return null; }
+  }, []);
+  const [selectedPack, setSelectedPack] = useState<PackTier | null>(initialPack);
   // Get plan from URL or sessionStorage
   const planCode = params.get("plan") || (() => {
     try {
