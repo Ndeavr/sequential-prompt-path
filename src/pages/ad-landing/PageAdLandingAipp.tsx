@@ -34,14 +34,14 @@ export default function PageAdLandingAipp() {
   const formRef = useRef<HTMLDivElement>(null);
 
   // Track CTA events
-  const trackEvent = useCallback(async (eventName: string, pageName: string, meta?: Record<string, unknown>) => {
+  const trackEvent = useCallback(async (eventName: string, pageName: string, meta?: Record<string, string | number | boolean>) => {
     try {
       await supabase.from("landing_cta_events").insert({
-        session_id: sessionId,
+        session_id: sessionId || null,
         event_name: eventName,
         page_name: pageName,
-        metadata_json: meta ?? {},
-      });
+        metadata_json: (meta as Record<string, string | number | boolean>) ?? {},
+      } as never);
     } catch { /* silent */ }
   }, [sessionId]);
 
