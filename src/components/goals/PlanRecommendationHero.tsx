@@ -2,13 +2,14 @@ import { motion } from "framer-motion";
 import { Sparkles, Check, ArrowUp, ArrowDown, Crown, Shield, Zap, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { getPlanById, formatPlanPrice } from "@/config/contractorPlans";
 
-const PLANS = {
-  recrue: { name: "Recrue", price: 0, icon: Shield, projects: "S/M", color: "text-muted-foreground" },
-  pro: { name: "Pro", price: 49, icon: Zap, projects: "S/M/L", color: "text-primary" },
-  premium: { name: "Premium", price: 99, icon: Star, projects: "S → XL", color: "text-secondary" },
-  elite: { name: "Élite", price: 199, icon: Crown, projects: "Toutes classes", color: "text-yellow-500" },
-  signature: { name: "Signature", price: 399, icon: Crown, projects: "Exclusivité", color: "text-rose-500" },
+const PLAN_META: Record<string, { icon: typeof Shield; projects: string; color: string }> = {
+  recrue: { icon: Shield, projects: "S/M", color: "text-muted-foreground" },
+  pro: { icon: Zap, projects: "S/M/L", color: "text-primary" },
+  premium: { icon: Star, projects: "S → XL", color: "text-secondary" },
+  elite: { icon: Crown, projects: "Toutes classes", color: "text-yellow-500" },
+  signature: { icon: Crown, projects: "Exclusivité", color: "text-rose-500" },
 };
 
 interface Props {
