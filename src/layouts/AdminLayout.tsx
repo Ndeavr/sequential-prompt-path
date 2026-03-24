@@ -36,6 +36,7 @@ const navItems = [
   { to: "/admin/home-graph", label: "Problem Graph", icon: Network },
   { to: "/admin/growth-engine", label: "Growth Engine", icon: TrendingUp },
   { to: "/admin/screenshot-analytics", label: "Screenshot Intel", icon: Camera },
+  { to: "/admin/optimization", label: "Optimisation IA", icon: TrendingUp },
   { to: "/admin/uos", label: "UNPRO OS", icon: Sparkles },
 ];
 
