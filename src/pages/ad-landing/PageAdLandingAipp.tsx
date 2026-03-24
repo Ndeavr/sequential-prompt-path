@@ -75,7 +75,7 @@ export default function PageAdLandingAipp() {
     // Persist to DB
     try {
       await supabase.from("aipp_score_checks").insert({
-        session_id: sid,
+        session_id: sid || null,
         business_name: data.business_name,
         city: data.city,
         website_url: data.website_url || null,
@@ -84,7 +84,7 @@ export default function PageAdLandingAipp() {
         quick_score: scored.score,
         score_label: scored.label,
         market_position_label: scored.marketPosition,
-      });
+      } as never);
     } catch { /* silent */ }
 
     trackEvent("aipp_check_started", "ad_landing", { score: scored.score });

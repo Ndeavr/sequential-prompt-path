@@ -266,6 +266,8 @@ export const AppRouter = () => (
     <Routes>
       {/* Public */}
       <Route path="/" element={<Home />} />
+      <Route path="/go" element={<PageAdLandingAipp />} />
+      <Route path="/aipp-check" element={<PageAdLandingAipp />} />
       <Route path="/search" element={<Search />} />
       <Route path="/contractors/:id" element={<ContractorProfile />} />
       <Route path="/login" element={<LoginPageUnpro />} />
