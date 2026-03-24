@@ -61,6 +61,7 @@ import SeoSitemapPage from "@/pages/seo/SeoSitemapPage";
 import AdminSeoGenerator from "@/pages/admin/AdminSeoGenerator";
 import PropertyGraphPage from "@/pages/PropertyGraphPage";
 import AlexChat from "@/pages/AlexChat";
+import AuthorityDashboardPage from "@/pages/AuthorityDashboardPage";
 import AlexVoicePage from "@/pages/AlexVoicePage";
 import AlexCommandCenterPage from "@/pages/AlexCommandCenterPage";
 import DesignPage from "@/pages/DesignPage";
