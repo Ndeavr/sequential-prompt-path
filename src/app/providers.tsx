@@ -37,7 +37,6 @@ export const Providers = ({ children }: ProvidersProps) => (
             <Sonner />
             {children}
             <GlobalAlexOverlay />
-            
           </TooltipProvider>
         </AlexVoiceProvider>
       </QueryClientProvider>
