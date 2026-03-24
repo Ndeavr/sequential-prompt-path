@@ -52,13 +52,13 @@ export default function PageAdLandingAipp() {
     const campaign = searchParams.get("utm_campaign") || searchParams.get("campaign") || null;
     const variant = searchParams.get("v") || null;
     const isMobile = window.innerWidth < 768;
-    const { data } = await supabase.from("lead_capture_sessions").insert({
+    const { data } = await supabase.from("lead_capture_sessions" as never).insert({
       source_channel: source,
       campaign_name: campaign,
       landing_variant: variant,
       device_type: isMobile ? "mobile" : "desktop",
       status: "started",
-    }).select("id").single();
+    } as never).select("id").single();
     if (data) { setSessionId(data.id); return data.id; }
     return null;
   }, [sessionId, searchParams]);
