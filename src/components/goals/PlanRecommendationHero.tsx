@@ -97,7 +97,7 @@ export default function PlanRecommendationHero({ recommendedPlan, primaryObjecti
             <p className="text-xs font-semibold text-muted-foreground">Ce qu'il débloque</p>
             <div className="space-y-1.5">
               {[
-                `Projets ${plan.projects}`,
+                `Projets ${meta.projects}`,
                 monthlyAppointments > 0 ? `~${monthlyAppointments} RDV/mois requis pour votre objectif` : null,
                 "Profil public vérifié",
                 recommendedPlan !== "recrue" ? "Visibilité prioritaire" : null,
