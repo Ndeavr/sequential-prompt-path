@@ -45,9 +45,9 @@ export default function AlexVoiceRealtime({ agentId, onClose, userName, classNam
     overrides: {
       agent: {
         language: "fr",
-        firstMessage: userName
-          ? `Bonjour ${userName}, je suis Alex. Je suis là pour vous aider tout de suite.`
-          : "Bonjour, je suis Alex. Je suis là pour vous aider tout de suite.",
+      firstMessage: userName
+          ? `Bonjour ${userName}! Je suis Alex d'un PRO. Comment puis-je vous aider aujourd'hui?`
+          : "Bonjour! Je suis Alex d'un PRO. Comment puis-je vous aider aujourd'hui?",
       },
     },
     onConnect: () => {
