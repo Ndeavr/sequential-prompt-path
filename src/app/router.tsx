@@ -135,6 +135,13 @@ import AdminScreenshotFrictionPage from "@/pages/admin/AdminScreenshotFrictionPa
 import AdminScreenshotAlertsPage from "@/pages/admin/AdminScreenshotAlertsPage";
 import AdminScreenshotInsightsPage from "@/pages/admin/AdminScreenshotInsightsPage";
 
+// AI Self-Optimizing System
+import AdminOptimizationDashboard from "@/pages/admin/AdminOptimizationDashboard";
+import AdminExperimentsPage from "@/pages/admin/AdminExperimentsPage";
+import AdminExperimentDetailPage from "@/pages/admin/AdminExperimentDetailPage";
+import AdminOptimizationRecommendations from "@/pages/admin/AdminOptimizationRecommendations";
+import AdminWinningVariantsPage from "@/pages/admin/AdminWinningVariantsPage";
+
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
 import BlogArticlePage from "@/pages/blog/BlogArticlePage";
@@ -560,6 +567,11 @@ export const AppRouter = () => (
       <Route path="/admin/screenshot-friction" element={<ProtectedRoute requiredRole="admin"><AdminScreenshotFrictionPage /></ProtectedRoute>} />
       <Route path="/admin/screenshot-alerts" element={<ProtectedRoute requiredRole="admin"><AdminScreenshotAlertsPage /></ProtectedRoute>} />
       <Route path="/admin/screenshot-insights" element={<ProtectedRoute requiredRole="admin"><AdminScreenshotInsightsPage /></ProtectedRoute>} />
+      <Route path="/admin/optimization" element={<ProtectedRoute requiredRole="admin"><AdminOptimizationDashboard /></ProtectedRoute>} />
+      <Route path="/admin/experiments" element={<ProtectedRoute requiredRole="admin"><AdminExperimentsPage /></ProtectedRoute>} />
+      <Route path="/admin/experiments/:id" element={<ProtectedRoute requiredRole="admin"><AdminExperimentDetailPage /></ProtectedRoute>} />
+      <Route path="/admin/optimization/recommendations" element={<ProtectedRoute requiredRole="admin"><AdminOptimizationRecommendations /></ProtectedRoute>} />
+      <Route path="/admin/optimization/winners" element={<ProtectedRoute requiredRole="admin"><AdminWinningVariantsPage /></ProtectedRoute>} />
       <Route path="/audit/:slug" element={<AuditLandingPage />} />
       <Route path="/articles/:slug" element={<SeoArticlePage />} />
       <Route path="/emergency" element={<EmergencyPage />} />

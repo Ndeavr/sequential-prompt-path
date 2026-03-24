@@ -9,6 +9,12 @@ const DEFAULT_FLAGS: Record<string, boolean> = {
   admin_alerts: true,
   recommendations_engine: true,
   web_share_fallback: true,
+  self_optimizing_enabled: true,
+  experiment_engine_enabled: true,
+  auto_promotion_enabled: false,
+  alex_optimization_enabled: true,
+  copy_variant_registry_enabled: true,
+  ui_block_registry_enabled: true,
 };
 
 let overrides: Record<string, boolean> = {};

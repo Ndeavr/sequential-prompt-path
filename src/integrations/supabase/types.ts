@@ -10148,6 +10148,42 @@ export type Database = {
         }
         Relationships: []
       }
+      copy_variant_registry: {
+        Row: {
+          block_key: string
+          content: string
+          copy_type: string
+          created_at: string
+          id: string
+          is_active: boolean
+          language: string
+          screen_key: string
+          variant_key: string
+        }
+        Insert: {
+          block_key: string
+          content: string
+          copy_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          language?: string
+          screen_key: string
+          variant_key: string
+        }
+        Update: {
+          block_key?: string
+          content?: string
+          copy_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          language?: string
+          screen_key?: string
+          variant_key?: string
+        }
+        Relationships: []
+      }
       cta_events: {
         Row: {
           created_at: string
@@ -11590,6 +11626,105 @@ export type Database = {
             columns: ["assignment_id"]
             isOneToOne: false
             referencedRelation: "emergency_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      experiment_assignments: {
+        Row: {
+          assigned_at: string
+          experiment_id: string
+          id: string
+          screen_key: string
+          session_id: string | null
+          user_id: string | null
+          variant_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          experiment_id: string
+          id?: string
+          screen_key: string
+          session_id?: string | null
+          user_id?: string | null
+          variant_id: string
+        }
+        Update: {
+          assigned_at?: string
+          experiment_id?: string
+          id?: string
+          screen_key?: string
+          session_id?: string | null
+          user_id?: string | null
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experiment_assignments_experiment_id_fkey"
+            columns: ["experiment_id"]
+            isOneToOne: false
+            referencedRelation: "optimization_experiments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "experiment_assignments_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "optimization_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      experiment_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          event_value: number | null
+          experiment_id: string
+          id: string
+          metadata: Json | null
+          screen_key: string
+          session_id: string | null
+          user_id: string | null
+          variant_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          event_value?: number | null
+          experiment_id: string
+          id?: string
+          metadata?: Json | null
+          screen_key: string
+          session_id?: string | null
+          user_id?: string | null
+          variant_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          event_value?: number | null
+          experiment_id?: string
+          id?: string
+          metadata?: Json | null
+          screen_key?: string
+          session_id?: string | null
+          user_id?: string | null
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experiment_events_experiment_id_fkey"
+            columns: ["experiment_id"]
+            isOneToOne: false
+            referencedRelation: "optimization_experiments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "experiment_events_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "optimization_variants"
             referencedColumns: ["id"]
           },
         ]
@@ -15469,6 +15604,107 @@ export type Database = {
           },
         ]
       }
+      optimization_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          description: string | null
+          experiment_id: string | null
+          id: string
+          resolved_at: string | null
+          severity: string
+          status: string
+          title: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          description?: string | null
+          experiment_id?: string | null
+          id?: string
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          title: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          description?: string | null
+          experiment_id?: string | null
+          id?: string
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "optimization_alerts_experiment_id_fkey"
+            columns: ["experiment_id"]
+            isOneToOne: false
+            referencedRelation: "optimization_experiments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      optimization_experiments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          ended_at: string | null
+          experiment_type: string
+          hypothesis: string | null
+          id: string
+          minimum_sample_size: number
+          name: string
+          primary_metric: string
+          screen_key: string
+          secondary_metrics: string[] | null
+          started_at: string | null
+          status: string
+          traffic_allocation_percent: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ended_at?: string | null
+          experiment_type: string
+          hypothesis?: string | null
+          id?: string
+          minimum_sample_size?: number
+          name: string
+          primary_metric?: string
+          screen_key: string
+          secondary_metrics?: string[] | null
+          started_at?: string | null
+          status?: string
+          traffic_allocation_percent?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ended_at?: string | null
+          experiment_type?: string
+          hypothesis?: string | null
+          id?: string
+          minimum_sample_size?: number
+          name?: string
+          primary_metric?: string
+          screen_key?: string
+          secondary_metrics?: string[] | null
+          started_at?: string | null
+          status?: string
+          traffic_allocation_percent?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       optimization_insights: {
         Row: {
           city: string | null
@@ -15512,6 +15748,125 @@ export type Database = {
             columns: ["placement_id"]
             isOneToOne: false
             referencedRelation: "qr_placements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      optimization_opportunities: {
+        Row: {
+          confidence_score: number
+          created_at: string
+          description: string | null
+          id: string
+          opportunity_type: string
+          priority: string
+          screen_key: string
+          status: string
+          supporting_metrics: Json | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          confidence_score?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          opportunity_type: string
+          priority?: string
+          screen_key: string
+          status?: string
+          supporting_metrics?: Json | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          confidence_score?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          opportunity_type?: string
+          priority?: string
+          screen_key?: string
+          status?: string
+          supporting_metrics?: Json | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      optimization_rules: {
+        Row: {
+          config_json: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          rule_key: string
+          rule_name: string
+          scope: string
+          updated_at: string
+        }
+        Insert: {
+          config_json?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          rule_key: string
+          rule_name: string
+          scope?: string
+          updated_at?: string
+        }
+        Update: {
+          config_json?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          rule_key?: string
+          rule_name?: string
+          scope?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      optimization_variants: {
+        Row: {
+          config_json: Json
+          created_at: string
+          experiment_id: string
+          id: string
+          is_control: boolean
+          status: string
+          variant_key: string
+          variant_name: string
+          variant_type: string
+        }
+        Insert: {
+          config_json?: Json
+          created_at?: string
+          experiment_id: string
+          id?: string
+          is_control?: boolean
+          status?: string
+          variant_key: string
+          variant_name: string
+          variant_type?: string
+        }
+        Update: {
+          config_json?: Json
+          created_at?: string
+          experiment_id?: string
+          id?: string
+          is_control?: boolean
+          status?: string
+          variant_key?: string
+          variant_name?: string
+          variant_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "optimization_variants_experiment_id_fkey"
+            columns: ["experiment_id"]
+            isOneToOne: false
+            referencedRelation: "optimization_experiments"
             referencedColumns: ["id"]
           },
         ]
@@ -23922,6 +24277,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ui_block_registry: {
+        Row: {
+          block_key: string
+          block_name: string
+          block_type: string
+          created_at: string
+          default_config: Json
+          id: string
+          is_experimentable: boolean
+          risk_level: string
+          screen_key: string
+        }
+        Insert: {
+          block_key: string
+          block_name: string
+          block_type?: string
+          created_at?: string
+          default_config?: Json
+          id?: string
+          is_experimentable?: boolean
+          risk_level?: string
+          screen_key: string
+        }
+        Update: {
+          block_key?: string
+          block_name?: string
+          block_type?: string
+          created_at?: string
+          default_config?: Json
+          id?: string
+          is_experimentable?: boolean
+          risk_level?: string
+          screen_key?: string
+        }
+        Relationships: []
+      }
       user_likes: {
         Row: {
           created_at: string
@@ -24524,6 +24915,60 @@ export type Database = {
             columns: ["territory_id"]
             isOneToOne: false
             referencedRelation: "v_territories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      winning_variants: {
+        Row: {
+          approved_by: string | null
+          auto_promoted: boolean
+          confidence_score: number | null
+          created_at: string
+          decision_reason: string | null
+          experiment_id: string
+          id: string
+          primary_metric_lift_percent: number | null
+          screen_key: string
+          variant_id: string
+        }
+        Insert: {
+          approved_by?: string | null
+          auto_promoted?: boolean
+          confidence_score?: number | null
+          created_at?: string
+          decision_reason?: string | null
+          experiment_id: string
+          id?: string
+          primary_metric_lift_percent?: number | null
+          screen_key: string
+          variant_id: string
+        }
+        Update: {
+          approved_by?: string | null
+          auto_promoted?: boolean
+          confidence_score?: number | null
+          created_at?: string
+          decision_reason?: string | null
+          experiment_id?: string
+          id?: string
+          primary_metric_lift_percent?: number | null
+          screen_key?: string
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "winning_variants_experiment_id_fkey"
+            columns: ["experiment_id"]
+            isOneToOne: false
+            referencedRelation: "optimization_experiments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "winning_variants_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "optimization_variants"
             referencedColumns: ["id"]
           },
         ]
