@@ -29,6 +29,7 @@ export default function PageAdLandingAipp() {
   const [phase, setPhase] = useState<Phase>("form");
   const [result, setResult] = useState<AIPPQuickResult | null>(null);
   const [businessName, setBusinessName] = useState("");
+  const [businessCity, setBusinessCity] = useState("");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const scoreRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
@@ -67,7 +68,7 @@ export default function PageAdLandingAipp() {
     business_name: string; city: string; website_url: string; phone: string; google_profile_url: string;
   }) => {
     setBusinessName(data.business_name);
-    // Save for downstream prefill
+    setBusinessCity(data.city);
     try {
       sessionStorage.setItem("unpro_aipp_prefill", JSON.stringify({
         businessName: data.business_name,
@@ -271,6 +272,7 @@ export default function PageAdLandingAipp() {
                 <AippQuickResultCard
                   result={result}
                   businessName={businessName}
+                  city={businessCity}
                   onCreateProfile={() => {
                     trackEvent("cta_create_profile", "ad_landing", { score: result.score });
                     navigate("/contractor-onboarding");

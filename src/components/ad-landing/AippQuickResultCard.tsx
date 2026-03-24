@@ -1,13 +1,15 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, CheckCircle, AlertTriangle, TrendingUp, Zap } from "lucide-react";
+import { ArrowRight, CheckCircle, AlertTriangle, TrendingUp, Zap, MapPin, ExternalLink, ThumbsUp, ThumbsDown } from "lucide-react";
 import type { AIPPQuickResult } from "@/services/aippQuickScoreService";
 
 interface Props {
   result: AIPPQuickResult;
   businessName: string;
+  city?: string;
   onCreateProfile: () => void;
   onTalkToAlex: () => void;
 }
@@ -71,7 +73,12 @@ function MarketPositionMini({ position }: { position: string }) {
   );
 }
 
-export default function AippQuickResultCard({ result, businessName, onCreateProfile, onTalkToAlex }: Props) {
+export default function AippQuickResultCard({ result, businessName, city, onCreateProfile, onTalkToAlex }: Props) {
+  const [confirmed, setConfirmed] = useState(false);
+  const mapsQuery = encodeURIComponent(`${businessName} ${city || ""}`);
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
+  const mapsEmbedUrl = `https://maps.google.com/maps?q=${mapsQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+
   return (
     <motion.div
       className="w-full max-w-md mx-auto space-y-5"
@@ -79,55 +86,107 @@ export default function AippQuickResultCard({ result, businessName, onCreateProf
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="overflow-hidden border-0 shadow-lg">
-        <div className="bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/5 p-6 text-center space-y-4">
-          <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Score AIPP</p>
-          <ScoreRing score={result.score} />
-          <VisibilityBadge label={result.label} />
-          <h3 className="text-lg font-bold text-foreground">{businessName}</h3>
-          <MarketPositionMini position={result.marketPosition} />
-        </div>
-        <CardContent className="p-5 space-y-4">
-          <p className="text-sm text-muted-foreground leading-relaxed">{result.message}</p>
-
-          {result.strengths.length > 0 && (
-            <div>
-              <p className="text-xs font-bold text-foreground uppercase mb-2">Points forts</p>
-              <div className="space-y-1.5">
-                {result.strengths.map((s) => (
-                  <div key={s} className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="h-3.5 w-3.5 text-success flex-shrink-0" />
-                    <span className="text-foreground">{s}</span>
-                  </div>
-                ))}
+      {/* Business confirmation card */}
+      {!confirmed && (
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+          <Card className="overflow-hidden border-primary/20">
+            <div className="relative h-36 w-full bg-muted overflow-hidden rounded-t-lg">
+              <iframe
+                src={mapsEmbedUrl}
+                className="w-full h-full border-0 pointer-events-none"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Localisation"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+              <div className="absolute bottom-2 left-3 right-3">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-bold text-foreground drop-shadow-sm truncate">{businessName}</span>
+                </div>
+                {city && <span className="text-xs text-muted-foreground ml-6">{city}</span>}
               </div>
             </div>
-          )}
-
-          {result.quickWins.length > 0 && (
-            <div>
-              <p className="text-xs font-bold text-foreground uppercase mb-2">Gains rapides</p>
-              <div className="space-y-1.5">
-                {result.quickWins.map((w) => (
-                  <div key={w} className="flex items-center gap-2 text-sm">
-                    <Zap className="h-3.5 w-3.5 text-warning flex-shrink-0" />
-                    <span className="text-muted-foreground">{w}</span>
-                  </div>
-                ))}
+            <CardContent className="p-4 space-y-3">
+              <p className="text-sm font-semibold text-foreground text-center">Est-ce bien votre entreprise?</p>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  className="flex-1 h-10 font-bold"
+                  onClick={() => setConfirmed(true)}
+                >
+                  <ThumbsUp className="h-4 w-4 mr-1.5" /> Oui, c'est moi
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 h-10"
+                  asChild
+                >
+                  <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-1.5" /> Voir sur Maps
+                  </a>
+                </Button>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
-      <div className="space-y-3">
-        <Button size="lg" className="w-full h-12 text-base font-bold" onClick={onCreateProfile}>
-          Créer mon profil intelligent <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
-        <Button size="lg" variant="outline" className="w-full h-12 text-base" onClick={onTalkToAlex}>
-          Continuer avec Alex
-        </Button>
-      </div>
+      {/* Score card — shown after confirmation or immediately if no map needed */}
+      {confirmed && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <Card className="overflow-hidden border-0 shadow-lg">
+            <div className="bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/5 p-6 text-center space-y-4">
+              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Score AIPP</p>
+              <ScoreRing score={result.score} />
+              <VisibilityBadge label={result.label} />
+              <h3 className="text-lg font-bold text-foreground">{businessName}</h3>
+              <MarketPositionMini position={result.marketPosition} />
+            </div>
+            <CardContent className="p-5 space-y-4">
+              <p className="text-sm text-muted-foreground leading-relaxed">{result.message}</p>
+
+              {result.strengths.length > 0 && (
+                <div>
+                  <p className="text-xs font-bold text-foreground uppercase mb-2">Points forts</p>
+                  <div className="space-y-1.5">
+                    {result.strengths.map((s) => (
+                      <div key={s} className="flex items-center gap-2 text-sm">
+                        <CheckCircle className="h-3.5 w-3.5 text-success flex-shrink-0" />
+                        <span className="text-foreground">{s}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {result.quickWins.length > 0 && (
+                <div>
+                  <p className="text-xs font-bold text-foreground uppercase mb-2">Gains rapides</p>
+                  <div className="space-y-1.5">
+                    {result.quickWins.map((w) => (
+                      <div key={w} className="flex items-center gap-2 text-sm">
+                        <Zap className="h-3.5 w-3.5 text-warning flex-shrink-0" />
+                        <span className="text-muted-foreground">{w}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="space-y-3 mt-5">
+            <Button size="lg" className="w-full h-12 text-base font-bold" onClick={onCreateProfile}>
+              Créer mon profil intelligent <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            <Button size="lg" variant="outline" className="w-full h-12 text-base" onClick={onTalkToAlex}>
+              Continuer avec Alex
+            </Button>
+          </div>
+        </motion.div>
+      )}
     </motion.div>
   );
 }
