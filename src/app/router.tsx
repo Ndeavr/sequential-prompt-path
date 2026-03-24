@@ -301,6 +301,7 @@ export const AppRouter = () => (
       <Route path="/property-graph" element={<PropertyGraphPage />} />
       <Route path="/alex" element={<AlexChat />} />
       <Route path="/alex/voice" element={<AlexVoicePage />} />
+      <Route path="/alex/voice/realtime" element={<AlexVoiceRealtimePage />} />
       <Route path="/alex/command" element={<AlexCommandCenterPage />} />
       <Route path="/alex/renovation" element={<RenovationVisualizerPage />} />
       <Route path="/design" element={<DesignPage />} />
