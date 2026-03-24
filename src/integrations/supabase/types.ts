@@ -3905,6 +3905,177 @@ export type Database = {
           },
         ]
       }
+      business_assets: {
+        Row: {
+          asset_type: string
+          contractor_id: string | null
+          created_at: string
+          external_url: string | null
+          file_path: string | null
+          id: string
+          is_featured: boolean | null
+          is_logo: boolean | null
+        }
+        Insert: {
+          asset_type: string
+          contractor_id?: string | null
+          created_at?: string
+          external_url?: string | null
+          file_path?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_logo?: boolean | null
+        }
+        Update: {
+          asset_type?: string
+          contractor_id?: string | null
+          created_at?: string
+          external_url?: string | null
+          file_path?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_logo?: boolean | null
+        }
+        Relationships: []
+      }
+      business_entities: {
+        Row: {
+          business_name: string
+          contractor_id: string | null
+          created_at: string
+          description_long: string | null
+          description_short: string | null
+          email: string | null
+          id: string
+          phone: string | null
+          primary_city: string | null
+          region: string | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          business_name: string
+          contractor_id?: string | null
+          created_at?: string
+          description_long?: string | null
+          description_short?: string | null
+          email?: string | null
+          id?: string
+          phone?: string | null
+          primary_city?: string | null
+          region?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          business_name?: string
+          contractor_id?: string | null
+          created_at?: string
+          description_long?: string | null
+          description_short?: string | null
+          email?: string | null
+          id?: string
+          phone?: string | null
+          primary_city?: string | null
+          region?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      business_import_jobs: {
+        Row: {
+          contractor_id: string | null
+          created_at: string
+          id: string
+          normalized_payload_json: Json | null
+          raw_payload_json: Json | null
+          source_type: string
+          source_url: string | null
+          status: string
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          normalized_payload_json?: Json | null
+          raw_payload_json?: Json | null
+          source_type: string
+          source_url?: string | null
+          status?: string
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          normalized_payload_json?: Json | null
+          raw_payload_json?: Json | null
+          source_type?: string
+          source_url?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      business_locations: {
+        Row: {
+          city: string | null
+          contractor_id: string | null
+          created_at: string
+          id: string
+          is_primary: boolean | null
+          region: string | null
+          service_radius_km: number | null
+        }
+        Insert: {
+          city?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          region?: string | null
+          service_radius_km?: number | null
+        }
+        Update: {
+          city?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          region?: string | null
+          service_radius_km?: number | null
+        }
+        Relationships: []
+      }
+      business_services: {
+        Row: {
+          contractor_id: string | null
+          created_at: string
+          id: string
+          is_primary: boolean | null
+          service_category: string
+          service_subcategory: string | null
+          specialization_label: string | null
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          service_category: string
+          service_subcategory?: string | null
+          specialization_label?: string | null
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          service_category?: string
+          service_subcategory?: string | null
+          specialization_label?: string | null
+        }
+        Relationships: []
+      }
       campaign_generations: {
         Row: {
           auto_campaign_id: string
@@ -15859,6 +16030,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      profile_completion_events: {
+        Row: {
+          action_type: string
+          contractor_id: string | null
+          created_at: string
+          id: string
+          impact_score: number | null
+          metadata_json: Json | null
+        }
+        Insert: {
+          action_type: string
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          impact_score?: number | null
+          metadata_json?: Json | null
+        }
+        Update: {
+          action_type?: string
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          impact_score?: number | null
+          metadata_json?: Json | null
+        }
+        Relationships: []
+      }
+      profile_missing_fields: {
+        Row: {
+          contractor_id: string | null
+          created_at: string
+          field_name: string
+          id: string
+          priority: string
+          status: string
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string
+          field_name: string
+          id?: string
+          priority?: string
+          status?: string
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string
+          field_name?: string
+          id?: string
+          priority?: string
+          status?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
