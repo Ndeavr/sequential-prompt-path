@@ -83,6 +83,13 @@ export default function PageAlexGoalsStrategy() {
       secondaryObjectives,
     }));
 
+    // Persist pack selection
+    if (selectedPack) {
+      sessionStorage.setItem("unpro_appointment_pack", JSON.stringify(selectedPack));
+    } else {
+      sessionStorage.removeItem("unpro_appointment_pack");
+    }
+
     // Persist to DB (best-effort)
     try {
       const contractorId = prefill?.contractorId;
