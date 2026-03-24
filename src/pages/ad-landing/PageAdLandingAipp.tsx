@@ -272,6 +272,7 @@ export default function PageAdLandingAipp() {
                 <AippQuickResultCard
                   result={result}
                   businessName={businessName}
+                  city={businessCity}
                   onCreateProfile={() => {
                     trackEvent("cta_create_profile", "ad_landing", { score: result.score });
                     navigate("/contractor-onboarding");
