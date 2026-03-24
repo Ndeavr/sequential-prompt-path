@@ -67,6 +67,7 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
       "Tout le plan Pro",
       "Rendez-vous garantis S à XL",
       "Auto-acceptation des projets",
+      "Demandes d'avis automatiques après chaque rendez-vous",
       "Statistiques avancées",
       "Badge Premium",
     ],
@@ -85,6 +86,7 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
       "Tout le plan Premium",
       "Tous les rendez-vous garantis (S à XXL)",
       "Auto-acceptation + analytics avancés",
+      "Demandes d'avis automatiques",
       "Support dédié",
       "Badge Élite",
     ],
@@ -102,6 +104,7 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     features: [
       "Tout le plan Élite",
       "Exclusivité territoriale éligible",
+      "Demandes d'avis automatiques",
       "Accompagnement personnalisé",
       "Rapports sur mesure",
       "Badge Signature",
