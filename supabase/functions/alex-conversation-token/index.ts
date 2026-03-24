@@ -21,9 +21,10 @@ serve(async (req) => {
       throw new Error("ELEVENLABS_API_KEY is not configured");
     }
 
-    const { agentId } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const agentId = body.agentId || Deno.env.get("ELEVENLABS_AGENT_ID");
     if (!agentId) {
-      return new Response(JSON.stringify({ error: "agentId is required" }), {
+      return new Response(JSON.stringify({ error: "agentId is required — set ELEVENLABS_AGENT_ID secret or pass in body" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
