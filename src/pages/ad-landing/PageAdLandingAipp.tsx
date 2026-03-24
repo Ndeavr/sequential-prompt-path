@@ -74,7 +74,7 @@ export default function PageAdLandingAipp() {
 
     // Persist to DB
     try {
-      await supabase.from("aipp_score_checks").insert({
+      await supabase.from("aipp_score_checks" as never).insert({
         session_id: sid || null,
         business_name: data.business_name,
         city: data.city,
