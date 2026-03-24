@@ -86,6 +86,7 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
       "Tout le plan Premium",
       "Tous les rendez-vous garantis (S à XXL)",
       "Auto-acceptation + analytics avancés",
+      "Demandes d'avis automatiques",
       "Support dédié",
       "Badge Élite",
     ],
