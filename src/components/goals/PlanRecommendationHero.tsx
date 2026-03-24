@@ -73,12 +73,12 @@ export default function PlanRecommendationHero({ recommendedPlan, primaryObjecti
           <div className="text-center space-y-2">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Plan recommandé pour votre objectif</p>
             <div className="flex items-center justify-center gap-2">
-              <Icon className={cn("w-6 h-6", plan.color)} />
-              <h2 className="text-2xl font-black text-gradient">{plan.name}</h2>
+              <Icon className={cn("w-6 h-6", meta.color)} />
+              <h2 className="text-2xl font-black text-gradient">{planName}</h2>
             </div>
             <p className="text-3xl font-black text-foreground">
-              {plan.price > 0 ? `${plan.price}$` : "Gratuit"}
-              {plan.price > 0 && <span className="text-sm font-normal text-muted-foreground">/mois</span>}
+              {displayPrice > 0 ? `${displayPrice}$` : "Gratuit"}
+              {displayPrice > 0 && <span className="text-sm font-normal text-muted-foreground">/mois</span>}
             </p>
           </div>
 
