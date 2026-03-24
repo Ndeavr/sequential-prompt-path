@@ -63,6 +63,7 @@ import PropertyGraphPage from "@/pages/PropertyGraphPage";
 import AlexChat from "@/pages/AlexChat";
 import AuthorityDashboardPage from "@/pages/AuthorityDashboardPage";
 import AlexVoicePage from "@/pages/AlexVoicePage";
+import AlexVoiceRealtimePage from "@/pages/AlexVoiceRealtimePage";
 import AlexCommandCenterPage from "@/pages/AlexCommandCenterPage";
 import DesignPage from "@/pages/DesignPage";
 import DesignSharePage from "@/pages/DesignSharePage";
@@ -300,6 +301,7 @@ export const AppRouter = () => (
       <Route path="/property-graph" element={<PropertyGraphPage />} />
       <Route path="/alex" element={<AlexChat />} />
       <Route path="/alex/voice" element={<AlexVoicePage />} />
+      <Route path="/alex/voice/realtime" element={<AlexVoiceRealtimePage />} />
       <Route path="/alex/command" element={<AlexCommandCenterPage />} />
       <Route path="/alex/renovation" element={<RenovationVisualizerPage />} />
       <Route path="/design" element={<DesignPage />} />
