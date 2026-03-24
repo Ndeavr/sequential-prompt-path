@@ -149,6 +149,9 @@ import AdminPredictiveLeads from "@/pages/admin/AdminPredictiveLeads";
 // Dynamic Market Pricing
 import AdminDynamicMarketPricing from "@/pages/admin/AdminDynamicMarketPricing";
 
+// Predictive Market Board
+import AdminPredictiveMarketBoard from "@/pages/admin/AdminPredictiveMarketBoard";
+
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
 import BlogArticlePage from "@/pages/blog/BlogArticlePage";
@@ -581,6 +584,7 @@ export const AppRouter = () => (
       <Route path="/admin/optimization/winners" element={<ProtectedRoute requiredRole="admin"><AdminWinningVariantsPage /></ProtectedRoute>} />
       <Route path="/admin/predictive-leads" element={<ProtectedRoute requiredRole="admin"><AdminPredictiveLeads /></ProtectedRoute>} />
       <Route path="/admin/dynamic-pricing-market" element={<ProtectedRoute requiredRole="admin"><AdminDynamicMarketPricing /></ProtectedRoute>} />
+      <Route path="/admin/predictive-market-board" element={<ProtectedRoute requiredRole="admin"><AdminPredictiveMarketBoard /></ProtectedRoute>} />
       <Route path="/signature" element={<PageAlexGuidedOnboarding />} />
       <Route path="/audit/:slug" element={<AuditLandingPage />} />
       <Route path="/articles/:slug" element={<SeoArticlePage />} />
