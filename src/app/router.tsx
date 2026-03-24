@@ -114,6 +114,7 @@ import AdminFounderInvites from "@/pages/admin/AdminFounderInvites";
 import AdminProspects from "@/pages/admin/AdminProspects";
 import AdminProspectImport from "@/pages/admin/AdminProspectImport";
 import AuditLandingPage from "@/pages/AuditLandingPage";
+import PageAlexGuidedOnboarding from "@/pages/signature/PageAlexGuidedOnboarding";
 import ContractorAvailabilityPage from "@/pages/ContractorAvailabilityPage";
 import PublicBookingPage from "@/pages/PublicBookingPage";
 import BookingClientDemoPage from "@/pages/BookingClientDemoPage";
