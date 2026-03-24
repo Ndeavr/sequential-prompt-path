@@ -47,6 +47,9 @@ export default function PageAlexGoalsStrategy() {
   const completionPercent = prefill?.completionPercent ?? 45;
   const marketPosition = prefill?.marketPosition ?? "behind";
 
+  // Appointment pack upsell
+  const [selectedPack, setSelectedPack] = useState<PackTier | null>(null);
+
   // Objectives
   const [primaryObjective, setPrimaryObjective] = useState("");
   const [secondaryObjectives, setSecondaryObjectives] = useState<string[]>([]);
