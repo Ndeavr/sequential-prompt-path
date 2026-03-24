@@ -41,7 +41,7 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     id: "pro",
     name: "Pro",
     monthlyPrice: 4900,
-    yearlyPrice: 99900,
+    yearlyPrice: 49900, // ~15 % off
     monthlyStripePriceId: "price_1T9X6pCvZwK1QnPVfBlT13Lw",
     yearlyStripePriceId: "price_1T9X6pCvZwK1QnPVfBlT13Ly",
     features: [
