@@ -34,8 +34,22 @@ export default function AlexVoiceRealtime({ agentId, onClose, userName, classNam
   const [isMuted, setIsMuted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const entryIdRef = useRef(0);
+  const didSendFrenchContextRef = useRef(false);
 
   const conversation = useConversation({
+    connectionDelay: {
+      android: 250,
+      ios: 0,
+      default: 0,
+    },
+    overrides: {
+      agent: {
+        language: "fr",
+        firstMessage: userName
+          ? `Bonjour ${userName}, je suis Alex. Je suis là pour vous aider tout de suite.`
+          : "Bonjour, je suis Alex. Je suis là pour vous aider tout de suite.",
+      },
+    },
     onConnect: () => {
       console.log("[AlexVoice] Connected to agent");
       setIsConnecting(false);
@@ -79,16 +93,32 @@ export default function AlexVoiceRealtime({ agentId, onClose, userName, classNam
     }
   }, [transcripts]);
 
+  useEffect(() => {
+    if (conversation.status === "connected" && !didSendFrenchContextRef.current) {
+      conversation.sendContextualUpdate(
+        "Instruction de langue: réponds toujours en français (Québec), phrases courtes, ton humain, jamais en anglais."
+      );
+      didSendFrenchContextRef.current = true;
+      return;
+    }
+
+    if (conversation.status !== "connected") {
+      didSendFrenchContextRef.current = false;
+    }
+  }, [conversation, conversation.status]);
+
   const startConversation = useCallback(async () => {
     setIsConnecting(true);
     try {
-      // Request microphone permission
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Parallelize permission + token fetch for faster startup
+      const [, tokenResult] = await Promise.all([
+        navigator.mediaDevices.getUserMedia({ audio: true }),
+        supabase.functions.invoke("alex-conversation-token", {
+          body: agentId ? { agentId } : {},
+        }),
+      ]);
 
-      // Get conversation token from edge function
-      const { data, error } = await supabase.functions.invoke("alex-conversation-token", {
-        body: { agentId },
-      });
+      const { data, error } = tokenResult;
 
       if (error || !data?.token) {
         throw new Error(error?.message || "Impossible d'obtenir le token de conversation");
