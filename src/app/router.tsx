@@ -146,6 +146,9 @@ import AdminWinningVariantsPage from "@/pages/admin/AdminWinningVariantsPage";
 // Predictive Lead Core
 import AdminPredictiveLeads from "@/pages/admin/AdminPredictiveLeads";
 
+// Dynamic Market Pricing
+import AdminDynamicMarketPricing from "@/pages/admin/AdminDynamicMarketPricing";
+
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
 import BlogArticlePage from "@/pages/blog/BlogArticlePage";
