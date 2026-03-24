@@ -67,6 +67,15 @@ export default function PageAdLandingAipp() {
     business_name: string; city: string; website_url: string; phone: string; google_profile_url: string;
   }) => {
     setBusinessName(data.business_name);
+    // Save for downstream prefill
+    try {
+      sessionStorage.setItem("unpro_aipp_prefill", JSON.stringify({
+        businessName: data.business_name,
+        city: data.city,
+        phone: data.phone,
+        website: data.website_url,
+      }));
+    } catch {}
     setPhase("loading");
     const sid = await ensureSession();
     const scored = computeQuickAIPPScore(data);

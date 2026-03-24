@@ -62,14 +62,27 @@ export default function ContractorOnboardingPage() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  // Load prefill data from AIPP check or GMB import
+  const prefill = useMemo(() => {
+    try {
+      const raw = sessionStorage.getItem("unpro_aipp_prefill");
+      if (raw) {
+        sessionStorage.removeItem("unpro_aipp_prefill");
+        return JSON.parse(raw) as { businessName?: string; city?: string; phone?: string; website?: string };
+      }
+    } catch {}
+    return null;
+  }, []);
+
   const [step, setStep] = useState(1);
 
   const [form, setForm] = useState({
-    businessName: "",
-    city: "",
+    businessName: prefill?.businessName || "",
+    city: prefill?.city || "",
     categories: [] as string[],
     // territory
-    territoryCity: "",
+    territoryCity: prefill?.city || "",
     radius: "20",
     // services
     services: [] as string[],
