@@ -1659,6 +1659,77 @@ export type Database = {
           },
         ]
       }
+      appointment_packs: {
+        Row: {
+          city_slug: string | null
+          contractor_id: string | null
+          created_at: string | null
+          id: string
+          pack_size: number
+          remaining: number
+          source: string | null
+          status: string | null
+          total_price_cents: number
+          trade_slug: string | null
+          unit_price_cents: number
+        }
+        Insert: {
+          city_slug?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          id?: string
+          pack_size: number
+          remaining: number
+          source?: string | null
+          status?: string | null
+          total_price_cents: number
+          trade_slug?: string | null
+          unit_price_cents: number
+        }
+        Update: {
+          city_slug?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          id?: string
+          pack_size?: number
+          remaining?: number
+          source?: string | null
+          status?: string | null
+          total_price_cents?: number
+          trade_slug?: string | null
+          unit_price_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_packs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_packs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_packs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_packs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       appointment_price_calculations: {
         Row: {
           admin_override: boolean

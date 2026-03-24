@@ -9,6 +9,7 @@ import { ArrowLeft, ArrowRight, Sparkles, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { PackTier } from "@/lib/appointmentPricing";
 import ObjectiveSelectorGrid from "@/components/goals/ObjectiveSelectorGrid";
 import CurrentSituationSummary from "@/components/goals/CurrentSituationSummary";
 import StrategyRecommendationCard from "@/components/goals/StrategyRecommendationCard";
@@ -46,6 +47,9 @@ export default function PageAlexGoalsStrategy() {
   const completionPercent = prefill?.completionPercent ?? 45;
   const marketPosition = prefill?.marketPosition ?? "behind";
 
+  // Appointment pack upsell
+  const [selectedPack, setSelectedPack] = useState<PackTier | null>(null);
+
   // Objectives
   const [primaryObjective, setPrimaryObjective] = useState("");
   const [secondaryObjectives, setSecondaryObjectives] = useState<string[]>([]);
@@ -78,6 +82,13 @@ export default function PageAlexGoalsStrategy() {
       primaryObjective,
       secondaryObjectives,
     }));
+
+    // Persist pack selection
+    if (selectedPack) {
+      sessionStorage.setItem("unpro_appointment_pack", JSON.stringify(selectedPack));
+    } else {
+      sessionStorage.removeItem("unpro_appointment_pack");
+    }
 
     // Persist to DB (best-effort)
     try {
@@ -194,6 +205,10 @@ export default function PageAlexGoalsStrategy() {
                 monthlyAppointments={monthlyAppointments}
                 onSelectPlan={handleSelectPlan}
                 onTalkToAlex={() => navigate("/alex/voice/realtime")}
+                selectedPack={selectedPack}
+                onSelectPack={setSelectedPack}
+                tradeSlug={prefill?.tradeSlug}
+                citySlug={prefill?.citySlug}
               />
             </motion.div>
           )}

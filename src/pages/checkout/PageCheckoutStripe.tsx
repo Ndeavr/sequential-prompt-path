@@ -2,7 +2,7 @@
  * Module 4 — Stripe Checkout Page
  * Shows plan summary, trust signals, and redirects to Stripe.
  */
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Shield, Sparkles, Clock, Calendar, Check, Loader2, Lock, CreditCard } from "lucide-react";
@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { getPlanById, formatPlanPrice, type ContractorPlan, type BillingInterval, getStripePriceId, getYearlySavingsPercent } from "@/config/contractorPlans";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import AppointmentUpsellCard from "@/components/goals/AppointmentUpsellCard";
+import { formatCents, type PackTier } from "@/lib/appointmentPricing";
 
 const PLAN_ICONS: Record<string, string> = {
   recrue: "🛡️",
@@ -28,6 +30,14 @@ export default function PageCheckoutStripe() {
   const [loading, setLoading] = useState(false);
   const [billingInterval, setBillingInterval] = useState<BillingInterval>("month");
 
+  // Appointment pack from goals funnel
+  const initialPack = useMemo(() => {
+    try {
+      const raw = sessionStorage.getItem("unpro_appointment_pack");
+      return raw ? JSON.parse(raw) as PackTier : null;
+    } catch { return null; }
+  }, []);
+  const [selectedPack, setSelectedPack] = useState<PackTier | null>(initialPack);
   // Get plan from URL or sessionStorage
   const planCode = params.get("plan") || (() => {
     try {
@@ -86,6 +96,13 @@ export default function PageCheckoutStripe() {
             billingInterval,
             successUrl: `${window.location.origin}/checkout/success?plan=${planCode}`,
             cancelUrl: `${window.location.origin}/checkout?plan=${planCode}`,
+            ...(selectedPack && {
+              appointmentPack: {
+                size: selectedPack.size,
+                totalPriceCents: selectedPack.totalPriceCents,
+                unitPriceCents: selectedPack.unitPriceCents,
+              },
+            }),
           }),
         }
       );
@@ -195,6 +212,26 @@ export default function PageCheckoutStripe() {
           </div>
         </motion.div>
 
+        {/* Appointment pack upsell */}
+        <AppointmentUpsellCard
+          selectedPack={selectedPack}
+          onSelectPack={setSelectedPack}
+        />
+
+        {/* Pack total line */}
+        {selectedPack && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="rounded-xl bg-secondary/5 border border-secondary/10 p-3 flex items-center justify-between"
+          >
+            <p className="text-sm text-foreground font-medium">
+              + {selectedPack.size} rendez-vous à la carte
+            </p>
+            <p className="text-sm font-bold text-foreground">{formatCents(selectedPack.totalPriceCents)}</p>
+          </motion.div>
+        )}
+
         {/* After payment */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -253,7 +290,7 @@ export default function PageCheckoutStripe() {
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
               <>
-                <CreditCard className="w-4 h-4 mr-2" /> Payer {displayPrice}/mois
+                <CreditCard className="w-4 h-4 mr-2" /> Payer {displayPrice}/mois{selectedPack ? ` + ${formatCents(selectedPack.totalPriceCents)}` : ""}
               </>
             )}
           </Button>

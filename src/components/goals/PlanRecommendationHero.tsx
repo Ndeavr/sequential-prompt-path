@@ -3,6 +3,8 @@ import { Sparkles, Check, ArrowUp, ArrowDown, Crown, Shield, Zap, Star } from "l
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getPlanById, formatPlanPrice } from "@/config/contractorPlans";
+import AppointmentUpsellCard from "./AppointmentUpsellCard";
+import type { PackTier } from "@/lib/appointmentPricing";
 
 const PLAN_META: Record<string, { icon: typeof Shield; projects: string; color: string }> = {
   recrue: { icon: Shield, projects: "S/M", color: "text-muted-foreground" },
@@ -18,6 +20,10 @@ interface Props {
   monthlyAppointments: number;
   onSelectPlan: (plan: string) => void;
   onTalkToAlex: () => void;
+  selectedPack: PackTier | null;
+  onSelectPack: (pack: PackTier | null) => void;
+  tradeSlug?: string;
+  citySlug?: string;
 }
 
 function getWhyRecommended(plan: string, objective: string): string {
@@ -54,7 +60,7 @@ function getWhyNotLower(plan: string): string {
   return msgs[plan] || "";
 }
 
-export default function PlanRecommendationHero({ recommendedPlan, primaryObjective, monthlyAppointments, onSelectPlan, onTalkToAlex }: Props) {
+export default function PlanRecommendationHero({ recommendedPlan, primaryObjective, monthlyAppointments, onSelectPlan, onTalkToAlex, selectedPack, onSelectPack, tradeSlug, citySlug }: Props) {
   const configPlan = getPlanById(recommendedPlan);
   const meta = PLAN_META[recommendedPlan] || PLAN_META.pro;
   const Icon = meta.icon;
@@ -121,6 +127,16 @@ export default function PlanRecommendationHero({ recommendedPlan, primaryObjecti
           )}
         </div>
       </div>
+
+      {/* Appointment upsell */}
+      <AppointmentUpsellCard
+        monthlyAppointments={monthlyAppointments}
+        planIncludedRdv={recommendedPlan === "recrue" ? 0 : recommendedPlan === "pro" ? 3 : recommendedPlan === "premium" ? 8 : 15}
+        tradeSlug={tradeSlug}
+        citySlug={citySlug}
+        selectedPack={selectedPack}
+        onSelectPack={onSelectPack}
+      />
 
       {/* Competitive shift */}
       <CompetitiveShiftPreview currentPosition="behind" projectedPosition={
