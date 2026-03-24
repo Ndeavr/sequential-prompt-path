@@ -104,6 +104,7 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     features: [
       "Tout le plan Élite",
       "Exclusivité territoriale éligible",
+      "Demandes d'avis automatiques",
       "Accompagnement personnalisé",
       "Rapports sur mesure",
       "Badge Signature",

@@ -119,16 +119,30 @@ serve(async (req) => {
         await serviceSupabase.from('leads').update({ status: 'closed' }).eq('id', appointment.lead_id)
       }
 
-      // Trigger feedback request notification
+      // Auto Review Request Engine — Premium+ only
       try {
-        await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-feedback-request`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-          },
-          body: JSON.stringify({ appointmentId }),
-        })
+        const { data: sub } = await serviceSupabase
+          .from('contractor_subscriptions')
+          .select('plan_id')
+          .eq('contractor_id', contractor.id)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        const plan = sub?.plan_id ?? 'recrue'
+        const premiumPlus = ['premium', 'elite', 'signature']
+
+        if (premiumPlus.includes(plan)) {
+          await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-feedback-request`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+            },
+            body: JSON.stringify({ appointmentId }),
+          })
+        }
       } catch (_) { /* non-blocking */ }
 
       return new Response(JSON.stringify({ ok: true, action }), { headers: corsHeaders })
