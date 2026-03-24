@@ -118,7 +118,7 @@ export default function PageAlexPredictiveSeller() {
     predicted_profit_value: pred?.predicted_profit_value,
     predicted_close_probability: pred?.predicted_close_probability,
     predicted_lead_quality_score: pred?.predicted_lead_quality_score,
-    predicted_pricing_sensitivity: pred?.predicted_pricing_sensitivity,
+    predicted_pricing_sensitivity: pred?.predicted_pricing_sensitivity != null ? Number(pred.predicted_pricing_sensitivity) : undefined,
     predicted_abandon_probability: pred?.predicted_abandon_probability,
     predicted_show_probability: pred?.predicted_show_probability,
     predicted_best_offer_type: pred?.predicted_best_offer_type,
