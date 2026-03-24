@@ -20,6 +20,10 @@ interface Props {
   monthlyAppointments: number;
   onSelectPlan: (plan: string) => void;
   onTalkToAlex: () => void;
+  selectedPack: PackTier | null;
+  onSelectPack: (pack: PackTier | null) => void;
+  tradeSlug?: string;
+  citySlug?: string;
 }
 
 function getWhyRecommended(plan: string, objective: string): string {
