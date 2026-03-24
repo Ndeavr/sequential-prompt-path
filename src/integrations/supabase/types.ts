@@ -807,6 +807,56 @@ export type Database = {
         }
         Relationships: []
       }
+      aipp_score_checks: {
+        Row: {
+          business_name: string
+          city: string
+          created_at: string
+          google_profile_url: string | null
+          id: string
+          market_position_label: string | null
+          phone: string | null
+          quick_score: number | null
+          score_label: string | null
+          session_id: string | null
+          website_url: string | null
+        }
+        Insert: {
+          business_name: string
+          city: string
+          created_at?: string
+          google_profile_url?: string | null
+          id?: string
+          market_position_label?: string | null
+          phone?: string | null
+          quick_score?: number | null
+          score_label?: string | null
+          session_id?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          business_name?: string
+          city?: string
+          created_at?: string
+          google_profile_url?: string | null
+          id?: string
+          market_position_label?: string | null
+          phone?: string | null
+          quick_score?: number | null
+          score_label?: string | null
+          session_id?: string | null
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aipp_score_checks_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "lead_capture_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       aipp_scores: {
         Row: {
           calculated_at: string
@@ -13450,6 +13500,71 @@ export type Database = {
           name_fr?: string
           slug?: string
           sort_order?: number | null
+        }
+        Relationships: []
+      }
+      landing_cta_events: {
+        Row: {
+          created_at: string
+          event_name: string
+          id: string
+          metadata_json: Json | null
+          page_name: string
+          session_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_name: string
+          id?: string
+          metadata_json?: Json | null
+          page_name: string
+          session_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_name?: string
+          id?: string
+          metadata_json?: Json | null
+          page_name?: string
+          session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "landing_cta_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "lead_capture_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_capture_sessions: {
+        Row: {
+          campaign_name: string | null
+          created_at: string
+          device_type: string | null
+          id: string
+          landing_variant: string | null
+          source_channel: string | null
+          status: string
+        }
+        Insert: {
+          campaign_name?: string | null
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          landing_variant?: string | null
+          source_channel?: string | null
+          status?: string
+        }
+        Update: {
+          campaign_name?: string | null
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          landing_variant?: string | null
+          source_channel?: string | null
+          status?: string
         }
         Relationships: []
       }
