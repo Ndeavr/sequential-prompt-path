@@ -60,7 +60,7 @@ function getWhyNotLower(plan: string): string {
   return msgs[plan] || "";
 }
 
-export default function PlanRecommendationHero({ recommendedPlan, primaryObjective, monthlyAppointments, onSelectPlan, onTalkToAlex }: Props) {
+export default function PlanRecommendationHero({ recommendedPlan, primaryObjective, monthlyAppointments, onSelectPlan, onTalkToAlex, selectedPack, onSelectPack, tradeSlug, citySlug }: Props) {
   const configPlan = getPlanById(recommendedPlan);
   const meta = PLAN_META[recommendedPlan] || PLAN_META.pro;
   const Icon = meta.icon;
