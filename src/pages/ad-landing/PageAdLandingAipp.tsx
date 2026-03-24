@@ -58,7 +58,7 @@ export default function PageAdLandingAipp() {
       landing_variant: variant,
       device_type: isMobile ? "mobile" : "desktop",
       status: "started",
-    } as never).select("id").single();
+    } as never).select("id").single() as { data: { id: string } | null };
     if (data) { setSessionId(data.id); return data.id; }
     return null;
   }, [sessionId, searchParams]);
