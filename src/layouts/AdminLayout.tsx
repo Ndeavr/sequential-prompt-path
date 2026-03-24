@@ -37,6 +37,7 @@ const navItems = [
   { to: "/admin/growth-engine", label: "Growth Engine", icon: TrendingUp },
   { to: "/admin/screenshot-analytics", label: "Screenshot Intel", icon: Camera },
   { to: "/admin/optimization", label: "Optimisation IA", icon: Wand2 },
+  { to: "/admin/predictive-leads", label: "Predictive Leads", icon: Brain },
   { to: "/admin/uos", label: "UNPRO OS", icon: Sparkles },
 ];
 

@@ -143,6 +143,9 @@ import AdminExperimentDetailPage from "@/pages/admin/AdminExperimentDetailPage";
 import AdminOptimizationRecommendations from "@/pages/admin/AdminOptimizationRecommendations";
 import AdminWinningVariantsPage from "@/pages/admin/AdminWinningVariantsPage";
 
+// Predictive Lead Core
+import AdminPredictiveLeads from "@/pages/admin/AdminPredictiveLeads";
+
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
 import BlogArticlePage from "@/pages/blog/BlogArticlePage";
@@ -573,6 +576,7 @@ export const AppRouter = () => (
       <Route path="/admin/experiments/:id" element={<ProtectedRoute requiredRole="admin"><AdminExperimentDetailPage /></ProtectedRoute>} />
       <Route path="/admin/optimization/recommendations" element={<ProtectedRoute requiredRole="admin"><AdminOptimizationRecommendations /></ProtectedRoute>} />
       <Route path="/admin/optimization/winners" element={<ProtectedRoute requiredRole="admin"><AdminWinningVariantsPage /></ProtectedRoute>} />
+      <Route path="/admin/predictive-leads" element={<ProtectedRoute requiredRole="admin"><AdminPredictiveLeads /></ProtectedRoute>} />
       <Route path="/signature" element={<PageAlexGuidedOnboarding />} />
       <Route path="/audit/:slug" element={<AuditLandingPage />} />
       <Route path="/articles/:slug" element={<SeoArticlePage />} />
