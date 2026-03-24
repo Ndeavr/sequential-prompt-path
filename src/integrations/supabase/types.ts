@@ -20622,6 +20622,240 @@ export type Database = {
           },
         ]
       }
+      screen_catalog: {
+        Row: {
+          created_at: string
+          entity_type: string | null
+          id: string
+          is_active: boolean
+          is_share_worthy: boolean
+          role_scope: string[] | null
+          route_pattern: string
+          screen_key: string
+          screen_name: string
+          share_priority_weight: number
+        }
+        Insert: {
+          created_at?: string
+          entity_type?: string | null
+          id?: string
+          is_active?: boolean
+          is_share_worthy?: boolean
+          role_scope?: string[] | null
+          route_pattern: string
+          screen_key: string
+          screen_name: string
+          share_priority_weight?: number
+        }
+        Update: {
+          created_at?: string
+          entity_type?: string | null
+          id?: string
+          is_active?: boolean
+          is_share_worthy?: boolean
+          role_scope?: string[] | null
+          route_pattern?: string
+          screen_key?: string
+          screen_name?: string
+          share_priority_weight?: number
+        }
+        Relationships: []
+      }
+      screen_friction_scores: {
+        Row: {
+          dismiss_rate_percent: number
+          friction_level: string
+          friction_score: number
+          id: string
+          last_calculated_at: string
+          prompt_conversion_rate_percent: number
+          screen_key: string
+          screen_name: string
+          screenshot_rate_percent: number
+          time_window: string
+          total_prompt_dismissed: number
+          total_prompt_shown: number
+          total_screenshots: number
+          total_share_converted: number
+          total_views: number
+        }
+        Insert: {
+          dismiss_rate_percent?: number
+          friction_level?: string
+          friction_score?: number
+          id?: string
+          last_calculated_at?: string
+          prompt_conversion_rate_percent?: number
+          screen_key: string
+          screen_name: string
+          screenshot_rate_percent?: number
+          time_window?: string
+          total_prompt_dismissed?: number
+          total_prompt_shown?: number
+          total_screenshots?: number
+          total_share_converted?: number
+          total_views?: number
+        }
+        Update: {
+          dismiss_rate_percent?: number
+          friction_level?: string
+          friction_score?: number
+          id?: string
+          last_calculated_at?: string
+          prompt_conversion_rate_percent?: number
+          screen_key?: string
+          screen_name?: string
+          screenshot_rate_percent?: number
+          time_window?: string
+          total_prompt_dismissed?: number
+          total_prompt_shown?: number
+          total_screenshots?: number
+          total_share_converted?: number
+          total_views?: number
+        }
+        Relationships: []
+      }
+      screenshot_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          description: string
+          id: string
+          metric_snapshot: Json | null
+          resolved_at: string | null
+          screen_key: string
+          severity: string
+          status: string
+          title: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          description: string
+          id?: string
+          metric_snapshot?: Json | null
+          resolved_at?: string | null
+          screen_key: string
+          severity: string
+          status?: string
+          title: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          description?: string
+          id?: string
+          metric_snapshot?: Json | null
+          resolved_at?: string | null
+          screen_key?: string
+          severity?: string
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      screenshot_events: {
+        Row: {
+          app_version: string | null
+          created_at: string
+          dismissed: boolean
+          entity_id: string | null
+          entity_slug: string | null
+          entity_type: string | null
+          id: string
+          platform: string
+          role: string | null
+          route_path: string
+          screen_key: string
+          screen_name: string
+          session_id: string | null
+          share_cta_clicked: boolean
+          share_method: string | null
+          share_prompt_shown: boolean
+          share_prompt_variant: string | null
+          user_id: string | null
+        }
+        Insert: {
+          app_version?: string | null
+          created_at?: string
+          dismissed?: boolean
+          entity_id?: string | null
+          entity_slug?: string | null
+          entity_type?: string | null
+          id?: string
+          platform: string
+          role?: string | null
+          route_path: string
+          screen_key: string
+          screen_name: string
+          session_id?: string | null
+          share_cta_clicked?: boolean
+          share_method?: string | null
+          share_prompt_shown?: boolean
+          share_prompt_variant?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          app_version?: string | null
+          created_at?: string
+          dismissed?: boolean
+          entity_id?: string | null
+          entity_slug?: string | null
+          entity_type?: string | null
+          id?: string
+          platform?: string
+          role?: string | null
+          route_path?: string
+          screen_key?: string
+          screen_name?: string
+          session_id?: string | null
+          share_cta_clicked?: boolean
+          share_method?: string | null
+          share_prompt_shown?: boolean
+          share_prompt_variant?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      screenshot_recommendations: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          priority: string
+          recommendation_type: string
+          resolved_at: string | null
+          screen_key: string
+          status: string
+          supporting_metrics: Json | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          priority?: string
+          recommendation_type: string
+          resolved_at?: string | null
+          screen_key: string
+          status?: string
+          supporting_metrics?: Json | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          priority?: string
+          recommendation_type?: string
+          resolved_at?: string | null
+          screen_key?: string
+          status?: string
+          supporting_metrics?: Json | null
+          title?: string
+        }
+        Relationships: []
+      }
       seo_admin_queue: {
         Row: {
           city: string | null
@@ -21291,6 +21525,56 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      share_link_events: {
+        Row: {
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          route_path: string
+          screen_key: string
+          screenshot_event_id: string | null
+          session_id: string | null
+          share_link_url: string | null
+          share_method: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          route_path: string
+          screen_key: string
+          screenshot_event_id?: string | null
+          session_id?: string | null
+          share_link_url?: string | null
+          share_method: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          route_path?: string
+          screen_key?: string
+          screenshot_event_id?: string | null
+          session_id?: string | null
+          share_link_url?: string | null
+          share_method?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "share_link_events_screenshot_event_id_fkey"
+            columns: ["screenshot_event_id"]
+            isOneToOne: false
+            referencedRelation: "screenshot_events"
             referencedColumns: ["id"]
           },
         ]
@@ -23716,6 +24000,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_share_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          last_prompt_seen_at: string | null
+          preferred_share_method: string | null
+          times_prompt_dismissed_total: number
+          times_prompt_seen_this_session: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_prompt_seen_at?: string | null
+          preferred_share_method?: string | null
+          times_prompt_dismissed_total?: number
+          times_prompt_seen_this_session?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_prompt_seen_at?: string | null
+          preferred_share_method?: string | null
+          times_prompt_dismissed_total?: number
+          times_prompt_seen_this_session?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_shares: {
         Row: {
           created_at: string
@@ -24288,6 +24605,92 @@ export type Database = {
           scores: Json | null
           traits: Json | null
           updated_at: string | null
+        }
+        Relationships: []
+      }
+      screen_friction_summary: {
+        Row: {
+          dismiss_rate_percent: number | null
+          friction_level: string | null
+          friction_score: number | null
+          last_calculated_at: string | null
+          prompt_conversion_rate_percent: number | null
+          screen_key: string | null
+          screen_name: string | null
+          total_screenshots: number | null
+          total_share_converted: number | null
+        }
+        Insert: {
+          dismiss_rate_percent?: number | null
+          friction_level?: string | null
+          friction_score?: number | null
+          last_calculated_at?: string | null
+          prompt_conversion_rate_percent?: number | null
+          screen_key?: string | null
+          screen_name?: string | null
+          total_screenshots?: number | null
+          total_share_converted?: number | null
+        }
+        Update: {
+          dismiss_rate_percent?: number | null
+          friction_level?: string | null
+          friction_score?: number | null
+          last_calculated_at?: string | null
+          prompt_conversion_rate_percent?: number | null
+          screen_key?: string | null
+          screen_name?: string | null
+          total_screenshots?: number | null
+          total_share_converted?: number | null
+        }
+        Relationships: []
+      }
+      screenshot_alert_summary: {
+        Row: {
+          severity: string | null
+          status: string | null
+          total_alerts: number | null
+        }
+        Relationships: []
+      }
+      screenshot_analytics_daily: {
+        Row: {
+          day: string | null
+          total_screenshots: number | null
+          total_shared_after_prompt: number | null
+          unique_users: number | null
+        }
+        Relationships: []
+      }
+      screenshot_conversion_summary: {
+        Row: {
+          conversion_rate_percent: number | null
+          total_converted: number | null
+          total_screenshots: number | null
+        }
+        Relationships: []
+      }
+      screenshot_recommendation_summary: {
+        Row: {
+          priority: string | null
+          status: string | null
+          total_recommendations: number | null
+        }
+        Relationships: []
+      }
+      screenshot_role_breakdown: {
+        Row: {
+          role: string | null
+          total_converted: number | null
+          total_screenshots: number | null
+        }
+        Relationships: []
+      }
+      screenshot_top_screens: {
+        Row: {
+          screen_key: string | null
+          screen_name: string | null
+          total_converted_shares: number | null
+          total_screenshots: number | null
         }
         Relationships: []
       }
