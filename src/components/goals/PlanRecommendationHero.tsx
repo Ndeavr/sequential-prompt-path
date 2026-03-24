@@ -55,8 +55,11 @@ function getWhyNotLower(plan: string): string {
 }
 
 export default function PlanRecommendationHero({ recommendedPlan, primaryObjective, monthlyAppointments, onSelectPlan, onTalkToAlex }: Props) {
-  const plan = PLANS[recommendedPlan as keyof typeof PLANS] || PLANS.pro;
-  const Icon = plan.icon;
+  const configPlan = getPlanById(recommendedPlan);
+  const meta = PLAN_META[recommendedPlan] || PLAN_META.pro;
+  const Icon = meta.icon;
+  const displayPrice = configPlan ? configPlan.monthlyPrice / 100 : 0;
+  const planName = configPlan?.name ?? "Pro";
 
   return (
     <motion.div
