@@ -61,6 +61,7 @@ import SeoSitemapPage from "@/pages/seo/SeoSitemapPage";
 import AdminSeoGenerator from "@/pages/admin/AdminSeoGenerator";
 import PropertyGraphPage from "@/pages/PropertyGraphPage";
 import AlexChat from "@/pages/AlexChat";
+import AuthorityDashboardPage from "@/pages/AuthorityDashboardPage";
 import AlexVoicePage from "@/pages/AlexVoicePage";
 import AlexCommandCenterPage from "@/pages/AlexCommandCenterPage";
 import DesignPage from "@/pages/DesignPage";
@@ -308,6 +309,7 @@ export const AppRouter = () => (
       <Route path="/tendances" element={<TrendingPage />} />
       <Route path="/carte" element={<PropertyMapPage />} />
       <Route path="/flywheel" element={<FlywheelPage />} />
+      <Route path="/authority" element={<AuthorityDashboardPage />} />
       <Route path="/energy" element={<EnergyPage />} />
       <Route path="/preventive-maintenance" element={<PreventiveMaintenancePage />} />
       <Route path="/copropriete" element={<CoproprietePage />} />

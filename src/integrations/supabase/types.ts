@@ -1903,6 +1903,332 @@ export type Database = {
           },
         ]
       }
+      authority_articles: {
+        Row: {
+          aeo_score: number | null
+          content: string | null
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          published_at: string | null
+          seo_score: number | null
+          status: string | null
+          title: string
+          topic_id: string | null
+          updated_at: string | null
+          user_id: string | null
+          word_count: number | null
+        }
+        Insert: {
+          aeo_score?: number | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          published_at?: string | null
+          seo_score?: number | null
+          status?: string | null
+          title: string
+          topic_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          word_count?: number | null
+        }
+        Update: {
+          aeo_score?: number | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          published_at?: string | null
+          seo_score?: number | null
+          status?: string | null
+          title?: string
+          topic_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          word_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "authority_articles_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "authority_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      authority_content_variants: {
+        Row: {
+          article_id: string | null
+          created_at: string | null
+          engagement_score: number | null
+          id: string
+          platform: string
+          posted_at: string | null
+          scheduled_at: string | null
+          status: string | null
+          variant_content: string | null
+        }
+        Insert: {
+          article_id?: string | null
+          created_at?: string | null
+          engagement_score?: number | null
+          id?: string
+          platform: string
+          posted_at?: string | null
+          scheduled_at?: string | null
+          status?: string | null
+          variant_content?: string | null
+        }
+        Update: {
+          article_id?: string | null
+          created_at?: string | null
+          engagement_score?: number | null
+          id?: string
+          platform?: string
+          posted_at?: string | null
+          scheduled_at?: string | null
+          status?: string | null
+          variant_content?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "authority_content_variants_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "authority_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      authority_distribution_queue: {
+        Row: {
+          created_at: string | null
+          id: string
+          platform: string
+          priority: number | null
+          result: Json | null
+          scheduled_for: string | null
+          status: string | null
+          user_id: string | null
+          variant_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          platform: string
+          priority?: number | null
+          result?: Json | null
+          scheduled_for?: string | null
+          status?: string | null
+          user_id?: string | null
+          variant_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          platform?: string
+          priority?: number | null
+          result?: Json | null
+          scheduled_for?: string | null
+          status?: string | null
+          user_id?: string | null
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "authority_distribution_queue_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "authority_content_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      authority_performance: {
+        Row: {
+          consistency_score: number | null
+          content_volume: number | null
+          growth_pct: number | null
+          id: string
+          metadata: Json | null
+          overall_score: number | null
+          platform_diversity: number | null
+          signal_strength: number | null
+          snapshot_at: string | null
+          structure_quality: number | null
+          user_id: string | null
+        }
+        Insert: {
+          consistency_score?: number | null
+          content_volume?: number | null
+          growth_pct?: number | null
+          id?: string
+          metadata?: Json | null
+          overall_score?: number | null
+          platform_diversity?: number | null
+          signal_strength?: number | null
+          snapshot_at?: string | null
+          structure_quality?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          consistency_score?: number | null
+          content_volume?: number | null
+          growth_pct?: number | null
+          id?: string
+          metadata?: Json | null
+          overall_score?: number | null
+          platform_diversity?: number | null
+          signal_strength?: number | null
+          snapshot_at?: string | null
+          structure_quality?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      authority_signals: {
+        Row: {
+          created_at: string | null
+          detected_at: string | null
+          id: string
+          metadata: Json | null
+          signal_type: string
+          source: string | null
+          source_url: string | null
+          strength_score: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          detected_at?: string | null
+          id?: string
+          metadata?: Json | null
+          signal_type: string
+          source?: string | null
+          source_url?: string | null
+          strength_score?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          detected_at?: string | null
+          id?: string
+          metadata?: Json | null
+          signal_type?: string
+          source?: string | null
+          source_url?: string | null
+          strength_score?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      authority_tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          due_date: string | null
+          duration_minutes: number | null
+          id: string
+          priority: string | null
+          related_topic_id: string | null
+          source: string | null
+          status: string | null
+          task_type: string | null
+          title: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          due_date?: string | null
+          duration_minutes?: number | null
+          id?: string
+          priority?: string | null
+          related_topic_id?: string | null
+          source?: string | null
+          status?: string | null
+          task_type?: string | null
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          due_date?: string | null
+          duration_minutes?: number | null
+          id?: string
+          priority?: string | null
+          related_topic_id?: string | null
+          source?: string | null
+          status?: string | null
+          task_type?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "authority_tasks_related_topic_id_fkey"
+            columns: ["related_topic_id"]
+            isOneToOne: false
+            referencedRelation: "authority_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      authority_topics: {
+        Row: {
+          aeo_score: number | null
+          category: string | null
+          created_at: string | null
+          id: string
+          location: string | null
+          platform_coverage: Json | null
+          slug: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          aeo_score?: number | null
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          location?: string | null
+          platform_coverage?: Json | null
+          slug?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          aeo_score?: number | null
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          location?: string | null
+          platform_coverage?: Json | null
+          slug?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       auto_campaigns: {
         Row: {
           created_at: string
