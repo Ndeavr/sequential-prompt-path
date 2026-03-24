@@ -2,7 +2,7 @@
  * Module 4 — Stripe Checkout Page
  * Shows plan summary, trust signals, and redirects to Stripe.
  */
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Shield, Sparkles, Clock, Calendar, Check, Loader2, Lock, CreditCard } from "lucide-react";
@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { getPlanById, formatPlanPrice, type ContractorPlan, type BillingInterval, getStripePriceId, getYearlySavingsPercent } from "@/config/contractorPlans";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import AppointmentUpsellCard from "@/components/goals/AppointmentUpsellCard";
+import { formatCents, type PackTier } from "@/lib/appointmentPricing";
 
 const PLAN_ICONS: Record<string, string> = {
   recrue: "🛡️",

@@ -205,6 +205,10 @@ export default function PageAlexGoalsStrategy() {
                 monthlyAppointments={monthlyAppointments}
                 onSelectPlan={handleSelectPlan}
                 onTalkToAlex={() => navigate("/alex/voice/realtime")}
+                selectedPack={selectedPack}
+                onSelectPack={setSelectedPack}
+                tradeSlug={prefill?.tradeSlug}
+                citySlug={prefill?.citySlug}
               />
             </motion.div>
           )}
