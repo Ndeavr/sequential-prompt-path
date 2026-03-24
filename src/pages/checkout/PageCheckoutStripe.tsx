@@ -290,7 +290,7 @@ export default function PageCheckoutStripe() {
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
               <>
-                <CreditCard className="w-4 h-4 mr-2" /> Payer {displayPrice}/mois
+                <CreditCard className="w-4 h-4 mr-2" /> Payer {displayPrice}/mois{selectedPack ? ` + ${formatCents(selectedPack.totalPriceCents)}` : ""}
               </>
             )}
           </Button>
