@@ -236,7 +236,7 @@ export default function PageAlexGuidedOnboarding() {
     setIsProcessing(true);
     try {
       await supabase.from("contractors").update({
-        onboarding_completed: true,
+        admin_verified: true,
       }).eq("id", state.contractorId);
       goTo("published");
       toast.success("Profil publié !");
