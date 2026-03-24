@@ -176,8 +176,8 @@ export default function AlexSalesPanel() {
             )}
 
             {analysis.recommended_plan === "current" && (
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-green-500/10 border border-green-500/20">
-                <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-accent/10 border border-accent/20">
+                <CheckCircle2 className="w-4 h-4 text-accent flex-shrink-0" />
                 <p className="text-xs text-foreground font-medium">
                   Votre plan actuel est adapté. Concentrez-vous sur l'optimisation de votre profil.
                 </p>
