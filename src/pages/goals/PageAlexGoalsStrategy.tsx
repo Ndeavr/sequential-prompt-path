@@ -9,6 +9,7 @@ import { ArrowLeft, ArrowRight, Sparkles, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { PackTier } from "@/lib/appointmentPricing";
 import ObjectiveSelectorGrid from "@/components/goals/ObjectiveSelectorGrid";
 import CurrentSituationSummary from "@/components/goals/CurrentSituationSummary";
 import StrategyRecommendationCard from "@/components/goals/StrategyRecommendationCard";
