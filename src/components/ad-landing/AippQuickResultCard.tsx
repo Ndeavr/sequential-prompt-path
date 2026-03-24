@@ -1,13 +1,15 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, CheckCircle, AlertTriangle, TrendingUp, Zap } from "lucide-react";
+import { ArrowRight, CheckCircle, AlertTriangle, TrendingUp, Zap, MapPin, ExternalLink, ThumbsUp, ThumbsDown } from "lucide-react";
 import type { AIPPQuickResult } from "@/services/aippQuickScoreService";
 
 interface Props {
   result: AIPPQuickResult;
   businessName: string;
+  city?: string;
   onCreateProfile: () => void;
   onTalkToAlex: () => void;
 }
