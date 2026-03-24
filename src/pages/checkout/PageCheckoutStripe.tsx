@@ -212,6 +212,26 @@ export default function PageCheckoutStripe() {
           </div>
         </motion.div>
 
+        {/* Appointment pack upsell */}
+        <AppointmentUpsellCard
+          selectedPack={selectedPack}
+          onSelectPack={setSelectedPack}
+        />
+
+        {/* Pack total line */}
+        {selectedPack && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="rounded-xl bg-secondary/5 border border-secondary/10 p-3 flex items-center justify-between"
+          >
+            <p className="text-sm text-foreground font-medium">
+              + {selectedPack.size} rendez-vous à la carte
+            </p>
+            <p className="text-sm font-bold text-foreground">{formatCents(selectedPack.totalPriceCents)}</p>
+          </motion.div>
+        )}
+
         {/* After payment */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
