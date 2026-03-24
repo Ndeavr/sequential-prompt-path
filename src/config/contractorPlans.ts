@@ -77,8 +77,8 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
   {
     id: "elite",
     name: "Élite",
-    monthlyPrice: 24900,
-    yearlyPrice: 249900,
+    monthlyPrice: 19900,
+    yearlyPrice: 199900,
     monthlyStripePriceId: "price_1T9X6sCvZwK1QnPV2ZwYQOGT",
     yearlyStripePriceId: "price_1T9X6sCvZwK1QnPV2ZwYQOGY",
     features: [
