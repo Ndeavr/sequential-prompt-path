@@ -63,6 +63,7 @@ import PropertyGraphPage from "@/pages/PropertyGraphPage";
 import AlexChat from "@/pages/AlexChat";
 import AuthorityDashboardPage from "@/pages/AuthorityDashboardPage";
 import AlexVoicePage from "@/pages/AlexVoicePage";
+import AlexVoiceRealtimePage from "@/pages/AlexVoiceRealtimePage";
 import AlexCommandCenterPage from "@/pages/AlexCommandCenterPage";
 import DesignPage from "@/pages/DesignPage";
 import DesignSharePage from "@/pages/DesignSharePage";
