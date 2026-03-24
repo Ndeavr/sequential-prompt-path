@@ -159,8 +159,15 @@ export default function ContractorOnboardingPage() {
       navigate("/signup");
       return;
     }
-    toast.success("Profil activé ! Bienvenue dans le réseau UNPRO.");
-    navigate("/pro");
+    // Pass context to goals page
+    sessionStorage.setItem("unpro_goals_prefill", JSON.stringify({
+      city: form.city,
+      aippScore: currentScore,
+      completionPercent: 45,
+      marketPosition: "behind",
+    }));
+    toast.success("Profil créé ! Définissons maintenant vos objectifs.");
+    navigate("/goals");
   };
 
   const currentScore = 61;

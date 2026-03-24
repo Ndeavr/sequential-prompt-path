@@ -15179,6 +15179,30 @@ export type Database = {
           },
         ]
       }
+      onboarding_objectives: {
+        Row: {
+          contractor_id: string
+          created_at: string | null
+          id: string
+          primary_objective: string
+          secondary_objectives_json: Json | null
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string | null
+          id?: string
+          primary_objective: string
+          secondary_objectives_json?: Json | null
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string | null
+          id?: string
+          primary_objective?: string
+          secondary_objectives_json?: Json | null
+        }
+        Relationships: []
+      }
       opportunity_allocations: {
         Row: {
           allocation_mode: string | null
@@ -15564,6 +15588,33 @@ export type Database = {
           short_pitch?: string | null
           summary_outcome?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      plan_recommendations: {
+        Row: {
+          contractor_id: string
+          created_at: string | null
+          id: string
+          reason_json: Json | null
+          reason_summary: string | null
+          recommended_plan_code: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string | null
+          id?: string
+          reason_json?: Json | null
+          reason_summary?: string | null
+          recommended_plan_code: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string | null
+          id?: string
+          reason_json?: Json | null
+          reason_summary?: string | null
+          recommended_plan_code?: string
         }
         Relationships: []
       }
@@ -19575,6 +19626,77 @@ export type Database = {
         }
         Relationships: []
       }
+      revenue_fit_inputs: {
+        Row: {
+          average_job_value: number | null
+          close_rate_percent: number | null
+          contractor_id: string
+          created_at: string | null
+          gross_margin_percent: number | null
+          id: string
+          target_revenue_amount: number | null
+        }
+        Insert: {
+          average_job_value?: number | null
+          close_rate_percent?: number | null
+          contractor_id: string
+          created_at?: string | null
+          gross_margin_percent?: number | null
+          id?: string
+          target_revenue_amount?: number | null
+        }
+        Update: {
+          average_job_value?: number | null
+          close_rate_percent?: number | null
+          contractor_id?: string
+          created_at?: string | null
+          gross_margin_percent?: number | null
+          id?: string
+          target_revenue_amount?: number | null
+        }
+        Relationships: []
+      }
+      revenue_fit_results: {
+        Row: {
+          created_at: string | null
+          fit_label: string | null
+          id: string
+          input_id: string | null
+          reason_json: Json | null
+          recommended_plan_code: string | null
+          required_appointments: number | null
+          required_closed_jobs: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          fit_label?: string | null
+          id?: string
+          input_id?: string | null
+          reason_json?: Json | null
+          recommended_plan_code?: string | null
+          required_appointments?: number | null
+          required_closed_jobs?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          fit_label?: string | null
+          id?: string
+          input_id?: string | null
+          reason_json?: Json | null
+          recommended_plan_code?: string | null
+          required_appointments?: number | null
+          required_closed_jobs?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_fit_results_input_id_fkey"
+            columns: ["input_id"]
+            isOneToOne: false
+            referencedRelation: "revenue_fit_inputs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       review_insights: {
         Row: {
           authenticity_flags: Json | null
@@ -21575,6 +21697,36 @@ export type Database = {
           is_active?: boolean | null
           region?: string | null
           rule_name?: string
+        }
+        Relationships: []
+      }
+      strategy_recommendations: {
+        Row: {
+          action_plan_json: Json | null
+          confidence_score: number | null
+          contractor_id: string
+          created_at: string | null
+          id: string
+          reasoning: string | null
+          strategy_type: string
+        }
+        Insert: {
+          action_plan_json?: Json | null
+          confidence_score?: number | null
+          contractor_id: string
+          created_at?: string | null
+          id?: string
+          reasoning?: string | null
+          strategy_type: string
+        }
+        Update: {
+          action_plan_json?: Json | null
+          confidence_score?: number | null
+          contractor_id?: string
+          created_at?: string | null
+          id?: string
+          reasoning?: string | null
+          strategy_type?: string
         }
         Relationships: []
       }

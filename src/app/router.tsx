@@ -13,6 +13,7 @@ import LoginPageUnpro from "@/pages/LoginPageUnpro";
 // Public
 import PageAdLandingAipp from "@/pages/ad-landing/PageAdLandingAipp";
 import PageBusinessImport from "@/pages/business-import/PageBusinessImport";
+import PageAlexGoalsStrategy from "@/pages/goals/PageAlexGoalsStrategy";
 import Home from "@/pages/Home";
 import Search from "@/pages/Search";
 import ContractorProfile from "@/pages/ContractorProfile";
@@ -293,6 +294,7 @@ export const AppRouter = () => (
       <Route path="/describe-project" element={<DescribeProjectPage />} />
       <Route path="/compare-quotes" element={<CompareQuotesPage />} />
       <Route path="/contractor-onboarding" element={<ContractorOnboardingPage />} />
+      <Route path="/goals" element={<PageAlexGoalsStrategy />} />
       <Route path="/onboarding" element={<OnboardingFlow />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/aipp-score" element={<AIPPScorePage />} />
