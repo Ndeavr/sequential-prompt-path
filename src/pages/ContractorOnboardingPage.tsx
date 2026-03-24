@@ -81,6 +81,7 @@ export default function ContractorOnboardingPage() {
     businessName: prefill?.businessName || "",
     city: prefill?.city || "",
     categories: [] as string[],
+    primaryCategory: "",
     // territory
     territoryCity: prefill?.city || "",
     radius: "20",
