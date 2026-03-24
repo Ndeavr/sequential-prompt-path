@@ -129,6 +129,12 @@ import BrokerLeadsPage from "@/pages/courtiers/BrokerLeadsPage";
 import BrokerProfilePage from "@/pages/courtiers/BrokerProfilePage";
 import BrokerAppointmentsPage from "@/pages/courtiers/BrokerAppointmentsPage";
 
+// Screenshot Intelligence Admin
+import AdminScreenshotAnalyticsPage from "@/pages/admin/AdminScreenshotAnalyticsPage";
+import AdminScreenshotFrictionPage from "@/pages/admin/AdminScreenshotFrictionPage";
+import AdminScreenshotAlertsPage from "@/pages/admin/AdminScreenshotAlertsPage";
+import AdminScreenshotInsightsPage from "@/pages/admin/AdminScreenshotInsightsPage";
+
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
 import BlogArticlePage from "@/pages/blog/BlogArticlePage";
