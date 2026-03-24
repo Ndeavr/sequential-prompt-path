@@ -29,6 +29,7 @@ export default function PageAdLandingAipp() {
   const [phase, setPhase] = useState<Phase>("form");
   const [result, setResult] = useState<AIPPQuickResult | null>(null);
   const [businessName, setBusinessName] = useState("");
+  const [businessCity, setBusinessCity] = useState("");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const scoreRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
