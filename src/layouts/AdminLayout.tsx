@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Users, Briefcase, FileText, Star, FolderOpen,
   CalendarDays, TrendingUp, LogOut, MapPin, BarChart3, Sparkles,
   Brain, Palette, Menu, X, ShieldCheck, Shield, Bell, SearchCheck,
-  Bot, Network,
+  Bot, Network, Camera,
 } from "lucide-react";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import type { ReactNode } from "react";
@@ -35,6 +35,7 @@ const navItems = [
   { to: "/admin/automation", label: "Automatisation", icon: Bot },
   { to: "/admin/home-graph", label: "Problem Graph", icon: Network },
   { to: "/admin/growth-engine", label: "Growth Engine", icon: TrendingUp },
+  { to: "/admin/screenshot-analytics", label: "Screenshot Intel", icon: Camera },
   { to: "/admin/uos", label: "UNPRO OS", icon: Sparkles },
 ];
 

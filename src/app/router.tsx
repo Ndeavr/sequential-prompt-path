@@ -129,6 +129,12 @@ import BrokerLeadsPage from "@/pages/courtiers/BrokerLeadsPage";
 import BrokerProfilePage from "@/pages/courtiers/BrokerProfilePage";
 import BrokerAppointmentsPage from "@/pages/courtiers/BrokerAppointmentsPage";
 
+// Screenshot Intelligence Admin
+import AdminScreenshotAnalyticsPage from "@/pages/admin/AdminScreenshotAnalyticsPage";
+import AdminScreenshotFrictionPage from "@/pages/admin/AdminScreenshotFrictionPage";
+import AdminScreenshotAlertsPage from "@/pages/admin/AdminScreenshotAlertsPage";
+import AdminScreenshotInsightsPage from "@/pages/admin/AdminScreenshotInsightsPage";
+
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
 import BlogArticlePage from "@/pages/blog/BlogArticlePage";
@@ -550,6 +556,10 @@ export const AppRouter = () => (
       <Route path="/admin/prospects/import" element={<ProtectedRoute requiredRole="admin"><AdminProspectImport /></ProtectedRoute>} />
       <Route path="/admin/prospects/campaigns" element={<ProtectedRoute requiredRole="admin"><AdminProspectCampaigns /></ProtectedRoute>} />
       <Route path="/admin/roadmap-execution" element={<ProtectedRoute requiredRole="admin"><AdminRoadmapExecution /></ProtectedRoute>} />
+      <Route path="/admin/screenshot-analytics" element={<ProtectedRoute requiredRole="admin"><AdminScreenshotAnalyticsPage /></ProtectedRoute>} />
+      <Route path="/admin/screenshot-friction" element={<ProtectedRoute requiredRole="admin"><AdminScreenshotFrictionPage /></ProtectedRoute>} />
+      <Route path="/admin/screenshot-alerts" element={<ProtectedRoute requiredRole="admin"><AdminScreenshotAlertsPage /></ProtectedRoute>} />
+      <Route path="/admin/screenshot-insights" element={<ProtectedRoute requiredRole="admin"><AdminScreenshotInsightsPage /></ProtectedRoute>} />
       <Route path="/audit/:slug" element={<AuditLandingPage />} />
       <Route path="/articles/:slug" element={<SeoArticlePage />} />
       <Route path="/emergency" element={<EmergencyPage />} />
