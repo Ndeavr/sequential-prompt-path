@@ -135,6 +135,13 @@ import AdminScreenshotFrictionPage from "@/pages/admin/AdminScreenshotFrictionPa
 import AdminScreenshotAlertsPage from "@/pages/admin/AdminScreenshotAlertsPage";
 import AdminScreenshotInsightsPage from "@/pages/admin/AdminScreenshotInsightsPage";
 
+// AI Self-Optimizing System
+import AdminOptimizationDashboard from "@/pages/admin/AdminOptimizationDashboard";
+import AdminExperimentsPage from "@/pages/admin/AdminExperimentsPage";
+import AdminExperimentDetailPage from "@/pages/admin/AdminExperimentDetailPage";
+import AdminOptimizationRecommendations from "@/pages/admin/AdminOptimizationRecommendations";
+import AdminWinningVariantsPage from "@/pages/admin/AdminWinningVariantsPage";
+
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
 import BlogArticlePage from "@/pages/blog/BlogArticlePage";
