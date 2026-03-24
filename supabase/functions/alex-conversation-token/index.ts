@@ -30,25 +30,68 @@ serve(async (req) => {
       });
     }
 
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${agentId}`,
-      {
-        headers: { "xi-api-key": ELEVENLABS_API_KEY },
-      }
-    );
+    const fetchConversationToken = (targetAgentId: string) =>
+      fetch(
+        `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${targetAgentId}`,
+        {
+          headers: { "xi-api-key": ELEVENLABS_API_KEY },
+        }
+      );
+
+    let resolvedAgentId = agentId;
+    let response = await fetchConversationToken(resolvedAgentId);
+    let upstreamErrorText = "";
 
     if (!response.ok) {
-      const errText = await response.text();
-      console.error("[alex-conversation-token] ElevenLabs error:", response.status, errText);
+      upstreamErrorText = await response.text();
+
+      let upstreamCode: string | undefined;
+      try {
+        upstreamCode = JSON.parse(upstreamErrorText)?.detail?.code;
+      } catch {
+        // noop
+      }
+
+      if (response.status === 404 && upstreamCode === "agent_not_found") {
+        console.warn("[alex-conversation-token] Agent not found, trying first available agent");
+        const agentsResponse = await fetch(
+          "https://api.elevenlabs.io/v1/convai/agents?page_size=1",
+          { headers: { "xi-api-key": ELEVENLABS_API_KEY } }
+        );
+
+        if (agentsResponse.ok) {
+          const agentsPayload = await agentsResponse.json();
+          const fallbackAgentId = agentsPayload?.agents?.[0]?.agent_id as string | undefined;
+
+          if (fallbackAgentId) {
+            resolvedAgentId = fallbackAgentId;
+            response = await fetchConversationToken(resolvedAgentId);
+            if (!response.ok) {
+              upstreamErrorText = await response.text();
+            }
+          }
+        }
+      }
+    }
+
+    if (!response.ok) {
+      console.error("[alex-conversation-token] ElevenLabs error:", response.status, upstreamErrorText);
+      let message = "Failed to get conversation token";
+      try {
+        message = JSON.parse(upstreamErrorText)?.detail?.message ?? message;
+      } catch {
+        // noop
+      }
+
       return new Response(
-        JSON.stringify({ error: "Failed to get conversation token" }),
+        JSON.stringify({ error: message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const { token } = await response.json();
 
-    return new Response(JSON.stringify({ token }), {
+    return new Response(JSON.stringify({ token, agentId: resolvedAgentId }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
