@@ -36,7 +36,7 @@ export default function PageAdLandingAipp() {
   // Track CTA events
   const trackEvent = useCallback(async (eventName: string, pageName: string, meta?: Record<string, string | number | boolean>) => {
     try {
-      await supabase.from("landing_cta_events").insert({
+      await supabase.from("landing_cta_events" as never).insert({
         session_id: sessionId || null,
         event_name: eventName,
         page_name: pageName,
