@@ -13,6 +13,7 @@ import LoginPageUnpro from "@/pages/LoginPageUnpro";
 // Public
 import PageAdLandingAipp from "@/pages/ad-landing/PageAdLandingAipp";
 import PageBusinessImport from "@/pages/business-import/PageBusinessImport";
+import PageAlexGoalsStrategy from "@/pages/goals/PageAlexGoalsStrategy";
 import Home from "@/pages/Home";
 import Search from "@/pages/Search";
 import ContractorProfile from "@/pages/ContractorProfile";
