@@ -143,6 +143,9 @@ import AdminExperimentDetailPage from "@/pages/admin/AdminExperimentDetailPage";
 import AdminOptimizationRecommendations from "@/pages/admin/AdminOptimizationRecommendations";
 import AdminWinningVariantsPage from "@/pages/admin/AdminWinningVariantsPage";
 
+// Predictive Lead Core
+import AdminPredictiveLeads from "@/pages/admin/AdminPredictiveLeads";
+
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
 import BlogArticlePage from "@/pages/blog/BlogArticlePage";
