@@ -128,6 +128,16 @@ export default function PlanRecommendationHero({ recommendedPlan, primaryObjecti
         </div>
       </div>
 
+      {/* Appointment upsell */}
+      <AppointmentUpsellCard
+        monthlyAppointments={monthlyAppointments}
+        planIncludedRdv={recommendedPlan === "recrue" ? 0 : recommendedPlan === "pro" ? 3 : recommendedPlan === "premium" ? 8 : 15}
+        tradeSlug={tradeSlug}
+        citySlug={citySlug}
+        selectedPack={selectedPack}
+        onSelectPack={onSelectPack}
+      />
+
       {/* Competitive shift */}
       <CompetitiveShiftPreview currentPosition="behind" projectedPosition={
         recommendedPlan === "signature" ? "dominant" :
