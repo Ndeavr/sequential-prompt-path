@@ -23,10 +23,10 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
   {
     id: "recrue",
     name: "Recrue",
-    monthlyPrice: 4900,
-    yearlyPrice: 49900, // ~15 % off
-    monthlyStripePriceId: "price_1T9X6oCvZwK1QnPVG3tLbNqV",
-    yearlyStripePriceId: "price_1T9X6oCvZwK1QnPVG3tLbNqY",
+    monthlyPrice: 0,
+    yearlyPrice: 0,
+    monthlyStripePriceId: "",
+    yearlyStripePriceId: "",
     features: [
       "Profil public de base",
       "Rendez-vous garantis classes S et M",
@@ -40,7 +40,7 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
   {
     id: "pro",
     name: "Pro",
-    monthlyPrice: 9900,
+    monthlyPrice: 4900,
     yearlyPrice: 99900,
     monthlyStripePriceId: "price_1T9X6pCvZwK1QnPVfBlT13Lw",
     yearlyStripePriceId: "price_1T9X6pCvZwK1QnPVfBlT13Ly",
