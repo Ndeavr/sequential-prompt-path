@@ -96,6 +96,13 @@ export default function PageCheckoutStripe() {
             billingInterval,
             successUrl: `${window.location.origin}/checkout/success?plan=${planCode}`,
             cancelUrl: `${window.location.origin}/checkout?plan=${planCode}`,
+            ...(selectedPack && {
+              appointmentPack: {
+                size: selectedPack.size,
+                totalPriceCents: selectedPack.totalPriceCents,
+                unitPriceCents: selectedPack.unitPriceCents,
+              },
+            }),
           }),
         }
       );
