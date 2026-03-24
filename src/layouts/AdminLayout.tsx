@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Users, Briefcase, FileText, Star, FolderOpen,
   CalendarDays, TrendingUp, LogOut, MapPin, BarChart3, Sparkles,
   Brain, Palette, Menu, X, ShieldCheck, Shield, Bell, SearchCheck,
-  Bot, Network, Camera,
+  Bot, Network, Camera, Wand2,
 } from "lucide-react";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import type { ReactNode } from "react";
