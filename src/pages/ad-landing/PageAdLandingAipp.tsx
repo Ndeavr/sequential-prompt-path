@@ -264,6 +264,13 @@ export default function PageAdLandingAipp() {
                   businessName={businessName}
                   onCreateProfile={() => {
                     trackEvent("cta_create_profile", "ad_landing", { score: result.score });
+                    // Pass known data so onboarding doesn't re-ask
+                    try {
+                      sessionStorage.setItem("unpro_aipp_prefill", JSON.stringify({
+                        businessName,
+                        city: (document.querySelector<HTMLInputElement>('[placeholder="Montréal"]')?.value) || "",
+                      }));
+                    } catch {}
                     navigate("/contractor-onboarding");
                   }}
                   onTalkToAlex={() => {
