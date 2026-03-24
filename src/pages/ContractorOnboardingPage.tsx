@@ -114,16 +114,29 @@ export default function ContractorOnboardingPage() {
   const handleBusinessSelected = (result: BusinessSearchResult) => {
     update("businessName", result.business_name);
     if (result.city) update("city", result.city);
-    // Auto-add detected category from Google
+    if (result.city) update("territoryCity", result.city);
+
+    // Auto-fill ALL categories from GMB (primary first, then secondaries)
+    const detectedCategories: string[] = [];
     if (result.primary_category) {
-      const match = ALL_CATEGORIES.find(
-        (c) => c.toLowerCase() === result.primary_category!.toLowerCase(),
-      );
-      if (match && !form.categories.includes(match)) {
-        update("categories", [...form.categories, match].slice(0, MAX_CATEGORIES));
+      detectedCategories.push(result.primary_category);
+    }
+    if (result.secondary_categories?.length) {
+      for (const cat of result.secondary_categories) {
+        if (!detectedCategories.includes(cat)) {
+          detectedCategories.push(cat);
+        }
       }
     }
-    if (result.city) update("territoryCity", result.city);
+    if (detectedCategories.length > 0) {
+      // Map to known categories where possible, keep raw otherwise
+      const mapped = detectedCategories.map((cat) => {
+        const match = ALL_CATEGORIES.find((c) => c.toLowerCase() === cat.toLowerCase());
+        return match || cat;
+      });
+      update("categories", mapped.slice(0, MAX_CATEGORIES));
+      update("primaryCategory", mapped[0]);
+    }
   };
 
   const toggleArray = (field: "services" | "certifications", val: string) => {
