@@ -225,7 +225,7 @@ function PlanRecommendation({ analysis }: { analysis: SalesAnalysis }) {
         {analysis.estimated_monthly_loss_cad > 0 && (
           <div className="text-right">
             <p className="text-[9px] text-muted-foreground">ROI estimé</p>
-            <p className="text-sm font-bold text-green-500">
+            <p className="text-sm font-bold text-accent">
               +{analysis.estimated_monthly_loss_cad.toLocaleString("fr-CA")}$/mois
             </p>
           </div>
