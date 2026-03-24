@@ -2,13 +2,14 @@ import { motion } from "framer-motion";
 import { Sparkles, Check, ArrowUp, ArrowDown, Crown, Shield, Zap, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { getPlanById, formatPlanPrice } from "@/config/contractorPlans";
 
-const PLANS = {
-  recrue: { name: "Recrue", price: 0, icon: Shield, projects: "S/M", color: "text-muted-foreground" },
-  pro: { name: "Pro", price: 49, icon: Zap, projects: "S/M/L", color: "text-primary" },
-  premium: { name: "Premium", price: 99, icon: Star, projects: "S → XL", color: "text-secondary" },
-  elite: { name: "Élite", price: 199, icon: Crown, projects: "Toutes classes", color: "text-yellow-500" },
-  signature: { name: "Signature", price: 399, icon: Crown, projects: "Exclusivité", color: "text-rose-500" },
+const PLAN_META: Record<string, { icon: typeof Shield; projects: string; color: string }> = {
+  recrue: { icon: Shield, projects: "S/M", color: "text-muted-foreground" },
+  pro: { icon: Zap, projects: "S/M/L", color: "text-primary" },
+  premium: { icon: Star, projects: "S → XL", color: "text-secondary" },
+  elite: { icon: Crown, projects: "Toutes classes", color: "text-yellow-500" },
+  signature: { icon: Crown, projects: "Exclusivité", color: "text-rose-500" },
 };
 
 interface Props {
@@ -54,8 +55,11 @@ function getWhyNotLower(plan: string): string {
 }
 
 export default function PlanRecommendationHero({ recommendedPlan, primaryObjective, monthlyAppointments, onSelectPlan, onTalkToAlex }: Props) {
-  const plan = PLANS[recommendedPlan as keyof typeof PLANS] || PLANS.pro;
-  const Icon = plan.icon;
+  const configPlan = getPlanById(recommendedPlan);
+  const meta = PLAN_META[recommendedPlan] || PLAN_META.pro;
+  const Icon = meta.icon;
+  const displayPrice = configPlan ? configPlan.monthlyPrice / 100 : 0;
+  const planName = configPlan?.name ?? "Pro";
 
   return (
     <motion.div
@@ -69,12 +73,12 @@ export default function PlanRecommendationHero({ recommendedPlan, primaryObjecti
           <div className="text-center space-y-2">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Plan recommandé pour votre objectif</p>
             <div className="flex items-center justify-center gap-2">
-              <Icon className={cn("w-6 h-6", plan.color)} />
-              <h2 className="text-2xl font-black text-gradient">{plan.name}</h2>
+              <Icon className={cn("w-6 h-6", meta.color)} />
+              <h2 className="text-2xl font-black text-gradient">{planName}</h2>
             </div>
             <p className="text-3xl font-black text-foreground">
-              {plan.price > 0 ? `${plan.price}$` : "Gratuit"}
-              {plan.price > 0 && <span className="text-sm font-normal text-muted-foreground">/mois</span>}
+              {displayPrice > 0 ? `${displayPrice}$` : "Gratuit"}
+              {displayPrice > 0 && <span className="text-sm font-normal text-muted-foreground">/mois</span>}
             </p>
           </div>
 
@@ -93,7 +97,7 @@ export default function PlanRecommendationHero({ recommendedPlan, primaryObjecti
             <p className="text-xs font-semibold text-muted-foreground">Ce qu'il débloque</p>
             <div className="space-y-1.5">
               {[
-                `Projets ${plan.projects}`,
+                `Projets ${meta.projects}`,
                 monthlyAppointments > 0 ? `~${monthlyAppointments} RDV/mois requis pour votre objectif` : null,
                 "Profil public vérifié",
                 recommendedPlan !== "recrue" ? "Visibilité prioritaire" : null,

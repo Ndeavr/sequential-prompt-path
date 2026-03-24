@@ -61,7 +61,8 @@ export default function PageAlexGoalsStrategy() {
   const requiredJobs = revenueInputs.avgJobValue > 0
     ? Math.ceil(revenueInputs.targetRevenue / revenueInputs.avgJobValue) : 0;
   const closeRate = revenueInputs.closeRate > 0 ? revenueInputs.closeRate / 100 : 0.3;
-  const monthlyAppointments = closeRate > 0 ? Math.ceil(requiredJobs / closeRate / 12) : 0;
+  const rawMonthlyAppointments = closeRate > 0 ? Math.ceil(requiredJobs / closeRate / 12) : 0;
+  const monthlyAppointments = Math.min(rawMonthlyAppointments, 30);
 
   const recPlan = useMemo(() =>
     recommendPlan(primaryObjective, monthlyAppointments, aippScore),

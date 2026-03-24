@@ -23,10 +23,10 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
   {
     id: "recrue",
     name: "Recrue",
-    monthlyPrice: 4900,
-    yearlyPrice: 49900, // ~15 % off
-    monthlyStripePriceId: "price_1T9X6oCvZwK1QnPVG3tLbNqV",
-    yearlyStripePriceId: "price_1T9X6oCvZwK1QnPVG3tLbNqY",
+    monthlyPrice: 0,
+    yearlyPrice: 0,
+    monthlyStripePriceId: "",
+    yearlyStripePriceId: "",
     features: [
       "Profil public de base",
       "Rendez-vous garantis classes S et M",
@@ -40,8 +40,8 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
   {
     id: "pro",
     name: "Pro",
-    monthlyPrice: 9900,
-    yearlyPrice: 99900,
+    monthlyPrice: 4900,
+    yearlyPrice: 49900, // ~15 % off
     monthlyStripePriceId: "price_1T9X6pCvZwK1QnPVfBlT13Lw",
     yearlyStripePriceId: "price_1T9X6pCvZwK1QnPVfBlT13Ly",
     features: [
@@ -59,8 +59,8 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
   {
     id: "premium",
     name: "Premium",
-    monthlyPrice: 14900,
-    yearlyPrice: 149900,
+    monthlyPrice: 9900,
+    yearlyPrice: 99900,
     monthlyStripePriceId: "price_1T9X6qCvZwK1QnPV8V4P18tw",
     yearlyStripePriceId: "price_1T9X6qCvZwK1QnPV8V4P18ty",
     features: [
@@ -77,8 +77,8 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
   {
     id: "elite",
     name: "Élite",
-    monthlyPrice: 24900,
-    yearlyPrice: 249900,
+    monthlyPrice: 19900,
+    yearlyPrice: 199900,
     monthlyStripePriceId: "price_1T9X6sCvZwK1QnPV2ZwYQOGT",
     yearlyStripePriceId: "price_1T9X6sCvZwK1QnPV2ZwYQOGY",
     features: [
@@ -95,8 +95,8 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
   {
     id: "signature",
     name: "Signature",
-    monthlyPrice: 49900,
-    yearlyPrice: 499900,
+    monthlyPrice: 39900,
+    yearlyPrice: 399900,
     monthlyStripePriceId: "price_1T9X6tCvZwK1QnPVxNcBNeBM",
     yearlyStripePriceId: "price_1T9X6tCvZwK1QnPVxNcBNeBY",
     features: [
