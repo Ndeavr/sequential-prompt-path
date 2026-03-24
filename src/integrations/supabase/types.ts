@@ -14315,6 +14315,293 @@ export type Database = {
         }
         Relationships: []
       }
+      market_feedback_events: {
+        Row: {
+          actual_close_days: number | null
+          actual_contract_value: number | null
+          actual_show: boolean | null
+          created_at: string
+          event_type: string
+          event_value: string | null
+          id: string
+          lead_id: string
+          notes: string | null
+        }
+        Insert: {
+          actual_close_days?: number | null
+          actual_contract_value?: number | null
+          actual_show?: boolean | null
+          created_at?: string
+          event_type: string
+          event_value?: string | null
+          id?: string
+          lead_id: string
+          notes?: string | null
+        }
+        Update: {
+          actual_close_days?: number | null
+          actual_contract_value?: number | null
+          actual_show?: boolean | null
+          created_at?: string
+          event_type?: string
+          event_value?: string | null
+          id?: string
+          lead_id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_feedback_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "market_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      market_lead_predictions: {
+        Row: {
+          confidence_score: number
+          created_at: string
+          id: string
+          lead_id: string
+          model_version: string
+          predicted_abandon_probability: number
+          predicted_best_offer_type: string | null
+          predicted_close_probability: number
+          predicted_contract_value: number
+          predicted_lead_quality_score: number
+          predicted_next_best_action: string | null
+          predicted_pricing_sensitivity: string | null
+          predicted_profit_value: number
+          predicted_routing_priority: number
+          predicted_show_probability: number
+          predicted_time_to_close_days: number
+          reasoning_json: Json | null
+        }
+        Insert: {
+          confidence_score?: number
+          created_at?: string
+          id?: string
+          lead_id: string
+          model_version?: string
+          predicted_abandon_probability?: number
+          predicted_best_offer_type?: string | null
+          predicted_close_probability?: number
+          predicted_contract_value?: number
+          predicted_lead_quality_score?: number
+          predicted_next_best_action?: string | null
+          predicted_pricing_sensitivity?: string | null
+          predicted_profit_value?: number
+          predicted_routing_priority?: number
+          predicted_show_probability?: number
+          predicted_time_to_close_days?: number
+          reasoning_json?: Json | null
+        }
+        Update: {
+          confidence_score?: number
+          created_at?: string
+          id?: string
+          lead_id?: string
+          model_version?: string
+          predicted_abandon_probability?: number
+          predicted_best_offer_type?: string | null
+          predicted_close_probability?: number
+          predicted_contract_value?: number
+          predicted_lead_quality_score?: number
+          predicted_next_best_action?: string | null
+          predicted_pricing_sensitivity?: string | null
+          predicted_profit_value?: number
+          predicted_routing_priority?: number
+          predicted_show_probability?: number
+          predicted_time_to_close_days?: number
+          reasoning_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_lead_predictions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "market_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      market_lead_risk_scores: {
+        Row: {
+          competitor_loss_risk: number | null
+          created_at: string
+          delay_risk: number | null
+          id: string
+          lead_id: string
+          mitigation_suggestions: Json | null
+          no_show_risk: number | null
+          overall_risk_score: number | null
+          price_objection_risk: number | null
+          risk_level: string | null
+          scope_creep_risk: number | null
+        }
+        Insert: {
+          competitor_loss_risk?: number | null
+          created_at?: string
+          delay_risk?: number | null
+          id?: string
+          lead_id: string
+          mitigation_suggestions?: Json | null
+          no_show_risk?: number | null
+          overall_risk_score?: number | null
+          price_objection_risk?: number | null
+          risk_level?: string | null
+          scope_creep_risk?: number | null
+        }
+        Update: {
+          competitor_loss_risk?: number | null
+          created_at?: string
+          delay_risk?: number | null
+          id?: string
+          lead_id?: string
+          mitigation_suggestions?: Json | null
+          no_show_risk?: number | null
+          overall_risk_score?: number | null
+          price_objection_risk?: number | null
+          risk_level?: string | null
+          scope_creep_risk?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_lead_risk_scores_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "market_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      market_leads: {
+        Row: {
+          budget_range: string | null
+          city_slug: string | null
+          contact_preference: string | null
+          contractor_id: string | null
+          created_at: string
+          description: string | null
+          homeowner_user_id: string | null
+          id: string
+          intake_metadata: Json | null
+          project_category: string | null
+          property_type: string | null
+          referral_source: string | null
+          session_id: string | null
+          source: string
+          specialty_slug: string | null
+          status: string
+          timeline: string | null
+          trade_slug: string | null
+          updated_at: string
+          urgency_level: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          budget_range?: string | null
+          city_slug?: string | null
+          contact_preference?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          description?: string | null
+          homeowner_user_id?: string | null
+          id?: string
+          intake_metadata?: Json | null
+          project_category?: string | null
+          property_type?: string | null
+          referral_source?: string | null
+          session_id?: string | null
+          source?: string
+          specialty_slug?: string | null
+          status?: string
+          timeline?: string | null
+          trade_slug?: string | null
+          updated_at?: string
+          urgency_level?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          budget_range?: string | null
+          city_slug?: string | null
+          contact_preference?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          description?: string | null
+          homeowner_user_id?: string | null
+          id?: string
+          intake_metadata?: Json | null
+          project_category?: string | null
+          property_type?: string | null
+          referral_source?: string | null
+          session_id?: string | null
+          source?: string
+          specialty_slug?: string | null
+          status?: string
+          timeline?: string | null
+          trade_slug?: string | null
+          updated_at?: string
+          urgency_level?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: []
+      }
+      market_next_best_actions: {
+        Row: {
+          action_description: string | null
+          action_label: string
+          action_type: string
+          created_at: string
+          executed_at: string | null
+          id: string
+          lead_id: string
+          priority: number
+          reasoning: string | null
+          status: string
+        }
+        Insert: {
+          action_description?: string | null
+          action_label: string
+          action_type: string
+          created_at?: string
+          executed_at?: string | null
+          id?: string
+          lead_id: string
+          priority?: number
+          reasoning?: string | null
+          status?: string
+        }
+        Update: {
+          action_description?: string | null
+          action_label?: string
+          action_type?: string
+          created_at?: string
+          executed_at?: string | null
+          id?: string
+          lead_id?: string
+          priority?: number
+          reasoning?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_next_best_actions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "market_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       market_opportunities: {
         Row: {
           city: string | null
