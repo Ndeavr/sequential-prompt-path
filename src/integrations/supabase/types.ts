@@ -44,6 +44,65 @@ export type Database = {
         }
         Relationships: []
       }
+      activation_steps: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          id: string
+          sort_order: number
+          status: string
+          step_code: string
+          title: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          status?: string
+          step_code: string
+          title: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          status?: string
+          step_code?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activation_steps_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activation_steps_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activation_steps_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activation_steps_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       ad_campaigns: {
         Row: {
           ad_copy: Json | null
@@ -15522,6 +15581,62 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qr_placements"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_activations: {
+        Row: {
+          activated_at: string | null
+          activation_status: string
+          contractor_id: string
+          created_at: string
+          id: string
+          plan_code: string
+        }
+        Insert: {
+          activated_at?: string | null
+          activation_status?: string
+          contractor_id: string
+          created_at?: string
+          id?: string
+          plan_code: string
+        }
+        Update: {
+          activated_at?: string | null
+          activation_status?: string
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          plan_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_activations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_activations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_activations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_activations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
         ]
       }

@@ -14,6 +14,9 @@ import LoginPageUnpro from "@/pages/LoginPageUnpro";
 import PageAdLandingAipp from "@/pages/ad-landing/PageAdLandingAipp";
 import PageBusinessImport from "@/pages/business-import/PageBusinessImport";
 import PageAlexGoalsStrategy from "@/pages/goals/PageAlexGoalsStrategy";
+import PageCheckoutStripe from "@/pages/checkout/PageCheckoutStripe";
+import PageCheckoutSuccess from "@/pages/checkout/PageCheckoutSuccess";
+import PageActivationStart from "@/pages/checkout/PageActivationStart";
 import Home from "@/pages/Home";
 import Search from "@/pages/Search";
 import ContractorProfile from "@/pages/ContractorProfile";
@@ -295,6 +298,9 @@ export const AppRouter = () => (
       <Route path="/compare-quotes" element={<CompareQuotesPage />} />
       <Route path="/contractor-onboarding" element={<ContractorOnboardingPage />} />
       <Route path="/goals" element={<PageAlexGoalsStrategy />} />
+      <Route path="/checkout" element={<PageCheckoutStripe />} />
+      <Route path="/checkout/success" element={<PageCheckoutSuccess />} />
+      <Route path="/activation" element={<PageActivationStart />} />
       <Route path="/onboarding" element={<OnboardingFlow />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/aipp-score" element={<AIPPScorePage />} />
