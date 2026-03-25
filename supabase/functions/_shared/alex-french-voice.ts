@@ -605,6 +605,8 @@ export const ALEX_VOICE_CONFIG = {
   outputFormat: "mp3_44100_128",
   chunkLengthSchedule: [70, 110, 150],
   voiceSettings: VOICE_PROFILES.default,
+  /** ElevenLabs speech speed — 0.95 = slightly slower for clarity */
+  speed: 0.95,
 } as const;
 
 // ─── 7. System Prompt (voice-optimized) ───
