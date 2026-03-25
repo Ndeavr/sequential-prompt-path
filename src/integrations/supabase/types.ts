@@ -7687,6 +7687,87 @@ export type Database = {
         }
         Relationships: []
       }
+      contractor_outcomes: {
+        Row: {
+          actual_close_probability: number | null
+          actual_contract_value_cents: number | null
+          actual_profit_cents: number | null
+          actual_time_to_close_days: number | null
+          contractor_id: string | null
+          created_at: string
+          did_close: boolean | null
+          did_show: boolean | null
+          id: string
+          lead_id: string | null
+          notes: string | null
+          outcome_source: string | null
+        }
+        Insert: {
+          actual_close_probability?: number | null
+          actual_contract_value_cents?: number | null
+          actual_profit_cents?: number | null
+          actual_time_to_close_days?: number | null
+          contractor_id?: string | null
+          created_at?: string
+          did_close?: boolean | null
+          did_show?: boolean | null
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          outcome_source?: string | null
+        }
+        Update: {
+          actual_close_probability?: number | null
+          actual_contract_value_cents?: number | null
+          actual_profit_cents?: number | null
+          actual_time_to_close_days?: number | null
+          contractor_id?: string | null
+          created_at?: string
+          did_close?: boolean | null
+          did_show?: boolean | null
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          outcome_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_outcomes_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_outcomes_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_outcomes_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_outcomes_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_outcomes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "market_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_performance_metrics: {
         Row: {
           appointment_show_rate: number | null
@@ -14880,6 +14961,150 @@ export type Database = {
           supply_score?: number
           trade_slug?: string
           urgency_index?: number
+        }
+        Relationships: []
+      }
+      market_zone_exclusivity: {
+        Row: {
+          city_slug: string
+          contractor_id: string | null
+          created_at: string
+          exclusivity_end: string | null
+          exclusivity_start: string | null
+          id: string
+          justification: string | null
+          monthly_revenue_projection_cents: number | null
+          premium_price_cents: number
+          status: string
+          trade_slug: string
+          updated_at: string
+          zone_score_id: string | null
+        }
+        Insert: {
+          city_slug: string
+          contractor_id?: string | null
+          created_at?: string
+          exclusivity_end?: string | null
+          exclusivity_start?: string | null
+          id?: string
+          justification?: string | null
+          monthly_revenue_projection_cents?: number | null
+          premium_price_cents?: number
+          status?: string
+          trade_slug: string
+          updated_at?: string
+          zone_score_id?: string | null
+        }
+        Update: {
+          city_slug?: string
+          contractor_id?: string | null
+          created_at?: string
+          exclusivity_end?: string | null
+          exclusivity_start?: string | null
+          id?: string
+          justification?: string | null
+          monthly_revenue_projection_cents?: number | null
+          premium_price_cents?: number
+          status?: string
+          trade_slug?: string
+          updated_at?: string
+          zone_score_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_zone_exclusivity_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_zone_exclusivity_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_zone_exclusivity_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_zone_exclusivity_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "market_zone_exclusivity_zone_score_id_fkey"
+            columns: ["zone_score_id"]
+            isOneToOne: false
+            referencedRelation: "market_zone_scores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      market_zone_scores: {
+        Row: {
+          avg_predicted_profit_cents: number
+          city_slug: string
+          competition_score: number
+          computed_at: string
+          conversion_frequency: number
+          created_at: string
+          demand_volume: number
+          exclusivity_eligible: boolean
+          id: string
+          justification_json: Json | null
+          revenue_projection_monthly_cents: number | null
+          seasonality_factor: number
+          suggested_premium_cents: number | null
+          supply_scarcity_score: number
+          trade_slug: string
+          updated_at: string
+          zone_value_score: number
+        }
+        Insert: {
+          avg_predicted_profit_cents?: number
+          city_slug: string
+          competition_score?: number
+          computed_at?: string
+          conversion_frequency?: number
+          created_at?: string
+          demand_volume?: number
+          exclusivity_eligible?: boolean
+          id?: string
+          justification_json?: Json | null
+          revenue_projection_monthly_cents?: number | null
+          seasonality_factor?: number
+          suggested_premium_cents?: number | null
+          supply_scarcity_score?: number
+          trade_slug: string
+          updated_at?: string
+          zone_value_score?: number
+        }
+        Update: {
+          avg_predicted_profit_cents?: number
+          city_slug?: string
+          competition_score?: number
+          computed_at?: string
+          conversion_frequency?: number
+          created_at?: string
+          demand_volume?: number
+          exclusivity_eligible?: boolean
+          id?: string
+          justification_json?: Json | null
+          revenue_projection_monthly_cents?: number | null
+          seasonality_factor?: number
+          suggested_premium_cents?: number | null
+          supply_scarcity_score?: number
+          trade_slug?: string
+          updated_at?: string
+          zone_value_score?: number
         }
         Relationships: []
       }
