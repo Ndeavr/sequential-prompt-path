@@ -155,6 +155,9 @@ import AdminPredictiveMarketBoard from "@/pages/admin/AdminPredictiveMarketBoard
 // Alex Predictive Seller
 import PageAlexPredictiveSeller from "@/pages/alex/PageAlexPredictiveSeller";
 
+// Zone Value & Feedback Loop
+import AdminZoneValueMap from "@/pages/admin/AdminZoneValueMap";
+
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
 import BlogArticlePage from "@/pages/blog/BlogArticlePage";
