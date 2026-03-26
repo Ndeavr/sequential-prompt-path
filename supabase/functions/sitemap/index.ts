@@ -140,6 +140,14 @@ Deno.serve(async (req) => {
           { loc: "/seo-sitemap", priority: "0.3", changefreq: "weekly" },
           { loc: "/comment-ca-marche", priority: "0.7", changefreq: "monthly" },
           { loc: "/guides", priority: "0.6", changefreq: "weekly" },
+          { loc: "/communique", priority: "0.5", changefreq: "yearly" },
+          { loc: "/proprietaires", priority: "0.8", changefreq: "monthly" },
+          { loc: "/entrepreneurs", priority: "0.8", changefreq: "monthly" },
+          { loc: "/courtiers", priority: "0.7", changefreq: "monthly" },
+          { loc: "/pricing", priority: "0.7", changefreq: "monthly" },
+          { loc: "/compare-quotes", priority: "0.7", changefreq: "monthly" },
+          { loc: "/score-maison", priority: "0.7", changefreq: "monthly" },
+          { loc: "/aipp-score", priority: "0.7", changefreq: "monthly" },
         ];
         break;
 
@@ -320,6 +328,30 @@ Deno.serve(async (req) => {
           { loc: "/copropriete/comment-ca-marche", priority: "0.6", changefreq: "monthly" },
         ];
         break;
+
+      // ── Renovation × City ─────────────────────────────────
+      case "renovation-locations": {
+        const { data: renovationCategories } = await sb
+          .from("service_categories")
+          .select("slug")
+          .eq("is_active", true);
+        const { data: renovCities } = await sb
+          .from("cities")
+          .select("slug")
+          .eq("is_active", true);
+        if (renovationCategories && renovCities) {
+          for (const r of renovationCategories) {
+            for (const c of renovCities) {
+              urls.push({
+                loc: `/renovation/${r.slug}/${c.slug}`,
+                priority: "0.6",
+                changefreq: "monthly",
+              });
+            }
+          }
+        }
+        break;
+      }
 
       default:
         return new Response("Invalid segment", {
