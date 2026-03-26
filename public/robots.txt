@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://unpro.ca/sitemap.xml
+Sitemap: https://clmaqdnphbndvmmqvpff.supabase.co/functions/v1/sitemap
