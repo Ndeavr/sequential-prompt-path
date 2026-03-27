@@ -157,7 +157,6 @@ const SmartHeader = () => {
 
               <div className="flex items-center gap-1.5">
                 <LanguageToggle lang={lang} onChange={setLang} />
-                <ThemeToggle />
               </div>
 
               {/* Share QR button — all users */}
@@ -284,15 +283,14 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-card overflow-y-auto"
+        className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-card flex flex-col"
       >
-        <div className="p-5">
+        <div className="p-5 flex-1 overflow-y-auto">
           {/* Close + Language */}
           <div className="flex items-center justify-between mb-6">
             <span className="font-display text-lg font-bold text-foreground">UNPRO</span>
             <div className="flex items-center gap-1.5">
               <LanguageToggle lang={lang} onChange={setLang} />
-              <ThemeToggle />
               <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9 rounded-lg">
                 <X className="h-5 w-5" />
               </Button>
@@ -415,6 +413,10 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
               </>
             )}
 
+            <div className="flex items-center justify-between px-3 py-2.5 rounded-lg">
+              <span className="text-meta text-foreground">{lang === "en" ? "Dark mode" : "Mode sombre"}</span>
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </motion.div>
