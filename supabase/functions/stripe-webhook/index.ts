@@ -40,37 +40,117 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Idempotency: log event
+    const { data: existingLog } = await supabase
+      .from("integration_audit_logs")
+      .select("id")
+      .eq("integration_name", "stripe")
+      .eq("action_name", event.id)
+      .maybeSingle();
+
+    if (existingLog) {
+      console.log(`Duplicate webhook event ${event.id}, skipping`);
+      return new Response(JSON.stringify({ received: true, duplicate: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Log event
+    await supabase.from("integration_audit_logs").insert({
+      integration_name: "stripe",
+      action_name: event.id,
+      status: "processing",
+      payload: { type: event.type },
+    });
+
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const contractorId = session.metadata?.contractor_id;
         const planId = session.metadata?.plan_id;
         const billingInterval = session.metadata?.billing_interval || "month";
+        const redemptionId = session.metadata?.redemption_id;
+        const promoCode = session.metadata?.promo_code;
         if (!contractorId || !planId) break;
 
-        const subscription = await stripe.subscriptions.retrieve(
-          session.subscription as string
-        );
+        const subscription = session.subscription
+          ? await stripe.subscriptions.retrieve(session.subscription as string)
+          : null;
 
-        await supabase.from("contractor_subscriptions").upsert(
-          {
-            contractor_id: contractorId,
+        // Update checkout_sessions
+        await supabase
+          .from("checkout_sessions")
+          .update({
+            checkout_status: "paid",
             stripe_customer_id: session.customer as string,
-            stripe_subscription_id: subscription.id,
-            plan_id: planId,
-            billing_interval: billingInterval,
-            status: subscription.status,
-            current_period_start: new Date(
-              subscription.current_period_start * 1000
-            ).toISOString(),
-            current_period_end: new Date(
-              subscription.current_period_end * 1000
-            ).toISOString(),
-            cancel_at_period_end: subscription.cancel_at_period_end,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "contractor_id" }
-        );
+            stripe_subscription_id: subscription?.id || null,
+            currency: session.currency?.toUpperCase() || "CAD",
+          })
+          .eq("external_checkout_id", session.id);
+
+        // Upsert contractor_subscriptions
+        if (subscription) {
+          await supabase.from("contractor_subscriptions").upsert(
+            {
+              contractor_id: contractorId,
+              stripe_customer_id: session.customer as string,
+              stripe_subscription_id: subscription.id,
+              plan_id: planId,
+              billing_interval: billingInterval,
+              status: subscription.status,
+              current_period_start: new Date(
+                subscription.current_period_start * 1000
+              ).toISOString(),
+              current_period_end: new Date(
+                subscription.current_period_end * 1000
+              ).toISOString(),
+              cancel_at_period_end: subscription.cancel_at_period_end,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "contractor_id" }
+          );
+        }
+
+        // Activate contractor
+        await supabase
+          .from("contractors")
+          .update({
+            status: "active",
+            subscription_plan: planId,
+          })
+          .eq("id", contractorId);
+
+        // Consume promo redemption
+        if (redemptionId) {
+          await supabase
+            .from("promo_code_redemptions")
+            .update({ status: "consumed" })
+            .eq("id", redemptionId)
+            .eq("status", "reserved");
+        }
+
+        break;
+      }
+
+      case "checkout.session.expired": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const redemptionId = session.metadata?.redemption_id;
+
+        // Mark checkout as expired
+        await supabase
+          .from("checkout_sessions")
+          .update({ checkout_status: "expired" })
+          .eq("external_checkout_id", session.id);
+
+        // Reverse promo reservation so user can try again
+        if (redemptionId) {
+          await supabase
+            .from("promo_code_redemptions")
+            .update({ status: "reversed" })
+            .eq("id", redemptionId)
+            .eq("status", "reserved");
+        }
+
         break;
       }
 
@@ -100,6 +180,21 @@ Deno.serve(async (req) => {
           .from("contractor_subscriptions")
           .update(updateData)
           .eq("stripe_subscription_id", subId);
+
+        // Ensure contractor is active
+        const { data: sub } = await supabase
+          .from("contractor_subscriptions")
+          .select("contractor_id")
+          .eq("stripe_subscription_id", subId)
+          .maybeSingle();
+
+        if (sub?.contractor_id) {
+          await supabase
+            .from("contractors")
+            .update({ status: "active" })
+            .eq("id", sub.contractor_id);
+        }
+
         break;
       }
 
@@ -148,9 +243,31 @@ Deno.serve(async (req) => {
           .from("contractor_subscriptions")
           .update({ status: "canceled", updated_at: new Date().toISOString() })
           .eq("stripe_subscription_id", subscription.id);
+
+        // Deactivate contractor
+        const { data: sub } = await supabase
+          .from("contractor_subscriptions")
+          .select("contractor_id")
+          .eq("stripe_subscription_id", subscription.id)
+          .maybeSingle();
+
+        if (sub?.contractor_id) {
+          await supabase
+            .from("contractors")
+            .update({ status: "inactive" })
+            .eq("id", sub.contractor_id);
+        }
+
         break;
       }
     }
+
+    // Update audit log
+    await supabase
+      .from("integration_audit_logs")
+      .update({ status: "completed" })
+      .eq("integration_name", "stripe")
+      .eq("action_name", event.id);
 
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
