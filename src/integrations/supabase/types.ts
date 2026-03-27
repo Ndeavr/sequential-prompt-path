@@ -16014,6 +16014,42 @@ export type Database = {
           },
         ]
       }
+      login_interstitial_content: {
+        Row: {
+          benefits_json: Json | null
+          created_at: string | null
+          id: string
+          intent_key: string
+          primary_login_method: string | null
+          secondary_actions_json: Json | null
+          subtitle: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          benefits_json?: Json | null
+          created_at?: string | null
+          id?: string
+          intent_key: string
+          primary_login_method?: string | null
+          secondary_actions_json?: Json | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          benefits_json?: Json | null
+          created_at?: string | null
+          id?: string
+          intent_key?: string
+          primary_login_method?: string | null
+          secondary_actions_json?: Json | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       market_capacity: {
         Row: {
           active_slots: number
@@ -17477,6 +17513,249 @@ export type Database = {
         }
         Relationships: []
       }
+      navigation_context_rules: {
+        Row: {
+          condition_json: Json | null
+          context_key: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          menu_adjustment_json: Json | null
+          priority: number | null
+          role: string
+          source_signal: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          condition_json?: Json | null
+          context_key: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          menu_adjustment_json?: Json | null
+          priority?: number | null
+          role: string
+          source_signal?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          condition_json?: Json | null
+          context_key?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          menu_adjustment_json?: Json | null
+          priority?: number | null
+          role?: string
+          source_signal?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      navigation_event_logs: {
+        Row: {
+          created_at: string | null
+          event_type: string
+          id: string
+          intent_key: string | null
+          menu_item_key: string | null
+          role: string | null
+          route_path: string | null
+          session_id: string | null
+          user_id: string | null
+          was_fallback_rendered: boolean | null
+          was_login_interstitial_rendered: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_type: string
+          id?: string
+          intent_key?: string | null
+          menu_item_key?: string | null
+          role?: string | null
+          route_path?: string | null
+          session_id?: string | null
+          user_id?: string | null
+          was_fallback_rendered?: boolean | null
+          was_login_interstitial_rendered?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          intent_key?: string | null
+          menu_item_key?: string | null
+          role?: string | null
+          route_path?: string | null
+          session_id?: string | null
+          user_id?: string | null
+          was_fallback_rendered?: boolean | null
+          was_login_interstitial_rendered?: boolean | null
+        }
+        Relationships: []
+      }
+      navigation_fallback_pages: {
+        Row: {
+          benefits_json: Json | null
+          created_at: string | null
+          empty_state_json: Json | null
+          faq_json: Json | null
+          how_it_works_json: Json | null
+          id: string
+          is_active: boolean | null
+          page_key: string
+          primary_cta_label: string | null
+          primary_cta_path: string | null
+          role_target: string | null
+          secondary_cta_label: string | null
+          secondary_cta_path: string | null
+          subtitle: string | null
+          title: string
+          trust_points_json: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          benefits_json?: Json | null
+          created_at?: string | null
+          empty_state_json?: Json | null
+          faq_json?: Json | null
+          how_it_works_json?: Json | null
+          id?: string
+          is_active?: boolean | null
+          page_key: string
+          primary_cta_label?: string | null
+          primary_cta_path?: string | null
+          role_target?: string | null
+          secondary_cta_label?: string | null
+          secondary_cta_path?: string | null
+          subtitle?: string | null
+          title: string
+          trust_points_json?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          benefits_json?: Json | null
+          created_at?: string | null
+          empty_state_json?: Json | null
+          faq_json?: Json | null
+          how_it_works_json?: Json | null
+          id?: string
+          is_active?: boolean | null
+          page_key?: string
+          primary_cta_label?: string | null
+          primary_cta_path?: string | null
+          role_target?: string | null
+          secondary_cta_label?: string | null
+          secondary_cta_path?: string | null
+          subtitle?: string | null
+          title?: string
+          trust_points_json?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      navigation_menu_items: {
+        Row: {
+          audience_role: string
+          badge_rule_key: string | null
+          created_at: string | null
+          fallback_page_key: string | null
+          icon_name: string | null
+          id: string
+          is_active: boolean | null
+          is_center_alex: boolean | null
+          key: string
+          label: string
+          label_en: string | null
+          menu_type: string
+          path: string
+          requires_auth: boolean | null
+          section_name: string | null
+          slot_index: number | null
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audience_role: string
+          badge_rule_key?: string | null
+          created_at?: string | null
+          fallback_page_key?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_center_alex?: boolean | null
+          key: string
+          label: string
+          label_en?: string | null
+          menu_type: string
+          path: string
+          requires_auth?: boolean | null
+          section_name?: string | null
+          slot_index?: number | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audience_role?: string
+          badge_rule_key?: string | null
+          created_at?: string | null
+          fallback_page_key?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_center_alex?: boolean | null
+          key?: string
+          label?: string
+          label_en?: string | null
+          menu_type?: string
+          path?: string
+          requires_auth?: boolean | null
+          section_name?: string | null
+          slot_index?: number | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      navigation_role_rules: {
+        Row: {
+          alex_enabled: boolean | null
+          bottom_nav_layout_json: Json | null
+          created_at: string | null
+          hamburger_layout_json: Json | null
+          id: string
+          primary_cta_label: string | null
+          primary_cta_path: string | null
+          role: string
+          top_nav_layout_json: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          alex_enabled?: boolean | null
+          bottom_nav_layout_json?: Json | null
+          created_at?: string | null
+          hamburger_layout_json?: Json | null
+          id?: string
+          primary_cta_label?: string | null
+          primary_cta_path?: string | null
+          role: string
+          top_nav_layout_json?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          alex_enabled?: boolean | null
+          bottom_nav_layout_json?: Json | null
+          created_at?: string | null
+          hamburger_layout_json?: Json | null
+          id?: string
+          primary_cta_label?: string | null
+          primary_cta_path?: string | null
+          role?: string
+          top_nav_layout_json?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       neighborhood_stats: {
         Row: {
           active_passports: number | null
@@ -18262,6 +18541,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      page_registry: {
+        Row: {
+          allowed_roles_json: Json | null
+          created_at: string | null
+          fallback_page_key: string | null
+          has_minimum_content: boolean | null
+          id: string
+          is_built: boolean | null
+          is_published: boolean | null
+          owner_role: string | null
+          page_name: string
+          page_type: string | null
+          path: string
+          requires_auth: boolean | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          allowed_roles_json?: Json | null
+          created_at?: string | null
+          fallback_page_key?: string | null
+          has_minimum_content?: boolean | null
+          id?: string
+          is_built?: boolean | null
+          is_published?: boolean | null
+          owner_role?: string | null
+          page_name: string
+          page_type?: string | null
+          path: string
+          requires_auth?: boolean | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          allowed_roles_json?: Json | null
+          created_at?: string | null
+          fallback_page_key?: string | null
+          has_minimum_content?: boolean | null
+          id?: string
+          is_built?: boolean | null
+          is_published?: boolean | null
+          owner_role?: string | null
+          page_name?: string
+          page_type?: string | null
+          path?: string
+          requires_auth?: boolean | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       page_scores: {
         Row: {
@@ -23336,6 +23666,48 @@ export type Database = {
         }
         Relationships: []
       }
+      role_mismatch_content: {
+        Row: {
+          created_at: string | null
+          id: string
+          primary_cta_label: string | null
+          primary_cta_path: string | null
+          secondary_cta_label: string | null
+          secondary_cta_path: string | null
+          source_role: string
+          subtitle: string | null
+          target_route: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          primary_cta_label?: string | null
+          primary_cta_path?: string | null
+          secondary_cta_label?: string | null
+          secondary_cta_path?: string | null
+          source_role: string
+          subtitle?: string | null
+          target_route: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          primary_cta_label?: string | null
+          primary_cta_path?: string | null
+          secondary_cta_label?: string | null
+          secondary_cta_path?: string | null
+          source_role?: string
+          subtitle?: string | null
+          target_route?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       sales_microcopy: {
         Row: {
           ab_test_variant: string | null
@@ -24878,6 +25250,51 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      smart_deep_links: {
+        Row: {
+          created_at: string | null
+          destination_path: string
+          fallback_path: string | null
+          id: string
+          intent_key: string
+          is_active: boolean | null
+          label: string
+          optional_payload_json: Json | null
+          requires_auth: boolean | null
+          resume_after_login: boolean | null
+          role_target: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          destination_path: string
+          fallback_path?: string | null
+          id?: string
+          intent_key: string
+          is_active?: boolean | null
+          label: string
+          optional_payload_json?: Json | null
+          requires_auth?: boolean | null
+          resume_after_login?: boolean | null
+          role_target?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          destination_path?: string
+          fallback_path?: string | null
+          id?: string
+          intent_key?: string
+          is_active?: boolean | null
+          label?: string
+          optional_payload_json?: Json | null
+          requires_auth?: boolean | null
+          resume_after_login?: boolean | null
+          role_target?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       sms_automation_rules: {
         Row: {
@@ -26988,6 +27405,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_navigation_preferences: {
+        Row: {
+          collapsed_sections_json: Json | null
+          created_at: string | null
+          id: string
+          last_primary_action_key: string | null
+          preferred_home_path: string | null
+          show_alex_entry: boolean | null
+          show_bottom_bar_labels: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          collapsed_sections_json?: Json | null
+          created_at?: string | null
+          id?: string
+          last_primary_action_key?: string | null
+          preferred_home_path?: string | null
+          show_alex_entry?: boolean | null
+          show_bottom_bar_labels?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          collapsed_sections_json?: Json | null
+          created_at?: string | null
+          id?: string
+          last_primary_action_key?: string | null
+          preferred_home_path?: string | null
+          show_alex_entry?: boolean | null
+          show_bottom_bar_labels?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_notifications: {
         Row: {
           channel: string
@@ -28438,6 +28891,18 @@ export type Database = {
         | "completed"
         | "failed"
         | "partial"
+      nav_event_type:
+        | "menu_click"
+        | "bottom_nav_click"
+        | "hamburger_open"
+        | "hamburger_click"
+        | "alex_open"
+        | "deep_link_open"
+        | "fallback_render"
+        | "login_interstitial_render"
+        | "role_mismatch_render"
+      nav_menu_type: "top" | "bottom" | "hamburger"
+      nav_page_status: "draft" | "fallback_only" | "published"
       neq_status: "active" | "inactive" | "struck_off" | "not_found" | "unknown"
       project_fit: "compatible" | "partial" | "verify" | "incompatible"
       property_condition: "excellent" | "good" | "fair" | "poor" | "critical"
@@ -28653,6 +29118,19 @@ export const Constants = {
         "failed",
         "partial",
       ],
+      nav_event_type: [
+        "menu_click",
+        "bottom_nav_click",
+        "hamburger_open",
+        "hamburger_click",
+        "alex_open",
+        "deep_link_open",
+        "fallback_render",
+        "login_interstitial_render",
+        "role_mismatch_render",
+      ],
+      nav_menu_type: ["top", "bottom", "hamburger"],
+      nav_page_status: ["draft", "fallback_only", "published"],
       neq_status: ["active", "inactive", "struck_off", "not_found", "unknown"],
       project_fit: ["compatible", "partial", "verify", "incompatible"],
       property_condition: ["excellent", "good", "fair", "poor", "critical"],

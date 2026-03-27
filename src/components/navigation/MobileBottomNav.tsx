@@ -1,7 +1,6 @@
 /**
  * UNPRO — Mobile Bottom Navigation (Role-Aware)
- * Uses mobileTabsByRole config. Shows for all users on mobile.
- * The "Alex" tab triggers the voice orb instead of navigating.
+ * Uses mobileTabsByRole config. Alex is centered with a bottom sheet launcher.
  */
 
 import { Link, useLocation } from "react-router-dom";
@@ -9,14 +8,13 @@ import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { mobileTabsByRole } from "@/config/navigationConfig";
 import { resolveIcon } from "./IconResolver";
-import { useAlexVoice } from "@/contexts/AlexVoiceContext";
+import AlexBottomSheetLauncherUNPRO from "./AlexBottomSheetLauncherUNPRO";
 import type { UserRole } from "@/types/navigation";
 
 const MobileBottomNav = () => {
   const { activeRole } = useNavigationContext();
   const { pathname } = useLocation();
   const { lang } = useLanguage();
-  const { openAlex } = useAlexVoice();
 
   // Hide on specific full-screen pages
   const hiddenPaths = ["/alex", "/login", "/signup", "/start"];
@@ -29,29 +27,43 @@ const MobileBottomNav = () => {
     return pathname.startsWith(to);
   };
 
+  // Split tabs: first 2, Alex center, last 2
+  const isAlexTab = (tab: typeof tabs[0]) => tab.label === "Alex";
+  const regularTabs = tabs.filter(t => !isAlexTab(t));
+  const leftTabs = regularTabs.slice(0, 2);
+  const rightTabs = regularTabs.slice(2, 4);
+
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border/20 bg-background/95 backdrop-blur-2xl safe-area-bottom" aria-label="Mobile navigation">
       <div className="flex items-center justify-around h-16 px-2">
-        {tabs.map((tab) => {
+        {leftTabs.map((tab) => {
           const active = isActive(tab.to);
           const Icon = resolveIcon(tab.icon);
-          const isAlexTab = tab.label === "Alex";
+          return (
+            <Link
+              key={tab.to}
+              to={tab.to}
+              className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-2 rounded-lg transition-colors ${
+                active ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              <Icon className={`h-5 w-5 ${active ? "text-primary" : ""}`} />
+              <span className="text-[10px] font-medium leading-none">
+                {lang === "en" && tab.labelEn ? tab.labelEn : tab.label}
+              </span>
+              {tab.badge && (
+                <span className="absolute -top-0.5 right-0.5 h-2 w-2 rounded-full bg-primary" />
+              )}
+            </Link>
+          );
+        })}
 
-          if (isAlexTab) {
-            return (
-              <button
-                key="alex-voice"
-                onClick={() => openAlex("general")}
-                className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2 rounded-lg transition-colors text-muted-foreground"
-              >
-                <Icon className="h-5 w-5" />
-                <span className="text-[10px] font-medium leading-none">
-                  {lang === "en" && tab.labelEn ? tab.labelEn : tab.label}
-                </span>
-              </button>
-            );
-          }
+        {/* Center Alex Button */}
+        <AlexBottomSheetLauncherUNPRO />
 
+        {rightTabs.map((tab) => {
+          const active = isActive(tab.to);
+          const Icon = resolveIcon(tab.icon);
           return (
             <Link
               key={tab.to}

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HelpPopup from "@/components/shared/HelpPopup";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import PlaceholderPage from "@/pages/PlaceholderPage";
+import FallbackRoutePage from "@/pages/FallbackRoutePage";
 import Unsubscribe from "@/pages/Unsubscribe";
 import CommentCaMarchePage from "@/pages/CommentCaMarchePage";
 import StartPage from "@/pages/StartPage";
@@ -423,64 +424,96 @@ export const AppRouter = () => (
       <Route path="/solutions/:slug" element={<SolutionPage />} />
       <Route path="/city/:slug" element={<CityPage />} />
 
-      {/* ─── Placeholder public pages (navigation links) ─── */}
-      <Route path="/proprietaires/passeport-maison" element={<PlaceholderPage />} />
-      <Route path="/proprietaires/score-maison" element={<PlaceholderPage />} />
-      <Route path="/outils-ia" element={<PlaceholderPage />} />
-      <Route path="/services/isolation-grenier" element={<PlaceholderPage />} />
-      <Route path="/services/toiture" element={<PlaceholderPage />} />
-      <Route path="/services/fondation" element={<PlaceholderPage />} />
-      <Route path="/services/fenetres" element={<PlaceholderPage />} />
-      <Route path="/services/chauffage" element={<PlaceholderPage />} />
-      <Route path="/entrepreneurs/creer-mon-profil" element={<PlaceholderPage />} />
-      <Route path="/entrepreneurs/pages-ia" element={<PlaceholderPage />} />
-      <Route path="/entrepreneurs/score-aipp" element={<PlaceholderPage />} />
-      <Route path="/entrepreneurs/profil-public" element={<PlaceholderPage />} />
-      <Route path="/entrepreneurs/matching" element={<PlaceholderPage />} />
-      <Route path="/entrepreneurs/badges" element={<PlaceholderPage />} />
-      <Route path="/entrepreneurs/demo" element={<PlaceholderPage />} />
-      <Route path="/entrepreneurs/ambassadeur" element={<PlaceholderPage />} />
-      <Route path="/ambassadeurs" element={<PlaceholderPage />} />
-      <Route path="/aide" element={<PlaceholderPage />} />
-      <Route path="/professionnels" element={<PlaceholderPage />} />
-      <Route path="/villes" element={<PlaceholderPage />} />
-      <Route path="/guides" element={<PlaceholderPage />} />
+      {/* ─── Fallback-enabled public pages (navigation links) ─── */}
+      <Route path="/proprietaires/passeport-maison" element={<FallbackRoutePage />} />
+      <Route path="/proprietaires/score-maison" element={<FallbackRoutePage />} />
+      <Route path="/outils-ia" element={<FallbackRoutePage />} />
+      <Route path="/services/isolation-grenier" element={<FallbackRoutePage />} />
+      <Route path="/services/toiture" element={<FallbackRoutePage />} />
+      <Route path="/services/fondation" element={<FallbackRoutePage />} />
+      <Route path="/services/fenetres" element={<FallbackRoutePage />} />
+      <Route path="/services/chauffage" element={<FallbackRoutePage />} />
+      <Route path="/entrepreneurs/creer-mon-profil" element={<FallbackRoutePage />} />
+      <Route path="/entrepreneurs/pages-ia" element={<FallbackRoutePage />} />
+      <Route path="/entrepreneurs/score-aipp" element={<FallbackRoutePage />} />
+      <Route path="/entrepreneurs/profil-public" element={<FallbackRoutePage />} />
+      <Route path="/entrepreneurs/matching" element={<FallbackRoutePage />} />
+      <Route path="/entrepreneurs/badges" element={<FallbackRoutePage />} />
+      <Route path="/entrepreneurs/demo" element={<FallbackRoutePage />} />
+      <Route path="/entrepreneurs/ambassadeur" element={<FallbackRoutePage />} />
+      <Route path="/ambassadeurs" element={<FallbackRoutePage />} />
+      <Route path="/aide" element={<FallbackRoutePage />} />
+      <Route path="/professionnels" element={<FallbackRoutePage />} />
+      <Route path="/villes" element={<FallbackRoutePage />} />
+      <Route path="/guides" element={<FallbackRoutePage />} />
+      {/* New V3 Navigation routes */}
+      <Route path="/trouver" element={<Search />} />
+      <Route path="/verifier" element={<VerifyLandingPage />} />
+      <Route path="/planifier" element={<DescribeProjectPage />} />
+      <Route path="/score-aipp" element={<FallbackRoutePage />} />
+      <Route path="/plans-prix" element={<FallbackRoutePage />} />
+      <Route path="/favoris" element={<FallbackRoutePage />} />
+      <Route path="/historique" element={<FallbackRoutePage />} />
+      <Route path="/estimations-ai" element={<FallbackRoutePage />} />
+      <Route path="/classement" element={<FallbackRoutePage />} />
+      <Route path="/facturation" element={<FallbackRoutePage />} />
+      <Route path="/analytics" element={<FallbackRoutePage />} />
+      <Route path="/settings-systeme" element={<FallbackRoutePage />} />
+      <Route path="/notifications" element={<FallbackRoutePage />} />
+      <Route path="/opportunites" element={<FallbackRoutePage />} />
+      <Route path="/messages" element={<FallbackRoutePage />} />
+      <Route path="/compte" element={<FallbackRoutePage />} />
+      <Route path="/connexion-interstice" element={<FallbackRoutePage />} />
+      <Route path="/mes-projets" element={<FallbackRoutePage />} />
+      <Route path="/mes-rendez-vous" element={<FallbackRoutePage />} />
+      <Route path="/immeubles" element={<FallbackRoutePage />} />
+      <Route path="/interventions" element={<FallbackRoutePage />} />
+      <Route path="/documents" element={<FallbackRoutePage />} />
+      <Route path="/loi-16" element={<FallbackRoutePage />} />
+      <Route path="/fonds-prevoyance" element={<FallbackRoutePage />} />
+      <Route path="/rapports" element={<FallbackRoutePage />} />
+      <Route path="/registre" element={<FallbackRoutePage />} />
+      <Route path="/photos-projets" element={<FallbackRoutePage />} />
+      <Route path="/avis-clients" element={<FallbackRoutePage />} />
+      <Route path="/certifications" element={<FallbackRoutePage />} />
+      <Route path="/profil-ai" element={<FallbackRoutePage />} />
+      <Route path="/alertes" element={<FallbackRoutePage />} />
       <Route path="/blog" element={<BlogIndexPage />} />
       <Route path="/blog/:slug" element={<BlogArticlePage />} />
       <Route path="/blog/category/:category" element={<BlogIndexPage />} />
       <Route path="/blog/city/:city" element={<BlogIndexPage />} />
-      <Route path="/conseils-renovation" element={<PlaceholderPage />} />
-      <Route path="/faq" element={<PlaceholderPage />} />
+      <Route path="/conseils-renovation" element={<FallbackRoutePage />} />
+      <Route path="/faq" element={<FallbackRoutePage />} />
       <Route path="/comment-ca-marche" element={<CommentCaMarchePage />} />
-      <Route path="/verification" element={<PlaceholderPage />} />
-      <Route path="/nos-standards" element={<PlaceholderPage />} />
-      <Route path="/pourquoi-pas-3-soumissions" element={<PlaceholderPage />} />
-      <Route path="/a-propos" element={<PlaceholderPage />} />
-      <Route path="/partenaires" element={<PlaceholderPage />} />
-      <Route path="/contact" element={<PlaceholderPage />} />
-      <Route path="/conditions" element={<PlaceholderPage />} />
-      <Route path="/confidentialite" element={<PlaceholderPage />} />
-      <Route path="/cookies" element={<PlaceholderPage />} />
-      <Route path="/sitemap" element={<PlaceholderPage />} />
-      <Route path="/accessibilite" element={<PlaceholderPage />} />
+      <Route path="/verification" element={<FallbackRoutePage />} />
+      <Route path="/nos-standards" element={<FallbackRoutePage />} />
+      <Route path="/pourquoi-pas-3-soumissions" element={<FallbackRoutePage />} />
+      <Route path="/a-propos" element={<FallbackRoutePage />} />
+      <Route path="/partenaires" element={<FallbackRoutePage />} />
+      <Route path="/contact" element={<FallbackRoutePage />} />
+      <Route path="/conditions" element={<FallbackRoutePage />} />
+      <Route path="/confidentialite" element={<FallbackRoutePage />} />
+      <Route path="/cookies" element={<FallbackRoutePage />} />
+      <Route path="/sitemap" element={<FallbackRoutePage />} />
+      <Route path="/accessibilite" element={<FallbackRoutePage />} />
 
-      {/* ─── Placeholder condo pages ─── */}
-      <Route path="/condo/passeport" element={<PlaceholderPage />} />
-      <Route path="/condo/documents" element={<PlaceholderPage />} />
-      <Route path="/condo/dashboard" element={<PlaceholderPage />} />
-      <Route path="/condo/dossier" element={<PlaceholderPage />} />
-      <Route path="/condo/travaux" element={<PlaceholderPage />} />
-      <Route path="/condo/historique" element={<PlaceholderPage />} />
-      <Route path="/condo/inviter" element={<PlaceholderPage />} />
+      {/* ─── Fallback condo pages ─── */}
+      <Route path="/condo/passeport" element={<FallbackRoutePage />} />
+      <Route path="/condo/documents" element={<FallbackRoutePage />} />
+      <Route path="/condo/dashboard" element={<FallbackRoutePage />} />
+      <Route path="/condo/dossier" element={<FallbackRoutePage />} />
+      <Route path="/condo/travaux" element={<FallbackRoutePage />} />
+      <Route path="/condo/historique" element={<FallbackRoutePage />} />
+      <Route path="/condo/inviter" element={<FallbackRoutePage />} />
       <Route path="/condo/loi-16" element={<CondoLoi16Page />} />
-      <Route path="/condo/inspection" element={<PlaceholderPage />} />
-      <Route path="/condo/guides" element={<PlaceholderPage />} />
+      <Route path="/condo/inspection" element={<FallbackRoutePage />} />
+      <Route path="/condo/guides" element={<FallbackRoutePage />} />
 
-      {/* ─── Placeholder pro pages ─── */}
-      <Route path="/pro/stats" element={<PlaceholderPage />} />
-      <Route path="/pro/visibility" element={<PlaceholderPage />} />
-      <Route path="/pro/recommendations" element={<PlaceholderPage />} />
-      <Route path="/dashboard/maintenance" element={<PlaceholderPage />} />
+      {/* ─── Fallback pro pages ─── */}
+      <Route path="/pro/stats" element={<FallbackRoutePage />} />
+      <Route path="/pro/visibility" element={<FallbackRoutePage />} />
+      <Route path="/pro/recommendations" element={<FallbackRoutePage />} />
+      <Route path="/dashboard/maintenance" element={<FallbackRoutePage />} />
 
       {/* Homeowner Dashboard */}
       <Route path="/dashboard" element={<ProtectedRoute requiredRole="homeowner"><DashboardHome /></ProtectedRoute>} />
@@ -659,7 +692,8 @@ export const AppRouter = () => (
       <Route path="/condos/reports" element={<ProtectedRoute requiredRole="homeowner"><CondoReportsPage /></ProtectedRoute>} />
       <Route path="/condos/billing" element={<ProtectedRoute requiredRole="homeowner"><CondoBillingPage /></ProtectedRoute>} />
 
-      <Route path="*" element={<NotFound />} />
+      {/* Catch-all: try fallback, then 404 */}
+      <Route path="*" element={<FallbackRoutePage />} />
     </Routes>
     <HelpPopup />
   </BrowserRouter>
