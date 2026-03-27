@@ -1,7 +1,7 @@
 /**
  * UNPRO — Alex Guided Signature Onboarding
  * Full flow: Alex chat → contractor draft → categories → territories →
- * Signature offer (SIGNATURE26 = 0$) → activation → import → profile → publish.
+ * Signature offer (SIGNATURE26 = 0$) → activation → real import → profile → publish.
  */
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
@@ -36,6 +36,25 @@ interface ContractorDraft {
   website?: string;
 }
 
+export interface ImportedField {
+  value: any;
+  state: "imported" | "inferred" | "needs_confirmation" | "missing" | "confirmed";
+  source: string;
+  confidence: number;
+}
+
+export interface ImportedBusinessData {
+  [key: string]: ImportedField;
+}
+
+export interface ImportModule {
+  id: string;
+  label: string;
+  status: string;
+  progress: number;
+  messages: string[];
+}
+
 interface OnboardingState {
   step: OnboardingStep;
   draft: ContractorDraft;
@@ -47,6 +66,8 @@ interface OnboardingState {
   importJobId: string | null;
   importProgress: number;
   profileCompletion: number;
+  importedData: ImportedBusinessData | null;
+  importModules: ImportModule[];
 }
 
 const INITIAL_STATE: OnboardingState = {
@@ -60,6 +81,8 @@ const INITIAL_STATE: OnboardingState = {
   importJobId: null,
   importProgress: 0,
   profileCompletion: 0,
+  importedData: null,
+  importModules: [],
 };
 
 const STEP_ORDER: OnboardingStep[] = [
@@ -92,6 +115,7 @@ export default function PageAlexGuidedOnboarding() {
   const stepIndex = STEP_ORDER.indexOf(state.step);
   const progress = Math.round((stepIndex / (STEP_ORDER.length - 1)) * 100);
 
+  // ─── Step: Create contractor draft ───
   const createContractorDraft = useCallback(async () => {
     setIsProcessing(true);
     try {
@@ -116,6 +140,7 @@ export default function PageAlexGuidedOnboarding() {
     } finally { setIsProcessing(false); }
   }, [state.draft, user?.id, update]);
 
+  // ─── Step: Save categories ───
   const saveCategories = useCallback(async () => {
     if (!state.contractorId) return;
     setIsProcessing(true);
@@ -141,6 +166,7 @@ export default function PageAlexGuidedOnboarding() {
     finally { setIsProcessing(false); }
   }, [state.contractorId, state.categories, goTo]);
 
+  // ─── Step: Save territories ───
   const saveTerritories = useCallback(async () => {
     if (!state.contractorId) return;
     setIsProcessing(true);
@@ -156,6 +182,7 @@ export default function PageAlexGuidedOnboarding() {
     finally { setIsProcessing(false); }
   }, [state.contractorId, state.territories, goTo]);
 
+  // ─── Step: Activate Signature plan ───
   const activateSignaturePlan = useCallback(async () => {
     if (!state.contractorId) return;
     setIsProcessing(true);
@@ -198,39 +225,104 @@ export default function PageAlexGuidedOnboarding() {
     } finally { setIsProcessing(false); }
   }, [state.contractorId, state.promoCode, update]);
 
+  // ─── Step: Real import pipeline ───
   useEffect(() => {
-    if (state.step !== "importing" || state.importJobId || !state.contractorId) return;
+    if (state.step !== "importing" || state.importedData || !state.contractorId) return;
 
-    const runImport = async () => {
+    const runRealImport = async () => {
       try {
-        const { data: job } = await supabase
-          .from("extraction_jobs")
-          .insert({
-            contractor_id: state.contractorId,
-            source_type: "auto",
-            job_type: "signature_onboarding",
-          })
-          .select("id")
-          .single();
-        if (job) update({ importJobId: job.id });
+        // Phase 1: Start progress animation
+        update({ importProgress: 10 });
 
-        for (let p = 10; p <= 100; p += 15) {
-          await new Promise((r) => setTimeout(r, 800));
-          update({ importProgress: Math.min(p, 100) });
+        // Phase 2: Call real onboarding-import edge function
+        update({ importProgress: 25 });
+        const { data: importResult, error: importError } = await supabase.functions.invoke("onboarding-import", {
+          body: {
+            importForm: {
+              businessName: state.draft.business_name,
+              website: state.draft.website || undefined,
+              phone: state.draft.phone,
+              city: state.draft.city,
+            },
+          },
+        });
+
+        if (importError) {
+          console.error("Import error:", importError);
+          toast.error("Import partiel — certaines sources sont indisponibles");
         }
 
-        if (job) await supabase.from("extraction_jobs").update({ status: "completed" }).eq("id", job.id);
+        update({ importProgress: 60 });
 
-        await supabase.from("contractors").update({
-          description: `${state.draft.business_name} — entreprise spécialisée en ${state.draft.activity} à ${state.draft.city}. Service professionnel de haute qualité.`,
-        }).eq("id", state.contractorId!);
+        const businessData: ImportedBusinessData = importResult?.businessData || {};
+        const modules: ImportModule[] = importResult?.modules || [];
 
-        update({ importProgress: 100, profileCompletion: 65, step: "profile_completion" });
-      } catch { toast.error("Erreur lors de l'import"); }
+        // Phase 3: Enrich contractor profile with imported data
+        const profileUpdates: Record<string, any> = {};
+
+        if (businessData.description?.value) {
+          profileUpdates.description = typeof businessData.description.value === "string"
+            ? businessData.description.value.substring(0, 1000)
+            : `${state.draft.business_name} — entreprise spécialisée en ${state.draft.activity} à ${state.draft.city}.`;
+        } else {
+          profileUpdates.description = `${state.draft.business_name} — entreprise spécialisée en ${state.draft.activity} à ${state.draft.city}. Service professionnel de haute qualité.`;
+        }
+
+        if (businessData.address?.value) profileUpdates.address = businessData.address.value;
+        if (businessData.rating?.value) profileUpdates.rating = businessData.rating.value;
+        if (businessData.reviewCount?.value) profileUpdates.review_count = businessData.reviewCount.value;
+        if (businessData.website?.value && !state.draft.website) profileUpdates.website = businessData.website.value;
+        if (businessData.phone?.value && !state.draft.phone) profileUpdates.phone = businessData.phone.value;
+        if (businessData.businessHours?.value) profileUpdates.description += `\n\nHoraires : ${businessData.businessHours.value}`;
+
+        // Google Business URL
+        const googleUrl = importResult?.businessData?.googleMapsUri?.value;
+        if (googleUrl) profileUpdates.google_business_url = googleUrl;
+
+        // Facebook
+        if (businessData.facebookPresence?.value) {
+          // Could set facebook_page_url if we have it
+        }
+
+        update({ importProgress: 80 });
+
+        await supabase.from("contractors")
+          .update(profileUpdates)
+          .eq("id", state.contractorId!);
+
+        // Calculate completion percentage
+        const importedFieldCount = Object.values(businessData).filter(
+          (f: ImportedField) => f.state !== "missing"
+        ).length;
+        const totalFields = Object.keys(businessData).length;
+        const completionPct = Math.round((importedFieldCount / Math.max(totalFields, 1)) * 100);
+
+        update({
+          importProgress: 100,
+          importedData: businessData,
+          importModules: modules,
+          profileCompletion: Math.max(completionPct, 40),
+          step: "profile_completion",
+        });
+
+      } catch (e: any) {
+        console.error("Import pipeline error:", e);
+        // Fallback: still allow user to continue with basic profile
+        update({
+          importProgress: 100,
+          importedData: {},
+          importModules: [],
+          profileCompletion: 35,
+          step: "profile_completion",
+        });
+        toast.error("Import partiel — vous pouvez compléter manuellement");
+      }
     };
-    runImport();
-  }, [state.step, state.importJobId, state.contractorId, state.draft, update]);
 
+    runRealImport();
+  }, [state.step, state.importedData, state.contractorId, state.draft, update]);
+
+  // ─── Step: Publish profile ───
   const publishProfile = useCallback(async () => {
     if (!state.contractorId) return;
     setIsProcessing(true);
@@ -244,6 +336,7 @@ export default function PageAlexGuidedOnboarding() {
     finally { setIsProcessing(false); }
   }, [state.contractorId, goTo]);
 
+  // ─── Alex messages per step ───
   const alexMessages: Record<OnboardingStep, string> = useMemo(() => ({
     welcome: "Bienvenue ! Je suis Alex, votre assistant IA. Je vais vous guider pour créer votre profil en quelques minutes.",
     business_info: "Parfait ! Dites-moi un peu plus sur votre entreprise.",
@@ -251,8 +344,8 @@ export default function PageAlexGuidedOnboarding() {
     territories: "Où offrez-vous vos services ? Sélectionnez vos villes.",
     signature_offer: "🎉 Offre exclusive ! Le plan Signature est offert gratuitement avec le code SIGNATURE26.",
     activation: "Activation en cours...",
-    importing: "Je recherche vos informations en ligne pour construire votre profil...",
-    profile_completion: "Votre profil est presque complet ! Vérifions les derniers détails.",
+    importing: "Je recherche vos informations en ligne pour construire votre profil. Cela prend quelques secondes...",
+    profile_completion: "Voici ce que j'ai trouvé ! Vérifiez les informations et complétez ce qui manque.",
     preview: "Voici votre profil tel que vos clients le verront. Prêt à publier ?",
     published: "🎉 Félicitations ! Votre profil est en ligne. Vous êtes prêt à recevoir des rendez-vous.",
   }), []);
@@ -264,35 +357,147 @@ export default function PageAlexGuidedOnboarding() {
         <meta name="description" content="Créez votre profil professionnel avec Alex, votre assistant IA UNPRO." />
       </Helmet>
       <div className="min-h-screen bg-background">
+        {/* Progress bar */}
         <div className="fixed top-0 inset-x-0 z-50 h-1 bg-muted">
           <motion.div className="h-full bg-gradient-to-r from-primary to-secondary" animate={{ width: `${progress}%` }} transition={{ duration: 0.4 }} />
         </div>
+
         <div className="max-w-lg mx-auto px-4 pt-6 pb-32">
           <AlexOrbPanel message={alexMessages[state.step]} step={state.step} />
+
           <AnimatePresence mode="wait">
-            <motion.div key={state.step} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="mt-6">
+            <motion.div
+              key={state.step}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="mt-6"
+            >
+              {/* Welcome */}
               {state.step === "welcome" && (
                 <div className="text-center space-y-6">
-                  <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground">Commencer avec Alex</h1>
-                  <p className="text-muted-foreground text-sm max-w-sm mx-auto">En quelques minutes, Alex crée votre profil professionnel complet et vous active le plan Signature gratuitement.</p>
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => goTo("business_info")} className="w-full max-w-xs mx-auto h-14 rounded-2xl bg-primary text-primary-foreground font-bold text-base shadow-lg">Commencer →</motion.button>
+                  <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground">
+                    Commencer avec Alex
+                  </h1>
+                  <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+                    En quelques minutes, Alex crée votre profil professionnel complet et vous active le plan Signature gratuitement.
+                  </p>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => goTo("business_info")}
+                    className="w-full max-w-xs mx-auto h-14 rounded-2xl bg-primary text-primary-foreground font-bold text-base shadow-lg"
+                  >
+                    Commencer →
+                  </motion.button>
                 </div>
               )}
-              {state.step === "business_info" && <AlexChatStep draft={state.draft} onUpdate={(d) => update({ draft: { ...state.draft, ...d } })} onComplete={createContractorDraft} isProcessing={isProcessing} />}
-              {state.step === "categories" && <CategorySelectorTree categories={state.categories} onChange={(c) => update({ categories: c })} onContinue={saveCategories} isProcessing={isProcessing} />}
-              {state.step === "territories" && <TerritorySelectorQuebec selected={state.territories} onChange={(t) => update({ territories: t })} onContinue={saveTerritories} isProcessing={isProcessing} />}
-              {state.step === "signature_offer" && <SignatureOfferCard promoCode={state.promoCode} onPromoChange={(c) => update({ promoCode: c })} onActivate={activateSignaturePlan} isProcessing={isProcessing} />}
-              {state.step === "importing" && <ImportProgressRealtime progress={state.importProgress} />}
-              {state.step === "profile_completion" && <ProfileCompletionChecklist draft={state.draft} completion={state.profileCompletion} onComplete={() => goTo("preview")} />}
-              {state.step === "preview" && <ProfilePreviewCard draft={state.draft} categories={state.categories} territories={state.territories} onPublish={publishProfile} isProcessing={isProcessing} />}
+
+              {/* Business info chat */}
+              {state.step === "business_info" && (
+                <AlexChatStep
+                  draft={state.draft}
+                  onUpdate={(d) => update({ draft: { ...state.draft, ...d } })}
+                  onComplete={createContractorDraft}
+                  isProcessing={isProcessing}
+                />
+              )}
+
+              {/* Categories */}
+              {state.step === "categories" && (
+                <CategorySelectorTree
+                  categories={state.categories}
+                  onChange={(c) => update({ categories: c })}
+                  onContinue={saveCategories}
+                  isProcessing={isProcessing}
+                />
+              )}
+
+              {/* Territories */}
+              {state.step === "territories" && (
+                <TerritorySelectorQuebec
+                  selected={state.territories}
+                  onChange={(t) => update({ territories: t })}
+                  onContinue={saveTerritories}
+                  isProcessing={isProcessing}
+                />
+              )}
+
+              {/* Signature offer */}
+              {state.step === "signature_offer" && (
+                <SignatureOfferCard
+                  promoCode={state.promoCode}
+                  onPromoChange={(c) => update({ promoCode: c })}
+                  onActivate={activateSignaturePlan}
+                  isProcessing={isProcessing}
+                />
+              )}
+
+              {/* Import in progress */}
+              {state.step === "importing" && (
+                <ImportProgressRealtime
+                  progress={state.importProgress}
+                  modules={state.importModules}
+                />
+              )}
+
+              {/* Profile completion */}
+              {state.step === "profile_completion" && (
+                <ProfileCompletionChecklist
+                  draft={state.draft}
+                  completion={state.profileCompletion}
+                  importedData={state.importedData}
+                  importModules={state.importModules}
+                  contractorId={state.contractorId}
+                  onComplete={() => goTo("preview")}
+                />
+              )}
+
+              {/* Preview */}
+              {state.step === "preview" && (
+                <ProfilePreviewCard
+                  draft={state.draft}
+                  categories={state.categories}
+                  territories={state.territories}
+                  importedData={state.importedData}
+                  onPublish={publishProfile}
+                  isProcessing={isProcessing}
+                />
+              )}
+
+              {/* Published */}
               {state.step === "published" && (
                 <div className="text-center space-y-6 py-8">
-                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", bounce: 0.5 }} className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center"><span className="text-3xl">🎉</span></motion.div>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", bounce: 0.5 }}
+                    className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center"
+                  >
+                    <span className="text-3xl">🎉</span>
+                  </motion.div>
                   <h2 className="text-2xl font-bold text-foreground">Profil publié !</h2>
-                  <p className="text-muted-foreground text-sm">Votre profil est maintenant visible. Vous êtes prêt à recevoir des rendez-vous qualifiés.</p>
+                  <p className="text-muted-foreground text-sm">
+                    Votre profil est maintenant visible. Vous êtes prêt à recevoir des rendez-vous qualifiés.
+                  </p>
                   <div className="flex flex-col gap-3 max-w-xs mx-auto">
-                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => navigate("/pro")} className="h-12 rounded-xl bg-primary text-primary-foreground font-bold">Entrer dans mon cockpit</motion.button>
-                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => navigate("/alex")} className="h-12 rounded-xl border border-border text-foreground font-medium">Parler à Alex</motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => navigate("/pro")}
+                      className="h-12 rounded-xl bg-primary text-primary-foreground font-bold"
+                    >
+                      Entrer dans mon cockpit
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => navigate("/alex")}
+                      className="h-12 rounded-xl border border-border text-foreground font-medium"
+                    >
+                      Parler à Alex
+                    </motion.button>
                   </div>
                 </div>
               )}
