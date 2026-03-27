@@ -68,6 +68,8 @@ interface OnboardingState {
   profileCompletion: number;
   importedData: ImportedBusinessData | null;
   importModules: ImportModule[];
+  importStarted: boolean;
+  detectedCategory: string | null;
 }
 
 const INITIAL_STATE: OnboardingState = {
@@ -83,7 +85,39 @@ const INITIAL_STATE: OnboardingState = {
   profileCompletion: 0,
   importedData: null,
   importModules: [],
+  importStarted: false,
+  detectedCategory: null,
 };
+
+// Map activity keywords to known categories
+const CATEGORY_KEYWORDS: Record<string, string[]> = {
+  "Isolation": ["isolation", "isoler", "cellulose", "uréthane", "entretoit", "grenier", "laine"],
+  "Plomberie": ["plomberie", "plombier", "tuyau", "débouchage", "chauffe-eau"],
+  "Électricité": ["électricité", "électricien", "panneau", "filage", "borne"],
+  "Toiture": ["toiture", "toit", "couvreur", "bardeau", "membrane"],
+  "Peinture": ["peinture", "peintre", "teinture"],
+  "Rénovation générale": ["rénovation", "rénov", "construction", "entrepreneur général"],
+  "Chauffage & Climatisation": ["chauffage", "climatisation", "thermopompe", "fournaise", "hvac", "ventilation"],
+  "Fondation & Structure": ["fondation", "fissure", "drain français", "imperméabilisation"],
+  "Aménagement extérieur": ["paysag", "pavé", "clôture", "terrasse", "aménagement"],
+  "Portes & Fenêtres": ["porte", "fenêtre", "vitre"],
+  "Revêtement extérieur": ["revêtement", "vinyle", "crépi", "maçonnerie"],
+  "Excavation & Terrassement": ["excavation", "terrassement", "nivellement"],
+  "Béton & Maçonnerie": ["béton", "maçon", "brique", "dalle"],
+  "Plancher & Céramique": ["plancher", "céramique", "bois franc", "sablage"],
+  "Piscine & Spa": ["piscine", "spa"],
+  "Nettoyage professionnel": ["nettoyage", "ménage", "sinistre"],
+  "Notaire": ["notaire"],
+  "Courtier immobilier": ["courtier", "immobilier"],
+};
+
+function detectCategory(activity: string): string | null {
+  const q = activity.toLowerCase();
+  for (const [cat, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    if (keywords.some((kw) => q.includes(kw))) return cat;
+  }
+  return null;
+}
 
 const STEP_ORDER: OnboardingStep[] = [
   "welcome", "business_info", "categories", "territories",
