@@ -310,6 +310,8 @@ import AdminOutreachTemplates from "@/pages/admin/AdminOutreachTemplates";
 import AdminOutreachAnalytics from "@/pages/admin/AdminOutreachAnalytics";
 import MesProprietesPage from "@/pages/MesProprietesPage";
 import AnalyserSoumissionsPage from "@/pages/AnalyserSoumissionsPage";
+import PageRecruitmentCloser from "@/pages/recruitment/PageRecruitmentCloser";
+import PageRecruitmentThankYou from "@/pages/recruitment/PageRecruitmentThankYou";
 // import TrouverEntrepreneurPage from "@/pages/TrouverEntrepreneurPage"; // Hidden for now
 import DecrireMonProjetPage from "@/pages/DecrireMonProjetPage";
 import ParlerAAlexPage from "@/pages/ParlerAAlexPage";
@@ -726,6 +728,10 @@ export const AppRouter = () => (
       <Route path="/condos/quotes" element={<ProtectedRoute requiredRole="homeowner"><CondoQuotesPage /></ProtectedRoute>} />
       <Route path="/condos/reports" element={<ProtectedRoute requiredRole="homeowner"><CondoReportsPage /></ProtectedRoute>} />
       <Route path="/condos/billing" element={<ProtectedRoute requiredRole="homeowner"><CondoBillingPage /></ProtectedRoute>} />
+
+      {/* Recruitment */}
+      <Route path="/carriere" element={<PageRecruitmentCloser />} />
+      <Route path="/carriere/merci" element={<PageRecruitmentThankYou />} />
 
       {/* Catch-all: try fallback, then 404 */}
       <Route path="*" element={<FallbackRoutePage />} />
