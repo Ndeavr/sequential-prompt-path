@@ -325,6 +325,10 @@ export default function PageCheckoutStripe() {
           >
             {loading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
+            ) : promoDiscount?.discount_value === 100 ? (
+              <>
+                <PartyPopper className="w-4 h-4 mr-2" /> Activer gratuitement
+              </>
             ) : (
               <>
                 <CreditCard className="w-4 h-4 mr-2" /> Payer {displayPrice}/mois{selectedPack ? ` + ${formatCents(selectedPack.totalPriceCents)}` : ""}
