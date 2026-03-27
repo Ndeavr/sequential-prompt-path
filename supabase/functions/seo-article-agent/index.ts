@@ -135,7 +135,7 @@ Génère l'article maintenant avec le tool generate_seo_article.`;
                   },
                   description: "2 à 4 liens internes vers d'autres articles/pages",
                 },
-                hero_image_prompt: { type: "string", description: "Prompt pour générer l'image héro" },
+                hero_image_prompt: { type: "string", description: "Prompt pour générer l'image héro. IMPORTANT: doit décrire une vraie photo de chantier style documentaire — éclairage naturel imparfait, vrais matériaux visibles (laine rose, OSB, charpente bois, outils), qualité photo de téléphone ou portfolio entrepreneur. PAS de studio, PAS de modèle posé, PAS d'esthétique stock photo." },
                 seo_score: { type: "integer", description: "Score SEO estimé 0-100" },
                 intent_score: { type: "integer", description: "Score d'intention 0-100" },
                 conversion_score: { type: "integer", description: "Score de conversion 0-100" },

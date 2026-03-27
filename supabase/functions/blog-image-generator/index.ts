@@ -36,7 +36,7 @@ serve(async (req) => {
 
     for (const article of articles) {
       try {
-        const imagePrompt = `Professional, high-quality photograph for a home services blog article. Topic: "${article.title}". Category: ${article.category || "home services"}. Location context: ${article.city || "Quebec"}, Canada. Style: clean, modern, realistic editorial photography. No text overlay. Bright natural lighting. 16:9 landscape format.`;
+        const imagePrompt = `Documentary-style photograph taken on a real job site. Subject: "${article.title}". Category: ${article.category || "home services"}. Location: ${article.city || "Quebec"}, Canada. Requirements: MUST look like a real photo taken by a contractor or homeowner on-site — natural imperfect lighting, real tools visible, real materials (pink fiberglass batts, blown-in cellulose, OSB sheathing, wood framing, etc.), slight grain or phone-camera quality is OK. NO studio lighting, NO perfectly posed models, NO stock photo aesthetics, NO text overlays. Think Google Maps user photo or a contractor's portfolio photo. 16:9 landscape.`;
 
         const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
