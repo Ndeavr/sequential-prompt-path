@@ -330,53 +330,73 @@ export default function PageAlexGuidedOnboarding() {
     finally { setIsProcessing(false); }
   }, [state.contractorId, state.territories, goTo]);
 
-  // ─── Step: Activate Signature plan ───
+  // ─── Step: Activate Signature plan via Stripe checkout ───
   const activateSignaturePlan = useCallback(async () => {
     if (!state.contractorId) return;
     setIsProcessing(true);
     try {
-      const { data: promoResult } = await supabase.rpc("validate_unpro_promo_code", {
-        _code: state.promoCode || "SIGNATURE26",
-        _plan_code: "signature",
-        _contractor_id: state.contractorId,
+      const { data, error } = await supabase.functions.invoke("create-signature-checkout", {
+        body: {
+          promo_code: state.promoCode || "SIGNATURE26",
+          contractor_id: state.contractorId,
+        },
       });
 
-      const result = promoResult as Record<string, unknown> | null;
-      if (!result?.valid) {
-        toast.error((result?.reason as string) || "Code promo invalide");
+      if (error || !data?.url) {
+        toast.error("Erreur lors de la création du paiement");
         setIsProcessing(false);
         return;
       }
 
-      await supabase.from("contractor_subscriptions").insert({
-        contractor_id: state.contractorId,
-        plan_id: "signature",
-        status: "active",
-      });
-
-      await supabase.from("checkout_sessions").insert({
-        contractor_profile_id: state.contractorId,
-        selected_plan_code: "signature",
-        billing_cycle: "month",
-        promo_code: "SIGNATURE26",
-        base_price: 39900,
-        discount_amount: 39900,
-        final_total_after_discount: 0,
-        checkout_status: "completed_free",
-        zero_dollar_activation: true,
-      });
-
-      // If import already done in background, skip to profile_completion
-      if (state.importedData) {
-        update({ promoValid: true, step: "profile_completion" });
-      } else {
-        update({ promoValid: true, step: "importing" });
-      }
-      toast.success("Plan Signature activé gratuitement !");
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
     } catch (e: any) {
-      toast.error("Erreur d'activation: " + (e.message || ""));
+      toast.error("Erreur: " + (e.message || ""));
     } finally { setIsProcessing(false); }
-  }, [state.contractorId, state.promoCode, update]);
+  }, [state.contractorId, state.promoCode]);
+
+  // ─── Handle Stripe checkout return ───
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const checkoutStatus = params.get("checkout");
+    const returnedContractorId = params.get("contractor_id");
+
+    if (checkoutStatus === "success" && returnedContractorId) {
+      // Activate subscription in DB
+      (async () => {
+        await supabase.from("contractor_subscriptions").upsert({
+          contractor_id: returnedContractorId,
+          plan_id: "signature",
+          status: "active",
+        }, { onConflict: "contractor_id" });
+
+        await supabase.from("checkout_sessions").insert({
+          contractor_profile_id: returnedContractorId,
+          selected_plan_code: "signature",
+          billing_cycle: "one_time",
+          promo_code: "SIGNATURE26",
+          base_price: 299700,
+          discount_amount: 299699,
+          final_total_after_discount: 1,
+          checkout_status: "completed_stripe",
+          zero_dollar_activation: false,
+        });
+
+        update({
+          contractorId: returnedContractorId,
+          promoValid: true,
+          step: "importing",
+        });
+        toast.success("Paiement confirmé ! Plan Signature activé.");
+
+        // Clean URL
+        window.history.replaceState({}, "", "/signature");
+      })();
+    } else if (checkoutStatus === "cancelled") {
+      toast.error("Paiement annulé.");
+      window.history.replaceState({}, "", "/signature");
+    }
+  }, [update]);
 
   // ─── Step: When on "importing" step, wait for background import to finish ───
   useEffect(() => {

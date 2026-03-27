@@ -1,9 +1,10 @@
 /**
- * SignatureOfferCard — Shows Signature plan at 399$/mo crossed out → 0$ with SIGNATURE26.
+ * SignatureOfferCard — Signature plan $2997 one-time, with SIGNATURE26 coupon = $0.01.
+ * Uses real Stripe checkout.
  */
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Check, Loader2, Gift, Shield, Crown } from "lucide-react";
+import { Sparkles, Check, Loader2, Gift, Shield, Crown, CreditCard } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 interface Props {
@@ -59,14 +60,14 @@ export default function SignatureOfferCard({ promoCode, onPromoChange, onActivat
 
         {/* Pricing */}
         <div className="flex items-baseline gap-3">
-          <span className="text-2xl text-muted-foreground line-through font-semibold">399 $/mois</span>
+          <span className="text-2xl text-muted-foreground line-through font-semibold">2 997 $</span>
           {codeApplied && (
             <motion.span
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               className="text-3xl font-bold text-green-500"
             >
-              0 $
+              0,01 $
             </motion.span>
           )}
         </div>
@@ -76,7 +77,7 @@ export default function SignatureOfferCard({ promoCode, onPromoChange, onActivat
             animate={{ opacity: 1 }}
             className="text-xs text-green-500 font-semibold"
           >
-            🎉 Code SIGNATURE26 appliqué — 2 997 $ d'économie !
+            🎉 Code SIGNATURE26 appliqué — 2 996,99 $ de rabais !
           </motion.p>
         )}
 
@@ -111,8 +112,8 @@ export default function SignatureOfferCard({ promoCode, onPromoChange, onActivat
 
       {/* Trust strip */}
       <div className="flex items-center gap-4 text-[10px] text-muted-foreground/60">
-        <span className="flex items-center gap-1"><Shield className="w-3 h-3" /> Activation immédiate</span>
-        <span className="flex items-center gap-1"><Sparkles className="w-3 h-3" /> Sans carte de crédit</span>
+        <span className="flex items-center gap-1"><Shield className="w-3 h-3" /> Paiement sécurisé Stripe</span>
+        <span className="flex items-center gap-1"><CreditCard className="w-3 h-3" /> Transaction protégée</span>
       </div>
 
       {/* CTA */}
@@ -128,7 +129,7 @@ export default function SignatureOfferCard({ promoCode, onPromoChange, onActivat
         ) : (
           <>
             <Sparkles className="w-5 h-5" />
-            Activer le plan Signature gratuitement
+            {codeApplied ? "Payer 0,01 $ et activer" : "Procéder au paiement"}
           </>
         )}
       </motion.button>
