@@ -12405,6 +12405,51 @@ export type Database = {
         }
         Relationships: []
       }
+      email_automation_rules: {
+        Row: {
+          audience_type: string | null
+          conditions_json: Json
+          created_at: string
+          delay_minutes: number
+          id: string
+          max_retries: number
+          rule_key: string
+          sender_email: string
+          status: string
+          template_key: string
+          trigger_event: string
+          updated_at: string
+        }
+        Insert: {
+          audience_type?: string | null
+          conditions_json?: Json
+          created_at?: string
+          delay_minutes?: number
+          id?: string
+          max_retries?: number
+          rule_key: string
+          sender_email: string
+          status?: string
+          template_key: string
+          trigger_event: string
+          updated_at?: string
+        }
+        Update: {
+          audience_type?: string | null
+          conditions_json?: Json
+          created_at?: string
+          delay_minutes?: number
+          id?: string
+          max_retries?: number
+          rule_key?: string
+          sender_email?: string
+          status?: string
+          template_key?: string
+          trigger_event?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -12464,6 +12509,154 @@ export type Database = {
           retry_after_until?: string | null
           send_delay_ms?: number
           transactional_email_ttl_minutes?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      email_template_metrics: {
+        Row: {
+          click_count: number
+          completion_count: number
+          created_at: string
+          delivered_count: number
+          failed_count: number
+          id: string
+          metric_date: string
+          open_count: number
+          payment_recovery_count: number
+          recovery_count: number
+          sent_count: number
+          template_version_id: string
+        }
+        Insert: {
+          click_count?: number
+          completion_count?: number
+          created_at?: string
+          delivered_count?: number
+          failed_count?: number
+          id?: string
+          metric_date?: string
+          open_count?: number
+          payment_recovery_count?: number
+          recovery_count?: number
+          sent_count?: number
+          template_version_id: string
+        }
+        Update: {
+          click_count?: number
+          completion_count?: number
+          created_at?: string
+          delivered_count?: number
+          failed_count?: number
+          id?: string
+          metric_date?: string
+          open_count?: number
+          payment_recovery_count?: number
+          recovery_count?: number
+          sent_count?: number
+          template_version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_template_metrics_template_version_id_fkey"
+            columns: ["template_version_id"]
+            isOneToOne: false
+            referencedRelation: "email_template_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_template_versions: {
+        Row: {
+          created_at: string
+          cta_primary_label: string | null
+          cta_primary_url_template: string | null
+          cta_secondary_label: string | null
+          cta_secondary_url_template: string | null
+          id: string
+          is_active: boolean
+          is_archived: boolean
+          preheader_template: string | null
+          published_at: string | null
+          subject_template: string
+          template_id: string
+          updated_at: string
+          variant_type: string
+          version_label: string
+        }
+        Insert: {
+          created_at?: string
+          cta_primary_label?: string | null
+          cta_primary_url_template?: string | null
+          cta_secondary_label?: string | null
+          cta_secondary_url_template?: string | null
+          id?: string
+          is_active?: boolean
+          is_archived?: boolean
+          preheader_template?: string | null
+          published_at?: string | null
+          subject_template: string
+          template_id: string
+          updated_at?: string
+          variant_type?: string
+          version_label: string
+        }
+        Update: {
+          created_at?: string
+          cta_primary_label?: string | null
+          cta_primary_url_template?: string | null
+          cta_secondary_label?: string | null
+          cta_secondary_url_template?: string | null
+          id?: string
+          is_active?: boolean
+          is_archived?: boolean
+          preheader_template?: string | null
+          published_at?: string | null
+          subject_template?: string
+          template_id?: string
+          updated_at?: string
+          variant_type?: string
+          version_label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_templates: {
+        Row: {
+          audience_type: string | null
+          category: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          template_key: string
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          audience_type?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          template_key: string
+          template_name: string
+          updated_at?: string
+        }
+        Update: {
+          audience_type?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          template_key?: string
+          template_name?: string
           updated_at?: string
         }
         Relationships: []
@@ -24567,6 +24760,180 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      sms_automation_rules: {
+        Row: {
+          audience_type: string | null
+          conditions_json: Json
+          cooldown_minutes: number
+          created_at: string
+          delay_minutes: number
+          id: string
+          max_retries: number
+          rule_key: string
+          status: string
+          template_key: string
+          trigger_event: string
+          updated_at: string
+        }
+        Insert: {
+          audience_type?: string | null
+          conditions_json?: Json
+          cooldown_minutes?: number
+          created_at?: string
+          delay_minutes?: number
+          id?: string
+          max_retries?: number
+          rule_key: string
+          status?: string
+          template_key: string
+          trigger_event: string
+          updated_at?: string
+        }
+        Update: {
+          audience_type?: string | null
+          conditions_json?: Json
+          cooldown_minutes?: number
+          created_at?: string
+          delay_minutes?: number
+          id?: string
+          max_retries?: number
+          rule_key?: string
+          status?: string
+          template_key?: string
+          trigger_event?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sms_event_queue: {
+        Row: {
+          cooldown_key: string | null
+          created_at: string
+          error_message: string | null
+          event_key: string
+          id: string
+          idempotency_key: string | null
+          payload_json: Json
+          processed_at: string | null
+          queue_status: string
+          recipient_phone: string
+          retry_count: number
+          scheduled_at: string
+          template_key: string
+          updated_at: string
+        }
+        Insert: {
+          cooldown_key?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_key: string
+          id?: string
+          idempotency_key?: string | null
+          payload_json?: Json
+          processed_at?: string | null
+          queue_status?: string
+          recipient_phone: string
+          retry_count?: number
+          scheduled_at?: string
+          template_key: string
+          updated_at?: string
+        }
+        Update: {
+          cooldown_key?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_key?: string
+          id?: string
+          idempotency_key?: string | null
+          payload_json?: Json
+          processed_at?: string | null
+          queue_status?: string
+          recipient_phone?: string
+          retry_count?: number
+          scheduled_at?: string
+          template_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sms_events: {
+        Row: {
+          created_at: string
+          delivered_at: string | null
+          error_message: string | null
+          event_key: string | null
+          id: string
+          message_id: string | null
+          payload_json: Json
+          provider_key: string
+          recipient_phone: string
+          sent_at: string | null
+          status: string
+          template_key: string
+        }
+        Insert: {
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          event_key?: string | null
+          id?: string
+          message_id?: string | null
+          payload_json?: Json
+          provider_key?: string
+          recipient_phone: string
+          sent_at?: string | null
+          status?: string
+          template_key: string
+        }
+        Update: {
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          event_key?: string | null
+          id?: string
+          message_id?: string | null
+          payload_json?: Json
+          provider_key?: string
+          recipient_phone?: string
+          sent_at?: string | null
+          status?: string
+          template_key?: string
+        }
+        Relationships: []
+      }
+      sms_templates: {
+        Row: {
+          audience_type: string | null
+          body_template: string
+          created_at: string
+          id: string
+          is_active: boolean
+          template_key: string
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          audience_type?: string | null
+          body_template: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          template_key: string
+          template_name: string
+          updated_at?: string
+        }
+        Update: {
+          audience_type?: string | null
+          body_template?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          template_key?: string
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       storage_documents: {
         Row: {

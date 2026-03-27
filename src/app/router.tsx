@@ -27,6 +27,7 @@ import HomeownersPage from "@/pages/HomeownersPage";
 import OwnerMenuPreviewPage from "@/pages/OwnerMenuPreviewPage";
 import MenuIntelligenceAdminPage from "@/pages/admin/MenuIntelligenceAdminPage";
 import PageAdminEmailLogs from "@/pages/admin/PageAdminEmailLogs";
+import PageAdminEmailTemplates from "@/pages/admin/PageAdminEmailTemplates";
 import ProfessionalsPage from "@/pages/ProfessionalsPage";
 import PartnersPage from "@/pages/PartnersPage";
 import DescribeProjectPage from "@/pages/DescribeProjectPage";
@@ -534,6 +535,7 @@ export const AppRouter = () => (
       {/* Admin */}
       <Route path="/admin/menu-intelligence" element={<ProtectedRoute requiredRole="admin"><MenuIntelligenceAdminPage /></ProtectedRoute>} />
       <Route path="/admin/emails" element={<ProtectedRoute requiredRole="admin"><PageAdminEmailLogs /></ProtectedRoute>} />
+      <Route path="/admin/email-templates" element={<ProtectedRoute requiredRole="admin"><PageAdminEmailTemplates /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><AdminUsers /></ProtectedRoute>} />
       <Route path="/admin/contractors" element={<ProtectedRoute requiredRole="admin"><AdminContractors /></ProtectedRoute>} />
