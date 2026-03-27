@@ -27,6 +27,7 @@ import HomeownersPage from "@/pages/HomeownersPage";
 import OwnerMenuPreviewPage from "@/pages/OwnerMenuPreviewPage";
 import MenuIntelligenceAdminPage from "@/pages/admin/MenuIntelligenceAdminPage";
 import PageAdminEmailLogs from "@/pages/admin/PageAdminEmailLogs";
+import PageAdminEmailTemplates from "@/pages/admin/PageAdminEmailTemplates";
 import ProfessionalsPage from "@/pages/ProfessionalsPage";
 import PartnersPage from "@/pages/PartnersPage";
 import DescribeProjectPage from "@/pages/DescribeProjectPage";
