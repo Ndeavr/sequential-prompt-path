@@ -168,6 +168,10 @@ import AdminVoiceOptimizerPage from "@/pages/admin/AdminVoiceOptimizerPage";
 import EntrepreneurVoiceSalesPage from "@/pages/entrepreneur/EntrepreneurVoiceSalesPage";
 import AdminSalesAnalyticsPage from "@/pages/admin/AdminSalesAnalyticsPage";
 
+// Homeowner Voice Closer
+import HomeownerVoiceEntryPage from "@/pages/homeowner/HomeownerVoiceEntryPage";
+import AdminHomeownerAnalyticsPage from "@/pages/admin/AdminHomeownerAnalyticsPage";
+
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
 import BlogArticlePage from "@/pages/blog/BlogArticlePage";
