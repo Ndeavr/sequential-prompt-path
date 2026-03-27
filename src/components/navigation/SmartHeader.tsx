@@ -390,6 +390,12 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
             </>
           )}
 
+          {/* Settings (mobile only) */}
+          <div className="border-t border-border/20 pt-4 mt-4 flex items-center gap-2 sm:hidden">
+            <LanguageToggle lang={lang} onChange={setLang} />
+            <ThemeToggle />
+          </div>
+
           {/* Account section */}
           <div className="border-t border-border/20 pt-4 mt-4 space-y-1">
             <p className="text-caption font-bold text-muted-foreground uppercase tracking-wider mb-2">
