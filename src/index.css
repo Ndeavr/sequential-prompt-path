@@ -4,11 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Prevent horizontal scroll / swipe globally */
-html, body {
-  overflow-x: hidden;
-}
-
 @layer base {
   :root {
     --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
@@ -518,5 +513,13 @@ html, body {
   /* ─── Mobile safe area ─── */
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  /* ─── Hide scrollbar ─── */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }
