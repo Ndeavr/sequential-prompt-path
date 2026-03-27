@@ -160,11 +160,11 @@ const SmartHeader = () => {
                 <ThemeToggle />
               </div>
 
-              {/* Share QR button — hidden on mobile, available in hamburger */}
+              {/* Share QR button — always visible */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="hidden sm:inline-flex h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
                 onClick={() => setShareOpen(true)}
                 aria-label="Partager"
               >
