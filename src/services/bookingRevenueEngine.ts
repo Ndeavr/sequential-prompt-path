@@ -220,11 +220,11 @@ export function calculateSlotValue(input: {
 // ─── Format Helpers ───
 
 export function formatCentsToCAD(cents: number): string {
-  return `${(cents / 100).toFixed(2).replace(/\.00$/, "")} $`;
+  return `${(cents / 100).toFixed(2).replace(/\.00$/, "")}\u00A0$`;
 }
 
 export function formatCentsShort(cents: number): string {
-  return `${Math.round(cents / 100)} $`;
+  return `${Math.round(cents / 100)}\u00A0$`;
 }
 
 // ─── Data Fetchers ───
