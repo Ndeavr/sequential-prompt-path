@@ -92,18 +92,16 @@ export async function buildPredictiveMatches(params: {
   sessionId: string;
 }): Promise<PredictiveMatch[]> {
   // Query contractors matching service + city
-  let query = supabase
+  const baseQuery = supabase
     .from("contractors")
     .select("id, business_name, specialty, city, aipp_score, admin_verified")
     .eq("status", "active")
     .order("aipp_score", { ascending: false })
     .limit(5);
 
-  if (params.city) {
-    query = query.ilike("city", `%${params.city}%`);
-  }
-
-  const { data: contractors } = await query;
+  const { data: contractors } = params.city
+    ? await baseQuery.ilike("city", `%${params.city}%`)
+    : await baseQuery;
   if (!contractors?.length) return [];
 
   const matches: PredictiveMatch[] = contractors.map((c, i) => ({
