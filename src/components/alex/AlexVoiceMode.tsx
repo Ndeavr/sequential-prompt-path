@@ -1,7 +1,9 @@
 /**
- * UNPRO — Alex Voice Mode
- * Real-time voice interaction with STT + TTS.
- * Alex ENGAGES the conversation first with a greeting, then auto-listens.
+ * UNPRO — Alex Voice Mode (Hard Reset Edition)
+ * 
+ * Uses AlexSingleAudioChannel — guaranteed single voice output.
+ * Voice IDs loaded from DB, not hardcoded.
+ * Immediate interruption on user speech.
  */
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,15 +11,14 @@ import { Mic, MicOff, MessageSquare, X, Loader2, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { alexAudioChannel } from "@/services/alexSingleAudioChannel";
 
 interface AlexVoiceProps {
   feature: string;
   deepLinkId?: string;
   onFlowComplete: (context: Record<string, string>) => void;
   onDismiss: () => void;
-  /** Render inline (inside a card) instead of fixed floating */
   inline?: boolean;
-  /** Auto-start listening on mount (legacy, greeting now handles this) */
   autoStart?: boolean;
 }
 
@@ -26,7 +27,7 @@ interface Message {
   content: string;
 }
 
-export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onDismiss, inline = false, autoStart = false }: AlexVoiceProps) {
+export default function AlexVoiceMode({ feature, onFlowComplete, onDismiss, inline = false }: AlexVoiceProps) {
   const [mode, setMode] = useState<"voice" | "text">("voice");
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -37,15 +38,22 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [greetingDone, setGreetingDone] = useState(false);
   const recognitionRef = useRef<any>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const greetingAttempted = useRef(false);
   const mountedRef = useRef(false);
 
-  // Listen for global cleanup event to stop all audio/STT
+  // Track audio channel state
+  useEffect(() => {
+    const unsub = alexAudioChannel.onStateChange((state) => {
+      if (state === 'playing') setIsSpeaking(true);
+      else if (state === 'idle' || state === 'interrupted' || state === 'error') setIsSpeaking(false);
+    });
+    return unsub;
+  }, []);
+
+  // Listen for global cleanup event
   useEffect(() => {
     const handleCleanup = () => {
-      audioRef.current?.pause();
-      audioRef.current = null;
+      alexAudioChannel.hardStop();
       recognitionRef.current?.stop();
       recognitionRef.current = null;
       setIsListening(false);
@@ -54,8 +62,9 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
     window.addEventListener("alex-voice-cleanup", handleCleanup);
     return () => {
       window.removeEventListener("alex-voice-cleanup", handleCleanup);
-      // Cleanup on unmount
-      handleCleanup();
+      // Cleanup on unmount — kill ALL audio
+      alexAudioChannel.hardStop();
+      recognitionRef.current?.stop();
     };
   }, []);
 
@@ -70,27 +79,23 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
         });
         if (data?.sessionId) {
           setSessionId(data.sessionId);
-
-          // Play greeting audio + display greeting text immediately
           if (data.greeting) {
             setMessages([{ role: "assistant", content: data.greeting }]);
           }
           if (data.greetingAudio) {
             playGreetingAudio(data.greetingAudio);
           } else {
-            // No audio — just mark greeting done and start listening
             setGreetingDone(true);
           }
         }
       } catch {
-        // Fallback greeting if backend fails
         setMessages([{ role: "assistant", content: "Bonjour! Comment puis-je vous aider?" }]);
         setGreetingDone(true);
       }
     })();
   }, [feature]);
 
-  // Auto-start listening after greeting finishes
+  // Auto-start listening after greeting
   useEffect(() => {
     if (greetingDone && sessionId && mode === "voice") {
       const timer = setTimeout(() => startListening(), 300);
@@ -98,37 +103,23 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
     }
   }, [greetingDone, sessionId, mode]);
 
-  // Play greeting audio, then trigger listening
   const playGreetingAudio = useCallback((base64Audio: string) => {
-    try {
-      setIsSpeaking(true);
-      const audioUrl = `data:audio/mpeg;base64,${base64Audio}`;
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-      audio.onended = () => {
-        setIsSpeaking(false);
-        setGreetingDone(true);
-      };
-      audio.onerror = () => {
-        setIsSpeaking(false);
-        setGreetingDone(true);
-      };
-      audio.play().catch(() => {
-        // Autoplay blocked — mark done so user can manually interact
-        setIsSpeaking(false);
-        setGreetingDone(true);
-      });
-    } catch {
-      setIsSpeaking(false);
+    alexAudioChannel.playBase64(base64Audio).then(() => {
       setGreetingDone(true);
-    }
+    }).catch(() => {
+      setGreetingDone(true);
+    });
   }, []);
 
-  // Speech recognition setup
   const startListening = useCallback(() => {
+    // Interrupt Alex if still speaking
+    if (alexAudioChannel.isPlaying()) {
+      alexAudioChannel.interrupt();
+    }
+
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      toast.error("La reconnaissance vocale n'est pas supportée par ce navigateur");
+      toast.error("La reconnaissance vocale n'est pas supportée");
       setMode("text");
       return;
     }
@@ -139,6 +130,11 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
     recognition.interimResults = true;
 
     recognition.onresult = (event: any) => {
+      // Interrupt Alex immediately on user speech
+      if (alexAudioChannel.isPlaying()) {
+        alexAudioChannel.interrupt();
+      }
+
       let interim = "";
       let final = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -149,18 +145,11 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
         }
       }
       setTranscript(final || interim);
-      if (final) {
-        handleUserMessage(final);
-      }
+      if (final) handleUserMessage(final);
     };
 
-    recognition.onerror = () => {
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
 
     recognitionRef.current = recognition;
     recognition.start();
@@ -172,37 +161,13 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
     setIsListening(false);
   }, []);
 
-  // Play response audio chunks sequentially
-  const playAudioChunks = useCallback((chunks: string[], onDone: () => void) => {
-    let index = 0;
-    const playNext = () => {
-      if (index >= chunks.length) {
-        onDone();
-        return;
-      }
-      const audioUrl = `data:audio/mpeg;base64,${chunks[index]}`;
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-      audio.onended = () => {
-        index++;
-        playNext();
-      };
-      audio.onerror = () => {
-        index++;
-        playNext();
-      };
-      audio.play().catch(() => {
-        index++;
-        playNext();
-      });
-    };
-    playNext();
-  }, []);
-
-  // Send message to Alex and get voice response
   const handleUserMessage = useCallback(async (text: string) => {
     setIsProcessing(true);
     setTranscript("");
+    
+    // ALWAYS kill any playing audio before processing
+    alexAudioChannel.hardStop();
+
     const newMessages = [...messages, { role: "user" as const, content: text }];
     setMessages(newMessages);
 
@@ -226,16 +191,8 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
         }
       );
 
-      if (response.status === 429) {
-        toast.error("Trop de requêtes, réessaie dans quelques secondes");
-        setIsProcessing(false);
-        return;
-      }
-      if (response.status === 402) {
-        toast.error("Crédit insuffisant");
-        setIsProcessing(false);
-        return;
-      }
+      if (response.status === 429) { toast.error("Trop de requêtes"); setIsProcessing(false); return; }
+      if (response.status === 402) { toast.error("Crédit insuffisant"); setIsProcessing(false); return; }
 
       const data = await response.json();
 
@@ -243,28 +200,13 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
         setMessages(prev => [...prev, { role: "assistant", content: data.text }]);
       }
 
-      // Play audio chunks if available
+      // Play audio through singleton channel — no overlap possible
       if (data.audioAvailable && data.audioChunks?.length && mode === "voice") {
-        setIsSpeaking(true);
-        playAudioChunks(data.audioChunks, () => {
-          setIsSpeaking(false);
-          if (mode === "voice") {
-            setTimeout(() => startListening(), 300);
-          }
-        });
+        await alexAudioChannel.playChunksSequential(data.audioChunks);
+        if (mode === "voice") setTimeout(() => startListening(), 300);
       } else if (data.audioAvailable && data.audio && mode === "voice") {
-        // Legacy single audio field
-        setIsSpeaking(true);
-        const audioUrl = `data:audio/mpeg;base64,${data.audio}`;
-        const audio = new Audio(audioUrl);
-        audioRef.current = audio;
-        audio.onended = () => {
-          setIsSpeaking(false);
-          if (mode === "voice") {
-            setTimeout(() => startListening(), 300);
-          }
-        };
-        await audio.play();
+        await alexAudioChannel.playBase64(data.audio);
+        if (mode === "voice") setTimeout(() => startListening(), 300);
       }
     } catch (e) {
       console.error("Voice error:", e);
@@ -272,7 +214,7 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
     } finally {
       setIsProcessing(false);
     }
-  }, [messages, sessionId, feature, mode, startListening, playAudioChunks]);
+  }, [messages, sessionId, feature, mode, startListening]);
 
   const handleTextSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -286,13 +228,9 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
       initial={{ opacity: 0, y: inline ? 10 : 30 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: inline ? -10 : 20 }}
-      className={inline
-        ? "w-full"
-        : "fixed bottom-24 right-6 z-50 w-[360px] max-w-[calc(100vw-3rem)]"
-      }
+      className={inline ? "w-full" : "fixed bottom-24 right-6 z-50 w-[360px] max-w-[calc(100vw-3rem)]"}
     >
       <div className={`relative backdrop-blur-xl border border-border/60 rounded-2xl shadow-[var(--shadow-2xl)] overflow-hidden ${inline ? "bg-card" : "bg-card/95"}`}>
-        {/* Top glow */}
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
 
         {/* Header */}
@@ -334,22 +272,14 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               className={`text-xs leading-relaxed px-3 py-2 rounded-xl max-w-[85%] ${
-                msg.role === "user"
-                  ? "ml-auto bg-primary/10 text-foreground"
-                  : "bg-muted/50 text-foreground"
+                msg.role === "user" ? "ml-auto bg-primary/10 text-foreground" : "bg-muted/50 text-foreground"
               }`}
             >
               {msg.content}
             </motion.div>
           ))}
-
-          {/* Live transcript */}
           {transcript && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.6 }}
-              className="text-xs text-muted-foreground italic px-3 py-1"
-            >
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} className="text-xs text-muted-foreground italic px-3 py-1">
               {transcript}...
             </motion.div>
           )}
@@ -361,7 +291,7 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
             <div className="flex items-center justify-center">
               <motion.button
                 onClick={isListening ? stopListening : startListening}
-                disabled={isProcessing || isSpeaking}
+                disabled={isProcessing}
                 className={`h-14 w-14 rounded-full flex items-center justify-center transition-all ${
                   isListening
                     ? "bg-destructive text-destructive-foreground"
