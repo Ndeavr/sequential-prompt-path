@@ -274,6 +274,28 @@ export default function HomeownersPage() {
         </section>
 
         {/* ═══════════════════════════════════════
+            SECTION — PARLEZ À ALEX
+        ═══════════════════════════════════════ */}
+        <section className="px-5 py-12 md:py-16">
+          <div className="max-w-xl mx-auto">
+            <AlexLauncherHero
+              onLaunch={handleAlexLaunch}
+              isActivating={alexActivating}
+            />
+          </div>
+        </section>
+
+        {/* Alex Conversation Overlay */}
+        <AnimatePresence>
+          {alexOpen && (
+            <AlexConversationShell
+              onClose={() => setAlexOpen(false)}
+              entrypoint="homeowner_hero"
+            />
+          )}
+        </AnimatePresence>
+
+        {/* ═══════════════════════════════════════
             SECTION 2 — COMMENT ÇA FONCTIONNE
         ═══════════════════════════════════════ */}
         <section className="px-5 py-16 md:py-24">
