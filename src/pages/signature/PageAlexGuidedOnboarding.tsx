@@ -68,6 +68,8 @@ interface OnboardingState {
   profileCompletion: number;
   importedData: ImportedBusinessData | null;
   importModules: ImportModule[];
+  importStarted: boolean;
+  detectedCategory: string | null;
 }
 
 const INITIAL_STATE: OnboardingState = {
@@ -83,7 +85,39 @@ const INITIAL_STATE: OnboardingState = {
   profileCompletion: 0,
   importedData: null,
   importModules: [],
+  importStarted: false,
+  detectedCategory: null,
 };
+
+// Map activity keywords to known categories
+const CATEGORY_KEYWORDS: Record<string, string[]> = {
+  "Isolation": ["isolation", "isoler", "cellulose", "uréthane", "entretoit", "grenier", "laine"],
+  "Plomberie": ["plomberie", "plombier", "tuyau", "débouchage", "chauffe-eau"],
+  "Électricité": ["électricité", "électricien", "panneau", "filage", "borne"],
+  "Toiture": ["toiture", "toit", "couvreur", "bardeau", "membrane"],
+  "Peinture": ["peinture", "peintre", "teinture"],
+  "Rénovation générale": ["rénovation", "rénov", "construction", "entrepreneur général"],
+  "Chauffage & Climatisation": ["chauffage", "climatisation", "thermopompe", "fournaise", "hvac", "ventilation"],
+  "Fondation & Structure": ["fondation", "fissure", "drain français", "imperméabilisation"],
+  "Aménagement extérieur": ["paysag", "pavé", "clôture", "terrasse", "aménagement"],
+  "Portes & Fenêtres": ["porte", "fenêtre", "vitre"],
+  "Revêtement extérieur": ["revêtement", "vinyle", "crépi", "maçonnerie"],
+  "Excavation & Terrassement": ["excavation", "terrassement", "nivellement"],
+  "Béton & Maçonnerie": ["béton", "maçon", "brique", "dalle"],
+  "Plancher & Céramique": ["plancher", "céramique", "bois franc", "sablage"],
+  "Piscine & Spa": ["piscine", "spa"],
+  "Nettoyage professionnel": ["nettoyage", "ménage", "sinistre"],
+  "Notaire": ["notaire"],
+  "Courtier immobilier": ["courtier", "immobilier"],
+};
+
+function detectCategory(activity: string): string | null {
+  const q = activity.toLowerCase();
+  for (const [cat, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    if (keywords.some((kw) => q.includes(kw))) return cat;
+  }
+  return null;
+}
 
 const STEP_ORDER: OnboardingStep[] = [
   "welcome", "business_info", "categories", "territories",
@@ -115,10 +149,75 @@ export default function PageAlexGuidedOnboarding() {
   const stepIndex = STEP_ORDER.indexOf(state.step);
   const progress = Math.round((stepIndex / (STEP_ORDER.length - 1)) * 100);
 
+  // ─── Background import (fire and forget) ───
+  const startBackgroundImport = useCallback(async (contractorId: string) => {
+    if (state.importStarted) return;
+    update({ importStarted: true });
+    try {
+      const { data: importResult } = await supabase.functions.invoke("onboarding-import", {
+        body: {
+          importForm: {
+            businessName: state.draft.business_name,
+            website: state.draft.website || undefined,
+            phone: state.draft.phone,
+            city: state.draft.city,
+          },
+        },
+      });
+
+      const businessData: ImportedBusinessData = importResult?.businessData || {};
+      const modules: ImportModule[] = importResult?.modules || [];
+
+      // Enrich contractor profile
+      const profileUpdates: Record<string, any> = {};
+      if (businessData.description?.value) {
+        profileUpdates.description = typeof businessData.description.value === "string"
+          ? businessData.description.value.substring(0, 1000)
+          : `${state.draft.business_name} — entreprise spécialisée en ${state.draft.activity} à ${state.draft.city}.`;
+      } else {
+        profileUpdates.description = `${state.draft.business_name} — entreprise spécialisée en ${state.draft.activity} à ${state.draft.city}. Service professionnel de haute qualité.`;
+      }
+      if (businessData.address?.value) profileUpdates.address = businessData.address.value;
+      if (businessData.rating?.value) profileUpdates.rating = businessData.rating.value;
+      if (businessData.reviewCount?.value) profileUpdates.review_count = businessData.reviewCount.value;
+      if (businessData.website?.value && !state.draft.website) profileUpdates.website = businessData.website.value;
+      if (businessData.phone?.value && !state.draft.phone) profileUpdates.phone = businessData.phone.value;
+      if (businessData.businessHours?.value) profileUpdates.description += `\n\nHoraires : ${businessData.businessHours.value}`;
+      const googleUrl = importResult?.businessData?.googleMapsUri?.value;
+      if (googleUrl) profileUpdates.google_business_url = googleUrl;
+
+      await supabase.from("contractors").update(profileUpdates).eq("id", contractorId);
+
+      const importedFieldCount = Object.values(businessData).filter(
+        (f: ImportedField) => f.state !== "missing"
+      ).length;
+      const totalFields = Object.keys(businessData).length;
+      const completionPct = Math.round((importedFieldCount / Math.max(totalFields, 1)) * 100);
+
+      update({
+        importProgress: 100,
+        importedData: businessData,
+        importModules: modules,
+        profileCompletion: Math.max(completionPct, 40),
+      });
+    } catch (e) {
+      console.error("Background import error:", e);
+      update({ importProgress: 100, importedData: {}, importModules: [], profileCompletion: 35 });
+    }
+  }, [state.importStarted, state.draft, update]);
+
   // ─── Step: Create contractor draft ───
   const createContractorDraft = useCallback(async () => {
     setIsProcessing(true);
     try {
+      // Detect category from activity
+      const detected = detectCategory(state.draft.activity);
+      const categoryPatch = detected
+        ? { categories: { primary: detected, secondary: [] }, detectedCategory: detected }
+        : {};
+
+      let cid: string;
+
       // If user already has a contractor row, update it instead of inserting
       if (user?.id) {
         const { data: existing } = await supabase
@@ -128,7 +227,6 @@ export default function PageAlexGuidedOnboarding() {
           .maybeSingle();
 
         if (existing) {
-          // Wipe and reuse existing contractor
           await supabase.from("contractor_services").delete().eq("contractor_id", existing.id);
           await supabase.from("contractor_service_areas").delete().eq("contractor_id", existing.id);
           const { error } = await supabase
@@ -140,41 +238,55 @@ export default function PageAlexGuidedOnboarding() {
               email: state.draft.email,
               specialty: state.draft.activity,
               website: state.draft.website || null,
-              description: null,
-              rating: null,
-              review_count: null,
-              address: null,
-              google_business_url: null,
+              description: null, rating: null, review_count: null, address: null, google_business_url: null,
             })
             .eq("id", existing.id);
           if (error) throw error;
-          update({ contractorId: existing.id, step: "categories" });
-          toast.success("Profil réinitialisé !");
-          setIsProcessing(false);
-          return;
+          cid = existing.id;
+        } else {
+          const { data, error } = await supabase
+            .from("contractors")
+            .insert({
+              business_name: state.draft.business_name,
+              city: state.draft.city,
+              phone: state.draft.phone,
+              email: state.draft.email,
+              specialty: state.draft.activity,
+              website: state.draft.website || null,
+              user_id: user.id,
+            })
+            .select("id")
+            .single();
+          if (error) throw error;
+          cid = data.id;
         }
+      } else {
+        const { data, error } = await supabase
+          .from("contractors")
+          .insert({
+            business_name: state.draft.business_name,
+            city: state.draft.city,
+            phone: state.draft.phone,
+            email: state.draft.email,
+            specialty: state.draft.activity,
+            website: state.draft.website || null,
+            user_id: null,
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+        cid = data.id;
       }
 
-      const { data, error } = await supabase
-        .from("contractors")
-        .insert({
-          business_name: state.draft.business_name,
-          city: state.draft.city,
-          phone: state.draft.phone,
-          email: state.draft.email,
-          specialty: state.draft.activity,
-          website: state.draft.website || null,
-          user_id: user?.id || null,
-        })
-        .select("id")
-        .single();
-      if (error) throw error;
-      update({ contractorId: data.id, step: "categories" });
-      toast.success("Profil créé !");
+      update({ contractorId: cid, step: "categories", ...categoryPatch });
+      toast.success("Profil créé — recherche en cours...");
+
+      // Start import in background immediately
+      startBackgroundImport(cid);
     } catch (e: any) {
       toast.error("Erreur : " + (e.message || "Impossible de créer le profil"));
     } finally { setIsProcessing(false); }
-  }, [state.draft, user?.id, update]);
+  }, [state.draft, user?.id, update, startBackgroundImport]);
 
   // ─── Step: Save categories ───
   const saveCategories = useCallback(async () => {
@@ -254,111 +366,26 @@ export default function PageAlexGuidedOnboarding() {
         zero_dollar_activation: true,
       });
 
-      update({ promoValid: true, step: "importing" });
+      // If import already done in background, skip to profile_completion
+      if (state.importedData) {
+        update({ promoValid: true, step: "profile_completion" });
+      } else {
+        update({ promoValid: true, step: "importing" });
+      }
       toast.success("Plan Signature activé gratuitement !");
     } catch (e: any) {
       toast.error("Erreur d'activation: " + (e.message || ""));
     } finally { setIsProcessing(false); }
   }, [state.contractorId, state.promoCode, update]);
 
-  // ─── Step: Real import pipeline ───
+  // ─── Step: When on "importing" step, wait for background import to finish ───
   useEffect(() => {
-    if (state.step !== "importing" || state.importedData || !state.contractorId) return;
-
-    const runRealImport = async () => {
-      try {
-        // Phase 1: Start progress animation
-        update({ importProgress: 10 });
-
-        // Phase 2: Call real onboarding-import edge function
-        update({ importProgress: 25 });
-        const { data: importResult, error: importError } = await supabase.functions.invoke("onboarding-import", {
-          body: {
-            importForm: {
-              businessName: state.draft.business_name,
-              website: state.draft.website || undefined,
-              phone: state.draft.phone,
-              city: state.draft.city,
-            },
-          },
-        });
-
-        if (importError) {
-          console.error("Import error:", importError);
-          toast.error("Import partiel — certaines sources sont indisponibles");
-        }
-
-        update({ importProgress: 60 });
-
-        const businessData: ImportedBusinessData = importResult?.businessData || {};
-        const modules: ImportModule[] = importResult?.modules || [];
-
-        // Phase 3: Enrich contractor profile with imported data
-        const profileUpdates: Record<string, any> = {};
-
-        if (businessData.description?.value) {
-          profileUpdates.description = typeof businessData.description.value === "string"
-            ? businessData.description.value.substring(0, 1000)
-            : `${state.draft.business_name} — entreprise spécialisée en ${state.draft.activity} à ${state.draft.city}.`;
-        } else {
-          profileUpdates.description = `${state.draft.business_name} — entreprise spécialisée en ${state.draft.activity} à ${state.draft.city}. Service professionnel de haute qualité.`;
-        }
-
-        if (businessData.address?.value) profileUpdates.address = businessData.address.value;
-        if (businessData.rating?.value) profileUpdates.rating = businessData.rating.value;
-        if (businessData.reviewCount?.value) profileUpdates.review_count = businessData.reviewCount.value;
-        if (businessData.website?.value && !state.draft.website) profileUpdates.website = businessData.website.value;
-        if (businessData.phone?.value && !state.draft.phone) profileUpdates.phone = businessData.phone.value;
-        if (businessData.businessHours?.value) profileUpdates.description += `\n\nHoraires : ${businessData.businessHours.value}`;
-
-        // Google Business URL
-        const googleUrl = importResult?.businessData?.googleMapsUri?.value;
-        if (googleUrl) profileUpdates.google_business_url = googleUrl;
-
-        // Facebook
-        if (businessData.facebookPresence?.value) {
-          // Could set facebook_page_url if we have it
-        }
-
-        update({ importProgress: 80 });
-
-        await supabase.from("contractors")
-          .update(profileUpdates)
-          .eq("id", state.contractorId!);
-
-        // Calculate completion percentage
-        const importedFieldCount = Object.values(businessData).filter(
-          (f: ImportedField) => f.state !== "missing"
-        ).length;
-        const totalFields = Object.keys(businessData).length;
-        const completionPct = Math.round((importedFieldCount / Math.max(totalFields, 1)) * 100);
-
-        update({
-          importProgress: 100,
-          importedData: businessData,
-          importModules: modules,
-          profileCompletion: Math.max(completionPct, 40),
-          step: "profile_completion",
-        });
-
-      } catch (e: any) {
-        console.error("Import pipeline error:", e);
-        // Fallback: still allow user to continue with basic profile
-        update({
-          importProgress: 100,
-          importedData: {},
-          importModules: [],
-          profileCompletion: 35,
-          step: "profile_completion",
-        });
-        toast.error("Import partiel — vous pouvez compléter manuellement");
-      }
-    };
-
-    runRealImport();
-  }, [state.step, state.importedData, state.contractorId, state.draft, update]);
-
-  // ─── Step: Publish profile ───
+    if (state.step !== "importing") return;
+    if (state.importedData) {
+      // Import already done, move on
+      goTo("profile_completion");
+    }
+  }, [state.step, state.importedData, goTo]);
   const publishProfile = useCallback(async () => {
     if (!state.contractorId) return;
     setIsProcessing(true);
@@ -447,6 +474,8 @@ export default function PageAlexGuidedOnboarding() {
                   onChange={(c) => update({ categories: c })}
                   onContinue={saveCategories}
                   isProcessing={isProcessing}
+                  detectedPrimary={state.detectedCategory}
+                  importRunning={state.importStarted && !state.importedData}
                 />
               )}
 
