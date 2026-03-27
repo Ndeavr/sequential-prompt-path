@@ -1235,6 +1235,334 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_homeowner_booking_drafts: {
+        Row: {
+          booking_status: string
+          calendar_payload: Json | null
+          city: string | null
+          contact_email: string | null
+          contact_first_name: string | null
+          contact_phone: string | null
+          contractor_id: string | null
+          created_at: string | null
+          homeowner_session_id: string
+          id: string
+          preferred_time_window: string | null
+          project_summary: string | null
+          service_type: string | null
+          updated_at: string | null
+          urgency_level: string | null
+          user_id: string | null
+        }
+        Insert: {
+          booking_status?: string
+          calendar_payload?: Json | null
+          city?: string | null
+          contact_email?: string | null
+          contact_first_name?: string | null
+          contact_phone?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          homeowner_session_id: string
+          id?: string
+          preferred_time_window?: string | null
+          project_summary?: string | null
+          service_type?: string | null
+          updated_at?: string | null
+          urgency_level?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          booking_status?: string
+          calendar_payload?: Json | null
+          city?: string | null
+          contact_email?: string | null
+          contact_first_name?: string | null
+          contact_phone?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          homeowner_session_id?: string
+          id?: string
+          preferred_time_window?: string | null
+          project_summary?: string | null
+          service_type?: string | null
+          updated_at?: string | null
+          urgency_level?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_homeowner_booking_drafts_homeowner_session_id_fkey"
+            columns: ["homeowner_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_homeowner_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_homeowner_conversion_scores: {
+        Row: {
+          booking_probability_score: number | null
+          booking_readiness_score: number | null
+          created_at: string | null
+          homeowner_session_id: string
+          id: string
+          intent_score: number | null
+          objection_risk_score: number | null
+          trust_score: number | null
+          urgency_score: number | null
+        }
+        Insert: {
+          booking_probability_score?: number | null
+          booking_readiness_score?: number | null
+          created_at?: string | null
+          homeowner_session_id: string
+          id?: string
+          intent_score?: number | null
+          objection_risk_score?: number | null
+          trust_score?: number | null
+          urgency_score?: number | null
+        }
+        Update: {
+          booking_probability_score?: number | null
+          booking_readiness_score?: number | null
+          created_at?: string | null
+          homeowner_session_id?: string
+          id?: string
+          intent_score?: number | null
+          objection_risk_score?: number | null
+          trust_score?: number | null
+          urgency_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_homeowner_conversion_scores_homeowner_session_id_fkey"
+            columns: ["homeowner_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_homeowner_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_homeowner_events: {
+        Row: {
+          created_at: string | null
+          event_status: string | null
+          event_type: string
+          homeowner_session_id: string
+          id: string
+          payload: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_status?: string | null
+          event_type: string
+          homeowner_session_id: string
+          id?: string
+          payload?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          event_status?: string | null
+          event_type?: string
+          homeowner_session_id?: string
+          id?: string
+          payload?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_homeowner_events_homeowner_session_id_fkey"
+            columns: ["homeowner_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_homeowner_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_homeowner_objections: {
+        Row: {
+          created_at: string | null
+          detected_text: string | null
+          homeowner_session_id: string
+          id: string
+          objection_type: string
+          resolved: boolean | null
+          response_used: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          detected_text?: string | null
+          homeowner_session_id: string
+          id?: string
+          objection_type: string
+          resolved?: boolean | null
+          response_used?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          detected_text?: string | null
+          homeowner_session_id?: string
+          id?: string
+          objection_type?: string
+          resolved?: boolean | null
+          response_used?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_homeowner_objections_homeowner_session_id_fkey"
+            columns: ["homeowner_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_homeowner_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_homeowner_prompt_performance: {
+        Row: {
+          booking_rate: number | null
+          calendar_open_rate: number | null
+          contact_capture_rate: number | null
+          created_at: string | null
+          id: string
+          locale_code: string
+          prompt_style: string
+          recommendation_rate: number | null
+          role_key: string
+          sessions_count: number | null
+        }
+        Insert: {
+          booking_rate?: number | null
+          calendar_open_rate?: number | null
+          contact_capture_rate?: number | null
+          created_at?: string | null
+          id?: string
+          locale_code: string
+          prompt_style: string
+          recommendation_rate?: number | null
+          role_key?: string
+          sessions_count?: number | null
+        }
+        Update: {
+          booking_rate?: number | null
+          calendar_open_rate?: number | null
+          contact_capture_rate?: number | null
+          created_at?: string | null
+          id?: string
+          locale_code?: string
+          prompt_style?: string
+          recommendation_rate?: number | null
+          role_key?: string
+          sessions_count?: number | null
+        }
+        Relationships: []
+      }
+      alex_homeowner_recovery_queue: {
+        Row: {
+          city: string | null
+          created_at: string | null
+          email: string | null
+          first_name: string | null
+          homeowner_session_id: string
+          id: string
+          notes: string | null
+          phone: string
+          project_type: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          homeowner_session_id: string
+          id?: string
+          notes?: string | null
+          phone: string
+          project_type?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          homeowner_session_id?: string
+          id?: string
+          notes?: string | null
+          phone?: string
+          project_type?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_homeowner_recovery_queue_homeowner_session_id_fkey"
+            columns: ["homeowner_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_homeowner_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_homeowner_sessions: {
+        Row: {
+          booking_ready: boolean | null
+          booking_submitted: boolean | null
+          city: string | null
+          created_at: string | null
+          current_step: string
+          id: string
+          language: string | null
+          locale_code: string | null
+          primary_constraint: string | null
+          project_type: string | null
+          recommended_contractor_id: string | null
+          role_detected: string | null
+          session_token: string
+          updated_at: string | null
+          urgency_level: string | null
+          user_id: string | null
+        }
+        Insert: {
+          booking_ready?: boolean | null
+          booking_submitted?: boolean | null
+          city?: string | null
+          created_at?: string | null
+          current_step?: string
+          id?: string
+          language?: string | null
+          locale_code?: string | null
+          primary_constraint?: string | null
+          project_type?: string | null
+          recommended_contractor_id?: string | null
+          role_detected?: string | null
+          session_token: string
+          updated_at?: string | null
+          urgency_level?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          booking_ready?: boolean | null
+          booking_submitted?: boolean | null
+          city?: string | null
+          created_at?: string | null
+          current_step?: string
+          id?: string
+          language?: string | null
+          locale_code?: string | null
+          primary_constraint?: string | null
+          project_type?: string | null
+          recommended_contractor_id?: string | null
+          role_detected?: string | null
+          session_token?: string
+          updated_at?: string | null
+          urgency_level?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       alex_intents: {
         Row: {
           booking_readiness_score: number
@@ -15466,6 +15794,50 @@ export type Database = {
           },
         ]
       }
+      homeowner_match_recommendations: {
+        Row: {
+          confidence_score: number
+          contractor_id: string | null
+          created_at: string | null
+          explanation_summary: string | null
+          homeowner_session_id: string
+          id: string
+          is_primary: boolean | null
+          match_score: number
+          recommendation_payload: Json | null
+        }
+        Insert: {
+          confidence_score?: number
+          contractor_id?: string | null
+          created_at?: string | null
+          explanation_summary?: string | null
+          homeowner_session_id: string
+          id?: string
+          is_primary?: boolean | null
+          match_score?: number
+          recommendation_payload?: Json | null
+        }
+        Update: {
+          confidence_score?: number
+          contractor_id?: string | null
+          created_at?: string | null
+          explanation_summary?: string | null
+          homeowner_session_id?: string
+          id?: string
+          is_primary?: boolean | null
+          match_score?: number
+          recommendation_payload?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homeowner_match_recommendations_homeowner_session_id_fkey"
+            columns: ["homeowner_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_homeowner_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homeowner_messages: {
         Row: {
           action_label_fr: string | null
@@ -15584,6 +15956,47 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      homeowner_project_diagnoses: {
+        Row: {
+          created_at: string | null
+          detected_city: string | null
+          detected_project_type: string | null
+          diagnosis_payload: Json | null
+          homeowner_session_id: string
+          id: string
+          recommended_professional_type: string | null
+          urgency_level: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          detected_city?: string | null
+          detected_project_type?: string | null
+          diagnosis_payload?: Json | null
+          homeowner_session_id: string
+          id?: string
+          recommended_professional_type?: string | null
+          urgency_level?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          detected_city?: string | null
+          detected_project_type?: string | null
+          diagnosis_payload?: Json | null
+          homeowner_session_id?: string
+          id?: string
+          recommended_professional_type?: string | null
+          urgency_level?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homeowner_project_diagnoses_homeowner_session_id_fkey"
+            columns: ["homeowner_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_homeowner_sessions"
             referencedColumns: ["id"]
           },
         ]

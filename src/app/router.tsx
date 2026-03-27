@@ -168,6 +168,10 @@ import AdminVoiceOptimizerPage from "@/pages/admin/AdminVoiceOptimizerPage";
 import EntrepreneurVoiceSalesPage from "@/pages/entrepreneur/EntrepreneurVoiceSalesPage";
 import AdminSalesAnalyticsPage from "@/pages/admin/AdminSalesAnalyticsPage";
 
+// Homeowner Voice Closer
+import HomeownerVoiceEntryPage from "@/pages/homeowner/HomeownerVoiceEntryPage";
+import AdminHomeownerAnalyticsPage from "@/pages/admin/AdminHomeownerAnalyticsPage";
+
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
 import BlogArticlePage from "@/pages/blog/BlogArticlePage";
@@ -655,6 +659,8 @@ export const AppRouter = () => (
       <Route path="/admin/voice-optimizer/:id" element={<ProtectedRoute requiredRole="admin"><AdminVoiceOptimizerPage /></ProtectedRoute>} />
       <Route path="/admin/sales-analytics" element={<ProtectedRoute requiredRole="admin"><AdminSalesAnalyticsPage /></ProtectedRoute>} />
       <Route path="/entrepreneur/sales" element={<EntrepreneurVoiceSalesPage />} />
+      <Route path="/homeowner/voice" element={<HomeownerVoiceEntryPage />} />
+      <Route path="/admin/homeowner-analytics" element={<ProtectedRoute requiredRole="admin"><AdminHomeownerAnalyticsPage /></ProtectedRoute>} />
       <Route path="/alex/predictive-seller" element={<PageAlexPredictiveSeller />} />
       <Route path="/signature" element={<PageAlexGuidedOnboarding />} />
       <Route path="/audit/:slug" element={<AuditLandingPage />} />
