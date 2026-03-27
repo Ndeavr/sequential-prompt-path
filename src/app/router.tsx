@@ -303,6 +303,11 @@ import AdminDomainIntelligence from "@/pages/admin/AdminDomainIntelligence";
 import AdminBulkArticlesPage from "@/pages/admin/AdminBulkArticlesPage";
 import AdminProspectCampaigns from "@/pages/admin/AdminProspectCampaigns";
 import AdminRoadmapExecution from "@/pages/admin/AdminRoadmapExecution";
+import AdminOutreachDashboard from "@/pages/admin/AdminOutreachDashboard";
+import AdminOutreachCampaignNew from "@/pages/admin/AdminOutreachCampaignNew";
+import AdminOutreachCampaignDetail from "@/pages/admin/AdminOutreachCampaignDetail";
+import AdminOutreachTemplates from "@/pages/admin/AdminOutreachTemplates";
+import AdminOutreachAnalytics from "@/pages/admin/AdminOutreachAnalytics";
 import MesProprietesPage from "@/pages/MesProprietesPage";
 import AnalyserSoumissionsPage from "@/pages/AnalyserSoumissionsPage";
 // import TrouverEntrepreneurPage from "@/pages/TrouverEntrepreneurPage"; // Hidden for now
@@ -671,6 +676,11 @@ export const AppRouter = () => (
       <Route path="/admin/prospection/prospects" element={<ProtectedRoute requiredRole="admin"><AdminProspectionProspects /></ProtectedRoute>} />
       <Route path="/admin/prospection/analytics" element={<ProtectedRoute requiredRole="admin"><AdminProspectionAnalytics /></ProtectedRoute>} />
       <Route path="/alex-landing" element={<PageAlexPersonalizedLanding />} />
+      <Route path="/admin/outreach" element={<ProtectedRoute requiredRole="admin"><AdminOutreachDashboard /></ProtectedRoute>} />
+      <Route path="/admin/outreach/new" element={<ProtectedRoute requiredRole="admin"><AdminOutreachCampaignNew /></ProtectedRoute>} />
+      <Route path="/admin/outreach/:id" element={<ProtectedRoute requiredRole="admin"><AdminOutreachCampaignDetail /></ProtectedRoute>} />
+      <Route path="/admin/outreach/templates" element={<ProtectedRoute requiredRole="admin"><AdminOutreachTemplates /></ProtectedRoute>} />
+      <Route path="/admin/outreach/analytics" element={<ProtectedRoute requiredRole="admin"><AdminOutreachAnalytics /></ProtectedRoute>} />
       <Route path="/audit/:slug" element={<AuditLandingPage />} />
       <Route path="/articles/:slug" element={<SeoArticlePage />} />
       <Route path="/emergency" element={<EmergencyPage />} />

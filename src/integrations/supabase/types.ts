@@ -19763,6 +19763,263 @@ export type Database = {
           },
         ]
       }
+      outreach_campaigns: {
+        Row: {
+          campaign_type: string | null
+          completed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          daily_send_limit: number | null
+          default_promo_code: string | null
+          default_sender_email: string | null
+          default_sender_name: string | null
+          default_sender_phone: string | null
+          email_provider: string | null
+          hourly_send_limit: number | null
+          id: string
+          language: string | null
+          launched_at: string | null
+          name: string
+          primary_channel: string | null
+          send_window_id: string | null
+          sms_provider: string | null
+          smtp_profile_key: string | null
+          source_campaign_id: string | null
+          status: string | null
+          stop_on_conversion: boolean | null
+          twilio_profile_key: string | null
+        }
+        Insert: {
+          campaign_type?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          daily_send_limit?: number | null
+          default_promo_code?: string | null
+          default_sender_email?: string | null
+          default_sender_name?: string | null
+          default_sender_phone?: string | null
+          email_provider?: string | null
+          hourly_send_limit?: number | null
+          id?: string
+          language?: string | null
+          launched_at?: string | null
+          name: string
+          primary_channel?: string | null
+          send_window_id?: string | null
+          sms_provider?: string | null
+          smtp_profile_key?: string | null
+          source_campaign_id?: string | null
+          status?: string | null
+          stop_on_conversion?: boolean | null
+          twilio_profile_key?: string | null
+        }
+        Update: {
+          campaign_type?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          daily_send_limit?: number | null
+          default_promo_code?: string | null
+          default_sender_email?: string | null
+          default_sender_name?: string | null
+          default_sender_phone?: string | null
+          email_provider?: string | null
+          hourly_send_limit?: number | null
+          id?: string
+          language?: string | null
+          launched_at?: string | null
+          name?: string
+          primary_channel?: string | null
+          send_window_id?: string | null
+          sms_provider?: string | null
+          smtp_profile_key?: string | null
+          source_campaign_id?: string | null
+          status?: string | null
+          stop_on_conversion?: boolean | null
+          twilio_profile_key?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_campaigns_send_window_id_fkey"
+            columns: ["send_window_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_send_windows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_campaigns_source_campaign_id_fkey"
+            columns: ["source_campaign_id"]
+            isOneToOne: false
+            referencedRelation: "prospection_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outreach_click_events: {
+        Row: {
+          campaign_id: string | null
+          clicked_at: string | null
+          clicked_url: string | null
+          id: string
+          message_id: string | null
+          prospect_id: string | null
+          resolved_url: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          clicked_at?: string | null
+          clicked_url?: string | null
+          id?: string
+          message_id?: string | null
+          prospect_id?: string | null
+          resolved_url?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          clicked_at?: string | null
+          clicked_url?: string | null
+          id?: string
+          message_id?: string | null
+          prospect_id?: string | null
+          resolved_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_click_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_click_events_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_click_events_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outreach_delivery_events: {
+        Row: {
+          event_status: string | null
+          event_type: string
+          id: string
+          message_id: string | null
+          occurred_at: string | null
+          provider_name: string | null
+          provider_payload_json: Json | null
+        }
+        Insert: {
+          event_status?: string | null
+          event_type: string
+          id?: string
+          message_id?: string | null
+          occurred_at?: string | null
+          provider_name?: string | null
+          provider_payload_json?: Json | null
+        }
+        Update: {
+          event_status?: string | null
+          event_type?: string
+          id?: string
+          message_id?: string | null
+          occurred_at?: string | null
+          provider_name?: string | null
+          provider_payload_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_delivery_events_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outreach_domain_health_checks: {
+        Row: {
+          bounce_rate: number | null
+          complaint_rate: number | null
+          dkim_status: string | null
+          dmarc_status: string | null
+          domain_name: string
+          id: string
+          last_checked_at: string | null
+          spf_status: string | null
+          warmup_status: string | null
+        }
+        Insert: {
+          bounce_rate?: number | null
+          complaint_rate?: number | null
+          dkim_status?: string | null
+          dmarc_status?: string | null
+          domain_name: string
+          id?: string
+          last_checked_at?: string | null
+          spf_status?: string | null
+          warmup_status?: string | null
+        }
+        Update: {
+          bounce_rate?: number | null
+          complaint_rate?: number | null
+          dkim_status?: string | null
+          dmarc_status?: string | null
+          domain_name?: string
+          id?: string
+          last_checked_at?: string | null
+          spf_status?: string | null
+          warmup_status?: string | null
+        }
+        Relationships: []
+      }
+      outreach_followup_rules: {
+        Row: {
+          action_json: Json | null
+          campaign_id: string | null
+          condition_json: Json | null
+          id: string
+          is_active: boolean | null
+          rule_name: string
+          trigger_type: string
+        }
+        Insert: {
+          action_json?: Json | null
+          campaign_id?: string | null
+          condition_json?: Json | null
+          id?: string
+          is_active?: boolean | null
+          rule_name: string
+          trigger_type: string
+        }
+        Update: {
+          action_json?: Json | null
+          campaign_id?: string | null
+          condition_json?: Json | null
+          id?: string
+          is_active?: boolean | null
+          rule_name?: string
+          trigger_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_followup_rules_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outreach_logs: {
         Row: {
           clicked: boolean | null
@@ -19803,6 +20060,621 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      outreach_messages: {
+        Row: {
+          body_rendered: string | null
+          campaign_id: string | null
+          channel_type: string
+          delivered_at: string | null
+          error_message: string | null
+          failed_at: string | null
+          from_value: string | null
+          id: string
+          message_status: string | null
+          prospect_id: string | null
+          provider_message_id: string | null
+          provider_name: string | null
+          queued_at: string | null
+          recipient_id: string | null
+          sent_at: string | null
+          sequence_step_id: string | null
+          subject_rendered: string | null
+          to_value: string | null
+        }
+        Insert: {
+          body_rendered?: string | null
+          campaign_id?: string | null
+          channel_type: string
+          delivered_at?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          from_value?: string | null
+          id?: string
+          message_status?: string | null
+          prospect_id?: string | null
+          provider_message_id?: string | null
+          provider_name?: string | null
+          queued_at?: string | null
+          recipient_id?: string | null
+          sent_at?: string | null
+          sequence_step_id?: string | null
+          subject_rendered?: string | null
+          to_value?: string | null
+        }
+        Update: {
+          body_rendered?: string | null
+          campaign_id?: string | null
+          channel_type?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          from_value?: string | null
+          id?: string
+          message_status?: string | null
+          prospect_id?: string | null
+          provider_message_id?: string | null
+          provider_name?: string | null
+          queued_at?: string | null
+          recipient_id?: string | null
+          sent_at?: string | null
+          sequence_step_id?: string | null
+          subject_rendered?: string | null
+          to_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_messages_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_messages_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_messages_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_recipients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_messages_sequence_step_id_fkey"
+            columns: ["sequence_step_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_sequence_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outreach_open_events: {
+        Row: {
+          campaign_id: string | null
+          id: string
+          ip_hash: string | null
+          message_id: string | null
+          opened_at: string | null
+          prospect_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          id?: string
+          ip_hash?: string | null
+          message_id?: string | null
+          opened_at?: string | null
+          prospect_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          id?: string
+          ip_hash?: string | null
+          message_id?: string | null
+          opened_at?: string | null
+          prospect_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_open_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_open_events_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_open_events_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outreach_provider_configs: {
+        Row: {
+          config_json: Json | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          provider_key: string
+          provider_type: string
+        }
+        Insert: {
+          config_json?: Json | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          provider_key: string
+          provider_type: string
+        }
+        Update: {
+          config_json?: Json | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          provider_key?: string
+          provider_type?: string
+        }
+        Relationships: []
+      }
+      outreach_rate_limits: {
+        Row: {
+          campaign_id: string | null
+          created_at: string | null
+          hour_key: string
+          id: string
+          limit_count: number | null
+          sent_count: number | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string | null
+          hour_key: string
+          id?: string
+          limit_count?: number | null
+          sent_count?: number | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string | null
+          hour_key?: string
+          id?: string
+          limit_count?: number | null
+          sent_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_rate_limits_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outreach_recipients: {
+        Row: {
+          campaign_id: string | null
+          created_at: string | null
+          current_step_order: number | null
+          id: string
+          last_sent_at: string | null
+          next_send_at: string | null
+          prospect_id: string | null
+          recipient_status: string | null
+          sms_opt_out: boolean | null
+          stopped_reason: string | null
+          unsubscribe_status: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string | null
+          current_step_order?: number | null
+          id?: string
+          last_sent_at?: string | null
+          next_send_at?: string | null
+          prospect_id?: string | null
+          recipient_status?: string | null
+          sms_opt_out?: boolean | null
+          stopped_reason?: string | null
+          unsubscribe_status?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string | null
+          current_step_order?: number | null
+          id?: string
+          last_sent_at?: string | null
+          next_send_at?: string | null
+          prospect_id?: string | null
+          recipient_status?: string | null
+          sms_opt_out?: boolean | null
+          stopped_reason?: string | null
+          unsubscribe_status?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_recipients_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outreach_reply_events: {
+        Row: {
+          campaign_id: string | null
+          channel_type: string | null
+          id: string
+          message_id: string | null
+          prospect_id: string | null
+          reply_detected_at: string | null
+          reply_excerpt: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          channel_type?: string | null
+          id?: string
+          message_id?: string | null
+          prospect_id?: string | null
+          reply_detected_at?: string | null
+          reply_excerpt?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          channel_type?: string | null
+          id?: string
+          message_id?: string | null
+          prospect_id?: string | null
+          reply_detected_at?: string | null
+          reply_excerpt?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_reply_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_reply_events_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_reply_events_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outreach_send_windows: {
+        Row: {
+          allowed_days_json: Json | null
+          end_hour: number | null
+          exclude_holidays: boolean | null
+          id: string
+          is_active: boolean | null
+          start_hour: number | null
+          timezone: string | null
+          window_name: string
+        }
+        Insert: {
+          allowed_days_json?: Json | null
+          end_hour?: number | null
+          exclude_holidays?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          start_hour?: number | null
+          timezone?: string | null
+          window_name: string
+        }
+        Update: {
+          allowed_days_json?: Json | null
+          end_hour?: number | null
+          exclude_holidays?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          start_hour?: number | null
+          timezone?: string | null
+          window_name?: string
+        }
+        Relationships: []
+      }
+      outreach_sequence_steps: {
+        Row: {
+          body_template: string | null
+          channel_type: string
+          delay_hours: number | null
+          id: string
+          is_active: boolean | null
+          send_if_json: Json | null
+          sequence_id: string | null
+          skip_if_json: Json | null
+          step_name: string | null
+          step_order: number
+          stop_if_json: Json | null
+          subject_template: string | null
+          track_clicks: boolean | null
+          track_opens: boolean | null
+        }
+        Insert: {
+          body_template?: string | null
+          channel_type: string
+          delay_hours?: number | null
+          id?: string
+          is_active?: boolean | null
+          send_if_json?: Json | null
+          sequence_id?: string | null
+          skip_if_json?: Json | null
+          step_name?: string | null
+          step_order: number
+          stop_if_json?: Json | null
+          subject_template?: string | null
+          track_clicks?: boolean | null
+          track_opens?: boolean | null
+        }
+        Update: {
+          body_template?: string | null
+          channel_type?: string
+          delay_hours?: number | null
+          id?: string
+          is_active?: boolean | null
+          send_if_json?: Json | null
+          sequence_id?: string | null
+          skip_if_json?: Json | null
+          step_name?: string | null
+          step_order?: number
+          stop_if_json?: Json | null
+          subject_template?: string | null
+          track_clicks?: boolean | null
+          track_opens?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_sequence_steps_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_sequences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outreach_sequences: {
+        Row: {
+          campaign_id: string | null
+          created_at: string | null
+          id: string
+          sequence_name: string
+          status: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string | null
+          id?: string
+          sequence_name: string
+          status?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string | null
+          id?: string
+          sequence_name?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_sequences_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outreach_suppressions: {
+        Row: {
+          contact_type: string
+          contact_value: string
+          created_at: string | null
+          id: string
+          source: string | null
+          suppression_reason: string | null
+        }
+        Insert: {
+          contact_type: string
+          contact_value: string
+          created_at?: string | null
+          id?: string
+          source?: string | null
+          suppression_reason?: string | null
+        }
+        Update: {
+          contact_type?: string
+          contact_value?: string
+          created_at?: string | null
+          id?: string
+          source?: string | null
+          suppression_reason?: string | null
+        }
+        Relationships: []
+      }
+      outreach_template_versions: {
+        Row: {
+          body_template: string | null
+          created_at: string | null
+          id: string
+          subject_template: string | null
+          template_id: string | null
+          version_number: number
+        }
+        Insert: {
+          body_template?: string | null
+          created_at?: string | null
+          id?: string
+          subject_template?: string | null
+          template_id?: string | null
+          version_number: number
+        }
+        Update: {
+          body_template?: string | null
+          created_at?: string | null
+          id?: string
+          subject_template?: string | null
+          template_id?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outreach_templates: {
+        Row: {
+          body_template: string | null
+          channel_type: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          language: string | null
+          subject_template: string | null
+          template_name: string
+          template_type: string | null
+        }
+        Insert: {
+          body_template?: string | null
+          channel_type: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          language?: string | null
+          subject_template?: string | null
+          template_name: string
+          template_type?: string | null
+        }
+        Update: {
+          body_template?: string | null
+          channel_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          language?: string | null
+          subject_template?: string | null
+          template_name?: string
+          template_type?: string | null
+        }
+        Relationships: []
+      }
+      outreach_unsubscribes: {
+        Row: {
+          campaign_id: string | null
+          channel_type: string
+          created_at: string | null
+          id: string
+          prospect_id: string | null
+          source: string | null
+          unsubscribe_reason: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          channel_type: string
+          created_at?: string | null
+          id?: string
+          prospect_id?: string | null
+          source?: string | null
+          unsubscribe_reason?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          channel_type?: string
+          created_at?: string | null
+          id?: string
+          prospect_id?: string | null
+          source?: string | null
+          unsubscribe_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_unsubscribes_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_unsubscribes_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outreach_webhook_logs: {
+        Row: {
+          error_message: string | null
+          id: string
+          payload_json: Json | null
+          processed_status: string | null
+          provider_name: string
+          received_at: string | null
+          webhook_type: string
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          payload_json?: Json | null
+          processed_status?: string | null
+          provider_name: string
+          received_at?: string | null
+          webhook_type: string
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          payload_json?: Json | null
+          processed_status?: string | null
+          provider_name?: string
+          received_at?: string | null
+          webhook_type?: string
+        }
+        Relationships: []
       }
       page_registry: {
         Row: {
