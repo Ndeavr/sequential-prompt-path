@@ -320,6 +320,13 @@ export const AppRouter = () => (
       <Route path="/signup" element={<LoginPageUnpro />} />
       <Route path="/onboarding" element={<OnboardingPageUnpro />} />
       <Route path="/start" element={<StartPage />} />
+
+      {/* Entrepreneur Funnel */}
+      <Route path="/entrepreneur" element={<PageEntrepreneurLandingAIPP />} />
+      <Route path="/entrepreneur/score" element={<PageEntrepreneurScoreResult />} />
+      <Route path="/entrepreneur/pricing" element={<PageEntrepreneurPricing />} />
+      <Route path="/entrepreneur/dashboard" element={<PageEntrepreneurDashboardLite />} />
+
       <Route path="/homeowners" element={<HomeownersPage />} />
       <Route path="/proprietaires" element={<HomeownersPage />} />
       <Route path="/owner-universe" element={<OwnerMenuPreviewPage />} />
