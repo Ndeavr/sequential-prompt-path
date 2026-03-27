@@ -196,6 +196,8 @@ const FLOWS: Record<CopilotDomain, CopilotStep[]> = {
   homeowner: HOMEOWNER_STEPS,
   contractor: CONTRACTOR_STEPS,
   condo: CONDO_STEPS,
+  entrepreneur: ENTREPRENEUR_STEPS,
+  condo_manager: CONDO_MANAGER_STEPS,
 };
 
 export function getCopilotState(
