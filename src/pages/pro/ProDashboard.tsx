@@ -1,11 +1,12 @@
 /**
- * UNPRO — Dashboard Entrepreneur v1
+ * UNPRO — Dashboard Entrepreneur v2
  * Recevez des rendez-vous exclusifs. Pas des leads partagés.
  */
 import ContractorLayout from "@/layouts/ContractorLayout";
 import { LoadingState } from "@/components/shared";
 import { useContractorProfile, useContractorReviews } from "@/hooks/useContractor";
 import { useAppointments } from "@/hooks/useAppointments";
+import { useHasActiveSubscription } from "@/hooks/useSubscription";
 import DashHero from "@/components/pro-dashboard/DashHero";
 import DashKpiRow from "@/components/pro-dashboard/DashKpiRow";
 import DashProbability from "@/components/pro-dashboard/DashProbability";
@@ -23,14 +24,17 @@ import DashNotifications from "@/components/pro-dashboard/DashNotifications";
 import DashPerformance from "@/components/pro-dashboard/DashPerformance";
 import DashObjective from "@/components/pro-dashboard/DashObjective";
 import DashWaitlistStatus from "@/components/pro-dashboard/DashWaitlistStatus";
+import DashRevenueChart from "@/components/pro-dashboard/DashRevenueChart";
+import DashResponseTime from "@/components/pro-dashboard/DashResponseTime";
 import { motion } from "framer-motion";
 
 const ProDashboard = () => {
   const { data: profile, isLoading: pL } = useContractorProfile();
   const { data: reviews, isLoading: rL } = useContractorReviews();
   const { data: appointments, isLoading: aL } = useAppointments();
+  const { planId, isLoading: sL } = useHasActiveSubscription();
 
-  if (pL || rL || aL) return <ContractorLayout><LoadingState /></ContractorLayout>;
+  if (pL || rL || aL || sL) return <ContractorLayout><LoadingState /></ContractorLayout>;
 
   const fields = [profile?.business_name, profile?.specialty, profile?.description, profile?.phone, profile?.email, profile?.city, profile?.license_number, profile?.insurance_info, profile?.logo_url, profile?.website];
   const completeness = Math.round((fields.filter(Boolean).length / fields.length) * 100);
@@ -41,7 +45,7 @@ const ProDashboard = () => {
   const newAppts = appts.filter(a => a.status === "requested" || a.status === "under_review").length;
   const acceptedAppts = appts.filter(a => a.status === "accepted" || a.status === "scheduled").length;
   const completedAppts = appts.filter(a => a.status === "completed").length;
-  const currentPlan = "recrue"; // TODO: from subscription
+  const currentPlan = planId ?? "recrue";
 
   return (
     <ContractorLayout>
@@ -58,12 +62,15 @@ const ProDashboard = () => {
         <DashProbability completeness={completeness} plan={currentPlan} aipp={aipp} />
         <DashChecklist profile={profile} reviewCount={reviewCount} />
         <DashPipeline appointments={appts} />
+        <DashRevenueChart />
         <DashAippScore aipp={aipp} completeness={completeness} profile={profile} />
+        <DashResponseTime />
         <DashWaitlistStatus />
         <CoachPanel />
         <AlexSalesPanel />
         <CoachNudges completeness={completeness} aipp={aipp} reviewCount={reviewCount} plan={currentPlan} />
         <DashMatchActivity />
+        <DashAutoAccept plan={currentPlan} />
         <DashAiRecommendations completeness={completeness} plan={currentPlan} aipp={aipp} />
         <DashUpsell plan={currentPlan} />
         <DashNotifications />
