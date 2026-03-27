@@ -2,7 +2,7 @@
  * UNPRO — Booking Payment Success Page
  * Verifies Stripe payment and shows confirmation.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle, Loader2 } from "lucide-react";
@@ -12,9 +12,11 @@ export default function BookingPaymentSuccess() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState<"verifying" | "paid" | "error">("verifying");
+  const emailSent = useRef(false);
 
   const bookingId = params.get("booking_id");
   const sessionId = params.get("session_id");
+  const clientEmail = params.get("email");
 
   useEffect(() => {
     if (!bookingId || !sessionId) {
@@ -31,10 +33,28 @@ export default function BookingPaymentSuccess() {
           setStatus("error");
         } else {
           setStatus("paid");
+          // Send booking confirmation email (best-effort, once)
+          if (clientEmail && !emailSent.current) {
+            emailSent.current = true;
+            supabase.functions.invoke("send-transactional-email", {
+              body: {
+                templateName: "booking-confirmation",
+                recipientEmail: clientEmail,
+                idempotencyKey: `booking-confirm-${bookingId}`,
+                templateData: {
+                  clientName: data.client_name || undefined,
+                  contractorName: data.contractor_name || undefined,
+                  serviceType: data.service_type || undefined,
+                  date: data.date || undefined,
+                  time: data.time || undefined,
+                },
+              },
+            }).catch(() => {});
+          }
         }
       })
       .catch(() => setStatus("error"));
-  }, [bookingId, sessionId]);
+  }, [bookingId, sessionId, clientEmail]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
