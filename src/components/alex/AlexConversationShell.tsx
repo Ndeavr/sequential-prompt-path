@@ -1,18 +1,21 @@
 /**
  * AlexConversationShell — Full-screen immersive conversation with Alex.
  * Dual mode: voice + text. Premium mobile-first experience.
+ * Wired end-to-end: session → conversation → matching → booking → contact capture.
  */
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Mic, MicOff, ArrowDown } from "lucide-react";
+import { X, Send, Mic, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import AlexOrbState from "./AlexOrbState";
 import AlexQuickReplyChips from "./AlexQuickReplyChips";
 import AlexLiveTranscript from "./AlexLiveTranscript";
+import AlexMatchCard from "./AlexMatchCard";
+import AlexContactCapture from "./AlexContactCapture";
+import AlexBookingCTA from "./AlexBookingCTA";
 import { useAlexSession, type AlexStep } from "@/hooks/useAlexSession";
-import { useAlexConversation, type AlexMessage } from "@/hooks/useAlexConversation";
+import { useAlexConversation, type AlexMessage, type AlexNextAction } from "@/hooks/useAlexConversation";
 import { useAlexVoiceInput } from "@/hooks/useAlexVoiceInput";
 import ReactMarkdown from "react-markdown";
 import logo from "@/assets/unpro-robot.png";
@@ -61,7 +64,7 @@ export default function AlexConversationShell({ onClose, entrypoint = "voice" }:
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [conversation.messages]);
+  }, [conversation.messages, conversation.primaryMatch, conversation.nextAction]);
 
   const handleSendText = useCallback(() => {
     const text = textInput.trim();
@@ -80,6 +83,24 @@ export default function AlexConversationShell({ onClose, entrypoint = "voice" }:
   const handleChipSelect = useCallback((value: string) => {
     conversation.sendMessage(value, "text");
   }, [conversation]);
+
+  const handleMatchCalendar = useCallback(() => {
+    alexSession.setStep("opening_calendar");
+    conversation.sendMessage("Je veux voir les disponibilités.", "text");
+  }, [alexSession, conversation]);
+
+  const handleMatchLearnMore = useCallback(() => {
+    conversation.sendMessage("Dis-moi en plus sur cet entrepreneur.", "text");
+  }, [conversation]);
+
+  const handleContactCaptured = useCallback((data: { firstName: string; phone: string }) => {
+    conversation.sendMessage(`Mon prénom est ${data.firstName} et mon numéro est ${data.phone}.`, "text");
+  }, [conversation]);
+
+  // Determine which inline action to show
+  const showMatchCard = conversation.primaryMatch && !conversation.nextAction?.type?.includes("calendar");
+  const showContactCapture = conversation.nextAction?.type === "capture_contact";
+  const showBookingCTA = conversation.nextAction?.type === "open_calendar";
 
   return (
     <motion.div
@@ -104,12 +125,32 @@ export default function AlexConversationShell({ onClose, entrypoint = "voice" }:
                 ? "Je vous écoute…"
                 : alexSession.currentStep === "thinking"
                 ? "Je regarde…"
+                : alexSession.currentStep === "matching"
+                ? "Je cherche le meilleur pro…"
+                : alexSession.currentStep === "preparing_booking"
+                ? "Je prépare le rendez-vous…"
+                : alexSession.currentStep === "opening_calendar"
+                ? "Ouverture du calendrier…"
                 : alexSession.currentStep === "speaking"
                 ? "Alex parle…"
                 : "En ligne"}
             </p>
           </div>
         </div>
+
+        {/* Booking readiness indicator */}
+        {conversation.bookingReadiness > 0 && (
+          <div className="flex items-center gap-1.5 mr-2">
+            <div className="h-1 w-12 rounded-full bg-muted/30 overflow-hidden">
+              <motion.div
+                className="h-full rounded-full bg-gradient-to-r from-primary to-success"
+                animate={{ width: `${conversation.bookingReadiness}%` }}
+                transition={{ duration: 0.5 }}
+              />
+            </div>
+          </div>
+        )}
+
         <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
           <X className="w-5 h-5" />
         </Button>
@@ -122,6 +163,29 @@ export default function AlexConversationShell({ onClose, entrypoint = "voice" }:
             <MessageBubble key={msg.id} message={msg} />
           ))}
         </AnimatePresence>
+
+        {/* Inline action cards based on backend response */}
+        {showMatchCard && conversation.primaryMatch && (
+          <AlexMatchCard
+            match={conversation.primaryMatch}
+            onViewCalendar={handleMatchCalendar}
+            onLearnMore={handleMatchLearnMore}
+          />
+        )}
+
+        {showContactCapture && (
+          <AlexContactCapture
+            sessionToken={alexSession.sessionToken}
+            onCaptured={handleContactCaptured}
+          />
+        )}
+
+        {showBookingCTA && (
+          <AlexBookingCTA
+            contractorId={conversation.primaryMatch?.contractor_id}
+            label={conversation.nextAction?.label || "Je vous montre les disponibilités."}
+          />
+        )}
 
         {/* Live voice transcript */}
         {voice.isListening && voice.liveTranscript && (
