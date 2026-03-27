@@ -32,9 +32,9 @@ export default function AlexDecisionAssistCard({ match, className = "" }: Props)
       </div>
 
       <div className="space-y-2">
-        <Row icon={<CheckCircle2 className="w-3.5 h-3.5 text-green-500" />} label="Pourquoi lui" value={match.explanationSummary} />
-        <Row icon={<Clock className="w-3.5 h-3.5 text-amber-500" />} label="Disponibilité" value={`${avail}% — créneaux cette semaine`} />
-        <Row icon={<Shield className="w-3.5 h-3.5 text-blue-500" />} label="Vérification" value="Licence + assurance vérifiées" />
+        <Row icon={<CheckCircle2 className="w-3.5 h-3.5 text-primary" />} label="Pourquoi lui" value={match.explanationSummary} />
+        <Row icon={<Clock className="w-3.5 h-3.5 text-accent-foreground" />} label="Disponibilité" value={`${avail}% — créneaux cette semaine`} />
+        <Row icon={<Shield className="w-3.5 h-3.5 text-primary" />} label="Vérification" value="Licence + assurance vérifiées" />
       </div>
 
       <p className="text-[11px] text-muted-foreground mt-3 text-center">

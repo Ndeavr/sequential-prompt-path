@@ -124,7 +124,7 @@ export async function buildPredictiveMatches(params: {
     explanation_summary: m.explanationSummary,
   }));
 
-  await supabase.from("alex_predictive_matches" as any).insert(inserts);
+  await (supabase.from("alex_predictive_matches") as any).insert(inserts);
 
   return matches;
 }
