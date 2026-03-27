@@ -17,7 +17,7 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import MegaMenuPanel from "./MegaMenu";
 import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
 import SmartCTA from "@/components/cta/SmartCTA";
-
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import QRShareSheet from "@/components/sharing/QRShareSheet";
 import unproLogo from "@/assets/unpro-logo.png";
 import type { UserRole } from "@/types/navigation";
@@ -155,11 +155,12 @@ const SmartHeader = () => {
                 <AlexNavOrb lang={lang} />
               </div>
 
-              <div className="flex items-center gap-1.5">
+              <div className="hidden sm:flex items-center gap-1.5">
                 <LanguageToggle lang={lang} onChange={setLang} />
+                <ThemeToggle />
               </div>
 
-              {/* Share QR button — all users */}
+              {/* Share QR button — always visible */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -232,7 +233,7 @@ const SmartHeader = () => {
       {/* Mobile menu overlay */}
       <AnimatePresence>
         {mobileOpen && (
-          <MobileMenuOverlay lang={lang} onClose={() => setMobileOpen(false)} ctx={ctx} activeRole={activeRole} />
+          <MobileMenuOverlay lang={lang} onClose={() => setMobileOpen(false)} ctx={ctx} activeRole={activeRole} onShareOpen={() => setShareOpen(true)} />
         )}
       </AnimatePresence>
 
@@ -251,11 +252,12 @@ import { getDrawerItems, getStateActions } from "@/config/navigationConfig";
 import { resolveIcon } from "./IconResolver";
 import MegaMenuMobileSection from "./MobileMenu";
 
-function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
+function MobileMenuOverlay({ lang, onClose, ctx, activeRole, onShareOpen }: {
   lang: "fr" | "en";
   onClose: () => void;
   ctx: any;
   activeRole: string;
+  onShareOpen: () => void;
 }) {
   const { signOut } = useAuth();
   const { setLang } = useLanguage();
@@ -286,11 +288,21 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
         className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-card overflow-y-auto"
       >
         <div className="p-5">
-          {/* Close + Language */}
+          {/* Close + Language + Theme + QR */}
           <div className="flex items-center justify-between mb-6">
             <span className="font-display text-lg font-bold text-foreground">UNPRO</span>
             <div className="flex items-center gap-1.5">
               <LanguageToggle lang={lang} onChange={setLang} />
+              <ThemeToggle />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                onClick={() => { onClose(); onShareOpen(); }}
+                aria-label="Partager"
+              >
+                <QrCode className="h-4 w-4" />
+              </Button>
               <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9 rounded-lg">
                 <X className="h-5 w-5" />
               </Button>
