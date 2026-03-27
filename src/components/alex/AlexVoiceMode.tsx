@@ -39,9 +39,30 @@ export default function AlexVoiceMode({ feature, deepLinkId, onFlowComplete, onD
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const greetingAttempted = useRef(false);
+  const mountedRef = useRef(false);
 
-  // Create session on mount — greeting is handled in a separate effect
+  // Listen for global cleanup event to stop all audio/STT
   useEffect(() => {
+    const handleCleanup = () => {
+      audioRef.current?.pause();
+      audioRef.current = null;
+      recognitionRef.current?.stop();
+      recognitionRef.current = null;
+      setIsListening(false);
+      setIsSpeaking(false);
+    };
+    window.addEventListener("alex-voice-cleanup", handleCleanup);
+    return () => {
+      window.removeEventListener("alex-voice-cleanup", handleCleanup);
+      // Cleanup on unmount
+      handleCleanup();
+    };
+  }, []);
+
+  // Create session on mount — guard against double-mount
+  useEffect(() => {
+    if (mountedRef.current) return;
+    mountedRef.current = true;
     (async () => {
       try {
         const { data } = await supabase.functions.invoke("alex-voice", {

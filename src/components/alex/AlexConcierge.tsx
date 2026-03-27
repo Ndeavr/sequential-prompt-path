@@ -129,11 +129,11 @@ interface AlexConciergeProps {
 }
 
 const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, occupancyStatus }: AlexConciergeProps) => {
-  const isHomePage = useLocation().pathname === "/";
+  const { pathname } = useLocation();
+  const isHomePage = pathname === "/";
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated } = useAuth();
-  const { openAlex: openAlexVoice } = useAlexVoice();
-  const { pathname } = useLocation();
+  const { openAlex: openAlexVoice, isOpen: voiceOverlayOpen } = useAlexVoice();
   const { messages, isStreaming, sendMessage, reset } = useAlex();
   const [input, setInput] = useState("");
   const [recommendations, setRecommendations] = useState<AlexRecommendation[]>([]);
@@ -145,6 +145,13 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
     [pathname, isAuthenticated]
   );
 
+  // Suppress concierge entirely when global voice overlay is active
+  useEffect(() => {
+    if (voiceOverlayOpen && isOpen) {
+      setIsOpen(false);
+    }
+  }, [voiceOverlayOpen]);
+
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
@@ -152,6 +159,9 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
   useEffect(() => {
     if (isOpen) setTimeout(() => inputRef.current?.focus(), 100);
   }, [isOpen]);
+
+  // If voice overlay is open, hide the entire concierge
+  if (voiceOverlayOpen) return null;
 
   const handleSend = async () => {
     const trimmed = input.trim();
