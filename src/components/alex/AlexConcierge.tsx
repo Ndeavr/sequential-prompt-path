@@ -160,6 +160,9 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
     if (isOpen) setTimeout(() => inputRef.current?.focus(), 100);
   }, [isOpen]);
 
+  // If voice overlay is open, hide the entire concierge
+  if (voiceOverlayOpen) return null;
+
   const handleSend = async () => {
     const trimmed = input.trim();
     if (!trimmed || isStreaming) return;
