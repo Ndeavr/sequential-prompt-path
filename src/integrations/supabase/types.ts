@@ -5346,6 +5346,7 @@ export type Database = {
       }
       checkout_sessions: {
         Row: {
+          adaptive_pricing_enabled: boolean
           addons_json: Json | null
           addons_total: number
           base_price: number
@@ -5362,12 +5363,16 @@ export type Database = {
           final_total_after_discount: number
           id: string
           payment_provider: string | null
+          presentment_currency: string | null
           promo_code: string | null
           promo_code_type: string | null
+          promo_redemption_id: string | null
           selected_plan_code: string | null
           selected_plan_id: string | null
           selected_plan_name: string | null
           setup_fee: number
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           subtotal_before_discount: number
           tax_amount: number
           taxable_amount: number
@@ -5375,6 +5380,7 @@ export type Database = {
           zero_dollar_activation: boolean
         }
         Insert: {
+          adaptive_pricing_enabled?: boolean
           addons_json?: Json | null
           addons_total?: number
           base_price?: number
@@ -5391,12 +5397,16 @@ export type Database = {
           final_total_after_discount?: number
           id?: string
           payment_provider?: string | null
+          presentment_currency?: string | null
           promo_code?: string | null
           promo_code_type?: string | null
+          promo_redemption_id?: string | null
           selected_plan_code?: string | null
           selected_plan_id?: string | null
           selected_plan_name?: string | null
           setup_fee?: number
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           subtotal_before_discount?: number
           tax_amount?: number
           taxable_amount?: number
@@ -5404,6 +5414,7 @@ export type Database = {
           zero_dollar_activation?: boolean
         }
         Update: {
+          adaptive_pricing_enabled?: boolean
           addons_json?: Json | null
           addons_total?: number
           base_price?: number
@@ -5420,12 +5431,16 @@ export type Database = {
           final_total_after_discount?: number
           id?: string
           payment_provider?: string | null
+          presentment_currency?: string | null
           promo_code?: string | null
           promo_code_type?: string | null
+          promo_redemption_id?: string | null
           selected_plan_code?: string | null
           selected_plan_id?: string | null
           selected_plan_name?: string | null
           setup_fee?: number
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           subtotal_before_discount?: number
           tax_amount?: number
           taxable_amount?: number
@@ -5460,6 +5475,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "checkout_sessions_promo_redemption_id_fkey"
+            columns: ["promo_redemption_id"]
+            isOneToOne: false
+            referencedRelation: "promo_code_redemptions"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "checkout_sessions_selected_plan_id_fkey"
@@ -19369,6 +19391,91 @@ export type Database = {
           },
         ]
       }
+      promo_code_redemptions: {
+        Row: {
+          checkout_session_id: string | null
+          contractor_id: string | null
+          created_at: string | null
+          id: string
+          normalized_email: string | null
+          normalized_phone: string | null
+          promo_code_id: string
+          redeemed_at: string | null
+          redemption_count_for_user: number | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          checkout_session_id?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          id?: string
+          normalized_email?: string | null
+          normalized_phone?: string | null
+          promo_code_id: string
+          redeemed_at?: string | null
+          redemption_count_for_user?: number | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          checkout_session_id?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          id?: string
+          normalized_email?: string | null
+          normalized_phone?: string | null
+          promo_code_id?: string
+          redeemed_at?: string | null
+          redemption_count_for_user?: number | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_code_redemptions_checkout_session_id_fkey"
+            columns: ["checkout_session_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_code_redemptions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_code_redemptions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_code_redemptions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_code_redemptions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "promo_code_redemptions_promo_code_id_fkey"
+            columns: ["promo_code_id"]
+            isOneToOne: false
+            referencedRelation: "promo_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       promo_codes: {
         Row: {
           active: boolean
@@ -27743,6 +27850,16 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      reserve_promo_code_redemption: {
+        Args: {
+          p_code: string
+          p_contractor_id: string
+          p_normalized_email?: string
+          p_normalized_phone?: string
+          p_user_id: string
+        }
+        Returns: Json
       }
       resolve_qr_token: { Args: { _token: string }; Returns: Json }
       search_rag_chunks_text: {

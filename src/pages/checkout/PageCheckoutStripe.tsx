@@ -1,11 +1,11 @@
 /**
  * Module 4 — Stripe Checkout Page
- * Shows plan summary, trust signals, and redirects to Stripe.
+ * Shows plan summary, promo codes, trust signals, and redirects to Stripe.
  */
 import { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Shield, Sparkles, Clock, Calendar, Check, Loader2, Lock, CreditCard } from "lucide-react";
+import { ArrowLeft, Shield, Sparkles, Clock, Calendar, Check, Loader2, Lock, CreditCard, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import AppointmentUpsellCard from "@/components/goals/AppointmentUpsellCard";
 import { formatCents, type PackTier } from "@/lib/appointmentPricing";
+import PromoCodeInput from "@/components/checkout/PromoCodeInput";
 
 const PLAN_ICONS: Record<string, string> = {
   recrue: "🛡️",
@@ -29,6 +30,8 @@ export default function PageCheckoutStripe() {
   const { session } = useAuth();
   const [loading, setLoading] = useState(false);
   const [billingInterval, setBillingInterval] = useState<BillingInterval>("month");
+  const [promoCode, setPromoCode] = useState<string | null>(null);
+  const [promoDiscount, setPromoDiscount] = useState<{ discount_type?: string; discount_value?: number; label?: string } | null>(null);
 
   // Appointment pack from goals funnel
   const initialPack = useMemo(() => {
@@ -94,6 +97,7 @@ export default function PageCheckoutStripe() {
             priceId,
             planId: planCode,
             billingInterval,
+            promoCode: promoCode || undefined,
             successUrl: `${window.location.origin}/checkout/success?plan=${planCode}`,
             cancelUrl: `${window.location.origin}/checkout?plan=${planCode}`,
             ...(selectedPack && {
@@ -112,8 +116,16 @@ export default function PageCheckoutStripe() {
         throw new Error(err.error || "Erreur de paiement");
       }
 
-      const { url } = await res.json();
-      if (url) window.location.href = url;
+      const data = await res.json();
+
+      // Zero-total activation (promo 100%)
+      if (data.activated && data.zero_total) {
+        toast.success("Plan activé gratuitement! 🎉");
+        navigate("/checkout/success?plan=" + planCode + "&free=true");
+        return;
+      }
+
+      if (data.url) window.location.href = data.url;
     } catch (err: any) {
       toast.error(err.message || "Erreur lors de la création du paiement");
     } finally {
@@ -232,6 +244,31 @@ export default function PageCheckoutStripe() {
           </motion.div>
         )}
 
+        {/* Promo Code */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="rounded-2xl border border-border/50 bg-card p-4"
+        >
+          <p className="text-sm font-bold text-foreground mb-3">Code promo</p>
+          <PromoCodeInput
+            planCode={planCode}
+            onPromoValidated={(code, result) => {
+              setPromoCode(code);
+              setPromoDiscount(result ? { discount_type: result.discount_type, discount_value: result.discount_value, label: result.label } : null);
+            }}
+          />
+          {promoDiscount && promoDiscount.discount_value === 100 && (
+            <div className="mt-3 rounded-lg bg-green-500/10 border border-green-500/20 p-3 flex items-center gap-2">
+              <PartyPopper className="w-4 h-4 text-green-600" />
+              <p className="text-xs text-green-600 font-medium">
+                Activation gratuite — aucune carte requise!
+              </p>
+            </div>
+          )}
+        </motion.div>
+
         {/* After payment */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -288,6 +325,10 @@ export default function PageCheckoutStripe() {
           >
             {loading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
+            ) : promoDiscount?.discount_value === 100 ? (
+              <>
+                <PartyPopper className="w-4 h-4 mr-2" /> Activer gratuitement
+              </>
             ) : (
               <>
                 <CreditCard className="w-4 h-4 mr-2" /> Payer {displayPrice}/mois{selectedPack ? ` + ${formatCents(selectedPack.totalPriceCents)}` : ""}
