@@ -252,11 +252,12 @@ import { getDrawerItems, getStateActions } from "@/config/navigationConfig";
 import { resolveIcon } from "./IconResolver";
 import MegaMenuMobileSection from "./MobileMenu";
 
-function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
+function MobileMenuOverlay({ lang, onClose, ctx, activeRole, onShareOpen }: {
   lang: "fr" | "en";
   onClose: () => void;
   ctx: any;
   activeRole: string;
+  onShareOpen: () => void;
 }) {
   const { signOut } = useAuth();
   const { setLang } = useLanguage();
@@ -297,7 +298,7 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
                 variant="ghost"
                 size="icon"
                 className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
-                onClick={() => { onClose(); /* QR handled via parent */ }}
+                onClick={() => { onClose(); onShareOpen(); }}
                 aria-label="Partager"
               >
                 <QrCode className="h-4 w-4" />
