@@ -10,7 +10,13 @@ export interface TemplateEntry {
 }
 
 import { template as contactComment } from './contact-comment.tsx'
+import { template as bookingConfirmation } from './booking-confirmation.tsx'
+import { template as paymentSuccess } from './payment-success.tsx'
+import { template as entrepreneurWelcome } from './entrepreneur-welcome.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'contact-comment': contactComment,
+  'booking-confirmation': bookingConfirmation,
+  'payment-success': paymentSuccess,
+  'entrepreneur-welcome': entrepreneurWelcome,
 }
