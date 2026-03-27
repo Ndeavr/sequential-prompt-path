@@ -214,6 +214,12 @@ import SyndicateVoteCreate from "@/pages/dashboard/SyndicateVoteCreate";
 import SyndicateGrowthDashboard from "@/pages/dashboard/SyndicateGrowthDashboard";
 import LeadResults from "@/pages/dashboard/LeadResults";
 
+// Entrepreneur Funnel
+import PageEntrepreneurLandingAIPP from "@/pages/entrepreneur/PageEntrepreneurLandingAIPP";
+import PageEntrepreneurScoreResult from "@/pages/entrepreneur/PageEntrepreneurScoreResult";
+import PageEntrepreneurPricing from "@/pages/entrepreneur/PageEntrepreneurPricing";
+import PageEntrepreneurDashboardLite from "@/pages/entrepreneur/PageEntrepreneurDashboardLite";
+
 // Contractor Pro
 import ProDashboard from "@/pages/pro/ProDashboard";
 import ProProfile from "@/pages/pro/ProProfile";
