@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { motion, useInView } from "framer-motion";
+import { motion, useInView, AnimatePresence } from "framer-motion";
 import MainLayout from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,8 @@ import {
   Wrench, DollarSign, Users, CheckCircle2,
 } from "lucide-react";
 import { useRef } from "react";
+import AlexLauncherHero from "@/components/alex/AlexLauncherHero";
+import AlexConversationShell from "@/components/alex/AlexConversationShell";
 
 /* ═══ Animation helpers ═══ */
 const fadeUp = {
@@ -122,6 +124,17 @@ export default function HomeownersPage() {
   const { isAuthenticated } = useAuth();
   const [address, setAddress] = useState("");
   const [neighborCount, setNeighborCount] = useState(0);
+  const [alexOpen, setAlexOpen] = useState(false);
+  const [alexActivating, setAlexActivating] = useState(false);
+
+  const handleAlexLaunch = useCallback(() => {
+    setAlexActivating(true);
+    // Small delay for visual feedback before opening
+    setTimeout(() => {
+      setAlexActivating(false);
+      setAlexOpen(true);
+    }, 150);
+  }, []);
 
   // Only show neighbor count after user has typed a real address (min 10 chars)
   useEffect(() => {
@@ -259,6 +272,28 @@ export default function HomeownersPage() {
             </svg>
           </div>
         </section>
+
+        {/* ═══════════════════════════════════════
+            SECTION — PARLEZ À ALEX
+        ═══════════════════════════════════════ */}
+        <section className="px-5 py-12 md:py-16">
+          <div className="max-w-xl mx-auto">
+            <AlexLauncherHero
+              onLaunch={handleAlexLaunch}
+              isActivating={alexActivating}
+            />
+          </div>
+        </section>
+
+        {/* Alex Conversation Overlay */}
+        <AnimatePresence>
+          {alexOpen && (
+            <AlexConversationShell
+              onClose={() => setAlexOpen(false)}
+              entrypoint="homeowner_hero"
+            />
+          )}
+        </AnimatePresence>
 
         {/* ═══════════════════════════════════════
             SECTION 2 — COMMENT ÇA FONCTIONNE
