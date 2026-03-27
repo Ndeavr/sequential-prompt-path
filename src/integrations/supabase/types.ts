@@ -949,6 +949,116 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_booking_drafts: {
+        Row: {
+          booking_status: string
+          city: string | null
+          contact_email: string | null
+          contact_first_name: string | null
+          contact_phone: string | null
+          contractor_id: string | null
+          created_at: string
+          id: string
+          preferred_time_window: string | null
+          project_summary: string | null
+          service_type: string | null
+          session_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          booking_status?: string
+          city?: string | null
+          contact_email?: string | null
+          contact_first_name?: string | null
+          contact_phone?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          preferred_time_window?: string | null
+          project_summary?: string | null
+          service_type?: string | null
+          session_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          booking_status?: string
+          city?: string | null
+          contact_email?: string | null
+          contact_first_name?: string | null
+          contact_phone?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          preferred_time_window?: string | null
+          project_summary?: string | null
+          service_type?: string | null
+          session_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_booking_drafts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alex_booking_drafts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alex_booking_drafts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alex_booking_drafts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      alex_conversion_prompts: {
+        Row: {
+          created_at: string
+          id: string
+          prompt_style: string
+          prompt_text: string
+          session_id: string
+          trigger_reason: string | null
+          user_response: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          prompt_style?: string
+          prompt_text: string
+          session_id: string
+          trigger_reason?: string | null
+          user_response?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          prompt_style?: string
+          prompt_text?: string
+          session_id?: string
+          trigger_reason?: string | null
+          user_response?: string | null
+        }
+        Relationships: []
+      }
       alex_experiments: {
         Row: {
           confidence: number | null
@@ -997,6 +1107,48 @@ export type Database = {
           variant_b_conversions?: number | null
           variant_b_impressions?: number | null
           winner?: string | null
+        }
+        Relationships: []
+      }
+      alex_intents: {
+        Row: {
+          booking_readiness_score: number
+          confidence_score: number
+          created_at: string
+          detected_intent: string
+          friction_score: number
+          id: string
+          raw_signals: Json | null
+          session_id: string
+          trust_score: number
+          urgency_score: number
+          user_id: string | null
+        }
+        Insert: {
+          booking_readiness_score?: number
+          confidence_score?: number
+          created_at?: string
+          detected_intent?: string
+          friction_score?: number
+          id?: string
+          raw_signals?: Json | null
+          session_id: string
+          trust_score?: number
+          urgency_score?: number
+          user_id?: string | null
+        }
+        Update: {
+          booking_readiness_score?: number
+          confidence_score?: number
+          created_at?: string
+          detected_intent?: string
+          friction_score?: number
+          id?: string
+          raw_signals?: Json | null
+          session_id?: string
+          trust_score?: number
+          urgency_score?: number
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1131,6 +1283,33 @@ export type Database = {
           },
         ]
       }
+      alex_momentum_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          momentum_score: number
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          momentum_score?: number
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          momentum_score?: number
+          session_id?: string
+        }
+        Relationships: []
+      }
       alex_performance_metrics: {
         Row: {
           created_at: string | null
@@ -1161,6 +1340,68 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_predictive_matches: {
+        Row: {
+          availability_score: number
+          confidence_score: number
+          contractor_id: string | null
+          created_at: string
+          explanation_summary: string | null
+          id: string
+          match_score: number
+          session_id: string
+        }
+        Insert: {
+          availability_score?: number
+          confidence_score?: number
+          contractor_id?: string | null
+          created_at?: string
+          explanation_summary?: string | null
+          id?: string
+          match_score?: number
+          session_id: string
+        }
+        Update: {
+          availability_score?: number
+          confidence_score?: number
+          contractor_id?: string | null
+          created_at?: string
+          explanation_summary?: string | null
+          id?: string
+          match_score?: number
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_predictive_matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alex_predictive_matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alex_predictive_matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alex_predictive_matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       alex_sessions: {
         Row: {
           created_at: string
@@ -1188,6 +1429,36 @@ export type Database = {
           session_type?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      alex_soft_objections: {
+        Row: {
+          answer_used: string | null
+          created_at: string
+          detected_text: string | null
+          id: string
+          objection_type: string
+          resolved: boolean
+          session_id: string
+        }
+        Insert: {
+          answer_used?: string | null
+          created_at?: string
+          detected_text?: string | null
+          id?: string
+          objection_type: string
+          resolved?: boolean
+          session_id: string
+        }
+        Update: {
+          answer_used?: string | null
+          created_at?: string
+          detected_text?: string | null
+          id?: string
+          objection_type?: string
+          resolved?: boolean
+          session_id?: string
         }
         Relationships: []
       }
