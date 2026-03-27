@@ -71,7 +71,7 @@ export class HybridVoiceProvider implements IAlexVoiceProvider {
   readonly providerKey = 'hybrid';
   private _state: VoiceSessionState = 'idle';
   private events: VoiceSessionEvents | null = null;
-  private recognition: SpeechRecognition | null = null;
+  private recognition: any = null;
   private synthesis: SpeechSynthesisUtterance | null = null;
 
   get state() { return this._state; }
