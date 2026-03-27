@@ -1740,6 +1740,63 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_voice_experiments: {
+        Row: {
+          auto_promote: boolean
+          confidence_threshold: number
+          created_at: string
+          description: string | null
+          end_date: string | null
+          experiment_key: string
+          experiment_name: string
+          id: string
+          language: string
+          locale_code: string
+          min_sessions_per_variant: number
+          profile_key: string
+          start_date: string | null
+          status: string
+          updated_at: string
+          winner_variant_id: string | null
+        }
+        Insert: {
+          auto_promote?: boolean
+          confidence_threshold?: number
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          experiment_key: string
+          experiment_name: string
+          id?: string
+          language?: string
+          locale_code?: string
+          min_sessions_per_variant?: number
+          profile_key?: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          winner_variant_id?: string | null
+        }
+        Update: {
+          auto_promote?: boolean
+          confidence_threshold?: number
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          experiment_key?: string
+          experiment_name?: string
+          id?: string
+          language?: string
+          locale_code?: string
+          min_sessions_per_variant?: number
+          profile_key?: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          winner_variant_id?: string | null
+        }
+        Relationships: []
+      }
       alex_voice_fallback_events: {
         Row: {
           created_at: string | null
@@ -1870,6 +1927,54 @@ export type Database = {
           voice_name_secondary?: string | null
         }
         Relationships: []
+      }
+      alex_voice_promotion_history: {
+        Row: {
+          experiment_id: string
+          id: string
+          new_config: Json | null
+          previous_config: Json | null
+          promoted_at: string
+          promoted_by: string | null
+          promotion_reason: string | null
+          variant_id: string
+        }
+        Insert: {
+          experiment_id: string
+          id?: string
+          new_config?: Json | null
+          previous_config?: Json | null
+          promoted_at?: string
+          promoted_by?: string | null
+          promotion_reason?: string | null
+          variant_id: string
+        }
+        Update: {
+          experiment_id?: string
+          id?: string
+          new_config?: Json | null
+          previous_config?: Json | null
+          promoted_at?: string
+          promoted_by?: string | null
+          promotion_reason?: string | null
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_voice_promotion_history_experiment_id_fkey"
+            columns: ["experiment_id"]
+            isOneToOne: false
+            referencedRelation: "alex_voice_experiments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alex_voice_promotion_history_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "alex_voice_variants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       alex_voice_provider_events: {
         Row: {
@@ -2004,6 +2109,72 @@ export type Database = {
           },
         ]
       }
+      alex_voice_session_scores: {
+        Row: {
+          calendar_opened: boolean | null
+          clarity_score: number | null
+          confidence_score: number | null
+          conversion_achieved: boolean | null
+          created_at: string
+          experiment_id: string | null
+          fallback_triggered: boolean | null
+          fluency_score: number | null
+          id: string
+          interruption_count: number | null
+          overall_score: number | null
+          session_duration_ms: number | null
+          variant_id: string | null
+          voice_session_id: string | null
+        }
+        Insert: {
+          calendar_opened?: boolean | null
+          clarity_score?: number | null
+          confidence_score?: number | null
+          conversion_achieved?: boolean | null
+          created_at?: string
+          experiment_id?: string | null
+          fallback_triggered?: boolean | null
+          fluency_score?: number | null
+          id?: string
+          interruption_count?: number | null
+          overall_score?: number | null
+          session_duration_ms?: number | null
+          variant_id?: string | null
+          voice_session_id?: string | null
+        }
+        Update: {
+          calendar_opened?: boolean | null
+          clarity_score?: number | null
+          confidence_score?: number | null
+          conversion_achieved?: boolean | null
+          created_at?: string
+          experiment_id?: string | null
+          fallback_triggered?: boolean | null
+          fluency_score?: number | null
+          id?: string
+          interruption_count?: number | null
+          overall_score?: number | null
+          session_duration_ms?: number | null
+          variant_id?: string | null
+          voice_session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_voice_session_scores_experiment_id_fkey"
+            columns: ["experiment_id"]
+            isOneToOne: false
+            referencedRelation: "alex_voice_experiments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alex_voice_session_scores_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "alex_voice_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alex_voice_sessions: {
         Row: {
           browser_name: string | null
@@ -2068,6 +2239,128 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "alex_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_voice_variant_metrics: {
+        Row: {
+          avg_clarity: number | null
+          avg_confidence: number | null
+          avg_fluency: number | null
+          avg_interruptions: number | null
+          avg_overall_score: number | null
+          calendar_open_rate: number | null
+          computed_at: string
+          conversion_rate: number | null
+          experiment_id: string
+          fallback_rate: number | null
+          id: string
+          total_sessions: number
+          variant_id: string
+        }
+        Insert: {
+          avg_clarity?: number | null
+          avg_confidence?: number | null
+          avg_fluency?: number | null
+          avg_interruptions?: number | null
+          avg_overall_score?: number | null
+          calendar_open_rate?: number | null
+          computed_at?: string
+          conversion_rate?: number | null
+          experiment_id: string
+          fallback_rate?: number | null
+          id?: string
+          total_sessions?: number
+          variant_id: string
+        }
+        Update: {
+          avg_clarity?: number | null
+          avg_confidence?: number | null
+          avg_fluency?: number | null
+          avg_interruptions?: number | null
+          avg_overall_score?: number | null
+          calendar_open_rate?: number | null
+          computed_at?: string
+          conversion_rate?: number | null
+          experiment_id?: string
+          fallback_rate?: number | null
+          id?: string
+          total_sessions?: number
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_voice_variant_metrics_experiment_id_fkey"
+            columns: ["experiment_id"]
+            isOneToOne: false
+            referencedRelation: "alex_voice_experiments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alex_voice_variant_metrics_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: true
+            referencedRelation: "alex_voice_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_voice_variants: {
+        Row: {
+          created_at: string
+          experiment_id: string
+          id: string
+          is_control: boolean
+          is_winner: boolean
+          provider_key: string
+          speech_rate: number
+          speech_style: string | null
+          tone_config: Json | null
+          traffic_split: number
+          variant_key: string
+          variant_name: string
+          voice_id: string | null
+          voice_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          experiment_id: string
+          id?: string
+          is_control?: boolean
+          is_winner?: boolean
+          provider_key?: string
+          speech_rate?: number
+          speech_style?: string | null
+          tone_config?: Json | null
+          traffic_split?: number
+          variant_key: string
+          variant_name: string
+          voice_id?: string | null
+          voice_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          experiment_id?: string
+          id?: string
+          is_control?: boolean
+          is_winner?: boolean
+          provider_key?: string
+          speech_rate?: number
+          speech_style?: string | null
+          tone_config?: Json | null
+          traffic_split?: number
+          variant_key?: string
+          variant_name?: string
+          voice_id?: string | null
+          voice_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_voice_variants_experiment_id_fkey"
+            columns: ["experiment_id"]
+            isOneToOne: false
+            referencedRelation: "alex_voice_experiments"
             referencedColumns: ["id"]
           },
         ]
