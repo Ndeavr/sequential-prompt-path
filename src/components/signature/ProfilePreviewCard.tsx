@@ -1,8 +1,10 @@
 /**
  * ProfilePreviewCard — Preview of the contractor profile before publishing.
+ * Shows real imported data when available.
  */
 import { motion } from "framer-motion";
-import { MapPin, Phone, Mail, Globe, Star, Crown, Loader2, ExternalLink } from "lucide-react";
+import { MapPin, Phone, Mail, Globe, Star, Crown, Loader2, ExternalLink, Shield, Clock, Check } from "lucide-react";
+import type { ImportedBusinessData } from "@/pages/signature/PageAlexGuidedOnboarding";
 
 interface Props {
   draft: {
@@ -16,11 +18,21 @@ interface Props {
   };
   categories: { primary: string; secondary: string[] };
   territories: string[];
+  importedData?: ImportedBusinessData | null;
   onPublish: () => void;
   isProcessing: boolean;
 }
 
-export default function ProfilePreviewCard({ draft, categories, territories, onPublish, isProcessing }: Props) {
+export default function ProfilePreviewCard({ draft, categories, territories, importedData, onPublish, isProcessing }: Props) {
+  const rating = importedData?.rating?.value;
+  const reviewCount = importedData?.reviewCount?.value;
+  const address = importedData?.address?.value;
+  const hours = importedData?.businessHours?.value;
+  const hasInsurance = !!importedData?.insuranceInfo?.value;
+  const hasLicense = !!importedData?.licenseNumber?.value;
+  const photoCount = importedData?.photoCount?.value || 0;
+  const website = draft.website || importedData?.website?.value;
+
   return (
     <div className="space-y-5">
       <h2 className="text-lg font-bold text-foreground text-center">Prévisualisation</h2>
@@ -51,23 +63,46 @@ export default function ProfilePreviewCard({ draft, categories, territories, onP
             <p className="text-xs text-muted-foreground">{draft.activity}</p>
           </div>
 
+          {/* Rating */}
+          {rating && (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map(s => (
+                  <Star key={s} className={`w-3.5 h-3.5 ${s <= Math.round(rating) ? "text-amber-400 fill-amber-400" : "text-muted-foreground/30"}`} />
+                ))}
+              </div>
+              <span className="text-sm font-semibold text-foreground">{rating}</span>
+              {reviewCount && (
+                <span className="text-xs text-muted-foreground">({reviewCount} avis)</span>
+              )}
+            </div>
+          )}
+
           {/* Quick info */}
           <div className="grid grid-cols-2 gap-2">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <MapPin className="w-3 h-3" /> {draft.city}
+              <MapPin className="w-3 h-3 flex-shrink-0" /> {address || draft.city}
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Phone className="w-3 h-3" /> {draft.phone}
+              <Phone className="w-3 h-3 flex-shrink-0" /> {draft.phone}
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Mail className="w-3 h-3" /> {draft.email}
+              <Mail className="w-3 h-3 flex-shrink-0" /> {draft.email}
             </div>
-            {draft.website && (
+            {website && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Globe className="w-3 h-3" /> Site web
+                <Globe className="w-3 h-3 flex-shrink-0" /> Site web
               </div>
             )}
           </div>
+
+          {/* Hours */}
+          {hours && (
+            <div className="flex items-start gap-2 text-xs text-muted-foreground">
+              <Clock className="w-3 h-3 mt-0.5 flex-shrink-0" />
+              <span className="line-clamp-2">{hours}</span>
+            </div>
+          )}
 
           {/* Category */}
           <div>
@@ -95,12 +130,33 @@ export default function ProfilePreviewCard({ draft, categories, territories, onP
             <p className="text-xs text-foreground">{territories.join(", ")}</p>
           </div>
 
-          {/* Score */}
+          {/* Trust badges */}
+          <div className="flex flex-wrap gap-2">
+            {hasLicense && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-green-500/10 text-green-600 text-[10px] font-medium">
+                <Shield className="w-3 h-3" /> Licencié
+              </div>
+            )}
+            {hasInsurance && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-green-500/10 text-green-600 text-[10px] font-medium">
+                <Check className="w-3 h-3" /> Assuré
+              </div>
+            )}
+            {photoCount > 0 && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-500/10 text-blue-600 text-[10px] font-medium">
+                {photoCount} photos
+              </div>
+            )}
+          </div>
+
+          {/* AIPP Score */}
           <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/10 border border-border/20">
             <Star className="w-5 h-5 text-amber-500" />
             <div>
               <p className="text-[10px] text-muted-foreground">Score AIPP estimé</p>
-              <p className="text-sm font-bold text-foreground">En cours de calcul...</p>
+              <p className="text-sm font-bold text-foreground">
+                {rating ? `${Math.min(Math.round(rating * 15 + (reviewCount ? Math.min(reviewCount, 50) * 0.4 : 0)), 95)}/100` : "En cours de calcul..."}
+              </p>
             </div>
           </div>
         </div>
