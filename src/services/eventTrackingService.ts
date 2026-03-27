@@ -18,9 +18,7 @@ export type EventCategory =
   | "seo"
   | "agent"
   | "map"
-  | "matching"
-  | "homepage_card"
-  | "hero";
+  | "matching";
 
 export interface TrackEventInput {
   eventType: string;

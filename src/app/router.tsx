@@ -19,7 +19,6 @@ import PageCheckoutStripe from "@/pages/checkout/PageCheckoutStripe";
 import PageCheckoutSuccess from "@/pages/checkout/PageCheckoutSuccess";
 import PageActivationStart from "@/pages/checkout/PageActivationStart";
 import Home from "@/pages/Home";
-import HomePageUnproV2 from "@/pages/HomePageUnproV2";
 import Search from "@/pages/Search";
 import ContractorProfile from "@/pages/ContractorProfile";
 import Login from "@/pages/Login";
@@ -320,7 +319,7 @@ export const AppRouter = () => (
     <ScrollRestoration />
     <Routes>
       {/* Public */}
-      <Route path="/" element={<HomePageUnproV2 />} />
+      <Route path="/" element={<Home />} />
       <Route path="/go" element={<PageAdLandingAipp />} />
       <Route path="/aipp-check" element={<PageAdLandingAipp />} />
       <Route path="/business-import" element={<PageBusinessImport />} />

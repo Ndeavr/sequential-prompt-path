@@ -155,16 +155,16 @@ const SmartHeader = () => {
                 <AlexNavOrb lang={lang} />
               </div>
 
-              <div className="hidden sm:flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5">
                 <LanguageToggle lang={lang} onChange={setLang} />
                 <ThemeToggle />
               </div>
 
-              {/* Share QR button — desktop only */}
+              {/* Share QR button — all users */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="hidden sm:flex h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
                 onClick={() => setShareOpen(true)}
                 aria-label="Partager"
               >
@@ -389,12 +389,6 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
               <MegaMenuMobileSection lang={lang} onClose={onClose} />
             </>
           )}
-
-          {/* Settings (mobile only) */}
-          <div className="border-t border-border/20 pt-4 mt-4 flex items-center gap-2 sm:hidden">
-            <LanguageToggle lang={lang} onChange={setLang} />
-            <ThemeToggle />
-          </div>
 
           {/* Account section */}
           <div className="border-t border-border/20 pt-4 mt-4 space-y-1">
