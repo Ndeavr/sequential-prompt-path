@@ -30,6 +30,8 @@ export default function PageCheckoutStripe() {
   const { session } = useAuth();
   const [loading, setLoading] = useState(false);
   const [billingInterval, setBillingInterval] = useState<BillingInterval>("month");
+  const [promoCode, setPromoCode] = useState<string | null>(null);
+  const [promoDiscount, setPromoDiscount] = useState<{ discount_type?: string; discount_value?: number; label?: string } | null>(null);
 
   // Appointment pack from goals funnel
   const initialPack = useMemo(() => {
