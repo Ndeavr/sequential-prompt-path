@@ -320,7 +320,7 @@ export const AppRouter = () => (
     <ScrollRestoration />
     <Routes>
       {/* Public */}
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<HomePageUnproV2 />} />
       <Route path="/go" element={<PageAdLandingAipp />} />
       <Route path="/aipp-check" element={<PageAdLandingAipp />} />
       <Route path="/business-import" element={<PageBusinessImport />} />
