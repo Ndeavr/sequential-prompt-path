@@ -124,6 +124,17 @@ export default function HomeownersPage() {
   const { isAuthenticated } = useAuth();
   const [address, setAddress] = useState("");
   const [neighborCount, setNeighborCount] = useState(0);
+  const [alexOpen, setAlexOpen] = useState(false);
+  const [alexActivating, setAlexActivating] = useState(false);
+
+  const handleAlexLaunch = useCallback(() => {
+    setAlexActivating(true);
+    // Small delay for visual feedback before opening
+    setTimeout(() => {
+      setAlexActivating(false);
+      setAlexOpen(true);
+    }, 150);
+  }, []);
 
   // Only show neighbor count after user has typed a real address (min 10 chars)
   useEffect(() => {
