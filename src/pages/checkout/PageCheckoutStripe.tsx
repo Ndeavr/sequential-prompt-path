@@ -97,6 +97,7 @@ export default function PageCheckoutStripe() {
             priceId,
             planId: planCode,
             billingInterval,
+            promoCode: promoCode || undefined,
             successUrl: `${window.location.origin}/checkout/success?plan=${planCode}`,
             cancelUrl: `${window.location.origin}/checkout?plan=${planCode}`,
             ...(selectedPack && {
@@ -115,8 +116,16 @@ export default function PageCheckoutStripe() {
         throw new Error(err.error || "Erreur de paiement");
       }
 
-      const { url } = await res.json();
-      if (url) window.location.href = url;
+      const data = await res.json();
+
+      // Zero-total activation (promo 100%)
+      if (data.activated && data.zero_total) {
+        toast.success("Plan activé gratuitement! 🎉");
+        navigate("/checkout/success?plan=" + planCode + "&free=true");
+        return;
+      }
+
+      if (data.url) window.location.href = data.url;
     } catch (err: any) {
       toast.error(err.message || "Erreur lors de la création du paiement");
     } finally {
