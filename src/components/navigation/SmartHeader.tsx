@@ -155,16 +155,16 @@ const SmartHeader = () => {
                 <AlexNavOrb lang={lang} />
               </div>
 
-              <div className="flex items-center gap-1.5">
+              <div className="hidden sm:flex items-center gap-1.5">
                 <LanguageToggle lang={lang} onChange={setLang} />
                 <ThemeToggle />
               </div>
 
-              {/* Share QR button — all users */}
+              {/* Share QR button — desktop only */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                className="hidden sm:flex h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
                 onClick={() => setShareOpen(true)}
                 aria-label="Partager"
               >
