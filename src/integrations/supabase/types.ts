@@ -1068,6 +1068,45 @@ export type Database = {
           },
         ]
       }
+      alex_contact_captures: {
+        Row: {
+          city: string | null
+          created_at: string | null
+          email: string | null
+          first_name: string | null
+          id: string
+          phone: string | null
+          project_type: string | null
+          session_id: string
+          source: string | null
+          user_id: string | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          phone?: string | null
+          project_type?: string | null
+          session_id: string
+          source?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          phone?: string | null
+          project_type?: string | null
+          session_id?: string
+          source?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       alex_conversion_prompts: {
         Row: {
           created_at: string
@@ -5193,6 +5232,278 @@ export type Database = {
           trade_slug?: string
           updated_at?: string | null
           urgency_level?: string | null
+        }
+        Relationships: []
+      }
+      condo_action_plans: {
+        Row: {
+          assigned_contractor_id: string | null
+          category: string | null
+          condo_id: string
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          estimated_cost_max: number | null
+          estimated_cost_min: number | null
+          id: string
+          priority: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_contractor_id?: string | null
+          category?: string | null
+          condo_id: string
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          estimated_cost_max?: number | null
+          estimated_cost_min?: number | null
+          id?: string
+          priority?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_contractor_id?: string | null
+          category?: string | null
+          condo_id?: string
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          estimated_cost_max?: number | null
+          estimated_cost_min?: number | null
+          id?: string
+          priority?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "condo_action_plans_condo_id_fkey"
+            columns: ["condo_id"]
+            isOneToOne: false
+            referencedRelation: "condo_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      condo_compliance_checks: {
+        Row: {
+          check_label: string
+          check_type: string
+          checked_at: string | null
+          condo_id: string
+          created_at: string | null
+          due_date: string | null
+          id: string
+          is_required: boolean | null
+          notes: string | null
+          status: string | null
+        }
+        Insert: {
+          check_label: string
+          check_type: string
+          checked_at?: string | null
+          condo_id: string
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          is_required?: boolean | null
+          notes?: string | null
+          status?: string | null
+        }
+        Update: {
+          check_label?: string
+          check_type?: string
+          checked_at?: string | null
+          condo_id?: string
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          is_required?: boolean | null
+          notes?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "condo_compliance_checks_condo_id_fkey"
+            columns: ["condo_id"]
+            isOneToOne: false
+            referencedRelation: "condo_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      condo_documents: {
+        Row: {
+          category: string | null
+          condo_id: string
+          created_at: string | null
+          document_name: string
+          document_type: string
+          file_url: string | null
+          id: string
+          is_loi16_required: boolean | null
+          notes: string | null
+          status: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          condo_id: string
+          created_at?: string | null
+          document_name: string
+          document_type: string
+          file_url?: string | null
+          id?: string
+          is_loi16_required?: boolean | null
+          notes?: string | null
+          status?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          condo_id?: string
+          created_at?: string | null
+          document_name?: string
+          document_type?: string
+          file_url?: string | null
+          id?: string
+          is_loi16_required?: boolean | null
+          notes?: string | null
+          status?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "condo_documents_condo_id_fkey"
+            columns: ["condo_id"]
+            isOneToOne: false
+            referencedRelation: "condo_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      condo_maintenance_tasks: {
+        Row: {
+          assigned_to: string | null
+          category: string | null
+          condo_id: string
+          created_at: string | null
+          estimated_cost: number | null
+          frequency: string | null
+          id: string
+          last_completed_at: string | null
+          next_due_date: string | null
+          priority: string | null
+          status: string | null
+          task_description: string | null
+          task_title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string | null
+          condo_id: string
+          created_at?: string | null
+          estimated_cost?: number | null
+          frequency?: string | null
+          id?: string
+          last_completed_at?: string | null
+          next_due_date?: string | null
+          priority?: string | null
+          status?: string | null
+          task_description?: string | null
+          task_title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string | null
+          condo_id?: string
+          created_at?: string | null
+          estimated_cost?: number | null
+          frequency?: string | null
+          id?: string
+          last_completed_at?: string | null
+          next_due_date?: string | null
+          priority?: string | null
+          status?: string | null
+          task_description?: string | null
+          task_title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "condo_maintenance_tasks_condo_id_fkey"
+            columns: ["condo_id"]
+            isOneToOne: false
+            referencedRelation: "condo_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      condo_profiles: {
+        Row: {
+          address: string | null
+          building_name: string | null
+          building_type: string | null
+          city: string | null
+          created_at: string | null
+          id: string
+          manager_email: string | null
+          manager_name: string | null
+          manager_phone: string | null
+          postal_code: string | null
+          recent_major_works: string | null
+          reserve_fund_amount: number | null
+          syndicate_name: string | null
+          unit_count: number | null
+          updated_at: string | null
+          user_id: string
+          year_built: number | null
+        }
+        Insert: {
+          address?: string | null
+          building_name?: string | null
+          building_type?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          manager_email?: string | null
+          manager_name?: string | null
+          manager_phone?: string | null
+          postal_code?: string | null
+          recent_major_works?: string | null
+          reserve_fund_amount?: number | null
+          syndicate_name?: string | null
+          unit_count?: number | null
+          updated_at?: string | null
+          user_id: string
+          year_built?: number | null
+        }
+        Update: {
+          address?: string | null
+          building_name?: string | null
+          building_type?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          manager_email?: string | null
+          manager_name?: string | null
+          manager_phone?: string | null
+          postal_code?: string | null
+          recent_major_works?: string | null
+          reserve_fund_amount?: number | null
+          syndicate_name?: string | null
+          unit_count?: number | null
+          updated_at?: string | null
+          user_id?: string
+          year_built?: number | null
         }
         Relationships: []
       }
@@ -12257,6 +12568,164 @@ export type Database = {
             columns: ["assignment_id"]
             isOneToOne: false
             referencedRelation: "emergency_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entrepreneur_goals: {
+        Row: {
+          annual_revenue_target: number | null
+          avg_project_value: number | null
+          created_at: string | null
+          current_situation: string | null
+          id: string
+          monthly_capacity: number | null
+          service_type: string | null
+          service_zone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          annual_revenue_target?: number | null
+          avg_project_value?: number | null
+          created_at?: string | null
+          current_situation?: string | null
+          id?: string
+          monthly_capacity?: number | null
+          service_type?: string | null
+          service_zone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          annual_revenue_target?: number | null
+          avg_project_value?: number | null
+          created_at?: string | null
+          current_situation?: string | null
+          id?: string
+          monthly_capacity?: number | null
+          service_type?: string | null
+          service_zone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      entrepreneur_plan_recommendations: {
+        Row: {
+          accepted: boolean | null
+          confidence_score: number | null
+          created_at: string | null
+          id: string
+          monthly_rdv_needed: number | null
+          projected_revenue: number | null
+          reasoning: string | null
+          recommended_plan: string
+          user_id: string
+        }
+        Insert: {
+          accepted?: boolean | null
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          monthly_rdv_needed?: number | null
+          projected_revenue?: number | null
+          reasoning?: string | null
+          recommended_plan: string
+          user_id: string
+        }
+        Update: {
+          accepted?: boolean | null
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          monthly_rdv_needed?: number | null
+          projected_revenue?: number | null
+          reasoning?: string | null
+          recommended_plan?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      entrepreneur_profile_progress: {
+        Row: {
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          sort_order: number | null
+          status: string | null
+          step_code: string
+          step_label: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          sort_order?: number | null
+          status?: string | null
+          step_code: string
+          step_label: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          sort_order?: number | null
+          status?: string | null
+          step_code?: string
+          step_label?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      entrepreneur_revenue_projections: {
+        Row: {
+          annual_target: number
+          avg_project_value: number
+          created_at: string | null
+          estimated_margin_pct: number | null
+          goal_id: string | null
+          id: string
+          rdv_needed_annual: number
+          rdv_needed_monthly: number
+          recommended_plan: string | null
+          user_id: string
+        }
+        Insert: {
+          annual_target: number
+          avg_project_value: number
+          created_at?: string | null
+          estimated_margin_pct?: number | null
+          goal_id?: string | null
+          id?: string
+          rdv_needed_annual: number
+          rdv_needed_monthly: number
+          recommended_plan?: string | null
+          user_id: string
+        }
+        Update: {
+          annual_target?: number
+          avg_project_value?: number
+          created_at?: string | null
+          estimated_margin_pct?: number | null
+          goal_id?: string | null
+          id?: string
+          rdv_needed_annual?: number
+          rdv_needed_monthly?: number
+          recommended_plan?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entrepreneur_revenue_projections_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "entrepreneur_goals"
             referencedColumns: ["id"]
           },
         ]

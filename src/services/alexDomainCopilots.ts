@@ -3,7 +3,78 @@
  * Each copilot defines a progression chain and domain-specific guidance.
  */
 
-export type CopilotDomain = "homeowner" | "contractor" | "condo";
+export type CopilotDomain = "homeowner" | "contractor" | "condo" | "entrepreneur" | "condo_manager";
+
+// ─── Entrepreneur Flow ───
+const ENTREPRENEUR_STEPS: CopilotStep[] = [
+  {
+    id: "diagnostic",
+    label: "Diagnostic rapide",
+    alexPrompt: "Parlons de votre entreprise. Quel type de service offrez-vous ?",
+    uiAction: "none",
+    isComplete: () => false,
+  },
+  {
+    id: "revenue_projection",
+    label: "Projection de revenus",
+    alexPrompt: "Voici combien de rendez-vous vous auriez besoin pour atteindre vos objectifs.",
+    uiAction: "show_projection",
+    isComplete: (ctx) => ctx.hasScore,
+  },
+  {
+    id: "plan_recommendation",
+    label: "Recommandation de plan",
+    alexPrompt: "Avec votre objectif, je vous recommanderais de commencer ici.",
+    uiAction: "show_plan_selector",
+    isComplete: (ctx) => ctx.hasPlan,
+  },
+  {
+    id: "profile_builder",
+    label: "Créer le profil",
+    alexPrompt: "On construit votre profil ensemble. Plus il est complet, plus vous êtes visible.",
+    uiAction: "open_profile_builder",
+    isComplete: (ctx) => ctx.hasProfile,
+  },
+  {
+    id: "payment_activation",
+    label: "Activation",
+    alexPrompt: "Tout est prêt. On active votre profil ?",
+    uiAction: "open_payment",
+    isComplete: (ctx) => ctx.hasBooking,
+  },
+];
+
+// ─── Condo Manager Flow ───
+const CONDO_MANAGER_STEPS: CopilotStep[] = [
+  {
+    id: "building_profile",
+    label: "Profil de l'immeuble",
+    alexPrompt: "Commençons par les informations de base de votre copropriété.",
+    uiAction: "none",
+    isComplete: () => false,
+  },
+  {
+    id: "loi16_check",
+    label: "Audit Loi 16",
+    alexPrompt: "Je vérifie votre conformité à la Loi 16. Quelques questions rapides.",
+    uiAction: "show_compliance",
+    isComplete: (ctx) => ctx.hasScore,
+  },
+  {
+    id: "action_plan",
+    label: "Plan d'action",
+    alexPrompt: "Voici vos priorités, classées par urgence.",
+    uiAction: "show_action_plan",
+    isComplete: (ctx) => ctx.hasPlan,
+  },
+  {
+    id: "pro_matching",
+    label: "Trouver des pros",
+    alexPrompt: "Je peux vous recommander des professionnels qualifiés pour vos travaux.",
+    uiAction: "open_booking",
+    isComplete: (ctx) => ctx.hasBooking,
+  },
+];
 
 export interface CopilotStep {
   id: string;
@@ -125,6 +196,8 @@ const FLOWS: Record<CopilotDomain, CopilotStep[]> = {
   homeowner: HOMEOWNER_STEPS,
   contractor: CONTRACTOR_STEPS,
   condo: CONDO_STEPS,
+  entrepreneur: ENTREPRENEUR_STEPS,
+  condo_manager: CONDO_MANAGER_STEPS,
 };
 
 export function getCopilotState(
