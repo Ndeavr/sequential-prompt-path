@@ -52,6 +52,21 @@ export default function AlexChatStep({ draft, onUpdate, onComplete, isProcessing
     }
   }, [isLast, onComplete]);
 
+  const formatPhone = useCallback((raw: string) => {
+    const digits = raw.replace(/\D/g, "").slice(0, 10);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }, []);
+
+  const handleFieldChange = useCallback((key: FieldKey, val: string) => {
+    if (key === "phone") {
+      onUpdate({ [key]: formatPhone(val) });
+    } else {
+      onUpdate({ [key]: val });
+    }
+  }, [onUpdate, formatPhone]);
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "Enter" && canProceed) handleNext();
@@ -90,7 +105,7 @@ export default function AlexChatStep({ draft, onUpdate, onComplete, isProcessing
             type={field.type || "text"}
             placeholder={field.placeholder}
             value={value}
-            onChange={(e) => onUpdate({ [field.key]: e.target.value })}
+            onChange={(e) => handleFieldChange(field.key, e.target.value)}
             onKeyDown={handleKeyDown}
             autoFocus
             className="h-12 text-base rounded-xl"

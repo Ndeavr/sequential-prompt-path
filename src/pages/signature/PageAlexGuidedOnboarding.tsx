@@ -119,6 +119,42 @@ export default function PageAlexGuidedOnboarding() {
   const createContractorDraft = useCallback(async () => {
     setIsProcessing(true);
     try {
+      // If user already has a contractor row, update it instead of inserting
+      if (user?.id) {
+        const { data: existing } = await supabase
+          .from("contractors")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (existing) {
+          // Wipe and reuse existing contractor
+          await supabase.from("contractor_services").delete().eq("contractor_id", existing.id);
+          await supabase.from("contractor_service_areas").delete().eq("contractor_id", existing.id);
+          const { error } = await supabase
+            .from("contractors")
+            .update({
+              business_name: state.draft.business_name,
+              city: state.draft.city,
+              phone: state.draft.phone,
+              email: state.draft.email,
+              specialty: state.draft.activity,
+              website: state.draft.website || null,
+              description: null,
+              rating: null,
+              review_count: null,
+              address: null,
+              google_business_url: null,
+            })
+            .eq("id", existing.id);
+          if (error) throw error;
+          update({ contractorId: existing.id, step: "categories" });
+          toast.success("Profil réinitialisé !");
+          setIsProcessing(false);
+          return;
+        }
+      }
+
       const { data, error } = await supabase
         .from("contractors")
         .insert({
