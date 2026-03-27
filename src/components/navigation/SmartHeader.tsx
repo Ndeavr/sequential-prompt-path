@@ -233,7 +233,7 @@ const SmartHeader = () => {
       {/* Mobile menu overlay */}
       <AnimatePresence>
         {mobileOpen && (
-          <MobileMenuOverlay lang={lang} onClose={() => setMobileOpen(false)} ctx={ctx} activeRole={activeRole} />
+          <MobileMenuOverlay lang={lang} onClose={() => setMobileOpen(false)} ctx={ctx} activeRole={activeRole} onShareOpen={() => setShareOpen(true)} />
         )}
       </AnimatePresence>
 
