@@ -161,6 +161,8 @@ import PageAlexPredictiveSeller from "@/pages/alex/PageAlexPredictiveSeller";
 
 // Zone Value & Feedback Loop
 import AdminZoneValueMap from "@/pages/admin/AdminZoneValueMap";
+import AdminVoiceControlPage from "@/pages/admin/AdminVoiceControlPage";
+import AdminVoiceOptimizerPage from "@/pages/admin/AdminVoiceOptimizerPage";
 
 // Blog
 import BlogIndexPage from "@/pages/blog/BlogIndexPage";
