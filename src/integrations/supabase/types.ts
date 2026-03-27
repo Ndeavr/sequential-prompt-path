@@ -949,15 +949,50 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_actions: {
+        Row: {
+          action_status: string
+          action_type: string
+          created_at: string
+          id: string
+          payload: Json
+          session_id: string
+          trigger_source: string
+          ui_target: string | null
+        }
+        Insert: {
+          action_status?: string
+          action_type: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          session_id: string
+          trigger_source?: string
+          ui_target?: string | null
+        }
+        Update: {
+          action_status?: string
+          action_type?: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          session_id?: string
+          trigger_source?: string
+          ui_target?: string | null
+        }
+        Relationships: []
+      }
       alex_booking_drafts: {
         Row: {
           booking_status: string
+          calendar_payload: Json
           city: string | null
           contact_email: string | null
           contact_first_name: string | null
           contact_phone: string | null
           contractor_id: string | null
           created_at: string
+          draft_source: string
           id: string
           preferred_time_window: string | null
           project_summary: string | null
@@ -968,12 +1003,14 @@ export type Database = {
         }
         Insert: {
           booking_status?: string
+          calendar_payload?: Json
           city?: string | null
           contact_email?: string | null
           contact_first_name?: string | null
           contact_phone?: string | null
           contractor_id?: string | null
           created_at?: string
+          draft_source?: string
           id?: string
           preferred_time_window?: string | null
           project_summary?: string | null
@@ -984,12 +1021,14 @@ export type Database = {
         }
         Update: {
           booking_status?: string
+          calendar_payload?: Json
           city?: string | null
           contact_email?: string | null
           contact_first_name?: string | null
           contact_phone?: string | null
           contractor_id?: string | null
           created_at?: string
+          draft_source?: string
           id?: string
           preferred_time_window?: string | null
           project_summary?: string | null
@@ -1249,29 +1288,35 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          latency_ms: number | null
           message: string
           message_type: string | null
           metadata: Json | null
           sender: string
           session_id: string
+          spoken_variant: string | null
         }
         Insert: {
           created_at?: string
           id?: string
+          latency_ms?: number | null
           message: string
           message_type?: string | null
           metadata?: Json | null
           sender?: string
           session_id: string
+          spoken_variant?: string | null
         }
         Update: {
           created_at?: string
           id?: string
+          latency_ms?: number | null
           message?: string
           message_type?: string | null
           metadata?: Json | null
           sender?: string
           session_id?: string
+          spoken_variant?: string | null
         }
         Relationships: [
           {
@@ -1307,6 +1352,42 @@ export type Database = {
           metadata?: Json | null
           momentum_score?: number
           session_id?: string
+        }
+        Relationships: []
+      }
+      alex_no_result_events: {
+        Row: {
+          city: string | null
+          created_at: string
+          fallback_used: string | null
+          id: string
+          partial_matches_count: number
+          radius_attempted: number
+          service_type: string | null
+          session_id: string
+          waitlist_created: boolean
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          fallback_used?: string | null
+          id?: string
+          partial_matches_count?: number
+          radius_attempted?: number
+          service_type?: string | null
+          session_id: string
+          waitlist_created?: boolean
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          fallback_used?: string | null
+          id?: string
+          partial_matches_count?: number
+          radius_attempted?: number
+          service_type?: string | null
+          session_id?: string
+          waitlist_created?: boolean
         }
         Relationships: []
       }
@@ -1346,30 +1427,39 @@ export type Database = {
           confidence_score: number
           contractor_id: string | null
           created_at: string
+          distance_score: number
           explanation_summary: string | null
           id: string
+          is_primary: boolean
           match_score: number
           session_id: string
+          trust_score: number
         }
         Insert: {
           availability_score?: number
           confidence_score?: number
           contractor_id?: string | null
           created_at?: string
+          distance_score?: number
           explanation_summary?: string | null
           id?: string
+          is_primary?: boolean
           match_score?: number
           session_id: string
+          trust_score?: number
         }
         Update: {
           availability_score?: number
           confidence_score?: number
           contractor_id?: string | null
           created_at?: string
+          distance_score?: number
           explanation_summary?: string | null
           id?: string
+          is_primary?: boolean
           match_score?: number
           session_id?: string
+          trust_score?: number
         }
         Relationships: [
           {
@@ -1402,33 +1492,96 @@ export type Database = {
           },
         ]
       }
-      alex_sessions: {
+      alex_response_latency: {
         Row: {
           created_at: string
+          event_name: string
           id: string
-          intake_data: Json | null
-          last_intent: string | null
-          session_type: string
-          updated_at: string
-          user_id: string
+          is_sla_respected: boolean
+          latency_ms: number
+          session_id: string
         }
         Insert: {
           created_at?: string
+          event_name: string
           id?: string
-          intake_data?: Json | null
-          last_intent?: string | null
-          session_type?: string
-          updated_at?: string
-          user_id: string
+          is_sla_respected?: boolean
+          latency_ms: number
+          session_id: string
         }
         Update: {
           created_at?: string
+          event_name?: string
+          id?: string
+          is_sla_respected?: boolean
+          latency_ms?: number
+          session_id?: string
+        }
+        Relationships: []
+      }
+      alex_sessions: {
+        Row: {
+          auth_state: string
+          booking_intent: boolean
+          created_at: string
+          current_step: string
+          id: string
+          intake_data: Json | null
+          language: string
+          last_intent: string | null
+          no_result_state: boolean
+          project_city: string | null
+          project_summary: string | null
+          project_type: string | null
+          recommended_contractor_id: string | null
+          role_detected: string
+          session_token: string
+          session_type: string
+          updated_at: string
+          user_id: string
+          voice_locale: string
+        }
+        Insert: {
+          auth_state?: string
+          booking_intent?: boolean
+          created_at?: string
+          current_step?: string
           id?: string
           intake_data?: Json | null
+          language?: string
           last_intent?: string | null
+          no_result_state?: boolean
+          project_city?: string | null
+          project_summary?: string | null
+          project_type?: string | null
+          recommended_contractor_id?: string | null
+          role_detected?: string
+          session_token: string
+          session_type?: string
+          updated_at?: string
+          user_id: string
+          voice_locale?: string
+        }
+        Update: {
+          auth_state?: string
+          booking_intent?: boolean
+          created_at?: string
+          current_step?: string
+          id?: string
+          intake_data?: Json | null
+          language?: string
+          last_intent?: string | null
+          no_result_state?: boolean
+          project_city?: string | null
+          project_summary?: string | null
+          project_type?: string | null
+          recommended_contractor_id?: string | null
+          role_detected?: string
+          session_token?: string
           session_type?: string
           updated_at?: string
           user_id?: string
+          voice_locale?: string
         }
         Relationships: []
       }
@@ -1459,6 +1612,132 @@ export type Database = {
           objection_type?: string
           resolved?: boolean
           session_id?: string
+        }
+        Relationships: []
+      }
+      alex_ui_failures: {
+        Row: {
+          actual_ui_event: string | null
+          created_at: string
+          expected_ui_event: string
+          failure_type: string
+          id: string
+          metadata: Json
+          related_action_id: string | null
+          screen_name: string | null
+          session_id: string
+          spoken_text: string | null
+        }
+        Insert: {
+          actual_ui_event?: string | null
+          created_at?: string
+          expected_ui_event: string
+          failure_type: string
+          id?: string
+          metadata?: Json
+          related_action_id?: string | null
+          screen_name?: string | null
+          session_id: string
+          spoken_text?: string | null
+        }
+        Update: {
+          actual_ui_event?: string | null
+          created_at?: string
+          expected_ui_event?: string
+          failure_type?: string
+          id?: string
+          metadata?: Json
+          related_action_id?: string | null
+          screen_name?: string | null
+          session_id?: string
+          spoken_text?: string | null
+        }
+        Relationships: []
+      }
+      alex_voice_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          interactivity_level: string
+          language: string
+          locale_code: string
+          session_id: string | null
+          speech_rate: number
+          speech_style: string
+          user_id: string | null
+          voice_name: string | null
+          voice_provider: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interactivity_level?: string
+          language?: string
+          locale_code?: string
+          session_id?: string | null
+          speech_rate?: number
+          speech_style?: string
+          user_id?: string | null
+          voice_name?: string | null
+          voice_provider?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interactivity_level?: string
+          language?: string
+          locale_code?: string
+          session_id?: string | null
+          speech_rate?: number
+          speech_style?: string
+          user_id?: string | null
+          voice_name?: string | null
+          voice_provider?: string | null
+        }
+        Relationships: []
+      }
+      alex_waitlist_queue: {
+        Row: {
+          assigned_admin: string | null
+          city: string | null
+          created_at: string
+          email: string | null
+          first_name: string | null
+          id: string
+          notes: string | null
+          phone: string
+          project_type: string | null
+          session_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_admin?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          notes?: string | null
+          phone: string
+          project_type?: string | null
+          session_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_admin?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string
+          project_type?: string | null
+          session_id?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -26506,6 +26785,26 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      fn_alex_compute_booking_readiness: {
+        Args: { _session_id: string }
+        Returns: Json
+      }
+      fn_alex_detect_no_result_state: {
+        Args: { _session_id: string }
+        Returns: Json
+      }
+      fn_alex_get_active_session: {
+        Args: { _session_token: string }
+        Returns: Json
+      }
+      fn_alex_get_best_next_action: {
+        Args: { _session_id: string }
+        Returns: Json
+      }
+      fn_alex_promote_guest_session: {
+        Args: { _session_token: string; _user_id: string }
+        Returns: Json
       }
       generate_territories: {
         Args: {
