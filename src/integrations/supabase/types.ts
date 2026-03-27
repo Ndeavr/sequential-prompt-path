@@ -1605,6 +1605,316 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_sales_activation_events: {
+        Row: {
+          activation_step: string
+          created_at: string | null
+          id: string
+          payload: Json | null
+          sales_session_id: string | null
+          step_status: string
+          user_id: string | null
+        }
+        Insert: {
+          activation_step: string
+          created_at?: string | null
+          id?: string
+          payload?: Json | null
+          sales_session_id?: string | null
+          step_status: string
+          user_id?: string | null
+        }
+        Update: {
+          activation_step?: string
+          created_at?: string | null
+          id?: string
+          payload?: Json | null
+          sales_session_id?: string | null
+          step_status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_sales_activation_events_sales_session_id_fkey"
+            columns: ["sales_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_sales_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_sales_checkout_drafts: {
+        Row: {
+          billing_cycle: string | null
+          checkout_status: string
+          coupon_code: string | null
+          created_at: string | null
+          id: string
+          projected_value: Json | null
+          recommended_plan: string | null
+          sales_session_id: string | null
+          selected_plan: string | null
+          stripe_checkout_session_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          billing_cycle?: string | null
+          checkout_status?: string
+          coupon_code?: string | null
+          created_at?: string | null
+          id?: string
+          projected_value?: Json | null
+          recommended_plan?: string | null
+          sales_session_id?: string | null
+          selected_plan?: string | null
+          stripe_checkout_session_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          billing_cycle?: string | null
+          checkout_status?: string
+          coupon_code?: string | null
+          created_at?: string | null
+          id?: string
+          projected_value?: Json | null
+          recommended_plan?: string | null
+          sales_session_id?: string | null
+          selected_plan?: string | null
+          stripe_checkout_session_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_sales_checkout_drafts_sales_session_id_fkey"
+            columns: ["sales_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_sales_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_sales_conversion_scores: {
+        Row: {
+          checkout_readiness_score: number | null
+          created_at: string | null
+          id: string
+          intent_score: number | null
+          objection_risk_score: number | null
+          payment_probability_score: number | null
+          sales_session_id: string | null
+          trust_score: number | null
+          urgency_score: number | null
+        }
+        Insert: {
+          checkout_readiness_score?: number | null
+          created_at?: string | null
+          id?: string
+          intent_score?: number | null
+          objection_risk_score?: number | null
+          payment_probability_score?: number | null
+          sales_session_id?: string | null
+          trust_score?: number | null
+          urgency_score?: number | null
+        }
+        Update: {
+          checkout_readiness_score?: number | null
+          created_at?: string | null
+          id?: string
+          intent_score?: number | null
+          objection_risk_score?: number | null
+          payment_probability_score?: number | null
+          sales_session_id?: string | null
+          trust_score?: number | null
+          urgency_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_sales_conversion_scores_sales_session_id_fkey"
+            columns: ["sales_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_sales_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_sales_events: {
+        Row: {
+          created_at: string | null
+          event_status: string | null
+          event_type: string
+          id: string
+          payload: Json | null
+          sales_session_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_status?: string | null
+          event_type: string
+          id?: string
+          payload?: Json | null
+          sales_session_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_status?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json | null
+          sales_session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_sales_events_sales_session_id_fkey"
+            columns: ["sales_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_sales_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_sales_objections: {
+        Row: {
+          created_at: string | null
+          detected_text: string | null
+          id: string
+          objection_type: string
+          resolved: boolean | null
+          response_used: string | null
+          sales_session_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          detected_text?: string | null
+          id?: string
+          objection_type: string
+          resolved?: boolean | null
+          response_used?: string | null
+          sales_session_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          detected_text?: string | null
+          id?: string
+          objection_type?: string
+          resolved?: boolean | null
+          response_used?: string | null
+          sales_session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_sales_objections_sales_session_id_fkey"
+            columns: ["sales_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_sales_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_sales_prompt_performance: {
+        Row: {
+          checkout_open_rate: number | null
+          created_at: string | null
+          id: string
+          locale_code: string
+          objection_resolution_rate: number | null
+          payment_rate: number | null
+          prompt_style: string
+          role_key: string
+          sessions_count: number | null
+        }
+        Insert: {
+          checkout_open_rate?: number | null
+          created_at?: string | null
+          id?: string
+          locale_code: string
+          objection_resolution_rate?: number | null
+          payment_rate?: number | null
+          prompt_style: string
+          role_key?: string
+          sessions_count?: number | null
+        }
+        Update: {
+          checkout_open_rate?: number | null
+          created_at?: string | null
+          id?: string
+          locale_code?: string
+          objection_resolution_rate?: number | null
+          payment_rate?: number | null
+          prompt_style?: string
+          role_key?: string
+          sessions_count?: number | null
+        }
+        Relationships: []
+      }
+      alex_sales_sessions: {
+        Row: {
+          avg_job_value: number | null
+          capacity_per_month: number | null
+          checkout_ready: boolean | null
+          city: string | null
+          created_at: string | null
+          current_step: string
+          growth_goal: string | null
+          id: string
+          language: string
+          locale_code: string
+          paid: boolean | null
+          recommended_plan: string | null
+          role_detected: string
+          selected_plan: string | null
+          service_type: string | null
+          session_token: string
+          target_revenue: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          avg_job_value?: number | null
+          capacity_per_month?: number | null
+          checkout_ready?: boolean | null
+          city?: string | null
+          created_at?: string | null
+          current_step?: string
+          growth_goal?: string | null
+          id?: string
+          language?: string
+          locale_code?: string
+          paid?: boolean | null
+          recommended_plan?: string | null
+          role_detected?: string
+          selected_plan?: string | null
+          service_type?: string | null
+          session_token: string
+          target_revenue?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          avg_job_value?: number | null
+          capacity_per_month?: number | null
+          checkout_ready?: boolean | null
+          city?: string | null
+          created_at?: string | null
+          current_step?: string
+          growth_goal?: string | null
+          id?: string
+          language?: string
+          locale_code?: string
+          paid?: boolean | null
+          recommended_plan?: string | null
+          role_detected?: string
+          selected_plan?: string | null
+          service_type?: string | null
+          session_token?: string
+          target_revenue?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       alex_sessions: {
         Row: {
           auth_state: string
@@ -13425,6 +13735,7 @@ export type Database = {
           current_situation: string | null
           id: string
           monthly_capacity: number | null
+          sales_session_id: string | null
           service_type: string | null
           service_zone: string | null
           updated_at: string | null
@@ -13437,6 +13748,7 @@ export type Database = {
           current_situation?: string | null
           id?: string
           monthly_capacity?: number | null
+          sales_session_id?: string | null
           service_type?: string | null
           service_zone?: string | null
           updated_at?: string | null
@@ -13449,12 +13761,21 @@ export type Database = {
           current_situation?: string | null
           id?: string
           monthly_capacity?: number | null
+          sales_session_id?: string | null
           service_type?: string | null
           service_zone?: string | null
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_goals_sales_session"
+            columns: ["sales_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_sales_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       entrepreneur_leads: {
         Row: {
@@ -13502,6 +13823,7 @@ export type Database = {
           projected_revenue: number | null
           reasoning: string | null
           recommended_plan: string
+          sales_session_id: string | null
           user_id: string
         }
         Insert: {
@@ -13513,6 +13835,7 @@ export type Database = {
           projected_revenue?: number | null
           reasoning?: string | null
           recommended_plan: string
+          sales_session_id?: string | null
           user_id: string
         }
         Update: {
@@ -13524,9 +13847,18 @@ export type Database = {
           projected_revenue?: number | null
           reasoning?: string | null
           recommended_plan?: string
+          sales_session_id?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_plan_rec_sales_session"
+            columns: ["sales_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_sales_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       entrepreneur_profile_progress: {
         Row: {
@@ -13575,6 +13907,7 @@ export type Database = {
           rdv_needed_annual: number
           rdv_needed_monthly: number
           recommended_plan: string | null
+          sales_session_id: string | null
           user_id: string
         }
         Insert: {
@@ -13587,6 +13920,7 @@ export type Database = {
           rdv_needed_annual: number
           rdv_needed_monthly: number
           recommended_plan?: string | null
+          sales_session_id?: string | null
           user_id: string
         }
         Update: {
@@ -13599,6 +13933,7 @@ export type Database = {
           rdv_needed_annual?: number
           rdv_needed_monthly?: number
           recommended_plan?: string | null
+          sales_session_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -13607,6 +13942,13 @@ export type Database = {
             columns: ["goal_id"]
             isOneToOne: false
             referencedRelation: "entrepreneur_goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_rev_proj_sales_session"
+            columns: ["sales_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_sales_sessions"
             referencedColumns: ["id"]
           },
         ]
