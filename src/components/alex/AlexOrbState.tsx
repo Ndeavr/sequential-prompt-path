@@ -15,18 +15,18 @@ interface AlexOrbStateProps {
 const stepConfig: Record<AlexStep, { icon: typeof Mic; label: string; pulse: boolean; color: string }> = {
   idle: { icon: Mic, label: "Prêt", pulse: false, color: "var(--muted-foreground)" },
   listening: { icon: Mic, label: "Je vous écoute…", pulse: true, color: "var(--primary)" },
-  thinking: { icon: Sparkles, label: "Je regarde…", pulse: true, color: "var(--primary)" },
+  thinking: { icon: Sparkles, label: "Analyse en cours…", pulse: true, color: "var(--primary)" },
   predicting: { icon: Search, label: "J'analyse…", pulse: true, color: "var(--secondary)" },
-  matching: { icon: Search, label: "Je cherche le bon fit…", pulse: true, color: "var(--secondary)" },
-  preparing_booking: { icon: Calendar, label: "Je prépare ça…", pulse: true, color: "var(--accent)" },
+  matching: { icon: Search, label: "Recherche du meilleur profil…", pulse: true, color: "var(--secondary)" },
+  preparing_booking: { icon: Calendar, label: "Préparation en cours…", pulse: true, color: "var(--accent)" },
   speaking: { icon: Sparkles, label: "Alex parle…", pulse: false, color: "var(--primary)" },
-  opening_calendar: { icon: Calendar, label: "J'ouvre le calendrier…", pulse: true, color: "var(--accent)" },
-  waiting_input: { icon: Mic, label: "Allez-y…", pulse: false, color: "var(--primary)" },
+  opening_calendar: { icon: Calendar, label: "Ouverture du calendrier…", pulse: true, color: "var(--accent)" },
+  waiting_input: { icon: Mic, label: "Je vous écoute…", pulse: false, color: "var(--primary)" },
   objection_handling: { icon: Sparkles, label: "Je comprends…", pulse: false, color: "var(--primary)" },
-  auth_resume: { icon: Sparkles, label: "On reprend…", pulse: true, color: "var(--success)" },
-  no_result_recovery: { icon: Search, label: "Je cherche des alternatives…", pulse: true, color: "var(--warning)" },
+  auth_resume: { icon: Sparkles, label: "Reprise en cours…", pulse: true, color: "var(--success)" },
+  no_result_recovery: { icon: Search, label: "Recherche d'alternatives…", pulse: true, color: "var(--warning)" },
   success: { icon: Sparkles, label: "C'est prêt.", pulse: false, color: "var(--success)" },
-  error: { icon: AlertCircle, label: "Hmm, réessayez.", pulse: false, color: "var(--destructive)" },
+  error: { icon: AlertCircle, label: "Une erreur est survenue.", pulse: false, color: "var(--destructive)" },
 };
 
 export default function AlexOrbState({ step, size = 48, className = "" }: AlexOrbStateProps) {
