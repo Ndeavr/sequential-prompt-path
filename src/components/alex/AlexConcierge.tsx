@@ -129,21 +129,11 @@ interface AlexConciergeProps {
 }
 
 const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, occupancyStatus }: AlexConciergeProps) => {
-  const isHomePage = useLocation().pathname === "/";
+  const { pathname } = useLocation();
+  const isHomePage = pathname === "/";
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated } = useAuth();
   const { openAlex: openAlexVoice, isOpen: voiceOverlayOpen } = useAlexVoice();
-
-  // Suppress concierge entirely when global voice overlay is active
-  useEffect(() => {
-    if (voiceOverlayOpen && isOpen) {
-      setIsOpen(false);
-    }
-  }, [voiceOverlayOpen]);
-
-  // If voice overlay is open, hide the orb completely
-  if (voiceOverlayOpen) return null;
-  const { pathname } = useLocation();
   const { messages, isStreaming, sendMessage, reset } = useAlex();
   const [input, setInput] = useState("");
   const [recommendations, setRecommendations] = useState<AlexRecommendation[]>([]);
@@ -154,6 +144,13 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
     () => getContextSuggestions(pathname, isAuthenticated),
     [pathname, isAuthenticated]
   );
+
+  // Suppress concierge entirely when global voice overlay is active
+  useEffect(() => {
+    if (voiceOverlayOpen && isOpen) {
+      setIsOpen(false);
+    }
+  }, [voiceOverlayOpen]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
