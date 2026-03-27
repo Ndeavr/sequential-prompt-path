@@ -474,6 +474,8 @@ export default function PageAlexGuidedOnboarding() {
                   onChange={(c) => update({ categories: c })}
                   onContinue={saveCategories}
                   isProcessing={isProcessing}
+                  detectedPrimary={state.detectedCategory}
+                  importRunning={state.importStarted && !state.importedData}
                 />
               )}
 
