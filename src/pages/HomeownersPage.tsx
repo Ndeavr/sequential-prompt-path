@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { motion, useInView } from "framer-motion";
+import { motion, useInView, AnimatePresence } from "framer-motion";
 import MainLayout from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,8 @@ import {
   Wrench, DollarSign, Users, CheckCircle2,
 } from "lucide-react";
 import { useRef } from "react";
+import AlexLauncherHero from "@/components/alex/AlexLauncherHero";
+import AlexConversationShell from "@/components/alex/AlexConversationShell";
 
 /* ═══ Animation helpers ═══ */
 const fadeUp = {
