@@ -303,6 +303,11 @@ import AdminDomainIntelligence from "@/pages/admin/AdminDomainIntelligence";
 import AdminBulkArticlesPage from "@/pages/admin/AdminBulkArticlesPage";
 import AdminProspectCampaigns from "@/pages/admin/AdminProspectCampaigns";
 import AdminRoadmapExecution from "@/pages/admin/AdminRoadmapExecution";
+import AdminOutreachDashboard from "@/pages/admin/AdminOutreachDashboard";
+import AdminOutreachCampaignNew from "@/pages/admin/AdminOutreachCampaignNew";
+import AdminOutreachCampaignDetail from "@/pages/admin/AdminOutreachCampaignDetail";
+import AdminOutreachTemplates from "@/pages/admin/AdminOutreachTemplates";
+import AdminOutreachAnalytics from "@/pages/admin/AdminOutreachAnalytics";
 import MesProprietesPage from "@/pages/MesProprietesPage";
 import AnalyserSoumissionsPage from "@/pages/AnalyserSoumissionsPage";
 // import TrouverEntrepreneurPage from "@/pages/TrouverEntrepreneurPage"; // Hidden for now
