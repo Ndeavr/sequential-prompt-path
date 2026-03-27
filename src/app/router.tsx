@@ -214,6 +214,12 @@ import SyndicateVoteCreate from "@/pages/dashboard/SyndicateVoteCreate";
 import SyndicateGrowthDashboard from "@/pages/dashboard/SyndicateGrowthDashboard";
 import LeadResults from "@/pages/dashboard/LeadResults";
 
+// Entrepreneur Funnel
+import PageEntrepreneurLandingAIPP from "@/pages/entrepreneur/PageEntrepreneurLandingAIPP";
+import PageEntrepreneurScoreResult from "@/pages/entrepreneur/PageEntrepreneurScoreResult";
+import PageEntrepreneurPricing from "@/pages/entrepreneur/PageEntrepreneurPricing";
+import PageEntrepreneurDashboardLite from "@/pages/entrepreneur/PageEntrepreneurDashboardLite";
+
 // Contractor Pro
 import ProDashboard from "@/pages/pro/ProDashboard";
 import ProProfile from "@/pages/pro/ProProfile";
@@ -314,6 +320,13 @@ export const AppRouter = () => (
       <Route path="/signup" element={<LoginPageUnpro />} />
       <Route path="/onboarding" element={<OnboardingPageUnpro />} />
       <Route path="/start" element={<StartPage />} />
+
+      {/* Entrepreneur Funnel */}
+      <Route path="/entrepreneur" element={<PageEntrepreneurLandingAIPP />} />
+      <Route path="/entrepreneur/score" element={<PageEntrepreneurScoreResult />} />
+      <Route path="/entrepreneur/pricing" element={<PageEntrepreneurPricing />} />
+      <Route path="/entrepreneur/dashboard" element={<PageEntrepreneurDashboardLite />} />
+
       <Route path="/homeowners" element={<HomeownersPage />} />
       <Route path="/proprietaires" element={<HomeownersPage />} />
       <Route path="/owner-universe" element={<OwnerMenuPreviewPage />} />
