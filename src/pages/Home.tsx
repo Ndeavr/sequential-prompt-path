@@ -493,52 +493,19 @@ const Home = () => {
         <div className="relative z-10 max-w-3xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
             <div className="premium-card rounded-3xl p-6 sm:p-8 overflow-hidden">
-              <AnimatePresence mode="wait">
-                {alexInlineOpen ? (
-                  <motion.div
-                    key="voice"
-                    initial={{ opacity: 0, scale: 0.97 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.97 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    <div className="flex items-center gap-3 mb-3">
-                      <img src={unproRobot} alt="Alex IA" className="h-12 w-12 drop-shadow-lg" />
-                      <div>
-                        <h3 className="font-display text-base font-bold text-foreground">Alex <span className="font-normal text-muted-foreground">— Conseiller IA</span></h3>
-                        <p className="text-caption text-muted-foreground">En conversation...</p>
-                      </div>
-                    </div>
-                    <AlexVoiceMode
-                      feature="general"
-                      inline
-                      autoStart
-                      onFlowComplete={() => setAlexInlineOpen(false)}
-                      onDismiss={() => setAlexInlineOpen(false)}
-                    />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="cta"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="flex flex-col sm:flex-row items-center gap-5"
-                  >
-                    <img src={unproRobot} alt="Alex IA" className="h-24 w-24 drop-shadow-xl" />
-                    <div className="flex-1 text-center sm:text-left">
-                      <h3 className="font-display text-section font-bold text-foreground">Alex <span className="font-normal text-muted-foreground">— Conseiller IA</span></h3>
-                      <p className="text-meta mt-1 leading-relaxed text-muted-foreground">Besoin d'aide pour décrire votre projet? Alex est là pour vous guider.</p>
-                    </div>
-                    <button
-                      onClick={() => setAlexInlineOpen(true)}
-                      className="shrink-0 h-11 rounded-xl px-5 flex items-center gap-2 text-meta font-bold bg-card border-2 border-primary/25 text-primary hover:border-primary/40 transition-all active:scale-[0.97]"
-                    >
-                      <MessageCircle className="h-4 w-4" /> Parler avec Alex
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <div className="flex flex-col sm:flex-row items-center gap-5">
+                <img src={unproRobot} alt="Alex IA" className="h-24 w-24 drop-shadow-xl" />
+                <div className="flex-1 text-center sm:text-left">
+                  <h3 className="font-display text-section font-bold text-foreground">Alex <span className="font-normal text-muted-foreground">— Conseiller IA</span></h3>
+                  <p className="text-meta mt-1 leading-relaxed text-muted-foreground">Besoin d'aide pour décrire votre projet? Alex est là pour vous guider.</p>
+                </div>
+                <button
+                  onClick={() => openAlex("general")}
+                  className="shrink-0 h-11 rounded-xl px-5 flex items-center gap-2 text-meta font-bold bg-card border-2 border-primary/25 text-primary hover:border-primary/40 transition-all active:scale-[0.97]"
+                >
+                  <MessageCircle className="h-4 w-4" /> Parler avec Alex
+                </button>
+              </div>
             </div>
           </motion.div>
         </div>
