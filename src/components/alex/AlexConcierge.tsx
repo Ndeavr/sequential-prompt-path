@@ -132,7 +132,17 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
   const isHomePage = useLocation().pathname === "/";
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated } = useAuth();
-  const { openAlex: openAlexVoice } = useAlexVoice();
+  const { openAlex: openAlexVoice, isOpen: voiceOverlayOpen } = useAlexVoice();
+
+  // Suppress concierge entirely when global voice overlay is active
+  useEffect(() => {
+    if (voiceOverlayOpen && isOpen) {
+      setIsOpen(false);
+    }
+  }, [voiceOverlayOpen]);
+
+  // If voice overlay is open, hide the orb completely
+  if (voiceOverlayOpen) return null;
   const { pathname } = useLocation();
   const { messages, isStreaming, sendMessage, reset } = useAlex();
   const [input, setInput] = useState("");
