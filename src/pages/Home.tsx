@@ -17,7 +17,7 @@ import HeroSection from "@/components/home/HeroSection";
 import VerificationFeatureCard from "@/components/home/VerificationFeatureCard";
 import MainLayout from "@/layouts/MainLayout";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import AlexVoiceMode from "@/components/alex/AlexVoiceMode";
 import FloatingAlexRobot from "@/components/home/FloatingAlexRobot";
 import unproRobot from "@/assets/unpro-robot.png";
