@@ -646,6 +646,9 @@ export const AppRouter = () => (
       <Route path="/admin/dynamic-pricing-market" element={<ProtectedRoute requiredRole="admin"><AdminDynamicMarketPricing /></ProtectedRoute>} />
       <Route path="/admin/predictive-market-board" element={<ProtectedRoute requiredRole="admin"><AdminPredictiveMarketBoard /></ProtectedRoute>} />
       <Route path="/admin/zone-value" element={<ProtectedRoute requiredRole="admin"><AdminZoneValueMap /></ProtectedRoute>} />
+      <Route path="/admin/voice-control" element={<ProtectedRoute requiredRole="admin"><AdminVoiceControlPage /></ProtectedRoute>} />
+      <Route path="/admin/voice-optimizer" element={<ProtectedRoute requiredRole="admin"><AdminVoiceOptimizerPage /></ProtectedRoute>} />
+      <Route path="/admin/voice-optimizer/:id" element={<ProtectedRoute requiredRole="admin"><AdminVoiceOptimizerPage /></ProtectedRoute>} />
       <Route path="/alex/predictive-seller" element={<PageAlexPredictiveSeller />} />
       <Route path="/signature" element={<PageAlexGuidedOnboarding />} />
       <Route path="/audit/:slug" element={<AuditLandingPage />} />
