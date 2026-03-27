@@ -22700,6 +22700,95 @@ export type Database = {
           },
         ]
       }
+      prospect_admin_reviews: {
+        Row: {
+          created_at: string | null
+          id: string
+          notes: string | null
+          prospect_id: string | null
+          review_reason: string | null
+          review_status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          prospect_id?: string | null
+          review_reason?: string | null
+          review_status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          prospect_id?: string | null
+          review_reason?: string | null
+          review_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_admin_reviews_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_alex_links: {
+        Row: {
+          campaign_id: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          landing_url: string | null
+          last_opened_at: string | null
+          open_count: number | null
+          prefill_json: Json | null
+          prospect_id: string | null
+          token: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          landing_url?: string | null
+          last_opened_at?: string | null
+          open_count?: number | null
+          prefill_json?: Json | null
+          prospect_id?: string | null
+          token: string
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          landing_url?: string | null
+          last_opened_at?: string | null
+          open_count?: number | null
+          prefill_json?: Json | null
+          prospect_id?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_alex_links_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "prospection_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_alex_links_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prospect_bookings: {
         Row: {
           booked_at: string | null
@@ -22755,6 +22844,153 @@ export type Database = {
             columns: ["contractor_id"]
             isOneToOne: false
             referencedRelation: "contractors_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_categories: {
+        Row: {
+          category_key: string
+          category_label: string
+          id: string
+          is_primary: boolean | null
+          prospect_id: string | null
+        }
+        Insert: {
+          category_key: string
+          category_label: string
+          id?: string
+          is_primary?: boolean | null
+          prospect_id?: string | null
+        }
+        Update: {
+          category_key?: string
+          category_label?: string
+          id?: string
+          is_primary?: boolean | null
+          prospect_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_categories_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_contact_points: {
+        Row: {
+          contact_type: string
+          contact_value: string
+          id: string
+          is_primary: boolean | null
+          is_validated: boolean | null
+          prospect_id: string | null
+          source_type: string | null
+        }
+        Insert: {
+          contact_type: string
+          contact_value: string
+          id?: string
+          is_primary?: boolean | null
+          is_validated?: boolean | null
+          prospect_id?: string | null
+          source_type?: string | null
+        }
+        Update: {
+          contact_type?: string
+          contact_value?: string
+          id?: string
+          is_primary?: boolean | null
+          is_validated?: boolean | null
+          prospect_id?: string | null
+          source_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_contact_points_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_conversion_events: {
+        Row: {
+          event_meta_json: Json | null
+          event_type: string
+          event_value: string | null
+          id: string
+          occurred_at: string | null
+          prospect_id: string | null
+        }
+        Insert: {
+          event_meta_json?: Json | null
+          event_type: string
+          event_value?: string | null
+          id?: string
+          occurred_at?: string | null
+          prospect_id?: string | null
+        }
+        Update: {
+          event_meta_json?: Json | null
+          event_type?: string
+          event_value?: string | null
+          id?: string
+          occurred_at?: string | null
+          prospect_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_conversion_events_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_dedup_queue: {
+        Row: {
+          created_at: string | null
+          id: string
+          possible_duplicate_of: string | null
+          prospect_id: string | null
+          review_status: string | null
+          similarity_score: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          possible_duplicate_of?: string | null
+          prospect_id?: string | null
+          review_status?: string | null
+          similarity_score?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          possible_duplicate_of?: string | null
+          prospect_id?: string | null
+          review_status?: string | null
+          similarity_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_dedup_queue_possible_duplicate_of_fkey"
+            columns: ["possible_duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_dedup_queue_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
             referencedColumns: ["id"]
           },
         ]
@@ -22949,6 +23185,263 @@ export type Database = {
           },
         ]
       }
+      prospect_normalized_data: {
+        Row: {
+          created_at: string | null
+          field_confidence_json: Json | null
+          id: string
+          normalized_json: Json
+          prospect_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          field_confidence_json?: Json | null
+          id?: string
+          normalized_json: Json
+          prospect_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          field_confidence_json?: Json | null
+          id?: string
+          normalized_json?: Json
+          prospect_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_normalized_data_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_outreach_events: {
+        Row: {
+          campaign_id: string | null
+          event_status: string | null
+          event_type: string
+          id: string
+          occurred_at: string | null
+          payload_json: Json | null
+          prospect_id: string | null
+          provider: string | null
+          provider_ref: string | null
+          sequence_id: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          event_status?: string | null
+          event_type: string
+          id?: string
+          occurred_at?: string | null
+          payload_json?: Json | null
+          prospect_id?: string | null
+          provider?: string | null
+          provider_ref?: string | null
+          sequence_id?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          event_status?: string | null
+          event_type?: string
+          id?: string
+          occurred_at?: string | null
+          payload_json?: Json | null
+          prospect_id?: string | null
+          provider?: string | null
+          provider_ref?: string | null
+          sequence_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_outreach_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "prospection_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_outreach_events_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_outreach_events_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_outreach_sequences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_outreach_sequences: {
+        Row: {
+          body_template: string | null
+          campaign_id: string | null
+          channel_type: string
+          delay_hours: number | null
+          id: string
+          is_active: boolean | null
+          sequence_name: string
+          step_order: number
+          subject_template: string | null
+        }
+        Insert: {
+          body_template?: string | null
+          campaign_id?: string | null
+          channel_type: string
+          delay_hours?: number | null
+          id?: string
+          is_active?: boolean | null
+          sequence_name: string
+          step_order: number
+          subject_template?: string | null
+        }
+        Update: {
+          body_template?: string | null
+          campaign_id?: string | null
+          channel_type?: string
+          delay_hours?: number | null
+          id?: string
+          is_active?: boolean | null
+          sequence_name?: string
+          step_order?: number
+          subject_template?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_outreach_sequences_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "prospection_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_raw_data: {
+        Row: {
+          created_at: string | null
+          id: string
+          prospect_id: string | null
+          raw_json: Json
+          source_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          prospect_id?: string | null
+          raw_json: Json
+          source_type: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          prospect_id?: string | null
+          raw_json?: Json
+          source_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_raw_data_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_reviews_summary: {
+        Row: {
+          average_rating: number | null
+          id: string
+          prospect_id: string | null
+          review_count: number | null
+          source_type: string | null
+          summary_json: Json | null
+        }
+        Insert: {
+          average_rating?: number | null
+          id?: string
+          prospect_id?: string | null
+          review_count?: number | null
+          source_type?: string | null
+          summary_json?: Json | null
+        }
+        Update: {
+          average_rating?: number | null
+          id?: string
+          prospect_id?: string | null
+          review_count?: number | null
+          source_type?: string | null
+          summary_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_reviews_summary_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_scores: {
+        Row: {
+          aipp_pre_score: number | null
+          conversion_priority_score: number | null
+          id: string
+          identity_clarity_score: number | null
+          prospect_id: string | null
+          reviews_score: number | null
+          scored_at: string | null
+          service_clarity_score: number | null
+          territory_clarity_score: number | null
+          trust_signal_score: number | null
+          web_presence_score: number | null
+        }
+        Insert: {
+          aipp_pre_score?: number | null
+          conversion_priority_score?: number | null
+          id?: string
+          identity_clarity_score?: number | null
+          prospect_id?: string | null
+          reviews_score?: number | null
+          scored_at?: string | null
+          service_clarity_score?: number | null
+          territory_clarity_score?: number | null
+          trust_signal_score?: number | null
+          web_presence_score?: number | null
+        }
+        Update: {
+          aipp_pre_score?: number | null
+          conversion_priority_score?: number | null
+          id?: string
+          identity_clarity_score?: number | null
+          prospect_id?: string | null
+          reviews_score?: number | null
+          scored_at?: string | null
+          service_clarity_score?: number | null
+          territory_clarity_score?: number | null
+          trust_signal_score?: number | null
+          web_presence_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_scores_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prospect_scraper_jobs: {
         Row: {
           category: string | null
@@ -22991,6 +23484,41 @@ export type Database = {
         }
         Relationships: []
       }
+      prospect_service_areas: {
+        Row: {
+          city_name: string | null
+          id: string
+          is_primary: boolean | null
+          prospect_id: string | null
+          province: string | null
+          region_name: string | null
+        }
+        Insert: {
+          city_name?: string | null
+          id?: string
+          is_primary?: boolean | null
+          prospect_id?: string | null
+          province?: string | null
+          region_name?: string | null
+        }
+        Update: {
+          city_name?: string | null
+          id?: string
+          is_primary?: boolean | null
+          prospect_id?: string | null
+          province?: string | null
+          region_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_service_areas_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prospect_settings: {
         Row: {
           id: string
@@ -23011,6 +23539,269 @@ export type Database = {
           value?: Json | null
         }
         Relationships: []
+      }
+      prospect_sources: {
+        Row: {
+          confidence_score: number | null
+          id: string
+          last_checked_at: string | null
+          prospect_id: string | null
+          source_label: string | null
+          source_status: string | null
+          source_type: string
+          source_url: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          id?: string
+          last_checked_at?: string | null
+          prospect_id?: string | null
+          source_label?: string | null
+          source_status?: string | null
+          source_type: string
+          source_url?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          id?: string
+          last_checked_at?: string | null
+          prospect_id?: string | null
+          source_label?: string | null
+          source_status?: string | null
+          source_type?: string
+          source_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_sources_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_web_assets: {
+        Row: {
+          asset_type: string
+          asset_url: string
+          id: string
+          is_cover: boolean | null
+          is_logo: boolean | null
+          prospect_id: string | null
+          sort_order: number | null
+          source_type: string | null
+        }
+        Insert: {
+          asset_type: string
+          asset_url: string
+          id?: string
+          is_cover?: boolean | null
+          is_logo?: boolean | null
+          prospect_id?: string | null
+          sort_order?: number | null
+          source_type?: string | null
+        }
+        Update: {
+          asset_type?: string
+          asset_url?: string
+          id?: string
+          is_cover?: boolean | null
+          is_logo?: boolean | null
+          prospect_id?: string | null
+          sort_order?: number | null
+          source_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_web_assets_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospection_campaigns: {
+        Row: {
+          campaign_type: string | null
+          completed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          default_promo_code: string | null
+          id: string
+          language: string | null
+          launched_at: string | null
+          name: string
+          outreach_channel: string | null
+          source_config_json: Json | null
+          status: string | null
+          target_category: string | null
+          target_city: string | null
+          target_count: number | null
+          target_province: string | null
+          target_region: string | null
+        }
+        Insert: {
+          campaign_type?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          default_promo_code?: string | null
+          id?: string
+          language?: string | null
+          launched_at?: string | null
+          name: string
+          outreach_channel?: string | null
+          source_config_json?: Json | null
+          status?: string | null
+          target_category?: string | null
+          target_city?: string | null
+          target_count?: number | null
+          target_province?: string | null
+          target_region?: string | null
+        }
+        Update: {
+          campaign_type?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          default_promo_code?: string | null
+          id?: string
+          language?: string | null
+          launched_at?: string | null
+          name?: string
+          outreach_channel?: string | null
+          source_config_json?: Json | null
+          status?: string | null
+          target_category?: string | null
+          target_city?: string | null
+          target_count?: number | null
+          target_province?: string | null
+          target_region?: string | null
+        }
+        Relationships: []
+      }
+      prospection_import_jobs: {
+        Row: {
+          campaign_id: string | null
+          completed_at: string | null
+          id: string
+          job_status: string | null
+          progress_percent: number | null
+          started_at: string | null
+          total_failed: number | null
+          total_found: number | null
+          total_imported: number | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          completed_at?: string | null
+          id?: string
+          job_status?: string | null
+          progress_percent?: number | null
+          started_at?: string | null
+          total_failed?: number | null
+          total_found?: number | null
+          total_imported?: number | null
+        }
+        Update: {
+          campaign_id?: string | null
+          completed_at?: string | null
+          id?: string
+          job_status?: string | null
+          progress_percent?: number | null
+          started_at?: string | null
+          total_failed?: number | null
+          total_found?: number | null
+          total_imported?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospection_import_jobs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "prospection_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospects: {
+        Row: {
+          aipp_pre_score: number | null
+          business_name: string
+          campaign_id: string | null
+          confidence_score: number | null
+          country: string | null
+          created_at: string | null
+          dedup_status: string | null
+          has_email: boolean | null
+          has_google_presence: boolean | null
+          has_phone: boolean | null
+          has_reviews: boolean | null
+          has_website: boolean | null
+          id: string
+          main_city: string | null
+          priority_level: string | null
+          province: string | null
+          region_name: string | null
+          slug: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          aipp_pre_score?: number | null
+          business_name: string
+          campaign_id?: string | null
+          confidence_score?: number | null
+          country?: string | null
+          created_at?: string | null
+          dedup_status?: string | null
+          has_email?: boolean | null
+          has_google_presence?: boolean | null
+          has_phone?: boolean | null
+          has_reviews?: boolean | null
+          has_website?: boolean | null
+          id?: string
+          main_city?: string | null
+          priority_level?: string | null
+          province?: string | null
+          region_name?: string | null
+          slug?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          aipp_pre_score?: number | null
+          business_name?: string
+          campaign_id?: string | null
+          confidence_score?: number | null
+          country?: string | null
+          created_at?: string | null
+          dedup_status?: string | null
+          has_email?: boolean | null
+          has_google_presence?: boolean | null
+          has_phone?: boolean | null
+          has_reviews?: boolean | null
+          has_website?: boolean | null
+          id?: string
+          main_city?: string | null
+          priority_level?: string | null
+          province?: string | null
+          region_name?: string | null
+          slug?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospects_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "prospection_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qr_bundle_cards: {
         Row: {

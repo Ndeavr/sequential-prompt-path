@@ -28,6 +28,10 @@ import HomeownersPage from "@/pages/HomeownersPage";
 import OwnerMenuPreviewPage from "@/pages/OwnerMenuPreviewPage";
 import MenuIntelligenceAdminPage from "@/pages/admin/MenuIntelligenceAdminPage";
 import PageAdminEmailLogs from "@/pages/admin/PageAdminEmailLogs";
+import AdminProspectionEngine from "@/pages/admin/AdminProspectionEngine";
+import AdminProspectionProspects from "@/pages/admin/AdminProspectionProspects";
+import AdminProspectionAnalytics from "@/pages/admin/AdminProspectionAnalytics";
+import PageAlexPersonalizedLanding from "@/pages/public/PageAlexPersonalizedLanding";
 import PageAdminEmailTemplates from "@/pages/admin/PageAdminEmailTemplates";
 import ProfessionalsPage from "@/pages/ProfessionalsPage";
 import PartnersPage from "@/pages/PartnersPage";
@@ -663,6 +667,10 @@ export const AppRouter = () => (
       <Route path="/admin/homeowner-analytics" element={<ProtectedRoute requiredRole="admin"><AdminHomeownerAnalyticsPage /></ProtectedRoute>} />
       <Route path="/alex/predictive-seller" element={<PageAlexPredictiveSeller />} />
       <Route path="/signature" element={<PageAlexGuidedOnboarding />} />
+      <Route path="/admin/prospection" element={<ProtectedRoute requiredRole="admin"><AdminProspectionEngine /></ProtectedRoute>} />
+      <Route path="/admin/prospection/prospects" element={<ProtectedRoute requiredRole="admin"><AdminProspectionProspects /></ProtectedRoute>} />
+      <Route path="/admin/prospection/analytics" element={<ProtectedRoute requiredRole="admin"><AdminProspectionAnalytics /></ProtectedRoute>} />
+      <Route path="/alex-landing" element={<PageAlexPersonalizedLanding />} />
       <Route path="/audit/:slug" element={<AuditLandingPage />} />
       <Route path="/articles/:slug" element={<SeoArticlePage />} />
       <Route path="/emergency" element={<EmergencyPage />} />
