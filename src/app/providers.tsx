@@ -29,7 +29,7 @@ interface ProvidersProps {
 
 export const Providers = ({ children }: ProvidersProps) => (
   <HelmetProvider>
-    <ThemeProvider attribute="class" <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange> enableSystem disableTransitionOnChange>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
       <QueryClientProvider client={queryClient}>
         <AlexVoiceProvider>
           <TooltipProvider>
