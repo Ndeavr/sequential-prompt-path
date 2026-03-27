@@ -497,23 +497,23 @@ export const AppRouter = () => (
       <Route path="/sitemap" element={<FallbackRoutePage />} />
       <Route path="/accessibilite" element={<FallbackRoutePage />} />
 
-      {/* ─── Placeholder condo pages ─── */}
-      <Route path="/condo/passeport" element={<PlaceholderPage />} />
-      <Route path="/condo/documents" element={<PlaceholderPage />} />
-      <Route path="/condo/dashboard" element={<PlaceholderPage />} />
-      <Route path="/condo/dossier" element={<PlaceholderPage />} />
-      <Route path="/condo/travaux" element={<PlaceholderPage />} />
-      <Route path="/condo/historique" element={<PlaceholderPage />} />
-      <Route path="/condo/inviter" element={<PlaceholderPage />} />
+      {/* ─── Fallback condo pages ─── */}
+      <Route path="/condo/passeport" element={<FallbackRoutePage />} />
+      <Route path="/condo/documents" element={<FallbackRoutePage />} />
+      <Route path="/condo/dashboard" element={<FallbackRoutePage />} />
+      <Route path="/condo/dossier" element={<FallbackRoutePage />} />
+      <Route path="/condo/travaux" element={<FallbackRoutePage />} />
+      <Route path="/condo/historique" element={<FallbackRoutePage />} />
+      <Route path="/condo/inviter" element={<FallbackRoutePage />} />
       <Route path="/condo/loi-16" element={<CondoLoi16Page />} />
-      <Route path="/condo/inspection" element={<PlaceholderPage />} />
-      <Route path="/condo/guides" element={<PlaceholderPage />} />
+      <Route path="/condo/inspection" element={<FallbackRoutePage />} />
+      <Route path="/condo/guides" element={<FallbackRoutePage />} />
 
-      {/* ─── Placeholder pro pages ─── */}
-      <Route path="/pro/stats" element={<PlaceholderPage />} />
-      <Route path="/pro/visibility" element={<PlaceholderPage />} />
-      <Route path="/pro/recommendations" element={<PlaceholderPage />} />
-      <Route path="/dashboard/maintenance" element={<PlaceholderPage />} />
+      {/* ─── Fallback pro pages ─── */}
+      <Route path="/pro/stats" element={<FallbackRoutePage />} />
+      <Route path="/pro/visibility" element={<FallbackRoutePage />} />
+      <Route path="/pro/recommendations" element={<FallbackRoutePage />} />
+      <Route path="/dashboard/maintenance" element={<FallbackRoutePage />} />
 
       {/* Homeowner Dashboard */}
       <Route path="/dashboard" element={<ProtectedRoute requiredRole="homeowner"><DashboardHome /></ProtectedRoute>} />
