@@ -6,7 +6,7 @@ export const formatCurrency = (amount: number, locale = "en-CA"): string => {
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: "CAD",
-  }).format(amount);
+  }).format(amount).replace(/\s/g, "\u00A0");
 };
 
 export const formatDate = (dateStr: string, locale = "en-CA"): string => {

@@ -58,5 +58,5 @@ export function calculateZoneValueScore(input: ZoneScoreInput): ZoneScoreResult 
 }
 
 export function formatCentsCAD(cents: number): string {
-  return new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format(cents / 100);
+  return new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format(cents / 100).replace(/\s/g, "\u00A0");
 }

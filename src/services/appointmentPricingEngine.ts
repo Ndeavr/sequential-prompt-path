@@ -217,7 +217,7 @@ export function calculateAppointmentPrice(ctx: PricingContext): PricingResult {
 
 export function formatCents(cents: number): string {
   const dollars = cents / 100;
-  return new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format(dollars);
+  return new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format(dollars).replace(/\s/g, "\u00A0");
 }
 
 // ─── Plan access matrix ───

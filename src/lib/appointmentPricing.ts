@@ -76,6 +76,6 @@ export function calculatePackPricing(
 export function formatCents(cents: number): string {
   const dollars = cents / 100;
   return dollars >= 1000
-    ? `${(dollars / 1000).toFixed(1).replace(/\.0$/, "")}k $`
-    : `${dollars.toFixed(0)} $`;
+    ? `${(dollars / 1000).toFixed(1).replace(/\.0$/, "")}k\u00A0$`
+    : `${dollars.toFixed(0)}\u00A0$`;
 }
