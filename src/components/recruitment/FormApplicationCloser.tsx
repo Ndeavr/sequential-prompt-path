@@ -47,7 +47,7 @@ const FormApplicationCloser = forwardRef<HTMLDivElement>((_, ref) => {
   const onSubmit = async (data: FormData) => {
     setSubmitting(true);
     try {
-      const { error } = await supabase.from("recruitment_leads").insert([{
+      const { error } = await (supabase.from("recruitment_leads" as any) as any).insert([{
         name: data.name,
         phone: data.phone,
         email: data.email,

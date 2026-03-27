@@ -25561,6 +25561,115 @@ export type Database = {
           },
         ]
       }
+      recruitment_events: {
+        Row: {
+          created_at: string | null
+          event_type: string
+          id: string
+          lead_id: string | null
+          metadata: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_type: string
+          id?: string
+          lead_id?: string | null
+          metadata?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          lead_id?: string | null
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recruitment_leads: {
+        Row: {
+          availability: string | null
+          city: string | null
+          created_at: string | null
+          email: string | null
+          experience_level: string | null
+          id: string
+          motivation: string | null
+          name: string
+          phone: string | null
+          source: string | null
+          status: string | null
+          work_mode: string | null
+        }
+        Insert: {
+          availability?: string | null
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          experience_level?: string | null
+          id?: string
+          motivation?: string | null
+          name: string
+          phone?: string | null
+          source?: string | null
+          status?: string | null
+          work_mode?: string | null
+        }
+        Update: {
+          availability?: string | null
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          experience_level?: string | null
+          id?: string
+          motivation?: string | null
+          name?: string
+          phone?: string | null
+          source?: string | null
+          status?: string | null
+          work_mode?: string | null
+        }
+        Relationships: []
+      }
+      recruitment_scores: {
+        Row: {
+          created_at: string | null
+          id: string
+          lead_id: string | null
+          reasoning: string | null
+          score: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          lead_id?: string | null
+          reasoning?: string | null
+          score?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          lead_id?: string | null
+          reasoning?: string | null
+          score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_scores_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referral_events: {
         Row: {
           created_at: string
