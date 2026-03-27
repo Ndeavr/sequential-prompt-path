@@ -22,26 +22,26 @@ export interface PersuasionPrompt {
 
 const PROMPTS: Record<PersuasionStyle, string[]> = {
   reassuring: [
-    "Je peux déjà vous montrer quelqu'un de sérieux.",
-    "Je vais vous simplifier ça.",
-    "On peut juste regarder, sans rien confirmer.",
-    "Le but, c'est de vous simplifier ça.",
+    "Je peux déjà vous présenter un professionnel sérieux.",
+    "Je vais simplifier cela pour vous.",
+    "Nous pouvons simplement regarder, sans rien confirmer.",
+    "L'objectif, c'est de vous faciliter la démarche.",
   ],
   momentum: [
-    "On est rendu là, je peux vous ouvrir les disponibilités.",
-    "Je vous avance ça pendant qu'on y est.",
-    "Parfait, je vous prépare ça.",
+    "Nous en sommes là, je peux ouvrir les disponibilités.",
+    "Parfait, je prépare cela pour vous.",
+    "Je m'en occupe tout de suite.",
     "Je vous l'ouvre.",
   ],
   effort_reduction: [
-    "Ça me prend juste vos infos et je vous prépare le tout.",
+    "Il me faut simplement vos coordonnées et je prépare le dossier.",
     "Je m'occupe du reste avec vous.",
-    "Je peux vous préparer ça tout de suite.",
-    "Je vous avance ça, ce sera plus simple.",
+    "Je peux préparer cela immédiatement.",
+    "Je fais avancer les choses, ce sera plus simple.",
   ],
   light_scarcity: [
-    "Je peux vérifier les disponibilités avant que les meilleurs créneaux partent.",
-    "Je vous montre les options pendant qu'elles sont là.",
+    "Je peux vérifier les disponibilités avant que les meilleurs créneaux soient pris.",
+    "Je vous montre les options disponibles en ce moment.",
     "Il reste quelques disponibilités cette semaine.",
     "Je regarde ce qui est encore libre.",
   ],
