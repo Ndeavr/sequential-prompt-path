@@ -366,111 +366,26 @@ export default function PageAlexGuidedOnboarding() {
         zero_dollar_activation: true,
       });
 
-      update({ promoValid: true, step: "importing" });
+      // If import already done in background, skip to profile_completion
+      if (state.importedData) {
+        update({ promoValid: true, step: "profile_completion" });
+      } else {
+        update({ promoValid: true, step: "importing" });
+      }
       toast.success("Plan Signature activé gratuitement !");
     } catch (e: any) {
       toast.error("Erreur d'activation: " + (e.message || ""));
     } finally { setIsProcessing(false); }
   }, [state.contractorId, state.promoCode, update]);
 
-  // ─── Step: Real import pipeline ───
+  // ─── Step: When on "importing" step, wait for background import to finish ───
   useEffect(() => {
-    if (state.step !== "importing" || state.importedData || !state.contractorId) return;
-
-    const runRealImport = async () => {
-      try {
-        // Phase 1: Start progress animation
-        update({ importProgress: 10 });
-
-        // Phase 2: Call real onboarding-import edge function
-        update({ importProgress: 25 });
-        const { data: importResult, error: importError } = await supabase.functions.invoke("onboarding-import", {
-          body: {
-            importForm: {
-              businessName: state.draft.business_name,
-              website: state.draft.website || undefined,
-              phone: state.draft.phone,
-              city: state.draft.city,
-            },
-          },
-        });
-
-        if (importError) {
-          console.error("Import error:", importError);
-          toast.error("Import partiel — certaines sources sont indisponibles");
-        }
-
-        update({ importProgress: 60 });
-
-        const businessData: ImportedBusinessData = importResult?.businessData || {};
-        const modules: ImportModule[] = importResult?.modules || [];
-
-        // Phase 3: Enrich contractor profile with imported data
-        const profileUpdates: Record<string, any> = {};
-
-        if (businessData.description?.value) {
-          profileUpdates.description = typeof businessData.description.value === "string"
-            ? businessData.description.value.substring(0, 1000)
-            : `${state.draft.business_name} — entreprise spécialisée en ${state.draft.activity} à ${state.draft.city}.`;
-        } else {
-          profileUpdates.description = `${state.draft.business_name} — entreprise spécialisée en ${state.draft.activity} à ${state.draft.city}. Service professionnel de haute qualité.`;
-        }
-
-        if (businessData.address?.value) profileUpdates.address = businessData.address.value;
-        if (businessData.rating?.value) profileUpdates.rating = businessData.rating.value;
-        if (businessData.reviewCount?.value) profileUpdates.review_count = businessData.reviewCount.value;
-        if (businessData.website?.value && !state.draft.website) profileUpdates.website = businessData.website.value;
-        if (businessData.phone?.value && !state.draft.phone) profileUpdates.phone = businessData.phone.value;
-        if (businessData.businessHours?.value) profileUpdates.description += `\n\nHoraires : ${businessData.businessHours.value}`;
-
-        // Google Business URL
-        const googleUrl = importResult?.businessData?.googleMapsUri?.value;
-        if (googleUrl) profileUpdates.google_business_url = googleUrl;
-
-        // Facebook
-        if (businessData.facebookPresence?.value) {
-          // Could set facebook_page_url if we have it
-        }
-
-        update({ importProgress: 80 });
-
-        await supabase.from("contractors")
-          .update(profileUpdates)
-          .eq("id", state.contractorId!);
-
-        // Calculate completion percentage
-        const importedFieldCount = Object.values(businessData).filter(
-          (f: ImportedField) => f.state !== "missing"
-        ).length;
-        const totalFields = Object.keys(businessData).length;
-        const completionPct = Math.round((importedFieldCount / Math.max(totalFields, 1)) * 100);
-
-        update({
-          importProgress: 100,
-          importedData: businessData,
-          importModules: modules,
-          profileCompletion: Math.max(completionPct, 40),
-          step: "profile_completion",
-        });
-
-      } catch (e: any) {
-        console.error("Import pipeline error:", e);
-        // Fallback: still allow user to continue with basic profile
-        update({
-          importProgress: 100,
-          importedData: {},
-          importModules: [],
-          profileCompletion: 35,
-          step: "profile_completion",
-        });
-        toast.error("Import partiel — vous pouvez compléter manuellement");
-      }
-    };
-
-    runRealImport();
-  }, [state.step, state.importedData, state.contractorId, state.draft, update]);
-
-  // ─── Step: Publish profile ───
+    if (state.step !== "importing") return;
+    if (state.importedData) {
+      // Import already done, move on
+      goTo("profile_completion");
+    }
+  }, [state.step, state.importedData, goTo]);
   const publishProfile = useCallback(async () => {
     if (!state.contractorId) return;
     setIsProcessing(true);
