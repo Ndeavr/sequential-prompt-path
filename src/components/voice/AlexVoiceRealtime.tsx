@@ -93,6 +93,17 @@ export default function AlexVoiceRealtime({ agentId, onClose, userName, classNam
     }
   }, [transcripts]);
 
+  // Listen for global cleanup — stop this conversation if another voice source starts
+  useEffect(() => {
+    const handleCleanup = () => {
+      if (conversation.status === "connected") {
+        conversation.endSession();
+      }
+    };
+    window.addEventListener("alex-voice-cleanup", handleCleanup);
+    return () => window.removeEventListener("alex-voice-cleanup", handleCleanup);
+  }, [conversation]);
+
   useEffect(() => {
     if (conversation.status === "connected" && !didSendFrenchContextRef.current) {
       conversation.sendContextualUpdate(
