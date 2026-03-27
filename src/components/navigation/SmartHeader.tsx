@@ -17,7 +17,7 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import MegaMenuPanel from "./MegaMenu";
 import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
 import SmartCTA from "@/components/cta/SmartCTA";
-import ThemeToggle from "@/components/ui/ThemeToggle";
+
 import QRShareSheet from "@/components/sharing/QRShareSheet";
 import unproLogo from "@/assets/unpro-logo.png";
 import type { UserRole } from "@/types/navigation";
@@ -157,7 +157,6 @@ const SmartHeader = () => {
 
               <div className="flex items-center gap-1.5">
                 <LanguageToggle lang={lang} onChange={setLang} />
-                <ThemeToggle />
               </div>
 
               {/* Share QR button — all users */}
@@ -292,7 +291,6 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
             <span className="font-display text-lg font-bold text-foreground">UNPRO</span>
             <div className="flex items-center gap-1.5">
               <LanguageToggle lang={lang} onChange={setLang} />
-              <ThemeToggle />
               <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9 rounded-lg">
                 <X className="h-5 w-5" />
               </Button>
