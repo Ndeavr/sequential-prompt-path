@@ -6,6 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
+async function getAuthToken(): Promise<string> {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+}
+
 export interface BookingDraftData {
   sessionToken: string;
   userId?: string | null;
@@ -43,13 +48,10 @@ export class AlexBookingDraftService {
   }
 
   async captureContact(sessionToken: string, firstName: string, phone: string, email?: string) {
-    const token = supabase.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const token = await getAuthToken();
     const resp = await fetch(`${FUNCTIONS_BASE}/alex-capture-contact`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ session_token: sessionToken, first_name: firstName, phone, email }),
     });
     return resp.json();

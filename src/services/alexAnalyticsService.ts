@@ -6,6 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
+async function getAuthToken(): Promise<string> {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+}
+
 export interface AlexAnalyticsSummary {
   avgResponseLatencyMs: number;
   slaRespectRate: number;
@@ -21,21 +26,14 @@ export interface AlexAnalyticsSummary {
 
 export class AlexAnalyticsService {
   async fetchSummary(): Promise<AlexAnalyticsSummary | null> {
-    const token = supabase.session?.access_token;
-    if (!token) return null;
-
+    const token = await getAuthToken();
     const resp = await fetch(`${FUNCTIONS_BASE}/alex-admin-analytics-summary`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({}),
     });
-
     if (!resp.ok) return null;
     const data = await resp.json();
-
     return {
       avgResponseLatencyMs: data.avg_response_latency_ms,
       slaRespectRate: data.sla_respect_rate,

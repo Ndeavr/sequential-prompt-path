@@ -6,6 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
+async function getAuthToken(): Promise<string> {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+}
+
 export interface RecoveryResult {
   recoveryMode: "expand_radius" | "show_partial_matches" | "offer_waitlist";
   expandedMatches: Array<{
@@ -20,13 +25,10 @@ export interface RecoveryResult {
 
 export class AlexRecoveryService {
   async triggerRecovery(sessionToken: string): Promise<RecoveryResult> {
-    const token = supabase.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const token = await getAuthToken();
     const resp = await fetch(`${FUNCTIONS_BASE}/alex-no-result-recovery`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ session_token: sessionToken }),
     });
     const data = await resp.json();
