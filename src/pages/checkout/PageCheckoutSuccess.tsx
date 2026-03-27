@@ -67,6 +67,24 @@ export default function PageCheckoutSuccess() {
           sort_order: i,
         }));
         await supabase.from("activation_steps").insert(stepsToInsert);
+
+        // Send payment success email (best-effort)
+        const email = session?.user?.email;
+        if (email) {
+          const planNames: Record<string, string> = {
+            recrue: "Recrue", pro: "Pro", premium: "Premium", elite: "Élite", signature: "Signature",
+          };
+          await supabase.functions.invoke("send-transactional-email", {
+            body: {
+              templateName: "payment-success",
+              recipientEmail: email,
+              idempotencyKey: `payment-success-${contractor.id}-${planCode}`,
+              templateData: {
+                planName: planNames[planCode] || planCode,
+              },
+            },
+          });
+        }
       } catch {}
     })();
   }, [session?.user?.id, planCode]);
