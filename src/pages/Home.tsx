@@ -40,9 +40,16 @@ const sectionFade = {
 const Home = () => {
   const { isAuthenticated, role } = useAuth();
   const navigate = useNavigate();
-  const { openAlex } = useAlexVoice();
+  const { openAlex, isOpen: isAlexGlobalOpen } = useAlexVoice();
   const alexSectionRef = useRef<HTMLElement>(null);
   const [alexInlineOpen, setAlexInlineOpen] = useState(false);
+
+  // Close inline Alex when global overlay opens to prevent two voices
+  useEffect(() => {
+    if (isAlexGlobalOpen) {
+      setAlexInlineOpen(false);
+    }
+  }, [isAlexGlobalOpen]);
   const dash = role === "contractor" ? "/pro" : role === "admin" ? "/admin" : "/dashboard";
 
   const handleCta = (destination: string, label?: string) => {
