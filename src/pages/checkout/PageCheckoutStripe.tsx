@@ -244,6 +244,31 @@ export default function PageCheckoutStripe() {
           </motion.div>
         )}
 
+        {/* Promo Code */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="rounded-2xl border border-border/50 bg-card p-4"
+        >
+          <p className="text-sm font-bold text-foreground mb-3">Code promo</p>
+          <PromoCodeInput
+            planCode={planCode}
+            onPromoValidated={(code, result) => {
+              setPromoCode(code);
+              setPromoDiscount(result ? { discount_type: result.discount_type, discount_value: result.discount_value, label: result.label } : null);
+            }}
+          />
+          {promoDiscount && promoDiscount.discount_value === 100 && (
+            <div className="mt-3 rounded-lg bg-green-500/10 border border-green-500/20 p-3 flex items-center gap-2">
+              <PartyPopper className="w-4 h-4 text-green-600" />
+              <p className="text-xs text-green-600 font-medium">
+                Activation gratuite — aucune carte requise!
+              </p>
+            </div>
+          )}
+        </motion.div>
+
         {/* After payment */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
