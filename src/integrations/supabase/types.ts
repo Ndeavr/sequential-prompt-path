@@ -13163,6 +13163,42 @@ export type Database = {
         }
         Relationships: []
       }
+      entrepreneur_leads: {
+        Row: {
+          business_name: string
+          city: string
+          created_at: string
+          email: string | null
+          id: string
+          phone: string | null
+          session_id: string | null
+          source: string | null
+          website: string | null
+        }
+        Insert: {
+          business_name: string
+          city: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          phone?: string | null
+          session_id?: string | null
+          source?: string | null
+          website?: string | null
+        }
+        Update: {
+          business_name?: string
+          city?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          phone?: string | null
+          session_id?: string | null
+          source?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       entrepreneur_plan_recommendations: {
         Row: {
           accepted: boolean | null
@@ -13278,6 +13314,47 @@ export type Database = {
             columns: ["goal_id"]
             isOneToOne: false
             referencedRelation: "entrepreneur_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entrepreneur_scores: {
+        Row: {
+          ai_visibility: string | null
+          component_scores: Json | null
+          created_at: string
+          id: string
+          lead_id: string
+          opportunities_max: number | null
+          opportunities_min: number | null
+          score: number
+        }
+        Insert: {
+          ai_visibility?: string | null
+          component_scores?: Json | null
+          created_at?: string
+          id?: string
+          lead_id: string
+          opportunities_max?: number | null
+          opportunities_min?: number | null
+          score?: number
+        }
+        Update: {
+          ai_visibility?: string | null
+          component_scores?: Json | null
+          created_at?: string
+          id?: string
+          lead_id?: string
+          opportunities_max?: number | null
+          opportunities_min?: number | null
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entrepreneur_scores_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "entrepreneur_leads"
             referencedColumns: ["id"]
           },
         ]
@@ -18141,6 +18218,47 @@ export type Database = {
             columns: ["experiment_id"]
             isOneToOne: false
             referencedRelation: "optimization_experiments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outreach_logs: {
+        Row: {
+          clicked: boolean | null
+          converted: boolean | null
+          created_at: string
+          email_sent: boolean | null
+          id: string
+          lead_id: string | null
+          opened: boolean | null
+          sent_at: string | null
+        }
+        Insert: {
+          clicked?: boolean | null
+          converted?: boolean | null
+          created_at?: string
+          email_sent?: boolean | null
+          id?: string
+          lead_id?: string | null
+          opened?: boolean | null
+          sent_at?: string | null
+        }
+        Update: {
+          clicked?: boolean | null
+          converted?: boolean | null
+          created_at?: string
+          email_sent?: boolean | null
+          id?: string
+          lead_id?: string | null
+          opened?: boolean | null
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "entrepreneur_leads"
             referencedColumns: ["id"]
           },
         ]
