@@ -4,6 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent horizontal scroll / swipe globally */
+html, body {
+  overflow-x: hidden;
+}
+
 @layer base {
   :root {
     --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
