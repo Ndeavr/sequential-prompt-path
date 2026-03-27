@@ -1137,6 +1137,53 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_device_audio_capabilities: {
+        Row: {
+          created_at: string | null
+          has_microphone: boolean | null
+          has_speaker: boolean | null
+          id: string
+          permission_microphone: string | null
+          permission_speaker: string | null
+          preferred_input_mode: string | null
+          preferred_output_mode: string | null
+          session_id: string
+          webrtc_supported: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          has_microphone?: boolean | null
+          has_speaker?: boolean | null
+          id?: string
+          permission_microphone?: string | null
+          permission_speaker?: string | null
+          preferred_input_mode?: string | null
+          preferred_output_mode?: string | null
+          session_id: string
+          webrtc_supported?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          has_microphone?: boolean | null
+          has_speaker?: boolean | null
+          id?: string
+          permission_microphone?: string | null
+          permission_speaker?: string | null
+          preferred_input_mode?: string | null
+          preferred_output_mode?: string | null
+          session_id?: string
+          webrtc_supported?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_device_audio_capabilities_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alex_experiments: {
         Row: {
           confidence: number | null
@@ -1693,6 +1740,44 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_voice_fallback_events: {
+        Row: {
+          created_at: string | null
+          from_provider: string
+          id: string
+          reason: string
+          to_provider: string
+          voice_session_id: string
+          was_user_visible: boolean
+        }
+        Insert: {
+          created_at?: string | null
+          from_provider: string
+          id?: string
+          reason: string
+          to_provider: string
+          voice_session_id: string
+          was_user_visible?: boolean
+        }
+        Update: {
+          created_at?: string | null
+          from_provider?: string
+          id?: string
+          reason?: string
+          to_provider?: string
+          voice_session_id?: string
+          was_user_visible?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_voice_fallback_events_voice_session_id_fkey"
+            columns: ["voice_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_voice_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alex_voice_preferences: {
         Row: {
           created_at: string
@@ -1734,6 +1819,258 @@ export type Database = {
           voice_provider?: string | null
         }
         Relationships: []
+      }
+      alex_voice_profile_configs: {
+        Row: {
+          created_at: string | null
+          id: string
+          interruptibility_mode: string
+          is_active: boolean
+          language: string
+          locale_code: string
+          profile_key: string
+          prosody_profile: Json
+          provider_preference_order: string[]
+          speech_rate: number
+          speech_style: string
+          updated_at: string | null
+          voice_name_primary: string | null
+          voice_name_secondary: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          interruptibility_mode?: string
+          is_active?: boolean
+          language?: string
+          locale_code?: string
+          profile_key: string
+          prosody_profile?: Json
+          provider_preference_order?: string[]
+          speech_rate?: number
+          speech_style?: string
+          updated_at?: string | null
+          voice_name_primary?: string | null
+          voice_name_secondary?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          interruptibility_mode?: string
+          is_active?: boolean
+          language?: string
+          locale_code?: string
+          profile_key?: string
+          prosody_profile?: Json
+          provider_preference_order?: string[]
+          speech_rate?: number
+          speech_style?: string
+          updated_at?: string | null
+          voice_name_primary?: string | null
+          voice_name_secondary?: string | null
+        }
+        Relationships: []
+      }
+      alex_voice_provider_events: {
+        Row: {
+          created_at: string | null
+          event_status: string
+          event_type: string
+          id: string
+          payload: Json
+          provider_name: string
+          voice_session_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_status: string
+          event_type: string
+          id?: string
+          payload?: Json
+          provider_name: string
+          voice_session_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_status?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          provider_name?: string
+          voice_session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_voice_provider_events_voice_session_id_fkey"
+            columns: ["voice_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_voice_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_voice_provider_registry: {
+        Row: {
+          config_json: Json
+          created_at: string | null
+          deprecation_risk: string | null
+          id: string
+          is_active: boolean
+          model_name: string
+          priority_order: number
+          provider_key: string
+          provider_type: string
+          rollout_percentage: number
+          supports_barge_in: boolean
+          supports_realtime_audio: boolean
+          supports_text_fallback: boolean
+          supports_tool_calling: boolean
+          transport_mode: string
+          updated_at: string | null
+        }
+        Insert: {
+          config_json?: Json
+          created_at?: string | null
+          deprecation_risk?: string | null
+          id?: string
+          is_active?: boolean
+          model_name: string
+          priority_order?: number
+          provider_key: string
+          provider_type?: string
+          rollout_percentage?: number
+          supports_barge_in?: boolean
+          supports_realtime_audio?: boolean
+          supports_text_fallback?: boolean
+          supports_tool_calling?: boolean
+          transport_mode?: string
+          updated_at?: string | null
+        }
+        Update: {
+          config_json?: Json
+          created_at?: string | null
+          deprecation_risk?: string | null
+          id?: string
+          is_active?: boolean
+          model_name?: string
+          priority_order?: number
+          provider_key?: string
+          provider_type?: string
+          rollout_percentage?: number
+          supports_barge_in?: boolean
+          supports_realtime_audio?: boolean
+          supports_text_fallback?: boolean
+          supports_tool_calling?: boolean
+          transport_mode?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      alex_voice_quality_logs: {
+        Row: {
+          created_at: string | null
+          id: string
+          metric_key: string
+          metric_value: number | null
+          notes: string | null
+          quality_level: string | null
+          voice_session_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metric_key: string
+          metric_value?: number | null
+          notes?: string | null
+          quality_level?: string | null
+          voice_session_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metric_key?: string
+          metric_value?: number | null
+          notes?: string | null
+          quality_level?: string | null
+          voice_session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_voice_quality_logs_voice_session_id_fkey"
+            columns: ["voice_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_voice_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_voice_sessions: {
+        Row: {
+          browser_name: string | null
+          connection_mode: string
+          device_type: string | null
+          ended_at: string | null
+          id: string
+          language: string
+          locale_code: string
+          network_quality: string | null
+          provider_current: string
+          provider_fallback: string | null
+          provider_primary: string
+          session_id: string
+          session_status: string
+          started_at: string | null
+          user_id: string | null
+          voice_name: string | null
+          voice_profile_key: string
+        }
+        Insert: {
+          browser_name?: string | null
+          connection_mode?: string
+          device_type?: string | null
+          ended_at?: string | null
+          id?: string
+          language?: string
+          locale_code?: string
+          network_quality?: string | null
+          provider_current: string
+          provider_fallback?: string | null
+          provider_primary: string
+          session_id: string
+          session_status?: string
+          started_at?: string | null
+          user_id?: string | null
+          voice_name?: string | null
+          voice_profile_key?: string
+        }
+        Update: {
+          browser_name?: string | null
+          connection_mode?: string
+          device_type?: string | null
+          ended_at?: string | null
+          id?: string
+          language?: string
+          locale_code?: string
+          network_quality?: string | null
+          provider_current?: string
+          provider_fallback?: string | null
+          provider_primary?: string
+          session_id?: string
+          session_status?: string
+          started_at?: string | null
+          user_id?: string | null
+          voice_name?: string | null
+          voice_profile_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_voice_sessions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       alex_waitlist_queue: {
         Row: {
