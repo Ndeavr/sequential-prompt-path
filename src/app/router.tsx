@@ -325,6 +325,14 @@ import EmergencyPage from "@/pages/EmergencyPage";
 import RefusalSeoPage from "@/pages/seo/RefusalSeoPage";
 import MyPlacementsPage from "@/pages/dashboard/MyPlacementsPage";
 
+// Contractor Join + Onboarding
+import PageEntrepreneurJoin from "@/pages/entrepreneur/PageEntrepreneurJoin";
+import PageEntrepreneurHowItWorks from "@/pages/entrepreneur/PageEntrepreneurHowItWorks";
+import PageEntrepreneurPlans from "@/pages/entrepreneur/PageEntrepreneurPlans";
+
+// Owner Match
+import PageOwnerMatch from "@/pages/match/PageOwnerMatch";
+
 export const AppRouter = () => (
   <BrowserRouter>
     <ScrollRestoration />
