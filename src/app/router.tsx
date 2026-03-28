@@ -357,11 +357,19 @@ export const AppRouter = () => (
       <Route path="/entrepreneur/pricing" element={<PageEntrepreneurPricing />} />
       <Route path="/entrepreneur/dashboard" element={<PageEntrepreneurDashboardLite />} />
 
+      {/* Contractor Join Landing */}
+      <Route path="/entrepreneurs/rejoindre" element={<PageEntrepreneurJoin />} />
+      <Route path="/entrepreneurs/comment-ca-marche" element={<PageEntrepreneurHowItWorks />} />
+      <Route path="/entrepreneurs/plans" element={<PageEntrepreneurPlans />} />
+
+      {/* Owner Match */}
+      <Route path="/match" element={<PageOwnerMatch />} />
+
       <Route path="/homeowners" element={<HomeownersPage />} />
       <Route path="/proprietaires" element={<HomeownersPage />} />
       <Route path="/owner-universe" element={<OwnerMenuPreviewPage />} />
       <Route path="/professionals" element={<ProfessionalsPage />} />
-      <Route path="/entrepreneurs" element={<ProfessionalsPage />} />
+      <Route path="/entrepreneurs" element={<PageEntrepreneurJoin />} />
       <Route path="/entrepreneurs/disponibilite-categorie-specialite-ville" element={<ContractorAvailabilityPage />} />
       <Route path="/book/:slug" element={<PublicBookingPage />} />
       <Route path="/book/:slug/:typeSlug" element={<PublicBookingPage />} />
