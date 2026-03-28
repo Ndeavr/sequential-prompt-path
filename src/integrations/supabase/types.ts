@@ -20676,6 +20676,225 @@ export type Database = {
         }
         Relationships: []
       }
+      owner_match_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_match_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "owner_match_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owner_match_inputs: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          input_type: string
+          session_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          input_type: string
+          session_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          input_type?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_match_inputs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "owner_match_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owner_match_photos: {
+        Row: {
+          ai_description: string | null
+          ai_detected_categories: string[] | null
+          ai_urgency_signal: string | null
+          created_at: string
+          id: string
+          session_id: string
+          storage_path: string
+        }
+        Insert: {
+          ai_description?: string | null
+          ai_detected_categories?: string[] | null
+          ai_urgency_signal?: string | null
+          created_at?: string
+          id?: string
+          session_id: string
+          storage_path: string
+        }
+        Update: {
+          ai_description?: string | null
+          ai_detected_categories?: string[] | null
+          ai_urgency_signal?: string | null
+          created_at?: string
+          id?: string
+          session_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_match_photos_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "owner_match_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owner_match_recommendations: {
+        Row: {
+          contractor_id: string | null
+          created_at: string
+          id: string
+          is_top_fit: boolean | null
+          match_reasons: Json | null
+          match_score: number | null
+          rank: number
+          session_id: string
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          is_top_fit?: boolean | null
+          match_reasons?: Json | null
+          match_score?: number | null
+          rank?: number
+          session_id: string
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          is_top_fit?: boolean | null
+          match_reasons?: Json | null
+          match_score?: number | null
+          rank?: number
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_match_recommendations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_match_recommendations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_match_recommendations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_match_recommendations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "owner_match_recommendations_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "owner_match_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owner_match_sessions: {
+        Row: {
+          city: string | null
+          created_at: string
+          detected_problem_type: string | null
+          detected_urgency: string | null
+          entry_mode: string
+          id: string
+          login_gate_shown: boolean | null
+          project_summary: string | null
+          recommended_contractor_id: string | null
+          session_token: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          detected_problem_type?: string | null
+          detected_urgency?: string | null
+          entry_mode?: string
+          id?: string
+          login_gate_shown?: boolean | null
+          project_summary?: string | null
+          recommended_contractor_id?: string | null
+          session_token?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          detected_problem_type?: string | null
+          detected_urgency?: string | null
+          entry_mode?: string
+          id?: string
+          login_gate_shown?: boolean | null
+          project_summary?: string | null
+          recommended_contractor_id?: string | null
+          session_token?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       page_registry: {
         Row: {
           allowed_roles_json: Json | null
@@ -31663,6 +31882,8 @@ export type Database = {
         Args: { p_waitlist_id: string }
         Returns: Json
       }
+      current_contractor_id: { Args: never; Returns: string }
+      current_profile_id: { Args: never; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -31771,6 +31992,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: never; Returns: boolean }
       is_syndicate_admin: {
         Args: { _syndicate_id: string; _user_id: string }
         Returns: boolean
@@ -31807,6 +32029,7 @@ export type Database = {
         }
         Returns: number
       }
+      owns_contractor: { Args: { _contractor_id: string }; Returns: boolean }
       owns_verification_run: {
         Args: { _run_id: string; _user_id: string }
         Returns: boolean
