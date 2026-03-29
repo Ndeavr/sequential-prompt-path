@@ -14269,6 +14269,30 @@ export type Database = {
           },
         ]
       }
+      entrepreneur_entry_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          session_id: string | null
+          source_page: string
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          id?: string
+          session_id?: string | null
+          source_page?: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          session_id?: string | null
+          source_page?: string
+        }
+        Relationships: []
+      }
       entrepreneur_goals: {
         Row: {
           annual_revenue_target: number | null
