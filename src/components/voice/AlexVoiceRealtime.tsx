@@ -120,6 +120,12 @@ export default function AlexVoiceRealtime({ agentId, onClose, userName, classNam
 
   const startConversation = useCallback(async () => {
     setIsConnecting(true);
+    
+    // RULE: Kill ALL other voice sources before starting Realtime
+    window.dispatchEvent(new CustomEvent('alex-voice-cleanup'));
+    // Wait a tick for cleanup handlers to run
+    await new Promise(r => setTimeout(r, 50));
+    
     try {
       // Parallelize permission + token fetch for faster startup
       const [, sessionResult] = await Promise.all([
@@ -135,7 +141,7 @@ export default function AlexVoiceRealtime({ agentId, onClose, userName, classNam
         throw new Error(error?.message || "Impossible d'obtenir les credentials de conversation");
       }
 
-      // Prefer WebSocket signed URL to avoid unstable WebRTC validation path on some networks/devices
+      // Prefer WebSocket signed URL
       if (data?.signedUrl) {
         await conversation.startSession({
           signedUrl: data.signedUrl,
@@ -144,7 +150,6 @@ export default function AlexVoiceRealtime({ agentId, onClose, userName, classNam
         return;
       }
 
-      // Fallback to WebRTC token if signed URL is not available
       await conversation.startSession({
         conversationToken: data.token,
         connectionType: "webrtc",

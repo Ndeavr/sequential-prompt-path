@@ -1,9 +1,12 @@
 /**
  * AlexVoiceContext — Global context to trigger Alex voice/orb from anywhere.
  * Any "Parler avec Alex" button calls openAlex() to show the orb overlay.
- * Includes mutex lock + cleanup event dispatch to prevent dual-voice conflicts.
+ * 
+ * RULE: Opening Alex always fires cleanup to kill ALL other voice sources first.
+ * Only ONE voice source can ever be active.
  */
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { alexAudioChannel } from "@/services/alexSingleAudioChannel";
 
 interface AlexVoiceContextType {
   isOpen: boolean;
@@ -27,7 +30,8 @@ export function AlexVoiceProvider({ children }: { children: ReactNode }) {
   const [voiceActive, setVoiceActive] = useState(false);
 
   const openAlex = useCallback((feat = "general") => {
-    // Dispatch cleanup to kill any lingering audio/STT before opening
+    // Kill ALL audio and voice sources before opening
+    alexAudioChannel.hardStop();
     window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
     setFeature(feat);
     setIsOpen(true);
@@ -35,7 +39,8 @@ export function AlexVoiceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const closeAlex = useCallback(() => {
-    // Kill all audio/STT across the app
+    // Kill ALL audio and voice sources
+    alexAudioChannel.hardStop();
     window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
     setIsOpen(false);
     setVoiceActive(false);

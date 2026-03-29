@@ -2,6 +2,9 @@
  * GlobalAlexOverlay — Rendered once at app root.
  * When triggered via useAlexVoice().openAlex(), immediately starts voice mode.
  * Uses AlexSingleAudioChannel for guaranteed single-voice output.
+ * 
+ * RULE: On open, fires cleanup to kill Realtime sessions.
+ * On close, fires cleanup again.
  */
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import AlexVoiceMode from "./AlexVoiceMode";
@@ -11,18 +14,19 @@ import { alexAudioChannel } from "@/services/alexSingleAudioChannel";
 export default function GlobalAlexOverlay() {
   const { isOpen, feature, closeAlex } = useAlexVoice();
 
-  // Kill all audio when overlay closes
   const handleDismiss = useCallback(() => {
     alexAudioChannel.hardStop();
+    window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
     closeAlex();
   }, [closeAlex]);
 
   const handleFlowComplete = useCallback((_ctx: Record<string, string>) => {
     alexAudioChannel.hardStop();
+    window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
     closeAlex();
   }, [closeAlex]);
 
-  // Ensure audio stops when overlay unmounts
+  // Ensure audio stops when overlay closes
   useEffect(() => {
     if (!isOpen) {
       alexAudioChannel.hardStop();
