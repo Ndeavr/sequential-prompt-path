@@ -25,7 +25,7 @@ interface FallbackLandingProps {
   pageKey?: string;
 }
 
-export default function FallbackLandingTemplateUNPRO({ data }: FallbackLandingProps) {
+export default function FallbackLandingTemplateUNPRO({ data, pageKey }: FallbackLandingProps) {
   const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
