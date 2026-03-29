@@ -20,7 +20,7 @@ export default function CardEntrepreneurEntryAlex({ sourcePage = "fallback" }: P
 
   const logEntry = async (action: "click" | "view") => {
     try {
-      await supabase.from("entrepreneur_entry_logs").insert({
+      await (supabase as any).from("entrepreneur_entry_logs").insert({
         source_page: sourcePage,
         action,
         session_id: crypto.randomUUID(),
