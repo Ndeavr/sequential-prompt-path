@@ -4,6 +4,9 @@
  * Uses AlexSingleAudioChannel for guaranteed single-voice output.
  * Loads voice config from DB via edge function (no hardcoded voice IDs).
  * Manages STT, interruption, and state.
+ * 
+ * RULE: Before any audio output, fires alex-voice-cleanup to kill
+ * ElevenLabs Realtime and any other voice source.
  */
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { alexAudioChannel, type AudioState } from '@/services/alexSingleAudioChannel';
@@ -63,15 +66,15 @@ export function useAlexVoiceRuntime(options: UseAlexVoiceRuntimeOptions = {}) {
     return () => {
       mountedRef.current = false;
       alexAudioChannel.hardStop();
-      recognitionRef.current?.stop();
+      try { recognitionRef.current?.stop(); } catch {}
     };
   }, []);
 
-  // Listen for global cleanup
+  // Listen for global cleanup (e.g. another voice source starting)
   useEffect(() => {
     const handler = () => {
       alexAudioChannel.hardStop();
-      recognitionRef.current?.stop();
+      try { recognitionRef.current?.stop(); } catch {}
       if (mountedRef.current) setRuntimeState('idle');
     };
     window.addEventListener('alex-voice-cleanup', handler);
@@ -100,12 +103,13 @@ export function useAlexVoiceRuntime(options: UseAlexVoiceRuntimeOptions = {}) {
     return null;
   }, [profileKey, language]);
 
-  // Speak text via ElevenLabs (through edge function)
+  // Speak text via ElevenLabs (through alex-voice-speak edge function)
   const speak = useCallback(async (text: string) => {
     if (!mountedRef.current) return;
 
-    // Always kill previous audio first
+    // Kill ALL previous audio + other voice sources
     alexAudioChannel.hardStop();
+    window.dispatchEvent(new CustomEvent('alex-voice-cleanup'));
     setRuntimeState('thinking');
 
     try {
@@ -124,6 +128,12 @@ export function useAlexVoiceRuntime(options: UseAlexVoiceRuntimeOptions = {}) {
 
       if (!resp.ok) {
         console.error('[AlexVoiceRuntime] TTS failed:', resp.status);
+        // Log error server-side
+        fetch(`${FUNCTIONS_BASE}/alex-voice-log-error`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` },
+          body: JSON.stringify({ error_type: 'tts_request_failed', error_message: `Status ${resp.status}`, payload: { profileKey, language } }),
+        }).catch(() => {});
         if (mountedRef.current) setRuntimeState('error');
         return;
       }
@@ -141,7 +151,7 @@ export function useAlexVoiceRuntime(options: UseAlexVoiceRuntimeOptions = {}) {
   // Interrupt Alex immediately
   const interrupt = useCallback(() => {
     alexAudioChannel.interrupt();
-    recognitionRef.current?.stop();
+    try { recognitionRef.current?.stop(); } catch {}
     if (mountedRef.current) setRuntimeState('interrupted');
   }, []);
 
@@ -168,7 +178,7 @@ export function useAlexVoiceRuntime(options: UseAlexVoiceRuntimeOptions = {}) {
       const transcript = last[0].transcript;
       const isFinal = last.isFinal;
       
-      // If user starts talking while Alex speaks, interrupt
+      // Interrupt Alex immediately on any user speech
       if (alexAudioChannel.isPlaying()) {
         alexAudioChannel.interrupt();
       }
@@ -192,7 +202,7 @@ export function useAlexVoiceRuntime(options: UseAlexVoiceRuntimeOptions = {}) {
   }, [voiceConfig, language, options, runtimeState]);
 
   const stopListening = useCallback(() => {
-    recognitionRef.current?.stop();
+    try { recognitionRef.current?.stop(); } catch {}
     recognitionRef.current = null;
     if (mountedRef.current) setRuntimeState('idle');
   }, []);
@@ -200,7 +210,8 @@ export function useAlexVoiceRuntime(options: UseAlexVoiceRuntimeOptions = {}) {
   // Hard reset everything
   const hardReset = useCallback(() => {
     alexAudioChannel.hardStop();
-    recognitionRef.current?.stop();
+    window.dispatchEvent(new CustomEvent('alex-voice-cleanup'));
+    try { recognitionRef.current?.stop(); } catch {}
     recognitionRef.current = null;
     if (mountedRef.current) {
       setRuntimeState('idle');

@@ -4,6 +4,9 @@
  * RULE: Only ONE audio can ever play at a time. Period.
  * Starting new audio instantly kills previous audio.
  * No overlap, no double playback, no stale chunks.
+ * 
+ * Also integrates with ElevenLabs Conversational AI cleanup:
+ * Before any playback, fires "alex-voice-cleanup" to kill Realtime sessions.
  */
 
 type AudioState = 'idle' | 'loading' | 'playing' | 'interrupted' | 'error';
@@ -16,6 +19,7 @@ class AlexSingleAudioChannel {
   private state: AudioState = 'idle';
   private listeners: Set<StateListener> = new Set();
   private destroyed = false;
+  private playbackCount = 0; // Guards against stale callbacks
 
   /** Subscribe to state changes */
   onStateChange(listener: StateListener): () => void {
@@ -36,17 +40,23 @@ class AlexSingleAudioChannel {
    * Called before any new audio, on interruption, or on cleanup.
    */
   hardStop(): void {
-    // Kill current audio
+    this.playbackCount++;
+
+    // Kill current audio element
     if (this.currentAudio) {
-      this.currentAudio.pause();
-      this.currentAudio.removeAttribute('src');
-      this.currentAudio.load(); // Force release
+      try {
+        this.currentAudio.pause();
+        this.currentAudio.removeAttribute('src');
+        this.currentAudio.load();
+      } catch {
+        // Ignore errors during cleanup
+      }
       this.currentAudio = null;
     }
 
     // Revoke object URL
     if (this.currentObjectUrl) {
-      URL.revokeObjectURL(this.currentObjectUrl);
+      try { URL.revokeObjectURL(this.currentObjectUrl); } catch {}
       this.currentObjectUrl = null;
     }
 
@@ -58,14 +68,18 @@ class AlexSingleAudioChannel {
 
   /**
    * Play audio from a blob. Kills any existing playback first.
+   * Also dispatches cleanup event to stop ElevenLabs Realtime sessions.
    */
   async playBlob(blob: Blob): Promise<void> {
     if (this.destroyed) return;
     
-    // ALWAYS stop previous before starting new
+    // ALWAYS stop everything before starting new
     this.hardStop();
-    
+    // Signal all other voice sources to stop
+    window.dispatchEvent(new CustomEvent('alex-voice-cleanup'));
+
     this.setState('loading');
+    const token = this.playbackCount;
 
     const url = URL.createObjectURL(blob);
     this.currentObjectUrl = url;
@@ -75,24 +89,26 @@ class AlexSingleAudioChannel {
 
     return new Promise<void>((resolve) => {
       audio.onended = () => {
+        if (this.playbackCount !== token) return resolve();
         this.cleanup();
         this.setState('idle');
         resolve();
-        // Play next in queue if any
         this.playNextInQueue();
       };
 
       audio.onerror = () => {
+        if (this.playbackCount !== token) return resolve();
         this.cleanup();
         this.setState('error');
         resolve();
       };
 
       audio.play().then(() => {
-        if (this.currentAudio === audio) {
+        if (this.playbackCount === token && this.currentAudio === audio) {
           this.setState('playing');
         }
       }).catch(() => {
+        if (this.playbackCount !== token) return resolve();
         this.cleanup();
         this.setState('error');
         resolve();
@@ -106,16 +122,18 @@ class AlexSingleAudioChannel {
   async playBase64(base64: string, mimeType = 'audio/mpeg'): Promise<void> {
     if (this.destroyed) return;
 
-    // ALWAYS stop previous before starting new
     this.hardStop();
+    window.dispatchEvent(new CustomEvent('alex-voice-cleanup'));
 
     this.setState('loading');
+    const token = this.playbackCount;
 
     const audio = new Audio(`data:${mimeType};base64,${base64}`);
     this.currentAudio = audio;
 
     return new Promise<void>((resolve) => {
       audio.onended = () => {
+        if (this.playbackCount !== token) return resolve();
         this.currentAudio = null;
         this.setState('idle');
         resolve();
@@ -123,16 +141,18 @@ class AlexSingleAudioChannel {
       };
 
       audio.onerror = () => {
+        if (this.playbackCount !== token) return resolve();
         this.currentAudio = null;
         this.setState('error');
         resolve();
       };
 
       audio.play().then(() => {
-        if (this.currentAudio === audio) {
+        if (this.playbackCount === token && this.currentAudio === audio) {
           this.setState('playing');
         }
       }).catch(() => {
+        if (this.playbackCount !== token) return resolve();
         this.currentAudio = null;
         this.setState('error');
         resolve();
@@ -147,10 +167,8 @@ class AlexSingleAudioChannel {
   async playChunksSequential(chunks: string[], mimeType = 'audio/mpeg'): Promise<void> {
     if (this.destroyed || chunks.length === 0) return;
 
-    // Kill everything first
     this.hardStop();
 
-    // Play first chunk immediately, queue the rest
     this.queue = chunks.slice(1);
     await this.playBase64(chunks[0], mimeType);
   }
@@ -159,7 +177,6 @@ class AlexSingleAudioChannel {
   interrupt(): void {
     this.hardStop();
     this.setState('interrupted');
-    // After a brief moment, go to idle
     setTimeout(() => {
       if (this.state === 'interrupted') {
         this.setState('idle');
@@ -182,15 +199,18 @@ class AlexSingleAudioChannel {
 
   private cleanup(): void {
     if (this.currentObjectUrl) {
-      URL.revokeObjectURL(this.currentObjectUrl);
+      try { URL.revokeObjectURL(this.currentObjectUrl); } catch {}
       this.currentObjectUrl = null;
     }
     this.currentAudio = null;
   }
 
   private setState(s: AudioState): void {
+    if (this.state === s) return;
     this.state = s;
-    this.listeners.forEach(l => l(s));
+    this.listeners.forEach(l => {
+      try { l(s); } catch {}
+    });
   }
 }
 
