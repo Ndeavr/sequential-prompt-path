@@ -46,7 +46,7 @@ export function HeroSectionPremium({
             transition={{ duration: 0.4, ease }}
             className={cn(
               "text-caption font-semibold tracking-widest uppercase mb-4",
-              isDark ? "text-blue-300/80" : "text-primary"
+              isDark ? "text-accent/80" : "text-primary"
             )}
           >
             {overline}
@@ -70,7 +70,7 @@ export function HeroSectionPremium({
             transition={{ duration: 0.45, delay: 0.12, ease }}
             className={cn(
               "text-body-lg mt-5 max-w-xl mx-auto leading-relaxed",
-              isDark ? "text-blue-100/70" : "text-muted-foreground"
+              isDark ? "text-primary-foreground/70" : "text-muted-foreground"
             )}
           >
             {description}
