@@ -18,20 +18,15 @@ export default {
         display: ["Space Grotesk", "Manrope", "system-ui", "sans-serif"],
       },
       fontSize: {
-        "display-xl": ["4.5rem", { lineHeight: "1.02", fontWeight: "700", letterSpacing: "-0.035em" }],
-        "display": ["3.5rem", { lineHeight: "1.04", fontWeight: "700", letterSpacing: "-0.03em" }],
+        "display": ["3.75rem", { lineHeight: "1.02", fontWeight: "700", letterSpacing: "-0.035em" }],
         "hero": ["3rem", { lineHeight: "1.06", fontWeight: "700", letterSpacing: "-0.03em" }],
         "hero-sm": ["2.25rem", { lineHeight: "1.1", fontWeight: "700", letterSpacing: "-0.025em" }],
-        "heading-xl": ["2rem", { lineHeight: "1.15", fontWeight: "700", letterSpacing: "-0.02em" }],
         "title": ["1.75rem", { lineHeight: "1.18", fontWeight: "600", letterSpacing: "-0.02em" }],
         "section": ["1.375rem", { lineHeight: "1.25", fontWeight: "600", letterSpacing: "-0.015em" }],
-        "body-lg": ["1.125rem", { lineHeight: "1.65" }],
+        "body-lg": ["1.0625rem", { lineHeight: "1.65" }],
         "body": ["0.9375rem", { lineHeight: "1.6" }],
         "meta": ["0.8125rem", { lineHeight: "1.5" }],
         "caption": ["0.6875rem", { lineHeight: "1.45", letterSpacing: "0.015em" }],
-        "label": ["0.8125rem", { lineHeight: "1.4", fontWeight: "600", letterSpacing: "0.02em" }],
-        "metric-xl": ["3.25rem", { lineHeight: "1.05", fontWeight: "700", letterSpacing: "-0.03em" }],
-        "metric-lg": ["2.25rem", { lineHeight: "1.1", fontWeight: "700", letterSpacing: "-0.025em" }],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -58,10 +53,6 @@ export default {
         warning: {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
-        },
-        info: {
-          DEFAULT: "hsl(var(--info))",
-          foreground: "hsl(var(--info-foreground))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -90,20 +81,13 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
-      maxWidth: {
-        "narrow": "720px",
-        "standard": "1120px",
-        "wide": "1280px",
-        "ultra": "1440px",
-      },
       borderRadius: {
-        sm: "calc(var(--radius) - 4px)",
-        md: "calc(var(--radius) - 2px)",
         lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
         xl: "calc(var(--radius) + 4px)",
         "2xl": "calc(var(--radius) + 8px)",
         "3xl": "1.5rem",
-        "premium": "1.125rem",
       },
       boxShadow: {
         "soft": "var(--shadow-sm)",
@@ -113,9 +97,6 @@ export default {
         "dramatic": "var(--shadow-2xl)",
         "glow": "var(--shadow-glow)",
         "glow-lg": "var(--shadow-glow-lg)",
-        "depth-card": "var(--shadow-depth-card)",
-        "floating": "var(--shadow-floating)",
-        "focus-glow": "var(--shadow-focus-glow)",
       },
       keyframes: {
         "accordion-down": {
@@ -159,16 +140,8 @@ export default {
           "50%": { opacity: "0.7" },
         },
         "glow-pulse": {
-          "0%, 100%": { boxShadow: "0 0 20px -4px hsl(235 100% 52% / 0.2)" },
-          "50%": { boxShadow: "0 0 32px -4px hsl(235 100% 52% / 0.35)" },
-        },
-        "blur-in": {
-          "0%": { opacity: "0", filter: "blur(8px)" },
-          "100%": { opacity: "1", filter: "blur(0px)" },
-        },
-        "count-up": {
-          "0%": { opacity: "0", transform: "translateY(8px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
+          "0%, 100%": { boxShadow: "0 0 20px -4px hsl(222 100% 65% / 0.2)" },
+          "50%": { boxShadow: "0 0 32px -4px hsl(222 100% 65% / 0.35)" },
         },
       },
       animation: {
@@ -183,14 +156,10 @@ export default {
         "shimmer": "shimmer 2s linear infinite",
         "pulse-soft": "pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "glow-pulse": "glow-pulse 3s ease-in-out infinite",
-        "blur-in": "blur-in 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-        "count-up": "count-up 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
       },
       spacing: {
         "18": "4.5rem",
         "22": "5.5rem",
-        "section": "5.5rem",
-        "section-lg": "9rem",
       },
     },
   },

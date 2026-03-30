@@ -7,7 +7,6 @@ import { motion } from "framer-motion";
 import { Sparkles, ArrowRight, CheckCircle2, HelpCircle, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import CardEntrepreneurEntryAlex from "@/components/entrepreneur/CardEntrepreneurEntryAlex";
 
 interface FallbackPageData {
   title: string;
@@ -25,7 +24,7 @@ interface FallbackLandingProps {
   pageKey?: string;
 }
 
-export default function FallbackLandingTemplateUNPRO({ data, pageKey }: FallbackLandingProps) {
+export default function FallbackLandingTemplateUNPRO({ data }: FallbackLandingProps) {
   const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
@@ -53,12 +52,7 @@ export default function FallbackLandingTemplateUNPRO({ data, pageKey }: Fallback
             {d.subtitle && <p className="text-lg text-muted-foreground mt-3 max-w-xl mx-auto">{d.subtitle}</p>}
           </motion.div>
 
-          {/* Entrepreneur Entry Card */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="max-w-sm mx-auto w-full">
-            <CardEntrepreneurEntryAlex sourcePage={pageKey || "fallback"} />
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="flex flex-col sm:flex-row gap-3 justify-center">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="flex flex-col sm:flex-row gap-3 justify-center">
             {d.primaryCtaPath && (
               <Button onClick={() => navigate(d.primaryCtaPath!)} size="lg" className="gap-2">
                 {d.primaryCtaLabel || "Continuer"}
