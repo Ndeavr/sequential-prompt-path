@@ -4,9 +4,8 @@ import { GraduationCap, Sun, Clock, Home } from "lucide-react";
 
 const pills = [
   { icon: GraduationCap, label: "Étudiants bienvenus" },
-  { icon: Sun, label: "Job d'été" },
-  { icon: Clock, label: "Temps partiel" },
-  { icon: Home, label: "Remote ou en personne" },
+  { icon: Clock, label: "Temps partiel OK" },
+  { icon: Sun, label: "☕ En personne ou remote" },
 ];
 
 interface Props {
