@@ -28,7 +28,7 @@ export default function HeroSectionCloser({ onSimulate, onApply }: Props) {
           transition={{ duration: 0.6 }}
           className="text-4xl sm:text-5xl md:text-6xl font-display font-bold text-white leading-tight"
         >
-          Des clients grâce à l'intelligence artificielle?
+          Job d'été. Pas de bureau. Pas de cold call.
         </motion.h1>
 
         <motion.p
@@ -37,9 +37,8 @@ export default function HeroSectionCloser({ onSimulate, onApply }: Props) {
           transition={{ duration: 0.6, delay: 0.15 }}
           className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed"
         >
-          Tu rencontres des entrepreneurs dans un café ou sur leur chantier.
-          Tu crées leur profil UNPRO avec l'IA, en direct.
-          Tu encaisses des commissions récurrentes.
+          Rencontre des entrepreneurs dans un café. Crée leur profil IA en live.
+          Encaisse des commissions récurrentes.
         </motion.p>
 
         <motion.div
