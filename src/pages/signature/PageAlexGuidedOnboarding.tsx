@@ -524,6 +524,9 @@ export default function PageAlexGuidedOnboarding() {
                 <ImportProgressRealtime
                   progress={state.importProgress}
                   modules={state.importModules}
+                  businessName={state.draft.business_name}
+                  city={state.draft.city}
+                  website={state.draft.website}
                 />
               )}
 
