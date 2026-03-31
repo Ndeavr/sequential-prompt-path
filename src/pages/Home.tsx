@@ -19,6 +19,7 @@ import MainLayout from "@/layouts/MainLayout";
 import { motion } from "framer-motion";
 import { useState, useRef, useCallback } from "react";
 import FloatingAlexRobot from "@/components/home/FloatingAlexRobot";
+import HomepageRevealFlow from "@/components/home/HomepageRevealFlow";
 import unproRobot from "@/assets/unpro-robot.png";
 import avatarsGroup from "@/assets/avatars-group.jpg";
 
