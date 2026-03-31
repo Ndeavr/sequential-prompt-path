@@ -2,11 +2,21 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, Zap, TrendingUp, Shield, ArrowRight, Sparkles } from "lucide-react";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { createFlowSession, getActiveFlowSession, getStepRoute } from "@/services/flowStateService";
+
+const analyzeSchema = z.object({
+  businessName: z.string().trim().min(2).max(120),
+  city: z.string().trim().min(2).max(120),
+  website: z.union([
+    z.literal(""),
+    z.string().trim().url().max(255),
+  ]),
+});
 
 const PageEntrepreneurLandingAIPP = () => {
   const navigate = useNavigate();
@@ -26,73 +36,107 @@ const PageEntrepreneurLandingAIPP = () => {
 
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!businessName.trim() || !city.trim()) {
-      toast.error("Nom d'entreprise et ville requis");
+
+    const parsed = analyzeSchema.safeParse({
+      businessName,
+      city,
+      website: website.trim(),
+    });
+
+    if (!parsed.success) {
+      toast.error("Vérifiez le nom, la ville et l’URL du site web.");
       return;
     }
 
+    const cleanBusinessName = parsed.data.businessName.trim();
+    const cleanCity = parsed.data.city.trim();
+    const cleanWebsite = parsed.data.website.trim() || null;
+
     setLoading(true);
     try {
-      // Create lead
-      const { data: lead, error } = await supabase
-        .from("entrepreneur_leads")
-        .insert({ business_name: businessName, city, website: website || null, source: "funnel" })
-        .select()
-        .single();
+      const leadId = crypto.randomUUID();
 
-      if (error) throw error;
-
-      // Generate score
+      // Generate score first so UX never blocks on analytics persistence
       const score = Math.floor(Math.random() * 35) + 25;
       const visibility = score >= 55 ? "moyenne" : score >= 40 ? "faible" : "très faible";
       const oppMin = Math.floor(score / 5) + 3;
       const oppMax = oppMin + Math.floor(Math.random() * 15) + 8;
 
-      const { error: scoreErr } = await supabase
-        .from("entrepreneur_scores")
-        .insert({
-          lead_id: lead.id,
-          score,
-          ai_visibility: visibility,
-          opportunities_min: oppMin,
-          opportunities_max: oppMax,
-          component_scores: {
-            seo: Math.floor(Math.random() * 40) + 15,
-            ai_readiness: Math.floor(Math.random() * 30) + 10,
-            social_proof: Math.floor(Math.random() * 50) + 20,
-            conversion: Math.floor(Math.random() * 35) + 15,
-          },
-        });
-
-      if (scoreErr) throw scoreErr;
-
-      // Store in sessionStorage for continuity
-      sessionStorage.setItem("unpro_lead_id", lead.id);
-      sessionStorage.setItem("unpro_lead_name", businessName);
-      sessionStorage.setItem("unpro_lead_city", city);
+      sessionStorage.setItem("unpro_lead_id", leadId);
+      sessionStorage.setItem("unpro_lead_name", cleanBusinessName);
+      sessionStorage.setItem("unpro_lead_city", cleanCity);
       sessionStorage.setItem("unpro_lead_score", String(score));
       sessionStorage.setItem("unpro_lead_visibility", visibility);
       sessionStorage.setItem("unpro_lead_opp_min", String(oppMin));
       sessionStorage.setItem("unpro_lead_opp_max", String(oppMax));
 
-      // Get current user if logged in
-      const { data: { user } } = await supabase.auth.getUser();
+      let leadSaved = false;
 
-      // Create flow session (persisted in DB)
-      await createFlowSession({
+      try {
+        const { error } = await supabase
+          .from("entrepreneur_leads")
+          .insert({
+            id: leadId,
+            business_name: cleanBusinessName,
+            city: cleanCity,
+            website: cleanWebsite,
+            source: "funnel",
+          });
+
+        if (error) {
+          console.error("AIPP lead insert failed:", error);
+        } else {
+          leadSaved = true;
+        }
+      } catch (leadError) {
+        console.error("AIPP lead insert exception:", leadError);
+      }
+
+      if (leadSaved) {
+        try {
+          const { error: scoreErr } = await supabase
+            .from("entrepreneur_scores")
+            .insert({
+              lead_id: leadId,
+              score,
+              ai_visibility: visibility,
+              opportunities_min: oppMin,
+              opportunities_max: oppMax,
+              component_scores: {
+                seo: Math.floor(Math.random() * 40) + 15,
+                ai_readiness: Math.floor(Math.random() * 30) + 10,
+                social_proof: Math.floor(Math.random() * 50) + 20,
+                conversion: Math.floor(Math.random() * 35) + 15,
+              },
+            });
+
+          if (scoreErr) {
+            console.error("AIPP score insert failed:", scoreErr);
+          }
+        } catch (scoreError) {
+          console.error("AIPP score insert exception:", scoreError);
+        }
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      const flowSession = await createFlowSession({
         flowType: "AIPP_ANALYSIS",
         inputPayload: {
-          company_name: businessName,
-          city,
-          website: website || null,
+          company_name: cleanBusinessName,
+          city: cleanCity,
+          website: cleanWebsite,
         },
         userId: user?.id || null,
-        leadId: lead.id,
+        leadId: leadSaved ? leadId : undefined,
       });
 
-      // Navigate to loading page (NEVER dashboard)
+      if (!flowSession) {
+        sessionStorage.setItem("unpro_aipp_fallback", "1");
+      }
+
       navigate("/entrepreneur/analysis/loading");
-    } catch {
+    } catch (error) {
+      console.error("AIPP analysis failed:", error);
       toast.error("Une erreur est survenue. Réessayez.");
     } finally {
       setLoading(false);
