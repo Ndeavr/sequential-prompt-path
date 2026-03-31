@@ -450,15 +450,33 @@ export default function PublicBookingPage() {
                       Quelques détails pour préparer votre rendez-vous
                     </h3>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Nom complet *</Label>
-                      <Input
-                        id="name"
-                        value={clientName}
-                        onChange={(e) => setClientName(e.target.value)}
-                        placeholder="Ex: Marie Tremblay"
-                        required
-                      />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName">Prénom *</Label>
+                        <Input
+                          id="firstName"
+                          value={clientName.split(" ")[0] || ""}
+                          onChange={(e) => {
+                            const last = clientName.split(" ").slice(1).join(" ");
+                            setClientName([e.target.value, last].filter(Boolean).join(" "));
+                          }}
+                          placeholder="Marie"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName">Nom *</Label>
+                        <Input
+                          id="lastName"
+                          value={clientName.split(" ").slice(1).join(" ") || ""}
+                          onChange={(e) => {
+                            const first = clientName.split(" ")[0] || "";
+                            setClientName([first, e.target.value].filter(Boolean).join(" "));
+                          }}
+                          placeholder="Tremblay"
+                          required
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-2">
