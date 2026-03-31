@@ -9589,6 +9589,195 @@ export type Database = {
           },
         ]
       }
+      contractor_import_consents: {
+        Row: {
+          captured_at: string
+          captured_by: string
+          consent_text_version: string | null
+          consent_type: string
+          consent_value: boolean
+          id: string
+          import_session_id: string
+        }
+        Insert: {
+          captured_at?: string
+          captured_by?: string
+          consent_text_version?: string | null
+          consent_type: string
+          consent_value?: boolean
+          id?: string
+          import_session_id: string
+        }
+        Update: {
+          captured_at?: string
+          captured_by?: string
+          consent_text_version?: string | null
+          consent_type?: string
+          consent_value?: boolean
+          id?: string
+          import_session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_import_consents_import_session_id_fkey"
+            columns: ["import_session_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_import_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_import_followups: {
+        Row: {
+          created_at: string
+          destination_email: string | null
+          destination_phone: string | null
+          followup_type: string
+          id: string
+          import_session_id: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          destination_email?: string | null
+          destination_phone?: string | null
+          followup_type: string
+          id?: string
+          import_session_id: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          destination_email?: string | null
+          destination_phone?: string | null
+          followup_type?: string
+          id?: string
+          import_session_id?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_import_followups_import_session_id_fkey"
+            columns: ["import_session_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_import_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_import_script_events: {
+        Row: {
+          actor_name: string | null
+          actor_type: string
+          created_at: string
+          delivery_mode: string | null
+          id: string
+          import_session_id: string
+          script_text: string | null
+          step_key: string
+        }
+        Insert: {
+          actor_name?: string | null
+          actor_type?: string
+          created_at?: string
+          delivery_mode?: string | null
+          id?: string
+          import_session_id: string
+          script_text?: string | null
+          step_key: string
+        }
+        Update: {
+          actor_name?: string | null
+          actor_type?: string
+          created_at?: string
+          delivery_mode?: string | null
+          id?: string
+          import_session_id?: string
+          script_text?: string | null
+          step_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_import_script_events_import_session_id_fkey"
+            columns: ["import_session_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_import_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_import_sessions: {
+        Row: {
+          completion_percent: number | null
+          consent_source: string | null
+          consent_status: string
+          contractor_business_name: string
+          contractor_contact_name: string | null
+          contractor_email: string | null
+          contractor_phone: string | null
+          created_at: string
+          domain_url: string | null
+          google_business_url: string | null
+          id: string
+          import_mode: string
+          import_status: string
+          initiated_by_rep_id: string | null
+          initiated_by_user_id: string | null
+          neq_number: string | null
+          private_profile_id: string | null
+          public_profile_slug: string | null
+          rbq_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          completion_percent?: number | null
+          consent_source?: string | null
+          consent_status?: string
+          contractor_business_name: string
+          contractor_contact_name?: string | null
+          contractor_email?: string | null
+          contractor_phone?: string | null
+          created_at?: string
+          domain_url?: string | null
+          google_business_url?: string | null
+          id?: string
+          import_mode?: string
+          import_status?: string
+          initiated_by_rep_id?: string | null
+          initiated_by_user_id?: string | null
+          neq_number?: string | null
+          private_profile_id?: string | null
+          public_profile_slug?: string | null
+          rbq_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          completion_percent?: number | null
+          consent_source?: string | null
+          consent_status?: string
+          contractor_business_name?: string
+          contractor_contact_name?: string | null
+          contractor_email?: string | null
+          contractor_phone?: string | null
+          created_at?: string
+          domain_url?: string | null
+          google_business_url?: string | null
+          id?: string
+          import_mode?: string
+          import_status?: string
+          initiated_by_rep_id?: string | null
+          initiated_by_user_id?: string | null
+          neq_number?: string | null
+          private_profile_id?: string | null
+          public_profile_slug?: string | null
+          rbq_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contractor_license_scope_results: {
         Row: {
           created_at: string
