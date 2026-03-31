@@ -58,7 +58,11 @@ export default function OnboardingPageUnpro() {
   }, [authLoading, profileLoading, profile, existingRole, navigate]);
 
   const handleRoleSelect = useCallback(async (r: string) => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      toast.error("Veuillez vous connecter pour continuer.");
+      navigate("/login", { state: { from: "/onboarding" } });
+      return;
+    }
     setSaving(true);
     try {
       // Insert role

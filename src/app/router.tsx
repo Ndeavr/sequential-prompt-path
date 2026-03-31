@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HelpPopup from "@/components/shared/HelpPopup";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import UniversalRouteGuard from "@/guards/UniversalRouteGuard";
 import PlaceholderPage from "@/pages/PlaceholderPage";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
 import Unsubscribe from "@/pages/Unsubscribe";
@@ -349,7 +350,7 @@ export const AppRouter = () => (
       <Route path="/login" element={<LoginPageUnpro />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route path="/signup" element={<LoginPageUnpro />} />
-      <Route path="/onboarding" element={<OnboardingPageUnpro />} />
+      <Route path="/onboarding" element={<UniversalRouteGuard anyAuth><OnboardingPageUnpro /></UniversalRouteGuard>} />
       <Route path="/start" element={<StartPage />} />
 
       {/* Entrepreneur Funnel */}
@@ -385,7 +386,7 @@ export const AppRouter = () => (
       <Route path="/checkout" element={<PageCheckoutStripe />} />
       <Route path="/checkout/success" element={<PageCheckoutSuccess />} />
       <Route path="/activation" element={<PageActivationStart />} />
-      <Route path="/onboarding" element={<OnboardingFlow />} />
+      {/* Removed duplicate /onboarding route — handled at line 352 */}
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/aipp-score" element={<AIPPScorePage />} />
       <Route path="/matching" element={<ProtectedRoute requiredRole="homeowner"><MatchingResultsPage /></ProtectedRoute>} />
