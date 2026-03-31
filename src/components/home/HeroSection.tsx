@@ -197,11 +197,11 @@ export default function HeroSection() {
 
                 {/* Icon */}
                 {orbState === "speaking" ? (
-                  <Volume2 className="h-9 w-9 text-white/90 relative z-10 drop-shadow-sm" />
+                  <Volume2 className="h-9 w-9 text-foreground/90 relative z-10 drop-shadow-sm" />
                 ) : orbState === "thinking" ? (
-                  <Loader2 className="h-9 w-9 text-white/90 relative z-10 animate-spin" />
+                  <Loader2 className="h-9 w-9 text-foreground/90 relative z-10 animate-spin" />
                 ) : (
-                  <Mic className="h-9 w-9 text-white/90 relative z-10 drop-shadow-sm" />
+                  <Mic className="h-9 w-9 text-foreground/90 relative z-10 drop-shadow-sm" />
                 )}
               </motion.button>
             </div>
