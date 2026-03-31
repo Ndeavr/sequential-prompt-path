@@ -123,11 +123,7 @@ const Home = () => {
                 whileInView={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.7, delay: 0.3 }}
-                className="rounded-3xl p-5 sm:p-6 border border-border/60 shadow-[var(--shadow-xl)]"
-                style={{
-                  background: "linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--card) / 0.85) 100%)",
-                  backdropFilter: "blur(20px)",
-                }}
+                className="glass-card rounded-3xl p-5 sm:p-6 shadow-[var(--shadow-xl)]"
               >
                 <div className="flex items-start gap-4">
                   <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl overflow-hidden bg-muted/50 border border-border/50 shrink-0 flex items-center justify-center">
