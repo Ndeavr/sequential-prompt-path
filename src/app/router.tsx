@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HelpPopup from "@/components/shared/HelpPopup";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import UniversalRouteGuard from "@/guards/UniversalRouteGuard";
 import PlaceholderPage from "@/pages/PlaceholderPage";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
 import Unsubscribe from "@/pages/Unsubscribe";
