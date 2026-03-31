@@ -2,7 +2,7 @@
  * HeroSection — Cinematic AI Home with Gemini Live Native Audio voice.
  * Uses useLiveVoice for real-time bidirectional voice (no legacy TTS pipeline).
  */
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
@@ -23,12 +23,8 @@ export default function HeroSection() {
 
   // Gemini Live voice state
   const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
-    onTranscript: () => {
-      // Agent transcript — handled by Gemini Live natively
-    },
-    onUserTranscript: () => {
-      // User transcript — handled by Gemini Live natively
-    },
+    onTranscript: () => {},
+    onUserTranscript: () => {},
     onConnect: () => {
       console.log("[Hero] Gemini Live connected");
     },
@@ -53,15 +49,24 @@ export default function HeroSection() {
   const startVoice = useCallback(() => {
     // Kill any other voice source first
     window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
-    start();
-  }, [start]);
+
+    // Build personalised greeting
+    const firstName = user?.user_metadata?.full_name?.split(" ")[0]
+      || user?.user_metadata?.first_name
+      || null;
+
+    const initialGreeting = firstName
+      ? `Salue-moi. Mon prénom est ${firstName}. Dis "Bonjour ${firstName}, bienvenue."`
+      : `Salue-moi. Je suis un nouveau visiteur. Dis "Bonjour, bienvenue."`;
+
+    start({ initialGreeting });
+  }, [start, user]);
 
   const stopVoice = useCallback(() => {
     stop();
   }, [stop]);
 
   const muteSpeech = useCallback(() => {
-    // For Gemini Live, stopping and restarting is the interrupt mechanism
     stop();
   }, [stop]);
 
