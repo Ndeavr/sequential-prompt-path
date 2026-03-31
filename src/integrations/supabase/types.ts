@@ -30847,6 +30847,80 @@ export type Database = {
         }
         Relationships: []
       }
+      user_flow_sessions: {
+        Row: {
+          contractor_id: string | null
+          created_at: string
+          flow_type: string
+          id: string
+          input_payload: Json
+          lead_id: string | null
+          score_snapshot: Json | null
+          session_token: string
+          status: string
+          step: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string
+          flow_type?: string
+          id?: string
+          input_payload?: Json
+          lead_id?: string | null
+          score_snapshot?: Json | null
+          session_token?: string
+          status?: string
+          step?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string
+          flow_type?: string
+          id?: string
+          input_payload?: Json
+          lead_id?: string | null
+          score_snapshot?: Json | null
+          session_token?: string
+          status?: string
+          step?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_flow_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_flow_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_flow_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_flow_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       user_likes: {
         Row: {
           created_at: string

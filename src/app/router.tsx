@@ -235,6 +235,7 @@ import PageEntrepreneurLandingAIPP from "@/pages/entrepreneur/PageEntrepreneurLa
 import PageEntrepreneurScoreResult from "@/pages/entrepreneur/PageEntrepreneurScoreResult";
 import PageEntrepreneurPricing from "@/pages/entrepreneur/PageEntrepreneurPricing";
 import PageEntrepreneurDashboardLite from "@/pages/entrepreneur/PageEntrepreneurDashboardLite";
+import PageAIPPAnalysisLoading from "@/pages/entrepreneur/PageAIPPAnalysisLoading";
 
 // Contractor Pro
 import ProDashboard from "@/pages/pro/ProDashboard";
@@ -334,10 +335,12 @@ import PageEntrepreneurPlans from "@/pages/entrepreneur/PageEntrepreneurPlans";
 
 // Owner Match
 import PageOwnerMatch from "@/pages/match/PageOwnerMatch";
+import BannerContinueFlow from "@/components/flow/BannerContinueFlow";
 
 export const AppRouter = () => (
   <BrowserRouter>
     <ScrollRestoration />
+    <BannerContinueFlow />
     <Routes>
       {/* Public */}
       <Route path="/" element={<Home />} />
@@ -355,6 +358,7 @@ export const AppRouter = () => (
 
       {/* Entrepreneur Funnel */}
       <Route path="/entrepreneur" element={<PageEntrepreneurLandingAIPP />} />
+      <Route path="/entrepreneur/analysis/loading" element={<PageAIPPAnalysisLoading />} />
       <Route path="/entrepreneur/score" element={<PageEntrepreneurScoreResult />} />
       <Route path="/entrepreneur/pricing" element={<PageEntrepreneurPricing />} />
       <Route path="/entrepreneur/dashboard" element={<PageEntrepreneurDashboardLite />} />
