@@ -398,14 +398,27 @@ export default function PageAlexGuidedOnboarding() {
     }
   }, [update]);
 
-  // ─── Step: When on "importing" step, wait for background import to finish ───
+  // ─── Step: When on "importing" step, simulate progress + wait for real data ───
   useEffect(() => {
     if (state.step !== "importing") return;
-    if (state.importedData) {
-      // Import already done, move on
-      goTo("profile_completion");
+
+    // Simulate progressive progress while waiting for real import
+    if (!state.importedData && state.importProgress < 90) {
+      const iv = setInterval(() => {
+        setState((prev) => {
+          if (prev.importedData || prev.importProgress >= 90) return prev;
+          return { ...prev, importProgress: Math.min(prev.importProgress + Math.random() * 8 + 2, 90) };
+        });
+      }, 800);
+      return () => clearInterval(iv);
     }
-  }, [state.step, state.importedData, goTo]);
+
+    if (state.importedData) {
+      // Give time for animation to finish before transitioning
+      const timeout = setTimeout(() => goTo("profile_completion"), 2500);
+      return () => clearTimeout(timeout);
+    }
+  }, [state.step, state.importedData, state.importProgress, goTo]);
   const publishProfile = useCallback(async () => {
     if (!state.contractorId) return;
     setIsProcessing(true);
