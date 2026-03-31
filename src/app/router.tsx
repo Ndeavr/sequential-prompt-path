@@ -19,6 +19,7 @@ import PageAlexGoalsStrategy from "@/pages/goals/PageAlexGoalsStrategy";
 import PageCheckoutStripe from "@/pages/checkout/PageCheckoutStripe";
 import PageCheckoutSuccess from "@/pages/checkout/PageCheckoutSuccess";
 import PageActivationStart from "@/pages/checkout/PageActivationStart";
+import LandingContractorAIActivation from "@/pages/acquisition/LandingContractorAIActivation";
 import Home from "@/pages/Home";
 import Search from "@/pages/Search";
 import ContractorProfile from "@/pages/ContractorProfile";
@@ -360,6 +361,9 @@ export const AppRouter = () => (
       <Route path="/signup" element={<LoginPageUnpro />} />
       <Route path="/onboarding" element={<UniversalRouteGuard anyAuth><OnboardingPageUnpro /></UniversalRouteGuard>} />
       <Route path="/start" element={<StartPage />} />
+
+      {/* Contractor AI Activation */}
+      <Route path="/activation-ia" element={<LandingContractorAIActivation />} />
 
       {/* Entrepreneur Funnel */}
       <Route path="/entrepreneur" element={<PageEntrepreneurLandingAIPP />} />
