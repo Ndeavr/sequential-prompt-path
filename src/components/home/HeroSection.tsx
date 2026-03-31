@@ -105,7 +105,7 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.15 }}
-            className="font-display text-[28px] sm:text-[36px] md:text-[48px] font-bold text-white leading-[1.1] tracking-tight"
+            className="font-display text-[28px] sm:text-[36px] md:text-[48px] font-bold text-foreground leading-[1.1] tracking-tight"
           >
             Quel est votre problème?
           </motion.h1>
