@@ -1,8 +1,8 @@
 /**
  * AlexVoiceRealtime — Gemini Live (Native Audio) powered real-time voice
  * 
- * PRIMARY: Gemini Live bidirectional audio (ultra-low latency)
- * FALLBACK: ElevenLabs Conversational AI (if Gemini fails)
+ * PRIMARY: Gemini Live Native Audio (ultra-low latency bidirectional)
+ * No ElevenLabs dependency — Gemini handles voice natively.
  * 
  * Full bidirectional voice: user speaks → AI listens → AI responds in real-time
  * No sequential TTS. True real-time conversation via WebSockets.

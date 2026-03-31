@@ -5,8 +5,8 @@
  * Starting new audio instantly kills previous audio.
  * No overlap, no double playback, no stale chunks.
  * 
- * Also integrates with ElevenLabs Conversational AI cleanup:
- * Before any playback, fires "alex-voice-cleanup" to kill Realtime sessions.
+ * Fires "alex-voice-cleanup" before playback to kill any other voice source
+ * (Gemini Live sessions, fallback providers, etc.).
  */
 
 type AudioState = 'idle' | 'loading' | 'playing' | 'interrupted' | 'error';
@@ -68,7 +68,7 @@ class AlexSingleAudioChannel {
 
   /**
    * Play audio from a blob. Kills any existing playback first.
-   * Also dispatches cleanup event to stop ElevenLabs Realtime sessions.
+   * Dispatches cleanup event to stop all other voice sources.
    */
   async playBlob(blob: Blob): Promise<void> {
     if (this.destroyed) return;

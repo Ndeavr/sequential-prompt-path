@@ -1,8 +1,8 @@
 /**
  * AdminVoiceControlPage — Voice Hard Reset Edition
  * 
- * Edit voice profiles with real ElevenLabs Voice IDs.
- * Test voices through the SAME pipeline as production.
+ * PRIMARY: Gemini Live (Native Audio) — ultra-low latency bidirectional.
+ * FALLBACK: Legacy TTS pipeline for non-realtime use cases.
  * Debug panel shows runtime state.
  * All voice IDs come from DB, zero hardcoded values.
  */
@@ -327,13 +327,13 @@ function VoiceProfileCard({
 
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            {/* ElevenLabs Voice ID */}
+            {/* Voice ID (Gemini voice name or fallback provider ID) */}
             <div className="space-y-1.5 sm:col-span-2">
-              <label className="text-xs font-medium text-muted-foreground">ElevenLabs Voice ID</label>
+              <label className="text-xs font-medium text-muted-foreground">Voice ID (Gemini: Aoede, Zephyr / Fallback: provider voice ID)</label>
               <Input
                 value={(getVal(profile, "voice_id_primary") as string) || ""}
                 onChange={e => updateProfile(profile.id, "voice_id_primary", e.target.value)}
-                placeholder="ex: FGY2WhTYpPnrIDTdsKH5"
+                placeholder="ex: Aoede"
                 className="text-sm font-mono"
               />
             </div>
@@ -344,7 +344,7 @@ function VoiceProfileCard({
               <Input
                 value={(getVal(profile, "voice_display_name") as string) || ""}
                 onChange={e => updateProfile(profile.id, "voice_display_name", e.target.value)}
-                placeholder="ex: Laura (FR-QC)"
+                placeholder="ex: Aoede (FR-QC)"
                 className="text-sm"
               />
             </div>
@@ -358,7 +358,8 @@ function VoiceProfileCard({
               >
                 <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="elevenlabs">ElevenLabs</SelectItem>
+                  <SelectItem value="gemini-live">Gemini Live (Primary)</SelectItem>
+                  <SelectItem value="elevenlabs">ElevenLabs (Fallback)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

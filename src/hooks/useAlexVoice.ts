@@ -15,6 +15,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
 const VOICE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-voice`;
+// Legacy TTS fallback — Gemini Live (Native Audio) is now the primary voice engine
 const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`;
 
 export type VoiceState = "idle" | "listening" | "thinking" | "speaking";
