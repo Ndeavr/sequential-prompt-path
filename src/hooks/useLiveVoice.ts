@@ -4,12 +4,15 @@
  * Uses @google/genai SDK for real-time WebSocket audio streaming.
  * API key fetched securely from edge function (never hardcoded client-side).
  * Integrates with AlexSingleAudioChannel for guaranteed single-voice output.
+ * 
+ * Uses AudioWorklet for reliable mic capture (fallback to ScriptProcessorNode).
  */
 import { useState, useRef, useCallback } from "react";
 import { GoogleGenAI, Modality } from "@google/genai";
 import type { LiveServerMessage } from "@google/genai";
-import { createPcmBlob, decodeFromBase64, decodeAudioData } from "@/services/geminiAudioCodec";
+import { encodeToBase64, decodeFromBase64, decodeAudioData } from "@/services/geminiAudioCodec";
 import { ALEX_SYSTEM_INSTRUCTION, ALEX_LIVE_CONFIG } from "@/services/alexConfig";
+import { createWorkletBlobURL } from "@/services/geminiAudioWorklet";
 import { supabase } from "@/integrations/supabase/client";
 
 interface UseLiveVoiceCallbacks {
@@ -33,13 +36,28 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const callbacksRef = useRef(callbacks);
   callbacksRef.current = callbacks;
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const workletNodeRef = useRef<AudioWorkletNode | null>(null);
   const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
+  const workletBlobURLRef = useRef<string | null>(null);
+  const audioChunksSent = useRef(0);
 
   const cleanup = useCallback(() => {
-    // Stop script processor
+    // Stop worklet node
+    if (workletNodeRef.current) {
+      workletNodeRef.current.disconnect();
+      workletNodeRef.current = null;
+    }
+
+    // Stop script processor (fallback)
     if (scriptProcessorRef.current) {
       scriptProcessorRef.current.disconnect();
       scriptProcessorRef.current = null;
+    }
+
+    // Revoke worklet blob URL
+    if (workletBlobURLRef.current) {
+      URL.revokeObjectURL(workletBlobURLRef.current);
+      workletBlobURLRef.current = null;
     }
 
     // Stop media stream
@@ -71,6 +89,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     });
     activeSources.current.clear();
     nextStartTime.current = 0;
+    audioChunksSent.current = 0;
 
     setIsActive(false);
     setIsConnecting(false);
@@ -82,7 +101,80 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     callbacksRef.current?.onDisconnect?.();
   }, [cleanup]);
 
-  const start = useCallback(async () => {
+  /** Send PCM Int16 data to Gemini session */
+  const sendPcmToGemini = useCallback((int16Data: Int16Array) => {
+    if (!sessionRef.current) return;
+    const base64 = encodeToBase64(new Uint8Array(int16Data.buffer));
+    try {
+      sessionRef.current.sendRealtimeInput({
+        media: { data: base64, mimeType: "audio/pcm;rate=16000" },
+      });
+      audioChunksSent.current++;
+      if (audioChunksSent.current === 1) {
+        console.log("[GeminiLive] ✅ First audio chunk sent, size:", int16Data.length, "samples");
+      }
+    } catch (err) {
+      console.warn("[GeminiLive] Failed to send audio chunk:", err);
+    }
+  }, []);
+
+  /** Set up microphone → Gemini pipeline using AudioWorklet (with ScriptProcessor fallback) */
+  const setupMicPipeline = useCallback(async (
+    stream: MediaStream,
+    audioCtx: AudioContext
+  ) => {
+    const source = audioCtx.createMediaStreamSource(stream);
+
+    // Try AudioWorklet first (more reliable, especially on mobile)
+    try {
+      const blobURL = createWorkletBlobURL();
+      workletBlobURLRef.current = blobURL;
+      await audioCtx.audioWorklet.addModule(blobURL);
+
+      const workletNode = new AudioWorkletNode(audioCtx, "pcm-capture-processor");
+      workletNodeRef.current = workletNode;
+
+      workletNode.port.onmessage = (event) => {
+        const { pcm } = event.data;
+        if (pcm && pcm.length > 0) {
+          sendPcmToGemini(pcm);
+        } else {
+          console.warn("[GeminiLive] Empty audio chunk from worklet");
+        }
+      };
+
+      source.connect(workletNode);
+      // AudioWorklet doesn't need to connect to destination
+      console.log("[GeminiLive] ✅ AudioWorklet mic pipeline active (sampleRate:", audioCtx.sampleRate + ")");
+      return;
+    } catch (workletErr) {
+      console.warn("[GeminiLive] AudioWorklet not supported, falling back to ScriptProcessor:", workletErr);
+    }
+
+    // Fallback: ScriptProcessorNode
+    const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+    scriptProcessorRef.current = processor;
+
+    processor.onaudioprocess = (e: AudioProcessingEvent) => {
+      const inputData = e.inputBuffer.getChannelData(0);
+      if (inputData.length === 0) {
+        console.warn("[GeminiLive] Empty ScriptProcessor buffer");
+        return;
+      }
+      // Convert Float32 → Int16
+      const int16 = new Int16Array(inputData.length);
+      for (let i = 0; i < inputData.length; i++) {
+        int16[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
+      }
+      sendPcmToGemini(int16);
+    };
+
+    source.connect(processor);
+    processor.connect(audioCtx.destination);
+    console.log("[GeminiLive] ⚠️ ScriptProcessor fallback active (sampleRate:", audioCtx.sampleRate + ")");
+  }, [sendPcmToGemini]);
+
+  const start = useCallback(async (options?: { initialGreeting?: string }) => {
     if (isActive || isConnecting) return;
     setIsConnecting(true);
 
@@ -102,7 +194,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       // 2. Initialize Google GenAI
       const ai = new GoogleGenAI({ apiKey });
 
-      // 3. Set up audio contexts
+      // 3. Set up audio contexts — use native sample rate for input (better compatibility)
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       inputAudioContextRef.current = new AudioCtx({ sampleRate: 16000 });
 
@@ -116,29 +208,38 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       outputGain.connect(outputAudioContextRef.current.destination);
 
       // 6. Connect to Gemini Live
+      const initialGreeting = options?.initialGreeting;
+
       const session = await ai.live.connect({
         model: tokenData.model || ALEX_LIVE_CONFIG.model,
         callbacks: {
-          onopen: () => {
+          onopen: async () => {
             setIsActive(true);
             setIsConnecting(false);
             callbacksRef.current?.onConnect?.();
 
-            // Set up mic → Gemini pipeline
-            const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
-            const processor = inputAudioContextRef.current!.createScriptProcessor(4096, 1, 1);
-            scriptProcessorRef.current = processor;
+            // Set up mic → Gemini pipeline (AudioWorklet or fallback)
+            await setupMicPipeline(stream, inputAudioContextRef.current!);
 
-            processor.onaudioprocess = (e: AudioProcessingEvent) => {
-              const inputData = e.inputBuffer.getChannelData(0);
-              const pcmBlob = createPcmBlob(inputData);
+            // Send initial greeting to trigger Alex's first spoken response
+            if (initialGreeting && sessionRef.current) {
+              console.log("[GeminiLive] Sending initial greeting:", initialGreeting);
               try {
-                sessionRef.current?.sendRealtimeInput({ media: pcmBlob });
-              } catch {}
-            };
+                sessionRef.current.sendClientContent({
+                  turns: [{ role: "user", parts: [{ text: initialGreeting }] }],
+                  turnComplete: true,
+                });
+              } catch (err) {
+                console.warn("[GeminiLive] Failed to send initial greeting:", err);
+              }
+            }
 
-            source.connect(processor);
-            processor.connect(inputAudioContextRef.current!.destination);
+            // Diagnostic: warn if no audio sent after 3 seconds
+            setTimeout(() => {
+              if (audioChunksSent.current === 0 && sessionRef.current) {
+                console.warn("[GeminiLive] ⚠️ No audio chunks sent after 3s — mic may not be working");
+              }
+            }, 3000);
           },
 
           onmessage: (message: LiveServerMessage) => {
@@ -152,9 +253,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
 
             // Handle user transcript (input transcription)
             if ((message as any).serverContent?.inputTranscription?.text) {
-              callbacksRef.current?.onUserTranscript?.(
-                (message as any).serverContent.inputTranscription.text
-              );
+              const transcript = (message as any).serverContent.inputTranscription.text;
+              console.log("[GeminiLive] 🎤 User transcript:", transcript);
+              callbacksRef.current?.onUserTranscript?.(transcript);
             }
 
             // Handle audio output
@@ -246,7 +347,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       callbacksRef.current?.onError?.(err);
       cleanup();
     }
-  }, [isActive, isConnecting, cleanup]);
+  }, [isActive, isConnecting, cleanup, setupMicPipeline]);
 
   return { start, stop, isActive, isConnecting, isSpeaking };
 }
