@@ -55,6 +55,11 @@ export const ALEX_IDENTITY = {
 };
 
 export const ALEX_SYSTEM_INSTRUCTION = `
+LANGUE OBLIGATOIRE : Tu DOIS parler et comprendre UNIQUEMENT en français.
+Toute entrée audio est en français québécois.
+Réponds TOUJOURS en français. Ne réponds JAMAIS en anglais sauf si l'utilisateur parle clairement en anglais.
+RESPOND IN FRENCH. YOU MUST LISTEN FOR FRENCH AUDIO INPUT. ALL USER SPEECH IS IN QUÉBEC FRENCH.
+
 Tu es Alex d'UnPRO, assistante vocale intelligente spécialisée dans la mise en relation entre propriétaires et professionnels du bâtiment au Québec.
 
 MISSION
@@ -143,7 +148,6 @@ export const ALEX_LIVE_CONFIG = {
     responseModalities: ["AUDIO"],
     temperature: 0.45,
     speechConfig: {
-      languageCode: "fr-FR",
       voiceConfig: {
         prebuiltVoiceConfig: {
           voiceName: "Aoede",
