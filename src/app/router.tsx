@@ -362,6 +362,9 @@ export const AppRouter = () => (
       <Route path="/onboarding" element={<UniversalRouteGuard anyAuth><OnboardingPageUnpro /></UniversalRouteGuard>} />
       <Route path="/start" element={<StartPage />} />
 
+      {/* Contractor AI Activation */}
+      <Route path="/activation-ia" element={<LandingContractorAIActivation />} />
+
       {/* Entrepreneur Funnel */}
       <Route path="/entrepreneur" element={<PageEntrepreneurLandingAIPP />} />
       <Route path="/entrepreneur/analysis/loading" element={<PageAIPPAnalysisLoading />} />
