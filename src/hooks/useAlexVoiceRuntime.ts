@@ -5,8 +5,9 @@
  * Loads voice config from DB via edge function (no hardcoded voice IDs).
  * Manages STT, interruption, and state.
  * 
- * RULE: Before any audio output, fires alex-voice-cleanup to kill
- * ElevenLabs Realtime and any other voice source.
+ * PRIMARY: Gemini Live (Native Audio) via useLiveVoice hook.
+ * FALLBACK: Legacy TTS pipeline via alex-voice-speak edge function.
+ * RULE: Before any audio output, fires alex-voice-cleanup to kill all other voice sources.
  */
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { alexAudioChannel, type AudioState } from '@/services/alexSingleAudioChannel';
