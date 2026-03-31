@@ -272,7 +272,6 @@ export default function EmergencyPage() {
                   }} placeholder="Tremblay" className="mt-1" />
                 </div>
               </div>
-              </div>
 
               {/* Description */}
               <div>
