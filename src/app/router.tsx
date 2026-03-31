@@ -236,6 +236,10 @@ import PageEntrepreneurScoreResult from "@/pages/entrepreneur/PageEntrepreneurSc
 import PageEntrepreneurPricing from "@/pages/entrepreneur/PageEntrepreneurPricing";
 import PageEntrepreneurDashboardLite from "@/pages/entrepreneur/PageEntrepreneurDashboardLite";
 import PageAIPPAnalysisLoading from "@/pages/entrepreneur/PageAIPPAnalysisLoading";
+import PagePricingCalculator from "@/pages/entrepreneur/PagePricingCalculator";
+import PagePlanResult from "@/pages/entrepreneur/PagePlanResult";
+import PagePaymentSuccess from "@/pages/entrepreneur/PagePaymentSuccess";
+import PagePaymentCancelled from "@/pages/entrepreneur/PagePaymentCancelled";
 
 // Contractor Pro
 import ProDashboard from "@/pages/pro/ProDashboard";
@@ -361,6 +365,10 @@ export const AppRouter = () => (
       <Route path="/entrepreneur/analysis/loading" element={<PageAIPPAnalysisLoading />} />
       <Route path="/entrepreneur/score" element={<PageEntrepreneurScoreResult />} />
       <Route path="/entrepreneur/pricing" element={<PageEntrepreneurPricing />} />
+      <Route path="/entrepreneur/pricing-calculator" element={<PagePricingCalculator />} />
+      <Route path="/entrepreneur/plan-result" element={<PagePlanResult />} />
+      <Route path="/entrepreneur/payment-success" element={<PagePaymentSuccess />} />
+      <Route path="/entrepreneur/payment-cancelled" element={<PagePaymentCancelled />} />
       <Route path="/entrepreneur/dashboard" element={<PageEntrepreneurDashboardLite />} />
 
       {/* Contractor Join Landing */}
