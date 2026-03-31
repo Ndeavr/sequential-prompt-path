@@ -1,8 +1,8 @@
 /**
  * AdminVoiceControlPage — Voice Hard Reset Edition
  * 
- * Edit voice profiles with real ElevenLabs Voice IDs.
- * Test voices through the SAME pipeline as production.
+ * PRIMARY: Gemini Live (Native Audio) — ultra-low latency bidirectional.
+ * FALLBACK: Legacy TTS pipeline for non-realtime use cases.
  * Debug panel shows runtime state.
  * All voice IDs come from DB, zero hardcoded values.
  */
