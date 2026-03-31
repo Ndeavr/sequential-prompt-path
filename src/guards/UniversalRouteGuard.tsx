@@ -13,7 +13,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { hasRouteAccess, resolveDestinationForRole } from "@/config/routeRegistry";
 import { saveNavigationContext, trackNavigation } from "@/services/navigation/journeyService";
-import { saveAuthIntent } from "@/services/auth/authIntentService";
+import { getDefaultRedirectForRole, saveAuthIntent } from "@/services/auth/authIntentService";
 import RouteTransitionLoader from "@/components/navigation/RouteTransitionLoader";
 import { useEffect, useRef } from "react";
 
@@ -71,7 +71,7 @@ export default function UniversalRouteGuard({ children, allowedRoles, anyAuth }:
   // ── Explicit allowedRoles prop ──
   if (allowedRoles && allowedRoles.length > 0) {
     if (!role || !allowedRoles.includes(role)) {
-      return <Navigate to={resolveDestinationForRole(role)} replace />;
+      return <Navigate to={getDefaultRedirectForRole(role)} replace />;
     }
     return <>{children}</>;
   }
@@ -80,7 +80,7 @@ export default function UniversalRouteGuard({ children, allowedRoles, anyAuth }:
   const access = hasRouteAccess(location.pathname, role, isAuthenticated);
   if (!access.allowed) {
     if (access.reason === "role_mismatch") {
-      return <Navigate to={access.fallback || resolveDestinationForRole(role)} replace />;
+      return <Navigate to={access.fallback || getDefaultRedirectForRole(role)} replace />;
     }
     return <Navigate to={access.fallback || "/"} replace />;
   }

@@ -5,8 +5,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { consumeAuthIntent } from "@/services/auth/authIntentService";
-import { resolveDestinationForRole } from "@/config/routeRegistry";
+import { consumeAuthIntent, getDefaultRedirectForRole } from "@/services/auth/authIntentService";
 import { consumeNavigationContext, getResumePath } from "@/services/navigation/journeyService";
 import AuthCardUnpro from "@/components/auth/AuthCardUnpro";
 import OAuthButtons from "@/components/auth/OAuthButtons";
@@ -27,7 +26,7 @@ export default function LoginPageUnpro() {
       const navCtx = consumeNavigationContext();
       const from = (location.state as any)?.from;
       const resumePath = getResumePath(role);
-      const target = intent?.returnPath || navCtx?.intendedDestination || from || resumePath || resolveDestinationForRole(role);
+      const target = intent?.returnPath || navCtx?.intendedDestination || from || resumePath || getDefaultRedirectForRole(role);
       navigate(target, { replace: true });
     }
   }, [isAuthenticated, isLoading, role, navigate, location]);

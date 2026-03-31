@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
+import { getDefaultRedirectForRole } from "@/services/auth/authIntentService";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import OnboardingStepper from "@/components/onboarding/OnboardingStepper";
@@ -42,7 +43,7 @@ export default function OnboardingPageUnpro() {
   useEffect(() => {
     if (!authLoading && !profileLoading && profile) {
       if (profile.onboarding_completed) {
-        navigate(existingRole === "contractor" ? "/pro" : "/dashboard", { replace: true });
+        navigate(getDefaultRedirectForRole(existingRole ?? "homeowner"), { replace: true });
         return;
       }
       // If role exists, skip step 0

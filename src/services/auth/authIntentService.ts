@@ -58,7 +58,9 @@ export function getDefaultRedirectForRole(role: string | null): string {
       return "/admin";
     case "contractor":
       return "/pro";
-    default:
+    case "homeowner":
       return "/dashboard";
+    default:
+      return "/onboarding";
   }
 }
