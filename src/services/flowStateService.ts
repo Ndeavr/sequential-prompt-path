@@ -123,22 +123,26 @@ export async function createFlowSession(params: {
   persistToken(token);
   persistFallbackSession(localSession);
 
-  const { error } = await supabase
-    .from("user_flow_sessions")
-    .insert({
-      id,
-      session_token: token,
-      flow_type: params.flowType,
-      step: "loading",
-      status: "in_progress",
-      input_payload: params.inputPayload,
-      user_id: params.userId || null,
-      lead_id: params.leadId || null,
-      score_snapshot: null,
-    } as never);
+  try {
+    const { error } = await supabase
+      .from("user_flow_sessions")
+      .insert({
+        id,
+        session_token: token,
+        flow_type: params.flowType,
+        step: "loading",
+        status: "in_progress",
+        input_payload: params.inputPayload,
+        user_id: params.userId || null,
+        lead_id: params.leadId || null,
+        score_snapshot: null,
+      } as never);
 
-  if (error) {
-    console.error("createFlowSession failed, using local fallback:", error);
+    if (error) {
+      console.error("createFlowSession failed, using local fallback:", error);
+    }
+  } catch (error) {
+    console.error("createFlowSession exception, using local fallback:", error);
   }
 
   return localSession;
@@ -166,36 +170,43 @@ export async function getActiveFlowSession(flowType?: FlowType): Promise<FlowSes
     return null;
   }
 
-  let query = supabase
-    .from("user_flow_sessions")
-    .select("*")
-    .eq("session_token", token as string)
-    .eq("status", "in_progress");
+  try {
+    let query = supabase
+      .from("user_flow_sessions")
+      .select("*")
+      .eq("session_token", token as string)
+      .eq("status", "in_progress");
 
-  if (flowType) {
-    query = query.eq("flow_type", flowType);
-  }
+    if (flowType) {
+      query = query.eq("flow_type", flowType);
+    }
 
-  const { data, error } = await query.order("created_at", { ascending: false }).limit(1).maybeSingle();
+    const { data, error } = await query.order("created_at", { ascending: false }).limit(1).maybeSingle();
 
-  if (error || !data) {
+    if (error || !data) {
+      if (fallback && (!flowType || fallback.flow_type === flowType) && !isExpired(fallback)) {
+        return fallback;
+      }
+      return null;
+    }
+
+    const session = data as unknown as FlowSession;
+    if (isExpired(session)) {
+      await updateFlowStep(session.id, "loading", "completed");
+      clearFlowToken();
+      clearFallbackSession();
+      return null;
+    }
+
+    persistFallbackSession(session);
+    return session;
+  } catch (error) {
+    console.error("getActiveFlowSession exception, using local fallback:", error);
     if (fallback && (!flowType || fallback.flow_type === flowType) && !isExpired(fallback)) {
       return fallback;
     }
     return null;
   }
-
-  const session = data as unknown as FlowSession;
-  if (isExpired(session)) {
-    await updateFlowStep(session.id, "loading", "completed");
-    clearFlowToken();
-    clearFallbackSession();
-    return null;
-  }
-
-  persistFallbackSession(session);
-
-  return session;
 }
 
 // ─── Update Step ───
@@ -219,10 +230,14 @@ export async function updateFlowStep(
     } as FlowSession);
   }
 
-  await supabase
-    .from("user_flow_sessions")
-    .update(update as never)
-    .eq("id", sessionId);
+  try {
+    await supabase
+      .from("user_flow_sessions")
+      .update(update as never)
+      .eq("id", sessionId);
+  } catch (error) {
+    console.error("updateFlowStep exception:", error);
+  }
 }
 
 // ─── Update Score Snapshot ───
@@ -241,10 +256,14 @@ export async function updateFlowScoreSnapshot(
     });
   }
 
-  await supabase
-    .from("user_flow_sessions")
-    .update({ score_snapshot: scoreSnapshot, step: "analysis_ready" } as never)
-    .eq("id", sessionId);
+  try {
+    await supabase
+      .from("user_flow_sessions")
+      .update({ score_snapshot: scoreSnapshot, step: "analysis_ready" } as never)
+      .eq("id", sessionId);
+  } catch (error) {
+    console.error("updateFlowScoreSnapshot exception:", error);
+  }
 }
 
 // ─── Promote Guest → Authenticated ───
@@ -263,19 +282,24 @@ export async function promoteFlowSession(userId: string): Promise<FlowSession | 
 
   if (!token) return fallback;
 
-  const { data, error } = await supabase
-    .from("user_flow_sessions")
-    .update({ user_id: userId } as never)
-    .eq("session_token", token)
-    .is("user_id", null)
-    .select()
-    .maybeSingle();
+  try {
+    const { data, error } = await supabase
+      .from("user_flow_sessions")
+      .update({ user_id: userId } as never)
+      .eq("session_token", token)
+      .is("user_id", null)
+      .select()
+      .maybeSingle();
 
-  if (error || !data) return fallback;
+    if (error || !data) return fallback;
 
-  const session = data as unknown as FlowSession;
-  persistFallbackSession(session);
-  return session;
+    const session = data as unknown as FlowSession;
+    persistFallbackSession(session);
+    return session;
+  } catch (error) {
+    console.error("promoteFlowSession exception:", error);
+    return fallback;
+  }
 }
 
 // ─── Complete Flow ───
