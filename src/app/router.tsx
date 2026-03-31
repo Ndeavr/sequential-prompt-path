@@ -19,6 +19,7 @@ import PageAlexGoalsStrategy from "@/pages/goals/PageAlexGoalsStrategy";
 import PageCheckoutStripe from "@/pages/checkout/PageCheckoutStripe";
 import PageCheckoutSuccess from "@/pages/checkout/PageCheckoutSuccess";
 import PageActivationStart from "@/pages/checkout/PageActivationStart";
+import LandingContractorAIActivation from "@/pages/acquisition/LandingContractorAIActivation";
 import Home from "@/pages/Home";
 import Search from "@/pages/Search";
 import ContractorProfile from "@/pages/ContractorProfile";
