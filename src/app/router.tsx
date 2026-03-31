@@ -385,7 +385,7 @@ export const AppRouter = () => (
       <Route path="/checkout" element={<PageCheckoutStripe />} />
       <Route path="/checkout/success" element={<PageCheckoutSuccess />} />
       <Route path="/activation" element={<PageActivationStart />} />
-      <Route path="/onboarding" element={<OnboardingFlow />} />
+      {/* Removed duplicate /onboarding route — handled at line 352 */}
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/aipp-score" element={<AIPPScorePage />} />
       <Route path="/matching" element={<ProtectedRoute requiredRole="homeowner"><MatchingResultsPage /></ProtectedRoute>} />
