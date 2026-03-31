@@ -36,6 +36,7 @@ export const Providers = ({ children }: ProvidersProps) => (
             <Toaster />
             <Sonner />
             {children}
+            <BannerContinueFlow />
             <GlobalAlexOverlay />
           </TooltipProvider>
         </AlexVoiceProvider>
