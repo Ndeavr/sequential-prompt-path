@@ -197,7 +197,7 @@ export default function PageRepresentativeOnboarding() {
       const modules = importResult?.modules || [];
 
       // Create contractor profile
-      const contractorInsert: Record<string, any> = {
+      const contractorInsert: any = {
         business_name: state.seed.business_name,
         phone: state.seed.phone || null,
         email: state.seed.email || null,
