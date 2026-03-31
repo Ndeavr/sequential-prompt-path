@@ -213,7 +213,7 @@ export default function HeroSection() {
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
-                className="mt-4 text-xs font-medium text-white/50"
+                className="mt-4 text-xs font-medium text-muted-foreground"
               >
                 {statusText}
               </motion.p>
