@@ -21559,6 +21559,530 @@ export type Database = {
         }
         Relationships: []
       }
+      pricing_categories: {
+        Row: {
+          average_contract_value_max: number | null
+          average_contract_value_min: number | null
+          base_competitiveness_score: number | null
+          base_market_difficulty_score: number | null
+          base_plan_floor: string | null
+          base_rendezvous_unit_price: number | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name_en: string | null
+          name_fr: string
+          parent_category_id: string | null
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          average_contract_value_max?: number | null
+          average_contract_value_min?: number | null
+          base_competitiveness_score?: number | null
+          base_market_difficulty_score?: number | null
+          base_plan_floor?: string | null
+          base_rendezvous_unit_price?: number | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name_en?: string | null
+          name_fr: string
+          parent_category_id?: string | null
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          average_contract_value_max?: number | null
+          average_contract_value_min?: number | null
+          base_competitiveness_score?: number | null
+          base_market_difficulty_score?: number | null
+          base_plan_floor?: string | null
+          base_rendezvous_unit_price?: number | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name_en?: string | null
+          name_fr?: string
+          parent_category_id?: string | null
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_categories_parent_category_id_fkey"
+            columns: ["parent_category_id"]
+            isOneToOne: false
+            referencedRelation: "pricing_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pricing_checkout_sessions: {
+        Row: {
+          cancelled_at: string | null
+          checkout_url: string | null
+          contractor_id: string | null
+          created_at: string | null
+          currency: string | null
+          gst_amount: number
+          id: string
+          paid_at: string | null
+          pricing_quote_id: string
+          qst_amount: number
+          status: string
+          stripe_checkout_session_id: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subtotal_amount: number
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          cancelled_at?: string | null
+          checkout_url?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          gst_amount?: number
+          id?: string
+          paid_at?: string | null
+          pricing_quote_id: string
+          qst_amount?: number
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subtotal_amount?: number
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Update: {
+          cancelled_at?: string | null
+          checkout_url?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          gst_amount?: number
+          id?: string
+          paid_at?: string | null
+          pricing_quote_id?: string
+          qst_amount?: number
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subtotal_amount?: number
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_checkout_sessions_pricing_quote_id_fkey"
+            columns: ["pricing_quote_id"]
+            isOneToOne: false
+            referencedRelation: "pricing_quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pricing_markets: {
+        Row: {
+          city_name: string
+          competitiveness_multiplier: number | null
+          created_at: string | null
+          demand_score: number | null
+          id: string
+          is_active: boolean | null
+          labor_cost_multiplier: number | null
+          market_tier: string | null
+          population_estimate: number | null
+          premium_territory_multiplier: number | null
+          province_code: string | null
+          region_name: string | null
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          city_name: string
+          competitiveness_multiplier?: number | null
+          created_at?: string | null
+          demand_score?: number | null
+          id?: string
+          is_active?: boolean | null
+          labor_cost_multiplier?: number | null
+          market_tier?: string | null
+          population_estimate?: number | null
+          premium_territory_multiplier?: number | null
+          province_code?: string | null
+          region_name?: string | null
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          city_name?: string
+          competitiveness_multiplier?: number | null
+          created_at?: string | null
+          demand_score?: number | null
+          id?: string
+          is_active?: boolean | null
+          labor_cost_multiplier?: number | null
+          market_tier?: string | null
+          population_estimate?: number | null
+          premium_territory_multiplier?: number | null
+          province_code?: string | null
+          region_name?: string | null
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      pricing_payment_events: {
+        Row: {
+          created_at: string | null
+          event_payload: Json | null
+          id: string
+          pricing_checkout_session_id: string
+          processed_at: string | null
+          processed_successfully: boolean | null
+          stripe_event_id: string | null
+          stripe_event_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_payload?: Json | null
+          id?: string
+          pricing_checkout_session_id: string
+          processed_at?: string | null
+          processed_successfully?: boolean | null
+          stripe_event_id?: string | null
+          stripe_event_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_payload?: Json | null
+          id?: string
+          pricing_checkout_session_id?: string
+          processed_at?: string | null
+          processed_successfully?: boolean | null
+          stripe_event_id?: string | null
+          stripe_event_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_payment_events_pricing_checkout_session_id_fkey"
+            columns: ["pricing_checkout_session_id"]
+            isOneToOne: false
+            referencedRelation: "pricing_checkout_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pricing_plan_bases: {
+        Row: {
+          ai_features: Json | null
+          base_price: number
+          billing_period: string
+          booking_features: Json | null
+          created_at: string | null
+          id: string
+          included_rendezvous: number | null
+          is_active: boolean | null
+          is_public: boolean | null
+          max_categories: number | null
+          max_service_areas: number | null
+          plan_code: string
+          plan_name: string
+          ranking_features: Json | null
+          support_features: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_features?: Json | null
+          base_price?: number
+          billing_period?: string
+          booking_features?: Json | null
+          created_at?: string | null
+          id?: string
+          included_rendezvous?: number | null
+          is_active?: boolean | null
+          is_public?: boolean | null
+          max_categories?: number | null
+          max_service_areas?: number | null
+          plan_code: string
+          plan_name: string
+          ranking_features?: Json | null
+          support_features?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_features?: Json | null
+          base_price?: number
+          billing_period?: string
+          booking_features?: Json | null
+          created_at?: string | null
+          id?: string
+          included_rendezvous?: number | null
+          is_active?: boolean | null
+          is_public?: boolean | null
+          max_categories?: number | null
+          max_service_areas?: number | null
+          plan_code?: string
+          plan_name?: string
+          ranking_features?: Json | null
+          support_features?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      pricing_quotes: {
+        Row: {
+          accepted_at: string | null
+          average_contract_value: number | null
+          base_plan_amount: number
+          calculation_version: string | null
+          capacity_monthly: number | null
+          category_id: string
+          category_multiplier: number | null
+          close_rate_percent: number | null
+          competitiveness_multiplier: number | null
+          competitiveness_score: number | null
+          contractor_id: string | null
+          created_at: string | null
+          expires_at: string | null
+          gst_amount: number
+          id: string
+          market_id: string
+          market_multiplier: number | null
+          override_adjustment_amount: number | null
+          pricing_snapshot: Json | null
+          qst_amount: number
+          recommended_plan_code: string | null
+          recommended_rendezvous_count: number | null
+          rendezvous_amount: number
+          revenue_goal_monthly: number | null
+          selected_billing_period: string
+          selected_plan_code: string
+          selected_rendezvous_count: number | null
+          session_id: string | null
+          status: string
+          subtotal_amount: number
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          average_contract_value?: number | null
+          base_plan_amount?: number
+          calculation_version?: string | null
+          capacity_monthly?: number | null
+          category_id: string
+          category_multiplier?: number | null
+          close_rate_percent?: number | null
+          competitiveness_multiplier?: number | null
+          competitiveness_score?: number | null
+          contractor_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          gst_amount?: number
+          id?: string
+          market_id: string
+          market_multiplier?: number | null
+          override_adjustment_amount?: number | null
+          pricing_snapshot?: Json | null
+          qst_amount?: number
+          recommended_plan_code?: string | null
+          recommended_rendezvous_count?: number | null
+          rendezvous_amount?: number
+          revenue_goal_monthly?: number | null
+          selected_billing_period?: string
+          selected_plan_code: string
+          selected_rendezvous_count?: number | null
+          session_id?: string | null
+          status?: string
+          subtotal_amount?: number
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          average_contract_value?: number | null
+          base_plan_amount?: number
+          calculation_version?: string | null
+          capacity_monthly?: number | null
+          category_id?: string
+          category_multiplier?: number | null
+          close_rate_percent?: number | null
+          competitiveness_multiplier?: number | null
+          competitiveness_score?: number | null
+          contractor_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          gst_amount?: number
+          id?: string
+          market_id?: string
+          market_multiplier?: number | null
+          override_adjustment_amount?: number | null
+          pricing_snapshot?: Json | null
+          qst_amount?: number
+          recommended_plan_code?: string | null
+          recommended_rendezvous_count?: number | null
+          rendezvous_amount?: number
+          revenue_goal_monthly?: number | null
+          selected_billing_period?: string
+          selected_plan_code?: string
+          selected_rendezvous_count?: number | null
+          session_id?: string | null
+          status?: string
+          subtotal_amount?: number
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_quotes_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "pricing_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_quotes_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "pricing_markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pricing_rendezvous_packages: {
+        Row: {
+          base_package_price: number
+          category_multiplier_enabled: boolean | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          market_multiplier_enabled: boolean | null
+          package_code: string
+          package_name: string
+          pricing_mode: string | null
+          rendezvous_count: number
+          updated_at: string | null
+        }
+        Insert: {
+          base_package_price?: number
+          category_multiplier_enabled?: boolean | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          market_multiplier_enabled?: boolean | null
+          package_code: string
+          package_name: string
+          pricing_mode?: string | null
+          rendezvous_count: number
+          updated_at?: string | null
+        }
+        Update: {
+          base_package_price?: number
+          category_multiplier_enabled?: boolean | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          market_multiplier_enabled?: boolean | null
+          package_code?: string
+          package_name?: string
+          pricing_mode?: string | null
+          rendezvous_count?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      pricing_rule_overrides: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          created_by: string | null
+          ends_at: string | null
+          id: string
+          is_active: boolean | null
+          market_id: string | null
+          override_type: string
+          override_value: number
+          plan_base_id: string | null
+          reason: string | null
+          rendezvous_package_id: string | null
+          scope_reference_id: string | null
+          scope_type: string
+          starts_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          market_id?: string | null
+          override_type: string
+          override_value?: number
+          plan_base_id?: string | null
+          reason?: string | null
+          rendezvous_package_id?: string | null
+          scope_reference_id?: string | null
+          scope_type?: string
+          starts_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          market_id?: string | null
+          override_type?: string
+          override_value?: number
+          plan_base_id?: string | null
+          reason?: string | null
+          rendezvous_package_id?: string | null
+          scope_reference_id?: string | null
+          scope_type?: string
+          starts_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_rule_overrides_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "pricing_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_rule_overrides_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "pricing_markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_rule_overrides_plan_base_id_fkey"
+            columns: ["plan_base_id"]
+            isOneToOne: false
+            referencedRelation: "pricing_plan_bases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_rule_overrides_rendezvous_package_id_fkey"
+            columns: ["rendezvous_package_id"]
+            isOneToOne: false
+            referencedRelation: "pricing_rendezvous_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pricing_transactions: {
         Row: {
           amount_cents: number
