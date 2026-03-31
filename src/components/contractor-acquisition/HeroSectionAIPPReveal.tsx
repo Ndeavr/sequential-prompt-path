@@ -33,7 +33,7 @@ export default function HeroSectionAIPPReveal({ onAnalyze, loading }: Props) {
       toast.error("Vérifiez les champs.");
       return;
     }
-    onAnalyze(parsed.data);
+    onAnalyze({ businessName: parsed.data.businessName!, city: parsed.data.city!, website: parsed.data.website ?? "" });
   };
 
   return (
