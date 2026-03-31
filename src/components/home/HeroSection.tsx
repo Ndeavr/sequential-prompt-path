@@ -264,12 +264,7 @@ export default function HeroSection() {
                   <Link
                     key={action.label}
                     to={action.route}
-                    className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-medium text-white/80 transition-all hover:text-white hover:bg-white/10 active:scale-[0.97]"
-                    style={{
-                      background: "hsl(222 30% 15% / 0.6)",
-                      border: "1px solid hsl(222 40% 30% / 0.4)",
-                      backdropFilter: "blur(12px)",
-                    }}
+                    className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-medium text-foreground/80 transition-all hover:text-foreground hover:bg-card/80 active:scale-[0.97] glass-card"
                   >
                     <action.icon className="h-4 w-4 text-primary/80" />
                     {action.label}
