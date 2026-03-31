@@ -982,6 +982,36 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_blocked_patterns: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          pattern_text: string
+          pattern_type: string
+          replacement_strategy: string | null
+          severity: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          pattern_text: string
+          pattern_type?: string
+          replacement_strategy?: string | null
+          severity?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          pattern_text?: string
+          pattern_type?: string
+          replacement_strategy?: string | null
+          severity?: string
+        }
+        Relationships: []
+      }
       alex_booking_drafts: {
         Row: {
           booking_status: string
@@ -1104,6 +1134,39 @@ export type Database = {
           session_id?: string
           source?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      alex_conversation_rules: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          rule_description: string | null
+          rule_key: string
+          rule_label: string
+          severity: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          rule_description?: string | null
+          rule_key: string
+          rule_label: string
+          severity?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          rule_description?: string | null
+          rule_key?: string
+          rule_label?: string
+          severity?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1930,6 +1993,87 @@ export type Database = {
           is_sla_respected?: boolean
           latency_ms?: number
           session_id?: string
+        }
+        Relationships: []
+      }
+      alex_response_logs: {
+        Row: {
+          blocked_patterns_detected: string[] | null
+          created_at: string
+          final_status: string
+          id: string
+          raw_response: string
+          response_time_ms: number | null
+          rewrite_applied: boolean | null
+          rewritten_response: string | null
+          role_type: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          blocked_patterns_detected?: string[] | null
+          created_at?: string
+          final_status?: string
+          id?: string
+          raw_response: string
+          response_time_ms?: number | null
+          rewrite_applied?: boolean | null
+          rewritten_response?: string | null
+          role_type?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          blocked_patterns_detected?: string[] | null
+          created_at?: string
+          final_status?: string
+          id?: string
+          raw_response?: string
+          response_time_ms?: number | null
+          rewrite_applied?: boolean | null
+          rewritten_response?: string | null
+          role_type?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      alex_response_settings: {
+        Row: {
+          created_at: string
+          default_language: string
+          directness_level: number
+          id: string
+          max_response_length: number
+          notebook_style_block_enabled: boolean
+          pronunciation_override_enabled: boolean
+          rewrite_enabled: boolean
+          updated_at: string
+          warmth_level: number
+        }
+        Insert: {
+          created_at?: string
+          default_language?: string
+          directness_level?: number
+          id?: string
+          max_response_length?: number
+          notebook_style_block_enabled?: boolean
+          pronunciation_override_enabled?: boolean
+          rewrite_enabled?: boolean
+          updated_at?: string
+          warmth_level?: number
+        }
+        Update: {
+          created_at?: string
+          default_language?: string
+          directness_level?: number
+          id?: string
+          max_response_length?: number
+          notebook_style_block_enabled?: boolean
+          pronunciation_override_enabled?: boolean
+          rewrite_enabled?: boolean
+          updated_at?: string
+          warmth_level?: number
         }
         Relationships: []
       }
