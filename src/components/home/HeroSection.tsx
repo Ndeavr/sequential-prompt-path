@@ -176,7 +176,7 @@ export default function HeroSection() {
                   height: 100,
                   background: "linear-gradient(135deg, hsl(222 100% 30% / 0.8), hsl(222 100% 20% / 0.9))",
                   border: "2px solid hsl(222 100% 70% / 0.3)",
-                  boxShadow: "0 0 60px -10px hsl(222 100% 61% / 0.4), inset 0 1px 1px hsl(0 0% 100% / 0.1)",
+                  boxShadow: "0 0 60px -10px hsl(222 100% 65% / 0.4), inset 0 1px 1px hsl(0 0% 100% / 0.1)",
                 }}
                 animate={
                   orbState === "speaking" ? { scale: [1, 1.08, 1] }
