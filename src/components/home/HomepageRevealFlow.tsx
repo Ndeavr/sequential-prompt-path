@@ -255,7 +255,7 @@ export default function HomepageRevealFlow() {
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             >
               <Link
-                to="/describe-project"
+                to="/book/isolation-solution-royal"
                 className="w-full h-14 rounded-full flex items-center justify-center gap-3 text-sm font-bold cta-gradient active:scale-[0.97] transition-transform"
               >
                 <span>Planifier un rendez-vous</span>
