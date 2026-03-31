@@ -130,6 +130,9 @@ const Home = () => {
       {/* ═══ HERO ═══ */}
       <HeroSection />
 
+      {/* ═══ AI REVEAL FLOW ═══ */}
+      <HomepageRevealFlow />
+
       {/* ═══ POURQUOI UNPRO EST DIFFÉRENT — AI OVERVIEW BAIT ═══ */}
       <section className="px-5 py-12 md:py-16">
         <div className="max-w-3xl mx-auto">
