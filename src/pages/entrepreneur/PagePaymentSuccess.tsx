@@ -8,7 +8,7 @@ import { CheckCircle2, Mail, Bell, UserCheck, ArrowRight, PartyPopper } from "lu
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import confetti from "@/lib/confetti";
+
 
 // Simple confetti fallback
 const triggerConfetti = () => {
