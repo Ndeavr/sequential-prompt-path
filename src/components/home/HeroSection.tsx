@@ -230,7 +230,7 @@ export default function HeroSection() {
                 >
                   {orbState === "speaking" && (
                     <button onClick={muteSpeech}
-                      className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                      className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-muted-foreground bg-card/60 border border-border hover:bg-card transition-colors"
                     >
                       <VolumeX className="h-3 w-3" /> Couper
                     </button>
