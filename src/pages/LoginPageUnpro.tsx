@@ -24,8 +24,10 @@ export default function LoginPageUnpro() {
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
       const intent = consumeAuthIntent();
+      const navCtx = consumeNavigationContext();
       const from = (location.state as any)?.from;
-      const target = intent?.returnPath || from || getDefaultRedirectForRole(role);
+      const resumePath = getResumePath(role);
+      const target = intent?.returnPath || navCtx?.intendedDestination || from || resumePath || resolveDestinationForRole(role);
       navigate(target, { replace: true });
     }
   }, [isAuthenticated, isLoading, role, navigate, location]);
