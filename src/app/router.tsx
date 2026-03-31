@@ -749,6 +749,8 @@ export const AppRouter = () => (
       {/* Recruitment */}
       <Route path="/carriere" element={<PageRecruitmentCloser />} />
       <Route path="/carriere/merci" element={<PageRecruitmentThankYou />} />
+      <Route path="/carriere/onboarding" element={<PageRepresentativeOnboarding />} />
+      <Route path="/import-entrepreneur" element={<PageRepresentativeOnboarding />} />
 
       {/* Catch-all: try fallback, then 404 */}
       <Route path="*" element={<FallbackRoutePage />} />
