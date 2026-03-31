@@ -308,7 +308,7 @@ const Home = () => {
                 { step: 3, icon: Trophy, title: "Rencontrez", subtitle: "le bon entrepreneur", iconColor: "text-warning" },
               ].map((item, i) => (
                 <motion.div key={item.step} variants={fadeUp} custom={i}>
-                  <div className="premium-card rounded-2xl p-3 sm:p-5 text-center h-full relative overflow-hidden">
+                  <div className="glass-card rounded-2xl p-3 sm:p-5 text-center h-full relative overflow-hidden">
                     <div className="absolute top-2 right-2 h-6 w-6 rounded-full bg-primary flex items-center justify-center text-[10px] font-black text-primary-foreground">
                       {item.step}
                     </div>
