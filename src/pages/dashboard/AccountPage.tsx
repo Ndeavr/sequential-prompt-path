@@ -69,7 +69,6 @@ const AccountPage = () => {
                 <SelectContent>
                   <SelectItem value="M.">M.</SelectItem>
                   <SelectItem value="Mme">Mme</SelectItem>
-                  <SelectItem value="Mx">Mx</SelectItem>
                 </SelectContent>
               </Select>
             </div>
