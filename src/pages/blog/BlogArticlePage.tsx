@@ -8,11 +8,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
-import { CalendarDays, Clock, Tag, ArrowRight, ChevronDown, MapPin } from "lucide-react";
+import { CalendarDays, Clock, Tag, ArrowRight, ChevronDown, MapPin, Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
 import EnrichedFaqAnswer from "@/components/grants/EnrichedFaqAnswer";
 import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import LikeShareButtons from "@/components/shared/LikeShareButtons";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 export default function BlogArticlePage() {
   const { slug } = useParams<{ slug: string }>();
