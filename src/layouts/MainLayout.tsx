@@ -30,7 +30,19 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col relative overflow-x-hidden">
+      {/* ── Persistent immersive background ── */}
+      <div
+        className="fixed inset-0 -z-10"
+        style={{
+          background: `
+            radial-gradient(circle at 15% 20%, hsl(222 100% 65% / 0.18), transparent 40%),
+            radial-gradient(circle at 85% 80%, hsl(195 100% 55% / 0.12), transparent 50%),
+            radial-gradient(circle at 50% 50%, hsl(252 100% 72% / 0.06), transparent 60%),
+            hsl(228 40% 7%)
+          `,
+        }}
+      />
       <SmartHeader />
       <main className="flex-1 pb-16 lg:pb-0 relative z-0">{children}</main>
       {showSEOGrid && <FooterSEOGrid />}

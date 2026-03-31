@@ -80,7 +80,7 @@ const Home = () => {
         <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
       </Helmet>
 
-      <div className="flex flex-col bg-background text-foreground">
+      <div className="flex flex-col">
         <FloatingAlexRobot alexSectionRef={alexSectionRef} />
 
         {/* ═══ HERO ═══ */}
@@ -110,9 +110,9 @@ const Home = () => {
               <div className="flex items-start gap-3 max-w-md">
                 <div className="relative shrink-0">
                   <img src={unproRobot} alt="Alex" className="h-11 w-11 rounded-full object-cover" />
-                  <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-green-500 border-2 border-background" />
+                  <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-success border-2 border-background" />
                 </div>
-                <div className="rounded-2xl rounded-tl-md px-4 py-3 bg-card/80 backdrop-blur-md border border-border/60 shadow-[var(--shadow-md)]">
+                <div className="rounded-2xl rounded-tl-md px-4 py-3 glass-card shadow-[var(--shadow-md)]">
                   <p className="text-sm font-medium text-foreground">J'ai trouvé le match parfait pour vous.</p>
                 </div>
               </div>
@@ -123,11 +123,7 @@ const Home = () => {
                 whileInView={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.7, delay: 0.3 }}
-                className="rounded-3xl p-5 sm:p-6 border border-border/60 shadow-[var(--shadow-xl)]"
-                style={{
-                  background: "linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--card) / 0.85) 100%)",
-                  backdropFilter: "blur(20px)",
-                }}
+                className="glass-card rounded-3xl p-5 sm:p-6 shadow-[var(--shadow-xl)]"
               >
                 <div className="flex items-start gap-4">
                   <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl overflow-hidden bg-muted/50 border border-border/50 shrink-0 flex items-center justify-center">
@@ -225,7 +221,7 @@ const Home = () => {
                 <motion.div key={card.title} variants={fadeUp} custom={i}>
                   <Link
                     to={card.route}
-                    className="premium-card rounded-2xl p-3 sm:p-4 h-full flex flex-col text-center hover:shadow-lg transition-all group"
+                    className="glass-card rounded-2xl p-3 sm:p-4 h-full flex flex-col text-center hover:shadow-lg transition-all group"
                   >
                     <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-xl ${card.bgColor} flex items-center justify-center mx-auto mb-2`}>
                       <card.icon className={`h-5 w-5 sm:h-6 sm:w-6 ${card.color}`} />
@@ -259,7 +255,7 @@ const Home = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <div className="premium-card rounded-3xl p-5 sm:p-7 space-y-5">
+              <div className="glass-card rounded-3xl p-5 sm:p-7 space-y-5">
                 {/* Tabs mockup */}
                 <div className="flex rounded-xl overflow-hidden border border-border/60">
                   {["Factures", "Travaux", "Dossier Maison"].map((tab, i) => (
@@ -313,7 +309,7 @@ const Home = () => {
                 { step: 3, icon: Trophy, title: "Rencontrez", subtitle: "le bon entrepreneur", iconColor: "text-warning" },
               ].map((item, i) => (
                 <motion.div key={item.step} variants={fadeUp} custom={i}>
-                  <div className="premium-card rounded-2xl p-3 sm:p-5 text-center h-full relative overflow-hidden">
+                  <div className="glass-card rounded-2xl p-3 sm:p-5 text-center h-full relative overflow-hidden">
                     <div className="absolute top-2 right-2 h-6 w-6 rounded-full bg-primary flex items-center justify-center text-[10px] font-black text-primary-foreground">
                       {item.step}
                     </div>
@@ -389,7 +385,7 @@ const Home = () => {
                 { name: "Sophie T.", role: "Propriétaire · Québec", text: "Le Score Maison m'a permis de planifier un budget réaliste sur 5 ans." },
               ].map((t, i) => (
                 <motion.div key={t.name} variants={fadeUp} custom={i}>
-                  <div className="premium-card rounded-2xl p-4 h-full space-y-2.5">
+                  <div className="glass-card rounded-2xl p-4 h-full space-y-2.5">
                     <div className="flex items-center gap-0.5">
                       {[1,2,3,4,5].map(s => <Star key={s} className="h-3 w-3 fill-current text-warning" />)}
                     </div>
@@ -422,7 +418,7 @@ const Home = () => {
                   { q: "Comment UNPRO choisit l'entrepreneur ?", a: "Le système analyse votre projet, votre localisation et la disponibilité des professionnels pour trouver le meilleur match." },
                   { q: "Est-ce plus rapide que les soumissions ?", a: "Oui. Au lieu d'attendre plusieurs réponses, vous obtenez un rendez-vous garanti directement avec le bon entrepreneur." },
                 ].map((faq) => (
-                  <details key={faq.q} className="group premium-card rounded-2xl overflow-hidden">
+                  <details key={faq.q} className="group glass-card rounded-2xl overflow-hidden">
                     <summary className="flex items-center justify-between cursor-pointer px-4 py-3 text-sm font-semibold text-foreground hover:bg-muted/30 transition-colors">
                       {faq.q}
                       <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform group-open:rotate-90" />

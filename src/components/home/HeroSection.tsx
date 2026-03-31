@@ -69,23 +69,23 @@ export default function HeroSection() {
   return (
     <>
       <section className="relative min-h-[85vh] flex flex-col items-center justify-center overflow-hidden px-5 py-16">
-        {/* ── Dark space background ── */}
-        <div className="absolute inset-0 bg-[#060B18]">
+        {/* ── Subtle overlay effects (transparent — uses persistent bg) ── */}
+        <div className="absolute inset-0">
           {/* Star field subtle */}
-          <div className="absolute inset-0 opacity-40" style={{
-            backgroundImage: "radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.4) 0%, transparent 100%), radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,0.3) 0%, transparent 100%), radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.2) 0%, transparent 100%), radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,0.35) 0%, transparent 100%), radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,0.25) 0%, transparent 100%), radial-gradient(1px 1px at 55% 45%, rgba(255,255,255,0.3) 0%, transparent 100%)",
+          <div className="absolute inset-0 opacity-30" style={{
+            backgroundImage: "radial-gradient(1px 1px at 20% 30%, hsl(220 20% 93% / 0.4) 0%, transparent 100%), radial-gradient(1px 1px at 70% 20%, hsl(220 20% 93% / 0.3) 0%, transparent 100%), radial-gradient(1px 1px at 40% 70%, hsl(220 20% 93% / 0.2) 0%, transparent 100%), radial-gradient(1px 1px at 80% 60%, hsl(220 20% 93% / 0.35) 0%, transparent 100%), radial-gradient(1px 1px at 10% 80%, hsl(220 20% 93% / 0.25) 0%, transparent 100%), radial-gradient(1px 1px at 55% 45%, hsl(220 20% 93% / 0.3) 0%, transparent 100%)",
           }} />
           {/* Horizon glow */}
           <div className="absolute bottom-0 left-0 right-0 h-[40%]" style={{
-            background: "linear-gradient(0deg, hsl(222 100% 61% / 0.12) 0%, transparent 100%)",
+            background: "linear-gradient(0deg, hsl(222 100% 65% / 0.08) 0%, transparent 100%)",
           }} />
           {/* Central orb ambient */}
           <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full" style={{
-            background: "radial-gradient(circle, hsl(222 100% 61% / 0.08) 0%, transparent 70%)",
+            background: "radial-gradient(circle, hsl(222 100% 65% / 0.06) 0%, transparent 70%)",
           }} />
           {/* Horizontal light streak */}
           <div className="absolute top-[55%] left-0 right-0 h-px" style={{
-            background: "linear-gradient(90deg, transparent 5%, hsl(222 100% 70% / 0.25) 30%, hsl(195 100% 60% / 0.3) 50%, hsl(222 100% 70% / 0.25) 70%, transparent 95%)",
+            background: "linear-gradient(90deg, transparent 5%, hsl(222 100% 70% / 0.2) 30%, hsl(195 100% 60% / 0.25) 50%, hsl(222 100% 70% / 0.2) 70%, transparent 95%)",
           }} />
         </div>
 
@@ -105,7 +105,7 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.15 }}
-            className="font-display text-[28px] sm:text-[36px] md:text-[48px] font-bold text-white leading-[1.1] tracking-tight"
+            className="font-display text-[28px] sm:text-[36px] md:text-[48px] font-bold text-foreground leading-[1.1] tracking-tight"
           >
             Quel est votre problème?
           </motion.h1>
@@ -114,7 +114,7 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="mt-3 text-sm sm:text-base text-white/60 max-w-md"
+            className="mt-3 text-sm sm:text-base text-muted-foreground max-w-md"
           >
             Décrivez. Prenez une photo. Parlez.
           </motion.p>
@@ -176,7 +176,7 @@ export default function HeroSection() {
                   height: 100,
                   background: "linear-gradient(135deg, hsl(222 100% 30% / 0.8), hsl(222 100% 20% / 0.9))",
                   border: "2px solid hsl(222 100% 70% / 0.3)",
-                  boxShadow: "0 0 60px -10px hsl(222 100% 61% / 0.4), inset 0 1px 1px hsl(0 0% 100% / 0.1)",
+                  boxShadow: "0 0 60px -10px hsl(222 100% 65% / 0.4), inset 0 1px 1px hsl(0 0% 100% / 0.1)",
                 }}
                 animate={
                   orbState === "speaking" ? { scale: [1, 1.08, 1] }
@@ -197,11 +197,11 @@ export default function HeroSection() {
 
                 {/* Icon */}
                 {orbState === "speaking" ? (
-                  <Volume2 className="h-9 w-9 text-white/90 relative z-10 drop-shadow-sm" />
+                  <Volume2 className="h-9 w-9 text-foreground/90 relative z-10 drop-shadow-sm" />
                 ) : orbState === "thinking" ? (
-                  <Loader2 className="h-9 w-9 text-white/90 relative z-10 animate-spin" />
+                  <Loader2 className="h-9 w-9 text-foreground/90 relative z-10 animate-spin" />
                 ) : (
-                  <Mic className="h-9 w-9 text-white/90 relative z-10 drop-shadow-sm" />
+                  <Mic className="h-9 w-9 text-foreground/90 relative z-10 drop-shadow-sm" />
                 )}
               </motion.button>
             </div>
@@ -213,7 +213,7 @@ export default function HeroSection() {
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
-                className="mt-4 text-xs font-medium text-white/50"
+                className="mt-4 text-xs font-medium text-muted-foreground"
               >
                 {statusText}
               </motion.p>
@@ -230,18 +230,18 @@ export default function HeroSection() {
                 >
                   {orbState === "speaking" && (
                     <button onClick={muteSpeech}
-                      className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                      className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-muted-foreground bg-card/60 border border-border hover:bg-card transition-colors"
                     >
                       <VolumeX className="h-3 w-3" /> Couper
                     </button>
                   )}
                   <button onClick={() => { stopVoice(); setTextSheetOpen(true); }}
-                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-muted-foreground bg-card/60 border border-border hover:bg-card transition-colors"
                   >
                     <Keyboard className="h-3 w-3" /> Écrire
                   </button>
                   <button onClick={stopVoice}
-                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-red-400/80 bg-red-500/5 border border-red-500/15 hover:bg-red-500/10 transition-colors"
+                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-destructive/80 bg-destructive/5 border border-destructive/15 hover:bg-destructive/10 transition-colors"
                   >
                     <Square className="h-2.5 w-2.5" /> Arrêter
                   </button>
@@ -264,12 +264,7 @@ export default function HeroSection() {
                   <Link
                     key={action.label}
                     to={action.route}
-                    className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-medium text-white/80 transition-all hover:text-white hover:bg-white/10 active:scale-[0.97]"
-                    style={{
-                      background: "hsl(222 30% 15% / 0.6)",
-                      border: "1px solid hsl(222 40% 30% / 0.4)",
-                      backdropFilter: "blur(12px)",
-                    }}
+                    className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-medium text-foreground/80 transition-all hover:text-foreground hover:bg-card/80 active:scale-[0.97] glass-card"
                   >
                     <action.icon className="h-4 w-4 text-primary/80" />
                     {action.label}
