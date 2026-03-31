@@ -11,7 +11,9 @@ import { motion } from "framer-motion";
 import OAuthButtons from "@/components/auth/OAuthButtons";
 import AuthDivider from "@/components/auth/AuthDivider";
 import PhoneOtpForm from "@/components/auth/PhoneOtpForm";
-import { saveAuthIntent, consumeAuthIntent, getDefaultRedirectForRole } from "@/services/auth/authIntentService";
+import { consumeAuthIntent } from "@/services/auth/authIntentService";
+import { resolveDestinationForRole } from "@/config/routeRegistry";
+import { consumeNavigationContext, getResumePath } from "@/services/navigation/journeyService";
 import { Smartphone, Lock } from "lucide-react";
 import logo from "@/assets/unpro-robot.png";
 
@@ -25,8 +27,10 @@ const Login = () => {
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
       const intent = consumeAuthIntent();
+      const navCtx = consumeNavigationContext();
       const from = (location.state as any)?.from;
-      const target = intent?.returnPath || from || getDefaultRedirectForRole(role);
+      const resumePath = getResumePath(role);
+      const target = intent?.returnPath || navCtx?.intendedDestination || from || resumePath || resolveDestinationForRole(role);
       navigate(target, { replace: true });
     }
   }, [isAuthenticated, isLoading, role, navigate, location]);
