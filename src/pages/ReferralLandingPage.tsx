@@ -6,12 +6,13 @@ import { useEffect } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { trackReferralEvent } from "@/hooks/useReferralAttribution";
 import { useAuth } from "@/hooks/useAuth";
+import { getDefaultRedirectForRole } from "@/services/auth/authIntentService";
 
 const ReferralLandingPage = () => {
   const { refCode } = useParams<{ refCode: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, role } = useAuth();
 
   useEffect(() => {
     if (!refCode) return;
@@ -41,16 +42,16 @@ const ReferralLandingPage = () => {
 
     if (isAuthenticated) {
       // Already logged in — go to dashboard
-      if (intent === "book") {
+      if (intent === "book" && role === "homeowner") {
         navigate("/dashboard/appointments", { replace: true });
       } else {
-        navigate("/dashboard", { replace: true });
+        navigate(getDefaultRedirectForRole(role), { replace: true });
       }
     } else {
       // Redirect to signup with ref preserved
       navigate(`/signup?ref=${refCode}`, { replace: true });
     }
-  }, [isAuthenticated, isLoading, navigate, refCode, searchParams]);
+  }, [isAuthenticated, isLoading, navigate, refCode, role, searchParams]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">

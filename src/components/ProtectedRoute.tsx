@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { saveAuthIntent } from "@/services/auth/authIntentService";
+import { getDefaultRedirectForRole, saveAuthIntent } from "@/services/auth/authIntentService";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -32,8 +32,7 @@ const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps
 
   // If anyRole is set, skip role check. Admins can access any route.
   if (!anyRole && requiredRole && role !== requiredRole && role !== "admin") {
-    if (role === "contractor") return <Navigate to="/pro" replace />;
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={getDefaultRedirectForRole(role)} replace />;
   }
 
   return <>{children}</>;

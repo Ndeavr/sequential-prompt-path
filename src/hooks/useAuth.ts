@@ -24,7 +24,7 @@ export const useAuth = () => {
     return () => subscription.unsubscribe();
   }, [queryClient]);
 
-  const { data: role } = useQuery({
+  const roleQuery = useQuery({
     queryKey: ["user-role", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
@@ -42,6 +42,10 @@ export const useAuth = () => {
     enabled: !!session?.user?.id,
   });
 
+  const role = roleQuery.data ?? null;
+  const isRoleLoading = !!session?.user?.id && !roleQuery.isFetched;
+  const isAuthLoading = loading || isRoleLoading;
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     queryClient.clear();
@@ -50,7 +54,9 @@ export const useAuth = () => {
   return {
     user: session?.user ?? null,
     session,
-    isLoading: loading,
+    isLoading: isAuthLoading,
+    isRoleLoading,
+    hasResolvedRole: !session?.user || roleQuery.isFetched,
     isAuthenticated: !!session?.user,
     role: role as string | null,
     signOut,

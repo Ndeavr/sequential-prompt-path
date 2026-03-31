@@ -5,7 +5,7 @@
  */
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { resolveDestinationForRole } from "@/config/routeRegistry";
+import { getDefaultRedirectForRole } from "@/services/auth/authIntentService";
 import { getResumePath } from "@/services/navigation/journeyService";
 import { consumeAuthIntent } from "@/services/auth/authIntentService";
 import RouteTransitionLoader from "@/components/navigation/RouteTransitionLoader";
@@ -23,5 +23,5 @@ export default function DashboardRedirectHandler() {
   const resumePath = getResumePath(role);
   if (resumePath) return <Navigate to={resumePath} replace />;
 
-  return <Navigate to={resolveDestinationForRole(role)} replace />;
+  return <Navigate to={getDefaultRedirectForRole(role)} replace />;
 }
