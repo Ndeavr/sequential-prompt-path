@@ -31,13 +31,14 @@ export default function PageAIPPAnalysisLoading() {
 
     const run = async () => {
       const session = await getActiveFlowSession("AIPP_ANALYSIS");
+      const hasFallbackScore = Boolean(sessionStorage.getItem("unpro_lead_score"));
 
-      // If no active session or already past loading, redirect
-      if (!session) {
+      // If no active session, still continue when fallback sessionStorage exists
+      if (!session && !hasFallbackScore) {
         navigate("/entrepreneur", { replace: true });
         return;
       }
-      if (session.step !== "loading") {
+      if (session && session.step !== "loading") {
         navigate(getStepRoute(session.step), { replace: true });
         return;
       }
@@ -62,12 +63,14 @@ export default function PageAIPPAnalysisLoading() {
       const oppMin = Number(sessionStorage.getItem("unpro_lead_opp_min") || 5);
       const oppMax = Number(sessionStorage.getItem("unpro_lead_opp_max") || 15);
 
-      await updateFlowScoreSnapshot(session.id, {
-        score,
-        visibility,
-        oppMin,
-        oppMax,
-      });
+      if (session) {
+        await updateFlowScoreSnapshot(session.id, {
+          score,
+          visibility,
+          oppMin,
+          oppMax,
+        });
+      }
 
       navigate("/entrepreneur/score", { replace: true });
     };
