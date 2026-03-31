@@ -11,8 +11,6 @@ export default function AlexVoiceRealtimePage() {
   const { user } = useAuth();
   const userName = user?.user_metadata?.first_name || user?.user_metadata?.full_name?.split(" ")[0] || null;
 
-  // Agent ID is resolved server-side from ELEVENLABS_AGENT_ID secret
-  // We pass empty string — the edge function uses the env var
   return (
     <>
       <Helmet>
@@ -21,7 +19,6 @@ export default function AlexVoiceRealtimePage() {
       </Helmet>
       <div className="fixed inset-0 z-50 bg-background">
         <AlexVoiceRealtime
-          agentId=""
           onClose={() => navigate(-1)}
           userName={userName || undefined}
         />

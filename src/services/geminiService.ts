@@ -15,6 +15,14 @@ import {
   type AlexRuntimeContext,
 } from "./alexConfig";
 
+// Re-export audio codec utilities for backward compatibility
+export {
+  encodeToBase64 as encode,
+  decodeFromBase64 as decode,
+  decodeAudioData,
+  createPcmBlob as createBlob,
+} from "./geminiAudioCodec";
+
 // ─── Types ───
 
 export type GenerateAlexTextInput = {
