@@ -114,7 +114,7 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="mt-3 text-sm sm:text-base text-white/60 max-w-md"
+            className="mt-3 text-sm sm:text-base text-muted-foreground max-w-md"
           >
             Décrivez. Prenez une photo. Parlez.
           </motion.p>
