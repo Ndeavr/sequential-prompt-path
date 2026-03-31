@@ -235,6 +235,7 @@ import PageEntrepreneurLandingAIPP from "@/pages/entrepreneur/PageEntrepreneurLa
 import PageEntrepreneurScoreResult from "@/pages/entrepreneur/PageEntrepreneurScoreResult";
 import PageEntrepreneurPricing from "@/pages/entrepreneur/PageEntrepreneurPricing";
 import PageEntrepreneurDashboardLite from "@/pages/entrepreneur/PageEntrepreneurDashboardLite";
+import PageAIPPAnalysisLoading from "@/pages/entrepreneur/PageAIPPAnalysisLoading";
 
 // Contractor Pro
 import ProDashboard from "@/pages/pro/ProDashboard";
