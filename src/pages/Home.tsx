@@ -222,6 +222,7 @@ const Home = () => {
                   <Link
                     to={card.route}
                     className="glass-card rounded-2xl p-3 sm:p-4 h-full flex flex-col text-center hover:shadow-lg transition-all group"
+                  >
                     <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-xl ${card.bgColor} flex items-center justify-center mx-auto mb-2`}>
                       <card.icon className={`h-5 w-5 sm:h-6 sm:w-6 ${card.color}`} />
                     </div>
