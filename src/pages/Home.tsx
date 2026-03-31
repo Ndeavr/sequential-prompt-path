@@ -417,7 +417,7 @@ const Home = () => {
                   { q: "Comment UNPRO choisit l'entrepreneur ?", a: "Le système analyse votre projet, votre localisation et la disponibilité des professionnels pour trouver le meilleur match." },
                   { q: "Est-ce plus rapide que les soumissions ?", a: "Oui. Au lieu d'attendre plusieurs réponses, vous obtenez un rendez-vous garanti directement avec le bon entrepreneur." },
                 ].map((faq) => (
-                  <details key={faq.q} className="group premium-card rounded-2xl overflow-hidden">
+                  <details key={faq.q} className="group glass-card rounded-2xl overflow-hidden">
                     <summary className="flex items-center justify-between cursor-pointer px-4 py-3 text-sm font-semibold text-foreground hover:bg-muted/30 transition-colors">
                       {faq.q}
                       <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform group-open:rotate-90" />
