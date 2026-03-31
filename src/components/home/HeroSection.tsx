@@ -241,7 +241,7 @@ export default function HeroSection() {
                     <Keyboard className="h-3 w-3" /> Écrire
                   </button>
                   <button onClick={stopVoice}
-                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-red-400/80 bg-red-500/5 border border-red-500/15 hover:bg-red-500/10 transition-colors"
+                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-destructive/80 bg-destructive/5 border border-destructive/15 hover:bg-destructive/10 transition-colors"
                   >
                     <Square className="h-2.5 w-2.5" /> Arrêter
                   </button>
