@@ -10,7 +10,9 @@ import FooterSEOGrid from "@/components/navigation/FooterSEOGrid";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import AlexConcierge from "@/components/alex/AlexConcierge";
 import CommandPalette from "@/components/navigation/CommandPalette";
+import BannerResumeJourney from "@/components/navigation/BannerResumeJourney";
 import { useLanguage } from "@/components/ui/LanguageToggle";
+import { useJourneyTracker } from "@/hooks/useJourneyTracker";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -19,6 +21,7 @@ interface MainLayoutProps {
 const MainLayout = ({ children }: MainLayoutProps) => {
   const { pathname } = useLocation();
   const { lang } = useLanguage();
+  useJourneyTracker();
 
   // Theme is now user-controlled via ThemeToggle
 
