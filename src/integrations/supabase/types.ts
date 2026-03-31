@@ -13628,6 +13628,183 @@ export type Database = {
           },
         ]
       }
+      domain_dns_records: {
+        Row: {
+          actual_value: string | null
+          checked_at: string
+          created_at: string
+          domain: string
+          expected_value: string | null
+          id: string
+          record_type: string
+          status: string
+        }
+        Insert: {
+          actual_value?: string | null
+          checked_at?: string
+          created_at?: string
+          domain: string
+          expected_value?: string | null
+          id?: string
+          record_type: string
+          status?: string
+        }
+        Update: {
+          actual_value?: string | null
+          checked_at?: string
+          created_at?: string
+          domain?: string
+          expected_value?: string | null
+          id?: string
+          record_type?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      domain_fix_logs: {
+        Row: {
+          action: string
+          created_at: string
+          domain: string
+          id: string
+          performed_by: string | null
+          result_json: Json | null
+          status: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          domain: string
+          id?: string
+          performed_by?: string | null
+          result_json?: Json | null
+          status?: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          domain?: string
+          id?: string
+          performed_by?: string | null
+          result_json?: Json | null
+          status?: string
+        }
+        Relationships: []
+      }
+      domain_health_checks: {
+        Row: {
+          access_ok: boolean | null
+          checked_by: string | null
+          created_at: string
+          details_json: Json | null
+          dns_valid: boolean | null
+          domain: string
+          id: string
+          score: number | null
+          security_ok: boolean | null
+          ssl_valid: boolean | null
+          status: string
+        }
+        Insert: {
+          access_ok?: boolean | null
+          checked_by?: string | null
+          created_at?: string
+          details_json?: Json | null
+          dns_valid?: boolean | null
+          domain: string
+          id?: string
+          score?: number | null
+          security_ok?: boolean | null
+          ssl_valid?: boolean | null
+          status?: string
+        }
+        Update: {
+          access_ok?: boolean | null
+          checked_by?: string | null
+          created_at?: string
+          details_json?: Json | null
+          dns_valid?: boolean | null
+          domain?: string
+          id?: string
+          score?: number | null
+          security_ok?: boolean | null
+          ssl_valid?: boolean | null
+          status?: string
+        }
+        Relationships: []
+      }
+      domain_security_flags: {
+        Row: {
+          category: string | null
+          checked_at: string
+          created_at: string
+          details: string | null
+          domain: string
+          flag_type: string
+          fortiguard_block: boolean | null
+          id: string
+          risk_level: string | null
+        }
+        Insert: {
+          category?: string | null
+          checked_at?: string
+          created_at?: string
+          details?: string | null
+          domain: string
+          flag_type: string
+          fortiguard_block?: boolean | null
+          id?: string
+          risk_level?: string | null
+        }
+        Update: {
+          category?: string | null
+          checked_at?: string
+          created_at?: string
+          details?: string | null
+          domain?: string
+          flag_type?: string
+          fortiguard_block?: boolean | null
+          id?: string
+          risk_level?: string | null
+        }
+        Relationships: []
+      }
+      domain_ssl_status: {
+        Row: {
+          checked_at: string
+          created_at: string
+          domain: string
+          error_code: string | null
+          error_message: string | null
+          expiry_date: string | null
+          id: string
+          issuer: string | null
+          valid: boolean | null
+        }
+        Insert: {
+          checked_at?: string
+          created_at?: string
+          domain: string
+          error_code?: string | null
+          error_message?: string | null
+          expiry_date?: string | null
+          id?: string
+          issuer?: string | null
+          valid?: boolean | null
+        }
+        Update: {
+          checked_at?: string
+          created_at?: string
+          domain?: string
+          error_code?: string | null
+          error_message?: string | null
+          expiry_date?: string | null
+          id?: string
+          issuer?: string | null
+          valid?: boolean | null
+        }
+        Relationships: []
+      }
       dynamic_pricing: {
         Row: {
           base_price_cents: number | null

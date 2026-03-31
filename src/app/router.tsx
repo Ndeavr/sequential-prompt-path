@@ -306,6 +306,7 @@ import AdminMarketEngine from "@/pages/admin/AdminMarketEngine";
 import AdminNexusDashboard from "@/pages/admin/AdminNexusDashboard";
 import AdminDispatchCenter from "@/pages/admin/AdminDispatchCenter";
 import AdminDomainIntelligence from "@/pages/admin/AdminDomainIntelligence";
+import PageDomainHealthDashboard from "@/pages/admin/PageDomainHealthDashboard";
 import AdminBulkArticlesPage from "@/pages/admin/AdminBulkArticlesPage";
 import AdminProspectCampaigns from "@/pages/admin/AdminProspectCampaigns";
 import AdminRoadmapExecution from "@/pages/admin/AdminRoadmapExecution";
@@ -675,6 +676,7 @@ export const AppRouter = () => (
       <Route path="/admin/nexus" element={<ProtectedRoute requiredRole="admin"><AdminNexusDashboard /></ProtectedRoute>} />
       <Route path="/admin/dispatch-center" element={<ProtectedRoute requiredRole="admin"><AdminDispatchCenter /></ProtectedRoute>} />
       <Route path="/admin/domain-intelligence" element={<ProtectedRoute requiredRole="admin"><AdminDomainIntelligence /></ProtectedRoute>} />
+      <Route path="/admin/domain-health" element={<ProtectedRoute requiredRole="admin"><PageDomainHealthDashboard /></ProtectedRoute>} />
       <Route path="/admin/seo-articles" element={<ProtectedRoute requiredRole="admin"><AdminSeoArticles /></ProtectedRoute>} />
       <Route path="/admin/bulk-articles" element={<ProtectedRoute requiredRole="admin"><AdminBulkArticlesPage /></ProtectedRoute>} />
       <Route path="/admin/founder-invites" element={<ProtectedRoute requiredRole="admin"><AdminFounderInvites /></ProtectedRoute>} />
