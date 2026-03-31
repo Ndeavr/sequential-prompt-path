@@ -5,7 +5,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { consumeAuthIntent, getDefaultRedirectForRole } from "@/services/auth/authIntentService";
+import { consumeAuthIntent } from "@/services/auth/authIntentService";
+import { resolveDestinationForRole } from "@/config/routeRegistry";
+import { consumeNavigationContext, getResumePath } from "@/services/navigation/journeyService";
 import AuthCardUnpro from "@/components/auth/AuthCardUnpro";
 import OAuthButtons from "@/components/auth/OAuthButtons";
 import AuthDivider from "@/components/auth/AuthDivider";
