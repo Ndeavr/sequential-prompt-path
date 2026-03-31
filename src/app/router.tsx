@@ -236,6 +236,10 @@ import PageEntrepreneurScoreResult from "@/pages/entrepreneur/PageEntrepreneurSc
 import PageEntrepreneurPricing from "@/pages/entrepreneur/PageEntrepreneurPricing";
 import PageEntrepreneurDashboardLite from "@/pages/entrepreneur/PageEntrepreneurDashboardLite";
 import PageAIPPAnalysisLoading from "@/pages/entrepreneur/PageAIPPAnalysisLoading";
+import PagePricingCalculator from "@/pages/entrepreneur/PagePricingCalculator";
+import PagePlanResult from "@/pages/entrepreneur/PagePlanResult";
+import PagePaymentSuccess from "@/pages/entrepreneur/PagePaymentSuccess";
+import PagePaymentCancelled from "@/pages/entrepreneur/PagePaymentCancelled";
 
 // Contractor Pro
 import ProDashboard from "@/pages/pro/ProDashboard";
