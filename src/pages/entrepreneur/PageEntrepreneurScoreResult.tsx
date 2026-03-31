@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Eye, TrendingUp, AlertTriangle, CheckCircle2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ScoreRing from "@/components/ui/score-ring";
+import { getActiveFlowSession, type FlowSession } from "@/services/flowStateService";
 
 const PageEntrepreneurScoreResult = () => {
   const navigate = useNavigate();
@@ -15,20 +16,37 @@ const PageEntrepreneurScoreResult = () => {
   const [showAlex, setShowAlex] = useState(false);
 
   useEffect(() => {
-    const s = sessionStorage.getItem("unpro_lead_score");
-    if (!s) {
-      navigate("/entrepreneur");
-      return;
-    }
-    setScore(Number(s));
-    setVisibility(sessionStorage.getItem("unpro_lead_visibility") || "faible");
-    setOppMin(Number(sessionStorage.getItem("unpro_lead_opp_min") || 0));
-    setOppMax(Number(sessionStorage.getItem("unpro_lead_opp_max") || 0));
-    setBusinessName(sessionStorage.getItem("unpro_lead_name") || "");
+    const loadData = async () => {
+      // Try sessionStorage first
+      const s = sessionStorage.getItem("unpro_lead_score");
+      if (s) {
+        setScore(Number(s));
+        setVisibility(sessionStorage.getItem("unpro_lead_visibility") || "faible");
+        setOppMin(Number(sessionStorage.getItem("unpro_lead_opp_min") || 0));
+        setOppMax(Number(sessionStorage.getItem("unpro_lead_opp_max") || 0));
+        setBusinessName(sessionStorage.getItem("unpro_lead_name") || "");
+      } else {
+        // Fallback: restore from flow session DB
+        const session = await getActiveFlowSession("AIPP_ANALYSIS");
+        if (!session || !session.score_snapshot) {
+          navigate("/entrepreneur", { replace: true });
+          return;
+        }
+        const snap = session.score_snapshot as Record<string, number | string>;
+        setScore(Number(snap.score || 0));
+        setVisibility(String(snap.visibility || "faible"));
+        setOppMin(Number(snap.oppMin || 0));
+        setOppMax(Number(snap.oppMax || 0));
+        setBusinessName(
+          String((session.input_payload as Record<string, string>)?.company_name || "")
+        );
+      }
 
-    // Trigger Alex after 3s
-    const timer = setTimeout(() => setShowAlex(true), 3000);
-    return () => clearTimeout(timer);
+      // Trigger Alex after 3s
+      setTimeout(() => setShowAlex(true), 3000);
+    };
+
+    loadData();
   }, [navigate]);
 
   const visibilityColor = visibility === "moyenne" ? "text-warning" : visibility === "très faible" ? "text-destructive" : "text-accent";
