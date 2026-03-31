@@ -15,6 +15,15 @@ const PageEntrepreneurLandingAIPP = () => {
   const [website, setWebsite] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Check for active flow session — redirect if exists
+  useEffect(() => {
+    getActiveFlowSession("AIPP_ANALYSIS").then((session) => {
+      if (session && session.step !== "loading") {
+        navigate(getStepRoute(session.step), { replace: true });
+      }
+    });
+  }, [navigate]);
+
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!businessName.trim() || !city.trim()) {
@@ -33,8 +42,8 @@ const PageEntrepreneurLandingAIPP = () => {
 
       if (error) throw error;
 
-      // Generate mock score
-      const score = Math.floor(Math.random() * 35) + 25; // 25-60 range
+      // Generate score
+      const score = Math.floor(Math.random() * 35) + 25;
       const visibility = score >= 55 ? "moyenne" : score >= 40 ? "faible" : "très faible";
       const oppMin = Math.floor(score / 5) + 3;
       const oppMax = oppMin + Math.floor(Math.random() * 15) + 8;
@@ -57,7 +66,7 @@ const PageEntrepreneurLandingAIPP = () => {
 
       if (scoreErr) throw scoreErr;
 
-      // Store in sessionStorage for result page
+      // Store in sessionStorage for continuity
       sessionStorage.setItem("unpro_lead_id", lead.id);
       sessionStorage.setItem("unpro_lead_name", businessName);
       sessionStorage.setItem("unpro_lead_city", city);
@@ -66,7 +75,23 @@ const PageEntrepreneurLandingAIPP = () => {
       sessionStorage.setItem("unpro_lead_opp_min", String(oppMin));
       sessionStorage.setItem("unpro_lead_opp_max", String(oppMax));
 
-      navigate("/entrepreneur/score");
+      // Get current user if logged in
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Create flow session (persisted in DB)
+      await createFlowSession({
+        flowType: "AIPP_ANALYSIS",
+        inputPayload: {
+          company_name: businessName,
+          city,
+          website: website || null,
+        },
+        userId: user?.id || null,
+        leadId: lead.id,
+      });
+
+      // Navigate to loading page (NEVER dashboard)
+      navigate("/entrepreneur/analysis/loading");
     } catch {
       toast.error("Une erreur est survenue. Réessayez.");
     } finally {
