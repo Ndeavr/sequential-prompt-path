@@ -153,7 +153,9 @@ import AdminExperimentDetailPage from "@/pages/admin/AdminExperimentDetailPage";
 import AdminOptimizationRecommendations from "@/pages/admin/AdminOptimizationRecommendations";
 import AdminWinningVariantsPage from "@/pages/admin/AdminWinningVariantsPage";
 
-// Predictive Lead Core
+// Alex Conversation Guardrails
+import PageAdminAlexConversationRules from "@/pages/admin/PageAdminAlexConversationRules";
+
 import AdminPredictiveLeads from "@/pages/admin/AdminPredictiveLeads";
 
 // Dynamic Market Pricing
