@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, Zap, TrendingUp, Shield, ArrowRight, Sparkles } from "lucide-react";
@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { createFlowSession, getActiveFlowSession, getStepRoute } from "@/services/flowStateService";
 
 const PageEntrepreneurLandingAIPP = () => {
   const navigate = useNavigate();
