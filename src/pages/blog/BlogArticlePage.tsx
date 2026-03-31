@@ -8,14 +8,16 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
-import { CalendarDays, Clock, Tag, ArrowRight, ChevronDown, MapPin } from "lucide-react";
+import { CalendarDays, Clock, Tag, ArrowRight, ChevronDown, MapPin, Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
 import EnrichedFaqAnswer from "@/components/grants/EnrichedFaqAnswer";
 import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import LikeShareButtons from "@/components/shared/LikeShareButtons";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 export default function BlogArticlePage() {
   const { slug } = useParams<{ slug: string }>();
+  const { openAlex } = useAlexVoice();
   useEngagementTracking();
 
   const { data: article, isLoading } = useQuery({
@@ -215,20 +217,20 @@ export default function BlogArticlePage() {
           transition={{ delay: 0.4 }}
           className="rounded-xl bg-primary/5 border border-primary/20 p-6 text-center space-y-3"
         >
-          <h3 className="text-lg font-semibold text-foreground">Besoin d'aide avec ce projet?</h3>
-          <p className="text-muted-foreground text-sm">UNPRO remplace les soumissions multiples par un rendez-vous garanti avec le bon entrepreneur.</p>
+          <h3 className="text-lg font-semibold text-foreground">Une question sur ce sujet?</h3>
+          <p className="text-muted-foreground text-sm">Alex, notre assistant IA, peut vous aider à comprendre et vous guider vers la meilleure solution.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              to="/alex"
+            <button
+              onClick={() => openAlex("general")}
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-lg font-medium hover:bg-primary/90 transition"
             >
-              Obtenir mon rendez-vous <ArrowRight className="h-4 w-4" />
-            </Link>
+              <Sparkles className="h-4 w-4" /> Parler à Alex
+            </button>
             <Link
-              to="/alex"
+              to="/decrire-mon-projet"
               className="inline-flex items-center gap-2 border border-border px-6 py-2.5 rounded-lg font-medium hover:bg-accent transition text-foreground"
             >
-              Parler à Alex
+              Décrire mon projet <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </motion.div>
