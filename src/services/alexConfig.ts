@@ -148,7 +148,6 @@ export const ALEX_LIVE_CONFIG = {
     responseModalities: ["AUDIO"],
     temperature: 0.45,
     speechConfig: {
-      languageCode: "fr-FR",
       voiceConfig: {
         prebuiltVoiceConfig: {
           voiceName: "Aoede",
