@@ -365,6 +365,10 @@ export const AppRouter = () => (
       <Route path="/entrepreneur/analysis/loading" element={<PageAIPPAnalysisLoading />} />
       <Route path="/entrepreneur/score" element={<PageEntrepreneurScoreResult />} />
       <Route path="/entrepreneur/pricing" element={<PageEntrepreneurPricing />} />
+      <Route path="/entrepreneur/pricing-calculator" element={<PagePricingCalculator />} />
+      <Route path="/entrepreneur/plan-result" element={<PagePlanResult />} />
+      <Route path="/entrepreneur/payment-success" element={<PagePaymentSuccess />} />
+      <Route path="/entrepreneur/payment-cancelled" element={<PagePaymentCancelled />} />
       <Route path="/entrepreneur/dashboard" element={<PageEntrepreneurDashboardLite />} />
 
       {/* Contractor Join Landing */}
