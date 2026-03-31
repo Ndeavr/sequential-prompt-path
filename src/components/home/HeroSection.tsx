@@ -1,35 +1,25 @@
 /**
- * HeroSection — Dark premium space-themed hero
- * Voice-first with centered microphone orb, quick action buttons, and glass effects.
+ * HeroSection — Cinematic AI Home background with photo-first intent messaging.
+ * No "Quel est votre problème" — replaced by "Vous avez une photo?"
  */
-import { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useAlexVoiceSession } from "@/hooks/useAlexVoiceSession";
 import { Link } from "react-router-dom";
-import { Mic, Volume2, VolumeX, Loader2, Keyboard, Square, Camera, FileText, Search } from "lucide-react";
-import unproRobot from "@/assets/unpro-robot.png";
+import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, Camera, Sparkles, Search } from "lucide-react";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
-
-const CHIP_GREETINGS: Record<string, string> = {
-  "Rénovation": "vous cherchez à rénover ?",
-  "Construction": "vous cherchez à construire ?",
-  "Toiture": "vous avez un projet de toiture ?",
-  "Cuisine": "vous voulez refaire votre cuisine ?",
-  "Électricité": "vous avez besoin d'un électricien ?",
-  "Plomberie": "vous cherchez un plombier ?",
-};
+import cinematicBg from "@/assets/cinematic-home-bg.jpg";
 
 const QUICK_ACTIONS = [
-  { icon: Camera, label: "Analyser mon problème", route: "/describe-project" },
-  { icon: FileText, label: "Comparer mes soumissions", route: "/dashboard/quotes/upload" },
-  { icon: Search, label: "Vérifier un entrepreneur", route: "/verify" },
+  { icon: Camera, label: "Analyser une photo" },
+  { icon: Sparkles, label: "Améliorer un design" },
+  { icon: Search, label: "Détecter un problème" },
 ];
 
 export default function HeroSection() {
   const { user } = useAuth();
   const [textSheetOpen, setTextSheetOpen] = useState(false);
-  const [textSheetChip, setTextSheetChip] = useState<string | undefined>();
 
   const {
     state: orbState,
@@ -43,104 +33,100 @@ export default function HeroSection() {
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "";
   const greeting = firstName ? `Bonjour ${firstName}.` : "Bonjour.";
 
-  const startVoice = useCallback((chip?: string) => {
-    if (!sttSupported) {
-      setTextSheetChip(chip);
-      setTextSheetOpen(true);
-      return;
-    }
-    const chipGreet = chip ? CHIP_GREETINGS[chip] : undefined;
-    const greetText = chipGreet
-      ? `${greeting.replace(".", ",")} ${chipGreet}`
-      : `${greeting} Quel projet avez-vous en tête ?`;
-    openSession(greetText);
+  const startVoice = useCallback(() => {
+    if (!sttSupported) { setTextSheetOpen(true); return; }
+    openSession(`${greeting} Décrivez votre situation ou envoyez une photo.`);
   }, [sttSupported, greeting, openSession]);
 
-  const stopVoice = useCallback(() => {
-    closeSession();
-  }, [closeSession]);
+  const stopVoice = useCallback(() => closeSession(), [closeSession]);
 
   const statusText =
     orbState === "speaking" ? "Alex vous parle…"
       : orbState === "thinking" ? "Alex réfléchit…"
-      : orbState === "listening" ? "Je vous écoute…"
-      : "Parlez à Alex";
+        : orbState === "listening" ? "Je vous écoute…"
+          : "Parlez à Alex";
 
   return (
     <>
-      <section className="relative min-h-[85vh] flex flex-col items-center justify-center overflow-hidden px-5 py-16">
-        {/* ── Subtle overlay effects (transparent — uses persistent bg) ── */}
-        <div className="absolute inset-0">
-          {/* Star field subtle */}
-          <div className="absolute inset-0 opacity-30" style={{
-            backgroundImage: "radial-gradient(1px 1px at 20% 30%, hsl(220 20% 93% / 0.4) 0%, transparent 100%), radial-gradient(1px 1px at 70% 20%, hsl(220 20% 93% / 0.3) 0%, transparent 100%), radial-gradient(1px 1px at 40% 70%, hsl(220 20% 93% / 0.2) 0%, transparent 100%), radial-gradient(1px 1px at 80% 60%, hsl(220 20% 93% / 0.35) 0%, transparent 100%), radial-gradient(1px 1px at 10% 80%, hsl(220 20% 93% / 0.25) 0%, transparent 100%), radial-gradient(1px 1px at 55% 45%, hsl(220 20% 93% / 0.3) 0%, transparent 100%)",
+      <section className="relative min-h-[92vh] flex flex-col items-center justify-center overflow-hidden">
+        {/* ── Cinematic Background Image ── */}
+        <motion.div
+          className="absolute inset-0 z-0"
+          animate={{ scale: [1, 1.03, 1] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        >
+          <img
+            src={cinematicBg}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover"
+            width={1920}
+            height={1080}
+          />
+        </motion.div>
+
+        {/* ── Cinematic Overlay ── */}
+        <div className="absolute inset-0 z-[1]" style={{
+          background: "linear-gradient(to bottom, rgba(6,11,24,0.35) 0%, rgba(6,11,24,0.6) 50%, rgba(6,11,24,0.92) 100%)",
+        }} />
+
+        {/* ── Ambient Light FX ── */}
+        <div className="absolute inset-0 z-[2] pointer-events-none">
+          {/* Horizontal glow streak */}
+          <div className="absolute top-[45%] left-0 right-0 h-[2px]" style={{
+            background: "linear-gradient(90deg, transparent 5%, hsl(222 100% 70% / 0.3) 30%, hsl(195 100% 60% / 0.4) 50%, hsl(222 100% 70% / 0.3) 70%, transparent 95%)",
+            filter: "blur(1px)",
           }} />
-          {/* Horizon glow */}
-          <div className="absolute bottom-0 left-0 right-0 h-[40%]" style={{
-            background: "linear-gradient(0deg, hsl(222 100% 65% / 0.08) 0%, transparent 100%)",
-          }} />
-          {/* Central orb ambient */}
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full" style={{
-            background: "radial-gradient(circle, hsl(222 100% 65% / 0.06) 0%, transparent 70%)",
-          }} />
-          {/* Horizontal light streak */}
-          <div className="absolute top-[55%] left-0 right-0 h-px" style={{
-            background: "linear-gradient(90deg, transparent 5%, hsl(222 100% 70% / 0.2) 30%, hsl(195 100% 60% / 0.25) 50%, hsl(222 100% 70% / 0.2) 70%, transparent 95%)",
+          {/* Central radial glow */}
+          <div className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px]" style={{
+            background: "radial-gradient(ellipse, hsl(222 100% 65% / 0.12) 0%, transparent 70%)",
           }} />
         </div>
 
-        <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto w-full">
-          {/* ── Logo ── */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="mb-8"
-          >
-            <img src={unproRobot} alt="UNPRO" className="h-20 w-20 mx-auto drop-shadow-[0_0_30px_rgba(63,123,255,0.4)]" />
-          </motion.div>
-
-          {/* ── Headline ── */}
+        {/* ── Content ── */}
+        <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto w-full px-5 py-16">
+          {/* Headline */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.15 }}
-            className="font-display text-[28px] sm:text-[36px] md:text-[48px] font-bold text-foreground leading-[1.1] tracking-tight"
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="font-display text-[28px] sm:text-[36px] md:text-[48px] font-bold text-white leading-[1.1] tracking-tight"
           >
-            Quel est votre problème?
+            Vous avez une <span className="text-primary">photo</span> ?
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="mt-3 text-sm sm:text-base text-muted-foreground max-w-md"
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="mt-3 text-sm sm:text-base text-white/70 max-w-md"
           >
-            Décrivez. Prenez une photo. Parlez.
+            Je peux analyser, améliorer ou détecter ce qui ne va pas.
+            <br />
+            <span className="text-white/50">On commence par quoi ?</span>
           </motion.p>
 
-          {/* ── VOICE ORB ── */}
+          {/* ── Voice Orb ── */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.45, type: "spring", stiffness: 200 }}
+            transition={{ duration: 0.6, delay: 0.55, type: "spring", stiffness: 200 }}
             className="mt-10 mb-6 flex flex-col items-center"
           >
             <div className="relative flex items-center justify-center">
-              {/* Outer ring */}
+              {/* Outer glow ring */}
               <motion.div
                 className="absolute rounded-full pointer-events-none"
                 style={{
-                  width: 140,
-                  height: 140,
-                  border: "2px solid hsl(222 100% 61% / 0.2)",
-                  boxShadow: "0 0 40px hsl(222 100% 61% / 0.15), inset 0 0 40px hsl(222 100% 61% / 0.05)",
+                  width: 140, height: 140,
+                  border: "2px solid hsl(222 100% 61% / 0.25)",
+                  boxShadow: "0 0 50px hsl(222 100% 61% / 0.15), inset 0 0 50px hsl(222 100% 61% / 0.05)",
                 }}
                 animate={{ scale: voiceActive ? [1, 1.15, 1] : [1, 1.05, 1] }}
-                transition={{ duration: voiceActive ? 1.5 : 3, repeat: Infinity, ease: "easeInOut" }}
+                transition={{ duration: voiceActive ? 1.5 : 2.5, repeat: Infinity, ease: "easeInOut" }}
               />
 
-              {/* Pulse rings — listening */}
+              {/* Listening pulses */}
               {orbState === "listening" && [0, 1].map((i) => (
                 <motion.div key={i} className="absolute rounded-full pointer-events-none"
                   style={{ width: 120, height: 120, border: "1.5px solid hsl(222 100% 70% / 0.2)" }}
@@ -149,7 +135,7 @@ export default function HeroSection() {
                 />
               ))}
 
-              {/* Speaking wave */}
+              {/* Speaking waves */}
               {orbState === "speaking" && [0, 1].map((i) => (
                 <motion.div key={`s${i}`} className="absolute rounded-full pointer-events-none"
                   style={{ width: 120, height: 120, border: "1.5px solid hsl(195 100% 60% / 0.25)" }}
@@ -158,7 +144,7 @@ export default function HeroSection() {
                 />
               ))}
 
-              {/* Thinking */}
+              {/* Thinking ring */}
               {orbState === "thinking" && (
                 <motion.div className="absolute rounded-full pointer-events-none"
                   style={{ width: 130, height: 130, border: "2px dashed hsl(252 100% 70% / 0.2)" }}
@@ -167,21 +153,20 @@ export default function HeroSection() {
                 />
               )}
 
-              {/* Main orb */}
+              {/* Main orb button */}
               <motion.button
                 onClick={() => voiceActive ? stopVoice() : startVoice()}
                 className="relative rounded-full flex items-center justify-center overflow-hidden z-10"
                 style={{
-                  width: 100,
-                  height: 100,
-                  background: "linear-gradient(135deg, hsl(222 100% 30% / 0.8), hsl(222 100% 20% / 0.9))",
-                  border: "2px solid hsl(222 100% 70% / 0.3)",
-                  boxShadow: "0 0 60px -10px hsl(222 100% 65% / 0.4), inset 0 1px 1px hsl(0 0% 100% / 0.1)",
+                  width: 100, height: 100,
+                  background: "linear-gradient(135deg, hsl(222 100% 30% / 0.85), hsl(222 100% 18% / 0.95))",
+                  border: "2px solid hsl(222 100% 70% / 0.35)",
+                  boxShadow: "0 0 60px -10px hsl(222 100% 65% / 0.45), inset 0 1px 1px hsl(0 0% 100% / 0.1)",
                 }}
                 animate={
                   orbState === "speaking" ? { scale: [1, 1.08, 1] }
                     : orbState === "listening" ? { scale: [1, 1.05, 1] }
-                    : { scale: [1, 1.02, 1] }
+                      : { scale: [1, 1.02, 1] }
                 }
                 transition={{
                   duration: orbState === "speaking" ? 0.6 : orbState === "listening" ? 1.2 : 3,
@@ -190,30 +175,27 @@ export default function HeroSection() {
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.95 }}
               >
-                {/* Inner glow */}
                 <div className="absolute inset-0 rounded-full" style={{
-                  background: "radial-gradient(circle at 40% 35%, hsl(222 100% 70% / 0.25), transparent 60%)",
+                  background: "radial-gradient(circle at 40% 35%, hsl(222 100% 70% / 0.3), transparent 60%)",
                 }} />
-
-                {/* Icon */}
                 {orbState === "speaking" ? (
-                  <Volume2 className="h-9 w-9 text-foreground/90 relative z-10 drop-shadow-sm" />
+                  <Volume2 className="h-9 w-9 text-white/90 relative z-10" />
                 ) : orbState === "thinking" ? (
-                  <Loader2 className="h-9 w-9 text-foreground/90 relative z-10 animate-spin" />
+                  <Loader2 className="h-9 w-9 text-white/90 relative z-10 animate-spin" />
                 ) : (
-                  <Mic className="h-9 w-9 text-foreground/90 relative z-10 drop-shadow-sm" />
+                  <Mic className="h-9 w-9 text-white/90 relative z-10" />
                 )}
               </motion.button>
             </div>
 
-            {/* Status */}
+            {/* Status text */}
             <AnimatePresence mode="wait">
               <motion.p
                 key={voiceActive ? orbState : "idle"}
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
-                className="mt-4 text-xs font-medium text-muted-foreground"
+                className="mt-4 text-xs font-medium text-white/50"
               >
                 {statusText}
               </motion.p>
@@ -230,18 +212,18 @@ export default function HeroSection() {
                 >
                   {orbState === "speaking" && (
                     <button onClick={muteSpeech}
-                      className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-muted-foreground bg-card/60 border border-border hover:bg-card transition-colors"
+                      className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
                     >
                       <VolumeX className="h-3 w-3" /> Couper
                     </button>
                   )}
                   <button onClick={() => { stopVoice(); setTextSheetOpen(true); }}
-                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-muted-foreground bg-card/60 border border-border hover:bg-card transition-colors"
+                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
                   >
                     <Keyboard className="h-3 w-3" /> Écrire
                   </button>
                   <button onClick={stopVoice}
-                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-destructive/80 bg-destructive/5 border border-destructive/15 hover:bg-destructive/10 transition-colors"
+                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-red-400/80 bg-red-500/5 border border-red-500/15 hover:bg-red-500/10 transition-colors"
                   >
                     <Square className="h-2.5 w-2.5" /> Arrêter
                   </button>
@@ -250,23 +232,28 @@ export default function HeroSection() {
             </AnimatePresence>
           </motion.div>
 
-          {/* ── Quick Actions ── */}
+          {/* ── Quick Actions (glass pills) ── */}
           <AnimatePresence>
             {!voiceActive && (
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.4, delay: 0.55 }}
+                transition={{ duration: 0.4, delay: 0.65 }}
                 className="flex flex-wrap justify-center gap-2.5 w-full"
               >
                 {QUICK_ACTIONS.map((action) => (
                   <Link
                     key={action.label}
-                    to={action.route}
-                    className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-medium text-foreground/80 transition-all hover:text-foreground hover:bg-card/80 active:scale-[0.97] glass-card"
+                    to="/describe-project"
+                    className="flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-medium text-white/80 transition-all hover:text-white active:scale-[0.97]"
+                    style={{
+                      background: "rgba(255,255,255,0.08)",
+                      backdropFilter: "blur(12px)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                    }}
                   >
-                    <action.icon className="h-4 w-4 text-primary/80" />
+                    <action.icon className="h-4 w-4 text-primary" />
                     {action.label}
                   </Link>
                 ))}
@@ -275,14 +262,15 @@ export default function HeroSection() {
           </AnimatePresence>
         </div>
 
-        {/* Bottom fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent z-20" />
+        {/* Bottom gradient fade into next section */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 z-20" style={{
+          background: "linear-gradient(to top, hsl(228 40% 7%) 0%, transparent 100%)",
+        }} />
       </section>
 
       <AlexAssistantSheet
         open={textSheetOpen}
-        onClose={() => { setTextSheetOpen(false); setTextSheetChip(undefined); }}
-        initialChip={textSheetChip}
+        onClose={() => setTextSheetOpen(false)}
       />
     </>
   );
