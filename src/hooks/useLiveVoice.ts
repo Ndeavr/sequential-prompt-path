@@ -223,6 +223,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: {
+            languageCode: "fr-FR",
             voiceConfig: {
               prebuiltVoiceConfig: { voiceName },
             },
