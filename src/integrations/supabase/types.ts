@@ -3939,6 +3939,69 @@ export type Database = {
           },
         ]
       }
+      appointment_pricing_benchmarks: {
+        Row: {
+          base_appointment_price_cents: number
+          category_slug: string
+          created_at: string
+          data_source: string | null
+          effective_from: string
+          effective_to: string | null
+          final_appointment_price_cents: number
+          google_ads_avg_conversion_rate: number | null
+          google_ads_cpc_cents: number
+          google_ads_cpl_cents: number
+          id: string
+          is_active: boolean
+          market_slug: string
+          notes: string | null
+          season_code: string | null
+          seasonal_multiplier: number
+          unpro_markup_percent: number
+          updated_at: string
+        }
+        Insert: {
+          base_appointment_price_cents?: number
+          category_slug: string
+          created_at?: string
+          data_source?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          final_appointment_price_cents?: number
+          google_ads_avg_conversion_rate?: number | null
+          google_ads_cpc_cents?: number
+          google_ads_cpl_cents?: number
+          id?: string
+          is_active?: boolean
+          market_slug: string
+          notes?: string | null
+          season_code?: string | null
+          seasonal_multiplier?: number
+          unpro_markup_percent?: number
+          updated_at?: string
+        }
+        Update: {
+          base_appointment_price_cents?: number
+          category_slug?: string
+          created_at?: string
+          data_source?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          final_appointment_price_cents?: number
+          google_ads_avg_conversion_rate?: number | null
+          google_ads_cpc_cents?: number
+          google_ads_cpl_cents?: number
+          id?: string
+          is_active?: boolean
+          market_slug?: string
+          notes?: string | null
+          season_code?: string | null
+          seasonal_multiplier?: number
+          unpro_markup_percent?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       appointment_pricing_rules: {
         Row: {
           base_value: number
@@ -28047,6 +28110,42 @@ export type Database = {
           status?: string
           supporting_metrics?: Json | null
           title?: string
+        }
+        Relationships: []
+      }
+      seasonal_pricing_rules: {
+        Row: {
+          category_slug: string
+          created_at: string
+          id: string
+          is_active: boolean
+          label_fr: string | null
+          month_end: number
+          month_start: number
+          multiplier: number
+          season_code: string
+        }
+        Insert: {
+          category_slug: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label_fr?: string | null
+          month_end: number
+          month_start: number
+          multiplier?: number
+          season_code: string
+        }
+        Update: {
+          category_slug?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label_fr?: string | null
+          month_end?: number
+          month_start?: number
+          multiplier?: number
+          season_code?: string
         }
         Relationships: []
       }
