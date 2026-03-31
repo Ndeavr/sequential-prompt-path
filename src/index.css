@@ -9,57 +9,60 @@
     --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
     --font-display: 'Space Grotesk', 'Manrope', system-ui, sans-serif;
 
-    /* ─── UNPRO Brand Palette (Light) ─── */
-    --primary: 222 100% 61%;
+    /* ─── UNPRO Brand — Dark-first (unified immersive) ─── */
+    --primary: 222 100% 65%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 252 100% 65%;
+    --secondary: 252 100% 72%;
     --secondary-foreground: 0 0% 100%;
-    --accent: 195 100% 50%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 195 100% 55%;
+    --accent-foreground: 0 0% 100%;
 
-    --background: 220 20% 98%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --muted: 220 16% 95%;
-    --muted-foreground: 220 10% 46%;
+    --background: 228 40% 7%;
+    --foreground: 220 20% 93%;
 
-    --destructive: 0 84% 60%;
+    --card: 228 30% 10%;
+    --card-foreground: 220 20% 93%;
+
+    --popover: 228 30% 9%;
+    --popover-foreground: 220 20% 93%;
+
+    --muted: 228 20% 14%;
+    --muted-foreground: 220 14% 55%;
+
+    --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
-    --success: 152 69% 51%;
+    --success: 152 69% 42%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 220 16% 92%;
-    --input: 220 16% 90%;
-    --ring: 222 100% 61%;
+    --border: 228 18% 15%;
+    --input: 228 18% 16%;
+    --ring: 222 100% 65%;
     --radius: 0.75rem;
 
-    --shadow-xs: 0 1px 2px 0 hsl(220 30% 20% / 0.04);
-    --shadow-sm: 0 1px 3px 0 hsl(220 30% 20% / 0.06), 0 1px 2px -1px hsl(220 30% 20% / 0.04);
-    --shadow-md: 0 4px 6px -1px hsl(220 30% 20% / 0.07), 0 2px 4px -2px hsl(220 30% 20% / 0.05);
-    --shadow-lg: 0 10px 15px -3px hsl(220 30% 20% / 0.08), 0 4px 6px -4px hsl(220 30% 20% / 0.04);
-    --shadow-xl: 0 20px 25px -5px hsl(220 30% 20% / 0.08), 0 8px 10px -6px hsl(220 30% 20% / 0.04);
-    --shadow-2xl: 0 25px 50px -12px hsl(220 30% 20% / 0.18);
-    --shadow-glow: 0 0 24px -4px hsl(222 100% 61% / 0.2), 0 0 8px -2px hsl(222 100% 61% / 0.12);
-    --shadow-glow-lg: 0 0 40px -4px hsl(222 100% 61% / 0.28), 0 0 16px -4px hsl(222 100% 61% / 0.14);
-    --shadow-inner-glow: inset 0 1px 0 0 hsl(0 0% 100% / 0.06);
+    --shadow-xs: 0 1px 2px 0 hsl(228 40% 3% / 0.4);
+    --shadow-sm: 0 1px 3px 0 hsl(228 40% 3% / 0.5), 0 1px 2px -1px hsl(228 40% 3% / 0.3);
+    --shadow-md: 0 4px 6px -1px hsl(228 40% 3% / 0.5), 0 2px 4px -2px hsl(228 40% 3% / 0.3);
+    --shadow-lg: 0 10px 15px -3px hsl(228 40% 3% / 0.5), 0 4px 6px -4px hsl(228 40% 3% / 0.3);
+    --shadow-xl: 0 20px 25px -5px hsl(228 40% 3% / 0.5), 0 8px 10px -6px hsl(228 40% 3% / 0.3);
+    --shadow-2xl: 0 25px 50px -12px hsl(228 40% 3% / 0.7);
+    --shadow-glow: 0 0 30px -4px hsl(222 100% 65% / 0.25), 0 0 10px -2px hsl(222 100% 65% / 0.15);
+    --shadow-glow-lg: 0 0 50px -4px hsl(222 100% 65% / 0.35), 0 0 20px -4px hsl(222 100% 65% / 0.18);
+    --shadow-inner-glow: inset 0 1px 0 0 hsl(0 0% 100% / 0.04);
 
-    --glass-bg: hsl(0 0% 100% / 0.7);
-    --glass-border: hsl(220 20% 90% / 0.6);
+    --glass-bg: hsl(228 30% 10% / 0.6);
+    --glass-border: hsl(228 20% 20% / 0.5);
     --glass-blur: 24px;
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 222 100% 61%;
+    --sidebar-background: 228 35% 6%;
+    --sidebar-foreground: 220 20% 93%;
+    --sidebar-primary: 222 100% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 16% 96%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 220 16% 93%;
-    --sidebar-ring: 222 100% 61%;
+    --sidebar-accent: 228 20% 11%;
+    --sidebar-accent-foreground: 220 20% 93%;
+    --sidebar-border: 228 18% 13%;
+    --sidebar-ring: 222 100% 65%;
   }
 
   .dark {
