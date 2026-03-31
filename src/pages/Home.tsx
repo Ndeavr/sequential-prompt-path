@@ -384,7 +384,7 @@ const Home = () => {
                 { name: "Sophie T.", role: "Propriétaire · Québec", text: "Le Score Maison m'a permis de planifier un budget réaliste sur 5 ans." },
               ].map((t, i) => (
                 <motion.div key={t.name} variants={fadeUp} custom={i}>
-                  <div className="premium-card rounded-2xl p-4 h-full space-y-2.5">
+                  <div className="glass-card rounded-2xl p-4 h-full space-y-2.5">
                     <div className="flex items-center gap-0.5">
                       {[1,2,3,4,5].map(s => <Star key={s} className="h-3 w-3 fill-current text-warning" />)}
                     </div>
