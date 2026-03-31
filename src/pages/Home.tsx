@@ -174,7 +174,7 @@ const Home = () => {
                     Voir le profil
                   </Link>
                   <button
-                    onClick={() => handleCta("/describe-project", "Planifier un rendez-vous")}
+                    onClick={() => handleCta("/book/isolation-solution-royal", "Planifier un rendez-vous")}
                     className="flex-1 h-11 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold cta-gradient"
                   >
                     Planifier un rendez-vous <ArrowRight className="h-3.5 w-3.5" />
