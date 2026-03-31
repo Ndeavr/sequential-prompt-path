@@ -339,6 +339,7 @@ import PageOwnerMatch from "@/pages/match/PageOwnerMatch";
 export const AppRouter = () => (
   <BrowserRouter>
     <ScrollRestoration />
+    <BannerContinueFlow />
     <Routes>
       {/* Public */}
       <Route path="/" element={<Home />} />
