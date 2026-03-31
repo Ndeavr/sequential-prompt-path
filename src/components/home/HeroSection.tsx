@@ -1,11 +1,11 @@
 /**
- * HeroSection — Cinematic AI Home background with photo-first intent messaging.
- * No "Quel est votre problème" — replaced by "Vous avez une photo?"
+ * HeroSection — Cinematic AI Home with Gemini Live Native Audio voice.
+ * Uses useLiveVoice for real-time bidirectional voice (no legacy TTS pipeline).
  */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import { useAlexVoiceSession } from "@/hooks/useAlexVoiceSession";
+import { useLiveVoice } from "@/hooks/useLiveVoice";
 import { Link } from "react-router-dom";
 import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, Camera, Sparkles, Search } from "lucide-react";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
@@ -21,30 +21,58 @@ export default function HeroSection() {
   const { user } = useAuth();
   const [textSheetOpen, setTextSheetOpen] = useState(false);
 
-  const {
-    state: orbState,
-    sessionActive: voiceActive,
-    openSession,
-    closeSession,
-    muteSpeech,
-    sttSupported,
-  } = useAlexVoiceSession();
+  // Gemini Live voice state
+  const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
+    onTranscript: () => {
+      // Agent transcript — handled by Gemini Live natively
+    },
+    onUserTranscript: () => {
+      // User transcript — handled by Gemini Live natively
+    },
+    onConnect: () => {
+      console.log("[Hero] Gemini Live connected");
+    },
+    onDisconnect: () => {
+      console.log("[Hero] Gemini Live disconnected");
+    },
+    onError: (err) => {
+      console.error("[Hero] Gemini Live error:", err);
+    },
+  });
 
-  const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "";
-  const greeting = firstName ? `Bonjour ${firstName}.` : "Bonjour.";
+  const orbState = isConnecting
+    ? "thinking"
+    : isActive
+    ? isSpeaking
+      ? "speaking"
+      : "listening"
+    : "idle";
+
+  const voiceActive = isActive || isConnecting;
 
   const startVoice = useCallback(() => {
-    if (!sttSupported) { setTextSheetOpen(true); return; }
-    openSession(`${greeting} Décrivez votre situation ou envoyez une photo.`);
-  }, [sttSupported, greeting, openSession]);
+    // Kill any other voice source first
+    window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
+    start();
+  }, [start]);
 
-  const stopVoice = useCallback(() => closeSession(), [closeSession]);
+  const stopVoice = useCallback(() => {
+    stop();
+  }, [stop]);
+
+  const muteSpeech = useCallback(() => {
+    // For Gemini Live, stopping and restarting is the interrupt mechanism
+    stop();
+  }, [stop]);
 
   const statusText =
-    orbState === "speaking" ? "Alex vous parle…"
-      : orbState === "thinking" ? "Alex réfléchit…"
-        : orbState === "listening" ? "Je vous écoute…"
-          : "Parlez à Alex";
+    orbState === "speaking"
+      ? "Alex vous parle…"
+      : orbState === "thinking"
+      ? "Connexion Gemini Live…"
+      : orbState === "listening"
+      ? "Je vous écoute…"
+      : "Parlez à Alex";
 
   return (
     <>
@@ -72,12 +100,10 @@ export default function HeroSection() {
 
         {/* ── Ambient Light FX ── */}
         <div className="absolute inset-0 z-[2] pointer-events-none">
-          {/* Horizontal glow streak */}
           <div className="absolute top-[45%] left-0 right-0 h-[2px]" style={{
             background: "linear-gradient(90deg, transparent 5%, hsl(222 100% 70% / 0.3) 30%, hsl(195 100% 60% / 0.4) 50%, hsl(222 100% 70% / 0.3) 70%, transparent 95%)",
             filter: "blur(1px)",
           }} />
-          {/* Central radial glow */}
           <div className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px]" style={{
             background: "radial-gradient(ellipse, hsl(222 100% 65% / 0.12) 0%, transparent 70%)",
           }} />
@@ -262,7 +288,7 @@ export default function HeroSection() {
           </AnimatePresence>
         </div>
 
-        {/* Bottom gradient fade into next section */}
+        {/* Bottom gradient fade */}
         <div className="absolute bottom-0 left-0 right-0 h-32 z-20" style={{
           background: "linear-gradient(to top, hsl(228 40% 7%) 0%, transparent 100%)",
         }} />
