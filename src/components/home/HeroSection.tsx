@@ -69,23 +69,23 @@ export default function HeroSection() {
   return (
     <>
       <section className="relative min-h-[85vh] flex flex-col items-center justify-center overflow-hidden px-5 py-16">
-        {/* ── Dark space background ── */}
-        <div className="absolute inset-0 bg-[#060B18]">
+        {/* ── Subtle overlay effects (transparent — uses persistent bg) ── */}
+        <div className="absolute inset-0">
           {/* Star field subtle */}
-          <div className="absolute inset-0 opacity-40" style={{
-            backgroundImage: "radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.4) 0%, transparent 100%), radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,0.3) 0%, transparent 100%), radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.2) 0%, transparent 100%), radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,0.35) 0%, transparent 100%), radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,0.25) 0%, transparent 100%), radial-gradient(1px 1px at 55% 45%, rgba(255,255,255,0.3) 0%, transparent 100%)",
+          <div className="absolute inset-0 opacity-30" style={{
+            backgroundImage: "radial-gradient(1px 1px at 20% 30%, hsl(220 20% 93% / 0.4) 0%, transparent 100%), radial-gradient(1px 1px at 70% 20%, hsl(220 20% 93% / 0.3) 0%, transparent 100%), radial-gradient(1px 1px at 40% 70%, hsl(220 20% 93% / 0.2) 0%, transparent 100%), radial-gradient(1px 1px at 80% 60%, hsl(220 20% 93% / 0.35) 0%, transparent 100%), radial-gradient(1px 1px at 10% 80%, hsl(220 20% 93% / 0.25) 0%, transparent 100%), radial-gradient(1px 1px at 55% 45%, hsl(220 20% 93% / 0.3) 0%, transparent 100%)",
           }} />
           {/* Horizon glow */}
           <div className="absolute bottom-0 left-0 right-0 h-[40%]" style={{
-            background: "linear-gradient(0deg, hsl(222 100% 61% / 0.12) 0%, transparent 100%)",
+            background: "linear-gradient(0deg, hsl(222 100% 65% / 0.08) 0%, transparent 100%)",
           }} />
           {/* Central orb ambient */}
           <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full" style={{
-            background: "radial-gradient(circle, hsl(222 100% 61% / 0.08) 0%, transparent 70%)",
+            background: "radial-gradient(circle, hsl(222 100% 65% / 0.06) 0%, transparent 70%)",
           }} />
           {/* Horizontal light streak */}
           <div className="absolute top-[55%] left-0 right-0 h-px" style={{
-            background: "linear-gradient(90deg, transparent 5%, hsl(222 100% 70% / 0.25) 30%, hsl(195 100% 60% / 0.3) 50%, hsl(222 100% 70% / 0.25) 70%, transparent 95%)",
+            background: "linear-gradient(90deg, transparent 5%, hsl(222 100% 70% / 0.2) 30%, hsl(195 100% 60% / 0.25) 50%, hsl(222 100% 70% / 0.2) 70%, transparent 95%)",
           }} />
         </div>
 
