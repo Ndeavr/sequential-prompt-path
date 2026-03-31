@@ -80,7 +80,7 @@ const Home = () => {
         <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
       </Helmet>
 
-      <div className="flex flex-col bg-background text-foreground">
+      <div className="flex flex-col">
         <FloatingAlexRobot alexSectionRef={alexSectionRef} />
 
         {/* ═══ HERO ═══ */}
