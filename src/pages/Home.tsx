@@ -112,7 +112,7 @@ const Home = () => {
                   <img src={unproRobot} alt="Alex" className="h-11 w-11 rounded-full object-cover" />
                   <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-green-500 border-2 border-background" />
                 </div>
-                <div className="rounded-2xl rounded-tl-md px-4 py-3 bg-card/80 backdrop-blur-md border border-border/60 shadow-[var(--shadow-md)]">
+                <div className="rounded-2xl rounded-tl-md px-4 py-3 glass-card shadow-[var(--shadow-md)]">
                   <p className="text-sm font-medium text-foreground">J'ai trouvé le match parfait pour vous.</p>
                 </div>
               </div>
