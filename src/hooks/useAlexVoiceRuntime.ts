@@ -104,7 +104,7 @@ export function useAlexVoiceRuntime(options: UseAlexVoiceRuntimeOptions = {}) {
     return null;
   }, [profileKey, language]);
 
-  // Speak text via ElevenLabs (through alex-voice-speak edge function)
+  // Speak text via fallback TTS pipeline (alex-voice-speak edge function)
   const speak = useCallback(async (text: string) => {
     if (!mountedRef.current) return;
 

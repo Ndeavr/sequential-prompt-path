@@ -68,7 +68,7 @@ class AlexSingleAudioChannel {
 
   /**
    * Play audio from a blob. Kills any existing playback first.
-   * Also dispatches cleanup event to stop ElevenLabs Realtime sessions.
+   * Dispatches cleanup event to stop all other voice sources.
    */
   async playBlob(blob: Blob): Promise<void> {
     if (this.destroyed) return;
