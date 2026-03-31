@@ -1,28 +1,48 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import ContractorLayout from "@/layouts/ContractorLayout";
 import { PageHeader, LoadingState } from "@/components/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+
+interface ProfileForm {
+  salutation: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+}
 
 const ProAccount = () => {
   const { user } = useAuth();
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
-  const [form, setForm] = useState<{ full_name: string; phone: string } | null>(null);
+  const [form, setForm] = useState<ProfileForm | null>(null);
 
-  const current = form ?? { full_name: profile?.full_name ?? "", phone: profile?.phone ?? "" };
+  const current: ProfileForm = form ?? {
+    salutation: profile?.salutation ?? "",
+    first_name: profile?.first_name ?? "",
+    last_name: profile?.last_name ?? "",
+    phone: profile?.phone ?? "",
+  };
 
   if (isLoading) return <ContractorLayout><LoadingState /></ContractorLayout>;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await updateProfile.mutateAsync({ full_name: current.full_name, phone: current.phone });
+      const full_name = [current.first_name, current.last_name].filter(Boolean).join(" ");
+      await updateProfile.mutateAsync({
+        salutation: current.salutation || null,
+        first_name: current.first_name || null,
+        last_name: current.last_name || null,
+        full_name: full_name || null,
+        phone: current.phone || null,
+      });
       toast.success("Profil mis à jour !");
       setForm(null);
     } catch {
@@ -36,9 +56,37 @@ const ProAccount = () => {
       <Card className="max-w-lg">
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2"><Label>Courriel</Label><Input value={user?.email ?? ""} disabled /></div>
-            <div className="space-y-2"><Label>Nom complet</Label><Input value={current.full_name} onChange={(e) => setForm({ ...current, full_name: e.target.value })} /></div>
-            <div className="space-y-2"><Label>Téléphone</Label><Input value={current.phone} onChange={(e) => setForm({ ...current, phone: e.target.value })} /></div>
+            <div className="space-y-2">
+              <Label>Courriel</Label>
+              <Input value={user?.email ?? ""} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="salutation">Salutation</Label>
+              <Select value={current.salutation} onValueChange={(v) => setForm({ ...current, salutation: v })}>
+                <SelectTrigger id="salutation">
+                  <SelectValue placeholder="Sélectionner…" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="M.">M.</SelectItem>
+                  <SelectItem value="Mme">Mme</SelectItem>
+                  <SelectItem value="Mx">Mx</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="first_name">Prénom</Label>
+                <Input id="first_name" value={current.first_name} onChange={(e) => setForm({ ...current, first_name: e.target.value })} placeholder="Jean" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="last_name">Nom</Label>
+                <Input id="last_name" value={current.last_name} onChange={(e) => setForm({ ...current, last_name: e.target.value })} placeholder="Tremblay" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Téléphone</Label>
+              <Input id="phone" value={current.phone} onChange={(e) => setForm({ ...current, phone: e.target.value })} placeholder="514-555-1234" />
+            </div>
             <Button type="submit" disabled={updateProfile.isPending}>{updateProfile.isPending ? "Enregistrement…" : "Enregistrer"}</Button>
           </form>
         </CardContent>

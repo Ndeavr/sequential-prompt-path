@@ -19,7 +19,7 @@ export const useUpdateProfile = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (updates: { full_name?: string; phone?: string; avatar_url?: string }) => {
+    mutationFn: async (updates: { salutation?: string; first_name?: string; last_name?: string; full_name?: string; phone?: string; avatar_url?: string }) => {
       const { data, error } = await supabase.from("profiles").update(updates).eq("user_id", user!.id).select().single();
       if (error) throw error;
       return data;

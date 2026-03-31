@@ -306,7 +306,8 @@ function TimeSlotGridSmart({ slots, selectedSlotId, onSelect, isSignature }: { s
 
 function BookingIntakeForm({ form, onChange }: { form: Record<string, string>; onChange: (key: string, value: string) => void }) {
   const fields = [
-    { key: "clientName", label: "Votre nom", type: "text", placeholder: "Nom complet" },
+    { key: "clientFirstName", label: "Prénom", type: "text", placeholder: "Marie" },
+    { key: "clientLastName", label: "Nom", type: "text", placeholder: "Tremblay" },
     { key: "clientPhone", label: "Téléphone", type: "tel", placeholder: "(514) 555-0000" },
     { key: "clientEmail", label: "Courriel", type: "email", placeholder: "vous@exemple.com" },
   ];

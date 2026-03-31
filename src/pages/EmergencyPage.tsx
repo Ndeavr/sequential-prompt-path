@@ -255,11 +255,22 @@ export default function EmergencyPage() {
                 </div>
               </div>
 
-              {/* Full Name */}
-              <div>
-                <Label htmlFor="fullname" className="text-sm font-medium">Votre nom complet *</Label>
-                <Input id="fullname" value={fullName} onChange={e => setFullName(e.target.value)}
-                  placeholder="Ex: Jean Tremblay" className="mt-1" />
+              {/* Name Fields */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="firstname" className="text-sm font-medium">Prénom *</Label>
+                  <Input id="firstname" value={fullName.split(" ")[0] || ""} onChange={e => {
+                    const last = fullName.split(" ").slice(1).join(" ");
+                    setFullName([e.target.value, last].filter(Boolean).join(" "));
+                  }} placeholder="Jean" className="mt-1" />
+                </div>
+                <div>
+                  <Label htmlFor="lastname" className="text-sm font-medium">Nom *</Label>
+                  <Input id="lastname" value={fullName.split(" ").slice(1).join(" ") || ""} onChange={e => {
+                    const first = fullName.split(" ")[0] || "";
+                    setFullName([first, e.target.value].filter(Boolean).join(" "));
+                  }} placeholder="Tremblay" className="mt-1" />
+                </div>
               </div>
 
               {/* Description */}
