@@ -1,36 +1,31 @@
 /**
  * ImportProgressRealtime — Shows real-time import progress with source-by-source status.
  */
-import { motion } from "framer-motion";
-import { Search, Globe, Star, CheckCircle, Loader2, Facebook, MapPin, Shield, BarChart3 } from "lucide-react";
+/**
+ * ImportProgressRealtime — Multi-agent overlapping import animation.
+ */
 import type { ImportModule } from "@/pages/signature/PageAlexGuidedOnboarding";
+import MultiAgentImportAnimation from "./MultiAgentImportAnimation";
 
 interface Props {
   progress: number;
   modules?: ImportModule[];
+  businessName?: string;
+  city?: string;
+  website?: string;
 }
 
-const DEFAULT_STAGES = [
-  { key: "identity", label: "Identification de l'entreprise...", icon: Search, threshold: 15 },
-  { key: "google", label: "Recherche Google Business...", icon: MapPin, threshold: 30 },
-  { key: "website", label: "Analyse du site web...", icon: Globe, threshold: 50 },
-  { key: "facebook", label: "Détection réseaux sociaux...", icon: Facebook, threshold: 65 },
-  { key: "analysis", label: "Analyse de confiance...", icon: Shield, threshold: 80 },
-  { key: "aipp", label: "Calcul du score AIPP...", icon: BarChart3, threshold: 90 },
-];
-
-const ICON_MAP: Record<string, any> = {
-  identity: Search,
-  google: MapPin,
-  facebook: Facebook,
-  website: Globe,
-  matching: Shield,
-  analysis: Star,
-  aipp: BarChart3,
-  plan: CheckCircle,
-};
-
-export default function ImportProgressRealtime({ progress, modules }: Props) {
+export default function ImportProgressRealtime({ progress, modules, businessName, city, website }: Props) {
+  return (
+    <MultiAgentImportAnimation
+      progress={progress}
+      modules={modules}
+      businessName={businessName}
+      city={city}
+      website={website}
+    />
+  );
+}
   const stages = modules && modules.length > 0
     ? modules.map((m, i) => ({
         key: m.id,
