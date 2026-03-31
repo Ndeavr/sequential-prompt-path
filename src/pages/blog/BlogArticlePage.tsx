@@ -17,6 +17,7 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 export default function BlogArticlePage() {
   const { slug } = useParams<{ slug: string }>();
+  const { openAlex } = useAlexVoice();
   useEngagementTracking();
 
   const { data: article, isLoading } = useQuery({
