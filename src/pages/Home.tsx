@@ -254,7 +254,7 @@ const Home = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <div className="premium-card rounded-3xl p-5 sm:p-7 space-y-5">
+              <div className="glass-card rounded-3xl p-5 sm:p-7 space-y-5">
                 {/* Tabs mockup */}
                 <div className="flex rounded-xl overflow-hidden border border-border/60">
                   {["Factures", "Travaux", "Dossier Maison"].map((tab, i) => (
