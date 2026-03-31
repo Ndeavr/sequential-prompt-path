@@ -5,8 +5,8 @@
  * Starting new audio instantly kills previous audio.
  * No overlap, no double playback, no stale chunks.
  * 
- * Also integrates with ElevenLabs Conversational AI cleanup:
- * Before any playback, fires "alex-voice-cleanup" to kill Realtime sessions.
+ * Fires "alex-voice-cleanup" before playback to kill any other voice source
+ * (Gemini Live sessions, fallback providers, etc.).
  */
 
 type AudioState = 'idle' | 'loading' | 'playing' | 'interrupted' | 'error';
