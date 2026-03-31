@@ -70,29 +70,47 @@ const PageEntrepreneurLandingAIPP = () => {
       sessionStorage.setItem("unpro_lead_opp_min", String(oppMin));
       sessionStorage.setItem("unpro_lead_opp_max", String(oppMax));
 
-      let leadSaved = false;
+      const { data: { user } } = await supabase.auth.getUser();
+      await createFlowSession({
+        flowType: "AIPP_ANALYSIS",
+        inputPayload: {
+          company_name: cleanBusinessName,
+          city: cleanCity,
+          website: cleanWebsite,
+        },
+        userId: user?.id || null,
+        leadId,
+      });
 
-      try {
-        const { error } = await supabase
-          .from("entrepreneur_leads")
-          .insert({
-            id: leadId,
-            business_name: cleanBusinessName,
-            city: cleanCity,
-            website: cleanWebsite,
-            source: "funnel",
-          });
+      navigate("/entrepreneur/analysis/loading");
 
-        if (error) {
-          console.error("AIPP lead insert failed:", error);
-        } else {
+      void (async () => {
+        let leadSaved = false;
+
+        try {
+          const { error } = await supabase
+            .from("entrepreneur_leads")
+            .insert({
+              id: leadId,
+              business_name: cleanBusinessName,
+              city: cleanCity,
+              website: cleanWebsite,
+              source: "funnel",
+            });
+
+          if (error) {
+            console.error("AIPP lead insert failed:", error);
+            return;
+          }
+
           leadSaved = true;
+        } catch (leadError) {
+          console.error("AIPP lead insert exception:", leadError);
+          return;
         }
-      } catch (leadError) {
-        console.error("AIPP lead insert exception:", leadError);
-      }
 
-      if (leadSaved) {
+        if (!leadSaved) return;
+
         try {
           const { error: scoreErr } = await supabase
             .from("entrepreneur_scores")
@@ -116,25 +134,7 @@ const PageEntrepreneurLandingAIPP = () => {
         } catch (scoreError) {
           console.error("AIPP score insert exception:", scoreError);
         }
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      const flowSession = await createFlowSession({
-        flowType: "AIPP_ANALYSIS",
-        inputPayload: {
-          company_name: cleanBusinessName,
-          city: cleanCity,
-          website: cleanWebsite,
-        },
-        userId: user?.id || null,
-        leadId: leadSaved ? leadId : undefined,
-      });
-
-      if (!flowSession) {
-        sessionStorage.setItem("unpro_aipp_fallback", "1");
-      }
-
-      navigate("/entrepreneur/analysis/loading");
+      })();
     } catch (error) {
       console.error("AIPP analysis failed:", error);
       toast.error("Une erreur est survenue. Réessayez.");
