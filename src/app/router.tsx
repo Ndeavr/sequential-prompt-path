@@ -335,6 +335,7 @@ import PageEntrepreneurPlans from "@/pages/entrepreneur/PageEntrepreneurPlans";
 
 // Owner Match
 import PageOwnerMatch from "@/pages/match/PageOwnerMatch";
+import BannerContinueFlow from "@/components/flow/BannerContinueFlow";
 
 export const AppRouter = () => (
   <BrowserRouter>
