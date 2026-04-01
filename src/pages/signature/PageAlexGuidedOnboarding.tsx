@@ -459,8 +459,13 @@ export default function PageAlexGuidedOnboarding() {
     activation: "Activation en cours...",
     importing: "Je recherche vos informations en ligne pour construire votre profil. Cela prend quelques secondes...",
     profile_completion: "Voici ce que j'ai trouvé ! Vérifiez les informations et complétez ce qui manque.",
+    score_reveal: "Je vais maintenant vous montrer comment l'IA perçoit votre entreprise actuellement.",
+    revenue_projection: "Voyons ce que vous laissez sur la table avec votre situation actuelle.",
+    objectives: "Parlez-moi de vos ambitions — je vais calculer le plan optimal pour vous.",
+    plan_recommendation: "Voici le plan le plus logique selon votre situation et vos objectifs.",
     preview: "Voici votre profil tel que vos clients le verront. Prêt à publier ?",
     published: "🎉 Félicitations ! Votre profil est en ligne. Vous êtes prêt à recevoir des rendez-vous.",
+    activation_success: "🎉 Tout est activé ! Vous êtes prêt à recevoir des rendez-vous qualifiés.",
   }), []);
 
   return (
