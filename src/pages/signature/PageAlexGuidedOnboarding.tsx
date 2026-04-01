@@ -668,6 +668,15 @@ export default function PageAlexGuidedOnboarding() {
                   </div>
                 </div>
               )}
+
+              {/* Activation Success */}
+              {state.step === "activation_success" && (
+                <StepActivationSuccess
+                  businessName={state.draft.business_name}
+                  planName={state.selectedPlan || "signature"}
+                  score={state.scoreData?.pre_unpro_score}
+                />
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
