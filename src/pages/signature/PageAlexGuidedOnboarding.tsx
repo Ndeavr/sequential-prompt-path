@@ -19,11 +19,19 @@ import SignatureOfferCard from "@/components/signature/SignatureOfferCard";
 import ImportProgressRealtime from "@/components/signature/ImportProgressRealtime";
 import ProfileCompletionChecklist from "@/components/signature/ProfileCompletionChecklist";
 import ProfilePreviewCard from "@/components/signature/ProfilePreviewCard";
+import StepScoreReveal from "@/components/onboarding-funnel/StepScoreReveal";
+import StepRevenueProjection from "@/components/onboarding-funnel/StepRevenueProjection";
+import StepObjectivesCapture from "@/components/onboarding-funnel/StepObjectivesCapture";
+import type { ObjectivesData } from "@/components/onboarding-funnel/StepObjectivesCapture";
+import StepPlanRecommendation from "@/components/onboarding-funnel/StepPlanRecommendation";
+import StepActivationSuccess from "@/components/onboarding-funnel/StepActivationSuccess";
 
 export type OnboardingStep =
   | "welcome" | "business_info" | "categories" | "territories"
   | "signature_offer" | "activation" | "importing"
-  | "profile_completion" | "preview" | "published";
+  | "profile_completion" | "score_reveal" | "revenue_projection"
+  | "objectives" | "plan_recommendation"
+  | "preview" | "published" | "activation_success";
 
 interface ContractorDraft {
   id?: string;
@@ -70,6 +78,10 @@ interface OnboardingState {
   importModules: ImportModule[];
   importStarted: boolean;
   detectedCategory: string | null;
+  scoreData: any | null;
+  revenueInputs: any | null;
+  objectives: ObjectivesData | null;
+  selectedPlan: string | null;
 }
 
 const INITIAL_STATE: OnboardingState = {
@@ -87,6 +99,10 @@ const INITIAL_STATE: OnboardingState = {
   importModules: [],
   importStarted: false,
   detectedCategory: null,
+  scoreData: null,
+  revenueInputs: null,
+  objectives: null,
+  selectedPlan: null,
 };
 
 // Map activity keywords to known categories
@@ -122,7 +138,8 @@ function detectCategory(activity: string): string | null {
 const STEP_ORDER: OnboardingStep[] = [
   "welcome", "business_info", "categories", "territories",
   "signature_offer", "activation", "importing",
-  "profile_completion", "preview", "published",
+  "profile_completion", "score_reveal", "revenue_projection",
+  "objectives", "plan_recommendation", "preview", "published", "activation_success",
 ];
 
 export default function PageAlexGuidedOnboarding() {
@@ -442,8 +459,13 @@ export default function PageAlexGuidedOnboarding() {
     activation: "Activation en cours...",
     importing: "Je recherche vos informations en ligne pour construire votre profil. Cela prend quelques secondes...",
     profile_completion: "Voici ce que j'ai trouvé ! Vérifiez les informations et complétez ce qui manque.",
+    score_reveal: "Je vais maintenant vous montrer comment l'IA perçoit votre entreprise actuellement.",
+    revenue_projection: "Voyons ce que vous laissez sur la table avec votre situation actuelle.",
+    objectives: "Parlez-moi de vos ambitions — je vais calculer le plan optimal pour vous.",
+    plan_recommendation: "Voici le plan le plus logique selon votre situation et vos objectifs.",
     preview: "Voici votre profil tel que vos clients le verront. Prêt à publier ?",
     published: "🎉 Félicitations ! Votre profil est en ligne. Vous êtes prêt à recevoir des rendez-vous.",
+    activation_success: "🎉 Tout est activé ! Vous êtes prêt à recevoir des rendez-vous qualifiés.",
   }), []);
 
   return (
@@ -551,7 +573,51 @@ export default function PageAlexGuidedOnboarding() {
                   importedData={state.importedData}
                   importModules={state.importModules}
                   contractorId={state.contractorId}
-                  onComplete={() => goTo("preview")}
+                  onComplete={() => goTo("score_reveal")}
+                />
+              )}
+
+              {/* Score Reveal */}
+              {state.step === "score_reveal" && (
+                <StepScoreReveal
+                  businessName={state.draft.business_name}
+                  contractorId={state.contractorId}
+                  onContinue={() => goTo("revenue_projection")}
+                  onScoreComputed={(s) => update({ scoreData: s })}
+                />
+              )}
+
+              {/* Revenue Projection */}
+              {state.step === "revenue_projection" && (
+                <StepRevenueProjection
+                  onContinue={(inputs) => {
+                    update({ revenueInputs: inputs, step: "objectives" });
+                  }}
+                />
+              )}
+
+              {/* Objectives */}
+              {state.step === "objectives" && (
+                <StepObjectivesCapture
+                  city={state.draft.city}
+                  activity={state.draft.activity}
+                  onContinue={(obj) => {
+                    update({ objectives: obj, step: "plan_recommendation" });
+                  }}
+                />
+              )}
+
+              {/* Plan Recommendation */}
+              {state.step === "plan_recommendation" && (
+                <StepPlanRecommendation
+                  objectives={state.objectives}
+                  businessName={state.draft.business_name}
+                  city={state.draft.city}
+                  activity={state.draft.activity}
+                  onSelectPlan={(plan) => {
+                    update({ selectedPlan: plan, step: "preview" });
+                  }}
+                  isProcessing={isProcessing}
                 />
               )}
 
@@ -601,6 +667,15 @@ export default function PageAlexGuidedOnboarding() {
                     </motion.button>
                   </div>
                 </div>
+              )}
+
+              {/* Activation Success */}
+              {state.step === "activation_success" && (
+                <StepActivationSuccess
+                  businessName={state.draft.business_name}
+                  planName={state.selectedPlan || "signature"}
+                  score={state.scoreData?.pre_unpro_score}
+                />
               )}
             </motion.div>
           </AnimatePresence>
