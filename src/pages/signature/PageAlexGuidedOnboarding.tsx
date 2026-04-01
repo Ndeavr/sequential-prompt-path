@@ -78,6 +78,10 @@ interface OnboardingState {
   importModules: ImportModule[];
   importStarted: boolean;
   detectedCategory: string | null;
+  scoreData: any | null;
+  revenueInputs: any | null;
+  objectives: ObjectivesData | null;
+  selectedPlan: string | null;
 }
 
 const INITIAL_STATE: OnboardingState = {
@@ -95,6 +99,10 @@ const INITIAL_STATE: OnboardingState = {
   importModules: [],
   importStarted: false,
   detectedCategory: null,
+  scoreData: null,
+  revenueInputs: null,
+  objectives: null,
+  selectedPlan: null,
 };
 
 // Map activity keywords to known categories
