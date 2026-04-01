@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, Clock, MapPin } from "lucide-react";
+import repDemoImg from "@/assets/rep-demo-aipp.png";
 
 const pills = [
   { icon: GraduationCap, label: "Étudiants bienvenus" },
@@ -69,6 +70,21 @@ export default function HeroSectionCloser({ onSimulate, onApply }: Props) {
           <Button size="lg" variant="outline" onClick={onApply} className="text-base px-8 py-6 font-semibold">
             Postuler maintenant
           </Button>
+        </motion.div>
+
+        {/* Hero image — rep showing AIPP score to entrepreneur */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.7, delay: 0.55 }}
+          className="mt-10 rounded-2xl overflow-hidden border border-border/30 shadow-2xl max-w-2xl mx-auto"
+        >
+          <img
+            src={repDemoImg}
+            alt="Représentant UNPRO présentant le score AIPP à un entrepreneur"
+            className="w-full h-auto object-cover"
+            loading="eager"
+          />
         </motion.div>
       </div>
     </section>
