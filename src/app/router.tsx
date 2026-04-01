@@ -550,6 +550,11 @@ export const AppRouter = () => (
       <Route path="/conseils-renovation" element={<FallbackRoutePage />} />
       <Route path="/faq" element={<FallbackRoutePage />} />
       <Route path="/comment-ca-marche" element={<CommentCaMarchePage />} />
+      <Route path="/comment-fonctionne-ia" element={<PageHowUnproWorksAI />} />
+      <Route path="/roadmap" element={<PageRoadmapFeatures />} />
+      <Route path="/couverture" element={<PageCityServiceCoverage />} />
+      <Route path="/guides" element={<PageGuidesHomeProblems />} />
+      <Route path="/avis-verifies" element={<PageReviewsVerified />} />
       <Route path="/verification" element={<FallbackRoutePage />} />
       <Route path="/nos-standards" element={<FallbackRoutePage />} />
       <Route path="/pourquoi-pas-3-soumissions" element={<FallbackRoutePage />} />
