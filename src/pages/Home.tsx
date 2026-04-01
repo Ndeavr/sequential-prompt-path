@@ -431,6 +431,31 @@ const Home = () => {
           </div>
         </section>
 
+
+        {/* ═══ TRUST LINKS ═══ */}
+        <section className="px-5 py-8">
+          <div className="max-w-3xl mx-auto text-center space-y-4">
+            <h2 className="font-display text-lg font-bold text-foreground">Explorez la confiance UNPRO</h2>
+            <div className="flex flex-wrap justify-center gap-2">
+              {[
+                { to: "/comment-fonctionne-ia", label: "Comment ça marche", icon: Brain },
+                { to: "/couverture", label: "Couverture locale", icon: Shield },
+                { to: "/guides", label: "Guides maison", icon: FileText },
+                { to: "/avis-verifies", label: "Avis vérifiés", icon: Star },
+                { to: "/roadmap", label: "Roadmap", icon: Zap },
+              ].map(({ to, label, icon: Icon }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
         {/* ═══ FINAL CTA ═══ */}
         <section className="px-5 py-14">
           <div className="max-w-3xl mx-auto">
