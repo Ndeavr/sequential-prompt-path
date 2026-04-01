@@ -3,20 +3,24 @@ import FAQSection from "@/components/shared/FAQSection";
 
 const faqItems = [
   {
-    question: "Dois-je prospecter?",
-    answer: "Non. Les rendez-vous sont déjà dans ton agenda. Tu n'as pas besoin de faire du cold call, du porte-à-porte ou du démarchage. On s'occupe de tout ça pour toi.",
+    question: "Dois-je prospecter moi-même?",
+    answer: "Non. Les rendez-vous avec les entrepreneurs sont déjà planifiés dans ton agenda. Tu n'as pas à trouver les clients toi-même.",
   },
   {
     question: "Dois-je être expert en vente?",
-    answer: "Non. L'IA fait le gros du travail. Tu crées le profil de l'entrepreneur en direct avec lui, et le système s'occupe de l'analyse, du scoring et des recommandations. Tu as juste besoin d'être humain, à l'écoute et organisé.",
+    answer: "Non. L'IA fait le gros du travail. Tu crées le profil de l'entrepreneur en direct avec lui, et le système s'occupe de l'analyse, du scoring et des recommandations. Tu as juste besoin d'être à l'écoute et organisé.",
   },
   {
-    question: "C'est quoi exactement le produit que je vends?",
-    answer: "Tu ne vends pas des leads, des clics ou de la pub. Tu offres aux entrepreneurs un système qui leur amène des rendez-vous qualifiés directement dans leur agenda. Pas de compétition avec 3-4 autres entreprises. Un vrai rendez-vous, un vrai client.",
+    question: "C'est quoi exactement ce que je fais comme rep?",
+    answer: "Tu rencontres des entrepreneurs (plombiers, électriciens, etc.) en personne. Tu crées leur profil IA avec notre outil en 5 minutes. L'entrepreneur voit son score et ses opportunités, et s'active. Tu touches une commission à chaque activation — et chaque mois tant qu'il reste client.",
   },
   {
     question: "C'est un job d'été seulement?",
     answer: "Non! C'est flexible. Job d'été, temps partiel pendant les études, ou à temps plein si tu veux. Remote, en personne, ou hybride — c'est toi qui choisis ton rythme.",
+  },
+  {
+    question: "Les entrepreneurs sont-ils vraiment intéressés?",
+    answer: "Oui. On cible des entrepreneurs qui perdent déjà des clients en ligne. Quand tu leur montres leur score AIPP et ce qu'ils perdent chaque mois, le déclic est immédiat.",
   },
 ];
 

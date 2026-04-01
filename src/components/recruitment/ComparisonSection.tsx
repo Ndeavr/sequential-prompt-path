@@ -2,10 +2,11 @@ import { motion } from "framer-motion";
 import { X, Check } from "lucide-react";
 
 const rows = [
-  { old: "Cold calls", unpro: "Rendez-vous fournis" },
-  { old: "Leads froids partagés avec 3-4 compétiteurs", unpro: "Entrepreneurs qualifiés, exclusifs" },
-  { old: "Vendre des clics Google, SEO, Facebook Ads", unpro: "Des vrais rendez-vous dans leur agenda" },
-  { old: "Vente one-shot", unpro: "Revenus récurrents" },
+  { old: "Cold calls et porte-à-porte", unpro: "Rendez-vous déjà planifiés dans ton agenda" },
+  { old: "Produit compliqué à expliquer", unpro: "L'IA fait la démo en live devant toi" },
+  { old: "Commission unique (one-shot)", unpro: "Revenus récurrents chaque mois" },
+  { old: "Territoire ouvert à tous les vendeurs", unpro: "Territoire exclusif réservé pour toi" },
+  { old: "Salaire minimum + pression quotas", unpro: "Commissions illimitées, zéro quota" },
 ];
 
 export default function ComparisonSection() {
@@ -18,7 +19,7 @@ export default function ComparisonSection() {
           viewport={{ once: true }}
           className="text-3xl font-display font-bold text-center text-foreground mb-10"
         >
-          Ancien modèle vs UNPRO
+          Job de vente classique vs Représentant UNPRO
         </motion.h2>
 
         <motion.div
@@ -29,8 +30,8 @@ export default function ComparisonSection() {
         >
           {/* Header */}
           <div className="grid grid-cols-2 bg-card">
-            <div className="p-4 text-center font-semibold text-muted-foreground border-r border-border/60">Ancien modèle</div>
-            <div className="p-4 text-center font-semibold text-primary">UNPRO</div>
+            <div className="p-4 text-center font-semibold text-muted-foreground border-r border-border/60">Job classique</div>
+            <div className="p-4 text-center font-semibold text-primary">Rep UNPRO</div>
           </div>
 
           {rows.map((row, i) => (
