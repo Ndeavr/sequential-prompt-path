@@ -299,6 +299,12 @@ const Home = () => {
           </div>
         </section>
 
+        {/* ═══ ALEX ACTIVATION ═══ */}
+        <SectionAlexActivation sectionRef={alexSectionRef} />
+
+        {/* ═══ BOOKING CTA ═══ */}
+        <SectionBookingCTA />
+
         {/* ═══ HOW IT WORKS ═══ */}
         <section className="px-5 py-10">
           <div className="max-w-3xl mx-auto">
