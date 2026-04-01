@@ -17,6 +17,9 @@ import MainLayout from "@/layouts/MainLayout";
 import { motion } from "framer-motion";
 import { useRef } from "react";
 import FloatingAlexRobot from "@/components/home/FloatingAlexRobot";
+import SectionInstantMatch from "@/components/home/SectionInstantMatch";
+import SectionBookingCTA from "@/components/home/SectionBookingCTA";
+import SectionAlexActivation from "@/components/home/SectionAlexActivation";
 import unproRobot from "@/assets/unpro-robot.png";
 import avatarsGroup from "@/assets/avatars-group.jpg";
 
@@ -86,7 +89,8 @@ const Home = () => {
         {/* ═══ HERO ═══ */}
         <HeroSection />
 
-        {/* ═══ MATCH REVEAL — "Plus besoin de comparer 3 soumissions" ═══ */}
+        {/* ═══ INSTANT MATCH — Photo/Voice/Text entry ═══ */}
+        <SectionInstantMatch />
         <section className="px-5 py-14 md:py-20">
           <div className="max-w-3xl mx-auto">
             <motion.div variants={sectionFade} initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-8">
@@ -294,6 +298,12 @@ const Home = () => {
             </motion.div>
           </div>
         </section>
+
+        {/* ═══ ALEX ACTIVATION ═══ */}
+        <SectionAlexActivation sectionRef={alexSectionRef} />
+
+        {/* ═══ BOOKING CTA ═══ */}
+        <SectionBookingCTA />
 
         {/* ═══ HOW IT WORKS ═══ */}
         <section className="px-5 py-10">
