@@ -159,7 +159,7 @@ const FormApplicationCloser = forwardRef<HTMLDivElement>((_, ref) => {
 
           <Button type="submit" size="lg" className="w-full font-semibold" disabled={submitting}>
             {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
-            Recevoir mes premiers rendez-vous
+            Envoyer ma candidature
           </Button>
         </motion.form>
       </div>
