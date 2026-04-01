@@ -573,7 +573,51 @@ export default function PageAlexGuidedOnboarding() {
                   importedData={state.importedData}
                   importModules={state.importModules}
                   contractorId={state.contractorId}
-                  onComplete={() => goTo("preview")}
+                  onComplete={() => goTo("score_reveal")}
+                />
+              )}
+
+              {/* Score Reveal */}
+              {state.step === "score_reveal" && (
+                <StepScoreReveal
+                  businessName={state.draft.business_name}
+                  contractorId={state.contractorId}
+                  onContinue={() => goTo("revenue_projection")}
+                  onScoreComputed={(s) => update({ scoreData: s })}
+                />
+              )}
+
+              {/* Revenue Projection */}
+              {state.step === "revenue_projection" && (
+                <StepRevenueProjection
+                  onContinue={(inputs) => {
+                    update({ revenueInputs: inputs, step: "objectives" });
+                  }}
+                />
+              )}
+
+              {/* Objectives */}
+              {state.step === "objectives" && (
+                <StepObjectivesCapture
+                  city={state.draft.city}
+                  activity={state.draft.activity}
+                  onContinue={(obj) => {
+                    update({ objectives: obj, step: "plan_recommendation" });
+                  }}
+                />
+              )}
+
+              {/* Plan Recommendation */}
+              {state.step === "plan_recommendation" && (
+                <StepPlanRecommendation
+                  objectives={state.objectives}
+                  businessName={state.draft.business_name}
+                  city={state.draft.city}
+                  activity={state.draft.activity}
+                  onSelectPlan={(plan) => {
+                    update({ selectedPlan: plan, step: "preview" });
+                  }}
+                  isProcessing={isProcessing}
                 />
               )}
 
