@@ -24,7 +24,9 @@ const FALLBACK_FEATURES = [
 
 export default function PageRoadmapFeatures() {
   const { data: features, isLoading } = useRoadmapFeatures();
-  const displayFeatures = features && features.length > 0 ? features : FALLBACK_FEATURES;
+  const displayFeatures = (features && features.length > 0
+    ? features.map((f: any) => ({ id: f.id, title: f.title, description: f.description, status: f.status as "live" | "in_progress" | "upcoming", category: f.category }))
+    : FALLBACK_FEATURES);
 
   return (
     <>
