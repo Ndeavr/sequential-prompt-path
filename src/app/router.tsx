@@ -132,6 +132,13 @@ import BookingSettingsPage from "@/pages/BookingSettingsPage";
 import BookingPaymentSuccess from "@/pages/BookingPaymentSuccess";
 import BookingPaymentCancel from "@/pages/BookingPaymentCancel";
 
+// Trust Authority Layer
+import PageHowUnproWorksAI from "@/pages/trust/PageHowUnproWorksAI";
+import PageRoadmapFeatures from "@/pages/trust/PageRoadmapFeatures";
+import PageCityServiceCoverage from "@/pages/trust/PageCityServiceCoverage";
+import PageGuidesHomeProblems from "@/pages/trust/PageGuidesHomeProblems";
+import PageReviewsVerified from "@/pages/trust/PageReviewsVerified";
+
 // Broker / Courtier
 import CourtiersLandingPage from "@/pages/courtiers/CourtiersLandingPage";
 import BrokerOnboardingPage from "@/pages/courtiers/BrokerOnboardingPage";
@@ -543,6 +550,11 @@ export const AppRouter = () => (
       <Route path="/conseils-renovation" element={<FallbackRoutePage />} />
       <Route path="/faq" element={<FallbackRoutePage />} />
       <Route path="/comment-ca-marche" element={<CommentCaMarchePage />} />
+      <Route path="/comment-fonctionne-ia" element={<PageHowUnproWorksAI />} />
+      <Route path="/roadmap" element={<PageRoadmapFeatures />} />
+      <Route path="/couverture" element={<PageCityServiceCoverage />} />
+      <Route path="/guides" element={<PageGuidesHomeProblems />} />
+      <Route path="/avis-verifies" element={<PageReviewsVerified />} />
       <Route path="/verification" element={<FallbackRoutePage />} />
       <Route path="/nos-standards" element={<FallbackRoutePage />} />
       <Route path="/pourquoi-pas-3-soumissions" element={<FallbackRoutePage />} />

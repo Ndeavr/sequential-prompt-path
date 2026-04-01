@@ -76,6 +76,13 @@ export const ROUTES = {
   LOGIN: "/login",
   SIGNUP: "/signup",
 
+  // Trust Authority Layer
+  HOW_AI_WORKS: "/comment-fonctionne-ia",
+  ROADMAP: "/roadmap",
+  CITY_COVERAGE: "/couverture",
+  GUIDES: "/guides",
+  VERIFIED_REVIEWS: "/avis-verifies",
+
   // SEO
   SEO_PROBLEME: "/probleme/:slug",
   SEO_PROBLEME_CITY: "/probleme/:problem/:city",
