@@ -207,6 +207,17 @@ const MatchingResultsPage = () => {
               ))}
             </div>
           )}
+
+          {/* Trust Proof Section */}
+          <div className="mt-8">
+            <SectionTrustProof
+              city={filteredMatches[0]?.city}
+              aippScore={filteredMatches[0]?.aipp_score_snapshot}
+              projectsCompleted={filteredMatches.length}
+              isVerified={true}
+              showAIExplanation
+            />
+          </div>
         </div>
 
         {/* Compare Drawer */}
