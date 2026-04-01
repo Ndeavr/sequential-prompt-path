@@ -19,6 +19,12 @@ import SignatureOfferCard from "@/components/signature/SignatureOfferCard";
 import ImportProgressRealtime from "@/components/signature/ImportProgressRealtime";
 import ProfileCompletionChecklist from "@/components/signature/ProfileCompletionChecklist";
 import ProfilePreviewCard from "@/components/signature/ProfilePreviewCard";
+import StepScoreReveal from "@/components/onboarding-funnel/StepScoreReveal";
+import StepRevenueProjection from "@/components/onboarding-funnel/StepRevenueProjection";
+import StepObjectivesCapture from "@/components/onboarding-funnel/StepObjectivesCapture";
+import type { ObjectivesData } from "@/components/onboarding-funnel/StepObjectivesCapture";
+import StepPlanRecommendation from "@/components/onboarding-funnel/StepPlanRecommendation";
+import StepActivationSuccess from "@/components/onboarding-funnel/StepActivationSuccess";
 
 export type OnboardingStep =
   | "welcome" | "business_info" | "categories" | "territories"
