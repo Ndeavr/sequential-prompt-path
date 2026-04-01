@@ -2,9 +2,9 @@ import { motion } from "framer-motion";
 import { DollarSign, TrendingUp, Wallet } from "lucide-react";
 
 const cards = [
-  { icon: DollarSign, title: "10 rencontres", desc: "1 500$ à 3 000$", sub: "par mois" },
-  { icon: TrendingUp, title: "30 clients actifs", desc: "Revenus mensuels récurrents", sub: "qui s'accumulent" },
-  { icon: Wallet, title: "Ton portefeuille", desc: "Te paie chaque mois", sub: "revenu passif" },
+  { icon: DollarSign, title: "10 rencontres / semaine", desc: "1 500$ à 3 000$", sub: "en commissions mensuelles" },
+  { icon: TrendingUp, title: "30 entrepreneurs activés", desc: "Revenus récurrents", sub: "qui s'accumulent mois après mois" },
+  { icon: Wallet, title: "Ton portefeuille clients", desc: "Te génère du passif", sub: "même quand tu ne travailles pas" },
 ];
 
 export default function ProofSectionEarnings() {

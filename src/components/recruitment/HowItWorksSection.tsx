@@ -2,10 +2,10 @@ import { motion } from "framer-motion";
 import { CalendarCheck, Coffee, Sparkles, BadgeDollarSign } from "lucide-react";
 
 const steps = [
-  { icon: CalendarCheck, title: "On remplit ton agenda", desc: "de rendez-vous qualifiés" },
-  { icon: Coffee, title: "Tu rencontres l'entrepreneur", desc: "café, chantier, bureau — toi qui choisis" },
-  { icon: Sparkles, title: "Tu crées son profil IA", desc: "en direct avec lui, simple et rapide" },
-  { icon: BadgeDollarSign, title: "Tu gagnes à vie", desc: "commission récurrente sur chaque client" },
+  { icon: CalendarCheck, title: "Tu reçois tes rendez-vous", desc: "On te planifie des rencontres avec des entrepreneurs ciblés" },
+  { icon: Coffee, title: "Tu rencontres l'entrepreneur", desc: "café, chantier, bureau — toi qui choisis le lieu" },
+  { icon: Sparkles, title: "Tu crées son profil IA", desc: "en direct avec lui, en 5 min avec nos outils" },
+  { icon: BadgeDollarSign, title: "Tu touches ta commission", desc: "à l'activation + récurrent chaque mois" },
 ];
 
 export default function HowItWorksSection() {
@@ -18,11 +18,10 @@ export default function HowItWorksSection() {
           viewport={{ once: true }}
           className="text-3xl font-display font-bold text-center text-foreground mb-14"
         >
-          Ce que tu fais concrètement
+          Ton quotidien comme rep
         </motion.h2>
 
         <div className="relative">
-          {/* Vertical line */}
           <div className="absolute left-6 md:left-1/2 top-0 bottom-0 w-px bg-border hidden md:block" />
 
           <div className="space-y-10">
