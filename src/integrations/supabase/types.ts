@@ -14923,6 +14923,129 @@ export type Database = {
           },
         ]
       }
+      entrepreneur_activation_events: {
+        Row: {
+          contractor_id: string | null
+          created_at: string
+          event_payload: Json | null
+          event_type: string
+          id: string
+          import_session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string
+          event_payload?: Json | null
+          event_type: string
+          id?: string
+          import_session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string
+          event_payload?: Json | null
+          event_type?: string
+          id?: string
+          import_session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entrepreneur_activation_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_activation_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_activation_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_activation_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_activation_events_import_session_id_fkey"
+            columns: ["import_session_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_import_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entrepreneur_assets: {
+        Row: {
+          ai_caption: string | null
+          alt_text: string | null
+          asset_type: string
+          created_at: string
+          id: string
+          import_session_id: string | null
+          is_primary: boolean | null
+          profile_draft_id: string | null
+          quality_score: number | null
+          source_type: string | null
+          storage_path: string
+        }
+        Insert: {
+          ai_caption?: string | null
+          alt_text?: string | null
+          asset_type?: string
+          created_at?: string
+          id?: string
+          import_session_id?: string | null
+          is_primary?: boolean | null
+          profile_draft_id?: string | null
+          quality_score?: number | null
+          source_type?: string | null
+          storage_path: string
+        }
+        Update: {
+          ai_caption?: string | null
+          alt_text?: string | null
+          asset_type?: string
+          created_at?: string
+          id?: string
+          import_session_id?: string | null
+          is_primary?: boolean | null
+          profile_draft_id?: string | null
+          quality_score?: number | null
+          source_type?: string | null
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entrepreneur_assets_import_session_id_fkey"
+            columns: ["import_session_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_import_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_assets_profile_draft_id_fkey"
+            columns: ["profile_draft_id"]
+            isOneToOne: false
+            referencedRelation: "entrepreneur_profiles_draft"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entrepreneur_entry_logs: {
         Row: {
           action: string
@@ -15080,6 +15203,47 @@ export type Database = {
           },
         ]
       }
+      entrepreneur_profile_fields: {
+        Row: {
+          created_at: string
+          field_key: string
+          field_value: string | null
+          id: string
+          is_verified: boolean | null
+          profile_draft_id: string
+          source_priority: number | null
+          source_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          field_key: string
+          field_value?: string | null
+          id?: string
+          is_verified?: boolean | null
+          profile_draft_id: string
+          source_priority?: number | null
+          source_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          field_key?: string
+          field_value?: string | null
+          id?: string
+          is_verified?: boolean | null
+          profile_draft_id?: string
+          source_priority?: number | null
+          source_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entrepreneur_profile_fields_profile_draft_id_fkey"
+            columns: ["profile_draft_id"]
+            isOneToOne: false
+            referencedRelation: "entrepreneur_profiles_draft"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entrepreneur_profile_progress: {
         Row: {
           created_at: string | null
@@ -15115,6 +15279,129 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      entrepreneur_profiles_draft: {
+        Row: {
+          ai_indexing_summary: string | null
+          business_description_long: string | null
+          business_description_short: string | null
+          business_name: string | null
+          city: string | null
+          completeness_score: number | null
+          contractor_id: string | null
+          created_at: string
+          email: string | null
+          google_rating: number | null
+          google_reviews_count: number | null
+          id: string
+          import_session_id: string | null
+          logo_url: string | null
+          media_gallery: Json | null
+          owner_name: string | null
+          phone: string | null
+          province: string | null
+          service_categories: Json | null
+          service_subcategories: Json | null
+          status: string
+          target_territories: Json | null
+          trust_signals_summary: string | null
+          updated_at: string
+          user_id: string | null
+          website_url: string | null
+        }
+        Insert: {
+          ai_indexing_summary?: string | null
+          business_description_long?: string | null
+          business_description_short?: string | null
+          business_name?: string | null
+          city?: string | null
+          completeness_score?: number | null
+          contractor_id?: string | null
+          created_at?: string
+          email?: string | null
+          google_rating?: number | null
+          google_reviews_count?: number | null
+          id?: string
+          import_session_id?: string | null
+          logo_url?: string | null
+          media_gallery?: Json | null
+          owner_name?: string | null
+          phone?: string | null
+          province?: string | null
+          service_categories?: Json | null
+          service_subcategories?: Json | null
+          status?: string
+          target_territories?: Json | null
+          trust_signals_summary?: string | null
+          updated_at?: string
+          user_id?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          ai_indexing_summary?: string | null
+          business_description_long?: string | null
+          business_description_short?: string | null
+          business_name?: string | null
+          city?: string | null
+          completeness_score?: number | null
+          contractor_id?: string | null
+          created_at?: string
+          email?: string | null
+          google_rating?: number | null
+          google_reviews_count?: number | null
+          id?: string
+          import_session_id?: string | null
+          logo_url?: string | null
+          media_gallery?: Json | null
+          owner_name?: string | null
+          phone?: string | null
+          province?: string | null
+          service_categories?: Json | null
+          service_subcategories?: Json | null
+          status?: string
+          target_territories?: Json | null
+          trust_signals_summary?: string | null
+          updated_at?: string
+          user_id?: string | null
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entrepreneur_profiles_draft_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_profiles_draft_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_profiles_draft_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_profiles_draft_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_profiles_draft_import_session_id_fkey"
+            columns: ["import_session_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_import_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       entrepreneur_revenue_projections: {
         Row: {
