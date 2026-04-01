@@ -132,6 +132,13 @@ import BookingSettingsPage from "@/pages/BookingSettingsPage";
 import BookingPaymentSuccess from "@/pages/BookingPaymentSuccess";
 import BookingPaymentCancel from "@/pages/BookingPaymentCancel";
 
+// Trust Authority Layer
+import PageHowUnproWorksAI from "@/pages/trust/PageHowUnproWorksAI";
+import PageRoadmapFeatures from "@/pages/trust/PageRoadmapFeatures";
+import PageCityServiceCoverage from "@/pages/trust/PageCityServiceCoverage";
+import PageGuidesHomeProblems from "@/pages/trust/PageGuidesHomeProblems";
+import PageReviewsVerified from "@/pages/trust/PageReviewsVerified";
+
 // Broker / Courtier
 import CourtiersLandingPage from "@/pages/courtiers/CourtiersLandingPage";
 import BrokerOnboardingPage from "@/pages/courtiers/BrokerOnboardingPage";
