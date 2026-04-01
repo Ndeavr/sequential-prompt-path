@@ -17,6 +17,9 @@ import MainLayout from "@/layouts/MainLayout";
 import { motion } from "framer-motion";
 import { useRef } from "react";
 import FloatingAlexRobot from "@/components/home/FloatingAlexRobot";
+import SectionInstantMatch from "@/components/home/SectionInstantMatch";
+import SectionBookingCTA from "@/components/home/SectionBookingCTA";
+import SectionAlexActivation from "@/components/home/SectionAlexActivation";
 import unproRobot from "@/assets/unpro-robot.png";
 import avatarsGroup from "@/assets/avatars-group.jpg";
 
