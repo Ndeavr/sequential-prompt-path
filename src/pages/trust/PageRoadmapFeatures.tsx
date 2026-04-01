@@ -9,6 +9,7 @@ import { useRoadmapFeatures } from "@/hooks/useTrustData";
 import { motion } from "framer-motion";
 import { fadeUp } from "@/lib/motion";
 import { Rocket, Loader2 } from "lucide-react";
+import InternalLinksTrust from "@/components/trust/InternalLinksTrust";
 
 // Fallback data when DB is empty
 const FALLBACK_FEATURES = [
