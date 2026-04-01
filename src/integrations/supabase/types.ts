@@ -17446,6 +17446,54 @@ export type Database = {
         }
         Relationships: []
       }
+      input_mode_failures: {
+        Row: {
+          created_at: string
+          failed_mode: string
+          id: string
+          reason: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          failed_mode: string
+          id?: string
+          reason: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          failed_mode?: string
+          id?: string
+          reason?: string
+          session_id?: string
+        }
+        Relationships: []
+      }
+      input_mode_preferences: {
+        Row: {
+          id: string
+          last_used_mode: string | null
+          preferred_mode: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          last_used_mode?: string | null
+          preferred_mode?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          last_used_mode?: string | null
+          preferred_mode?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       jve_calculator_sessions: {
         Row: {
           city_id: string | null
@@ -32343,6 +32391,42 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      user_input_mode_logs: {
+        Row: {
+          conversion: boolean | null
+          created_at: string
+          id: string
+          mode_used: string
+          page_context: string | null
+          session_id: string
+          success: boolean | null
+          time_to_first_input_ms: number | null
+          user_id: string | null
+        }
+        Insert: {
+          conversion?: boolean | null
+          created_at?: string
+          id?: string
+          mode_used?: string
+          page_context?: string | null
+          session_id: string
+          success?: boolean | null
+          time_to_first_input_ms?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          conversion?: boolean | null
+          created_at?: string
+          id?: string
+          mode_used?: string
+          page_context?: string | null
+          session_id?: string
+          success?: boolean | null
+          time_to_first_input_ms?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       user_likes: {
         Row: {
