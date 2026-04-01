@@ -752,6 +752,39 @@ export type Database = {
           },
         ]
       }
+      ai_explanations: {
+        Row: {
+          created_at: string
+          explanation_fr: string
+          icon_name: string | null
+          id: string
+          is_active: boolean | null
+          step_key: string
+          step_order: number | null
+          title_fr: string
+        }
+        Insert: {
+          created_at?: string
+          explanation_fr: string
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          step_key: string
+          step_order?: number | null
+          title_fr: string
+        }
+        Update: {
+          created_at?: string
+          explanation_fr?: string
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          step_key?: string
+          step_order?: number | null
+          title_fr?: string
+        }
+        Relationships: []
+      }
       ai_optimization_logs: {
         Row: {
           applied: boolean
@@ -6943,6 +6976,54 @@ export type Database = {
           trade_slug?: string
           updated_at?: string | null
           urgency_level?: string | null
+        }
+        Relationships: []
+      }
+      city_services: {
+        Row: {
+          avg_response_time_hours: number | null
+          city: string
+          city_slug: string
+          contractors_count: number | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          latitude: number | null
+          longitude: number | null
+          province: string | null
+          service: string
+          service_slug: string
+          updated_at: string
+        }
+        Insert: {
+          avg_response_time_hours?: number | null
+          city: string
+          city_slug: string
+          contractors_count?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          province?: string | null
+          service: string
+          service_slug: string
+          updated_at?: string
+        }
+        Update: {
+          avg_response_time_hours?: number | null
+          city?: string
+          city_slug?: string
+          contractors_count?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          province?: string | null
+          service?: string
+          service_slug?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -15857,6 +15938,63 @@ export type Database = {
           source_engine?: string
           status?: string
           title?: string | null
+        }
+        Relationships: []
+      }
+      guides_content: {
+        Row: {
+          category: string | null
+          causes: string[] | null
+          contractor_specialty: string | null
+          created_at: string
+          estimated_cost_max: number | null
+          estimated_cost_min: number | null
+          id: string
+          is_published: boolean | null
+          problem: string
+          seo_description: string | null
+          seo_title: string | null
+          severity: string | null
+          slug: string
+          solution: string | null
+          symptoms: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          causes?: string[] | null
+          contractor_specialty?: string | null
+          created_at?: string
+          estimated_cost_max?: number | null
+          estimated_cost_min?: number | null
+          id?: string
+          is_published?: boolean | null
+          problem: string
+          seo_description?: string | null
+          seo_title?: string | null
+          severity?: string | null
+          slug: string
+          solution?: string | null
+          symptoms?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          causes?: string[] | null
+          contractor_specialty?: string | null
+          created_at?: string
+          estimated_cost_max?: number | null
+          estimated_cost_min?: number | null
+          id?: string
+          is_published?: boolean | null
+          problem?: string
+          seo_description?: string | null
+          seo_title?: string | null
+          severity?: string | null
+          slug?: string
+          solution?: string | null
+          symptoms?: string[] | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -27715,10 +27853,15 @@ export type Database = {
           created_at: string
           id: string
           is_published: boolean | null
+          proof_type: string | null
+          proof_url: string | null
           rating: number
           title: string | null
           updated_at: string
           user_id: string
+          verification_status: string | null
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
           content?: string | null
@@ -27726,10 +27869,15 @@ export type Database = {
           created_at?: string
           id?: string
           is_published?: boolean | null
+          proof_type?: string | null
+          proof_url?: string | null
           rating: number
           title?: string | null
           updated_at?: string
           user_id: string
+          verification_status?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
           content?: string | null
@@ -27737,10 +27885,15 @@ export type Database = {
           created_at?: string
           id?: string
           is_published?: boolean | null
+          proof_type?: string | null
+          proof_url?: string | null
           rating?: number
           title?: string | null
           updated_at?: string
           user_id?: string
+          verification_status?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: [
           {
@@ -27935,6 +28088,45 @@ export type Database = {
           run_status?: string
           run_type?: string
           started_at?: string | null
+        }
+        Relationships: []
+      }
+      roadmap_features: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          icon_name: string | null
+          id: string
+          priority: number | null
+          release_date: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          priority?: number | null
+          release_date?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          priority?: number | null
+          release_date?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
