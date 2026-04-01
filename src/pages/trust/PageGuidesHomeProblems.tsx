@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import { fadeUp, staggerContainer, viewportOnce } from "@/lib/motion";
 import { BookOpen, Loader2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import InternalLinksTrust from "@/components/trust/InternalLinksTrust";
 
 // Fallback guides
 const FALLBACK_GUIDES = [
@@ -125,6 +126,7 @@ export default function PageGuidesHomeProblems() {
             </div>
           )}
         </SectionContainer>
+        <InternalLinksTrust currentPath="/guides" />
       </main>
     </>
   );

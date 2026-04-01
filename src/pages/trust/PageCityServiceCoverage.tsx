@@ -10,6 +10,7 @@ import { useCityServices } from "@/hooks/useTrustData";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer, viewportOnce } from "@/lib/motion";
 import { MapPin, Loader2 } from "lucide-react";
+import InternalLinksTrust from "@/components/trust/InternalLinksTrust";
 
 // Fallback data
 const FALLBACK_CITIES = [
@@ -93,6 +94,7 @@ export default function PageCityServiceCoverage() {
             ))}
           </motion.div>
         </SectionContainer>
+        <InternalLinksTrust currentPath="/couverture" />
       </main>
     </>
   );

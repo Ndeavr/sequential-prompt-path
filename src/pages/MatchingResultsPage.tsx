@@ -16,6 +16,7 @@ import CompareDrawer from "@/components/matching/CompareDrawer";
 import AlexMatchingModule from "@/components/matching/AlexMatchingModule";
 import { useMatchResults } from "@/hooks/useMatchingEngine";
 import type { MatchEvaluation } from "@/types/matching";
+import SectionTrustProof from "@/components/trust/SectionTrustProof";
 
 // ─── Mock data for demo when no real matches exist ───
 const MOCK_MATCHES: MatchEvaluation[] = [
@@ -206,6 +207,17 @@ const MatchingResultsPage = () => {
               ))}
             </div>
           )}
+
+          {/* Trust Proof Section */}
+          <div className="mt-8">
+            <SectionTrustProof
+              city={filteredMatches[0]?.city}
+              aippScore={filteredMatches[0]?.aipp_score_snapshot}
+              projectsCompleted={filteredMatches.length}
+              isVerified={true}
+              showAIExplanation
+            />
+          </div>
         </div>
 
         {/* Compare Drawer */}

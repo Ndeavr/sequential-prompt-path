@@ -9,6 +9,7 @@ import { useVerifiedReviews } from "@/hooks/useTrustData";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer, viewportOnce } from "@/lib/motion";
 import { Star, Loader2 } from "lucide-react";
+import InternalLinksTrust from "@/components/trust/InternalLinksTrust";
 
 // Fallback reviews
 const FALLBACK_REVIEWS = [
@@ -89,6 +90,7 @@ export default function PageReviewsVerified() {
             </motion.div>
           )}
         </SectionContainer>
+        <InternalLinksTrust currentPath="/avis-verifies" />
       </main>
     </>
   );
