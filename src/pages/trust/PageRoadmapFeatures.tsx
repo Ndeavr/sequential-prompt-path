@@ -64,6 +64,7 @@ export default function PageRoadmapFeatures() {
             <TimelineRoadmapFeatures features={displayFeatures} />
           )}
         </SectionContainer>
+        <InternalLinksTrust currentPath="/roadmap" />
       </main>
     </>
   );

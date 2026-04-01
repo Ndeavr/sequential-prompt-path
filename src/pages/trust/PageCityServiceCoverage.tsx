@@ -94,6 +94,7 @@ export default function PageCityServiceCoverage() {
             ))}
           </motion.div>
         </SectionContainer>
+        <InternalLinksTrust currentPath="/couverture" />
       </main>
     </>
   );

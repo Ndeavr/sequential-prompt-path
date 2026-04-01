@@ -90,6 +90,7 @@ export default function PageReviewsVerified() {
             </motion.div>
           )}
         </SectionContainer>
+        <InternalLinksTrust currentPath="/avis-verifies" />
       </main>
     </>
   );

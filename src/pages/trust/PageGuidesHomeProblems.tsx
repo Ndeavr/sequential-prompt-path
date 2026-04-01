@@ -126,6 +126,7 @@ export default function PageGuidesHomeProblems() {
             </div>
           )}
         </SectionContainer>
+        <InternalLinksTrust currentPath="/guides" />
       </main>
     </>
   );

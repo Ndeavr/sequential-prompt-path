@@ -96,6 +96,7 @@ export default function PageHowUnproWorksAI() {
             </Button>
           </motion.div>
         </SectionContainer>
+        <InternalLinksTrust currentPath="/comment-fonctionne-ia" />
       </main>
     </>
   );
