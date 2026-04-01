@@ -29,7 +29,9 @@ import StepActivationSuccess from "@/components/onboarding-funnel/StepActivation
 export type OnboardingStep =
   | "welcome" | "business_info" | "categories" | "territories"
   | "signature_offer" | "activation" | "importing"
-  | "profile_completion" | "preview" | "published";
+  | "profile_completion" | "score_reveal" | "revenue_projection"
+  | "objectives" | "plan_recommendation"
+  | "preview" | "published" | "activation_success";
 
 interface ContractorDraft {
   id?: string;
