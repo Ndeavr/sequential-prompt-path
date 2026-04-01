@@ -89,7 +89,8 @@ const Home = () => {
         {/* ═══ HERO ═══ */}
         <HeroSection />
 
-        {/* ═══ MATCH REVEAL — "Plus besoin de comparer 3 soumissions" ═══ */}
+        {/* ═══ INSTANT MATCH — Photo/Voice/Text entry ═══ */}
+        <SectionInstantMatch />
         <section className="px-5 py-14 md:py-20">
           <div className="max-w-3xl mx-auto">
             <motion.div variants={sectionFade} initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-8">
