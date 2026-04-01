@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, Clock, MapPin } from "lucide-react";
+import repDemoImg from "@/assets/rep-demo-aipp.png";
 
 const pills = [
   { icon: GraduationCap, label: "Étudiants bienvenus" },
