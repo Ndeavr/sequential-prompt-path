@@ -1170,6 +1170,60 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_context_prompts: {
+        Row: {
+          active: boolean
+          context_key: string
+          created_at: string
+          greeting_text: string
+          id: string
+          intent_key: string
+          issue_type: string | null
+          locale: string
+          next_flow: string | null
+          object_type: string | null
+          primary_question: string
+          priority: number
+          quick_replies_json: Json
+          role_type: string | null
+          room_type: string | null
+        }
+        Insert: {
+          active?: boolean
+          context_key?: string
+          created_at?: string
+          greeting_text: string
+          id?: string
+          intent_key: string
+          issue_type?: string | null
+          locale?: string
+          next_flow?: string | null
+          object_type?: string | null
+          primary_question: string
+          priority?: number
+          quick_replies_json?: Json
+          role_type?: string | null
+          room_type?: string | null
+        }
+        Update: {
+          active?: boolean
+          context_key?: string
+          created_at?: string
+          greeting_text?: string
+          id?: string
+          intent_key?: string
+          issue_type?: string | null
+          locale?: string
+          next_flow?: string | null
+          object_type?: string | null
+          primary_question?: string
+          priority?: number
+          quick_replies_json?: Json
+          role_type?: string | null
+          room_type?: string | null
+        }
+        Relationships: []
+      }
       alex_conversation_rules: {
         Row: {
           created_at: string
@@ -1230,6 +1284,45 @@ export type Database = {
           session_id?: string
           trigger_reason?: string | null
           user_response?: string | null
+        }
+        Relationships: []
+      }
+      alex_detected_contexts: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          detected_issue: string | null
+          detected_objects_json: Json | null
+          detected_room: string | null
+          detected_style: string | null
+          id: string
+          image_id: string | null
+          session_id: string
+          suggested_intent: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          detected_issue?: string | null
+          detected_objects_json?: Json | null
+          detected_room?: string | null
+          detected_style?: string | null
+          id?: string
+          image_id?: string | null
+          session_id: string
+          suggested_intent?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          detected_issue?: string | null
+          detected_objects_json?: Json | null
+          detected_room?: string | null
+          detected_style?: string | null
+          id?: string
+          image_id?: string | null
+          session_id?: string
+          suggested_intent?: string | null
         }
         Relationships: []
       }
@@ -1999,6 +2092,59 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      alex_prompt_logs: {
+        Row: {
+          created_at: string
+          detected_context_json: Json | null
+          id: string
+          image_id: string | null
+          next_flow_opened: string | null
+          prompt_id: string | null
+          question_shown: string | null
+          quick_reply_clicked: string | null
+          session_id: string
+          trigger_type: string
+          trigger_value: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          detected_context_json?: Json | null
+          id?: string
+          image_id?: string | null
+          next_flow_opened?: string | null
+          prompt_id?: string | null
+          question_shown?: string | null
+          quick_reply_clicked?: string | null
+          session_id: string
+          trigger_type?: string
+          trigger_value?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          detected_context_json?: Json | null
+          id?: string
+          image_id?: string | null
+          next_flow_opened?: string | null
+          prompt_id?: string | null
+          question_shown?: string | null
+          quick_reply_clicked?: string | null
+          session_id?: string
+          trigger_type?: string
+          trigger_value?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_prompt_logs_prompt_id_fkey"
+            columns: ["prompt_id"]
+            isOneToOne: false
+            referencedRelation: "alex_context_prompts"
+            referencedColumns: ["id"]
           },
         ]
       }
