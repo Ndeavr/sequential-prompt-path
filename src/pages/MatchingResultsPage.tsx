@@ -16,6 +16,7 @@ import CompareDrawer from "@/components/matching/CompareDrawer";
 import AlexMatchingModule from "@/components/matching/AlexMatchingModule";
 import { useMatchResults } from "@/hooks/useMatchingEngine";
 import type { MatchEvaluation } from "@/types/matching";
+import SectionTrustProof from "@/components/trust/SectionTrustProof";
 
 // ─── Mock data for demo when no real matches exist ───
 const MOCK_MATCHES: MatchEvaluation[] = [
