@@ -1,20 +1,23 @@
-import { useTheme } from "next-themes";
+/**
+ * ThemeToggle — Premium light/dark toggle for UNPRO.
+ * Uses CSS .light class on document root (no next-themes dependency).
+ */
 import { Sun, Moon } from "lucide-react";
 import { motion } from "framer-motion";
+import { useThemeToggle } from "@/hooks/useThemeToggle";
 
 interface ThemeToggleProps {
   className?: string;
 }
 
 export default function ThemeToggle({ className = "" }: ThemeToggleProps) {
-  const { theme, setTheme } = useTheme();
-  const isDark = theme === "dark";
+  const { isDark, toggle } = useThemeToggle();
 
   return (
     <button
-      onClick={() => setTheme(isDark ? "light" : "dark")}
+      onClick={toggle}
       className={`relative flex h-8 w-8 items-center justify-center rounded-full bg-muted/60 border border-border/40 transition-colors hover:bg-muted ${className}`}
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      aria-label={isDark ? "Mode clair" : "Mode sombre"}
     >
       <motion.div
         key={isDark ? "moon" : "sun"}
