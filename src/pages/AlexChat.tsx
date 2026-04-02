@@ -9,6 +9,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { detectIntent, detectCategory } from "@/services/alexIntentService";
 import { getRecommendations, type AlexRecommendation } from "@/services/alexRecommendationService";
 import {
+  createIntentSession, getIntentSession, resetIntentSession,
+  incrementMessageCount, shouldAutoAdvance, advancePhase,
+  getPhaseGatedActions, getPhaseLabel, phaseActionsToRecommendations,
+  type IntentSession,
+} from "@/services/alexIntentPhaseEngine";
+import {
   Send, Search, Upload, Calendar, Home, BarChart3, Star,
   Loader2, RotateCcw, Sparkles, ArrowLeft, Mic, MicOff, Square,
 } from "lucide-react";
@@ -107,7 +113,20 @@ const AlexChat = () => {
     setInput("");
     const intent = detectIntent(trimmed);
     const category = detectCategory(trimmed);
-    const recs = getRecommendations(intent, { hasProperties: false, hasQuotes: false, category });
+
+    // Phase-gated recommendations
+    let session = getIntentSession();
+    if (!session) {
+      session = createIntentSession(intent, trimmed);
+    } else {
+      incrementMessageCount(session);
+      if (shouldAutoAdvance(session)) {
+        advancePhase(session);
+      }
+    }
+
+    const phaseActions = getPhaseGatedActions(session, { category, hasProperties: false });
+    const recs = phaseActionsToRecommendations(phaseActions);
     setRecommendations(recs);
     await sendMessage(trimmed, { currentPage: pathname });
   };
@@ -115,6 +134,7 @@ const AlexChat = () => {
   const handleReset = () => {
     reset();
     setRecommendations([]);
+    resetIntentSession();
   };
 
   return (
@@ -228,7 +248,7 @@ const AlexChat = () => {
                     exit={{ opacity: 0 }}
                     className="space-y-2 pl-9"
                   >
-                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Actions suggérées</p>
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{getIntentSession() ? getPhaseLabel(getIntentSession()!.currentPhase) : "Actions suggérées"}</p>
                     {recommendations.map((rec) => {
                       const Icon = ICON_MAP[rec.icon] ?? Search;
                       return (
