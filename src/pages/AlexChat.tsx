@@ -9,6 +9,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { detectIntent, detectCategory } from "@/services/alexIntentService";
 import { getRecommendations, type AlexRecommendation } from "@/services/alexRecommendationService";
 import {
+  createIntentSession, getIntentSession, resetIntentSession,
+  incrementMessageCount, shouldAutoAdvance, advancePhase,
+  getPhaseGatedActions, getPhaseLabel, phaseActionsToRecommendations,
+  type IntentSession,
+} from "@/services/alexIntentPhaseEngine";
+import {
   Send, Search, Upload, Calendar, Home, BarChart3, Star,
   Loader2, RotateCcw, Sparkles, ArrowLeft, Mic, MicOff, Square,
 } from "lucide-react";
