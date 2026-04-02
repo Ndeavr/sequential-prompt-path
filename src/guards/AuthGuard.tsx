@@ -1,17 +1,30 @@
 /**
- * UNPRO — Auth Guard: Redirects unauthenticated users to /login
+ * UNPRO — Auth Guard: Opens premium overlay for unauthenticated users
+ * instead of hard-redirecting to /login.
  */
-import { Navigate, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { saveAuthIntent } from "@/services/auth/authIntentService";
+import { openAuthOverlay } from "@/hooks/useAuthOverlay";
 
 interface AuthGuardProps {
   children: React.ReactNode;
+  actionLabel?: string;
 }
 
-export default function AuthGuard({ children }: AuthGuardProps) {
+export default function AuthGuard({ children, actionLabel }: AuthGuardProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      openAuthOverlay({
+        label: actionLabel ?? "Accéder à cette section",
+        returnPath: location.pathname + location.search,
+        action: "access_protected",
+      });
+    }
+  }, [isAuthenticated, isLoading, location, actionLabel]);
 
   if (isLoading) {
     return (
@@ -22,11 +35,12 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   }
 
   if (!isAuthenticated) {
-    saveAuthIntent({
-      returnPath: location.pathname + location.search,
-      action: "access_protected",
-    });
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    // Render nothing — overlay handles the auth UX
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-muted-foreground text-sm">Connexion requise</div>
+      </div>
+    );
   }
 
   return <>{children}</>;
