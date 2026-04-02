@@ -2,7 +2,6 @@
  * UNPRO — Auth Overlay global state
  * Lightweight store for triggering the auth overlay from anywhere.
  */
-import { create } from "zustand";
 
 interface PendingAction {
   label: string;
@@ -10,20 +9,10 @@ interface PendingAction {
   action?: string;
 }
 
-interface AuthOverlayState {
-  isOpen: boolean;
-  pendingAction: PendingAction | null;
-  open: (pending?: PendingAction) => void;
-  close: () => void;
-}
-
-// We use a simple callback pattern instead of zustand to avoid adding a dep
 let listeners: Array<() => void> = [];
-let state: AuthOverlayState = {
-  isOpen: false,
-  pendingAction: null,
-  open: () => {},
-  close: () => {},
+let currentState = {
+  isOpen: false as boolean,
+  pendingAction: null as PendingAction | null,
 };
 
 function notify() {
@@ -31,17 +20,17 @@ function notify() {
 }
 
 export function openAuthOverlay(pending?: PendingAction) {
-  state = { ...state, isOpen: true, pendingAction: pending ?? null };
+  currentState = { isOpen: true, pendingAction: pending ?? null };
   notify();
 }
 
 export function closeAuthOverlay() {
-  state = { ...state, isOpen: false };
+  currentState = { ...currentState, isOpen: false };
   notify();
 }
 
 export function getAuthOverlayState() {
-  return state;
+  return currentState;
 }
 
 export function subscribeAuthOverlay(listener: () => void) {
