@@ -42,8 +42,13 @@ export default function OAuthButtons({ loading: externalLoading, className = "" 
       <Button
         type="button"
         variant="outline"
-        className="w-full h-11 text-sm font-medium rounded-xl gap-3"
-        style={{ background: "white", border: "1px solid #DFE9F5", color: "#0B1533" }}
+        className="w-full h-12 text-sm font-semibold rounded-xl gap-3 transition-all active:scale-[0.98]"
+        style={{
+          background: "hsl(0 0% 100% / 0.95)",
+          border: "1px solid hsl(0 0% 100% / 0.2)",
+          color: "#1a1a2e",
+          boxShadow: "0 2px 8px -2px hsl(228 40% 3% / 0.3)",
+        }}
         disabled={isDisabled}
         onClick={() => handleOAuth("google")}
       >
