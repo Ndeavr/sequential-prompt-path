@@ -1,145 +1,210 @@
 /**
- * HeroSection — Cinematic AI Home with Gemini Live Native Audio voice.
- * Uses useLiveVoice for real-time bidirectional voice (no legacy TTS pipeline).
+ * HeroSectionCinematicAlex — Immersive cinematic hero with Alex orb,
+ * intent selector pills, and UNPRO brand glow.
+ * Voice-first with Gemini Live Native Audio.
  */
 import { useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
-
-import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX } from "lucide-react";
-import HeroIntentSwitcher from "@/components/home/HeroIntentSwitcher";
+import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, Camera, AlertTriangle, Sparkles, ArrowRight } from "lucide-react";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
+import { Link } from "react-router-dom";
 import cinematicBg from "@/assets/cinematic-home-bg.jpg";
 
+type IntentSlug = "photo" | "probleme" | "projet";
+
+const INTENTS = [
+  {
+    slug: "photo" as IntentSlug,
+    label: "Photo",
+    icon: Camera,
+    cta: "Analyser une photo",
+    ctaSec: "Améliorer un design",
+    route: "/describe-project?intent=photo",
+    routeSec: "/describe-project?intent=design",
+  },
+  {
+    slug: "probleme" as IntentSlug,
+    label: "Problème",
+    icon: AlertTriangle,
+    cta: "Détecter un problème",
+    ctaSec: "Obtenir une piste",
+    route: "/describe-project?intent=problem",
+    routeSec: "/describe-project?intent=diagnostic",
+  },
+  {
+    slug: "projet" as IntentSlug,
+    label: "Projet",
+    icon: Sparkles,
+    cta: "Lancer un projet",
+    ctaSec: "Voir des idées",
+    route: "/describe-project",
+    routeSec: "/inspirations",
+  },
+];
 
 export default function HeroSection() {
   const { user } = useAuth();
   const [textSheetOpen, setTextSheetOpen] = useState(false);
+  const [activeIntent, setActiveIntent] = useState<IntentSlug>("photo");
 
-  // Gemini Live voice state
   const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
     onTranscript: () => {},
     onUserTranscript: () => {},
-    onConnect: () => {
-      console.log("[Hero] Gemini Live connected");
-    },
-    onDisconnect: () => {
-      console.log("[Hero] Gemini Live disconnected");
-    },
-    onError: (err) => {
-      console.error("[Hero] Gemini Live error:", err);
-    },
+    onConnect: () => console.log("[Hero] Gemini Live connected"),
+    onDisconnect: () => console.log("[Hero] Gemini Live disconnected"),
+    onError: (err) => console.error("[Hero] Gemini Live error:", err),
   });
 
-  const orbState = isConnecting
-    ? "thinking"
-    : isActive
-    ? isSpeaking
-      ? "speaking"
-      : "listening"
-    : "idle";
-
+  const orbState = isConnecting ? "thinking" : isActive ? (isSpeaking ? "speaking" : "listening") : "idle";
   const voiceActive = isActive || isConnecting;
+  const current = INTENTS.find((i) => i.slug === activeIntent)!;
 
   const startVoice = useCallback(() => {
-    // Kill any other voice source first
     window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
-
-    // Build personalised greeting
-    const firstName = user?.user_metadata?.full_name?.split(" ")[0]
-      || user?.user_metadata?.first_name
-      || null;
-
+    const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || null;
     const initialGreeting = firstName
       ? `Salue-moi. Mon prénom est ${firstName}. Dis "Bonjour ${firstName}, bienvenue."`
       : `Salue-moi. Je suis un nouveau visiteur. Dis "Bonjour, bienvenue."`;
-
     start({ initialGreeting });
   }, [start, user]);
 
-  const stopVoice = useCallback(() => {
-    stop();
-  }, [stop]);
-
-  const muteSpeech = useCallback(() => {
-    stop();
-  }, [stop]);
+  const stopVoice = useCallback(() => stop(), [stop]);
 
   const statusText =
-    orbState === "speaking"
-      ? "Alex vous parle…"
-      : orbState === "thinking"
-      ? "Connexion Gemini Live…"
-      : orbState === "listening"
-      ? "Je vous écoute…"
-      : "Parlez à Alex";
+    orbState === "speaking" ? "Alex vous parle…"
+    : orbState === "thinking" ? "Connexion…"
+    : orbState === "listening" ? "Je vous écoute…"
+    : "Parlez à Alex";
 
   return (
     <>
-      <section className="relative min-h-[92vh] flex flex-col items-center justify-center overflow-hidden">
-        {/* ── Cinematic Background Image ── */}
+      <section className="relative min-h-[100vh] flex flex-col items-center justify-center overflow-hidden">
+        {/* ── Cinematic Background ── */}
         <motion.div
           className="absolute inset-0 z-0"
-          animate={{ scale: [1, 1.03, 1] }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          animate={{ scale: [1, 1.04, 1] }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
         >
-          <img
-            src={cinematicBg}
-            alt=""
-            aria-hidden="true"
-            className="absolute inset-0 w-full h-full object-cover"
-            width={1920}
-            height={1080}
-          />
+          <img src={cinematicBg} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} />
         </motion.div>
 
-        {/* ── Cinematic Overlay ── */}
+        {/* ── Deep cinematic overlay ── */}
         <div className="absolute inset-0 z-[1]" style={{
-          background: "linear-gradient(to bottom, rgba(6,11,24,0.35) 0%, rgba(6,11,24,0.6) 50%, rgba(6,11,24,0.92) 100%)",
+          background: "linear-gradient(to bottom, rgba(4,8,20,0.45) 0%, rgba(4,8,20,0.65) 40%, rgba(4,8,20,0.92) 100%)",
         }} />
 
-        {/* ── Ambient Light FX ── */}
-        <div className="absolute inset-0 z-[2] pointer-events-none">
-          <div className="absolute top-[45%] left-0 right-0 h-[2px]" style={{
-            background: "linear-gradient(90deg, transparent 5%, hsl(222 100% 70% / 0.3) 30%, hsl(195 100% 60% / 0.4) 50%, hsl(222 100% 70% / 0.3) 70%, transparent 95%)",
-            filter: "blur(1px)",
+        {/* ── Dynamic aura glow ── */}
+        <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
+          {/* Center blue glow */}
+          <motion.div
+            className="absolute top-[35%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px]"
+            animate={{ opacity: [0.12, 0.2, 0.12], scale: [1, 1.05, 1] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            style={{ background: "radial-gradient(ellipse, hsl(222 100% 60% / 0.2) 0%, transparent 70%)" }}
+          />
+          {/* Horizontal light line */}
+          <motion.div
+            className="absolute top-[52%] left-0 right-0 h-[1px]"
+            animate={{ opacity: [0.15, 0.35, 0.15] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            style={{
+              background: "linear-gradient(90deg, transparent 5%, hsl(222 100% 70% / 0.35) 30%, hsl(195 100% 60% / 0.5) 50%, hsl(222 100% 70% / 0.35) 70%, transparent 95%)",
+              filter: "blur(1px)",
+            }}
+          />
+          {/* Bottom corner glows */}
+          <div className="absolute bottom-[10%] left-[-5%] w-[300px] h-[300px]" style={{
+            background: "radial-gradient(circle, hsl(252 100% 65% / 0.08) 0%, transparent 70%)",
           }} />
-          <div className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px]" style={{
-            background: "radial-gradient(ellipse, hsl(222 100% 65% / 0.12) 0%, transparent 70%)",
+          <div className="absolute bottom-[15%] right-[-5%] w-[300px] h-[300px]" style={{
+            background: "radial-gradient(circle, hsl(195 100% 55% / 0.06) 0%, transparent 70%)",
           }} />
         </div>
 
         {/* ── Content ── */}
-        <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto w-full px-5 py-16">
-          {/* Intent Switcher Headline */}
+        <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto w-full px-5 pt-20 pb-24">
+
+          {/* Headline */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="w-full"
+            transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           >
-            <HeroIntentSwitcher defaultIntent="photo" displayMode="headline-switch" />
+            <h1 className="font-display text-[28px] sm:text-[38px] md:text-[48px] font-bold text-white leading-[1.1] tracking-tight">
+              Passez à{" "}
+              <span className="bg-gradient-to-r from-[hsl(222,100%,70%)] via-[hsl(195,100%,60%)] to-[hsl(252,100%,72%)] bg-clip-text text-transparent">
+                l'intelligence
+              </span>
+              <br />du bâtiment
+            </h1>
+            <p className="mt-4 text-sm sm:text-base text-white/55 max-w-md mx-auto leading-relaxed">
+              Photo, voix ou texte — trouvez le bon professionnel en quelques secondes.
+            </p>
           </motion.div>
 
-          {/* ── Voice Orb ── */}
+          {/* ── Intent Pills ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.35 }}
+            className="mt-8 flex items-center gap-2"
+          >
+            {INTENTS.map((intent) => {
+              const isActive = intent.slug === activeIntent;
+              return (
+                <motion.button
+                  key={intent.slug}
+                  onClick={() => setActiveIntent(intent.slug)}
+                  className="relative flex items-center gap-1.5 rounded-full px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all duration-250"
+                  whileTap={{ scale: 0.95 }}
+                  style={{
+                    background: isActive
+                      ? "linear-gradient(135deg, hsl(222 100% 50% / 0.9), hsl(222 100% 35% / 0.95))"
+                      : "rgba(255,255,255,0.06)",
+                    backdropFilter: "blur(16px)",
+                    border: isActive ? "1px solid hsl(222 100% 70% / 0.45)" : "1px solid rgba(255,255,255,0.1)",
+                    boxShadow: isActive ? "0 0 30px hsl(222 100% 60% / 0.3), inset 0 1px 0 hsl(0 0% 100% / 0.1)" : "none",
+                    color: isActive ? "#fff" : "rgba(255,255,255,0.5)",
+                  }}
+                >
+                  <intent.icon className="h-3.5 w-3.5" />
+                  {intent.label}
+                </motion.button>
+              );
+            })}
+          </motion.div>
+
+          {/* ── Cinematic Voice Orb ── */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.55, type: "spring", stiffness: 200 }}
-            className="mt-10 mb-6 flex flex-col items-center"
+            transition={{ duration: 0.7, delay: 0.55, type: "spring", stiffness: 180 }}
+            className="mt-10 mb-5 flex flex-col items-center"
           >
             <div className="relative flex items-center justify-center">
-              {/* Outer glow ring */}
+              {/* Outer breathing glow */}
               <motion.div
                 className="absolute rounded-full pointer-events-none"
                 style={{
-                  width: 140, height: 140,
-                  border: "2px solid hsl(222 100% 61% / 0.25)",
-                  boxShadow: "0 0 50px hsl(222 100% 61% / 0.15), inset 0 0 50px hsl(222 100% 61% / 0.05)",
+                  width: 150, height: 150,
+                  background: "radial-gradient(circle, hsl(222 100% 60% / 0.12) 0%, transparent 70%)",
                 }}
-                animate={{ scale: voiceActive ? [1, 1.15, 1] : [1, 1.05, 1] }}
-                transition={{ duration: voiceActive ? 1.5 : 2.5, repeat: Infinity, ease: "easeInOut" }}
+                animate={{ scale: voiceActive ? [1, 1.2, 1] : [1, 1.08, 1], opacity: voiceActive ? [0.4, 0.8, 0.4] : [0.3, 0.5, 0.3] }}
+                transition={{ duration: voiceActive ? 1.5 : 3, repeat: Infinity, ease: "easeInOut" }}
+              />
+
+              {/* Ring */}
+              <motion.div
+                className="absolute rounded-full pointer-events-none"
+                style={{
+                  width: 130, height: 130,
+                  border: "1.5px solid hsl(222 100% 65% / 0.2)",
+                  boxShadow: "0 0 40px hsl(222 100% 65% / 0.1)",
+                }}
+                animate={{ scale: voiceActive ? [1, 1.12, 1] : [1, 1.04, 1] }}
+                transition={{ duration: voiceActive ? 1.2 : 2.5, repeat: Infinity, ease: "easeInOut" }}
               />
 
               {/* Listening pulses */}
@@ -147,7 +212,7 @@ export default function HeroSection() {
                 <motion.div key={i} className="absolute rounded-full pointer-events-none"
                   style={{ width: 120, height: 120, border: "1.5px solid hsl(222 100% 70% / 0.2)" }}
                   animate={{ scale: [1, 1.8], opacity: [0.5, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, delay: i * 0.6, ease: "easeOut" }}
+                  transition={{ duration: 2, repeat: Infinity, delay: i * 0.6 }}
                 />
               ))}
 
@@ -156,11 +221,11 @@ export default function HeroSection() {
                 <motion.div key={`s${i}`} className="absolute rounded-full pointer-events-none"
                   style={{ width: 120, height: 120, border: "1.5px solid hsl(195 100% 60% / 0.25)" }}
                   animate={{ scale: [1, 1.6], opacity: [0.6, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.4, ease: "easeOut" }}
+                  transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.4 }}
                 />
               ))}
 
-              {/* Thinking ring */}
+              {/* Thinking */}
               {orbState === "thinking" && (
                 <motion.div className="absolute rounded-full pointer-events-none"
                   style={{ width: 130, height: 130, border: "2px dashed hsl(252 100% 70% / 0.2)" }}
@@ -169,30 +234,28 @@ export default function HeroSection() {
                 />
               )}
 
-              {/* Main orb button */}
+              {/* Main orb */}
               <motion.button
                 onClick={() => voiceActive ? stopVoice() : startVoice()}
                 className="relative rounded-full flex items-center justify-center overflow-hidden z-10"
                 style={{
-                  width: 100, height: 100,
-                  background: "linear-gradient(135deg, hsl(222 100% 30% / 0.85), hsl(222 100% 18% / 0.95))",
-                  border: "2px solid hsl(222 100% 70% / 0.35)",
-                  boxShadow: "0 0 60px -10px hsl(222 100% 65% / 0.45), inset 0 1px 1px hsl(0 0% 100% / 0.1)",
+                  width: 96, height: 96,
+                  background: "linear-gradient(135deg, hsl(222 100% 45% / 0.9), hsl(222 100% 25% / 0.95))",
+                  border: "2px solid hsl(222 100% 70% / 0.3)",
+                  boxShadow: "0 0 60px -10px hsl(222 100% 65% / 0.5), 0 0 100px -20px hsl(222 100% 55% / 0.3), inset 0 1px 1px hsl(0 0% 100% / 0.1)",
                 }}
                 animate={
                   orbState === "speaking" ? { scale: [1, 1.08, 1] }
-                    : orbState === "listening" ? { scale: [1, 1.05, 1] }
-                      : { scale: [1, 1.02, 1] }
+                  : orbState === "listening" ? { scale: [1, 1.05, 1] }
+                  : { scale: [1, 1.03, 1] }
                 }
-                transition={{
-                  duration: orbState === "speaking" ? 0.6 : orbState === "listening" ? 1.2 : 3,
-                  repeat: Infinity, ease: "easeInOut",
-                }}
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.95 }}
+                transition={{ duration: orbState === "speaking" ? 0.6 : orbState === "listening" ? 1.2 : 2.5, repeat: Infinity, ease: "easeInOut" }}
+                whileHover={{ scale: 1.1, boxShadow: "0 0 80px -10px hsl(222 100% 65% / 0.6)" }}
+                whileTap={{ scale: 0.92 }}
               >
+                {/* Inner highlight */}
                 <div className="absolute inset-0 rounded-full" style={{
-                  background: "radial-gradient(circle at 40% 35%, hsl(222 100% 70% / 0.3), transparent 60%)",
+                  background: "radial-gradient(circle at 38% 32%, hsl(222 100% 75% / 0.35), transparent 60%)",
                 }} />
                 {orbState === "speaking" ? (
                   <Volume2 className="h-9 w-9 text-white/90 relative z-10" />
@@ -204,14 +267,14 @@ export default function HeroSection() {
               </motion.button>
             </div>
 
-            {/* Status text */}
+            {/* Status */}
             <AnimatePresence mode="wait">
               <motion.p
                 key={voiceActive ? orbState : "idle"}
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
-                className="mt-4 text-xs font-medium text-white/50"
+                className="mt-4 text-xs font-medium text-white/45"
               >
                 {statusText}
               </motion.p>
@@ -220,27 +283,16 @@ export default function HeroSection() {
             {/* Voice controls */}
             <AnimatePresence>
               {voiceActive && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 8 }}
-                  className="mt-3 flex items-center gap-2"
-                >
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="mt-3 flex items-center gap-2">
                   {orbState === "speaking" && (
-                    <button onClick={muteSpeech}
-                      className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
-                    >
+                    <button onClick={stopVoice} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
                       <VolumeX className="h-3 w-3" /> Couper
                     </button>
                   )}
-                  <button onClick={() => { stopVoice(); setTextSheetOpen(true); }}
-                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
-                  >
+                  <button onClick={() => { stopVoice(); setTextSheetOpen(true); }} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
                     <Keyboard className="h-3 w-3" /> Écrire
                   </button>
-                  <button onClick={stopVoice}
-                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-red-400/80 bg-red-500/5 border border-red-500/15 hover:bg-red-500/10 transition-colors"
-                  >
+                  <button onClick={stopVoice} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-red-400/80 bg-red-500/5 border border-red-500/15 hover:bg-red-500/10 transition-colors">
                     <Square className="h-2.5 w-2.5" /> Arrêter
                   </button>
                 </motion.div>
@@ -248,19 +300,51 @@ export default function HeroSection() {
             </AnimatePresence>
           </motion.div>
 
-          {/* Quick actions now handled by HeroIntentSwitcher above */}
+          {/* ── Context CTAs ── */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeIntent}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25 }}
+              className="flex flex-col sm:flex-row items-center gap-2.5 w-full max-w-sm"
+            >
+              <Link
+                to={current.route}
+                className="w-full sm:flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold transition-all active:scale-[0.97]"
+                style={{
+                  background: "linear-gradient(135deg, hsl(222 100% 55%), hsl(222 100% 42%))",
+                  boxShadow: "0 4px 24px hsl(222 100% 55% / 0.35), inset 0 1px 0 hsl(0 0% 100% / 0.15)",
+                  color: "#fff",
+                }}
+              >
+                <current.icon className="h-4 w-4" />
+                {current.cta}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                to={current.routeSec}
+                className="w-full sm:flex-1 h-11 rounded-2xl flex items-center justify-center gap-1.5 text-xs font-semibold text-white/65 hover:text-white/85 transition-all"
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  backdropFilter: "blur(12px)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                }}
+              >
+                {current.ctaSec}
+              </Link>
+            </motion.div>
+          </AnimatePresence>
         </div>
 
-        {/* Bottom gradient fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 z-20" style={{
+        {/* Bottom gradient to content */}
+        <div className="absolute bottom-0 left-0 right-0 h-40 z-20 pointer-events-none" style={{
           background: "linear-gradient(to top, hsl(228 40% 7%) 0%, transparent 100%)",
         }} />
       </section>
 
-      <AlexAssistantSheet
-        open={textSheetOpen}
-        onClose={() => setTextSheetOpen(false)}
-      />
+      <AlexAssistantSheet open={textSheetOpen} onClose={() => setTextSheetOpen(false)} />
     </>
   );
 }
