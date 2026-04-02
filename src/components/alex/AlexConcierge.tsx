@@ -394,7 +394,7 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
                       className="space-y-1.5 pl-8"
                     >
                       <p className="text-caption uppercase tracking-wider text-muted-foreground/70 font-semibold">
-                        Actions suggérées
+                        {getIntentSession() ? getPhaseLabel(getIntentSession()!.currentPhase) : "Actions suggérées"}
                       </p>
                       {recommendations.map((rec) => {
                         const Icon = ICON_MAP[rec.icon] ?? Search;
