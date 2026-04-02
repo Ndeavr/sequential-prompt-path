@@ -15,6 +15,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { detectIntent, detectCategory } from "@/services/alexIntentService";
 import { getRecommendations, type AlexRecommendation } from "@/services/alexRecommendationService";
 import {
+  createIntentSession, getIntentSession, resetIntentSession,
+  incrementMessageCount, shouldAutoAdvance, advancePhase,
+  getPhaseGatedActions, getPhaseLabel, phaseActionsToRecommendations,
+} from "@/services/alexIntentPhaseEngine";
+import {
   X, Send, Search, Upload, Calendar, Home,
   BarChart3, Star, Loader2, RotateCcw, Sparkles,
   ArrowRight, MessageCircle,
