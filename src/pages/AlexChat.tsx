@@ -113,7 +113,20 @@ const AlexChat = () => {
     setInput("");
     const intent = detectIntent(trimmed);
     const category = detectCategory(trimmed);
-    const recs = getRecommendations(intent, { hasProperties: false, hasQuotes: false, category });
+
+    // Phase-gated recommendations
+    let session = getIntentSession();
+    if (!session) {
+      session = createIntentSession(intent, trimmed);
+    } else {
+      incrementMessageCount(session);
+      if (shouldAutoAdvance(session)) {
+        advancePhase(session);
+      }
+    }
+
+    const phaseActions = getPhaseGatedActions(session, { category, hasProperties: false });
+    const recs = phaseActionsToRecommendations(phaseActions);
     setRecommendations(recs);
     await sendMessage(trimmed, { currentPage: pathname });
   };
@@ -121,6 +134,7 @@ const AlexChat = () => {
   const handleReset = () => {
     reset();
     setRecommendations([]);
+    resetIntentSession();
   };
 
   return (
