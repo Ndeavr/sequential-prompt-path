@@ -12,11 +12,6 @@ import HeroIntentSwitcher from "@/components/home/HeroIntentSwitcher";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 import cinematicBg from "@/assets/cinematic-home-bg.jpg";
 
-const QUICK_ACTIONS = [
-  { icon: Camera, label: "Analyser une photo" },
-  { icon: Sparkles, label: "Améliorer un design" },
-  { icon: Search, label: "Détecter un problème" },
-];
 
 export default function HeroSection() {
   const { user } = useAuth();
