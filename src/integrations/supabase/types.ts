@@ -17640,6 +17640,228 @@ export type Database = {
         }
         Relationships: []
       }
+      inspiration_posts: {
+        Row: {
+          after_image_url: string | null
+          author_user_id: string | null
+          before_image_url: string | null
+          budget_label: string | null
+          budget_max: number | null
+          budget_min: number | null
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          room_type: string | null
+          saves_count: number
+          slug: string | null
+          style_tags: string[] | null
+          title: string
+          updated_at: string
+          visibility_status: string
+          votes_count: number
+        }
+        Insert: {
+          after_image_url?: string | null
+          author_user_id?: string | null
+          before_image_url?: string | null
+          budget_label?: string | null
+          budget_max?: number | null
+          budget_min?: number | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          room_type?: string | null
+          saves_count?: number
+          slug?: string | null
+          style_tags?: string[] | null
+          title: string
+          updated_at?: string
+          visibility_status?: string
+          votes_count?: number
+        }
+        Update: {
+          after_image_url?: string | null
+          author_user_id?: string | null
+          before_image_url?: string | null
+          budget_label?: string | null
+          budget_max?: number | null
+          budget_min?: number | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          room_type?: string | null
+          saves_count?: number
+          slug?: string | null
+          style_tags?: string[] | null
+          title?: string
+          updated_at?: string
+          visibility_status?: string
+          votes_count?: number
+        }
+        Relationships: []
+      }
+      inspiration_project_matches: {
+        Row: {
+          contractor_id: string | null
+          created_at: string
+          id: string
+          inspiration_post_id: string | null
+          inspiration_version_id: string | null
+          match_score: number | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          inspiration_post_id?: string | null
+          inspiration_version_id?: string | null
+          match_score?: number | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          inspiration_post_id?: string | null
+          inspiration_version_id?: string | null
+          match_score?: number | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspiration_project_matches_inspiration_post_id_fkey"
+            columns: ["inspiration_post_id"]
+            isOneToOne: false
+            referencedRelation: "inspiration_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspiration_project_matches_inspiration_version_id_fkey"
+            columns: ["inspiration_version_id"]
+            isOneToOne: false
+            referencedRelation: "inspiration_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspiration_saves: {
+        Row: {
+          created_at: string
+          id: string
+          inspiration_post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inspiration_post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inspiration_post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspiration_saves_inspiration_post_id_fkey"
+            columns: ["inspiration_post_id"]
+            isOneToOne: false
+            referencedRelation: "inspiration_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspiration_versions: {
+        Row: {
+          budget_label: string | null
+          created_at: string
+          generated_image_url: string | null
+          id: string
+          inspiration_post_id: string | null
+          prompt_used: string | null
+          room_type: string | null
+          style_tags: string[] | null
+          updated_at: string
+          user_id: string
+          visibility_status: string
+        }
+        Insert: {
+          budget_label?: string | null
+          created_at?: string
+          generated_image_url?: string | null
+          id?: string
+          inspiration_post_id?: string | null
+          prompt_used?: string | null
+          room_type?: string | null
+          style_tags?: string[] | null
+          updated_at?: string
+          user_id: string
+          visibility_status?: string
+        }
+        Update: {
+          budget_label?: string | null
+          created_at?: string
+          generated_image_url?: string | null
+          id?: string
+          inspiration_post_id?: string | null
+          prompt_used?: string | null
+          room_type?: string | null
+          style_tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+          visibility_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspiration_versions_inspiration_post_id_fkey"
+            columns: ["inspiration_post_id"]
+            isOneToOne: false
+            referencedRelation: "inspiration_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspiration_votes: {
+        Row: {
+          created_at: string
+          id: string
+          inspiration_post_id: string
+          user_id: string
+          vote_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inspiration_post_id: string
+          user_id: string
+          vote_type?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inspiration_post_id?: string
+          user_id?: string
+          vote_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspiration_votes_inspiration_post_id_fkey"
+            columns: ["inspiration_post_id"]
+            isOneToOne: false
+            referencedRelation: "inspiration_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jve_calculator_sessions: {
         Row: {
           city_id: string | null
@@ -32666,6 +32888,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_project_privacy: {
+        Row: {
+          created_at: string
+          id: string
+          inspiration_version_id: string
+          updated_at: string
+          user_id: string
+          visibility_status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inspiration_version_id: string
+          updated_at?: string
+          user_id: string
+          visibility_status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inspiration_version_id?: string
+          updated_at?: string
+          user_id?: string
+          visibility_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_project_privacy_inspiration_version_id_fkey"
+            columns: ["inspiration_version_id"]
+            isOneToOne: false
+            referencedRelation: "inspiration_versions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
