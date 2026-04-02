@@ -248,7 +248,7 @@ const AlexChat = () => {
                     exit={{ opacity: 0 }}
                     className="space-y-2 pl-9"
                   >
-                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Actions suggérées</p>
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{getIntentSession() ? getPhaseLabel(getIntentSession()!.currentPhase) : "Actions suggérées"}</p>
                     {recommendations.map((rec) => {
                       const Icon = ICON_MAP[rec.icon] ?? Search;
                       return (
