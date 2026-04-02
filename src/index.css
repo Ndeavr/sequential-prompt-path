@@ -67,6 +67,62 @@
 
   /* Dark class is now a no-op — root is already dark */
   .dark {}
+
+  /* ─── UNPRO Light Premium Theme ─── */
+  .light {
+    --primary: 222 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 252 80% 58%;
+    --secondary-foreground: 0 0% 100%;
+    --accent: 195 90% 42%;
+    --accent-foreground: 0 0% 100%;
+
+    --background: 220 20% 97%;
+    --foreground: 228 30% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 228 30% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 228 30% 12%;
+
+    --muted: 220 14% 92%;
+    --muted-foreground: 220 10% 42%;
+
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 69% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 220 14% 88%;
+    --input: 220 14% 90%;
+    --ring: 222 100% 50%;
+
+    --shadow-xs: 0 1px 2px 0 hsl(220 20% 60% / 0.06);
+    --shadow-sm: 0 1px 3px 0 hsl(220 20% 60% / 0.08), 0 1px 2px -1px hsl(220 20% 60% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(220 20% 60% / 0.08), 0 2px 4px -2px hsl(220 20% 60% / 0.05);
+    --shadow-lg: 0 10px 15px -3px hsl(220 20% 60% / 0.1), 0 4px 6px -4px hsl(220 20% 60% / 0.05);
+    --shadow-xl: 0 20px 25px -5px hsl(220 20% 60% / 0.1), 0 8px 10px -6px hsl(220 20% 60% / 0.05);
+    --shadow-2xl: 0 25px 50px -12px hsl(220 20% 60% / 0.15);
+    --shadow-glow: 0 0 30px -4px hsl(222 100% 50% / 0.12), 0 0 10px -2px hsl(222 100% 50% / 0.06);
+    --shadow-glow-lg: 0 0 50px -4px hsl(222 100% 50% / 0.18), 0 0 20px -4px hsl(222 100% 50% / 0.08);
+    --shadow-inner-glow: inset 0 1px 0 0 hsl(0 0% 100% / 0.8);
+
+    --glass-bg: hsl(0 0% 100% / 0.72);
+    --glass-border: hsl(220 14% 88% / 0.7);
+    --glass-blur: 24px;
+
+    --sidebar-background: 220 20% 96%;
+    --sidebar-foreground: 228 30% 12%;
+    --sidebar-primary: 222 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 94%;
+    --sidebar-accent-foreground: 228 30% 12%;
+    --sidebar-border: 220 14% 88%;
+    --sidebar-ring: 222 100% 50%;
+  }
 }
 
 @layer base {
