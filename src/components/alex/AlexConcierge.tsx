@@ -174,7 +174,20 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
     setInput("");
     const intent = detectIntent(trimmed);
     const category = detectCategory(trimmed);
-    const recs = getRecommendations(intent, { hasProperties: (properties ?? []).length > 0, hasQuotes: false, category });
+
+    // Phase-gated recommendations
+    let session = getIntentSession();
+    if (!session) {
+      session = createIntentSession(intent, trimmed);
+    } else {
+      incrementMessageCount(session);
+      if (shouldAutoAdvance(session)) {
+        advancePhase(session);
+      }
+    }
+
+    const phaseActions = getPhaseGatedActions(session, { category, hasProperties: (properties ?? []).length > 0 });
+    const recs = phaseActionsToRecommendations(phaseActions);
     setRecommendations(recs);
     await sendMessage(trimmed, { properties, homeScore, currentPage: pathname, propertyFamily, propertyType, occupancyStatus });
   };
@@ -183,7 +196,19 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
     setInput("");
     const intent = detectIntent(message);
     const category = detectCategory(message);
-    const recs = getRecommendations(intent, { hasProperties: (properties ?? []).length > 0, category });
+
+    let session = getIntentSession();
+    if (!session) {
+      session = createIntentSession(intent, message);
+    } else {
+      incrementMessageCount(session);
+      if (shouldAutoAdvance(session)) {
+        advancePhase(session);
+      }
+    }
+
+    const phaseActions = getPhaseGatedActions(session, { category, hasProperties: (properties ?? []).length > 0 });
+    const recs = phaseActionsToRecommendations(phaseActions);
     setRecommendations(recs);
     sendMessage(message, { properties, homeScore, currentPage: pathname, propertyFamily, propertyType, occupancyStatus });
   };
@@ -191,6 +216,7 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
   const handleReset = () => {
     reset();
     setRecommendations([]);
+    resetIntentSession();
   };
 
   return (
