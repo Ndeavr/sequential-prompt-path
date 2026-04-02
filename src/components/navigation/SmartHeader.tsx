@@ -156,6 +156,7 @@ const SmartHeader = () => {
               </div>
 
               <div className="flex items-center gap-1.5">
+                <ThemeToggle />
                 <LanguageToggle lang={lang} onChange={setLang} />
               </div>
 
