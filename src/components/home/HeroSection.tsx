@@ -112,26 +112,15 @@ export default function HeroSection() {
 
         {/* ── Content ── */}
         <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto w-full px-5 py-16">
-          {/* Headline */}
-          <motion.h1
+          {/* Intent Switcher Headline */}
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="font-display text-[28px] sm:text-[36px] md:text-[48px] font-bold text-white leading-[1.1] tracking-tight"
+            className="w-full"
           >
-            Vous avez une <span className="text-primary">photo</span> ?
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="mt-3 text-sm sm:text-base text-white/70 max-w-md"
-          >
-            Je peux analyser, améliorer ou détecter ce qui ne va pas.
-            <br />
-            <span className="text-white/50">On commence par quoi ?</span>
-          </motion.p>
+            <HeroIntentSwitcher defaultIntent="photo" displayMode="headline-switch" />
+          </motion.div>
 
           {/* ── Voice Orb ── */}
           <motion.div
