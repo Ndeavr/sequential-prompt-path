@@ -6,16 +6,12 @@ import { useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
-import { Link } from "react-router-dom";
-import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, Camera, Sparkles, Search } from "lucide-react";
+
+import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX } from "lucide-react";
+import HeroIntentSwitcher from "@/components/home/HeroIntentSwitcher";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 import cinematicBg from "@/assets/cinematic-home-bg.jpg";
 
-const QUICK_ACTIONS = [
-  { icon: Camera, label: "Analyser une photo" },
-  { icon: Sparkles, label: "Améliorer un design" },
-  { icon: Search, label: "Détecter un problème" },
-];
 
 export default function HeroSection() {
   const { user } = useAuth();
@@ -116,26 +112,15 @@ export default function HeroSection() {
 
         {/* ── Content ── */}
         <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto w-full px-5 py-16">
-          {/* Headline */}
-          <motion.h1
+          {/* Intent Switcher Headline */}
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="font-display text-[28px] sm:text-[36px] md:text-[48px] font-bold text-white leading-[1.1] tracking-tight"
+            className="w-full"
           >
-            Vous avez une <span className="text-primary">photo</span> ?
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="mt-3 text-sm sm:text-base text-white/70 max-w-md"
-          >
-            Je peux analyser, améliorer ou détecter ce qui ne va pas.
-            <br />
-            <span className="text-white/50">On commence par quoi ?</span>
-          </motion.p>
+            <HeroIntentSwitcher defaultIntent="photo" displayMode="headline-switch" />
+          </motion.div>
 
           {/* ── Voice Orb ── */}
           <motion.div
@@ -263,34 +248,7 @@ export default function HeroSection() {
             </AnimatePresence>
           </motion.div>
 
-          {/* ── Quick Actions (glass pills) ── */}
-          <AnimatePresence>
-            {!voiceActive && (
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.4, delay: 0.65 }}
-                className="flex flex-wrap justify-center gap-2.5 w-full"
-              >
-                {QUICK_ACTIONS.map((action) => (
-                  <Link
-                    key={action.label}
-                    to="/describe-project"
-                    className="flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-medium text-white/80 transition-all hover:text-white active:scale-[0.97]"
-                    style={{
-                      background: "rgba(255,255,255,0.08)",
-                      backdropFilter: "blur(12px)",
-                      border: "1px solid rgba(255,255,255,0.12)",
-                    }}
-                  >
-                    <action.icon className="h-4 w-4 text-primary" />
-                    {action.label}
-                  </Link>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* Quick actions now handled by HeroIntentSwitcher above */}
         </div>
 
         {/* Bottom gradient fade */}
