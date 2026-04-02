@@ -71,8 +71,13 @@ export default function OAuthButtons({ loading: externalLoading, className = "" 
       <Button
         type="button"
         variant="outline"
-        className="w-full h-11 text-sm font-medium rounded-xl gap-3"
-        style={{ background: "#000", border: "1px solid #000", color: "#fff" }}
+        className="w-full h-12 text-sm font-semibold rounded-xl gap-3 transition-all active:scale-[0.98]"
+        style={{
+          background: "hsl(228 30% 13%)",
+          border: "1px solid hsl(228 18% 20%)",
+          color: "hsl(220 20% 93%)",
+          boxShadow: "0 2px 8px -2px hsl(228 40% 3% / 0.4)",
+        }}
         disabled={isDisabled}
         onClick={() => handleOAuth("apple")}
       >

@@ -51,7 +51,12 @@ export default function LoginPageUnpro() {
           <button
             type="button"
             onClick={() => setMode("email")}
-            className="w-full h-11 flex items-center justify-center gap-2 rounded-xl text-sm font-medium transition-colors hover:bg-muted border border-border bg-card text-foreground"
+            className="w-full h-12 flex items-center justify-center gap-2 rounded-xl text-sm font-medium transition-all active:scale-[0.98]"
+            style={{
+              background: "hsl(228 20% 14% / 0.6)",
+              border: "1px solid hsl(228 18% 18%)",
+              color: "hsl(220 20% 93%)",
+            }}
           >
             <Mail className="h-4 w-4 text-muted-foreground" />
             Continuer par courriel
@@ -59,7 +64,12 @@ export default function LoginPageUnpro() {
           <button
             type="button"
             onClick={() => setMode("phone")}
-            className="w-full h-11 flex items-center justify-center gap-2 rounded-xl text-sm font-medium transition-colors hover:bg-muted border border-border bg-card text-foreground"
+            className="w-full h-12 flex items-center justify-center gap-2 rounded-xl text-sm font-medium transition-all active:scale-[0.98]"
+            style={{
+              background: "hsl(228 20% 14% / 0.6)",
+              border: "1px solid hsl(228 18% 18%)",
+              color: "hsl(220 20% 93%)",
+            }}
           >
             <Smartphone className="h-4 w-4 text-muted-foreground" />
             Continuer par téléphone
