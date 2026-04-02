@@ -7,7 +7,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
 import { Link } from "react-router-dom";
-import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, Camera, Sparkles, Search } from "lucide-react";
+import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX } from "lucide-react";
+import HeroIntentSwitcher from "@/components/home/HeroIntentSwitcher";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 import cinematicBg from "@/assets/cinematic-home-bg.jpg";
 
