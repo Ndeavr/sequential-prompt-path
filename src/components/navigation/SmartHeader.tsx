@@ -86,7 +86,7 @@ const SmartHeader = () => {
               <img
                 src={unproLogo}
                 alt="UNPRO"
-                className="h-9 object-contain"
+                className="h-12 object-contain"
               />
             </Link>
 
