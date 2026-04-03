@@ -82,14 +82,14 @@ const SmartHeader = () => {
   return (
     <>
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-2xl">
-        <div className="mx-auto max-w-7xl px-4 lg:px-6">
-          <div className="flex items-center justify-between h-16">
+        <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
+          <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Back button — shown on all pages except home */}
             {!isHome && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground mr-1"
+                className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground mr-0.5"
                 onClick={() => {
                   if (window.history.length > 1) {
                     navigate(-1);
@@ -99,16 +99,16 @@ const SmartHeader = () => {
                 }}
                 aria-label="Retour"
               >
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowLeft className="h-4 w-4" />
               </Button>
             )}
 
-            {/* Logo */}
+            {/* Brand lockup — larger logo, premium presence */}
             <Link to={logoTo} className="flex items-center shrink-0 group">
               <img
                 src={unproLogo}
                 alt="UNPRO"
-                className="h-12 object-contain"
+                className="h-10 sm:h-12 object-contain drop-shadow-[0_0_8px_hsl(222_100%_60%/0.15)] dark:drop-shadow-[0_0_12px_hsl(222_100%_60%/0.3)]"
               />
             </Link>
 
