@@ -8,6 +8,7 @@ export interface ConversationStep {
   content?: string;
   delay: number; // ms before this step appears
   duration?: number; // ms this step takes to fully render
+  voice?: boolean; // whether Alex speaks this step
 }
 
 export const SCENARIO = {
@@ -45,14 +46,32 @@ export const BOOKING_SLOTS = [
 ] as const;
 
 export const CONVERSATION_TIMELINE: ConversationStep[] = [
-  { id: "upload", type: "user-image", delay: 400, duration: 600 },
-  { id: "typing-1", type: "typing", delay: 800, duration: 1200 },
-  { id: "diagnosis", type: "alex-diagnosis", content: "Ah je vois. Barrage de glace + perte de chaleur. Probable manque d'isolation dans l'entretoit.", delay: 0, duration: 800 },
-  { id: "recommendation", type: "alex-recommendation", content: "Je vous propose Isolation Solution Royal.", delay: 600, duration: 600 },
-  { id: "why", type: "alex-why", delay: 400, duration: 800 },
-  { id: "calendar", type: "alex-calendar", delay: 600, duration: 800 },
-  { id: "slot-ask", type: "alex-slot-ask", content: "Mardi à 11h, ça vous va ?", delay: 500, duration: 600 },
-  { id: "typing-2", type: "typing", delay: 800, duration: 800 },
-  { id: "user-reply", type: "user-text", content: "Oui, parfait.", delay: 0, duration: 400 },
-  { id: "confirmed", type: "booking-confirmed", delay: 600, duration: 1000 },
+  // 1. Alex greeting
+  { id: "greeting", type: "alex-text", content: "Bonjour! Comment puis-je vous aider aujourd'hui?", delay: 600, duration: 1200, voice: true },
+  // 2. User describes problem
+  { id: "user-problem", type: "user-text", content: "J'ai un problème de glace sur le toit.", delay: 1800, duration: 800 },
+  // 3. Alex typing...
+  { id: "typing-0", type: "typing", delay: 1200, duration: 1800 },
+  // 4. Alex asks for photo
+  { id: "alex-ask-photo", type: "alex-text", content: "Pourriez-vous téléverser une photo pour que je l'analyse?", delay: 0, duration: 1200, voice: true },
+  // 5. User uploads photo
+  { id: "upload", type: "user-image", delay: 2000, duration: 1000 },
+  // 6. Alex typing (analyzing)
+  { id: "typing-1", type: "typing", delay: 1400, duration: 2200 },
+  // 7. Diagnosis
+  { id: "diagnosis", type: "alex-diagnosis", content: "Ah je vois. Barrage de glace + perte de chaleur. Probable manque d'isolation dans l'entretoit.", delay: 0, duration: 1400, voice: true },
+  // 8. Recommendation
+  { id: "recommendation", type: "alex-recommendation", content: "Je vous propose Isolation Solution Royal.", delay: 1200, duration: 1000, voice: true },
+  // 9. Why this choice
+  { id: "why", type: "alex-why", delay: 1000, duration: 1200 },
+  // 10. Calendar
+  { id: "calendar", type: "alex-calendar", delay: 1200, duration: 1200 },
+  // 11. Alex slot ask
+  { id: "slot-ask", type: "alex-slot-ask", content: "Mardi à 11h, ça vous va?", delay: 1000, duration: 1000, voice: true },
+  // 12. Typing user
+  { id: "typing-2", type: "typing", delay: 1600, duration: 1200 },
+  // 13. User reply
+  { id: "user-reply", type: "user-text", content: "Oui, parfait.", delay: 0, duration: 800 },
+  // 14. Confirmed
+  { id: "confirmed", type: "booking-confirmed", delay: 1200, duration: 1400 },
 ];

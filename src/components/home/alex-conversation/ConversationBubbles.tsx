@@ -2,7 +2,7 @@
  * All conversation bubble components for the Alex ad preview
  */
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, Check, Calendar, Star, Shield, MapPin, Clock, Bot } from "lucide-react";
+import { Camera, Check, Calendar, Star, Shield, MapPin, Clock, Bot, Volume2, VolumeX } from "lucide-react";
 import iceDamImage from "@/assets/ice-dam-roof.jpg";
 import { SCENARIO, BOOKING_SLOTS } from "./data";
 
@@ -27,6 +27,25 @@ function AlexAvatar({ speaking = false }: { speaking?: boolean }) {
           transition={{ duration: 1.5, repeat: Infinity }}
         />
       )}
+    </div>
+  );
+}
+
+/* ─── Muted Voice Indicator ─── */
+function MutedVoiceIndicator() {
+  return (
+    <div className="flex items-center gap-1 mt-1.5">
+      <div className="flex items-center gap-0.5">
+        {[0, 1, 2, 3, 4].map(i => (
+          <motion.div
+            key={i}
+            className="w-0.5 rounded-full bg-primary/40"
+            animate={{ height: [2, 6 + Math.random() * 4, 2] }}
+            transition={{ duration: 0.5 + Math.random() * 0.3, repeat: Infinity, delay: i * 0.08 }}
+          />
+        ))}
+      </div>
+      <VolumeX className="w-3 h-3 text-muted-foreground/50 ml-1" />
     </div>
   );
 }
@@ -91,7 +110,7 @@ export function UserTextMessage({ text }: { text: string }) {
 }
 
 /* ─── Alex Text Response ─── */
-export function AlexTextResponse({ text, speaking = false, glow = false }: { text: string; speaking?: boolean; glow?: boolean }) {
+export function AlexTextResponse({ text, speaking = false, glow = false, voice = false }: { text: string; speaking?: boolean; glow?: boolean; voice?: boolean }) {
   return (
     <motion.div variants={bubbleIn} initial="hidden" animate="visible" className="flex items-end gap-2">
       <AlexAvatar speaking={speaking} />
@@ -103,26 +122,9 @@ export function AlexTextResponse({ text, speaking = false, glow = false }: { tex
         >
           {text}
         </motion.span>
-        {speaking && <WaveformIndicator />}
+        {voice && <MutedVoiceIndicator />}
       </div>
     </motion.div>
-  );
-}
-
-/* ─── Waveform ─── */
-function WaveformIndicator() {
-  return (
-    <div className="flex items-center gap-0.5 mt-1.5">
-      {[0, 1, 2, 3, 4].map(i => (
-        <motion.div
-          key={i}
-          className="w-0.5 rounded-full bg-primary/50"
-          animate={{ height: [3, 8 + Math.random() * 6, 3] }}
-          transition={{ duration: 0.5 + Math.random() * 0.3, repeat: Infinity, delay: i * 0.08 }}
-        />
-      ))}
-      <span className="ml-1.5 text-[10px] text-muted-foreground">🔊</span>
-    </div>
   );
 }
 
@@ -134,7 +136,7 @@ export function AlexDiagnosis({ text }: { text: string }) {
       <div className="max-w-[85%] space-y-2">
         <div className="rounded-2xl rounded-bl-md px-4 py-3 bg-muted/50 border border-border/40 text-sm text-foreground shadow-[0_0_20px_-4px_hsl(var(--primary)/0.15)]">
           {text}
-          <WaveformIndicator />
+          <MutedVoiceIndicator />
         </div>
         <div className="flex flex-wrap gap-1.5 pl-1">
           <Badge icon={<Shield className="w-3 h-3" />} label="Problème détecté" variant="warning" />
@@ -182,6 +184,7 @@ export function AlexRecommendation({ text }: { text: string }) {
               </p>
             </div>
           </div>
+          <MutedVoiceIndicator />
         </div>
         <Badge icon={<Star className="w-3 h-3" />} label="Recommandé UNPRO" variant="primary" />
       </div>
