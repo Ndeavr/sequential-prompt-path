@@ -93,7 +93,7 @@ export default function HeroSection() {
 
         {/* ── Deep cinematic overlay ── */}
         <div className="absolute inset-0 z-[1]" style={{
-          background: "linear-gradient(to bottom, rgba(4,8,20,0.45) 0%, rgba(4,8,20,0.65) 40%, rgba(4,8,20,0.92) 100%)",
+          background: "linear-gradient(to bottom, rgba(4,8,20,0.55) 0%, rgba(4,8,20,0.72) 40%, rgba(4,8,20,0.94) 100%)",
         }} />
 
         {/* ── Dynamic aura glow ── */}
