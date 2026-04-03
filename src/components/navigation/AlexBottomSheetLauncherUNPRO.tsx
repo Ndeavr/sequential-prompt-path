@@ -1,6 +1,6 @@
 /**
- * UNPRO — Alex Bottom Sheet Launcher
- * Cinematic center button in mobile bottom nav.
+ * UNPRO — Alex Bottom Sheet Launcher (Dark Sharp)
+ * Smaller orb, controlled glow.
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -62,29 +62,25 @@ export default function AlexBottomSheetLauncherUNPRO() {
 
   return (
     <>
-      {/* Center Alex Orb — elevated */}
+      {/* Center Alex Orb — compact */}
       <button
         onClick={() => setIsOpen(true)}
         className="relative flex flex-col items-center justify-center gap-0.5 flex-1 py-1"
         aria-label="Alex"
       >
         <motion.div
-          className="w-12 h-12 -mt-6 rounded-full flex items-center justify-center relative"
+          className="w-10 h-10 -mt-5 rounded-full flex items-center justify-center relative"
           style={{
             background: "linear-gradient(135deg, hsl(222 100% 55%), hsl(252 100% 60%), hsl(195 100% 48%))",
-            boxShadow: "0 4px 20px -2px hsl(222 100% 60% / 0.5), 0 0 30px -4px hsl(222 100% 60% / 0.25), inset 0 1px 0 hsl(0 0% 100% / 0.2)",
+            boxShadow: "0 4px 16px -2px hsl(222 100% 60% / 0.4), inset 0 1px 0 hsl(0 0% 100% / 0.15)",
           }}
-          animate={{ scale: [1, 1.06, 1] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          animate={{ scale: [1, 1.04, 1] }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
           whileTap={{ scale: 0.9 }}
         >
-          {/* Shine */}
-          <div className="absolute inset-0 rounded-full" style={{
-            background: "radial-gradient(circle at 35% 28%, hsl(0 0% 100% / 0.2), transparent 55%)",
-          }} />
-          <Sparkles className="w-5 h-5 text-white relative z-10" />
+          <Sparkles className="w-4 h-4 text-white relative z-10" />
         </motion.div>
-        <span className="text-[10px] font-semibold text-primary mt-0.5">Alex</span>
+        <span className="text-[9px] font-semibold text-primary mt-0.5">Alex</span>
       </button>
 
       {/* Bottom Sheet */}
@@ -105,11 +101,11 @@ export default function AlexBottomSheetLauncherUNPRO() {
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl safe-area-bottom"
               style={{
-                background: "var(--glass-metal-bg)",
-                backdropFilter: "blur(32px) saturate(2)",
-                WebkitBackdropFilter: "blur(32px) saturate(2)",
-                borderTop: "1px solid var(--glass-metal-border)",
-                boxShadow: "var(--shadow-2xl)",
+                background: "hsl(220 35% 8% / 0.92)",
+                backdropFilter: "blur(24px) saturate(1.6)",
+                WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+                borderTop: "1px solid hsl(0 0% 100% / 0.08)",
+                boxShadow: "0 -8px 40px -8px hsl(228 40% 2% / 0.8)",
               }}
             >
               <div className="p-6 space-y-5">
@@ -128,12 +124,16 @@ export default function AlexBottomSheetLauncherUNPRO() {
                     <button
                       key={i}
                       onClick={() => handleAction(item)}
-                      className="w-full flex items-center gap-3 p-3.5 rounded-xl hover:bg-muted/30 transition-colors text-left surface-metal-glass"
+                      className="w-full flex items-center gap-3 p-3.5 rounded-xl transition-colors text-left"
+                      style={{
+                        background: "hsl(220 35% 10% / 0.6)",
+                        border: "1px solid hsl(0 0% 100% / 0.06)",
+                      }}
                     >
                       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                         <item.icon className="w-5 h-5 text-primary" />
                       </div>
-                      <span className="text-sm font-medium text-foreground relative z-10">{item.label}</span>
+                      <span className="text-sm font-medium text-foreground">{item.label}</span>
                     </button>
                   ))}
                 </div>

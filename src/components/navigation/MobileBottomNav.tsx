@@ -1,6 +1,6 @@
 /**
- * UNPRO — Mobile Bottom Navigation — Cinematic Floating Glass
- * Role-aware with center Alex orb.
+ * UNPRO — Mobile Bottom Navigation — Dark Sharp Compact
+ * Thinner, cleaner, controlled glow.
  */
 
 import { Link, useLocation } from "react-router-dom";
@@ -33,17 +33,17 @@ const MobileBottomNav = () => {
 
   return (
     <nav
-      className="lg:hidden fixed bottom-3 left-3 right-3 z-40 rounded-2xl safe-area-bottom"
+      className="lg:hidden fixed bottom-2 left-2 right-2 z-40 rounded-2xl safe-area-bottom"
       aria-label="Mobile navigation"
       style={{
-        background: "var(--glass-bg)",
-        backdropFilter: "blur(28px) saturate(1.8)",
-        WebkitBackdropFilter: "blur(28px) saturate(1.8)",
-        border: "1px solid var(--glass-border)",
-        boxShadow: "var(--shadow-lg), var(--shadow-glow)",
+        background: "hsl(220 40% 6% / 0.78)",
+        backdropFilter: "blur(20px) saturate(1.5)",
+        WebkitBackdropFilter: "blur(20px) saturate(1.5)",
+        border: "1px solid hsl(0 0% 100% / 0.06)",
+        boxShadow: "0 -4px 24px -4px hsl(222 100% 55% / 0.08), 0 8px 32px -8px hsl(228 40% 2% / 0.6)",
       }}
     >
-      <div className="flex items-center justify-around h-16 px-2">
+      <div className="flex items-center justify-around h-14 px-1">
         {leftTabs.map((tab) => {
           const active = isActive(tab.to);
           const Icon = resolveIcon(tab.icon);
@@ -51,22 +51,22 @@ const MobileBottomNav = () => {
             <Link
               key={tab.to}
               to={tab.to}
-              className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-2 rounded-xl transition-all duration-200 ${
+              className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-xl transition-all duration-200 ${
                 active ? "text-primary" : "text-muted-foreground"
               }`}
             >
-              <Icon className={`h-5 w-5 ${active ? "text-primary drop-shadow-[0_0_8px_hsl(222_100%_65%/0.4)]" : ""}`} />
-              <span className="text-[10px] font-medium leading-none">
+              <Icon className={`h-[18px] w-[18px] ${active ? "text-primary" : ""}`} />
+              <span className="text-[9px] font-medium leading-none">
                 {lang === "en" && tab.labelEn ? tab.labelEn : tab.label}
               </span>
               {active && (
-                <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />
+                <span className="h-0.5 w-3 rounded-full bg-primary mt-0.5" />
               )}
             </Link>
           );
         })}
 
-        {/* Center Alex Orb */}
+        {/* Center Alex Orb — slightly smaller */}
         <AlexBottomSheetLauncherUNPRO />
 
         {rightTabs.map((tab) => {
@@ -76,16 +76,16 @@ const MobileBottomNav = () => {
             <Link
               key={tab.to}
               to={tab.to}
-              className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-2 rounded-xl transition-all duration-200 ${
+              className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-xl transition-all duration-200 ${
                 active ? "text-primary" : "text-muted-foreground"
               }`}
             >
-              <Icon className={`h-5 w-5 ${active ? "text-primary drop-shadow-[0_0_8px_hsl(222_100%_65%/0.4)]" : ""}`} />
-              <span className="text-[10px] font-medium leading-none">
+              <Icon className={`h-[18px] w-[18px] ${active ? "text-primary" : ""}`} />
+              <span className="text-[9px] font-medium leading-none">
                 {lang === "en" && tab.labelEn ? tab.labelEn : tab.label}
               </span>
               {active && (
-                <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />
+                <span className="h-0.5 w-3 rounded-full bg-primary mt-0.5" />
               )}
             </Link>
           );
