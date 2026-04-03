@@ -297,6 +297,15 @@
     animation: orb-breathe 3s ease-in-out infinite;
   }
 
+  /* Light mode orb — brighter blue glow on white */
+  @keyframes orb-breathe-light {
+    0%, 100% { box-shadow: 0 0 4px 0 hsl(222 100% 55% / 0.30), 0 0 24px 6px hsl(222 100% 55% / 0.12); }
+    50% { box-shadow: 0 0 28px 14px hsl(222 100% 55% / 0.22), 0 0 48px 10px hsl(195 100% 50% / 0.10); }
+  }
+  .light .alex-orb {
+    animation: orb-breathe-light 3s ease-in-out infinite;
+  }
+
   /* ─── Gradient text ─── */
   .text-gradient {
     background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
