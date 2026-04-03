@@ -62,14 +62,28 @@ export default function HeroSection() {
   const voiceActive = isActive || isConnecting;
   const current = INTENTS.find((i) => i.slug === activeIntent)!;
 
-  const startVoice = useCallback(() => {
-    window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
+  const getIntentGreeting = useCallback((intent: IntentSlug) => {
     const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || null;
-    const initialGreeting = firstName
-      ? `Salue-moi. Mon prénom est ${firstName}. Dis "Bonjour ${firstName}, bienvenue."`
-      : `Salue-moi. Je suis un nouveau visiteur. Dis "Bonjour, bienvenue."`;
-    start({ initialGreeting });
-  }, [start, user]);
+    const name = firstName || "";
+    const hi = name ? `Bonjour ${name}!` : "Bonjour!";
+
+    switch (intent) {
+      case "probleme":
+        return `${hi} Je peux vous aider à trouver une solution! Avez-vous une photo ou pouvez-vous me décrire votre problème?`;
+      case "projet":
+        return `${hi} Ah! Un nouveau projet! Je peux certainement vous aider avec ça! Avez-vous une photo de ce que vous voulez améliorer ou pouvez-vous me décrire votre projet?`;
+      case "avis":
+        return `${hi} Vous aimeriez que j'analyse vos soumissions? Pas de problème!`;
+      default:
+        return `${hi} Comment puis-je vous aider?`;
+    }
+  }, [user]);
+
+  const startVoice = useCallback((intent?: IntentSlug) => {
+    window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
+    const greeting = getIntentGreeting(intent || activeIntent);
+    start({ initialGreeting: `Dis exactement ceci, mot pour mot, en français québécois naturel: "${greeting}"` });
+  }, [start, getIntentGreeting, activeIntent]);
 
   const stopVoice = useCallback(() => stop(), [stop]);
 
