@@ -564,6 +564,12 @@
   .cta-gradient:active {
     transform: scale(0.98);
   }
+  .light .cta-gradient {
+    box-shadow: 0 8px 30px -4px hsl(222 100% 55% / 0.35), 0 0 20px -4px hsl(222 100% 55% / 0.18);
+  }
+  .light .cta-gradient:hover {
+    box-shadow: 0 12px 40px -4px hsl(222 100% 55% / 0.45), 0 0 28px -4px hsl(222 100% 55% / 0.25);
+  }
 
   /* ─── Trust badge row ─── */
   .trust-row {
@@ -580,8 +586,37 @@
     @apply text-meta font-semibold;
     color: hsl(var(--muted-foreground));
   }
+
+  /* ─── Light mode mobile nav ─── */
+  .light .mobile-bottom-nav {
+    background: hsl(0 0% 100% / 0.78);
+    border-top: 1px solid hsl(222 50% 90% / 0.6);
+    box-shadow: 0 -6px 24px -6px hsl(222 100% 55% / 0.08);
+  }
+
+  /* ─── Light mode premium-card glow ─── */
+  .light .premium-card {
+    box-shadow: 0 4px 20px -6px hsl(222 100% 55% / 0.08);
+  }
+  .light .premium-card:hover {
+    box-shadow: 0 10px 32px -8px hsl(222 100% 55% / 0.14);
+  }
+
+  /* ─── Light mode stat card ─── */
+  .light .stat-card {
+    box-shadow: 0 2px 12px -3px hsl(222 100% 55% / 0.06);
+  }
+  .light .stat-card:hover {
+    box-shadow: 0 6px 24px -6px hsl(222 100% 55% / 0.12);
+  }
+
   /* ─── Mobile safe area ─── */
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* ─── Light mode smooth transition ─── */
+  :root {
+    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
   }
 }
