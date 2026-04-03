@@ -3,13 +3,13 @@
  * Adapts nav items, CTA, logo destination, and mobile menu by auth state + role.
  */
 
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { headerNavByRole } from "@/config/navigationConfig";
-import { Menu, X, Bell, ChevronDown, QrCode } from "lucide-react";
+import { Menu, X, Bell, ChevronDown, QrCode, ArrowLeft } from "lucide-react";
 import ProfileMenu from "./ProfileMenu";
 import AlexNavOrb from "./AlexNavOrb";
 import HeaderSearch from "./HeaderSearch";
@@ -43,6 +43,7 @@ function getLogoDestination(role: UserRole | "guest"): string {
 const SmartHeader = () => {
   const { ctx, activeRole } = useNavigationContext();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeMega, setActiveMega] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
@@ -52,6 +53,7 @@ const SmartHeader = () => {
   const handleMegaLeave = useCallback(() => setActiveMega(null), []);
 
   const isGuest = !ctx;
+  const isHome = pathname === "/";
   const logoTo = getLogoDestination(activeRole as UserRole | "guest");
   const navItems = headerNavByRole[activeRole as UserRole | "guest"] || headerNavByRole.guest;
 
@@ -81,6 +83,25 @@ const SmartHeader = () => {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-2xl">
         <div className="mx-auto max-w-7xl px-4 lg:px-6">
           <div className="flex items-center justify-between h-16">
+            {/* Back button — shown on all pages except home */}
+            {!isHome && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground mr-1"
+                onClick={() => {
+                  if (window.history.length > 1) {
+                    navigate(-1);
+                  } else {
+                    navigate("/");
+                  }
+                }}
+                aria-label="Retour"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            )}
+
             {/* Logo */}
             <Link to={logoTo} className="flex items-center shrink-0 group">
               <img
