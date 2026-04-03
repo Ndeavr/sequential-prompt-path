@@ -68,7 +68,7 @@
   /* Dark class is now a no-op — root is already dark */
   .dark {}
 
-  /* ─── UNPRO Light Premium Theme ─── */
+  /* ─── UNPRO Light Unicorn Premium Theme ─── */
   .light {
     --primary: 222 100% 50%;
     --primary-foreground: 0 0% 100%;
@@ -77,17 +77,17 @@
     --accent: 195 90% 42%;
     --accent-foreground: 0 0% 100%;
 
-    --background: 220 20% 97%;
-    --foreground: 228 30% 12%;
+    --background: 216 40% 98%;
+    --foreground: 224 40% 8%;
 
     --card: 0 0% 100%;
-    --card-foreground: 228 30% 12%;
+    --card-foreground: 224 40% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 228 30% 12%;
+    --popover-foreground: 224 40% 8%;
 
-    --muted: 220 14% 92%;
-    --muted-foreground: 220 10% 42%;
+    --muted: 216 20% 94%;
+    --muted-foreground: 220 12% 40%;
 
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
@@ -96,31 +96,31 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 220 14% 88%;
-    --input: 220 14% 90%;
+    --border: 216 18% 88%;
+    --input: 216 18% 90%;
     --ring: 222 100% 50%;
 
-    --shadow-xs: 0 1px 2px 0 hsl(220 20% 60% / 0.06);
-    --shadow-sm: 0 1px 3px 0 hsl(220 20% 60% / 0.08), 0 1px 2px -1px hsl(220 20% 60% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(220 20% 60% / 0.08), 0 2px 4px -2px hsl(220 20% 60% / 0.05);
-    --shadow-lg: 0 10px 15px -3px hsl(220 20% 60% / 0.1), 0 4px 6px -4px hsl(220 20% 60% / 0.05);
-    --shadow-xl: 0 20px 25px -5px hsl(220 20% 60% / 0.1), 0 8px 10px -6px hsl(220 20% 60% / 0.05);
-    --shadow-2xl: 0 25px 50px -12px hsl(220 20% 60% / 0.15);
-    --shadow-glow: 0 0 30px -4px hsl(222 100% 50% / 0.12), 0 0 10px -2px hsl(222 100% 50% / 0.06);
-    --shadow-glow-lg: 0 0 50px -4px hsl(222 100% 50% / 0.18), 0 0 20px -4px hsl(222 100% 50% / 0.08);
-    --shadow-inner-glow: inset 0 1px 0 0 hsl(0 0% 100% / 0.8);
+    --shadow-xs: 0 1px 2px 0 hsl(222 50% 50% / 0.04);
+    --shadow-sm: 0 1px 3px 0 hsl(222 50% 50% / 0.06), 0 1px 2px -1px hsl(222 50% 50% / 0.03);
+    --shadow-md: 0 4px 8px -2px hsl(222 50% 50% / 0.08), 0 2px 4px -2px hsl(222 50% 50% / 0.04);
+    --shadow-lg: 0 10px 20px -4px hsl(222 50% 50% / 0.10), 0 4px 8px -4px hsl(222 50% 50% / 0.05);
+    --shadow-xl: 0 20px 30px -6px hsl(222 50% 50% / 0.12), 0 8px 12px -6px hsl(222 50% 50% / 0.06);
+    --shadow-2xl: 0 25px 50px -12px hsl(222 50% 50% / 0.18);
+    --shadow-glow: 0 0 30px -4px hsl(222 100% 55% / 0.18), 0 0 12px -2px hsl(222 100% 55% / 0.10);
+    --shadow-glow-lg: 0 0 50px -4px hsl(222 100% 55% / 0.25), 0 0 24px -4px hsl(222 100% 55% / 0.14);
+    --shadow-inner-glow: inset 0 1px 0 0 hsl(0 0% 100% / 0.9);
 
-    --glass-bg: hsl(0 0% 100% / 0.72);
-    --glass-border: hsl(220 14% 88% / 0.7);
-    --glass-blur: 24px;
+    --glass-bg: hsl(0 0% 100% / 0.65);
+    --glass-border: hsl(0 0% 100% / 0.6);
+    --glass-blur: 20px;
 
-    --sidebar-background: 220 20% 96%;
-    --sidebar-foreground: 228 30% 12%;
+    --sidebar-background: 216 30% 97%;
+    --sidebar-foreground: 224 40% 8%;
     --sidebar-primary: 222 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 94%;
-    --sidebar-accent-foreground: 228 30% 12%;
-    --sidebar-border: 220 14% 88%;
+    --sidebar-accent: 216 20% 95%;
+    --sidebar-accent-foreground: 224 40% 8%;
+    --sidebar-border: 216 18% 88%;
     --sidebar-ring: 222 100% 50%;
   }
 }
@@ -160,6 +160,42 @@
 }
 
 @layer components {
+  /* ─── Light mode aura background ─── */
+  @keyframes aura-drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(5%, -3%) scale(1.05); }
+    50% { transform: translate(-3%, 5%) scale(0.97); }
+    75% { transform: translate(-5%, -2%) scale(1.03); }
+  }
+
+  .bg-light-aura {
+    background: hsl(216 40% 98%);
+  }
+  .bg-light-aura::before,
+  .bg-light-aura::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(120px);
+    animation: aura-drift 20s ease-in-out infinite;
+  }
+  .bg-light-aura::before {
+    width: 60%;
+    height: 50%;
+    top: -10%;
+    left: 10%;
+    background: radial-gradient(ellipse, hsl(222 100% 55% / 0.10) 0%, transparent 70%);
+  }
+  .bg-light-aura::after {
+    width: 50%;
+    height: 45%;
+    bottom: 5%;
+    right: 5%;
+    background: radial-gradient(ellipse, hsl(195 100% 50% / 0.08) 0%, hsl(252 80% 60% / 0.05) 50%, transparent 70%);
+    animation-delay: -10s;
+  }
+
   /* ─── Glass surfaces ─── */
   .glass-card {
     background: var(--glass-bg);
@@ -168,6 +204,15 @@
     border: 1px solid var(--glass-border);
     border-radius: var(--radius);
     box-shadow: var(--shadow-inner-glow), var(--shadow-sm);
+  }
+
+  .light .glass-card {
+    box-shadow: var(--shadow-inner-glow), 0 10px 30px -8px hsl(222 100% 55% / 0.08);
+  }
+
+  .light .glass-card:hover {
+    box-shadow: var(--shadow-inner-glow), 0 14px 36px -8px hsl(222 100% 55% / 0.14);
+    transform: scale(1.005);
   }
 
   .glass-surface {
@@ -189,6 +234,14 @@
     box-shadow: var(--shadow-inner-glow), var(--shadow-lg);
     border-color: hsl(var(--border) / 0.8);
     transform: translateY(-1px);
+  }
+
+  .light .glass-card-elevated {
+    box-shadow: var(--shadow-inner-glow), 0 8px 24px -6px hsl(222 100% 55% / 0.10);
+  }
+  .light .glass-card-elevated:hover {
+    box-shadow: var(--shadow-inner-glow), 0 14px 36px -8px hsl(222 100% 55% / 0.16);
+    transform: translateY(-2px) scale(1.005);
   }
 
   /* ─── Premium backgrounds ─── */
@@ -242,6 +295,15 @@
 
   .alex-orb {
     animation: orb-breathe 3s ease-in-out infinite;
+  }
+
+  /* Light mode orb — brighter blue glow on white */
+  @keyframes orb-breathe-light {
+    0%, 100% { box-shadow: 0 0 4px 0 hsl(222 100% 55% / 0.30), 0 0 24px 6px hsl(222 100% 55% / 0.12); }
+    50% { box-shadow: 0 0 28px 14px hsl(222 100% 55% / 0.22), 0 0 48px 10px hsl(195 100% 50% / 0.10); }
+  }
+  .light .alex-orb {
+    animation: orb-breathe-light 3s ease-in-out infinite;
   }
 
   /* ─── Gradient text ─── */
@@ -502,6 +564,12 @@
   .cta-gradient:active {
     transform: scale(0.98);
   }
+  .light .cta-gradient {
+    box-shadow: 0 8px 30px -4px hsl(222 100% 55% / 0.35), 0 0 20px -4px hsl(222 100% 55% / 0.18);
+  }
+  .light .cta-gradient:hover {
+    box-shadow: 0 12px 40px -4px hsl(222 100% 55% / 0.45), 0 0 28px -4px hsl(222 100% 55% / 0.25);
+  }
 
   /* ─── Trust badge row ─── */
   .trust-row {
@@ -518,8 +586,37 @@
     @apply text-meta font-semibold;
     color: hsl(var(--muted-foreground));
   }
+
+  /* ─── Light mode mobile nav ─── */
+  .light .mobile-bottom-nav {
+    background: hsl(0 0% 100% / 0.78);
+    border-top: 1px solid hsl(222 50% 90% / 0.6);
+    box-shadow: 0 -6px 24px -6px hsl(222 100% 55% / 0.08);
+  }
+
+  /* ─── Light mode premium-card glow ─── */
+  .light .premium-card {
+    box-shadow: 0 4px 20px -6px hsl(222 100% 55% / 0.08);
+  }
+  .light .premium-card:hover {
+    box-shadow: 0 10px 32px -8px hsl(222 100% 55% / 0.14);
+  }
+
+  /* ─── Light mode stat card ─── */
+  .light .stat-card {
+    box-shadow: 0 2px 12px -3px hsl(222 100% 55% / 0.06);
+  }
+  .light .stat-card:hover {
+    box-shadow: 0 6px 24px -6px hsl(222 100% 55% / 0.12);
+  }
+
   /* ─── Mobile safe area ─── */
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* ─── Light mode smooth transition ─── */
+  :root {
+    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
   }
 }
