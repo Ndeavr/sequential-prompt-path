@@ -2585,7 +2585,7 @@ export type Database = {
           session_token: string
           session_type: string
           updated_at: string
-          user_id: string
+          user_id: string | null
           voice_locale: string
         }
         Insert: {
@@ -2606,7 +2606,7 @@ export type Database = {
           session_token: string
           session_type?: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           voice_locale?: string
         }
         Update: {
@@ -2627,7 +2627,7 @@ export type Database = {
           session_token?: string
           session_type?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           voice_locale?: string
         }
         Relationships: []
