@@ -83,6 +83,25 @@ const SmartHeader = () => {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-2xl">
         <div className="mx-auto max-w-7xl px-4 lg:px-6">
           <div className="flex items-center justify-between h-16">
+            {/* Back button — shown on all pages except home */}
+            {!isHome && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground mr-1"
+                onClick={() => {
+                  if (window.history.length > 1) {
+                    navigate(-1);
+                  } else {
+                    navigate("/");
+                  }
+                }}
+                aria-label="Retour"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            )}
+
             {/* Logo */}
             <Link to={logoTo} className="flex items-center shrink-0 group">
               <img
