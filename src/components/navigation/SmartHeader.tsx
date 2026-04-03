@@ -43,6 +43,7 @@ function getLogoDestination(role: UserRole | "guest"): string {
 const SmartHeader = () => {
   const { ctx, activeRole } = useNavigationContext();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeMega, setActiveMega] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
