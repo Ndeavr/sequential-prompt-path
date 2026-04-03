@@ -315,8 +315,8 @@ export default function HeroSection() {
               transition={{ duration: 0.25 }}
               className="flex flex-col items-center gap-2.5 w-full max-w-sm"
             >
-              <Link
-                to={current.route}
+              <button
+                onClick={() => startVoice(activeIntent)}
                 className="w-full h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold transition-all active:scale-[0.97]"
                 style={{
                   background: "linear-gradient(135deg, hsl(222 100% 55%), hsl(222 100% 42%))",
@@ -327,7 +327,7 @@ export default function HeroSection() {
                 <current.ctaIcon className="h-4 w-4" />
                 {current.cta}
                 <ArrowRight className="h-4 w-4" />
-              </Link>
+              </button>
             </motion.div>
           </AnimatePresence>
         </div>
