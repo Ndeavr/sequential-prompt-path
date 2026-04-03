@@ -160,6 +160,42 @@
 }
 
 @layer components {
+  /* ─── Light mode aura background ─── */
+  @keyframes aura-drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(5%, -3%) scale(1.05); }
+    50% { transform: translate(-3%, 5%) scale(0.97); }
+    75% { transform: translate(-5%, -2%) scale(1.03); }
+  }
+
+  .bg-light-aura {
+    background: hsl(216 40% 98%);
+  }
+  .bg-light-aura::before,
+  .bg-light-aura::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(120px);
+    animation: aura-drift 20s ease-in-out infinite;
+  }
+  .bg-light-aura::before {
+    width: 60%;
+    height: 50%;
+    top: -10%;
+    left: 10%;
+    background: radial-gradient(ellipse, hsl(222 100% 55% / 0.10) 0%, transparent 70%);
+  }
+  .bg-light-aura::after {
+    width: 50%;
+    height: 45%;
+    bottom: 5%;
+    right: 5%;
+    background: radial-gradient(ellipse, hsl(195 100% 50% / 0.08) 0%, hsl(252 80% 60% / 0.05) 50%, transparent 70%);
+    animation-delay: -10s;
+  }
+
   /* ─── Glass surfaces ─── */
   .glass-card {
     background: var(--glass-bg);
@@ -168,6 +204,15 @@
     border: 1px solid var(--glass-border);
     border-radius: var(--radius);
     box-shadow: var(--shadow-inner-glow), var(--shadow-sm);
+  }
+
+  .light .glass-card {
+    box-shadow: var(--shadow-inner-glow), 0 10px 30px -8px hsl(222 100% 55% / 0.08);
+  }
+
+  .light .glass-card:hover {
+    box-shadow: var(--shadow-inner-glow), 0 14px 36px -8px hsl(222 100% 55% / 0.14);
+    transform: scale(1.005);
   }
 
   .glass-surface {
