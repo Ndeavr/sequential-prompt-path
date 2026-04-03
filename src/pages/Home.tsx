@@ -57,6 +57,9 @@ const Home = () => {
         {/* Hero cinématique avec intent selector + orb Alex */}
         <HeroSection />
 
+        {/* Alex Conversation Ad Preview — Immersive demo */}
+        <SectionAlexConversationAd />
+
         {/* Match instantané — Photo/Voice/Text */}
         <SectionInstantMatch />
 
