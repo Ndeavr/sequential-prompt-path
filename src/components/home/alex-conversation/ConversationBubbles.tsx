@@ -6,9 +6,11 @@ import { Camera, Check, Calendar, Star, Shield, MapPin, Clock, Bot } from "lucid
 import iceDamImage from "@/assets/ice-dam-roof.jpg";
 import { SCENARIO, BOOKING_SLOTS } from "./data";
 
-const bubbleIn = {
+import type { Variants } from "framer-motion";
+
+const bubbleIn: Variants = {
   hidden: { opacity: 0, y: 12, scale: 0.97 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] as const } },
 };
 
 /* ─── Alex Avatar ─── */

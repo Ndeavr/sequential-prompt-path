@@ -11,6 +11,7 @@ import SectionBookingCTA from "@/components/home/SectionBookingCTA";
 import SectionHowItWorks from "@/components/home/SectionHowItWorks";
 import SectionEntrepreneurCTA from "@/components/home/SectionEntrepreneurCTA";
 import SectionTrustProof from "@/components/home/SectionTrustProof";
+import SectionAlexConversationAd from "@/components/home/SectionAlexConversationAd";
 import FloatingAlexRobot from "@/components/home/FloatingAlexRobot";
 
 const Home = () => {
