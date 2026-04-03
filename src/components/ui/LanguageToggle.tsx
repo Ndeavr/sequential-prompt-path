@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, createContext, useContext, type ReactNode } from "react";
+import { useState, useRef, createContext, useContext, type ReactNode } from "react";
 import { motion } from "framer-motion";
 
 const STORAGE_KEY = "unpro-lang";
@@ -14,7 +14,10 @@ interface LanguageContextType {
   setLang: (l: "fr" | "en") => void;
 }
 
-const LanguageContext = createContext<LanguageContextType | null>(null);
+const LanguageContext = createContext<LanguageContextType>({
+  lang: "fr",
+  setLang: () => {},
+});
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<"fr" | "en">(() => {
@@ -38,22 +41,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 }
 
 export function useLanguage(): LanguageContextType {
-  const ctx = useContext(LanguageContext);
-  if (ctx) return ctx;
-
-  // Fallback for components outside provider (shouldn't happen but safe)
-  const [lang, setLangState] = useState<"fr" | "en">(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored === "fr" || stored === "en") return stored;
-    } catch {}
-    return detectBrowserLang();
-  });
-  const setLang = (l: "fr" | "en") => {
-    setLangState(l);
-    try { localStorage.setItem(STORAGE_KEY, l); } catch {}
-  };
-  return { lang, setLang };
+  return useContext(LanguageContext);
 }
 
 // ─── Toggle Component ───
@@ -74,14 +62,12 @@ export default function LanguageToggle({ lang, onChange, className = "" }: Langu
       aria-label="Language"
       className={`relative flex h-8 w-[72px] items-center rounded-full bg-muted/60 border border-border/40 p-0.5 cursor-pointer select-none ${className}`}
     >
-      {/* Sliding pill */}
       <motion.div
         layout
         transition={{ type: "spring", stiffness: 500, damping: 32 }}
         className="absolute top-0.5 h-[calc(100%-4px)] w-[calc(50%-2px)] rounded-full bg-primary shadow-sm"
         style={{ left: isFr ? 2 : "calc(50% + 0px)" }}
       />
-
       <button
         role="radio"
         aria-checked={isFr}

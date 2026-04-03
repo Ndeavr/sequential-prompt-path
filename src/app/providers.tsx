@@ -9,6 +9,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes";
 import { HelmetProvider } from "react-helmet-async";
 import { AlexVoiceProvider } from "@/contexts/AlexVoiceContext";
+import { LanguageProvider } from "@/components/ui/LanguageToggle";
 import GlobalAlexOverlay from "@/components/alex/GlobalAlexOverlay";
 import type { ReactNode } from "react";
 
