@@ -31,7 +31,7 @@ const SmartFooter = () => {
               <img
                 src={unproLogo}
                 alt="UNPRO"
-                className="h-10 object-contain logo-hero-glow"
+                className="h-12 object-contain logo-hero-glow"
               />
             </Link>
             <p className="text-sm text-muted-foreground mb-4 max-w-[220px] leading-relaxed">
