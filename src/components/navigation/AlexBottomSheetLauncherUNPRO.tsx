@@ -1,6 +1,6 @@
 /**
  * UNPRO — Alex Bottom Sheet Launcher
- * The center Alex button in mobile bottom nav with role-aware quick actions.
+ * Cinematic center button in mobile bottom nav.
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -62,16 +62,29 @@ export default function AlexBottomSheetLauncherUNPRO() {
 
   return (
     <>
-      {/* Center Alex Button */}
+      {/* Center Alex Orb — elevated */}
       <button
         onClick={() => setIsOpen(true)}
         className="relative flex flex-col items-center justify-center gap-0.5 flex-1 py-1"
         aria-label="Alex"
       >
-        <div className="w-11 h-11 -mt-5 rounded-full bg-primary shadow-lg shadow-primary/30 flex items-center justify-center">
-          <Sparkles className="w-5 h-5 text-primary-foreground" />
-        </div>
-        <span className="text-[10px] font-medium text-primary mt-0.5">Alex</span>
+        <motion.div
+          className="w-12 h-12 -mt-6 rounded-full flex items-center justify-center relative"
+          style={{
+            background: "linear-gradient(135deg, hsl(222 100% 55%), hsl(252 100% 60%), hsl(195 100% 48%))",
+            boxShadow: "0 4px 20px -2px hsl(222 100% 60% / 0.5), 0 0 30px -4px hsl(222 100% 60% / 0.25), inset 0 1px 0 hsl(0 0% 100% / 0.2)",
+          }}
+          animate={{ scale: [1, 1.06, 1] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          whileTap={{ scale: 0.9 }}
+        >
+          {/* Shine */}
+          <div className="absolute inset-0 rounded-full" style={{
+            background: "radial-gradient(circle at 35% 28%, hsl(0 0% 100% / 0.2), transparent 55%)",
+          }} />
+          <Sparkles className="w-5 h-5 text-white relative z-10" />
+        </motion.div>
+        <span className="text-[10px] font-semibold text-primary mt-0.5">Alex</span>
       </button>
 
       {/* Bottom Sheet */}
@@ -83,14 +96,21 @@ export default function AlexBottomSheetLauncherUNPRO() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
-              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+              className="fixed inset-0 z-50 bg-background/60 backdrop-blur-md"
             />
             <motion.div
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-background rounded-t-3xl border-t border-border/20 safe-area-bottom"
+              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl safe-area-bottom"
+              style={{
+                background: "var(--glass-metal-bg)",
+                backdropFilter: "blur(32px) saturate(2)",
+                WebkitBackdropFilter: "blur(32px) saturate(2)",
+                borderTop: "1px solid var(--glass-metal-border)",
+                boxShadow: "var(--shadow-2xl)",
+              }}
             >
               <div className="p-6 space-y-5">
                 <div className="flex items-center justify-between">
@@ -108,19 +128,19 @@ export default function AlexBottomSheetLauncherUNPRO() {
                     <button
                       key={i}
                       onClick={() => handleAction(item)}
-                      className="w-full flex items-center gap-3 p-3.5 rounded-xl hover:bg-muted/50 transition-colors text-left"
+                      className="w-full flex items-center gap-3 p-3.5 rounded-xl hover:bg-muted/30 transition-colors text-left surface-metal-glass"
                     >
                       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                         <item.icon className="w-5 h-5 text-primary" />
                       </div>
-                      <span className="text-sm font-medium text-foreground">{item.label}</span>
+                      <span className="text-sm font-medium text-foreground relative z-10">{item.label}</span>
                     </button>
                   ))}
                 </div>
 
                 <button
                   onClick={() => { setIsOpen(false); openAlex("general"); }}
-                  className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-primary/10 text-primary font-medium text-sm hover:bg-primary/20 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 p-3 rounded-xl btn-liquid-metal font-medium text-sm"
                 >
                   <Mic className="w-4 h-4" />
                   Parler à Alex

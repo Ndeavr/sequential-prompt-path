@@ -1,6 +1,6 @@
 /**
- * UNPRO — Mobile Bottom Navigation (Role-Aware)
- * Uses mobileTabsByRole config. Alex is centered with a bottom sheet launcher.
+ * UNPRO — Mobile Bottom Navigation — Cinematic Floating Glass
+ * Role-aware with center Alex orb.
  */
 
 import { Link, useLocation } from "react-router-dom";
@@ -16,7 +16,6 @@ const MobileBottomNav = () => {
   const { pathname } = useLocation();
   const { lang } = useLanguage();
 
-  // Hide on specific full-screen pages
   const hiddenPaths = ["/alex", "/login", "/signup", "/start"];
   if (hiddenPaths.some((p) => pathname === p)) return null;
 
@@ -27,14 +26,23 @@ const MobileBottomNav = () => {
     return pathname.startsWith(to);
   };
 
-  // Split tabs: first 2, Alex center, last 2
   const isAlexTab = (tab: typeof tabs[0]) => tab.label === "Alex";
   const regularTabs = tabs.filter(t => !isAlexTab(t));
   const leftTabs = regularTabs.slice(0, 2);
   const rightTabs = regularTabs.slice(2, 4);
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border/20 bg-background/95 backdrop-blur-2xl safe-area-bottom" aria-label="Mobile navigation">
+    <nav
+      className="lg:hidden fixed bottom-3 left-3 right-3 z-40 rounded-2xl safe-area-bottom"
+      aria-label="Mobile navigation"
+      style={{
+        background: "var(--glass-bg)",
+        backdropFilter: "blur(28px) saturate(1.8)",
+        WebkitBackdropFilter: "blur(28px) saturate(1.8)",
+        border: "1px solid var(--glass-border)",
+        boxShadow: "var(--shadow-lg), var(--shadow-glow)",
+      }}
+    >
       <div className="flex items-center justify-around h-16 px-2">
         {leftTabs.map((tab) => {
           const active = isActive(tab.to);
@@ -43,22 +51,22 @@ const MobileBottomNav = () => {
             <Link
               key={tab.to}
               to={tab.to}
-              className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-2 rounded-lg transition-colors ${
+              className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-2 rounded-xl transition-all duration-200 ${
                 active ? "text-primary" : "text-muted-foreground"
               }`}
             >
-              <Icon className={`h-5 w-5 ${active ? "text-primary" : ""}`} />
+              <Icon className={`h-5 w-5 ${active ? "text-primary drop-shadow-[0_0_8px_hsl(222_100%_65%/0.4)]" : ""}`} />
               <span className="text-[10px] font-medium leading-none">
                 {lang === "en" && tab.labelEn ? tab.labelEn : tab.label}
               </span>
-              {tab.badge && (
-                <span className="absolute -top-0.5 right-0.5 h-2 w-2 rounded-full bg-primary" />
+              {active && (
+                <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />
               )}
             </Link>
           );
         })}
 
-        {/* Center Alex Button */}
+        {/* Center Alex Orb */}
         <AlexBottomSheetLauncherUNPRO />
 
         {rightTabs.map((tab) => {
@@ -68,16 +76,16 @@ const MobileBottomNav = () => {
             <Link
               key={tab.to}
               to={tab.to}
-              className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-2 rounded-lg transition-colors ${
+              className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-2 rounded-xl transition-all duration-200 ${
                 active ? "text-primary" : "text-muted-foreground"
               }`}
             >
-              <Icon className={`h-5 w-5 ${active ? "text-primary" : ""}`} />
+              <Icon className={`h-5 w-5 ${active ? "text-primary drop-shadow-[0_0_8px_hsl(222_100%_65%/0.4)]" : ""}`} />
               <span className="text-[10px] font-medium leading-none">
                 {lang === "en" && tab.labelEn ? tab.labelEn : tab.label}
               </span>
-              {tab.badge && (
-                <span className="absolute -top-0.5 right-0.5 h-2 w-2 rounded-full bg-primary" />
+              {active && (
+                <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />
               )}
             </Link>
           );

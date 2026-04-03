@@ -1,6 +1,6 @@
 /**
- * UNPRO — Premium Header (Role-Aware Navigation)
- * Adapts nav items, CTA, logo destination, and mobile menu by auth state + role.
+ * UNPRO — Premium Header (Cinematic Glass Nav)
+ * Role-aware navigation with logo hero treatment.
  */
 
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -23,7 +23,6 @@ import QRShareSheet from "@/components/sharing/QRShareSheet";
 import unproLogo from "@/assets/unpro-logo.png";
 import type { UserRole } from "@/types/navigation";
 
-/** Mega menus only for guests — logged-in users get direct nav links */
 const guestMegaKeys = [
   { key: "maison", label: "Maison", labelEn: "Home" },
   { key: "entreprises", label: "Entreprises", labelEn: "Business" },
@@ -58,7 +57,6 @@ const SmartHeader = () => {
   const logoTo = getLogoDestination(activeRole as UserRole | "guest");
   const navItems = headerNavByRole[activeRole as UserRole | "guest"] || headerNavByRole.guest;
 
-  // Detect returning visitor via localStorage
   const isReturningVisitor = (() => {
     try {
       const visited = localStorage.getItem("unpro_visited");
@@ -70,7 +68,6 @@ const SmartHeader = () => {
     } catch { return false; }
   })();
 
-  // Context label for logged-in users
   const contextLabel = ctx
     ? activeRole === "contractor" && ctx.contractor?.businessName
       ? ctx.contractor.businessName
@@ -81,10 +78,18 @@ const SmartHeader = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-2xl">
+      <header
+        className="sticky top-0 z-50"
+        style={{
+          background: "var(--glass-bg)",
+          backdropFilter: "blur(28px) saturate(1.8)",
+          WebkitBackdropFilter: "blur(28px) saturate(1.8)",
+          borderBottom: "1px solid var(--glass-border)",
+        }}
+      >
         <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
           <div className="flex items-center justify-between h-14 sm:h-16">
-            {/* Back button — shown on all pages except home */}
+            {/* Back button */}
             {!isHome && (
               <Button
                 variant="ghost"
@@ -103,19 +108,18 @@ const SmartHeader = () => {
               </Button>
             )}
 
-            {/* Brand lockup — larger logo, premium presence */}
+            {/* Brand lockup — hero logo with glow */}
             <Link to={logoTo} className="flex items-center shrink-0 group">
               <img
                 src={unproLogo}
                 alt="UNPRO"
-                className="h-10 sm:h-12 object-contain drop-shadow-[0_0_8px_hsl(222_100%_60%/0.15)] dark:drop-shadow-[0_0_12px_hsl(222_100%_60%/0.3)]"
+                className="h-10 sm:h-12 object-contain logo-hero-glow transition-all duration-300 group-hover:scale-105"
               />
             </Link>
 
             {/* Desktop nav */}
             <nav className="hidden lg:flex items-center gap-0.5 ml-8" role="navigation" aria-label="Main">
               {isGuest ? (
-                /* Guests get mega-menu dropdowns */
                 guestMegaKeys.map((item) => (
                   <div
                     key={item.key}
@@ -137,7 +141,6 @@ const SmartHeader = () => {
                   </div>
                 ))
               ) : (
-                /* Logged-in users get direct nav links from config */
                 navItems.map((item) => {
                   const active = item.to === "/" || item.to === "/dashboard" || item.to === "/pro" || item.to === "/admin"
                     ? pathname === item.to
@@ -169,26 +172,24 @@ const SmartHeader = () => {
               <HeaderSearch lang={lang} />
             </div>
 
-            {/* Right actions — compact on mobile */}
+            {/* Right actions */}
             <div className="flex items-center gap-1 sm:gap-2">
               <div className="hidden sm:block">
                 <AlexNavOrb lang={lang} />
               </div>
 
-              {/* Theme + Language — compact pill on mobile, full on desktop */}
+              {/* Theme + Language */}
               <div className="flex items-center gap-1">
                 <ThemeToggle className="h-7 w-7 sm:h-8 sm:w-8" />
-                {/* Mobile: ultra-compact pill */}
                 <div className="sm:hidden">
                   <SwitchLanguagePillAnimated lang={lang} onChange={setLang} />
                 </div>
-                {/* Desktop: original toggle */}
                 <div className="hidden sm:block">
                   <LanguageToggle lang={lang} onChange={setLang} />
                 </div>
               </div>
 
-              {/* Share QR button */}
+              {/* Share QR */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -220,15 +221,13 @@ const SmartHeader = () => {
                 <ProfileMenu />
               ) : (
                 <>
-                  {/* Mobile: compact Sign In CTA */}
-                  <Button asChild size="sm" className="rounded-full h-7 text-[11px] px-3 font-bold sm:hidden shadow-sm">
+                  <Button asChild size="sm" className="rounded-full h-7 text-[11px] px-3 font-bold sm:hidden btn-liquid-metal border-0">
                     <Link to={isReturningVisitor ? "/login" : "/signup"}>
                       {isReturningVisitor
                         ? (lang === "en" ? "Sign In" : "Connexion")
                         : (lang === "en" ? "Sign Up" : "S'inscrire")}
                     </Link>
                   </Button>
-                  {/* Desktop */}
                   <Button asChild variant="ghost" size="sm" className="rounded-full h-9 text-meta px-4 hidden sm:inline-flex text-muted-foreground hover:text-foreground">
                     <Link to="/login">{lang === "en" ? "Sign In" : "Connexion"}</Link>
                   </Button>
@@ -250,7 +249,7 @@ const SmartHeader = () => {
           </div>
         </div>
 
-        {/* Mega Menu panels — only for guests */}
+        {/* Mega Menu panels */}
         <AnimatePresence>
           {isGuest && activeMega && (
             <MegaMenuPanel menuKey={activeMega} lang={lang} onClose={handleMegaLeave} />
@@ -315,7 +314,6 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
         className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-card flex flex-col"
       >
         <div className="p-5 flex-1 overflow-y-auto">
-          {/* Close + Language */}
           <div className="flex items-center justify-between mb-6">
             <span className="font-display text-lg font-bold text-foreground">UNPRO</span>
             <div className="flex items-center gap-1.5">
@@ -326,15 +324,12 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
             </div>
           </div>
 
-          {/* Search */}
           <div className="mb-6">
             <HeaderSearch lang={lang} variant="mobile" onClose={onClose} />
           </div>
 
-          {/* ── LOGGED-IN: Role-aware quick actions + drawer ── */}
           {!isGuest ? (
             <>
-              {/* Urgent state actions */}
               {stateActions.length > 0 && (
                 <div className="space-y-1 mb-4">
                   <p className="text-caption font-bold text-muted-foreground uppercase tracking-wider mb-2">
@@ -363,16 +358,14 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
                 </div>
               )}
 
-              {/* Dashboard link */}
               <Link
                 to={dashboardTo}
                 onClick={onClose}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-meta mb-1"
+                className="flex items-center gap-3 px-3 py-3 rounded-xl btn-liquid-metal font-semibold text-meta mb-1"
               >
                 {lang === "en" ? "Dashboard" : "Tableau de bord"}
               </Link>
 
-              {/* Drawer items from config */}
               <div className="space-y-0.5 mb-4">
                 {drawerItems.map((item) => {
                   const Icon = resolveIcon(item.icon);
@@ -390,25 +383,23 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
                 })}
               </div>
 
-              {/* Alex */}
               <button onClick={() => { onClose(); alexVoice.openAlex("general"); }} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-meta mb-4 w-full text-left">
                 ✨ {lang === "en" ? "Talk to Alex" : "Parler à Alex"}
               </button>
             </>
           ) : (
-            /* ── GUEST: Discovery-focused ── */
             <>
               <div className="space-y-1 mb-6">
                 <p className="text-caption font-bold text-muted-foreground uppercase tracking-wider mb-2">
                   {lang === "en" ? "Quick Actions" : "Actions rapides"}
                 </p>
-                <Link to="/signup" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-meta">
+                <Link to="/signup" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl btn-liquid-metal font-semibold text-meta">
                   {lang === "en" ? "Get Started Free" : "Commencer gratuitement"}
                 </Link>
                 <button onClick={() => { onClose(); alexVoice.openAlex("general"); }} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 text-foreground font-medium text-meta w-full text-left">
                   ✨ {lang === "en" ? "Talk to Alex" : "Parler à Alex"}
                 </button>
-                <Link to="/proprietaires/passeport-maison" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-muted/40 text-foreground font-medium text-meta">
+                <Link to="/proprietaires/passeport-maison" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl surface-metal-glass text-foreground font-medium text-meta">
                   {lang === "en" ? "Create My Home Passport" : "Créer mon Passeport Maison"}
                 </Link>
               </div>
@@ -417,36 +408,16 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
             </>
           )}
 
-          {/* Account section */}
-          <div className="border-t border-border/20 pt-4 mt-4 space-y-1">
-            <p className="text-caption font-bold text-muted-foreground uppercase tracking-wider mb-2">
-              {lang === "en" ? "Account" : "Compte"}
-            </p>
-            {ctx ? (
-              <>
-                <Link to={activeRole === "contractor" ? "/pro/account" : "/dashboard/account"} onClick={onClose} className="block px-3 py-2.5 text-meta text-foreground rounded-lg hover:bg-muted/40">
-                  {lang === "en" ? "My Account" : "Mon compte"}
-                </Link>
-                <button onClick={() => { signOut(); onClose(); }} className="w-full text-left px-3 py-2.5 text-meta text-destructive rounded-lg hover:bg-destructive/5">
-                  {lang === "en" ? "Sign Out" : "Déconnexion"}
-                </button>
-              </>
-            ) : (
-              <>
-                <Link to="/login" onClick={onClose} className="block px-3 py-2.5 text-meta text-foreground rounded-lg hover:bg-muted/40">
-                  {lang === "en" ? "Sign In" : "Connexion"}
-                </Link>
-                <Link to="/signup" onClick={onClose} className="block px-3 py-2.5 text-meta text-primary font-semibold rounded-lg hover:bg-primary/5">
-                  {lang === "en" ? "Create Account" : "Créer un compte"}
-                </Link>
-              </>
-            )}
-
-            <div className="flex items-center justify-between px-3 py-2.5 rounded-lg">
-              <span className="text-meta text-foreground">{lang === "en" ? "Dark mode" : "Mode sombre"}</span>
-              <ThemeToggle />
+          {ctx && (
+            <div className="mt-auto pt-4 border-t border-border/30 space-y-1">
+              <Link to="/settings" onClick={onClose} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-meta text-muted-foreground hover:bg-muted/40 transition-colors">
+                {lang === "en" ? "Settings" : "Paramètres"}
+              </Link>
+              <button onClick={() => { signOut(); onClose(); }} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-meta text-destructive hover:bg-destructive/5 transition-colors w-full text-left">
+                {lang === "en" ? "Sign Out" : "Déconnexion"}
+              </button>
             </div>
-          </div>
+          )}
         </div>
       </motion.div>
     </motion.div>
