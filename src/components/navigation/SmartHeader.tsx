@@ -1,6 +1,6 @@
 /**
- * UNPRO — Premium Header (Cinematic Glass Nav)
- * Role-aware navigation with logo hero treatment.
+ * UNPRO — Premium Header (Dark Sharp)
+ * Role-aware navigation. Dark-only. Logo enlarged. No theme toggle.
  */
 
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -18,7 +18,6 @@ import MegaMenuPanel from "./MegaMenu";
 import LanguageToggle, { useLanguage } from "@/components/ui/LanguageToggle";
 import SwitchLanguagePillAnimated from "@/components/ui/SwitchLanguagePillAnimated";
 import SmartCTA from "@/components/cta/SmartCTA";
-import ThemeToggle from "@/components/ui/ThemeToggle";
 import QRShareSheet from "@/components/sharing/QRShareSheet";
 import unproLogo from "@/assets/unpro-logo.png";
 import type { UserRole } from "@/types/navigation";
@@ -81,10 +80,10 @@ const SmartHeader = () => {
       <header
         className="sticky top-0 z-50"
         style={{
-          background: "var(--glass-bg)",
-          backdropFilter: "blur(28px) saturate(1.8)",
-          WebkitBackdropFilter: "blur(28px) saturate(1.8)",
-          borderBottom: "1px solid var(--glass-border)",
+          background: "hsl(220 40% 6% / 0.82)",
+          backdropFilter: "blur(20px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(20px) saturate(1.6)",
+          borderBottom: "1px solid hsl(0 0% 100% / 0.06)",
         }}
       >
         <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
@@ -108,12 +107,12 @@ const SmartHeader = () => {
               </Button>
             )}
 
-            {/* Brand lockup — hero logo with glow */}
+            {/* Brand lockup — LARGE logo */}
             <Link to={logoTo} className="flex items-center shrink-0 group">
               <img
                 src={unproLogo}
                 alt="UNPRO"
-                className="h-10 sm:h-12 object-contain logo-hero-glow transition-all duration-300 group-hover:scale-105"
+                className="h-9 sm:h-12 object-contain logo-hero-glow transition-all duration-300 group-hover:scale-105"
               />
             </Link>
 
@@ -173,20 +172,17 @@ const SmartHeader = () => {
             </div>
 
             {/* Right actions */}
-            <div className="flex items-center gap-1 sm:gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <div className="hidden sm:block">
                 <AlexNavOrb lang={lang} />
               </div>
 
-              {/* Theme + Language */}
-              <div className="flex items-center gap-1">
-                <ThemeToggle className="h-7 w-7 sm:h-8 sm:w-8" />
-                <div className="sm:hidden">
-                  <SwitchLanguagePillAnimated lang={lang} onChange={setLang} />
-                </div>
-                <div className="hidden sm:block">
-                  <LanguageToggle lang={lang} onChange={setLang} />
-                </div>
+              {/* Language only — no theme toggle */}
+              <div className="sm:hidden">
+                <SwitchLanguagePillAnimated lang={lang} onChange={setLang} />
+              </div>
+              <div className="hidden sm:block">
+                <LanguageToggle lang={lang} onChange={setLang} />
               </div>
 
               {/* Share QR */}

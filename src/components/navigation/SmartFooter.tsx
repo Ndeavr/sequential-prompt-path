@@ -1,6 +1,5 @@
 /**
- * UNPRO — Strategic Footer (Role-Aware)
- * Uses getFooterSections from config. Fixes "lead" terminology.
+ * UNPRO — Footer (Dark Sharp)
  */
 
 import { Link } from "react-router-dom";
@@ -23,26 +22,24 @@ const SmartFooter = () => {
   const sections = getFooterSections(activeRole as UserRole | "guest");
 
   return (
-    <footer className="border-t border-border/20 bg-card/50">
+    <footer className="border-t border-border/20" style={{ background: "hsl(220 40% 4% / 0.8)" }}>
       <div className="mx-auto max-w-7xl px-4 lg:px-6 py-12 lg:py-16">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-10 mb-12">
           {/* Brand column */}
           <div className="col-span-2 sm:col-span-3 lg:col-span-1">
-            <Link to="/" className="flex items-center gap-2 mb-4">
+            <Link to="/" className="flex items-center gap-2.5 mb-4">
               <img
                 src={unproLogo}
                 alt="UNPRO"
-                className="h-8 w-8 rounded-lg object-contain"
-                style={{ filter: "brightness(0) saturate(100%) invert(28%) sepia(92%) saturate(1800%) hue-rotate(213deg) brightness(101%) contrast(101%)" }}
+                className="h-10 object-contain logo-hero-glow"
               />
-              <span className="font-display text-lg font-bold text-foreground tracking-tight">UNPRO</span>
             </Link>
-            <p className="text-meta text-muted-foreground mb-4 max-w-[220px] leading-relaxed">
+            <p className="text-sm text-muted-foreground mb-4 max-w-[220px] leading-relaxed">
               {lang === "en"
                 ? "Exclusive guaranteed appointments. Not shared leads."
                 : "Des rendez-vous garantis exclusifs. Pas des leads partagés."}
             </p>
-            <div className="space-y-1.5 text-caption text-muted-foreground/70">
+            <div className="space-y-1.5 text-xs text-muted-foreground">
               <p>🏠 {lang === "en" ? "Home Passport" : "Passeport Maison"}</p>
               <p>🤖 {lang === "en" ? "Smart Matching" : "Matching intelligent"}</p>
               <p>✨ {lang === "en" ? "Alex Assistant" : "Alex assistant"}</p>
@@ -52,7 +49,7 @@ const SmartFooter = () => {
           {/* Dynamic columns from config */}
           {sections.map((col) => (
             <div key={col.title}>
-              <h4 className="text-caption font-bold text-foreground uppercase tracking-wider mb-4">
+              <h4 className="text-xs font-bold text-foreground uppercase tracking-wider mb-4">
                 {lang === "en" && col.titleEn ? col.titleEn : col.title}
               </h4>
               <ul className="space-y-2.5">
@@ -60,7 +57,7 @@ const SmartFooter = () => {
                   <li key={item.to}>
                     <Link
                       to={item.to}
-                      className="text-meta text-muted-foreground hover:text-foreground transition-colors duration-200"
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
                     >
                       {lang === "en" && item.labelEn ? item.labelEn : item.label}
                     </Link>
@@ -74,7 +71,7 @@ const SmartFooter = () => {
         {/* Bottom bar */}
         <div className="h-px bg-gradient-to-r from-transparent via-border/30 to-transparent mb-6" />
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4 text-caption text-muted-foreground/50">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground/60">
             <span>© {new Date().getFullYear()} UNPRO</span>
             <span className="hidden sm:inline">•</span>
             <span className="hidden sm:inline">
@@ -89,14 +86,14 @@ const SmartFooter = () => {
                   key={s.label}
                   href={s.href}
                   aria-label={s.label}
-                  className="h-8 w-8 flex items-center justify-center rounded-full bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors text-caption font-bold"
+                  className="h-8 w-8 flex items-center justify-center rounded-full bg-muted/20 text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors text-xs font-bold"
                 >
                   {s.icon}
                 </a>
               ))}
             </div>
 
-            <div className="flex items-center gap-3 text-caption text-muted-foreground/50">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground/60">
               <Link to="/conditions" className="hover:text-foreground transition-colors">
                 {lang === "en" ? "Terms" : "Conditions"}
               </Link>
