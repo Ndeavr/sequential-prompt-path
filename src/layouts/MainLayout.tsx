@@ -32,29 +32,16 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="min-h-screen flex flex-col relative overflow-x-hidden">
       {/* ── Dark cinematic background ── */}
-      <div className="fixed inset-0 -z-10">
-        {pathname === "/" && (
-          <img
-            src="/images/hero-bg.gif"
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        )}
-        {/* Dark overlay + color grading */}
+      <div className="fixed inset-0 -z-10 noise-overlay">
         <div
           className="absolute inset-0"
           style={{
-            background: pathname === "/"
-              ? `
-                linear-gradient(to bottom, hsl(222 55% 4% / 0.72), hsl(222 55% 4% / 0.85) 60%, #060B14 100%),
-                radial-gradient(ellipse 80% 60% at 15% 20%, hsl(222 100% 65% / 0.07), transparent 50%)
-              `
-              : `
-                radial-gradient(ellipse 80% 60% at 15% 20%, hsl(222 100% 65% / 0.07), transparent 50%),
-                radial-gradient(ellipse 70% 50% at 85% 80%, hsl(195 100% 55% / 0.05), transparent 50%),
-                radial-gradient(ellipse 60% 40% at 50% 50%, hsl(252 100% 72% / 0.03), transparent 50%),
-                #060B14
-              `,
+            background: `
+              radial-gradient(ellipse 80% 60% at 15% 20%, hsl(222 100% 65% / 0.07), transparent 50%),
+              radial-gradient(ellipse 70% 50% at 85% 80%, hsl(195 100% 55% / 0.05), transparent 50%),
+              radial-gradient(ellipse 60% 40% at 50% 50%, hsl(252 100% 72% / 0.03), transparent 50%),
+              #060B14
+            `,
           }}
         />
       </div>
