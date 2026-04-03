@@ -11,6 +11,7 @@ import SectionBookingCTA from "@/components/home/SectionBookingCTA";
 import SectionHowItWorks from "@/components/home/SectionHowItWorks";
 import SectionEntrepreneurCTA from "@/components/home/SectionEntrepreneurCTA";
 import SectionTrustProof from "@/components/home/SectionTrustProof";
+import SectionAlexConversationAd from "@/components/home/SectionAlexConversationAd";
 import FloatingAlexRobot from "@/components/home/FloatingAlexRobot";
 
 const Home = () => {
@@ -55,6 +56,9 @@ const Home = () => {
 
         {/* Hero cinématique avec intent selector + orb Alex */}
         <HeroSection />
+
+        {/* Alex Conversation Ad Preview — Immersive demo */}
+        <SectionAlexConversationAd />
 
         {/* Match instantané — Photo/Voice/Text */}
         <SectionInstantMatch />
