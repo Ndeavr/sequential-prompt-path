@@ -4,11 +4,11 @@
  * Voice-first with Gemini Live Native Audio.
  * Pills: Problème, Projet, Avis — all start Alex & allow photo upload.
  */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
-import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, AlertTriangle, Sparkles, MessageSquare, ArrowRight, Camera, FileSearch } from "lucide-react";
+import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, AlertTriangle, Sparkles, MessageSquare, ArrowRight, Camera, FileSearch, Upload } from "lucide-react";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 
 const cinematicBg = "/images/hero-bg.gif";
@@ -62,6 +62,8 @@ export default function HeroSection() {
   const voiceActive = isActive || isConnecting;
   const current = INTENTS.find((i) => i.slug === activeIntent)!;
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const getIntentGreeting = useCallback((intent: IntentSlug) => {
     const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || null;
     const name = firstName || "";
@@ -73,7 +75,7 @@ export default function HeroSection() {
       case "projet":
         return `${hi} Ah! Un nouveau projet! Je peux certainement vous aider avec ça! Avez-vous une photo de ce que vous voulez améliorer ou pouvez-vous me décrire votre projet?`;
       case "avis":
-        return `${hi} Vous aimeriez que j'analyse vos soumissions? Pas de problème!`;
+        return `${hi} Vous aimeriez que j'analyse vos soumissions? Pas de problème! Vous pouvez les téléverser ou les prendre en photo ici.`;
       default:
         return `${hi} Comment puis-je vous aider?`;
     }
@@ -81,8 +83,16 @@ export default function HeroSection() {
 
   const startVoice = useCallback((intent?: IntentSlug) => {
     window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
-    const greeting = getIntentGreeting(intent || activeIntent);
-    start({ initialGreeting: `Dis exactement ceci, mot pour mot, en français québécois naturel: "${greeting}"` });
+    const selectedIntent = intent || activeIntent;
+    const greeting = getIntentGreeting(selectedIntent);
+    start({ initialGreeting: greeting });
+
+    // Auto-open file upload for "avis" intent
+    if (selectedIntent === "avis") {
+      setTimeout(() => {
+        fileInputRef.current?.click();
+      }, 1500);
+    }
   }, [start, getIntentGreeting, activeIntent]);
 
   const stopVoice = useCallback(() => stop(), [stop]);
@@ -331,6 +341,24 @@ export default function HeroSection() {
             </motion.div>
           </AnimatePresence>
         </div>
+
+        {/* Hidden file input for upload */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,application/pdf"
+          multiple
+          capture="environment"
+          className="hidden"
+          onChange={(e) => {
+            const files = e.target.files;
+            if (files && files.length > 0) {
+              console.log("[Hero] Files selected:", files.length);
+              // TODO: handle file upload to Alex quote analysis
+            }
+            e.target.value = "";
+          }}
+        />
 
         {/* Bottom gradient */}
         <div className="absolute bottom-0 left-0 right-0 h-40 z-20 pointer-events-none" style={{
