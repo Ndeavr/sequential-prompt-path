@@ -3,9 +3,10 @@
  * Thinner, cleaner, controlled glow.
  */
 
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { useLanguage } from "@/components/ui/LanguageToggle";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { mobileTabsByRole } from "@/config/navigationConfig";
 import { resolveIcon } from "./IconResolver";
 import AlexBottomSheetLauncherUNPRO from "./AlexBottomSheetLauncherUNPRO";

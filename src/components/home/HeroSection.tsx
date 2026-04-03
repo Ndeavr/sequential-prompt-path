@@ -87,11 +87,11 @@ export default function HeroSection() {
     const greeting = getIntentGreeting(selectedIntent);
     start({ initialGreeting: greeting });
 
-    // Auto-open file upload for "avis" intent
-    if (selectedIntent === "avis") {
+    // Auto-open file upload after Alex finishes greeting (~4s)
+    if (selectedIntent === "avis" || selectedIntent === "probleme" || selectedIntent === "projet") {
       setTimeout(() => {
         fileInputRef.current?.click();
-      }, 1500);
+      }, 4000);
     }
   }, [start, getIntentGreeting, activeIntent]);
 
