@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
 import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, AlertTriangle, Sparkles, MessageSquare, ArrowRight, Camera, FileSearch } from "lucide-react";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
-import { Link } from "react-router-dom";
+
 const cinematicBg = "/images/hero-bg.gif";
 
 type IntentSlug = "probleme" | "projet" | "avis";
