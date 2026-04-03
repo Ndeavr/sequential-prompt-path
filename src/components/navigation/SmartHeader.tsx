@@ -56,7 +56,6 @@ const SmartHeader = () => {
   const isHome = pathname === "/";
   const logoTo = getLogoDestination(activeRole as UserRole | "guest");
   const navItems = headerNavByRole[activeRole as UserRole | "guest"] || headerNavByRole.guest;
-  const navItems = headerNavByRole[activeRole as UserRole | "guest"] || headerNavByRole.guest;
 
   // Detect returning visitor via localStorage
   const isReturningVisitor = (() => {
