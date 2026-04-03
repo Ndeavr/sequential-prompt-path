@@ -62,6 +62,8 @@ export default function HeroSection() {
   const voiceActive = isActive || isConnecting;
   const current = INTENTS.find((i) => i.slug === activeIntent)!;
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const getIntentGreeting = useCallback((intent: IntentSlug) => {
     const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || null;
     const name = firstName || "";
@@ -73,7 +75,7 @@ export default function HeroSection() {
       case "projet":
         return `${hi} Ah! Un nouveau projet! Je peux certainement vous aider avec ça! Avez-vous une photo de ce que vous voulez améliorer ou pouvez-vous me décrire votre projet?`;
       case "avis":
-        return `${hi} Vous aimeriez que j'analyse vos soumissions? Pas de problème!`;
+        return `${hi} Vous aimeriez que j'analyse vos soumissions? Pas de problème! Vous pouvez les téléverser ou les prendre en photo ici.`;
       default:
         return `${hi} Comment puis-je vous aider?`;
     }
@@ -81,8 +83,16 @@ export default function HeroSection() {
 
   const startVoice = useCallback((intent?: IntentSlug) => {
     window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
-    const greeting = getIntentGreeting(intent || activeIntent);
-    start({ initialGreeting: `Dis exactement ceci, mot pour mot, en français québécois naturel: "${greeting}"` });
+    const selectedIntent = intent || activeIntent;
+    const greeting = getIntentGreeting(selectedIntent);
+    start({ initialGreeting: greeting });
+
+    // Auto-open file upload for "avis" intent
+    if (selectedIntent === "avis") {
+      setTimeout(() => {
+        fileInputRef.current?.click();
+      }, 1500);
+    }
   }, [start, getIntentGreeting, activeIntent]);
 
   const stopVoice = useCallback(() => stop(), [stop]);
