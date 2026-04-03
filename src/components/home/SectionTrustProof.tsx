@@ -1,6 +1,6 @@
 /**
  * SectionTrustProofSignals — Social proof stats, testimonials, FAQ.
- * Clean premium layout with trust signals.
+ * Clean premium layout with trust signals. No duplicate "Décrivez votre projet" CTA.
  */
 import { motion } from "framer-motion";
 import {
@@ -61,16 +61,6 @@ export default function SectionTrustProof() {
                 <p className="text-xs font-medium text-muted-foreground">2,500+ avis</p>
               </div>
             </div>
-
-            <button
-              onClick={() => navigate("/describe-project")}
-              className="w-full h-14 rounded-full flex items-center justify-center gap-3 text-sm font-bold cta-gradient"
-            >
-              Décrivez votre projet
-              <div className="h-8 w-8 rounded-full flex items-center justify-center bg-white/25">
-                <ArrowRight className="h-4 w-4" />
-              </div>
-            </button>
 
             <div className="trust-row mt-4">
               {[

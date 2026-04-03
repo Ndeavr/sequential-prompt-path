@@ -1,22 +1,14 @@
 import { Helmet } from "react-helmet-async";
-import { useRef } from "react";
 import MainLayout from "@/layouts/MainLayout";
 import HeroSection from "@/components/home/HeroSection";
-import SectionInstantMatch from "@/components/home/SectionInstantMatch";
 import SectionNoMoreQuotes from "@/components/home/SectionNoMoreQuotes";
+import SectionAlexConversationAd from "@/components/home/SectionAlexConversationAd";
 import SectionPasseportCards from "@/components/home/SectionPasseportCards";
-import SectionSmartHome from "@/components/home/SectionSmartHome";
-import SectionAlexActivation from "@/components/home/SectionAlexActivation";
-import SectionBookingCTA from "@/components/home/SectionBookingCTA";
 import SectionHowItWorks from "@/components/home/SectionHowItWorks";
 import SectionEntrepreneurCTA from "@/components/home/SectionEntrepreneurCTA";
 import SectionTrustProof from "@/components/home/SectionTrustProof";
-import SectionAlexConversationAd from "@/components/home/SectionAlexConversationAd";
-import FloatingAlexRobot from "@/components/home/FloatingAlexRobot";
 
 const Home = () => {
-  const alexSectionRef = useRef<HTMLElement>(null);
-
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Service",
@@ -52,31 +44,17 @@ const Home = () => {
       </Helmet>
 
       <div className="flex flex-col">
-        <FloatingAlexRobot alexSectionRef={alexSectionRef} />
-
-        {/* Hero cinématique avec intent selector + orb Alex */}
+        {/* Hero cinématique — Problème / Projet / Avis */}
         <HeroSection />
 
-        {/* Alex Conversation Ad Preview — Immersive demo */}
+        {/* Alex Conversation Ad Preview */}
         <SectionAlexConversationAd />
 
-        {/* Match instantané — Photo/Voice/Text */}
-        <SectionInstantMatch />
-
-        {/* "Plus besoin de 3 soumissions" — match card reveal */}
+        {/* Bulle explicative — Comparer 3 soumissions ? */}
         <SectionNoMoreQuotes />
 
         {/* Passeport Maison / Condo / Entrepreneur */}
         <SectionPasseportCards />
-
-        {/* "Votre maison a un cerveau" — Score IA preview */}
-        <SectionSmartHome />
-
-        {/* Alex concierge IA */}
-        <SectionAlexActivation sectionRef={alexSectionRef} />
-
-        {/* Booking CTA — créneaux preview */}
-        <SectionBookingCTA />
 
         {/* Comment ça marche — 3 étapes */}
         <SectionHowItWorks />
@@ -84,7 +62,7 @@ const Home = () => {
         {/* Banner entrepreneur */}
         <SectionEntrepreneurCTA />
 
-        {/* Social proof, testimonials, FAQ, trust links, final CTA */}
+        {/* Social proof, testimonials, FAQ */}
         <SectionTrustProof />
       </div>
     </MainLayout>
