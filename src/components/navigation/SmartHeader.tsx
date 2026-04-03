@@ -3,7 +3,7 @@
  * Adapts nav items, CTA, logo destination, and mobile menu by auth state + role.
  */
 
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
