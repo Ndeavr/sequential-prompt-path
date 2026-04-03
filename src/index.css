@@ -236,6 +236,14 @@
     transform: translateY(-1px);
   }
 
+  .light .glass-card-elevated {
+    box-shadow: var(--shadow-inner-glow), 0 8px 24px -6px hsl(222 100% 55% / 0.10);
+  }
+  .light .glass-card-elevated:hover {
+    box-shadow: var(--shadow-inner-glow), 0 14px 36px -8px hsl(222 100% 55% / 0.16);
+    transform: translateY(-2px) scale(1.005);
+  }
+
   /* ─── Premium backgrounds ─── */
   .premium-bg {
     position: relative;
