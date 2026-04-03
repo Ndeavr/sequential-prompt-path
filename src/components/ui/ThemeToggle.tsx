@@ -16,7 +16,7 @@ export default function ThemeToggle({ className = "" }: ThemeToggleProps) {
   return (
     <button
       onClick={toggle}
-      className={`relative flex h-8 w-8 items-center justify-center rounded-full bg-muted/60 border border-border/40 transition-colors hover:bg-muted ${className}`}
+      className={`relative flex items-center justify-center rounded-full bg-muted/50 border border-border/30 transition-colors hover:bg-muted h-7 w-7 sm:h-8 sm:w-8 ${className}`}
       aria-label={isDark ? "Mode clair" : "Mode sombre"}
     >
       <motion.div
