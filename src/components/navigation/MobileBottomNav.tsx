@@ -15,7 +15,9 @@ import type { UserRole } from "@/types/navigation";
 const MobileBottomNav = () => {
   const { activeRole } = useNavigationContext();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { lang } = useLanguage();
+  const { openAlex } = useAlexVoice();
 
   const hiddenPaths = ["/alex", "/login", "/signup", "/start"];
   if (hiddenPaths.some((p) => pathname === p)) return null;
