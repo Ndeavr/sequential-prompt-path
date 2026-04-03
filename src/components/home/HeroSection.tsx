@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
 import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, AlertTriangle, Sparkles, MessageSquare, ArrowRight, Camera, FileSearch } from "lucide-react";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
-import { Link } from "react-router-dom";
+
 const cinematicBg = "/images/hero-bg.gif";
 
 type IntentSlug = "probleme" | "projet" | "avis";
@@ -62,14 +62,28 @@ export default function HeroSection() {
   const voiceActive = isActive || isConnecting;
   const current = INTENTS.find((i) => i.slug === activeIntent)!;
 
-  const startVoice = useCallback(() => {
-    window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
+  const getIntentGreeting = useCallback((intent: IntentSlug) => {
     const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || null;
-    const initialGreeting = firstName
-      ? `Salue-moi. Mon prénom est ${firstName}. Dis "Bonjour ${firstName}, bienvenue."`
-      : `Salue-moi. Je suis un nouveau visiteur. Dis "Bonjour, bienvenue."`;
-    start({ initialGreeting });
-  }, [start, user]);
+    const name = firstName || "";
+    const hi = name ? `Bonjour ${name}!` : "Bonjour!";
+
+    switch (intent) {
+      case "probleme":
+        return `${hi} Je peux vous aider à trouver une solution! Avez-vous une photo ou pouvez-vous me décrire votre problème?`;
+      case "projet":
+        return `${hi} Ah! Un nouveau projet! Je peux certainement vous aider avec ça! Avez-vous une photo de ce que vous voulez améliorer ou pouvez-vous me décrire votre projet?`;
+      case "avis":
+        return `${hi} Vous aimeriez que j'analyse vos soumissions? Pas de problème!`;
+      default:
+        return `${hi} Comment puis-je vous aider?`;
+    }
+  }, [user]);
+
+  const startVoice = useCallback((intent?: IntentSlug) => {
+    window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
+    const greeting = getIntentGreeting(intent || activeIntent);
+    start({ initialGreeting: `Dis exactement ceci, mot pour mot, en français québécois naturel: "${greeting}"` });
+  }, [start, getIntentGreeting, activeIntent]);
 
   const stopVoice = useCallback(() => stop(), [stop]);
 
@@ -301,8 +315,8 @@ export default function HeroSection() {
               transition={{ duration: 0.25 }}
               className="flex flex-col items-center gap-2.5 w-full max-w-sm"
             >
-              <Link
-                to={current.route}
+              <button
+                onClick={() => startVoice(activeIntent)}
                 className="w-full h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold transition-all active:scale-[0.97]"
                 style={{
                   background: "linear-gradient(135deg, hsl(222 100% 55%), hsl(222 100% 42%))",
@@ -313,7 +327,7 @@ export default function HeroSection() {
                 <current.ctaIcon className="h-4 w-4" />
                 {current.cta}
                 <ArrowRight className="h-4 w-4" />
-              </Link>
+              </button>
             </motion.div>
           </AnimatePresence>
         </div>
