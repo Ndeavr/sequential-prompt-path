@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { headerNavByRole } from "@/config/navigationConfig";
-import { Menu, X, Bell, ChevronDown, QrCode } from "lucide-react";
+import { Menu, X, Bell, ChevronDown, QrCode, ArrowLeft } from "lucide-react";
 import ProfileMenu from "./ProfileMenu";
 import AlexNavOrb from "./AlexNavOrb";
 import HeaderSearch from "./HeaderSearch";
