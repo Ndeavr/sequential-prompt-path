@@ -1,6 +1,6 @@
 /**
  * SectionTrustProofSignals — Social proof stats, testimonials, FAQ.
- * Clean premium layout with trust signals. No duplicate "Décrivez votre projet" CTA.
+ * True glass surfaces, high contrast text, living CTAs.
  */
 import { motion } from "framer-motion";
 import {
@@ -47,32 +47,34 @@ export default function SectionTrustProof() {
       <section className="px-5 py-10">
         <div className="max-w-3xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <div className="flex items-center justify-center gap-6 sm:gap-10 mb-6">
-              <div className="text-center">
-                <p className="font-display text-2xl sm:text-3xl font-bold text-primary">+10 000</p>
-                <p className="text-xs font-medium text-muted-foreground">projets réussis</p>
-              </div>
-              <div className="h-10 w-px bg-border" />
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-0.5 mb-0.5">
-                  {[1, 2, 3, 4, 5].map((s) => <Star key={s} className="h-3.5 w-3.5 fill-current text-warning" />)}
-                  <span className="font-display text-lg font-bold ml-1 text-foreground">4.9</span>
+            <div className="glass-card rounded-2xl p-5">
+              <div className="flex items-center justify-center gap-6 sm:gap-10 mb-4 relative z-10">
+                <div className="text-center">
+                  <p className="font-display text-2xl sm:text-3xl font-bold text-gradient">+10 000</p>
+                  <p className="text-xs font-medium text-muted-foreground">projets réussis</p>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">2,500+ avis</p>
+                <div className="h-10 w-px bg-border/50" />
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-0.5 mb-0.5">
+                    {[1, 2, 3, 4, 5].map((s) => <Star key={s} className="h-3.5 w-3.5 fill-current text-warning" />)}
+                    <span className="font-display text-lg font-bold ml-1 text-foreground">4.9</span>
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">2,500+ avis</p>
+                </div>
               </div>
-            </div>
 
-            <div className="trust-row mt-4">
-              {[
-                { icon: CheckCircle2, label: "Gratuit & Rapide" },
-                { icon: Shield, label: "Sécurisé" },
-                { icon: Heart, label: "Sans engagement" },
-              ].map((b) => (
-                <div key={b.label} className="trust-item">
-                  <b.icon />
-                  <span>{b.label}</span>
-                </div>
-              ))}
+              <div className="trust-row relative z-10">
+                {[
+                  { icon: CheckCircle2, label: "Gratuit & Rapide" },
+                  { icon: Shield, label: "Sécurisé" },
+                  { icon: Heart, label: "Sans engagement" },
+                ].map((b) => (
+                  <div key={b.label} className="trust-item">
+                    <b.icon />
+                    <span>{b.label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </motion.div>
         </div>
@@ -87,13 +89,13 @@ export default function SectionTrustProof() {
           <div className="grid sm:grid-cols-3 gap-3">
             {TESTIMONIALS.map((t, i) => (
               <motion.div key={t.name} variants={fadeUp} custom={i} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-                <div className="glass-card rounded-2xl p-4 h-full space-y-2.5">
-                  <div className="flex items-center gap-0.5">
+                <div className="glass-card-elevated rounded-2xl p-4 h-full space-y-2.5 light-ray-fx">
+                  <div className="flex items-center gap-0.5 relative z-10">
                     {[1, 2, 3, 4, 5].map((s) => <Star key={s} className="h-3 w-3 fill-current text-warning" />)}
                   </div>
-                  <p className="text-xs leading-relaxed font-medium text-foreground/85">"{t.text}"</p>
-                  <div className="flex items-center gap-2.5 pt-2 border-t border-border/40">
-                    <div className="h-8 w-8 rounded-full overflow-hidden border-2 border-border/60">
+                  <p className="text-xs leading-relaxed font-medium text-foreground relative z-10">"{t.text}"</p>
+                  <div className="flex items-center gap-2.5 pt-2 border-t border-border/40 relative z-10">
+                    <div className="h-8 w-8 rounded-full overflow-hidden border-2 border-primary/20">
                       <img src={avatarsGroup} alt={t.name} className="h-full w-full object-cover" style={{ objectPosition: `${i * 30 + 10}% 15%` }} />
                     </div>
                     <div>
@@ -116,11 +118,11 @@ export default function SectionTrustProof() {
             <div className="space-y-3">
               {FAQ.map((faq) => (
                 <details key={faq.q} className="group glass-card rounded-2xl overflow-hidden">
-                  <summary className="flex items-center justify-between cursor-pointer px-4 py-3 text-sm font-semibold text-foreground hover:bg-muted/30 transition-colors">
+                  <summary className="flex items-center justify-between cursor-pointer px-4 py-3 text-sm font-semibold text-foreground hover:bg-primary/5 transition-colors relative z-10">
                     {faq.q}
                     <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform group-open:rotate-90" />
                   </summary>
-                  <div className="px-4 pb-3 text-xs leading-relaxed text-muted-foreground">{faq.a}</div>
+                  <div className="px-4 pb-3 text-xs leading-relaxed text-muted-foreground relative z-10">{faq.a}</div>
                 </details>
               ))}
             </div>
@@ -137,7 +139,7 @@ export default function SectionTrustProof() {
               <Link
                 key={to}
                 to={to}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:text-foreground hover:border-primary/30 hover:shadow-sm btn-ghost-premium"
               >
                 <Icon className="h-3.5 w-3.5" />
                 {label}
@@ -151,19 +153,14 @@ export default function SectionTrustProof() {
       <section className="px-5 py-14">
         <div className="max-w-3xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <div className="relative rounded-3xl p-8 text-center overflow-hidden" style={{
-              background: "linear-gradient(135deg, hsl(var(--primary) / 0.9), hsl(var(--primary)), hsl(var(--accent)))",
-            }}>
-              <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-[-50%] right-[-20%] w-[60%] h-[120%] rounded-full blur-3xl bg-white/10" />
-              </div>
+            <div className="relative rounded-3xl p-8 text-center overflow-hidden btn-liquid-metal">
               <div className="relative z-10 space-y-4">
                 <h2 className="font-display text-xl sm:text-2xl font-bold text-white">
                   Un seul entrepreneur. Le bon.<br />Rendez-vous garanti.
                 </h2>
                 <button
                   onClick={() => navigate("/describe-project")}
-                  className="h-12 rounded-full px-8 text-sm font-bold bg-white text-primary hover:bg-white/90 transition-all active:scale-[0.97]"
+                  className="h-12 rounded-full px-8 text-sm font-bold bg-white text-primary hover:bg-white/90 transition-all active:scale-[0.97] shadow-lg"
                 >
                   Obtenir mon rendez-vous <ArrowRight className="h-4 w-4 ml-1.5 inline" />
                 </button>

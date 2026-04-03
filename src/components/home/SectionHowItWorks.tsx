@@ -1,5 +1,5 @@
 /**
- * SectionHowItWorks — 3-step process.
+ * SectionHowItWorks — 3-step process with true glass cards.
  */
 import { motion } from "framer-motion";
 import { FileText, Brain, Trophy } from "lucide-react";
@@ -13,9 +13,9 @@ const fadeUp = {
 };
 
 const STEPS = [
-  { step: 1, icon: FileText, title: "Décrivez", subtitle: "votre projet", iconColor: "text-primary" },
-  { step: 2, icon: Brain, title: "UNPRO analyse", subtitle: "et recommande", iconColor: "text-accent" },
-  { step: 3, icon: Trophy, title: "Rencontrez", subtitle: "le bon entrepreneur", iconColor: "text-warning" },
+  { step: 1, icon: FileText, title: "Décrivez", subtitle: "votre projet", gradient: "from-primary to-primary/70" },
+  { step: 2, icon: Brain, title: "UNPRO analyse", subtitle: "et recommande", gradient: "from-accent to-accent/70" },
+  { step: 3, icon: Trophy, title: "Rencontrez", subtitle: "le bon entrepreneur", gradient: "from-warning to-warning/70" },
 ];
 
 export default function SectionHowItWorks() {
@@ -36,12 +36,12 @@ export default function SectionHowItWorks() {
               whileInView="visible"
               viewport={{ once: true }}
             >
-              <div className="glass-card rounded-2xl p-3 sm:p-5 text-center h-full relative overflow-hidden">
-                <div className="absolute top-2 right-2 h-6 w-6 rounded-full bg-primary flex items-center justify-center text-[10px] font-black text-primary-foreground">
+              <div className="glass-card-elevated rounded-2xl p-3 sm:p-5 text-center h-full light-ray-fx">
+                <div className="absolute top-2 right-2 h-6 w-6 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-[10px] font-black text-primary-foreground shadow-sm relative z-10">
                   {item.step}
                 </div>
-                <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-xl flex items-center justify-center mx-auto mb-2 bg-muted/60 border border-border/50">
-                  <item.icon className={`h-5 w-5 sm:h-6 sm:w-6 ${item.iconColor}`} />
+                <div className={`h-10 w-10 sm:h-14 sm:w-14 rounded-xl flex items-center justify-center mx-auto mb-2 bg-gradient-to-br ${item.gradient} shadow-md`}>
+                  <item.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <p className="font-display text-sm sm:text-base font-bold text-foreground">{item.title}</p>
                 <p className="text-xs mt-0.5 text-muted-foreground">{item.subtitle}</p>
