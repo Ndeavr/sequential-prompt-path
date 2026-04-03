@@ -4,11 +4,11 @@
  * Voice-first with Gemini Live Native Audio.
  * Pills: Problème, Projet, Avis — all start Alex & allow photo upload.
  */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
-import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, AlertTriangle, Sparkles, MessageSquare, ArrowRight, Camera, FileSearch } from "lucide-react";
+import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, AlertTriangle, Sparkles, MessageSquare, ArrowRight, Camera, FileSearch, Upload } from "lucide-react";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 
 const cinematicBg = "/images/hero-bg.gif";
