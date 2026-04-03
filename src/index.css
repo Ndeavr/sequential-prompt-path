@@ -118,41 +118,7 @@
     75% { transform: translate(-4%, -1%) scale(1.02) rotate(0.5deg); }
   }
 
-  @keyframes aura-drift-light {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    25% { transform: translate(5%, -3%) scale(1.05); }
-    50% { transform: translate(-3%, 5%) scale(0.97); }
-    75% { transform: translate(-5%, -2%) scale(1.03); }
-  }
-
   /* Light mode aura */
-  .bg-light-aura {
-    background: hsl(216 50% 98%);
-  }
-  .bg-light-aura::before,
-  .bg-light-aura::after {
-    content: '';
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    filter: blur(120px);
-    animation: aura-drift-light 20s ease-in-out infinite;
-  }
-  .bg-light-aura::before {
-    width: 65%;
-    height: 55%;
-    top: -12%;
-    left: 8%;
-    background: radial-gradient(ellipse, hsl(222 100% 55% / 0.14) 0%, transparent 70%);
-  }
-  .bg-light-aura::after {
-    width: 55%;
-    height: 50%;
-    bottom: 3%;
-    right: 3%;
-    background: radial-gradient(ellipse, hsl(195 100% 50% / 0.12) 0%, hsl(252 80% 60% / 0.07) 50%, transparent 70%);
-    animation-delay: -10s;
-  }
 
   /* ═══════════════════════════════════════════════
      NOISE TEXTURE OVERLAY — Luxury grain
@@ -169,10 +135,6 @@
     pointer-events: none;
     z-index: 0;
     mix-blend-mode: overlay;
-  }
-  .light .noise-overlay::after {
-    opacity: 0.03;
-    mix-blend-mode: multiply;
   }
 
   /* ═══════════════════════════════════════════════
@@ -207,10 +169,6 @@
     pointer-events: none;
     z-index: 1;
   }
-  .light .light-ray-fx::before {
-    background: linear-gradient(90deg, transparent, hsl(222 100% 60% / 0.06), transparent);
-    animation-duration: 15s;
-  }
 
   /* ═══════════════════════════════════════════════
      TRUE GLASS SURFACES — Never opaque, real blur
@@ -241,10 +199,6 @@
   .glass-card:hover {
     box-shadow: var(--shadow-inner-glow), var(--shadow-md), 0 0 20px -6px hsl(222 100% 65% / 0.12);
     border-color: hsl(222 100% 65% / 0.15);
-  }
-
-  .light .glass-card {
-    box-shadow: var(--shadow-inner-glow), 0 8px 24px -6px hsl(222 100% 55% / 0.10);
   }
   .light .glass-card:hover {
     box-shadow: var(--shadow-inner-glow), 0 14px 36px -8px hsl(222 100% 55% / 0.16);
@@ -283,9 +237,6 @@
     box-shadow: var(--shadow-inner-glow), var(--shadow-lg), var(--shadow-glow);
     border-color: hsl(222 100% 65% / 0.18);
     transform: translateY(-2px);
-  }
-  .light .glass-card-elevated {
-    box-shadow: var(--shadow-inner-glow), 0 10px 28px -6px hsl(222 100% 55% / 0.12);
   }
   .light .glass-card-elevated:hover {
     box-shadow: var(--shadow-inner-glow), 0 16px 40px -8px hsl(222 100% 55% / 0.18);
@@ -381,9 +332,6 @@
   @keyframes orb-breathe-light {
     0%, 100% { box-shadow: 0 0 6px 0 hsl(222 100% 55% / 0.35), 0 0 28px 8px hsl(222 100% 55% / 0.15); }
     50% { box-shadow: 0 0 32px 16px hsl(222 100% 55% / 0.25), 0 0 56px 12px hsl(195 100% 50% / 0.12); }
-  }
-  .light .alex-orb {
-    animation: orb-breathe-light 3s ease-in-out infinite;
   }
 
   /* ═══════════════════════════════════════════════
@@ -561,10 +509,6 @@
     box-shadow: var(--shadow-metal), var(--shadow-xl), var(--shadow-glow);
     border-color: hsl(222 100% 65% / 0.2);
   }
-  .light .card-floating-premium {
-    background: linear-gradient(135deg, hsl(0 0% 100% / 0.22), hsl(216 30% 97% / 0.15));
-    border-color: hsl(0 0% 100% / 0.5);
-  }
 
   /* ═══════════════════════════════════════════════
      PREMIUM CARD (legacy compat)
@@ -601,9 +545,6 @@
   }
   .logo-hero-glow:hover {
     filter: drop-shadow(0 0 24px hsl(222 100% 60% / 0.5)) drop-shadow(0 0 60px hsl(222 100% 60% / 0.2));
-  }
-  .light .logo-hero-glow {
-    filter: drop-shadow(0 0 12px hsl(222 100% 55% / 0.25)) drop-shadow(0 0 30px hsl(222 100% 55% / 0.1));
   }
   .light .logo-hero-glow:hover {
     filter: drop-shadow(0 0 20px hsl(222 100% 55% / 0.4)) drop-shadow(0 0 50px hsl(222 100% 55% / 0.15));
@@ -740,9 +681,6 @@
   .cta-gradient:active {
     transform: scale(0.98);
     transition-duration: 0.08s;
-  }
-  .light .cta-gradient {
-    box-shadow: 0 8px 32px -4px hsl(222 100% 55% / 0.40), 0 0 24px -4px hsl(222 100% 55% / 0.20);
   }
   .light .cta-gradient:hover {
     box-shadow: 0 14px 44px -4px hsl(222 100% 55% / 0.50), 0 0 32px -4px hsl(222 100% 55% / 0.28);
