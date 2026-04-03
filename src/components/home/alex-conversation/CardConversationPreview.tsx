@@ -24,11 +24,12 @@ function StepRenderer({ step }: { step: ConversationStep }) {
     case "typing": return <TypingIndicator />;
     case "user-image": return <UserImageUpload />;
     case "user-text": return <UserTextMessage text={step.content!} />;
+    case "alex-text": return <AlexTextResponse text={step.content!} speaking={!!step.voice} voice={!!step.voice} />;
     case "alex-diagnosis": return <AlexDiagnosis text={step.content!} />;
     case "alex-recommendation": return <AlexRecommendation text={step.content!} />;
     case "alex-why": return <WhyThisChoice />;
     case "alex-calendar": return <MiniCalendar />;
-    case "alex-slot-ask": return <AlexTextResponse text={step.content!} speaking glow />;
+    case "alex-slot-ask": return <AlexTextResponse text={step.content!} speaking glow voice />;
     case "booking-confirmed": return <BookingConfirmed />;
     default: return null;
   }
