@@ -87,7 +87,7 @@ const SmartHeader = () => {
         }}
       >
         <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
-          <div className="flex items-center justify-between h-14 sm:h-16">
+          <div className="flex items-center justify-between h-20 sm:h-20 lg:h-16">
             {/* Back button */}
             {!isHome && (
               <Button
