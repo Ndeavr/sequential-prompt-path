@@ -2,52 +2,53 @@
  * HeroSectionCinematicAlex — Immersive cinematic hero with Alex orb,
  * intent selector pills, and UNPRO brand glow.
  * Voice-first with Gemini Live Native Audio.
+ * Pills: Problème, Projet, Avis — all start Alex & allow photo upload.
  */
 import { useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
-import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, Camera, AlertTriangle, Sparkles, ArrowRight } from "lucide-react";
+import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, AlertTriangle, Sparkles, MessageSquare, ArrowRight, Camera, FileSearch } from "lucide-react";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 import { Link } from "react-router-dom";
 import cinematicBg from "@/assets/cinematic-home-bg.jpg";
 
-type IntentSlug = "photo" | "probleme" | "projet";
+type IntentSlug = "probleme" | "projet" | "avis";
 
 const INTENTS = [
-  {
-    slug: "photo" as IntentSlug,
-    label: "Photo",
-    icon: Camera,
-    cta: "Analyser une photo",
-    ctaSec: "Améliorer un design",
-    route: "/describe-project?intent=photo",
-    routeSec: "/describe-project?intent=design",
-  },
   {
     slug: "probleme" as IntentSlug,
     label: "Problème",
     icon: AlertTriangle,
     cta: "Détecter un problème",
-    ctaSec: "Obtenir une piste",
+    ctaIcon: Camera,
+    ctaSec: null,
     route: "/describe-project?intent=problem",
-    routeSec: "/describe-project?intent=diagnostic",
   },
   {
     slug: "projet" as IntentSlug,
     label: "Projet",
     icon: Sparkles,
-    cta: "Lancer un projet",
-    ctaSec: "Voir des idées",
+    cta: "Décrire mon projet",
+    ctaIcon: Camera,
+    ctaSec: null,
     route: "/describe-project",
-    routeSec: "/inspirations",
+  },
+  {
+    slug: "avis" as IntentSlug,
+    label: "Avis",
+    icon: MessageSquare,
+    cta: "Analyser 3 soumissions",
+    ctaIcon: FileSearch,
+    ctaSec: null,
+    route: "/describe-project?intent=quote-analysis",
   },
 ];
 
 export default function HeroSection() {
   const { user } = useAuth();
   const [textSheetOpen, setTextSheetOpen] = useState(false);
-  const [activeIntent, setActiveIntent] = useState<IntentSlug>("photo");
+  const [activeIntent, setActiveIntent] = useState<IntentSlug>("probleme");
 
   const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
     onTranscript: () => {},
@@ -97,14 +98,12 @@ export default function HeroSection() {
 
         {/* ── Dynamic aura glow ── */}
         <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
-          {/* Center blue glow */}
           <motion.div
             className="absolute top-[35%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px]"
             animate={{ opacity: [0.12, 0.2, 0.12], scale: [1, 1.05, 1] }}
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
             style={{ background: "radial-gradient(ellipse, hsl(222 100% 60% / 0.2) 0%, transparent 70%)" }}
           />
-          {/* Horizontal light line */}
           <motion.div
             className="absolute top-[52%] left-0 right-0 h-[1px]"
             animate={{ opacity: [0.15, 0.35, 0.15] }}
@@ -114,13 +113,6 @@ export default function HeroSection() {
               filter: "blur(1px)",
             }}
           />
-          {/* Bottom corner glows */}
-          <div className="absolute bottom-[10%] left-[-5%] w-[300px] h-[300px]" style={{
-            background: "radial-gradient(circle, hsl(252 100% 65% / 0.08) 0%, transparent 70%)",
-          }} />
-          <div className="absolute bottom-[15%] right-[-5%] w-[300px] h-[300px]" style={{
-            background: "radial-gradient(circle, hsl(195 100% 55% / 0.06) 0%, transparent 70%)",
-          }} />
         </div>
 
         {/* ── Content ── */}
@@ -152,7 +144,7 @@ export default function HeroSection() {
             className="mt-8 flex items-center gap-2"
           >
             {INTENTS.map((intent) => {
-              const isActive = intent.slug === activeIntent;
+              const isAct = intent.slug === activeIntent;
               return (
                 <motion.button
                   key={intent.slug}
@@ -160,13 +152,13 @@ export default function HeroSection() {
                   className="relative flex items-center gap-1.5 rounded-full px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all duration-250"
                   whileTap={{ scale: 0.95 }}
                   style={{
-                    background: isActive
+                    background: isAct
                       ? "linear-gradient(135deg, hsl(222 100% 50% / 0.9), hsl(222 100% 35% / 0.95))"
                       : "rgba(255,255,255,0.06)",
                     backdropFilter: "blur(16px)",
-                    border: isActive ? "1px solid hsl(222 100% 70% / 0.45)" : "1px solid rgba(255,255,255,0.1)",
-                    boxShadow: isActive ? "0 0 30px hsl(222 100% 60% / 0.3), inset 0 1px 0 hsl(0 0% 100% / 0.1)" : "none",
-                    color: isActive ? "#fff" : "rgba(255,255,255,0.5)",
+                    border: isAct ? "1px solid hsl(222 100% 70% / 0.45)" : "1px solid rgba(255,255,255,0.1)",
+                    boxShadow: isAct ? "0 0 30px hsl(222 100% 60% / 0.3), inset 0 1px 0 hsl(0 0% 100% / 0.1)" : "none",
+                    color: isAct ? "#fff" : "rgba(255,255,255,0.5)",
                   }}
                 >
                   <intent.icon className="h-3.5 w-3.5" />
@@ -253,7 +245,6 @@ export default function HeroSection() {
                 whileHover={{ scale: 1.1, boxShadow: "0 0 80px -10px hsl(222 100% 65% / 0.6)" }}
                 whileTap={{ scale: 0.92 }}
               >
-                {/* Inner highlight */}
                 <div className="absolute inset-0 rounded-full" style={{
                   background: "radial-gradient(circle at 38% 32%, hsl(222 100% 75% / 0.35), transparent 60%)",
                 }} />
@@ -300,7 +291,7 @@ export default function HeroSection() {
             </AnimatePresence>
           </motion.div>
 
-          {/* ── Context CTAs ── */}
+          {/* ── Context CTA ── */}
           <AnimatePresence mode="wait">
             <motion.div
               key={activeIntent}
@@ -308,37 +299,26 @@ export default function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.25 }}
-              className="flex flex-col sm:flex-row items-center gap-2.5 w-full max-w-sm"
+              className="flex flex-col items-center gap-2.5 w-full max-w-sm"
             >
               <Link
                 to={current.route}
-                className="w-full sm:flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold transition-all active:scale-[0.97]"
+                className="w-full h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold transition-all active:scale-[0.97]"
                 style={{
                   background: "linear-gradient(135deg, hsl(222 100% 55%), hsl(222 100% 42%))",
                   boxShadow: "0 4px 24px hsl(222 100% 55% / 0.35), inset 0 1px 0 hsl(0 0% 100% / 0.15)",
                   color: "#fff",
                 }}
               >
-                <current.icon className="h-4 w-4" />
+                <current.ctaIcon className="h-4 w-4" />
                 {current.cta}
                 <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                to={current.routeSec}
-                className="w-full sm:flex-1 h-11 rounded-2xl flex items-center justify-center gap-1.5 text-xs font-semibold text-white/65 hover:text-white/85 transition-all"
-                style={{
-                  background: "rgba(255,255,255,0.06)",
-                  backdropFilter: "blur(12px)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                }}
-              >
-                {current.ctaSec}
               </Link>
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {/* Bottom gradient to content */}
+        {/* Bottom gradient */}
         <div className="absolute bottom-0 left-0 right-0 h-40 z-20 pointer-events-none" style={{
           background: "linear-gradient(to top, hsl(228 40% 7%) 0%, transparent 100%)",
         }} />
