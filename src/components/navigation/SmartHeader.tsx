@@ -169,33 +169,41 @@ const SmartHeader = () => {
               <HeaderSearch lang={lang} />
             </div>
 
-            {/* Right actions */}
-            <div className="flex items-center gap-2">
+            {/* Right actions — compact on mobile */}
+            <div className="flex items-center gap-1 sm:gap-2">
               <div className="hidden sm:block">
                 <AlexNavOrb lang={lang} />
               </div>
 
-              <div className="flex items-center gap-1.5">
-                <ThemeToggle />
-                <LanguageToggle lang={lang} onChange={setLang} />
+              {/* Theme + Language — compact pill on mobile, full on desktop */}
+              <div className="flex items-center gap-1">
+                <ThemeToggle className="h-7 w-7 sm:h-8 sm:w-8" />
+                {/* Mobile: ultra-compact pill */}
+                <div className="sm:hidden">
+                  <SwitchLanguagePillAnimated lang={lang} onChange={setLang} />
+                </div>
+                {/* Desktop: original toggle */}
+                <div className="hidden sm:block">
+                  <LanguageToggle lang={lang} onChange={setLang} />
+                </div>
               </div>
 
-              {/* Share QR button — all users */}
+              {/* Share QR button */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                className="h-7 w-7 sm:h-9 sm:w-9 rounded-lg text-muted-foreground hover:text-foreground"
                 onClick={() => setShareOpen(true)}
                 aria-label="Partager"
               >
-                <QrCode className="h-4 w-4" />
+                <QrCode className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Button>
 
               {/* Notifications */}
               {ctx && ctx.system.notificationsCount > 0 && (
-                <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground">
-                  <Bell className="h-4 w-4" />
-                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary animate-pulse" />
+                <Button variant="ghost" size="icon" className="relative h-7 w-7 sm:h-9 sm:w-9 rounded-lg text-muted-foreground hover:text-foreground">
+                  <Bell className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
                 </Button>
               )}
 
@@ -212,15 +220,15 @@ const SmartHeader = () => {
                 <ProfileMenu />
               ) : (
                 <>
-                  {/* Mobile: show contextual CTA */}
-                  <Button asChild size="sm" className="rounded-full h-8 text-xs px-4 font-semibold sm:hidden">
+                  {/* Mobile: compact Sign In CTA */}
+                  <Button asChild size="sm" className="rounded-full h-7 text-[11px] px-3 font-bold sm:hidden shadow-sm">
                     <Link to={isReturningVisitor ? "/login" : "/signup"}>
                       {isReturningVisitor
                         ? (lang === "en" ? "Sign In" : "Connexion")
-                        : (lang === "en" ? "Create Account" : "Créer un compte")}
+                        : (lang === "en" ? "Sign Up" : "S'inscrire")}
                     </Link>
                   </Button>
-                  {/* Desktop: keep existing */}
+                  {/* Desktop */}
                   <Button asChild variant="ghost" size="sm" className="rounded-full h-9 text-meta px-4 hidden sm:inline-flex text-muted-foreground hover:text-foreground">
                     <Link to="/login">{lang === "en" ? "Sign In" : "Connexion"}</Link>
                   </Button>
@@ -232,11 +240,11 @@ const SmartHeader = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="lg:hidden h-9 w-9 rounded-lg"
+                className="lg:hidden h-8 w-8 rounded-lg"
                 onClick={() => setMobileOpen(!mobileOpen)}
                 aria-label="Menu"
               >
-                {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {mobileOpen ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
               </Button>
             </div>
           </div>
