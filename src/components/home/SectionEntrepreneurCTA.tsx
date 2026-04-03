@@ -1,6 +1,5 @@
 /**
- * SectionEntrepreneurCTA — Banner switch for contractors.
- * Premium glass card with gradient accent.
+ * SectionEntrepreneurCTA — Premium glass banner with light sweep.
  */
 import { motion } from "framer-motion";
 import { HardHat, ArrowRight, Zap, BarChart3 } from "lucide-react";
@@ -15,20 +14,10 @@ export default function SectionEntrepreneurCTA() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <div className="relative rounded-3xl overflow-hidden" style={{
-            background: "linear-gradient(135deg, hsl(228 35% 10% / 0.9), hsl(228 30% 14% / 0.95))",
-            border: "1px solid hsl(222 100% 55% / 0.15)",
-          }}>
-            {/* Aura */}
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-0 right-0 w-[50%] h-full" style={{
-                background: "radial-gradient(ellipse at 80% 30%, hsl(222 100% 55% / 0.08), transparent 70%)",
-              }} />
-            </div>
-
+          <div className="glass-card-elevated rounded-3xl overflow-hidden light-ray-fx">
             <div className="relative z-10 p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center gap-5">
-              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/20 flex items-center justify-center shrink-0">
-                <HardHat className="h-7 w-7 text-primary" />
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0 shadow-lg">
+                <HardHat className="h-7 w-7 text-white" />
               </div>
 
               <div className="flex-1 min-w-0">
@@ -46,7 +35,7 @@ export default function SectionEntrepreneurCTA() {
 
               <Link
                 to="/pro"
-                className="h-11 rounded-xl px-5 flex items-center gap-2 text-sm font-bold cta-gradient shrink-0 active:scale-[0.97]"
+                className="h-11 rounded-xl px-5 flex items-center gap-2 text-sm font-bold btn-liquid-metal shrink-0"
               >
                 Activer mon profil <ArrowRight className="h-4 w-4" />
               </Link>

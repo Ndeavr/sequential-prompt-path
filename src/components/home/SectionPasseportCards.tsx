@@ -1,8 +1,9 @@
 /**
  * SectionPasseportCards — Passeport Maison / Condo / Entrepreneur entry cards.
+ * True glass with light sweep and strong contrast.
  */
 import { motion } from "framer-motion";
-import { Home as HomeIcon, Building, Briefcase } from "lucide-react";
+import { Home as HomeIcon, Building, Briefcase, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const fadeUp = {
@@ -20,8 +21,7 @@ const CARDS = [
     desc: "Documents, historique, valeur, travaux",
     cta: "Ouvrir",
     route: "/dashboard/property",
-    color: "text-primary",
-    bgColor: "bg-primary/8",
+    gradient: "from-primary to-primary/70",
   },
   {
     icon: Building,
@@ -29,8 +29,7 @@ const CARDS = [
     desc: "Gestion copropriété, conformité",
     cta: "Ouvrir",
     route: "/dashboard/syndicate",
-    color: "text-secondary",
-    bgColor: "bg-secondary/8",
+    gradient: "from-secondary to-secondary/70",
   },
   {
     icon: Briefcase,
@@ -38,8 +37,7 @@ const CARDS = [
     desc: "Profil IA, rendez-vous qualifiés",
     cta: "Accéder",
     route: "/pro",
-    color: "text-accent",
-    bgColor: "bg-accent/8",
+    gradient: "from-accent to-accent/70",
   },
 ];
 
@@ -58,16 +56,16 @@ export default function SectionPasseportCards() {
             <motion.div key={card.title} variants={fadeUp} custom={i}>
               <Link
                 to={card.route}
-                className="glass-card rounded-2xl p-3 sm:p-4 h-full flex flex-col text-center hover:shadow-lg transition-all group"
+                className="glass-card-elevated rounded-2xl p-3 sm:p-4 h-full flex flex-col text-center group light-ray-fx"
               >
-                <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-xl ${card.bgColor} flex items-center justify-center mx-auto mb-2`}>
-                  <card.icon className={`h-5 w-5 sm:h-6 sm:w-6 ${card.color}`} />
+                <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-gradient-to-br ${card.gradient} flex items-center justify-center mx-auto mb-2 shadow-md relative z-10`}>
+                  <card.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
-                <p className="font-display text-xs sm:text-sm font-bold text-foreground leading-tight">{card.title}</p>
-                <p className="text-[10px] sm:text-xs mt-1 text-muted-foreground leading-snug hidden sm:block">{card.desc}</p>
-                <div className="mt-auto pt-2">
-                  <span className={`inline-block text-[10px] sm:text-xs font-bold ${card.color} group-hover:underline`}>
-                    {card.cta}
+                <p className="font-display text-xs sm:text-sm font-bold text-foreground leading-tight relative z-10">{card.title}</p>
+                <p className="text-[10px] sm:text-xs mt-1 text-muted-foreground leading-snug hidden sm:block relative z-10">{card.desc}</p>
+                <div className="mt-auto pt-2 relative z-10">
+                  <span className="inline-flex items-center gap-0.5 text-[10px] sm:text-xs font-bold text-primary group-hover:underline">
+                    {card.cta} <ArrowRight className="h-3 w-3" />
                   </span>
                 </div>
               </Link>
