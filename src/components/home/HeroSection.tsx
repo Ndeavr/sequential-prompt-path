@@ -11,7 +11,7 @@ import { useLiveVoice } from "@/hooks/useLiveVoice";
 import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, AlertTriangle, Sparkles, MessageSquare, ArrowRight, Camera, FileSearch } from "lucide-react";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 import { Link } from "react-router-dom";
-import cinematicBg from "@/assets/cinematic-home-bg.jpg";
+const cinematicBg = "/images/hero-bg.gif";
 
 type IntentSlug = "probleme" | "projet" | "avis";
 
@@ -93,7 +93,7 @@ export default function HeroSection() {
 
         {/* ── Deep cinematic overlay ── */}
         <div className="absolute inset-0 z-[1]" style={{
-          background: "linear-gradient(to bottom, rgba(4,8,20,0.45) 0%, rgba(4,8,20,0.65) 40%, rgba(4,8,20,0.92) 100%)",
+          background: "linear-gradient(to bottom, rgba(4,8,20,0.55) 0%, rgba(4,8,20,0.72) 40%, rgba(4,8,20,0.94) 100%)",
         }} />
 
         {/* ── Dynamic aura glow ── */}
