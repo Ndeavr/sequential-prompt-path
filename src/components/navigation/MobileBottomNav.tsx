@@ -3,9 +3,10 @@
  * Thinner, cleaner, controlled glow.
  */
 
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { useLanguage } from "@/components/ui/LanguageToggle";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { mobileTabsByRole } from "@/config/navigationConfig";
 import { resolveIcon } from "./IconResolver";
 import AlexBottomSheetLauncherUNPRO from "./AlexBottomSheetLauncherUNPRO";
@@ -14,7 +15,9 @@ import type { UserRole } from "@/types/navigation";
 const MobileBottomNav = () => {
   const { activeRole } = useNavigationContext();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { lang } = useLanguage();
+  const { openAlex } = useAlexVoice();
 
   const hiddenPaths = ["/alex", "/login", "/signup", "/start"];
   if (hiddenPaths.some((p) => pathname === p)) return null;
@@ -47,10 +50,19 @@ const MobileBottomNav = () => {
         {leftTabs.map((tab) => {
           const active = isActive(tab.to);
           const Icon = resolveIcon(tab.icon);
+          const isVerify = tab.to === "/verifier";
+          
+          const handleClick = isVerify ? (e: React.MouseEvent) => {
+            e.preventDefault();
+            openAlex("verification");
+            setTimeout(() => navigate("/verifier"), 4000);
+          } : undefined;
+          
           return (
             <Link
               key={tab.to}
               to={tab.to}
+              onClick={handleClick}
               className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-xl transition-all duration-200 ${
                 active ? "text-primary" : "text-muted-foreground"
               }`}
