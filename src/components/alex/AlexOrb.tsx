@@ -1,6 +1,6 @@
 /**
- * AlexOrb — Premium animated AI orb with idle glow, breathing pulse,
- * and organic gradient movement. Primary CTA for the UNPRO homepage.
+ * AlexOrb — Cinematic AI orb with signature glow, breathing pulse,
+ * and organic gradient movement. Primary CTA for UNPRO.
  */
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
@@ -33,9 +33,9 @@ export default function AlexOrb({ size = "lg", onClick, className = "" }: AlexOr
       <motion.div
         className="absolute rounded-full"
         style={{
-          width: "140%",
-          height: "140%",
-          background: "conic-gradient(from 0deg, hsl(222 100% 61% / 0.08), hsl(195 100% 50% / 0.12), hsl(252 100% 65% / 0.08), hsl(222 100% 61% / 0.08))",
+          width: "145%",
+          height: "145%",
+          background: "conic-gradient(from 0deg, hsl(222 100% 61% / 0.10), hsl(195 100% 50% / 0.15), hsl(252 100% 65% / 0.10), hsl(222 100% 61% / 0.10))",
         }}
         animate={{ rotate: 360 }}
         transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
@@ -45,13 +45,13 @@ export default function AlexOrb({ size = "lg", onClick, className = "" }: AlexOr
       <motion.div
         className="absolute rounded-full"
         style={{
-          width: "125%",
-          height: "125%",
-          background: "radial-gradient(circle, hsl(222 100% 61% / 0.15) 0%, transparent 70%)",
+          width: "130%",
+          height: "130%",
+          background: "radial-gradient(circle, hsl(222 100% 61% / 0.18) 0%, transparent 70%)",
         }}
         animate={{
-          scale: [1, 1.12, 1],
-          opacity: [0.6, 1, 0.6],
+          scale: [1, 1.15, 1],
+          opacity: [0.5, 1, 0.5],
         }}
         transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
       />
@@ -60,26 +60,27 @@ export default function AlexOrb({ size = "lg", onClick, className = "" }: AlexOr
       <motion.div
         className={`relative ${sizeMap[size]} rounded-full flex items-center justify-center overflow-hidden cursor-pointer`}
         style={{
-          background: "linear-gradient(135deg, hsl(222 100% 61%), hsl(252 100% 65%), hsl(195 100% 50%))",
-          boxShadow: "0 8px 32px -4px hsl(222 100% 61% / 0.35), 0 0 20px -4px hsl(195 100% 50% / 0.2), inset 0 1px 1px hsl(0 0% 100% / 0.25)",
+          background: "linear-gradient(135deg, hsl(222 100% 55%), hsl(252 100% 60%), hsl(195 100% 48%))",
+          boxShadow: `
+            0 8px 36px -4px hsl(222 100% 61% / 0.4),
+            0 0 24px -4px hsl(195 100% 50% / 0.25),
+            inset 0 1px 1px hsl(0 0% 100% / 0.2),
+            inset 0 -2px 4px hsl(222 100% 30% / 0.3)
+          `,
         }}
-        animate={{
-          scale: [1, 1.04, 1],
-        }}
+        animate={{ scale: [1, 1.04, 1] }}
         transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-        whileHover={{ scale: 1.08 }}
+        whileHover={{ scale: 1.1, boxShadow: "0 12px 48px -4px hsl(222 100% 61% / 0.55), 0 0 36px -4px hsl(195 100% 50% / 0.3)" }}
         whileTap={{ scale: 0.95 }}
       >
-        {/* Inner gradient animation */}
+        {/* Internal light gradient */}
         <motion.div
           className="absolute inset-0 rounded-full"
           style={{
-            background: "radial-gradient(circle at 30% 30%, hsl(0 0% 100% / 0.2), transparent 60%)",
+            background: "radial-gradient(circle at 35% 28%, hsl(0 0% 100% / 0.25), transparent 55%)",
           }}
-          animate={{
-            backgroundPosition: ["30% 30%", "70% 60%", "30% 30%"],
-          }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          animate={{ opacity: [0.8, 1, 0.8] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
         />
 
         {/* Shine sweep */}
