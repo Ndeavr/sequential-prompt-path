@@ -398,6 +398,9 @@ function MobileMenuOverlay({ lang, onClose, ctx, activeRole }: {
                 <Link to="/proprietaires/passeport-maison" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-xl surface-metal-glass text-foreground font-medium text-meta">
                   {lang === "en" ? "Create My Home Passport" : "Créer mon Passeport Maison"}
                 </Link>
+                <a href="tel:5142499522" className="flex items-center gap-3 px-3 py-3 rounded-xl bg-green-500/15 text-green-400 font-medium text-meta">
+                  📞 {lang === "en" ? "Call Now" : "Appeler maintenant"}
+                </a>
               </div>
 
               <MegaMenuMobileSection lang={lang} onClose={onClose} />
