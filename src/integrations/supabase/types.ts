@@ -3856,6 +3856,77 @@ export type Database = {
         }
         Relationships: []
       }
+      appointment_billing_events: {
+        Row: {
+          amount_delta: number
+          billable: boolean
+          contractor_id: string
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          new_status: string | null
+          old_status: string | null
+          reason: string | null
+          units_delta: number
+        }
+        Insert: {
+          amount_delta?: number
+          billable?: boolean
+          contractor_id: string
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          new_status?: string | null
+          old_status?: string | null
+          reason?: string | null
+          units_delta?: number
+        }
+        Update: {
+          amount_delta?: number
+          billable?: boolean
+          contractor_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          new_status?: string | null
+          old_status?: string | null
+          reason?: string | null
+          units_delta?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_billing_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_billing_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_billing_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_billing_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       appointment_credits: {
         Row: {
           appointment_id: string | null
@@ -4406,6 +4477,33 @@ export type Database = {
           supply_count?: number
           surge_multiplier?: number
           trade_slug?: string
+        }
+        Relationships: []
+      }
+      appointment_value_history: {
+        Row: {
+          context_key: string
+          created_at: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          reason: string | null
+        }
+        Insert: {
+          context_key: string
+          created_at?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          reason?: string | null
+        }
+        Update: {
+          context_key?: string
+          created_at?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          reason?: string | null
         }
         Relationships: []
       }
@@ -15308,6 +15406,77 @@ export type Database = {
         }
         Relationships: []
       }
+      entrepreneur_extra_appointments: {
+        Row: {
+          billing_cycle_start: string
+          billing_status: string
+          contractor_id: string
+          created_at: string
+          extra_price: number
+          id: string
+          invoice_line_status: string | null
+          plan_code: string
+          project_size_code: string
+          units_consumed: number
+          updated_at: string
+        }
+        Insert: {
+          billing_cycle_start: string
+          billing_status?: string
+          contractor_id: string
+          created_at?: string
+          extra_price: number
+          id?: string
+          invoice_line_status?: string | null
+          plan_code: string
+          project_size_code: string
+          units_consumed: number
+          updated_at?: string
+        }
+        Update: {
+          billing_cycle_start?: string
+          billing_status?: string
+          contractor_id?: string
+          created_at?: string
+          extra_price?: number
+          id?: string
+          invoice_line_status?: string | null
+          plan_code?: string
+          project_size_code?: string
+          units_consumed?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entrepreneur_extra_appointments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_extra_appointments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_extra_appointments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_extra_appointments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       entrepreneur_goals: {
         Row: {
           annual_revenue_target: number | null
@@ -15394,6 +15563,95 @@ export type Database = {
         }
         Relationships: []
       }
+      entrepreneur_monthly_appointment_summary: {
+        Row: {
+          average_revenue_per_appointment: number | null
+          average_revenue_per_unit: number | null
+          billing_month: string
+          consumed_units: number
+          contractor_id: string
+          created_at: string
+          extra_appointment_revenue: number
+          extra_appointments_count: number
+          extra_units: number
+          id: string
+          included_appointments_count: number
+          included_units: number
+          plan_code: string
+          subscription_revenue: number
+          total_revenue: number
+          updated_at: string
+          upgrade_pressure_score: number | null
+        }
+        Insert: {
+          average_revenue_per_appointment?: number | null
+          average_revenue_per_unit?: number | null
+          billing_month: string
+          consumed_units?: number
+          contractor_id: string
+          created_at?: string
+          extra_appointment_revenue?: number
+          extra_appointments_count?: number
+          extra_units?: number
+          id?: string
+          included_appointments_count?: number
+          included_units?: number
+          plan_code: string
+          subscription_revenue?: number
+          total_revenue?: number
+          updated_at?: string
+          upgrade_pressure_score?: number | null
+        }
+        Update: {
+          average_revenue_per_appointment?: number | null
+          average_revenue_per_unit?: number | null
+          billing_month?: string
+          consumed_units?: number
+          contractor_id?: string
+          created_at?: string
+          extra_appointment_revenue?: number
+          extra_appointments_count?: number
+          extra_units?: number
+          id?: string
+          included_appointments_count?: number
+          included_units?: number
+          plan_code?: string
+          subscription_revenue?: number
+          total_revenue?: number
+          updated_at?: string
+          upgrade_pressure_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entrepreneur_monthly_appointment_summary_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_monthly_appointment_summary_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_monthly_appointment_summary_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_monthly_appointment_summary_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       entrepreneur_plan_recommendations: {
         Row: {
           accepted: boolean | null
@@ -15438,6 +15696,98 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "alex_sales_sessions"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      entrepreneur_plan_usage: {
+        Row: {
+          billing_cycle_end: string
+          billing_cycle_start: string
+          consumed_appointments_count: number
+          consumed_units: number
+          contractor_id: string
+          created_at: string
+          id: string
+          included_appointments_monthly: number
+          included_units_monthly: number
+          overage_amount: number
+          overage_appointments_count: number
+          overage_units: number
+          plan_code: string
+          remaining_units: number
+          updated_at: string
+          upgrade_recommended: boolean
+          upgrade_savings_projected: number | null
+          upgrade_target_plan: string | null
+        }
+        Insert: {
+          billing_cycle_end: string
+          billing_cycle_start: string
+          consumed_appointments_count?: number
+          consumed_units?: number
+          contractor_id: string
+          created_at?: string
+          id?: string
+          included_appointments_monthly?: number
+          included_units_monthly?: number
+          overage_amount?: number
+          overage_appointments_count?: number
+          overage_units?: number
+          plan_code: string
+          remaining_units?: number
+          updated_at?: string
+          upgrade_recommended?: boolean
+          upgrade_savings_projected?: number | null
+          upgrade_target_plan?: string | null
+        }
+        Update: {
+          billing_cycle_end?: string
+          billing_cycle_start?: string
+          consumed_appointments_count?: number
+          consumed_units?: number
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          included_appointments_monthly?: number
+          included_units_monthly?: number
+          overage_amount?: number
+          overage_appointments_count?: number
+          overage_units?: number
+          plan_code?: string
+          remaining_units?: number
+          updated_at?: string
+          upgrade_recommended?: boolean
+          upgrade_savings_projected?: number | null
+          upgrade_target_plan?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entrepreneur_plan_usage_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_plan_usage_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_plan_usage_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_plan_usage_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
           },
         ]
       }
@@ -15837,6 +16187,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      extra_appointment_pricing_rules: {
+        Row: {
+          base_extra_price: number
+          cluster_value_multiplier: number
+          cluster_value_tier: string | null
+          computed_final_price: number | null
+          created_at: string
+          id: string
+          is_active: boolean
+          monetization_floor_factor: number
+          plan_code: string
+          project_size_code: string
+          scarcity_multiplier: number
+          scarcity_status: string | null
+          size_multiplier: number
+          updated_at: string
+        }
+        Insert: {
+          base_extra_price: number
+          cluster_value_multiplier?: number
+          cluster_value_tier?: string | null
+          computed_final_price?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          monetization_floor_factor?: number
+          plan_code: string
+          project_size_code: string
+          scarcity_multiplier?: number
+          scarcity_status?: string | null
+          size_multiplier?: number
+          updated_at?: string
+        }
+        Update: {
+          base_extra_price?: number
+          cluster_value_multiplier?: number
+          cluster_value_tier?: string | null
+          computed_final_price?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          monetization_floor_factor?: number
+          plan_code?: string
+          project_size_code?: string
+          scarcity_multiplier?: number
+          scarcity_status?: string | null
+          size_multiplier?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       extraction_jobs: {
         Row: {
@@ -22797,6 +23198,77 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_included_appointments: {
+        Row: {
+          base_extra_appointment_price: number
+          can_rollover_unused_appointments: boolean
+          created_at: string
+          id: string
+          included_appointments_monthly: number
+          included_units_monthly: number
+          plan_code: string
+          rollover_cap_units: number | null
+          updated_at: string
+        }
+        Insert: {
+          base_extra_appointment_price?: number
+          can_rollover_unused_appointments?: boolean
+          created_at?: string
+          id?: string
+          included_appointments_monthly: number
+          included_units_monthly: number
+          plan_code: string
+          rollover_cap_units?: number | null
+          updated_at?: string
+        }
+        Update: {
+          base_extra_appointment_price?: number
+          can_rollover_unused_appointments?: boolean
+          created_at?: string
+          id?: string
+          included_appointments_monthly?: number
+          included_units_monthly?: number
+          plan_code?: string
+          rollover_cap_units?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      plan_project_size_access: {
+        Row: {
+          access_allowed: boolean
+          created_at: string
+          id: string
+          plan_code: string
+          project_size_id: string
+          upgrade_target_plan_code: string | null
+        }
+        Insert: {
+          access_allowed?: boolean
+          created_at?: string
+          id?: string
+          plan_code: string
+          project_size_id: string
+          upgrade_target_plan_code?: string | null
+        }
+        Update: {
+          access_allowed?: boolean
+          created_at?: string
+          id?: string
+          plan_code?: string
+          project_size_id?: string
+          upgrade_target_plan_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_project_size_access_project_size_id_fkey"
+            columns: ["project_size_id"]
+            isOneToOne: false
+            referencedRelation: "project_sizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plan_recommendations: {
         Row: {
           contractor_id: string
@@ -24182,6 +24654,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      project_sizes: {
+        Row: {
+          capture_factor: number
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          size_multiplier: number
+          sort_order: number
+          units_consumed_per_appointment: number
+        }
+        Insert: {
+          capture_factor?: number
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          size_multiplier?: number
+          sort_order?: number
+          units_consumed_per_appointment: number
+        }
+        Update: {
+          capture_factor?: number
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          size_multiplier?: number
+          sort_order?: number
+          units_consumed_per_appointment?: number
+        }
+        Relationships: []
       }
       project_team_members: {
         Row: {
