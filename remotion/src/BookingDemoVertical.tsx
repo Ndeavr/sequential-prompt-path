@@ -1,19 +1,5 @@
 /**
  * Vertical (9:16) booking demo video — 25 seconds at 30fps = 750 frames
- * 
- * Timeline (in frames at 30fps):
- * 0-30:    Phone appears
- * 30-80:   Greeting
- * 80-130:  User problem
- * 130-190: Typing → Ask photo
- * 190-260: User uploads photo
- * 260-340: Typing → Diagnosis
- * 340-410: Recommendation
- * 410-480: Why this choice
- * 480-560: Calendar
- * 560-610: Slot ask
- * 610-650: User reply
- * 650-750: Confirmed
  */
 import React from "react";
 import {
@@ -22,7 +8,6 @@ import {
   interpolate,
   spring,
   useVideoConfig,
-  Sequence,
 } from "remotion";
 import { COLORS } from "./theme";
 import { PhoneFrame } from "./PhoneFrame";
@@ -42,11 +27,9 @@ export const BookingDemoVertical: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // Phone entrance
   const phoneScale = spring({ frame, fps, config: { damping: 20, stiffness: 120 } });
   const phoneOpacity = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: "clamp" });
 
-  // Scroll offset — as more messages appear, scroll up
   const scrollOffset = interpolate(
     frame,
     [0, 130, 260, 340, 410, 480, 560, 650],
@@ -63,7 +46,6 @@ export const BookingDemoVertical: React.FC = () => {
         fontFamily: "Inter, system-ui, sans-serif",
       }}
     >
-      {/* Background glow */}
       <div
         style={{
           position: "absolute",
@@ -89,71 +71,23 @@ export const BookingDemoVertical: React.FC = () => {
       >
         <PhoneFrame width={1080} height={1920} headerStatus={status}>
           <div style={{ transform: `translateY(${scrollOffset}px)`, display: "flex", flexDirection: "column", gap: 12 }}>
-            {/* Greeting */}
-            <Sequence from={30}>
-              <AlexBubble text="Bonjour! Comment puis-je vous aider aujourd'hui?" voice />
-            </Sequence>
-
-            {/* User problem */}
-            <Sequence from={80}>
-              <UserBubble text="J'ai un problème de glace sur le toit." />
-            </Sequence>
-
-            {/* Typing */}
-            {frame >= 130 && frame < 190 && <TypingBubble />}
-
-            {/* Ask photo */}
-            <Sequence from={190}>
-              <AlexBubble text="Pourriez-vous téléverser une photo pour que je l'analyse?" voice />
-            </Sequence>
-
-            {/* User photo */}
-            <Sequence from={230}>
-              <UserImageBubble />
-            </Sequence>
-
-            {/* Typing analysis */}
-            {frame >= 260 && frame < 320 && <TypingBubble />}
-
-            {/* Diagnosis */}
-            <Sequence from={320}>
-              <DiagnosisBubble text="Ah je vois. Barrage de glace + perte de chaleur. Probable manque d'isolation dans l'entretoit." />
-            </Sequence>
-
-            {/* Recommendation */}
-            <Sequence from={380}>
-              <RecommendationBubble text="Je vous propose Isolation Solution Royal." />
-            </Sequence>
-
-            {/* Why */}
-            <Sequence from={430}>
-              <WhyChoiceBubble />
-            </Sequence>
-
-            {/* Calendar */}
-            <Sequence from={500}>
-              <CalendarBubble />
-            </Sequence>
-
-            {/* Slot ask */}
-            <Sequence from={570}>
-              <AlexBubble text="Mardi à 11h, ça vous va?" voice glow />
-            </Sequence>
-
-            {/* User reply */}
-            <Sequence from={620}>
-              <UserBubble text="Oui, parfait." />
-            </Sequence>
-
-            {/* Confirmed */}
-            <Sequence from={660}>
-              <ConfirmedBubble />
-            </Sequence>
+            {frame >= 30 && <AlexBubble text="Bonjour! Comment puis-je vous aider aujourd'hui?" delay={Math.max(0, 30 - frame + 30)} voice />}
+            {frame >= 80 && <UserBubble text="J'ai un problème de glace sur le toit." delay={Math.max(0, 80 - frame + 80)} />}
+            {frame >= 130 && frame < 190 && <TypingBubble delay={0} />}
+            {frame >= 190 && <AlexBubble text="Pourriez-vous téléverser une photo pour que je l'analyse?" delay={Math.max(0, 190 - frame + 190)} voice />}
+            {frame >= 230 && <UserImageBubble delay={Math.max(0, 230 - frame + 230)} />}
+            {frame >= 260 && frame < 320 && <TypingBubble delay={0} />}
+            {frame >= 320 && <DiagnosisBubble text="Ah je vois. Barrage de glace + perte de chaleur. Probable manque d'isolation dans l'entretoit." delay={Math.max(0, 320 - frame + 320)} />}
+            {frame >= 380 && <RecommendationBubble text="Je vous propose Isolation Solution Royal." delay={Math.max(0, 380 - frame + 380)} />}
+            {frame >= 430 && <WhyChoiceBubble delay={Math.max(0, 430 - frame + 430)} />}
+            {frame >= 500 && <CalendarBubble delay={Math.max(0, 500 - frame + 500)} />}
+            {frame >= 570 && <AlexBubble text="Mardi à 11h, ça vous va?" delay={Math.max(0, 570 - frame + 570)} voice glow />}
+            {frame >= 620 && <UserBubble text="Oui, parfait." delay={Math.max(0, 620 - frame + 620)} />}
+            {frame >= 660 && <ConfirmedBubble delay={Math.max(0, 660 - frame + 660)} />}
           </div>
         </PhoneFrame>
       </div>
 
-      {/* UNPRO watermark */}
       <div
         style={{
           position: "absolute",

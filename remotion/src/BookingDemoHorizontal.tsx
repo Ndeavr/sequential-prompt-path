@@ -8,7 +8,6 @@ import {
   interpolate,
   spring,
   useVideoConfig,
-  Sequence,
 } from "remotion";
 import { COLORS } from "./theme";
 import { PhoneFrame } from "./PhoneFrame";
@@ -40,11 +39,9 @@ export const BookingDemoHorizontal: React.FC = () => {
 
   const status = frame < 650 ? (frame > 30 ? "En ligne · Parle…" : "En ligne") : "Conversation terminée";
 
-  // Side text animations
   const titleOpacity = interpolate(frame, [20, 50], [0, 1], { extrapolateRight: "clamp" });
   const titleY = interpolate(frame, [20, 50], [20, 0], { extrapolateRight: "clamp" });
 
-  // Step highlights
   const steps = [
     { label: "📸 Photo", from: 230, to: 320 },
     { label: "🔍 Diagnostic", from: 320, to: 380 },
@@ -71,11 +68,7 @@ export const BookingDemoHorizontal: React.FC = () => {
           opacity: titleOpacity,
         }}
       >
-        <div
-          style={{
-            transform: `translateY(${titleY}px)`,
-          }}
-        >
+        <div style={{ transform: `translateY(${titleY}px)` }}>
           <div
             style={{
               fontSize: 14,
@@ -88,31 +81,14 @@ export const BookingDemoHorizontal: React.FC = () => {
           >
             Alex en action
           </div>
-          <div
-            style={{
-              fontSize: 36,
-              fontWeight: 800,
-              color: COLORS.text,
-              lineHeight: 1.2,
-            }}
-          >
-            Photo. Diagnostic.
-            <br />
-            Rendez-vous.
+          <div style={{ fontSize: 36, fontWeight: 800, color: COLORS.text, lineHeight: 1.2 }}>
+            Photo. Diagnostic.<br />Rendez-vous.
           </div>
-          <div
-            style={{
-              fontSize: 15,
-              color: COLORS.textMuted,
-              marginTop: 16,
-              lineHeight: 1.6,
-            }}
-          >
+          <div style={{ fontSize: 15, color: COLORS.textMuted, marginTop: 16, lineHeight: 1.6 }}>
             Alex identifie le problème, recommande le bon professionnel et
             propose un créneau — en quelques secondes.
           </div>
 
-          {/* Steps */}
           <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 10 }}>
             {steps.map((step, i) => {
               const isActive = frame >= step.from && frame < step.to;
@@ -128,7 +104,6 @@ export const BookingDemoHorizontal: React.FC = () => {
                     fontWeight: isActive ? 700 : 500,
                     color: isActive ? COLORS.primary : isDone ? COLORS.success : COLORS.textDim,
                     opacity: frame >= step.from - 30 ? 1 : 0.3,
-                    transition: "all 0.3s",
                   }}
                 >
                   <div
@@ -170,46 +145,23 @@ export const BookingDemoHorizontal: React.FC = () => {
               fontSize: 11,
             }}
           >
-            <Sequence from={30}>
-              <AlexBubble text="Bonjour! Comment puis-je vous aider aujourd'hui?" voice />
-            </Sequence>
-            <Sequence from={80}>
-              <UserBubble text="J'ai un problème de glace sur le toit." />
-            </Sequence>
+            {frame >= 30 && <AlexBubble text="Bonjour! Comment puis-je vous aider aujourd'hui?" voice />}
+            {frame >= 80 && <UserBubble text="J'ai un problème de glace sur le toit." />}
             {frame >= 130 && frame < 190 && <TypingBubble />}
-            <Sequence from={190}>
-              <AlexBubble text="Pourriez-vous téléverser une photo pour que je l'analyse?" voice />
-            </Sequence>
-            <Sequence from={230}>
-              <UserImageBubble />
-            </Sequence>
+            {frame >= 190 && <AlexBubble text="Pourriez-vous téléverser une photo pour que je l'analyse?" voice />}
+            {frame >= 230 && <UserImageBubble />}
             {frame >= 260 && frame < 320 && <TypingBubble />}
-            <Sequence from={320}>
-              <DiagnosisBubble text="Barrage de glace + perte de chaleur. Probable manque d'isolation." />
-            </Sequence>
-            <Sequence from={380}>
-              <RecommendationBubble text="Je vous propose Isolation Solution Royal." />
-            </Sequence>
-            <Sequence from={430}>
-              <WhyChoiceBubble />
-            </Sequence>
-            <Sequence from={500}>
-              <CalendarBubble />
-            </Sequence>
-            <Sequence from={570}>
-              <AlexBubble text="Mardi à 11h, ça vous va?" voice glow />
-            </Sequence>
-            <Sequence from={620}>
-              <UserBubble text="Oui, parfait." />
-            </Sequence>
-            <Sequence from={660}>
-              <ConfirmedBubble />
-            </Sequence>
+            {frame >= 320 && <DiagnosisBubble text="Barrage de glace + perte de chaleur. Probable manque d'isolation." />}
+            {frame >= 380 && <RecommendationBubble text="Je vous propose Isolation Solution Royal." />}
+            {frame >= 430 && <WhyChoiceBubble />}
+            {frame >= 500 && <CalendarBubble />}
+            {frame >= 570 && <AlexBubble text="Mardi à 11h, ça vous va?" voice glow />}
+            {frame >= 620 && <UserBubble text="Oui, parfait." />}
+            {frame >= 660 && <ConfirmedBubble />}
           </div>
         </PhoneFrame>
       </div>
 
-      {/* Watermark */}
       <div
         style={{
           position: "absolute",
