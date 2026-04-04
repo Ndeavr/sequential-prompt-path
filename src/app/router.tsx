@@ -94,6 +94,7 @@ import GmbLinkPage from "@/pages/GmbLinkPage";
 import ContractorQuestionnairePage from "@/pages/ContractorQuestionnairePage";
 import VerifyContractorPage from "@/pages/VerifyContractorPage";
 import VerifyLandingPage from "@/pages/VerifyLandingPage";
+import PageAnimationExportStudio from "@/pages/admin/PageAnimationExportStudio";
 import PublicPropertyPage from "@/pages/PublicPropertyPage";
 import PropertyPassportPage from "@/pages/dashboard/PropertyPassportPage";
 import PropertyGrantsPage from "@/pages/dashboard/PropertyGrantsPage";
