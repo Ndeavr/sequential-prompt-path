@@ -302,6 +302,8 @@ import AdminUOS from "@/pages/admin/AdminUOS";
 import AdminGrowthEngine from "@/pages/admin/AdminGrowthEngine";
 import AdminPricingPage from "@/pages/admin/AdminPricingPage";
 import PageAdminPlanDistribution from "@/pages/admin/PageAdminPlanDistribution";
+import PageAdminPlanAppointmentsControl from "@/pages/admin/PageAdminPlanAppointmentsControl";
+import PageEntrepreneurPlanUsage from "@/pages/entrepreneur/PageEntrepreneurPlanUsage";
 import AdminRefusalSeoPage from "@/pages/admin/AdminRefusalSeoPage";
 import AdminAdsEngine from "@/pages/admin/AdminAdsEngine";
 import AdminDemandGrid from "@/pages/admin/AdminDemandGrid";
@@ -680,6 +682,8 @@ export const AppRouter = () => (
       <Route path="/admin/growth-engine" element={<ProtectedRoute requiredRole="admin"><AdminGrowthEngine /></ProtectedRoute>} />
       <Route path="/admin/pricing" element={<ProtectedRoute requiredRole="admin"><AdminPricingPage /></ProtectedRoute>} />
       <Route path="/admin/plan-distribution" element={<ProtectedRoute requiredRole="admin"><PageAdminPlanDistribution /></ProtectedRoute>} />
+      <Route path="/admin/plan-appointments" element={<ProtectedRoute requiredRole="admin"><PageAdminPlanAppointmentsControl /></ProtectedRoute>} />
+      <Route path="/pro/plan-usage" element={<ProtectedRoute><PageEntrepreneurPlanUsage /></ProtectedRoute>} />
       <Route path="/admin/refusal-seo" element={<ProtectedRoute requiredRole="admin"><AdminRefusalSeoPage /></ProtectedRoute>} />
       <Route path="/admin/ads-engine" element={<ProtectedRoute requiredRole="admin"><AdminAdsEngine /></ProtectedRoute>} />
       <Route path="/admin/demand-grid" element={<ProtectedRoute requiredRole="admin"><AdminDemandGrid /></ProtectedRoute>} />
