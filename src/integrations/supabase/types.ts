@@ -7173,6 +7173,98 @@ export type Database = {
         }
         Relationships: []
       }
+      cluster_plan_capacity: {
+        Row: {
+          cluster_key: string
+          created_at: string
+          distribution_profile: string
+          id: string
+          max_slots: number
+          min_plan_required: string
+          occupied_slots: number
+          payment_required: boolean
+          plan_code: string
+          scarcity_status: string
+          updated_at: string
+          waitlist_active: boolean
+        }
+        Insert: {
+          cluster_key: string
+          created_at?: string
+          distribution_profile?: string
+          id?: string
+          max_slots?: number
+          min_plan_required?: string
+          occupied_slots?: number
+          payment_required?: boolean
+          plan_code: string
+          scarcity_status?: string
+          updated_at?: string
+          waitlist_active?: boolean
+        }
+        Update: {
+          cluster_key?: string
+          created_at?: string
+          distribution_profile?: string
+          id?: string
+          max_slots?: number
+          min_plan_required?: string
+          occupied_slots?: number
+          payment_required?: boolean
+          plan_code?: string
+          scarcity_status?: string
+          updated_at?: string
+          waitlist_active?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cluster_plan_capacity_plan_code_fkey"
+            columns: ["plan_code"]
+            isOneToOne: false
+            referencedRelation: "plan_definitions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      cluster_pricing_multipliers: {
+        Row: {
+          cluster_key: string
+          cluster_value_tier: string
+          created_at: string
+          demand_score: number
+          id: string
+          is_active: boolean
+          projected_monthly_revenue: number
+          scarcity_override_multiplier: number | null
+          updated_at: string
+          value_multiplier: number
+        }
+        Insert: {
+          cluster_key: string
+          cluster_value_tier?: string
+          created_at?: string
+          demand_score?: number
+          id?: string
+          is_active?: boolean
+          projected_monthly_revenue?: number
+          scarcity_override_multiplier?: number | null
+          updated_at?: string
+          value_multiplier?: number
+        }
+        Update: {
+          cluster_key?: string
+          cluster_value_tier?: string
+          created_at?: string
+          demand_score?: number
+          id?: string
+          is_active?: boolean
+          projected_monthly_revenue?: number
+          scarcity_override_multiplier?: number | null
+          updated_at?: string
+          value_multiplier?: number
+        }
+        Relationships: []
+      }
       condo_action_plans: {
         Row: {
           assigned_contractor_id: string | null
@@ -22645,6 +22737,66 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_definitions: {
+        Row: {
+          base_price_monthly: number
+          code: string
+          created_at: string
+          features: Json
+          id: string
+          is_active: boolean
+          is_paid: boolean
+          matching_boost: number
+          min_price_required: boolean
+          name: string
+          priority_level: number
+          rank: number
+          scarcity_multiplier_full: number
+          scarcity_multiplier_locked: number
+          scarcity_multiplier_rare: number
+          scarcity_multiplier_tight: number
+          updated_at: string
+        }
+        Insert: {
+          base_price_monthly?: number
+          code: string
+          created_at?: string
+          features?: Json
+          id?: string
+          is_active?: boolean
+          is_paid?: boolean
+          matching_boost?: number
+          min_price_required?: boolean
+          name: string
+          priority_level?: number
+          rank: number
+          scarcity_multiplier_full?: number
+          scarcity_multiplier_locked?: number
+          scarcity_multiplier_rare?: number
+          scarcity_multiplier_tight?: number
+          updated_at?: string
+        }
+        Update: {
+          base_price_monthly?: number
+          code?: string
+          created_at?: string
+          features?: Json
+          id?: string
+          is_active?: boolean
+          is_paid?: boolean
+          matching_boost?: number
+          min_price_required?: boolean
+          name?: string
+          priority_level?: number
+          rank?: number
+          scarcity_multiplier_full?: number
+          scarcity_multiplier_locked?: number
+          scarcity_multiplier_rare?: number
+          scarcity_multiplier_tight?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       plan_recommendations: {
         Row: {
           contractor_id: string
@@ -34078,6 +34230,10 @@ export type Database = {
       calculate_waitlist_score: {
         Args: { p_waitlist_id: string }
         Returns: Json
+      }
+      compute_scarcity_status: {
+        Args: { max_slots: number; occupied: number }
+        Returns: string
       }
       current_contractor_id: { Args: never; Returns: string }
       current_profile_id: { Args: never; Returns: string }
