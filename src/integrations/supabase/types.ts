@@ -15056,6 +15056,63 @@ export type Database = {
         }
         Relationships: []
       }
+      dynamic_pricing_size_snapshots: {
+        Row: {
+          base_monthly_price: number
+          cluster_id: string | null
+          cluster_value_multiplier: number
+          created_at: string
+          demand_multiplier: number
+          domain_id: string | null
+          final_annual_price: number
+          final_monthly_price: number
+          id: string
+          plan_code: string
+          pricing_tier: string | null
+          project_size_code: string
+          scarcity_multiplier: number
+          seasonal_multiplier: number
+          size_multiplier: number
+          snapshot_at: string
+        }
+        Insert: {
+          base_monthly_price: number
+          cluster_id?: string | null
+          cluster_value_multiplier?: number
+          created_at?: string
+          demand_multiplier?: number
+          domain_id?: string | null
+          final_annual_price: number
+          final_monthly_price: number
+          id?: string
+          plan_code: string
+          pricing_tier?: string | null
+          project_size_code: string
+          scarcity_multiplier?: number
+          seasonal_multiplier?: number
+          size_multiplier?: number
+          snapshot_at?: string
+        }
+        Update: {
+          base_monthly_price?: number
+          cluster_id?: string | null
+          cluster_value_multiplier?: number
+          created_at?: string
+          demand_multiplier?: number
+          domain_id?: string | null
+          final_annual_price?: number
+          final_monthly_price?: number
+          id?: string
+          plan_code?: string
+          pricing_tier?: string | null
+          project_size_code?: string
+          scarcity_multiplier?: number
+          seasonal_multiplier?: number
+          size_multiplier?: number
+          snapshot_at?: string
+        }
+        Relationships: []
+      }
       email_automation_rules: {
         Row: {
           audience_type: string | null
@@ -25291,6 +25348,60 @@ export type Database = {
         }
         Relationships: []
       }
+      project_sizing_ai_classifications: {
+        Row: {
+          classified_size_code: string
+          confidence_score: number
+          created_at: string
+          id: string
+          input_budget_estimated: number | null
+          input_budget_max: number | null
+          input_budget_min: number | null
+          input_description: string
+          model_used: string | null
+          override_by: string | null
+          override_reason: string | null
+          override_size_code: string | null
+          reasoning: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          classified_size_code: string
+          confidence_score?: number
+          created_at?: string
+          id?: string
+          input_budget_estimated?: number | null
+          input_budget_max?: number | null
+          input_budget_min?: number | null
+          input_description: string
+          model_used?: string | null
+          override_by?: string | null
+          override_reason?: string | null
+          override_size_code?: string | null
+          reasoning?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          classified_size_code?: string
+          confidence_score?: number
+          created_at?: string
+          id?: string
+          input_budget_estimated?: number | null
+          input_budget_max?: number | null
+          input_budget_min?: number | null
+          input_description?: string
+          model_used?: string | null
+          override_by?: string | null
+          override_reason?: string | null
+          override_size_code?: string | null
+          reasoning?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       project_team_members: {
         Row: {
           accepted_at: string | null
@@ -31431,6 +31542,57 @@ export type Database = {
           },
         ]
       }
+      signature_territory_locks: {
+        Row: {
+          cluster_id: string | null
+          created_at: string
+          domain_id: string | null
+          entrepreneur_id: string
+          expires_at: string | null
+          id: string
+          lock_status: string
+          locked_at: string
+          locked_by: string | null
+          project_size_code: string
+          reason: string | null
+          revenue_protected_annual: number | null
+          revenue_protected_monthly: number | null
+          updated_at: string
+        }
+        Insert: {
+          cluster_id?: string | null
+          created_at?: string
+          domain_id?: string | null
+          entrepreneur_id: string
+          expires_at?: string | null
+          id?: string
+          lock_status?: string
+          locked_at?: string
+          locked_by?: string | null
+          project_size_code?: string
+          reason?: string | null
+          revenue_protected_annual?: number | null
+          revenue_protected_monthly?: number | null
+          updated_at?: string
+        }
+        Update: {
+          cluster_id?: string | null
+          created_at?: string
+          domain_id?: string | null
+          entrepreneur_id?: string
+          expires_at?: string | null
+          id?: string
+          lock_status?: string
+          locked_at?: string
+          locked_by?: string | null
+          project_size_code?: string
+          reason?: string | null
+          revenue_protected_annual?: number | null
+          revenue_protected_monthly?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sla_assignments: {
         Row: {
           achieved: boolean | null
@@ -33943,6 +34105,57 @@ export type Database = {
           is_experimentable?: boolean
           risk_level?: string
           screen_key?: string
+        }
+        Relationships: []
+      }
+      upgrade_pressure_events: {
+        Row: {
+          converted: boolean | null
+          converted_at: string | null
+          created_at: string
+          cta_action: string | null
+          current_plan_code: string
+          dismissed: boolean | null
+          entrepreneur_id: string
+          id: string
+          message_en: string | null
+          message_fr: string | null
+          pressure_score: number
+          pressure_type: string
+          recommended_plan_code: string
+          target_project_size_code: string
+        }
+        Insert: {
+          converted?: boolean | null
+          converted_at?: string | null
+          created_at?: string
+          cta_action?: string | null
+          current_plan_code: string
+          dismissed?: boolean | null
+          entrepreneur_id: string
+          id?: string
+          message_en?: string | null
+          message_fr?: string | null
+          pressure_score?: number
+          pressure_type?: string
+          recommended_plan_code: string
+          target_project_size_code: string
+        }
+        Update: {
+          converted?: boolean | null
+          converted_at?: string | null
+          created_at?: string
+          cta_action?: string | null
+          current_plan_code?: string
+          dismissed?: boolean | null
+          entrepreneur_id?: string
+          id?: string
+          message_en?: string | null
+          message_fr?: string | null
+          pressure_score?: number
+          pressure_type?: string
+          recommended_plan_code?: string
+          target_project_size_code?: string
         }
         Relationships: []
       }

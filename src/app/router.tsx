@@ -304,6 +304,7 @@ import AdminPricingPage from "@/pages/admin/AdminPricingPage";
 import PageAdminPlanDistribution from "@/pages/admin/PageAdminPlanDistribution";
 import PageAdminPlanAppointmentsControl from "@/pages/admin/PageAdminPlanAppointmentsControl";
 import PageAdminClusterPlanProjectSizeMatrix from "@/pages/admin/PageAdminClusterPlanProjectSizeMatrix";
+import PageAdminProjectSizeExtensions from "@/pages/admin/PageAdminProjectSizeExtensions";
 import PageEntrepreneurPlanUsage from "@/pages/entrepreneur/PageEntrepreneurPlanUsage";
 import AdminRefusalSeoPage from "@/pages/admin/AdminRefusalSeoPage";
 import AdminAdsEngine from "@/pages/admin/AdminAdsEngine";
@@ -685,6 +686,7 @@ export const AppRouter = () => (
       <Route path="/admin/plan-distribution" element={<ProtectedRoute requiredRole="admin"><PageAdminPlanDistribution /></ProtectedRoute>} />
       <Route path="/admin/plan-appointments" element={<ProtectedRoute requiredRole="admin"><PageAdminPlanAppointmentsControl /></ProtectedRoute>} />
       <Route path="/admin/cluster-project-size-matrix" element={<ProtectedRoute requiredRole="admin"><PageAdminClusterPlanProjectSizeMatrix /></ProtectedRoute>} />
+      <Route path="/admin/project-size-extensions" element={<ProtectedRoute requiredRole="admin"><PageAdminProjectSizeExtensions /></ProtectedRoute>} />
       <Route path="/pro/plan-usage" element={<ProtectedRoute><PageEntrepreneurPlanUsage /></ProtectedRoute>} />
       <Route path="/admin/refusal-seo" element={<ProtectedRoute requiredRole="admin"><AdminRefusalSeoPage /></ProtectedRoute>} />
       <Route path="/admin/ads-engine" element={<ProtectedRoute requiredRole="admin"><AdminAdsEngine /></ProtectedRoute>} />
