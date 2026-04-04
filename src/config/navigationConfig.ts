@@ -192,7 +192,7 @@ export function getStateActions(ctx: NavigationContext): NavItem[] {
 
 export const mobileTabsByRole: Record<UserRole | "guest", NavItem[]> = {
   guest: [
-    { to: "/trouver", label: "Trouver", labelEn: "Find", icon: "Search" },
+    { to: "/inspirations", label: "Inspirations", labelEn: "Inspirations", icon: "Sparkles" },
     { to: "/verifier", label: "Vérifier", labelEn: "Verify", icon: "ShieldCheck" },
     { to: "/alex", label: "Alex", icon: "Sparkles" },
     { to: "/aide", label: "Aide", labelEn: "Help", icon: "HelpCircle" },
