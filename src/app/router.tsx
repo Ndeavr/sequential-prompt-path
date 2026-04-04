@@ -735,6 +735,7 @@ export const AppRouter = () => (
       <Route path="/admin/voice-optimizer" element={<ProtectedRoute requiredRole="admin"><AdminVoiceOptimizerPage /></ProtectedRoute>} />
       <Route path="/admin/voice-optimizer/:id" element={<ProtectedRoute requiredRole="admin"><AdminVoiceOptimizerPage /></ProtectedRoute>} />
       <Route path="/admin/sales-analytics" element={<ProtectedRoute requiredRole="admin"><AdminSalesAnalyticsPage /></ProtectedRoute>} />
+      <Route path="/admin/export-studio" element={<ProtectedRoute requiredRole="admin"><PageAnimationExportStudio /></ProtectedRoute>} />
       <Route path="/entrepreneur/sales" element={<EntrepreneurVoiceSalesPage />} />
       <Route path="/homeowner/voice" element={<HomeownerVoiceEntryPage />} />
       <Route path="/admin/homeowner-analytics" element={<ProtectedRoute requiredRole="admin"><AdminHomeownerAnalyticsPage /></ProtectedRoute>} />
