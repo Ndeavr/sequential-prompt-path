@@ -304,6 +304,7 @@ import AdminPricingPage from "@/pages/admin/AdminPricingPage";
 import PageAdminPlanDistribution from "@/pages/admin/PageAdminPlanDistribution";
 import PageAdminPlanAppointmentsControl from "@/pages/admin/PageAdminPlanAppointmentsControl";
 import PageAdminClusterPlanProjectSizeMatrix from "@/pages/admin/PageAdminClusterPlanProjectSizeMatrix";
+import PageAdminProjectSizeExtensions from "@/pages/admin/PageAdminProjectSizeExtensions";
 import PageEntrepreneurPlanUsage from "@/pages/entrepreneur/PageEntrepreneurPlanUsage";
 import AdminRefusalSeoPage from "@/pages/admin/AdminRefusalSeoPage";
 import AdminAdsEngine from "@/pages/admin/AdminAdsEngine";
