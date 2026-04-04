@@ -86,7 +86,7 @@ const SmartHeader = () => {
           borderBottom: "1px solid hsl(0 0% 100% / 0.06)",
         }}
       >
-        <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
+        <div className="mx-auto max-w-7xl px-1 sm:px-4 lg:px-6">
           <div className="flex items-center justify-between h-20 sm:h-20 lg:h-16">
             {/* Back button */}
             {!isHome && (
@@ -108,12 +108,11 @@ const SmartHeader = () => {
             )}
 
             {/* Brand lockup — LARGE logo */}
-            <Link to={logoTo} className="flex items-center shrink-0 group" style={{ minWidth: "fit-content" }}>
+            <Link to={logoTo} className="flex items-center shrink-0 group -ml-1" style={{ minWidth: "fit-content" }}>
               <img
                 src={unproLogo}
                 alt="UNPRO"
                 className="object-contain logo-hero-glow transition-all duration-300 group-hover:scale-105"
-                style={{ height: "56px", flexShrink: 0, minHeight: "56px" }}
               />
             </Link>
 
