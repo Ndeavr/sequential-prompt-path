@@ -140,7 +140,7 @@ export default function HeroSection() {
         </div>
 
         {/* ── Content ── */}
-        <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto w-full px-5 pt-20 pb-24">
+        <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto w-full px-5 pt-6 pb-20">
 
           {/* Headline */}
           <motion.div
