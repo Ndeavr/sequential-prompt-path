@@ -7271,6 +7271,370 @@ export type Database = {
         }
         Relationships: []
       }
+      cluster_domain_capacity: {
+        Row: {
+          annual_demand_estimated: number
+          annual_market_value: number
+          cluster_id: string
+          created_at: string
+          domain_id: string
+          id: string
+          market_control_factor: number
+          market_tier: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          annual_demand_estimated?: number
+          annual_market_value?: number
+          cluster_id: string
+          created_at?: string
+          domain_id: string
+          id?: string
+          market_control_factor?: number
+          market_tier?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          annual_demand_estimated?: number
+          annual_market_value?: number
+          cluster_id?: string
+          created_at?: string
+          domain_id?: string
+          id?: string
+          market_control_factor?: number
+          market_tier?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cluster_domain_plan_project_size_capacity: {
+        Row: {
+          access_allowed: boolean
+          cluster_id: string
+          created_at: string
+          current_slots: number
+          domain_id: string
+          id: string
+          locked_by_admin: boolean
+          locked_by_rule: boolean
+          max_slots: number
+          occupancy_rate: number
+          plan_id: string
+          project_size_id: string
+          remaining_slots: number
+          scarcity_status: string
+          target_percentage: number
+          updated_at: string
+          upgrade_required: boolean
+          waitlist_count: number
+        }
+        Insert: {
+          access_allowed?: boolean
+          cluster_id: string
+          created_at?: string
+          current_slots?: number
+          domain_id: string
+          id?: string
+          locked_by_admin?: boolean
+          locked_by_rule?: boolean
+          max_slots?: number
+          occupancy_rate?: number
+          plan_id: string
+          project_size_id: string
+          remaining_slots?: number
+          scarcity_status?: string
+          target_percentage?: number
+          updated_at?: string
+          upgrade_required?: boolean
+          waitlist_count?: number
+        }
+        Update: {
+          access_allowed?: boolean
+          cluster_id?: string
+          created_at?: string
+          current_slots?: number
+          domain_id?: string
+          id?: string
+          locked_by_admin?: boolean
+          locked_by_rule?: boolean
+          max_slots?: number
+          occupancy_rate?: number
+          plan_id?: string
+          project_size_id?: string
+          remaining_slots?: number
+          scarcity_status?: string
+          target_percentage?: number
+          updated_at?: string
+          upgrade_required?: boolean
+          waitlist_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cluster_domain_plan_project_size_capacity_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plan_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cluster_domain_plan_project_size_capacity_project_size_id_fkey"
+            columns: ["project_size_id"]
+            isOneToOne: false
+            referencedRelation: "project_sizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cluster_domain_plan_project_size_pricing: {
+        Row: {
+          base_monthly_price: number
+          cluster_id: string
+          created_at: string
+          domain_id: string
+          final_annual_price: number
+          final_monthly_price: number
+          id: string
+          plan_id: string
+          pricing_status: string
+          project_size_id: string
+          updated_at: string
+        }
+        Insert: {
+          base_monthly_price?: number
+          cluster_id: string
+          created_at?: string
+          domain_id: string
+          final_annual_price?: number
+          final_monthly_price?: number
+          id?: string
+          plan_id: string
+          pricing_status?: string
+          project_size_id: string
+          updated_at?: string
+        }
+        Update: {
+          base_monthly_price?: number
+          cluster_id?: string
+          created_at?: string
+          domain_id?: string
+          final_annual_price?: number
+          final_monthly_price?: number
+          id?: string
+          plan_id?: string
+          pricing_status?: string
+          project_size_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cluster_domain_plan_project_size_pricing_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plan_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cluster_domain_plan_project_size_pricing_project_size_id_fkey"
+            columns: ["project_size_id"]
+            isOneToOne: false
+            referencedRelation: "project_sizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cluster_domain_plan_project_size_revenue: {
+        Row: {
+          cluster_id: string
+          created_at: string
+          current_slots: number
+          domain_id: string
+          high_ticket_pressure_score: number
+          id: string
+          max_slots: number
+          plan_id: string
+          project_size_id: string
+          revenue_current_annual: number
+          revenue_current_monthly: number
+          revenue_gap_annual: number
+          revenue_gap_monthly: number
+          revenue_if_full_annual: number
+          revenue_if_full_monthly: number
+          updated_at: string
+          upgrade_revenue_opportunity: number
+        }
+        Insert: {
+          cluster_id: string
+          created_at?: string
+          current_slots?: number
+          domain_id: string
+          high_ticket_pressure_score?: number
+          id?: string
+          max_slots?: number
+          plan_id: string
+          project_size_id: string
+          revenue_current_annual?: number
+          revenue_current_monthly?: number
+          revenue_gap_annual?: number
+          revenue_gap_monthly?: number
+          revenue_if_full_annual?: number
+          revenue_if_full_monthly?: number
+          updated_at?: string
+          upgrade_revenue_opportunity?: number
+        }
+        Update: {
+          cluster_id?: string
+          created_at?: string
+          current_slots?: number
+          domain_id?: string
+          high_ticket_pressure_score?: number
+          id?: string
+          max_slots?: number
+          plan_id?: string
+          project_size_id?: string
+          revenue_current_annual?: number
+          revenue_current_monthly?: number
+          revenue_gap_annual?: number
+          revenue_gap_monthly?: number
+          revenue_if_full_annual?: number
+          revenue_if_full_monthly?: number
+          updated_at?: string
+          upgrade_revenue_opportunity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cluster_domain_plan_project_size_revenue_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plan_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cluster_domain_plan_project_size_revenue_project_size_id_fkey"
+            columns: ["project_size_id"]
+            isOneToOne: false
+            referencedRelation: "project_sizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cluster_domain_project_size_capacity: {
+        Row: {
+          annual_demand_estimated: number
+          annual_market_value: number
+          cluster_id: string
+          cluster_value_tier: string
+          created_at: string
+          current_contractors: number
+          domain_id: string
+          id: string
+          jobs_per_contractor: number
+          max_contractors_final: number
+          max_contractors_raw: number
+          monthly_market_value: number
+          occupancy_rate: number
+          project_size_id: string
+          remaining_contractors: number
+          scarcity_status: string
+          updated_at: string
+          value_per_slot: number
+        }
+        Insert: {
+          annual_demand_estimated?: number
+          annual_market_value?: number
+          cluster_id: string
+          cluster_value_tier?: string
+          created_at?: string
+          current_contractors?: number
+          domain_id: string
+          id?: string
+          jobs_per_contractor?: number
+          max_contractors_final?: number
+          max_contractors_raw?: number
+          monthly_market_value?: number
+          occupancy_rate?: number
+          project_size_id: string
+          remaining_contractors?: number
+          scarcity_status?: string
+          updated_at?: string
+          value_per_slot?: number
+        }
+        Update: {
+          annual_demand_estimated?: number
+          annual_market_value?: number
+          cluster_id?: string
+          cluster_value_tier?: string
+          created_at?: string
+          current_contractors?: number
+          domain_id?: string
+          id?: string
+          jobs_per_contractor?: number
+          max_contractors_final?: number
+          max_contractors_raw?: number
+          monthly_market_value?: number
+          occupancy_rate?: number
+          project_size_id?: string
+          remaining_contractors?: number
+          scarcity_status?: string
+          updated_at?: string
+          value_per_slot?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cluster_domain_project_size_capacity_project_size_id_fkey"
+            columns: ["project_size_id"]
+            isOneToOne: false
+            referencedRelation: "project_sizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cluster_domain_project_size_pricing: {
+        Row: {
+          cluster_id: string
+          cluster_value_multiplier: number
+          created_at: string
+          domain_id: string
+          id: string
+          project_size_id: string
+          scarcity_multiplier: number
+          size_multiplier: number
+          updated_at: string
+        }
+        Insert: {
+          cluster_id: string
+          cluster_value_multiplier?: number
+          created_at?: string
+          domain_id: string
+          id?: string
+          project_size_id: string
+          scarcity_multiplier?: number
+          size_multiplier?: number
+          updated_at?: string
+        }
+        Update: {
+          cluster_id?: string
+          cluster_value_multiplier?: number
+          created_at?: string
+          domain_id?: string
+          id?: string
+          project_size_id?: string
+          scarcity_multiplier?: number
+          size_multiplier?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cluster_domain_project_size_pricing_project_size_id_fkey"
+            columns: ["project_size_id"]
+            isOneToOne: false
+            referencedRelation: "project_sizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cluster_plan_capacity: {
         Row: {
           cluster_key: string
@@ -7360,6 +7724,158 @@ export type Database = {
           scarcity_override_multiplier?: number | null
           updated_at?: string
           value_multiplier?: number
+        }
+        Relationships: []
+      }
+      cluster_project_size_distribution: {
+        Row: {
+          annual_demand_estimated: number
+          cluster_id: string
+          created_at: string
+          demand_percentage: number
+          distribution_profile: string
+          domain_id: string
+          id: string
+          project_size_id: string
+          updated_at: string
+        }
+        Insert: {
+          annual_demand_estimated?: number
+          cluster_id: string
+          created_at?: string
+          demand_percentage?: number
+          distribution_profile?: string
+          domain_id: string
+          id?: string
+          project_size_id: string
+          updated_at?: string
+        }
+        Update: {
+          annual_demand_estimated?: number
+          cluster_id?: string
+          created_at?: string
+          demand_percentage?: number
+          distribution_profile?: string
+          domain_id?: string
+          id?: string
+          project_size_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cluster_project_size_distribution_project_size_id_fkey"
+            columns: ["project_size_id"]
+            isOneToOne: false
+            referencedRelation: "project_sizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cluster_project_size_history: {
+        Row: {
+          actor_id: string | null
+          actor_type: string
+          cluster_id: string
+          created_at: string
+          domain_id: string
+          event_type: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          plan_id: string | null
+          project_size_id: string
+          reason: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type?: string
+          cluster_id: string
+          created_at?: string
+          domain_id: string
+          event_type: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          plan_id?: string | null
+          project_size_id: string
+          reason?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string
+          cluster_id?: string
+          created_at?: string
+          domain_id?: string
+          event_type?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          plan_id?: string | null
+          project_size_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cluster_project_size_history_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plan_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cluster_project_size_history_project_size_id_fkey"
+            columns: ["project_size_id"]
+            isOneToOne: false
+            referencedRelation: "project_sizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cluster_project_size_rules: {
+        Row: {
+          can_lock: boolean
+          created_at: string
+          default_demand_percentage: number
+          distribution_profile: string
+          domain_category: string | null
+          id: string
+          market_tier: string | null
+          project_size_code: string
+          scarcity_threshold_full: number
+          scarcity_threshold_rare: number
+          scarcity_threshold_tight: number
+          size_multiplier: number
+          updated_at: string
+        }
+        Insert: {
+          can_lock?: boolean
+          created_at?: string
+          default_demand_percentage?: number
+          distribution_profile?: string
+          domain_category?: string | null
+          id?: string
+          market_tier?: string | null
+          project_size_code: string
+          scarcity_threshold_full?: number
+          scarcity_threshold_rare?: number
+          scarcity_threshold_tight?: number
+          size_multiplier?: number
+          updated_at?: string
+        }
+        Update: {
+          can_lock?: boolean
+          created_at?: string
+          default_demand_percentage?: number
+          distribution_profile?: string
+          domain_category?: string | null
+          id?: string
+          market_tier?: string | null
+          project_size_code?: string
+          scarcity_threshold_full?: number
+          scarcity_threshold_rare?: number
+          scarcity_threshold_tight?: number
+          size_multiplier?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -23143,7 +23659,9 @@ export type Database = {
           base_price_monthly: number
           code: string
           created_at: string
+          exclusivity_access: boolean | null
           features: Json
+          high_ticket_priority: boolean | null
           id: string
           is_active: boolean
           is_paid: boolean
@@ -23157,12 +23675,15 @@ export type Database = {
           scarcity_multiplier_rare: number
           scarcity_multiplier_tight: number
           updated_at: string
+          visibility_weight: number | null
         }
         Insert: {
           base_price_monthly?: number
           code: string
           created_at?: string
+          exclusivity_access?: boolean | null
           features?: Json
+          high_ticket_priority?: boolean | null
           id?: string
           is_active?: boolean
           is_paid?: boolean
@@ -23176,12 +23697,15 @@ export type Database = {
           scarcity_multiplier_rare?: number
           scarcity_multiplier_tight?: number
           updated_at?: string
+          visibility_weight?: number | null
         }
         Update: {
           base_price_monthly?: number
           code?: string
           created_at?: string
+          exclusivity_access?: boolean | null
           features?: Json
+          high_ticket_priority?: boolean | null
           id?: string
           is_active?: boolean
           is_paid?: boolean
@@ -23195,6 +23719,7 @@ export type Database = {
           scarcity_multiplier_rare?: number
           scarcity_multiplier_tight?: number
           updated_at?: string
+          visibility_weight?: number | null
         }
         Relationships: []
       }
@@ -23242,6 +23767,7 @@ export type Database = {
           plan_code: string
           project_size_id: string
           upgrade_target_plan_code: string | null
+          upgrade_target_plan_id: string | null
         }
         Insert: {
           access_allowed?: boolean
@@ -23250,6 +23776,7 @@ export type Database = {
           plan_code: string
           project_size_id: string
           upgrade_target_plan_code?: string | null
+          upgrade_target_plan_id?: string | null
         }
         Update: {
           access_allowed?: boolean
@@ -23258,6 +23785,7 @@ export type Database = {
           plan_code?: string
           project_size_id?: string
           upgrade_target_plan_code?: string | null
+          upgrade_target_plan_id?: string | null
         }
         Relationships: [
           {
@@ -23265,6 +23793,13 @@ export type Database = {
             columns: ["project_size_id"]
             isOneToOne: false
             referencedRelation: "project_sizes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_project_size_access_upgrade_target_plan_id_fkey"
+            columns: ["upgrade_target_plan_id"]
+            isOneToOne: false
+            referencedRelation: "plan_definitions"
             referencedColumns: ["id"]
           },
         ]
@@ -24655,37 +25190,102 @@ export type Database = {
           },
         ]
       }
+      project_size_matching_rules: {
+        Row: {
+          created_at: string
+          id: string
+          min_aipp_score: number | null
+          min_plan_rank: number
+          prioritize_capacity: boolean
+          prioritize_compatibility: boolean
+          prioritize_experience: boolean
+          prioritize_speed: boolean
+          project_size_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          min_aipp_score?: number | null
+          min_plan_rank?: number
+          prioritize_capacity?: boolean
+          prioritize_compatibility?: boolean
+          prioritize_experience?: boolean
+          prioritize_speed?: boolean
+          project_size_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          min_aipp_score?: number | null
+          min_plan_rank?: number
+          prioritize_capacity?: boolean
+          prioritize_compatibility?: boolean
+          prioritize_experience?: boolean
+          prioritize_speed?: boolean
+          project_size_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_size_matching_rules_project_size_id_fkey"
+            columns: ["project_size_id"]
+            isOneToOne: true
+            referencedRelation: "project_sizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_sizes: {
         Row: {
+          avg_project_value: number | null
           capture_factor: number
           code: string
+          color_token: string | null
           created_at: string
           id: string
           is_active: boolean
+          jobs_per_contractor: number | null
           label: string
+          max_project_value: number | null
+          min_project_value: number | null
           size_multiplier: number
+          size_weight: number | null
           sort_order: number
           units_consumed_per_appointment: number
         }
         Insert: {
+          avg_project_value?: number | null
           capture_factor?: number
           code: string
+          color_token?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
+          jobs_per_contractor?: number | null
           label: string
+          max_project_value?: number | null
+          min_project_value?: number | null
           size_multiplier?: number
+          size_weight?: number | null
           sort_order?: number
           units_consumed_per_appointment: number
         }
         Update: {
+          avg_project_value?: number | null
           capture_factor?: number
           code?: string
+          color_token?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
+          jobs_per_contractor?: number | null
           label?: string
+          max_project_value?: number | null
+          min_project_value?: number | null
           size_multiplier?: number
+          size_weight?: number | null
           sort_order?: number
           units_consumed_per_appointment?: number
         }
