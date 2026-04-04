@@ -301,6 +301,7 @@ import AdminHomeGraph from "@/pages/admin/AdminHomeGraph";
 import AdminUOS from "@/pages/admin/AdminUOS";
 import AdminGrowthEngine from "@/pages/admin/AdminGrowthEngine";
 import AdminPricingPage from "@/pages/admin/AdminPricingPage";
+import PageAdminPlanDistribution from "@/pages/admin/PageAdminPlanDistribution";
 import AdminRefusalSeoPage from "@/pages/admin/AdminRefusalSeoPage";
 import AdminAdsEngine from "@/pages/admin/AdminAdsEngine";
 import AdminDemandGrid from "@/pages/admin/AdminDemandGrid";
