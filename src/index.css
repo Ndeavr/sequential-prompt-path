@@ -535,6 +535,12 @@
     filter: drop-shadow(0 0 16px hsl(222 100% 60% / 0.35)) drop-shadow(0 0 40px hsl(222 100% 60% / 0.15));
     transition: filter 0.4s ease;
   }
+
+  img[alt="UNPRO"] {
+    height: 56px !important;
+    flex-shrink: 0 !important;
+    min-height: 56px !important;
+  }
   .logo-hero-glow:hover {
     filter: drop-shadow(0 0 24px hsl(222 100% 60% / 0.5)) drop-shadow(0 0 60px hsl(222 100% 60% / 0.2));
   }
