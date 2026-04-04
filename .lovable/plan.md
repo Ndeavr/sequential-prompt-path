@@ -1,74 +1,65 @@
 
+Objectif
+- Rétablir le chargement de l’app sans écran blanc et sécuriser les routes d’entrée qui cassent actuellement le preview.
 
-## Problem Analysis
+Ce que j’ai trouvé
+- Les logs actuels montrent surtout un problème de WebSocket HMR Vite dans le preview (`failed to connect to websocket`).
+- La route courante est `/index`, mais le routeur ne définit que `/`.
+- Le replay montre aussi une navigation vers `/entrepreneur/aipp-analysis`, alors que le routeur définit seulement `/entrepreneur/analysis/loading`.
+- `src/app/router.tsx` importe énormément de pages au démarrage. Donc une seule page cassée peut faire tomber toute l’app avant même que la bonne route ne s’affiche.
+- Le correctif précédent sur Leaflet semble déjà appliqué côté dépendances: la pile React 18 visible est cohérente.
 
-Two issues on the Hero page (`/index`):
+Do I know what the issue is?
+- Oui, assez pour corriger proprement: il y a au moins 2 causes concrètes à traiter tout de suite:
+  1. configuration HMR Vite non adaptée au preview proxifié
+  2. routes d’entrée manquantes (`/index`, `/entrepreneur/aipp-analysis`)
+- Et 1 risque structurel à réduire:
+  3. imports eager du routeur qui peuvent blank-screen toute l’app.
 
-1. **Alex can't understand voice input** — The mic audio is being sent but Gemini doesn't comprehend it. Root cause: the `ScriptProcessorNode` is deprecated and unreliable on mobile browsers. It may silently produce empty/garbled buffers. Additionally, there's no audio format validation or error logging, so failures are silent.
+Plan d’implémentation
+1. Corriger le boot du preview
+- Mettre à jour `vite.config.ts` pour une config HMR compatible avec le proxy du preview.
+- Approche la plus sûre: simplifier/supprimer l’override HMR actuel, ou le remplacer par une config proxy-safe (`wss`, port client 443).
 
-2. **No auto-greeting on connect** — When the user taps the orb, Alex connects but stays silent, waiting for user input. She should immediately say "Bonjour [FirstName], bienvenue." or "Bonjour, bienvenue."
+2. Ajouter les routes de compatibilité manquantes
+- Dans `src/app/router.tsx`, créer des redirections explicites:
+  - `/index` → `/`
+  - `/entrepreneur/aipp-analysis` → `/entrepreneur/analysis/loading`
+- Garder la page fallback pour les vraies routes inconnues, pas pour ces anciennes entrées connues.
 
----
+3. Empêcher l’écran blanc global
+- Ajouter une vraie error boundary autour du routeur dans `src/app/App.tsx`.
+- Afficher un écran de récupération utile au lieu d’un blank screen si une page plante au chargement.
 
-## Plan
+4. Réduire la surface de crash au démarrage
+- Passer les pages lourdes/admin en lazy loading (`React.lazy` + `Suspense`), en commençant par:
+  - `PageAdminClusterPlanProjectSizeMatrix`
+  - `PageAdminProjectSizeExtensions`
+  - autres pages admin importées globalement
+- Ainsi, une page admin cassée ne bloquera plus l’accueil ni les routes publiques.
 
-### 1. Fix microphone capture — Replace ScriptProcessorNode with AudioWorklet
+5. Vérifier les composants montés globalement
+- Revalider les composants toujours présents au boot:
+  - `BannerContinueFlow`
+  - `AuthOverlayPremium`
+  - `HelpPopup`
+  - `GlobalAlexOverlay`
+- Garder leurs effets asynchrones non bloquants et défensifs.
 
-**File: `src/services/geminiAudioWorklet.ts`** (new)
+Fichiers à modifier
+- `vite.config.ts`
+- `src/app/router.tsx`
+- `src/app/App.tsx`
+- nouveau composant type `src/components/errors/AppErrorBoundary.tsx`
 
-Create an AudioWorklet processor that reliably captures PCM at 16kHz. AudioWorklet runs on a dedicated thread and doesn't drop frames like ScriptProcessorNode.
+Critères de succès
+- `/` charge normalement
+- `/index` redirige proprement vers l’accueil
+- `/entrepreneur/aipp-analysis` ouvre bien le flow entrepreneur
+- le preview ne casse plus à cause du HMR
+- une page admin défectueuse ne bloque plus toute l’application
+- les routes inconnues affichent un fallback, pas un écran blanc
 
-```text
-Worklet processor: captures Float32 → converts to Int16 PCM → posts via MessagePort
-```
-
-**File: `src/hooks/useLiveVoice.ts`**
-
-- Replace `createScriptProcessor` with `AudioWorklet` registration and `AudioWorkletNode`
-- Add fallback to ScriptProcessorNode for browsers that don't support AudioWorklet
-- Add `console.warn` logging when audio chunks are empty (debugging aid)
-- Keep input AudioContext at native sample rate (not forced 16kHz) and resample in the worklet — this fixes the core issue where some mobile browsers ignore the `sampleRate` constructor option
-
-### 2. Auto-greeting on connect — Use `sendClientContent`
-
-**File: `src/hooks/useLiveVoice.ts`**
-
-Add an optional `initialGreeting` parameter. Inside the `onopen` callback, after mic setup, send:
-
-```typescript
-session.sendClientContent({
-  turns: [{ role: "user", parts: [{ text: initialGreeting }] }],
-  turnComplete: true,
-});
-```
-
-This tells Gemini "the user just said this" and triggers an immediate spoken response.
-
-**File: `src/components/home/HeroSection.tsx`**
-
-- Import `useAuth` to get `user?.user_metadata?.full_name`
-- Extract first name
-- Pass `initialGreeting` to `useLiveVoice.start()`:
-  - Logged in: `"Salue-moi. Mon prénom est [FirstName]."`
-  - Anonymous: `"Salue-moi. Je suis un nouveau visiteur."`
-
-This approach lets the model generate the greeting naturally in its own voice (e.g., "Bonjour Marie, bienvenue!") rather than hard-coding TTS text.
-
-### 3. Add audio diagnostics
-
-**File: `src/hooks/useLiveVoice.ts`**
-
-- Log first audio chunk size to verify mic data is flowing
-- Log `inputTranscription` events to console so we can verify Gemini is receiving French audio
-- Add a 3-second timeout after connect: if no audio chunks sent, warn in console
-
----
-
-## Files to modify
-
-| File | Action |
-|------|--------|
-| `src/services/geminiAudioWorklet.ts` | **Create** — AudioWorklet processor for reliable mic capture |
-| `src/hooks/useLiveVoice.ts` | **Edit** — Replace ScriptProcessor with AudioWorklet, add `initialGreeting` support, add diagnostics |
-| `src/components/home/HeroSection.tsx` | **Edit** — Pass user's first name as initial greeting to `start()` |
-
+Détails techniques
+- Aucun changement backend n’est nécessaire pour ce correctif.
+- Si le bug est visible sur le site publié, il faudra republier les changements frontend après implémentation.
