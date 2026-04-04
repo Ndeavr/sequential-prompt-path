@@ -105,7 +105,7 @@ export default function HeroSection() {
 
   return (
     <>
-      <section className="relative min-h-[100vh] flex flex-col items-center justify-center overflow-hidden">
+      <section className="relative min-h-[calc(100vh-80px)] flex flex-col items-center justify-center overflow-hidden">
         {/* ── Cinematic Background ── */}
         <motion.div
           className="absolute inset-0 z-0"
