@@ -94,6 +94,7 @@ import GmbLinkPage from "@/pages/GmbLinkPage";
 import ContractorQuestionnairePage from "@/pages/ContractorQuestionnairePage";
 import VerifyContractorPage from "@/pages/VerifyContractorPage";
 import VerifyLandingPage from "@/pages/VerifyLandingPage";
+import PageAnimationExportStudio from "@/pages/admin/PageAnimationExportStudio";
 import PublicPropertyPage from "@/pages/PublicPropertyPage";
 import PropertyPassportPage from "@/pages/dashboard/PropertyPassportPage";
 import PropertyGrantsPage from "@/pages/dashboard/PropertyGrantsPage";
@@ -734,6 +735,7 @@ export const AppRouter = () => (
       <Route path="/admin/voice-optimizer" element={<ProtectedRoute requiredRole="admin"><AdminVoiceOptimizerPage /></ProtectedRoute>} />
       <Route path="/admin/voice-optimizer/:id" element={<ProtectedRoute requiredRole="admin"><AdminVoiceOptimizerPage /></ProtectedRoute>} />
       <Route path="/admin/sales-analytics" element={<ProtectedRoute requiredRole="admin"><AdminSalesAnalyticsPage /></ProtectedRoute>} />
+      <Route path="/admin/export-studio" element={<ProtectedRoute requiredRole="admin"><PageAnimationExportStudio /></ProtectedRoute>} />
       <Route path="/entrepreneur/sales" element={<EntrepreneurVoiceSalesPage />} />
       <Route path="/homeowner/voice" element={<HomeownerVoiceEntryPage />} />
       <Route path="/admin/homeowner-analytics" element={<ProtectedRoute requiredRole="admin"><AdminHomeownerAnalyticsPage /></ProtectedRoute>} />
