@@ -362,6 +362,10 @@ export const AppRouter = () => (
     <ScrollRestoration />
     <BannerContinueFlow />
     <Routes>
+      {/* Redirects for common mismatched entry points */}
+      <Route path="/index" element={<Home />} />
+      <Route path="/entrepreneur/aipp-analysis" element={<PageAIPPAnalysisLoading />} />
+
       {/* Public */}
       <Route path="/" element={<Home />} />
       <Route path="/go" element={<PageAdLandingAipp />} />
