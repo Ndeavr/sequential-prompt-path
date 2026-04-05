@@ -3,6 +3,14 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 
+export interface AlexProfile {
+  languagePref: string;
+  alexPersona: string;
+  quietHoursStart: number;
+  quietHoursEnd: number;
+  preferredChannel: string;
+}
+
 export const useAuth = () => {
   const queryClient = useQueryClient();
   const [session, setSession] = useState<Session | null>(null);
