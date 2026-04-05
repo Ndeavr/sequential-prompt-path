@@ -3,14 +3,6 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 
-export interface AlexProfile {
-  languagePref: string;
-  alexPersona: string;
-  quietHoursStart: number;
-  quietHoursEnd: number;
-  preferredChannel: string;
-}
-
 export const useAuth = () => {
   const queryClient = useQueryClient();
   const [session, setSession] = useState<Session | null>(null);
@@ -50,28 +42,6 @@ export const useAuth = () => {
     enabled: !!session?.user?.id,
   });
 
-  const profileQuery = useQuery({
-    queryKey: ["alex-profile", session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("language_pref, alex_persona, quiet_hours_start, quiet_hours_end, preferred_channel")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-      if (error) throw error;
-      if (!data) return null;
-      return {
-        languagePref: data.language_pref ?? "fr",
-        alexPersona: data.alex_persona ?? "advisor",
-        quietHoursStart: data.quiet_hours_start ?? 21,
-        quietHoursEnd: data.quiet_hours_end ?? 8,
-        preferredChannel: data.preferred_channel ?? "email",
-      } as AlexProfile;
-    },
-    enabled: !!session?.user?.id,
-  });
-
   const role = roleQuery.data ?? null;
   const isRoleLoading = !!session?.user?.id && !roleQuery.isFetched;
   const isAuthLoading = loading || isRoleLoading;
@@ -89,7 +59,6 @@ export const useAuth = () => {
     hasResolvedRole: !session?.user || roleQuery.isFetched,
     isAuthenticated: !!session?.user,
     role: role as string | null,
-    alexProfile: profileQuery.data ?? null,
     signOut,
   };
 };
