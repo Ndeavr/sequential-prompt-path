@@ -108,7 +108,7 @@ const SmartHeader = () => {
             )}
 
             {/* Brand lockup — LARGE logo */}
-            <Link to={logoTo} className="flex items-center shrink-0 group -ml-2" style={{ minWidth: "fit-content" }}>
+            <Link to={logoTo} className="flex items-center shrink-0 group" style={{ minWidth: "fit-content" }}>
               <img
                 src={unproLogo}
                 alt="UNPRO"
