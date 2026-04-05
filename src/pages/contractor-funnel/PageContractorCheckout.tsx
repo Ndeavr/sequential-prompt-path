@@ -37,22 +37,45 @@ const PLAN_DETAILS: Record<string, { name: string; price: number; features: stri
 
 export default function PageContractorCheckout() {
   const { state, goToStep } = useContractorFunnel();
+  const { isAuthenticated, isLoading: authLoading, session } = useAuth();
+  const navigate = useNavigate();
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const plan = PLAN_DETAILS[state.selectedPlanId || "premium"];
   const planName = plan?.name || "Premium";
   const planPrice = plan?.price || 299;
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      sessionStorage.setItem("unpro_funnel_redirect", "/entrepreneur/checkout");
+      toast.info("Connectez-vous pour finaliser votre paiement");
+      navigate("/login", { replace: true });
+    }
+  }, [authLoading, isAuthenticated, navigate]);
+
   const tax = Math.round(planPrice * 0.14975 * 100) / 100;
   const total = planPrice + tax;
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   const handleCheckout = async () => {
+    if (!session?.access_token) {
+      toast.error("Session expirée. Veuillez vous reconnecter.");
+      return;
+    }
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout-session", {
         body: {
-          planCode: state.selectedPlanId || "premium",
-          businessName: state.businessName,
+          planId: state.selectedPlanId || "premium",
+          billingInterval: "month",
           successUrl: `${window.location.origin}/entrepreneur/activation`,
           cancelUrl: `${window.location.origin}/entrepreneur/checkout`,
         },
@@ -61,9 +84,11 @@ export default function PageContractorCheckout() {
       if (error) throw error;
       if (data?.url) {
         window.open(data.url, "_blank");
-      } else {
-        toast.info("Simulation — le checkout Stripe sera connecté prochainement.");
+      } else if (data?.activated) {
+        toast.success(data.message || "Plan activé!");
         goToStep("activation");
+      } else {
+        toast.error("Erreur lors de la création du checkout");
       }
     } catch (err) {
       console.error(err);
