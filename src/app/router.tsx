@@ -125,6 +125,18 @@ import AdminProspects from "@/pages/admin/AdminProspects";
 import AdminProspectImport from "@/pages/admin/AdminProspectImport";
 import AuditLandingPage from "@/pages/AuditLandingPage";
 import PageAlexGuidedOnboarding from "@/pages/signature/PageAlexGuidedOnboarding";
+
+// Contractor Onboarding AIPP Funnel
+import PageContractorLandingAcquisition from "@/pages/contractor-funnel/PageContractorLandingAcquisition";
+import PageContractorOnboardingStart from "@/pages/contractor-funnel/PageContractorOnboardingStart";
+import PageContractorImportWorkspace from "@/pages/contractor-funnel/PageContractorImportWorkspace";
+import PageContractorAIPPBuilder from "@/pages/contractor-funnel/PageContractorAIPPBuilder";
+import PageContractorAssetsStudio from "@/pages/contractor-funnel/PageContractorAssetsStudio";
+import PageContractorFAQBuilder from "@/pages/contractor-funnel/PageContractorFAQBuilder";
+import PageContractorPlanRecommendation from "@/pages/contractor-funnel/PageContractorPlanRecommendation";
+import PageContractorCheckout from "@/pages/contractor-funnel/PageContractorCheckout";
+import PageContractorActivationSuccess from "@/pages/contractor-funnel/PageContractorActivationSuccess";
+import PageContractorDashboardPostActivation from "@/pages/contractor-funnel/PageContractorDashboardPostActivation";
 import ContractorAvailabilityPage from "@/pages/ContractorAvailabilityPage";
 import PublicBookingPage from "@/pages/PublicBookingPage";
 import BookingClientDemoPage from "@/pages/BookingClientDemoPage";
@@ -382,6 +394,18 @@ export const AppRouter = () => (
 
       {/* Contractor AI Activation */}
       <Route path="/activation-ia" element={<LandingContractorAIActivation />} />
+
+      {/* Contractor Onboarding AIPP Funnel */}
+      <Route path="/entrepreneur/join" element={<PageContractorLandingAcquisition />} />
+      <Route path="/entrepreneur/onboarding" element={<PageContractorOnboardingStart />} />
+      <Route path="/entrepreneur/import" element={<PageContractorImportWorkspace />} />
+      <Route path="/entrepreneur/aipp-builder" element={<PageContractorAIPPBuilder />} />
+      <Route path="/entrepreneur/assets" element={<PageContractorAssetsStudio />} />
+      <Route path="/entrepreneur/faq" element={<PageContractorFAQBuilder />} />
+      <Route path="/entrepreneur/plan" element={<PageContractorPlanRecommendation />} />
+      <Route path="/entrepreneur/checkout" element={<PageContractorCheckout />} />
+      <Route path="/entrepreneur/activation" element={<PageContractorActivationSuccess />} />
+      <Route path="/entrepreneur/dashboard-post" element={<PageContractorDashboardPostActivation />} />
 
       {/* Entrepreneur Funnel */}
       <Route path="/entrepreneur" element={<PageEntrepreneurLandingAIPP />} />
