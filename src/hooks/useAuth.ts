@@ -89,6 +89,7 @@ export const useAuth = () => {
     hasResolvedRole: !session?.user || roleQuery.isFetched,
     isAuthenticated: !!session?.user,
     role: role as string | null,
+    alexProfile: profileQuery.data ?? null,
     signOut,
   };
 };
