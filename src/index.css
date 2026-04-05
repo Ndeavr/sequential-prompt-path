@@ -537,9 +537,9 @@
   }
 
   img[alt="UNPRO"] {
-    height: 125px !important;
+    height: 48px !important;
     flex-shrink: 0 !important;
-    min-height: 125px !important;
+    min-height: 48px !important;
   }
   .logo-hero-glow:hover {
     filter: drop-shadow(0 0 24px hsl(222 100% 60% / 0.5)) drop-shadow(0 0 60px hsl(222 100% 60% / 0.2));
