@@ -125,6 +125,18 @@ import AdminProspects from "@/pages/admin/AdminProspects";
 import AdminProspectImport from "@/pages/admin/AdminProspectImport";
 import AuditLandingPage from "@/pages/AuditLandingPage";
 import PageAlexGuidedOnboarding from "@/pages/signature/PageAlexGuidedOnboarding";
+
+// Contractor Onboarding AIPP Funnel
+import PageContractorLandingAcquisition from "@/pages/contractor-funnel/PageContractorLandingAcquisition";
+import PageContractorOnboardingStart from "@/pages/contractor-funnel/PageContractorOnboardingStart";
+import PageContractorImportWorkspace from "@/pages/contractor-funnel/PageContractorImportWorkspace";
+import PageContractorAIPPBuilder from "@/pages/contractor-funnel/PageContractorAIPPBuilder";
+import PageContractorAssetsStudio from "@/pages/contractor-funnel/PageContractorAssetsStudio";
+import PageContractorFAQBuilder from "@/pages/contractor-funnel/PageContractorFAQBuilder";
+import PageContractorPlanRecommendation from "@/pages/contractor-funnel/PageContractorPlanRecommendation";
+import PageContractorCheckout from "@/pages/contractor-funnel/PageContractorCheckout";
+import PageContractorActivationSuccess from "@/pages/contractor-funnel/PageContractorActivationSuccess";
+import PageContractorDashboardPostActivation from "@/pages/contractor-funnel/PageContractorDashboardPostActivation";
 import ContractorAvailabilityPage from "@/pages/ContractorAvailabilityPage";
 import PublicBookingPage from "@/pages/PublicBookingPage";
 import BookingClientDemoPage from "@/pages/BookingClientDemoPage";

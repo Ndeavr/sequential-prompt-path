@@ -11,7 +11,7 @@ import CardGlass from "@/components/unpro/CardGlass";
 import { useContractorFunnel } from "@/hooks/useContractorFunnel";
 import { fadeUp, staggerContainer, scaleIn } from "@/lib/motion";
 import { DEFAULT_ACTIVATION_CHECKLIST } from "@/types/contractorFunnel";
-import Confetti from "@/components/ui/confetti";
+
 
 export default function PageContractorActivationSuccess() {
   const { state } = useContractorFunnel();
