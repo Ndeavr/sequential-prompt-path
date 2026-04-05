@@ -395,6 +395,18 @@ export const AppRouter = () => (
       {/* Contractor AI Activation */}
       <Route path="/activation-ia" element={<LandingContractorAIActivation />} />
 
+      {/* Contractor Onboarding AIPP Funnel */}
+      <Route path="/entrepreneur/join" element={<PageContractorLandingAcquisition />} />
+      <Route path="/entrepreneur/onboarding" element={<PageContractorOnboardingStart />} />
+      <Route path="/entrepreneur/import" element={<PageContractorImportWorkspace />} />
+      <Route path="/entrepreneur/aipp-builder" element={<PageContractorAIPPBuilder />} />
+      <Route path="/entrepreneur/assets" element={<PageContractorAssetsStudio />} />
+      <Route path="/entrepreneur/faq" element={<PageContractorFAQBuilder />} />
+      <Route path="/entrepreneur/plan" element={<PageContractorPlanRecommendation />} />
+      <Route path="/entrepreneur/checkout" element={<PageContractorCheckout />} />
+      <Route path="/entrepreneur/activation" element={<PageContractorActivationSuccess />} />
+      <Route path="/entrepreneur/dashboard-post" element={<PageContractorDashboardPostActivation />} />
+
       {/* Entrepreneur Funnel */}
       <Route path="/entrepreneur" element={<PageEntrepreneurLandingAIPP />} />
       <Route path="/entrepreneur/analysis/loading" element={<PageAIPPAnalysisLoading />} />
