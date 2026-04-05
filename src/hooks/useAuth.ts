@@ -50,6 +50,28 @@ export const useAuth = () => {
     enabled: !!session?.user?.id,
   });
 
+  const profileQuery = useQuery({
+    queryKey: ["alex-profile", session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("language_pref, alex_persona, quiet_hours_start, quiet_hours_end, preferred_channel")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return null;
+      return {
+        languagePref: data.language_pref ?? "fr",
+        alexPersona: data.alex_persona ?? "advisor",
+        quietHoursStart: data.quiet_hours_start ?? 21,
+        quietHoursEnd: data.quiet_hours_end ?? 8,
+        preferredChannel: data.preferred_channel ?? "email",
+      } as AlexProfile;
+    },
+    enabled: !!session?.user?.id,
+  });
+
   const role = roleQuery.data ?? null;
   const isRoleLoading = !!session?.user?.id && !roleQuery.isFetched;
   const isAuthLoading = loading || isRoleLoading;
