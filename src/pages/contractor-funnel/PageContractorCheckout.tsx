@@ -2,15 +2,17 @@
  * UNPRO — PageContractorCheckout
  * Summary, Stripe checkout, founder offer.
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, CreditCard, Shield, Lock, CheckCircle2, Gift } from "lucide-react";
+import { ArrowLeft, CreditCard, Shield, Lock, CheckCircle2, Gift, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import FunnelLayout from "@/components/contractor-funnel/FunnelLayout";
 import CardGlass from "@/components/unpro/CardGlass";
 import { useContractorFunnel } from "@/hooks/useContractorFunnel";
+import { useAuth } from "@/hooks/useAuth";
 import { fadeUp, staggerContainer } from "@/lib/motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
