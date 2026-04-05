@@ -1994,6 +1994,54 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_outreach_queue: {
+        Row: {
+          cancelled_reason: string | null
+          channel: string
+          created_at: string
+          id: string
+          message_text: string | null
+          priority: number
+          quick_replies: Json | null
+          scheduled_at: string
+          sent_at: string | null
+          status: string
+          trigger_payload: Json
+          trigger_type: string
+          user_id: string
+        }
+        Insert: {
+          cancelled_reason?: string | null
+          channel?: string
+          created_at?: string
+          id?: string
+          message_text?: string | null
+          priority?: number
+          quick_replies?: Json | null
+          scheduled_at: string
+          sent_at?: string | null
+          status?: string
+          trigger_payload: Json
+          trigger_type: string
+          user_id: string
+        }
+        Update: {
+          cancelled_reason?: string | null
+          channel?: string
+          created_at?: string
+          id?: string
+          message_text?: string | null
+          priority?: number
+          quick_replies?: Json | null
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: string
+          trigger_payload?: Json
+          trigger_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       alex_performance_metrics: {
         Row: {
           created_at: string | null
@@ -2023,6 +2071,53 @@ export type Database = {
           timeframe?: string | null
         }
         Relationships: []
+      }
+      alex_persistent_memory: {
+        Row: {
+          confidence: number
+          created_at: string
+          expires_at: string | null
+          id: string
+          key: string
+          last_confirmed_at: string | null
+          memory_type: string
+          source_thread_id: string | null
+          user_id: string
+          value: Json
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          key: string
+          last_confirmed_at?: string | null
+          memory_type: string
+          source_thread_id?: string | null
+          user_id: string
+          value: Json
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          key?: string
+          last_confirmed_at?: string | null
+          memory_type?: string
+          source_thread_id?: string | null
+          user_id?: string
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_persistent_memory_source_thread_id_fkey"
+            columns: ["source_thread_id"]
+            isOneToOne: false
+            referencedRelation: "alex_threads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       alex_predictive_matches: {
         Row: {
@@ -2659,6 +2754,74 @@ export type Database = {
           objection_type?: string
           resolved?: boolean
           session_id?: string
+        }
+        Relationships: []
+      }
+      alex_thread_messages: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          role: string
+          thread_id: string
+          token_count: number | null
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          id?: string
+          role: string
+          thread_id: string
+          token_count?: number | null
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          role?: string
+          thread_id?: string
+          token_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_thread_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "alex_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_threads: {
+        Row: {
+          context_type: string
+          created_at: string
+          entity_id: string | null
+          id: string
+          last_message_at: string | null
+          status: string
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          context_type: string
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          last_message_at?: string | null
+          status?: string
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          context_type?: string
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          last_message_at?: string | null
+          status?: string
+          title?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -24935,6 +25098,7 @@ export type Database = {
           account_type: string | null
           address_line_1: string | null
           affiliate_code: string | null
+          alex_persona: string
           avatar_url: string | null
           city: string | null
           country: string | null
@@ -24945,11 +25109,15 @@ export type Database = {
           id: string
           invited_by_user_id: string | null
           language: string | null
+          language_pref: string
           last_name: string | null
           onboarding_completed: boolean | null
           phone: string | null
           postal_code: string | null
+          preferred_channel: string
           province: string | null
+          quiet_hours_end: number
+          quiet_hours_start: number
           referral_code: string | null
           salutation: string | null
           updated_at: string
@@ -24959,6 +25127,7 @@ export type Database = {
           account_type?: string | null
           address_line_1?: string | null
           affiliate_code?: string | null
+          alex_persona?: string
           avatar_url?: string | null
           city?: string | null
           country?: string | null
@@ -24969,11 +25138,15 @@ export type Database = {
           id?: string
           invited_by_user_id?: string | null
           language?: string | null
+          language_pref?: string
           last_name?: string | null
           onboarding_completed?: boolean | null
           phone?: string | null
           postal_code?: string | null
+          preferred_channel?: string
           province?: string | null
+          quiet_hours_end?: number
+          quiet_hours_start?: number
           referral_code?: string | null
           salutation?: string | null
           updated_at?: string
@@ -24983,6 +25156,7 @@ export type Database = {
           account_type?: string | null
           address_line_1?: string | null
           affiliate_code?: string | null
+          alex_persona?: string
           avatar_url?: string | null
           city?: string | null
           country?: string | null
@@ -24993,11 +25167,15 @@ export type Database = {
           id?: string
           invited_by_user_id?: string | null
           language?: string | null
+          language_pref?: string
           last_name?: string | null
           onboarding_completed?: boolean | null
           phone?: string | null
           postal_code?: string | null
+          preferred_channel?: string
           province?: string | null
+          quiet_hours_end?: number
+          quiet_hours_start?: number
           referral_code?: string | null
           salutation?: string | null
           updated_at?: string
