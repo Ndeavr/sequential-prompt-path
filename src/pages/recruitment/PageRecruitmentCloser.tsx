@@ -22,9 +22,9 @@ export default function PageRecruitmentCloser() {
   return (
     <>
       <Helmet>
-        <title>Carrière UNPRO — Job d'été représentant terrain IA</title>
+        <title>Représentant terrain — Carrières UNPRO</title>
         <meta name="description" content="Job d'été, temps partiel ou permanent. Rencontre des entrepreneurs, crée leur profil IA, encaisse des commissions récurrentes. Pas de cold call." />
-        <link rel="canonical" href="https://sequential-prompt-path.lovable.app/carriere" />
+        <link rel="canonical" href="https://sequential-prompt-path.lovable.app/carrieres/representant" />
       </Helmet>
 
       <HeroSectionCloser
