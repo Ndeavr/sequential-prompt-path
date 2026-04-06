@@ -9,7 +9,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes";
 import { HelmetProvider } from "react-helmet-async";
 import { AlexVoiceProvider } from "@/contexts/AlexVoiceContext";
-import { AlexRuntimeSingletonProvider } from "@/contexts/AlexRuntimeSingleton";
 import { ActiveRoleProvider } from "@/contexts/ActiveRoleContext";
 import { LanguageProvider } from "@/components/ui/LanguageToggle";
 import GlobalAlexOverlay from "@/components/alex/GlobalAlexOverlay";
@@ -36,14 +35,12 @@ export const Providers = ({ children }: ProvidersProps) => (
         <LanguageProvider>
           <ActiveRoleProvider>
             <AlexVoiceProvider>
-              <AlexRuntimeSingletonProvider>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  {children}
-                  <GlobalAlexOverlay />
-                </TooltipProvider>
-              </AlexRuntimeSingletonProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                {children}
+                <GlobalAlexOverlay />
+              </TooltipProvider>
             </AlexVoiceProvider>
           </ActiveRoleProvider>
         </LanguageProvider>
