@@ -11,6 +11,7 @@ import ScrollRestoration from "@/components/ScrollRestoration";
 import AuthCallbackPage from "@/pages/AuthCallbackPage";
 import OnboardingPageUnpro from "@/pages/OnboardingPageUnpro";
 import LoginPageUnpro from "@/pages/LoginPageUnpro";
+import PreLoginRolePage from "@/pages/PreLoginRolePage";
 
 // Public
 import PageAdLandingAipp from "@/pages/ad-landing/PageAdLandingAipp";
