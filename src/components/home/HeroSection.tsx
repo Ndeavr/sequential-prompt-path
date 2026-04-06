@@ -147,13 +147,7 @@ export default function HeroSection() {
     const selectedIntent = intent || activeIntent;
     const greeting = getIntentGreeting(selectedIntent);
     start({ initialGreeting: greeting });
-
-    // Auto-open file upload after Alex finishes greeting (~4s)
-    if (selectedIntent === "avis" || selectedIntent === "probleme" || selectedIntent === "projet") {
-      setTimeout(() => {
-        fileInputRef.current?.click();
-      }, 4000);
-    }
+    alexTranscriptRef.current = ""; // Reset transcript tracking
   }, [start, getIntentGreeting, activeIntent, isPrimary, acquireLock]);
 
   const stopVoice = useCallback(() => {
