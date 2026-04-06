@@ -412,23 +412,6 @@ export default function HeroSection() {
           </AnimatePresence>
         </div>
 
-        {/* Hidden file input for upload */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*,application/pdf"
-          multiple
-          capture="environment"
-          className="hidden"
-          onChange={(e) => {
-            const files = e.target.files;
-            if (files && files.length > 0) {
-              console.log("[Hero] Files selected:", files.length);
-            }
-            e.target.value = "";
-          }}
-        />
-
         {/* Bottom gradient */}
         <div className="absolute bottom-0 left-0 right-0 h-40 z-20 pointer-events-none" style={{
           background: "linear-gradient(to top, hsl(228 40% 7%) 0%, transparent 100%)",
@@ -436,6 +419,15 @@ export default function HeroSection() {
       </section>
 
       <AlexAssistantSheet open={textSheetOpen} onClose={() => setTextSheetOpen(false)} />
+
+      <UploadPhotoModal
+        open={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        onFilesSelected={(files) => {
+          console.log("[Hero] Files uploaded via modal:", files.length, files.map(f => f.name));
+          // TODO: Send files to Alex for analysis
+        }}
+      />
     </>
   );
 }
