@@ -324,7 +324,6 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: {
-            languageCode: "fr-CA",
             voiceConfig: {
               prebuiltVoiceConfig: { voiceName },
             },
@@ -332,15 +331,6 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           systemInstruction: {
             parts: [{ text: ALEX_SYSTEM_INSTRUCTION }],
           },
-          ...ALEX_LIVE_CONFIG.config.inputAudioTranscription !== undefined
-            ? { inputAudioTranscription: { ...ALEX_LIVE_CONFIG.config.inputAudioTranscription } }
-            : {},
-          ...ALEX_LIVE_CONFIG.config.outputAudioTranscription !== undefined
-            ? { outputAudioTranscription: { ...ALEX_LIVE_CONFIG.config.outputAudioTranscription } }
-            : {},
-          ...ALEX_LIVE_CONFIG.config.realtimeInputConfig !== undefined
-            ? { realtimeInputConfig: { ...ALEX_LIVE_CONFIG.config.realtimeInputConfig } }
-            : {},
         },
       });
 
