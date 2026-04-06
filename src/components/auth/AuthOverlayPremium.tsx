@@ -58,7 +58,7 @@ export default function AuthOverlayPremium() {
     getAuthOverlayState
   );
 
-  const [mode, setMode] = useState<AuthMode>("choice");
+  const [mode, setMode] = useState<AuthMode>("role");
   const [secondaryMethod, setSecondaryMethod] = useState<SecondaryMethod>(null);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const overlayRef = useRef<HTMLDivElement>(null);
