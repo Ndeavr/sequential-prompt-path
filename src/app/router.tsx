@@ -88,6 +88,7 @@ import FlywheelPage from "@/pages/FlywheelPage";
 import EnergyPage from "@/pages/EnergyPage";
 import PreventiveMaintenancePage from "@/pages/PreventiveMaintenancePage";
 import CoproprietePage from "@/pages/CoproprietePage";
+import CondosPricingPage from "@/pages/condos/CondosPricingPage";
 import BuildingIntelligenceMap from "@/pages/BuildingIntelligenceMap";
 import AnswerEnginePage from "@/pages/AnswerEnginePage";
 import BusinessImportPage from "@/pages/BusinessImportPage";
