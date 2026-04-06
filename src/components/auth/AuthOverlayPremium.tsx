@@ -68,7 +68,7 @@ export default function AuthOverlayPremium() {
   // Reset state when opened
   useEffect(() => {
     if (isOpen) {
-      setMode("choice");
+      setMode("role");
       setSecondaryMethod(null);
       setSelectedRoles([]);
     }
