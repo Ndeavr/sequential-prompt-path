@@ -107,24 +107,14 @@ const SmartHeader = () => {
               </Button>
             )}
 
-            {/* Brand lockup — shiny metal border logo */}
+            {/* Brand lockup — LARGE logo */}
             <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0" style={{ minWidth: "fit-content" }}>
-              <div
-                className="rounded-lg transition-all duration-300 group-hover:scale-105"
-                style={{
-                  padding: "4px 8px",
-                  background: "linear-gradient(135deg, hsl(0 0% 22%) 0%, hsl(0 0% 32%) 40%, hsl(0 0% 26%) 100%)",
-                  border: "1px solid hsl(0 0% 100% / 0.12)",
-                  boxShadow: "0 1px 4px hsl(0 0% 0% / 0.3), inset 0 1px 0 hsl(0 0% 100% / 0.08)",
-                }}
-              >
-                <img
-                  src={unproLogo}
-                  alt="UNPRO"
-                  className="object-contain"
-                  style={{ height: 39, border: "none", outline: "none", padding: 0, margin: 0 }}
-                />
-              </div>
+              <img
+                src={unproLogo}
+                alt="UNPRO"
+                className="object-contain transition-all duration-300 group-hover:scale-105"
+                style={{ height: 43, border: "none", outline: "none", boxShadow: "none", padding: 0, margin: 0 }}
+              />
             </Link>
 
             {/* Desktop nav */}
