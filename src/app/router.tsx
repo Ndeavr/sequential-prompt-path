@@ -349,6 +349,8 @@ import AnalyserSoumissionsPage from "@/pages/AnalyserSoumissionsPage";
 import PageRecruitmentCloser from "@/pages/recruitment/PageRecruitmentCloser";
 import PageRecruitmentThankYou from "@/pages/recruitment/PageRecruitmentThankYou";
 import PageRepresentativeOnboarding from "@/pages/recruitment/PageRepresentativeOnboarding";
+import PageCareers from "@/pages/recruitment/PageCareers";
+import PageRecruitmentProgrammer from "@/pages/recruitment/PageRecruitmentProgrammer";
 // import TrouverEntrepreneurPage from "@/pages/TrouverEntrepreneurPage"; // Hidden for now
 import DecrireMonProjetPage from "@/pages/DecrireMonProjetPage";
 import ParlerAAlexPage from "@/pages/ParlerAAlexPage";
