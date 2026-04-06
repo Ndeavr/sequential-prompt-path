@@ -7683,6 +7683,51 @@ export type Database = {
           },
         ]
       }
+      cluster_domain_project_size_appointment_value: {
+        Row: {
+          annual_market_value: number
+          appointment_capture_factor: number
+          appointment_market_value: number
+          cluster_key: string
+          cluster_value_tier: string
+          created_at: string
+          domain_key: string
+          id: string
+          project_size_code: string
+          scarcity_status: string
+          updated_at: string
+          value_per_slot: number
+        }
+        Insert: {
+          annual_market_value?: number
+          appointment_capture_factor?: number
+          appointment_market_value?: number
+          cluster_key: string
+          cluster_value_tier?: string
+          created_at?: string
+          domain_key: string
+          id?: string
+          project_size_code: string
+          scarcity_status?: string
+          updated_at?: string
+          value_per_slot?: number
+        }
+        Update: {
+          annual_market_value?: number
+          appointment_capture_factor?: number
+          appointment_market_value?: number
+          cluster_key?: string
+          cluster_value_tier?: string
+          created_at?: string
+          domain_key?: string
+          id?: string
+          project_size_code?: string
+          scarcity_status?: string
+          updated_at?: string
+          value_per_slot?: number
+        }
+        Relationships: []
+      }
       cluster_domain_project_size_capacity: {
         Row: {
           annual_demand_estimated: number
@@ -25508,6 +25553,39 @@ export type Database = {
           },
         ]
       }
+      plan_project_size_included_appointments: {
+        Row: {
+          access_allowed: boolean
+          created_at: string
+          id: string
+          plan_code: string
+          project_size_code: string
+          units_consumed_per_appointment: number
+          updated_at: string
+          upgrade_target_plan_code: string | null
+        }
+        Insert: {
+          access_allowed?: boolean
+          created_at?: string
+          id?: string
+          plan_code: string
+          project_size_code: string
+          units_consumed_per_appointment?: number
+          updated_at?: string
+          upgrade_target_plan_code?: string | null
+        }
+        Update: {
+          access_allowed?: boolean
+          created_at?: string
+          id?: string
+          plan_code?: string
+          project_size_code?: string
+          units_consumed_per_appointment?: number
+          updated_at?: string
+          upgrade_target_plan_code?: string | null
+        }
+        Relationships: []
+      }
       plan_recommendations: {
         Row: {
           contractor_id: string
@@ -37214,6 +37292,27 @@ export type Database = {
         Args: { p_waitlist_id: string }
         Returns: Json
       }
+      check_upgrade_recommendation: {
+        Args: { _usage_id: string }
+        Returns: undefined
+      }
+      compute_extra_appointment_value: {
+        Args: {
+          _cluster_value_tier?: string
+          _plan_code: string
+          _project_size_code: string
+          _scarcity_status?: string
+        }
+        Returns: Json
+      }
+      compute_included_appointments: {
+        Args: { _plan_code: string }
+        Returns: Json
+      }
+      compute_monthly_overage: {
+        Args: { _billing_cycle_start?: string; _contractor_id: string }
+        Returns: Json
+      }
       compute_scarcity_status: {
         Args: { max_slots: number; occupied: number }
         Returns: string
@@ -37337,6 +37436,15 @@ export type Database = {
         Args: { _syndicate_id: string; _user_id: string }
         Returns: boolean
       }
+      manual_override_appointment_quota: {
+        Args: {
+          _contractor_id: string
+          _included_units: number
+          _plan_code: string
+          _reason: string
+        }
+        Returns: Json
+      }
       match_rag_chunks: {
         Args: {
           filter_namespaces?: string[]
@@ -37382,6 +37490,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      refresh_appointment_value_matrix: { Args: never; Returns: Json }
       reserve_promo_code_redemption: {
         Args: {
           p_code: string
@@ -37418,6 +37527,16 @@ export type Database = {
       set_current_contractor_aipp_score: {
         Args: { _contractor_id: string; _score_id: string }
         Returns: undefined
+      }
+      track_appointment_consumption: {
+        Args: {
+          _billing_cycle_start?: string
+          _contractor_id: string
+          _new_status: string
+          _plan_code: string
+          _project_size_code: string
+        }
+        Returns: Json
       }
       unpro_aipp_tier: { Args: { score: number }; Returns: string }
       validate_article_readiness: {
