@@ -26,7 +26,8 @@ export default function LoginPageUnpro() {
       const navCtx = consumeNavigationContext();
       const from = (location.state as any)?.from;
       const resumePath = getResumePath(role);
-      const target = intent?.returnPath || navCtx?.intendedDestination || from || resumePath || getDefaultRedirectForRole(role);
+      // Priority: explicit intent > nav context > referrer > resume where user left off > home
+      const target = intent?.returnPath || navCtx?.intendedDestination || from || resumePath || "/";
       navigate(target, { replace: true });
     }
   }, [isAuthenticated, isLoading, role, navigate, location]);
