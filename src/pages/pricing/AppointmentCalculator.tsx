@@ -18,7 +18,7 @@ import {
 import {
   Calculator, TrendingUp, ArrowRight, Target, MapPin, Briefcase, DollarSign,
   BarChart3, Zap, Crown, Star, Users, Shield, Sparkles, Brain, Lightbulb,
-  ChevronUp, AlertTriangle,
+  ChevronUp, AlertTriangle, Flame,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip } from "recharts";
