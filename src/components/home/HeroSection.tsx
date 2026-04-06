@@ -17,6 +17,7 @@ import { alexRuntime } from "@/services/alexRuntimeSingleton";
 import { alexAudioChannel } from "@/services/alexSingleAudioChannel";
 import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, AlertTriangle, Sparkles, MessageSquare, ArrowRight, Camera, FileSearch } from "lucide-react";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
+import UploadPhotoModal from "@/components/home/UploadPhotoModal";
 
 const cinematicBg = "/images/hero-bg.gif";
 
@@ -58,13 +59,37 @@ export default function HeroSection() {
   const { user } = useAuth();
   const [textSheetOpen, setTextSheetOpen] = useState(false);
   const [activeIntent, setActiveIntent] = useState<IntentSlug>("probleme");
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const alexTranscriptRef = useRef("");
 
   // Singleton guard — register as primary
   const { isPrimary, acquireLock, releaseLock, markActive } = useAlexSingleton(COMPONENT_NAME, 'primary');
 
   const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
-    onTranscript: () => {},
-    onUserTranscript: () => {},
+    onTranscript: (text) => {
+      // Accumulate Alex's transcript to detect photo-related questions
+      alexTranscriptRef.current += text;
+      const lower = alexTranscriptRef.current.toLowerCase();
+      const photoKeywords = ["photo", "image", "téléverser", "téléversez", "envoyer une photo", "uploader", "fichier", "picture"];
+      const hasPhotoAsk = photoKeywords.some(kw => lower.includes(kw));
+      if (hasPhotoAsk && !uploadModalOpen) {
+        // Alex asked about photo — will show upload when user says yes or after turn completes
+        console.log("[Hero] Alex mentioned photo — priming upload trigger");
+      }
+    },
+    onUserTranscript: (text) => {
+      // Detect user saying "yes" after Alex asked about photo
+      const lower = text.toLowerCase();
+      const alexLower = alexTranscriptRef.current.toLowerCase();
+      const photoKeywords = ["photo", "image", "téléverser", "téléversez", "envoyer une photo", "uploader"];
+      const alexAskedPhoto = photoKeywords.some(kw => alexLower.includes(kw));
+      const userSaysYes = ["oui", "yes", "ok", "d'accord", "parfait", "bien sûr", "go", "envoyer", "envoie"].some(y => lower.includes(y));
+      if (alexAskedPhoto && userSaysYes) {
+        console.log("[Hero] User confirmed photo — opening upload modal");
+        setUploadModalOpen(true);
+        alexTranscriptRef.current = ""; // Reset
+      }
+    },
     onConnect: () => {
       console.log("[Hero] Gemini Live connected");
       markActive('gemini-live');
@@ -82,8 +107,6 @@ export default function HeroSection() {
   const orbState = isConnecting ? "thinking" : isActive ? (isSpeaking ? "speaking" : "listening") : "idle";
   const voiceActive = isActive || isConnecting;
   const current = INTENTS.find((i) => i.slug === activeIntent)!;
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getIntentGreeting = useCallback((intent: IntentSlug) => {
     const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || null;
@@ -122,13 +145,7 @@ export default function HeroSection() {
     const selectedIntent = intent || activeIntent;
     const greeting = getIntentGreeting(selectedIntent);
     start({ initialGreeting: greeting });
-
-    // Auto-open file upload after Alex finishes greeting (~4s)
-    if (selectedIntent === "avis" || selectedIntent === "probleme" || selectedIntent === "projet") {
-      setTimeout(() => {
-        fileInputRef.current?.click();
-      }, 4000);
-    }
+    alexTranscriptRef.current = ""; // Reset transcript tracking
   }, [start, getIntentGreeting, activeIntent, isPrimary, acquireLock]);
 
   const stopVoice = useCallback(() => {
@@ -393,23 +410,6 @@ export default function HeroSection() {
           </AnimatePresence>
         </div>
 
-        {/* Hidden file input for upload */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*,application/pdf"
-          multiple
-          capture="environment"
-          className="hidden"
-          onChange={(e) => {
-            const files = e.target.files;
-            if (files && files.length > 0) {
-              console.log("[Hero] Files selected:", files.length);
-            }
-            e.target.value = "";
-          }}
-        />
-
         {/* Bottom gradient */}
         <div className="absolute bottom-0 left-0 right-0 h-40 z-20 pointer-events-none" style={{
           background: "linear-gradient(to top, hsl(228 40% 7%) 0%, transparent 100%)",
@@ -417,6 +417,15 @@ export default function HeroSection() {
       </section>
 
       <AlexAssistantSheet open={textSheetOpen} onClose={() => setTextSheetOpen(false)} />
+
+      <UploadPhotoModal
+        open={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        onFilesSelected={(files) => {
+          console.log("[Hero] Files uploaded via modal:", files.length, files.map(f => f.name));
+          // TODO: Send files to Alex for analysis
+        }}
+      />
     </>
   );
 }
