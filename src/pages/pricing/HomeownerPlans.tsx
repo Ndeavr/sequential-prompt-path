@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Home, Sparkles, ArrowRight } from "lucide-react";
+import { CheckCircle2, Home, Sparkles, ArrowRight, FileSearch } from "lucide-react";
 import { motion } from "framer-motion";
 
 const fadeUp = {
@@ -10,23 +9,26 @@ const fadeUp = {
 };
 
 const FREE_FEATURES = [
-  { text: "Créer profil propriétaire", link: null },
-  { text: "Créer Passeport Maison", link: "/passeport-maison" },
+  { text: "Créer un profil propriétaire", link: null },
+  { text: "Créer un Passeport Maison", link: "/passeport-maison" },
   { text: "Décrire un projet", link: null },
-  { text: "Recevoir entrepreneur recommandé", link: null },
+  { text: "Recevoir un entrepreneur recommandé", link: null },
   { text: "Réserver un rendez-vous", link: null },
+  { text: "Analyse intelligente des soumissions : 1 analyse incluse par mois", link: null },
 ];
 
 const PLUS_FEATURES = [
+  { text: "Tout le plan Gratuit", link: null },
   { text: "Passeport Maison complet", link: "/passeport-maison" },
-  { text: "Analyse intelligente des soumissions", link: null },
+  { text: "Analyses intelligentes des soumissions illimitées", link: null },
   { text: "Score maison UNPRO", link: "/score-maison" },
-  { text: "Historique travaux", link: null },
+  { text: "Historique des travaux", link: null },
+  { text: "Outils avancés de suivi et d'organisation", link: null },
 ];
 
 function FeatureList({ features }: { features: { text: string; link: string | null }[] }) {
   return (
-    <ul className="space-y-3">
+    <ul className="space-y-2.5">
       {features.map((f) => (
         <li key={f.text} className="flex items-start gap-2.5">
           <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-0.5" />
@@ -52,7 +54,9 @@ export default function HomeownerPlans() {
             <Home className="h-3.5 w-3.5" /> Pour les propriétaires
           </div>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground">Toujours gratuit pour les propriétaires</h2>
-          <p className="text-muted-foreground mt-2 max-w-md mx-auto">Trouvez le bon entrepreneur sans frais cachés.</p>
+          <p className="text-muted-foreground mt-2 max-w-lg mx-auto">
+            Trouvez le bon entrepreneur, comparez mieux, organisez vos projets et avancez sans frais cachés.
+          </p>
         </motion.div>
 
         <div className="grid md:grid-cols-2 gap-5 max-w-2xl mx-auto">
@@ -63,9 +67,7 @@ export default function HomeownerPlans() {
                 <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center">
                   <Home className="h-5 w-5 text-foreground" />
                 </div>
-                <div>
-                  <h3 className="font-bold text-foreground">Gratuit</h3>
-                </div>
+                <h3 className="font-bold text-foreground">Gratuit</h3>
               </div>
               <div className="mb-5">
                 <span className="text-4xl font-extrabold text-foreground">0 $</span>
@@ -88,14 +90,11 @@ export default function HomeownerPlans() {
                 <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
                   <Sparkles className="h-5 w-5 text-primary" />
                 </div>
-                <div>
-                  <h3 className="font-bold text-foreground">Propriétaire Plus</h3>
-                </div>
+                <h3 className="font-bold text-foreground">Propriétaire Plus</h3>
               </div>
               <div className="mb-5">
                 <span className="text-4xl font-extrabold text-foreground">49 $</span>
                 <span className="text-muted-foreground text-sm ml-1">/ année</span>
-                <p className="text-xs text-success font-medium mt-1">Ou 0 $ avec code promo</p>
               </div>
               <FeatureList features={PLUS_FEATURES} />
               <div className="mt-auto pt-6">
@@ -106,6 +105,28 @@ export default function HomeownerPlans() {
             </div>
           </motion.div>
         </div>
+
+        {/* Analyse intelligente des soumissions */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-8 max-w-2xl mx-auto"
+        >
+          <div className="rounded-2xl border border-border/50 bg-card/50 p-5 md:p-6">
+            <div className="flex items-start gap-3">
+              <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <FileSearch className="h-4.5 w-4.5 text-primary" />
+              </div>
+              <div>
+                <h4 className="font-bold text-foreground text-sm mb-1">Analyse intelligente des soumissions</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Déposez jusqu'à 3 soumissions et UNPRO repère les écarts, les zones floues, les oublis possibles et les éléments à vérifier avant d'aller plus loin.
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </section>
   );

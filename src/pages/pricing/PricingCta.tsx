@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, HardHat, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, Calculator } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function PricingCta() {
@@ -23,13 +23,13 @@ export default function PricingCta() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button asChild size="lg" className="rounded-2xl h-13 px-8 text-base shadow-glow">
                   <Link to="/signup?type=contractor">
-                    Créer mon profil entrepreneur <ArrowRight className="h-4 w-4 ml-2" />
+                    Voir les plans <ArrowRight className="h-4 w-4 ml-2" />
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="rounded-2xl h-13 px-8 text-base">
-                  <Link to="/comment-ca-marche">
-                    Voir comment ça fonctionne <HardHat className="h-4 w-4 ml-2" />
-                  </Link>
+                  <a href="#calculateur">
+                    <Calculator className="h-4 w-4 mr-2" /> Simuler ma croissance
+                  </a>
                 </Button>
               </div>
             </div>

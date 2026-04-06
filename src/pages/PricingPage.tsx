@@ -8,6 +8,7 @@ import PricingHero from "./pricing/PricingHero";
 import HomeownerPlans from "./pricing/HomeownerPlans";
 import ContractorPlans from "./pricing/ContractorPlans";
 import SignaturePlan from "./pricing/SignaturePlan";
+import SubscriptionExplainer from "./pricing/SubscriptionExplainer";
 import AppointmentCalculator from "./pricing/AppointmentCalculator";
 import PlatformComparison from "./pricing/PlatformComparison";
 import AppointmentPricing from "./pricing/AppointmentPricing";
@@ -22,7 +23,6 @@ export default function PricingPage() {
   const session = getCalculatorSession();
   const contractorRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to contractor plans if coming from calculator
   useEffect(() => {
     if (preSelectedPlan && contractorRef.current) {
       setTimeout(() => {
@@ -35,7 +35,6 @@ export default function PricingPage() {
     <div className="min-h-screen bg-background">
       <PricingHero />
 
-      {/* Calculator recommendation banner */}
       {session && preSelectedPlan && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -61,10 +60,10 @@ export default function PricingPage() {
       <div ref={contractorRef}>
         <ContractorPlans preSelectedPlan={preSelectedPlan} />
       </div>
-      <SignaturePlan />
+      <SubscriptionExplainer />
       <AppointmentCalculator />
-      <PlatformComparison />
       <AppointmentPricing />
+      <PlatformComparison />
       <PricingFaq />
       <PricingCta />
     </div>

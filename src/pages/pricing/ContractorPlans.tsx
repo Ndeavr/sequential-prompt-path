@@ -1,18 +1,18 @@
 /**
- * UNPRO — Contractor Plans with billing toggle & pre-selection support
+ * UNPRO — Contractor Plans with billing toggle, appointments & pre-selection
  */
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   CheckCircle2, ArrowRight, HardHat, Users, TrendingUp,
-  Star, Crown,
+  Star, Crown, CalendarCheck, Shield,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
-import { CONTRACTOR_PLANS, formatPlanPrice, getYearlySavingsPercent, type BillingInterval, type ContractorPlan } from "@/config/contractorPlans";
+import { CONTRACTOR_PLANS, formatPlanPrice, getYearlySavingsPercent, getMonthlyEquivalent, type BillingInterval, type ContractorPlan } from "@/config/contractorPlans";
 import { cn } from "@/lib/utils";
 
 const fadeUp = {
@@ -28,6 +28,7 @@ const PLAN_ICONS: Record<string, React.ElementType> = {
   pro: TrendingUp,
   premium: Star,
   elite: Crown,
+  signature: Shield,
 };
 
 function PlanCard({ plan, index, isRecommended, interval, onCheckout }: {
@@ -46,7 +47,7 @@ function PlanCard({ plan, index, isRecommended, interval, onCheckout }: {
   return (
     <motion.div variants={fadeUp} custom={index} initial="hidden" whileInView="visible" viewport={{ once: true }} data-plan={plan.id}>
       <div className={cn(
-        "rounded-2xl p-6 h-full flex flex-col transition-all duration-300 hover:-translate-y-1 relative",
+        "rounded-2xl p-5 md:p-6 h-full flex flex-col transition-all duration-300 hover:-translate-y-1 relative",
         isHighlighted
           ? "bg-card border-2 border-primary/30 shadow-glow"
           : "glass-card-elevated"
@@ -72,58 +73,80 @@ function PlanCard({ plan, index, isRecommended, interval, onCheckout }: {
         </div>
 
         <div className="mb-1">
-          <span className="text-4xl font-extrabold text-foreground">{formatPlanPrice(monthlyPrice)}</span>
+          <span className="text-3xl font-extrabold text-foreground">{formatPlanPrice(monthlyPrice)}</span>
           <span className="text-muted-foreground text-sm">/mois</span>
         </div>
 
         {interval === "year" && savings > 0 && (
-          <p className="text-xs font-semibold text-success mb-3">
+          <p className="text-xs font-semibold text-success mb-2">
             Économisez {savings}% vs mensuel
           </p>
         )}
         {interval === "month" && savings > 0 && plan.monthlyPrice > 0 && (
-          <p className="text-xs text-muted-foreground mb-3">
-            ou {formatPlanPrice(Math.round(plan.yearlyPrice / 12))}/mois en annuel{" "}
+          <p className="text-xs text-muted-foreground mb-2">
+            ou {getMonthlyEquivalent(plan)}/mois en annuel{" "}
             <span className="text-success font-semibold">(-{savings}%)</span>
           </p>
         )}
-        {plan.monthlyPrice === 0 && <div className="mb-3" />}
+        {plan.monthlyPrice === 0 && <div className="mb-2" />}
 
-        <ul className="space-y-2.5 mb-5 flex-1">
+        <p className="text-xs text-muted-foreground mb-4 leading-relaxed">{plan.tagline}</p>
+
+        {/* Inclus */}
+        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Inclus</p>
+        <ul className="space-y-2 mb-4">
           {plan.features.map((f) => (
-            <li key={f} className="flex items-center gap-2">
-              <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" />
-              <span className="text-sm text-muted-foreground">{f}</span>
+            <li key={f} className="flex items-start gap-2">
+              <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0 mt-0.5" />
+              <span className="text-xs text-muted-foreground">{f}</span>
             </li>
           ))}
         </ul>
 
-        {/* Contextual links */}
-        <div className="flex flex-wrap gap-x-3 gap-y-1 mb-4">
-          <Link to="/score-aipp" className="text-[10px] text-muted-foreground hover:text-primary underline decoration-dotted underline-offset-2 transition-colors">Score AIPP</Link>
-          <Link to="/comment-ca-marche" className="text-[10px] text-muted-foreground hover:text-primary underline decoration-dotted underline-offset-2 transition-colors">Comment ça marche</Link>
+        {/* Rendez-vous */}
+        <div className="border-t border-border/50 pt-3 mb-4">
+          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <CalendarCheck className="h-3 w-3" /> Rendez-vous
+          </p>
+          <ul className="space-y-1.5">
+            {plan.appointmentNotes.map((note) => (
+              <li key={note} className="flex items-start gap-2">
+                <span className="text-primary mt-1 text-[8px]">●</span>
+                <span className="text-xs text-muted-foreground">{note}</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
-        {plan.monthlyPrice > 0 ? (
-          <Button
-            size="lg"
-            variant={isHighlighted ? "default" : "outline"}
-            className={cn("w-full rounded-xl", isHighlighted && "shadow-glow")}
-            onClick={() => onCheckout(plan.id)}
-          >
-            {plan.id === "elite" ? "Choisir Élite" : `Choisir ${plan.name}`}
-            <ArrowRight className="h-4 w-4 ml-2" />
-          </Button>
-        ) : (
-          <Button
-            asChild
-            size="lg"
-            variant="outline"
-            className="w-full rounded-xl"
-          >
-            <Link to="/signup?type=contractor">Créer mon profil</Link>
-          </Button>
-        )}
+        {/* Project sizes */}
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {plan.projectSizes.map((s) => (
+            <Badge key={s} variant="outline" className="text-[10px] px-2 py-0.5">{s}</Badge>
+          ))}
+        </div>
+
+        <div className="mt-auto">
+          {plan.monthlyPrice > 0 ? (
+            <Button
+              size="lg"
+              variant={isHighlighted ? "default" : "outline"}
+              className={cn("w-full rounded-xl text-sm", isHighlighted && "shadow-glow")}
+              onClick={() => onCheckout(plan.id)}
+            >
+              Choisir {plan.name}
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          ) : (
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="w-full rounded-xl text-sm"
+            >
+              <Link to="/signup?type=contractor">Créer mon profil</Link>
+            </Button>
+          )}
+        </div>
       </div>
     </motion.div>
   );
@@ -163,18 +186,18 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
     }
   };
 
-  const visiblePlans = CONTRACTOR_PLANS.filter(p => p.id !== "signature");
-
   return (
     <section className="px-5 py-16 md:py-20 relative">
       <div className="absolute inset-0 section-gradient" />
-      <div className="relative z-10 max-w-5xl mx-auto">
+      <div className="relative z-10 max-w-6xl mx-auto">
         <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-8">
           <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 bg-secondary/8 text-secondary text-sm font-semibold mb-4">
             <HardHat className="h-3.5 w-3.5" /> Pour les entrepreneurs
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground">Choisissez votre plan</h2>
-          <p className="text-muted-foreground mt-2">Recevez des rendez-vous garantis exclusifs. Pas des leads partagés.</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground">Choisissez votre plan selon vos objectifs</h2>
+          <p className="text-muted-foreground mt-2 max-w-lg mx-auto">
+            Chaque plan comprend un abonnement, un accès à certaines classes de projets, des outils et des rendez-vous inclus.
+          </p>
         </motion.div>
 
         {/* Billing Toggle */}
@@ -206,18 +229,9 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
           </div>
         </div>
 
-        {interval === "year" && (
-          <motion.p
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center text-sm text-success font-medium mb-6"
-          >
-            🎉 Économisez jusqu'à 15% avec le paiement annuel
-          </motion.p>
-        )}
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {visiblePlans.map((plan, i) => (
+        {/* All 5 plans in a scrollable row on mobile */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          {CONTRACTOR_PLANS.map((plan, i) => (
             <PlanCard
               key={plan.id}
               plan={plan}
@@ -228,6 +242,24 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
             />
           ))}
         </div>
+
+        {/* Reminder block */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-10 rounded-2xl border border-border/50 bg-card/50 p-5 md:p-6 max-w-3xl mx-auto"
+        >
+          <p className="text-sm text-foreground font-semibold mb-2">
+            Chaque plan inclut un certain nombre de rendez-vous exclusifs par mois.
+          </p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Besoin de plus ? Achetez des rendez-vous supplémentaires à la carte, à l'unité ou en bloc, selon votre capacité et vos objectifs.
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            <strong className="text-foreground">Places limitées</strong> selon la spécialité et la localité. Certaines zones ou catégories peuvent devenir complètes.
+          </p>
+        </motion.div>
       </div>
     </section>
   );

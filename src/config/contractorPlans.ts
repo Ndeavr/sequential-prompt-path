@@ -12,7 +12,11 @@ export interface ContractorPlan {
   yearlyPrice: number; // cents CAD — yearly total
   monthlyStripePriceId: string;
   yearlyStripePriceId: string;
+  tagline: string;
   features: string[];
+  appointmentsIncluded: number;
+  projectSizes: string[];
+  appointmentNotes: string[];
   appointmentAccessLevel: "limited" | "standard" | "priority" | "premium" | "exclusive";
   priorityLevel: number;
   matchingBoost: number;
@@ -27,11 +31,20 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     yearlyPrice: 0,
     monthlyStripePriceId: "",
     yearlyStripePriceId: "",
+    tagline: "Pour commencer sur UNPRO sans engagement mensuel.",
     features: [
       "Profil public de base",
-      "Rendez-vous garantis classes S et M",
       "Score AIPP visible",
-      "Support par courriel",
+      "Accès aux projets S et M",
+      "Support Alex",
+    ],
+    appointmentsIncluded: 0,
+    projectSizes: ["S", "M"],
+    appointmentNotes: [
+      "Aucun rendez-vous inclus",
+      "Achat de rendez-vous supplémentaires à la carte",
+      "Achat possible à l'unité ou en bloc",
+      "Accès selon disponibilité dans votre spécialité et votre localité",
     ],
     appointmentAccessLevel: "limited",
     priorityLevel: 1,
@@ -41,15 +54,25 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     id: "pro",
     name: "Pro",
     monthlyPrice: 4900,
-    yearlyPrice: 49900, // ~15 % off
+    yearlyPrice: 49900,
     monthlyStripePriceId: "price_1T9X6pCvZwK1QnPVfBlT13Lw",
     yearlyStripePriceId: "price_1T9X6pCvZwK1QnPVfBlT13Ly",
+    tagline: "Pour établir une présence solide et recevoir des opportunités ciblées.",
     features: [
       "Profil public complet",
-      "Rendez-vous garantis S, M, L",
       "Visibilité améliorée dans la recherche",
-      "Badge Pro sur le profil",
-      "Support prioritaire",
+      "Badge Pro",
+      "Support Alex prioritaire",
+      "Accès aux projets S, M et L",
+    ],
+    appointmentsIncluded: 1,
+    projectSizes: ["S", "M", "L"],
+    appointmentNotes: [
+      "1 rendez-vous inclus / mois",
+      "Achat de rendez-vous supplémentaires à la carte",
+      "Achat possible à l'unité ou en bloc",
+      "Projets accessibles : S, M, L",
+      "Accès selon disponibilité dans votre spécialité et votre localité",
     ],
     appointmentAccessLevel: "standard",
     priorityLevel: 2,
@@ -63,13 +86,23 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     yearlyPrice: 99900,
     monthlyStripePriceId: "price_1T9X6qCvZwK1QnPV8V4P18tw",
     yearlyStripePriceId: "price_1T9X6qCvZwK1QnPV8V4P18ty",
+    tagline: "Pour accélérer avec plus d'automatisation et plus de potentiel.",
     features: [
       "Tout le plan Pro",
-      "Rendez-vous garantis S à XL",
       "Auto-acceptation des projets",
-      "Demandes d'avis automatiques après chaque rendez-vous",
+      "Demandes d'avis automatiques après rendez-vous",
       "Statistiques avancées",
       "Badge Premium",
+      "Accès aux projets S à XL",
+    ],
+    appointmentsIncluded: 2,
+    projectSizes: ["S", "M", "L", "XL"],
+    appointmentNotes: [
+      "2 rendez-vous inclus / mois",
+      "Achat de rendez-vous supplémentaires à la carte",
+      "Achat possible à l'unité ou en bloc",
+      "Projets accessibles : S, M, L, XL",
+      "Accès selon disponibilité dans votre spécialité et votre localité",
     ],
     appointmentAccessLevel: "priority",
     priorityLevel: 3,
@@ -82,13 +115,22 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     yearlyPrice: 199900,
     monthlyStripePriceId: "price_1T9X6sCvZwK1QnPV2ZwYQOGT",
     yearlyStripePriceId: "price_1T9X6sCvZwK1QnPV2ZwYQOGY",
+    tagline: "Pour maximiser la capacité, la rapidité et la domination locale.",
     features: [
       "Tout le plan Premium",
-      "Tous les rendez-vous garantis (S à XXL)",
-      "Auto-acceptation + analytics avancés",
-      "Demandes d'avis automatiques",
       "Support dédié",
-      "Badge Élite",
+      "Analytics avancés",
+      "Priorité renforcée dans les recommandations",
+      "Accès aux projets S à XXL",
+    ],
+    appointmentsIncluded: 4,
+    projectSizes: ["S", "M", "L", "XL", "XXL"],
+    appointmentNotes: [
+      "4 rendez-vous inclus / mois",
+      "Achat de rendez-vous supplémentaires à la carte",
+      "Achat possible à l'unité ou en bloc",
+      "Projets accessibles : S, M, L, XL, XXL",
+      "Accès selon disponibilité dans votre spécialité et votre localité",
     ],
     appointmentAccessLevel: "premium",
     priorityLevel: 4,
@@ -101,13 +143,24 @@ export const CONTRACTOR_PLANS: ContractorPlan[] = [
     yearlyPrice: 399900,
     monthlyStripePriceId: "price_1T9X6tCvZwK1QnPVxNcBNeBM",
     yearlyStripePriceId: "price_1T9X6tCvZwK1QnPVxNcBNeBY",
+    tagline: "Pour les entreprises qui veulent verrouiller leur position dans leur marché.",
     features: [
-      "Tout le plan Élite",
-      "Exclusivité territoriale éligible",
-      "Demandes d'avis automatiques",
-      "Accompagnement personnalisé",
-      "Rapports sur mesure",
+      "Visibilité maximale",
       "Badge Signature",
+      "Priorité maximale dans les recommandations",
+      "Auto-acceptation intelligente",
+      "Rapports personnalisés",
+      "Potentiel d'exclusivité territoriale",
+      "Accès à tous les projets S à XXL",
+    ],
+    appointmentsIncluded: 8,
+    projectSizes: ["S", "M", "L", "XL", "XXL"],
+    appointmentNotes: [
+      "8 rendez-vous inclus / mois",
+      "Achat de rendez-vous supplémentaires à la carte",
+      "Achat possible à l'unité ou en bloc",
+      "Priorité sur certaines localités et classes stratégiques",
+      "Potentiel d'exclusivité sur certaines combinaisons spécialité + localité",
     ],
     appointmentAccessLevel: "exclusive",
     priorityLevel: 5,
@@ -144,4 +197,4 @@ export const getPlanDisplayPrice = (
 
 /** Monthly equivalent when billed yearly */
 export const getMonthlyEquivalent = (plan: ContractorPlan): string =>
-  `${((plan.yearlyPrice / 12) / 100).toFixed(2).replace(/\.00$/, "")} $`;
+  `${((plan.yearlyPrice / 12) / 100).toFixed(0)} $`;
