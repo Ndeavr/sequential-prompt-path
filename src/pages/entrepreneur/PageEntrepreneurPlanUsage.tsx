@@ -1,137 +1,112 @@
 /**
- * UNPRO — Entrepreneur Plan Usage Page
- * Shows current month usage, extra appointments, upgrade recommendations.
+ * UNPRO — Entrepreneur Plan Usage Page (Live Data)
  */
-import { useState } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, TrendingUp, ArrowUpRight } from "lucide-react";
-import PanelPlanUsageSummary from "@/components/appointments/PanelPlanUsageSummary";
-import WidgetPlanAppointmentQuota from "@/components/appointments/WidgetPlanAppointmentQuota";
-import WidgetExtraAppointmentCost from "@/components/appointments/WidgetExtraAppointmentCost";
-import TablePlanIncludedAppointments from "@/components/appointments/TablePlanIncludedAppointments";
-import { simulateMonthlyUsage, PLAN_LABELS, PLAN_ORDER } from "@/services/appointmentEconomicsEngine";
-import type { PlanCode, ProjectSizeCode } from "@/services/appointmentEconomicsEngine";
+import { CalendarDays, TrendingUp, ArrowUpRight, Zap, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { usePlanDefinitions, usePlanIncludedAppointments, usePlanProjectSizeAccess, useEntrepreneurUsage, useEntrepreneurExtras, getUpgradeBreakEven } from "@/hooks/useAppointmentEconomics";
+import BadgeAppointmentQuotaState from "@/components/appointments/BadgeAppointmentQuotaState";
+import ProgressBarAppointmentUsage from "@/components/appointments/ProgressBarAppointmentUsage";
 
-// Demo data for preview
-const DEMO_PLAN: PlanCode = "premium";
-const DEMO_APPOINTMENTS: { size: ProjectSizeCode; count: number }[] = [
-  { size: "s", count: 8 },
-  { size: "m", count: 4 },
-  { size: "l", count: 3 },
-];
+const DEMO_CONTRACTOR_ID = "cccccccc-0001-0001-0001-000000000001";
 
 export default function PageEntrepreneurPlanUsage() {
-  const [selectedPlan, setSelectedPlan] = useState<PlanCode>(DEMO_PLAN);
-  const sim = simulateMonthlyUsage(selectedPlan, DEMO_APPOINTMENTS, "rare", "high");
+  const { data: plans } = usePlanDefinitions();
+  const { data: included } = usePlanIncludedAppointments();
+  const { data: access } = usePlanProjectSizeAccess();
+  const { data: usage, isLoading } = useEntrepreneurUsage(DEMO_CONTRACTOR_ID);
+  const { data: extras } = useEntrepreneurExtras(DEMO_CONTRACTOR_ID);
+
+  const current = usage?.[0];
+  const currentInc = included?.find(i => i.plan_code === current?.plan_code);
+  const planDef = plans?.find(p => p.code === current?.plan_code);
+  const consumedPct = current && currentInc ? (Number(current.consumed_units) / Number(currentInc.included_units_monthly)) * 100 : 0;
+  const quotaState = consumedPct >= 100 ? "exceeded" : consumedPct >= 80 ? "warning" : "normal";
+  const upgrade = current && plans ? getUpgradeBreakEven(plans.map(p => ({ code: p.code, base_price_monthly: p.base_price_monthly, rank: p.rank })), current.plan_code, Number(current.overage_amount)) : null;
+  const sizes = access?.filter(a => a.plan_code === current?.plan_code && a.access_allowed).map(a => a.project_size_code) ?? [];
 
   return (
     <div className="dark min-h-screen bg-background text-foreground">
       <main className="p-4 lg:p-6 max-w-4xl mx-auto space-y-5">
-        {/* Header */}
         <div>
           <div className="flex items-center gap-2.5 mb-1">
-            <h1 className="font-display text-xl font-bold text-foreground">Mon usage</h1>
-            <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold">{PLAN_LABELS[selectedPlan]}</span>
+            <h1 className="font-display text-xl font-bold text-foreground">Mon utilisation</h1>
+            {current && <BadgeAppointmentQuotaState state={quotaState} />}
           </div>
-          <p className="text-sm text-muted-foreground">Suivi de vos rendez-vous, quota et dépassements</p>
+          <p className="text-sm text-muted-foreground">{planDef ? `Plan ${planDef.name}` : "Chargement…"} — cycle en cours</p>
         </div>
-
-        {/* Plan selector (demo) */}
-        <div className="flex gap-1.5 overflow-x-auto pb-1">
-          {PLAN_ORDER.map(p => (
-            <button
-              key={p}
-              onClick={() => setSelectedPlan(p)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
-                selectedPlan === p
-                  ? "bg-primary/15 text-primary border-primary/20"
-                  : "text-muted-foreground hover:text-foreground border-transparent hover:bg-muted/20"
-              }`}
-            >
-              {PLAN_LABELS[p]}
-            </button>
-          ))}
-        </div>
-
-        <motion.div
-          key={selectedPlan}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className="space-y-5"
-        >
-          {/* Main usage panel */}
-          <PanelPlanUsageSummary
-            planCode={selectedPlan}
-            consumedUnits={sim.total_units_consumed}
-            consumedAppointments={sim.total_appointments}
-            extraAppointments={sim.extra_appointments_count}
-            overageAmount={sim.extra_cost}
-          />
-
-          {/* Widgets row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <WidgetPlanAppointmentQuota
-              planCode={selectedPlan}
-              consumedUnits={sim.total_units_consumed}
-              consumedAppointments={sim.total_appointments}
-            />
-            <WidgetExtraAppointmentCost
-              extraCount={sim.extra_appointments_count}
-              totalCost={sim.extra_cost}
-            />
+        {isLoading ? (
+          <div className="text-center text-muted-foreground py-12 text-sm">Chargement…</div>
+        ) : !current ? (
+          <div className="text-center text-muted-foreground py-12">
+            <p className="text-sm mb-2">Aucun cycle de facturation actif</p>
+            <p className="text-xs">Activez un plan pour voir votre utilisation</p>
           </div>
-
-          {/* Breakdown */}
-          <div className="rounded-xl border border-border/30 bg-card/50 p-5">
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <CalendarDays className="w-4 h-4 text-primary" />
-              Détail des rendez-vous ce mois
-            </h3>
-            <div className="space-y-2">
-              {sim.appointments.map(({ size, count }) => {
-                const units = ({ xs: 0.5, s: 1.0, m: 1.5, l: 2.0, xl: 3.0, xxl: 5.0 })[size];
-                return (
-                  <div key={size} className="flex items-center justify-between p-2.5 rounded-lg bg-muted/5 border border-border/20">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold uppercase">{size}</span>
-                      <span className="text-xs text-muted-foreground">{count} rendez-vous</span>
-                    </div>
-                    <span className="text-xs font-mono text-foreground">{(count * units).toFixed(1)} unités</span>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { label: "RDV consommés", value: current.consumed_appointments_count, sub: `/ ${currentInc?.included_appointments_monthly ?? "?"}`, icon: CalendarDays, color: "text-primary" },
+                { label: "Unités", value: Number(current.consumed_units).toFixed(1), sub: `/ ${currentInc ? Number(currentInc.included_units_monthly).toFixed(1) : "?"}`, icon: Zap, color: consumedPct >= 80 ? "text-accent" : "text-primary" },
+                { label: "RDV extra", value: current.overage_appointments_count, sub: "", icon: ArrowUpRight, color: current.overage_appointments_count > 0 ? "text-destructive" : "text-muted-foreground" },
+                { label: "Coût extra", value: `${Number(current.overage_amount).toFixed(0)}$`, sub: "", icon: TrendingUp, color: Number(current.overage_amount) > 0 ? "text-destructive" : "text-primary" },
+              ].map(kpi => (
+                <div key={kpi.label} className="rounded-xl border border-border/30 bg-card/50 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <kpi.icon className={`w-3.5 h-3.5 ${kpi.color}`} />
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{kpi.label}</span>
                   </div>
-                );
-              })}
-              <div className="flex items-center justify-between p-2.5 rounded-lg bg-primary/5 border border-primary/20 mt-2">
-                <span className="text-xs font-semibold text-primary">Total consommé</span>
-                <span className="text-sm font-bold font-mono text-primary">{sim.total_units_consumed.toFixed(1)} unités</span>
+                  <p className={`text-2xl font-bold font-mono ${kpi.color}`}>{kpi.value}{kpi.sub && <span className="text-sm text-muted-foreground ml-1">{kpi.sub}</span>}</p>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-xl border border-border/30 bg-card/50 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-muted-foreground">Quota mensuel</span>
+                <span className="text-xs font-mono text-foreground">{consumedPct.toFixed(0)}%</span>
+              </div>
+              <ProgressBarAppointmentUsage consumed={Number(current.consumed_units)} included={Number(currentInc?.included_units_monthly ?? 1)} />
+            </div>
+            <div className="rounded-xl border border-border/30 bg-card/50 p-4">
+              <p className="text-xs text-muted-foreground mb-2">Tailles accessibles</p>
+              <div className="flex gap-1.5 flex-wrap">
+                {["xs","s","m","l","xl","xxl"].map(s => (
+                  <span key={s} className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${sizes.includes(s) ? "bg-primary/10 text-primary border border-primary/20" : "bg-muted/20 text-muted-foreground/50 border border-border/20 line-through"}`}>{s}</span>
+                ))}
               </div>
             </div>
-          </div>
-
-          {/* Upgrade suggestion */}
-          {sim.upgrade?.should_recommend && (
-            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg border border-amber-500/20 bg-amber-500/10">
-                  <ArrowUpRight className="w-5 h-5 text-amber-400" />
+            {upgrade?.should_recommend && (
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-foreground mb-1">Upgrade recommandé</p>
+                    <p className="text-xs text-muted-foreground mb-3">{upgrade.message}</p>
+                    <Button size="sm" className="text-xs">Passer au plan {upgrade.next_plan}</Button>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-amber-400">Passez au plan supérieur</h4>
-                  <p className="text-xs text-muted-foreground mt-1">{sim.upgrade.message}</p>
-                  <button className="mt-3 text-xs font-semibold px-4 py-2 rounded-lg border border-amber-500/20 text-amber-400 hover:bg-amber-500/10 transition-all">
-                    Voir le plan {PLAN_LABELS[sim.upgrade.next_plan]}
-                  </button>
+              </motion.div>
+            )}
+            {extras && extras.length > 0 && (
+              <div className="rounded-xl border border-border/40 overflow-hidden">
+                <div className="px-4 py-3 border-b border-border/30 bg-muted/5">
+                  <p className="text-xs font-semibold text-foreground">Rendez-vous extra ({extras.length})</p>
+                </div>
+                <div className="divide-y divide-border/20">
+                  {extras.slice(0, 10).map(ex => (
+                    <div key={ex.id} className="px-4 py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[9px] font-bold uppercase">{ex.project_size_code}</span>
+                        <span className="text-xs text-muted-foreground">{Number(ex.units_consumed).toFixed(1)} u.</span>
+                      </div>
+                      <span className="font-mono text-xs text-destructive">{Number(ex.extra_price).toFixed(0)}$</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* Plan reference */}
-          <div>
-            <h3 className="text-sm font-semibold mb-3">Comparaison des plans</h3>
-            <TablePlanIncludedAppointments />
-          </div>
-        </motion.div>
+            )}
+          </>
+        )}
       </main>
     </div>
   );
