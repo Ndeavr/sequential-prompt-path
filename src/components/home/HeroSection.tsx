@@ -66,8 +66,30 @@ export default function HeroSection() {
   const { isPrimary, acquireLock, releaseLock, markActive } = useAlexSingleton(COMPONENT_NAME, 'primary');
 
   const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
-    onTranscript: () => {},
-    onUserTranscript: () => {},
+    onTranscript: (text) => {
+      // Accumulate Alex's transcript to detect photo-related questions
+      alexTranscriptRef.current += text;
+      const lower = alexTranscriptRef.current.toLowerCase();
+      const photoKeywords = ["photo", "image", "téléverser", "téléversez", "envoyer une photo", "uploader", "fichier", "picture"];
+      const hasPhotoAsk = photoKeywords.some(kw => lower.includes(kw));
+      if (hasPhotoAsk && !uploadModalOpen) {
+        // Alex asked about photo — will show upload when user says yes or after turn completes
+        console.log("[Hero] Alex mentioned photo — priming upload trigger");
+      }
+    },
+    onUserTranscript: (text) => {
+      // Detect user saying "yes" after Alex asked about photo
+      const lower = text.toLowerCase();
+      const alexLower = alexTranscriptRef.current.toLowerCase();
+      const photoKeywords = ["photo", "image", "téléverser", "téléversez", "envoyer une photo", "uploader"];
+      const alexAskedPhoto = photoKeywords.some(kw => alexLower.includes(kw));
+      const userSaysYes = ["oui", "yes", "ok", "d'accord", "parfait", "bien sûr", "go", "envoyer", "envoie"].some(y => lower.includes(y));
+      if (alexAskedPhoto && userSaysYes) {
+        console.log("[Hero] User confirmed photo — opening upload modal");
+        setUploadModalOpen(true);
+        alexTranscriptRef.current = ""; // Reset
+      }
+    },
     onConnect: () => {
       console.log("[Hero] Gemini Live connected");
       markActive('gemini-live');
