@@ -768,11 +768,14 @@
 .logo-metal-wrap {
   position: relative;
   overflow: hidden;
-  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .logo-metal {
   filter: brightness(0.72) contrast(1.1) drop-shadow(0 4px 12px hsl(222 90% 55% / 0.3));
+  position: relative;
+  z-index: 1;
 }
 
 .logo-metal-wrap::after {
@@ -780,17 +783,19 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 40%;
+  width: 30%;
   height: 100%;
   background: linear-gradient(
     105deg,
     transparent 20%,
-    hsl(0 0% 100% / 0.15) 45%,
-    hsl(0 0% 100% / 0.25) 50%,
-    hsl(0 0% 100% / 0.15) 55%,
+    hsl(0 0% 100% / 0.12) 45%,
+    hsl(0 0% 100% / 0.22) 50%,
+    hsl(0 0% 100% / 0.12) 55%,
     transparent 80%
   );
   transform: skewX(-15deg);
   animation: light-sweep-cta 3.5s ease-in-out infinite;
   pointer-events: none;
+  z-index: 2;
+  mix-blend-mode: overlay;
 }
