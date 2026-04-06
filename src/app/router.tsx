@@ -347,6 +347,12 @@ import AdminOutreachAnalytics from "@/pages/admin/AdminOutreachAnalytics";
 import PageOutboundDashboard from "@/pages/admin/outbound/PageOutboundDashboard";
 import PageOutboundCampaigns from "@/pages/admin/outbound/PageOutboundCampaigns";
 import PageOutboundLeadsQueue from "@/pages/admin/outbound/PageOutboundLeadsQueue";
+import PageOutboundLeadProfile from "@/pages/admin/outbound/PageOutboundLeadProfile";
+import PageOutboundSequences from "@/pages/admin/outbound/PageOutboundSequences";
+import PageOutboundMailboxes from "@/pages/admin/outbound/PageOutboundMailboxes";
+import PageOutboundAnalytics from "@/pages/admin/outbound/PageOutboundAnalytics";
+import PageOutboundSuppressionCenter from "@/pages/admin/outbound/PageOutboundSuppressionCenter";
+import PageOutboundLandingPages from "@/pages/admin/outbound/PageOutboundLandingPages";
 import MesProprietesPage from "@/pages/MesProprietesPage";
 import AnalyserSoumissionsPage from "@/pages/AnalyserSoumissionsPage";
 import PageRecruitmentCloser from "@/pages/recruitment/PageRecruitmentCloser";
@@ -784,6 +790,12 @@ export const AppRouter = () => (
       <Route path="/admin/outbound" element={<ProtectedRoute requiredRole="admin"><PageOutboundDashboard /></ProtectedRoute>} />
       <Route path="/admin/outbound/campaigns" element={<ProtectedRoute requiredRole="admin"><PageOutboundCampaigns /></ProtectedRoute>} />
       <Route path="/admin/outbound/leads" element={<ProtectedRoute requiredRole="admin"><PageOutboundLeadsQueue /></ProtectedRoute>} />
+      <Route path="/admin/outbound/leads/:id" element={<ProtectedRoute requiredRole="admin"><PageOutboundLeadProfile /></ProtectedRoute>} />
+      <Route path="/admin/outbound/sequences" element={<ProtectedRoute requiredRole="admin"><PageOutboundSequences /></ProtectedRoute>} />
+      <Route path="/admin/outbound/mailboxes" element={<ProtectedRoute requiredRole="admin"><PageOutboundMailboxes /></ProtectedRoute>} />
+      <Route path="/admin/outbound/analytics" element={<ProtectedRoute requiredRole="admin"><PageOutboundAnalytics /></ProtectedRoute>} />
+      <Route path="/admin/outbound/suppressions" element={<ProtectedRoute requiredRole="admin"><PageOutboundSuppressionCenter /></ProtectedRoute>} />
+      <Route path="/admin/outbound/landing-pages" element={<ProtectedRoute requiredRole="admin"><PageOutboundLandingPages /></ProtectedRoute>} />
       <Route path="/audit/:slug" element={<AuditLandingPage />} />
       <Route path="/articles/:slug" element={<SeoArticlePage />} />
       <Route path="/emergency" element={<EmergencyPage />} />

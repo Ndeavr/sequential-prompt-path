@@ -161,7 +161,7 @@ export default function PageOutboundLeadsQueue() {
                   {filtered.slice(0, 100).map(l => {
                     const st = crmStatusLabels[l.crm_status] || { label: l.crm_status, color: "" };
                     return (
-                      <TableRow key={l.id} className="cursor-pointer hover:bg-muted/30">
+                      <TableRow key={l.id} className="cursor-pointer hover:bg-muted/30" onClick={() => navigate(`/admin/outbound/leads/${l.id}`)}>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
