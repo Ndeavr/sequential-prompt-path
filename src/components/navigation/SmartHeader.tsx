@@ -219,14 +219,12 @@ const SmartHeader = () => {
               ) : (
                 <>
                   <Button asChild size="sm" className="rounded-full h-7 text-[11px] px-3 font-bold sm:hidden btn-liquid-metal border-0">
-                    <Link to={isReturningVisitor ? "/login" : "/signup"}>
-                      {isReturningVisitor
-                        ? (lang === "en" ? "Sign In" : "Connexion")
-                        : (lang === "en" ? "Sign Up" : "S'inscrire")}
+                    <Link to="/role">
+                      {lang === "en" ? "Sign In" : "Connexion"}
                     </Link>
                   </Button>
                   <Button asChild variant="ghost" size="sm" className="rounded-full h-9 text-meta px-4 hidden sm:inline-flex text-muted-foreground hover:text-foreground">
-                    <Link to="/login">{lang === "en" ? "Sign In" : "Connexion"}</Link>
+                    <Link to="/role">{lang === "en" ? "Sign In" : "Connexion"}</Link>
                   </Button>
                   <SmartCTA variant="header" className="hidden sm:block" />
                 </>

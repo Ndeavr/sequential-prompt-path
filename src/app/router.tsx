@@ -11,6 +11,7 @@ import ScrollRestoration from "@/components/ScrollRestoration";
 import AuthCallbackPage from "@/pages/AuthCallbackPage";
 import OnboardingPageUnpro from "@/pages/OnboardingPageUnpro";
 import LoginPageUnpro from "@/pages/LoginPageUnpro";
+import PreLoginRolePage from "@/pages/PreLoginRolePage";
 
 // Public
 import PageAdLandingAipp from "@/pages/ad-landing/PageAdLandingAipp";
@@ -390,6 +391,7 @@ export const AppRouter = () => (
       <Route path="/login" element={<LoginPageUnpro />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route path="/signup" element={<LoginPageUnpro />} />
+      <Route path="/role" element={<PreLoginRolePage />} />
       <Route path="/onboarding" element={<UniversalRouteGuard anyAuth><OnboardingPageUnpro /></UniversalRouteGuard>} />
       <Route path="/start" element={<StartPage />} />
 
