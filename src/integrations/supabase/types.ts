@@ -26512,6 +26512,57 @@ export type Database = {
           },
         ]
       }
+      product_feature_values: {
+        Row: {
+          created_at: string | null
+          feature_id: string
+          highlighted: boolean | null
+          id: string
+          product_id: string
+          tooltip_text: string | null
+          updated_at: string | null
+          value_text: string | null
+          value_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          feature_id: string
+          highlighted?: boolean | null
+          id?: string
+          product_id: string
+          tooltip_text?: string | null
+          updated_at?: string | null
+          value_text?: string | null
+          value_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          feature_id?: string
+          highlighted?: boolean | null
+          id?: string
+          product_id?: string
+          tooltip_text?: string | null
+          updated_at?: string | null
+          value_text?: string | null
+          value_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_feature_values_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_features"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_feature_values_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_alignment_answers: {
         Row: {
           answer_code: string
@@ -34244,6 +34295,146 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_features: {
+        Row: {
+          category: string | null
+          code: string
+          created_at: string | null
+          display_order: number | null
+          feature_description: string | null
+          feature_label: string
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          code: string
+          created_at?: string | null
+          display_order?: number | null
+          feature_description?: string | null
+          feature_label: string
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          code?: string
+          created_at?: string | null
+          display_order?: number | null
+          feature_description?: string | null
+          feature_label?: string
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      subscription_prices: {
+        Row: {
+          active: boolean | null
+          amount_cad: number
+          billing_period: string
+          compare_at_amount_cad: number | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          product_id: string
+          stripe_price_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          amount_cad?: number
+          billing_period?: string
+          compare_at_amount_cad?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          product_id: string
+          stripe_price_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          amount_cad?: number
+          billing_period?: string
+          compare_at_amount_cad?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          product_id?: string
+          stripe_price_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_prices_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_products: {
+        Row: {
+          active: boolean | null
+          audience_type: string
+          badge_label: string | null
+          badge_type: string | null
+          code: string
+          created_at: string | null
+          cta_label: string | null
+          cta_link: string | null
+          display_order: number | null
+          icon_name: string | null
+          id: string
+          long_description: string | null
+          name: string
+          popular_flag: boolean | null
+          premium_flag: boolean | null
+          short_description: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          audience_type?: string
+          badge_label?: string | null
+          badge_type?: string | null
+          code: string
+          created_at?: string | null
+          cta_label?: string | null
+          cta_link?: string | null
+          display_order?: number | null
+          icon_name?: string | null
+          id?: string
+          long_description?: string | null
+          name: string
+          popular_flag?: boolean | null
+          premium_flag?: boolean | null
+          short_description?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          audience_type?: string
+          badge_label?: string | null
+          badge_type?: string | null
+          code?: string
+          created_at?: string | null
+          cta_label?: string | null
+          cta_link?: string | null
+          display_order?: number | null
+          icon_name?: string | null
+          id?: string
+          long_description?: string | null
+          name?: string
+          popular_flag?: boolean | null
+          premium_flag?: boolean | null
+          short_description?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -36217,6 +36408,66 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string | null
+          id: string
+          price_id: string | null
+          product_id: string
+          renewal_date: string | null
+          start_date: string | null
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          id?: string
+          price_id?: string | null
+          product_id: string
+          renewal_date?: string | null
+          start_date?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          id?: string
+          price_id?: string | null
+          product_id?: string
+          renewal_date?: string | null
+          start_date?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_price_id_fkey"
+            columns: ["price_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_prices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_subscriptions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_voice_profiles: {
         Row: {
