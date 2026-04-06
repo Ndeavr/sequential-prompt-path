@@ -2351,6 +2351,169 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_runtime_conflicts: {
+        Row: {
+          alex_runtime_session_id: string | null
+          auto_resolved: boolean | null
+          conflict_reason: string | null
+          conflict_type: string
+          created_at: string
+          id: string
+          primary_component_name: string | null
+          primary_voice_id: string | null
+          resolution_action: string | null
+          secondary_component_name: string | null
+          secondary_voice_id: string | null
+        }
+        Insert: {
+          alex_runtime_session_id?: string | null
+          auto_resolved?: boolean | null
+          conflict_reason?: string | null
+          conflict_type: string
+          created_at?: string
+          id?: string
+          primary_component_name?: string | null
+          primary_voice_id?: string | null
+          resolution_action?: string | null
+          secondary_component_name?: string | null
+          secondary_voice_id?: string | null
+        }
+        Update: {
+          alex_runtime_session_id?: string | null
+          auto_resolved?: boolean | null
+          conflict_reason?: string | null
+          conflict_type?: string
+          created_at?: string
+          id?: string
+          primary_component_name?: string | null
+          primary_voice_id?: string | null
+          resolution_action?: string | null
+          secondary_component_name?: string | null
+          secondary_voice_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_runtime_conflicts_alex_runtime_session_id_fkey"
+            columns: ["alex_runtime_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_runtime_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_runtime_events: {
+        Row: {
+          alex_runtime_session_id: string | null
+          audio_source_id: string | null
+          component_name: string
+          created_at: string
+          event_label: string | null
+          event_payload: Json | null
+          event_type: string
+          id: string
+          mount_role: string
+          result_status: string
+          runtime_instance_id: string
+          voice_id: string | null
+        }
+        Insert: {
+          alex_runtime_session_id?: string | null
+          audio_source_id?: string | null
+          component_name: string
+          created_at?: string
+          event_label?: string | null
+          event_payload?: Json | null
+          event_type: string
+          id?: string
+          mount_role?: string
+          result_status?: string
+          runtime_instance_id: string
+          voice_id?: string | null
+        }
+        Update: {
+          alex_runtime_session_id?: string | null
+          audio_source_id?: string | null
+          component_name?: string
+          created_at?: string
+          event_label?: string | null
+          event_payload?: Json | null
+          event_type?: string
+          id?: string
+          mount_role?: string
+          result_status?: string
+          runtime_instance_id?: string
+          voice_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_runtime_events_alex_runtime_session_id_fkey"
+            columns: ["alex_runtime_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_runtime_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_runtime_sessions: {
+        Row: {
+          autostart_completed: boolean | null
+          autostart_triggered: boolean | null
+          created_at: string
+          device_type: string
+          duplicate_attempts_count: number | null
+          ended_at: string | null
+          id: string
+          last_heartbeat_at: string | null
+          page_key: string
+          primary_component_name: string | null
+          route_path: string
+          runtime_instance_id: string
+          session_status: string
+          started_at: string | null
+          updated_at: string
+          user_id: string | null
+          voice_id: string | null
+        }
+        Insert: {
+          autostart_completed?: boolean | null
+          autostart_triggered?: boolean | null
+          created_at?: string
+          device_type?: string
+          duplicate_attempts_count?: number | null
+          ended_at?: string | null
+          id?: string
+          last_heartbeat_at?: string | null
+          page_key?: string
+          primary_component_name?: string | null
+          route_path?: string
+          runtime_instance_id: string
+          session_status?: string
+          started_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+          voice_id?: string | null
+        }
+        Update: {
+          autostart_completed?: boolean | null
+          autostart_triggered?: boolean | null
+          created_at?: string
+          device_type?: string
+          duplicate_attempts_count?: number | null
+          ended_at?: string | null
+          id?: string
+          last_heartbeat_at?: string | null
+          page_key?: string
+          primary_component_name?: string | null
+          route_path?: string
+          runtime_instance_id?: string
+          session_status?: string
+          started_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+          voice_id?: string | null
+        }
+        Relationships: []
+      }
       alex_sales_activation_events: {
         Row: {
           activation_step: string
