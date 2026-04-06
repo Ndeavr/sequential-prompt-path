@@ -214,10 +214,14 @@ export default function AppointmentCalculator() {
     [revenueGoal, effectiveTypes, capacity]
   );
 
-  const appts = useMemo(
+  // Appointments needed to reach goal
+  const apptsNeeded = useMemo(
     () => estimateAppointments(revenueGoal[0], effectiveValue, conversionRate[0] / 100),
     [revenueGoal, effectiveValue, conversionRate]
   );
+
+  // Actual appointments capped by capacity
+  const appts = Math.min(apptsNeeded, capacity[0]);
 
   // Average appointment cost based on selected project types
   const avgApptCost = useMemo(() => {
@@ -231,10 +235,12 @@ export default function AppointmentCalculator() {
     [plan, appts, avgApptCost]
   );
 
+  // Revenue based on actual appointments (capacity-limited)
   const potentialRevenue = appts * effectiveValue * (conversionRate[0] / 100);
   const profit = potentialRevenue - totalCost;
   const roi = totalCost > 0 ? Math.round(potentialRevenue / totalCost) : 0;
   const goalProgress = Math.min(100, Math.round((potentialRevenue / revenueGoal[0]) * 100));
+  const capacityLimited = apptsNeeded > capacity[0];
 
   const suggestions = useMemo(
     () => generateSuggestions({
@@ -480,9 +486,9 @@ export default function AppointmentCalculator() {
 
               {/* KPI Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <KPICard label="Rendez-vous estimés" value={`${appts}`} sub="/mois" />
-                <KPICard label="Coût total" value={`${Math.round(totalCost).toLocaleString()} $`} />
-                <KPICard label="Revenu potentiel" value={`${Math.round(potentialRevenue).toLocaleString()} $`} accent="success" />
+                <KPICard label="Rendez-vous" value={`${appts}`} sub={capacityLimited ? `/${apptsNeeded} nécessaires` : "/mois"} />
+                <KPICard label="Coût total" value={`${Math.round(totalCost).toLocaleString()} $`} sub="/mois" />
+                <KPICard label="Revenu potentiel" value={`${Math.round(potentialRevenue).toLocaleString()} $`} accent="success" sub="/mois" />
                 <KPICard label="ROI estimé" value={`${roi}x`} accent="success" icon={<TrendingUp className="h-4 w-4" />} />
               </div>
 
@@ -558,11 +564,11 @@ export default function AppointmentCalculator() {
             </AnimatePresence>
 
             {/* ═══ CAPACITY WARNING ═══ */}
-            {appts > capacity[0] && (
+            {capacityLimited && (
               <div className="flex items-center gap-3 rounded-xl bg-destructive/5 border border-destructive/20 p-3 text-sm text-foreground">
                 <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
                 <span>
-                  Votre objectif nécessite <strong>{appts}</strong> rendez-vous/mois mais votre capacité est de <strong>{capacity[0]}</strong>. Ajustez vos paramètres ou activez l'optimisation automatique.
+                  Votre objectif nécessite <strong>{apptsNeeded}</strong> rendez-vous/mois mais votre capacité est de <strong>{capacity[0]}</strong>. Revenu limité à <strong>{Math.round(potentialRevenue).toLocaleString()} $</strong> au lieu de <strong>{revenueGoal[0].toLocaleString()} $</strong>.
                 </span>
               </div>
             )}
