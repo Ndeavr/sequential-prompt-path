@@ -190,39 +190,6 @@ export default function AppointmentCalculator() {
     }
   }, [jveEstimate]);
 
-  // Territory availability query
-  const { data: territoryData } = useQuery({
-    queryKey: ["territory-availability", citySlug, tradeSlug, plan],
-    queryFn: async () => {
-      if (!citySlug || !tradeSlug) return null;
-      const cityName = cities?.find((c: any) => c.slug === citySlug)?.name_fr ?? "";
-      const tradeName = trades?.find((t: any) => t.slug === tradeSlug)?.name_fr ?? "";
-      if (!cityName || !tradeName) return null;
-
-      const { data, error } = await supabase
-        .from("territories")
-        .select("slots_signature, slots_elite, slots_premium, slots_pro, slots_recrue, occupied_signature, occupied_elite, occupied_premium, occupied_pro, occupied_recrue, max_entrepreneurs")
-        .ilike("city_name", cityName)
-        .ilike("category_name", `%${tradeName}%`)
-        .limit(1)
-        .maybeSingle();
-      if (error || !data) return null;
-
-      const planSlotMap: Record<string, { slots: number; occupied: number }> = {
-        signature: { slots: data.slots_signature, occupied: data.occupied_signature },
-        elite: { slots: data.slots_elite, occupied: data.occupied_elite },
-        premium: { slots: data.slots_premium, occupied: data.occupied_premium },
-        pro: { slots: data.slots_pro, occupied: data.occupied_pro },
-        recrue: { slots: data.slots_recrue, occupied: data.occupied_recrue },
-      };
-      const current = planSlotMap[plan] ?? { slots: 0, occupied: 0 };
-      const totalOccupied = data.occupied_signature + data.occupied_elite + data.occupied_premium + data.occupied_pro + data.occupied_recrue;
-      return { ...current, remaining: Math.max(0, current.slots - current.occupied), totalSlots: data.max_entrepreneurs, totalOccupied };
-    },
-    enabled: !!citySlug && !!tradeSlug && !!cities?.length && !!trades?.length,
-    staleTime: 60_000,
-  });
-
   const toggleProjectType = (id: string) => {
     setProjectTypes((prev) =>
       prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
