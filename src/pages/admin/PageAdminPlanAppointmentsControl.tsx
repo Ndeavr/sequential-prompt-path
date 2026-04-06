@@ -1,14 +1,14 @@
 /**
- * UNPRO — Admin Plan Appointments Control Page
- * Full dashboard for plan quotas, included appointments, profitability.
+ * UNPRO — Admin Plan Appointments Control (Live Supabase Data)
  */
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, TrendingUp, Layers, BarChart3, Zap } from "lucide-react";
-import TablePlanIncludedAppointments from "@/components/appointments/TablePlanIncludedAppointments";
-import TableExtraAppointmentPricingMatrix from "@/components/appointments/TableExtraAppointmentPricingMatrix";
-import TablePlanProfitabilityMatrix from "@/components/appointments/TablePlanProfitabilityMatrix";
-import { PLAN_ORDER, PLAN_PRICES, INCLUDED_APPOINTMENTS, BASE_EXTRA_PRICES, buildProfitabilityMatrix } from "@/services/appointmentEconomicsEngine";
+import { CalendarDays, TrendingUp, Layers, BarChart3, Zap, Download, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { usePlanDefinitions, usePlanIncludedAppointments, useProjectSizes, usePlanProjectSizeAccess, useExtraPricingRules } from "@/hooks/useAppointmentEconomics";
+import TablePlanIncludedAppointmentsLive from "@/components/appointments/TablePlanIncludedAppointmentsLive";
+import TableExtraAppointmentPricingMatrixLive from "@/components/appointments/TableExtraAppointmentPricingMatrixLive";
+import TablePlanProfitabilityMatrixLive from "@/components/appointments/TablePlanProfitabilityMatrixLive";
 
 type Tab = "quotas" | "extra" | "profitability";
 
@@ -20,37 +20,49 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
 
 export default function PageAdminPlanAppointmentsControl() {
   const [tab, setTab] = useState<Tab>("quotas");
+  const { data: plans, isLoading: pl } = usePlanDefinitions();
+  const { data: included, isLoading: il } = usePlanIncludedAppointments();
+  const { data: sizes } = useProjectSizes();
+  const { data: access } = usePlanProjectSizeAccess();
+  const { data: pricing } = useExtraPricingRules();
 
-  const totalMonthlyAppointments = PLAN_ORDER.reduce((s, p) => s + INCLUDED_APPOINTMENTS[p].appointments, 0);
-  const totalMonthlyUnits = PLAN_ORDER.reduce((s, p) => s + INCLUDED_APPOINTMENTS[p].units, 0);
-  const avgRevenuePerUnit = PLAN_ORDER.reduce((s, p) => s + PLAN_PRICES[p], 0) / totalMonthlyUnits;
+  const loading = pl || il;
+
+  const totalAppts = included?.reduce((s, p) => s + p.included_appointments_monthly, 0) ?? 0;
+  const totalUnits = included?.reduce((s, p) => s + Number(p.included_units_monthly), 0) ?? 0;
+  const totalRevenue = plans?.reduce((s, p) => s + p.base_price_monthly, 0) ?? 0;
+  const avgPerUnit = totalUnits > 0 ? (totalRevenue / 100) / totalUnits : 0;
 
   return (
     <div className="dark min-h-screen bg-background text-foreground">
       <main className="p-4 lg:p-6 max-w-6xl mx-auto space-y-5">
         {/* Header */}
-        <div>
-          <div className="flex items-center gap-2.5 mb-1">
-            <h1 className="font-display text-xl font-bold text-foreground">Rendez-vous & Quotas</h1>
-            <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold">Admin</span>
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-2.5 mb-1">
+              <h1 className="font-display text-xl font-bold text-foreground">Rendez-vous & Quotas</h1>
+              <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold">Admin</span>
+            </div>
+            <p className="text-sm text-muted-foreground">Quotas inclus, tarification extra, rentabilité par plan — données live</p>
           </div>
-          <p className="text-sm text-muted-foreground">Quotas inclus, tarification extra, rentabilité par plan</p>
         </div>
 
         {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { label: "Plans actifs", value: PLAN_ORDER.length, icon: Layers, color: "text-primary" },
-            { label: "RDV inclus total", value: totalMonthlyAppointments, icon: CalendarDays, color: "text-emerald-400" },
-            { label: "Unités total", value: totalMonthlyUnits.toFixed(0), icon: Zap, color: "text-amber-400" },
-            { label: "Moy $/unité", value: `${avgRevenuePerUnit.toFixed(0)}$`, icon: TrendingUp, color: "text-primary" },
+            { label: "Plans actifs", value: plans?.length ?? 0, icon: Layers, color: "text-primary" },
+            { label: "RDV inclus total", value: totalAppts, icon: CalendarDays, color: "text-emerald-400" },
+            { label: "Unités total", value: totalUnits.toFixed(0), icon: Zap, color: "text-amber-400" },
+            { label: "Moy $/unité", value: `${avgPerUnit.toFixed(0)}$`, icon: TrendingUp, color: "text-primary" },
           ].map(kpi => (
             <div key={kpi.label} className="rounded-xl border border-border/30 bg-card/50 p-4">
               <div className="flex items-center gap-2 mb-2">
                 <kpi.icon className={`w-3.5 h-3.5 ${kpi.color}`} />
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{kpi.label}</span>
               </div>
-              <p className={`text-2xl font-bold font-mono ${kpi.color}`}>{kpi.value}</p>
+              <p className={`text-2xl font-bold font-mono ${kpi.color}`}>
+                {loading ? "—" : kpi.value}
+              </p>
             </div>
           ))}
         </div>
@@ -79,42 +91,29 @@ export default function PageAdminPlanAppointmentsControl() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          className="space-y-5"
         >
           {tab === "quotas" && (
-            <>
-              <TablePlanIncludedAppointments />
-              {/* Size consumption reference */}
-              <div className="rounded-xl border border-border/30 bg-card/50 p-5">
-                <h3 className="text-sm font-semibold mb-3">Consommation par taille de projet</h3>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                  {(["xs", "s", "m", "l", "xl", "xxl"] as const).map(size => (
-                    <div key={size} className="text-center p-3 rounded-lg border border-border/20 bg-muted/5">
-                      <span className="text-xs font-bold text-primary uppercase">{size}</span>
-                      <p className="text-lg font-bold font-mono text-foreground mt-1">
-                        {({ xs: "0.5", s: "1.0", m: "1.5", l: "2.0", xl: "3.0", xxl: "5.0" })[size]}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground">unités</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
+            <TablePlanIncludedAppointmentsLive
+              plans={plans ?? []}
+              included={included ?? []}
+              access={access ?? []}
+              loading={loading}
+            />
           )}
-          {tab === "extra" && <TableExtraAppointmentPricingMatrix />}
-          {tab === "profitability" && <TablePlanProfitabilityMatrix />}
+          {tab === "extra" && (
+            <TableExtraAppointmentPricingMatrixLive
+              pricing={pricing ?? []}
+              loading={!pricing}
+            />
+          )}
+          {tab === "profitability" && (
+            <TablePlanProfitabilityMatrixLive
+              plans={plans ?? []}
+              included={included ?? []}
+              loading={loading}
+            />
+          )}
         </motion.div>
-
-        {/* Rules */}
-        <div className="rounded-xl border border-amber-500/15 bg-amber-500/5 p-4">
-          <p className="text-xs font-semibold text-amber-400 mb-1">Règles de facturation</p>
-          <ul className="text-[10px] text-muted-foreground space-y-0.5">
-            <li>• Quota réinitialisé chaque cycle de facturation</li>
-            <li>• Extra facturé à partir de l'état "confirmed"</li>
-            <li>• Taille non couverte = accès bloqué + upgrade requis</li>
-            <li>• Upgrade recommandé si overage ≥ 85% du différentiel</li>
-          </ul>
-        </div>
       </main>
     </div>
   );
