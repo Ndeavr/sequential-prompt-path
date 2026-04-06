@@ -17,6 +17,7 @@ import { alexRuntime } from "@/services/alexRuntimeSingleton";
 import { alexAudioChannel } from "@/services/alexSingleAudioChannel";
 import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, AlertTriangle, Sparkles, MessageSquare, ArrowRight, Camera, FileSearch } from "lucide-react";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
+import UploadPhotoModal from "@/components/home/UploadPhotoModal";
 
 const cinematicBg = "/images/hero-bg.gif";
 
