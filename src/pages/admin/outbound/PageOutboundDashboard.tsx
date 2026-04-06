@@ -64,12 +64,27 @@ export default function PageOutboundDashboard() {
           <h1 className="font-display text-2xl md:text-3xl font-bold">Outbound CRM</h1>
           <p className="text-sm text-muted-foreground mt-1">Acquisition B2B par ville × spécialité · go.unpro.ca</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={() => navigate("/admin/outbound/leads")}>
             <Users className="h-4 w-4 mr-1" /> Leads
           </Button>
-          <Button size="sm" onClick={() => navigate("/admin/outbound/campaigns")}>
-            <Plus className="h-4 w-4 mr-1" /> Campagne
+          <Button variant="outline" size="sm" onClick={() => navigate("/admin/outbound/campaigns")}>
+            <Target className="h-4 w-4 mr-1" /> Campagnes
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate("/admin/outbound/sequences")}>
+            <Mail className="h-4 w-4 mr-1" /> Séquences
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate("/admin/outbound/mailboxes")}>
+            <Send className="h-4 w-4 mr-1" /> Mailboxes
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate("/admin/outbound/analytics")}>
+            <BarChart3 className="h-4 w-4 mr-1" /> Analytics
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate("/admin/outbound/suppressions")}>
+            <AlertTriangle className="h-4 w-4 mr-1" /> Suppressions
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate("/admin/outbound/landing-pages")}>
+            <Zap className="h-4 w-4 mr-1" /> Landing Pages
           </Button>
         </div>
       </div>
