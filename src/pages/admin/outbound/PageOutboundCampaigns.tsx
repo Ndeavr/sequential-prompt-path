@@ -164,7 +164,7 @@ export default function PageOutboundCampaigns() {
                 <div key={c.id} className="border border-border rounded-lg p-3 space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium">{c.city}</span>
-                    <Badge className={statusColors[c.campaign_status] || ""} variant="outline" className="text-[10px]">
+                    <Badge className={`${statusColors[c.campaign_status] || ""} text-[10px]`} variant="outline">
                       {c.campaign_status}
                     </Badge>
                   </div>
