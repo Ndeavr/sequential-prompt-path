@@ -56,10 +56,10 @@ const FormApplicationCloser = forwardRef<HTMLDivElement>((_, ref) => {
         availability: data.availability,
         work_mode: data.work_mode,
         motivation: data.motivation || null,
-        source: "carriere_page",
+        source: "carrieres_representant",
       }]);
       if (error) throw error;
-      navigate("/carriere/merci");
+      navigate("/carrieres/merci");
     } catch {
       toast.error("Erreur lors de l'envoi. Réessaie.");
     } finally {
