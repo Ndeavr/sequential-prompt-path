@@ -108,8 +108,6 @@ export default function HeroSection() {
   const voiceActive = isActive || isConnecting;
   const current = INTENTS.find((i) => i.slug === activeIntent)!;
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const getIntentGreeting = useCallback((intent: IntentSlug) => {
     const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || null;
     const name = firstName || "";
