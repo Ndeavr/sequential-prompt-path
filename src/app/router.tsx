@@ -781,6 +781,9 @@ export const AppRouter = () => (
       <Route path="/admin/outreach/:id" element={<ProtectedRoute requiredRole="admin"><AdminOutreachCampaignDetail /></ProtectedRoute>} />
       <Route path="/admin/outreach/templates" element={<ProtectedRoute requiredRole="admin"><AdminOutreachTemplates /></ProtectedRoute>} />
       <Route path="/admin/outreach/analytics" element={<ProtectedRoute requiredRole="admin"><AdminOutreachAnalytics /></ProtectedRoute>} />
+      <Route path="/admin/outbound" element={<ProtectedRoute requiredRole="admin"><PageOutboundDashboard /></ProtectedRoute>} />
+      <Route path="/admin/outbound/campaigns" element={<ProtectedRoute requiredRole="admin"><PageOutboundCampaigns /></ProtectedRoute>} />
+      <Route path="/admin/outbound/leads" element={<ProtectedRoute requiredRole="admin"><PageOutboundLeadsQueue /></ProtectedRoute>} />
       <Route path="/audit/:slug" element={<AuditLandingPage />} />
       <Route path="/articles/:slug" element={<SeoArticlePage />} />
       <Route path="/emergency" element={<EmergencyPage />} />
