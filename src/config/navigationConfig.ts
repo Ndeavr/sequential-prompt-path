@@ -188,35 +188,36 @@ export function getStateActions(ctx: NavigationContext): NavItem[] {
 
 /* ═══════════════════════════════════════════
    5. MOBILE BOTTOM NAV — 5 tabs max
+   Intent-based, contextual per persona
    ═══════════════════════════════════════════ */
 
 export const mobileTabsByRole: Record<UserRole | "guest", NavItem[]> = {
   guest: [
-    { to: "/inspirations", label: "Inspirations", labelEn: "Inspirations", icon: "Sparkles" },
-    { to: "/verifier", label: "Vérifier", labelEn: "Verify", icon: "ShieldCheck" },
+    { to: "/", label: "Accueil", labelEn: "Home", icon: "Home" },
+    { to: "/entrepreneurs", label: "Explorer", labelEn: "Explore", icon: "Compass" },
     { to: "/alex", label: "Alex", icon: "Sparkles" },
-    { to: "/aide", label: "Aide", labelEn: "Help", icon: "HelpCircle" },
-    { to: "/login", label: "Compte", labelEn: "Account", icon: "User" },
+    { to: "/pricing", label: "Tarifs", labelEn: "Pricing", icon: "CreditCard" },
+    { to: "/login", label: "Connexion", labelEn: "Sign In", icon: "LogIn" },
   ],
   homeowner: [
-    { to: "/trouver", label: "Trouver", labelEn: "Find", icon: "Search" },
-    { to: "/dashboard/projects/new", label: "Projet", labelEn: "Project", icon: "FolderOpen" },
+    { to: "/dashboard", label: "Accueil", labelEn: "Home", icon: "Home" },
+    { to: "/search", label: "Pro", labelEn: "Pro", icon: "Search" },
     { to: "/alex", label: "Alex", icon: "Sparkles" },
-    { to: "/dashboard/messages", label: "Messages", icon: "MessageSquare" },
+    { to: "/compare-quotes", label: "Soumissions", labelEn: "Quotes", icon: "Scale" },
     { to: "/dashboard/account", label: "Compte", labelEn: "Account", icon: "User" },
   ],
   contractor: [
-    { to: "/pro", label: "Dashboard", icon: "LayoutDashboard" },
-    { to: "/pro/leads", label: "Opportunités", labelEn: "Leads", icon: "CalendarCheck" },
+    { to: "/pro", label: "Accueil", labelEn: "Home", icon: "Home" },
+    { to: "/pro/leads", label: "Croissance", labelEn: "Growth", icon: "TrendingUp" },
     { to: "/alex", label: "Alex", icon: "Sparkles" },
-    { to: "/pro/appointments", label: "Messages", icon: "MessageSquare" },
-    { to: "/pro/account", label: "Compte", labelEn: "Account", icon: "User" },
+    { to: "/pro/profile", label: "Profil", labelEn: "Profile", icon: "User" },
+    { to: "/pro/account", label: "Compte", labelEn: "Account", icon: "Settings" },
   ],
   partner: [
-    { to: "/dashboard/syndicates", label: "Immeubles", labelEn: "Buildings", icon: "Building" },
-    { to: "/dashboard/appointments", label: "Interventions", icon: "Wrench" },
+    { to: "/dashboard", label: "Accueil", labelEn: "Home", icon: "Home" },
+    { to: "/condo", label: "Condo", labelEn: "Condo", icon: "Building" },
     { to: "/alex", label: "Alex", icon: "Sparkles" },
-    { to: "/dashboard/messages", label: "Messages", icon: "MessageSquare" },
+    { to: "/dashboard/syndicates", label: "Conformité", labelEn: "Compliance", icon: "ShieldCheck" },
     { to: "/dashboard/account", label: "Compte", labelEn: "Account", icon: "User" },
   ],
   admin: [
@@ -226,6 +227,83 @@ export const mobileTabsByRole: Record<UserRole | "guest", NavItem[]> = {
     { to: "/admin/users", label: "Admin", icon: "LayoutDashboard" },
     { to: "/admin/agents", label: "Compte", labelEn: "Account", icon: "User" },
   ],
+};
+
+/* ═══════════════════════════════════════════
+   5b. QUICK ACTIONS — Contextual per persona
+   ═══════════════════════════════════════════ */
+
+export const quickActionsByRole: Record<UserRole | "guest", NavItem[]> = {
+  guest: [],
+  homeowner: [
+    { to: "/search", label: "Trouver le bon pro", labelEn: "Find the right pro", icon: "Search" },
+    { to: "/compare-quotes", label: "Comparer soumissions", labelEn: "Compare quotes", icon: "Scale" },
+  ],
+  contractor: [
+    { to: "/pro/aipp-score", label: "Mon score AIPP", labelEn: "My AIPP Score", icon: "Star" },
+    { to: "/entrepreneurs/creer-mon-profil", label: "Importer profil", labelEn: "Import profile", icon: "UserPlus" },
+  ],
+  partner: [
+    { to: "/condo", label: "Passeport Condo", labelEn: "Condo Passport", icon: "Building" },
+    { to: "/dashboard/syndicates", label: "Outils conformité", labelEn: "Compliance tools", icon: "ShieldCheck" },
+  ],
+  admin: [
+    { to: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
+  ],
+};
+
+/* ═══════════════════════════════════════════
+   5c. DRAWER SECTIONS — Structured per persona
+   ═══════════════════════════════════════════ */
+
+export interface DrawerSection {
+  id: string;
+  label: string;
+  labelEn?: string;
+  items: NavItem[];
+}
+
+export function getDrawerSections(role: UserRole | "guest"): DrawerSection[] {
+  const mainNav: DrawerSection = {
+    id: "main",
+    label: "Navigation",
+    labelEn: "Navigation",
+    items: [
+      { to: "/", label: "Accueil", labelEn: "Home", icon: "Home" },
+      { to: "/proprietaires", label: "Propriétaires", labelEn: "Homeowners", icon: "Building2" },
+      { to: "/entrepreneurs", label: "Entrepreneurs", labelEn: "Contractors", icon: "Briefcase" },
+      { to: "/condo", label: "Copros", labelEn: "Condos", icon: "Building" },
+      { to: "/comment-ca-marche", label: "Comment ça marche", labelEn: "How it works", icon: "HelpCircle" },
+      { to: "/pricing", label: "Tarifs", labelEn: "Pricing", icon: "CreditCard" },
+    ],
+  };
+
+  const personaActions: DrawerSection = {
+    id: "actions",
+    label: "Actions",
+    labelEn: "Actions",
+    items: quickActionsByRole[role] || [],
+  };
+
+  const utilities: DrawerSection = {
+    id: "utilities",
+    label: "Outils",
+    labelEn: "Tools",
+    items: [
+      { to: "/search", label: "Vérifier un entrepreneur", labelEn: "Verify a contractor", icon: "ShieldCheck" },
+      { to: "/alex", label: "Support Alex", labelEn: "Alex Support", icon: "Sparkles" },
+    ],
+  };
+
+  return [mainNav, ...(personaActions.items.length > 0 ? [personaActions] : []), utilities];
+}
+
+export const personaLabels: Record<UserRole | "guest", { fr: string; en: string; description: string; descriptionEn: string }> = {
+  guest: { fr: "Visiteur", en: "Visitor", description: "Découvrez UNPRO", descriptionEn: "Discover UNPRO" },
+  homeowner: { fr: "Propriétaire", en: "Homeowner", description: "Maison, condo, projet", descriptionEn: "Home, condo, project" },
+  contractor: { fr: "Entrepreneur", en: "Contractor", description: "Visibilité, matchs, croissance", descriptionEn: "Visibility, matches, growth" },
+  partner: { fr: "Gestionnaire", en: "Manager", description: "Immeubles, interventions, suivi", descriptionEn: "Buildings, interventions, tracking" },
+  admin: { fr: "Admin", en: "Admin", description: "Gestion du système", descriptionEn: "System management" },
 };
 
 /* ═══════════════════════════════════════════
