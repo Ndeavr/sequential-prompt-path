@@ -1,26 +1,126 @@
 
 
-# Logo Enhancement: Metallic Grey with Inset Reflection & Drop Shadow
+# Plan — Navigation System Universal Intent-Based
 
-## What
-Reduce the logo 10% more (43px → 39px), and apply a CSS filter + styling to make the white parts appear as shiny metallic grey — with an inset light reflection and drop shadow, matching the premium "liquid metal" aesthetic of the Connexion button.
+## Résumé
 
-## Steps
+Refonte complète du système de navigation pour l'aligner avec l'approche intent-based d'UNPRO. Bottom bars contextuelles par persona, drawer mobile structuré, header desktop intent-based, Alex central.
 
-1. **Reduce logo size** in `SmartHeader.tsx` — change height from `43` to `39`.
+## Ce qui change
 
-2. **Add CSS class `.logo-metal`** in `src/index.css` with:
-   - `filter: brightness(0.72) contrast(1.1)` — turns white into metallic grey
-   - `drop-shadow(0 4px 12px hsl(222 90% 55% / 0.3))` — ombre portée (blue-tinted)
-   - A `::after` pseudo-element for the inset light sweep reflection (same animation as `btn-liquid-metal::before`)
-   - Transparent background preserved (no bg added)
+### 1. Bottom Bar Mobile — Contextuel par persona
 
-3. **Apply the class** to the `<img>` tag in `SmartHeader.tsx`.
+**Fichier:** `src/config/navigationConfig.ts` — section `mobileTabsByRole`
 
-## Technical Details
+Remplacer les tabs actuels (Inspirations, Vérifier, etc.) par des variantes utiles :
 
-- The CSS filter approach preserves transparency while shifting white → metallic grey
-- The inset reflet uses the same `light-sweep-cta` keyframe animation already defined
-- Drop shadow uses `filter: drop-shadow()` which respects PNG alpha, unlike `box-shadow`
-- The logo wrapper gets `position: relative; overflow: hidden` for the pseudo-element sweep
+| Slot | Guest | Homeowner | Contractor | Condo Manager (partner) |
+|------|-------|-----------|------------|------------------------|
+| 1 | Accueil | Accueil | Accueil | Accueil |
+| 2 | Explorer | Pro | Croissance | Condo |
+| 3 | **Alex** (orb) | **Alex** (orb) | **Alex** (orb) | **Alex** (orb) |
+| 4 | Tarifs | Soumissions | Profil | Conformité |
+| 5 | Connexion | Compte | Compte | Compte |
+
+- "Inspirations" et "Vérifier" **supprimés** du bottom bar (appartiennent à "Avis")
+- Labels courts, icônes cohérentes, slot 2 et 4 dynamiques selon persona
+
+**Fichier:** `src/components/navigation/MobileBottomNav.tsx` — Pas de changement structurel, juste consomme la nouvelle config.
+
+### 2. Header Desktop — Intent-Based avec 4 zones
+
+**Fichier:** `src/components/navigation/SmartHeader.tsx`
+
+Réorganiser la nav desktop guest en 4 zones :
+
+- **Zone 1 — Marque** : Logo UNPRO (existant, 16px)
+- **Zone 2 — Navigation principale** : Accueil | Propriétaires | Entrepreneurs | Copros | Comment ça marche
+- **Zone 3 — Actions contextuelles** (nouvelles, dynamiques par persona) :
+  - Guest : rien de spécial
+  - Homeowner : "Trouver un pro" | "Comparer soumissions"
+  - Contractor : "Mon score AIPP" | "Importer profil"
+  - Condo : "Passeport Condo" | "Conformité"
+- **Zone 4 — État utilisateur** : Connexion/Compte (existant)
+
+Nouveau composant `MenuQuickActionsContextual` pour la zone 3.
+
+### 3. Header Mobile — Simplifié
+
+**Fichier:** `src/components/navigation/SmartHeader.tsx`
+
+Le header mobile reste minimal :
+- Logo à gauche
+- Language pill + Connexion/Avatar au centre-droit  
+- Hamburger à droite
+- Pas de duplication des liens principaux
+
+### 4. Drawer Mobile — Structuré par sections
+
+**Fichier:** Nouveau `src/components/navigation/DrawerNavigationMobileIntent.tsx` (remplace la `MobileMenuOverlay` inline)
+
+Sections claires :
+1. **Rôle actif** — Badge persona + bouton "Changer de rôle" (`MenuRoleSwitcherUniversal`)
+2. **Navigation principale** — Accueil, Propriétaires, Entrepreneurs, Copros, Comment ça marche, Tarifs
+3. **Actions par persona** — items contextuels (comme zone 3 desktop)
+4. **Utilitaires** — Vérifier un entrepreneur, Support Alex, Connexion/Compte
+
+### 5. Nouveaux composants
+
+| Composant | Rôle |
+|-----------|------|
+| `MenuQuickActionsContextual` | Actions contextuelles par persona (desktop zone 3 + drawer section 3) |
+| `MenuRoleSwitcherUniversal` | Switch de rôle inline (drawer + desktop dropdown) |
+| `BadgePersonaActiveNavigation` | Pill affichant le rôle actif (Propriétaire/Entrepreneur/Gestionnaire) |
+| `BottomBarMobileUniversal` | Wrapper qui sélectionne la bonne variante de bottom bar |
+
+### 6. Config centralisée
+
+**Fichier:** `src/config/navigationConfig.ts`
+
+Ajouter :
+- `quickActionsByRole` — actions contextuelles par persona
+- `drawerSectionsByRole` — structure drawer par persona
+- Mettre à jour `mobileTabsByRole` avec les nouvelles variantes
+
+### 7. Tracking Supabase (migration)
+
+Nouvelle table `navigation_click_events` :
+```sql
+CREATE TABLE navigation_click_events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id text,
+  user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  nav_key text NOT NULL,
+  placement text, -- header, drawer, bottom_bar
+  persona_key text,
+  page_path text,
+  clicked_at timestamptz DEFAULT now()
+);
+ALTER TABLE navigation_click_events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can insert own clicks" ON navigation_click_events FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Anon can insert clicks" ON navigation_click_events FOR INSERT TO anon WITH CHECK (user_id IS NULL);
+```
+
+### 8. Fichiers modifiés
+
+| Fichier | Action |
+|---------|--------|
+| `src/config/navigationConfig.ts` | Update mobileTabsByRole + add quickActionsByRole |
+| `src/components/navigation/SmartHeader.tsx` | Refactor desktop nav zones, extract drawer |
+| `src/components/navigation/MobileBottomNav.tsx` | Minor — consume new config |
+| `src/components/navigation/DrawerNavigationMobileIntent.tsx` | **New** — structured drawer |
+| `src/components/navigation/MenuQuickActionsContextual.tsx` | **New** — contextual actions |
+| `src/components/navigation/MenuRoleSwitcherUniversal.tsx` | **New** — role switcher |
+| `src/components/navigation/BadgePersonaActiveNavigation.tsx` | **New** — active role badge |
+| `src/components/navigation/BottomBarMobileUniversal.tsx` | **New** — wrapper selecting variant |
+| Migration SQL | New table `navigation_click_events` |
+
+### 9. Ce qui ne change PAS
+
+- Logo style/size (16px brushed metal)
+- AlexBottomSheetLauncherUNPRO (orb central)
+- Routes existantes
+- Auth flow (/role page)
+- Safe area handling
+- Dark mode only
 
