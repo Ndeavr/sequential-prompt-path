@@ -214,10 +214,14 @@ export default function AppointmentCalculator() {
     [revenueGoal, effectiveTypes, capacity]
   );
 
-  const appts = useMemo(
+  // Appointments needed to reach goal
+  const apptsNeeded = useMemo(
     () => estimateAppointments(revenueGoal[0], effectiveValue, conversionRate[0] / 100),
     [revenueGoal, effectiveValue, conversionRate]
   );
+
+  // Actual appointments capped by capacity
+  const appts = Math.min(apptsNeeded, capacity[0]);
 
   // Average appointment cost based on selected project types
   const avgApptCost = useMemo(() => {
@@ -231,10 +235,12 @@ export default function AppointmentCalculator() {
     [plan, appts, avgApptCost]
   );
 
+  // Revenue based on actual appointments (capacity-limited)
   const potentialRevenue = appts * effectiveValue * (conversionRate[0] / 100);
   const profit = potentialRevenue - totalCost;
   const roi = totalCost > 0 ? Math.round(potentialRevenue / totalCost) : 0;
   const goalProgress = Math.min(100, Math.round((potentialRevenue / revenueGoal[0]) * 100));
+  const capacityLimited = apptsNeeded > capacity[0];
 
   const suggestions = useMemo(
     () => generateSuggestions({
