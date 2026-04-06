@@ -50,19 +50,10 @@ const MobileBottomNav = () => {
         {leftTabs.map((tab) => {
           const active = isActive(tab.to);
           const Icon = resolveIcon(tab.icon);
-          const isVerify = tab.to === "/verifier";
-          
-          const handleClick = isVerify ? (e: React.MouseEvent) => {
-            e.preventDefault();
-            openAlex("verification");
-            setTimeout(() => navigate("/verifier"), 4000);
-          } : undefined;
-          
           return (
             <Link
               key={tab.to}
               to={tab.to}
-              onClick={handleClick}
               className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-xl transition-all duration-200 ${
                 active ? "text-primary" : "text-muted-foreground"
               }`}
