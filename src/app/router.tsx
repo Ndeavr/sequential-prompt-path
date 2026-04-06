@@ -258,6 +258,7 @@ import PageEntrepreneurScoreResult from "@/pages/entrepreneur/PageEntrepreneurSc
 import PageEntrepreneurPricing from "@/pages/entrepreneur/PageEntrepreneurPricing";
 import PageEntrepreneurDashboardLite from "@/pages/entrepreneur/PageEntrepreneurDashboardLite";
 import PageAIPPAnalysisLoading from "@/pages/entrepreneur/PageAIPPAnalysisLoading";
+import PageEntrepreneurImportProcessing from "@/pages/entrepreneur/PageEntrepreneurImportProcessing";
 import PagePricingCalculator from "@/pages/entrepreneur/PagePricingCalculator";
 import PagePlanResult from "@/pages/entrepreneur/PagePlanResult";
 import PagePaymentSuccess from "@/pages/entrepreneur/PagePaymentSuccess";
@@ -399,6 +400,7 @@ export const AppRouter = () => (
       <Route path="/entrepreneur/join" element={<PageContractorLandingAcquisition />} />
       <Route path="/entrepreneur/onboarding" element={<PageContractorOnboardingStart />} />
       <Route path="/entrepreneur/import" element={<PageContractorImportWorkspace />} />
+      <Route path="/entrepreneur/import/processing" element={<PageEntrepreneurImportProcessing />} />
       <Route path="/entrepreneur/aipp-builder" element={<PageContractorAIPPBuilder />} />
       <Route path="/entrepreneur/assets" element={<PageContractorAssetsStudio />} />
       <Route path="/entrepreneur/faq" element={<PageContractorFAQBuilder />} />

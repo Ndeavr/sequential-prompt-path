@@ -8827,6 +8827,254 @@ export type Database = {
           },
         ]
       }
+      contractor_animation_events: {
+        Row: {
+          animation_session_id: string
+          contractor_id: string
+          created_at: string
+          delay_before_line_ms: number | null
+          display_text: string
+          emitted_at: string | null
+          event_code: string
+          event_label: string
+          event_type: string
+          hold_after_line_ms: number | null
+          id: string
+          import_job_id: string | null
+          payload_json: Json | null
+          reveal_card_code: string | null
+          sequence_order: number
+          severity: string
+          stage_code: string
+          typing_speed_chars_per_sec: number | null
+        }
+        Insert: {
+          animation_session_id: string
+          contractor_id: string
+          created_at?: string
+          delay_before_line_ms?: number | null
+          display_text: string
+          emitted_at?: string | null
+          event_code: string
+          event_label: string
+          event_type?: string
+          hold_after_line_ms?: number | null
+          id?: string
+          import_job_id?: string | null
+          payload_json?: Json | null
+          reveal_card_code?: string | null
+          sequence_order?: number
+          severity?: string
+          stage_code?: string
+          typing_speed_chars_per_sec?: number | null
+        }
+        Update: {
+          animation_session_id?: string
+          contractor_id?: string
+          created_at?: string
+          delay_before_line_ms?: number | null
+          display_text?: string
+          emitted_at?: string | null
+          event_code?: string
+          event_label?: string
+          event_type?: string
+          hold_after_line_ms?: number | null
+          id?: string
+          import_job_id?: string | null
+          payload_json?: Json | null
+          reveal_card_code?: string | null
+          sequence_order?: number
+          severity?: string
+          stage_code?: string
+          typing_speed_chars_per_sec?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_animation_events_animation_session_id_fkey"
+            columns: ["animation_session_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_animation_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_animation_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_animation_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_animation_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_animation_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_animation_events_import_job_id_fkey"
+            columns: ["import_job_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_import_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_animation_presets: {
+        Row: {
+          created_at: string
+          delay_before_line_ms: number
+          hold_after_line_ms: number
+          id: string
+          is_default: boolean
+          preset_code: string
+          preset_label: string
+          reveal_card_delay_ms: number
+          reveal_plan_delay_ms: number
+          reveal_score_delay_ms: number
+          stage_transition_ms: number
+          typing_speed_chars_per_sec: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          delay_before_line_ms?: number
+          hold_after_line_ms?: number
+          id?: string
+          is_default?: boolean
+          preset_code: string
+          preset_label: string
+          reveal_card_delay_ms?: number
+          reveal_plan_delay_ms?: number
+          reveal_score_delay_ms?: number
+          stage_transition_ms?: number
+          typing_speed_chars_per_sec?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          delay_before_line_ms?: number
+          hold_after_line_ms?: number
+          id?: string
+          is_default?: boolean
+          preset_code?: string
+          preset_label?: string
+          reveal_card_delay_ms?: number
+          reveal_plan_delay_ms?: number
+          reveal_score_delay_ms?: number
+          stage_transition_ms?: number
+          typing_speed_chars_per_sec?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      contractor_animation_sessions: {
+        Row: {
+          completed_at: string | null
+          contractor_id: string
+          created_at: string
+          current_stage: string
+          emitted_steps: number
+          id: string
+          import_job_id: string | null
+          percent_complete: number
+          preset_code: string
+          speed_mode: string
+          started_at: string | null
+          status: string
+          total_steps: number
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          contractor_id: string
+          created_at?: string
+          current_stage?: string
+          emitted_steps?: number
+          id?: string
+          import_job_id?: string | null
+          percent_complete?: number
+          preset_code?: string
+          speed_mode?: string
+          started_at?: string | null
+          status?: string
+          total_steps?: number
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          contractor_id?: string
+          created_at?: string
+          current_stage?: string
+          emitted_steps?: number
+          id?: string
+          import_job_id?: string | null
+          percent_complete?: number
+          preset_code?: string
+          speed_mode?: string
+          started_at?: string | null
+          status?: string
+          total_steps?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_animation_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_animation_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_animation_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_animation_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_animation_sessions_import_job_id_fkey"
+            columns: ["import_job_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_import_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_animation_sessions_preset_code_fkey"
+            columns: ["preset_code"]
+            isOneToOne: false
+            referencedRelation: "contractor_animation_presets"
+            referencedColumns: ["preset_code"]
+          },
+        ]
+      }
       contractor_authority_events: {
         Row: {
           contractor_id: string
