@@ -65,11 +65,7 @@ export default function PageEntrepreneurPlanUsage() {
                 <span className="text-xs text-muted-foreground">Quota mensuel</span>
                 <span className="text-xs font-mono text-foreground">{consumedPct.toFixed(0)}%</span>
               </div>
-              <ProgressBarAppointmentUsage percentage={Math.min(consumedPct, 100)} state={quotaState} />
-              <div className="flex justify-between mt-2 text-[10px] text-muted-foreground">
-                <span>{Number(current.consumed_units).toFixed(1)} unités utilisées</span>
-                <span>{Number(current.remaining_units).toFixed(1)} restantes</span>
-              </div>
+              <ProgressBarAppointmentUsage consumed={Number(current.consumed_units)} included={Number(currentInc?.included_units_monthly ?? 1)} />
             </div>
             <div className="rounded-xl border border-border/30 bg-card/50 p-4">
               <p className="text-xs text-muted-foreground mb-2">Tailles accessibles</p>
