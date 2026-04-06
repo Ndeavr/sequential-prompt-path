@@ -209,9 +209,61 @@ export default function AuthOverlayPremium() {
                 </div>
               )}
 
+              {/* Role selection mode */}
+              {mode === "role" && (
+                <div className="space-y-3">
+                  <div className="grid gap-1.5 max-h-[45vh] overflow-y-auto pr-1">
+                    {ROLES.map((role) => {
+                      const Icon = role.icon;
+                      const active = selectedRoles.includes(role.code);
+                      return (
+                        <motion.button
+                          key={role.code}
+                          onClick={() => {
+                            setSelectedRoles([role.code]);
+                            setTimeout(() => setMode("choice"), 200);
+                          }}
+                          whileTap={{ scale: 0.98 }}
+                          className="flex items-center gap-3 px-3.5 py-3 rounded-xl text-left transition-all w-full"
+                          style={{
+                            background: active ? "hsl(222 100% 65% / 0.12)" : "hsl(228 20% 14% / 0.5)",
+                            border: `1px solid ${active ? "hsl(222 100% 65% / 0.35)" : "hsl(228 18% 18%)"}`,
+                          }}
+                        >
+                          <div
+                            className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
+                            style={{ background: active ? "hsl(222 100% 65% / 0.18)" : "hsl(228 20% 16%)" }}
+                          >
+                            <Icon className="h-4 w-4" style={{ color: active ? "hsl(222 100% 75%)" : "hsl(220 14% 55%)" }} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-foreground leading-tight">{role.label}</p>
+                            <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">{role.desc}</p>
+                          </div>
+                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 ml-auto shrink-0" />
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={() => setMode("choice")}
+                    className="w-full text-xs text-primary hover:underline transition-colors pt-1"
+                  >
+                    J'ai déjà un compte
+                  </button>
+                </div>
+              )}
+
               {/* Choice mode: signup vs login */}
               {mode === "choice" && (
                 <div className="space-y-2.5">
+                  {selectedRoles.length > 0 && (
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ background: "hsl(222 100% 65% / 0.08)", border: "1px solid hsl(222 100% 65% / 0.15)" }}>
+                      <span className="text-muted-foreground">Rôle :</span>
+                      <span className="text-foreground font-medium">{ROLES.find(r => r.code === selectedRoles[0])?.label}</span>
+                      <button onClick={() => setMode("role")} className="ml-auto text-primary text-[11px] hover:underline">Changer</button>
+                    </div>
+                  )}
                   <Button
                     onClick={() => setMode("signup")}
                     className="w-full h-12 text-sm font-semibold rounded-xl gap-2"
@@ -241,38 +293,6 @@ export default function AuthOverlayPremium() {
               {/* Login or Signup mode */}
               {(mode === "login" || mode === "signup") && (
                 <div className="space-y-4">
-                  {/* Role selection (compact chips) */}
-                  {mode === "signup" && (
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium text-muted-foreground">Choisissez votre ou vos rôles</p>
-                      <div className="flex flex-wrap gap-2">
-                        {ROLES.map((role) => {
-                          const active = selectedRoles.includes(role.code);
-                          const Icon = role.icon;
-                          return (
-                            <button
-                              key={role.code}
-                              onClick={() => toggleRole(role.code)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-                              style={{
-                                background: active ? "hsl(222 100% 65% / 0.15)" : "hsl(228 20% 14% / 0.5)",
-                                border: `1px solid ${active ? "hsl(222 100% 65% / 0.4)" : "hsl(228 18% 18%)"}`,
-                                color: active ? "hsl(222 100% 75%)" : "hsl(220 14% 55%)",
-                              }}
-                            >
-                              <Icon className="h-3 w-3" />
-                              {role.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      {selectedRoles.includes("partner") && (
-                        <p className="text-[11px] text-muted-foreground pl-1">
-                          Assureur, municipalité, ministère, banque ou autre organisation.
-                        </p>
-                      )}
-                    </div>
-                  )}
 
                   {/* Divider */}
                   <div className="flex items-center gap-3">
