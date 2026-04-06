@@ -176,6 +176,7 @@ import AdminWinningVariantsPage from "@/pages/admin/AdminWinningVariantsPage";
 
 // Alex Conversation Guardrails
 import PageAdminAlexConversationRules from "@/pages/admin/PageAdminAlexConversationRules";
+import PageAdminAlexDebugHome from "@/pages/admin/PageAdminAlexDebugHome";
 
 import AdminPredictiveLeads from "@/pages/admin/AdminPredictiveLeads";
 
