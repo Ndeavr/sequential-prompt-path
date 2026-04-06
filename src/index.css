@@ -773,7 +773,7 @@
 }
 
 .logo-metal {
-  filter: brightness(0.78) contrast(1.05) saturate(0.15) drop-shadow(0 3px 10px hsl(222 90% 55% / 0.25));
+  filter: brightness(0.82) contrast(1.08) saturate(0.7) drop-shadow(0 2px 8px hsl(222 90% 55% / 0.2));
   position: relative;
   z-index: 1;
 }

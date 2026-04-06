@@ -113,7 +113,7 @@ const SmartHeader = () => {
                 src={unproLogo}
                 alt="UNPRO"
                 className="logo-metal object-contain transition-all duration-300 group-hover:scale-105"
-                style={{ height: 20, border: "none", outline: "none", boxShadow: "none", padding: 0, margin: 0 }}
+                style={{ height: 16, border: "none", outline: "none", boxShadow: "none", padding: 0, margin: 0 }}
               />
             </Link>
 
