@@ -3,12 +3,19 @@
  * intent selector pills, and UNPRO brand glow.
  * Voice-first with Gemini Live Native Audio.
  * Pills: Problème, Projet, Avis — all start Alex & allow photo upload.
+ * 
+ * SINGLETON GUARD: This is the PRIMARY Alex source on home page.
+ * Uses alexRuntime lock to prevent any duplicate voice.
  */
 import { useState, useCallback, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
-import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, AlertTriangle, Sparkles, MessageSquare, ArrowRight, Camera, FileSearch, Upload } from "lucide-react";
+import { useAlexSingleton } from "@/hooks/useAlexSingleton";
+import { useAlexHomeAutostart } from "@/hooks/useAlexHomeAutostart";
+import { alexRuntime } from "@/services/alexRuntimeSingleton";
+import { alexAudioChannel } from "@/services/alexSingleAudioChannel";
+import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, AlertTriangle, Sparkles, MessageSquare, ArrowRight, Camera, FileSearch } from "lucide-react";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 
 const cinematicBg = "/images/hero-bg.gif";
@@ -45,17 +52,31 @@ const INTENTS = [
   },
 ];
 
+const COMPONENT_NAME = 'HeroSectionCinematicAlex';
+
 export default function HeroSection() {
   const { user } = useAuth();
   const [textSheetOpen, setTextSheetOpen] = useState(false);
   const [activeIntent, setActiveIntent] = useState<IntentSlug>("probleme");
 
+  // Singleton guard — register as primary
+  const { isPrimary, acquireLock, releaseLock, markActive } = useAlexSingleton(COMPONENT_NAME, 'primary');
+
   const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
     onTranscript: () => {},
     onUserTranscript: () => {},
-    onConnect: () => console.log("[Hero] Gemini Live connected"),
-    onDisconnect: () => console.log("[Hero] Gemini Live disconnected"),
-    onError: (err) => console.error("[Hero] Gemini Live error:", err),
+    onConnect: () => {
+      console.log("[Hero] Gemini Live connected");
+      markActive('gemini-live');
+    },
+    onDisconnect: () => {
+      console.log("[Hero] Gemini Live disconnected");
+      releaseLock();
+    },
+    onError: (err) => {
+      console.error("[Hero] Gemini Live error:", err);
+      releaseLock();
+    },
   });
 
   const orbState = isConnecting ? "thinking" : isActive ? (isSpeaking ? "speaking" : "listening") : "idle";
@@ -82,7 +103,22 @@ export default function HeroSection() {
   }, [user]);
 
   const startVoice = useCallback((intent?: IntentSlug) => {
+    // SINGLETON GUARD: Must acquire lock before starting
+    if (!isPrimary) {
+      console.warn(`[Hero] Not primary — cannot start voice`);
+      return;
+    }
+
+    const locked = acquireLock();
+    if (!locked) {
+      console.warn(`[Hero] Lock rejected — another Alex instance is active`);
+      return;
+    }
+
+    // Kill all other audio sources
+    alexAudioChannel.hardStop();
     window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
+
     const selectedIntent = intent || activeIntent;
     const greeting = getIntentGreeting(selectedIntent);
     start({ initialGreeting: greeting });
@@ -93,9 +129,19 @@ export default function HeroSection() {
         fileInputRef.current?.click();
       }, 4000);
     }
-  }, [start, getIntentGreeting, activeIntent]);
+  }, [start, getIntentGreeting, activeIntent, isPrimary, acquireLock]);
 
-  const stopVoice = useCallback(() => stop(), [stop]);
+  const stopVoice = useCallback(() => {
+    stop();
+    releaseLock();
+  }, [stop, releaseLock]);
+
+  // Auto-start (controlled via singleton)
+  useAlexHomeAutostart({
+    enabled: true,
+    isPrimary,
+    onAutostart: () => startVoice(),
+  });
 
   const statusText =
     orbState === "speaking" ? "Alex vous parle…"
@@ -105,7 +151,10 @@ export default function HeroSection() {
 
   return (
     <>
-      <section className="relative min-h-[calc(100vh-80px)] flex flex-col items-center justify-center overflow-hidden">
+      <section
+        className="relative min-h-[calc(100vh-80px)] flex flex-col items-center justify-center overflow-hidden"
+        data-testid="hero-section-alex"
+      >
         {/* ── Cinematic Background ── */}
         <motion.div
           className="absolute inset-0 z-0"
@@ -198,6 +247,7 @@ export default function HeroSection() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.55, type: "spring", stiffness: 180 }}
             className="mt-10 mb-5 flex flex-col items-center"
+            data-testid="alex-orb-primary"
           >
             <div className="relative flex items-center justify-center">
               {/* Outer breathing glow */}
@@ -268,6 +318,7 @@ export default function HeroSection() {
                 transition={{ duration: orbState === "speaking" ? 0.6 : orbState === "listening" ? 1.2 : 2.5, repeat: Infinity, ease: "easeInOut" }}
                 whileHover={{ scale: 1.1, boxShadow: "0 0 80px -10px hsl(222 100% 65% / 0.6)" }}
                 whileTap={{ scale: 0.92 }}
+                data-testid="alex-orb-button"
               >
                 <div className="absolute inset-0 rounded-full" style={{
                   background: "radial-gradient(circle at 38% 32%, hsl(222 100% 75% / 0.35), transparent 60%)",
@@ -354,7 +405,6 @@ export default function HeroSection() {
             const files = e.target.files;
             if (files && files.length > 0) {
               console.log("[Hero] Files selected:", files.length);
-              // TODO: handle file upload to Alex quote analysis
             }
             e.target.value = "";
           }}
