@@ -39,8 +39,6 @@ export default function PageRecruitmentCloser() {
       <TestimonialsSectionCloser />
       <ObjectionSection />
       <FormApplicationCloser ref={formRef} />
-      <CTAStickyApply onApply={() => scrollTo(formRef)} />
-
       <div className="h-20 md:hidden" />
     </>
   );

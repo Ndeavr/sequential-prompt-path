@@ -824,8 +824,14 @@ export const AppRouter = () => (
       <Route path="/condos/reports" element={<ProtectedRoute requiredRole="homeowner"><CondoReportsPage /></ProtectedRoute>} />
       <Route path="/condos/billing" element={<ProtectedRoute requiredRole="homeowner"><CondoBillingPage /></ProtectedRoute>} />
 
-      {/* Recruitment */}
-      <Route path="/carriere" element={<PageRecruitmentCloser />} />
+      {/* Recruitment / Carrières */}
+      <Route path="/carrieres" element={<PageCareers />} />
+      <Route path="/carrieres/representant" element={<PageRecruitmentCloser />} />
+      <Route path="/carrieres/programmeur" element={<PageRecruitmentProgrammer />} />
+      <Route path="/carrieres/merci" element={<PageRecruitmentThankYou />} />
+      <Route path="/carrieres/onboarding" element={<PageRepresentativeOnboarding />} />
+      {/* Legacy redirects */}
+      <Route path="/carriere" element={<PageCareers />} />
       <Route path="/carriere/merci" element={<PageRecruitmentThankYou />} />
       <Route path="/carriere/onboarding" element={<PageRepresentativeOnboarding />} />
       <Route path="/import-entrepreneur" element={<PageRepresentativeOnboarding />} />
