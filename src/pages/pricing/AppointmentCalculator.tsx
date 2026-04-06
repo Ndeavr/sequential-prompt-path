@@ -4,6 +4,8 @@
  */
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
@@ -16,7 +18,7 @@ import {
 import {
   Calculator, TrendingUp, ArrowRight, Target, MapPin, Briefcase, DollarSign,
   BarChart3, Zap, Crown, Star, Users, Shield, Sparkles, Brain, Lightbulb,
-  ChevronUp, AlertTriangle,
+  ChevronUp, AlertTriangle, Flame,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip } from "recharts";
@@ -214,7 +216,40 @@ export default function AppointmentCalculator() {
     [revenueGoal, effectiveTypes, capacity]
   );
 
-  // Appointments needed to reach goal
+  // Territory availability query
+  const { data: territoryData } = useQuery({
+    queryKey: ["territory-availability", citySlug, tradeSlug, plan],
+    queryFn: async () => {
+      if (!citySlug || !tradeSlug) return null;
+      const cityName = cities?.find((c: any) => c.slug === citySlug)?.name_fr ?? "";
+      const tradeName = trades?.find((t: any) => t.slug === tradeSlug)?.name_fr ?? "";
+      if (!cityName || !tradeName) return null;
+
+      const { data, error } = await supabase
+        .from("territories")
+        .select("slots_signature, slots_elite, slots_premium, slots_pro, slots_recrue, occupied_signature, occupied_elite, occupied_premium, occupied_pro, occupied_recrue, max_entrepreneurs")
+        .ilike("city_name", cityName)
+        .ilike("category_name", `%${tradeName}%`)
+        .limit(1)
+        .maybeSingle();
+      if (error || !data) return null;
+
+      const planSlotMap: Record<string, { slots: number; occupied: number }> = {
+        signature: { slots: data.slots_signature, occupied: data.occupied_signature },
+        elite: { slots: data.slots_elite, occupied: data.occupied_elite },
+        premium: { slots: data.slots_premium, occupied: data.occupied_premium },
+        pro: { slots: data.slots_pro, occupied: data.occupied_pro },
+        recrue: { slots: data.slots_recrue, occupied: data.occupied_recrue },
+      };
+      const current = planSlotMap[plan] ?? { slots: 0, occupied: 0 };
+      const totalOccupied = data.occupied_signature + data.occupied_elite + data.occupied_premium + data.occupied_pro + data.occupied_recrue;
+      return { ...current, remaining: Math.max(0, current.slots - current.occupied), totalSlots: data.max_entrepreneurs, totalOccupied };
+    },
+    enabled: !!citySlug && !!tradeSlug && !!cities?.length && !!trades?.length,
+    staleTime: 60_000,
+  });
+
+
   const apptsNeeded = useMemo(
     () => estimateAppointments(revenueGoal[0], effectiveValue, conversionRate[0] / 100),
     [revenueGoal, effectiveValue, conversionRate]
@@ -482,6 +517,34 @@ export default function AppointmentCalculator() {
                   <PlanIcon className={`h-6 w-6 ${PLAN_META[plan]?.color}`} />
                   <span className="text-3xl font-extrabold text-foreground">{planLabel}</span>
                 </div>
+                {/* Scarcity indicator */}
+                {territoryData && territoryData.slots > 0 && (() => {
+                  const pct = territoryData.occupied / territoryData.slots;
+                  const remaining = territoryData.remaining;
+                  const showRatio = pct >= 0.5;
+                  const isUrgent = remaining <= 2;
+                  const isScarce = remaining <= Math.ceil(territoryData.slots * 0.3);
+                  return (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className={`mt-3 flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold ${
+                        isUrgent
+                          ? "bg-destructive/10 border border-destructive/20 text-destructive"
+                          : isScarce
+                            ? "bg-orange-500/10 border border-orange-500/20 text-orange-400"
+                            : "bg-success/10 border border-success/20 text-success"
+                      }`}
+                    >
+                      <Flame className={`h-4 w-4 ${isUrgent ? "text-destructive" : isScarce ? "text-orange-400" : "text-success"}`} />
+                      {showRatio ? (
+                        <span>{territoryData.occupied}/{territoryData.slots} places occupées — <strong>{remaining} restante{remaining > 1 ? "s" : ""}</strong></span>
+                      ) : (
+                        <span>{remaining} place{remaining > 1 ? "s" : ""} restante{remaining > 1 ? "s" : ""}</span>
+                      )}
+                    </motion.div>
+                  );
+                })()}
               </div>
 
               {/* KPI Grid */}
