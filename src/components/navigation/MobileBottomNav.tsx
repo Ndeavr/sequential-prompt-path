@@ -7,7 +7,6 @@ import { Link, useLocation } from "react-router-dom";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { mobileTabsByRole } from "@/config/navigationConfig";
-import { mobileTabsByRole } from "@/config/navigationConfig";
 import { resolveIcon } from "./IconResolver";
 import AlexBottomSheetLauncherUNPRO from "./AlexBottomSheetLauncherUNPRO";
 import type { UserRole } from "@/types/navigation";
@@ -15,9 +14,7 @@ import type { UserRole } from "@/types/navigation";
 const MobileBottomNav = () => {
   const { activeRole } = useNavigationContext();
   const { pathname } = useLocation();
-  const navigate = useNavigate();
   const { lang } = useLanguage();
-  const { openAlex } = useAlexVoice();
 
   const hiddenPaths = ["/alex", "/login", "/signup", "/start"];
   if (hiddenPaths.some((p) => pathname === p)) return null;
