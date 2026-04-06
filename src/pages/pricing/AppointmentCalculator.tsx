@@ -486,9 +486,9 @@ export default function AppointmentCalculator() {
 
               {/* KPI Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <KPICard label="Rendez-vous estimés" value={`${appts}`} sub="/mois" />
-                <KPICard label="Coût total" value={`${Math.round(totalCost).toLocaleString()} $`} />
-                <KPICard label="Revenu potentiel" value={`${Math.round(potentialRevenue).toLocaleString()} $`} accent="success" />
+                <KPICard label="Rendez-vous" value={`${appts}`} sub={capacityLimited ? `/${apptsNeeded} nécessaires` : "/mois"} />
+                <KPICard label="Coût total" value={`${Math.round(totalCost).toLocaleString()} $`} sub="/mois" />
+                <KPICard label="Revenu potentiel" value={`${Math.round(potentialRevenue).toLocaleString()} $`} accent="success" sub="/mois" />
                 <KPICard label="ROI estimé" value={`${roi}x`} accent="success" icon={<TrendingUp className="h-4 w-4" />} />
               </div>
 
