@@ -4,22 +4,24 @@
  */
 
 import {
-  Home, Building2, FolderOpen, Briefcase, Sparkles, Search,
-  User, TrendingUp, CalendarDays, BarChart3, Star, FileText,
+  Home, Building, Building2, FolderOpen, Briefcase, Sparkles, Search,
+  User, TrendingUp, CalendarDays, CalendarCheck, BarChart3, Star, FileText,
   Shield, ShieldCheck, MessageSquare, MapPin, CreditCard,
   LayoutDashboard, Users, Brain, Palette, Plus, UserPlus,
-  Scale, Bell, Settings, HelpCircle, LogOut, Globe, Menu, X,
-  ChevronDown, ArrowRightLeft,
+  Scale, Bell, Settings, HelpCircle, LogOut, LogIn, Globe, Menu, X,
+  ChevronDown, ArrowRightLeft, Compass, AlertTriangle, Wrench,
+  BookOpen, Wallet,
   type LucideIcon,
 } from "lucide-react";
 
 const iconMap: Record<string, LucideIcon> = {
-  Home, Building2, FolderOpen, Briefcase, Sparkles, Search,
-  User, TrendingUp, CalendarDays, BarChart3, Star, FileText,
+  Home, Building, Building2, FolderOpen, Briefcase, Sparkles, Search,
+  User, TrendingUp, CalendarDays, CalendarCheck, BarChart3, Star, FileText,
   Shield, ShieldCheck, MessageSquare, MapPin, CreditCard,
   LayoutDashboard, Users, Brain, Palette, Plus, UserPlus,
-  Scale, Bell, Settings, HelpCircle, LogOut, Globe, Menu, X,
-  ChevronDown, ArrowRightLeft,
+  Scale, Bell, Settings, HelpCircle, LogOut, LogIn, Globe, Menu, X,
+  ChevronDown, ArrowRightLeft, Compass, AlertTriangle, Wrench,
+  BookOpen, Wallet,
 };
 
 export function resolveIcon(name: string): LucideIcon {
@@ -27,10 +29,11 @@ export function resolveIcon(name: string): LucideIcon {
 }
 
 export {
-  Home, Building2, FolderOpen, Briefcase, Sparkles, Search,
-  User, TrendingUp, CalendarDays, BarChart3, Star, FileText,
+  Home, Building, Building2, FolderOpen, Briefcase, Sparkles, Search,
+  User, TrendingUp, CalendarDays, CalendarCheck, BarChart3, Star, FileText,
   Shield, ShieldCheck, MessageSquare, MapPin, CreditCard,
   LayoutDashboard, Users, Brain, Palette, Plus, UserPlus,
-  Scale, Bell, Settings, HelpCircle, LogOut, Globe, Menu, X,
-  ChevronDown, ArrowRightLeft,
+  Scale, Bell, Settings, HelpCircle, LogOut, LogIn, Globe, Menu, X,
+  ChevronDown, ArrowRightLeft, Compass, AlertTriangle, Wrench,
+  BookOpen, Wallet,
 };
