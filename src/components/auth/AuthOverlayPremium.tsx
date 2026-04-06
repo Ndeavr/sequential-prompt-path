@@ -5,7 +5,7 @@
  */
 import { useState, useEffect, useRef, useCallback, useSyncExternalStore } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Shield, User, Briefcase, Building2, Handshake, Mail, Smartphone, Lock, ChevronRight } from "lucide-react";
+import { X, User, Briefcase, Building2, Handshake, Mail, Smartphone, Lock, ChevronRight, Home, Award, Landmark, Globe, Factory, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import {
@@ -21,14 +21,19 @@ import LoginMagicLinkForm from "@/components/auth/LoginMagicLinkForm";
 import PhoneOtpForm from "@/components/auth/PhoneOtpForm";
 import logo from "@/assets/unpro-robot.png";
 
-type AuthMode = "choice" | "login" | "signup";
+type AuthMode = "role" | "choice" | "login" | "signup";
 type SecondaryMethod = null | "email" | "phone";
 
 const ROLES = [
-  { code: "owner", label: "Propriétaire", icon: User },
-  { code: "contractor", label: "Entrepreneur", icon: Briefcase },
-  { code: "condo_manager", label: "Gestionnaire de copropriété", icon: Building2 },
-  { code: "partner", label: "Partenaire", icon: Handshake },
+  { code: "homeowner", label: "Propriétaire", desc: "Maison, condo, projet", icon: Home },
+  { code: "contractor", label: "Entrepreneur", desc: "Visibilité, matchs, croissance", icon: Briefcase },
+  { code: "professional", label: "Professionnel", desc: "Expertise, crédibilité, clients", icon: Award },
+  { code: "condo_manager", label: "Gestionnaire de copropriétés", desc: "Immeubles, interventions, suivi", icon: Building2 },
+  { code: "partner", label: "Partenaire", desc: "Services, intégration, collaboration", icon: Handshake },
+  { code: "municipality", label: "Municipalité", desc: "Citoyens, orientation, terrain", icon: Landmark },
+  { code: "public_org", label: "Organisation publique", desc: "Services, démarches, accompagnement", icon: Globe },
+  { code: "enterprise", label: "Entreprise", desc: "Bâtiments, actifs, fournisseurs", icon: Factory },
+  { code: "ambassador", label: "Ambassadeur", desc: "Références, commissions, croissance", icon: Users },
 ] as const;
 
 const ACTION_LABELS: Record<string, string> = {
