@@ -88,6 +88,7 @@ import FlywheelPage from "@/pages/FlywheelPage";
 import EnergyPage from "@/pages/EnergyPage";
 import PreventiveMaintenancePage from "@/pages/PreventiveMaintenancePage";
 import CoproprietePage from "@/pages/CoproprietePage";
+import CondosPricingPage from "@/pages/condos/CondosPricingPage";
 import BuildingIntelligenceMap from "@/pages/BuildingIntelligenceMap";
 import AnswerEnginePage from "@/pages/AnswerEnginePage";
 import BusinessImportPage from "@/pages/BusinessImportPage";
@@ -489,6 +490,7 @@ export const AppRouter = () => (
       <Route path="/energy" element={<EnergyPage />} />
       <Route path="/preventive-maintenance" element={<PreventiveMaintenancePage />} />
       <Route path="/copropriete" element={<CoproprietePage />} />
+      <Route path="/condos/tarifs" element={<CondosPricingPage />} />
       <Route path="/building-map" element={<BuildingIntelligenceMap />} />
       <Route path="/answers" element={<AnswerEnginePage />} />
       <Route path="/import-business" element={<BusinessImportPage />} />
