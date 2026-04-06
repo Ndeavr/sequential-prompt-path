@@ -391,6 +391,7 @@ export const AppRouter = () => (
       <Route path="/login" element={<LoginPageUnpro />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route path="/signup" element={<LoginPageUnpro />} />
+      <Route path="/role" element={<PreLoginRolePage />} />
       <Route path="/onboarding" element={<UniversalRouteGuard anyAuth><OnboardingPageUnpro /></UniversalRouteGuard>} />
       <Route path="/start" element={<StartPage />} />
 
