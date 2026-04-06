@@ -517,6 +517,34 @@ export default function AppointmentCalculator() {
                   <PlanIcon className={`h-6 w-6 ${PLAN_META[plan]?.color}`} />
                   <span className="text-3xl font-extrabold text-foreground">{planLabel}</span>
                 </div>
+                {/* Scarcity indicator */}
+                {territoryData && territoryData.slots > 0 && (() => {
+                  const pct = territoryData.occupied / territoryData.slots;
+                  const remaining = territoryData.remaining;
+                  const showRatio = pct >= 0.5;
+                  const isUrgent = remaining <= 2;
+                  const isScarce = remaining <= Math.ceil(territoryData.slots * 0.3);
+                  return (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className={`mt-3 flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold ${
+                        isUrgent
+                          ? "bg-destructive/10 border border-destructive/20 text-destructive"
+                          : isScarce
+                            ? "bg-orange-500/10 border border-orange-500/20 text-orange-400"
+                            : "bg-success/10 border border-success/20 text-success"
+                      }`}
+                    >
+                      <Flame className={`h-4 w-4 ${isUrgent ? "text-destructive" : isScarce ? "text-orange-400" : "text-success"}`} />
+                      {showRatio ? (
+                        <span>{territoryData.occupied}/{territoryData.slots} places occupées — <strong>{remaining} restante{remaining > 1 ? "s" : ""}</strong></span>
+                      ) : (
+                        <span>{remaining} place{remaining > 1 ? "s" : ""} restante{remaining > 1 ? "s" : ""}</span>
+                      )}
+                    </motion.div>
+                  );
+                })()}
               </div>
 
               {/* KPI Grid */}
