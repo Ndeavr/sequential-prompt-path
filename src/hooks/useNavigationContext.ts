@@ -1,9 +1,10 @@
 /**
  * UNPRO — useNavigationContext
  * Aggregates all user state into a NavigationContext for programmatic navigation.
+ * Uses shared ActiveRoleContext for role state.
  */
 
-import { useState, useMemo, useCallback } from "react";
+import { useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useProperties } from "@/hooks/useProperties";
@@ -12,6 +13,7 @@ import { useAppointments, useContractorAppointments } from "@/hooks/useAppointme
 import { useContractorLeads } from "@/hooks/useLeads";
 import { useContractorSubscription } from "@/hooks/useSubscription";
 import { useLanguage } from "@/components/ui/LanguageToggle";
+import { useActiveRole } from "@/contexts/ActiveRoleContext";
 import type { NavigationContext, UserRole } from "@/types/navigation";
 
 function computeContractorCompletion(c: any): number {
@@ -31,7 +33,7 @@ export const useNavigationContext = (): {
   setActiveRole: (role: UserRole) => void;
   isLoading: boolean;
 } => {
-  const { user, isAuthenticated, role: dbRole, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { data: properties } = useProperties();
   const { data: contractor } = useContractorProfile();
@@ -40,32 +42,7 @@ export const useNavigationContext = (): {
   const { data: leads } = useContractorLeads();
   const { data: subscription } = useContractorSubscription();
   const { lang } = useLanguage();
-
-  // Derive available roles
-  const availableRoles = useMemo<UserRole[]>(() => {
-    if (!isAuthenticated) return [];
-    const roles: UserRole[] = [];
-    if (dbRole === "admin") roles.push("admin");
-    if (dbRole === "contractor" || contractor) roles.push("contractor");
-    // Everyone who is authenticated has at least homeowner
-    roles.push("homeowner");
-    return [...new Set(roles)];
-  }, [isAuthenticated, dbRole, contractor]);
-
-  const defaultRole = useMemo<UserRole>(() => {
-    if (dbRole === "admin") return "admin";
-    if (dbRole === "contractor") return "contractor";
-    return "homeowner";
-  }, [dbRole]);
-
-  const [overrideRole, setOverrideRole] = useState<UserRole | null>(null);
-  const activeRole: UserRole | "guest" = !isAuthenticated
-    ? "guest"
-    : overrideRole && availableRoles.includes(overrideRole)
-      ? overrideRole
-      : defaultRole;
-
-  const setActiveRole = useCallback((r: UserRole) => setOverrideRole(r), []);
+  const { activeRole, setActiveRole, availableRoles } = useActiveRole();
 
   const ctx = useMemo<NavigationContext | null>(() => {
     if (!isAuthenticated || !user) return null;
@@ -100,7 +77,7 @@ export const useNavigationContext = (): {
           city: p.city,
         })),
         activePropertyId: undefined,
-        passportCompletion: 0, // TODO: compute from property data
+        passportCompletion: 0,
         homeScore: undefined,
         activeProjectsCount: 0,
         upcomingAppointmentsCount: upcomingHOAppts,
