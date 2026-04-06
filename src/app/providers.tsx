@@ -33,14 +33,16 @@ export const Providers = ({ children }: ProvidersProps) => (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
       <QueryClientProvider client={queryClient}>
         <LanguageProvider>
-          <AlexVoiceProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              {children}
-              <GlobalAlexOverlay />
-            </TooltipProvider>
-          </AlexVoiceProvider>
+          <ActiveRoleProvider>
+            <AlexVoiceProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                {children}
+                <GlobalAlexOverlay />
+              </TooltipProvider>
+            </AlexVoiceProvider>
+          </ActiveRoleProvider>
         </LanguageProvider>
       </QueryClientProvider>
     </ThemeProvider>
