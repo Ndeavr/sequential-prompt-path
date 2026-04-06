@@ -1,14 +1,15 @@
 /**
  * HeroSectionCinematicAlex — Immersive cinematic hero with Alex orb,
  * intent selector pills, and UNPRO brand glow.
- * Voice-first with Gemini Live Native Audio.
- * Pills: Problème, Projet, Avis — all start Alex & allow photo upload.
+ * 
+ * UNIFIED: Uses openAlex() exclusively — NO independent voice pipeline.
+ * The orb is visual-only; actual voice is handled by GlobalAlexOverlay.
  */
 import { useState, useCallback, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import { useLiveVoice } from "@/hooks/useLiveVoice";
-import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, AlertTriangle, Sparkles, MessageSquare, ArrowRight, Camera, FileSearch, Upload } from "lucide-react";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
+import { Mic, Volume2, Loader2, Keyboard, AlertTriangle, Sparkles, MessageSquare, ArrowRight, Camera, FileSearch } from "lucide-react";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 
 const cinematicBg = "/images/hero-bg.gif";
@@ -22,7 +23,6 @@ const INTENTS = [
     icon: AlertTriangle,
     cta: "Détecter un problème",
     ctaIcon: Camera,
-    ctaSec: null,
     route: "/describe-project?intent=problem",
   },
   {
@@ -31,7 +31,6 @@ const INTENTS = [
     icon: Sparkles,
     cta: "Décrire mon projet",
     ctaIcon: Camera,
-    ctaSec: null,
     route: "/describe-project",
   },
   {
@@ -40,66 +39,38 @@ const INTENTS = [
     icon: MessageSquare,
     cta: "Analyser 3 soumissions",
     ctaIcon: FileSearch,
-    ctaSec: null,
     route: "/describe-project?intent=quote-analysis",
   },
 ];
 
 export default function HeroSection() {
   const { user } = useAuth();
+  const { openAlex, isOpen: alexOpen, voiceActive } = useAlexVoice();
   const [textSheetOpen, setTextSheetOpen] = useState(false);
   const [activeIntent, setActiveIntent] = useState<IntentSlug>("probleme");
 
-  const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
-    onTranscript: () => {},
-    onUserTranscript: () => {},
-    onConnect: () => console.log("[Hero] Gemini Live connected"),
-    onDisconnect: () => console.log("[Hero] Gemini Live disconnected"),
-    onError: (err) => console.error("[Hero] Gemini Live error:", err),
-  });
-
-  const orbState = isConnecting ? "thinking" : isActive ? (isSpeaking ? "speaking" : "listening") : "idle";
-  const voiceActive = isActive || isConnecting;
   const current = INTENTS.find((i) => i.slug === activeIntent)!;
-
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const getIntentGreeting = useCallback((intent: IntentSlug) => {
-    const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || null;
-    const name = firstName || "";
-    const hi = name ? `Bonjour ${name}!` : "Bonjour!";
+  // Map voice overlay state to orb visual state
+  const orbState = alexOpen && voiceActive ? "speaking" : alexOpen ? "listening" : "idle";
 
-    switch (intent) {
-      case "probleme":
-        return `${hi} Je peux vous aider à trouver une solution! Avez-vous une photo ou pouvez-vous me décrire votre problème?`;
-      case "projet":
-        return `${hi} Ah! Un nouveau projet! Je peux certainement vous aider avec ça! Avez-vous une photo de ce que vous voulez améliorer ou pouvez-vous me décrire votre projet?`;
-      case "avis":
-        return `${hi} Vous aimeriez que j'analyse vos soumissions? Pas de problème! Vous pouvez les téléverser ou les prendre en photo ici.`;
-      default:
-        return `${hi} Comment puis-je vous aider?`;
+  const handleOrbClick = useCallback(() => {
+    if (alexOpen) return; // Already open, don't duplicate
+    openAlex(activeIntent);
+  }, [openAlex, activeIntent, alexOpen]);
+
+  const handleCtaClick = useCallback(() => {
+    if (alexOpen) return;
+    openAlex(activeIntent);
+    // Auto-open file upload after greeting (~4s)
+    if (activeIntent === "avis" || activeIntent === "probleme" || activeIntent === "projet") {
+      setTimeout(() => fileInputRef.current?.click(), 4000);
     }
-  }, [user]);
-
-  const startVoice = useCallback((intent?: IntentSlug) => {
-    window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
-    const selectedIntent = intent || activeIntent;
-    const greeting = getIntentGreeting(selectedIntent);
-    start({ initialGreeting: greeting });
-
-    // Auto-open file upload after Alex finishes greeting (~4s)
-    if (selectedIntent === "avis" || selectedIntent === "probleme" || selectedIntent === "projet") {
-      setTimeout(() => {
-        fileInputRef.current?.click();
-      }, 4000);
-    }
-  }, [start, getIntentGreeting, activeIntent]);
-
-  const stopVoice = useCallback(() => stop(), [stop]);
+  }, [openAlex, activeIntent, alexOpen]);
 
   const statusText =
     orbState === "speaking" ? "Alex vous parle…"
-    : orbState === "thinking" ? "Connexion…"
     : orbState === "listening" ? "Je vous écoute…"
     : "Parlez à Alex";
 
@@ -192,7 +163,7 @@ export default function HeroSection() {
             })}
           </motion.div>
 
-          {/* ── Cinematic Voice Orb ── */}
+          {/* ── Cinematic Voice Orb — Visual only, triggers openAlex() ── */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -207,8 +178,8 @@ export default function HeroSection() {
                   width: 150, height: 150,
                   background: "radial-gradient(circle, hsl(222 100% 60% / 0.12) 0%, transparent 70%)",
                 }}
-                animate={{ scale: voiceActive ? [1, 1.2, 1] : [1, 1.08, 1], opacity: voiceActive ? [0.4, 0.8, 0.4] : [0.3, 0.5, 0.3] }}
-                transition={{ duration: voiceActive ? 1.5 : 3, repeat: Infinity, ease: "easeInOut" }}
+                animate={{ scale: alexOpen ? [1, 1.2, 1] : [1, 1.08, 1], opacity: alexOpen ? [0.4, 0.8, 0.4] : [0.3, 0.5, 0.3] }}
+                transition={{ duration: alexOpen ? 1.5 : 3, repeat: Infinity, ease: "easeInOut" }}
               />
 
               {/* Ring */}
@@ -219,8 +190,8 @@ export default function HeroSection() {
                   border: "1.5px solid hsl(222 100% 65% / 0.2)",
                   boxShadow: "0 0 40px hsl(222 100% 65% / 0.1)",
                 }}
-                animate={{ scale: voiceActive ? [1, 1.12, 1] : [1, 1.04, 1] }}
-                transition={{ duration: voiceActive ? 1.2 : 2.5, repeat: Infinity, ease: "easeInOut" }}
+                animate={{ scale: alexOpen ? [1, 1.12, 1] : [1, 1.04, 1] }}
+                transition={{ duration: alexOpen ? 1.2 : 2.5, repeat: Infinity, ease: "easeInOut" }}
               />
 
               {/* Listening pulses */}
@@ -241,19 +212,11 @@ export default function HeroSection() {
                 />
               ))}
 
-              {/* Thinking */}
-              {orbState === "thinking" && (
-                <motion.div className="absolute rounded-full pointer-events-none"
-                  style={{ width: 130, height: 130, border: "2px dashed hsl(252 100% 70% / 0.2)" }}
-                  animate={{ rotate: -360 }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                />
-              )}
-
               {/* Main orb */}
               <motion.button
-                onClick={() => voiceActive ? stopVoice() : startVoice()}
+                onClick={handleOrbClick}
                 className="relative rounded-full flex items-center justify-center overflow-hidden z-10"
+                data-testid="alex-hero-orb"
                 style={{
                   width: 96, height: 96,
                   background: "linear-gradient(135deg, hsl(222 100% 45% / 0.9), hsl(222 100% 25% / 0.95))",
@@ -274,7 +237,7 @@ export default function HeroSection() {
                 }} />
                 {orbState === "speaking" ? (
                   <Volume2 className="h-9 w-9 text-white/90 relative z-10" />
-                ) : orbState === "thinking" ? (
+                ) : orbState === "listening" ? (
                   <Loader2 className="h-9 w-9 text-white/90 relative z-10 animate-spin" />
                 ) : (
                   <Mic className="h-9 w-9 text-white/90 relative z-10" />
@@ -285,7 +248,7 @@ export default function HeroSection() {
             {/* Status */}
             <AnimatePresence mode="wait">
               <motion.p
-                key={voiceActive ? orbState : "idle"}
+                key={orbState}
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
@@ -293,25 +256,6 @@ export default function HeroSection() {
               >
                 {statusText}
               </motion.p>
-            </AnimatePresence>
-
-            {/* Voice controls */}
-            <AnimatePresence>
-              {voiceActive && (
-                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="mt-3 flex items-center gap-2">
-                  {orbState === "speaking" && (
-                    <button onClick={stopVoice} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-                      <VolumeX className="h-3 w-3" /> Couper
-                    </button>
-                  )}
-                  <button onClick={() => { stopVoice(); setTextSheetOpen(true); }} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-                    <Keyboard className="h-3 w-3" /> Écrire
-                  </button>
-                  <button onClick={stopVoice} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-red-400/80 bg-red-500/5 border border-red-500/15 hover:bg-red-500/10 transition-colors">
-                    <Square className="h-2.5 w-2.5" /> Arrêter
-                  </button>
-                </motion.div>
-              )}
             </AnimatePresence>
           </motion.div>
 
@@ -326,7 +270,7 @@ export default function HeroSection() {
               className="flex flex-col items-center gap-2.5 w-full max-w-sm"
             >
               <button
-                onClick={() => startVoice(activeIntent)}
+                onClick={handleCtaClick}
                 className="w-full h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold transition-all active:scale-[0.97]"
                 style={{
                   background: "linear-gradient(135deg, hsl(222 100% 55%), hsl(222 100% 42%))",
@@ -354,7 +298,6 @@ export default function HeroSection() {
             const files = e.target.files;
             if (files && files.length > 0) {
               console.log("[Hero] Files selected:", files.length);
-              // TODO: handle file upload to Alex quote analysis
             }
             e.target.value = "";
           }}
