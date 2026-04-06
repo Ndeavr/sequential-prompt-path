@@ -36,12 +36,14 @@ export const Providers = ({ children }: ProvidersProps) => (
         <LanguageProvider>
           <ActiveRoleProvider>
             <AlexVoiceProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                {children}
-                <GlobalAlexOverlay />
-              </TooltipProvider>
+              <AlexRuntimeSingletonProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
+                  {children}
+                  <GlobalAlexOverlay />
+                </TooltipProvider>
+              </AlexRuntimeSingletonProvider>
             </AlexVoiceProvider>
           </ActiveRoleProvider>
         </LanguageProvider>
