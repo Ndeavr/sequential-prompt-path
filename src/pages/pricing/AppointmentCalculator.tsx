@@ -564,11 +564,11 @@ export default function AppointmentCalculator() {
             </AnimatePresence>
 
             {/* ═══ CAPACITY WARNING ═══ */}
-            {appts > capacity[0] && (
+            {capacityLimited && (
               <div className="flex items-center gap-3 rounded-xl bg-destructive/5 border border-destructive/20 p-3 text-sm text-foreground">
                 <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
                 <span>
-                  Votre objectif nécessite <strong>{appts}</strong> rendez-vous/mois mais votre capacité est de <strong>{capacity[0]}</strong>. Ajustez vos paramètres ou activez l'optimisation automatique.
+                  Votre objectif nécessite <strong>{apptsNeeded}</strong> rendez-vous/mois mais votre capacité est de <strong>{capacity[0]}</strong>. Revenu limité à <strong>{Math.round(potentialRevenue).toLocaleString()} $</strong> au lieu de <strong>{revenueGoal[0].toLocaleString()} $</strong>.
                 </span>
               </div>
             )}
