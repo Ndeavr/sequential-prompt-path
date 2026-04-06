@@ -24240,6 +24240,1082 @@ export type Database = {
           },
         ]
       }
+      outbound_ai_personalizations: {
+        Row: {
+          approved: boolean | null
+          created_at: string | null
+          generated_output: string | null
+          id: string
+          lead_id: string
+          personalization_type: string | null
+          prompt_used: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          approved?: boolean | null
+          created_at?: string | null
+          generated_output?: string | null
+          id?: string
+          lead_id: string
+          personalization_type?: string | null
+          prompt_used?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          approved?: boolean | null
+          created_at?: string | null
+          generated_output?: string | null
+          id?: string
+          lead_id?: string
+          personalization_type?: string | null
+          prompt_used?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_ai_personalizations_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_ai_scores: {
+        Row: {
+          created_at: string | null
+          id: string
+          lead_id: string
+          reasoning_summary: string | null
+          score_json: Json | null
+          scoring_version: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          lead_id: string
+          reasoning_summary?: string | null
+          score_json?: Json | null
+          scoring_version?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          lead_id?: string
+          reasoning_summary?: string | null
+          score_json?: Json | null
+          scoring_version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_ai_scores_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_campaigns: {
+        Row: {
+          campaign_name: string
+          campaign_status: string | null
+          campaign_type: string | null
+          city: string | null
+          created_at: string | null
+          daily_send_limit: number | null
+          end_date: string | null
+          id: string
+          mailbox_id: string | null
+          notes: string | null
+          priority_index: number | null
+          sequence_id: string | null
+          specialty: string | null
+          start_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_name: string
+          campaign_status?: string | null
+          campaign_type?: string | null
+          city?: string | null
+          created_at?: string | null
+          daily_send_limit?: number | null
+          end_date?: string | null
+          id?: string
+          mailbox_id?: string | null
+          notes?: string | null
+          priority_index?: number | null
+          sequence_id?: string | null
+          specialty?: string | null
+          start_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_name?: string
+          campaign_status?: string | null
+          campaign_type?: string | null
+          city?: string | null
+          created_at?: string | null
+          daily_send_limit?: number | null
+          end_date?: string | null
+          id?: string
+          mailbox_id?: string | null
+          notes?: string | null
+          priority_index?: number | null
+          sequence_id?: string | null
+          specialty?: string | null
+          start_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_campaigns_mailbox_id_fkey"
+            columns: ["mailbox_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_mailboxes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_campaigns_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_sequences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_companies: {
+        Row: {
+          business_status: string | null
+          city: string | null
+          company_name: string
+          company_slug: string | null
+          created_at: string | null
+          google_rating: number | null
+          id: string
+          language: string | null
+          legitimacy_score: number | null
+          rbq_number: string | null
+          region: string | null
+          review_count: number | null
+          specialty: string | null
+          sub_specialty: string | null
+          updated_at: string | null
+          website_url: string | null
+        }
+        Insert: {
+          business_status?: string | null
+          city?: string | null
+          company_name: string
+          company_slug?: string | null
+          created_at?: string | null
+          google_rating?: number | null
+          id?: string
+          language?: string | null
+          legitimacy_score?: number | null
+          rbq_number?: string | null
+          region?: string | null
+          review_count?: number | null
+          specialty?: string | null
+          sub_specialty?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          business_status?: string | null
+          city?: string | null
+          company_name?: string
+          company_slug?: string | null
+          created_at?: string | null
+          google_rating?: number | null
+          id?: string
+          language?: string | null
+          legitimacy_score?: number | null
+          rbq_number?: string | null
+          region?: string | null
+          review_count?: number | null
+          specialty?: string | null
+          sub_specialty?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      outbound_contacts: {
+        Row: {
+          company_id: string | null
+          consent_basis: string | null
+          created_at: string | null
+          email: string | null
+          email_source_url: string | null
+          first_name: string | null
+          full_name: string | null
+          id: string
+          is_primary_contact: boolean | null
+          last_name: string | null
+          linkedin_url: string | null
+          outreach_eligible: boolean | null
+          phone: string | null
+          preferred_language: string | null
+          relevance_reason: string | null
+          role_title: string | null
+          source_type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          consent_basis?: string | null
+          created_at?: string | null
+          email?: string | null
+          email_source_url?: string | null
+          first_name?: string | null
+          full_name?: string | null
+          id?: string
+          is_primary_contact?: boolean | null
+          last_name?: string | null
+          linkedin_url?: string | null
+          outreach_eligible?: boolean | null
+          phone?: string | null
+          preferred_language?: string | null
+          relevance_reason?: string | null
+          role_title?: string | null
+          source_type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          consent_basis?: string | null
+          created_at?: string | null
+          email?: string | null
+          email_source_url?: string | null
+          first_name?: string | null
+          full_name?: string | null
+          id?: string
+          is_primary_contact?: boolean | null
+          last_name?: string | null
+          linkedin_url?: string | null
+          outreach_eligible?: boolean | null
+          phone?: string | null
+          preferred_language?: string | null
+          relevance_reason?: string | null
+          role_title?: string | null
+          source_type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_contacts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_delivery_metrics: {
+        Row: {
+          bounced_count: number | null
+          clicked_count: number | null
+          created_at: string | null
+          delivered_count: number | null
+          id: string
+          mailbox_id: string | null
+          metric_date: string
+          opened_count: number | null
+          replied_count: number | null
+          sent_count: number | null
+          unsubscribed_count: number | null
+        }
+        Insert: {
+          bounced_count?: number | null
+          clicked_count?: number | null
+          created_at?: string | null
+          delivered_count?: number | null
+          id?: string
+          mailbox_id?: string | null
+          metric_date: string
+          opened_count?: number | null
+          replied_count?: number | null
+          sent_count?: number | null
+          unsubscribed_count?: number | null
+        }
+        Update: {
+          bounced_count?: number | null
+          clicked_count?: number | null
+          created_at?: string | null
+          delivered_count?: number | null
+          id?: string
+          mailbox_id?: string | null
+          metric_date?: string
+          opened_count?: number | null
+          replied_count?: number | null
+          sent_count?: number | null
+          unsubscribed_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_delivery_metrics_mailbox_id_fkey"
+            columns: ["mailbox_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_mailboxes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_events: {
+        Row: {
+          campaign_id: string | null
+          created_at: string | null
+          event_at: string | null
+          event_payload: Json | null
+          event_type: string
+          event_value: string | null
+          id: string
+          lead_id: string | null
+          message_id: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string | null
+          event_at?: string | null
+          event_payload?: Json | null
+          event_type: string
+          event_value?: string | null
+          id?: string
+          lead_id?: string | null
+          message_id?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string | null
+          event_at?: string | null
+          event_payload?: Json | null
+          event_type?: string
+          event_value?: string | null
+          id?: string
+          lead_id?: string | null
+          message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_events_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_landing_pages: {
+        Row: {
+          aipp_summary: string | null
+          city: string | null
+          company_id: string | null
+          created_at: string | null
+          cta_primary: string | null
+          cta_secondary: string | null
+          hero_subtitle: string | null
+          hero_title: string | null
+          id: string
+          language: string | null
+          lead_id: string | null
+          missing_elements_json: Json | null
+          page_slug: string
+          page_status: string | null
+          page_url: string | null
+          specialty: string | null
+          strengths_json: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          aipp_summary?: string | null
+          city?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          cta_primary?: string | null
+          cta_secondary?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          language?: string | null
+          lead_id?: string | null
+          missing_elements_json?: Json | null
+          page_slug: string
+          page_status?: string | null
+          page_url?: string | null
+          specialty?: string | null
+          strengths_json?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          aipp_summary?: string | null
+          city?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          cta_primary?: string | null
+          cta_secondary?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          language?: string | null
+          lead_id?: string | null
+          missing_elements_json?: Json | null
+          page_slug?: string
+          page_status?: string | null
+          page_url?: string | null
+          specialty?: string | null
+          strengths_json?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_landing_pages_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_landing_pages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_lead_tags: {
+        Row: {
+          created_at: string | null
+          id: string
+          lead_id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          lead_id: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          lead_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_lead_tags_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_lead_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_leads: {
+        Row: {
+          aipp_upside_score: number | null
+          approved_send_order: number | null
+          booked_at: string | null
+          bounced_at: string | null
+          campaign_id: string | null
+          city_priority_score: number | null
+          closed_at: string | null
+          company_id: string | null
+          contact_id: string | null
+          converted_at: string | null
+          created_at: string | null
+          crm_status: string | null
+          hook_summary: string | null
+          id: string
+          last_contacted_at: string | null
+          legitimacy_score: number | null
+          outbound_readiness_score: number | null
+          owner_user_id: string | null
+          personalization_score: number | null
+          pipeline_stage: string | null
+          rejection_reason: string | null
+          replied_at: string | null
+          specialty_priority_score: number | null
+          total_priority_score: number | null
+          unsubscribed_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          aipp_upside_score?: number | null
+          approved_send_order?: number | null
+          booked_at?: string | null
+          bounced_at?: string | null
+          campaign_id?: string | null
+          city_priority_score?: number | null
+          closed_at?: string | null
+          company_id?: string | null
+          contact_id?: string | null
+          converted_at?: string | null
+          created_at?: string | null
+          crm_status?: string | null
+          hook_summary?: string | null
+          id?: string
+          last_contacted_at?: string | null
+          legitimacy_score?: number | null
+          outbound_readiness_score?: number | null
+          owner_user_id?: string | null
+          personalization_score?: number | null
+          pipeline_stage?: string | null
+          rejection_reason?: string | null
+          replied_at?: string | null
+          specialty_priority_score?: number | null
+          total_priority_score?: number | null
+          unsubscribed_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          aipp_upside_score?: number | null
+          approved_send_order?: number | null
+          booked_at?: string | null
+          bounced_at?: string | null
+          campaign_id?: string | null
+          city_priority_score?: number | null
+          closed_at?: string | null
+          company_id?: string | null
+          contact_id?: string | null
+          converted_at?: string | null
+          created_at?: string | null
+          crm_status?: string | null
+          hook_summary?: string | null
+          id?: string
+          last_contacted_at?: string | null
+          legitimacy_score?: number | null
+          outbound_readiness_score?: number | null
+          owner_user_id?: string | null
+          personalization_score?: number | null
+          pipeline_stage?: string | null
+          rejection_reason?: string | null
+          replied_at?: string | null
+          specialty_priority_score?: number | null
+          total_priority_score?: number | null
+          unsubscribed_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_leads_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_leads_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_leads_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_mailbox_warmup: {
+        Row: {
+          actual_sends: number | null
+          bounce_count: number | null
+          created_at: string | null
+          day_number: number
+          id: string
+          mailbox_id: string
+          target_sends: number | null
+          warmup_date: string | null
+        }
+        Insert: {
+          actual_sends?: number | null
+          bounce_count?: number | null
+          created_at?: string | null
+          day_number: number
+          id?: string
+          mailbox_id: string
+          target_sends?: number | null
+          warmup_date?: string | null
+        }
+        Update: {
+          actual_sends?: number | null
+          bounce_count?: number | null
+          created_at?: string | null
+          day_number?: number
+          id?: string
+          mailbox_id?: string
+          target_sends?: number | null
+          warmup_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_mailbox_warmup_mailbox_id_fkey"
+            columns: ["mailbox_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_mailboxes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_mailboxes: {
+        Row: {
+          created_at: string | null
+          daily_limit: number | null
+          health_score: number | null
+          id: string
+          mailbox_status: string | null
+          reply_to_email: string | null
+          sender_email: string
+          sender_name: string
+          sender_title: string | null
+          signature_html: string | null
+          tracking_domain: string | null
+          updated_at: string | null
+          warmup_enabled: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          daily_limit?: number | null
+          health_score?: number | null
+          id?: string
+          mailbox_status?: string | null
+          reply_to_email?: string | null
+          sender_email: string
+          sender_name: string
+          sender_title?: string | null
+          signature_html?: string | null
+          tracking_domain?: string | null
+          updated_at?: string | null
+          warmup_enabled?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          daily_limit?: number | null
+          health_score?: number | null
+          id?: string
+          mailbox_status?: string | null
+          reply_to_email?: string | null
+          sender_email?: string
+          sender_name?: string
+          sender_title?: string | null
+          signature_html?: string | null
+          tracking_domain?: string | null
+          updated_at?: string | null
+          warmup_enabled?: boolean | null
+        }
+        Relationships: []
+      }
+      outbound_messages: {
+        Row: {
+          body_rendered: string | null
+          campaign_id: string | null
+          click_count: number | null
+          created_at: string | null
+          delivery_status: string | null
+          id: string
+          lead_id: string
+          mailbox_id: string | null
+          open_count: number | null
+          provider_message_id: string | null
+          replied: boolean | null
+          sent_at: string | null
+          sequence_step_id: string | null
+          subject_rendered: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          body_rendered?: string | null
+          campaign_id?: string | null
+          click_count?: number | null
+          created_at?: string | null
+          delivery_status?: string | null
+          id?: string
+          lead_id: string
+          mailbox_id?: string | null
+          open_count?: number | null
+          provider_message_id?: string | null
+          replied?: boolean | null
+          sent_at?: string | null
+          sequence_step_id?: string | null
+          subject_rendered?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          body_rendered?: string | null
+          campaign_id?: string | null
+          click_count?: number | null
+          created_at?: string | null
+          delivery_status?: string | null
+          id?: string
+          lead_id?: string
+          mailbox_id?: string | null
+          open_count?: number | null
+          provider_message_id?: string | null
+          replied?: boolean | null
+          sent_at?: string | null
+          sequence_step_id?: string | null
+          subject_rendered?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_messages_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_messages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_messages_mailbox_id_fkey"
+            columns: ["mailbox_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_mailboxes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_messages_sequence_step_id_fkey"
+            columns: ["sequence_step_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_sequence_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_notes: {
+        Row: {
+          author_user_id: string | null
+          created_at: string | null
+          id: string
+          lead_id: string
+          note_content: string
+          note_type: string | null
+        }
+        Insert: {
+          author_user_id?: string | null
+          created_at?: string | null
+          id?: string
+          lead_id: string
+          note_content: string
+          note_type?: string | null
+        }
+        Update: {
+          author_user_id?: string | null
+          created_at?: string | null
+          id?: string
+          lead_id?: string
+          note_content?: string
+          note_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_notes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_replies: {
+        Row: {
+          assigned_to: string | null
+          campaign_id: string | null
+          created_at: string | null
+          handled: boolean | null
+          handled_at: string | null
+          id: string
+          lead_id: string | null
+          message_id: string | null
+          reply_body: string | null
+          reply_intent: string | null
+          reply_sentiment: string | null
+          reply_subject: string | null
+          suggested_crm_status: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          campaign_id?: string | null
+          created_at?: string | null
+          handled?: boolean | null
+          handled_at?: string | null
+          id?: string
+          lead_id?: string | null
+          message_id?: string | null
+          reply_body?: string | null
+          reply_intent?: string | null
+          reply_sentiment?: string | null
+          reply_subject?: string | null
+          suggested_crm_status?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          campaign_id?: string | null
+          created_at?: string | null
+          handled?: boolean | null
+          handled_at?: string | null
+          id?: string
+          lead_id?: string | null
+          message_id?: string | null
+          reply_body?: string | null
+          reply_intent?: string | null
+          reply_sentiment?: string | null
+          reply_subject?: string | null
+          suggested_crm_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_replies_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_replies_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_replies_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_sequence_steps: {
+        Row: {
+          body_template: string | null
+          created_at: string | null
+          delay_days: number | null
+          id: string
+          is_active: boolean | null
+          sequence_id: string
+          step_name: string
+          step_order: number
+          subject_template: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          body_template?: string | null
+          created_at?: string | null
+          delay_days?: number | null
+          id?: string
+          is_active?: boolean | null
+          sequence_id: string
+          step_name: string
+          step_order?: number
+          subject_template?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          body_template?: string | null
+          created_at?: string | null
+          delay_days?: number | null
+          id?: string
+          is_active?: boolean | null
+          sequence_id?: string
+          step_name?: string
+          step_order?: number
+          subject_template?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_sequence_steps_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_sequences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_sequences: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          language: string | null
+          sequence_name: string
+          sequence_type: string | null
+          target_type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          language?: string | null
+          sequence_name: string
+          sequence_type?: string | null
+          target_type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          language?: string | null
+          sequence_name?: string
+          sequence_type?: string | null
+          target_type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      outbound_suppressions: {
+        Row: {
+          active: boolean | null
+          company_id: string | null
+          created_at: string | null
+          domain: string | null
+          email: string | null
+          id: string
+          source: string | null
+          suppression_reason: string | null
+          suppression_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          company_id?: string | null
+          created_at?: string | null
+          domain?: string | null
+          email?: string | null
+          id?: string
+          source?: string | null
+          suppression_reason?: string | null
+          suppression_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          company_id?: string | null
+          created_at?: string | null
+          domain?: string | null
+          email?: string | null
+          id?: string
+          source?: string | null
+          suppression_reason?: string | null
+          suppression_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_suppressions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_tags: {
+        Row: {
+          created_at: string | null
+          id: string
+          tag_color: string | null
+          tag_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          tag_color?: string | null
+          tag_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          tag_color?: string | null
+          tag_name?: string
+        }
+        Relationships: []
+      }
+      outbound_tasks: {
+        Row: {
+          assigned_to: string | null
+          created_at: string | null
+          due_at: string | null
+          id: string
+          lead_id: string
+          priority: string | null
+          task_status: string | null
+          task_title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string | null
+          due_at?: string | null
+          id?: string
+          lead_id: string
+          priority?: string | null
+          task_status?: string | null
+          task_title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string | null
+          due_at?: string | null
+          id?: string
+          lead_id?: string
+          priority?: string | null
+          task_status?: string | null
+          task_title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_tasks_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outreach_campaigns: {
         Row: {
           campaign_type: string | null

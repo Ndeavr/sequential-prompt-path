@@ -344,6 +344,9 @@ import AdminOutreachCampaignNew from "@/pages/admin/AdminOutreachCampaignNew";
 import AdminOutreachCampaignDetail from "@/pages/admin/AdminOutreachCampaignDetail";
 import AdminOutreachTemplates from "@/pages/admin/AdminOutreachTemplates";
 import AdminOutreachAnalytics from "@/pages/admin/AdminOutreachAnalytics";
+import PageOutboundDashboard from "@/pages/admin/outbound/PageOutboundDashboard";
+import PageOutboundCampaigns from "@/pages/admin/outbound/PageOutboundCampaigns";
+import PageOutboundLeadsQueue from "@/pages/admin/outbound/PageOutboundLeadsQueue";
 import MesProprietesPage from "@/pages/MesProprietesPage";
 import AnalyserSoumissionsPage from "@/pages/AnalyserSoumissionsPage";
 import PageRecruitmentCloser from "@/pages/recruitment/PageRecruitmentCloser";
@@ -778,6 +781,9 @@ export const AppRouter = () => (
       <Route path="/admin/outreach/:id" element={<ProtectedRoute requiredRole="admin"><AdminOutreachCampaignDetail /></ProtectedRoute>} />
       <Route path="/admin/outreach/templates" element={<ProtectedRoute requiredRole="admin"><AdminOutreachTemplates /></ProtectedRoute>} />
       <Route path="/admin/outreach/analytics" element={<ProtectedRoute requiredRole="admin"><AdminOutreachAnalytics /></ProtectedRoute>} />
+      <Route path="/admin/outbound" element={<ProtectedRoute requiredRole="admin"><PageOutboundDashboard /></ProtectedRoute>} />
+      <Route path="/admin/outbound/campaigns" element={<ProtectedRoute requiredRole="admin"><PageOutboundCampaigns /></ProtectedRoute>} />
+      <Route path="/admin/outbound/leads" element={<ProtectedRoute requiredRole="admin"><PageOutboundLeadsQueue /></ProtectedRoute>} />
       <Route path="/audit/:slug" element={<AuditLandingPage />} />
       <Route path="/articles/:slug" element={<SeoArticlePage />} />
       <Route path="/emergency" element={<EmergencyPage />} />
