@@ -118,12 +118,14 @@ export default function AuthOverlayPremium() {
   }, []);
 
   const actionLabel = resolveActionLabel(pendingAction);
-  const modeTitle = mode === "login" ? "Connectez-vous à votre compte" : mode === "signup" ? "Créez votre accès gratuit" : "Connectez-vous pour continuer";
-  const modeSubtitle = mode === "login"
-    ? "Retrouvez votre espace UNPRO."
-    : mode === "signup"
-      ? "C'est gratuit. Votre progression est conservée."
-      : "Votre action est prête. Connectez-vous ou créez un compte gratuit pour poursuivre avec UNPRO.";
+  const modeTitle = mode === "role" ? "Quel est votre rôle ?" : mode === "login" ? "Connectez-vous à votre compte" : mode === "signup" ? "Créez votre accès gratuit" : "Connectez-vous pour continuer";
+  const modeSubtitle = mode === "role"
+    ? "Sélectionnez votre profil pour personnaliser votre expérience."
+    : mode === "login"
+      ? "Retrouvez votre espace UNPRO."
+      : mode === "signup"
+        ? "C'est gratuit. Votre progression est conservée."
+        : "Votre action est prête. Connectez-vous ou créez un compte gratuit pour poursuivre avec UNPRO.";
 
   return (
     <AnimatePresence>
