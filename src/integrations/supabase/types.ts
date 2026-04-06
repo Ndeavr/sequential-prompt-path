@@ -23219,6 +23219,39 @@ export type Database = {
         }
         Relationships: []
       }
+      navigation_click_events: {
+        Row: {
+          clicked_at: string | null
+          id: string
+          nav_key: string
+          page_path: string | null
+          persona_key: string | null
+          placement: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          clicked_at?: string | null
+          id?: string
+          nav_key: string
+          page_path?: string | null
+          persona_key?: string | null
+          placement?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          clicked_at?: string | null
+          id?: string
+          nav_key?: string
+          page_path?: string | null
+          persona_key?: string | null
+          placement?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       navigation_context_rules: {
         Row: {
           condition_json: Json | null
