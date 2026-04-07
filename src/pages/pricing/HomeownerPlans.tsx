@@ -355,7 +355,7 @@ export default function HomeownerPlans() {
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
             <Button asChild size="lg" className="rounded-xl shadow-glow px-8">
-              <Link to="/signup">Commencer gratuitement <ArrowRight className="h-4 w-4 ml-1.5" /></Link>
+              <Link to="/auth">Commencer gratuitement <ArrowRight className="h-4 w-4 ml-1.5" /></Link>
             </Button>
             <Button
               variant="ghost"
