@@ -11,7 +11,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { GoogleGenAI, Modality, StartSensitivity, EndSensitivity, ActivityHandling } from "@google/genai";
 import type { LiveServerMessage } from "@google/genai";
 import { encodeToBase64, decodeFromBase64, decodeAudioData } from "@/services/geminiAudioCodec";
-import { ALEX_SYSTEM_INSTRUCTION, ALEX_LIVE_CONFIG } from "@/services/alexConfig";
+import { ALEX_LIVE_CONFIG } from "@/services/alexConfig";
 import { createWorkletBlobURL } from "@/services/geminiAudioWorklet";
 import { supabase } from "@/integrations/supabase/client";
 import { isInternalThinking, cleanAlexOutput } from "@/services/alexTranscriptNormalizer";
@@ -241,24 +241,10 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
             setIsConnecting(false);
             callbacksRef.current?.onConnect?.();
 
-            // Send detailed system instructions AFTER connection is established
-            // This avoids the Gemini Live bug where long systemInstruction in config
-            // causes immediate WebSocket closure.
-            if (sessionRef.current) {
-              try {
-                sessionRef.current.sendClientContent({
-                  turns: [{ role: "user", parts: [{ text: ALEX_SYSTEM_INSTRUCTION }] }],
-                  turnComplete: false,
-                });
-              } catch (err) {
-                console.warn("[GeminiLive] Failed to send system context:", err);
-              }
-            }
+            // CRITICAL SEQUENCE: greeting FIRST, then mic.
+            // Sending audio while a clientContent turn is in-flight causes 1007.
 
-            // Set up mic → Gemini pipeline
-            await setupMicPipeline(stream, inputAudioContextRef.current!);
-
-            // Send initial greeting to trigger Alex's first spoken response
+            // Step 1: Send initial greeting to trigger Alex's spoken response
             if (initialGreeting && sessionRef.current) {
               console.log("[GeminiLive] Sending initial greeting:", initialGreeting);
               try {
@@ -269,6 +255,15 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
               } catch (err) {
                 console.warn("[GeminiLive] Failed to send initial greeting:", err);
               }
+            }
+
+            // Step 2: Wait briefly for server to process the greeting turn
+            // before starting audio input (prevents 1007 race condition)
+            await new Promise((r) => setTimeout(r, 300));
+
+            // Step 3: Set up mic → Gemini pipeline
+            if (inputAudioContextRef.current && mediaStreamRef.current) {
+              await setupMicPipeline(mediaStreamRef.current, inputAudioContextRef.current);
             }
 
             // Diagnostic: warn if no audio sent after 3 seconds
@@ -370,9 +365,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
               prebuiltVoiceConfig: { voiceName },
             },
           },
-          // SHORT system instruction only — detailed rules sent via sendClientContent post-connect
           systemInstruction: {
-            parts: [{ text: "Tu es Alex, concierge IA vocale d'UnPRO. Français québécois. Phrases courtes. Une question à la fois. Jamais de markdown. Prononce 'ville' avec un V clair." }],
+            parts: [{ text: "Tu es Alex, concierge IA vocale d'UnPRO.ca. Français québécois naturel. Phrases courtes, maximum 2 phrases. Une seule question à la fois. Jamais de markdown, listes, astérisques, code ou méta-commentaire. Prononce 'ville' avec un V clair. Ne dis jamais 'rénoration' — dis 'rénovation'. Ne verbalise jamais ton raisonnement interne. Tu guides le propriétaire vers une décision. Ton calme, posé, humain. Féminin : 'ravie', 'certaine', 'prête'." }],
           },
           realtimeInputConfig: {
             automaticActivityDetection: {
@@ -384,8 +378,6 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
             },
             activityHandling: ActivityHandling.START_OF_ACTIVITY_INTERRUPTS,
           },
-          outputAudioTranscription: {},
-          inputAudioTranscription: {},
         },
       });
 
