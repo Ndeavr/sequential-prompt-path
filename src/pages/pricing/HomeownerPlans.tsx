@@ -76,6 +76,7 @@ const PLANS: Plan[] = [
     description: "Comparez mieux, évitez les erreurs coûteuses et centralisez votre maison.",
     features: [
       { text: "Tout dans Découverte", highlight: false },
+      { text: "Jusqu'à 3 adresses", highlight: true },
       { text: "Passeport Maison enrichi", highlight: true },
       { text: "Analyses de soumissions illimitées", highlight: true },
       { text: "Comparaison intelligente de jusqu'à 3 soumissions", highlight: true },
