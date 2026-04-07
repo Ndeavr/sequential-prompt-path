@@ -52,13 +52,14 @@ const PLAN_THRESHOLDS = [
   { code: "signature", label: "Signature", maxUnits: 999, maxValue: 999999 },
 ];
 
-const SIZE_DEFS = [
-  { code: "xs", label: "XS", units: 0.5, avgValue: 800 },
-  { code: "s", label: "S", units: 1, avgValue: 2500 },
-  { code: "m", label: "M", units: 1.5, avgValue: 6000 },
-  { code: "l", label: "L", units: 2, avgValue: 15000 },
-  { code: "xl", label: "XL", units: 3, avgValue: 35000 },
-  { code: "xxl", label: "XXL", units: 5, avgValue: 75000 },
+// Relative size ratios (M = 1.0 anchor)
+const SIZE_RATIOS = [
+  { code: "xs", label: "XS", units: 0.5, ratio: 0.15 },
+  { code: "s", label: "S", units: 1, ratio: 0.45 },
+  { code: "m", label: "M", units: 1.5, ratio: 1.0 },
+  { code: "l", label: "L", units: 2, ratio: 2.2 },
+  { code: "xl", label: "XL", units: 3, ratio: 5.0 },
+  { code: "xxl", label: "XXL", units: 5, ratio: 10.0 },
 ];
 
 function getScoreMultiplier(score: number | null): number {
@@ -78,8 +79,28 @@ function getCityMultiplier(city: string): number {
 
 function getImprovedCloseRate(current: number, score: number | null): number {
   const s = score ?? 35;
-  const boost = s < 40 ? 0.15 : s < 60 ? 0.10 : 0.05;
-  return Math.min(current + boost, 0.85);
+  const boost = s < 40 ? 0.12 : s < 60 ? 0.08 : 0.04;
+  return Math.min(current + boost, 0.75);
+}
+
+/**
+ * Build SIZE_DEFS scaled to the entrepreneur's avg contract value.
+ * The entrepreneur's avg is mapped to the "M" anchor (ratio=1.0).
+ * Other sizes scale proportionally.
+ */
+function buildScaledSizes(avgContractValue: number) {
+  return SIZE_RATIOS.map(s => ({
+    ...s,
+    avgValue: roundNice(avgContractValue * s.ratio),
+  }));
+}
+
+/** Round to a "nice" number for display (nearest 50 for small, 500 for large) */
+function roundNice(v: number): number {
+  if (v < 500) return Math.round(v / 50) * 50;
+  if (v < 5000) return Math.round(v / 100) * 100;
+  if (v < 20000) return Math.round(v / 500) * 500;
+  return Math.round(v / 1000) * 1000;
 }
 
 export function useGoalToPlanEngine() {
@@ -109,48 +130,77 @@ export function useGoalToPlanEngine() {
     const cr = inputs.closeRatePercent / 100;
     const pm = inputs.profitMarginPercent / 100;
 
-    // Current reality
+    // ── Current reality ──
     const currentRev = inputs.submissionsPerMonth * cr * inputs.avgContractValue;
     const currentProfit = currentRev * pm;
 
     if (currentRev <= 0) return null;
 
-    // Multipliers
+    // ── Projected revenue with UNPRO (lost revenue shock) ──
     const scoreMult = getScoreMultiplier(inputs.preUnproScore);
     const cityMult = getCityMultiplier(inputs.city || "montreal");
-    const capacityMult = Math.min(1 + (inputs.appointmentsCapacityWeekly * 4.33 - inputs.submissionsPerMonth * cr) * 0.01, 1.25);
-    const totalMultMin = scoreMult * 0.85 * cityMult * Math.max(capacityMult, 0.9);
-    const totalMultMax = scoreMult * 1.15 * cityMult * Math.min(capacityMult * 1.1, 1.4);
+    // Capacity multiplier: more capacity → more room for growth
+    const monthlyCapacity = inputs.appointmentsCapacityWeekly * 4.33;
+    const currentContracts = inputs.submissionsPerMonth * cr;
+    const capacityRatio = monthlyCapacity > 0 ? Math.min((monthlyCapacity - currentContracts) / monthlyCapacity, 0.5) : 0;
+    const capacityMult = 1 + Math.max(capacityRatio * 0.3, 0);
 
-    const projMin = Math.round(currentRev * totalMultMin / 100) * 100;
-    const projMax = Math.round(currentRev * totalMultMax / 100) * 100;
-    const projProfMin = Math.round(projMin * pm);
-    const projProfMax = Math.round(projMax * pm);
-    const lostMin = Math.max(0, projMin - currentRev);
-    const lostMax = Math.max(0, projMax - currentRev);
+    // Conservative and optimistic bounds
+    const totalMultMin = scoreMult * 0.80 * cityMult * capacityMult;
+    const totalMultMax = scoreMult * 1.10 * cityMult * capacityMult;
 
-    // Required appointments
+    // Cap multipliers to avoid unrealistic projections
+    const cappedMultMin = Math.min(totalMultMin, 3.0);
+    const cappedMultMax = Math.min(totalMultMax, 4.5);
+
+    const projMin = Math.round(currentRev * cappedMultMin / 100) * 100;
+    const projMax = Math.round(currentRev * cappedMultMax / 100) * 100;
+    const projProfMin = Math.round(projMin * pm / 100) * 100;
+    const projProfMax = Math.round(projMax * pm / 100) * 100;
+
+    const lostMin = Math.max(0, Math.round((projMin - currentRev) / 100) * 100);
+    const lostMax = Math.max(0, Math.round((projMax - currentRev) / 100) * 100);
+    const lostProfMin = Math.round(lostMin * pm / 100) * 100;
+    const lostProfMax = Math.round(lostMax * pm / 100) * 100;
+
+    // ── Appointments calculation ──
     const improvedCR = getImprovedCloseRate(cr, inputs.preUnproScore);
-    const valuePerAppt = inputs.avgContractValue * improvedCR;
+    const scaledSizes = buildScaledSizes(inputs.avgContractValue);
     const target = Math.max(inputs.revenueTargetMonthly, currentRev);
-    const reqMonthly = Math.ceil(target / valuePerAppt);
+
+    // Generate mix first with a rough appointment estimate, then refine
+    const roughAppts = Math.ceil(target / (inputs.avgContractValue * improvedCR));
+    const mix = generateMix(roughAppts, inputs.preferredProjectSize, inputs.preferredLeadQuality, scaledSizes);
+
+    // Compute weighted average value from the mix
+    const totalMixCount = mix.reduce((s, m) => s + m.count, 0);
+    const totalMixRevenue = mix.reduce((s, m) => s + m.count * m.avgValue, 0);
+    const weightedAvgValue = totalMixCount > 0 ? totalMixRevenue / totalMixCount : inputs.avgContractValue;
+
+    // Recalculate exact appointments needed using weighted mix value
+    const expectedValuePerAppt = weightedAvgValue * improvedCR;
+    let reqMonthly = Math.max(1, Math.ceil(target / expectedValuePerAppt));
+
+    // Cap to reasonable bounds (max 3x current submissions)
+    reqMonthly = Math.min(reqMonthly, inputs.submissionsPerMonth * 3);
+
+    // Regenerate final mix with corrected count
+    const finalMix = generateMix(reqMonthly, inputs.preferredProjectSize, inputs.preferredLeadQuality, scaledSizes);
+
     const reqWeekly = Math.round((reqMonthly / 4.33) * 10) / 10;
 
     // Capacity status
-    const weekCap = inputs.appointmentsCapacityWeekly;
     const capacityStatus: GoalResults["capacityStatus"] =
-      reqWeekly > weekCap * 1.2 ? "surcharge" : reqWeekly > weekCap * 0.8 ? "equilibre" : "suffisant";
+      reqWeekly > inputs.appointmentsCapacityWeekly * 1.2 ? "surcharge"
+      : reqWeekly > inputs.appointmentsCapacityWeekly * 0.8 ? "equilibre"
+      : "suffisant";
 
-    // Mix
-    const mix = generateMix(reqMonthly, inputs.preferredProjectSize, inputs.avgContractValue, inputs.preferredLeadQuality);
-
-    // Total units
-    const totalUnits = mix.reduce((sum, m) => {
-      const def = SIZE_DEFS.find(s => s.code === m.size);
+    // ── Plan matching ──
+    const totalUnits = finalMix.reduce((sum, m) => {
+      const def = SIZE_RATIOS.find(s => s.code === m.size);
       return sum + m.count * (def?.units ?? 1);
     }, 0);
 
-    // Plan matching
     let plan = PLAN_THRESHOLDS[0];
     for (const p of PLAN_THRESHOLDS) {
       if (totalUnits <= p.maxUnits && target <= p.maxValue) {
@@ -161,7 +211,11 @@ export function useGoalToPlanEngine() {
     }
 
     // Confidence
-    const conf = Math.min(95, 60 + (capacityStatus === "equilibre" ? 20 : capacityStatus === "suffisant" ? 15 : 5) + (inputs.city ? 10 : 0));
+    const conf = Math.min(95,
+      60
+      + (capacityStatus === "equilibre" ? 20 : capacityStatus === "suffisant" ? 15 : 5)
+      + (inputs.city ? 10 : 0)
+    );
 
     return {
       currentMonthlyRevenue: Math.round(currentRev),
@@ -170,13 +224,13 @@ export function useGoalToPlanEngine() {
       projectedRevenueMax: projMax,
       projectedProfitMin: projProfMin,
       projectedProfitMax: projProfMax,
-      lostRevenueMin: Math.round(lostMin / 100) * 100,
-      lostRevenueMax: Math.round(lostMax / 100) * 100,
-      lostProfitMin: Math.round(lostMin * pm / 100) * 100,
-      lostProfitMax: Math.round(lostMax * pm / 100) * 100,
+      lostRevenueMin: lostMin,
+      lostRevenueMax: lostMax,
+      lostProfitMin: lostProfMin,
+      lostProfitMax: lostProfMax,
       requiredAppointmentsMonthly: reqMonthly,
       requiredAppointmentsWeekly: reqWeekly,
-      appointmentMix: mix,
+      appointmentMix: finalMix,
       recommendedPlan: plan.code,
       planMatchConfidence: conf,
       territoryStatus: "disponible",
@@ -188,33 +242,49 @@ export function useGoalToPlanEngine() {
   return { inputs, updateInput, results, step, setStep };
 }
 
+/**
+ * Generate appointment mix distribution.
+ * Sizes are pre-scaled to the entrepreneur's avg contract value.
+ */
 function generateMix(
   total: number,
   pref: string,
-  avgValue: number,
-  quality: string
+  quality: string,
+  scaledSizes: ReturnType<typeof buildScaledSizes>,
 ): AppointmentMixItem[] {
   const weights: Record<string, number[]> = {
-    xs: [0.15, 0.1, 0.05, 0.02, 0, 0],
-    s: [0.1, 0.3, 0.15, 0.05, 0.02, 0],
-    m: [0.05, 0.15, 0.4, 0.15, 0.05, 0],
-    l: [0.02, 0.05, 0.2, 0.4, 0.15, 0.05],
-    xl: [0, 0.02, 0.1, 0.2, 0.4, 0.15],
-    xxl: [0, 0, 0.05, 0.1, 0.25, 0.45],
-    mixed: [0.05, 0.1, 0.25, 0.3, 0.2, 0.1],
+    xs: [0.40, 0.25, 0.15, 0.10, 0.07, 0.03],
+    s: [0.15, 0.35, 0.25, 0.15, 0.07, 0.03],
+    m: [0.08, 0.17, 0.40, 0.22, 0.10, 0.03],
+    l: [0.03, 0.08, 0.20, 0.38, 0.22, 0.09],
+    xl: [0.02, 0.05, 0.12, 0.22, 0.38, 0.21],
+    xxl: [0.01, 0.03, 0.08, 0.15, 0.28, 0.45],
+    mixed: [0.08, 0.15, 0.30, 0.27, 0.14, 0.06],
   };
 
-  let w = weights[pref] || weights.mixed;
+  let w = [...(weights[pref] || weights.mixed)];
   if (quality === "quality") {
-    w = w.map((v, i) => (i >= 3 ? v * 1.3 : v * 0.7));
+    w = w.map((v, i) => (i >= 3 ? v * 1.3 : v * 0.8));
   } else if (quality === "volume") {
-    w = w.map((v, i) => (i <= 2 ? v * 1.3 : v * 0.7));
+    w = w.map((v, i) => (i <= 2 ? v * 1.3 : v * 0.8));
   }
   const sum = w.reduce((a, b) => a + b, 0);
   w = w.map(v => v / sum);
 
-  return SIZE_DEFS.map((def, i) => {
-    const count = Math.max(0, Math.round(total * w[i]));
-    return { size: def.code, label: def.label, count, avgValue: def.avgValue };
-  }).filter(m => m.count > 0);
+  // Distribute using largest remainder method for accurate totals
+  const rawCounts = w.map(wi => total * wi);
+  const floorCounts = rawCounts.map(c => Math.floor(c));
+  let remaining = total - floorCounts.reduce((a, b) => a + b, 0);
+  const remainders = rawCounts.map((c, i) => ({ i, r: c - floorCounts[i] }));
+  remainders.sort((a, b) => b.r - a.r);
+  for (let j = 0; j < remaining; j++) {
+    floorCounts[remainders[j].i]++;
+  }
+
+  return scaledSizes.map((def, i) => ({
+    size: def.code,
+    label: def.label,
+    count: floorCounts[i],
+    avgValue: def.avgValue,
+  })).filter(m => m.count > 0);
 }
