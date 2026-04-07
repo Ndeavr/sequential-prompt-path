@@ -31,6 +31,9 @@ export interface GoalResults {
   requiredAppointmentsWeekly: number;
   appointmentMix: AppointmentMixItem[];
   recommendedPlan: string;
+  recommendedPlanIncludedRdv: number;
+  extraRdvNeeded: number;
+  suggestedAddonPackage: number | null;
   planMatchConfidence: number;
   territoryStatus: string;
   exclusivityPossible: boolean;
