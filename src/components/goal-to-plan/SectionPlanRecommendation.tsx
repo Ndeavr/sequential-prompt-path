@@ -24,6 +24,7 @@ const ADDON_PACKAGES = [
 ];
 
 export default function SectionPlanRecommendation({ results, onActivate }: Props) {
+  const navigate = useNavigate();
   const fmt = (n: number) => n.toLocaleString("fr-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 });
   const recommended = results.recommendedPlan;
   const recPlan = PLANS.find(p => p.code === recommended);
