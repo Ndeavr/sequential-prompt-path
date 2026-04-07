@@ -175,8 +175,27 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     console.log("[GeminiLive] ⚠️ ScriptProcessor fallback active (sampleRate:", audioCtx.sampleRate + ")");
   }, [sendPcmToGemini]);
 
+  // Listen for cleanup events — auto-stop if another Alex instance starts
+  useEffect(() => {
+    const handleCleanup = () => {
+      if (sessionRef.current) {
+        console.log("[GeminiLive] Received alex-voice-cleanup — stopping session");
+        cleanup();
+        callbacksRef.current?.onDisconnect?.();
+      }
+    };
+    window.addEventListener("alex-voice-cleanup", handleCleanup);
+    return () => window.removeEventListener("alex-voice-cleanup", handleCleanup);
+  }, [cleanup]);
+
   const start = useCallback(async (options?: { initialGreeting?: string }) => {
     if (isActive || isConnecting) return;
+
+    // Kill any other active session before starting
+    window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
+    // Small delay to let other sessions close
+    await new Promise(r => setTimeout(r, 50));
+
     setIsConnecting(true);
 
     try {
