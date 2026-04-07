@@ -437,6 +437,7 @@ export const AppRouter = () => (
 
         {/* Entrepreneur Funnel */}
         <Route path="/entrepreneur" element={<PageEntrepreneurLandingAIPP />} />
+        <Route path="/entrepreneurs" element={<PageEntrepreneursLanding />} />
         <Route path="/entrepreneur/analysis/loading" element={<PageAIPPAnalysisLoading />} />
         <Route path="/entrepreneur/score" element={<PageEntrepreneurScoreResult />} />
         <Route path="/entrepreneur/pricing" element={<PageEntrepreneurPricing />} />
