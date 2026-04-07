@@ -252,16 +252,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
               }
             }
             
-            // Also check text parts but filter out internal reasoning
-            const textPart = message.serverContent?.modelTurn?.parts?.find(
-              (p: any) => p.text
-            );
-            if (textPart?.text) {
-              const text = textPart.text;
-              if (!isInternalThinking(text)) {
-                callbacksRef.current?.onTranscript?.(cleanAlexOutput(text));
-              }
-            }
+            // NOTE: modelTurn.parts[].text is internal text representation — 
+            // skip it when audio modality is active to avoid duplicate transcripts.
+            // outputTranscription above is the actual spoken words.
 
             // Handle user transcript (input transcription)
             if ((message as any).serverContent?.inputTranscription?.text) {
