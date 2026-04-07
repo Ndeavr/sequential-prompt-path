@@ -1905,6 +1905,81 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_latency_logs: {
+        Row: {
+          created_at: string
+          first_token_to_tts_ms: number | null
+          id: string
+          interrupted: boolean | null
+          mic_start_to_detect_ms: number | null
+          session_id: string
+          speech_end_to_final_ms: number | null
+          total_latency_ms: number | null
+          transcript_to_first_token_ms: number | null
+          turn_index: number
+        }
+        Insert: {
+          created_at?: string
+          first_token_to_tts_ms?: number | null
+          id?: string
+          interrupted?: boolean | null
+          mic_start_to_detect_ms?: number | null
+          session_id: string
+          speech_end_to_final_ms?: number | null
+          total_latency_ms?: number | null
+          transcript_to_first_token_ms?: number | null
+          turn_index?: number
+        }
+        Update: {
+          created_at?: string
+          first_token_to_tts_ms?: number | null
+          id?: string
+          interrupted?: boolean | null
+          mic_start_to_detect_ms?: number | null
+          session_id?: string
+          speech_end_to_final_ms?: number | null
+          total_latency_ms?: number | null
+          transcript_to_first_token_ms?: number | null
+          turn_index?: number
+        }
+        Relationships: []
+      }
+      alex_latency_profiles: {
+        Row: {
+          active: boolean
+          chunk_ms: number
+          created_at: string
+          end_sensitivity: string
+          id: string
+          prefix_padding_ms: number
+          profile_name: string
+          silence_duration_ms: number
+          start_sensitivity: string
+        }
+        Insert: {
+          active?: boolean
+          chunk_ms?: number
+          created_at?: string
+          end_sensitivity?: string
+          id?: string
+          prefix_padding_ms?: number
+          profile_name: string
+          silence_duration_ms?: number
+          start_sensitivity?: string
+        }
+        Update: {
+          active?: boolean
+          chunk_ms?: number
+          created_at?: string
+          end_sensitivity?: string
+          id?: string
+          prefix_padding_ms?: number
+          profile_name?: string
+          silence_duration_ms?: number
+          start_sensitivity?: string
+        }
+        Relationships: []
+      }
       alex_learning_memory: {
         Row: {
           applied: boolean | null
@@ -2084,6 +2159,30 @@ export type Database = {
           speech_close_threshold?: number
           speech_open_threshold?: number
           trailing_close_ms?: number
+        }
+        Relationships: []
+      }
+      alex_output_filters: {
+        Row: {
+          active: boolean
+          blocked_pattern: string
+          created_at: string
+          id: string
+          priority: number
+        }
+        Insert: {
+          active?: boolean
+          blocked_pattern: string
+          created_at?: string
+          id?: string
+          priority?: number
+        }
+        Update: {
+          active?: boolean
+          blocked_pattern?: string
+          created_at?: string
+          id?: string
+          priority?: number
         }
         Relationships: []
       }
@@ -2366,6 +2465,36 @@ export type Database = {
           },
         ]
       }
+      alex_pronunciation_fixes: {
+        Row: {
+          active: boolean
+          created_at: string
+          fixed_text: string
+          id: string
+          language_code: string
+          priority: number
+          source_text: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          fixed_text: string
+          id?: string
+          language_code?: string
+          priority?: number
+          source_text: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          fixed_text?: string
+          id?: string
+          language_code?: string
+          priority?: number
+          source_text?: string
+        }
+        Relationships: []
+      }
       alex_pronunciation_rules: {
         Row: {
           active: boolean
@@ -2396,6 +2525,39 @@ export type Database = {
           phonetic_hint?: string | null
           priority?: number
           source_text?: string
+        }
+        Relationships: []
+      }
+      alex_realtime_sessions: {
+        Row: {
+          device_type: string | null
+          ended_at: string | null
+          id: string
+          locale: string | null
+          started_at: string
+          status: string
+          user_id: string | null
+          voice_profile: string | null
+        }
+        Insert: {
+          device_type?: string | null
+          ended_at?: string | null
+          id?: string
+          locale?: string | null
+          started_at?: string
+          status?: string
+          user_id?: string | null
+          voice_profile?: string | null
+        }
+        Update: {
+          device_type?: string | null
+          ended_at?: string | null
+          id?: string
+          locale?: string | null
+          started_at?: string
+          status?: string
+          user_id?: string | null
+          voice_profile?: string | null
         }
         Relationships: []
       }
