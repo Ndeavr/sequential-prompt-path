@@ -31,6 +31,9 @@ export interface GoalResults {
   requiredAppointmentsWeekly: number;
   appointmentMix: AppointmentMixItem[];
   recommendedPlan: string;
+  recommendedPlanIncludedRdv: number;
+  extraRdvNeeded: number;
+  suggestedAddonPackage: number | null;
   planMatchConfidence: number;
   territoryStatus: string;
   exclusivityPossible: boolean;
@@ -45,11 +48,11 @@ export interface AppointmentMixItem {
 }
 
 const PLAN_THRESHOLDS = [
-  { code: "recrue", label: "Recrue", maxUnits: 6, maxValue: 15000 },
-  { code: "pro", label: "Pro", maxUnits: 14, maxValue: 35000 },
-  { code: "premium", label: "Premium", maxUnits: 25, maxValue: 65000 },
-  { code: "elite", label: "Élite", maxUnits: 40, maxValue: 120000 },
-  { code: "signature", label: "Signature", maxUnits: 999, maxValue: 999999 },
+  { code: "recrue", label: "Recrue", maxUnits: 6, maxValue: 15000, includedRdv: 3 },
+  { code: "pro", label: "Pro", maxUnits: 14, maxValue: 35000, includedRdv: 5 },
+  { code: "premium", label: "Premium", maxUnits: 25, maxValue: 65000, includedRdv: 10 },
+  { code: "elite", label: "Élite", maxUnits: 40, maxValue: 120000, includedRdv: 25 },
+  { code: "signature", label: "Signature", maxUnits: 999, maxValue: 999999, includedRdv: 50 },
 ];
 
 // Relative size ratios (M = 1.0 anchor)
@@ -217,6 +220,14 @@ export function useGoalToPlanEngine() {
       + (inputs.city ? 10 : 0)
     );
 
+    // ── RDV inclus vs requis ──
+    const includedRdv = plan.includedRdv;
+    const extraRdvNeeded = Math.max(0, reqMonthly - includedRdv);
+    const ADDON_PACKAGES = [5, 10, 25, 50];
+    const suggestedAddonPackage = extraRdvNeeded > 0
+      ? ADDON_PACKAGES.find(p => p >= extraRdvNeeded) ?? ADDON_PACKAGES[ADDON_PACKAGES.length - 1]
+      : null;
+
     return {
       currentMonthlyRevenue: Math.round(currentRev),
       currentMonthlyProfit: Math.round(currentProfit),
@@ -232,6 +243,9 @@ export function useGoalToPlanEngine() {
       requiredAppointmentsWeekly: reqWeekly,
       appointmentMix: finalMix,
       recommendedPlan: plan.code,
+      recommendedPlanIncludedRdv: includedRdv,
+      extraRdvNeeded,
+      suggestedAddonPackage,
       planMatchConfidence: conf,
       territoryStatus: "disponible",
       exclusivityPossible: plan.code === "signature" || plan.code === "elite",
@@ -253,12 +267,12 @@ function generateMix(
   scaledSizes: ReturnType<typeof buildScaledSizes>,
 ): AppointmentMixItem[] {
   const weights: Record<string, number[]> = {
-    xs: [0.40, 0.25, 0.15, 0.10, 0.07, 0.03],
-    s: [0.15, 0.35, 0.25, 0.15, 0.07, 0.03],
-    m: [0.08, 0.17, 0.40, 0.22, 0.10, 0.03],
-    l: [0.03, 0.08, 0.20, 0.38, 0.22, 0.09],
-    xl: [0.02, 0.05, 0.12, 0.22, 0.38, 0.21],
-    xxl: [0.01, 0.03, 0.08, 0.15, 0.28, 0.45],
+    xs: [0.55, 0.20, 0.12, 0.08, 0.04, 0.01],
+    s: [0.12, 0.50, 0.22, 0.10, 0.04, 0.02],
+    m: [0.05, 0.12, 0.55, 0.18, 0.08, 0.02],
+    l: [0.02, 0.06, 0.15, 0.50, 0.20, 0.07],
+    xl: [0.01, 0.03, 0.08, 0.18, 0.50, 0.20],
+    xxl: [0.01, 0.02, 0.05, 0.10, 0.25, 0.57],
     mixed: [0.08, 0.15, 0.30, 0.27, 0.14, 0.06],
   };
 
