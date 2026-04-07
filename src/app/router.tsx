@@ -273,6 +273,7 @@ const PageAIPPAnalysisLoading = lazy(() => import("@/pages/entrepreneur/PageAIPP
 const PageEntrepreneurImportProcessing = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurImportProcessing"));
 const PagePricingCalculator = lazy(() => import("@/pages/entrepreneur/PagePricingCalculator"));
 const PagePlanResult = lazy(() => import("@/pages/entrepreneur/PagePlanResult"));
+const PageEntrepreneurGoalToPlanLanding = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurGoalToPlanLanding"));
 const PagePaymentSuccess = lazy(() => import("@/pages/entrepreneur/PagePaymentSuccess"));
 const PagePaymentCancelled = lazy(() => import("@/pages/entrepreneur/PagePaymentCancelled"));
 
