@@ -46,11 +46,10 @@ Deno.serve(async (req) => {
       const supabase = createClient(supabaseUrl, anonKey, {
         global: { headers: { Authorization: authHeader } },
       });
-      const token = authHeader.replace("Bearer ", "");
-      const { data } = await supabase.auth.getClaims(token);
-      if (data?.claims) {
-        userId = data.claims.sub as string;
-        userEmail = data.claims.email as string;
+      const { data: { user }, error: authErr } = await supabase.auth.getUser();
+      if (!authErr && user) {
+        userId = user.id;
+        userEmail = user.email ?? null;
       }
     }
 
