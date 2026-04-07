@@ -145,7 +145,7 @@ Tu es Alex. Parle naturellement. Jamais de méta-commentaire sur toi-même.
 
 export const ALEX_GEMINI_TEXT_MODEL = "gemini-3-flash-preview";
 export const ALEX_GEMINI_LIVE_MODEL =
-  "gemini-2.5-flash-native-audio-preview-12-2025";
+  "gemini-3.1-flash-live-preview";
 
 export const ALEX_TEXT_CONFIG = {
   model: ALEX_GEMINI_TEXT_MODEL,

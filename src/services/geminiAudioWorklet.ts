@@ -15,7 +15,7 @@ class PcmCaptureProcessor extends AudioWorkletProcessor {
     super();
     this._buffer = new Float32Array(0);
     // We'll accumulate ~4096 samples before sending to match previous chunk size
-    this._chunkSize = 4096;
+    this._chunkSize = 640; // 40ms at 16kHz — ultra-low latency
   }
 
   process(inputs, outputs, parameters) {
