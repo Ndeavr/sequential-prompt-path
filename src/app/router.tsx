@@ -273,6 +273,7 @@ const PageAIPPAnalysisLoading = lazy(() => import("@/pages/entrepreneur/PageAIPP
 const PageEntrepreneurImportProcessing = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurImportProcessing"));
 const PagePricingCalculator = lazy(() => import("@/pages/entrepreneur/PagePricingCalculator"));
 const PagePlanResult = lazy(() => import("@/pages/entrepreneur/PagePlanResult"));
+const PageEntrepreneurGoalToPlanLanding = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurGoalToPlanLanding"));
 const PagePaymentSuccess = lazy(() => import("@/pages/entrepreneur/PagePaymentSuccess"));
 const PagePaymentCancelled = lazy(() => import("@/pages/entrepreneur/PagePaymentCancelled"));
 
@@ -443,6 +444,7 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/pricing" element={<PageEntrepreneurPricing />} />
         <Route path="/entrepreneur/pricing-calculator" element={<PagePricingCalculator />} />
         <Route path="/entrepreneur/plan-result" element={<PagePlanResult />} />
+        <Route path="/entrepreneurs/calculateur" element={<PageEntrepreneurGoalToPlanLanding />} />
         <Route path="/entrepreneur/payment-success" element={<PagePaymentSuccess />} />
         <Route path="/entrepreneur/payment-cancelled" element={<PagePaymentCancelled />} />
         <Route path="/entrepreneur/dashboard" element={<PageEntrepreneurDashboardLite />} />
