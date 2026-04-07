@@ -182,7 +182,8 @@ const ProBilling = () => {
     }
   }, [searchParams]);
 
-  const currentPlan = subscription ? getPlanById(subscription.plan_id) : null;
+  const { data: allPlans } = usePlanCatalog();
+  const currentPlan = subscription ? (allPlans ?? []).find(p => p.code === subscription.plan_id) : null;
   const isActive =
     subscription && ["active", "trialing"].includes(subscription.status);
 
