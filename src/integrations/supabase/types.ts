@@ -2019,6 +2019,107 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_match_notifications: {
+        Row: {
+          contractor_id: string | null
+          created_at: string
+          id: string
+          notification_status: string
+          opened_at: string | null
+          sent_at: string | null
+          waitlist_request_id: string
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          notification_status?: string
+          opened_at?: string | null
+          sent_at?: string | null
+          waitlist_request_id: string
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          notification_status?: string
+          opened_at?: string | null
+          sent_at?: string | null
+          waitlist_request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_match_notifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alex_match_notifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alex_match_notifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alex_match_notifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "alex_match_notifications_waitlist_request_id_fkey"
+            columns: ["waitlist_request_id"]
+            isOneToOne: false
+            referencedRelation: "alex_waitlist_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_match_retry_queue: {
+        Row: {
+          created_at: string
+          id: string
+          last_attempt_status: string
+          next_retry_at: string
+          retry_count: number
+          waitlist_request_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_attempt_status?: string
+          next_retry_at?: string
+          retry_count?: number
+          waitlist_request_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_attempt_status?: string
+          next_retry_at?: string
+          retry_count?: number
+          waitlist_request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_match_retry_queue_waitlist_request_id_fkey"
+            columns: ["waitlist_request_id"]
+            isOneToOne: false
+            referencedRelation: "alex_waitlist_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alex_messages: {
         Row: {
           created_at: string
@@ -2087,6 +2188,39 @@ export type Database = {
           metadata?: Json | null
           momentum_score?: number
           session_id?: string
+        }
+        Relationships: []
+      }
+      alex_no_match_cases: {
+        Row: {
+          alex_session_id: string
+          city: string
+          constraints_json: Json | null
+          created_at: string
+          detected_reason: string
+          id: string
+          radius_km: number
+          service: string
+        }
+        Insert: {
+          alex_session_id: string
+          city: string
+          constraints_json?: Json | null
+          created_at?: string
+          detected_reason?: string
+          id?: string
+          radius_km?: number
+          service: string
+        }
+        Update: {
+          alex_session_id?: string
+          city?: string
+          constraints_json?: Json | null
+          created_at?: string
+          detected_reason?: string
+          id?: string
+          radius_km?: number
+          service?: string
         }
         Relationships: []
       }
@@ -4666,6 +4800,57 @@ export type Database = {
           session_id?: string
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      alex_waitlist_requests: {
+        Row: {
+          alex_session_id: string
+          city: string
+          created_at: string
+          email: string | null
+          first_name: string | null
+          flexibility_level: string
+          id: string
+          phone: string | null
+          radius_km: number
+          service: string
+          status: string
+          updated_at: string
+          urgency_level: string
+          user_id: string | null
+        }
+        Insert: {
+          alex_session_id: string
+          city: string
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          flexibility_level?: string
+          id?: string
+          phone?: string | null
+          radius_km?: number
+          service: string
+          status?: string
+          updated_at?: string
+          urgency_level?: string
+          user_id?: string | null
+        }
+        Update: {
+          alex_session_id?: string
+          city?: string
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          flexibility_level?: string
+          id?: string
+          phone?: string | null
+          radius_km?: number
+          service?: string
+          status?: string
+          updated_at?: string
+          urgency_level?: string
+          user_id?: string | null
         }
         Relationships: []
       }
