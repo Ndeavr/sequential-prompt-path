@@ -14,6 +14,7 @@ import { encodeToBase64, decodeFromBase64, decodeAudioData } from "@/services/ge
 import { ALEX_SYSTEM_INSTRUCTION, ALEX_LIVE_CONFIG } from "@/services/alexConfig";
 import { createWorkletBlobURL } from "@/services/geminiAudioWorklet";
 import { supabase } from "@/integrations/supabase/client";
+import { isInternalThinking, cleanAlexOutput } from "@/services/alexTranscriptNormalizer";
 
 interface UseLiveVoiceCallbacks {
   onTranscript?: (text: string) => void;
