@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
       .from("contractor_subscriptions")
       .insert({
         contractor_id: contractorId,
-        plan_code: plan.code,
+        plan_id: plan.id,
         status: "active",
         current_period_start: now.toISOString(),
         current_period_end: periodEnd.toISOString(),
