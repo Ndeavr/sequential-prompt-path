@@ -362,12 +362,12 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           realtimeInputConfig: {
             automaticActivityDetection: {
               disabled: false,
-              startOfSpeechSensitivity: "START_OF_SPEECH_SENSITIVITY_LOW",
-              endOfSpeechSensitivity: "END_OF_SPEECH_SENSITIVITY_LOW",
+              startOfSpeechSensitivity: StartSensitivity.START_SENSITIVITY_LOW,
+              endOfSpeechSensitivity: EndSensitivity.END_SENSITIVITY_LOW,
               prefixPaddingMs: 30,
               silenceDurationMs: 180,
             },
-            activityHandling: "START_OF_ACTIVITY_INTERRUPTS",
+            activityHandling: ActivityHandling.START_OF_ACTIVITY_INTERRUPTS,
           },
           outputAudioTranscription: {},
           inputAudioTranscription: {},
