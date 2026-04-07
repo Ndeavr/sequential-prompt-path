@@ -16,6 +16,7 @@ import { createWorkletBlobURL } from "@/services/geminiAudioWorklet";
 import { supabase } from "@/integrations/supabase/client";
 import { isInternalThinking, cleanAlexOutput } from "@/services/alexTranscriptNormalizer";
 import { normalizeUserTranscript, normalizeAlexOutputText } from "@/services/alexPronunciationNormalizer";
+import { isBlockedOutput } from "@/hooks/useAlexPublicOutputFilter";
 
 interface UseLiveVoiceCallbacks {
   onTranscript?: (text: string) => void;
