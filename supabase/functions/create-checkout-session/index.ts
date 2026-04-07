@@ -10,23 +10,23 @@ const corsHeaders = {
 const PLAN_PRICES: Record<string, { month: string; year: string }> = {
   recrue: {
     month: "price_1T9X6oCvZwK1QnPVG3tLbNqV",
-    year: "price_1T9X6oCvZwK1QnPVG3tLbNqY",
+    year: "price_1TJZb2CvZwK1QnPVCqnR2OM7",
   },
   pro: {
     month: "price_1T9X6pCvZwK1QnPVfBlT13Lw",
-    year: "price_1T9X6pCvZwK1QnPVfBlT13Ly",
+    year: "price_1TJZb2CvZwK1QnPVI0hGFF39",
   },
   premium: {
     month: "price_1T9X6qCvZwK1QnPV8V4P18tw",
-    year: "price_1T9X6qCvZwK1QnPV8V4P18ty",
+    year: "price_1TJZb3CvZwK1QnPVhn0vbYhM",
   },
   elite: {
     month: "price_1T9X6sCvZwK1QnPV2ZwYQOGT",
-    year: "price_1T9X6sCvZwK1QnPV2ZwYQOGY",
+    year: "price_1TJZb3CvZwK1QnPVe52XCyib",
   },
   signature: {
     month: "price_1T9X6tCvZwK1QnPVxNcBNeBM",
-    year: "price_1T9X6tCvZwK1QnPVxNcBNeBY",
+    year: "price_1TJZb4CvZwK1QnPVtcHaVEhr",
   },
 };
 
