@@ -89,7 +89,7 @@ const PLANS: Plan[] = [
       { text: "Support prioritaire léger" },
     ],
     cta: "Passer à Plus",
-    ctaLink: "/signup?plan=plus",
+    ctaLink: "/auth?plan=plus",
     microcopy: "Le meilleur équilibre entre clarté, protection et valeur.",
     icon: Sparkles,
     badge: { label: "Le plus populaire", type: "popular" },
