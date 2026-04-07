@@ -243,12 +243,24 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           },
 
           onmessage: (message: LiveServerMessage) => {
-            // Handle text transcript from model
+            // Handle model output transcript (what Alex actually says — NOT internal thinking)
+            if ((message as any).serverContent?.outputTranscription?.text) {
+              const transcript = (message as any).serverContent.outputTranscription.text;
+              callbacksRef.current?.onTranscript?.(transcript);
+            }
+            
+            // Also check text parts but filter out internal reasoning (thinking patterns)
             const textPart = message.serverContent?.modelTurn?.parts?.find(
               (p: any) => p.text
             );
             if (textPart?.text) {
-              callbacksRef.current?.onTranscript?.(textPart.text);
+              const text = textPart.text;
+              // Filter out internal reasoning patterns
+              const isThinking = /\*\*/.test(text) || 
+                /\b(Prioritizing|Refocusing|My focus|I will|I've processed|I'm maintaining|My primary focus|I must|My next step|according to my internal)\b/i.test(text);
+              if (!isThinking) {
+                callbacksRef.current?.onTranscript?.(text);
+              }
             }
 
             // Handle user transcript (input transcription)
@@ -336,6 +348,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
               disabled: false,
             },
           },
+          outputAudioTranscription: {},
         },
       });
 
