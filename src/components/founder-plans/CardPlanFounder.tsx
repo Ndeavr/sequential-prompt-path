@@ -27,7 +27,7 @@ export default function CardPlanFounder({ plan, recommended, delay = 0 }: Props)
   const isSoldOut = plan.status === "sold_out" || plan.spots_remaining <= 0;
 
   const handleCheckout = async () => {
-    if (!user) {
+    if (!session) {
       toast.error("Connectez-vous pour réserver votre place");
       return;
     }
