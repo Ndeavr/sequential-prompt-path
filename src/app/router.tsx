@@ -394,6 +394,7 @@ const PageOwnerMatch = lazy(() => import("@/pages/match/PageOwnerMatch"));
 // New V3 pages
 const MesProprietes = lazy(() => import("@/pages/MesProprietesPage"));
 const AnalyserSoumissions = lazy(() => import("@/pages/AnalyserSoumissionsPage"));
+const LandingPageFounderPlans = lazy(() => import("@/pages/LandingPageFounderPlansUNPRO"));
 
 export const AppRouter = () => (
   <BrowserRouter>
@@ -520,6 +521,7 @@ export const AppRouter = () => (
         <Route path="/unsubscribe" element={<Unsubscribe />} />
         <Route path="/unlock" element={<UnlockPage />} />
         <Route path="/fondateur" element={<FounderPage />} />
+        <Route path="/fondateur/plans" element={<LandingPageFounderPlans />} />
 
         {/* Public Property Page */}
         <Route path="/maison/:slug" element={<PublicPropertyPage />} />

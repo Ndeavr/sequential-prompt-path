@@ -1,20 +1,34 @@
 
+## Module: Landing Page Plans Fondateurs UNPRO
 
-## Résultat de l'inspection
+### Phase 1 — Database
+- Create tables: `founder_plans`, `founder_spots`, `founder_purchases`, `territories_locked`
+- RLS policies for public read, authenticated write
+- Enable realtime on `founder_plans` (spots_remaining)
+- Seed initial data (2 plans: Élite 19 995$, Signature 29 995$, 30 spots each)
 
-Les prix sont **déjà corrects** dans le calculateur :
+### Phase 2 — Stripe Products
+- Create 2 Stripe products + prices (Élite Fondateur 19995 CAD, Signature Fondateur 29995 CAD)
+- Create edge function `create-founder-checkout` for one-time payment
 
-| Plan | Prix affiché | RDV inclus |
-|------|-------------|------------|
-| Recrue | 149 $ | 3 |
-| Pro | 349 $ | 5 |
-| Premium | 599 $ | 10 |
-| Élite | 999 $ | 25 |
-| Signature | 1 799 $ | 50 |
+### Phase 3 — UI Components
+- `CounterLiveSpots` — realtime spots counter with progress bar
+- `CardPlanEliteFounder` / `CardPlanSignatureFounder` — plan cards with value breakdown
+- `PanelValueStack` — ROI/value breakdown
+- `BadgeFounderLimited` — scarcity badge
+- `HeroSectionFounderScarcity` — hero with counter
+- `SectionWhyFounderPlans` — why only 30
+- `SectionPlanComparisonEliteSignature` — side-by-side comparison
+- `SectionValueStackBreakdown` — value stack
+- `SectionTerritoryLockExplanation` — territory lock explanation
+- `SectionFAQFounderPlans` — FAQ accordion
+- `SectionFinalCTAFounder` — final CTA with live counter
 
-**Fichier vérifié :** `src/components/goal-to-plan/SectionPlanRecommendation.tsx` (lignes 10-16)
+### Phase 4 — Page Assembly
+- `LandingPageFounderPlansUNPRO` page at `/fondateur/plans`
+- Route registration
+- Mobile-first, dark premium design
 
-Les valeurs hardcodées (149, 349, 599, 999, 1799) sont en place et ne sont pas écrasées par `contractorPlans.ts`. Le moteur de calcul (`useGoalToPlanEngine.ts`) utilise les mêmes RDV inclus (3, 5, 10, 25, 50).
-
-**Aucune modification requise.** Tout est déjà conforme.
-
+### Pricing
+- Élite Fondateur: 19 995 $ CAD (one-time)
+- Signature Fondateur: 29 995 $ CAD (one-time)
