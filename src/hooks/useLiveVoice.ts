@@ -266,9 +266,11 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           onmessage: (message: LiveServerMessage) => {
             // Handle model output transcript (what Alex actually says — NOT internal thinking)
             if ((message as any).serverContent?.outputTranscription?.text) {
-              const transcript = (message as any).serverContent.outputTranscription.text;
-              if (!isInternalThinking(transcript)) {
-                callbacksRef.current?.onTranscript?.(cleanAlexOutput(transcript));
+              const rawTranscript = (message as any).serverContent.outputTranscription.text;
+              // Double normalization: clean internal thinking + fix pronunciation
+              if (!isInternalThinking(rawTranscript)) {
+                const cleaned = normalizeAlexOutputText(cleanAlexOutput(rawTranscript));
+                callbacksRef.current?.onTranscript?.(cleaned);
               }
             }
             
