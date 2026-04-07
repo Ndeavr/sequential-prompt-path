@@ -68,6 +68,9 @@ const STT_CORRECTIONS: [RegExp, string][] = [
 // ── TTS Output Corrections (what Alex is about to say) ──
 
 const TTS_OUTPUT_FIXES: [RegExp, string][] = [
+  // Critical "ville" TTS fix
+  [/\bquelle ille\b/gi, "quelle ville"],
+  [/\bdans quelle ille\b/gi, "dans quelle ville"],
   // Fix diction errors the model might produce
   [/\bRénoration\b/g, "rénovation"],
   [/\brénoration\b/g, "rénovation"],
