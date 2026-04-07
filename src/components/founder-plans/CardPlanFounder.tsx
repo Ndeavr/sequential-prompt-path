@@ -4,7 +4,7 @@ import { Check, Crown, Star, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { FounderPlan } from "@/hooks/useFounderPlans";
 import { useFounderCheckout } from "@/hooks/useFounderPlans";
-import { useAuth } from "@/components/auth/AuthProvider";
+import { useAuth } from "@/hooks/useAuth";
 import CounterLiveSpots from "./CounterLiveSpots";
 import { useState } from "react";
 import { toast } from "sonner";
