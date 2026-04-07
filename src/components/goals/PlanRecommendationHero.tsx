@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Sparkles, Check, ArrowUp, ArrowDown, Crown, Shield, Zap, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { getPlanById, formatPlanPrice } from "@/config/contractorPlans";
+import { usePlanByCode, formatPlanPrice } from "@/hooks/usePlanCatalog";
 import AppointmentUpsellCard from "./AppointmentUpsellCard";
 import type { PackTier } from "@/lib/appointmentPricing";
 

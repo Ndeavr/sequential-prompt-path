@@ -14,7 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { useAdminContractor, useAdminContractorDocuments, useUpdateContractorVerification, useAdminContractorSubscription } from "@/hooks/useAdmin";
 import { useContractorVerificationSnapshot, useContractorVerificationHistory, useContractorMergeSuggestions } from "@/hooks/useContractorVerificationIntegration";
 import { VerificationSnapshotCard, LatestVerificationInsights, MergeSuggestionsPanel, VerificationHistoryTable } from "@/components/verification";
-import { getPlanById } from "@/config/contractorPlans";
+import { usePlanByCode } from "@/hooks/usePlanCatalog";
 import { getContractorCompleteness } from "@/services/contractorCompletenessService";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";

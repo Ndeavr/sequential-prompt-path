@@ -12,16 +12,14 @@ import {
   useCreateBillingPortal,
 } from "@/hooks/useSubscription";
 import {
-  CONTRACTOR_PLANS,
-  getPlanById,
+  usePlanCatalog,
   formatPlanPrice,
   getStripePriceId,
-  getPlanDisplayPrice,
   getYearlySavingsPercent,
   getMonthlyEquivalent,
   type BillingInterval,
-  type ContractorPlan,
-} from "@/config/contractorPlans";
+  type CatalogPlan,
+} from "@/hooks/usePlanCatalog";
 import { toast } from "sonner";
 import { Check, CreditCard, ExternalLink } from "lucide-react";
 

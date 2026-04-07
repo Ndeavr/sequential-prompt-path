@@ -19,9 +19,9 @@ import {
   Wrench, Camera, Globe, BarChart3, Users, Zap,
 } from "lucide-react";
 import {
-  CONTRACTOR_PLANS, formatPlanPrice, getYearlySavingsPercent,
-  getMonthlyEquivalent, type ContractorPlan,
-} from "@/config/contractorPlans";
+  usePlanCatalog, formatPlanPrice, getYearlySavingsPercent,
+  getMonthlyEquivalent, type CatalogPlan,
+} from "@/hooks/usePlanCatalog";
 
 /* ------------------------------------------------------------------ */
 /*  Trigger types                                                      */

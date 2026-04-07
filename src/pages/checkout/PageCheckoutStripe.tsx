@@ -9,7 +9,7 @@ import { ArrowLeft, Shield, Sparkles, Clock, Calendar, Check, Loader2, Lock, Cre
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getPlanById, formatPlanPrice, type ContractorPlan, type BillingInterval, getStripePriceId, getYearlySavingsPercent } from "@/config/contractorPlans";
+import { usePlanByCode, formatPlanPrice, type CatalogPlan, type BillingInterval, getStripePriceId, getYearlySavingsPercent } from "@/hooks/usePlanCatalog";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import AppointmentUpsellCard from "@/components/goals/AppointmentUpsellCard";
