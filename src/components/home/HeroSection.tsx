@@ -149,9 +149,9 @@ export default function HeroSection() {
       return;
     }
 
-    // Kill all other audio sources
+    // Kill all other audio sources BEFORE starting
+    // But DON'T dispatch alex-voice-cleanup here — it can race-kill the new session
     alexAudioChannel.hardStop();
-    window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
 
     const selectedIntent = intent || activeIntent;
     const greeting = getIntentGreeting(selectedIntent);
