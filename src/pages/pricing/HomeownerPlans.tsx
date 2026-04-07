@@ -62,7 +62,7 @@ const PLANS: Plan[] = [
       { text: "Accès à Alex pour orientation de base" },
     ],
     cta: "Commencer gratuitement",
-    ctaLink: "/signup",
+    ctaLink: "/auth",
     microcopy: "Idéal pour un premier projet ou un besoin ponctuel.",
     icon: Home,
     badge: { label: "Gratuit pour commencer", type: "neutral" },
