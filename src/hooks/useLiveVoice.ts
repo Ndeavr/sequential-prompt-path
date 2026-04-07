@@ -7,7 +7,7 @@
  * 
  * Uses AudioWorklet for reliable mic capture (fallback to ScriptProcessorNode).
  */
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { GoogleGenAI, Modality } from "@google/genai";
 import type { LiveServerMessage } from "@google/genai";
 import { encodeToBase64, decodeFromBase64, decodeAudioData } from "@/services/geminiAudioCodec";
@@ -175,8 +175,27 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     console.log("[GeminiLive] ⚠️ ScriptProcessor fallback active (sampleRate:", audioCtx.sampleRate + ")");
   }, [sendPcmToGemini]);
 
+  // Listen for cleanup events — auto-stop if another Alex instance starts
+  useEffect(() => {
+    const handleCleanup = () => {
+      if (sessionRef.current) {
+        console.log("[GeminiLive] Received alex-voice-cleanup — stopping session");
+        cleanup();
+        callbacksRef.current?.onDisconnect?.();
+      }
+    };
+    window.addEventListener("alex-voice-cleanup", handleCleanup);
+    return () => window.removeEventListener("alex-voice-cleanup", handleCleanup);
+  }, [cleanup]);
+
   const start = useCallback(async (options?: { initialGreeting?: string }) => {
     if (isActive || isConnecting) return;
+
+    // Kill any other active session before starting
+    window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
+    // Small delay to let other sessions close
+    await new Promise(r => setTimeout(r, 50));
+
     setIsConnecting(true);
 
     try {
@@ -252,16 +271,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
               }
             }
             
-            // Also check text parts but filter out internal reasoning
-            const textPart = message.serverContent?.modelTurn?.parts?.find(
-              (p: any) => p.text
-            );
-            if (textPart?.text) {
-              const text = textPart.text;
-              if (!isInternalThinking(text)) {
-                callbacksRef.current?.onTranscript?.(cleanAlexOutput(text));
-              }
-            }
+            // NOTE: modelTurn.parts[].text is internal text representation — 
+            // skip it when audio modality is active to avoid duplicate transcripts.
+            // outputTranscription above is the actual spoken words.
 
             // Handle user transcript (input transcription)
             if ((message as any).serverContent?.inputTranscription?.text) {
