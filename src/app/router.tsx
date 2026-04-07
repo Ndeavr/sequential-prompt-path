@@ -200,6 +200,7 @@ const PageAlexPredictiveSeller = lazy(() => import("@/pages/alex/PageAlexPredict
 const AdminZoneValueMap = lazy(() => import("@/pages/admin/AdminZoneValueMap"));
 const AdminVoiceControlPage = lazy(() => import("@/pages/admin/AdminVoiceControlPage"));
 const AdminVoiceOptimizerPage = lazy(() => import("@/pages/admin/AdminVoiceOptimizerPage"));
+const PageAdminVoicePronunciation = lazy(() => import("@/pages/admin/PageAdminVoicePronunciation"));
 const EntrepreneurVoiceSalesPage = lazy(() => import("@/pages/entrepreneur/EntrepreneurVoiceSalesPage"));
 const AdminSalesAnalyticsPage = lazy(() => import("@/pages/admin/AdminSalesAnalyticsPage"));
 const HomeownerVoiceEntryPage = lazy(() => import("@/pages/homeowner/HomeownerVoiceEntryPage"));
@@ -796,6 +797,7 @@ export const AppRouter = () => (
         <Route path="/admin/voice-control" element={<ProtectedRoute requiredRole="admin"><AdminVoiceControlPage /></ProtectedRoute>} />
         <Route path="/admin/voice-optimizer" element={<ProtectedRoute requiredRole="admin"><AdminVoiceOptimizerPage /></ProtectedRoute>} />
         <Route path="/admin/voice-optimizer/:id" element={<ProtectedRoute requiredRole="admin"><AdminVoiceOptimizerPage /></ProtectedRoute>} />
+        <Route path="/admin/voice-pronunciation" element={<ProtectedRoute requiredRole="admin"><PageAdminVoicePronunciation /></ProtectedRoute>} />
         <Route path="/admin/sales-analytics" element={<ProtectedRoute requiredRole="admin"><AdminSalesAnalyticsPage /></ProtectedRoute>} />
         <Route path="/entrepreneur/sales" element={<EntrepreneurVoiceSalesPage />} />
         <Route path="/homeowner/voice" element={<HomeownerVoiceEntryPage />} />
