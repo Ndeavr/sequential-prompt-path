@@ -41,6 +41,7 @@ interface Plan {
   badge?: { label: string; type: "popular" | "premium" | "neutral" };
   popular?: boolean;
   premium?: boolean;
+  onCheckout?: () => void;
 }
 
 const PLANS: Plan[] = [
