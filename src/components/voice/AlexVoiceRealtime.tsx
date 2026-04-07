@@ -38,6 +38,10 @@ export default function AlexVoiceRealtime({ onClose, userName, className = "" }:
 
   const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
     onTranscript: (text) => {
+      // Filter out internal/technical content before displaying
+      const filtered = filterPublicOutput(text);
+      if (!filtered) return;
+
       // Accumulate agent text into the latest agent entry
       setTranscripts((prev) => {
         const lastAgent = prev.length > 0 && prev[prev.length - 1].role === "agent"
@@ -46,17 +50,18 @@ export default function AlexVoiceRealtime({ onClose, userName, className = "" }:
 
         if (lastAgent && lastAgent.id === lastAgentIdRef.current) {
           return prev.map((e) =>
-            e.id === lastAgent.id ? { ...e, text: e.text + text } : e
+            e.id === lastAgent.id ? { ...e, text: e.text + filtered } : e
           );
         }
 
         const newId = `agent-${++entryIdRef.current}`;
         lastAgentIdRef.current = newId;
-        return [...prev, { role: "agent", text, id: newId }];
+        return [...prev, { role: "agent", text: filtered, id: newId }];
       });
     },
     onUserTranscript: (text) => {
-      lastAgentIdRef.current = null; // Reset so next agent text creates new entry
+      if (!text || text.trim().length < 2) return;
+      lastAgentIdRef.current = null;
       setTranscripts((prev) => [
         ...prev,
         { role: "user", text, id: `user-${++entryIdRef.current}` },
