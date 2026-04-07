@@ -110,14 +110,25 @@ export default function HeroSection() {
 
   const getIntentGreeting = useCallback((intent: IntentSlug) => {
     const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || null;
-    const name = firstName || "";
-    const hi = name ? `Bonjour ${name}!` : "Bonjour!";
+    const hour = new Date().getHours();
+    
+    // Time-based greeting: Bonjour / Bon après-midi / Bonsoir
+    let timeGreeting: string;
+    if (hour >= 5 && hour < 12) {
+      timeGreeting = "Bonjour";
+    } else if (hour >= 12 && hour < 18) {
+      timeGreeting = "Bon après-midi";
+    } else {
+      timeGreeting = "Bonsoir";
+    }
+    
+    const hi = firstName ? `${timeGreeting} ${firstName}!` : `${timeGreeting}!`;
 
     switch (intent) {
       case "probleme":
         return `${hi} Je peux vous aider à trouver une solution! Avez-vous une photo ou pouvez-vous me décrire votre problème?`;
       case "projet":
-        return `${hi} Ah! Un nouveau projet! Je peux certainement vous aider avec ça! Avez-vous une photo de ce que vous voulez améliorer ou pouvez-vous me décrire votre projet?`;
+        return `${hi} Un nouveau projet? Je peux certainement vous aider! Avez-vous une photo de ce que vous voulez améliorer ou pouvez-vous me décrire votre projet?`;
       case "avis":
         return `${hi} Vous aimeriez que j'analyse vos soumissions? Pas de problème! Vous pouvez les téléverser ou les prendre en photo ici.`;
       default:
