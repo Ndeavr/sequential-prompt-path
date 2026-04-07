@@ -41,15 +41,6 @@ const PageEntrepreneurPricing = () => {
         <div className="flex justify-center mb-8">
           <div className="inline-flex bg-muted rounded-xl p-1 gap-1">
             <button
-              onClick={() => setInterval("month")}
-              className={cn(
-                "px-5 py-2 rounded-lg text-sm font-medium transition-all",
-                interval === "month" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
-              )}
-            >
-              Mensuel
-            </button>
-            <button
               onClick={() => setInterval("year")}
               className={cn(
                 "px-5 py-2 rounded-lg text-sm font-medium transition-all",
@@ -58,6 +49,15 @@ const PageEntrepreneurPricing = () => {
             >
               Annuel
               <span className="ml-1 text-xs text-success font-bold">-15%</span>
+            </button>
+            <button
+              onClick={() => setInterval("month")}
+              className={cn(
+                "px-5 py-2 rounded-lg text-sm font-medium transition-all",
+                interval === "month" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              )}
+            >
+              Mensuel
             </button>
           </div>
         </div>
