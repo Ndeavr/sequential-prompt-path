@@ -18,15 +18,19 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-  );
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+
+  // Auth client (anon) to verify the user
+  const authClient = createClient(supabaseUrl, anonKey);
+  // Admin client (service role) to bypass RLS for spot reservation
+  const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
   try {
     const authHeader = req.headers.get("Authorization")!;
     const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
+    const { data } = await authClient.auth.getUser(token);
     const user = data.user;
     if (!user?.email) throw new Error("Not authenticated");
 
@@ -35,18 +39,19 @@ serve(async (req) => {
     if (!priceId) throw new Error("Invalid plan");
 
     // Check spots remaining
-    const { data: plan } = await supabaseClient
+    const { data: plan, error: planErr } = await adminClient
       .from("founder_plans")
       .select("id, spots_remaining, status")
       .eq("slug", planSlug)
       .single();
 
-    if (!plan || plan.status === "sold_out" || plan.spots_remaining <= 0) {
+    if (planErr || !plan) throw new Error("Plan not found");
+    if (plan.status === "sold_out" || plan.spots_remaining <= 0) {
       throw new Error("Plan sold out");
     }
 
-    // Soft reserve a spot (10 min)
-    const { data: spot, error: spotErr } = await supabaseClient
+    // Soft reserve a spot (10 min) using admin client to bypass RLS
+    const { data: spot, error: spotErr } = await adminClient
       .from("founder_spots")
       .insert({
         plan_id: plan.id,
@@ -57,7 +62,10 @@ serve(async (req) => {
       .select("id")
       .single();
 
-    if (spotErr) throw new Error("Could not reserve spot");
+    if (spotErr) {
+      console.error("Spot reservation error:", spotErr);
+      throw new Error("Could not reserve spot");
+    }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
@@ -89,12 +97,12 @@ serve(async (req) => {
 
     const session = await stripe.checkout.sessions.create(sessionParams);
 
-    // Store purchase record
-    await supabaseClient.from("founder_purchases").insert({
+    // Store purchase record using admin client
+    await adminClient.from("founder_purchases").insert({
       user_id: user.id,
       plan_id: plan.id,
       spot_id: spot.id,
-      amount_paid: 0, // Will be updated by webhook
+      amount_paid: 0,
       payment_status: "pending",
       stripe_session_id: session.id,
     });
@@ -104,6 +112,7 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
+    console.error("Checkout error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
