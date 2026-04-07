@@ -40,7 +40,7 @@ interface ContextSuggestion {
 const getContextSuggestions = (pathname: string, isAuthenticated: boolean): ContextSuggestion[] => {
   // Public pages — unauthenticated flow
   if (!isAuthenticated) {
-    if (pathname === "/" || pathname === "/homeowners") {
+    if (pathname === "/" || pathname === "/index" || pathname === "/homeowners") {
       return [
         { label: "Décrire mon projet", message: "J'ai un projet de rénovation et j'aimerais de l'aide pour le décrire." },
         { label: "Comprendre le Score Maison", message: "Comment fonctionne le Score Maison UNPRO?" },
