@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import HelpPopup from "@/components/shared/HelpPopup";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -397,7 +397,7 @@ export const AppRouter = () => (
     <Suspense fallback={<LazyFallback />}>
       <Routes>
         {/* Redirects for common mismatched entry points */}
-        <Route path="/index" element={<Navigate to="/" replace />} />
+        <Route path="/index" element={<Home />} />
         <Route path="/entrepreneur/aipp-analysis" element={<PageAIPPAnalysisLoading />} />
 
         {/* Public */}

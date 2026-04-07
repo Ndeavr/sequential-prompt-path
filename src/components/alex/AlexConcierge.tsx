@@ -40,7 +40,7 @@ interface ContextSuggestion {
 const getContextSuggestions = (pathname: string, isAuthenticated: boolean): ContextSuggestion[] => {
   // Public pages — unauthenticated flow
   if (!isAuthenticated) {
-    if (pathname === "/" || pathname === "/index" || pathname === "/homeowners") {
+    if (pathname === "/" || pathname === "/homeowners") {
       return [
         { label: "Décrire mon projet", message: "J'ai un projet de rénovation et j'aimerais de l'aide pour le décrire." },
         { label: "Comprendre le Score Maison", message: "Comment fonctionne le Score Maison UNPRO?" },
@@ -135,7 +135,7 @@ interface AlexConciergeProps {
 
 const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, occupancyStatus }: AlexConciergeProps) => {
   const { pathname } = useLocation();
-  const isHomePage = pathname === "/" || pathname === "/index";
+  const isHomePage = pathname === "/";
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated } = useAuth();
   const { openAlex: openAlexVoice, isOpen: voiceOverlayOpen } = useAlexVoice();
