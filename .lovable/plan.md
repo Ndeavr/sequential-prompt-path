@@ -1,86 +1,72 @@
 
+## AdminFlowEntrepreneurActivationComplete — Plan de construction
 
-## Plan: Dynamic Pricing from Admin Tables + Correct Stripe Routing
+### Constat existant
+Le projet possède déjà : `contractors`, `contractor_scores`, `contractor_media`, `contractor_credentials`, `contractor_subscriptions`, `contractor_services`, `contractor_service_areas`, `activation_steps`, `admin_action_logs`, `profiles`, `plan_catalog`, `plan_definitions`. Beaucoup de tables demandées existent déjà sous d'autres noms.
 
-### Problem Summary
-1. **Hardcoded prices** in `src/config/contractorPlans.ts` show wrong amounts (e.g., Premium = $599/mo) that don't match any database table
-2. **Wrong Stripe checkout**: All plans redirect to incorrect Stripe prices (e.g., clicking "Choisir Premium" opens a $149 checkout because the Stripe price IDs are mismatched to old products)
-3. Three different DB tables have conflicting prices — none are wired to the UI
+### Approche : Réutiliser l'existant + créer le manquant
 
-### Approach
-Use the user-specified prices as the source of truth, stored in the `plan_catalog` table (which already has the richest schema: monthly/annual prices, features, badges, descriptions). The frontend will fetch plans from this table instead of using a hardcoded config.
+---
 
-### Step 1 — Create Monthly Stripe Prices
-Create 5 monthly recurring Stripe prices on the correct existing products:
+### Phase 1 — Schéma DB (Migration)
+**Tables à CRÉER** (celles qui n'existent pas) :
+- `admin_company_import_jobs` — jobs d'importation admin
+- `admin_company_import_sources` — sources importées avec trust_score
+- `admin_import_conflicts` — conflits entre sources
+- `admin_activation_overrides` — bypass paiement 100%
+- `admin_appointment_readiness` — checklist readiness rendez-vous
+- `admin_activation_checklists` — items bloquants/non-bloquants
 
-| Plan | Product | Monthly Price (CAD) |
-|------|---------|-------------------|
-| Recrue | prod_UI9uPTzH0oaQ6u | $149 (14900¢) |
-| Pro | prod_UI9uM3GMnpxgxE | $349 (34900¢) |
-| Premium | prod_UI9uGUb5D4nGUd | $599 (59900¢) |
-| Élite | prod_UI9uu29MGVHaLi | $999 (99900¢) |
-| Signature | prod_UI9uIfzKY2p5en | $1799 (179900¢) |
+**Tables EXISTANTES à réutiliser** (avec mapping) :
+- `contractors` → company + contractor_profiles (déjà complet)
+- `contractor_scores` → scoring existant
+- `contractor_subscriptions` → subscriptions
+- `contractor_media` → media assets
+- `contractor_credentials` → credentials
+- `contractor_services` → services
+- `contractor_service_areas` → service areas
+- `admin_action_logs` → activation events (déjà complet)
+- `plan_catalog` → subscription_plans
+- `profiles` → account links (user_id already in contractors)
 
-### Step 2 — Database Migration
-Add Stripe price ID columns to `plan_catalog` and update with correct values:
+**RLS** : Admin-only policies via `has_role(auth.uid(), 'admin')` sur toutes les nouvelles tables.
 
-```sql
-ALTER TABLE plan_catalog
-  ADD COLUMN stripe_monthly_price_id text,
-  ADD COLUMN stripe_yearly_price_id text;
+### Phase 2 — Page Wizard + Composants Core
+Créer `PageAdminEntrepreneurActivation` avec wizard en 7 étapes :
+1. **Entreprise** — Recherche/création contractor
+2. **Importation** — Import données + résolution conflits  
+3. **Profil** — Construction profil complet
+4. **Score** — Calcul/override AIPP
+5. **Plan** — Sélection plan + bypass paiement
+6. **Activation** — Checklist readiness + publish
+7. **Résumé** — Audit trail + rollback
 
-UPDATE plan_catalog SET
-  monthly_price = 14900, annual_price = 149900,
-  stripe_monthly_price_id = '<new_recrue_monthly>',
-  stripe_yearly_price_id = 'price_1TJZb2CvZwK1QnPVCqnR2OM7'
-WHERE code = 'recrue';
--- ... repeat for all 5 plans with correct prices and Stripe IDs
-```
+Composants clés :
+- `AdminActivationWizard` — orchestrateur d'étapes
+- `StepEntrepriseSearch` — recherche + création
+- `StepDataImport` — import + conflits
+- `StepProfileBuilder` — formulaires profil
+- `StepScoring` — score preview + override
+- `StepPlanAssignment` — sélection plan + bypass 100%
+- `StepActivation` — checklist + publish + readiness
+- `StepSummary` — timeline audit + rollback
 
-Also sync `plan_definitions.base_price_monthly` to match.
+### Phase 3 — Edge Functions
+- `admin-activation-import` — recherche/import données entreprise
+- `admin-activation-score` — calcul score AIPP admin
+- `admin-activation-subscribe` — assign plan + bypass paiement
+- `admin-activation-publish` — publish profil + readiness
+- `admin-activation-rollback` — rollback contrôlé
 
-### Step 3 — Create Hook `usePlanCatalog`
-New hook that fetches plans from `plan_catalog` table:
-- Returns typed plan objects with prices, features, Stripe IDs
-- Cached via React Query with 5-minute stale time
-- Replaces all imports from `contractorPlans.ts`
+### Phase 4 — Seed Data + Polish
+- 3 cas de démo (neuve, partielle, override+actif)
+- Feature flag `admin_activation_v1`
+- Responsive mobile-first
 
-### Step 4 — Update `ContractorPlans.tsx`
-- Replace `CONTRACTOR_PLANS` import with `usePlanCatalog()` hook
-- Display prices from DB data
-- Pass correct `planId` (the plan code) to `handleCheckout`
-- Show loading skeleton while fetching
+### Routing
+- `/admin/activation` → PageAdminEntrepreneurActivation (wizard)
+- `/admin/activation/history` → historique activations
 
-### Step 5 — Update Edge Function `create-checkout-session`
-- Remove hardcoded `PLAN_PRICES` map
-- Look up Stripe price ID from `plan_catalog` table using the plan code + billing interval
-- This ensures the checkout always matches the admin-configured price
-
-### Step 6 — Update Other Consumers
-Files that import from `contractorPlans.ts`:
-- `PageEntrepreneurPricing.tsx`
-- `ProBilling.tsx`
-- `UpgradeWindow.tsx`
-- `PlanRecommendationHero.tsx`
-- `PageCheckoutStripe.tsx`
-
-Each will be updated to use the new hook or a shared utility that reads from DB.
-
-### Technical Details
-
-**New files:**
-- `src/hooks/usePlanCatalog.ts` — React Query hook fetching `plan_catalog`
-
-**Modified files:**
-- `src/config/contractorPlans.ts` — keep types/utilities, remove hardcoded array
-- `src/pages/pricing/ContractorPlans.tsx` — use DB data
-- `src/pages/entrepreneur/PageEntrepreneurPricing.tsx` — use DB data
-- `src/pages/pro/ProBilling.tsx` — use DB data
-- `src/pages/checkout/PageCheckoutStripe.tsx` — use DB data
-- `src/components/contractor/UpgradeWindow.tsx` — use DB data
-- `supabase/functions/create-checkout-session/index.ts` — DB lookup for price IDs
-
-**Database migration:**
-- Add `stripe_monthly_price_id`, `stripe_yearly_price_id` to `plan_catalog`
-- Update all 5 plan rows with correct prices and Stripe IDs
-
+### Ce qui est exclu (tables déjà gérées ailleurs)
+- Stripe réel (bypass uniquement, compatibilité conservée)
+- Connecteurs GMB/RBQ réels (mock data, prêt pour branchement futur)
