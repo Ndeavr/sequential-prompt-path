@@ -305,6 +305,7 @@ const PageEntrepreneurPlanUsage = lazy(() => import("@/pages/entrepreneur/PageEn
 
 // Admin
 const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
+const PageAdminEntrepreneurActivation = lazy(() => import("@/pages/admin/PageAdminEntrepreneurActivation"));
 const AdminUsers = lazy(() => import("@/pages/admin/AdminUsers"));
 const AdminContractors = lazy(() => import("@/pages/admin/AdminContractors"));
 const AdminQuotes = lazy(() => import("@/pages/admin/AdminQuotes"));
