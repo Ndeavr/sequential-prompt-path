@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 const PageEntrepreneurPricing = () => {
   const navigate = useNavigate();
-  const [interval, setInterval] = useState<BillingInterval>("month");
+  const [interval, setInterval] = useState<BillingInterval>("year");
 
   const handleSelectPlan = (planId: string) => {
     sessionStorage.setItem("unpro_selected_plan", planId);
