@@ -324,12 +324,18 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: {
+            languageCode: "fr-CA",
             voiceConfig: {
               prebuiltVoiceConfig: { voiceName },
             },
           },
           systemInstruction: {
             parts: [{ text: ALEX_SYSTEM_INSTRUCTION }],
+          },
+          realtimeInputConfig: {
+            automaticActivityDetection: {
+              disabled: false,
+            },
           },
         },
       });
