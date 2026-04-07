@@ -243,13 +243,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           },
 
           onmessage: (message: LiveServerMessage) => {
-            // Handle text transcript from model
-            const textPart = message.serverContent?.modelTurn?.parts?.find(
-              (p: any) => p.text
-            );
-            if (textPart?.text) {
-              callbacksRef.current?.onTranscript?.(textPart.text);
-            }
+            // In AUDIO mode, ignore text parts (they are internal model reasoning, not spoken output)
+            // We only show user transcripts and play audio
 
             // Handle user transcript (input transcription)
             if ((message as any).serverContent?.inputTranscription?.text) {
