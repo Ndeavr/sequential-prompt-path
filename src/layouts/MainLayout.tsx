@@ -47,7 +47,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       </div>
 
       <SmartHeader />
-      {pathname === "/" && <BannerResumeJourney />}
+      {/* BannerResumeJourney disabled — distracting on home page */}
       <main className="flex-1 pb-20 lg:pb-0 relative z-0">{children}</main>
       {showSEOGrid && <FooterSEOGrid />}
       <SmartFooter />
