@@ -348,6 +348,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
               disabled: false,
             },
           },
+          outputAudioTranscription: {},
         },
       });
 
