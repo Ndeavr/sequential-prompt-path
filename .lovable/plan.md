@@ -1,82 +1,39 @@
 
-# Module Outbound CRM UNPRO — Plan de build
 
-## Constat
+# Fix: Two Voices Overlapping on Home Page
 
-Le projet possède déjà 20 tables `outreach_*` et 25 tables `prospect_*`. Le nouveau module "outbound CRM" ajoute une couche CRM native avec pipeline, scoring, séquences, mailboxes et landing pages.
+## Problem Identified
 
-**Stratégie** : Créer les tables `outbound_*` dédiées (séparées de l'existant `outreach_*`) et les pages/composants associés. Build en 4 phases pour livrer progressivement.
+There are **two separate Gemini Live WebSocket sessions** opening simultaneously on the home page:
 
----
+1. **HeroSection** (the orb) — auto-starts via `useAlexHomeAutostart`, calls `useLiveVoice().start()`
+2. **GlobalAlexOverlay** — always mounted in `providers.tsx`, renders `AlexVoiceMode` which also calls `useLiveVoice().start()` when opened
 
-## Phase 1 — Foundation (cette session)
+Each `useLiveVoice()` hook instance creates its **own WebSocket connection** to Gemini, its **own microphone stream**, and its **own audio output context**. Result: two AI voices speaking simultaneously with potentially different audio characteristics.
 
-### Database (migration)
-Créer les 20 tables outbound principales :
-- `outbound_companies`, `outbound_contacts`, `outbound_leads`
-- `outbound_campaigns`, `outbound_sequences`, `outbound_sequence_steps`
-- `outbound_messages`, `outbound_events`, `outbound_replies`
-- `outbound_suppressions`, `outbound_mailboxes`, `outbound_mailbox_warmup`
-- `outbound_landing_pages`, `outbound_ai_scores`, `outbound_ai_personalizations`
-- `outbound_notes`, `outbound_tasks`, `outbound_tags`, `outbound_lead_tags`, `outbound_owners`
-- Avec RLS admin-only, indexes, relations FK
+Additionally, inside `useLiveVoice.ts` line 248-264, the `onTranscript` callback fires **twice per message** — once for `outputTranscription.text` and once for `modelTurn.parts[].text` — causing duplicate text in the UI.
 
-### Mock Data
-- 4 campagnes (Laval/Isolation, Montréal/Toiture, Longueuil/Électricité, Québec/Condo)
-- 3 mailboxes (alex@, partenariats@, yan@go.unpro.ca)
-- 40 leads réalistes, 3 séquences, événements CRM variés
+## Plan
 
-### Pages (Phase 1)
-- `PageOutboundDashboard` — Vue d'ensemble avec stats cards + campagnes actives
-- `PageOutboundCampaigns` — Liste campagnes avec filtres
-- `PageOutboundLeadsQueue` — File d'attente leads avec tri ville/spécialité
+### Step 1: Fix duplicate transcript in useLiveVoice.ts
+- In the `onmessage` handler, prioritize `outputTranscription.text` (the actual spoken words) and **skip** `modelTurn.parts[].text` when audio modality is active. The text parts are the internal text representation — not what's spoken — and should not trigger `onTranscript`.
 
-### Composants (Phase 1)
-- `CardOutboundVolumeToday`, `CardOutboundReplyRate`, `CardOutboundBounceRate`
-- `TableOutboundLeadQueue`, `TableOutboundCampaignPerformance`
-- `FilterBarOutboundMaster` (ville, spécialité, statut, campagne)
-- `BadgeCRMStatus`, `BadgeMailboxHealth`, `BadgeCampaignHealth`
+### Step 2: Enforce single Gemini session via GlobalAlexOverlay guard
+- In `GlobalAlexOverlay.tsx`, when `isOpen` becomes true while `HeroSection` already holds the runtime lock, **stop the Hero session first** before starting the overlay session (or block the overlay entirely).
+- In `HeroSection.tsx`, when `GlobalAlexOverlay` acquires the lock, ensure the hero's `useLiveVoice` session is stopped.
 
-### Routes
-- `/admin/outbound` → Dashboard
-- `/admin/outbound/campaigns` → Campagnes
-- `/admin/outbound/leads` → Leads Queue
+### Step 3: Make useLiveVoice singleton-aware
+- Before opening a new WebSocket in `start()`, dispatch `alex-voice-cleanup` event AND stop any existing session from the same hook instance.
+- Listen for `alex-voice-cleanup` in the hook itself — when received, auto-stop the current session. This ensures only ONE Gemini session is ever active app-wide.
 
----
+### Step 4: Verify voice consistency
+- Ensure both HeroSection and AlexVoiceMode use the same `voiceName` from the edge function (`Aoede`). Currently they do, but the duplicate session creates interference that sounds like a different voice.
 
-## Phase 2 — CRM & Lead Profile (session suivante)
+## Files to Modify
+- `src/hooks/useLiveVoice.ts` — Remove duplicate onTranscript, add cleanup listener
+- `src/components/alex/GlobalAlexOverlay.tsx` — Stop hero session before starting overlay
+- `src/components/home/HeroSection.tsx` — Listen for cleanup and auto-stop
 
-- `PageOutboundLeadProfile` avec timeline CRM complète
-- `DrawerLeadFullProfile`, `PanelCRMTimelineLead`
-- `PageOutboundSequences` avec éditeur
-- `FormSequenceStepEditor`, `CardSequenceStepPreview`
-- Actions CRM : assign owner, add note, update status, suppress
+## Note on "Playing Samples"
+I cannot play audio in this environment. The two voices you hear are both Gemini's Aoede voice, but from **two simultaneous WebSocket sessions** with slight timing differences, creating the overlapping effect. Fixing the duplicate session will eliminate the problem entirely — you'll hear one clean voice.
 
----
-
-## Phase 3 — Mailboxes, Landing Pages, Suppression (session suivante)
-
-- `PageOutboundMailboxes` avec health monitoring
-- `PageOutboundLandingPages` avec générateur go.unpro.ca
-- `PageOutboundSuppressionCenter`
-- `PanelMailboxWarmupStatus`, `FormMailboxConfiguration`
-- `FormLandingPageTemplateEditor`
-
----
-
-## Phase 4 — Analytics, AI, Automation (session suivante)
-
-- `PageOutboundAnalytics` avec widgets de performance
-- `PageOutboundSettings`
-- Edge Functions : import-leads, score-lead, generate-sequence, send-step
-- `PanelAILeadScoring`, `PanelAIPersonalizationEngine`
-- `PanelAutomationExecutionLogs`
-- Webhooks open/click/reply/bounce
-
----
-
-## Ce qui ne change PAS
-- Tables `outreach_*` et `prospect_*` existantes (pas de conflit)
-- Pages admin existantes `/admin/outreach/*`
-- Navigation et routes existantes
-- Auth flow et RLS existant
