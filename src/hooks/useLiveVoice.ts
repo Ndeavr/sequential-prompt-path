@@ -241,24 +241,10 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
             setIsConnecting(false);
             callbacksRef.current?.onConnect?.();
 
-            // Send detailed system instructions AFTER connection is established
-            // This avoids the Gemini Live bug where long systemInstruction in config
-            // causes immediate WebSocket closure.
-            if (sessionRef.current) {
-              try {
-                sessionRef.current.sendClientContent({
-                  turns: [{ role: "user", parts: [{ text: ALEX_SYSTEM_INSTRUCTION }] }],
-                  turnComplete: false,
-                });
-              } catch (err) {
-                console.warn("[GeminiLive] Failed to send system context:", err);
-              }
-            }
+            // CRITICAL SEQUENCE: greeting FIRST, then mic.
+            // Sending audio while a clientContent turn is in-flight causes 1007.
 
-            // Set up mic → Gemini pipeline
-            await setupMicPipeline(stream, inputAudioContextRef.current!);
-
-            // Send initial greeting to trigger Alex's first spoken response
+            // Step 1: Send initial greeting to trigger Alex's spoken response
             if (initialGreeting && sessionRef.current) {
               console.log("[GeminiLive] Sending initial greeting:", initialGreeting);
               try {
@@ -269,6 +255,15 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
               } catch (err) {
                 console.warn("[GeminiLive] Failed to send initial greeting:", err);
               }
+            }
+
+            // Step 2: Wait briefly for server to process the greeting turn
+            // before starting audio input (prevents 1007 race condition)
+            await new Promise((r) => setTimeout(r, 300));
+
+            // Step 3: Set up mic → Gemini pipeline
+            if (inputAudioContextRef.current && mediaStreamRef.current) {
+              await setupMicPipeline(mediaStreamRef.current, inputAudioContextRef.current);
             }
 
             // Diagnostic: warn if no audio sent after 3 seconds
