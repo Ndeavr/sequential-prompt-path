@@ -15,6 +15,7 @@ const DEFAULT_FLAGS: Record<string, boolean> = {
   alex_optimization_enabled: true,
   copy_variant_registry_enabled: true,
   ui_block_registry_enabled: true,
+  alex_no_match_recovery: true,
 };
 
 let overrides: Record<string, boolean> = {};

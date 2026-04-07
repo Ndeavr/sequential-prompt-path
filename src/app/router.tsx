@@ -201,6 +201,8 @@ const AdminZoneValueMap = lazy(() => import("@/pages/admin/AdminZoneValueMap"));
 const AdminVoiceControlPage = lazy(() => import("@/pages/admin/AdminVoiceControlPage"));
 const AdminVoiceOptimizerPage = lazy(() => import("@/pages/admin/AdminVoiceOptimizerPage"));
 const PageAdminVoicePronunciation = lazy(() => import("@/pages/admin/PageAdminVoicePronunciation"));
+const PageNoMatchFallback = lazy(() => import("@/pages/PageNoMatchFallback"));
+const PageAdminNoMatchMonitoring = lazy(() => import("@/pages/admin/PageAdminNoMatchMonitoring"));
 const EntrepreneurVoiceSalesPage = lazy(() => import("@/pages/entrepreneur/EntrepreneurVoiceSalesPage"));
 const AdminSalesAnalyticsPage = lazy(() => import("@/pages/admin/AdminSalesAnalyticsPage"));
 const HomeownerVoiceEntryPage = lazy(() => import("@/pages/homeowner/HomeownerVoiceEntryPage"));
@@ -485,6 +487,7 @@ export const AppRouter = () => (
         <Route path="/alex/voice" element={<AlexVoicePage />} />
         <Route path="/alex/voice/realtime" element={<AlexVoiceRealtimePage />} />
         <Route path="/alex/command" element={<AlexCommandCenterPage />} />
+        <Route path="/alex/no-match" element={<PageNoMatchFallback />} />
         <Route path="/alex/renovation" element={<RenovationVisualizerPage />} />
         <Route path="/design" element={<DesignPage />} />
         <Route path="/design/share/:token" element={<DesignSharePage />} />
@@ -798,6 +801,7 @@ export const AppRouter = () => (
         <Route path="/admin/voice-optimizer" element={<ProtectedRoute requiredRole="admin"><AdminVoiceOptimizerPage /></ProtectedRoute>} />
         <Route path="/admin/voice-optimizer/:id" element={<ProtectedRoute requiredRole="admin"><AdminVoiceOptimizerPage /></ProtectedRoute>} />
         <Route path="/admin/voice-pronunciation" element={<ProtectedRoute requiredRole="admin"><PageAdminVoicePronunciation /></ProtectedRoute>} />
+        <Route path="/admin/no-match-monitoring" element={<ProtectedRoute requiredRole="admin"><PageAdminNoMatchMonitoring /></ProtectedRoute>} />
         <Route path="/admin/sales-analytics" element={<ProtectedRoute requiredRole="admin"><AdminSalesAnalyticsPage /></ProtectedRoute>} />
         <Route path="/entrepreneur/sales" element={<EntrepreneurVoiceSalesPage />} />
         <Route path="/homeowner/voice" element={<HomeownerVoiceEntryPage />} />
