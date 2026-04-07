@@ -372,7 +372,7 @@ export default function AlexAssistantSheet({ open, onClose, initialChip }: Props
                 </ScrollArea>
 
                 {/* Input */}
-                <div className="px-4 py-3" style={{ borderTop: "1px solid #DFE9F5" }}>
+                <div className="px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]" style={{ borderTop: "1px solid #DFE9F5" }}>
                   <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-center gap-2">
                     <Input ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)}
                       placeholder="Posez votre question…"
