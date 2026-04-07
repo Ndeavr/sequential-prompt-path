@@ -3627,6 +3627,74 @@ export type Database = {
           },
         ]
       }
+      alex_voice_latency_events: {
+        Row: {
+          created_at: string
+          id: string
+          metric_type: string
+          metric_value_ms: number
+          session_id: string
+          turn_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metric_type: string
+          metric_value_ms: number
+          session_id: string
+          turn_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metric_type?: string
+          metric_value_ms?: number
+          session_id?: string
+          turn_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_voice_latency_events_turn_id_fkey"
+            columns: ["turn_id"]
+            isOneToOne: false
+            referencedRelation: "alex_voice_turns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_voice_output_filters: {
+        Row: {
+          action_type: string | null
+          created_at: string
+          filter_type: string | null
+          id: string
+          is_active: boolean | null
+          pattern: string
+          priority: number | null
+          updated_at: string
+        }
+        Insert: {
+          action_type?: string | null
+          created_at?: string
+          filter_type?: string | null
+          id?: string
+          is_active?: boolean | null
+          pattern: string
+          priority?: number | null
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string | null
+          created_at?: string
+          filter_type?: string | null
+          id?: string
+          is_active?: boolean | null
+          pattern?: string
+          priority?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       alex_voice_preferences: {
         Row: {
           created_at: string
@@ -3723,28 +3791,39 @@ export type Database = {
       alex_voice_profiles: {
         Row: {
           accent_target: string
+          chunk_size_ms: number | null
+          code: string | null
+          description: string | null
           device_type: string | null
           end_sensitivity: string | null
           first_reply_boost: boolean | null
           id: string
           interruptibility: boolean
           interruption_mode: string | null
+          interruption_threshold: number | null
           is_active: boolean
+          is_default: boolean | null
           language: string
           locale_code: string
           locale_primary: string | null
           locale_secondary: string | null
+          max_pause_ms: number | null
           min_speech_ms: number | null
+          name: string | null
           noise_floor_db: number | null
+          output_buffer_ms: number | null
           prefix_padding_ms: number | null
           profile_key: string
           profile_name: string | null
           provider_primary: string
+          reconnect_backoff_strategy: string | null
+          response_style: string | null
           silence_duration_ms: number | null
           similarity_boost: number | null
           speech_close_threshold: number | null
           speech_open_threshold: number | null
           speech_rate: number
+          speech_rate_target: number | null
           stability: number | null
           start_sensitivity: string | null
           stt_model: string | null
@@ -3756,33 +3835,45 @@ export type Database = {
           tts_voice: string | null
           updated_at: string | null
           vad_mode: string | null
+          vad_threshold: number | null
           voice_display_name: string | null
           voice_id_primary: string
         }
         Insert: {
           accent_target?: string
+          chunk_size_ms?: number | null
+          code?: string | null
+          description?: string | null
           device_type?: string | null
           end_sensitivity?: string | null
           first_reply_boost?: boolean | null
           id?: string
           interruptibility?: boolean
           interruption_mode?: string | null
+          interruption_threshold?: number | null
           is_active?: boolean
+          is_default?: boolean | null
           language?: string
           locale_code?: string
           locale_primary?: string | null
           locale_secondary?: string | null
+          max_pause_ms?: number | null
           min_speech_ms?: number | null
+          name?: string | null
           noise_floor_db?: number | null
+          output_buffer_ms?: number | null
           prefix_padding_ms?: number | null
           profile_key: string
           profile_name?: string | null
           provider_primary?: string
+          reconnect_backoff_strategy?: string | null
+          response_style?: string | null
           silence_duration_ms?: number | null
           similarity_boost?: number | null
           speech_close_threshold?: number | null
           speech_open_threshold?: number | null
           speech_rate?: number
+          speech_rate_target?: number | null
           stability?: number | null
           start_sensitivity?: string | null
           stt_model?: string | null
@@ -3794,33 +3885,45 @@ export type Database = {
           tts_voice?: string | null
           updated_at?: string | null
           vad_mode?: string | null
+          vad_threshold?: number | null
           voice_display_name?: string | null
           voice_id_primary: string
         }
         Update: {
           accent_target?: string
+          chunk_size_ms?: number | null
+          code?: string | null
+          description?: string | null
           device_type?: string | null
           end_sensitivity?: string | null
           first_reply_boost?: boolean | null
           id?: string
           interruptibility?: boolean
           interruption_mode?: string | null
+          interruption_threshold?: number | null
           is_active?: boolean
+          is_default?: boolean | null
           language?: string
           locale_code?: string
           locale_primary?: string | null
           locale_secondary?: string | null
+          max_pause_ms?: number | null
           min_speech_ms?: number | null
+          name?: string | null
           noise_floor_db?: number | null
+          output_buffer_ms?: number | null
           prefix_padding_ms?: number | null
           profile_key?: string
           profile_name?: string | null
           provider_primary?: string
+          reconnect_backoff_strategy?: string | null
+          response_style?: string | null
           silence_duration_ms?: number | null
           similarity_boost?: number | null
           speech_close_threshold?: number | null
           speech_open_threshold?: number | null
           speech_rate?: number
+          speech_rate_target?: number | null
           stability?: number | null
           start_sensitivity?: string | null
           stt_model?: string | null
@@ -3832,6 +3935,7 @@ export type Database = {
           tts_voice?: string | null
           updated_at?: string | null
           vad_mode?: string | null
+          vad_threshold?: number | null
           voice_display_name?: string | null
           voice_id_primary?: string
         }
@@ -3884,6 +3988,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      alex_voice_pronunciation_rules: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          locale: string | null
+          notes: string | null
+          priority: number | null
+          replacement_text: string
+          rule_type: string | null
+          source_text: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          locale?: string | null
+          notes?: string | null
+          priority?: number | null
+          replacement_text: string
+          rule_type?: string | null
+          source_text: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          locale?: string | null
+          notes?: string | null
+          priority?: number | null
+          replacement_text?: string
+          rule_type?: string | null
+          source_text?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       alex_voice_provider_events: {
         Row: {
