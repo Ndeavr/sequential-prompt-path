@@ -69,7 +69,7 @@ serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          text,
+          text: processedText,
           model_id: modelId,
           voice_settings: voiceSettings,
           chunk_length_schedule: chunkLengthSchedule,
