@@ -187,7 +187,7 @@ const ProBilling = () => {
   const isActive =
     subscription && ["active", "trialing"].includes(subscription.status);
 
-  const handleSubscribe = async (plan: ContractorPlan) => {
+  const handleSubscribe = async (plan: CatalogPlan) => {
     try {
       const priceId = getStripePriceId(plan, interval);
       const result = await checkout.mutateAsync({
