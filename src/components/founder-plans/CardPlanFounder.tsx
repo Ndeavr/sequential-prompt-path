@@ -17,7 +17,7 @@ interface Props {
 
 export default function CardPlanFounder({ plan, recommended, delay = 0 }: Props) {
   const { checkout } = useFounderCheckout();
-  const { user } = useAuth();
+  const { session } = useAuth();
   const [loading, setLoading] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [showPromo, setShowPromo] = useState(false);
