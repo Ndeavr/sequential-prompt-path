@@ -10,8 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { User, Eye, Save, CheckCircle2, AlertCircle } from "lucide-react";
+import { User, Eye, Save } from "lucide-react";
 import { toast } from "sonner";
 import type { ActivationWizardState } from "@/pages/admin/PageAdminEntrepreneurActivation";
 
@@ -23,23 +22,24 @@ interface Props {
 
 export default function StepProfileBuilder({ state, updateState, addEvent }: Props) {
   const [form, setForm] = useState({
-    company_name: "",
-    contact_email: "",
-    contact_phone: "",
+    business_name: "",
+    legal_name: "",
+    email: "",
+    phone: "",
     city: "",
+    address: "",
+    postal_code: "",
+    province: "QC",
     website: "",
     description: "",
-    short_description: "",
     slug: "",
     years_experience: "",
-    team_size: "",
-    languages: "fr",
-    service_radius_km: "50",
-    license_rbq: "",
-    license_neq: "",
+    specialty: "",
+    rbq_number: "",
+    neq: "",
+    license_number: "",
   });
 
-  // Load existing data
   const { data: contractor } = useQuery({
     queryKey: ["admin-contractor-profile", state.contractorId],
     queryFn: async () => {
@@ -56,44 +56,48 @@ export default function StepProfileBuilder({ state, updateState, addEvent }: Pro
   useEffect(() => {
     if (contractor) {
       setForm({
-        company_name: contractor.company_name || "",
-        contact_email: contractor.contact_email || "",
-        contact_phone: contractor.contact_phone || "",
+        business_name: contractor.business_name || "",
+        legal_name: contractor.legal_name || "",
+        email: contractor.email || "",
+        phone: contractor.phone || "",
         city: contractor.city || "",
+        address: contractor.address || "",
+        postal_code: contractor.postal_code || "",
+        province: contractor.province || "QC",
         website: contractor.website || "",
         description: contractor.description || "",
-        short_description: contractor.short_description || "",
         slug: contractor.slug || "",
         years_experience: contractor.years_experience?.toString() || "",
-        team_size: contractor.team_size?.toString() || "",
-        languages: contractor.languages || "fr",
-        service_radius_km: contractor.service_radius_km?.toString() || "50",
-        license_rbq: contractor.license_rbq || "",
-        license_neq: contractor.license_neq || "",
+        specialty: contractor.specialty || "",
+        rbq_number: contractor.rbq_number || "",
+        neq: contractor.neq || "",
+        license_number: contractor.license_number || "",
       });
     }
   }, [contractor]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const slug = form.slug || form.company_name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "");
+      const slug = form.slug || form.business_name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "");
       const { error } = await supabase
         .from("contractors")
         .update({
-          company_name: form.company_name,
-          contact_email: form.contact_email || null,
-          contact_phone: form.contact_phone || null,
+          business_name: form.business_name,
+          legal_name: form.legal_name || null,
+          email: form.email || null,
+          phone: form.phone || null,
           city: form.city || null,
+          address: form.address || null,
+          postal_code: form.postal_code || null,
+          province: form.province || null,
           website: form.website || null,
           description: form.description || null,
-          short_description: form.short_description || null,
           slug,
           years_experience: form.years_experience ? Number(form.years_experience) : null,
-          team_size: form.team_size ? Number(form.team_size) : null,
-          languages: form.languages || null,
-          service_radius_km: form.service_radius_km ? Number(form.service_radius_km) : null,
-          license_rbq: form.license_rbq || null,
-          license_neq: form.license_neq || null,
+          specialty: form.specialty || null,
+          rbq_number: form.rbq_number || null,
+          neq: form.neq || null,
+          license_number: form.license_number || null,
         })
         .eq("id", state.contractorId!);
       if (error) throw error;
@@ -107,7 +111,7 @@ export default function StepProfileBuilder({ state, updateState, addEvent }: Pro
   });
 
   const completeness = (() => {
-    const fields = [form.company_name, form.contact_email, form.contact_phone, form.city, form.description, form.short_description];
+    const fields = [form.business_name, form.email, form.phone, form.city, form.description, form.specialty];
     const filled = fields.filter(Boolean).length;
     return Math.round((filled / fields.length) * 100);
   })();
@@ -124,10 +128,8 @@ export default function StepProfileBuilder({ state, updateState, addEvent }: Pro
         </Badge>
       </div>
 
-      {/* Profile form */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {/* Identity */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Identité</CardTitle>
@@ -135,24 +137,54 @@ export default function StepProfileBuilder({ state, updateState, addEvent }: Pro
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label>Nom de l'entreprise *</Label>
-                  <Input value={form.company_name} onChange={e => setForm(p => ({ ...p, company_name: e.target.value }))} />
+                  <Label>Nom commercial *</Label>
+                  <Input value={form.business_name} onChange={e => setForm(p => ({ ...p, business_name: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Nom légal</Label>
+                  <Input value={form.legal_name} onChange={e => setForm(p => ({ ...p, legal_name: e.target.value }))} />
                 </div>
                 <div>
                   <Label>Slug public</Label>
                   <Input value={form.slug} onChange={e => setForm(p => ({ ...p, slug: e.target.value }))} placeholder="auto-généré" />
                 </div>
                 <div>
+                  <Label>Spécialité</Label>
+                  <Input value={form.specialty} onChange={e => setForm(p => ({ ...p, specialty: e.target.value }))} placeholder="Plomberie, Électricité..." />
+                </div>
+                <div>
                   <Label>Courriel *</Label>
-                  <Input type="email" value={form.contact_email} onChange={e => setForm(p => ({ ...p, contact_email: e.target.value }))} />
+                  <Input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
                 </div>
                 <div>
                   <Label>Téléphone *</Label>
-                  <Input value={form.contact_phone} onChange={e => setForm(p => ({ ...p, contact_phone: e.target.value }))} />
+                  <Input value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Adresse et couverture</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <Label>Adresse</Label>
+                  <Input value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} />
                 </div>
                 <div>
                   <Label>Ville *</Label>
                   <Input value={form.city} onChange={e => setForm(p => ({ ...p, city: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Province</Label>
+                  <Input value={form.province} onChange={e => setForm(p => ({ ...p, province: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Code postal</Label>
+                  <Input value={form.postal_code} onChange={e => setForm(p => ({ ...p, postal_code: e.target.value }))} />
                 </div>
                 <div>
                   <Label>Site web</Label>
@@ -162,18 +194,13 @@ export default function StepProfileBuilder({ state, updateState, addEvent }: Pro
             </CardContent>
           </Card>
 
-          {/* Business details */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Détails entreprise</CardTitle>
+              <CardTitle className="text-base">Détails & Licences</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label>Description courte</Label>
-                <Input value={form.short_description} onChange={e => setForm(p => ({ ...p, short_description: e.target.value }))} placeholder="En une phrase..." />
-              </div>
-              <div>
-                <Label>Description complète *</Label>
+                <Label>Description *</Label>
                 <Textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} rows={4} />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -182,35 +209,16 @@ export default function StepProfileBuilder({ state, updateState, addEvent }: Pro
                   <Input type="number" value={form.years_experience} onChange={e => setForm(p => ({ ...p, years_experience: e.target.value }))} />
                 </div>
                 <div>
-                  <Label>Taille équipe</Label>
-                  <Input type="number" value={form.team_size} onChange={e => setForm(p => ({ ...p, team_size: e.target.value }))} />
+                  <Label>RBQ</Label>
+                  <Input value={form.rbq_number} onChange={e => setForm(p => ({ ...p, rbq_number: e.target.value }))} />
                 </div>
                 <div>
-                  <Label>Rayon (km)</Label>
-                  <Input type="number" value={form.service_radius_km} onChange={e => setForm(p => ({ ...p, service_radius_km: e.target.value }))} />
+                  <Label>NEQ</Label>
+                  <Input value={form.neq} onChange={e => setForm(p => ({ ...p, neq: e.target.value }))} />
                 </div>
                 <div>
-                  <Label>Langues</Label>
-                  <Input value={form.languages} onChange={e => setForm(p => ({ ...p, languages: e.target.value }))} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Licenses */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Licences et identifiants</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label>Numéro RBQ</Label>
-                  <Input value={form.license_rbq} onChange={e => setForm(p => ({ ...p, license_rbq: e.target.value }))} />
-                </div>
-                <div>
-                  <Label>Numéro NEQ</Label>
-                  <Input value={form.license_neq} onChange={e => setForm(p => ({ ...p, license_neq: e.target.value }))} />
+                  <Label>Licence</Label>
+                  <Input value={form.license_number} onChange={e => setForm(p => ({ ...p, license_number: e.target.value }))} />
                 </div>
               </div>
             </CardContent>
@@ -237,20 +245,20 @@ export default function StepProfileBuilder({ state, updateState, addEvent }: Pro
                   <User className="h-8 w-8 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">{form.company_name || "Nom de l'entreprise"}</h3>
-                  <p className="text-sm text-muted-foreground">{form.short_description || "Description courte..."}</p>
+                  <h3 className="font-semibold">{form.business_name || "Nom de l'entreprise"}</h3>
+                  <p className="text-sm text-muted-foreground">{form.specialty || "Spécialité..."}</p>
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {form.city && <Badge variant="outline" className="text-xs">{form.city}</Badge>}
                   {form.years_experience && <Badge variant="outline" className="text-xs">{form.years_experience} ans</Badge>}
-                  {form.license_rbq && <Badge variant="outline" className="text-xs">RBQ ✓</Badge>}
+                  {form.rbq_number && <Badge variant="outline" className="text-xs">RBQ ✓</Badge>}
                 </div>
                 {form.description && (
                   <p className="text-xs text-muted-foreground line-clamp-4">{form.description}</p>
                 )}
                 <div className="pt-2 border-t">
                   <p className="text-xs text-muted-foreground">
-                    Slug: /{form.slug || form.company_name?.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "..."}
+                    Slug: /{form.slug || form.business_name?.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "..."}
                   </p>
                 </div>
               </div>

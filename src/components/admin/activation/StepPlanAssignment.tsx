@@ -20,7 +20,7 @@ interface Props {
   addEvent: (type: string, detail?: string) => void;
 }
 
-const PLAN_ICONS: Record<string, any> = {
+const PLAN_ICONS: Record<string, typeof Zap> = {
   recrue: Zap,
   pro: Star,
   premium: Shield,
@@ -53,13 +53,12 @@ export default function StepPlanAssignment({ state, updateState, addEvent }: Pro
       // Create subscription record
       const { data: sub, error: subErr } = await supabase
         .from("contractor_subscriptions")
-        .insert({
+        .upsert({
           contractor_id: state.contractorId!,
-          plan_code: selectedPlan,
-          status: bypassEnabled ? "active" : "pending_payment",
-          billing_status: bypassEnabled ? "bypassed" : "pending",
-          activated_by: user?.id || null,
-        })
+          plan_id: selectedPlan,
+          status: bypassEnabled ? "active" : "pending",
+          billing_interval: "monthly",
+        }, { onConflict: "contractor_id" })
         .select()
         .single();
       if (subErr) throw subErr;
@@ -76,6 +75,12 @@ export default function StepPlanAssignment({ state, updateState, addEvent }: Pro
         });
       }
 
+      // Update contractor activation_status
+      await supabase
+        .from("contractors")
+        .update({ activation_status: bypassEnabled ? "active_bypassed" : "pending_payment" })
+        .eq("id", state.contractorId!);
+
       // Log event
       await supabase.from("admin_activation_events").insert({
         contractor_id: state.contractorId!,
@@ -90,27 +95,20 @@ export default function StepPlanAssignment({ state, updateState, addEvent }: Pro
       });
     },
     onSuccess: () => {
-      updateState({
-        planAssigned: true,
-        planCode: selectedPlan,
-        bypassApplied: bypassEnabled,
-      });
+      updateState({ planAssigned: true, planCode: selectedPlan, bypassApplied: bypassEnabled });
       addEvent("plan_assigned", `Plan: ${selectedPlan}${bypassEnabled ? " (bypass 100%)" : ""}`);
       toast.success(`Plan ${selectedPlan} assigné${bypassEnabled ? " avec rabais 100%" : ""}`);
     },
-    onError: (e) => toast.error("Erreur: " + (e as any).message),
+    onError: (e: any) => toast.error("Erreur: " + e.message),
   });
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold mb-1">Sélection du plan</h2>
-        <p className="text-sm text-muted-foreground">
-          Assignez un plan entrepreneur et configurez le paiement
-        </p>
+        <p className="text-sm text-muted-foreground">Assignez un plan entrepreneur et configurez le paiement</p>
       </div>
 
-      {/* Plan selection */}
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map(i => (
@@ -119,18 +117,14 @@ export default function StepPlanAssignment({ state, updateState, addEvent }: Pro
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {(plans || []).map((plan: any) => {
+          {(plans || []).map((plan) => {
             const Icon = PLAN_ICONS[plan.code] || Star;
             const isSelected = selectedPlan === plan.code;
             const monthlyPrice = plan.monthly_price ? (plan.monthly_price / 100).toFixed(0) : "N/A";
-            const features = plan.features_json || [];
+            const features: string[] = Array.isArray(plan.features_json) ? plan.features_json as string[] : [];
 
             return (
-              <button
-                key={plan.id}
-                onClick={() => setSelectedPlan(plan.code)}
-                className={`text-left transition-all ${isSelected ? "" : ""}`}
-              >
+              <button key={plan.id} onClick={() => setSelectedPlan(plan.code)} className="text-left">
                 <Card className={`h-full transition-all ${isSelected ? "border-primary ring-2 ring-primary/20" : "hover:border-primary/30"}`}>
                   <CardContent className="pt-5 space-y-3">
                     <div className="flex items-center justify-between">
@@ -149,14 +143,14 @@ export default function StepPlanAssignment({ state, updateState, addEvent }: Pro
                       <span className="text-2xl font-bold">{monthlyPrice}$</span>
                       <span className="text-xs text-muted-foreground">/mois</span>
                     </div>
-                    {plan.appointments_range_min && (
+                    {plan.appointments_range_min != null && (
                       <p className="text-xs text-muted-foreground">
                         {plan.appointments_range_min} à {plan.appointments_range_max} rendez-vous/mois
                       </p>
                     )}
                     {features.length > 0 && (
                       <ul className="space-y-1">
-                        {features.slice(0, 4).map((f: string, i: number) => (
+                        {features.slice(0, 4).map((f, i) => (
                           <li key={i} className="text-xs text-muted-foreground flex items-start gap-1">
                             <Check className="h-3 w-3 text-green-500 shrink-0 mt-0.5" />
                             {f}
@@ -172,7 +166,6 @@ export default function StepPlanAssignment({ state, updateState, addEvent }: Pro
         </div>
       )}
 
-      {/* Payment bypass */}
       {selectedPlan && (
         <Card className={bypassEnabled ? "border-yellow-500/50 bg-yellow-50/30 dark:bg-yellow-950/10" : ""}>
           <CardHeader className="pb-3">
@@ -189,29 +182,19 @@ export default function StepPlanAssignment({ state, updateState, addEvent }: Pro
               <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-100/50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
                 <AlertTriangle className="h-4 w-4 text-yellow-600 shrink-0 mt-0.5" />
                 <p className="text-xs text-yellow-800 dark:text-yellow-200">
-                  Le rabais 100% active la souscription sans encaissement Stripe. 
-                  Cette action est journalisée et révocable.
+                  Le rabais 100% active la souscription sans encaissement Stripe. Cette action est journalisée et révocable.
                 </p>
               </div>
               <div>
                 <Label>Raison du rabais 100% *</Label>
-                <Textarea
-                  value={bypassReason}
-                  onChange={e => setBypassReason(e.target.value)}
-                  placeholder="Ex: Activation partenaire fondateur, entente spéciale..."
-                  rows={2}
-                />
+                <Textarea value={bypassReason} onChange={e => setBypassReason(e.target.value)} placeholder="Ex: Activation partenaire fondateur..." rows={2} />
               </div>
             </CardContent>
           )}
         </Card>
       )}
 
-      <Button
-        onClick={() => assignMutation.mutate()}
-        disabled={!selectedPlan || assignMutation.isPending || (bypassEnabled && !bypassReason)}
-        className="w-full sm:w-auto"
-      >
+      <Button onClick={() => assignMutation.mutate()} disabled={!selectedPlan || assignMutation.isPending || (bypassEnabled && !bypassReason)} className="w-full sm:w-auto">
         <CreditCard className="h-4 w-4 mr-2" />
         {bypassEnabled ? "Assigner plan + Bypass 100%" : "Assigner le plan"}
       </Button>

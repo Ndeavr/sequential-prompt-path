@@ -23,9 +23,9 @@ export default function StepEntrepriseSearch({ state, updateState, addEvent }: P
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [newCompany, setNewCompany] = useState({
-    company_name: "",
-    contact_email: "",
-    contact_phone: "",
+    business_name: "",
+    email: "",
+    phone: "",
     city: "",
     website: "",
   });
@@ -36,8 +36,8 @@ export default function StepEntrepriseSearch({ state, updateState, addEvent }: P
       if (!searchTerm || searchTerm.length < 2) return [];
       const { data, error } = await supabase
         .from("contractors")
-        .select("id, company_name, contact_email, contact_phone, city, website, aipp_score, admin_verified, profile_completion_score")
-        .or(`company_name.ilike.%${searchTerm}%,contact_email.ilike.%${searchTerm}%,contact_phone.ilike.%${searchTerm}%,city.ilike.%${searchTerm}%,website.ilike.%${searchTerm}%`)
+        .select("id, business_name, email, phone, city, website, aipp_score, admin_verified")
+        .or(`business_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,city.ilike.%${searchTerm}%,website.ilike.%${searchTerm}%`)
         .limit(10);
       if (error) throw error;
       return data || [];
@@ -50,36 +50,44 @@ export default function StepEntrepriseSearch({ state, updateState, addEvent }: P
       contractorId: contractor.id,
       contractorData: contractor,
     });
-    addEvent("contractor_selected", `Contractor: ${contractor.company_name} (${contractor.id})`);
-    toast.success(`${contractor.company_name} sélectionné`);
+    addEvent("contractor_selected", `Contractor: ${contractor.business_name} (${contractor.id})`);
+    toast.success(`${contractor.business_name} sélectionné`);
   };
 
   const handleCreate = async () => {
-    if (!newCompany.company_name) {
+    if (!newCompany.business_name) {
       toast.error("Le nom de l'entreprise est requis");
+      return;
+    }
+
+    // Need a user_id — get current admin user
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) {
+      toast.error("Utilisateur non authentifié");
       return;
     }
 
     const { data, error } = await supabase
       .from("contractors")
       .insert({
-        company_name: newCompany.company_name,
-        contact_email: newCompany.contact_email || null,
-        contact_phone: newCompany.contact_phone || null,
+        business_name: newCompany.business_name,
+        email: newCompany.email || null,
+        phone: newCompany.phone || null,
         city: newCompany.city || null,
         website: newCompany.website || null,
-        onboarding_source: "admin_activation",
+        user_id: userData.user.id,
+        activation_status: "admin_created",
       })
       .select()
       .single();
 
     if (error) {
-      toast.error("Erreur lors de la création");
+      toast.error("Erreur lors de la création: " + error.message);
       return;
     }
 
     updateState({ contractorId: data.id, contractorData: data });
-    addEvent("contractor_created", `Nouveau: ${data.company_name} (${data.id})`);
+    addEvent("contractor_created", `Nouveau: ${data.business_name} (${data.id})`);
     toast.success("Entreprise créée avec succès");
     setShowCreate(false);
   };
@@ -93,15 +101,14 @@ export default function StepEntrepriseSearch({ state, updateState, addEvent }: P
         </p>
       </div>
 
-      {/* Selected contractor banner */}
       {state.contractorId && state.contractorData && (
         <Card className="border-green-500/50 bg-green-50/50 dark:bg-green-950/20">
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
               <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="font-semibold truncate">{state.contractorData.company_name}</p>
-                <p className="text-xs text-muted-foreground">{state.contractorData.city} · {state.contractorData.contact_email}</p>
+                <p className="font-semibold truncate">{state.contractorData.business_name}</p>
+                <p className="text-xs text-muted-foreground">{state.contractorData.city} · {state.contractorData.email}</p>
               </div>
               <Badge variant="outline" className="text-green-600 border-green-300">Sélectionné</Badge>
             </div>
@@ -109,7 +116,6 @@ export default function StepEntrepriseSearch({ state, updateState, addEvent }: P
         </Card>
       )}
 
-      {/* Search */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -134,7 +140,7 @@ export default function StepEntrepriseSearch({ state, updateState, addEvent }: P
 
           {results && results.length > 0 && (
             <div className="space-y-2">
-              {results.map((c: any) => (
+              {results.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => handleSelect(c)}
@@ -144,10 +150,10 @@ export default function StepEntrepriseSearch({ state, updateState, addEvent }: P
                 >
                   <div className="flex items-center justify-between">
                     <div className="min-w-0">
-                      <p className="font-medium truncate">{c.company_name}</p>
+                      <p className="font-medium truncate">{c.business_name}</p>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                         {c.city && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{c.city}</span>}
-                        {c.contact_phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{c.contact_phone}</span>}
+                        {c.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{c.phone}</span>}
                         {c.website && <span className="flex items-center gap-1"><Globe className="h-3 w-3" />Site</span>}
                       </div>
                     </div>
@@ -173,7 +179,6 @@ export default function StepEntrepriseSearch({ state, updateState, addEvent }: P
         </CardContent>
       </Card>
 
-      {/* Create new */}
       {(showCreate || (!state.contractorId && searchTerm.length < 2)) && (
         <Card>
           <CardHeader className="pb-3">
@@ -187,8 +192,8 @@ export default function StepEntrepriseSearch({ state, updateState, addEvent }: P
               <div>
                 <Label>Nom de l'entreprise *</Label>
                 <Input
-                  value={newCompany.company_name}
-                  onChange={e => setNewCompany(p => ({ ...p, company_name: e.target.value }))}
+                  value={newCompany.business_name}
+                  onChange={e => setNewCompany(p => ({ ...p, business_name: e.target.value }))}
                   placeholder="Ex: Plomberie Laval Inc."
                 />
               </div>
@@ -196,16 +201,16 @@ export default function StepEntrepriseSearch({ state, updateState, addEvent }: P
                 <Label>Courriel</Label>
                 <Input
                   type="email"
-                  value={newCompany.contact_email}
-                  onChange={e => setNewCompany(p => ({ ...p, contact_email: e.target.value }))}
+                  value={newCompany.email}
+                  onChange={e => setNewCompany(p => ({ ...p, email: e.target.value }))}
                   placeholder="info@entreprise.com"
                 />
               </div>
               <div>
                 <Label>Téléphone</Label>
                 <Input
-                  value={newCompany.contact_phone}
-                  onChange={e => setNewCompany(p => ({ ...p, contact_phone: e.target.value }))}
+                  value={newCompany.phone}
+                  onChange={e => setNewCompany(p => ({ ...p, phone: e.target.value }))}
                   placeholder="514-555-1234"
                 />
               </div>

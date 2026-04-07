@@ -17,7 +17,6 @@ interface Props {
 }
 
 export default function StepSummary({ state, updateState, addEvent }: Props) {
-  // Fetch audit trail
   const { data: events } = useQuery({
     queryKey: ["admin-activation-events", state.contractorId],
     queryFn: async () => {
@@ -36,29 +35,15 @@ export default function StepSummary({ state, updateState, addEvent }: Props) {
     mutationFn: async () => {
       const user = (await supabase.auth.getUser()).data.user;
 
-      // Deactivate contractor
-      await supabase
-        .from("contractors")
-        .update({
-          is_accepting_appointments: false,
-          is_discoverable: false,
-          is_published: false,
-        })
-        .eq("id", state.contractorId!);
+      await supabase.from("contractors").update({
+        activation_status: "deactivated",
+        booking_enabled: false,
+        booking_page_published: false,
+      }).eq("id", state.contractorId!);
 
-      // Deactivate override
-      await supabase
-        .from("admin_activation_overrides")
-        .update({ is_active: false })
-        .eq("contractor_id", state.contractorId!);
+      await supabase.from("admin_activation_overrides").update({ is_active: false }).eq("contractor_id", state.contractorId!);
+      await supabase.from("admin_appointment_readiness").update({ ready_status: "not_ready" }).eq("contractor_id", state.contractorId!);
 
-      // Update readiness
-      await supabase
-        .from("admin_appointment_readiness")
-        .update({ ready_status: "not_ready" })
-        .eq("contractor_id", state.contractorId!);
-
-      // Log
       await supabase.from("admin_activation_events").insert({
         contractor_id: state.contractorId!,
         admin_user_id: user?.id || "",
@@ -86,23 +71,20 @@ export default function StepSummary({ state, updateState, addEvent }: Props) {
   ];
 
   const getEventIcon = (type: string) => {
-    if (type.includes("rollback")) return <Undo2 className="h-3.5 w-3.5 text-red-500" />;
+    if (type.includes("rollback")) return <Undo2 className="h-3.5 w-3.5 text-destructive" />;
     if (type.includes("activated") || type.includes("published")) return <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />;
     if (type.includes("override") || type.includes("bypass")) return <AlertTriangle className="h-3.5 w-3.5 text-yellow-500" />;
-    return <Clock className="h-3.5 w-3.5 text-blue-500" />;
+    return <Clock className="h-3.5 w-3.5 text-primary" />;
   };
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold mb-1">Résumé d'activation</h2>
-        <p className="text-sm text-muted-foreground">
-          Vue complète de l'activation et historique des événements
-        </p>
+        <p className="text-sm text-muted-foreground">Vue complète de l'activation et historique des événements</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Summary checklist */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base">État de l'activation</CardTitle>
@@ -117,11 +99,7 @@ export default function StepSummary({ state, updateState, addEvent }: Props) {
                       <Icon className={`h-4 w-4 ${item.done ? "text-green-600" : "text-muted-foreground"}`} />
                       <span className="text-sm">{item.label}</span>
                     </div>
-                    {item.done ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-muted-foreground" />
-                    )}
+                    {item.done ? <CheckCircle2 className="h-4 w-4 text-green-600" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
                   </div>
                 );
               })}
@@ -129,7 +107,6 @@ export default function StepSummary({ state, updateState, addEvent }: Props) {
           </CardContent>
         </Card>
 
-        {/* Audit trail */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Historique d'activation</CardTitle>
@@ -139,19 +116,15 @@ export default function StepSummary({ state, updateState, addEvent }: Props) {
               <p className="text-sm text-muted-foreground text-center py-4">Aucun événement</p>
             ) : (
               <div className="space-y-3">
-                {events.map((evt: any) => (
-                  <div key={evt.id} className="flex items-start gap-3 relative">
-                    <div className="mt-0.5 shrink-0">
-                      {getEventIcon(evt.event_type)}
-                    </div>
+                {events.map((evt) => (
+                  <div key={evt.id} className="flex items-start gap-3">
+                    <div className="mt-0.5 shrink-0">{getEventIcon(evt.event_type)}</div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium">{evt.event_type.replace(/_/g, " ")}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(evt.created_at).toLocaleString("fr-CA")}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{new Date(evt.created_at).toLocaleString("fr-CA")}</p>
                       {evt.event_payload_json && typeof evt.event_payload_json === "object" && (
                         <div className="mt-1 flex flex-wrap gap-1">
-                          {Object.entries(evt.event_payload_json as Record<string, any>).slice(0, 3).map(([k, v]) => (
+                          {Object.entries(evt.event_payload_json as Record<string, unknown>).slice(0, 3).map(([k, v]) => (
                             <Badge key={k} variant="outline" className="text-[10px]">
                               {k}: {typeof v === "string" ? v : JSON.stringify(v).slice(0, 20)}
                             </Badge>
@@ -167,7 +140,6 @@ export default function StepSummary({ state, updateState, addEvent }: Props) {
         </Card>
       </div>
 
-      {/* Local events */}
       {state.events.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
@@ -188,23 +160,15 @@ export default function StepSummary({ state, updateState, addEvent }: Props) {
         </Card>
       )}
 
-      {/* Rollback */}
       {state.activated && (
-        <Card className="border-red-200 dark:border-red-900">
+        <Card className="border-destructive/30">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium text-sm">Rollback d'activation</p>
-                <p className="text-xs text-muted-foreground">
-                  Désactive le profil, le plan et la readiness
-                </p>
+                <p className="text-xs text-muted-foreground">Désactive le profil, le plan et la readiness</p>
               </div>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => rollbackMutation.mutate()}
-                disabled={rollbackMutation.isPending}
-              >
+              <Button variant="destructive" size="sm" onClick={() => rollbackMutation.mutate()} disabled={rollbackMutation.isPending}>
                 <Undo2 className="h-4 w-4 mr-2" />
                 Rollback
               </Button>

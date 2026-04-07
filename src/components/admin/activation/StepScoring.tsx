@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Progress } from "@/components/ui/progress";
 import { BarChart3, Calculator, Edit3, Shield, Star, Globe, Camera, MapPin, FileCheck, Clock, Award } from "lucide-react";
 import { toast } from "sonner";
 import type { ActivationWizardState } from "@/pages/admin/PageAdminEntrepreneurActivation";
@@ -52,7 +51,7 @@ export default function StepScoring({ state, updateState, addEvent }: Props) {
     queryFn: async () => {
       const { data } = await supabase
         .from("contractors")
-        .select("aipp_score, profile_completion_score")
+        .select("aipp_score")
         .eq("id", state.contractorId!)
         .single();
       return data;
@@ -74,7 +73,6 @@ export default function StepScoring({ state, updateState, addEvent }: Props) {
         .eq("id", state.contractorId!);
       if (error) throw error;
 
-      // Log event
       const user = (await supabase.auth.getUser()).data.user;
       await supabase.from("admin_activation_events").insert({
         contractor_id: state.contractorId!,
@@ -110,13 +108,10 @@ export default function StepScoring({ state, updateState, addEvent }: Props) {
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold mb-1">Score AIPP</h2>
-        <p className="text-sm text-muted-foreground">
-          Calculez ou ajustez le score de l'entrepreneur
-        </p>
+        <p className="text-sm text-muted-foreground">Calculez ou ajustez le score de l'entrepreneur</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Signals */}
         <div className="lg:col-span-2 space-y-4">
           <Card>
             <CardHeader className="pb-3">
@@ -152,7 +147,6 @@ export default function StepScoring({ state, updateState, addEvent }: Props) {
             </CardContent>
           </Card>
 
-          {/* Override */}
           <Card className={overrideEnabled ? "border-yellow-500/50" : ""}>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -167,50 +161,29 @@ export default function StepScoring({ state, updateState, addEvent }: Props) {
               <CardContent className="space-y-4">
                 <div>
                   <Label>Score override ({overrideScore})</Label>
-                  <Input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={overrideScore}
-                    onChange={e => setOverrideScore(Number(e.target.value))}
-                  />
+                  <Input type="range" min={0} max={100} value={overrideScore} onChange={e => setOverrideScore(Number(e.target.value))} />
                 </div>
                 <div>
                   <Label>Raison de l'override *</Label>
-                  <Textarea
-                    value={overrideReason}
-                    onChange={e => setOverrideReason(e.target.value)}
-                    placeholder="Justification de la modification manuelle..."
-                    rows={2}
-                  />
+                  <Textarea value={overrideReason} onChange={e => setOverrideReason(e.target.value)} placeholder="Justification..." rows={2} />
                 </div>
               </CardContent>
             )}
           </Card>
 
-          <Button
-            onClick={() => saveMutation.mutate()}
-            disabled={saveMutation.isPending || (overrideEnabled && !overrideReason)}
-            className="w-full sm:w-auto"
-          >
+          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || (overrideEnabled && !overrideReason)} className="w-full sm:w-auto">
             <BarChart3 className="h-4 w-4 mr-2" />
             Enregistrer le score
           </Button>
         </div>
 
-        {/* Score preview card */}
         <div>
           <Card className="sticky top-32">
             <CardContent className="pt-6 text-center space-y-4">
               <div className="relative w-28 h-28 mx-auto">
                 <svg className="w-28 h-28 -rotate-90" viewBox="0 0 120 120">
                   <circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" strokeWidth="8" className="text-muted/20" />
-                  <circle
-                    cx="60" cy="60" r="50" fill="none" strokeWidth="8"
-                    className="text-primary"
-                    strokeDasharray={`${(effectiveScore / 100) * 314} 314`}
-                    strokeLinecap="round"
-                  />
+                  <circle cx="60" cy="60" r="50" fill="none" strokeWidth="8" className="text-primary" strokeDasharray={`${(effectiveScore / 100) * 314} 314`} strokeLinecap="round" />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-3xl font-bold">{effectiveScore}</span>
@@ -218,9 +191,7 @@ export default function StepScoring({ state, updateState, addEvent }: Props) {
               </div>
               <div>
                 <Badge className={`${tier.color} text-white`}>{tier.label}</Badge>
-                {overrideEnabled && (
-                  <p className="text-xs text-yellow-600 mt-1">Override actif</p>
-                )}
+                {overrideEnabled && <p className="text-xs text-yellow-600 mt-1">Override actif</p>}
               </div>
               <div className="text-left space-y-1 pt-2 border-t">
                 <p className="text-xs text-muted-foreground">Score calculé: {calculatedScore}</p>
