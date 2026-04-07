@@ -1,5 +1,6 @@
-import { Crown, Check, Star, Zap, Shield, Sparkles, CalendarPlus } from "lucide-react";
+import { Crown, Check, Star, Zap, Shield, Sparkles, CalendarPlus, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import type { GoalResults } from "@/hooks/useGoalToPlanEngine";
 
 interface Props {
