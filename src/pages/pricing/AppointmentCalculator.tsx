@@ -162,21 +162,6 @@ export default function AppointmentCalculator() {
   // Supabase data
   const { data: trades } = useJveTrades();
   const { data: cities } = useJveCities();
-  const { data: specialties } = useJveTradeSpecialties(tradeSlug || undefined);
-
-  // Build trade + specialty options for autocomplete
-  const tradeOptions = useMemo(() => {
-    const opts: { value: string; label: string; group?: string }[] = [];
-    (trades ?? []).forEach((t: any) => {
-      opts.push({ value: t.slug, label: t.name_fr });
-    });
-    if (specialties?.length) {
-      specialties.forEach((s: any) => {
-        opts.push({ value: s.slug, label: s.name_fr, group: trades?.find((t: any) => t.slug === tradeSlug)?.name_fr });
-      });
-    }
-    return opts;
-  }, [trades, specialties, tradeSlug]);
 
   // User inputs
   const [revenueGoal, setRevenueGoal] = useState([15000]);
@@ -187,6 +172,24 @@ export default function AppointmentCalculator() {
   const [capacity, setCapacity] = useState([15]);
   const [projectTypes, setProjectTypes] = useState<string[]>(["S", "M", "L"]);
   const [autoOptimizeEnabled, setAutoOptimizeEnabled] = useState(false);
+
+  // Specialties (depends on tradeSlug state)
+  const { data: specialties } = useJveTradeSpecialties(tradeSlug || undefined);
+
+  // Build trade + specialty options for autocomplete
+  const tradeOptions = useMemo(() => {
+    const opts: { value: string; label: string; group?: string }[] = [];
+    (trades ?? []).forEach((t: any) => {
+      opts.push({ value: t.slug, label: t.name_fr });
+    });
+    if (specialties?.length) {
+      const parentLabel = trades?.find((t: any) => t.slug === tradeSlug)?.name_fr;
+      specialties.forEach((s: any) => {
+        opts.push({ value: s.slug, label: s.name_fr, group: parentLabel });
+      });
+    }
+    return opts;
+  }, [trades, specialties, tradeSlug]);
 
   // Fetch JVE estimate when trade + city selected
   const jveParams = useMemo(() => {
