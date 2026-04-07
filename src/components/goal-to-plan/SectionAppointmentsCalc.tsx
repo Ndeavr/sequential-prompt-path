@@ -27,8 +27,14 @@ export default function SectionAppointmentsCalc({ results }: Props) {
 
         <div className="rounded-2xl border border-primary/20 bg-primary/5 p-8 mb-6">
           <p className="text-5xl font-bold text-primary mb-2">{results.requiredAppointmentsMonthly}</p>
-          <p className="text-muted-foreground">rendez-vous qualifiés par mois</p>
-          <p className="text-sm text-muted-foreground mt-1">≈ {results.requiredAppointmentsWeekly} par semaine</p>
+           <p className="text-muted-foreground">rendez-vous qualifiés par mois</p>
+           <p className="text-sm text-muted-foreground mt-1">≈ {results.requiredAppointmentsWeekly} par semaine</p>
+           {results.recommendedPlanIncludedRdv > 0 && (
+             <p className="text-xs text-primary/80 mt-2">
+               {results.recommendedPlanIncludedRdv} inclus dans votre plan
+               {results.extraRdvNeeded > 0 && ` · +${results.extraRdvNeeded} en forfait`}
+             </p>
+           )}
         </div>
 
         <div className="flex items-center justify-center gap-2 text-sm mb-8">
