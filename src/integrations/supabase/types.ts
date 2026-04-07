@@ -20140,6 +20140,140 @@ export type Database = {
         }
         Relationships: []
       }
+      founder_plans: {
+        Row: {
+          created_at: string
+          duration_years: number
+          features: Json | null
+          id: string
+          max_spots: number
+          name: string
+          price: number
+          slug: string
+          spots_remaining: number
+          status: string
+          updated_at: string
+          value_total: number
+        }
+        Insert: {
+          created_at?: string
+          duration_years?: number
+          features?: Json | null
+          id?: string
+          max_spots?: number
+          name: string
+          price: number
+          slug: string
+          spots_remaining?: number
+          status?: string
+          updated_at?: string
+          value_total: number
+        }
+        Update: {
+          created_at?: string
+          duration_years?: number
+          features?: Json | null
+          id?: string
+          max_spots?: number
+          name?: string
+          price?: number
+          slug?: string
+          spots_remaining?: number
+          status?: string
+          updated_at?: string
+          value_total?: number
+        }
+        Relationships: []
+      }
+      founder_purchases: {
+        Row: {
+          amount_paid: number
+          created_at: string
+          id: string
+          payment_status: string
+          plan_id: string
+          spot_id: string | null
+          stripe_session_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_paid: number
+          created_at?: string
+          id?: string
+          payment_status?: string
+          plan_id: string
+          spot_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_paid?: number
+          created_at?: string
+          id?: string
+          payment_status?: string
+          plan_id?: string
+          spot_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "founder_purchases_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "founder_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "founder_purchases_spot_id_fkey"
+            columns: ["spot_id"]
+            isOneToOne: false
+            referencedRelation: "founder_spots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      founder_spots: {
+        Row: {
+          created_at: string
+          id: string
+          plan_id: string
+          reserved_by_user_id: string | null
+          reserved_until: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          plan_id: string
+          reserved_by_user_id?: string | null
+          reserved_until?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          plan_id?: string
+          reserved_by_user_id?: string | null
+          reserved_until?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "founder_spots_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "founder_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gated_unlock_events: {
         Row: {
           article_id: string
@@ -38429,6 +38563,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      territories_locked: {
+        Row: {
+          category: string
+          city: string
+          created_at: string
+          exclusivity: boolean
+          id: string
+          plan_level: string
+          purchase_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          city: string
+          created_at?: string
+          exclusivity?: boolean
+          id?: string
+          plan_level: string
+          purchase_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          city?: string
+          created_at?: string
+          exclusivity?: boolean
+          id?: string
+          plan_level?: string
+          purchase_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "territories_locked_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "founder_purchases"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       territory_assignments: {
         Row: {
