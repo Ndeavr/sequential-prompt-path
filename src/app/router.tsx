@@ -201,6 +201,8 @@ const AdminZoneValueMap = lazy(() => import("@/pages/admin/AdminZoneValueMap"));
 const AdminVoiceControlPage = lazy(() => import("@/pages/admin/AdminVoiceControlPage"));
 const AdminVoiceOptimizerPage = lazy(() => import("@/pages/admin/AdminVoiceOptimizerPage"));
 const PageAdminVoicePronunciation = lazy(() => import("@/pages/admin/PageAdminVoicePronunciation"));
+const PageNoMatchFallback = lazy(() => import("@/pages/PageNoMatchFallback"));
+const PageAdminNoMatchMonitoring = lazy(() => import("@/pages/admin/PageAdminNoMatchMonitoring"));
 const EntrepreneurVoiceSalesPage = lazy(() => import("@/pages/entrepreneur/EntrepreneurVoiceSalesPage"));
 const AdminSalesAnalyticsPage = lazy(() => import("@/pages/admin/AdminSalesAnalyticsPage"));
 const HomeownerVoiceEntryPage = lazy(() => import("@/pages/homeowner/HomeownerVoiceEntryPage"));
