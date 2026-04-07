@@ -13,6 +13,7 @@ import { Mic, MicOff, X, Phone, PhoneOff, Sparkles, Volume2 } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
+import { filterPublicOutput } from "@/hooks/useAlexPublicOutputFilter";
 import logo from "@/assets/unpro-robot.png";
 
 interface TranscriptEntry {
