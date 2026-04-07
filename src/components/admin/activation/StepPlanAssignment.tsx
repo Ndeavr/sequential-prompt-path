@@ -134,7 +134,7 @@ export default function StepPlanAssignment({ state, updateState, addEvent }: Pro
                         </div>
                         <div>
                           <p className="font-semibold text-sm">{plan.name}</p>
-                          {plan.badge && <Badge variant="outline" className="text-[10px]">{plan.badge}</Badge>}
+                          {plan.badge_label && <Badge variant="outline" className="text-[10px]">{plan.badge_label}</Badge>}
                         </div>
                       </div>
                       {isSelected && <Check className="h-5 w-5 text-primary" />}
