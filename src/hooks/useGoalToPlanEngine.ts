@@ -220,6 +220,14 @@ export function useGoalToPlanEngine() {
       + (inputs.city ? 10 : 0)
     );
 
+    // ── RDV inclus vs requis ──
+    const includedRdv = plan.includedRdv;
+    const extraRdvNeeded = Math.max(0, reqMonthly - includedRdv);
+    const ADDON_PACKAGES = [5, 10, 25, 50];
+    const suggestedAddonPackage = extraRdvNeeded > 0
+      ? ADDON_PACKAGES.find(p => p >= extraRdvNeeded) ?? ADDON_PACKAGES[ADDON_PACKAGES.length - 1]
+      : null;
+
     return {
       currentMonthlyRevenue: Math.round(currentRev),
       currentMonthlyProfit: Math.round(currentProfit),
@@ -235,6 +243,9 @@ export function useGoalToPlanEngine() {
       requiredAppointmentsWeekly: reqWeekly,
       appointmentMix: finalMix,
       recommendedPlan: plan.code,
+      recommendedPlanIncludedRdv: includedRdv,
+      extraRdvNeeded,
+      suggestedAddonPackage,
       planMatchConfidence: conf,
       territoryStatus: "disponible",
       exclusivityPossible: plan.code === "signature" || plan.code === "elite",
