@@ -11,12 +11,11 @@ const STT_CORRECTIONS: [RegExp, string][] = [
   // Critical "ville" fix — STT drops the "v"
   [/\bquelle ille\b/gi, "quelle ville"],
   [/\bdans quelle ille\b/gi, "dans quelle ville"],
-  [/\b(\w+) ille\b/gi, (_, prefix) => {
-    // Only fix if it looks like a "ville" context
-    const villeContextPrefixes = ['quelle', 'la', 'une', 'cette', 'votre', 'notre', 'ma', 'sa'];
-    if (villeContextPrefixes.includes(prefix.toLowerCase())) return `${prefix} ville`;
-    return `${prefix} ille`; // don't change if not in context
-  }],
+  [/\bla ille\b/gi, "la ville"],
+  [/\bune ille\b/gi, "une ville"],
+  [/\bcette ille\b/gi, "cette ville"],
+  [/\bvotre ille\b/gi, "votre ville"],
+  [/\bnotre ille\b/gi, "notre ville"],
   // Cities — phonetic confusions
   [/\bmonreal\b/gi, "Montréal"],
   [/\bmontriel\b/gi, "Montréal"],
