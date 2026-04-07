@@ -168,13 +168,16 @@ export const ALEX_LIVE_CONFIG = {
   config: {
     systemInstruction: ALEX_SYSTEM_INSTRUCTION,
     responseModalities: ["AUDIO"],
-    temperature: 0.45,
+    temperature: 0.40,
     speechConfig: {
       voiceConfig: {
         prebuiltVoiceConfig: {
           voiceName: "Aoede",
         },
       },
+    },
+    thinkingConfig: {
+      thinkingBudget: 0,
     },
     inputAudioTranscription: {},
     outputAudioTranscription: {},
@@ -183,8 +186,8 @@ export const ALEX_LIVE_CONFIG = {
         disabled: false,
         startOfSpeechSensitivity: "START_SENSITIVITY_LOW",
         endOfSpeechSensitivity: "END_SENSITIVITY_LOW",
-        prefixPaddingMs: 30,
-        silenceDurationMs: 180,
+        prefixPaddingMs: 20,
+        silenceDurationMs: 140,
       },
       activityHandling: "START_OF_ACTIVITY_INTERRUPTS",
     },
@@ -201,8 +204,8 @@ export const ALEX_LIVE_CONFIG_FAST = {
         disabled: false,
         startOfSpeechSensitivity: "START_SENSITIVITY_LOW",
         endOfSpeechSensitivity: "END_SENSITIVITY_LOW",
-        prefixPaddingMs: 20,
-        silenceDurationMs: 140,
+        prefixPaddingMs: 15,
+        silenceDurationMs: 120,
       },
       activityHandling: "START_OF_ACTIVITY_INTERRUPTS",
     },
