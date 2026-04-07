@@ -175,7 +175,48 @@ export const ALEX_LIVE_CONFIG = {
     realtimeInputConfig: {
       automaticActivityDetection: {
         disabled: false,
+        startOfSpeechSensitivity: "START_SENSITIVITY_LOW",
+        endOfSpeechSensitivity: "END_SENSITIVITY_LOW",
+        prefixPaddingMs: 30,
+        silenceDurationMs: 180,
       },
+      activityHandling: "START_OF_ACTIVITY_INTERRUPTS",
+    },
+  },
+} as const;
+
+/** Preset: Ultra fast for first turn on mobile */
+export const ALEX_LIVE_CONFIG_FAST = {
+  ...ALEX_LIVE_CONFIG,
+  config: {
+    ...ALEX_LIVE_CONFIG.config,
+    realtimeInputConfig: {
+      automaticActivityDetection: {
+        disabled: false,
+        startOfSpeechSensitivity: "START_SENSITIVITY_LOW",
+        endOfSpeechSensitivity: "END_SENSITIVITY_LOW",
+        prefixPaddingMs: 20,
+        silenceDurationMs: 140,
+      },
+      activityHandling: "START_OF_ACTIVITY_INTERRUPTS",
+    },
+  },
+} as const;
+
+/** Preset: Stable for desktop/later turns */
+export const ALEX_LIVE_CONFIG_STABLE = {
+  ...ALEX_LIVE_CONFIG,
+  config: {
+    ...ALEX_LIVE_CONFIG.config,
+    realtimeInputConfig: {
+      automaticActivityDetection: {
+        disabled: false,
+        startOfSpeechSensitivity: "START_SENSITIVITY_LOW",
+        endOfSpeechSensitivity: "END_SENSITIVITY_LOW",
+        prefixPaddingMs: 40,
+        silenceDurationMs: 240,
+      },
+      activityHandling: "START_OF_ACTIVITY_INTERRUPTS",
     },
   },
 } as const;
