@@ -274,22 +274,33 @@ function CardPlan({ plan, index }: { plan: Plan; index: number }) {
 
         {/* CTA */}
         <div className="mt-auto space-y-2">
-          <Button
-            asChild
-            size="lg"
-            variant={isPopular ? "default" : isPremium ? "default" : "outline"}
-            className={`w-full rounded-xl text-sm font-bold ${
-              isPopular
-                ? "shadow-glow bg-primary hover:bg-primary/90"
-                : isPremium
-                ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground"
-                : ""
-            }`}
-          >
-            <Link to={plan.ctaLink}>
+          {plan.price === 0 ? (
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="w-full rounded-xl text-sm font-bold"
+            >
+              <Link to={plan.ctaLink}>
+                {plan.cta} <ArrowRight className="h-4 w-4 ml-1.5" />
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              size="lg"
+              variant="default"
+              onClick={() => plan.onCheckout?.()}
+              className={`w-full rounded-xl text-sm font-bold ${
+                isPopular
+                  ? "shadow-glow bg-primary hover:bg-primary/90"
+                  : isPremium
+                  ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+                  : ""
+              }`}
+            >
               {plan.cta} <ArrowRight className="h-4 w-4 ml-1.5" />
-            </Link>
-          </Button>
+            </Button>
+          )}
           <p className="text-[11px] text-muted-foreground/70 text-center">{plan.microcopy}</p>
         </div>
       </div>
