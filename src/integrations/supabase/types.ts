@@ -2051,6 +2051,42 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_noise_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          minimum_open_ms: number
+          noise_floor_db: number
+          profile_name: string
+          speech_close_threshold: number
+          speech_open_threshold: number
+          trailing_close_ms: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          minimum_open_ms?: number
+          noise_floor_db?: number
+          profile_name: string
+          speech_close_threshold?: number
+          speech_open_threshold?: number
+          trailing_close_ms?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          minimum_open_ms?: number
+          noise_floor_db?: number
+          profile_name?: string
+          speech_close_threshold?: number
+          speech_open_threshold?: number
+          trailing_close_ms?: number
+        }
+        Relationships: []
+      }
       alex_outreach_queue: {
         Row: {
           cancelled_reason: string | null
@@ -2175,6 +2211,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      alex_phrase_boosts: {
+        Row: {
+          boost_level: string
+          category: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          locale: string
+          phrase: string
+        }
+        Insert: {
+          boost_level?: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          locale?: string
+          phrase: string
+        }
+        Update: {
+          boost_level?: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          locale?: string
+          phrase?: string
+        }
+        Relationships: []
       }
       alex_predictive_matches: {
         Row: {
@@ -3078,6 +3144,42 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_transcript_rules: {
+        Row: {
+          confidence_threshold: number | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          locale: string
+          normalized_text: string
+          priority: number | null
+          rule_type: string
+          source_text: string
+        }
+        Insert: {
+          confidence_threshold?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          locale?: string
+          normalized_text: string
+          priority?: number | null
+          rule_type?: string
+          source_text: string
+        }
+        Update: {
+          confidence_threshold?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          locale?: string
+          normalized_text?: string
+          priority?: number | null
+          rule_type?: string
+          source_text?: string
+        }
+        Relationships: []
+      }
       alex_turn_logs: {
         Row: {
           cleaned_transcript: string | null
@@ -3459,55 +3561,115 @@ export type Database = {
       alex_voice_profiles: {
         Row: {
           accent_target: string
+          device_type: string | null
+          end_sensitivity: string | null
+          first_reply_boost: boolean | null
           id: string
           interruptibility: boolean
+          interruption_mode: string | null
           is_active: boolean
           language: string
           locale_code: string
+          locale_primary: string | null
+          locale_secondary: string | null
+          min_speech_ms: number | null
+          noise_floor_db: number | null
+          prefix_padding_ms: number | null
           profile_key: string
+          profile_name: string | null
           provider_primary: string
+          silence_duration_ms: number | null
           similarity_boost: number | null
+          speech_close_threshold: number | null
+          speech_open_threshold: number | null
           speech_rate: number
           stability: number | null
+          start_sensitivity: string | null
+          stt_model: string | null
+          stt_provider: string | null
           style_exaggeration: number | null
           tone_style: string
+          trailing_close_ms: number | null
+          tts_provider: string | null
+          tts_voice: string | null
           updated_at: string | null
+          vad_mode: string | null
           voice_display_name: string | null
           voice_id_primary: string
         }
         Insert: {
           accent_target?: string
+          device_type?: string | null
+          end_sensitivity?: string | null
+          first_reply_boost?: boolean | null
           id?: string
           interruptibility?: boolean
+          interruption_mode?: string | null
           is_active?: boolean
           language?: string
           locale_code?: string
+          locale_primary?: string | null
+          locale_secondary?: string | null
+          min_speech_ms?: number | null
+          noise_floor_db?: number | null
+          prefix_padding_ms?: number | null
           profile_key: string
+          profile_name?: string | null
           provider_primary?: string
+          silence_duration_ms?: number | null
           similarity_boost?: number | null
+          speech_close_threshold?: number | null
+          speech_open_threshold?: number | null
           speech_rate?: number
           stability?: number | null
+          start_sensitivity?: string | null
+          stt_model?: string | null
+          stt_provider?: string | null
           style_exaggeration?: number | null
           tone_style?: string
+          trailing_close_ms?: number | null
+          tts_provider?: string | null
+          tts_voice?: string | null
           updated_at?: string | null
+          vad_mode?: string | null
           voice_display_name?: string | null
           voice_id_primary: string
         }
         Update: {
           accent_target?: string
+          device_type?: string | null
+          end_sensitivity?: string | null
+          first_reply_boost?: boolean | null
           id?: string
           interruptibility?: boolean
+          interruption_mode?: string | null
           is_active?: boolean
           language?: string
           locale_code?: string
+          locale_primary?: string | null
+          locale_secondary?: string | null
+          min_speech_ms?: number | null
+          noise_floor_db?: number | null
+          prefix_padding_ms?: number | null
           profile_key?: string
+          profile_name?: string | null
           provider_primary?: string
+          silence_duration_ms?: number | null
           similarity_boost?: number | null
+          speech_close_threshold?: number | null
+          speech_open_threshold?: number | null
           speech_rate?: number
           stability?: number | null
+          start_sensitivity?: string | null
+          stt_model?: string | null
+          stt_provider?: string | null
           style_exaggeration?: number | null
           tone_style?: string
+          trailing_close_ms?: number | null
+          tts_provider?: string | null
+          tts_voice?: string | null
           updated_at?: string | null
+          vad_mode?: string | null
           voice_display_name?: string | null
           voice_id_primary?: string
         }
@@ -3933,6 +4095,69 @@ export type Database = {
           start_speech_threshold?: number
           tts_voice_name?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      alex_voice_turns: {
+        Row: {
+          cleaned_transcript: string | null
+          created_at: string
+          detected_language: string | null
+          fallback_used: boolean | null
+          id: string
+          interrupted: boolean | null
+          llm_first_token_at: string | null
+          playback_start_at: string | null
+          pronunciation_fixes: number | null
+          raw_transcript: string | null
+          response_text: string | null
+          session_id: string
+          start_listen_at: string | null
+          stop_listen_at: string | null
+          stt_final_at: string | null
+          transcript_confidence: number | null
+          tts_start_at: string | null
+          turn_index: number
+        }
+        Insert: {
+          cleaned_transcript?: string | null
+          created_at?: string
+          detected_language?: string | null
+          fallback_used?: boolean | null
+          id?: string
+          interrupted?: boolean | null
+          llm_first_token_at?: string | null
+          playback_start_at?: string | null
+          pronunciation_fixes?: number | null
+          raw_transcript?: string | null
+          response_text?: string | null
+          session_id: string
+          start_listen_at?: string | null
+          stop_listen_at?: string | null
+          stt_final_at?: string | null
+          transcript_confidence?: number | null
+          tts_start_at?: string | null
+          turn_index?: number
+        }
+        Update: {
+          cleaned_transcript?: string | null
+          created_at?: string
+          detected_language?: string | null
+          fallback_used?: boolean | null
+          id?: string
+          interrupted?: boolean | null
+          llm_first_token_at?: string | null
+          playback_start_at?: string | null
+          pronunciation_fixes?: number | null
+          raw_transcript?: string | null
+          response_text?: string | null
+          session_id?: string
+          start_listen_at?: string | null
+          stop_listen_at?: string | null
+          stt_final_at?: string | null
+          transcript_confidence?: number | null
+          tts_start_at?: string | null
+          turn_index?: number
         }
         Relationships: []
       }
