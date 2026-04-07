@@ -409,6 +409,7 @@ export const AppRouter = () => (
 
         {/* Public */}
         <Route path="/" element={<Home />} />
+        <Route path="/manifeste" element={<Suspense fallback={<LazyFallback />}><PageManifesto /></Suspense>} />
         <Route path="/go" element={<PageAdLandingAipp />} />
         <Route path="/aipp-check" element={<PageAdLandingAipp />} />
         <Route path="/business-import" element={<PageBusinessImport />} />

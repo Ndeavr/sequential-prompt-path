@@ -54,6 +54,9 @@ const Home = () => {
         {/* Bulle explicative — Comparer 3 soumissions ? */}
         <SectionNoMoreQuotes />
 
+        {/* Manifeste UNPRO — CTA card */}
+        <SectionManifestoCTA />
+
         {/* Passeport Maison / Condo / Entrepreneur */}
         <SectionPasseportCards />
 
