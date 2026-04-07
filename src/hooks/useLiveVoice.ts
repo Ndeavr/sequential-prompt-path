@@ -11,7 +11,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { GoogleGenAI, Modality, StartSensitivity, EndSensitivity, ActivityHandling } from "@google/genai";
 import type { LiveServerMessage } from "@google/genai";
 import { encodeToBase64, decodeFromBase64, decodeAudioData } from "@/services/geminiAudioCodec";
-import { ALEX_SYSTEM_INSTRUCTION, ALEX_LIVE_CONFIG } from "@/services/alexConfig";
+import { ALEX_LIVE_CONFIG } from "@/services/alexConfig";
 import { createWorkletBlobURL } from "@/services/geminiAudioWorklet";
 import { supabase } from "@/integrations/supabase/client";
 import { isInternalThinking, cleanAlexOutput } from "@/services/alexTranscriptNormalizer";
