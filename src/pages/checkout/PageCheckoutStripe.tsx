@@ -49,7 +49,7 @@ export default function PageCheckoutStripe() {
     } catch { return "pro"; }
   })();
 
-  const plan = useMemo(() => getPlanById(planCode), [planCode]);
+  const { plan } = usePlanByCode(planCode);
 
   // Get objective context
   const context = useMemo(() => {

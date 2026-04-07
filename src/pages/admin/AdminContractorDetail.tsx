@@ -248,7 +248,7 @@ const AdminContractorDetail = () => {
           <CardContent>
             {subscription ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                <div><p className="text-muted-foreground">Plan</p><p className="font-medium">{getPlanById(subscription.plan_id)?.name ?? subscription.plan_id}</p></div>
+                <div><p className="text-muted-foreground">Plan</p><p className="font-medium">{subscription.plan_id}</p></div>
                 <div><p className="text-muted-foreground">Statut</p><p className="font-medium">{subscription.status}</p></div>
                 <div><p className="text-muted-foreground">Facturation</p><p className="font-medium">{(subscription as any).billing_interval === "year" ? "Annuel" : "Mensuel"}</p></div>
                 <div>

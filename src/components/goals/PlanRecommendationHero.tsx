@@ -61,7 +61,7 @@ function getWhyNotLower(plan: string): string {
 }
 
 export default function PlanRecommendationHero({ recommendedPlan, primaryObjective, monthlyAppointments, onSelectPlan, onTalkToAlex, selectedPack, onSelectPack, tradeSlug, citySlug }: Props) {
-  const configPlan = getPlanById(recommendedPlan);
+  const { plan: configPlan } = usePlanByCode(recommendedPlan);
   const meta = PLAN_META[recommendedPlan] || PLAN_META.pro;
   const Icon = meta.icon;
   const displayPrice = configPlan ? configPlan.monthlyPrice / 100 : 0;
