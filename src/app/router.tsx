@@ -265,6 +265,7 @@ const MyPlacementsPage = lazy(() => import("@/pages/dashboard/MyPlacementsPage")
 
 // Entrepreneur Funnel
 const PageEntrepreneurLandingAIPP = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurLandingAIPP"));
+const PageEntrepreneursLanding = lazy(() => import("@/pages/entrepreneur/PageEntrepreneursLanding"));
 const PageEntrepreneurScoreResult = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurScoreResult"));
 const PageEntrepreneurPricing = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurPricing"));
 const PageEntrepreneurDashboardLite = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurDashboardLite"));
@@ -436,6 +437,7 @@ export const AppRouter = () => (
 
         {/* Entrepreneur Funnel */}
         <Route path="/entrepreneur" element={<PageEntrepreneurLandingAIPP />} />
+        <Route path="/entrepreneurs" element={<PageEntrepreneursLanding />} />
         <Route path="/entrepreneur/analysis/loading" element={<PageAIPPAnalysisLoading />} />
         <Route path="/entrepreneur/score" element={<PageEntrepreneurScoreResult />} />
         <Route path="/entrepreneur/pricing" element={<PageEntrepreneurPricing />} />
