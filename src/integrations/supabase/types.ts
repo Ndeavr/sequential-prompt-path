@@ -6739,6 +6739,36 @@ export type Database = {
         }
         Relationships: []
       }
+      availability_cache: {
+        Row: {
+          category_slug: string
+          city_slug: string
+          id: string
+          pressure_score: number
+          status: string
+          suggestions: Json | null
+          updated_at: string
+        }
+        Insert: {
+          category_slug: string
+          city_slug: string
+          id?: string
+          pressure_score?: number
+          status?: string
+          suggestions?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          category_slug?: string
+          city_slug?: string
+          id?: string
+          pressure_score?: number
+          status?: string
+          suggestions?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       blog_analytics: {
         Row: {
           article_id: string
@@ -8106,6 +8136,7 @@ export type Database = {
           is_active: boolean
           name: string
           priority: number
+          rbq_required: boolean
           service_group: string | null
           slug: string
           updated_at: string
@@ -8117,6 +8148,7 @@ export type Database = {
           is_active?: boolean
           name: string
           priority?: number
+          rbq_required?: boolean
           service_group?: string | null
           slug: string
           updated_at?: string
@@ -8128,6 +8160,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           priority?: number
+          rbq_required?: boolean
           service_group?: string | null
           slug?: string
           updated_at?: string
@@ -40517,6 +40550,10 @@ export type Database = {
       }
       calculate_waitlist_score: {
         Args: { p_waitlist_id: string }
+        Returns: Json
+      }
+      check_territory_availability: {
+        Args: { p_category_slugs: string[]; p_city_slugs: string[] }
         Returns: Json
       }
       check_upgrade_recommendation: {
