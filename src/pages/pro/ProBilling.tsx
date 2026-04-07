@@ -253,10 +253,7 @@ const ProBilling = () => {
             </div>
             <p className="text-sm text-muted-foreground">
               {formatPlanPrice(
-                getPlanDisplayPrice(
-                  currentPlan,
-                  ((subscription as any)?.billing_interval as BillingInterval) ?? "month"
-                )
+                currentPlan ? (((subscription as any)?.billing_interval === "year") ? currentPlan.yearlyPrice : currentPlan.monthlyPrice) : 0
               )}{" "}
               / {(subscription as any)?.billing_interval === "year" ? "an" : "mois"}
             </p>
