@@ -116,7 +116,7 @@ const PLANS: Plan[] = [
       { text: "Support prioritaire premium" },
     ],
     cta: "Activer Signature",
-    ctaLink: "/signup?plan=signature",
+    ctaLink: "/auth?plan=signature",
     microcopy: "Pour les propriétaires exigeants qui veulent une vraie longueur d'avance.",
     icon: Crown,
     badge: { label: "Premium", type: "premium" },
