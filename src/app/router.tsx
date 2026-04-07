@@ -305,6 +305,7 @@ const PageEntrepreneurPlanUsage = lazy(() => import("@/pages/entrepreneur/PageEn
 
 // Admin
 const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
+const PageAdminEntrepreneurActivation = lazy(() => import("@/pages/admin/PageAdminEntrepreneurActivation"));
 const AdminUsers = lazy(() => import("@/pages/admin/AdminUsers"));
 const AdminContractors = lazy(() => import("@/pages/admin/AdminContractors"));
 const AdminQuotes = lazy(() => import("@/pages/admin/AdminQuotes"));
@@ -736,6 +737,7 @@ export const AppRouter = () => (
         <Route path="/admin/emails" element={<ProtectedRoute requiredRole="admin"><PageAdminEmailLogs /></ProtectedRoute>} />
         <Route path="/admin/email-templates" element={<ProtectedRoute requiredRole="admin"><PageAdminEmailTemplates /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/activation" element={<ProtectedRoute requiredRole="admin"><PageAdminEntrepreneurActivation /></ProtectedRoute>} />
         <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><AdminUsers /></ProtectedRoute>} />
         <Route path="/admin/contractors" element={<ProtectedRoute requiredRole="admin"><AdminContractors /></ProtectedRoute>} />
         <Route path="/admin/contractors/:id" element={<ProtectedRoute requiredRole="admin"><AdminContractorDetail /></ProtectedRoute>} />

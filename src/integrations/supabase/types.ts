@@ -16227,6 +16227,7 @@ export type Database = {
       }
       contractor_subscriptions: {
         Row: {
+          activation_source: string | null
           billing_interval: string
           cancel_at_period_end: boolean | null
           contractor_id: string
@@ -16241,6 +16242,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          activation_source?: string | null
           billing_interval?: string
           cancel_at_period_end?: boolean | null
           contractor_id: string
@@ -16255,6 +16257,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          activation_source?: string | null
           billing_interval?: string
           cancel_at_period_end?: boolean | null
           contractor_id?: string
@@ -17025,6 +17028,9 @@ export type Database = {
           internal_verified_at: string | null
           internal_verified_by: string | null
           internal_verified_score: number | null
+          is_accepting_appointments: boolean
+          is_discoverable: boolean
+          is_published: boolean
           legal_name: string | null
           license_number: string | null
           logo_url: string | null
@@ -17037,6 +17043,7 @@ export type Database = {
           portfolio_urls: string[] | null
           postal_code: string | null
           province: string | null
+          published_at: string | null
           rating: number | null
           rbq_number: string | null
           recommended_plan_id: string | null
@@ -17086,6 +17093,9 @@ export type Database = {
           internal_verified_at?: string | null
           internal_verified_by?: string | null
           internal_verified_score?: number | null
+          is_accepting_appointments?: boolean
+          is_discoverable?: boolean
+          is_published?: boolean
           legal_name?: string | null
           license_number?: string | null
           logo_url?: string | null
@@ -17098,6 +17108,7 @@ export type Database = {
           portfolio_urls?: string[] | null
           postal_code?: string | null
           province?: string | null
+          published_at?: string | null
           rating?: number | null
           rbq_number?: string | null
           recommended_plan_id?: string | null
@@ -17147,6 +17158,9 @@ export type Database = {
           internal_verified_at?: string | null
           internal_verified_by?: string | null
           internal_verified_score?: number | null
+          is_accepting_appointments?: boolean
+          is_discoverable?: boolean
+          is_published?: boolean
           legal_name?: string | null
           license_number?: string | null
           logo_url?: string | null
@@ -17159,6 +17173,7 @@ export type Database = {
           portfolio_urls?: string[] | null
           postal_code?: string | null
           province?: string | null
+          published_at?: string | null
           rating?: number | null
           rbq_number?: string | null
           recommended_plan_id?: string | null

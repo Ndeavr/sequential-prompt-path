@@ -1,6 +1,16 @@
 project_id = "clmaqdnphbndvmmqvpff"
 
 [functions]
+  [functions.admin-activation-import]
+    verify_jwt = false
+  [functions.admin-activation-score]
+    verify_jwt = false
+  [functions.admin-activation-subscribe]
+    verify_jwt = false
+  [functions.admin-activation-publish]
+    verify_jwt = false
+  [functions.admin-activation-rollback]
+    verify_jwt = false
   [functions.alex-renovation]
     verify_jwt = false
   [functions.alex-voice]

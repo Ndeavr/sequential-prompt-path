@@ -63,6 +63,8 @@ export const ROUTES = {
   ADMIN_GROWTH: "/admin/growth",
   ADMIN_VALIDATION: "/admin/validation",
   ADMIN_DOMAIN_INTELLIGENCE: "/admin/domain-intelligence",
+  ADMIN_ACTIVATION: "/admin/activation",
+  ADMIN_ACTIVATION_HISTORY: "/admin/activation/history",
 
   // Broker / Courtier
   COURTIERS: "/courtiers",
