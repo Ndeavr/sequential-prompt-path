@@ -35044,6 +35044,251 @@ export type Database = {
         }
         Relationships: []
       }
+      self_serve_goal_plan_city_checks: {
+        Row: {
+          category: string | null
+          checked_at: string
+          city: string
+          id: string
+          session_id: string | null
+          territory_status: string | null
+        }
+        Insert: {
+          category?: string | null
+          checked_at?: string
+          city: string
+          id?: string
+          session_id?: string | null
+          territory_status?: string | null
+        }
+        Update: {
+          category?: string | null
+          checked_at?: string
+          city?: string
+          id?: string
+          session_id?: string | null
+          territory_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "self_serve_goal_plan_city_checks_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "self_serve_goal_plan_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      self_serve_goal_plan_cta_events: {
+        Row: {
+          created_at: string
+          cta_key: string
+          id: string
+          page_section: string | null
+          session_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          cta_key: string
+          id?: string
+          page_section?: string | null
+          session_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          cta_key?: string
+          id?: string
+          page_section?: string | null
+          session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "self_serve_goal_plan_cta_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "self_serve_goal_plan_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      self_serve_goal_plan_inputs: {
+        Row: {
+          appointments_capacity_weekly: number | null
+          avg_contract_value: number | null
+          close_rate_percent: number | null
+          created_at: string
+          current_category: string | null
+          current_city: string | null
+          growth_target_percent: number | null
+          id: string
+          pre_unpro_score: number | null
+          preferred_lead_quality: string | null
+          preferred_project_size: string | null
+          preferred_territory: string | null
+          profit_margin_percent: number | null
+          revenue_target_monthly: number | null
+          session_id: string
+          submissions_per_month: number | null
+          updated_at: string
+        }
+        Insert: {
+          appointments_capacity_weekly?: number | null
+          avg_contract_value?: number | null
+          close_rate_percent?: number | null
+          created_at?: string
+          current_category?: string | null
+          current_city?: string | null
+          growth_target_percent?: number | null
+          id?: string
+          pre_unpro_score?: number | null
+          preferred_lead_quality?: string | null
+          preferred_project_size?: string | null
+          preferred_territory?: string | null
+          profit_margin_percent?: number | null
+          revenue_target_monthly?: number | null
+          session_id: string
+          submissions_per_month?: number | null
+          updated_at?: string
+        }
+        Update: {
+          appointments_capacity_weekly?: number | null
+          avg_contract_value?: number | null
+          close_rate_percent?: number | null
+          created_at?: string
+          current_category?: string | null
+          current_city?: string | null
+          growth_target_percent?: number | null
+          id?: string
+          pre_unpro_score?: number | null
+          preferred_lead_quality?: string | null
+          preferred_project_size?: string | null
+          preferred_territory?: string | null
+          profit_margin_percent?: number | null
+          revenue_target_monthly?: number | null
+          session_id?: string
+          submissions_per_month?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "self_serve_goal_plan_inputs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "self_serve_goal_plan_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      self_serve_goal_plan_results: {
+        Row: {
+          appointment_mix_json: Json | null
+          created_at: string
+          current_monthly_profit: number | null
+          current_monthly_revenue: number | null
+          exclusivity_possible: boolean | null
+          id: string
+          lost_monthly_profit_max: number | null
+          lost_monthly_profit_min: number | null
+          lost_monthly_revenue_max: number | null
+          lost_monthly_revenue_min: number | null
+          plan_match_confidence: number | null
+          projected_monthly_profit_max: number | null
+          projected_monthly_profit_min: number | null
+          projected_monthly_revenue_max: number | null
+          projected_monthly_revenue_min: number | null
+          recommended_plan: string | null
+          required_appointments_monthly: number | null
+          required_appointments_weekly: number | null
+          session_id: string
+          territory_status: string | null
+          updated_at: string
+        }
+        Insert: {
+          appointment_mix_json?: Json | null
+          created_at?: string
+          current_monthly_profit?: number | null
+          current_monthly_revenue?: number | null
+          exclusivity_possible?: boolean | null
+          id?: string
+          lost_monthly_profit_max?: number | null
+          lost_monthly_profit_min?: number | null
+          lost_monthly_revenue_max?: number | null
+          lost_monthly_revenue_min?: number | null
+          plan_match_confidence?: number | null
+          projected_monthly_profit_max?: number | null
+          projected_monthly_profit_min?: number | null
+          projected_monthly_revenue_max?: number | null
+          projected_monthly_revenue_min?: number | null
+          recommended_plan?: string | null
+          required_appointments_monthly?: number | null
+          required_appointments_weekly?: number | null
+          session_id: string
+          territory_status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          appointment_mix_json?: Json | null
+          created_at?: string
+          current_monthly_profit?: number | null
+          current_monthly_revenue?: number | null
+          exclusivity_possible?: boolean | null
+          id?: string
+          lost_monthly_profit_max?: number | null
+          lost_monthly_profit_min?: number | null
+          lost_monthly_revenue_max?: number | null
+          lost_monthly_revenue_min?: number | null
+          plan_match_confidence?: number | null
+          projected_monthly_profit_max?: number | null
+          projected_monthly_profit_min?: number | null
+          projected_monthly_revenue_max?: number | null
+          projected_monthly_revenue_min?: number | null
+          recommended_plan?: string | null
+          required_appointments_monthly?: number | null
+          required_appointments_weekly?: number | null
+          session_id?: string
+          territory_status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "self_serve_goal_plan_results_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "self_serve_goal_plan_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      self_serve_goal_plan_sessions: {
+        Row: {
+          category: string | null
+          city: string | null
+          created_at: string
+          id: string
+          status: string
+          updated_at: string
+          visitor_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          visitor_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          visitor_id?: string | null
+        }
+        Relationships: []
+      }
       seo_admin_queue: {
         Row: {
           city: string | null
