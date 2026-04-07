@@ -3989,6 +3989,36 @@ export type Database = {
           },
         ]
       }
+      alex_voice_pronunciation_logs: {
+        Row: {
+          applied_rules_json: Json | null
+          created_at: string
+          id: string
+          locale: string
+          original_text: string
+          transformed_text: string
+          voice_session_id: string | null
+        }
+        Insert: {
+          applied_rules_json?: Json | null
+          created_at?: string
+          id?: string
+          locale?: string
+          original_text: string
+          transformed_text: string
+          voice_session_id?: string | null
+        }
+        Update: {
+          applied_rules_json?: Json | null
+          created_at?: string
+          id?: string
+          locale?: string
+          original_text?: string
+          transformed_text?: string
+          voice_session_id?: string | null
+        }
+        Relationships: []
+      }
       alex_voice_pronunciation_rules: {
         Row: {
           created_at: string
@@ -3996,8 +4026,10 @@ export type Database = {
           is_active: boolean | null
           locale: string | null
           notes: string | null
+          phonetic_override: string | null
           priority: number | null
           replacement_text: string
+          rule_name: string | null
           rule_type: string | null
           source_text: string
           updated_at: string
@@ -4008,8 +4040,10 @@ export type Database = {
           is_active?: boolean | null
           locale?: string | null
           notes?: string | null
+          phonetic_override?: string | null
           priority?: number | null
           replacement_text: string
+          rule_name?: string | null
           rule_type?: string | null
           source_text: string
           updated_at?: string
@@ -4020,8 +4054,10 @@ export type Database = {
           is_active?: boolean | null
           locale?: string | null
           notes?: string | null
+          phonetic_override?: string | null
           priority?: number | null
           replacement_text?: string
+          rule_name?: string | null
           rule_type?: string | null
           source_text?: string
           updated_at?: string
