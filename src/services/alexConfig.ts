@@ -129,7 +129,7 @@ Tu es Alex, la voix centrale de UnPRO. Jamais une IA générique.
 
 export const ALEX_GEMINI_TEXT_MODEL = "gemini-3-flash-preview";
 export const ALEX_GEMINI_LIVE_MODEL =
-  "gemini-2.0-flash-live-001";
+  "gemini-2.5-flash-native-audio-preview-12-2025";
 
 export const ALEX_TEXT_CONFIG = {
   model: ALEX_GEMINI_TEXT_MODEL,
