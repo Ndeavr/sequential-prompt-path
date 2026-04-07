@@ -12,9 +12,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { AutocompleteInput } from "@/components/ui/autocomplete-input";
 import {
   Calculator, TrendingUp, ArrowRight, Target, MapPin, Briefcase, DollarSign,
   BarChart3, Zap, Crown, Star, Users, Shield, Sparkles, Brain, Lightbulb,
