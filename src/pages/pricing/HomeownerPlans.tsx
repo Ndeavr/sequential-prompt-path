@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
+import HomeownerCheckoutDrawer from "@/components/pricing/HomeownerCheckoutDrawer";
 import {
   Accordion,
   AccordionContent,
