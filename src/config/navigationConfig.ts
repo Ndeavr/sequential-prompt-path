@@ -380,6 +380,8 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
     title: "Découvrez",
     titleEn: "Discover",
     items: [
+      { to: "/cest-quoi-unpro", label: "C'est quoi UNPRO ?", labelEn: "What is UNPRO?", icon: "HelpCircle" },
+      { to: "/manifeste", label: "Manifeste", labelEn: "Manifesto", icon: "FileText" },
       { to: "/probleme/infiltration-eau", label: "Problèmes maison", labelEn: "Home Problems", icon: "AlertTriangle" },
       { to: "/ville/montreal", label: "Villes desservies", labelEn: "Served Cities", icon: "MapPin" },
       { to: "/services/laval", label: "Services à Laval", icon: "Wrench" },
