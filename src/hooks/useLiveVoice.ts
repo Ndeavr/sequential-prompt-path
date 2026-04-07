@@ -193,8 +193,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const start = useCallback(async (options?: { initialGreeting?: string }) => {
     if (isActive || isConnecting) return;
 
-    // Only clean up THIS session's previous state — don't broadcast cleanup
-    // The caller (HeroSection, etc.) is responsible for broadcasting cleanup before calling start
+    // Only clean up THIS session's previous state
     cleanup();
 
     setIsConnecting(true);
@@ -215,7 +214,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       // 2. Initialize Google GenAI
       const ai = new GoogleGenAI({ apiKey });
 
-      // 3. Set up audio contexts — use native sample rate for input (better compatibility)
+      // 3. Set up audio contexts
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       inputAudioContextRef.current = new AudioCtx({ sampleRate: 16000 });
 
@@ -229,6 +228,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       outputGain.connect(outputAudioContextRef.current.destination);
 
       // 6. Connect to Gemini Live
+      // CRITICAL: Keep systemInstruction SHORT — long instructions cause immediate WebSocket close
+      // (Known Gemini Live bug). Detailed rules are sent via sendClientContent after connect.
       const initialGreeting = options?.initialGreeting;
 
       const session = await ai.live.connect({
@@ -239,7 +240,21 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
             setIsConnecting(false);
             callbacksRef.current?.onConnect?.();
 
-            // Set up mic → Gemini pipeline (AudioWorklet or fallback)
+            // Send detailed system instructions AFTER connection is established
+            // This avoids the Gemini Live bug where long systemInstruction in config
+            // causes immediate WebSocket closure.
+            if (sessionRef.current) {
+              try {
+                sessionRef.current.sendClientContent({
+                  turns: [{ role: "user", parts: [{ text: ALEX_SYSTEM_INSTRUCTION }] }],
+                  turnComplete: false,
+                });
+              } catch (err) {
+                console.warn("[GeminiLive] Failed to send system context:", err);
+              }
+            }
+
+            // Set up mic → Gemini pipeline
             await setupMicPipeline(stream, inputAudioContextRef.current!);
 
             // Send initial greeting to trigger Alex's first spoken response
@@ -264,10 +279,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           },
 
           onmessage: (message: LiveServerMessage) => {
-            // Handle model output transcript (what Alex actually says — NOT internal thinking)
+            // Handle model output transcript
             if ((message as any).serverContent?.outputTranscription?.text) {
               const rawTranscript = (message as any).serverContent.outputTranscription.text;
-              // Triple filter: internal thinking + blocked patterns + pronunciation fix
               if (!isInternalThinking(rawTranscript) && !isBlockedOutput(rawTranscript)) {
                 const cleaned = normalizeAlexOutputText(cleanAlexOutput(rawTranscript));
                 if (cleaned && !isBlockedOutput(cleaned)) {
@@ -275,12 +289,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
                 }
               }
             }
-            
-            // NOTE: modelTurn.parts[].text is internal text representation — 
-            // skip it when audio modality is active to avoid duplicate transcripts.
-            // outputTranscription above is the actual spoken words.
 
-            // Handle user transcript (input transcription) — normalize STT errors
+            // Handle user transcript — normalize STT errors
             if ((message as any).serverContent?.inputTranscription?.text) {
               const rawTranscript = (message as any).serverContent.inputTranscription.text;
               const normalized = normalizeUserTranscript(rawTranscript);
@@ -340,7 +350,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
             }
           },
 
-          onclose: () => {
+          onclose: (e: any) => {
+            console.warn("[GeminiLive] WebSocket closed:", e?.code, e?.reason || "(no reason)");
             cleanup();
             callbacksRef.current?.onDisconnect?.();
           },
@@ -358,12 +369,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
               prebuiltVoiceConfig: { voiceName },
             },
           },
+          // SHORT system instruction only — detailed rules sent via sendClientContent post-connect
           systemInstruction: {
-            parts: [{ text: ALEX_SYSTEM_INSTRUCTION }],
-          },
-          // Disable extended thinking to eliminate "Thought for Xs" delays
-          thinkingConfig: {
-            thinkingBudget: 0,
+            parts: [{ text: "Tu es Alex, concierge IA vocale d'UnPRO. Français québécois. Phrases courtes. Une question à la fois. Jamais de markdown. Prononce 'ville' avec un V clair." }],
           },
           realtimeInputConfig: {
             automaticActivityDetection: {
