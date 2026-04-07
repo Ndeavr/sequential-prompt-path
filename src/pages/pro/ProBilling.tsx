@@ -290,12 +290,12 @@ const ProBilling = () => {
 
       {/* Plan cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {CONTRACTOR_PLANS.map((plan) => (
+        {(allPlans ?? []).map((plan) => (
           <PlanCard
-            key={plan.id}
+            key={plan.code}
             plan={plan}
             interval={interval}
-            isCurrent={isActive === true && currentPlan?.id === plan.id}
+            isCurrent={isActive === true && currentPlan?.code === plan.code}
             isActive={!!isActive}
             onSubscribe={() => handleSubscribe(plan)}
             onPortal={handlePortal}
