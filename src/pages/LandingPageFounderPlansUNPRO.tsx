@@ -2,6 +2,7 @@
 import { Helmet } from "react-helmet-async";
 import { useFounderPlans } from "@/hooks/useFounderPlans";
 import HeroSectionFounderScarcity from "@/components/founder-plans/HeroSectionFounderScarcity";
+import SectionCheckAvailabilityFounder from "@/components/founder-plans/SectionCheckAvailabilityFounder";
 import SectionPlanComparisonEliteSignature from "@/components/founder-plans/SectionPlanComparisonEliteSignature";
 import SectionValueStackBreakdown from "@/components/founder-plans/SectionValueStackBreakdown";
 import SectionWhyFounderPlans from "@/components/founder-plans/SectionWhyFounderPlans";

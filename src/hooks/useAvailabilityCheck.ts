@@ -28,7 +28,7 @@ export function useAvailabilityCheck() {
         p_city_slugs: citySlugs,
       });
       if (rpcError) throw rpcError;
-      setResults((data as AvailabilityResult[]) ?? []);
+      setResults((data as unknown as AvailabilityResult[]) ?? []);
     } catch (e: any) {
       setError(e.message ?? "Erreur de vérification");
       setResults([]);
