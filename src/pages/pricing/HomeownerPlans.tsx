@@ -340,13 +340,33 @@ function ComparisonMatrix() {
 /* ─── Main Component ─── */
 export default function HomeownerPlans() {
   const [showComparison, setShowComparison] = useState(false);
+  const [checkoutPlan, setCheckoutPlan] = useState<{ code: "plus" | "signature"; name: string; price: number } | null>(null);
+
+  // Add onCheckout callbacks to plans
+  const plansWithCheckout = PLANS.map((p) => ({
+    ...p,
+    onCheckout: p.price > 0 ? () => setCheckoutPlan({
+      code: p.code === "homeowners_signature" ? "signature" : "plus",
+      name: p.name,
+      price: p.price,
+    }) : undefined,
+  }));
 
   return (
     <section className="px-5 py-16 md:py-24" id="homeowner-plans">
 
+      {/* Checkout Drawer */}
+      <HomeownerCheckoutDrawer
+        open={!!checkoutPlan}
+        onOpenChange={(open) => !open && setCheckoutPlan(null)}
+        planCode={checkoutPlan?.code || "plus"}
+        planName={checkoutPlan?.name || "Plus"}
+        price={checkoutPlan?.price || 49}
+      />
+
       {/* ─── PLAN CARDS ─── */}
       <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-5 md:gap-4 mb-16 md:items-stretch">
-        {PLANS.map((plan, i) => (
+        {plansWithCheckout.map((plan, i) => (
           <CardPlan key={plan.code} plan={plan} index={i} />
         ))}
       </div>
