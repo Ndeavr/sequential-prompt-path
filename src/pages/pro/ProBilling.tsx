@@ -92,7 +92,7 @@ const PlanCard = ({
   onPortal: () => void;
   isLoading: boolean;
 }) => {
-  const price = getPlanDisplayPrice(plan, interval);
+  const price = interval === "year" ? plan.yearlyPrice : plan.monthlyPrice;
   const savings = getYearlySavingsPercent(plan);
 
   return (
