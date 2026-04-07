@@ -58,6 +58,7 @@ const CompareQuotesPage = lazy(() => import("@/pages/CompareQuotesPage"));
 const ContractorOnboardingPage = lazy(() => import("@/pages/ContractorOnboardingPage"));
 const OnboardingFlow = lazy(() => import("@/pages/OnboardingFlow"));
 const PricingPage = lazy(() => import("@/pages/PricingPage"));
+const PageHomeownerWelcome = lazy(() => import("@/pages/proprietaire/PageHomeownerWelcome"));
 const AIPPScorePage = lazy(() => import("@/pages/AIPPScorePage"));
 const MatchingResultsPage = lazy(() => import("@/pages/MatchingResultsPage"));
 const ContractorComparisonPage = lazy(() => import("@/pages/ContractorComparisonPage"));
