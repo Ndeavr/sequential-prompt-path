@@ -84,7 +84,7 @@ const PlanCard = ({
   onPortal,
   isLoading,
 }: {
-  plan: ContractorPlan;
+  plan: CatalogPlan;
   interval: BillingInterval;
   isCurrent: boolean;
   isActive: boolean;
