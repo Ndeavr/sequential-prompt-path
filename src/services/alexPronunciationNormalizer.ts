@@ -8,6 +8,14 @@
 // ── STT Input Corrections (what the user said, misheard by STT) ──
 
 const STT_CORRECTIONS: [RegExp, string][] = [
+  // Critical "ville" fix — STT drops the "v"
+  [/\bquelle ille\b/gi, "quelle ville"],
+  [/\bdans quelle ille\b/gi, "dans quelle ville"],
+  [/\bla ille\b/gi, "la ville"],
+  [/\bune ille\b/gi, "une ville"],
+  [/\bcette ille\b/gi, "cette ville"],
+  [/\bvotre ille\b/gi, "votre ville"],
+  [/\bnotre ille\b/gi, "notre ville"],
   // Cities — phonetic confusions
   [/\bmonreal\b/gi, "Montréal"],
   [/\bmontriel\b/gi, "Montréal"],
@@ -60,6 +68,9 @@ const STT_CORRECTIONS: [RegExp, string][] = [
 // ── TTS Output Corrections (what Alex is about to say) ──
 
 const TTS_OUTPUT_FIXES: [RegExp, string][] = [
+  // Critical "ville" TTS fix
+  [/\bquelle ille\b/gi, "quelle ville"],
+  [/\bdans quelle ille\b/gi, "dans quelle ville"],
   // Fix diction errors the model might produce
   [/\bRénoration\b/g, "rénovation"],
   [/\brénoration\b/g, "rénovation"],

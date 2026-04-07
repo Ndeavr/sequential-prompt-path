@@ -16,6 +16,7 @@ import { createWorkletBlobURL } from "@/services/geminiAudioWorklet";
 import { supabase } from "@/integrations/supabase/client";
 import { isInternalThinking, cleanAlexOutput } from "@/services/alexTranscriptNormalizer";
 import { normalizeUserTranscript, normalizeAlexOutputText } from "@/services/alexPronunciationNormalizer";
+import { isBlockedOutput } from "@/hooks/useAlexPublicOutputFilter";
 
 interface UseLiveVoiceCallbacks {
   onTranscript?: (text: string) => void;
@@ -267,10 +268,12 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
             // Handle model output transcript (what Alex actually says — NOT internal thinking)
             if ((message as any).serverContent?.outputTranscription?.text) {
               const rawTranscript = (message as any).serverContent.outputTranscription.text;
-              // Double normalization: clean internal thinking + fix pronunciation
-              if (!isInternalThinking(rawTranscript)) {
+              // Triple filter: internal thinking + blocked patterns + pronunciation fix
+              if (!isInternalThinking(rawTranscript) && !isBlockedOutput(rawTranscript)) {
                 const cleaned = normalizeAlexOutputText(cleanAlexOutput(rawTranscript));
-                callbacksRef.current?.onTranscript?.(cleaned);
+                if (cleaned && !isBlockedOutput(cleaned)) {
+                  callbacksRef.current?.onTranscript?.(cleaned);
+                }
               }
             }
             
