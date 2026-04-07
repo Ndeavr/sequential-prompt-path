@@ -333,9 +333,6 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
             parts: [{ text: ALEX_SYSTEM_INSTRUCTION }],
           },
           realtimeInputConfig: {
-            speechConfig: {
-              languageCode: "fr-CA",
-            },
             automaticActivityDetection: {
               disabled: false,
             },
