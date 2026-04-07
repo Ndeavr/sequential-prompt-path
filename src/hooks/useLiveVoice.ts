@@ -362,13 +362,17 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           systemInstruction: {
             parts: [{ text: ALEX_SYSTEM_INSTRUCTION }],
           },
+          // Disable extended thinking to eliminate "Thought for Xs" delays
+          thinkingConfig: {
+            thinkingBudget: 0,
+          },
           realtimeInputConfig: {
             automaticActivityDetection: {
               disabled: false,
               startOfSpeechSensitivity: StartSensitivity.START_SENSITIVITY_LOW,
               endOfSpeechSensitivity: EndSensitivity.END_SENSITIVITY_LOW,
-              prefixPaddingMs: 30,
-              silenceDurationMs: 180,
+              prefixPaddingMs: 20,
+              silenceDurationMs: 140,
             },
             activityHandling: ActivityHandling.START_OF_ACTIVITY_INTERRUPTS,
           },

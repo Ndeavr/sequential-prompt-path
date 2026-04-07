@@ -5,14 +5,15 @@
 
 const BLOCKED_PATTERNS = [
   /\*\*/,
-  /^(Thought|Thinking|Processing|Analyzing|Evaluating|Considering)/i,
-  /\b(Prioritizing|Refocusing|My focus|I will execute|I'm maintaining|My primary|I must now|My next step|according to my internal|Let me think|Internal note)\b/i,
+  /^(Thought|Thinking|Processing|Analyzing|Evaluating|Considering|Hmm|Let me)/i,
+  /\b(Prioritizing|Refocusing|My focus|I will execute|I'm maintaining|My primary|I must now|My next step|according to my internal|Let me think|Internal note|One moment|Let me see)\b/i,
   /\b(useLiveVoice|onTranscript|console\.log|function\(|import |export |const |let |var )\b/,
   /\bEdited\b.*\bsrc\//i,
   /\bFix\b.*\.(ts|tsx|js)\b/i,
   /```/,
   /^\s*\/\//,
   /\bThought for \d+/i,
+  /\bThought for/i,
   /\bpreview card\b/i,
   /\binternal chain\b/i,
   /\btool call\b/i,
@@ -25,6 +26,11 @@ const BLOCKED_PATTERNS = [
   /\bfunction call\b/i,
   /\b\.tsx?\b/,
   /\bfix\b.*\b(bug|error|issue)\b/i,
+  /\bI need to\b/i,
+  /\bI should\b/i,
+  /\bI'll now\b/i,
+  /\bLet me process\b/i,
+  /\bOne sec\b/i,
 ];
 
 /** Returns true if text should be blocked from public display */
