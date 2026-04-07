@@ -62,7 +62,7 @@ export default function SectionPlanRecommendation({ results, onActivate }: Props
                 <p className="text-xs text-muted-foreground mt-1">{plan.includedRdv} RDV inclus/mois</p>
                 {isRec && (
                   <Button onClick={onActivate} size="sm" className="w-full mt-4 bg-gradient-to-r from-primary to-accent text-primary-foreground">
-                    Activer
+                    Activer {plan.price}$/mo
                   </Button>
                 )}
               </div>
