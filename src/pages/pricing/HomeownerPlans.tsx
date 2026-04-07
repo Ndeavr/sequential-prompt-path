@@ -104,6 +104,7 @@ const PLANS: Plan[] = [
     description: "Une expérience premium avec copilote maison plus stratégique.",
     features: [
       { text: "Tout dans Plus", highlight: false },
+      { text: "Jusqu'à 5 adresses", highlight: true },
       { text: "Analyses prioritaires", highlight: true },
       { text: "Accompagnement Alex avancé", highlight: true },
       { text: "Lecture plus stratégique des soumissions et options", highlight: true },
