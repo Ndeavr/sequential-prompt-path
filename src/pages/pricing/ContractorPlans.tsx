@@ -1,5 +1,6 @@
 /**
  * UNPRO — Contractor Plans with billing toggle, appointments & pre-selection
+ * Now fetches plan data dynamically from plan_catalog table.
  */
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -12,8 +13,9 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
-import { CONTRACTOR_PLANS, formatPlanPrice, getYearlySavingsPercent, getMonthlyEquivalent, type BillingInterval, type ContractorPlan } from "@/config/contractorPlans";
+import { usePlanCatalog, formatPlanPrice, getYearlySavingsPercent, getMonthlyEquivalent, type BillingInterval, type CatalogPlan } from "@/hooks/usePlanCatalog";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -32,20 +34,20 @@ const PLAN_ICONS: Record<string, React.ElementType> = {
 };
 
 function PlanCard({ plan, index, isRecommended, interval, onCheckout }: {
-  plan: ContractorPlan;
+  plan: CatalogPlan;
   index: number;
   isRecommended: boolean;
   interval: BillingInterval;
-  onCheckout: (planId: string) => void;
+  onCheckout: (planCode: string) => void;
 }) {
   const isHighlighted = isRecommended || plan.highlighted;
-  const Icon = PLAN_ICONS[plan.id] || Users;
+  const Icon = PLAN_ICONS[plan.code] || Users;
 
   const monthlyPrice = interval === "year" ? Math.round(plan.yearlyPrice / 12) : plan.monthlyPrice;
   const savings = getYearlySavingsPercent(plan);
 
   return (
-    <motion.div variants={fadeUp} custom={index} initial="hidden" whileInView="visible" viewport={{ once: true }} data-plan={plan.id}>
+    <motion.div variants={fadeUp} custom={index} initial="hidden" whileInView="visible" viewport={{ once: true }} data-plan={plan.code}>
       <div className={cn(
         "rounded-2xl p-5 md:p-6 h-full flex flex-col transition-all duration-300 hover:-translate-y-1 relative",
         isHighlighted
@@ -131,7 +133,7 @@ function PlanCard({ plan, index, isRecommended, interval, onCheckout }: {
               size="lg"
               variant={isHighlighted ? "default" : "outline"}
               className={cn("w-full rounded-xl text-sm", isHighlighted && "shadow-glow")}
-              onClick={() => onCheckout(plan.id)}
+              onClick={() => onCheckout(plan.code)}
             >
               Choisir {plan.name}
               <ArrowRight className="h-4 w-4 ml-2" />
@@ -155,22 +157,23 @@ function PlanCard({ plan, index, isRecommended, interval, onCheckout }: {
 export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?: string | null }) {
   const [loading, setLoading] = useState<string | null>(null);
   const [interval, setInterval] = useState<BillingInterval>("month");
+  const { data: plans, isLoading } = usePlanCatalog();
 
-  const handleCheckout = async (planId: string) => {
-    setLoading(planId);
+  const handleCheckout = async (planCode: string) => {
+    setLoading(planCode);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        window.location.href = `/signup?type=contractor&plan=${planId}`;
+        window.location.href = `/signup?type=contractor&plan=${planCode}`;
         return;
       }
 
       const { data, error } = await supabase.functions.invoke("create-checkout-session", {
         body: {
-          planId,
+          planId: planCode,
           billingInterval: interval,
-          successUrl: `${window.location.origin}/pro/onboarding?plan=${planId}&checkout=success`,
-          cancelUrl: `${window.location.origin}/pricing?plan=${planId}&checkout=cancelled`,
+          successUrl: `${window.location.origin}/pro/onboarding?plan=${planCode}&checkout=success`,
+          cancelUrl: `${window.location.origin}/pricing?plan=${planCode}&checkout=cancelled`,
         },
       });
 
@@ -229,19 +232,27 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
           </div>
         </div>
 
-        {/* All 5 plans in a scrollable row on mobile */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          {CONTRACTOR_PLANS.map((plan, i) => (
-            <PlanCard
-              key={plan.id}
-              plan={plan}
-              index={i}
-              isRecommended={preSelectedPlan === plan.id}
-              interval={interval}
-              onCheckout={handleCheckout}
-            />
-          ))}
-        </div>
+        {/* Plans */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-[420px] rounded-2xl" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            {(plans ?? []).map((plan, i) => (
+              <PlanCard
+                key={plan.code}
+                plan={plan}
+                index={i}
+                isRecommended={preSelectedPlan === plan.code}
+                interval={interval}
+                onCheckout={handleCheckout}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Reminder block */}
         <motion.div
