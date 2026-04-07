@@ -278,11 +278,12 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
             // skip it when audio modality is active to avoid duplicate transcripts.
             // outputTranscription above is the actual spoken words.
 
-            // Handle user transcript (input transcription)
+            // Handle user transcript (input transcription) — normalize STT errors
             if ((message as any).serverContent?.inputTranscription?.text) {
-              const transcript = (message as any).serverContent.inputTranscription.text;
-              console.log("[GeminiLive] 🎤 User transcript:", transcript);
-              callbacksRef.current?.onUserTranscript?.(transcript);
+              const rawTranscript = (message as any).serverContent.inputTranscription.text;
+              const normalized = normalizeUserTranscript(rawTranscript);
+              console.log("[GeminiLive] 🎤 User transcript:", rawTranscript, "→", normalized);
+              callbacksRef.current?.onUserTranscript?.(normalized);
             }
 
             // Handle audio output
