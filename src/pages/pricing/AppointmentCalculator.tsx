@@ -355,39 +355,39 @@ export default function AppointmentCalculator() {
               <Slider value={revenueGoal} onValueChange={setRevenueGoal} min={2000} max={200000} step={1000} />
             </div>
 
-            {/* City + Trade — Supabase-connected */}
+            {/* City + Trade — Autocomplete */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-3.5 w-3.5 text-primary" />
                   <span className="text-xs font-semibold text-foreground">Ville principale</span>
                 </div>
-                <Select value={citySlug} onValueChange={setCitySlug}>
-                  <SelectTrigger className="rounded-xl">
-                    <SelectValue placeholder="Sélectionner une ville..." />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-60">
-                    {(cities ?? []).map((c: any) => (
-                      <SelectItem key={c.slug} value={c.slug}>{c.name_fr}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <AutocompleteInput
+                  value={citySlug}
+                  onValueChange={setCitySlug}
+                  placeholder="Sélectionner une ville..."
+                  searchPlaceholder="Rechercher une ville..."
+                  emptyMessage="Aucune ville trouvée"
+                  options={(cities ?? []).map((c: any) => ({
+                    value: c.slug,
+                    label: c.name_fr,
+                    group: c.jve_regions?.name_fr,
+                  }))}
+                />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Briefcase className="h-3.5 w-3.5 text-primary" />
                   <span className="text-xs font-semibold text-foreground">Métier / Spécialité</span>
                 </div>
-                <Select value={tradeSlug} onValueChange={setTradeSlug}>
-                  <SelectTrigger className="rounded-xl">
-                    <SelectValue placeholder="Sélectionner un métier..." />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-60">
-                    {(trades ?? []).map((t: any) => (
-                      <SelectItem key={t.slug} value={t.slug}>{t.name_fr}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <AutocompleteInput
+                  value={tradeSlug}
+                  onValueChange={setTradeSlug}
+                  placeholder="Sélectionner un métier..."
+                  searchPlaceholder="Rechercher un métier..."
+                  emptyMessage="Aucun métier trouvé"
+                  options={tradeOptions}
+                />
               </div>
             </div>
 
