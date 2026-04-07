@@ -375,6 +375,446 @@ export type Database = {
           },
         ]
       }
+      admin_activation_checklists: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          id: string
+          is_blocking: boolean | null
+          item_code: string
+          item_label: string
+          item_status: string
+          resolved_at: string | null
+          resolved_by_admin_id: string | null
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          id?: string
+          is_blocking?: boolean | null
+          item_code: string
+          item_label: string
+          item_status?: string
+          resolved_at?: string | null
+          resolved_by_admin_id?: string | null
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          is_blocking?: boolean | null
+          item_code?: string
+          item_label?: string
+          item_status?: string
+          resolved_at?: string | null
+          resolved_by_admin_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_activation_checklists_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_activation_checklists_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_activation_checklists_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_activation_checklists_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      admin_activation_events: {
+        Row: {
+          admin_user_id: string
+          contractor_id: string | null
+          created_at: string
+          event_payload_json: Json | null
+          event_type: string
+          id: string
+        }
+        Insert: {
+          admin_user_id: string
+          contractor_id?: string | null
+          created_at?: string
+          event_payload_json?: Json | null
+          event_type: string
+          id?: string
+        }
+        Update: {
+          admin_user_id?: string
+          contractor_id?: string | null
+          created_at?: string
+          event_payload_json?: Json | null
+          event_type?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_activation_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_activation_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_activation_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_activation_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      admin_activation_overrides: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          created_by_admin_id: string
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          override_type: string
+          override_value: number
+          reason: string | null
+          starts_at: string | null
+          subscription_id: string | null
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          created_by_admin_id: string
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          override_type?: string
+          override_value?: number
+          reason?: string | null
+          starts_at?: string | null
+          subscription_id?: string | null
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          created_by_admin_id?: string
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          override_type?: string
+          override_value?: number
+          reason?: string | null
+          starts_at?: string | null
+          subscription_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_activation_overrides_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_activation_overrides_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_activation_overrides_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_activation_overrides_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      admin_appointment_readiness: {
+        Row: {
+          checklist_score: number | null
+          contractor_id: string
+          created_at: string
+          forced_by_admin_id: string | null
+          forced_reason: string | null
+          has_activation_override_or_payment: boolean | null
+          has_active_plan: boolean | null
+          has_core_identity: boolean | null
+          has_linked_account: boolean | null
+          has_media_minimum: boolean | null
+          has_public_profile: boolean | null
+          has_score: boolean | null
+          has_service_areas: boolean | null
+          has_services: boolean | null
+          id: string
+          ready_status: string
+          updated_at: string
+        }
+        Insert: {
+          checklist_score?: number | null
+          contractor_id: string
+          created_at?: string
+          forced_by_admin_id?: string | null
+          forced_reason?: string | null
+          has_activation_override_or_payment?: boolean | null
+          has_active_plan?: boolean | null
+          has_core_identity?: boolean | null
+          has_linked_account?: boolean | null
+          has_media_minimum?: boolean | null
+          has_public_profile?: boolean | null
+          has_score?: boolean | null
+          has_service_areas?: boolean | null
+          has_services?: boolean | null
+          id?: string
+          ready_status?: string
+          updated_at?: string
+        }
+        Update: {
+          checklist_score?: number | null
+          contractor_id?: string
+          created_at?: string
+          forced_by_admin_id?: string | null
+          forced_reason?: string | null
+          has_activation_override_or_payment?: boolean | null
+          has_active_plan?: boolean | null
+          has_core_identity?: boolean | null
+          has_linked_account?: boolean | null
+          has_media_minimum?: boolean | null
+          has_public_profile?: boolean | null
+          has_score?: boolean | null
+          has_service_areas?: boolean | null
+          has_services?: boolean | null
+          id?: string
+          ready_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_appointment_readiness_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_appointment_readiness_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_appointment_readiness_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_appointment_readiness_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      admin_company_import_jobs: {
+        Row: {
+          completed_at: string | null
+          contractor_id: string | null
+          created_at: string
+          id: string
+          import_mode: string
+          notes: string | null
+          started_at: string | null
+          started_by_admin_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          import_mode?: string
+          notes?: string | null
+          started_at?: string | null
+          started_by_admin_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          import_mode?: string
+          notes?: string | null
+          started_at?: string | null
+          started_by_admin_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_company_import_jobs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_company_import_jobs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_company_import_jobs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_company_import_jobs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      admin_company_import_sources: {
+        Row: {
+          created_at: string
+          fetched_at: string | null
+          id: string
+          import_job_id: string
+          source_label: string | null
+          source_payload_json: Json | null
+          source_type: string
+          source_url: string | null
+          trust_score: number | null
+        }
+        Insert: {
+          created_at?: string
+          fetched_at?: string | null
+          id?: string
+          import_job_id: string
+          source_label?: string | null
+          source_payload_json?: Json | null
+          source_type?: string
+          source_url?: string | null
+          trust_score?: number | null
+        }
+        Update: {
+          created_at?: string
+          fetched_at?: string | null
+          id?: string
+          import_job_id?: string
+          source_label?: string | null
+          source_payload_json?: Json | null
+          source_type?: string
+          source_url?: string | null
+          trust_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_company_import_sources_import_job_id_fkey"
+            columns: ["import_job_id"]
+            isOneToOne: false
+            referencedRelation: "admin_company_import_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_import_conflicts: {
+        Row: {
+          created_at: string
+          field_name: string
+          id: string
+          import_job_id: string
+          resolution_status: string
+          resolved_at: string | null
+          resolved_by_admin_id: string | null
+          selected_value: string | null
+          source_value_a: string | null
+          source_value_b: string | null
+        }
+        Insert: {
+          created_at?: string
+          field_name: string
+          id?: string
+          import_job_id: string
+          resolution_status?: string
+          resolved_at?: string | null
+          resolved_by_admin_id?: string | null
+          selected_value?: string | null
+          source_value_a?: string | null
+          source_value_b?: string | null
+        }
+        Update: {
+          created_at?: string
+          field_name?: string
+          id?: string
+          import_job_id?: string
+          resolution_status?: string
+          resolved_at?: string | null
+          resolved_by_admin_id?: string | null
+          selected_value?: string | null
+          source_value_a?: string | null
+          source_value_b?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_import_conflicts_import_job_id_fkey"
+            columns: ["import_job_id"]
+            isOneToOne: false
+            referencedRelation: "admin_company_import_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_notifications: {
         Row: {
           body: string
