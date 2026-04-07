@@ -93,6 +93,8 @@ const megaMenus: Record<string, MegaMenuConfig> = {
       {
         title: "Acquisition clients", titleEn: "Client Acquisition",
         items: [
+          { to: "/entrepreneurs", label: "Page entrepreneurs", labelEn: "Entrepreneur Landing", icon: Sparkles, description: "Découvrez comment UNPRO vous apporte des clients", descriptionEn: "See how UNPRO brings you clients" },
+          { to: "/entrepreneurs/calculateur", label: "Combien je perds", labelEn: "How Much Am I Losing", icon: DollarSign, description: "Calculez vos revenus perdus et le bon plan", descriptionEn: "Calculate lost revenue & the right plan", badge: "NEW" },
           { to: "/pro/leads", label: "Rendez-vous garantis", labelEn: "Guaranteed Appointments", icon: CalendarDays },
           { to: "/entrepreneurs/matching", label: "Matching propriétaires", labelEn: "Homeowner Matching", icon: Heart },
           { to: "/pro/appointments", label: "Booking intelligent", labelEn: "Smart Booking", icon: CalendarDays },
