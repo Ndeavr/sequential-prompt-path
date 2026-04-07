@@ -33,47 +33,49 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!roleData) throw new Error("Forbidden: admin only");
 
-    const { action, contractorId, signals, overrideScore, overrideReason } = await req.json();
+    const body = await req.json();
+    const { action, contractorId, signals, overrideScore, overrideReason } = body;
 
     if (action === "compute") {
-      // Compute AIPP score from signals
+      // Compute ranking score from signals
+      // Signals map to actual contractor_scores columns
       const s = signals || {};
-      const weights = {
-        profile_completeness: 0.15,
-        reviews: 0.15,
-        brand_presence: 0.10,
-        regulatory: 0.15,
-        media_quality: 0.10,
-        service_precision: 0.10,
-        geo_coverage: 0.10,
-        recency: 0.15,
-      };
+      const profileCompleteness = s.profile_completeness ?? 50;
+      const avgReview = s.avg_review ?? 3.0;
+      const responseSpeed = s.response_speed ?? 50;
+      const acceptanceRate = s.acceptance_rate ?? 50;
+      const closeRate = s.close_rate ?? 50;
+      const onTimeRate = s.on_time_rate ?? 50;
+      const recommendationRate = s.recommendation_rate ?? 50;
 
-      let total = 0;
-      for (const [key, weight] of Object.entries(weights)) {
-        total += (s[key] ?? 50) * (weight as number);
-      }
-      const scoreTotal = Math.round(total);
+      // Weighted ranking score (0-100)
+      const rankingScore = Math.round(
+        profileCompleteness * 0.15 +
+        (avgReview / 5 * 100) * 0.20 +
+        responseSpeed * 0.10 +
+        acceptanceRate * 0.10 +
+        closeRate * 0.15 +
+        onTimeRate * 0.15 +
+        recommendationRate * 0.15
+      );
+
+      const scoreRow = {
+        contractor_id: contractorId,
+        profile_completeness_score: profileCompleteness,
+        avg_review_score: avgReview,
+        response_speed_score: responseSpeed,
+        acceptance_rate: acceptanceRate,
+        close_rate: closeRate,
+        on_time_rate: onTimeRate,
+        recommendation_rate: recommendationRate,
+        ranking_score: rankingScore,
+      };
 
       const { data: existing } = await supabase
         .from("contractor_scores")
         .select("id")
         .eq("contractor_id", contractorId)
         .maybeSingle();
-
-      const scoreRow = {
-        contractor_id: contractorId,
-        score_total: scoreTotal,
-        signal_profile_completeness: s.profile_completeness ?? 50,
-        signal_reviews: s.reviews ?? 50,
-        signal_brand_presence: s.brand_presence ?? 50,
-        signal_regulatory: s.regulatory ?? 50,
-        signal_media_quality: s.media_quality ?? 50,
-        signal_service_precision: s.service_precision ?? 50,
-        signal_geo_coverage: s.geo_coverage ?? 50,
-        signal_recency: s.recency ?? 50,
-        computed_by: user.id,
-      };
 
       let result;
       if (existing) {
@@ -95,11 +97,17 @@ Deno.serve(async (req) => {
         result = data;
       }
 
+      // Also update aipp_score on contractor itself
+      await supabase
+        .from("contractors")
+        .update({ aipp_score: rankingScore })
+        .eq("id", contractorId);
+
       await supabase.from("admin_activation_events").insert({
         admin_user_id: user.id,
         contractor_id: contractorId,
         event_type: "score_computed",
-        event_payload_json: { score: scoreTotal, signals: s },
+        event_payload_json: { ranking_score: rankingScore, signals: s },
       });
 
       return new Response(JSON.stringify({ score: result }), {
@@ -110,13 +118,14 @@ Deno.serve(async (req) => {
     if (action === "override") {
       const { error } = await supabase
         .from("contractor_scores")
-        .update({
-          score_total: overrideScore,
-          override_reason: overrideReason,
-          computed_by: user.id,
-        })
+        .update({ ranking_score: overrideScore })
         .eq("contractor_id", contractorId);
       if (error) throw error;
+
+      await supabase
+        .from("contractors")
+        .update({ aipp_score: overrideScore })
+        .eq("id", contractorId);
 
       await supabase.from("admin_activation_events").insert({
         admin_user_id: user.id,
