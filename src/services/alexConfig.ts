@@ -193,8 +193,8 @@ export const ALEX_LIVE_CONFIG_FAST = {
     realtimeInputConfig: {
       automaticActivityDetection: {
         disabled: false,
-        startOfSpeechSensitivity: "START_OF_SPEECH_SENSITIVITY_LOW",
-        endOfSpeechSensitivity: "END_OF_SPEECH_SENSITIVITY_LOW",
+        startOfSpeechSensitivity: "START_SENSITIVITY_LOW",
+        endOfSpeechSensitivity: "END_SENSITIVITY_LOW",
         prefixPaddingMs: 20,
         silenceDurationMs: 140,
       },
