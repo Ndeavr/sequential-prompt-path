@@ -178,6 +178,7 @@ import AdminWinningVariantsPage from "@/pages/admin/AdminWinningVariantsPage";
 import PageAdminAlexConversationRules from "@/pages/admin/PageAdminAlexConversationRules";
 import PageAdminAlexDebugHome from "@/pages/admin/PageAdminAlexDebugHome";
 import PageAdminAlexSpeechTuning from "@/pages/admin/AlexSpeechTuning";
+import AlexVoiceAdmin from "@/pages/admin/AlexVoiceAdmin";
 
 import AdminPredictiveLeads from "@/pages/admin/AdminPredictiveLeads";
 
