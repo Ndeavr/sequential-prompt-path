@@ -27,6 +27,7 @@ const OnboardingPageUnpro = lazy(() => import("@/pages/OnboardingPageUnpro"));
 const LoginPageUnpro = lazy(() => import("@/pages/LoginPageUnpro"));
 const PreLoginRolePage = lazy(() => import("@/pages/PreLoginRolePage"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
+const PageManifesto = lazy(() => import("@/pages/PageManifesto"));
 
 // Public
 const PageAdLandingAipp = lazy(() => import("@/pages/ad-landing/PageAdLandingAipp"));
@@ -408,6 +409,7 @@ export const AppRouter = () => (
 
         {/* Public */}
         <Route path="/" element={<Home />} />
+        <Route path="/manifeste" element={<Suspense fallback={<LazyFallback />}><PageManifesto /></Suspense>} />
         <Route path="/go" element={<PageAdLandingAipp />} />
         <Route path="/aipp-check" element={<PageAdLandingAipp />} />
         <Route path="/business-import" element={<PageBusinessImport />} />

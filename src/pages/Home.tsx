@@ -7,6 +7,7 @@ import SectionPasseportCards from "@/components/home/SectionPasseportCards";
 import SectionHowItWorks from "@/components/home/SectionHowItWorks";
 import SectionEntrepreneurCTA from "@/components/home/SectionEntrepreneurCTA";
 import SectionTrustProof from "@/components/home/SectionTrustProof";
+import SectionManifestoCTA from "@/components/home/SectionManifestoCTA";
 
 const Home = () => {
   const jsonLd = {
@@ -52,6 +53,9 @@ const Home = () => {
 
         {/* Bulle explicative — Comparer 3 soumissions ? */}
         <SectionNoMoreQuotes />
+
+        {/* Manifeste UNPRO — CTA card */}
+        <SectionManifestoCTA />
 
         {/* Passeport Maison / Condo / Entrepreneur */}
         <SectionPasseportCards />
