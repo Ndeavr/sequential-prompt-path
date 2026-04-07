@@ -55,8 +55,11 @@ export default function AlexVoiceMode({ feature, onFlowComplete, onDismiss, inli
     },
   });
 
-  // Auto-start on mount
+  // Auto-start on mount — but ONLY if not already blocked
   useEffect(() => {
+    // Guard: don't auto-start if another session is active
+    if (isActive || isConnecting) return;
+
     const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || null;
     const hour = new Date().getHours();
     

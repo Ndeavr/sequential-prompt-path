@@ -193,10 +193,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const start = useCallback(async (options?: { initialGreeting?: string }) => {
     if (isActive || isConnecting) return;
 
-    // Kill any other active session before starting
-    window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
-    // Small delay to let other sessions close
-    await new Promise(r => setTimeout(r, 50));
+    // Only clean up THIS session's previous state — don't broadcast cleanup
+    // The caller (HeroSection, etc.) is responsible for broadcasting cleanup before calling start
+    cleanup();
 
     setIsConnecting(true);
 
