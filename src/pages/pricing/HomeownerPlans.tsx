@@ -62,7 +62,7 @@ const PLANS: Plan[] = [
       { text: "Accès à Alex pour orientation de base" },
     ],
     cta: "Commencer gratuitement",
-    ctaLink: "/signup",
+    ctaLink: "/auth",
     microcopy: "Idéal pour un premier projet ou un besoin ponctuel.",
     icon: Home,
     badge: { label: "Gratuit pour commencer", type: "neutral" },
@@ -76,6 +76,7 @@ const PLANS: Plan[] = [
     description: "Comparez mieux, évitez les erreurs coûteuses et centralisez votre maison.",
     features: [
       { text: "Tout dans Découverte", highlight: false },
+      { text: "Jusqu'à 3 adresses", highlight: true },
       { text: "Passeport Maison enrichi", highlight: true },
       { text: "Analyses de soumissions illimitées", highlight: true },
       { text: "Comparaison intelligente de jusqu'à 3 soumissions", highlight: true },
@@ -88,7 +89,7 @@ const PLANS: Plan[] = [
       { text: "Support prioritaire léger" },
     ],
     cta: "Passer à Plus",
-    ctaLink: "/signup?plan=plus",
+    ctaLink: "/auth?plan=plus",
     microcopy: "Le meilleur équilibre entre clarté, protection et valeur.",
     icon: Sparkles,
     badge: { label: "Le plus populaire", type: "popular" },
@@ -103,6 +104,7 @@ const PLANS: Plan[] = [
     description: "Une expérience premium avec copilote maison plus stratégique.",
     features: [
       { text: "Tout dans Plus", highlight: false },
+      { text: "Jusqu'à 5 adresses", highlight: true },
       { text: "Analyses prioritaires", highlight: true },
       { text: "Accompagnement Alex avancé", highlight: true },
       { text: "Lecture plus stratégique des soumissions et options", highlight: true },
@@ -114,7 +116,7 @@ const PLANS: Plan[] = [
       { text: "Support prioritaire premium" },
     ],
     cta: "Activer Signature",
-    ctaLink: "/signup?plan=signature",
+    ctaLink: "/auth?plan=signature",
     microcopy: "Pour les propriétaires exigeants qui veulent une vraie longueur d'avance.",
     icon: Crown,
     badge: { label: "Premium", type: "premium" },
@@ -132,6 +134,7 @@ interface ComparisonRow {
 
 const COMPARISON: ComparisonRow[] = [
   { label: "Compte propriétaire UNPRO", discovery: "Oui", plus: "Oui", signature: "Oui" },
+  { label: "Adresses (propriétés)", discovery: "1", plus: "Jusqu'à 3", signature: "Jusqu'à 5" },
   { label: "Passeport Maison", discovery: "1", plus: "1 enrichi", signature: "1 enrichi" },
   { label: "Estimation préliminaire de projet", discovery: "Oui", plus: "Oui", signature: "Oui" },
   { label: "Recommandations de professionnels", discovery: "Oui", plus: "Oui", signature: "Oui" },
@@ -352,7 +355,7 @@ export default function HomeownerPlans() {
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
             <Button asChild size="lg" className="rounded-xl shadow-glow px-8">
-              <Link to="/signup">Commencer gratuitement <ArrowRight className="h-4 w-4 ml-1.5" /></Link>
+              <Link to="/auth">Commencer gratuitement <ArrowRight className="h-4 w-4 ml-1.5" /></Link>
             </Button>
             <Button
               variant="ghost"
