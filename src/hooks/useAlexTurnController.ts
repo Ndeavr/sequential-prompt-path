@@ -7,7 +7,7 @@
 import { useState, useRef, useCallback } from "react";
 import { normalizeUserTranscript, normalizeAlexOutputText } from "@/services/alexPronunciationNormalizer";
 import { isInternalThinking, cleanAlexOutput } from "@/services/alexTranscriptNormalizer";
-import { getAlexGreeting } from "@/services/alexGreetingEngine";
+
 import { supabase } from "@/integrations/supabase/client";
 
 export type TurnState =
