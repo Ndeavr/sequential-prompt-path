@@ -14,7 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { useAdminContractor, useAdminContractorDocuments, useUpdateContractorVerification, useAdminContractorSubscription } from "@/hooks/useAdmin";
 import { useContractorVerificationSnapshot, useContractorVerificationHistory, useContractorMergeSuggestions } from "@/hooks/useContractorVerificationIntegration";
 import { VerificationSnapshotCard, LatestVerificationInsights, MergeSuggestionsPanel, VerificationHistoryTable } from "@/components/verification";
-import { getPlanById } from "@/config/contractorPlans";
+import { usePlanByCode } from "@/hooks/usePlanCatalog";
 import { getContractorCompleteness } from "@/services/contractorCompletenessService";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -248,7 +248,7 @@ const AdminContractorDetail = () => {
           <CardContent>
             {subscription ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                <div><p className="text-muted-foreground">Plan</p><p className="font-medium">{getPlanById(subscription.plan_id)?.name ?? subscription.plan_id}</p></div>
+                <div><p className="text-muted-foreground">Plan</p><p className="font-medium">{subscription.plan_id}</p></div>
                 <div><p className="text-muted-foreground">Statut</p><p className="font-medium">{subscription.status}</p></div>
                 <div><p className="text-muted-foreground">Facturation</p><p className="font-medium">{(subscription as any).billing_interval === "year" ? "Annuel" : "Mensuel"}</p></div>
                 <div>

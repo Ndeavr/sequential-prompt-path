@@ -19,9 +19,9 @@ import {
   Wrench, Camera, Globe, BarChart3, Users, Zap,
 } from "lucide-react";
 import {
-  CONTRACTOR_PLANS, formatPlanPrice, getYearlySavingsPercent,
-  getMonthlyEquivalent, type ContractorPlan,
-} from "@/config/contractorPlans";
+  usePlanCatalog, formatPlanPrice, getYearlySavingsPercent,
+  getMonthlyEquivalent, type CatalogPlan,
+} from "@/hooks/usePlanCatalog";
 
 /* ------------------------------------------------------------------ */
 /*  Trigger types                                                      */
@@ -173,9 +173,11 @@ export default function UpgradeWindow({
   const config = TRIGGER_CONFIG[trigger];
   const TriggerIcon = config.icon;
 
-  const currentPlan = CONTRACTOR_PLANS.find((p) => p.id === currentPlanId);
-  const currentIdx = CONTRACTOR_PLANS.findIndex((p) => p.id === currentPlanId);
-  const suggestedPlan = CONTRACTOR_PLANS[Math.min(currentIdx + 1, CONTRACTOR_PLANS.length - 1)];
+  const { data: allPlans } = usePlanCatalog();
+  const plans = allPlans ?? [];
+  const currentPlan = plans.find((p) => p.code === currentPlanId);
+  const currentIdx = plans.findIndex((p) => p.code === currentPlanId);
+  const suggestedPlan = plans[Math.min(currentIdx + 1, plans.length - 1)];
 
   if (!currentPlan || !suggestedPlan) return null;
 

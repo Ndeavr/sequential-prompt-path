@@ -28027,20 +28027,32 @@ export type Database = {
           aipp_fit_max: number
           aipp_fit_min: number
           annual_price: number
+          appointment_notes: Json | null
+          appointments_included: number | null
+          appointments_range_max: number | null
+          appointments_range_min: number | null
           badge_text: string | null
           best_for: string | null
           code: string
           created_at: string
+          features_json: Json | null
+          highlighted: boolean | null
           id: string
           includes_json: Json | null
+          matching_boost: number | null
           monthly_price: number
           name: string
           objective_fit_json: Json | null
           position_rank: number
+          priority_level: number | null
+          project_sizes: Json | null
           recommended_for_json: Json | null
           setup_fee: number
           short_pitch: string | null
+          stripe_monthly_price_id: string | null
+          stripe_yearly_price_id: string | null
           summary_outcome: string | null
+          tagline: string | null
           updated_at: string
         }
         Insert: {
@@ -28048,20 +28060,32 @@ export type Database = {
           aipp_fit_max?: number
           aipp_fit_min?: number
           annual_price?: number
+          appointment_notes?: Json | null
+          appointments_included?: number | null
+          appointments_range_max?: number | null
+          appointments_range_min?: number | null
           badge_text?: string | null
           best_for?: string | null
           code: string
           created_at?: string
+          features_json?: Json | null
+          highlighted?: boolean | null
           id?: string
           includes_json?: Json | null
+          matching_boost?: number | null
           monthly_price?: number
           name: string
           objective_fit_json?: Json | null
           position_rank?: number
+          priority_level?: number | null
+          project_sizes?: Json | null
           recommended_for_json?: Json | null
           setup_fee?: number
           short_pitch?: string | null
+          stripe_monthly_price_id?: string | null
+          stripe_yearly_price_id?: string | null
           summary_outcome?: string | null
+          tagline?: string | null
           updated_at?: string
         }
         Update: {
@@ -28069,20 +28093,32 @@ export type Database = {
           aipp_fit_max?: number
           aipp_fit_min?: number
           annual_price?: number
+          appointment_notes?: Json | null
+          appointments_included?: number | null
+          appointments_range_max?: number | null
+          appointments_range_min?: number | null
           badge_text?: string | null
           best_for?: string | null
           code?: string
           created_at?: string
+          features_json?: Json | null
+          highlighted?: boolean | null
           id?: string
           includes_json?: Json | null
+          matching_boost?: number | null
           monthly_price?: number
           name?: string
           objective_fit_json?: Json | null
           position_rank?: number
+          priority_level?: number | null
+          project_sizes?: Json | null
           recommended_for_json?: Json | null
           setup_fee?: number
           short_pitch?: string | null
+          stripe_monthly_price_id?: string | null
+          stripe_yearly_price_id?: string | null
           summary_outcome?: string | null
+          tagline?: string | null
           updated_at?: string
         }
         Relationships: []

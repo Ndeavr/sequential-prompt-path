@@ -7,28 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PLAN_PRICES: Record<string, { month: string; year: string }> = {
-  recrue: {
-    month: "price_1T9X6oCvZwK1QnPVG3tLbNqV",
-    year: "price_1TJZb2CvZwK1QnPVCqnR2OM7",
-  },
-  pro: {
-    month: "price_1T9X6pCvZwK1QnPVfBlT13Lw",
-    year: "price_1TJZb2CvZwK1QnPVI0hGFF39",
-  },
-  premium: {
-    month: "price_1T9X6qCvZwK1QnPV8V4P18tw",
-    year: "price_1TJZb3CvZwK1QnPVhn0vbYhM",
-  },
-  elite: {
-    month: "price_1T9X6sCvZwK1QnPV2ZwYQOGT",
-    year: "price_1TJZb3CvZwK1QnPVe52XCyib",
-  },
-  signature: {
-    month: "price_1T9X6tCvZwK1QnPVxNcBNeBM",
-    year: "price_1TJZb4CvZwK1QnPVtcHaVEhr",
-  },
-};
+// Stripe price IDs are now fetched from plan_catalog table (no hardcoded map)
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -68,23 +47,36 @@ Deno.serve(async (req) => {
     const userEmail = claimsData.claims.email as string;
 
     const { planId, billingInterval, successUrl, cancelUrl, promoCode } = await req.json();
+    const interval: "month" | "year" = billingInterval === "year" ? "year" : "month";
 
-    // Validate plan
-    const planPrices = PLAN_PRICES[planId];
-    if (!planPrices) {
+    const serviceClient = createClient(
+      supabaseUrl,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // Look up Stripe price ID from plan_catalog
+    const priceColumn = interval === "year" ? "stripe_yearly_price_id" : "stripe_monthly_price_id";
+    const { data: planRow, error: planError } = await serviceClient
+      .from("plan_catalog")
+      .select(`code, name, ${priceColumn}`)
+      .eq("code", planId)
+      .eq("active", true)
+      .maybeSingle();
+
+    if (planError || !planRow) {
       return new Response(JSON.stringify({ error: "Invalid plan" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const interval: "month" | "year" = billingInterval === "year" ? "year" : "month";
-    const resolvedPriceId = planPrices[interval];
-
-    const serviceClient = createClient(
-      supabaseUrl,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const resolvedPriceId = (planRow as any)[priceColumn];
+    if (!resolvedPriceId) {
+      return new Response(JSON.stringify({ error: "Price not configured for this plan/interval" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Get or create contractor
     let { data: contractor } = await serviceClient

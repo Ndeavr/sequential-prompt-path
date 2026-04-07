@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useContractorProfile } from "@/hooks/useContractor";
-import type { BillingInterval } from "@/config/contractorPlans";
+import type { BillingInterval } from "@/hooks/usePlanCatalog";
 
 export interface ContractorSubscription {
   id: string;

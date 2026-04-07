@@ -3,18 +3,23 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Check, Sparkles, ArrowRight, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CONTRACTOR_PLANS, formatPlanPrice, getYearlySavingsPercent, type BillingInterval } from "@/config/contractorPlans";
+import { usePlanCatalog, formatPlanPrice, getYearlySavingsPercent, type BillingInterval } from "@/hooks/usePlanCatalog";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const PageEntrepreneurPricing = () => {
   const navigate = useNavigate();
   const [interval, setInterval] = useState<BillingInterval>("year");
+  const { data: plans, isLoading } = usePlanCatalog();
 
-  const handleSelectPlan = (planId: string) => {
-    sessionStorage.setItem("unpro_selected_plan", planId);
+  const handleSelectPlan = (planCode: string) => {
+    sessionStorage.setItem("unpro_selected_plan", planCode);
     sessionStorage.setItem("unpro_selected_interval", interval);
-    navigate("/checkout");
+    navigate(`/checkout?plan=${planCode}`);
   };
+
+  const paidPlans = (plans ?? []).filter(p => p.code !== "recrue");
+  const recruePlan = (plans ?? []).find(p => p.code === "recrue");
 
   return (
     <div className="min-h-screen bg-background">
@@ -63,79 +68,89 @@ const PageEntrepreneurPricing = () => {
         </div>
 
         {/* Plans Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {CONTRACTOR_PLANS.filter(p => p.id !== "recrue").map((plan, i) => {
-            const price = interval === "year" ? plan.yearlyPrice / 12 : plan.monthlyPrice;
-            const savings = getYearlySavingsPercent(plan);
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-[380px] rounded-2xl" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {paidPlans.map((plan, i) => {
+              const price = interval === "year" ? plan.yearlyPrice / 12 : plan.monthlyPrice;
+              const savings = getYearlySavingsPercent(plan);
 
-            return (
-              <motion.div
-                key={plan.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08 }}
-                className={cn(
-                  "bg-card rounded-2xl p-6 border transition-all relative",
-                  plan.highlighted
-                    ? "border-primary shadow-lg ring-2 ring-primary/20"
-                    : "border-border shadow-sm hover:shadow-md"
-                )}
-              >
-                {plan.highlighted && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-full">
-                    Populaire
-                  </div>
-                )}
-
-                <div className="mb-4">
-                  <h3 className="text-lg font-bold text-foreground">{plan.name}</h3>
-                  <div className="mt-2">
-                    <span className="text-3xl font-extrabold text-foreground">{formatPlanPrice(price)}</span>
-                    <span className="text-muted-foreground text-sm">/mois</span>
-                  </div>
-                  {interval === "year" && savings > 0 && (
-                    <p className="text-xs text-success font-semibold mt-1">Économisez {savings}%</p>
-                  )}
-                </div>
-
-                <ul className="space-y-2 mb-6">
-                  {plan.features.map((f, j) => (
-                    <li key={j} className="flex items-start gap-2 text-sm">
-                      <Check className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                      <span className="text-foreground">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Button
-                  onClick={() => handleSelectPlan(plan.id)}
+              return (
+                <motion.div
+                  key={plan.code}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.08 }}
                   className={cn(
-                    "w-full font-bold gap-2",
-                    plan.highlighted ? "" : "variant-outline"
+                    "bg-card rounded-2xl p-6 border transition-all relative",
+                    plan.highlighted
+                      ? "border-primary shadow-lg ring-2 ring-primary/20"
+                      : "border-border shadow-sm hover:shadow-md"
                   )}
-                  variant={plan.highlighted ? "default" : "outline"}
                 >
-                  Commencer
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </motion.div>
-            );
-          })}
-        </div>
+                  {plan.highlighted && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-full">
+                      Populaire
+                    </div>
+                  )}
+
+                  <div className="mb-4">
+                    <h3 className="text-lg font-bold text-foreground">{plan.name}</h3>
+                    <div className="mt-2">
+                      <span className="text-3xl font-extrabold text-foreground">{formatPlanPrice(price)}</span>
+                      <span className="text-muted-foreground text-sm">/mois</span>
+                    </div>
+                    {interval === "year" && savings > 0 && (
+                      <p className="text-xs text-success font-semibold mt-1">Économisez {savings}%</p>
+                    )}
+                  </div>
+
+                  <ul className="space-y-2 mb-6">
+                    {plan.features.map((f, j) => (
+                      <li key={j} className="flex items-start gap-2 text-sm">
+                        <Check className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span className="text-foreground">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button
+                    onClick={() => handleSelectPlan(plan.code)}
+                    className={cn(
+                      "w-full font-bold gap-2",
+                      plan.highlighted ? "" : "variant-outline"
+                    )}
+                    variant={plan.highlighted ? "default" : "outline"}
+                  >
+                    Commencer
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Free tier */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mt-8 text-center"
-        >
-          <p className="text-muted-foreground text-sm mb-2">Pas prêt ? Commencez gratuitement.</p>
-          <Button variant="ghost" onClick={() => handleSelectPlan("recrue")} className="gap-2 text-sm">
-            <Sparkles className="w-4 h-4" />
-            Essayer le plan Recrue (gratuit)
-          </Button>
-        </motion.div>
+        {recruePlan && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="mt-8 text-center"
+          >
+            <p className="text-muted-foreground text-sm mb-2">Pas prêt ? Commencez gratuitement.</p>
+            <Button variant="ghost" onClick={() => handleSelectPlan("recrue")} className="gap-2 text-sm">
+              <Sparkles className="w-4 h-4" />
+              Essayer le plan Recrue (gratuit)
+            </Button>
+          </motion.div>
+        )}
       </div>
     </div>
   );

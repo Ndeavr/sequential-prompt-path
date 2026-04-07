@@ -12,16 +12,14 @@ import {
   useCreateBillingPortal,
 } from "@/hooks/useSubscription";
 import {
-  CONTRACTOR_PLANS,
-  getPlanById,
+  usePlanCatalog,
   formatPlanPrice,
   getStripePriceId,
-  getPlanDisplayPrice,
   getYearlySavingsPercent,
   getMonthlyEquivalent,
   type BillingInterval,
-  type ContractorPlan,
-} from "@/config/contractorPlans";
+  type CatalogPlan,
+} from "@/hooks/usePlanCatalog";
 import { toast } from "sonner";
 import { Check, CreditCard, ExternalLink } from "lucide-react";
 
@@ -86,7 +84,7 @@ const PlanCard = ({
   onPortal,
   isLoading,
 }: {
-  plan: ContractorPlan;
+  plan: CatalogPlan;
   interval: BillingInterval;
   isCurrent: boolean;
   isActive: boolean;
@@ -94,7 +92,7 @@ const PlanCard = ({
   onPortal: () => void;
   isLoading: boolean;
 }) => {
-  const price = getPlanDisplayPrice(plan, interval);
+  const price = interval === "year" ? plan.yearlyPrice : plan.monthlyPrice;
   const savings = getYearlySavingsPercent(plan);
 
   return (
@@ -184,11 +182,12 @@ const ProBilling = () => {
     }
   }, [searchParams]);
 
-  const currentPlan = subscription ? getPlanById(subscription.plan_id) : null;
+  const { data: allPlans } = usePlanCatalog();
+  const currentPlan = subscription ? (allPlans ?? []).find(p => p.code === subscription.plan_id) : null;
   const isActive =
     subscription && ["active", "trialing"].includes(subscription.status);
 
-  const handleSubscribe = async (plan: ContractorPlan) => {
+  const handleSubscribe = async (plan: CatalogPlan) => {
     try {
       const priceId = getStripePriceId(plan, interval);
       const result = await checkout.mutateAsync({
@@ -254,10 +253,7 @@ const ProBilling = () => {
             </div>
             <p className="text-sm text-muted-foreground">
               {formatPlanPrice(
-                getPlanDisplayPrice(
-                  currentPlan,
-                  ((subscription as any)?.billing_interval as BillingInterval) ?? "month"
-                )
+                currentPlan ? (((subscription as any)?.billing_interval === "year") ? currentPlan.yearlyPrice : currentPlan.monthlyPrice) : 0
               )}{" "}
               / {(subscription as any)?.billing_interval === "year" ? "an" : "mois"}
             </p>
@@ -294,12 +290,12 @@ const ProBilling = () => {
 
       {/* Plan cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {CONTRACTOR_PLANS.map((plan) => (
+        {(allPlans ?? []).map((plan) => (
           <PlanCard
-            key={plan.id}
+            key={plan.code}
             plan={plan}
             interval={interval}
-            isCurrent={isActive === true && currentPlan?.id === plan.id}
+            isCurrent={isActive === true && currentPlan?.code === plan.code}
             isActive={!!isActive}
             onSubscribe={() => handleSubscribe(plan)}
             onPortal={handlePortal}

@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Sparkles, Check, ArrowUp, ArrowDown, Crown, Shield, Zap, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { getPlanById, formatPlanPrice } from "@/config/contractorPlans";
+import { usePlanByCode, formatPlanPrice } from "@/hooks/usePlanCatalog";
 import AppointmentUpsellCard from "./AppointmentUpsellCard";
 import type { PackTier } from "@/lib/appointmentPricing";
 
@@ -61,7 +61,7 @@ function getWhyNotLower(plan: string): string {
 }
 
 export default function PlanRecommendationHero({ recommendedPlan, primaryObjective, monthlyAppointments, onSelectPlan, onTalkToAlex, selectedPack, onSelectPack, tradeSlug, citySlug }: Props) {
-  const configPlan = getPlanById(recommendedPlan);
+  const { plan: configPlan } = usePlanByCode(recommendedPlan);
   const meta = PLAN_META[recommendedPlan] || PLAN_META.pro;
   const Icon = meta.icon;
   const displayPrice = configPlan ? configPlan.monthlyPrice / 100 : 0;
