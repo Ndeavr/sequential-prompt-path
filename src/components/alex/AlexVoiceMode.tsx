@@ -58,7 +58,19 @@ export default function AlexVoiceMode({ feature, onFlowComplete, onDismiss, inli
   // Auto-start on mount
   useEffect(() => {
     const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || null;
-    const name = firstName ? `Bonjour ${firstName}!` : "Bonjour!";
+    const hour = new Date().getHours();
+    
+    // Time-based greeting
+    let timeGreeting: string;
+    if (hour >= 5 && hour < 12) {
+      timeGreeting = "Bonjour";
+    } else if (hour >= 12 && hour < 18) {
+      timeGreeting = "Bon après-midi";
+    } else {
+      timeGreeting = "Bonsoir";
+    }
+    
+    const name = firstName ? `${timeGreeting} ${firstName}!` : `${timeGreeting}!`;
 
     let greeting: string;
     switch (feature) {

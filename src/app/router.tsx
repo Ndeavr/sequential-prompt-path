@@ -177,6 +177,7 @@ import AdminWinningVariantsPage from "@/pages/admin/AdminWinningVariantsPage";
 // Alex Conversation Guardrails
 import PageAdminAlexConversationRules from "@/pages/admin/PageAdminAlexConversationRules";
 import PageAdminAlexDebugHome from "@/pages/admin/PageAdminAlexDebugHome";
+import PageAdminAlexSpeechTuning from "@/pages/admin/AlexSpeechTuning";
 
 import AdminPredictiveLeads from "@/pages/admin/AdminPredictiveLeads";
 
@@ -753,6 +754,7 @@ export const AppRouter = () => (
       <Route path="/admin/domain-health" element={<ProtectedRoute requiredRole="admin"><PageDomainHealthDashboard /></ProtectedRoute>} />
       <Route path="/admin/alex-guardrails" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexConversationRules /></ProtectedRoute>} />
       <Route path="/admin/alex-debug" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexDebugHome /></ProtectedRoute>} />
+      <Route path="/admin/alex-speech-tuning" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexSpeechTuning /></ProtectedRoute>} />
       <Route path="/admin/seo-articles" element={<ProtectedRoute requiredRole="admin"><AdminSeoArticles /></ProtectedRoute>} />
       <Route path="/admin/bulk-articles" element={<ProtectedRoute requiredRole="admin"><AdminBulkArticlesPage /></ProtectedRoute>} />
       <Route path="/admin/founder-invites" element={<ProtectedRoute requiredRole="admin"><AdminFounderInvites /></ProtectedRoute>} />

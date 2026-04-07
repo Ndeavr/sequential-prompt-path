@@ -15,6 +15,7 @@ import { ALEX_SYSTEM_INSTRUCTION, ALEX_LIVE_CONFIG } from "@/services/alexConfig
 import { createWorkletBlobURL } from "@/services/geminiAudioWorklet";
 import { supabase } from "@/integrations/supabase/client";
 import { isInternalThinking, cleanAlexOutput } from "@/services/alexTranscriptNormalizer";
+import { normalizeUserTranscript, normalizeAlexOutputText } from "@/services/alexPronunciationNormalizer";
 
 interface UseLiveVoiceCallbacks {
   onTranscript?: (text: string) => void;
@@ -265,9 +266,11 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           onmessage: (message: LiveServerMessage) => {
             // Handle model output transcript (what Alex actually says — NOT internal thinking)
             if ((message as any).serverContent?.outputTranscription?.text) {
-              const transcript = (message as any).serverContent.outputTranscription.text;
-              if (!isInternalThinking(transcript)) {
-                callbacksRef.current?.onTranscript?.(cleanAlexOutput(transcript));
+              const rawTranscript = (message as any).serverContent.outputTranscription.text;
+              // Double normalization: clean internal thinking + fix pronunciation
+              if (!isInternalThinking(rawTranscript)) {
+                const cleaned = normalizeAlexOutputText(cleanAlexOutput(rawTranscript));
+                callbacksRef.current?.onTranscript?.(cleaned);
               }
             }
             
@@ -275,11 +278,12 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
             // skip it when audio modality is active to avoid duplicate transcripts.
             // outputTranscription above is the actual spoken words.
 
-            // Handle user transcript (input transcription)
+            // Handle user transcript (input transcription) — normalize STT errors
             if ((message as any).serverContent?.inputTranscription?.text) {
-              const transcript = (message as any).serverContent.inputTranscription.text;
-              console.log("[GeminiLive] 🎤 User transcript:", transcript);
-              callbacksRef.current?.onUserTranscript?.(transcript);
+              const rawTranscript = (message as any).serverContent.inputTranscription.text;
+              const normalized = normalizeUserTranscript(rawTranscript);
+              console.log("[GeminiLive] 🎤 User transcript:", rawTranscript, "→", normalized);
+              callbacksRef.current?.onUserTranscript?.(normalized);
             }
 
             // Handle audio output
