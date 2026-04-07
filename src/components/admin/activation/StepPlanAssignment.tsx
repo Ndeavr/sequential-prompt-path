@@ -38,7 +38,7 @@ export default function StepPlanAssignment({ state, updateState, addEvent }: Pro
     queryFn: async () => {
       const { data } = await supabase
         .from("plan_catalog")
-        .select("*")
+        .select("code, name, monthly_price, features_json, appointments_range_min, appointments_range_max, id, is_active, badge_label")
         .eq("is_active", true)
         .order("monthly_price", { ascending: true });
       return data || [];
