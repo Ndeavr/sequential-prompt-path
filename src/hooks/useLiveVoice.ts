@@ -7,7 +7,7 @@
  * 
  * Uses AudioWorklet for reliable mic capture (fallback to ScriptProcessorNode).
  */
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { GoogleGenAI, Modality } from "@google/genai";
 import type { LiveServerMessage } from "@google/genai";
 import { encodeToBase64, decodeFromBase64, decodeAudioData } from "@/services/geminiAudioCodec";
