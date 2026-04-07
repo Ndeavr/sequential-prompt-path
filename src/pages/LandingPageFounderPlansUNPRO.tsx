@@ -2,6 +2,7 @@
 import { Helmet } from "react-helmet-async";
 import { useFounderPlans } from "@/hooks/useFounderPlans";
 import HeroSectionFounderScarcity from "@/components/founder-plans/HeroSectionFounderScarcity";
+import SectionCheckAvailabilityFounder from "@/components/founder-plans/SectionCheckAvailabilityFounder";
 import SectionPlanComparisonEliteSignature from "@/components/founder-plans/SectionPlanComparisonEliteSignature";
 import SectionValueStackBreakdown from "@/components/founder-plans/SectionValueStackBreakdown";
 import SectionWhyFounderPlans from "@/components/founder-plans/SectionWhyFounderPlans";
@@ -24,6 +25,7 @@ export default function LandingPageFounderPlansUNPRO() {
       </Helmet>
       <div className="min-h-screen bg-background">
         <HeroSectionFounderScarcity elite={elite} signature={signature} isLoading={isLoading} />
+        <SectionCheckAvailabilityFounder />
         <SectionPlanComparisonEliteSignature elite={elite} signature={signature} isLoading={isLoading} />
         <SectionValueStackBreakdown />
         <SectionWhyFounderPlans />
