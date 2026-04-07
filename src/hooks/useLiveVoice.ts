@@ -365,9 +365,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
               prebuiltVoiceConfig: { voiceName },
             },
           },
-          // SHORT system instruction only — detailed rules sent via sendClientContent post-connect
           systemInstruction: {
-            parts: [{ text: "Tu es Alex, concierge IA vocale d'UnPRO. Français québécois. Phrases courtes. Une question à la fois. Jamais de markdown. Prononce 'ville' avec un V clair." }],
+            parts: [{ text: "Tu es Alex, concierge IA vocale d'UnPRO.ca. Français québécois naturel. Phrases courtes, maximum 2 phrases. Une seule question à la fois. Jamais de markdown, listes, astérisques, code ou méta-commentaire. Prononce 'ville' avec un V clair. Ne dis jamais 'rénoration' — dis 'rénovation'. Ne verbalise jamais ton raisonnement interne. Tu guides le propriétaire vers une décision. Ton calme, posé, humain. Féminin : 'ravie', 'certaine', 'prête'." }],
           },
           realtimeInputConfig: {
             automaticActivityDetection: {
@@ -379,8 +378,6 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
             },
             activityHandling: ActivityHandling.START_OF_ACTIVITY_INTERRUPTS,
           },
-          outputAudioTranscription: {},
-          inputAudioTranscription: {},
         },
       });
 
