@@ -330,51 +330,6 @@ export default function HomeownerPlans() {
 
   return (
     <section className="px-5 py-16 md:py-24" id="homeowner-plans">
-      {/* ─── HERO ─── */}
-      <div className="max-w-5xl mx-auto text-center mb-14">
-        <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-          <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 bg-primary/8 text-primary text-sm font-semibold mb-5">
-            <Home className="h-3.5 w-3.5" /> Pour les propriétaires
-          </div>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-foreground leading-tight">
-            Choisissez le niveau d'accompagnement<br className="hidden md:block" /> qui convient à votre maison.
-          </h2>
-          <p className="text-muted-foreground mt-4 max-w-2xl mx-auto text-base md:text-lg leading-relaxed">
-            UNPRO vous aide à voir plus clair, comparer intelligemment, éviter les angles morts et garder votre maison organisée au même endroit.
-          </p>
-
-          {/* Microproof */}
-          <div className="flex flex-wrap justify-center gap-4 mt-6">
-            {["Vérifiez plus vite", "Comparez mieux", "Décidez avec plus de confiance"].map((t) => (
-              <span key={t} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                <CheckCircle2 className="h-3.5 w-3.5 text-success" /> {t}
-              </span>
-            ))}
-          </div>
-
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
-            <Button asChild size="lg" className="rounded-xl shadow-glow px-8">
-              <Link to="/auth">Commencer gratuitement <ArrowRight className="h-4 w-4 ml-1.5" /></Link>
-            </Button>
-            <Button
-              variant="ghost"
-              size="lg"
-              className="rounded-xl text-muted-foreground hover:text-foreground"
-              onClick={() => {
-                setShowComparison(true);
-                document.getElementById("comparison-matrix")?.scrollIntoView({ behavior: "smooth" });
-              }}
-            >
-              Comparer les plans <ChevronDown className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-
-          <p className="text-[11px] text-muted-foreground/60 mt-4">
-            Pas de pression. Commencez avec Découverte, passez à Plus ou Signature quand vous en voyez la valeur.
-          </p>
-        </motion.div>
-      </div>
 
       {/* ─── PLAN CARDS ─── */}
       <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-5 md:gap-4 mb-16 md:items-stretch">
