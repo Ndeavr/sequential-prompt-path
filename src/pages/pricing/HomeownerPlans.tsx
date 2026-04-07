@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
+import HomeownerCheckoutDrawer from "@/components/pricing/HomeownerCheckoutDrawer";
 import {
   Accordion,
   AccordionContent,
@@ -40,6 +41,7 @@ interface Plan {
   badge?: { label: string; type: "popular" | "premium" | "neutral" };
   popular?: boolean;
   premium?: boolean;
+  onCheckout?: () => void;
 }
 
 const PLANS: Plan[] = [
@@ -273,22 +275,33 @@ function CardPlan({ plan, index }: { plan: Plan; index: number }) {
 
         {/* CTA */}
         <div className="mt-auto space-y-2">
-          <Button
-            asChild
-            size="lg"
-            variant={isPopular ? "default" : isPremium ? "default" : "outline"}
-            className={`w-full rounded-xl text-sm font-bold ${
-              isPopular
-                ? "shadow-glow bg-primary hover:bg-primary/90"
-                : isPremium
-                ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground"
-                : ""
-            }`}
-          >
-            <Link to={plan.ctaLink}>
+          {plan.price === 0 ? (
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="w-full rounded-xl text-sm font-bold"
+            >
+              <Link to={plan.ctaLink}>
+                {plan.cta} <ArrowRight className="h-4 w-4 ml-1.5" />
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              size="lg"
+              variant="default"
+              onClick={() => plan.onCheckout?.()}
+              className={`w-full rounded-xl text-sm font-bold ${
+                isPopular
+                  ? "shadow-glow bg-primary hover:bg-primary/90"
+                  : isPremium
+                  ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+                  : ""
+              }`}
+            >
               {plan.cta} <ArrowRight className="h-4 w-4 ml-1.5" />
-            </Link>
-          </Button>
+            </Button>
+          )}
           <p className="text-[11px] text-muted-foreground/70 text-center">{plan.microcopy}</p>
         </div>
       </div>
@@ -327,13 +340,33 @@ function ComparisonMatrix() {
 /* ─── Main Component ─── */
 export default function HomeownerPlans() {
   const [showComparison, setShowComparison] = useState(false);
+  const [checkoutPlan, setCheckoutPlan] = useState<{ code: "plus" | "signature"; name: string; price: number } | null>(null);
+
+  // Add onCheckout callbacks to plans
+  const plansWithCheckout = PLANS.map((p) => ({
+    ...p,
+    onCheckout: p.price > 0 ? () => setCheckoutPlan({
+      code: p.code === "homeowners_signature" ? "signature" : "plus",
+      name: p.name,
+      price: p.price,
+    }) : undefined,
+  }));
 
   return (
     <section className="px-5 py-16 md:py-24" id="homeowner-plans">
 
+      {/* Checkout Drawer */}
+      <HomeownerCheckoutDrawer
+        open={!!checkoutPlan}
+        onOpenChange={(open) => !open && setCheckoutPlan(null)}
+        planCode={checkoutPlan?.code || "plus"}
+        planName={checkoutPlan?.name || "Plus"}
+        price={checkoutPlan?.price || 49}
+      />
+
       {/* ─── PLAN CARDS ─── */}
       <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-5 md:gap-4 mb-16 md:items-stretch">
-        {PLANS.map((plan, i) => (
+        {plansWithCheckout.map((plan, i) => (
           <CardPlan key={plan.code} plan={plan} index={i} />
         ))}
       </div>

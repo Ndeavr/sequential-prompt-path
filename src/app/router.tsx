@@ -58,6 +58,7 @@ const CompareQuotesPage = lazy(() => import("@/pages/CompareQuotesPage"));
 const ContractorOnboardingPage = lazy(() => import("@/pages/ContractorOnboardingPage"));
 const OnboardingFlow = lazy(() => import("@/pages/OnboardingFlow"));
 const PricingPage = lazy(() => import("@/pages/PricingPage"));
+const PageHomeownerWelcome = lazy(() => import("@/pages/proprietaire/PageHomeownerWelcome"));
 const AIPPScorePage = lazy(() => import("@/pages/AIPPScorePage"));
 const MatchingResultsPage = lazy(() => import("@/pages/MatchingResultsPage"));
 const ContractorComparisonPage = lazy(() => import("@/pages/ContractorComparisonPage"));
@@ -465,6 +466,7 @@ export const AppRouter = () => (
 
         <Route path="/homeowners" element={<HomeownersPage />} />
         <Route path="/proprietaires" element={<HomeownersPage />} />
+        <Route path="/proprietaire/bienvenue" element={<PageHomeownerWelcome />} />
         <Route path="/owner-universe" element={<OwnerMenuPreviewPage />} />
         <Route path="/professionals" element={<ProfessionalsPage />} />
         <Route path="/entrepreneurs" element={<PageEntrepreneurJoin />} />
