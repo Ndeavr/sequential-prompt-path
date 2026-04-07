@@ -118,8 +118,7 @@ async function tryV1(
 
   const body = {
     config: {
-      encoding: "LINEAR16",
-      sampleRateHertz: 16000,
+      encoding: "WEBM_OPUS",
       languageCode: locale || "fr-CA",
       enableAutomaticPunctuation: true,
       enableWordConfidence: true,
