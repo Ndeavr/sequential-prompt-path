@@ -156,28 +156,30 @@ export const ALEX_LIVE_CONFIG = {
 } as const;
 
 /**
- * Greeting déterministe.
- * À injecter AVANT le texte du modèle.
+ * Greeting déterministe — utilise le moteur de salutation temporelle.
+ * Bonjour (5h-11h), Bon après-midi (12h-17h), Bonsoir (18h-4h).
  */
 export function buildAlexGreeting(input: AlexGreetingInput): string {
   const spokenName =
     input.preferredSpokenName?.trim() || input.firstName?.trim() || "";
   const isReturning = Boolean(input.isReturningUser);
-  const hour = input.localHour ?? 9;
+  const hour = input.localHour ?? new Date().getHours();
 
   if (isReturning) {
     return spokenName ? `Rebonjour ${spokenName}.` : "Rebonjour.";
   }
 
-  if (hour < 12) {
-    return spokenName ? `Bonjour ${spokenName}.` : "Bonjour.";
+  // Time-based greeting
+  let greeting: string;
+  if (hour >= 5 && hour < 12) {
+    greeting = "Bonjour";
+  } else if (hour >= 12 && hour < 18) {
+    greeting = "Bon après-midi";
+  } else {
+    greeting = "Bonsoir";
   }
 
-  if (hour < 18) {
-    return spokenName ? `Bonjour ${spokenName}.` : "Bonjour.";
-  }
-
-  return spokenName ? `Bonsoir ${spokenName}.` : "Bonsoir.";
+  return spokenName ? `${greeting} ${spokenName}.` : `${greeting}.`;
 }
 
 /**
