@@ -109,9 +109,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     if (!sessionRef.current) return;
     const base64 = encodeToBase64(new Uint8Array(int16Data.buffer));
     try {
-      // Use new `audio` field instead of deprecated `media`
       sessionRef.current.sendRealtimeInput({
-        audio: { data: base64, mimeType: "audio/pcm;rate=16000" },
+        media: { data: base64, mimeType: "audio/pcm;rate=16000" },
       });
       audioChunksSent.current++;
       if (audioChunksSent.current === 1) {
