@@ -151,6 +151,16 @@ export default function SectionPlanRecommendation({ results, onActivate }: Props
             </p>
           )}
         </div>
+        {/* Promo code link */}
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => navigate(`/checkout?plan=${recommended}`)}
+            className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors underline underline-offset-4"
+          >
+            <Tag className="w-4 h-4" />
+            Vous avez un code promo? Appliquez-le au paiement
+          </button>
+        </div>
       </div>
     </section>
   );
