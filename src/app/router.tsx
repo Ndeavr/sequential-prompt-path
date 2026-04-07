@@ -521,6 +521,7 @@ export const AppRouter = () => (
         <Route path="/unsubscribe" element={<Unsubscribe />} />
         <Route path="/unlock" element={<UnlockPage />} />
         <Route path="/fondateur" element={<FounderPage />} />
+        <Route path="/fondateur/plans" element={<LandingPageFounderPlans />} />
 
         {/* Public Property Page */}
         <Route path="/maison/:slug" element={<PublicPropertyPage />} />
