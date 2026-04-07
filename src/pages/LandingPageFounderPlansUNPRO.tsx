@@ -25,6 +25,7 @@ export default function LandingPageFounderPlansUNPRO() {
       </Helmet>
       <div className="min-h-screen bg-background">
         <HeroSectionFounderScarcity elite={elite} signature={signature} isLoading={isLoading} />
+        <SectionCheckAvailabilityFounder />
         <SectionPlanComparisonEliteSignature elite={elite} signature={signature} isLoading={isLoading} />
         <SectionValueStackBreakdown />
         <SectionWhyFounderPlans />
