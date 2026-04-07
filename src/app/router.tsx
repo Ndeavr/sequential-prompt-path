@@ -444,6 +444,7 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/pricing" element={<PageEntrepreneurPricing />} />
         <Route path="/entrepreneur/pricing-calculator" element={<PagePricingCalculator />} />
         <Route path="/entrepreneur/plan-result" element={<PagePlanResult />} />
+        <Route path="/entrepreneurs/calculateur" element={<PageEntrepreneurGoalToPlanLanding />} />
         <Route path="/entrepreneur/payment-success" element={<PagePaymentSuccess />} />
         <Route path="/entrepreneur/payment-cancelled" element={<PagePaymentCancelled />} />
         <Route path="/entrepreneur/dashboard" element={<PageEntrepreneurDashboardLite />} />
