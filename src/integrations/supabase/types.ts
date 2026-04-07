@@ -19001,6 +19001,30 @@ export type Database = {
           },
         ]
       }
+      entrepreneur_cta_events: {
+        Row: {
+          created_at: string
+          cta_key: string
+          id: string
+          page_section: string | null
+          visitor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          cta_key: string
+          id?: string
+          page_section?: string | null
+          visitor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          cta_key?: string
+          id?: string
+          page_section?: string | null
+          visitor_id?: string | null
+        }
+        Relationships: []
+      }
       entrepreneur_entry_logs: {
         Row: {
           action: string
@@ -19145,6 +19169,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      entrepreneur_interest_events: {
+        Row: {
+          category: string | null
+          city: string | null
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json | null
+          visitor_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          city?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          payload?: Json | null
+          visitor_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          city?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json | null
+          visitor_id?: string | null
+        }
+        Relationships: []
       }
       entrepreneur_leads: {
         Row: {
@@ -38246,6 +38300,42 @@ export type Database = {
           skipped_count?: number
           total_combinations?: number
           updated_count?: number
+        }
+        Relationships: []
+      }
+      territory_interest_requests: {
+        Row: {
+          business_name: string | null
+          category: string | null
+          city: string
+          contact_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          phone: string | null
+          requested_exclusivity: boolean | null
+        }
+        Insert: {
+          business_name?: string | null
+          category?: string | null
+          city: string
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          phone?: string | null
+          requested_exclusivity?: boolean | null
+        }
+        Update: {
+          business_name?: string | null
+          category?: string | null
+          city?: string
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          phone?: string | null
+          requested_exclusivity?: boolean | null
         }
         Relationships: []
       }
