@@ -54,7 +54,7 @@ const SmartHeader = () => {
   const handleMegaLeave = useCallback(() => setActiveMega(null), []);
 
   const isGuest = !ctx;
-  const isHome = pathname === "/";
+  const isHome = pathname === "/" || pathname === "/index";
   const logoTo = getLogoDestination(activeRole as UserRole | "guest");
   const navItems = headerNavByRole[activeRole as UserRole | "guest"] || headerNavByRole.guest;
 

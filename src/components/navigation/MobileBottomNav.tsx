@@ -22,7 +22,8 @@ const MobileBottomNav = () => {
   const tabs = mobileTabsByRole[(activeRole as UserRole | "guest")] || mobileTabsByRole.guest;
 
   const isActive = (to: string) => {
-    if (to === "/" || to === "/dashboard" || to === "/pro" || to === "/admin") return pathname === to;
+    if (to === "/") return pathname === "/" || pathname === "/index";
+    if (to === "/dashboard" || to === "/pro" || to === "/admin") return pathname === to;
     return pathname.startsWith(to);
   };
 
