@@ -1,5 +1,6 @@
-import { Crown, Check, Star, Zap, Shield, Sparkles, CalendarPlus } from "lucide-react";
+import { Crown, Check, Star, Zap, Shield, Sparkles, CalendarPlus, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import type { GoalResults } from "@/hooks/useGoalToPlanEngine";
 
 interface Props {
@@ -23,6 +24,7 @@ const ADDON_PACKAGES = [
 ];
 
 export default function SectionPlanRecommendation({ results, onActivate }: Props) {
+  const navigate = useNavigate();
   const fmt = (n: number) => n.toLocaleString("fr-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 });
   const recommended = results.recommendedPlan;
   const recPlan = PLANS.find(p => p.code === recommended);
@@ -62,7 +64,7 @@ export default function SectionPlanRecommendation({ results, onActivate }: Props
                 <p className="text-xs text-muted-foreground mt-1">{plan.includedRdv} RDV inclus/mois</p>
                 {isRec && (
                   <Button onClick={onActivate} size="sm" className="w-full mt-4 bg-gradient-to-r from-primary to-accent text-primary-foreground">
-                    Activer
+                    Activer {plan.price}$/mo
                   </Button>
                 )}
               </div>
@@ -148,6 +150,16 @@ export default function SectionPlanRecommendation({ results, onActivate }: Props
               <Crown className="w-3 h-3" /> Exclusivité territoriale possible
             </p>
           )}
+        </div>
+        {/* Promo code link */}
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => navigate(`/checkout?plan=${recommended}`)}
+            className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors underline underline-offset-4"
+          >
+            <Tag className="w-4 h-4" />
+            Vous avez un code promo? Appliquez-le au paiement
+          </button>
         </div>
       </div>
     </section>
