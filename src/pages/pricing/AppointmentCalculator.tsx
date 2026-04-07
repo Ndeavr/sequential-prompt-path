@@ -23,7 +23,7 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip } from 
 import {
   saveCalculatorSession, recommendPlan, estimateAppointments, estimateBudget,
 } from "@/services/calculatorSessionService";
-import { useJveTrades, useJveCities, useJobValueEstimate } from "@/hooks/useJobValueEngine";
+import { useJveTrades, useJveCities, useJveTradeSpecialties, useJobValueEstimate } from "@/hooks/useJobValueEngine";
 
 // ─── Constants ───
 
