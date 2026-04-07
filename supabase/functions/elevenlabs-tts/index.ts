@@ -19,12 +19,39 @@ serve(async (req) => {
       throw new Error("ELEVENLABS_API_KEY is not configured");
     }
 
-    const { text, voiceProfile } = await req.json();
+    const { text, voiceProfile, locale } = await req.json();
     if (!text || typeof text !== "string") {
       return new Response(JSON.stringify({ error: "text is required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Apply DB pronunciation rules before TTS
+    let processedText = text;
+    try {
+      const sb = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+      const ruleLocale = locale || "fr-CA";
+      const { data: rules } = await sb
+        .from("alex_voice_pronunciation_rules")
+        .select("source_text, replacement_text, phonetic_override")
+        .eq("is_active", true)
+        .or(`locale.eq.${ruleLocale},locale.eq.global`)
+        .order("priority", { ascending: false });
+
+      if (rules?.length) {
+        for (const rule of rules) {
+          const escaped = rule.source_text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          const regex = new RegExp(`\\b${escaped}\\b`, "gi");
+          const replacement = rule.phonetic_override || rule.replacement_text;
+          processedText = processedText.replace(regex, replacement);
+        }
+      }
+    } catch (e) {
+      console.warn("Pronunciation rules fetch failed, using raw text:", e);
     }
 
     // Always use locked Alex voice — no fallback
