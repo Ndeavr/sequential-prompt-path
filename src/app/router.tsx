@@ -487,6 +487,7 @@ export const AppRouter = () => (
         <Route path="/alex/voice" element={<AlexVoicePage />} />
         <Route path="/alex/voice/realtime" element={<AlexVoiceRealtimePage />} />
         <Route path="/alex/command" element={<AlexCommandCenterPage />} />
+        <Route path="/alex/no-match" element={<PageNoMatchFallback />} />
         <Route path="/alex/renovation" element={<RenovationVisualizerPage />} />
         <Route path="/design" element={<DesignPage />} />
         <Route path="/design/share/:token" element={<DesignSharePage />} />
