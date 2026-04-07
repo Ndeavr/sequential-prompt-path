@@ -162,6 +162,21 @@ export default function AppointmentCalculator() {
   // Supabase data
   const { data: trades } = useJveTrades();
   const { data: cities } = useJveCities();
+  const { data: specialties } = useJveTradeSpecialties(tradeSlug || undefined);
+
+  // Build trade + specialty options for autocomplete
+  const tradeOptions = useMemo(() => {
+    const opts: { value: string; label: string; group?: string }[] = [];
+    (trades ?? []).forEach((t: any) => {
+      opts.push({ value: t.slug, label: t.name_fr });
+    });
+    if (specialties?.length) {
+      specialties.forEach((s: any) => {
+        opts.push({ value: s.slug, label: s.name_fr, group: trades?.find((t: any) => t.slug === tradeSlug)?.name_fr });
+      });
+    }
+    return opts;
+  }, [trades, specialties, tradeSlug]);
 
   // User inputs
   const [revenueGoal, setRevenueGoal] = useState([15000]);
