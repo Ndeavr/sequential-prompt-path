@@ -1131,6 +1131,33 @@ export type Database = {
           },
         ]
       }
+      alex_city_aliases: {
+        Row: {
+          active: boolean
+          aliases_json: Json
+          canonical_name: string
+          created_at: string
+          id: string
+          region: string | null
+        }
+        Insert: {
+          active?: boolean
+          aliases_json?: Json
+          canonical_name: string
+          created_at?: string
+          id?: string
+          region?: string | null
+        }
+        Update: {
+          active?: boolean
+          aliases_json?: Json
+          canonical_name?: string
+          created_at?: string
+          id?: string
+          region?: string | null
+        }
+        Relationships: []
+      }
       alex_contact_captures: {
         Row: {
           city: string | null
@@ -1421,6 +1448,36 @@ export type Database = {
           variant_b_conversions?: number | null
           variant_b_impressions?: number | null
           winner?: string | null
+        }
+        Relationships: []
+      }
+      alex_greeting_rules: {
+        Row: {
+          active: boolean
+          created_at: string
+          end_hour: number
+          greeting_text_en: string
+          greeting_text_fr: string
+          id: string
+          start_hour: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          end_hour: number
+          greeting_text_en: string
+          greeting_text_fr: string
+          id?: string
+          start_hour: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          end_hour?: number
+          greeting_text_en?: string
+          greeting_text_fr?: string
+          id?: string
+          start_hour?: number
         }
         Relationships: []
       }
@@ -2243,6 +2300,39 @@ export type Database = {
           },
         ]
       }
+      alex_pronunciation_rules: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          language_code: string
+          normalized_text: string
+          phonetic_hint: string | null
+          priority: number
+          source_text: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          language_code?: string
+          normalized_text: string
+          phonetic_hint?: string | null
+          priority?: number
+          source_text: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          language_code?: string
+          normalized_text?: string
+          phonetic_hint?: string | null
+          priority?: number
+          source_text?: string
+        }
+        Relationships: []
+      }
       alex_response_latency: {
         Row: {
           created_at: string
@@ -2985,6 +3075,51 @@ export type Database = {
           status?: string
           title?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      alex_turn_logs: {
+        Row: {
+          cleaned_transcript: string | null
+          created_at: string
+          detected_language: string | null
+          final_status: string | null
+          id: string
+          interruption_count: number | null
+          pronunciation_fix_count: number | null
+          raw_transcript: string | null
+          response_latency_ms: number | null
+          session_id: string
+          speech_start_delay_ms: number | null
+          turn_index: number
+        }
+        Insert: {
+          cleaned_transcript?: string | null
+          created_at?: string
+          detected_language?: string | null
+          final_status?: string | null
+          id?: string
+          interruption_count?: number | null
+          pronunciation_fix_count?: number | null
+          raw_transcript?: string | null
+          response_latency_ms?: number | null
+          session_id: string
+          speech_start_delay_ms?: number | null
+          turn_index?: number
+        }
+        Update: {
+          cleaned_transcript?: string | null
+          created_at?: string
+          detected_language?: string | null
+          final_status?: string | null
+          id?: string
+          interruption_count?: number | null
+          pronunciation_fix_count?: number | null
+          raw_transcript?: string | null
+          response_latency_ms?: number | null
+          session_id?: string
+          speech_start_delay_ms?: number | null
+          turn_index?: number
         }
         Relationships: []
       }
@@ -3743,6 +3878,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      alex_voice_settings: {
+        Row: {
+          active: boolean
+          created_at: string
+          device_type: string
+          end_speech_threshold: number
+          first_reply_boost: boolean
+          id: string
+          interrupt_threshold_ms: number
+          interruption_enabled: boolean
+          language_default: string
+          language_fallback: string
+          max_silence_gap_ms: number
+          min_speech_ms: number
+          profile_name: string
+          start_speech_threshold: number
+          tts_voice_name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          device_type?: string
+          end_speech_threshold?: number
+          first_reply_boost?: boolean
+          id?: string
+          interrupt_threshold_ms?: number
+          interruption_enabled?: boolean
+          language_default?: string
+          language_fallback?: string
+          max_silence_gap_ms?: number
+          min_speech_ms?: number
+          profile_name: string
+          start_speech_threshold?: number
+          tts_voice_name?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          device_type?: string
+          end_speech_threshold?: number
+          first_reply_boost?: boolean
+          id?: string
+          interrupt_threshold_ms?: number
+          interruption_enabled?: boolean
+          language_default?: string
+          language_fallback?: string
+          max_silence_gap_ms?: number
+          min_speech_ms?: number
+          profile_name?: string
+          start_speech_threshold?: number
+          tts_voice_name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       alex_voice_variant_metrics: {
         Row: {
