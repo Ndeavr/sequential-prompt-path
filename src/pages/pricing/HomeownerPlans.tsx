@@ -134,6 +134,7 @@ interface ComparisonRow {
 
 const COMPARISON: ComparisonRow[] = [
   { label: "Compte propriétaire UNPRO", discovery: "Oui", plus: "Oui", signature: "Oui" },
+  { label: "Adresses (propriétés)", discovery: "1", plus: "Jusqu'à 3", signature: "Jusqu'à 5" },
   { label: "Passeport Maison", discovery: "1", plus: "1 enrichi", signature: "1 enrichi" },
   { label: "Estimation préliminaire de projet", discovery: "Oui", plus: "Oui", signature: "Oui" },
   { label: "Recommandations de professionnels", discovery: "Oui", plus: "Oui", signature: "Oui" },
