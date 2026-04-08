@@ -265,6 +265,7 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
                 isRecommended={preSelectedPlan === plan.code}
                 interval={interval}
                 onCheckout={handleCheckout}
+                onOpenRdvModal={() => setRdvModalOpen(true)}
               />
             ))}
           </div>
