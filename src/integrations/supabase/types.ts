@@ -1571,6 +1571,57 @@ export type Database = {
           },
         ]
       }
+      alex_brand_phonetic_lock: {
+        Row: {
+          brand_key: string
+          context_type: string
+          created_at: string
+          display_text: string
+          id: string
+          is_active: boolean
+          is_forced: boolean
+          language_code: string
+          notes: string | null
+          phonetic_hint: string | null
+          priority: number
+          speech_text: string
+          updated_at: string
+          voice_engine: string | null
+        }
+        Insert: {
+          brand_key?: string
+          context_type?: string
+          created_at?: string
+          display_text?: string
+          id?: string
+          is_active?: boolean
+          is_forced?: boolean
+          language_code?: string
+          notes?: string | null
+          phonetic_hint?: string | null
+          priority?: number
+          speech_text: string
+          updated_at?: string
+          voice_engine?: string | null
+        }
+        Update: {
+          brand_key?: string
+          context_type?: string
+          created_at?: string
+          display_text?: string
+          id?: string
+          is_active?: boolean
+          is_forced?: boolean
+          language_code?: string
+          notes?: string | null
+          phonetic_hint?: string | null
+          priority?: number
+          speech_text?: string
+          updated_at?: string
+          voice_engine?: string | null
+        }
+        Relationships: []
+      }
       alex_city_aliases: {
         Row: {
           active: boolean
@@ -2881,6 +2932,50 @@ export type Database = {
             columns: ["source_thread_id"]
             isOneToOne: false
             referencedRelation: "alex_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_phonetic_events: {
+        Row: {
+          brand_key: string
+          created_at: string
+          engine: string | null
+          id: string
+          language_code: string
+          original_text: string
+          processed_text: string
+          rule_id: string | null
+          success: boolean
+        }
+        Insert: {
+          brand_key?: string
+          created_at?: string
+          engine?: string | null
+          id?: string
+          language_code?: string
+          original_text: string
+          processed_text: string
+          rule_id?: string | null
+          success?: boolean
+        }
+        Update: {
+          brand_key?: string
+          created_at?: string
+          engine?: string | null
+          id?: string
+          language_code?: string
+          original_text?: string
+          processed_text?: string
+          rule_id?: string | null
+          success?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_phonetic_events_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "alex_brand_phonetic_lock"
             referencedColumns: ["id"]
           },
         ]
