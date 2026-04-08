@@ -296,6 +296,10 @@ Deno.serve(async (req) => {
         billing_interval: interval,
         ...(redemptionId && { redemption_id: redemptionId }),
         ...(promoCode && { promo_code: promoCode.toUpperCase() }),
+        ...(appointmentPack && {
+          appointment_pack_size: String(appointmentPack.size),
+          appointment_pack_total_cents: String(appointmentPack.totalPriceCents),
+        }),
       },
       subscription_data: {
         metadata: {
