@@ -20289,6 +20289,72 @@ export type Database = {
         }
         Relationships: []
       }
+      execution_complexity_factors: {
+        Row: {
+          created_at: string
+          factor_key: string
+          factor_label: string
+          id: string
+          is_active: boolean
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          factor_key: string
+          factor_label: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          factor_key?: string
+          factor_label?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: []
+      }
+      execution_decision_rules: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          is_active: boolean
+          max_credit_allowed: number
+          max_score: number
+          min_score: number
+          rule_name: string
+          updated_at: string
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_credit_allowed?: number
+          max_score?: number
+          min_score?: number
+          rule_name: string
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_credit_allowed?: number
+          max_score?: number
+          min_score?: number
+          rule_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       execution_decisions: {
         Row: {
           created_at: string | null
@@ -20296,6 +20362,8 @@ export type Database = {
           decision_reason: string | null
           decision_type: string
           id: string
+          rule_applied: string | null
+          score_snapshot: number | null
           selected_strategy: string | null
           task_id: string
         }
@@ -20305,6 +20373,8 @@ export type Database = {
           decision_reason?: string | null
           decision_type: string
           id?: string
+          rule_applied?: string | null
+          score_snapshot?: number | null
           selected_strategy?: string | null
           task_id: string
         }
@@ -20314,6 +20384,8 @@ export type Database = {
           decision_reason?: string | null
           decision_type?: string
           id?: string
+          rule_applied?: string | null
+          score_snapshot?: number | null
           selected_strategy?: string | null
           task_id?: string
         }
@@ -20540,10 +20612,13 @@ export type Database = {
       }
       execution_tasks: {
         Row: {
+          advanced_score: number | null
+          breakdown_json: Json | null
           created_at: string | null
           current_status: string | null
           estimated_complexity_score: number | null
           estimated_credit_cost: number | null
+          estimated_credits: number | null
           execution_mode: string | null
           id: string
           module_name: string | null
@@ -20553,10 +20628,13 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          advanced_score?: number | null
+          breakdown_json?: Json | null
           created_at?: string | null
           current_status?: string | null
           estimated_complexity_score?: number | null
           estimated_credit_cost?: number | null
+          estimated_credits?: number | null
           execution_mode?: string | null
           id?: string
           module_name?: string | null
@@ -20566,10 +20644,13 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          advanced_score?: number | null
+          breakdown_json?: Json | null
           created_at?: string | null
           current_status?: string | null
           estimated_complexity_score?: number | null
           estimated_credit_cost?: number | null
+          estimated_credits?: number | null
           execution_mode?: string | null
           id?: string
           module_name?: string | null
