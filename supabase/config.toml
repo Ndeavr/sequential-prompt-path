@@ -15,6 +15,10 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.alex-voice]
     verify_jwt = false
+  [functions.agent-router]
+    verify_jwt = false
+  [functions.auto-split-engine]
+    verify_jwt = false
   [functions.analyze-property]
     verify_jwt = false
   [functions.answer-engine]
