@@ -9,16 +9,30 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const publishableKey = Deno.env.get("STRIPE_PUBLISHABLE_KEY");
-  if (!publishableKey) {
+  const publishableKey = Deno.env.get("STRIPE_PUBLISHABLE_KEY") ?? "";
+
+  if (!publishableKey.startsWith("pk_")) {
     return new Response(
-      JSON.stringify({ error: "STRIPE_PUBLISHABLE_KEY not configured" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: "Invalid Stripe publishable key configuration" }),
+      {
+        status: 500,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+        },
+      }
     );
   }
 
   return new Response(
     JSON.stringify({ publishableKey }),
-    { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
+      },
+    }
   );
 });
