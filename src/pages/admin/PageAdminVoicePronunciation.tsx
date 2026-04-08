@@ -1,5 +1,6 @@
 import { useState } from "react";
 import PanelBrandPhoneticLock from "@/components/admin/PanelBrandPhoneticLock";
+import PanelVoiceToneControl from "@/components/admin/PanelVoiceToneControl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { clearPronunciationCache } from "@/services/alexPronunciationRulesService";
