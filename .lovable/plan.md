@@ -1,43 +1,25 @@
 
 
-## Plan: Combined First Payment (Subscription + One-Time RDV Pack)
+## Plan: Footer Text, Remove Duplicate Alex Orb, Fix Tooltip Overlay
 
-### Problem
-The checkout page sends `appointmentPack` data to the edge function, but `create-checkout-session` ignores it entirely. The extra RDV pack (e.g. 720$) is never added to Stripe — only the subscription line item is created.
+### 3 Issues from Screenshots
 
-### Solution
-Add the appointment pack as a **one-time price line item** in the same Stripe Checkout session. Stripe supports mixing `mode: "subscription"` with one-time `price_data` items natively.
+1. **Footer**: Change "Fabriqué au Québec 🍁" to "Made in Québec ⚜️ with ❤️" (blue fleur-de-lys symbol for Québec, red heart)
+2. **Duplicate Alex orb on mobile**: The `AlexConcierge` floating orb (bottom-right) overlaps with the Alex center tab in `MobileBottomNav`. Hide the concierge orb on mobile viewports (`lg:hidden` → only show on desktop).
+3. **"Besoin d'aide" tooltip**: The permanent tooltip covers content underneath. Make it auto-dismiss after ~5 seconds instead of staying forever.
 
 ### Changes
 
-**1. Edge Function: `supabase/functions/create-checkout-session/index.ts`**
+**1. `src/components/navigation/SmartFooter.tsx`** (~line 77-79)
+- Replace `"Fabriqué au Québec 🍁"` with `"Made in Québec ⚜️ with ❤️"`
+- EN version: `"Made in Québec ⚜️ with ❤️"`
+- Show on all screens (remove `hidden sm:inline` restriction)
 
-- Parse `appointmentPack` from request body (`{ size, totalPriceCents, unitPriceCents }`)
-- If present, add a second line item with `price_data` (one-time, CAD):
-  ```
-  {
-    price_data: {
-      currency: "cad",
-      product_data: {
-        name: `${size} rendez-vous à la carte`,
-        metadata: { type: "appointment_pack", size }
-      },
-      unit_amount: totalPriceCents,  // already in cents
-    },
-    quantity: 1
-  }
-  ```
-- Add pack metadata to `checkoutConfig.metadata` (`appointment_pack_size`, `appointment_pack_total_cents`)
-- Store pack info in the `checkout_sessions` DB record (using existing columns or metadata)
-
-**2. Frontend: `src/pages/checkout/PageCheckoutStripe.tsx`** — No changes needed (already sends `appointmentPack`)
-
-### Result
-- User sees one Stripe Checkout with: **999$/mois subscription + 720$ one-time**
-- First charge = 1 719$ + taxes
-- Recurring = 999$/mois
-- The Stripe receipt clearly separates both items
+**2. `src/components/alex/AlexConcierge.tsx`** (~line 227-266)
+- Add `hidden lg:block` to the floating orb button so it only appears on desktop (mobile already has Alex in bottom nav)
+- Make the "Besoin d'aide" tooltip auto-hide after 5 seconds using an `AnimatePresence` exit triggered by a timeout state
 
 ### Files Changed
-1. `supabase/functions/create-checkout-session/index.ts` — Add one-time line item for appointment pack (~15 lines)
+1. `src/components/navigation/SmartFooter.tsx` — Update footer text (1 line)
+2. `src/components/alex/AlexConcierge.tsx` — Hide orb on mobile, auto-dismiss tooltip (small changes in orb section)
 
