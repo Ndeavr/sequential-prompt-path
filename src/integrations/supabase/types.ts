@@ -8228,6 +8228,71 @@ export type Database = {
           },
         ]
       }
+      booking_intents: {
+        Row: {
+          contractor_id: string | null
+          created_at: string
+          datetime: string | null
+          id: string
+          service_type: string | null
+          session_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string
+          datetime?: string | null
+          id?: string
+          service_type?: string | null
+          session_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string
+          datetime?: string | null
+          id?: string
+          service_type?: string | null
+          session_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_intents_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_intents_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_intents_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_intents_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       booking_links: {
         Row: {
           alex_mode: boolean | null
@@ -25954,6 +26019,71 @@ export type Database = {
           },
         ]
       }
+      matchmaking_results: {
+        Row: {
+          city: string | null
+          contractor_id: string | null
+          created_at: string
+          id: string
+          project_type: string | null
+          reason: string | null
+          score: number | null
+          urgency: string | null
+          user_id: string
+        }
+        Insert: {
+          city?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          project_type?: string | null
+          reason?: string | null
+          score?: number | null
+          urgency?: string | null
+          user_id: string
+        }
+        Update: {
+          city?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          project_type?: string | null
+          reason?: string | null
+          score?: number | null
+          urgency?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matchmaking_results_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matchmaking_results_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matchmaking_results_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matchmaking_results_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       media_assets: {
         Row: {
           alt_text: string | null
@@ -32622,6 +32752,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      property_context: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          id: string
+          property_type: string | null
+          updated_at: string
+          user_id: string
+          year_built: number | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          property_type?: string | null
+          updated_at?: string
+          user_id: string
+          year_built?: number | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          property_type?: string | null
+          updated_at?: string
+          user_id?: string
+          year_built?: number | null
+        }
+        Relationships: []
       }
       property_documents: {
         Row: {
@@ -41273,6 +41436,42 @@ export type Database = {
           pressure_type?: string
           recommended_plan_code?: string
           target_project_size_code?: string
+        }
+        Relationships: []
+      }
+      user_context_memory: {
+        Row: {
+          budget_range: string | null
+          created_at: string
+          id: string
+          last_intent: string | null
+          last_session_id: string | null
+          preferred_category: string | null
+          updated_at: string
+          urgency: string | null
+          user_id: string
+        }
+        Insert: {
+          budget_range?: string | null
+          created_at?: string
+          id?: string
+          last_intent?: string | null
+          last_session_id?: string | null
+          preferred_category?: string | null
+          updated_at?: string
+          urgency?: string | null
+          user_id: string
+        }
+        Update: {
+          budget_range?: string | null
+          created_at?: string
+          id?: string
+          last_intent?: string | null
+          last_session_id?: string | null
+          preferred_category?: string | null
+          updated_at?: string
+          urgency?: string | null
+          user_id?: string
         }
         Relationships: []
       }
