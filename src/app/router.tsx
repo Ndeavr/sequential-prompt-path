@@ -217,6 +217,7 @@ const BlogArticlePage = lazy(() => import("@/pages/blog/BlogArticlePage"));
 
 // Condos
 const CondoHomePage = lazy(() => import("@/pages/condos/CondoHomePage"));
+const PageLandingCondoTeaser = lazy(() => import("@/pages/condos/PageLandingCondoTeaser"));
 const CondoLoi16Page = lazy(() => import("@/pages/condos/CondoLoi16Page"));
 const CondoCarnetPage = lazy(() => import("@/pages/condos/CondoCarnetPage"));
 const CondoFondsPage = lazy(() => import("@/pages/condos/CondoFondsPage"));
@@ -863,7 +864,12 @@ export const AppRouter = () => (
         <Route path="/refusal/:slug" element={<RefusalSeoPage />} />
 
         {/* Condos — Public SEO */}
-        <Route path="/condo" element={<CondoHomePage />} />
+        <Route path="/condo" element={<PageLandingCondoTeaser />} />
+        <Route path="/gestion-copropriete-quebec" element={<PageLandingCondoTeaser />} />
+        <Route path="/logiciel-copropriete-quebec" element={<PageLandingCondoTeaser />} />
+        <Route path="/loi-16-copropriete" element={<PageLandingCondoTeaser />} />
+        <Route path="/syndicat-copropriete-autogestion" element={<PageLandingCondoTeaser />} />
+        <Route path="/attestation-copropriete" element={<PageLandingCondoTeaser />} />
         <Route path="/condo/fonds-de-prevoyance" element={<CondoFondsPage />} />
         <Route path="/condo/carnet-entretien" element={<CondoCarnetPage />} />
         <Route path="/condos" element={<CondoHomePage />} />

@@ -9958,6 +9958,39 @@ export type Database = {
           },
         ]
       }
+      condo_lead_magnets: {
+        Row: {
+          created_at: string
+          file_url: string | null
+          id: string
+          is_active: boolean
+          language_code: string
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          is_active?: boolean
+          language_code?: string
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          is_active?: boolean
+          language_code?: string
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       condo_maintenance_tasks: {
         Row: {
           assigned_to: string | null
@@ -10017,6 +10050,42 @@ export type Database = {
           },
         ]
       }
+      condo_page_faqs: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          is_active: boolean
+          language_code: string
+          page_key: string
+          question: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          language_code?: string
+          page_key: string
+          question: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          language_code?: string
+          page_key?: string
+          question?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       condo_profiles: {
         Row: {
           address: string | null
@@ -10074,6 +10143,54 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           year_built?: number | null
+        }
+        Relationships: []
+      }
+      condo_seo_pages: {
+        Row: {
+          body_content: string | null
+          canonical_url: string | null
+          created_at: string
+          h1_title: string
+          id: string
+          intro_text: string | null
+          language_code: string
+          meta_description: string | null
+          publish_status: string
+          schema_payload: Json | null
+          slug: string
+          title_tag: string
+          updated_at: string
+        }
+        Insert: {
+          body_content?: string | null
+          canonical_url?: string | null
+          created_at?: string
+          h1_title: string
+          id?: string
+          intro_text?: string | null
+          language_code?: string
+          meta_description?: string | null
+          publish_status?: string
+          schema_payload?: Json | null
+          slug: string
+          title_tag: string
+          updated_at?: string
+        }
+        Update: {
+          body_content?: string | null
+          canonical_url?: string | null
+          created_at?: string
+          h1_title?: string
+          id?: string
+          intro_text?: string | null
+          language_code?: string
+          meta_description?: string | null
+          publish_status?: string
+          schema_payload?: Json | null
+          slug?: string
+          title_tag?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -10138,6 +10255,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      condo_waitlist_leads: {
+        Row: {
+          building_size_range: string | null
+          campaign_source: string | null
+          city: string | null
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          interest_type: string | null
+          last_name: string | null
+          lead_source: string | null
+          notes: string | null
+          organization_name: string | null
+          phone: string | null
+          role_type: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          building_size_range?: string | null
+          campaign_source?: string | null
+          city?: string | null
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id?: string
+          interest_type?: string | null
+          last_name?: string | null
+          lead_source?: string | null
+          notes?: string | null
+          organization_name?: string | null
+          phone?: string | null
+          role_type?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          building_size_range?: string | null
+          campaign_source?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          interest_type?: string | null
+          last_name?: string | null
+          lead_source?: string | null
+          notes?: string | null
+          organization_name?: string | null
+          phone?: string | null
+          role_type?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       content_assets: {
         Row: {
