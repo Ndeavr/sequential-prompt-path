@@ -7,11 +7,9 @@ import ScrollRestoration from "@/components/ScrollRestoration";
 import BannerContinueFlow from "@/components/flow/BannerContinueFlow";
 
 // Only eagerly load the home page and critical shared pages
+import HomeWithFeatureFlag from "@/components/home-intent/HomeWithFeatureFlag";
 import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
-
-// Intent-based homepage (feature flag)
-const PageHomeIntentUNPRO = lazy(() => import("@/pages/PageHomeIntentUNPRO"));
 
 // Lightweight loading fallback
 const LazyFallback = () => (
