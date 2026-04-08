@@ -1,25 +1,21 @@
 
 
-## Plan: Footer Text, Remove Duplicate Alex Orb, Fix Tooltip Overlay
+## Plan: Enhance Leather Texture Visibility
 
-### 3 Issues from Screenshots
-
-1. **Footer**: Change "Fabriqué au Québec 🍁" to "Made in Québec ⚜️ with ❤️" (blue fleur-de-lys symbol for Québec, red heart)
-2. **Duplicate Alex orb on mobile**: The `AlexConcierge` floating orb (bottom-right) overlaps with the Alex center tab in `MobileBottomNav`. Hide the concierge orb on mobile viewports (`lg:hidden` → only show on desktop).
-3. **"Besoin d'aide" tooltip**: The permanent tooltip covers content underneath. Make it auto-dismiss after ~5 seconds instead of staying forever.
+### What
+Increase the leather texture opacity and adjust blend mode so it's more noticeable against the dark blue background, while preserving the cinematic dark blue base (#060B14) and colored aura gradients.
 
 ### Changes
 
-**1. `src/components/navigation/SmartFooter.tsx`** (~line 77-79)
-- Replace `"Fabriqué au Québec 🍁"` with `"Made in Québec ⚜️ with ❤️"`
-- EN version: `"Made in Québec ⚜️ with ❤️"`
-- Show on all screens (remove `hidden sm:inline` restriction)
+**File: `src/index.css`** (lines 143-153)
+- Increase `opacity` from `0.035` → `0.12` (roughly 3× more visible)
+- Change `mix-blend-mode` from `soft-light` → `overlay` for better contrast on dark surfaces
+- Increase `baseFrequency` slightly from `0.65` → `0.55` for a coarser, more leather-like grain
+- Bump SVG `slope` from `1.8` → `2.2` for sharper texture detail
 
-**2. `src/components/alex/AlexConcierge.tsx`** (~line 227-266)
-- Add `hidden lg:block` to the floating orb button so it only appears on desktop (mobile already has Alex in bottom nav)
-- Make the "Besoin d'aide" tooltip auto-hide after 5 seconds using an `AnimatePresence` exit triggered by a timeout state
+### Result
+A clearly visible but still subtle dark leather texture layered over the dark navy background — tactile depth without washing out the premium dark aesthetic.
 
 ### Files Changed
-1. `src/components/navigation/SmartFooter.tsx` — Update footer text (1 line)
-2. `src/components/alex/AlexConcierge.tsx` — Hide orb on mobile, auto-dismiss tooltip (small changes in orb section)
+1. `src/index.css` — Adjust leather texture parameters (~5 values)
 
