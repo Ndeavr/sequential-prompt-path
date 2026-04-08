@@ -16,11 +16,11 @@ import { supabase } from "@/integrations/supabase/client";
 export default function PageHomeIntentUNPRO() {
   const navigate = useNavigate();
   const { openAlex } = useAlexVoice();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [match, setMatch] = useState<PredictionMatch | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const userName = profile?.first_name || user?.user_metadata?.first_name || null;
+  const userName = user?.user_metadata?.first_name || null;
 
   const handleVoice = useCallback(() => {
     openAlex("intent");
