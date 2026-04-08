@@ -353,6 +353,12 @@ Deno.serve(async (req) => {
       adaptive_pricing_enabled: false,
     });
 
+    if (isEmbedded) {
+      return new Response(JSON.stringify({ clientSecret: session.client_secret }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
