@@ -143,6 +143,9 @@ export default function PageAdminVoicePronunciation() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 space-y-6">
+      {/* Brand Phonetic Lock — Top Priority */}
+      <PanelBrandPhoneticLock />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Prononciation Alex</h1>
