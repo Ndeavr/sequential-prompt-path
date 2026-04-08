@@ -90,6 +90,10 @@ export default function AlexVoiceMode({ feature, onFlowComplete, onDismiss, inli
       case "avis":
         greeting = `${name} Vous aimeriez que j'analyse vos soumissions? Allez-y, décrivez-moi ce que vous avez reçu.`;
         break;
+      case "intent":
+      case "diagnostic":
+        greeting = `${name} Décrivez-moi votre besoin et je vous trouve le bon professionnel.`;
+        break;
       default:
         greeting = `${name} Comment puis-je vous aider aujourd'hui?`;
     }
