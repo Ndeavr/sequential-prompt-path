@@ -144,7 +144,10 @@ export default function PageAdminVoicePronunciation() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 space-y-6">
-      {/* Brand Phonetic Lock — Top Priority */}
+      {/* Voice Tone Standardization — Top Priority */}
+      <PanelVoiceToneControl />
+
+      {/* Brand Phonetic Lock */}
       <PanelBrandPhoneticLock />
 
       <div className="flex items-center justify-between">
