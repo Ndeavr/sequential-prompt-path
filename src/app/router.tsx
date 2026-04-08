@@ -864,7 +864,12 @@ export const AppRouter = () => (
         <Route path="/refusal/:slug" element={<RefusalSeoPage />} />
 
         {/* Condos — Public SEO */}
-        <Route path="/condo" element={<CondoHomePage />} />
+        <Route path="/condo" element={<PageLandingCondoTeaser />} />
+        <Route path="/gestion-copropriete-quebec" element={<PageLandingCondoTeaser />} />
+        <Route path="/logiciel-copropriete-quebec" element={<PageLandingCondoTeaser />} />
+        <Route path="/loi-16-copropriete" element={<PageLandingCondoTeaser />} />
+        <Route path="/syndicat-copropriete-autogestion" element={<PageLandingCondoTeaser />} />
+        <Route path="/attestation-copropriete" element={<PageLandingCondoTeaser />} />
         <Route path="/condo/fonds-de-prevoyance" element={<CondoFondsPage />} />
         <Route path="/condo/carnet-entretien" element={<CondoCarnetPage />} />
         <Route path="/condos" element={<CondoHomePage />} />
