@@ -6423,6 +6423,51 @@ export type Database = {
         }
         Relationships: []
       }
+      appointment_values: {
+        Row: {
+          avg_duration_minutes: number
+          conversion_rate: number
+          created_at: string
+          estimated_value_max: number
+          estimated_value_min: number
+          icon_name: string | null
+          id: string
+          is_active: boolean
+          label_en: string | null
+          label_fr: string
+          project_size: string
+          sort_order: number
+        }
+        Insert: {
+          avg_duration_minutes?: number
+          conversion_rate?: number
+          created_at?: string
+          estimated_value_max?: number
+          estimated_value_min?: number
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean
+          label_en?: string | null
+          label_fr: string
+          project_size: string
+          sort_order?: number
+        }
+        Update: {
+          avg_duration_minutes?: number
+          conversion_rate?: number
+          created_at?: string
+          estimated_value_max?: number
+          estimated_value_min?: number
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean
+          label_en?: string | null
+          label_fr?: string
+          project_size?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           budget_range: string | null
@@ -15169,6 +15214,39 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      contractor_plan_limits: {
+        Row: {
+          allowed_sizes: string[]
+          created_at: string
+          id: string
+          is_active: boolean
+          max_appointments: number
+          min_appointments: number
+          plan_code: string
+          plan_name: string
+        }
+        Insert: {
+          allowed_sizes?: string[]
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_appointments?: number
+          min_appointments?: number
+          plan_code: string
+          plan_name: string
+        }
+        Update: {
+          allowed_sizes?: string[]
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_appointments?: number
+          min_appointments?: number
+          plan_code?: string
+          plan_name?: string
+        }
+        Relationships: []
       }
       contractor_portfolio_projects: {
         Row: {
@@ -31700,6 +31778,39 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      project_types: {
+        Row: {
+          avg_ticket: number
+          category: string
+          category_fr: string
+          created_at: string
+          id: string
+          is_active: boolean
+          size: string
+          urgency_score: number
+        }
+        Insert: {
+          avg_ticket?: number
+          category: string
+          category_fr: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          size: string
+          urgency_score?: number
+        }
+        Update: {
+          avg_ticket?: number
+          category?: string
+          category_fr?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          size?: string
+          urgency_score?: number
+        }
+        Relationships: []
       }
       project_votes: {
         Row: {
