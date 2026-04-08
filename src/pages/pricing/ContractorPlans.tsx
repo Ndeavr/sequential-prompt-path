@@ -16,7 +16,7 @@ import { usePlanCatalog, formatPlanPrice, getYearlySavingsPercent, getMonthlyEqu
 import ModalRendezVousValueExplanation from "@/components/pricing/ModalRendezVousValueExplanation";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useNavigate } from "react-router-dom";
+
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
