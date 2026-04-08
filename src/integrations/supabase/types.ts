@@ -23950,6 +23950,33 @@ export type Database = {
           },
         ]
       }
+      intent_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          input_mode: string
+          matched_contractor_id: string | null
+          session_status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          input_mode?: string
+          matched_contractor_id?: string | null
+          session_status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          input_mode?: string
+          matched_contractor_id?: string | null
+          session_status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       jve_calculator_sessions: {
         Row: {
           city_id: string | null
@@ -30199,6 +30226,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      prediction_matches: {
+        Row: {
+          contractor_id: string | null
+          created_at: string
+          estimated_delay: string | null
+          estimated_price_max: number | null
+          estimated_price_min: number | null
+          id: string
+          intent_id: string | null
+          score: number | null
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string
+          estimated_delay?: string | null
+          estimated_price_max?: number | null
+          estimated_price_min?: number | null
+          id?: string
+          intent_id?: string | null
+          score?: number | null
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string
+          estimated_delay?: string | null
+          estimated_price_max?: number | null
+          estimated_price_min?: number | null
+          id?: string
+          intent_id?: string | null
+          score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prediction_matches_intent_id_fkey"
+            columns: ["intent_id"]
+            isOneToOne: false
+            referencedRelation: "user_intents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pricing_categories: {
         Row: {
@@ -41314,6 +41382,36 @@ export type Database = {
           session_id?: string
           success?: boolean | null
           time_to_first_input_ms?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_intents: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          intent_type: string | null
+          raw_input: string
+          urgency_level: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          intent_type?: string | null
+          raw_input: string
+          urgency_level?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          intent_type?: string | null
+          raw_input?: string
+          urgency_level?: string | null
           user_id?: string | null
         }
         Relationships: []

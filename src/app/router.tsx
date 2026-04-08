@@ -7,8 +7,12 @@ import ScrollRestoration from "@/components/ScrollRestoration";
 import BannerContinueFlow from "@/components/flow/BannerContinueFlow";
 
 // Only eagerly load the home page and critical shared pages
+import HomeWithFeatureFlag from "@/components/home-intent/HomeWithFeatureFlag";
 import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
+
+// Intent homepage (direct route for testing)
+const PageHomeIntentUNPRO = lazy(() => import("@/pages/PageHomeIntentUNPRO"));
 
 // Lightweight loading fallback
 const LazyFallback = () => (
@@ -413,11 +417,12 @@ export const AppRouter = () => (
     <Suspense fallback={<LazyFallback />}>
       <Routes>
         {/* Redirects for common mismatched entry points */}
-        <Route path="/index" element={<Home />} />
+        <Route path="/index" element={<HomeWithFeatureFlag />} />
         <Route path="/entrepreneur/aipp-analysis" element={<PageAIPPAnalysisLoading />} />
 
         {/* Public */}
-        <Route path="/" element={<Home />} />
+        <Route path="/home-intent" element={<Suspense fallback={<LazyFallback />}><PageHomeIntentUNPRO /></Suspense>} />
+        <Route path="/" element={<HomeWithFeatureFlag />} />
         <Route path="/manifeste" element={<Suspense fallback={<LazyFallback />}><PageManifesto /></Suspense>} />
         <Route path="/cest-quoi-unpro" element={<Suspense fallback={<LazyFallback />}><PageUnproFAQ25 /></Suspense>} />
         <Route path="/go" element={<PageAdLandingAipp />} />
