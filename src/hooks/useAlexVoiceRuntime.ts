@@ -11,6 +11,7 @@
  */
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { alexAudioChannel, type AudioState } from '@/services/alexSingleAudioChannel';
+import { preprocessTextForTone, logVoiceRender } from '@/services/alex/alexVoiceToneService';
 
 const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
