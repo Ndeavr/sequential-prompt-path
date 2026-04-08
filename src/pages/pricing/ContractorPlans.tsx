@@ -172,6 +172,7 @@ function PlanCard({ plan, index, isRecommended, interval, onCheckout, onOpenRdvM
 export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?: string | null }) {
   const [loading, setLoading] = useState<string | null>(null);
   const [interval, setInterval] = useState<BillingInterval>("year");
+  const [rdvModalOpen, setRdvModalOpen] = useState(false);
   const { data: plans, isLoading } = usePlanCatalog();
 
   const handleCheckout = async (planCode: string) => {
