@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     const userId = claimsData.claims.sub;
     const userEmail = claimsData.claims.email as string;
 
-    const { planId, billingInterval, successUrl, cancelUrl, promoCode } = await req.json();
+    const { planId, billingInterval, successUrl, cancelUrl, promoCode, appointmentPack } = await req.json();
     const interval: "month" | "year" = billingInterval === "year" ? "year" : "month";
 
     const serviceClient = createClient(
@@ -263,11 +263,29 @@ Deno.serve(async (req) => {
       customerId = customer.id;
     }
 
+    // Build line items
+    const lineItems: any[] = [{ price: resolvedPriceId, quantity: 1 }];
+
+    // Add one-time appointment pack if present
+    if (appointmentPack && appointmentPack.totalPriceCents > 0) {
+      lineItems.push({
+        price_data: {
+          currency: "cad",
+          product_data: {
+            name: `${appointmentPack.size} rendez-vous à la carte`,
+            metadata: { type: "appointment_pack", size: String(appointmentPack.size) },
+          },
+          unit_amount: appointmentPack.totalPriceCents,
+        },
+        quantity: 1,
+      });
+    }
+
     // Build checkout config
     const checkoutConfig: any = {
       customer: customerId,
       mode: "subscription",
-      line_items: [{ price: resolvedPriceId, quantity: 1 }],
+      line_items: lineItems,
       success_url:
         successUrl || `${req.headers.get("origin")}/pro/billing?success=true`,
       cancel_url:
@@ -278,6 +296,10 @@ Deno.serve(async (req) => {
         billing_interval: interval,
         ...(redemptionId && { redemption_id: redemptionId }),
         ...(promoCode && { promo_code: promoCode.toUpperCase() }),
+        ...(appointmentPack && {
+          appointment_pack_size: String(appointmentPack.size),
+          appointment_pack_total_cents: String(appointmentPack.totalPriceCents),
+        }),
       },
       subscription_data: {
         metadata: {
