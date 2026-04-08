@@ -34,12 +34,13 @@ const PLAN_ICONS: Record<string, React.ElementType> = {
   signature: Shield,
 };
 
-function PlanCard({ plan, index, isRecommended, interval, onCheckout }: {
+function PlanCard({ plan, index, isRecommended, interval, onCheckout, onOpenRdvModal }: {
   plan: CatalogPlan;
   index: number;
   isRecommended: boolean;
   interval: BillingInterval;
   onCheckout: (planCode: string) => void;
+  onOpenRdvModal: () => void;
 }) {
   const isHighlighted = isRecommended || plan.highlighted;
   const Icon = PLAN_ICONS[plan.code] || Users;
