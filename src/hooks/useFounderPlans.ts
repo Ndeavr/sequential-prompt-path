@@ -78,7 +78,7 @@ export function useFounderCheckout() {
     }
 
     const { url } = await res.json();
-    window.open(url, "_blank");
+    window.location.href = url;
   };
 
   return { checkout };

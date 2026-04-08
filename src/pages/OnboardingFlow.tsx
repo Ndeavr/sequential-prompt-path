@@ -179,7 +179,7 @@ export default function OnboardingFlow() {
         console.error("Checkout error:", error);
         return;
       }
-      window.open(data.url, "_blank");
+      window.location.href = data.url;
     } catch (err) {
       console.error("Stripe checkout error:", err);
       toast.error("Erreur de paiement. Réessayez.");
