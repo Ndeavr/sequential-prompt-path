@@ -236,26 +236,21 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
               <Skeleton key={i} className="h-[420px] rounded-2xl" />
             ))}
           </div>
-        ) : selectedPlan ? (
-          /* Embedded checkout mode: show selected plan summary + Stripe form */
-          <div ref={checkoutRef}>
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="max-w-2xl mx-auto"
-            >
-              <div>
-                <InlineStripeCheckout
-                  planCode={selectedPlan.code}
-                  planName={selectedPlan.name}
-                  interval={interval}
-                  basePrice={interval === "year" ? Math.round(selectedPlan.yearlyPrice / 12) : selectedPlan.monthlyPrice}
-                  onCancel={handleCancelCheckout}
-                />
-              </div>
-            </motion.div>
-          </div>
         ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            {(plans ?? []).map((plan, i) => (
+              <PlanCard
+                key={plan.code}
+                plan={plan}
+                index={i}
+                isRecommended={preSelectedPlan === plan.code}
+                interval={interval}
+                onCheckout={handleCheckout}
+                onOpenRdvModal={() => setRdvModalOpen(true)}
+              />
+            ))}
+          </div>
+        )}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {(plans ?? []).map((plan, i) => (
               <PlanCard
