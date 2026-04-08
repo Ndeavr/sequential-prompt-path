@@ -2,7 +2,7 @@
  * UNPRO — Contractor Plans with billing toggle, appointments & pre-selection
  * Now fetches plan data dynamically from plan_catalog table.
  */
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,8 +11,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { usePlanCatalog, formatPlanPrice, getYearlySavingsPercent, getMonthlyEquivalent, type BillingInterval, type CatalogPlan } from "@/hooks/usePlanCatalog";
 import ModalRendezVousValueExplanation from "@/components/pricing/ModalRendezVousValueExplanation";
 import { cn } from "@/lib/utils";
