@@ -68,6 +68,8 @@ export default function HelpPopup() {
     }
   };
 
+  if (isCheckout) return null;
+
   return (
     <AnimatePresence>
       {visible && (
