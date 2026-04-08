@@ -37,6 +37,7 @@ const PageAlexGoalsStrategy = lazy(() => import("@/pages/goals/PageAlexGoalsStra
 const PageCheckoutStripe = lazy(() => import("@/pages/checkout/PageCheckoutStripe"));
 const PageCheckoutSuccess = lazy(() => import("@/pages/checkout/PageCheckoutSuccess"));
 const PageActivationStart = lazy(() => import("@/pages/checkout/PageActivationStart"));
+const PageCheckoutNativeScrollable = lazy(() => import("@/pages/checkout/PageCheckoutNativeScrollable"));
 const LandingContractorAIActivation = lazy(() => import("@/pages/acquisition/LandingContractorAIActivation"));
 const Search = lazy(() => import("@/pages/Search"));
 const ContractorProfile = lazy(() => import("@/pages/ContractorProfile"));
