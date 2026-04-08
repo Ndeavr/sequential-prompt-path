@@ -370,6 +370,8 @@ const PageOutboundAnalytics = lazy(() => import("@/pages/admin/outbound/PageOutb
 const PageOutboundSuppressionCenter = lazy(() => import("@/pages/admin/outbound/PageOutboundSuppressionCenter"));
 const PageOutboundLandingPages = lazy(() => import("@/pages/admin/outbound/PageOutboundLandingPages"));
 const PageAdminExecutionControl = lazy(() => import("@/pages/admin/PageAdminExecutionControl"));
+const PageAdminDominanceControl = lazy(() => import("@/pages/admin/PageAdminDominanceControl"));
+const PageServiceEntityLanding = lazy(() => import("@/pages/seo/PageServiceEntityLanding"));
 const MesProprietesPage = lazy(() => import("@/pages/MesProprietesPage"));
 const AnalyserSoumissionsPage = lazy(() => import("@/pages/AnalyserSoumissionsPage"));
 const PageRecruitmentCloser = lazy(() => import("@/pages/recruitment/PageRecruitmentCloser"));
