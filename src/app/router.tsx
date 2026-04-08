@@ -369,6 +369,7 @@ const PageOutboundMailboxes = lazy(() => import("@/pages/admin/outbound/PageOutb
 const PageOutboundAnalytics = lazy(() => import("@/pages/admin/outbound/PageOutboundAnalytics"));
 const PageOutboundSuppressionCenter = lazy(() => import("@/pages/admin/outbound/PageOutboundSuppressionCenter"));
 const PageOutboundLandingPages = lazy(() => import("@/pages/admin/outbound/PageOutboundLandingPages"));
+const PageAdminExecutionControl = lazy(() => import("@/pages/admin/PageAdminExecutionControl"));
 const MesProprietesPage = lazy(() => import("@/pages/MesProprietesPage"));
 const AnalyserSoumissionsPage = lazy(() => import("@/pages/AnalyserSoumissionsPage"));
 const PageRecruitmentCloser = lazy(() => import("@/pages/recruitment/PageRecruitmentCloser"));
