@@ -99,12 +99,25 @@ function PlanCard({ plan, index, isRecommended, interval, onCheckout, onOpenRdvM
         {/* Inclus */}
         <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Inclus</p>
         <ul className="space-y-2 mb-4">
-          {plan.features.map((f) => (
-            <li key={f} className="flex items-start gap-2">
-              <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0 mt-0.5" />
-              <span className="text-xs text-muted-foreground">{f}</span>
-            </li>
-          ))}
+          {plan.features.map((f) => {
+            const isRdvFeature = /rendez-vous/i.test(f);
+            return (
+              <li key={f} className="flex items-start gap-2">
+                <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0 mt-0.5" />
+                {isRdvFeature ? (
+                  <button
+                    type="button"
+                    onClick={onOpenRdvModal}
+                    className="text-xs text-primary underline decoration-dotted underline-offset-2 hover:text-primary/80 transition-colors text-left cursor-pointer"
+                  >
+                    {f}
+                  </button>
+                ) : (
+                  <span className="text-xs text-muted-foreground">{f}</span>
+                )}
+              </li>
+            );
+          })}
         </ul>
 
         {/* Rendez-vous */}
