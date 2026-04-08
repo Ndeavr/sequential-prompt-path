@@ -24,7 +24,7 @@ export default function DesignUpgradeModal({ currentCount, limit, onClose }: Pro
       const { data, error } = await supabase.functions.invoke("design-checkout");
       if (error) throw error;
       if (data?.url) {
-        window.open(data.url, "_blank");
+        window.location.href = data.url;
       }
     } catch (err) {
       console.error("Checkout error:", err);

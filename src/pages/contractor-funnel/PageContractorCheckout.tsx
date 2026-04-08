@@ -83,7 +83,7 @@ export default function PageContractorCheckout() {
 
       if (error) throw error;
       if (data?.url) {
-        window.open(data.url, "_blank");
+        window.location.href = data.url;
       } else if (data?.activated) {
         toast.success(data.message || "Plan activé!");
         goToStep("activation");
