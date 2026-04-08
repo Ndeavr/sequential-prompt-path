@@ -73,10 +73,8 @@ const SmartFooter = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4 text-xs text-muted-foreground/60">
             <span>© {new Date().getFullYear()} UNPRO</span>
-            <span className="hidden sm:inline">•</span>
-            <span className="hidden sm:inline">
-              {lang === "en" ? "Made in Quebec" : "Fabriqué au Québec"} 🍁
-            </span>
+            <span>•</span>
+            <span>Made in Québec ⚜️ with ❤️</span>
           </div>
 
           <div className="flex items-center gap-4">

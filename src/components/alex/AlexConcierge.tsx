@@ -230,7 +230,7 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
             exit={{ scale: 0, opacity: 0 }}
             transition={{ delay: 1.5, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             onClick={() => openAlexVoice("general")}
-            className="fixed bottom-20 right-5 z-50 group lg:bottom-8"
+            className="fixed bottom-20 right-5 z-50 group lg:bottom-8 hidden lg:block"
             aria-label="Ouvrir Alex"
           >
             {/* Ambient glow */}
@@ -251,11 +251,21 @@ const AlexConcierge = ({ properties, homeScore, propertyFamily, propertyType, oc
               <Sparkles className="h-5 w-5 text-primary-foreground" />
             </div>
 
-            {/* Tooltip hint */}
+            {/* Tooltip hint — auto-dismiss after 5s */}
             <motion.div
               initial={{ opacity: 0, x: 8 }}
               animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 8 }}
               transition={{ delay: 3, duration: 0.4 }}
+              onAnimationComplete={(def: any) => {
+                if (def?.opacity === 1) {
+                  setTimeout(() => {
+                    const el = document.getElementById("alex-tooltip-hint");
+                    if (el) el.style.display = "none";
+                  }, 5000);
+                }
+              }}
+              id="alex-tooltip-hint"
               className="absolute right-full mr-3 top-1/2 -translate-y-1/2 whitespace-nowrap bg-card/90 backdrop-blur-xl border border-border/40 rounded-2xl px-3.5 py-2 shadow-elevated pointer-events-none"
             >
               <p className="text-[0.65rem] font-medium text-foreground">
