@@ -157,7 +157,7 @@ export default function AlexVoiceMode({ feature, onFlowComplete, onDismiss, inli
                 msg.role === "user" ? "ml-auto bg-primary/10 text-foreground" : "bg-muted/50 text-foreground"
               }`}
             >
-              {msg.content}
+              {formatAlexTranscriptForDisplay(msg.content)}
             </motion.div>
           ))}
         </div>
