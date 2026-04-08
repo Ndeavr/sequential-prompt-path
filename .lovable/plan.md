@@ -1,21 +1,22 @@
 
 
-## Plan: Enhance Leather Texture Visibility
+## Plan: Default Annual Billing + Stay on Same Tab for Stripe
 
-### What
-Increase the leather texture opacity and adjust blend mode so it's more noticeable against the dark blue background, while preserving the cinematic dark blue base (#060B14) and colored aura gradients.
+### Issues
+1. **Stripe opens in new tab**: `ContractorPlans.tsx` uses `window.open(url, "_blank")` — should stay on same page
+2. **Default billing is monthly**: `interval` state defaults to `"month"` — should default to `"year"`
 
 ### Changes
 
-**File: `src/index.css`** (lines 143-153)
-- Increase `opacity` from `0.035` → `0.12` (roughly 3× more visible)
-- Change `mix-blend-mode` from `soft-light` → `overlay` for better contrast on dark surfaces
-- Increase `baseFrequency` slightly from `0.65` → `0.55` for a coarser, more leather-like grain
-- Bump SVG `slope` from `1.8` → `2.2` for sharper texture detail
+**File: `src/pages/pricing/ContractorPlans.tsx`**
+- Line 159: Change default interval from `"month"` to `"year"`
+- Line 182: Change `window.open(data.url, "_blank")` to `window.location.href = data.url`
 
 ### Result
-A clearly visible but still subtle dark leather texture layered over the dark navy background — tactile depth without washing out the premium dark aesthetic.
+- Pricing page shows annual plans by default (with -15% savings visible)
+- Clicking "Choisir Élite/Signature/etc." redirects to Stripe in the same tab instead of opening a new window
+- Other checkout flows (homeowner, onboarding) already use `window.location.href` — no changes needed there
 
 ### Files Changed
-1. `src/index.css` — Adjust leather texture parameters (~5 values)
+1. `src/pages/pricing/ContractorPlans.tsx` — 2 one-line changes
 
