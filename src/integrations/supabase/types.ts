@@ -20250,6 +20250,336 @@ export type Database = {
           },
         ]
       }
+      execution_budget_rules: {
+        Row: {
+          ask_question_threshold: number | null
+          auto_pause_enabled: boolean | null
+          auto_split_enabled: boolean | null
+          id: string
+          max_complexity_score: number | null
+          max_credit_estimate: number | null
+          max_duration_seconds: number | null
+          rule_key: string
+          rule_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          ask_question_threshold?: number | null
+          auto_pause_enabled?: boolean | null
+          auto_split_enabled?: boolean | null
+          id?: string
+          max_complexity_score?: number | null
+          max_credit_estimate?: number | null
+          max_duration_seconds?: number | null
+          rule_key: string
+          rule_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          ask_question_threshold?: number | null
+          auto_pause_enabled?: boolean | null
+          auto_split_enabled?: boolean | null
+          id?: string
+          max_complexity_score?: number | null
+          max_credit_estimate?: number | null
+          max_duration_seconds?: number | null
+          rule_key?: string
+          rule_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      execution_decisions: {
+        Row: {
+          created_at: string | null
+          decision_payload_json: Json | null
+          decision_reason: string | null
+          decision_type: string
+          id: string
+          selected_strategy: string | null
+          task_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          decision_payload_json?: Json | null
+          decision_reason?: string | null
+          decision_type: string
+          id?: string
+          selected_strategy?: string | null
+          task_id: string
+        }
+        Update: {
+          created_at?: string | null
+          decision_payload_json?: Json | null
+          decision_reason?: string | null
+          decision_type?: string
+          id?: string
+          selected_strategy?: string | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "execution_decisions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "execution_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      execution_fail_safes: {
+        Row: {
+          action_taken: string | null
+          created_at: string | null
+          fail_safe_type: string
+          id: string
+          task_id: string
+          trigger_reason: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          created_at?: string | null
+          fail_safe_type: string
+          id?: string
+          task_id: string
+          trigger_reason?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          created_at?: string | null
+          fail_safe_type?: string
+          id?: string
+          task_id?: string
+          trigger_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "execution_fail_safes_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "execution_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      execution_missing_inputs: {
+        Row: {
+          blocking_level: string | null
+          created_at: string | null
+          id: string
+          input_key: string
+          input_label: string | null
+          question_text: string | null
+          resolution_status: string | null
+          suggested_default: string | null
+          task_id: string
+        }
+        Insert: {
+          blocking_level?: string | null
+          created_at?: string | null
+          id?: string
+          input_key: string
+          input_label?: string | null
+          question_text?: string | null
+          resolution_status?: string | null
+          suggested_default?: string | null
+          task_id: string
+        }
+        Update: {
+          blocking_level?: string | null
+          created_at?: string | null
+          id?: string
+          input_key?: string
+          input_label?: string | null
+          question_text?: string | null
+          resolution_status?: string | null
+          suggested_default?: string | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "execution_missing_inputs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "execution_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      execution_recovery_actions: {
+        Row: {
+          created_at: string | null
+          id: string
+          recovery_label: string | null
+          recovery_payload_json: Json | null
+          recovery_status: string | null
+          recovery_type: string
+          task_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          recovery_label?: string | null
+          recovery_payload_json?: Json | null
+          recovery_status?: string | null
+          recovery_type: string
+          task_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          recovery_label?: string | null
+          recovery_payload_json?: Json | null
+          recovery_status?: string | null
+          recovery_type?: string
+          task_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "execution_recovery_actions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "execution_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      execution_runs: {
+        Row: {
+          credits_actual: number | null
+          credits_estimated: number | null
+          duration_ms: number | null
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          partial_output_json: Json | null
+          run_status: string | null
+          run_type: string | null
+          started_at: string | null
+          task_id: string
+        }
+        Insert: {
+          credits_actual?: number | null
+          credits_estimated?: number | null
+          duration_ms?: number | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          partial_output_json?: Json | null
+          run_status?: string | null
+          run_type?: string | null
+          started_at?: string | null
+          task_id: string
+        }
+        Update: {
+          credits_actual?: number | null
+          credits_estimated?: number | null
+          duration_ms?: number | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          partial_output_json?: Json | null
+          run_status?: string | null
+          run_type?: string | null
+          started_at?: string | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "execution_runs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "execution_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      execution_split_plans: {
+        Row: {
+          created_at: string | null
+          current_step_index: number | null
+          id: string
+          split_status: string | null
+          split_steps_json: Json | null
+          split_version: number | null
+          task_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_step_index?: number | null
+          id?: string
+          split_status?: string | null
+          split_steps_json?: Json | null
+          split_version?: number | null
+          task_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_step_index?: number | null
+          id?: string
+          split_status?: string | null
+          split_steps_json?: Json | null
+          split_version?: number | null
+          task_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "execution_split_plans_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "execution_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      execution_tasks: {
+        Row: {
+          created_at: string | null
+          current_status: string | null
+          estimated_complexity_score: number | null
+          estimated_credit_cost: number | null
+          execution_mode: string | null
+          id: string
+          module_name: string | null
+          requested_scope_json: Json | null
+          task_key: string
+          task_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_status?: string | null
+          estimated_complexity_score?: number | null
+          estimated_credit_cost?: number | null
+          execution_mode?: string | null
+          id?: string
+          module_name?: string | null
+          requested_scope_json?: Json | null
+          task_key: string
+          task_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_status?: string | null
+          estimated_complexity_score?: number | null
+          estimated_credit_cost?: number | null
+          execution_mode?: string | null
+          id?: string
+          module_name?: string | null
+          requested_scope_json?: Json | null
+          task_key?: string
+          task_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       experiment_assignments: {
         Row: {
           assigned_at: string
