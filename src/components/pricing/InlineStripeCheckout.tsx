@@ -1,17 +1,25 @@
-import { useCallback } from "react";
-import { loadStripe } from "@stripe/stripe-js";
+import { useCallback, useState, useEffect } from "react";
+import { loadStripe, type Stripe } from "@stripe/stripe-js";
 import {
   EmbeddedCheckoutProvider,
   EmbeddedCheckout,
 } from "@stripe/react-stripe-js";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { BillingInterval } from "@/hooks/usePlanCatalog";
 
-const stripePromise = loadStripe(
-  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? ""
-);
+// Will be loaded from edge function
+let stripePromise: Promise<Stripe | null> | null = null;
+
+async function getStripePromise(): Promise<Promise<Stripe | null>> {
+  if (stripePromise) return stripePromise;
+  const { data } = await supabase.functions.invoke("get-stripe-publishable-key");
+  const key = data?.publishableKey;
+  if (!key) throw new Error("Stripe publishable key not available");
+  stripePromise = loadStripe(key);
+  return stripePromise;
+}
 
 interface InlineStripeCheckoutProps {
   planCode: string;
