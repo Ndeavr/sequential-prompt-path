@@ -45,6 +45,12 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.elevenlabs-tts]
     verify_jwt = false
+  [functions.evaluate-task-advanced]
+    verify_jwt = false
+  [functions.generate-decision]
+    verify_jwt = false
+  [functions.generate-split-plan]
+    verify_jwt = false
   [functions.emergency-triage]
     verify_jwt = false
   [functions.founder-pin-verify]
