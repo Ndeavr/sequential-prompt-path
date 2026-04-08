@@ -261,12 +261,14 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
               animate={{ opacity: 1, y: 0 }}
               className="max-w-2xl mx-auto"
             >
-              <InlineStripeCheckout
-                planCode={selectedPlan.code}
-                planName={selectedPlan.name}
-                interval={interval}
-                onCancel={handleCancelCheckout}
-              />
+              <div>
+                <InlineStripeCheckout
+                  planCode={selectedPlan.code}
+                  planName={selectedPlan.name}
+                  interval={interval}
+                  onCancel={handleCancelCheckout}
+                />
+              </div>
             </motion.div>
           </div>
         ) : (
