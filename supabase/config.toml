@@ -61,6 +61,8 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.growth-optimizer]
     verify_jwt = false
+  [functions.learning-loop]
+    verify_jwt = false
   [functions.handle-email-suppression]
     verify_jwt = false
   [functions.handle-email-unsubscribe]
