@@ -282,14 +282,11 @@ Deno.serve(async (req) => {
     }
 
     // Build checkout config
+    const isEmbedded = uiMode === "embedded";
     const checkoutConfig: any = {
       customer: customerId,
       mode: "subscription",
       line_items: lineItems,
-      success_url:
-        successUrl || `${req.headers.get("origin")}/pro/billing?success=true`,
-      cancel_url:
-        cancelUrl || `${req.headers.get("origin")}/pro/billing?canceled=true`,
       metadata: {
         contractor_id: contractor.id,
         plan_id: planId,
@@ -309,6 +306,14 @@ Deno.serve(async (req) => {
         },
       },
     };
+
+    if (isEmbedded) {
+      checkoutConfig.ui_mode = "embedded";
+      checkoutConfig.return_url = returnUrl || `${req.headers.get("origin")}/pro/onboarding?plan=${planId}&checkout=success&session_id={CHECKOUT_SESSION_ID}`;
+    } else {
+      checkoutConfig.success_url = successUrl || `${req.headers.get("origin")}/pro/billing?success=true`;
+      checkoutConfig.cancel_url = cancelUrl || `${req.headers.get("origin")}/pro/billing?canceled=true`;
+    }
 
     // Add Stripe coupon for promo (if partial discount, not zero-total)
     if (promoResult?.ok && !isZeroTotal) {
