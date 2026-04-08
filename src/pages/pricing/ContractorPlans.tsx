@@ -12,7 +12,7 @@ import {
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { usePlanCatalog, formatPlanPrice, getYearlySavingsPercent, getMonthlyEquivalent, type BillingInterval, type CatalogPlan } from "@/hooks/usePlanCatalog";
 import ModalRendezVousValueExplanation from "@/components/pricing/ModalRendezVousValueExplanation";
 import { cn } from "@/lib/utils";
@@ -171,7 +171,6 @@ function PlanCard({ plan, index, isRecommended, interval, onCheckout, onOpenRdvM
 }
 
 export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?: string | null }) {
-  const [loading, setLoading] = useState<string | null>(null);
   const [interval, setInterval] = useState<BillingInterval>("year");
   const [rdvModalOpen, setRdvModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<CatalogPlan | null>(null);
@@ -185,7 +184,7 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
       return;
     }
 
-    const plan = (plans ?? []).find(p => p.code === planCode);
+    const plan = (plans ?? []).find((p) => p.code === planCode);
     if (plan) {
       setSelectedPlan(plan);
     }
@@ -262,12 +261,14 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
               animate={{ opacity: 1, y: 0 }}
               className="max-w-2xl mx-auto"
             >
-              <InlineStripeCheckout
-                planCode={selectedPlan.code}
-                planName={selectedPlan.name}
-                interval={interval}
-                onCancel={handleCancelCheckout}
-              />
+              <div>
+                <InlineStripeCheckout
+                  planCode={selectedPlan.code}
+                  planName={selectedPlan.name}
+                  interval={interval}
+                  onCancel={handleCancelCheckout}
+                />
+              </div>
             </motion.div>
           </div>
         ) : (
