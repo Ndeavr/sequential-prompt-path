@@ -31,11 +31,14 @@ export default function AlexVoiceMode({ feature, onFlowComplete, onDismiss, inli
 
   const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
     onTranscript: (text) => {
-      // Alex speaking — accumulate assistant message
+      // Alex speaking — accumulate assistant message with proper spacing
       setMessages(prev => {
         const last = prev[prev.length - 1];
         if (last?.role === "assistant") {
-          return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: m.content + text } : m);
+          return prev.map((m, i) => i === prev.length - 1 
+            ? { ...m, content: smartConcatChunk(m.content, text) } 
+            : m
+          );
         }
         return [...prev, { role: "assistant", content: text }];
       });
