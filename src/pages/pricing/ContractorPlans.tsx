@@ -179,7 +179,7 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
 
       if (error) throw error;
       if (data?.url) {
-        window.open(data.url, "_blank");
+        window.location.href = data.url;
       }
     } catch (err: any) {
       toast.error("Erreur lors du paiement. Réessayez.");
