@@ -404,7 +404,7 @@ function CheckoutPaymentForm({
               layout: {
                 type: "accordion",
                 defaultCollapsed: false,
-                radios: false,
+                radios: "never" as const,
                 spacedAccordionItems: true,
               },
             }}
