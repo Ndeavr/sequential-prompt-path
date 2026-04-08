@@ -414,7 +414,7 @@ export const AppRouter = () => (
     <Suspense fallback={<LazyFallback />}>
       <Routes>
         {/* Redirects for common mismatched entry points */}
-        <Route path="/index" element={<Home />} />
+        <Route path="/index" element={<HomeWithFeatureFlag />} />
         <Route path="/entrepreneur/aipp-analysis" element={<PageAIPPAnalysisLoading />} />
 
         {/* Public */}
