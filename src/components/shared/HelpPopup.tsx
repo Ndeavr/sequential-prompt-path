@@ -20,12 +20,10 @@ export default function HelpPopup() {
   const [sending, setSending] = useState(false);
   const navigate = useNavigate();
   const { openAlex } = useAlexVoice();
-  const location = window.location.pathname;
-
-  // Hide on checkout pages
-  if (location.startsWith("/checkout")) return null;
+  const isCheckout = window.location.pathname.startsWith("/checkout");
 
   useEffect(() => {
+    if (isCheckout) return;
     const already = sessionStorage.getItem(STORAGE_KEY);
     if (already) return;
     const timer = setTimeout(() => {
@@ -33,7 +31,7 @@ export default function HelpPopup() {
       sessionStorage.setItem(STORAGE_KEY, "1");
     }, DELAY_MS);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isCheckout]);
 
   const close = useCallback(() => setVisible(false), []);
 
