@@ -22,12 +22,14 @@ export default function LoginPageUnpro() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
+      const searchParams = new URLSearchParams(location.search);
+      const redirectParam = searchParams.get("redirect");
       const intent = consumeAuthIntent();
       const navCtx = consumeNavigationContext();
       const from = (location.state as any)?.from;
       const resumePath = getResumePath(role);
-      // Priority: explicit intent > nav context > referrer > resume where user left off > home
-      const target = intent?.returnPath || navCtx?.intendedDestination || from || resumePath || "/";
+      // Priority: redirect query param > explicit intent > nav context > referrer > resume > home
+      const target = redirectParam || intent?.returnPath || navCtx?.intendedDestination || from || resumePath || "/";
       navigate(target, { replace: true });
     }
   }, [isAuthenticated, isLoading, role, navigate, location]);
