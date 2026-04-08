@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mic, MicOff, MessageSquare, X, Loader2, Volume2, Square } from "lucide-react";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
 import { useAuth } from "@/hooks/useAuth";
+import { smartConcatChunk, formatAlexTranscriptForDisplay } from "@/lib/alexTextFormatter";
 
 interface AlexVoiceProps {
   feature: string;
@@ -30,11 +31,14 @@ export default function AlexVoiceMode({ feature, onFlowComplete, onDismiss, inli
 
   const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
     onTranscript: (text) => {
-      // Alex speaking — accumulate assistant message
+      // Alex speaking — accumulate assistant message with proper spacing
       setMessages(prev => {
         const last = prev[prev.length - 1];
         if (last?.role === "assistant") {
-          return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: m.content + text } : m);
+          return prev.map((m, i) => i === prev.length - 1 
+            ? { ...m, content: smartConcatChunk(m.content, text) } 
+            : m
+          );
         }
         return [...prev, { role: "assistant", content: text }];
       });
@@ -86,6 +90,10 @@ export default function AlexVoiceMode({ feature, onFlowComplete, onDismiss, inli
       case "avis":
         greeting = `${name} Vous aimeriez que j'analyse vos soumissions? Allez-y, décrivez-moi ce que vous avez reçu.`;
         break;
+      case "intent":
+      case "diagnostic":
+        greeting = `${name} Décrivez-moi votre besoin et je vous trouve le bon professionnel.`;
+        break;
       default:
         greeting = `${name} Comment puis-je vous aider aujourd'hui?`;
     }
@@ -118,7 +126,9 @@ export default function AlexVoiceMode({ feature, onFlowComplete, onDismiss, inli
       exit={{ opacity: 0, y: inline ? -10 : 20 }}
       className={inline ? "w-full" : "fixed bottom-24 right-6 z-50 w-[360px] max-w-[calc(100vw-3rem)]"}
     >
-      <div className={`relative backdrop-blur-xl border border-border/60 rounded-2xl shadow-[var(--shadow-2xl)] overflow-hidden ${inline ? "bg-card" : "bg-card/95"}`}>
+      <div className={`relative backdrop-blur-xl border border-border/60 rounded-2xl shadow-[var(--shadow-2xl)] overflow-hidden ${inline ? "bg-card" : "bg-card/95"}`}
+        style={{ maxHeight: inline ? undefined : "70vh" }}
+      >
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
 
         {/* Header */}
@@ -153,7 +163,7 @@ export default function AlexVoiceMode({ feature, onFlowComplete, onDismiss, inli
                 msg.role === "user" ? "ml-auto bg-primary/10 text-foreground" : "bg-muted/50 text-foreground"
               }`}
             >
-              {msg.content}
+              {formatAlexTranscriptForDisplay(msg.content)}
             </motion.div>
           ))}
         </div>
