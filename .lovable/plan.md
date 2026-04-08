@@ -1,22 +1,33 @@
 
 
-## Plan: Default Annual Billing + Stay on Same Tab for Stripe
+## Plan: Remplacer tous les `window.open` par `window.location.href` pour les paiements
 
-### Issues
-1. **Stripe opens in new tab**: `ContractorPlans.tsx` uses `window.open(url, "_blank")` — should stay on same page
-2. **Default billing is monthly**: `interval` state defaults to `"month"` — should default to `"year"`
+### Problème
+Plusieurs flux de paiement utilisent `window.open(url, "_blank")` pour ouvrir Stripe Checkout dans un nouvel onglet. Les navigateurs mobiles bloquent souvent ces pop-ups, résultant en une page blanche (comme sur le screenshot).
 
-### Changes
+### Solution
+Remplacer tous les `window.open(url, "_blank")` liés aux paiements Stripe par `window.location.href = url` pour rester dans le même onglet.
 
-**File: `src/pages/pricing/ContractorPlans.tsx`**
-- Line 159: Change default interval from `"month"` to `"year"`
-- Line 182: Change `window.open(data.url, "_blank")` to `window.location.href = data.url`
+### Fichiers à modifier
 
-### Result
-- Pricing page shows annual plans by default (with -15% savings visible)
-- Clicking "Choisir Élite/Signature/etc." redirects to Stripe in the same tab instead of opening a new window
-- Other checkout flows (homeowner, onboarding) already use `window.location.href` — no changes needed there
+1. **`src/pages/OnboardingFlow.tsx`** (ligne 182)
+   - `window.open(data.url, "_blank")` → `window.location.href = data.url`
 
-### Files Changed
-1. `src/pages/pricing/ContractorPlans.tsx` — 2 one-line changes
+2. **`src/pages/contractor-funnel/PageContractorCheckout.tsx`** (ligne 86)
+   - `window.open(data.url, "_blank")` → `window.location.href = data.url`
+
+3. **`src/hooks/useCondoSubscription.ts`** (ligne 31)
+   - `window.open(data.url, "_blank")` → `window.location.href = data.url`
+
+4. **`src/hooks/useFounderPlans.ts`** (ligne 81)
+   - `window.open(url, "_blank")` → `window.location.href = url`
+
+5. **`src/components/design/DesignUpgradeModal.tsx`** (ligne 27)
+   - `window.open(data.url, "_blank")` → `window.location.href = data.url`
+
+### Résultat
+Tous les flux de paiement Stripe redirigent dans le même onglet — plus de pop-up bloqué, navigation fluide sur mobile et desktop.
+
+### Fichiers modifiés
+5 fichiers — 1 ligne chacun
 
