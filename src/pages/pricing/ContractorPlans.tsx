@@ -289,6 +289,15 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
           </p>
         </motion.div>
       </div>
+
+      <ModalRendezVousValueExplanation
+        open={rdvModalOpen}
+        onOpenChange={setRdvModalOpen}
+        onChoosePlan={() => {
+          const recommended = document.querySelector('[data-plan="pro"]');
+          recommended?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }}
+      />
     </section>
   );
 }
