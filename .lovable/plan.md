@@ -1,37 +1,28 @@
 
-## Plan: Flux d'achat propriétaires complet
 
-### Phase 1 — Stripe Products & Edge Function
-1. **Créer produits Stripe** : "UNPRO Propriétaire Plus" ($49/an) et "UNPRO Propriétaire Signature" ($149/an)
-2. **Edge function `create-homeowner-checkout`** :
-   - Mode `subscription` annuel
-   - Supporte guest checkout (pas besoin de compte avant paiement)
-   - Support coupon/promo code
-   - `success_url` → `/proprietaire/bienvenue?session_id={CHECKOUT_SESSION_ID}`
-   - `cancel_url` → `/tarifs?tab=proprietaires`
-   - Metadata: plan code, billing interval
+## Plan: Add Subtle Dark Leather Texture to Background
 
-### Phase 2 — UI Checkout Flow
-3. **Modifier `HomeownerPlans.tsx`** : CTA "Passer à Plus" et "Activer Signature" → ouvrent un modal/drawer avec champ coupon code + bouton payer (appel edge function)
-4. **Ajouter champ code promo** dans le flow avant redirect Stripe
+### What
+Add a CSS-based dark leather texture overlay to the existing cinematic background in `MainLayout.tsx`. The texture will be purely CSS (no external images), using layered SVG noise filters tuned to simulate fine-grain leather — subtle, elegant, and consistent with the premium dark aesthetic.
 
-### Phase 3 — Post-Payment Onboarding
-5. **Page `/proprietaire/bienvenue`** : 
-   - Vérifie le `session_id` Stripe
-   - Si pas connecté → formulaire création de compte (email pré-rempli depuis Stripe session)
-   - Si déjà connecté → lien vers login
-   - Étapes post-achat : ajouter adresses, configurer Passeport Maison
-6. **Edge function `verify-homeowner-payment`** : vérifie la session Stripe et retourne email + plan acheté
+### How
 
-### Phase 4 — Database
-7. **Table `homeowner_subscriptions`** : track les abonnements propriétaires séparément des entrepreneurs
-8. **Route + routing** : ajouter les nouvelles pages
+**File: `src/index.css`** — Add a new `.leather-texture` utility class using a `::before` pseudo-element with a custom SVG filter that simulates leather grain:
+- Use `feTurbulence` with low `baseFrequency` (~0.65) and high `numOctaves` (5) for a fine, organic grain
+- Layer with a second turbulence at different frequency for the characteristic leather "pore" pattern
+- Very low opacity (~0.03–0.04) to keep it subtle
+- `mix-blend-mode: soft-light` for natural blending with the dark base
+- Add a subtle dark vignette gradient overlay to enhance depth
 
-### Résumé du parcours
-1. Propriétaire voit le prix → clique "Passer à Plus"
-2. Modal avec champ coupon → "Procéder au paiement"
-3. Redirect Stripe Checkout (guest OK)
-4. Retour sur `/proprietaire/bienvenue`
-5. Création de compte si nécessaire
-6. Ajout d'adresses, configuration
-7. Dashboard propriétaire actif
+**File: `src/layouts/MainLayout.tsx`** — Add the `leather-texture` class to the existing background `div` (the one with `noise-overlay`), so both the grain noise and leather texture coexist as layered effects.
+
+### Visual Result
+- The background retains its dark cinematic base (#060B14) with colored aura gradients
+- A very subtle leather-like grain adds tactile depth
+- The existing noise overlay remains on top for luxury grain
+- No external assets needed — pure CSS/SVG
+
+### Files Changed
+1. `src/index.css` — Add `.leather-texture` class (~20 lines)
+2. `src/layouts/MainLayout.tsx` — Add class to background div (1 line change)
+
