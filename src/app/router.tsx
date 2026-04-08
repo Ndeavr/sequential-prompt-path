@@ -369,6 +369,7 @@ const PageOutboundMailboxes = lazy(() => import("@/pages/admin/outbound/PageOutb
 const PageOutboundAnalytics = lazy(() => import("@/pages/admin/outbound/PageOutboundAnalytics"));
 const PageOutboundSuppressionCenter = lazy(() => import("@/pages/admin/outbound/PageOutboundSuppressionCenter"));
 const PageOutboundLandingPages = lazy(() => import("@/pages/admin/outbound/PageOutboundLandingPages"));
+const PageAdminExecutionControl = lazy(() => import("@/pages/admin/PageAdminExecutionControl"));
 const MesProprietesPage = lazy(() => import("@/pages/MesProprietesPage"));
 const AnalyserSoumissionsPage = lazy(() => import("@/pages/AnalyserSoumissionsPage"));
 const PageRecruitmentCloser = lazy(() => import("@/pages/recruitment/PageRecruitmentCloser"));
@@ -840,6 +841,7 @@ export const AppRouter = () => (
         <Route path="/admin/outbound/analytics" element={<ProtectedRoute requiredRole="admin"><PageOutboundAnalytics /></ProtectedRoute>} />
         <Route path="/admin/outbound/suppressions" element={<ProtectedRoute requiredRole="admin"><PageOutboundSuppressionCenter /></ProtectedRoute>} />
         <Route path="/admin/outbound/landing-pages" element={<ProtectedRoute requiredRole="admin"><PageOutboundLandingPages /></ProtectedRoute>} />
+        <Route path="/admin/execution-control" element={<ProtectedRoute requiredRole="admin"><PageAdminExecutionControl /></ProtectedRoute>} />
         <Route path="/audit/:slug" element={<AuditLandingPage />} />
         <Route path="/articles/:slug" element={<SeoArticlePage />} />
         <Route path="/emergency" element={<EmergencyPage />} />
