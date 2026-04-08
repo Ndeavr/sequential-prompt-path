@@ -156,7 +156,7 @@ function PlanCard({ plan, index, isRecommended, interval, onCheckout }: {
 
 export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?: string | null }) {
   const [loading, setLoading] = useState<string | null>(null);
-  const [interval, setInterval] = useState<BillingInterval>("month");
+  const [interval, setInterval] = useState<BillingInterval>("year");
   const { data: plans, isLoading } = usePlanCatalog();
 
   const handleCheckout = async (planCode: string) => {
@@ -179,7 +179,7 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
 
       if (error) throw error;
       if (data?.url) {
-        window.open(data.url, "_blank");
+        window.location.href = data.url;
       }
     } catch (err: any) {
       toast.error("Erreur lors du paiement. Réessayez.");
