@@ -3,7 +3,7 @@
  * Creates an incomplete Stripe subscription and returns the client_secret
  * for use with Stripe Payment Element (not Embedded Checkout).
  */
-import Stripe from "https://esm.sh/stripe@18.5.0";
+import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
@@ -218,12 +218,40 @@ Deno.serve(async (req) => {
       }
     }
 
+    console.log("Creating subscription...");
     const subscription = await stripe.subscriptions.create(subParams);
+    console.log("Subscription created:", subscription.id, "status:", subscription.status);
 
-    const invoice = subscription.latest_invoice as Stripe.Invoice;
-    const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
+    // Retrieve the latest invoice separately with expand
+    const invoiceId = typeof subscription.latest_invoice === "string" 
+      ? subscription.latest_invoice 
+      : subscription.latest_invoice?.id;
+    
+    console.log("Invoice ID:", invoiceId);
+    
+    if (!invoiceId) {
+      return json({ error: "Aucune facture créée pour cet abonnement" }, 500);
+    }
 
-    if (!paymentIntent?.client_secret) {
+    const invoice = await stripe.invoices.retrieve(invoiceId, {
+      expand: ["payment_intent"],
+    });
+    
+    console.log("Invoice status:", invoice.status, "PI type:", typeof invoice.payment_intent);
+
+    let clientSecret: string | null = null;
+    
+    if (typeof invoice.payment_intent === "string") {
+      const pi = await stripe.paymentIntents.retrieve(invoice.payment_intent);
+      clientSecret = pi.client_secret;
+    } else if (invoice.payment_intent) {
+      clientSecret = (invoice.payment_intent as any).client_secret;
+    }
+
+    console.log("clientSecret present:", !!clientSecret);
+
+    if (!clientSecret) {
+      console.error("No client_secret found. Invoice PI:", JSON.stringify(invoice.payment_intent));
       return json({ error: "Impossible d'obtenir le secret de paiement" }, 500);
     }
 
