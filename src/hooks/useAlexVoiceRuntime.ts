@@ -117,11 +117,14 @@ export function useAlexVoiceRuntime(options: UseAlexVoiceRuntimeOptions = {}) {
     try {
       const config = voiceConfig || await loadConfig();
       
+      // Tone preprocessing — neutralize accent, fix diction, control pacing
+      const processedText = preprocessTextForTone(text, language);
+      
       const resp = await fetch(`${FUNCTIONS_BASE}/alex-voice-speak`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` },
         body: JSON.stringify({
-          text,
+          text: processedText,
           profile_key: profileKey,
           language,
           voice_id: config?.voiceId,
