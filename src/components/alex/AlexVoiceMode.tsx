@@ -126,7 +126,9 @@ export default function AlexVoiceMode({ feature, onFlowComplete, onDismiss, inli
       exit={{ opacity: 0, y: inline ? -10 : 20 }}
       className={inline ? "w-full" : "fixed bottom-24 right-6 z-50 w-[360px] max-w-[calc(100vw-3rem)]"}
     >
-      <div className={`relative backdrop-blur-xl border border-border/60 rounded-2xl shadow-[var(--shadow-2xl)] overflow-hidden ${inline ? "bg-card" : "bg-card/95"}`}>
+      <div className={`relative backdrop-blur-xl border border-border/60 rounded-2xl shadow-[var(--shadow-2xl)] overflow-hidden ${inline ? "bg-card" : "bg-card/95"}`}
+        style={{ maxHeight: inline ? undefined : "70vh" }}
+      >
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
 
         {/* Header */}
