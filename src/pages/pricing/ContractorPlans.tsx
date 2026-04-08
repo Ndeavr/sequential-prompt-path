@@ -173,9 +173,8 @@ function PlanCard({ plan, index, isRecommended, interval, onCheckout, onOpenRdvM
 export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?: string | null }) {
   const [interval, setInterval] = useState<BillingInterval>("year");
   const [rdvModalOpen, setRdvModalOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<CatalogPlan | null>(null);
-  const checkoutRef = useRef<HTMLDivElement>(null);
   const { data: plans, isLoading } = usePlanCatalog();
+  const navigate = useNavigate();
 
   const handleCheckout = async (planCode: string) => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -183,25 +182,9 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
       window.location.href = `/signup?type=contractor&plan=${planCode}`;
       return;
     }
-
-    const plan = (plans ?? []).find((p) => p.code === planCode);
-    if (plan) {
-      setSelectedPlan(plan);
-    }
+    // Navigate to dedicated checkout page
+    navigate(`/checkout/native/${planCode}?billing=${interval}`);
   };
-
-  const handleCancelCheckout = () => {
-    setSelectedPlan(null);
-  };
-
-  // Scroll to checkout when a plan is selected
-  useEffect(() => {
-    if (selectedPlan && checkoutRef.current) {
-      setTimeout(() => {
-        checkoutRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
-    }
-  }, [selectedPlan]);
 
   return (
     <section className="px-5 py-16 md:py-20 relative">
