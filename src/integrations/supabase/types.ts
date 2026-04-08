@@ -40577,6 +40577,45 @@ export type Database = {
         }
         Relationships: []
       }
+      tax_rules: {
+        Row: {
+          country_code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          province_code: string
+          tax_code: string
+          tax_name: string
+          tax_order: number
+          tax_rate: number
+          updated_at: string
+        }
+        Insert: {
+          country_code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          province_code?: string
+          tax_code: string
+          tax_name: string
+          tax_order?: number
+          tax_rate: number
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          province_code?: string
+          tax_code?: string
+          tax_name?: string
+          tax_order?: number
+          tax_rate?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       territories: {
         Row: {
           category_name: string
