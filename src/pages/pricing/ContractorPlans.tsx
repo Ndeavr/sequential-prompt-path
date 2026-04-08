@@ -156,7 +156,7 @@ function PlanCard({ plan, index, isRecommended, interval, onCheckout }: {
 
 export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?: string | null }) {
   const [loading, setLoading] = useState<string | null>(null);
-  const [interval, setInterval] = useState<BillingInterval>("month");
+  const [interval, setInterval] = useState<BillingInterval>("year");
   const { data: plans, isLoading } = usePlanCatalog();
 
   const handleCheckout = async (planCode: string) => {
