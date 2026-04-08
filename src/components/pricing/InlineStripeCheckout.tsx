@@ -34,6 +34,15 @@ export default function InlineStripeCheckout({
   interval,
   onCancel,
 }: InlineStripeCheckoutProps) {
+  const [stripe, setStripe] = useState<Promise<Stripe | null> | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getStripePromise()
+      .then(setStripe)
+      .catch((e) => setError(e.message));
+  }, []);
+
   const fetchClientSecret = useCallback(async () => {
     const { data, error } = await supabase.functions.invoke(
       "create-checkout-session",
@@ -54,6 +63,24 @@ export default function InlineStripeCheckout({
     return data.clientSecret;
   }, [planCode, interval]);
 
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-destructive text-sm mb-4">{error}</p>
+        <Button variant="ghost" onClick={onCancel}>Retour aux plans</Button>
+      </div>
+    );
+  }
+
+  if (!stripe) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <span className="ml-2 text-sm text-muted-foreground">Chargement du paiement…</span>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full">
       <div className="flex items-center gap-3 mb-4">
@@ -73,7 +100,7 @@ export default function InlineStripeCheckout({
 
       <div className="rounded-2xl border border-border bg-card overflow-hidden min-h-[400px]">
         <EmbeddedCheckoutProvider
-          stripe={stripePromise}
+          stripe={stripe}
           options={{ fetchClientSecret }}
         >
           <EmbeddedCheckout />
