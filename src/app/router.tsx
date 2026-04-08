@@ -489,6 +489,7 @@ export const AppRouter = () => (
         <Route path="/goals" element={<PageAlexGoalsStrategy />} />
         <Route path="/checkout" element={<PageCheckoutStripe />} />
         <Route path="/checkout/success" element={<PageCheckoutSuccess />} />
+        <Route path="/checkout/native/:planCode" element={<PageCheckoutNativeScrollable />} />
         <Route path="/activation" element={<PageActivationStart />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/aipp-score" element={<AIPPScorePage />} />
