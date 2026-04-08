@@ -32,7 +32,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="min-h-screen flex flex-col relative overflow-x-hidden">
       {/* ── Dark cinematic background ── */}
-      <div className="fixed inset-0 -z-10 noise-overlay">
+      <div className="fixed inset-0 -z-10 noise-overlay leather-texture">
         <div
           className="absolute inset-0"
           style={{
