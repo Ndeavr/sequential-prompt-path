@@ -2,7 +2,7 @@
  * UNPRO — Contractor Plans with billing toggle, appointments & pre-selection
  * Now fetches plan data dynamically from plan_catalog table.
  */
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,13 +11,12 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { usePlanCatalog, formatPlanPrice, getYearlySavingsPercent, getMonthlyEquivalent, type BillingInterval, type CatalogPlan } from "@/hooks/usePlanCatalog";
 import ModalRendezVousValueExplanation from "@/components/pricing/ModalRendezVousValueExplanation";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import InlineStripeCheckout from "@/components/pricing/InlineStripeCheckout";
+
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -173,9 +172,8 @@ function PlanCard({ plan, index, isRecommended, interval, onCheckout, onOpenRdvM
 export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?: string | null }) {
   const [interval, setInterval] = useState<BillingInterval>("year");
   const [rdvModalOpen, setRdvModalOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<CatalogPlan | null>(null);
-  const checkoutRef = useRef<HTMLDivElement>(null);
   const { data: plans, isLoading } = usePlanCatalog();
+  const navigate = useNavigate();
 
   const handleCheckout = async (planCode: string) => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -183,25 +181,9 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
       window.location.href = `/signup?type=contractor&plan=${planCode}`;
       return;
     }
-
-    const plan = (plans ?? []).find((p) => p.code === planCode);
-    if (plan) {
-      setSelectedPlan(plan);
-    }
+    // Navigate to dedicated checkout page
+    navigate(`/checkout/native/${planCode}?billing=${interval}`);
   };
-
-  const handleCancelCheckout = () => {
-    setSelectedPlan(null);
-  };
-
-  // Scroll to checkout when a plan is selected
-  useEffect(() => {
-    if (selectedPlan && checkoutRef.current) {
-      setTimeout(() => {
-        checkoutRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
-    }
-  }, [selectedPlan]);
 
   return (
     <section className="px-5 py-16 md:py-20 relative">
@@ -252,25 +234,6 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-[420px] rounded-2xl" />
             ))}
-          </div>
-        ) : selectedPlan ? (
-          /* Embedded checkout mode: show selected plan summary + Stripe form */
-          <div ref={checkoutRef}>
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="max-w-2xl mx-auto"
-            >
-              <div>
-                <InlineStripeCheckout
-                  planCode={selectedPlan.code}
-                  planName={selectedPlan.name}
-                  interval={interval}
-                  basePrice={interval === "year" ? Math.round(selectedPlan.yearlyPrice / 12) : selectedPlan.monthlyPrice}
-                  onCancel={handleCancelCheckout}
-                />
-              </div>
-            </motion.div>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
