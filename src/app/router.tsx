@@ -11,6 +11,9 @@ import HomeWithFeatureFlag from "@/components/home-intent/HomeWithFeatureFlag";
 import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
 
+// Intent homepage (direct route for testing)
+const PageHomeIntentUNPRO = lazy(() => import("@/pages/PageHomeIntentUNPRO"));
+
 // Lightweight loading fallback
 const LazyFallback = () => (
   <div className="flex items-center justify-center min-h-screen">
