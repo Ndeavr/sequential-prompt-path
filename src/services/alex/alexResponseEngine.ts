@@ -106,24 +106,12 @@ function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-// ─── Pronunciation Override ─────────────────────────────────────────
-const PRONUNCIATION_RULES_FR: [RegExp, string][] = [
-  [/\bUNPRO\b/gi, "1 pro"],
-  [/\bunpro\b/g, "1 pro"],
-];
-
-const PRONUNCIATION_RULES_EN: [RegExp, string][] = [
-  [/\bUNPRO\b/gi, "eun pro"],
-  [/\bunpro\b/g, "eun pro"],
-];
+// ─── Pronunciation Override (Brand Phonetic Lock) ───────────────────
+import { applyBrandPhoneticLockSync } from "@/services/alex/brandPhoneticLock";
 
 export function applyPronunciationOverride(text: string, lang: string): string {
-  const rules = lang.startsWith("en") ? PRONUNCIATION_RULES_EN : PRONUNCIATION_RULES_FR;
-  let result = text;
-  for (const [pattern, replacement] of rules) {
-    result = result.replace(pattern, replacement);
-  }
-  return result;
+  const result = applyBrandPhoneticLockSync(text, lang);
+  return result.speechText;
 }
 
 // ─── Style quality check ────────────────────────────────────────────
