@@ -1,5 +1,6 @@
 import { useState } from "react";
 import PanelBrandPhoneticLock from "@/components/admin/PanelBrandPhoneticLock";
+import PanelVoiceToneControl from "@/components/admin/PanelVoiceToneControl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { clearPronunciationCache } from "@/services/alexPronunciationRulesService";
@@ -143,7 +144,10 @@ export default function PageAdminVoicePronunciation() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 space-y-6">
-      {/* Brand Phonetic Lock — Top Priority */}
+      {/* Voice Tone Standardization — Top Priority */}
+      <PanelVoiceToneControl />
+
+      {/* Brand Phonetic Lock */}
       <PanelBrandPhoneticLock />
 
       <div className="flex items-center justify-between">

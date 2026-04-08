@@ -11,6 +11,7 @@
  */
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { alexAudioChannel, type AudioState } from '@/services/alexSingleAudioChannel';
+import { preprocessTextForTone, logVoiceRender } from '@/services/alex/alexVoiceToneService';
 
 const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -116,11 +117,14 @@ export function useAlexVoiceRuntime(options: UseAlexVoiceRuntimeOptions = {}) {
     try {
       const config = voiceConfig || await loadConfig();
       
+      // Tone preprocessing — neutralize accent, fix diction, control pacing
+      const processedText = preprocessTextForTone(text, language);
+      
       const resp = await fetch(`${FUNCTIONS_BASE}/alex-voice-speak`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` },
         body: JSON.stringify({
-          text,
+          text: processedText,
           profile_key: profileKey,
           language,
           voice_id: config?.voiceId,
