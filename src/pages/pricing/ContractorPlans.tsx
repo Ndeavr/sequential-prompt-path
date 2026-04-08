@@ -12,11 +12,12 @@ import {
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { usePlanCatalog, formatPlanPrice, getYearlySavingsPercent, getMonthlyEquivalent, type BillingInterval, type CatalogPlan } from "@/hooks/usePlanCatalog";
 import ModalRendezVousValueExplanation from "@/components/pricing/ModalRendezVousValueExplanation";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import InlineStripeCheckout from "@/components/pricing/InlineStripeCheckout";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -173,37 +174,35 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
   const [loading, setLoading] = useState<string | null>(null);
   const [interval, setInterval] = useState<BillingInterval>("year");
   const [rdvModalOpen, setRdvModalOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<CatalogPlan | null>(null);
+  const checkoutRef = useRef<HTMLDivElement>(null);
   const { data: plans, isLoading } = usePlanCatalog();
 
   const handleCheckout = async (planCode: string) => {
-    setLoading(planCode);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.href = `/signup?type=contractor&plan=${planCode}`;
-        return;
-      }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      window.location.href = `/signup?type=contractor&plan=${planCode}`;
+      return;
+    }
 
-      const { data, error } = await supabase.functions.invoke("create-checkout-session", {
-        body: {
-          planId: planCode,
-          billingInterval: interval,
-          successUrl: `${window.location.origin}/pro/onboarding?plan=${planCode}&checkout=success`,
-          cancelUrl: `${window.location.origin}/pricing?plan=${planCode}&checkout=cancelled`,
-        },
-      });
-
-      if (error) throw error;
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    } catch (err: any) {
-      toast.error("Erreur lors du paiement. Réessayez.");
-      console.error(err);
-    } finally {
-      setLoading(null);
+    const plan = (plans ?? []).find(p => p.code === planCode);
+    if (plan) {
+      setSelectedPlan(plan);
     }
   };
+
+  const handleCancelCheckout = () => {
+    setSelectedPlan(null);
+  };
+
+  // Scroll to checkout when a plan is selected
+  useEffect(() => {
+    if (selectedPlan && checkoutRef.current) {
+      setTimeout(() => {
+        checkoutRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    }
+  }, [selectedPlan]);
 
   return (
     <section className="px-5 py-16 md:py-20 relative">
@@ -254,6 +253,22 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-[420px] rounded-2xl" />
             ))}
+          </div>
+        ) : selectedPlan ? (
+          /* Embedded checkout mode: show selected plan summary + Stripe form */
+          <div ref={checkoutRef}>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="max-w-2xl mx-auto"
+            >
+              <InlineStripeCheckout
+                planCode={selectedPlan.code}
+                planName={selectedPlan.name}
+                interval={interval}
+                onCancel={handleCancelCheckout}
+              />
+            </motion.div>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">

@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     const userId = claimsData.claims.sub;
     const userEmail = claimsData.claims.email as string;
 
-    const { planId, billingInterval, successUrl, cancelUrl, promoCode, appointmentPack } = await req.json();
+    const { planId, billingInterval, successUrl, cancelUrl, promoCode, appointmentPack, uiMode, returnUrl } = await req.json();
     const interval: "month" | "year" = billingInterval === "year" ? "year" : "month";
 
     const serviceClient = createClient(
@@ -282,14 +282,11 @@ Deno.serve(async (req) => {
     }
 
     // Build checkout config
+    const isEmbedded = uiMode === "embedded";
     const checkoutConfig: any = {
       customer: customerId,
       mode: "subscription",
       line_items: lineItems,
-      success_url:
-        successUrl || `${req.headers.get("origin")}/pro/billing?success=true`,
-      cancel_url:
-        cancelUrl || `${req.headers.get("origin")}/pro/billing?canceled=true`,
       metadata: {
         contractor_id: contractor.id,
         plan_id: planId,
@@ -309,6 +306,14 @@ Deno.serve(async (req) => {
         },
       },
     };
+
+    if (isEmbedded) {
+      checkoutConfig.ui_mode = "embedded";
+      checkoutConfig.return_url = returnUrl || `${req.headers.get("origin")}/pro/onboarding?plan=${planId}&checkout=success&session_id={CHECKOUT_SESSION_ID}`;
+    } else {
+      checkoutConfig.success_url = successUrl || `${req.headers.get("origin")}/pro/billing?success=true`;
+      checkoutConfig.cancel_url = cancelUrl || `${req.headers.get("origin")}/pro/billing?canceled=true`;
+    }
 
     // Add Stripe coupon for promo (if partial discount, not zero-total)
     if (promoResult?.ok && !isZeroTotal) {
@@ -347,6 +352,12 @@ Deno.serve(async (req) => {
       payment_provider: "stripe",
       adaptive_pricing_enabled: false,
     });
+
+    if (isEmbedded) {
+      return new Response(JSON.stringify({ clientSecret: session.client_secret }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
