@@ -20,6 +20,10 @@ export default function HelpPopup() {
   const [sending, setSending] = useState(false);
   const navigate = useNavigate();
   const { openAlex } = useAlexVoice();
+  const location = window.location.pathname;
+
+  // Hide on checkout pages
+  if (location.startsWith("/checkout")) return null;
 
   useEffect(() => {
     const already = sessionStorage.getItem(STORAGE_KEY);
