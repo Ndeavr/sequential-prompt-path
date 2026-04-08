@@ -286,6 +286,7 @@ Deno.serve(async (req) => {
     const checkoutConfig: any = {
       customer: customerId,
       mode: "subscription",
+      locale: "fr",
       line_items: lineItems,
       metadata: {
         contractor_id: contractor.id,
