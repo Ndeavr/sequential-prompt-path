@@ -27,7 +27,7 @@ import type { BillingInterval } from "@/hooks/usePlanCatalog";
 
 const STRIPE_PUBLISHABLE_KEY = "pk_live_Gw47doir5ZX9n9uM0nrBpKro";
 const stripePromise = STRIPE_PUBLISHABLE_KEY.startsWith("pk_")
-  ? loadStripe(STRIPE_PUBLISHABLE_KEY)
+  ? loadStripe(STRIPE_PUBLISHABLE_KEY, { locale: "fr-CA" })
   : null;
 
 const PLAN_ICONS: Record<string, React.ElementType> = {

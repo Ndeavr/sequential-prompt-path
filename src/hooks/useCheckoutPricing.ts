@@ -80,14 +80,16 @@ export function useCheckoutPricing(
   });
 }
 
-/** Format cents to CAD display */
+/** Format cents to CAD display (space-separated thousands, no decimals for round) */
 export const fmtCAD = (cents: number): string => {
-  const val = (cents / 100).toFixed(2);
-  // Remove trailing .00 for round numbers
-  const clean = val.endsWith(".00") ? val.slice(0, -3) : val;
-  return `${clean} $`;
+  const val = cents / 100;
+  const isRound = val === Math.floor(val);
+  const formatted = isRound
+    ? Math.floor(val).toLocaleString("fr-CA")
+    : val.toLocaleString("fr-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `${formatted} $`;
 };
 
-/** Format cents to CAD with decimals always shown */
+/** Format cents to CAD with decimals always shown (space-separated thousands) */
 export const fmtCADExact = (cents: number): string =>
-  `${(cents / 100).toFixed(2)} $`;
+  `${(cents / 100).toLocaleString("fr-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} $`;
