@@ -1,28 +1,43 @@
 
 
-## Plan: Add Subtle Dark Leather Texture to Background
+## Plan: Combined First Payment (Subscription + One-Time RDV Pack)
 
-### What
-Add a CSS-based dark leather texture overlay to the existing cinematic background in `MainLayout.tsx`. The texture will be purely CSS (no external images), using layered SVG noise filters tuned to simulate fine-grain leather — subtle, elegant, and consistent with the premium dark aesthetic.
+### Problem
+The checkout page sends `appointmentPack` data to the edge function, but `create-checkout-session` ignores it entirely. The extra RDV pack (e.g. 720$) is never added to Stripe — only the subscription line item is created.
 
-### How
+### Solution
+Add the appointment pack as a **one-time price line item** in the same Stripe Checkout session. Stripe supports mixing `mode: "subscription"` with one-time `price_data` items natively.
 
-**File: `src/index.css`** — Add a new `.leather-texture` utility class using a `::before` pseudo-element with a custom SVG filter that simulates leather grain:
-- Use `feTurbulence` with low `baseFrequency` (~0.65) and high `numOctaves` (5) for a fine, organic grain
-- Layer with a second turbulence at different frequency for the characteristic leather "pore" pattern
-- Very low opacity (~0.03–0.04) to keep it subtle
-- `mix-blend-mode: soft-light` for natural blending with the dark base
-- Add a subtle dark vignette gradient overlay to enhance depth
+### Changes
 
-**File: `src/layouts/MainLayout.tsx`** — Add the `leather-texture` class to the existing background `div` (the one with `noise-overlay`), so both the grain noise and leather texture coexist as layered effects.
+**1. Edge Function: `supabase/functions/create-checkout-session/index.ts`**
 
-### Visual Result
-- The background retains its dark cinematic base (#060B14) with colored aura gradients
-- A very subtle leather-like grain adds tactile depth
-- The existing noise overlay remains on top for luxury grain
-- No external assets needed — pure CSS/SVG
+- Parse `appointmentPack` from request body (`{ size, totalPriceCents, unitPriceCents }`)
+- If present, add a second line item with `price_data` (one-time, CAD):
+  ```
+  {
+    price_data: {
+      currency: "cad",
+      product_data: {
+        name: `${size} rendez-vous à la carte`,
+        metadata: { type: "appointment_pack", size }
+      },
+      unit_amount: totalPriceCents,  // already in cents
+    },
+    quantity: 1
+  }
+  ```
+- Add pack metadata to `checkoutConfig.metadata` (`appointment_pack_size`, `appointment_pack_total_cents`)
+- Store pack info in the `checkout_sessions` DB record (using existing columns or metadata)
+
+**2. Frontend: `src/pages/checkout/PageCheckoutStripe.tsx`** — No changes needed (already sends `appointmentPack`)
+
+### Result
+- User sees one Stripe Checkout with: **999$/mois subscription + 720$ one-time**
+- First charge = 1 719$ + taxes
+- Recurring = 999$/mois
+- The Stripe receipt clearly separates both items
 
 ### Files Changed
-1. `src/index.css` — Add `.leather-texture` class (~20 lines)
-2. `src/layouts/MainLayout.tsx` — Add class to background div (1 line change)
+1. `supabase/functions/create-checkout-session/index.ts` — Add one-time line item for appointment pack (~15 lines)
 
