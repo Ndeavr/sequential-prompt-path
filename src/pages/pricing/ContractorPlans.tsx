@@ -184,7 +184,7 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
       return;
     }
 
-    const plan = (plans ?? []).find(p => p.code === planCode);
+    const plan = (plans ?? []).find((p) => p.code === planCode);
     if (plan) {
       setSelectedPlan(plan);
     }
