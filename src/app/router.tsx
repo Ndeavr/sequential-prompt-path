@@ -217,6 +217,7 @@ const BlogArticlePage = lazy(() => import("@/pages/blog/BlogArticlePage"));
 
 // Condos
 const CondoHomePage = lazy(() => import("@/pages/condos/CondoHomePage"));
+const PageLandingCondoTeaser = lazy(() => import("@/pages/condos/PageLandingCondoTeaser"));
 const CondoLoi16Page = lazy(() => import("@/pages/condos/CondoLoi16Page"));
 const CondoCarnetPage = lazy(() => import("@/pages/condos/CondoCarnetPage"));
 const CondoFondsPage = lazy(() => import("@/pages/condos/CondoFondsPage"));
