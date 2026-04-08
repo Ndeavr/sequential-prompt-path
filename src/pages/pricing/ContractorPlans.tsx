@@ -12,8 +12,9 @@ import {
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { usePlanCatalog, formatPlanPrice, getYearlySavingsPercent, getMonthlyEquivalent, type BillingInterval, type CatalogPlan } from "@/hooks/usePlanCatalog";
+import ModalRendezVousValueExplanation from "@/components/pricing/ModalRendezVousValueExplanation";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -33,12 +34,13 @@ const PLAN_ICONS: Record<string, React.ElementType> = {
   signature: Shield,
 };
 
-function PlanCard({ plan, index, isRecommended, interval, onCheckout }: {
+function PlanCard({ plan, index, isRecommended, interval, onCheckout, onOpenRdvModal }: {
   plan: CatalogPlan;
   index: number;
   isRecommended: boolean;
   interval: BillingInterval;
   onCheckout: (planCode: string) => void;
+  onOpenRdvModal: () => void;
 }) {
   const isHighlighted = isRecommended || plan.highlighted;
   const Icon = PLAN_ICONS[plan.code] || Users;
@@ -97,12 +99,25 @@ function PlanCard({ plan, index, isRecommended, interval, onCheckout }: {
         {/* Inclus */}
         <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Inclus</p>
         <ul className="space-y-2 mb-4">
-          {plan.features.map((f) => (
-            <li key={f} className="flex items-start gap-2">
-              <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0 mt-0.5" />
-              <span className="text-xs text-muted-foreground">{f}</span>
-            </li>
-          ))}
+          {plan.features.map((f) => {
+            const isRdvFeature = /rendez-vous/i.test(f);
+            return (
+              <li key={f} className="flex items-start gap-2">
+                <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0 mt-0.5" />
+                {isRdvFeature ? (
+                  <button
+                    type="button"
+                    onClick={onOpenRdvModal}
+                    className="text-xs text-primary underline decoration-dotted underline-offset-2 hover:text-primary/80 transition-colors text-left cursor-pointer"
+                  >
+                    {f}
+                  </button>
+                ) : (
+                  <span className="text-xs text-muted-foreground">{f}</span>
+                )}
+              </li>
+            );
+          })}
         </ul>
 
         {/* Rendez-vous */}
@@ -157,6 +172,7 @@ function PlanCard({ plan, index, isRecommended, interval, onCheckout }: {
 export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?: string | null }) {
   const [loading, setLoading] = useState<string | null>(null);
   const [interval, setInterval] = useState<BillingInterval>("year");
+  const [rdvModalOpen, setRdvModalOpen] = useState(false);
   const { data: plans, isLoading } = usePlanCatalog();
 
   const handleCheckout = async (planCode: string) => {
@@ -249,6 +265,7 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
                 isRecommended={preSelectedPlan === plan.code}
                 interval={interval}
                 onCheckout={handleCheckout}
+                onOpenRdvModal={() => setRdvModalOpen(true)}
               />
             ))}
           </div>
@@ -272,6 +289,15 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
           </p>
         </motion.div>
       </div>
+
+      <ModalRendezVousValueExplanation
+        open={rdvModalOpen}
+        onOpenChange={setRdvModalOpen}
+        onChoosePlan={() => {
+          const recommended = document.querySelector('[data-plan="pro"]');
+          recommended?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }}
+      />
     </section>
   );
 }
