@@ -87,6 +87,8 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = true
   [functions.process-reminders]
     verify_jwt = false
+  [functions.recovery-engine]
+    verify_jwt = false
   [functions.property-autopilot]
     verify_jwt = false
   [functions.schedule-reminders]
