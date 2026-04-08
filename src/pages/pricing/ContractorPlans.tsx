@@ -251,20 +251,6 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
             ))}
           </div>
         )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-            {(plans ?? []).map((plan, i) => (
-              <PlanCard
-                key={plan.code}
-                plan={plan}
-                index={i}
-                isRecommended={preSelectedPlan === plan.code}
-                interval={interval}
-                onCheckout={handleCheckout}
-                onOpenRdvModal={() => setRdvModalOpen(true)}
-              />
-            ))}
-          </div>
-        )}
 
         {/* Reminder block */}
         <motion.div
