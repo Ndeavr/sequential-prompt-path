@@ -333,6 +333,7 @@ const AdminHomeGraph = lazy(() => import("@/pages/admin/AdminHomeGraph"));
 const AdminUOS = lazy(() => import("@/pages/admin/AdminUOS"));
 const AdminGrowthEngine = lazy(() => import("@/pages/admin/AdminGrowthEngine"));
 const AdminPricingPage = lazy(() => import("@/pages/admin/AdminPricingPage"));
+const AdminCoupons = lazy(() => import("@/pages/admin/AdminCoupons"));
 const PageAdminPlanDistribution = lazy(() => import("@/pages/admin/PageAdminPlanDistribution"));
 const PageAdminPlanAppointmentsControl = lazy(() => import("@/pages/admin/PageAdminPlanAppointmentsControl"));
 const PageAdminClusterPlanProjectSizeMatrix = lazy(() => import("@/pages/admin/PageAdminClusterPlanProjectSizeMatrix"));
@@ -769,6 +770,7 @@ export const AppRouter = () => (
         <Route path="/admin/uos" element={<ProtectedRoute requiredRole="admin"><AdminUOS /></ProtectedRoute>} />
         <Route path="/admin/growth-engine" element={<ProtectedRoute requiredRole="admin"><AdminGrowthEngine /></ProtectedRoute>} />
         <Route path="/admin/pricing" element={<ProtectedRoute requiredRole="admin"><AdminPricingPage /></ProtectedRoute>} />
+        <Route path="/admin/coupons" element={<ProtectedRoute requiredRole="admin"><AdminCoupons /></ProtectedRoute>} />
         <Route path="/admin/plan-distribution" element={<ProtectedRoute requiredRole="admin"><PageAdminPlanDistribution /></ProtectedRoute>} />
         <Route path="/admin/plan-appointments" element={<ProtectedRoute requiredRole="admin"><PageAdminPlanAppointmentsControl /></ProtectedRoute>} />
         <Route path="/admin/cluster-project-size-matrix" element={<ProtectedRoute requiredRole="admin"><PageAdminClusterPlanProjectSizeMatrix /></ProtectedRoute>} />

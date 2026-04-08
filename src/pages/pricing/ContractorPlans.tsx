@@ -266,6 +266,7 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
                   planCode={selectedPlan.code}
                   planName={selectedPlan.name}
                   interval={interval}
+                  basePrice={interval === "year" ? Math.round(selectedPlan.yearlyPrice / 12) : selectedPlan.monthlyPrice}
                   onCancel={handleCancelCheckout}
                 />
               </div>

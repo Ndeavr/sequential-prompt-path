@@ -7461,6 +7461,39 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_events_log: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          event_type: string
+          id: string
+          livemode: boolean | null
+          payload_json: Json | null
+          processing_status: string | null
+          stripe_event_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          event_type: string
+          id?: string
+          livemode?: boolean | null
+          payload_json?: Json | null
+          processing_status?: string | null
+          stripe_event_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          livemode?: boolean | null
+          payload_json?: Json | null
+          processing_status?: string | null
+          stripe_event_id?: string | null
+        }
+        Relationships: []
+      }
       blog_analytics: {
         Row: {
           article_id: string
@@ -32072,48 +32105,93 @@ export type Database = {
       promo_codes: {
         Row: {
           active: boolean
+          applies_to_billing_intervals: string[] | null
+          archived_at: string | null
           code: string
           created_at: string
+          created_by: string | null
+          currency: string | null
+          current_redemptions_count: number | null
           description: string | null
+          description_public: string | null
           discount_type: string
           discount_value: number
+          duration_in_months: number | null
+          duration_type: string | null
           eligible_plan_codes: string[]
           ends_at: string | null
           id: string
+          is_founder_offer: boolean | null
+          is_internal_only: boolean | null
+          is_partner_only: boolean | null
+          is_stackable: boolean | null
           label: string | null
+          partner_id: string | null
           starts_at: string | null
+          stripe_coupon_id: string | null
+          stripe_promotion_code_id: string | null
           updated_at: string
           usage_limit_per_business: number | null
           usage_limit_total: number | null
         }
         Insert: {
           active?: boolean
+          applies_to_billing_intervals?: string[] | null
+          archived_at?: string | null
           code: string
           created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          current_redemptions_count?: number | null
           description?: string | null
+          description_public?: string | null
           discount_type?: string
           discount_value?: number
+          duration_in_months?: number | null
+          duration_type?: string | null
           eligible_plan_codes?: string[]
           ends_at?: string | null
           id?: string
+          is_founder_offer?: boolean | null
+          is_internal_only?: boolean | null
+          is_partner_only?: boolean | null
+          is_stackable?: boolean | null
           label?: string | null
+          partner_id?: string | null
           starts_at?: string | null
+          stripe_coupon_id?: string | null
+          stripe_promotion_code_id?: string | null
           updated_at?: string
           usage_limit_per_business?: number | null
           usage_limit_total?: number | null
         }
         Update: {
           active?: boolean
+          applies_to_billing_intervals?: string[] | null
+          archived_at?: string | null
           code?: string
           created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          current_redemptions_count?: number | null
           description?: string | null
+          description_public?: string | null
           discount_type?: string
           discount_value?: number
+          duration_in_months?: number | null
+          duration_type?: string | null
           eligible_plan_codes?: string[]
           ends_at?: string | null
           id?: string
+          is_founder_offer?: boolean | null
+          is_internal_only?: boolean | null
+          is_partner_only?: boolean | null
+          is_stackable?: boolean | null
           label?: string | null
+          partner_id?: string | null
           starts_at?: string | null
+          stripe_coupon_id?: string | null
+          stripe_promotion_code_id?: string | null
           updated_at?: string
           usage_limit_per_business?: number | null
           usage_limit_total?: number | null
