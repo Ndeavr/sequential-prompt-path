@@ -7832,6 +7832,50 @@ export type Database = {
           },
         ]
       }
+      booking_events: {
+        Row: {
+          booking_status: string | null
+          city: string | null
+          contractor_id: string | null
+          created_at: string
+          entity_id: string | null
+          id: string
+          metadata_json: Json | null
+          source: string | null
+          user_id: string | null
+        }
+        Insert: {
+          booking_status?: string | null
+          city?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          metadata_json?: Json | null
+          source?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          booking_status?: string | null
+          city?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          metadata_json?: Json | null
+          source?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_events_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "service_entity_master"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_files: {
         Row: {
           booking_id: string
@@ -10000,6 +10044,54 @@ export type Database = {
           },
         ]
       }
+      content_assets: {
+        Row: {
+          alt_text: string | null
+          asset_type: string
+          created_at: string
+          entity_id: string | null
+          id: string
+          metadata_json: Json | null
+          page_id: string | null
+          url: string
+        }
+        Insert: {
+          alt_text?: string | null
+          asset_type?: string
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          metadata_json?: Json | null
+          page_id?: string | null
+          url: string
+        }
+        Update: {
+          alt_text?: string | null
+          asset_type?: string
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          metadata_json?: Json | null
+          page_id?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_assets_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "service_entity_master"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_assets_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "content_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_generation_runs: {
         Row: {
           article_id: string | null
@@ -10056,6 +10148,74 @@ export type Database = {
             columns: ["topic_id"]
             isOneToOne: false
             referencedRelation: "topic_backlog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_pages: {
+        Row: {
+          city: string | null
+          city_slug: string | null
+          content_json: Json | null
+          created_at: string
+          entity_id: string | null
+          faq_json: Json | null
+          generation_source: string | null
+          h1: string
+          id: string
+          internal_links_json: Json | null
+          meta_description: string | null
+          published: boolean
+          published_at: string | null
+          schema_json: Json | null
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          city_slug?: string | null
+          content_json?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          faq_json?: Json | null
+          generation_source?: string | null
+          h1: string
+          id?: string
+          internal_links_json?: Json | null
+          meta_description?: string | null
+          published?: boolean
+          published_at?: string | null
+          schema_json?: Json | null
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          city_slug?: string | null
+          content_json?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          faq_json?: Json | null
+          generation_source?: string | null
+          h1?: string
+          id?: string
+          internal_links_json?: Json | null
+          meta_description?: string | null
+          published?: boolean
+          published_at?: string | null
+          schema_json?: Json | null
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_pages_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "service_entity_master"
             referencedColumns: ["id"]
           },
         ]
@@ -17674,6 +17834,50 @@ export type Database = {
           sub_feature?: string | null
         }
         Relationships: []
+      }
+      demand_signals_qc: {
+        Row: {
+          city: string | null
+          created_at: string
+          entity_id: string | null
+          id: string
+          metadata_json: Json | null
+          raw_query: string | null
+          source: string
+          trend: string | null
+          volume_estimate: number | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          metadata_json?: Json | null
+          raw_query?: string | null
+          source?: string
+          trend?: string | null
+          volume_estimate?: number | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          metadata_json?: Json | null
+          raw_query?: string | null
+          source?: string
+          trend?: string | null
+          volume_estimate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_signals_qc_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "service_entity_master"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       demand_spike_metrics: {
         Row: {
@@ -35130,6 +35334,50 @@ export type Database = {
         }
         Relationships: []
       }
+      revenue_events: {
+        Row: {
+          city: string | null
+          contractor_id: string | null
+          created_at: string
+          entity_id: string | null
+          event_type: string
+          id: string
+          metadata_json: Json | null
+          user_id: string | null
+          value_cents: number | null
+        }
+        Insert: {
+          city?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          event_type: string
+          id?: string
+          metadata_json?: Json | null
+          user_id?: string | null
+          value_cents?: number | null
+        }
+        Update: {
+          city?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          event_type?: string
+          id?: string
+          metadata_json?: Json | null
+          user_id?: string | null
+          value_cents?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_events_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "service_entity_master"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       revenue_fit_inputs: {
         Row: {
           average_job_value: number | null
@@ -37111,6 +37359,50 @@ export type Database = {
         }
         Relationships: []
       }
+      serp_validation: {
+        Row: {
+          city: string | null
+          created_at: string
+          entity_id: string | null
+          id: string
+          is_valid: boolean | null
+          query_text: string
+          top_results_json: Json | null
+          validated_at: string
+          variation_score: number | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          is_valid?: boolean | null
+          query_text: string
+          top_results_json?: Json | null
+          validated_at?: string
+          variation_score?: number | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          is_valid?: boolean | null
+          query_text?: string
+          top_results_json?: Json | null
+          validated_at?: string
+          variation_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "serp_validation_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "service_entity_master"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_areas: {
         Row: {
           city_name: string
@@ -37223,6 +37515,119 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      service_entity_city: {
+        Row: {
+          avg_price_high_local: number | null
+          avg_price_low_local: number | null
+          city: string
+          city_slug: string
+          created_at: string
+          demand_score: number | null
+          entity_id: string
+          id: string
+          is_active: boolean
+          local_context_fr: string | null
+          priority: number | null
+          updated_at: string
+        }
+        Insert: {
+          avg_price_high_local?: number | null
+          avg_price_low_local?: number | null
+          city: string
+          city_slug: string
+          created_at?: string
+          demand_score?: number | null
+          entity_id: string
+          id?: string
+          is_active?: boolean
+          local_context_fr?: string | null
+          priority?: number | null
+          updated_at?: string
+        }
+        Update: {
+          avg_price_high_local?: number | null
+          avg_price_low_local?: number | null
+          city?: string
+          city_slug?: string
+          created_at?: string
+          demand_score?: number | null
+          entity_id?: string
+          id?: string
+          is_active?: boolean
+          local_context_fr?: string | null
+          priority?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_entity_city_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "service_entity_master"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_entity_master: {
+        Row: {
+          avg_price_high: number | null
+          avg_price_low: number | null
+          category: string
+          contractor_types_json: Json | null
+          created_at: string
+          description_fr: string | null
+          id: string
+          intent_type: string
+          is_active: boolean
+          keywords_json: Json | null
+          name: string
+          normalized_name: string
+          related_entities_json: Json | null
+          seasonality_qc: string | null
+          slug: string
+          updated_at: string
+          urgency_level: string
+        }
+        Insert: {
+          avg_price_high?: number | null
+          avg_price_low?: number | null
+          category?: string
+          contractor_types_json?: Json | null
+          created_at?: string
+          description_fr?: string | null
+          id?: string
+          intent_type?: string
+          is_active?: boolean
+          keywords_json?: Json | null
+          name: string
+          normalized_name: string
+          related_entities_json?: Json | null
+          seasonality_qc?: string | null
+          slug: string
+          updated_at?: string
+          urgency_level?: string
+        }
+        Update: {
+          avg_price_high?: number | null
+          avg_price_low?: number | null
+          category?: string
+          contractor_types_json?: Json | null
+          created_at?: string
+          description_fr?: string | null
+          id?: string
+          intent_type?: string
+          is_active?: boolean
+          keywords_json?: Json | null
+          name?: string
+          normalized_name?: string
+          related_entities_json?: Json | null
+          seasonality_qc?: string | null
+          slug?: string
+          updated_at?: string
+          urgency_level?: string
+        }
+        Relationships: []
       }
       share_link_events: {
         Row: {
