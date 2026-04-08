@@ -4479,12 +4479,14 @@ export type Database = {
           max_pause_ms: number | null
           min_speech_ms: number | null
           name: string | null
+          neutral_accent_mode: boolean | null
           noise_floor_db: number | null
           output_buffer_ms: number | null
           prefix_padding_ms: number | null
           profile_key: string
           profile_name: string | null
           provider_primary: string
+          quebec_flavor_level: number | null
           reconnect_backoff_strategy: string | null
           response_style: string | null
           silence_duration_ms: number | null
@@ -4529,12 +4531,14 @@ export type Database = {
           max_pause_ms?: number | null
           min_speech_ms?: number | null
           name?: string | null
+          neutral_accent_mode?: boolean | null
           noise_floor_db?: number | null
           output_buffer_ms?: number | null
           prefix_padding_ms?: number | null
           profile_key: string
           profile_name?: string | null
           provider_primary?: string
+          quebec_flavor_level?: number | null
           reconnect_backoff_strategy?: string | null
           response_style?: string | null
           silence_duration_ms?: number | null
@@ -4579,12 +4583,14 @@ export type Database = {
           max_pause_ms?: number | null
           min_speech_ms?: number | null
           name?: string | null
+          neutral_accent_mode?: boolean | null
           noise_floor_db?: number | null
           output_buffer_ms?: number | null
           prefix_padding_ms?: number | null
           profile_key?: string
           profile_name?: string | null
           provider_primary?: string
+          quebec_flavor_level?: number | null
           reconnect_backoff_strategy?: string | null
           response_style?: string | null
           silence_duration_ms?: number | null
@@ -4866,6 +4872,56 @@ export type Database = {
           },
         ]
       }
+      alex_voice_render_logs: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          language_code: string | null
+          profile_key: string | null
+          success: boolean
+          text_input: string | null
+          text_preprocessed: string | null
+          user_id: string | null
+          voice_profile_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          language_code?: string | null
+          profile_key?: string | null
+          success?: boolean
+          text_input?: string | null
+          text_preprocessed?: string | null
+          user_id?: string | null
+          voice_profile_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          language_code?: string | null
+          profile_key?: string | null
+          success?: boolean
+          text_input?: string | null
+          text_preprocessed?: string | null
+          user_id?: string | null
+          voice_profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_voice_render_logs_voice_profile_id_fkey"
+            columns: ["voice_profile_id"]
+            isOneToOne: false
+            referencedRelation: "alex_voice_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alex_voice_runtime_sessions: {
         Row: {
           created_at: string | null
@@ -5107,6 +5163,62 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      alex_voice_tone_settings: {
+        Row: {
+          created_at: string
+          energy: number
+          formality: number
+          id: string
+          is_active: boolean
+          neutral_accent_enabled: boolean
+          pacing_style: string
+          pitch: number
+          quebec_flavor_level: number
+          speech_rate: number
+          updated_at: string
+          voice_profile_id: string
+          warmth: number
+        }
+        Insert: {
+          created_at?: string
+          energy?: number
+          formality?: number
+          id?: string
+          is_active?: boolean
+          neutral_accent_enabled?: boolean
+          pacing_style?: string
+          pitch?: number
+          quebec_flavor_level?: number
+          speech_rate?: number
+          updated_at?: string
+          voice_profile_id: string
+          warmth?: number
+        }
+        Update: {
+          created_at?: string
+          energy?: number
+          formality?: number
+          id?: string
+          is_active?: boolean
+          neutral_accent_enabled?: boolean
+          pacing_style?: string
+          pitch?: number
+          quebec_flavor_level?: number
+          speech_rate?: number
+          updated_at?: string
+          voice_profile_id?: string
+          warmth?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_voice_tone_settings_voice_profile_id_fkey"
+            columns: ["voice_profile_id"]
+            isOneToOne: false
+            referencedRelation: "alex_voice_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       alex_voice_turns: {
         Row: {
