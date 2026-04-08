@@ -20250,6 +20250,53 @@ export type Database = {
           },
         ]
       }
+      execution_agent_tasks: {
+        Row: {
+          agent_type: string
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          parent_task_id: string | null
+          result_json: Json | null
+          started_at: string | null
+          status: string
+          task_payload: Json
+        }
+        Insert: {
+          agent_type?: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          parent_task_id?: string | null
+          result_json?: Json | null
+          started_at?: string | null
+          status?: string
+          task_payload?: Json
+        }
+        Update: {
+          agent_type?: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          parent_task_id?: string | null
+          result_json?: Json | null
+          started_at?: string | null
+          status?: string
+          task_payload?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "execution_agent_tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "execution_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       execution_budget_rules: {
         Row: {
           ask_question_threshold: number | null
@@ -20434,6 +20481,48 @@ export type Database = {
           },
         ]
       }
+      execution_learning_logs: {
+        Row: {
+          actual_credits: number | null
+          avg_duration_ms: number | null
+          complexity_score: number | null
+          created_at: string
+          estimated_credits: number | null
+          id: string
+          insights_json: Json | null
+          sample_count: number
+          success_rate: number | null
+          task_type: string
+          updated_at: string
+        }
+        Insert: {
+          actual_credits?: number | null
+          avg_duration_ms?: number | null
+          complexity_score?: number | null
+          created_at?: string
+          estimated_credits?: number | null
+          id?: string
+          insights_json?: Json | null
+          sample_count?: number
+          success_rate?: number | null
+          task_type: string
+          updated_at?: string
+        }
+        Update: {
+          actual_credits?: number | null
+          avg_duration_ms?: number | null
+          complexity_score?: number | null
+          created_at?: string
+          estimated_credits?: number | null
+          id?: string
+          insights_json?: Json | null
+          sample_count?: number
+          success_rate?: number | null
+          task_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       execution_missing_inputs: {
         Row: {
           blocking_level: string | null
@@ -20519,8 +20608,50 @@ export type Database = {
           },
         ]
       }
+      execution_recovery_memory: {
+        Row: {
+          context_json: Json | null
+          created_at: string
+          failure_type: string
+          id: string
+          recovery_strategy: string
+          retry_count: number
+          success: boolean
+          task_id: string | null
+        }
+        Insert: {
+          context_json?: Json | null
+          created_at?: string
+          failure_type: string
+          id?: string
+          recovery_strategy: string
+          retry_count?: number
+          success?: boolean
+          task_id?: string | null
+        }
+        Update: {
+          context_json?: Json | null
+          created_at?: string
+          failure_type?: string
+          id?: string
+          recovery_strategy?: string
+          retry_count?: number
+          success?: boolean
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "execution_recovery_memory_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "execution_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       execution_runs: {
         Row: {
+          agent_used: string | null
           credits_actual: number | null
           credits_estimated: number | null
           duration_ms: number | null
@@ -20528,12 +20659,14 @@ export type Database = {
           finished_at: string | null
           id: string
           partial_output_json: Json | null
+          recovery_used: string | null
           run_status: string | null
           run_type: string | null
           started_at: string | null
           task_id: string
         }
         Insert: {
+          agent_used?: string | null
           credits_actual?: number | null
           credits_estimated?: number | null
           duration_ms?: number | null
@@ -20541,12 +20674,14 @@ export type Database = {
           finished_at?: string | null
           id?: string
           partial_output_json?: Json | null
+          recovery_used?: string | null
           run_status?: string | null
           run_type?: string | null
           started_at?: string | null
           task_id: string
         }
         Update: {
+          agent_used?: string | null
           credits_actual?: number | null
           credits_estimated?: number | null
           duration_ms?: number | null
@@ -20554,6 +20689,7 @@ export type Database = {
           finished_at?: string | null
           id?: string
           partial_output_json?: Json | null
+          recovery_used?: string | null
           run_status?: string | null
           run_type?: string | null
           started_at?: string | null
@@ -20613,6 +20749,7 @@ export type Database = {
       execution_tasks: {
         Row: {
           advanced_score: number | null
+          auto_split_enabled: boolean | null
           breakdown_json: Json | null
           created_at: string | null
           current_status: string | null
@@ -20621,6 +20758,7 @@ export type Database = {
           estimated_credits: number | null
           execution_mode: string | null
           id: string
+          learning_adjusted_score: number | null
           module_name: string | null
           requested_scope_json: Json | null
           task_key: string
@@ -20629,6 +20767,7 @@ export type Database = {
         }
         Insert: {
           advanced_score?: number | null
+          auto_split_enabled?: boolean | null
           breakdown_json?: Json | null
           created_at?: string | null
           current_status?: string | null
@@ -20637,6 +20776,7 @@ export type Database = {
           estimated_credits?: number | null
           execution_mode?: string | null
           id?: string
+          learning_adjusted_score?: number | null
           module_name?: string | null
           requested_scope_json?: Json | null
           task_key: string
@@ -20645,6 +20785,7 @@ export type Database = {
         }
         Update: {
           advanced_score?: number | null
+          auto_split_enabled?: boolean | null
           breakdown_json?: Json | null
           created_at?: string | null
           current_status?: string | null
@@ -20653,6 +20794,7 @@ export type Database = {
           estimated_credits?: number | null
           execution_mode?: string | null
           id?: string
+          learning_adjusted_score?: number | null
           module_name?: string | null
           requested_scope_json?: Json | null
           task_key?: string
