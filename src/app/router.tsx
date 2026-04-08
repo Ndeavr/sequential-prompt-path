@@ -333,6 +333,7 @@ const AdminHomeGraph = lazy(() => import("@/pages/admin/AdminHomeGraph"));
 const AdminUOS = lazy(() => import("@/pages/admin/AdminUOS"));
 const AdminGrowthEngine = lazy(() => import("@/pages/admin/AdminGrowthEngine"));
 const AdminPricingPage = lazy(() => import("@/pages/admin/AdminPricingPage"));
+const AdminCoupons = lazy(() => import("@/pages/admin/AdminCoupons"));
 const PageAdminPlanDistribution = lazy(() => import("@/pages/admin/PageAdminPlanDistribution"));
 const PageAdminPlanAppointmentsControl = lazy(() => import("@/pages/admin/PageAdminPlanAppointmentsControl"));
 const PageAdminClusterPlanProjectSizeMatrix = lazy(() => import("@/pages/admin/PageAdminClusterPlanProjectSizeMatrix"));
