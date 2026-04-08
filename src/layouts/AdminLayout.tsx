@@ -41,6 +41,7 @@ const navItems = [
   { to: "/admin/dynamic-pricing-market", label: "Prix Dynamique", icon: TrendingUp },
   { to: "/admin/predictive-market-board", label: "Centre Prédictif", icon: Zap },
   { to: "/admin/zone-value", label: "Zones & Exclusivité", icon: MapPin },
+  { to: "/admin/coupons", label: "Coupons", icon: Tag },
   { to: "/admin/uos", label: "UNPRO OS", icon: Sparkles },
 ];
 
