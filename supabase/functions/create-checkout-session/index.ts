@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     const userId = claimsData.claims.sub;
     const userEmail = claimsData.claims.email as string;
 
-    const { planId, billingInterval, successUrl, cancelUrl, promoCode } = await req.json();
+    const { planId, billingInterval, successUrl, cancelUrl, promoCode, appointmentPack } = await req.json();
     const interval: "month" | "year" = billingInterval === "year" ? "year" : "month";
 
     const serviceClient = createClient(
