@@ -236,6 +236,7 @@ export function buildAlexGreeting(input: AlexGreetingInput): string {
 
 /**
  * Réécriture anti-français trop écrit / trop traduit.
+ * Garde un ton professionnel international.
  */
 export function rewriteAlexToSpokenFrench(text: string): string {
   return text
@@ -247,10 +248,14 @@ export function rewriteAlexToSpokenFrench(text: string): string {
     .replace(/\bje suis en mesure de\b/g, "je peux")
     .replace(/\bIl serait pertinent de\b/gi, "Le mieux, c'est de")
     .replace(/\bil serait pertinent de\b/g, "le mieux, c'est de")
-    .replace(/\bNous allons procéder\b/gi, "On va faire ça")
-    .replace(/\bnous allons procéder\b/g, "on va faire ça")
-    .replace(/\bMerci pour cette précision\b/gi, "D'accord")
-    .replace(/\bmerci pour cette précision\b/g, "d'accord")
+    .replace(/\bNous allons procéder\b/gi, "On s'en occupe")
+    .replace(/\bnous allons procéder\b/g, "on s'en occupe")
+    .replace(/\bMerci pour cette précision\b/gi, "Très bien")
+    .replace(/\bmerci pour cette précision\b/g, "très bien")
+    .replace(/\bN'hésitez pas\b/gi, "")
+    .replace(/\bn'hésitez pas\b/g, "")
+    .replace(/\bAbsolument\b/gi, "Oui")
+    .replace(/\babsolument\b/g, "oui")
     .replace(/\s+/g, " ")
     .trim();
 }
