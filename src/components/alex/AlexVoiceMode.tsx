@@ -83,20 +83,20 @@ export default function AlexVoiceMode({ feature, onFlowComplete, onDismiss, inli
     let greeting: string;
     switch (feature) {
       case "probleme":
-        greeting = `${name} Je peux vous aider à trouver une solution. Décrivez-moi votre problème.`;
+        greeting = `${name} Décrivez-moi votre problème, je m'en occupe.`;
         break;
       case "projet":
-        greeting = `${name} Un nouveau projet? Je peux certainement vous aider. Décrivez-moi votre projet.`;
+        greeting = `${name} Un nouveau projet ? Dites-moi de quoi il s'agit.`;
         break;
       case "avis":
-        greeting = `${name} Vous aimeriez que j'analyse vos soumissions? Allez-y, décrivez-moi ce que vous avez reçu.`;
+        greeting = `${name} Vous souhaitez que j'analyse vos soumissions ? Décrivez-moi ce que vous avez reçu.`;
         break;
       case "intent":
       case "diagnostic":
-        greeting = `${name} Décrivez-moi votre besoin et je vous trouve le bon professionnel.`;
+        greeting = `${name} Décrivez-moi votre besoin, je vous trouve le bon professionnel.`;
         break;
       default:
-        greeting = `${name} Comment puis-je vous aider aujourd'hui?`;
+        greeting = `${name} Je suis là. Dites-moi ce dont vous avez besoin.`;
     }
 
     // Play intro sound then start voice
