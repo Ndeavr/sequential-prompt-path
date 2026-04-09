@@ -10,6 +10,7 @@ import { Mic, MicOff, MessageSquare, X, Loader2, Volume2, Square } from "lucide-
 import { useLiveVoice } from "@/hooks/useLiveVoice";
 import { useAuth } from "@/hooks/useAuth";
 import { smartConcatChunk, formatAlexTranscriptForDisplay } from "@/lib/alexTextFormatter";
+import { audioEngine } from "@/services/audioEngineUNPRO";
 
 interface AlexVoiceProps {
   feature: string;
