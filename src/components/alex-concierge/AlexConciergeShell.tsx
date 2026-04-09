@@ -37,6 +37,14 @@ export default function AlexConciergeShell() {
   const [showAuth, setShowAuth] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
 
+  // Sonic identity: play sounds on state transitions
+  useEffect(() => {
+    if (state === "MATCHING") audioEngine.play("thinking");
+    if (state === "MATCH_FOUND" || state === "BOOKING_READY") audioEngine.play("success");
+    if (state === "NO_MATCH") audioEngine.play("notification");
+    if (state === "ERROR") audioEngine.play("error");
+  }, [state]);
+
   const handleIntentSelect = useCallback((intent: QuickIntent) => {
     setIntent(intent.label, intent.category);
   }, [setIntent]);

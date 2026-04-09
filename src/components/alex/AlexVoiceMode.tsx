@@ -99,9 +99,12 @@ export default function AlexVoiceMode({ feature, onFlowComplete, onDismiss, inli
         greeting = `${name} Comment puis-je vous aider aujourd'hui?`;
     }
 
+    // Play intro sound then start voice
+    audioEngine.play("intro");
     start({ initialGreeting: greeting });
 
     return () => {
+      audioEngine.play("outro");
       stop();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
