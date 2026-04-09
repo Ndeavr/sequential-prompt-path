@@ -49,7 +49,7 @@ export interface AlexRuntimeContext {
 export const ALEX_IDENTITY = {
   name: "Alex",
   role: "Intelligence Centrale et Concierge IA officielle de UnPRO.ca",
-  locale: "fr-CA",
+  locale: "fr",
   defaultLanguage: "fr",
   fallbackLanguage: "en",
 };
