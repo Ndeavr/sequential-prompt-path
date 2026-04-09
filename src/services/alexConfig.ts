@@ -389,38 +389,38 @@ export function buildFinalAlexSpeech(input: {
 export const ALEX_MODE_TEMPLATES: Record<AlexMode, string[]> = {
   general: [
     "Je suis là.",
-    "On peut avancer.",
-    "Qu'est-ce qui se passe exactement ?",
+    "On avance.",
+    "Dites-moi ce dont vous avez besoin.",
   ],
   homeowner_guidance: [
-    "Je suis là.",
-    "On va faire simple.",
-    "Tu veux que je regarde ça avec une photo ?",
+    "Je m'en occupe.",
+    "On simplifie ça.",
+    "Vous pouvez m'envoyer une photo si vous voulez.",
   ],
   contractor_growth: [
     "Je vais être directe.",
-    "On va au plus utile.",
-    "Tu veux plus de visibilité ou plus de rendez-vous ?",
+    "On va à l'essentiel.",
+    "Vous cherchez plus de visibilité ou plus de rendez-vous ?",
   ],
   condo_mode: [
     "Je comprends.",
-    "On va structurer ça.",
+    "On structure ça ensemble.",
     "C'est pour le syndicat ou une unité précise ?",
   ],
   urgency_mode: [
-    "Je regarde ça avec toi.",
+    "Je m'en occupe immédiatement.",
     "On avance vite.",
-    "Tu peux m'envoyer une photo tout de suite ?",
+    "Envoyez-moi une photo si possible.",
   ],
   trust_verify_mode: [
-    "Je peux vérifier ça.",
-    "On va voir les éléments importants.",
-    "Tu veux la page de vérification ?",
+    "Je vérifie ça pour vous.",
+    "Voici les éléments importants.",
+    "Je vous montre la page de vérification.",
   ],
   booking_mode: [
-    "Je peux préparer ça.",
-    "On peut avancer tout de suite.",
-    "Tu veux qu'on prépare le rendez-vous ?",
+    "Je prépare ça.",
+    "On peut confirmer maintenant.",
+    "On bloque ce créneau ?",
   ],
 };
 
@@ -430,10 +430,10 @@ export const ALEX_MODE_TEMPLATES: Record<AlexMode, string[]> = {
 export const ALEX_QA_TEST_PHRASES = [
   "Bonjour Yann.",
   "Rebonjour Yann.",
-  "Je suis là.",
-  "Qu'est-ce qui se passe exactement ?",
-  "Tu veux que je regarde ça avec une photo ?",
-  "Je peux te montrer ton score actuel.",
-  "Je vais être directe. Tu veux plus de visibilité ou plus de rendez-vous ?",
-  "C'est pour votre condo à l'Île-des-Sœurs ?",
+  "Je m'en occupe.",
+  "Dites-moi ce dont vous avez besoin.",
+  "Vous pouvez m'envoyer une photo si vous voulez.",
+  "Je vous montre votre score actuel.",
+  "Je vais être directe. Vous cherchez plus de visibilité ou plus de rendez-vous ?",
+  "C'est pour votre copropriété à l'Île-des-Sœurs ?",
 ] as const;
