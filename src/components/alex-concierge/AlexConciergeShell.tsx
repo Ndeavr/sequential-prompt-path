@@ -7,11 +7,12 @@
  * - Each question unlocks an action
  * - No "3 soumissions", no "on vous rappelle"
  */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, AlertCircle, Eye } from "lucide-react";
 import { useAlexConcierge } from "@/hooks/useAlexConcierge";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
+import { audioEngine } from "@/services/audioEngineUNPRO";
 import ModalInlineAuth from "./ModalInlineAuth";
 import PanelPropertyForm from "./PanelPropertyForm";
 import QuickIntentCards from "./QuickIntentCards";
@@ -35,6 +36,14 @@ export default function AlexConciergeShell() {
   const { openAlex } = useAlexVoice();
   const [showAuth, setShowAuth] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
+
+  // Sonic identity: play sounds on state transitions
+  useEffect(() => {
+    if (state === "MATCHING") audioEngine.play("thinking");
+    if (state === "MATCH_FOUND" || state === "BOOKING_READY") audioEngine.play("success");
+    if (state === "NO_MATCH") audioEngine.play("notification");
+    if (state === "ERROR") audioEngine.play("error");
+  }, [state]);
 
   const handleIntentSelect = useCallback((intent: QuickIntent) => {
     setIntent(intent.label, intent.category);
