@@ -1,8 +1,8 @@
 /**
  * Alex — configuration centrale UnPRO
  * Version orientée:
- * - FR-CA naturel
- * - mode conversationnel court
+ * - Français International Neutre (pas d'accent québécois)
+ * - Mode agentic (action-driven, décisionnel)
  * - Gemini texte + Gemini Live audio
  */
 
