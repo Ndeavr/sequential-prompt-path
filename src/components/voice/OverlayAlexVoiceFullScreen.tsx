@@ -129,6 +129,7 @@ export default function OverlayAlexVoiceFullScreen() {
     if (!store.isOverlayOpen || store.machineState !== "requesting_permission") return;
 
     let cancelled = false;
+    let bootTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const boot = async () => {
       try {
@@ -144,13 +145,23 @@ export default function OverlayAlexVoiceFullScreen() {
         // 3. Enter stabilization (4s no-close window)
         store.transitionTo("stabilizing", "stabilization_start");
 
-        // 4. Connect Gemini Live
+        // 4. Set a HARD boot timeout — if nothing happens in 12s, force error
+        bootTimeoutId = setTimeout(() => {
+          if (!cancelled && store.isOverlayOpen && 
+              (store.machineState === "stabilizing" || store.machineState === "opening_session")) {
+            console.error("[VoiceOverlay] ⏱️ Boot timeout — forcing error state");
+            store.setError("boot_timeout", "La connexion prend trop de temps. Réessayez.", true);
+          }
+        }, 12000);
+
+        // 5. Connect Gemini Live
         const greeting = buildGreeting();
+        console.log("[VoiceOverlay] Starting Gemini Live with greeting:", greeting);
         await start({ initialGreeting: greeting });
 
         if (cancelled) return;
 
-        // 5. Stabilization timer
+        // 6. Stabilization timer
         stabilizationTimerRef.current = setTimeout(() => {
           if (store.machineState === "stabilizing") {
             store.transitionTo("session_ready", "stabilization_complete");
@@ -164,7 +175,7 @@ export default function OverlayAlexVoiceFullScreen() {
         if (err?.name === "NotAllowedError" || err?.message?.includes("Permission")) {
           store.setError("permission_denied", "Autorisez le microphone pour continuer.", false);
         } else {
-          store.setError("boot_failed", "Impossible de démarrer la voix. Réessayez.", true);
+          store.setError("boot_failed", err?.message || "Impossible de démarrer la voix. Réessayez.", true);
         }
       }
     };
@@ -173,6 +184,7 @@ export default function OverlayAlexVoiceFullScreen() {
 
     return () => {
       cancelled = true;
+      if (bootTimeoutId) clearTimeout(bootTimeoutId);
     };
   }, [store.isOverlayOpen, store.machineState === "requesting_permission"]);
 
