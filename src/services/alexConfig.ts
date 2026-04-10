@@ -128,7 +128,7 @@ Tu es un agent. Tu résous, tu ne converses pas.
 
 export const ALEX_GEMINI_TEXT_MODEL = "gemini-3-flash-preview";
 export const ALEX_GEMINI_LIVE_MODEL =
-  "gemini-live-2.5-flash-preview";
+  "gemini-2.0-flash-live-001";
 
 export const ALEX_TEXT_CONFIG = {
   model: ALEX_GEMINI_TEXT_MODEL,
