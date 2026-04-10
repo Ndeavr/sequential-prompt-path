@@ -178,38 +178,8 @@ export default function PageHomeAlexConversationalLite() {
         isThinking={isThinking}
       />
 
-      {/* Voice active indicator */}
-      <AnimatePresence>
-        {voiceIsActive && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="flex items-center justify-center gap-2 py-2 bg-primary/5 border-b border-primary/10">
-              <div className="flex items-center gap-1">
-                {[0, 1, 2].map(i => (
-                  <motion.div
-                    key={i}
-                    animate={{ height: voiceIsSpeaking ? [3, 12, 3] : [3, 6, 3] }}
-                    transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.15 }}
-                    className="w-1 bg-primary rounded-full"
-                  />
-                ))}
-              </div>
-              <span className="text-xs font-medium text-primary">
-                {voiceStatus}
-              </span>
-              {bootState === "session_error" && (
-                <button onClick={retryVoice} className="text-xs text-primary underline ml-1">
-                  Réessayer
-                </button>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Voice is handled by the locked overlay — no inline indicator needed */}
+      {/* The OverlayAlexVoiceFullScreen renders at app root level */}
 
       {/* Conversation Canvas — takes max space */}
       <div
@@ -226,47 +196,9 @@ export default function PageHomeAlexConversationalLite() {
               {msg.cardType && renderCard(msg)}
             </div>
           ))}
-
-          {/* Voice transcripts — rendered inline in the chat */}
-          {voiceIsActive && voiceTranscripts.map(entry => (
-            <motion.div
-              key={entry.id}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-1"
-            >
-              {entry.role === "alex" ? (
-                <BubbleAlexMessage content={entry.text} />
-              ) : (
-                <BubbleUserMessage content={entry.text} />
-              )}
-            </motion.div>
-          ))}
         </AnimatePresence>
 
         {isThinking && <LoaderAlexThinking />}
-
-        {/* Voice listening indicator in chat */}
-        {isVoiceListening && !isThinking && voiceTranscripts.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0.4, 0.8, 0.4] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className="flex items-center gap-2 pl-10"
-          >
-            <div className="flex gap-0.5">
-              {[0, 1, 2].map(i => (
-                <motion.div
-                  key={i}
-                  animate={{ height: [2, 8, 2] }}
-                  transition={{ duration: 0.4, repeat: Infinity, delay: i * 0.1 }}
-                  className="w-1 bg-primary/40 rounded-full"
-                />
-              ))}
-            </div>
-            <span className="text-xs text-muted-foreground">Je vous écoute...</span>
-          </motion.div>
-        )}
       </div>
 
       {/* Expanded Input Dock — always visible */}
@@ -274,9 +206,9 @@ export default function PageHomeAlexConversationalLite() {
         onSend={sendMessage}
         onMicToggle={handleMicToggle}
         isMicActive={voiceIsActive}
-        isVoiceConnecting={voiceIsConnecting || bootState === "preloading" || bootState === "intro_playing"}
+        isVoiceConnecting={voiceIsConnecting}
         disabled={isThinking}
-        placeholder={voiceIsActive ? "Mode vocal actif" : "Décrivez votre besoin..."}
+        placeholder={voiceIsActive ? "Mode vocal actif — Alex vous écoute" : "Décrivez votre besoin..."}
       />
 
       {/* Sheets */}
