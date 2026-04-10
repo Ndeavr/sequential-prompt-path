@@ -1,11 +1,14 @@
 /**
  * PageHomeAlexConversationalLite — Conversational homepage variant.
  * Alex-driven, mobile-first, premium, immersive.
+ * Now with voice-first analysis engine: business, quote, photo cards inline.
  */
 import { useEffect, useRef, useState, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { useAlexConversationLite } from "@/hooks/useAlexConversationLite";
+import { audioEngine } from "@/services/audioEngineUNPRO";
 import HeroSectionAlexOrbLite from "@/components/alex-conversation/HeroSectionAlexOrbLite";
 import InputAlexMessageComposer from "@/components/alex-conversation/InputAlexMessageComposer";
 import BubbleAlexMessage from "@/components/alex-conversation/BubbleAlexMessage";
@@ -17,6 +20,13 @@ import CardUrgencyAction from "@/components/alex-conversation/CardUrgencyAction"
 import CardProjectSuggestion from "@/components/alex-conversation/CardProjectSuggestion";
 import CardLoginPromptInline from "@/components/alex-conversation/CardLoginPromptInline";
 import CardNoMatchFallback from "@/components/alex-conversation/CardNoMatchFallback";
+import CardBusinessAnalysisScore from "@/components/alex-conversation/CardBusinessAnalysisScore";
+import CardQuoteAnalysisBreakdown from "@/components/alex-conversation/CardQuoteAnalysisBreakdown";
+import CardPhotoDesignSuggestions from "@/components/alex-conversation/CardPhotoDesignSuggestions";
+import CardPhotoProblemDiagnosis from "@/components/alex-conversation/CardPhotoProblemDiagnosis";
+import CardAIPPScore from "@/components/alex-conversation/CardAIPPScore";
+import CardImprovementActions from "@/components/alex-conversation/CardImprovementActions";
+import WidgetUploadInline from "@/components/alex-conversation/WidgetUploadInline";
 import SheetEntrepreneurDetails from "@/components/alex-conversation/SheetEntrepreneurDetails";
 import SheetBookingSlots from "@/components/alex-conversation/SheetBookingSlots";
 import { MOCK_SLOTS, type MockContractor, type MockSlot } from "@/components/alex-conversation/types";
@@ -24,8 +34,9 @@ import { toast } from "sonner";
 
 export default function PageHomeAlexConversationalLite() {
   const { user, isAuthenticated } = useAuth();
+  const { openAlex, voiceActive } = useAlexVoice();
   const firstName = user?.user_metadata?.first_name || user?.user_metadata?.name?.split(" ")[0];
-  const { messages, isThinking, sendMessage, initialize } = useAlexConversationLite(firstName);
+  const { messages, isThinking, sendMessage, initialize, handleFileUpload } = useAlexConversationLite(firstName);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isMicActive, setIsMicActive] = useState(false);
@@ -35,20 +46,31 @@ export default function PageHomeAlexConversationalLite() {
   const [detailContractor, setDetailContractor] = useState<MockContractor | null>(null);
   const [bookingContractor, setBookingContractor] = useState<MockContractor | null>(null);
 
-  // Initialize greeting
+  // Initialize greeting + unlock audio
   useEffect(() => {
-    if (messages.length === 0) initialize();
+    if (messages.length === 0) {
+      audioEngine.unlock();
+      initialize();
+    }
   }, [initialize, messages.length]);
 
   // Auto-scroll
   useEffect(() => {
     const el = scrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    if (el) {
+      requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight;
+      });
+    }
   }, [messages, isThinking]);
 
   const handleMicToggle = useCallback(() => {
+    if (!isMicActive) {
+      audioEngine.play("intro");
+      openAlex("conversation");
+    }
     setIsMicActive(prev => !prev);
-  }, []);
+  }, [isMicActive, openAlex]);
 
   const handleSlotSelect = useCallback((slot: MockSlot) => {
     setSelectedSlotId(slot.id);
@@ -60,6 +82,7 @@ export default function PageHomeAlexConversationalLite() {
       setBookingContractor(null);
       return;
     }
+    audioEngine.play("success");
     toast.success(`Rendez-vous confirmé : ${slot.label}`);
     setBookingContractor(null);
   }, [isAuthenticated]);
@@ -90,6 +113,33 @@ export default function PageHomeAlexConversationalLite() {
         return <CardLoginPromptInline />;
       case "no_match":
         return <CardNoMatchFallback />;
+      case "business_analysis":
+        return <CardBusinessAnalysisScore data={msg.cardData} />;
+      case "quote_analysis":
+        return <CardQuoteAnalysisBreakdown data={msg.cardData} />;
+      case "photo_design":
+        return <CardPhotoDesignSuggestions data={msg.cardData} />;
+      case "photo_problem":
+        return (
+          <CardPhotoProblemDiagnosis
+            data={msg.cardData}
+            onFindPro={() => sendMessage("Trouvez-moi un professionnel pour ce problème")}
+          />
+        );
+      case "aipp_score":
+        return (
+          <CardAIPPScore
+            entityName={msg.cardData?.entityName}
+            score={msg.cardData?.score}
+            tier={msg.cardData?.tier}
+          />
+        );
+      case "improvement_actions":
+        return <CardImprovementActions actions={msg.cardData || []} />;
+      case "upload_photo":
+        return <WidgetUploadInline type="photo" onFileSelected={(f) => handleFileUpload(f, "photo")} />;
+      case "upload_quote":
+        return <WidgetUploadInline type="quote" onFileSelected={(f) => handleFileUpload(f, "quote")} />;
       default:
         return null;
     }
@@ -108,7 +158,7 @@ export default function PageHomeAlexConversationalLite() {
 
       {/* Orb Header */}
       <HeroSectionAlexOrbLite
-        isListening={isMicActive}
+        isListening={isMicActive || voiceActive}
         isSpeaking={false}
         isThinking={isThinking}
       />
