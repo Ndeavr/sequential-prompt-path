@@ -81,22 +81,31 @@ export default function PageHomeAlexConversationalLite() {
     prevAuthRef.current = isAuthenticated;
   }, [isAuthenticated, firstName, updateAuthState]);
 
-  // Auto-scroll on new messages or voice transcripts
+  // Auto-scroll on new messages
   useEffect(() => {
     const el = scrollRef.current;
     if (el) {
       requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
     }
-  }, [messages, isThinking, voiceTranscripts]);
+  }, [messages, isThinking]);
 
-  // Mic toggle
+  // Mic toggle — opens/closes the locked voice overlay
   const handleMicToggle = useCallback(() => {
-    if (voiceIsActive) {
-      stopVoice();
+    if (voiceStore.isOverlayOpen) {
+      voiceStore.closeVoiceSession("user_mic_toggle");
     } else {
-      startVoice();
+      voiceStore.openVoiceSession("conversation", "mic_button");
     }
-  }, [voiceIsActive, startVoice, stopVoice]);
+  }, []);
+
+  // Auto-start voice on /alex/voice route
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (location.pathname === "/alex/voice" && !autoStartedRef.current && !voiceStore.isOverlayOpen) {
+      autoStartedRef.current = true;
+      setTimeout(() => voiceStore.openVoiceSession("conversation", "auto_start_voice_route"), 500);
+    }
+  }, [location.pathname]);
 
   const handleSlotSelect = useCallback((slot: MockSlot) => {
     setSelectedSlotId(slot.id);
@@ -149,7 +158,7 @@ export default function PageHomeAlexConversationalLite() {
 
   // Determine if voice is active for UI state
   const isVoiceSpeaking = voiceIsActive && voiceIsSpeaking;
-  const isVoiceListening = voiceIsActive && !voiceIsSpeaking && bootState === "alex_listening";
+  const isVoiceListening = voiceIsActive && !voiceIsSpeaking && voiceStore.machineState === "listening";
 
   return (
     <div className="flex flex-col h-[100dvh] bg-background relative overflow-hidden">
