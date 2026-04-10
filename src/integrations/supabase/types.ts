@@ -43054,6 +43054,102 @@ export type Database = {
           },
         ]
       }
+      voice_session_errors: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          error_payload: Json | null
+          error_type: string
+          id: string
+          recoverable: boolean
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          error_payload?: Json | null
+          error_type: string
+          id?: string
+          recoverable?: boolean
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          error_payload?: Json | null
+          error_type?: string
+          id?: string
+          recoverable?: boolean
+          session_id?: string
+        }
+        Relationships: []
+      }
+      voice_session_logs: {
+        Row: {
+          close_reason: string | null
+          closed_at: string | null
+          created_at: string
+          guest_token: string | null
+          id: string
+          open_reason: string | null
+          opened_at: string
+          session_id: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          close_reason?: string | null
+          closed_at?: string | null
+          created_at?: string
+          guest_token?: string | null
+          id?: string
+          open_reason?: string | null
+          opened_at?: string
+          session_id: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          close_reason?: string | null
+          closed_at?: string | null
+          created_at?: string
+          guest_token?: string | null
+          id?: string
+          open_reason?: string | null
+          opened_at?: string
+          session_id?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      voice_session_state_transitions: {
+        Row: {
+          created_at: string
+          from_state: string
+          id: string
+          session_id: string
+          to_state: string
+          transition_reason: string | null
+        }
+        Insert: {
+          created_at?: string
+          from_state: string
+          id?: string
+          session_id: string
+          to_state: string
+          transition_reason?: string | null
+        }
+        Update: {
+          created_at?: string
+          from_state?: string
+          id?: string
+          session_id?: string
+          to_state?: string
+          transition_reason?: string | null
+        }
+        Relationships: []
+      }
       voice_sessions: {
         Row: {
           context_json: Json | null
