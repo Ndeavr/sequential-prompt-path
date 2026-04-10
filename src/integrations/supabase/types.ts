@@ -8466,6 +8466,75 @@ export type Database = {
           },
         ]
       }
+      booking_slot_snapshots: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          id: string
+          session_id: string
+          slot_end: string
+          slot_label: string | null
+          slot_start: string
+          slot_status: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          id?: string
+          session_id: string
+          slot_end: string
+          slot_label?: string | null
+          slot_start: string
+          slot_status?: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          session_id?: string
+          slot_end?: string
+          slot_label?: string | null
+          slot_start?: string
+          slot_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_slot_snapshots_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_slot_snapshots_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_slot_snapshots_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_slot_snapshots_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "booking_slot_snapshots_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_transactions: {
         Row: {
           amount_total_cents: number
@@ -18052,6 +18121,82 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_context_signals: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          id: string
+          session_id: string
+          signal_key: string
+          signal_value_json: Json | null
+          signal_value_text: string | null
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          session_id: string
+          signal_key: string
+          signal_value_json?: Json | null
+          signal_value_text?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          session_id?: string
+          signal_key?: string
+          signal_value_json?: Json | null
+          signal_value_text?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_context_signals_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_events: {
+        Row: {
+          created_at: string
+          event_payload: Json | null
+          event_type: string
+          id: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_payload?: Json | null
+          event_type: string
+          id?: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          event_payload?: Json | null
+          event_type?: string
+          id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_memory: {
         Row: {
           created_at: string
@@ -18134,6 +18279,97 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_sessions: {
+        Row: {
+          created_at: string
+          device_type: string | null
+          ended_at: string | null
+          entry_point: string | null
+          guest_token: string | null
+          id: string
+          locale: string | null
+          session_status: string
+          started_at: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_type?: string | null
+          ended_at?: string | null
+          entry_point?: string | null
+          guest_token?: string | null
+          id?: string
+          locale?: string | null
+          session_status?: string
+          started_at?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_type?: string | null
+          ended_at?: string | null
+          entry_point?: string | null
+          guest_token?: string | null
+          id?: string
+          locale?: string | null
+          session_status?: string
+          started_at?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_ui_cards: {
+        Row: {
+          card_payload: Json | null
+          card_type: string
+          created_at: string
+          display_order: number
+          id: string
+          interaction_status: string
+          session_id: string
+          updated_at: string
+        }
+        Insert: {
+          card_payload?: Json | null
+          card_type: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          interaction_status?: string
+          session_id: string
+          updated_at?: string
+        }
+        Update: {
+          card_payload?: Json | null
+          card_type?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          interaction_status?: string
+          session_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_ui_cards_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -20909,6 +21145,87 @@ export type Database = {
             columns: ["import_session_id"]
             isOneToOne: false
             referencedRelation: "contractor_import_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entrepreneur_recommendations: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          id: string
+          recommendation_rank: number
+          recommendation_reason: string | null
+          score_availability: number | null
+          score_geo: number | null
+          score_match: number | null
+          score_total: number | null
+          session_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          id?: string
+          recommendation_rank?: number
+          recommendation_reason?: string | null
+          score_availability?: number | null
+          score_geo?: number | null
+          score_match?: number | null
+          score_total?: number | null
+          session_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          recommendation_rank?: number
+          recommendation_reason?: string | null
+          score_availability?: number | null
+          score_geo?: number | null
+          score_match?: number | null
+          score_total?: number | null
+          session_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entrepreneur_recommendations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_recommendations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_recommendations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_recommendations_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "entrepreneur_recommendations_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -42689,6 +43006,50 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "voice_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_preferences: {
+        Row: {
+          accent_profile: string | null
+          autoplay_enabled: boolean | null
+          created_at: string
+          id: string
+          language_code: string | null
+          speed_rate: number | null
+          updated_at: string
+          user_id: string
+          voice_id: string | null
+        }
+        Insert: {
+          accent_profile?: string | null
+          autoplay_enabled?: boolean | null
+          created_at?: string
+          id?: string
+          language_code?: string | null
+          speed_rate?: number | null
+          updated_at?: string
+          user_id: string
+          voice_id?: string | null
+        }
+        Update: {
+          accent_profile?: string | null
+          autoplay_enabled?: boolean | null
+          created_at?: string
+          id?: string
+          language_code?: string | null
+          speed_rate?: number | null
+          updated_at?: string
+          user_id?: string
+          voice_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
