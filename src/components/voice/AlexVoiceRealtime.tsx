@@ -42,9 +42,10 @@ export default function AlexVoiceRealtime({ onClose, userName, className = "" }:
     }
   }, [transcripts]);
 
-  // Listen for global cleanup
+  // Listen for global cleanup — but NOT if locked overlay manages this
   useEffect(() => {
     const handleCleanup = () => {
+      // This will only fire if the locked overlay didn't intercept it
       if (isActive) stopVoice();
     };
     window.addEventListener("alex-voice-cleanup", handleCleanup);
