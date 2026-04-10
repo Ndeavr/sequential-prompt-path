@@ -22485,6 +22485,39 @@ export type Database = {
         }
         Relationships: []
       }
+      generation_limits: {
+        Row: {
+          created_at: string
+          generation_type: string
+          id: string
+          is_unlimited: boolean
+          max_generations: number | null
+          plan_type: string
+          reset_period: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          generation_type?: string
+          id?: string
+          is_unlimited?: boolean
+          max_generations?: number | null
+          plan_type: string
+          reset_period?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          generation_type?: string
+          id?: string
+          is_unlimited?: boolean
+          max_generations?: number | null
+          plan_type?: string
+          reset_period?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       geo_areas: {
         Row: {
           area_type: string
@@ -42354,6 +42387,36 @@ export type Database = {
           },
         ]
       }
+      user_generation_usage: {
+        Row: {
+          created_at: string
+          generation_type: string
+          id: string
+          last_generation_at: string | null
+          updated_at: string
+          used_count: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          generation_type?: string
+          id?: string
+          last_generation_at?: string | null
+          updated_at?: string
+          used_count?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          generation_type?: string
+          id?: string
+          last_generation_at?: string | null
+          updated_at?: string
+          used_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_input_mode_logs: {
         Row: {
           conversion: boolean | null
@@ -43903,6 +43966,14 @@ export type Database = {
         Args: { p_waitlist_id: string }
         Returns: Json
       }
+      check_generation_quota: {
+        Args: {
+          _generation_type?: string
+          _plan_type?: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       check_territory_availability: {
         Args: { p_category_slugs: string[]; p_city_slugs: string[] }
         Returns: Json
@@ -43931,6 +44002,10 @@ export type Database = {
       compute_scarcity_status: {
         Args: { max_slots: number; occupied: number }
         Returns: string
+      }
+      consume_generation_credit: {
+        Args: { _generation_type?: string; _user_id: string }
+        Returns: Json
       }
       current_contractor_id: { Args: never; Returns: string }
       current_profile_id: { Args: never; Returns: string }
