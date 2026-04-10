@@ -84,16 +84,14 @@ export default function OverlayAlexVoiceFullScreen() {
       ]);
     },
     onConnect: () => {
+      console.log("[VoiceOverlay] ✅ Gemini connected");
       hasConnectedRef.current = true;
       store.resetHeartbeat();
     },
     onDisconnect: () => {
-      // CRITICAL: Do NOT auto-close. Just mark recoverable error if in stabilization
-      if (store.isOverlayOpen && store.isInStabilization()) {
-        console.warn("[VoiceOverlay] Disconnect during stabilization — ignoring auto-close");
-        return;
-      }
+      console.warn("[VoiceOverlay] Gemini disconnected. isOverlayOpen:", store.isOverlayOpen, "state:", store.machineState);
       if (store.isOverlayOpen) {
+        // ALWAYS show error on disconnect — don't silently swallow during stabilization
         store.setError("connection_lost", "Connexion perdue. Réessayez ou passez au chat.", true);
       }
     },
