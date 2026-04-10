@@ -1,17 +1,18 @@
 /**
- * PageHomeAlexConversationalLite — V6: Dominant Chat + Working Voice Pipeline
+ * PageHomeAlexConversationalLite — V7: Dominant Chat + Locked Voice Overlay
  * 
  * - Chat takes 85%+ of screen
  * - Compact header orb
  * - Expanded input dock with integrated mic
- * - Voice transcripts flow INTO the main chat (not separate overlay)
- * - Voice mode = inline, not full-screen
+ * - Mic triggers the locked full-screen voice overlay (stable, no auto-close)
+ * - Voice transcripts are injected back into chat on close
  */
 import { useEffect, useRef, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "react-router-dom";
 import { useAlexConversationLite } from "@/hooks/useAlexConversationLite";
-import { useAlexVoiceBootstrap } from "@/hooks/useAlexVoiceBootstrap";
+import { useAlexVoiceLockedStore } from "@/stores/alexVoiceLockedStore";
 import { audioEngine } from "@/services/audioEngineUNPRO";
 import HeroSectionAlexOrbLite from "@/components/alex-conversation/HeroSectionAlexOrbLite";
 import InputAlexDockExpanded from "@/components/alex-conversation/InputAlexDockExpanded";
@@ -42,25 +43,18 @@ import { toast } from "sonner";
 
 export default function PageHomeAlexConversationalLite() {
   const { user, isAuthenticated } = useAuth();
+  const location = useLocation();
   const firstName = user?.user_metadata?.first_name || user?.user_metadata?.name?.split(" ")[0];
   const {
     messages, isThinking, sendMessage, initialize, handleFileUpload,
     flowState, updateAuthState,
   } = useAlexConversationLite(firstName, isAuthenticated, false);
 
-  // Voice bootstrap — feeds transcripts into main chat
-  const {
-    bootState,
-    transcripts: voiceTranscripts,
-    primaryControl: voiceControl,
-    statusText: voiceStatus,
-    isSpeaking: voiceIsSpeaking,
-    isActive: voiceIsActive,
-    isConnecting: voiceIsConnecting,
-    startVoice,
-    stopVoice,
-    retryVoice,
-  } = useAlexVoiceBootstrap({ feature: "conversation" });
+  // Voice: use the locked overlay store (stable, no auto-close)
+  const voiceStore = useAlexVoiceLockedStore();
+  const voiceIsActive = voiceStore.isOverlayOpen;
+  const voiceIsConnecting = voiceStore.machineState === "stabilizing" || voiceStore.machineState === "opening_session" || voiceStore.machineState === "requesting_permission";
+  const voiceIsSpeaking = voiceStore.machineState === "speaking";
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const initRef = useRef(false);
