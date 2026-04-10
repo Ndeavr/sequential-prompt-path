@@ -40,7 +40,7 @@ export default function HeroSectionAlexOrbLite({ isListening, isSpeaking, isThin
           <Bot className="w-4 h-4 text-primary" />
         </motion.div>
         {(isListening || isSpeaking) && (
-          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background" />
+          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background" style={{ backgroundColor: "hsl(var(--primary))" }} />
         )}
       </div>
 
