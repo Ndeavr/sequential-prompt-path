@@ -173,9 +173,9 @@ export function useAlexVoiceBootstrap(options: UseAlexVoiceBootstrapOptions = {}
       setBootState("preloading");
       audioEngine.unlock();
 
-      // 2. Play intro chime (wait for completion)
+      // 2. Play intro chime without blocking the voice connection
       setBootState("intro_playing");
-      await audioEngine.play("intro");
+      void audioEngine.play("intro").catch(() => {});
 
       // 3. Connect Gemini Live with greeting
       setBootState("connecting");

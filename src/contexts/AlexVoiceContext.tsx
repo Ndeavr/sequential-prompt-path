@@ -10,6 +10,7 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import { alexAudioChannel } from "@/services/alexSingleAudioChannel";
 import { useAlexVoiceLockedStore } from "@/stores/alexVoiceLockedStore";
+import { audioEngine } from "@/services/audioEngineUNPRO";
 
 interface AlexVoiceContextType {
   isOpen: boolean;
@@ -44,6 +45,7 @@ export function AlexVoiceProvider({ children }: { children: ReactNode }) {
 
     // Kill ALL audio and voice sources before opening
     alexAudioChannel.hardStop();
+    audioEngine.unlock();
     // NOTE: Do NOT dispatch alex-voice-cleanup here — it causes the race condition
     // that kills the session we're about to start
     
