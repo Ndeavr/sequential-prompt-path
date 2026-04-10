@@ -3,9 +3,9 @@
  * 
  * Uses @google/genai SDK for real-time WebSocket audio streaming.
  * API key fetched securely from edge function (never hardcoded client-side).
- * Integrates with AlexSingleAudioChannel for guaranteed single-voice output.
  * 
- * Uses AudioWorklet for reliable mic capture (fallback to ScriptProcessorNode).
+ * FIXED: Removed sendClientContent greeting (causes WebSocket 1007 close).
+ * Greeting is now part of systemInstruction only.
  */
 import { useState, useRef, useCallback, useEffect } from "react";
 import { GoogleGenAI, Modality, StartSensitivity, EndSensitivity, ActivityHandling } from "@google/genai";
@@ -26,7 +26,7 @@ interface UseLiveVoiceCallbacks {
   onDisconnect?: () => void;
 }
 
-const LIVE_CONNECT_TIMEOUT_MS = 8000;
+const LIVE_CONNECT_TIMEOUT_MS = 12000;
 
 export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const [isActive, setIsActive] = useState(false);
@@ -45,146 +45,113 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
   const workletBlobURLRef = useRef<string | null>(null);
   const audioChunksSent = useRef(0);
+  const intentionallyStopped = useRef(false);
 
   const cleanup = useCallback(() => {
-    // Stop worklet node
     if (workletNodeRef.current) {
       workletNodeRef.current.disconnect();
       workletNodeRef.current = null;
     }
-
-    // Stop script processor (fallback)
     if (scriptProcessorRef.current) {
       scriptProcessorRef.current.disconnect();
       scriptProcessorRef.current = null;
     }
-
-    // Revoke worklet blob URL
     if (workletBlobURLRef.current) {
       URL.revokeObjectURL(workletBlobURLRef.current);
       workletBlobURLRef.current = null;
     }
-
-    // Stop media stream
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((t) => t.stop());
       mediaStreamRef.current = null;
     }
-
-    // Close session
     if (sessionRef.current) {
       try { sessionRef.current.close(); } catch {}
       sessionRef.current = null;
     }
-
-    // Close audio contexts
     if (inputAudioContextRef.current?.state !== "closed") {
       try { inputAudioContextRef.current?.close(); } catch {}
     }
     inputAudioContextRef.current = null;
-
     if (outputAudioContextRef.current?.state !== "closed") {
       try { outputAudioContextRef.current?.close(); } catch {}
     }
     outputAudioContextRef.current = null;
-
-    // Stop all active audio sources
     activeSources.current.forEach((s) => {
       try { s.stop(); } catch {}
     });
     activeSources.current.clear();
     nextStartTime.current = 0;
     audioChunksSent.current = 0;
-
     setIsActive(false);
     setIsConnecting(false);
     setIsSpeaking(false);
   }, []);
 
   const stop = useCallback(() => {
+    intentionallyStopped.current = true;
     cleanup();
     callbacksRef.current?.onDisconnect?.();
   }, [cleanup]);
 
-  /** Send PCM Int16 data to Gemini session */
   const sendPcmToGemini = useCallback((int16Data: Int16Array) => {
     if (!sessionRef.current) return;
     const base64 = encodeToBase64(new Uint8Array(int16Data.buffer));
     try {
-      // Use new `audio` field instead of deprecated `media`
       sessionRef.current.sendRealtimeInput({
         audio: { data: base64, mimeType: "audio/pcm;rate=16000" },
       });
       audioChunksSent.current++;
       if (audioChunksSent.current === 1) {
-        console.log("[GeminiLive] ✅ First audio chunk sent, size:", int16Data.length, "samples");
+        console.log("[GeminiLive] ✅ First audio chunk sent");
       }
     } catch (err) {
       console.warn("[GeminiLive] Failed to send audio chunk:", err);
     }
   }, []);
 
-  /** Set up microphone → Gemini pipeline using AudioWorklet (with ScriptProcessor fallback) */
   const setupMicPipeline = useCallback(async (
     stream: MediaStream,
     audioCtx: AudioContext
   ) => {
     const source = audioCtx.createMediaStreamSource(stream);
 
-    // Try AudioWorklet first (more reliable, especially on mobile)
     try {
       const blobURL = createWorkletBlobURL();
       workletBlobURLRef.current = blobURL;
       await audioCtx.audioWorklet.addModule(blobURL);
-
       const workletNode = new AudioWorkletNode(audioCtx, "pcm-capture-processor");
       workletNodeRef.current = workletNode;
-
       workletNode.port.onmessage = (event) => {
         const { pcm } = event.data;
-        if (pcm && pcm.length > 0) {
-          sendPcmToGemini(pcm);
-        } else {
-          console.warn("[GeminiLive] Empty audio chunk from worklet");
-        }
+        if (pcm && pcm.length > 0) sendPcmToGemini(pcm);
       };
-
       source.connect(workletNode);
-      // AudioWorklet doesn't need to connect to destination
-      console.log("[GeminiLive] ✅ AudioWorklet mic pipeline active (sampleRate:", audioCtx.sampleRate + ")");
+      console.log("[GeminiLive] ✅ AudioWorklet mic pipeline active");
       return;
     } catch (workletErr) {
-      console.warn("[GeminiLive] AudioWorklet not supported, falling back to ScriptProcessor:", workletErr);
+      console.warn("[GeminiLive] AudioWorklet fallback to ScriptProcessor:", workletErr);
     }
 
-    // Fallback: ScriptProcessorNode
     const processor = audioCtx.createScriptProcessor(4096, 1, 1);
     scriptProcessorRef.current = processor;
-
     processor.onaudioprocess = (e: AudioProcessingEvent) => {
       const inputData = e.inputBuffer.getChannelData(0);
-      if (inputData.length === 0) {
-        console.warn("[GeminiLive] Empty ScriptProcessor buffer");
-        return;
-      }
-      // Convert Float32 → Int16
+      if (inputData.length === 0) return;
       const int16 = new Int16Array(inputData.length);
       for (let i = 0; i < inputData.length; i++) {
         int16[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
       }
       sendPcmToGemini(int16);
     };
-
     source.connect(processor);
     processor.connect(audioCtx.destination);
-    console.log("[GeminiLive] ⚠️ ScriptProcessor fallback active (sampleRate:", audioCtx.sampleRate + ")");
+    console.log("[GeminiLive] ⚠️ ScriptProcessor fallback active");
   }, [sendPcmToGemini]);
 
-  // Listen for cleanup events — auto-stop if another Alex instance starts
   useEffect(() => {
     const handleCleanup = () => {
       if (sessionRef.current) {
-        console.log("[GeminiLive] Received alex-voice-cleanup — stopping session");
+        console.log("[GeminiLive] Received alex-voice-cleanup — stopping");
         cleanup();
         callbacksRef.current?.onDisconnect?.();
       }
@@ -196,52 +163,51 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const start = useCallback(async (options?: { initialGreeting?: string }) => {
     if (isActive || isConnecting) return;
 
-    // Only clean up THIS session's previous state
     cleanup();
-
+    intentionallyStopped.current = false;
     setIsConnecting(true);
 
     try {
-      // 1. Fetch API key securely from edge function
-      const { data: tokenData, error: tokenError } = await supabase.functions.invoke(
-        "alex-live-token"
-      );
-
+      // 1. Get API key
+      console.log("[GeminiLive] Fetching API key...");
+      const { data: tokenData, error: tokenError } = await supabase.functions.invoke("alex-live-token");
       if (tokenError || !tokenData?.apiKey) {
         throw new Error(tokenError?.message || "Impossible d'obtenir les credentials Gemini");
       }
+      console.log("[GeminiLive] ✅ Got API key, model:", tokenData.model);
 
       const apiKey = tokenData.apiKey;
       const voiceName = tokenData.voiceName || ALEX_LIVE_CONFIG.config.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName;
 
-      // 2. Initialize Google GenAI
-      console.log("[GeminiLive] Initializing with model:", tokenData.model);
-      const ai = new GoogleGenAI({ apiKey });
-
-      // 3. Get microphone access FIRST (this is the user-gesture-gated part)
+      // 2. Get microphone FIRST (user gesture required)
       console.log("[GeminiLive] Requesting microphone...");
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
       console.log("[GeminiLive] ✅ Microphone granted");
 
-      // 4. Set up audio contexts
+      // 3. Audio contexts
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       inputAudioContextRef.current = new AudioCtx({ sampleRate: 16000 });
-
-      // 5. Set up output audio context (Gemini outputs at 24kHz)
       outputAudioContextRef.current = new AudioCtx({ sampleRate: 24000 });
       const outputGain = outputAudioContextRef.current.createGain();
       outputGain.connect(outputAudioContextRef.current.destination);
 
-      // 6. Connect to Gemini Live
-      console.log("[GeminiLive] Connecting to Gemini Live WebSocket...");
-      const initialGreeting = options?.initialGreeting;
+      // 4. Build system instruction WITH greeting baked in
+      const greetingText = options?.initialGreeting || "Bonjour. Que puis-je faire pour vous?";
+      const systemText = `Tu es Alex, concierge IA d'UnPRO.ca. Français international neutre, professionnel. Tu es un agent décisionnel : tu agis, tu ne converses pas. Phrases courtes, maximum 2 phrases. Une seule question à la fois. Jamais de markdown. Ne verbalise jamais ton raisonnement interne. Ton calme, confiant, direct. Féminin : 'ravie', 'certaine', 'prête'.
 
+IMPORTANT: Commence IMMÉDIATEMENT la conversation en disant: "${greetingText}"
+Ne dis rien d'autre avant cette salutation. Dis-la maintenant.`;
+
+      const ai = new GoogleGenAI({ apiKey });
+
+      // 5. Connect WebSocket
+      console.log("[GeminiLive] Connecting WebSocket...");
       const connectPromise = ai.live.connect({
-        model: tokenData.model || ALEX_LIVE_CONFIG.model,
+        model: tokenData.model || "gemini-2.0-flash-live-001",
         callbacks: {
           onmessage: (message: LiveServerMessage) => {
-            // Handle model output transcript
+            // Output transcription
             if ((message as any).serverContent?.outputTranscription?.text) {
               const rawTranscript = (message as any).serverContent.outputTranscription.text;
               if (!isInternalThinking(rawTranscript) && !isBlockedOutput(rawTranscript)) {
@@ -252,15 +218,15 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
               }
             }
 
-            // Handle user transcript — normalize STT errors
+            // User transcript
             if ((message as any).serverContent?.inputTranscription?.text) {
               const rawTranscript = (message as any).serverContent.inputTranscription.text;
               const normalized = normalizeUserTranscript(rawTranscript);
-              console.log("[GeminiLive] 🎤 User transcript:", rawTranscript, "→", normalized);
+              console.log("[GeminiLive] 🎤 User:", normalized);
               callbacksRef.current?.onUserTranscript?.(normalized);
             }
 
-            // Handle audio output
+            // Audio output
             const audioPart = message.serverContent?.modelTurn?.parts?.find(
               (p: any) => p.inlineData
             );
@@ -269,16 +235,10 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
             if (base64Audio && outputAudioContextRef.current) {
               setIsSpeaking(true);
               const ctx = outputAudioContextRef.current;
-              nextStartTime.current = Math.max(
-                nextStartTime.current,
-                ctx.currentTime
-              );
+              nextStartTime.current = Math.max(nextStartTime.current, ctx.currentTime);
 
               const audioBuffer = decodeAudioData(
-                decodeFromBase64(base64Audio),
-                ctx,
-                24000,
-                1
+                decodeFromBase64(base64Audio), ctx, 24000, 1
               );
 
               const bufferSource = ctx.createBufferSource();
@@ -290,22 +250,15 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
 
               bufferSource.onended = () => {
                 activeSources.current.delete(bufferSource);
-                if (activeSources.current.size === 0) {
-                  setIsSpeaking(false);
-                }
+                if (activeSources.current.size === 0) setIsSpeaking(false);
               };
             }
 
-            // Handle turn completion
-            if (message.serverContent?.turnComplete) {
-              setIsSpeaking(false);
-            }
+            if (message.serverContent?.turnComplete) setIsSpeaking(false);
 
-            // Handle interruptions (user barge-in)
+            // User barge-in
             if (message.serverContent?.interrupted) {
-              activeSources.current.forEach((s) => {
-                try { s.stop(); } catch {}
-              });
+              activeSources.current.forEach((s) => { try { s.stop(); } catch {} });
               activeSources.current.clear();
               nextStartTime.current = 0;
               setIsSpeaking(false);
@@ -314,8 +267,12 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
 
           onclose: (e: any) => {
             console.warn("[GeminiLive] WebSocket closed:", e?.code, e?.reason || "(no reason)");
+            const wasActive = sessionRef.current !== null;
             cleanup();
-            callbacksRef.current?.onDisconnect?.();
+            // Only fire disconnect if we weren't intentionally stopped
+            if (!intentionallyStopped.current && wasActive) {
+              callbacksRef.current?.onDisconnect?.();
+            }
           },
 
           onerror: (e: unknown) => {
@@ -331,11 +288,10 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
               prebuiltVoiceConfig: { voiceName },
             },
           },
-          // CRITICAL: Enable transcription so we receive text from audio
           outputAudioTranscription: {},
           inputAudioTranscription: {},
           systemInstruction: {
-            parts: [{ text: "Tu es Alex, concierge IA d'UnPRO.ca. Français international neutre, professionnel, sans accent régional. Tu es un agent décisionnel : tu agis, tu ne converses pas. Phrases courtes, maximum 2 phrases. Une seule question à la fois, uniquement si elle débloque une action. Jamais de markdown, listes, astérisques, code ou méta-commentaire. Ne verbalise jamais ton raisonnement interne. Ton calme, confiant, direct. Féminin : 'ravie', 'certaine', 'prête'. Micro-phrases : 'Je m'en occupe', 'C'est fait', 'J'ai trouvé', 'On bloque ça ?'" }],
+            parts: [{ text: systemText }],
           },
           realtimeInputConfig: {
             automaticActivityDetection: {
@@ -365,31 +321,15 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
 
       console.log("[GeminiLive] ✅ WebSocket connected!");
       sessionRef.current = session;
-
       setIsActive(true);
       setIsConnecting(false);
       callbacksRef.current?.onConnect?.();
 
-      // CRITICAL SEQUENCE: greeting FIRST, then mic.
-      // Sending audio while a clientContent turn is in-flight causes 1007.
-      if (initialGreeting) {
-        try {
-          session.sendClientContent({
-            turns: [
-              {
-                role: "user",
-                parts: [{ text: `[INSTRUCTION SYSTÈME — NE PAS LIRE CE TEXTE] Dis exactement ceci à voix haute comme salutation d'ouverture, mot pour mot: "${initialGreeting}"` }],
-              },
-            ],
-            turnComplete: true,
-          });
-        } catch (err) {
-          console.warn("[GeminiLive] Failed to send initial greeting:", err);
-        }
-      }
+      // NO sendClientContent — greeting is in systemInstruction.
+      // Just wait a moment then start mic to avoid any race condition.
+      await new Promise((r) => setTimeout(r, 500));
 
-      await new Promise((r) => setTimeout(r, initialGreeting ? 300 : 50));
-
+      // Resume audio contexts
       if (inputAudioContextRef.current?.state === "suspended") {
         await inputAudioContextRef.current.resume().catch(() => {});
       }
@@ -397,6 +337,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         await outputAudioContextRef.current.resume().catch(() => {});
       }
 
+      // Start mic pipeline
       if (inputAudioContextRef.current && mediaStreamRef.current) {
         await setupMicPipeline(mediaStreamRef.current, inputAudioContextRef.current);
       }

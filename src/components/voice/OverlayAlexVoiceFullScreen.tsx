@@ -31,6 +31,7 @@ export default function OverlayAlexVoiceFullScreen() {
   const entryIdRef = useRef(0);
   const lastAlexIdRef = useRef<string | null>(null);
   const hasConnectedRef = useRef(false);
+  const bootTimeRef = useRef<number>(0);
 
   const firstName = user?.user_metadata?.first_name
     || user?.user_metadata?.full_name?.split(" ")[0]
@@ -86,13 +87,17 @@ export default function OverlayAlexVoiceFullScreen() {
     onConnect: () => {
       console.log("[VoiceOverlay] ✅ Gemini connected");
       hasConnectedRef.current = true;
+      bootTimeRef.current = Date.now();
       store.resetHeartbeat();
     },
     onDisconnect: () => {
-      console.warn("[VoiceOverlay] Gemini disconnected. isOverlayOpen:", store.isOverlayOpen, "state:", store.machineState);
-      if (store.isOverlayOpen) {
-        // ALWAYS show error on disconnect — don't silently swallow during stabilization
+      console.warn("[VoiceOverlay] Gemini disconnected. state:", store.machineState);
+      // Grace period: don't show error if disconnect happens within 2s of connect (transient)
+      const timeSinceBoot = Date.now() - bootTimeRef.current;
+      if (store.isOverlayOpen && hasConnectedRef.current && timeSinceBoot > 2000) {
         store.setError("connection_lost", "Connexion perdue. Réessayez ou passez au chat.", true);
+      } else if (store.isOverlayOpen && !hasConnectedRef.current) {
+        store.setError("connection_failed", "Impossible de se connecter. Réessayez.", true);
       }
     },
     onError: (error) => {
@@ -193,6 +198,10 @@ export default function OverlayAlexVoiceFullScreen() {
     if (!store.isOverlayOpen) return;
 
     heartbeatRef.current = setInterval(() => {
+      // Don't trigger heartbeat failures during first 15 seconds (boot grace period)
+      const timeSinceBoot = Date.now() - bootTimeRef.current;
+      if (timeSinceBoot < 15000) return;
+      
       if (!isActive && hasConnectedRef.current && store.isOverlayOpen) {
         store.incrementHeartbeatFailure();
       } else {
