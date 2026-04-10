@@ -198,6 +198,10 @@ export default function OverlayAlexVoiceFullScreen() {
     if (!store.isOverlayOpen) return;
 
     heartbeatRef.current = setInterval(() => {
+      // Don't trigger heartbeat failures during first 15 seconds (boot grace period)
+      const timeSinceBoot = Date.now() - bootTimeRef.current;
+      if (timeSinceBoot < 15000) return;
+      
       if (!isActive && hasConnectedRef.current && store.isOverlayOpen) {
         store.incrementHeartbeatFailure();
       } else {
