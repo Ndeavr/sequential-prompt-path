@@ -60,50 +60,52 @@ export default function AlexVoiceMode({ feature, onFlowComplete, onDismiss, inli
     },
   });
 
-  // Auto-start on mount — but ONLY if not already blocked
-  useEffect(() => {
-    // Guard: don't auto-start if another session is active
-    if (isActive || isConnecting) return;
-
+  // Build greeting text
+  const buildGreeting = useCallback(() => {
     const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || null;
     const hour = new Date().getHours();
-    
-    // Time-based greeting
-    let timeGreeting: string;
-    if (hour >= 5 && hour < 12) {
-      timeGreeting = "Bonjour";
-    } else if (hour >= 12 && hour < 18) {
-      timeGreeting = "Bon après-midi";
-    } else {
-      timeGreeting = "Bonsoir";
-    }
-    
-    const name = firstName ? `${timeGreeting} ${firstName}!` : `${timeGreeting}!`;
+    const timeGreeting = hour >= 5 && hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+    const name = firstName ? `${timeGreeting} ${firstName}.` : `${timeGreeting}.`;
 
-    let greeting: string;
     switch (feature) {
       case "probleme":
-        greeting = `${name} Décrivez-moi votre problème, je m'en occupe.`;
-        break;
+        return `${name} Décrivez-moi votre problème, je m'en occupe.`;
       case "projet":
-        greeting = `${name} Un nouveau projet ? Dites-moi de quoi il s'agit.`;
-        break;
+        return `${name} Un nouveau projet? Dites-moi de quoi il s'agit.`;
       case "avis":
-        greeting = `${name} Vous souhaitez que j'analyse vos soumissions ? Décrivez-moi ce que vous avez reçu.`;
-        break;
+        return `${name} Vous souhaitez que j'analyse vos soumissions? Décrivez-moi ce que vous avez reçu.`;
       case "intent":
       case "diagnostic":
-        greeting = `${name} Décrivez-moi votre besoin, je vous trouve le bon professionnel.`;
-        break;
+        return `${name} Décrivez-moi votre besoin, je vous trouve le bon professionnel.`;
       default:
-        greeting = `${name} Je suis là. Dites-moi ce dont vous avez besoin.`;
+        return `${name} Que puis-je faire pour vous aujourd'hui?`;
     }
+  }, [user, feature]);
 
-    // Play intro sound then start voice
-    audioEngine.play("intro");
-    start({ initialGreeting: greeting });
+  // Auto-start: unlock audio (we're in gesture context from button click),
+  // play intro chime, WAIT for it to finish, then start Gemini with greeting.
+  useEffect(() => {
+    if (isActive || isConnecting) return;
+    let cancelled = false;
+
+    const launchSequence = async () => {
+      // 1. Unlock audio engine (preserves gesture context)
+      audioEngine.unlock();
+
+      // 2. Play intro chime and wait for it to finish
+      await audioEngine.play("intro");
+
+      if (cancelled) return;
+
+      // 3. Start Gemini Live — Alex speaks the greeting proactively
+      const greeting = buildGreeting();
+      start({ initialGreeting: greeting });
+    };
+
+    launchSequence();
 
     return () => {
+      cancelled = true;
       audioEngine.play("outro");
       stop();
     };

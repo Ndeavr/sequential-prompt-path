@@ -244,12 +244,14 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
             // CRITICAL SEQUENCE: greeting FIRST, then mic.
             // Sending audio while a clientContent turn is in-flight causes 1007.
 
-            // Step 1: Send initial greeting to trigger Alex's spoken response
+            // Step 1: Send instruction for Alex to speak the greeting aloud
             if (initialGreeting && sessionRef.current) {
-              console.log("[GeminiLive] Sending initial greeting:", initialGreeting);
+              console.log("[GeminiLive] Sending greeting instruction:", initialGreeting);
               try {
                 sessionRef.current.sendClientContent({
-                  turns: [{ role: "user", parts: [{ text: initialGreeting }] }],
+                  turns: [
+                    { role: "user", parts: [{ text: `[INSTRUCTION SYSTÈME — NE PAS LIRE CE TEXTE] Dis exactement ceci à voix haute comme salutation d'ouverture, mot pour mot: "${initialGreeting}"` }] },
+                  ],
                   turnComplete: true,
                 });
               } catch (err) {
