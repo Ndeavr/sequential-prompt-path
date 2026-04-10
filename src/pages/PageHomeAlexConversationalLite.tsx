@@ -94,9 +94,10 @@ export default function PageHomeAlexConversationalLite() {
     if (voiceStore.isOverlayOpen) {
       voiceStore.closeVoiceSession("user_mic_toggle");
     } else {
+      audioEngine.unlock();
       voiceStore.openVoiceSession("conversation", "mic_button");
     }
-  }, []);
+  }, [voiceStore]);
 
   // Auto-start voice on /alex/voice route
   const autoStartedRef = useRef(false);

@@ -137,9 +137,9 @@ export default function OverlayAlexVoiceFullScreen() {
         // 1. Transition to opening
         store.transitionTo("opening_session", "boot_start");
 
-        // 2. Unlock audio + play intro
+        // 2. Unlock audio and play intro without blocking voice boot
         audioEngine.unlock();
-        try { await audioEngine.play("intro"); } catch {}
+        void audioEngine.play("intro").catch(() => {});
 
         if (cancelled) return;
 
