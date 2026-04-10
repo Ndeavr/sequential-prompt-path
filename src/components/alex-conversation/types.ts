@@ -28,7 +28,10 @@ export type InlineCardType =
   | "aipp_score"
   | "improvement_actions"
   | "upload_photo"
-  | "upload_quote";
+  | "upload_quote"
+  | "problem_summary"
+  | "address_required"
+  | "booking_next_step";
 
 export interface MockContractor {
   id: string;
