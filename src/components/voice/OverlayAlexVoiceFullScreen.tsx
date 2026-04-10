@@ -128,21 +128,34 @@ export default function OverlayAlexVoiceFullScreen() {
     onDisconnect: () => {
       const s = getStore();
       console.warn("[VoiceOverlay] Gemini disconnected. state:", s.machineState);
+      const wasConnected = hasConnectedRef.current;
       hasConnectedRef.current = false;
       firstAudioReceivedRef.current = false;
       if (firstAudioTimerRef.current) {
         clearTimeout(firstAudioTimerRef.current);
         firstAudioTimerRef.current = null;
       }
+      if (stabilizationTimerRef.current) {
+        clearTimeout(stabilizationTimerRef.current);
+        stabilizationTimerRef.current = null;
+      }
       const timeSinceBoot = Date.now() - bootTimeRef.current;
-      if (s.isOverlayOpen && hasConnectedRef.current && timeSinceBoot > 2000) {
+      if (s.isOverlayOpen && wasConnected && timeSinceBoot > 2000) {
         s.setError("connection_lost", "Connexion perdue. Réessayez ou passez au chat.", true);
-      } else if (s.isOverlayOpen && !hasConnectedRef.current) {
+      } else if (s.isOverlayOpen && !wasConnected) {
         s.setError("connection_failed", "Impossible de se connecter. Réessayez.", true);
       }
     },
     onError: (error) => {
       console.error("[VoiceOverlay] Error:", error);
+      if (firstAudioTimerRef.current) {
+        clearTimeout(firstAudioTimerRef.current);
+        firstAudioTimerRef.current = null;
+      }
+      if (stabilizationTimerRef.current) {
+        clearTimeout(stabilizationTimerRef.current);
+        stabilizationTimerRef.current = null;
+      }
       const s = getStore();
       if (s.isOverlayOpen) {
         const rawMessage = (error as any)?.message || "Erreur de connexion vocale.";
