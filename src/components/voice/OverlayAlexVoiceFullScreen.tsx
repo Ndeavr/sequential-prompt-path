@@ -296,7 +296,7 @@ export default function OverlayAlexVoiceFullScreen() {
                   <img src={logo} alt="Alex" className="w-full h-full object-contain" />
                 </div>
                 {isSessionActive && (
-                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background" />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-background" />
                 )}
               </div>
               <div>
