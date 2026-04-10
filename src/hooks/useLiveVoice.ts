@@ -215,15 +215,18 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       const voiceName = tokenData.voiceName || ALEX_LIVE_CONFIG.config.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName;
 
       // 2. Initialize Google GenAI
+      console.log("[GeminiLive] Initializing with model:", tokenData.model);
       const ai = new GoogleGenAI({ apiKey });
 
-      // 3. Set up audio contexts
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      inputAudioContextRef.current = new AudioCtx({ sampleRate: 16000 });
-
-      // 4. Get microphone access
+      // 3. Get microphone access FIRST (this is the user-gesture-gated part)
+      console.log("[GeminiLive] Requesting microphone...");
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
+      console.log("[GeminiLive] ✅ Microphone granted");
+
+      // 4. Set up audio contexts
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      inputAudioContextRef.current = new AudioCtx({ sampleRate: 16000 });
 
       // 5. Set up output audio context (Gemini outputs at 24kHz)
       outputAudioContextRef.current = new AudioCtx({ sampleRate: 24000 });
@@ -231,8 +234,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       outputGain.connect(outputAudioContextRef.current.destination);
 
       // 6. Connect to Gemini Live
-      // CRITICAL: Keep systemInstruction SHORT — long instructions cause immediate WebSocket close
-      // (Known Gemini Live bug). Detailed rules are sent via sendClientContent after connect.
+      console.log("[GeminiLive] Connecting to Gemini Live WebSocket...");
       const initialGreeting = options?.initialGreeting;
 
       const connectPromise = ai.live.connect({
@@ -329,6 +331,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
               prebuiltVoiceConfig: { voiceName },
             },
           },
+          // CRITICAL: Enable transcription so we receive text from audio
+          outputAudioTranscription: {},
+          inputAudioTranscription: {},
           systemInstruction: {
             parts: [{ text: "Tu es Alex, concierge IA d'UnPRO.ca. Français international neutre, professionnel, sans accent régional. Tu es un agent décisionnel : tu agis, tu ne converses pas. Phrases courtes, maximum 2 phrases. Une seule question à la fois, uniquement si elle débloque une action. Jamais de markdown, listes, astérisques, code ou méta-commentaire. Ne verbalise jamais ton raisonnement interne. Ton calme, confiant, direct. Féminin : 'ravie', 'certaine', 'prête'. Micro-phrases : 'Je m'en occupe', 'C'est fait', 'J'ai trouvé', 'On bloque ça ?'" }],
           },
@@ -345,13 +350,20 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         },
       });
 
-      const session = await Promise.race([
-        connectPromise,
-        new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error("Connexion Gemini Live expirée")), LIVE_CONNECT_TIMEOUT_MS);
-        }),
-      ]);
+      let session: any;
+      try {
+        session = await Promise.race([
+          connectPromise,
+          new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error("Connexion Gemini Live expirée")), LIVE_CONNECT_TIMEOUT_MS);
+          }),
+        ]);
+      } catch (connectErr) {
+        console.error("[GeminiLive] ❌ Connect failed:", connectErr);
+        throw connectErr;
+      }
 
+      console.log("[GeminiLive] ✅ WebSocket connected!");
       sessionRef.current = session;
 
       setIsActive(true);
