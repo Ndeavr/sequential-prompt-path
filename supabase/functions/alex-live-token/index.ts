@@ -31,7 +31,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         apiKey: GEMINI_API_KEY,
-        model: "gemini-2.0-flash-live-001",
+        model: "gemini-3.1-flash-live-preview",
         voiceName: "Aoede",
         fallbackVoiceName: "Zephyr",
       }),
