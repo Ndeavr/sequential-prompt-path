@@ -26,6 +26,8 @@ interface UseLiveVoiceCallbacks {
   onDisconnect?: () => void;
 }
 
+const LIVE_CONNECT_TIMEOUT_MS = 8000;
+
 export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const [isActive, setIsActive] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -233,49 +235,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       // (Known Gemini Live bug). Detailed rules are sent via sendClientContent after connect.
       const initialGreeting = options?.initialGreeting;
 
-      const session = await ai.live.connect({
+      const connectPromise = ai.live.connect({
         model: tokenData.model || ALEX_LIVE_CONFIG.model,
         callbacks: {
-          onopen: async () => {
-            setIsActive(true);
-            setIsConnecting(false);
-            callbacksRef.current?.onConnect?.();
-
-            // CRITICAL SEQUENCE: greeting FIRST, then mic.
-            // Sending audio while a clientContent turn is in-flight causes 1007.
-
-            // Step 1: Send instruction for Alex to speak the greeting aloud
-            if (initialGreeting && sessionRef.current) {
-              console.log("[GeminiLive] Sending greeting instruction:", initialGreeting);
-              try {
-                sessionRef.current.sendClientContent({
-                  turns: [
-                    { role: "user", parts: [{ text: `[INSTRUCTION SYSTÈME — NE PAS LIRE CE TEXTE] Dis exactement ceci à voix haute comme salutation d'ouverture, mot pour mot: "${initialGreeting}"` }] },
-                  ],
-                  turnComplete: true,
-                });
-              } catch (err) {
-                console.warn("[GeminiLive] Failed to send initial greeting:", err);
-              }
-            }
-
-            // Step 2: Wait briefly for server to process the greeting turn
-            // before starting audio input (prevents 1007 race condition)
-            await new Promise((r) => setTimeout(r, 300));
-
-            // Step 3: Set up mic → Gemini pipeline
-            if (inputAudioContextRef.current && mediaStreamRef.current) {
-              await setupMicPipeline(mediaStreamRef.current, inputAudioContextRef.current);
-            }
-
-            // Diagnostic: warn if no audio sent after 3 seconds
-            setTimeout(() => {
-              if (audioChunksSent.current === 0 && sessionRef.current) {
-                console.warn("[GeminiLive] ⚠️ No audio chunks sent after 3s — mic may not be working");
-              }
-            }, 3000);
-          },
-
           onmessage: (message: LiveServerMessage) => {
             // Handle model output transcript
             if ((message as any).serverContent?.outputTranscription?.text) {
@@ -383,7 +345,55 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         },
       });
 
+      const session = await Promise.race([
+        connectPromise,
+        new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error("Connexion Gemini Live expirée")), LIVE_CONNECT_TIMEOUT_MS);
+        }),
+      ]);
+
       sessionRef.current = session;
+
+      setIsActive(true);
+      setIsConnecting(false);
+      callbacksRef.current?.onConnect?.();
+
+      // CRITICAL SEQUENCE: greeting FIRST, then mic.
+      // Sending audio while a clientContent turn is in-flight causes 1007.
+      if (initialGreeting) {
+        try {
+          session.sendClientContent({
+            turns: [
+              {
+                role: "user",
+                parts: [{ text: `[INSTRUCTION SYSTÈME — NE PAS LIRE CE TEXTE] Dis exactement ceci à voix haute comme salutation d'ouverture, mot pour mot: "${initialGreeting}"` }],
+              },
+            ],
+            turnComplete: true,
+          });
+        } catch (err) {
+          console.warn("[GeminiLive] Failed to send initial greeting:", err);
+        }
+      }
+
+      await new Promise((r) => setTimeout(r, initialGreeting ? 300 : 50));
+
+      if (inputAudioContextRef.current?.state === "suspended") {
+        await inputAudioContextRef.current.resume().catch(() => {});
+      }
+      if (outputAudioContextRef.current?.state === "suspended") {
+        await outputAudioContextRef.current.resume().catch(() => {});
+      }
+
+      if (inputAudioContextRef.current && mediaStreamRef.current) {
+        await setupMicPipeline(mediaStreamRef.current, inputAudioContextRef.current);
+      }
+
+      setTimeout(() => {
+        if (audioChunksSent.current === 0 && sessionRef.current) {
+          console.warn("[GeminiLive] ⚠️ No audio chunks sent after 3s — mic may not be working");
+        }
+      }, 3000);
     } catch (err: any) {
       console.error("[GeminiLive] Failed to start:", err);
       callbacksRef.current?.onError?.(err);
