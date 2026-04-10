@@ -1,6 +1,8 @@
 /**
- * PageHomeAlexConversationalLite — Conversational homepage variant.
- * V3: Enforces conversation order engine. Problem-first, no premature city/address questions.
+ * PageHomeAlexConversationalLite — V4: Strict Guards
+ * 
+ * User-facing only. No debug stepper, no internal state visible.
+ * Clean conversation surface with guarded message flow.
  */
 import { useEffect, useRef, useState, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
@@ -13,7 +15,6 @@ import InputAlexMessageComposer from "@/components/alex-conversation/InputAlexMe
 import BubbleAlexMessage from "@/components/alex-conversation/BubbleAlexMessage";
 import BubbleUserMessage from "@/components/alex-conversation/BubbleUserMessage";
 import LoaderAlexThinking from "@/components/alex-conversation/LoaderAlexThinking";
-import StepperAlexConversationOrder from "@/components/alex-conversation/StepperAlexConversationOrder";
 import CardEntrepreneurInline from "@/components/alex-conversation/CardEntrepreneurInline";
 import CardAvailabilitySlot from "@/components/alex-conversation/CardAvailabilitySlot";
 import CardUrgencyAction from "@/components/alex-conversation/CardUrgencyAction";
@@ -42,27 +43,28 @@ export default function PageHomeAlexConversationalLite() {
   const firstName = user?.user_metadata?.first_name || user?.user_metadata?.name?.split(" ")[0];
   const {
     messages, isThinking, sendMessage, initialize, handleFileUpload,
-    flowState, currentPhase, updateAuthState,
+    flowState, updateAuthState,
   } = useAlexConversationLite(firstName, isAuthenticated, false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const initRef = useRef(false);
   const [isMicActive, setIsMicActive] = useState(false);
   const [selectedSlotId, setSelectedSlotId] = useState<string>();
   const prevAuthRef = useRef(isAuthenticated);
 
-  // Sheets
   const [detailContractor, setDetailContractor] = useState<MockContractor | null>(null);
   const [bookingContractor, setBookingContractor] = useState<MockContractor | null>(null);
 
-  // Initialize greeting
+  // GUARD: single initialization
   useEffect(() => {
-    if (messages.length === 0) {
+    if (!initRef.current) {
+      initRef.current = true;
       audioEngine.unlock();
       initialize();
     }
-  }, [initialize, messages.length]);
+  }, [initialize]);
 
-  // Detect auth state change and resume flow
+  // GUARD: detect auth change → resume flow (not re-initialize)
   useEffect(() => {
     if (isAuthenticated && !prevAuthRef.current) {
       updateAuthState(true, firstName);
@@ -74,9 +76,7 @@ export default function PageHomeAlexConversationalLite() {
   useEffect(() => {
     const el = scrollRef.current;
     if (el) {
-      requestAnimationFrame(() => {
-        el.scrollTop = el.scrollHeight;
-      });
+      requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
     }
   }, [messages, isThinking]);
 
@@ -103,9 +103,10 @@ export default function PageHomeAlexConversationalLite() {
     setBookingContractor(null);
   }, [isAuthenticated]);
 
+  // ─── CARD RENDERER (user-safe only) ───
   const renderCard = (msg: typeof messages[0]) => {
     switch (msg.cardType) {
-      case "problem_summary" as string:
+      case "problem_summary":
         return (
           <CardAlexProblemSummary
             problemType={msg.cardData?.problemType}
@@ -114,14 +115,14 @@ export default function PageHomeAlexConversationalLite() {
             summary={msg.cardData?.summary}
           />
         );
-      case "profile_completion" as string:
+      case "profile_completion":
         return (
           <CardAlexProfileCompletionRequired
             missingFields={flowState.userContext.missingFields}
             completionPercent={60}
           />
         );
-      case "address_required" as string:
+      case "address_required":
         return (
           <CardAlexAddressRequired
             reason="Votre adresse permet de trouver les meilleurs entrepreneurs dans votre secteur."
@@ -146,13 +147,7 @@ export default function PageHomeAlexConversationalLite() {
           </div>
         );
       case "availability":
-        return (
-          <CardAvailabilitySlot
-            slots={MOCK_SLOTS}
-            selectedId={selectedSlotId}
-            onSelect={handleSlotSelect}
-          />
-        );
+        return <CardAvailabilitySlot slots={MOCK_SLOTS} selectedId={selectedSlotId} onSelect={handleSlotSelect} />;
       case "urgency":
         return <CardUrgencyAction />;
       case "project_suggestion":
@@ -168,20 +163,9 @@ export default function PageHomeAlexConversationalLite() {
       case "photo_design":
         return <CardPhotoDesignSuggestions data={msg.cardData} />;
       case "photo_problem":
-        return (
-          <CardPhotoProblemDiagnosis
-            data={msg.cardData}
-            onFindPro={() => sendMessage("Trouvez-moi un professionnel pour ce problème")}
-          />
-        );
+        return <CardPhotoProblemDiagnosis data={msg.cardData} onFindPro={() => sendMessage("Trouvez-moi un professionnel")} />;
       case "aipp_score":
-        return (
-          <CardAIPPScore
-            entityName={msg.cardData?.entityName}
-            score={msg.cardData?.score}
-            tier={msg.cardData?.tier}
-          />
-        );
+        return <CardAIPPScore entityName={msg.cardData?.entityName} score={msg.cardData?.score} tier={msg.cardData?.tier} />;
       case "improvement_actions":
         return <CardImprovementActions actions={msg.cardData || []} />;
       case "upload_photo":
@@ -195,7 +179,7 @@ export default function PageHomeAlexConversationalLite() {
 
   return (
     <div className="flex flex-col h-[100dvh] bg-background relative overflow-hidden">
-      {/* Ambient background glow */}
+      {/* Ambient glow */}
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] pointer-events-none"
         style={{
@@ -204,26 +188,14 @@ export default function PageHomeAlexConversationalLite() {
         }}
       />
 
-      {/* Orb Header */}
+      {/* Orb Header — user-safe, no debug info */}
       <HeroSectionAlexOrbLite
         isListening={isMicActive || voiceActive}
         isSpeaking={false}
         isThinking={isThinking}
       />
 
-      {/* Conversation Progress Stepper */}
-      <StepperAlexConversationOrder
-        currentPhase={currentPhase}
-        skippedPhases={
-          flowState.userContext.isAuthenticated && flowState.userContext.profileComplete
-            ? ["check_auth", "complete_profile"]
-            : flowState.userContext.isAuthenticated
-            ? ["check_auth"]
-            : []
-        }
-      />
-
-      {/* Conversation Canvas */}
+      {/* Conversation Canvas — user-safe messages only */}
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto px-4 pb-2 space-y-3 scroll-smooth"
@@ -232,7 +204,7 @@ export default function PageHomeAlexConversationalLite() {
         <AnimatePresence mode="popLayout">
           {messages.map(msg => (
             <div key={msg.id} className="space-y-2">
-              {msg.role === "alex" && <BubbleAlexMessage content={msg.content} />}
+              {msg.role === "alex" && msg.content && <BubbleAlexMessage content={msg.content} />}
               {msg.role === "user" && <BubbleUserMessage content={msg.content} />}
               {msg.cardType && renderCard(msg)}
             </div>
@@ -249,7 +221,7 @@ export default function PageHomeAlexConversationalLite() {
         disabled={isThinking}
       />
 
-      {/* Detail Sheet */}
+      {/* Sheets */}
       <SheetEntrepreneurDetails
         contractor={detailContractor}
         open={!!detailContractor}
@@ -260,8 +232,6 @@ export default function PageHomeAlexConversationalLite() {
           if (c) setBookingContractor(c);
         }}
       />
-
-      {/* Booking Sheet */}
       <SheetBookingSlots
         open={!!bookingContractor}
         onClose={() => setBookingContractor(null)}
