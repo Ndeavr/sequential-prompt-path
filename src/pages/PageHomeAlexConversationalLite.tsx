@@ -1,7 +1,6 @@
 /**
  * PageHomeAlexConversationalLite — Conversational homepage variant.
- * Alex-driven, mobile-first, premium, immersive.
- * Now with voice-first analysis engine: business, quote, photo cards inline.
+ * V3: Enforces conversation order engine. Problem-first, no premature city/address questions.
  */
 import { useEffect, useRef, useState, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
@@ -14,6 +13,7 @@ import InputAlexMessageComposer from "@/components/alex-conversation/InputAlexMe
 import BubbleAlexMessage from "@/components/alex-conversation/BubbleAlexMessage";
 import BubbleUserMessage from "@/components/alex-conversation/BubbleUserMessage";
 import LoaderAlexThinking from "@/components/alex-conversation/LoaderAlexThinking";
+import StepperAlexConversationOrder from "@/components/alex-conversation/StepperAlexConversationOrder";
 import CardEntrepreneurInline from "@/components/alex-conversation/CardEntrepreneurInline";
 import CardAvailabilitySlot from "@/components/alex-conversation/CardAvailabilitySlot";
 import CardUrgencyAction from "@/components/alex-conversation/CardUrgencyAction";
@@ -26,6 +26,10 @@ import CardPhotoDesignSuggestions from "@/components/alex-conversation/CardPhoto
 import CardPhotoProblemDiagnosis from "@/components/alex-conversation/CardPhotoProblemDiagnosis";
 import CardAIPPScore from "@/components/alex-conversation/CardAIPPScore";
 import CardImprovementActions from "@/components/alex-conversation/CardImprovementActions";
+import CardAlexProblemSummary from "@/components/alex-conversation/CardAlexProblemSummary";
+import CardAlexProfileCompletionRequired from "@/components/alex-conversation/CardAlexProfileCompletionRequired";
+import CardAlexAddressRequired from "@/components/alex-conversation/CardAlexAddressRequired";
+import CardAlexBookingNextStep from "@/components/alex-conversation/CardAlexBookingNextStep";
 import WidgetUploadInline from "@/components/alex-conversation/WidgetUploadInline";
 import SheetEntrepreneurDetails from "@/components/alex-conversation/SheetEntrepreneurDetails";
 import SheetBookingSlots from "@/components/alex-conversation/SheetBookingSlots";
@@ -36,23 +40,35 @@ export default function PageHomeAlexConversationalLite() {
   const { user, isAuthenticated } = useAuth();
   const { openAlex, voiceActive } = useAlexVoice();
   const firstName = user?.user_metadata?.first_name || user?.user_metadata?.name?.split(" ")[0];
-  const { messages, isThinking, sendMessage, initialize, handleFileUpload } = useAlexConversationLite(firstName);
+  const {
+    messages, isThinking, sendMessage, initialize, handleFileUpload,
+    flowState, currentPhase, updateAuthState,
+  } = useAlexConversationLite(firstName, isAuthenticated, false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isMicActive, setIsMicActive] = useState(false);
   const [selectedSlotId, setSelectedSlotId] = useState<string>();
+  const prevAuthRef = useRef(isAuthenticated);
 
   // Sheets
   const [detailContractor, setDetailContractor] = useState<MockContractor | null>(null);
   const [bookingContractor, setBookingContractor] = useState<MockContractor | null>(null);
 
-  // Initialize greeting + unlock audio
+  // Initialize greeting
   useEffect(() => {
     if (messages.length === 0) {
       audioEngine.unlock();
       initialize();
     }
   }, [initialize, messages.length]);
+
+  // Detect auth state change and resume flow
+  useEffect(() => {
+    if (isAuthenticated && !prevAuthRef.current) {
+      updateAuthState(true, firstName);
+    }
+    prevAuthRef.current = isAuthenticated;
+  }, [isAuthenticated, firstName, updateAuthState]);
 
   // Auto-scroll
   useEffect(() => {
@@ -89,13 +105,45 @@ export default function PageHomeAlexConversationalLite() {
 
   const renderCard = (msg: typeof messages[0]) => {
     switch (msg.cardType) {
+      case "problem_summary" as string:
+        return (
+          <CardAlexProblemSummary
+            problemType={msg.cardData?.problemType}
+            projectType={msg.cardData?.projectType}
+            urgency={msg.cardData?.urgency}
+            summary={msg.cardData?.summary}
+          />
+        );
+      case "profile_completion" as string:
+        return (
+          <CardAlexProfileCompletionRequired
+            missingFields={flowState.userContext.missingFields}
+            completionPercent={60}
+          />
+        );
+      case "address_required" as string:
+        return (
+          <CardAlexAddressRequired
+            reason="Votre adresse permet de trouver les meilleurs entrepreneurs dans votre secteur."
+            onAddAddress={() => sendMessage("Montréal")}
+          />
+        );
       case "entrepreneur":
         return (
-          <CardEntrepreneurInline
-            contractor={msg.cardData}
-            onViewProfile={() => setDetailContractor(msg.cardData)}
-            onViewSlots={() => setBookingContractor(msg.cardData)}
-          />
+          <div className="space-y-2">
+            <CardEntrepreneurInline
+              contractor={msg.cardData}
+              onViewProfile={() => setDetailContractor(msg.cardData)}
+              onViewSlots={() => setBookingContractor(msg.cardData)}
+            />
+            <CardAlexBookingNextStep
+              contractorName={msg.cardData?.name}
+              specialty={msg.cardData?.specialty}
+              score={msg.cardData?.score}
+              nextSlotLabel="Lun 14 avr · 9h"
+              onBook={() => setBookingContractor(msg.cardData)}
+            />
+          </div>
         );
       case "availability":
         return (
@@ -161,6 +209,18 @@ export default function PageHomeAlexConversationalLite() {
         isListening={isMicActive || voiceActive}
         isSpeaking={false}
         isThinking={isThinking}
+      />
+
+      {/* Conversation Progress Stepper */}
+      <StepperAlexConversationOrder
+        currentPhase={currentPhase}
+        skippedPhases={
+          flowState.userContext.isAuthenticated && flowState.userContext.profileComplete
+            ? ["check_auth", "complete_profile"]
+            : flowState.userContext.isAuthenticated
+            ? ["check_auth"]
+            : []
+        }
       />
 
       {/* Conversation Canvas */}
