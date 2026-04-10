@@ -512,7 +512,7 @@ export const AppRouter = () => (
 
         {/* Property Graph */}
         <Route path="/property-graph" element={<PropertyGraphPage />} />
-        <Route path="/alex" element={<AlexChat />} />
+        {/* /alex already defined above — this was a duplicate */}
         <Route path="/alex/voice" element={<AlexVoicePage />} />
         <Route path="/alex/voice/realtime" element={<AlexVoiceRealtimePage />} />
         <Route path="/alex/command" element={<AlexCommandCenterPage />} />
