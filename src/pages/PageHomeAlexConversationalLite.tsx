@@ -1,13 +1,13 @@
 /**
- * PageHomeAlexConversationalLite — V4: Strict Guards
+ * PageHomeAlexConversationalLite — V5: Voice Autostart + Strict Guards
  * 
- * User-facing only. No debug stepper, no internal state visible.
- * Clean conversation surface with guarded message flow.
+ * Unified conversation page with proper voice bootstrap.
+ * When mic is activated, shows PanelAlexVoiceSurface with full boot sequence.
+ * No duplicate controls, no infinite spinners, greeting before listening.
  */
 import { useEffect, useRef, useState, useCallback } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { useAlexConversationLite } from "@/hooks/useAlexConversationLite";
 import { audioEngine } from "@/services/audioEngineUNPRO";
 import HeroSectionAlexOrbLite from "@/components/alex-conversation/HeroSectionAlexOrbLite";
@@ -34,12 +34,12 @@ import CardAlexBookingNextStep from "@/components/alex-conversation/CardAlexBook
 import WidgetUploadInline from "@/components/alex-conversation/WidgetUploadInline";
 import SheetEntrepreneurDetails from "@/components/alex-conversation/SheetEntrepreneurDetails";
 import SheetBookingSlots from "@/components/alex-conversation/SheetBookingSlots";
+import PanelAlexVoiceSurface from "@/components/alex-conversation/PanelAlexVoiceSurface";
 import { MOCK_SLOTS, type MockContractor, type MockSlot } from "@/components/alex-conversation/types";
 import { toast } from "sonner";
 
 export default function PageHomeAlexConversationalLite() {
   const { user, isAuthenticated } = useAuth();
-  const { openAlex, voiceActive } = useAlexVoice();
   const firstName = user?.user_metadata?.first_name || user?.user_metadata?.name?.split(" ")[0];
   const {
     messages, isThinking, sendMessage, initialize, handleFileUpload,
@@ -48,7 +48,7 @@ export default function PageHomeAlexConversationalLite() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const initRef = useRef(false);
-  const [isMicActive, setIsMicActive] = useState(false);
+  const [voiceMode, setVoiceMode] = useState(false);
   const [selectedSlotId, setSelectedSlotId] = useState<string>();
   const prevAuthRef = useRef(isAuthenticated);
 
@@ -81,12 +81,8 @@ export default function PageHomeAlexConversationalLite() {
   }, [messages, isThinking]);
 
   const handleMicToggle = useCallback(() => {
-    if (!isMicActive) {
-      audioEngine.play("intro");
-      openAlex("conversation");
-    }
-    setIsMicActive(prev => !prev);
-  }, [isMicActive, openAlex]);
+    setVoiceMode(prev => !prev);
+  }, []);
 
   const handleSlotSelect = useCallback((slot: MockSlot) => {
     setSelectedSlotId(slot.id);
@@ -103,77 +99,37 @@ export default function PageHomeAlexConversationalLite() {
     setBookingContractor(null);
   }, [isAuthenticated]);
 
-  // ─── CARD RENDERER (user-safe only) ───
+  // ─── CARD RENDERER ───
   const renderCard = (msg: typeof messages[0]) => {
     switch (msg.cardType) {
       case "problem_summary":
-        return (
-          <CardAlexProblemSummary
-            problemType={msg.cardData?.problemType}
-            projectType={msg.cardData?.projectType}
-            urgency={msg.cardData?.urgency}
-            summary={msg.cardData?.summary}
-          />
-        );
+        return <CardAlexProblemSummary problemType={msg.cardData?.problemType} projectType={msg.cardData?.projectType} urgency={msg.cardData?.urgency} summary={msg.cardData?.summary} />;
       case "profile_completion":
-        return (
-          <CardAlexProfileCompletionRequired
-            missingFields={flowState.userContext.missingFields}
-            completionPercent={60}
-          />
-        );
+        return <CardAlexProfileCompletionRequired missingFields={flowState.userContext.missingFields} completionPercent={60} />;
       case "address_required":
-        return (
-          <CardAlexAddressRequired
-            reason="Votre adresse permet de trouver les meilleurs entrepreneurs dans votre secteur."
-            onAddAddress={() => sendMessage("Montréal")}
-          />
-        );
+        return <CardAlexAddressRequired reason="Votre adresse permet de trouver les meilleurs entrepreneurs dans votre secteur." onAddAddress={() => sendMessage("Montréal")} />;
       case "entrepreneur":
         return (
           <div className="space-y-2">
-            <CardEntrepreneurInline
-              contractor={msg.cardData}
-              onViewProfile={() => setDetailContractor(msg.cardData)}
-              onViewSlots={() => setBookingContractor(msg.cardData)}
-            />
-            <CardAlexBookingNextStep
-              contractorName={msg.cardData?.name}
-              specialty={msg.cardData?.specialty}
-              score={msg.cardData?.score}
-              nextSlotLabel="Lun 14 avr · 9h"
-              onBook={() => setBookingContractor(msg.cardData)}
-            />
+            <CardEntrepreneurInline contractor={msg.cardData} onViewProfile={() => setDetailContractor(msg.cardData)} onViewSlots={() => setBookingContractor(msg.cardData)} />
+            <CardAlexBookingNextStep contractorName={msg.cardData?.name} specialty={msg.cardData?.specialty} score={msg.cardData?.score} nextSlotLabel="Lun 14 avr · 9h" onBook={() => setBookingContractor(msg.cardData)} />
           </div>
         );
       case "availability":
         return <CardAvailabilitySlot slots={MOCK_SLOTS} selectedId={selectedSlotId} onSelect={handleSlotSelect} />;
-      case "urgency":
-        return <CardUrgencyAction />;
-      case "project_suggestion":
-        return <CardProjectSuggestion />;
-      case "login_prompt":
-        return <CardLoginPromptInline />;
-      case "no_match":
-        return <CardNoMatchFallback />;
-      case "business_analysis":
-        return <CardBusinessAnalysisScore data={msg.cardData} />;
-      case "quote_analysis":
-        return <CardQuoteAnalysisBreakdown data={msg.cardData} />;
-      case "photo_design":
-        return <CardPhotoDesignSuggestions data={msg.cardData} />;
-      case "photo_problem":
-        return <CardPhotoProblemDiagnosis data={msg.cardData} onFindPro={() => sendMessage("Trouvez-moi un professionnel")} />;
-      case "aipp_score":
-        return <CardAIPPScore entityName={msg.cardData?.entityName} score={msg.cardData?.score} tier={msg.cardData?.tier} />;
-      case "improvement_actions":
-        return <CardImprovementActions actions={msg.cardData || []} />;
-      case "upload_photo":
-        return <WidgetUploadInline type="photo" onFileSelected={(f) => handleFileUpload(f, "photo")} />;
-      case "upload_quote":
-        return <WidgetUploadInline type="quote" onFileSelected={(f) => handleFileUpload(f, "quote")} />;
-      default:
-        return null;
+      case "urgency": return <CardUrgencyAction />;
+      case "project_suggestion": return <CardProjectSuggestion />;
+      case "login_prompt": return <CardLoginPromptInline />;
+      case "no_match": return <CardNoMatchFallback />;
+      case "business_analysis": return <CardBusinessAnalysisScore data={msg.cardData} />;
+      case "quote_analysis": return <CardQuoteAnalysisBreakdown data={msg.cardData} />;
+      case "photo_design": return <CardPhotoDesignSuggestions data={msg.cardData} />;
+      case "photo_problem": return <CardPhotoProblemDiagnosis data={msg.cardData} onFindPro={() => sendMessage("Trouvez-moi un professionnel")} />;
+      case "aipp_score": return <CardAIPPScore entityName={msg.cardData?.entityName} score={msg.cardData?.score} tier={msg.cardData?.tier} />;
+      case "improvement_actions": return <CardImprovementActions actions={msg.cardData || []} />;
+      case "upload_photo": return <WidgetUploadInline type="photo" onFileSelected={(f) => handleFileUpload(f, "photo")} />;
+      case "upload_quote": return <WidgetUploadInline type="quote" onFileSelected={(f) => handleFileUpload(f, "quote")} />;
+      default: return null;
     }
   };
 
@@ -188,14 +144,31 @@ export default function PageHomeAlexConversationalLite() {
         }}
       />
 
-      {/* Orb Header — user-safe, no debug info */}
+      {/* Voice Mode: Full surface replaces orb + conversation */}
+      <AnimatePresence>
+        {voiceMode && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute inset-0 z-40 bg-background/98 backdrop-blur-sm flex flex-col items-center justify-center p-6"
+          >
+            <PanelAlexVoiceSurface
+              feature="conversation"
+              onClose={() => setVoiceMode(false)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Orb Header */}
       <HeroSectionAlexOrbLite
-        isListening={isMicActive || voiceActive}
+        isListening={voiceMode}
         isSpeaking={false}
         isThinking={isThinking}
       />
 
-      {/* Conversation Canvas — user-safe messages only */}
+      {/* Conversation Canvas */}
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto px-4 pb-2 space-y-3 scroll-smooth"
@@ -213,13 +186,15 @@ export default function PageHomeAlexConversationalLite() {
         {isThinking && <LoaderAlexThinking />}
       </div>
 
-      {/* Input Dock */}
-      <InputAlexMessageComposer
-        onSend={sendMessage}
-        onMicToggle={handleMicToggle}
-        isMicActive={isMicActive}
-        disabled={isThinking}
-      />
+      {/* Input Dock — hidden when voice mode is active */}
+      {!voiceMode && (
+        <InputAlexMessageComposer
+          onSend={sendMessage}
+          onMicToggle={handleMicToggle}
+          isMicActive={voiceMode}
+          disabled={isThinking}
+        />
+      )}
 
       {/* Sheets */}
       <SheetEntrepreneurDetails
