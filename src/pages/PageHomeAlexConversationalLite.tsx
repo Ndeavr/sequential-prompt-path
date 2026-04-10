@@ -1,17 +1,20 @@
 /**
- * PageHomeAlexConversationalLite — V5: Voice Autostart + Strict Guards
+ * PageHomeAlexConversationalLite — V6: Dominant Chat + Working Voice Pipeline
  * 
- * Unified conversation page with proper voice bootstrap.
- * When mic is activated, shows PanelAlexVoiceSurface with full boot sequence.
- * No duplicate controls, no infinite spinners, greeting before listening.
+ * - Chat takes 85%+ of screen
+ * - Compact header orb
+ * - Expanded input dock with integrated mic
+ * - Voice transcripts flow INTO the main chat (not separate overlay)
+ * - Voice mode = inline, not full-screen
  */
 import { useEffect, useRef, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useAlexConversationLite } from "@/hooks/useAlexConversationLite";
+import { useAlexVoiceBootstrap } from "@/hooks/useAlexVoiceBootstrap";
 import { audioEngine } from "@/services/audioEngineUNPRO";
 import HeroSectionAlexOrbLite from "@/components/alex-conversation/HeroSectionAlexOrbLite";
-import InputAlexMessageComposer from "@/components/alex-conversation/InputAlexMessageComposer";
+import InputAlexDockExpanded from "@/components/alex-conversation/InputAlexDockExpanded";
 import BubbleAlexMessage from "@/components/alex-conversation/BubbleAlexMessage";
 import BubbleUserMessage from "@/components/alex-conversation/BubbleUserMessage";
 import LoaderAlexThinking from "@/components/alex-conversation/LoaderAlexThinking";
@@ -34,7 +37,6 @@ import CardAlexBookingNextStep from "@/components/alex-conversation/CardAlexBook
 import WidgetUploadInline from "@/components/alex-conversation/WidgetUploadInline";
 import SheetEntrepreneurDetails from "@/components/alex-conversation/SheetEntrepreneurDetails";
 import SheetBookingSlots from "@/components/alex-conversation/SheetBookingSlots";
-import PanelAlexVoiceSurface from "@/components/alex-conversation/PanelAlexVoiceSurface";
 import { MOCK_SLOTS, type MockContractor, type MockSlot } from "@/components/alex-conversation/types";
 import { toast } from "sonner";
 
@@ -46,9 +48,22 @@ export default function PageHomeAlexConversationalLite() {
     flowState, updateAuthState,
   } = useAlexConversationLite(firstName, isAuthenticated, false);
 
+  // Voice bootstrap — feeds transcripts into main chat
+  const {
+    bootState,
+    transcripts: voiceTranscripts,
+    primaryControl: voiceControl,
+    statusText: voiceStatus,
+    isSpeaking: voiceIsSpeaking,
+    isActive: voiceIsActive,
+    isConnecting: voiceIsConnecting,
+    startVoice,
+    stopVoice,
+    retryVoice,
+  } = useAlexVoiceBootstrap({ feature: "conversation" });
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const initRef = useRef(false);
-  const [voiceMode, setVoiceMode] = useState(false);
   const [selectedSlotId, setSelectedSlotId] = useState<string>();
   const prevAuthRef = useRef(isAuthenticated);
 
@@ -64,7 +79,7 @@ export default function PageHomeAlexConversationalLite() {
     }
   }, [initialize]);
 
-  // GUARD: detect auth change → resume flow (not re-initialize)
+  // GUARD: detect auth change
   useEffect(() => {
     if (isAuthenticated && !prevAuthRef.current) {
       updateAuthState(true, firstName);
@@ -72,17 +87,22 @@ export default function PageHomeAlexConversationalLite() {
     prevAuthRef.current = isAuthenticated;
   }, [isAuthenticated, firstName, updateAuthState]);
 
-  // Auto-scroll
+  // Auto-scroll on new messages or voice transcripts
   useEffect(() => {
     const el = scrollRef.current;
     if (el) {
       requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
     }
-  }, [messages, isThinking]);
+  }, [messages, isThinking, voiceTranscripts]);
 
+  // Mic toggle
   const handleMicToggle = useCallback(() => {
-    setVoiceMode(prev => !prev);
-  }, []);
+    if (voiceIsActive) {
+      stopVoice();
+    } else {
+      startVoice();
+    }
+  }, [voiceIsActive, startVoice, stopVoice]);
 
   const handleSlotSelect = useCallback((slot: MockSlot) => {
     setSelectedSlotId(slot.id);
@@ -133,48 +153,69 @@ export default function PageHomeAlexConversationalLite() {
     }
   };
 
+  // Determine if voice is active for UI state
+  const isVoiceSpeaking = voiceIsActive && voiceIsSpeaking;
+  const isVoiceListening = voiceIsActive && !voiceIsSpeaking && bootState === "alex_listening";
+
   return (
     <div className="flex flex-col h-[100dvh] bg-background relative overflow-hidden">
       {/* Ambient glow */}
       <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] pointer-events-none"
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] pointer-events-none"
         style={{
-          background: "radial-gradient(ellipse at center, hsl(var(--primary) / 0.06) 0%, transparent 70%)",
-          filter: "blur(60px)",
+          background: "radial-gradient(ellipse at center, hsl(var(--primary) / 0.05) 0%, transparent 70%)",
+          filter: "blur(50px)",
         }}
       />
 
-      {/* Voice Mode: Full surface replaces orb + conversation */}
+      {/* Compact Header */}
+      <HeroSectionAlexOrbLite
+        isListening={isVoiceListening}
+        isSpeaking={isVoiceSpeaking}
+        isThinking={isThinking}
+      />
+
+      {/* Voice active indicator */}
       <AnimatePresence>
-        {voiceMode && (
+        {voiceIsActive && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="absolute inset-0 z-40 bg-background/98 backdrop-blur-sm flex flex-col items-center justify-center p-6"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
           >
-            <PanelAlexVoiceSurface
-              feature="conversation"
-              onClose={() => setVoiceMode(false)}
-            />
+            <div className="flex items-center justify-center gap-2 py-2 bg-primary/5 border-b border-primary/10">
+              <div className="flex items-center gap-1">
+                {[0, 1, 2].map(i => (
+                  <motion.div
+                    key={i}
+                    animate={{ height: voiceIsSpeaking ? [3, 12, 3] : [3, 6, 3] }}
+                    transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.15 }}
+                    className="w-1 bg-primary rounded-full"
+                  />
+                ))}
+              </div>
+              <span className="text-xs font-medium text-primary">
+                {voiceStatus}
+              </span>
+              {bootState === "session_error" && (
+                <button onClick={retryVoice} className="text-xs text-primary underline ml-1">
+                  Réessayer
+                </button>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Orb Header */}
-      <HeroSectionAlexOrbLite
-        isListening={voiceMode}
-        isSpeaking={false}
-        isThinking={isThinking}
-      />
-
-      {/* Conversation Canvas */}
+      {/* Conversation Canvas — takes max space */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto px-4 pb-2 space-y-3 scroll-smooth"
+        className="flex-1 overflow-y-auto px-4 pb-3 pt-3 space-y-3 scroll-smooth"
         style={{ scrollbarWidth: "none" }}
       >
         <AnimatePresence mode="popLayout">
+          {/* Text chat messages */}
           {messages.map(msg => (
             <div key={msg.id} className="space-y-2">
               {msg.role === "alex" && msg.content && <BubbleAlexMessage content={msg.content} />}
@@ -182,19 +223,58 @@ export default function PageHomeAlexConversationalLite() {
               {msg.cardType && renderCard(msg)}
             </div>
           ))}
+
+          {/* Voice transcripts — rendered inline in the chat */}
+          {voiceIsActive && voiceTranscripts.map(entry => (
+            <motion.div
+              key={entry.id}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-1"
+            >
+              {entry.role === "alex" ? (
+                <BubbleAlexMessage content={entry.text} />
+              ) : (
+                <BubbleUserMessage content={entry.text} />
+              )}
+            </motion.div>
+          ))}
         </AnimatePresence>
+
         {isThinking && <LoaderAlexThinking />}
+
+        {/* Voice listening indicator in chat */}
+        {isVoiceListening && !isThinking && voiceTranscripts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0.4, 0.8, 0.4] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="flex items-center gap-2 pl-10"
+          >
+            <div className="flex gap-0.5">
+              {[0, 1, 2].map(i => (
+                <motion.div
+                  key={i}
+                  animate={{ height: [2, 8, 2] }}
+                  transition={{ duration: 0.4, repeat: Infinity, delay: i * 0.1 }}
+                  className="w-1 bg-primary/40 rounded-full"
+                />
+              ))}
+            </div>
+            <span className="text-xs text-muted-foreground">Je vous écoute...</span>
+          </motion.div>
+        )}
       </div>
 
-      {/* Input Dock — hidden when voice mode is active */}
-      {!voiceMode && (
-        <InputAlexMessageComposer
-          onSend={sendMessage}
-          onMicToggle={handleMicToggle}
-          isMicActive={voiceMode}
-          disabled={isThinking}
-        />
-      )}
+      {/* Expanded Input Dock — always visible */}
+      <InputAlexDockExpanded
+        onSend={sendMessage}
+        onMicToggle={handleMicToggle}
+        isMicActive={voiceIsActive}
+        isVoiceConnecting={voiceIsConnecting || bootState === "preloading" || bootState === "intro_playing"}
+        disabled={isThinking}
+        placeholder={voiceIsActive ? "Mode vocal actif" : "Décrivez votre besoin..."}
+      />
 
       {/* Sheets */}
       <SheetEntrepreneurDetails
