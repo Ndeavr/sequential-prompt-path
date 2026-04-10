@@ -13,6 +13,7 @@ import FallbackRoutePage from "@/pages/FallbackRoutePage";
 
 // Intent homepage (direct route for testing)
 const PageHomeIntentUNPRO = lazy(() => import("@/pages/PageHomeIntentUNPRO"));
+const PageHomeAlexConversationalLite = lazy(() => import("@/pages/PageHomeAlexConversationalLite"));
 
 // Lightweight loading fallback
 const LazyFallback = () => (
