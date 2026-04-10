@@ -39689,6 +39689,160 @@ export type Database = {
         }
         Relationships: []
       }
+      syndicate_activity_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          syndicate_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          syndicate_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          syndicate_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_activity_logs_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicate_alerts: {
+        Row: {
+          action_url: string | null
+          alert_type: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_dismissed: boolean | null
+          is_read: boolean | null
+          message: string | null
+          severity: string
+          syndicate_id: string
+          title: string
+        }
+        Insert: {
+          action_url?: string | null
+          alert_type?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          message?: string | null
+          severity?: string
+          syndicate_id: string
+          title: string
+        }
+        Update: {
+          action_url?: string | null
+          alert_type?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          message?: string | null
+          severity?: string
+          syndicate_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_alerts_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicate_assemblies: {
+        Row: {
+          assembly_type: string
+          created_at: string
+          id: string
+          location: string | null
+          minutes_document_id: string | null
+          notes: string | null
+          quorum_reached: boolean | null
+          quorum_required: number | null
+          scheduled_date: string
+          status: string
+          syndicate_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assembly_type?: string
+          created_at?: string
+          id?: string
+          location?: string | null
+          minutes_document_id?: string | null
+          notes?: string | null
+          quorum_reached?: boolean | null
+          quorum_required?: number | null
+          scheduled_date: string
+          status?: string
+          syndicate_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assembly_type?: string
+          created_at?: string
+          id?: string
+          location?: string | null
+          minutes_document_id?: string | null
+          notes?: string | null
+          quorum_reached?: boolean | null
+          quorum_required?: number | null
+          scheduled_date?: string
+          status?: string
+          syndicate_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_assemblies_minutes_document_id_fkey"
+            columns: ["minutes_document_id"]
+            isOneToOne: false
+            referencedRelation: "syndicate_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndicate_assemblies_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       syndicate_audit_logs: {
         Row: {
           action: string
@@ -39773,6 +39927,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "syndicate_budget_items_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicate_budgets: {
+        Row: {
+          approved_at: string | null
+          created_at: string
+          fiscal_year: number
+          id: string
+          notes: string | null
+          operating_budget_cents: number | null
+          reserve_fund_balance_cents: number | null
+          reserve_fund_contribution_cents: number | null
+          status: string
+          syndicate_id: string
+          total_budget_cents: number | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          created_at?: string
+          fiscal_year: number
+          id?: string
+          notes?: string | null
+          operating_budget_cents?: number | null
+          reserve_fund_balance_cents?: number | null
+          reserve_fund_contribution_cents?: number | null
+          status?: string
+          syndicate_id: string
+          total_budget_cents?: number | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          created_at?: string
+          fiscal_year?: number
+          id?: string
+          notes?: string | null
+          operating_budget_cents?: number | null
+          reserve_fund_balance_cents?: number | null
+          reserve_fund_contribution_cents?: number | null
+          status?: string
+          syndicate_id?: string
+          total_budget_cents?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_budgets_syndicate_id_fkey"
             columns: ["syndicate_id"]
             isOneToOne: false
             referencedRelation: "syndicates"
@@ -39892,6 +40099,47 @@ export type Database = {
           },
         ]
       }
+      syndicate_document_versions: {
+        Row: {
+          change_notes: string | null
+          created_at: string
+          document_id: string
+          file_size_bytes: number | null
+          file_url: string
+          id: string
+          uploaded_by: string | null
+          version_number: number
+        }
+        Insert: {
+          change_notes?: string | null
+          created_at?: string
+          document_id: string
+          file_size_bytes?: number | null
+          file_url: string
+          id?: string
+          uploaded_by?: string | null
+          version_number?: number
+        }
+        Update: {
+          change_notes?: string | null
+          created_at?: string
+          document_id?: string
+          file_size_bytes?: number | null
+          file_url?: string
+          id?: string
+          uploaded_by?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_document_versions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "syndicate_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       syndicate_documents: {
         Row: {
           created_at: string
@@ -39938,6 +40186,138 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "syndicate_documents_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicate_expenses: {
+        Row: {
+          amount_cents: number
+          budget_id: string | null
+          category: string | null
+          created_at: string
+          description: string
+          expense_date: string
+          id: string
+          invoice_id: string | null
+          is_reserve_fund: boolean | null
+          syndicate_id: string
+        }
+        Insert: {
+          amount_cents?: number
+          budget_id?: string | null
+          category?: string | null
+          created_at?: string
+          description: string
+          expense_date?: string
+          id?: string
+          invoice_id?: string | null
+          is_reserve_fund?: boolean | null
+          syndicate_id: string
+        }
+        Update: {
+          amount_cents?: number
+          budget_id?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string
+          expense_date?: string
+          id?: string
+          invoice_id?: string | null
+          is_reserve_fund?: boolean | null
+          syndicate_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_expenses_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "syndicate_budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndicate_expenses_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "syndicate_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndicate_expenses_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicate_invoices: {
+        Row: {
+          amount_cents: number
+          category: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          file_url: string | null
+          id: string
+          invoice_date: string
+          ocr_data: Json | null
+          ocr_status: string | null
+          status: string
+          supplier_name: string
+          syndicate_id: string
+          tax_gst_cents: number | null
+          tax_qst_cents: number | null
+          total_cents: number | null
+          updated_at: string
+        }
+        Insert: {
+          amount_cents?: number
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          file_url?: string | null
+          id?: string
+          invoice_date?: string
+          ocr_data?: Json | null
+          ocr_status?: string | null
+          status?: string
+          supplier_name: string
+          syndicate_id: string
+          tax_gst_cents?: number | null
+          tax_qst_cents?: number | null
+          total_cents?: number | null
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          file_url?: string | null
+          id?: string
+          invoice_date?: string
+          ocr_data?: Json | null
+          ocr_status?: string | null
+          status?: string
+          supplier_name?: string
+          syndicate_id?: string
+          tax_gst_cents?: number | null
+          tax_qst_cents?: number | null
+          total_cents?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_invoices_syndicate_id_fkey"
             columns: ["syndicate_id"]
             isOneToOne: false
             referencedRelation: "syndicates"
@@ -40295,6 +40675,72 @@ export type Database = {
           },
         ]
       }
+      syndicate_motions: {
+        Row: {
+          assembly_id: string
+          category: string | null
+          created_at: string
+          decision: string | null
+          description: string | null
+          id: string
+          requires_supermajority: boolean | null
+          sort_order: number | null
+          status: string
+          syndicate_id: string
+          title: string
+          votes_abstain: number | null
+          votes_against: number | null
+          votes_for: number | null
+        }
+        Insert: {
+          assembly_id: string
+          category?: string | null
+          created_at?: string
+          decision?: string | null
+          description?: string | null
+          id?: string
+          requires_supermajority?: boolean | null
+          sort_order?: number | null
+          status?: string
+          syndicate_id: string
+          title: string
+          votes_abstain?: number | null
+          votes_against?: number | null
+          votes_for?: number | null
+        }
+        Update: {
+          assembly_id?: string
+          category?: string | null
+          created_at?: string
+          decision?: string | null
+          description?: string | null
+          id?: string
+          requires_supermajority?: boolean | null
+          sort_order?: number | null
+          status?: string
+          syndicate_id?: string
+          title?: string
+          votes_abstain?: number | null
+          votes_against?: number | null
+          votes_for?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_motions_assembly_id_fkey"
+            columns: ["assembly_id"]
+            isOneToOne: false
+            referencedRelation: "syndicate_assemblies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndicate_motions_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       syndicate_project_interests: {
         Row: {
           contractor_id: string
@@ -40594,6 +41040,48 @@ export type Database = {
             columns: ["vote_id"]
             isOneToOne: false
             referencedRelation: "syndicate_votes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicate_vote_records: {
+        Row: {
+          id: string
+          motion_id: string
+          syndicate_id: string
+          user_id: string
+          vote: string
+          voted_at: string
+        }
+        Insert: {
+          id?: string
+          motion_id: string
+          syndicate_id: string
+          user_id: string
+          vote: string
+          voted_at?: string
+        }
+        Update: {
+          id?: string
+          motion_id?: string
+          syndicate_id?: string
+          user_id?: string
+          vote?: string
+          voted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_vote_records_motion_id_fkey"
+            columns: ["motion_id"]
+            isOneToOne: false
+            referencedRelation: "syndicate_motions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndicate_vote_records_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
             referencedColumns: ["id"]
           },
         ]
