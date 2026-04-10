@@ -31,6 +31,7 @@ export default function OverlayAlexVoiceFullScreen() {
   const entryIdRef = useRef(0);
   const lastAlexIdRef = useRef<string | null>(null);
   const hasConnectedRef = useRef(false);
+  const bootTimeRef = useRef<number>(0);
 
   const firstName = user?.user_metadata?.first_name
     || user?.user_metadata?.full_name?.split(" ")[0]
