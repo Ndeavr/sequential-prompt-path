@@ -277,7 +277,7 @@ export default function OverlayAlexVoiceFullScreen() {
         firstAudioTimerRef.current = null;
       }
     };
-  }, [store.isOverlayOpen, store.machineState === "requesting_permission"]);
+  }, [store.isOverlayOpen, store.machineState, buildGreeting, start]);
 
   // ─── HEARTBEAT ───
   useEffect(() => {
