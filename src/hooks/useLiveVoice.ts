@@ -21,12 +21,25 @@ import { isBlockedOutput } from "@/hooks/useAlexPublicOutputFilter";
 interface UseLiveVoiceCallbacks {
   onTranscript?: (text: string) => void;
   onUserTranscript?: (text: string) => void;
+  onFirstAudio?: () => void;
   onError?: (error: unknown) => void;
   onConnect?: () => void;
   onDisconnect?: () => void;
 }
 
 const LIVE_CONNECT_TIMEOUT_MS = 12000;
+const LIVE_POST_CONNECT_GRACE_MS = 1200;
+
+function getFriendlyLiveCloseReason(code: number | null, reason: string | null) {
+  if (!reason && !code) return "La session vocale s'est fermée pendant le démarrage.";
+  if (reason?.includes("not found") || reason?.includes("bidiGenerateContent")) {
+    return "Le moteur vocal n'est pas disponible avec ce modèle. Basculez au chat ou réessayez.";
+  }
+  if (code === 1008) {
+    return "Le serveur vocal a refusé la session. Réessayez ou passez au chat.";
+  }
+  return reason || "La session vocale s'est fermée pendant le démarrage.";
+}
 
 export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const [isActive, setIsActive] = useState(false);
@@ -46,6 +59,10 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const workletBlobURLRef = useRef<string | null>(null);
   const audioChunksSent = useRef(0);
   const intentionallyStopped = useRef(false);
+  const hasStableConnectionRef = useRef(false);
+  const hasDeliveredFirstAudioRef = useRef(false);
+  const lastCloseReasonRef = useRef<string | null>(null);
+  const lastCloseCodeRef = useRef<number | null>(null);
 
   const cleanup = useCallback(() => {
     if (workletNodeRef.current) {
@@ -82,6 +99,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     activeSources.current.clear();
     nextStartTime.current = 0;
     audioChunksSent.current = 0;
+    hasStableConnectionRef.current = false;
+    hasDeliveredFirstAudioRef.current = false;
     setIsActive(false);
     setIsConnecting(false);
     setIsSpeaking(false);
@@ -175,9 +194,14 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         throw new Error(tokenError?.message || "Impossible d'obtenir les credentials Gemini");
       }
       console.log("[GeminiLive] ✅ Got API key, model:", tokenData.model);
+      lastCloseReasonRef.current = null;
+      lastCloseCodeRef.current = null;
+      hasStableConnectionRef.current = false;
+      hasDeliveredFirstAudioRef.current = false;
 
       const apiKey = tokenData.apiKey;
       const voiceName = tokenData.voiceName || ALEX_LIVE_CONFIG.config.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName;
+      const liveModel = tokenData.model || ALEX_LIVE_CONFIG.model;
 
       // 2. Get microphone FIRST (user gesture required)
       console.log("[GeminiLive] Requesting microphone...");
@@ -204,7 +228,7 @@ Ne dis rien d'autre avant cette salutation. Dis-la maintenant.`;
       // 5. Connect WebSocket
       console.log("[GeminiLive] Connecting WebSocket...");
       const connectPromise = ai.live.connect({
-        model: tokenData.model || "gemini-2.0-flash-live-001",
+        model: liveModel,
         callbacks: {
           onmessage: (message: LiveServerMessage) => {
             // Output transcription
@@ -233,6 +257,11 @@ Ne dis rien d'autre avant cette salutation. Dis-la maintenant.`;
             const base64Audio = audioPart?.inlineData?.data;
 
             if (base64Audio && outputAudioContextRef.current) {
+              if (!hasDeliveredFirstAudioRef.current) {
+                hasDeliveredFirstAudioRef.current = true;
+                callbacksRef.current?.onFirstAudio?.();
+              }
+
               setIsSpeaking(true);
               const ctx = outputAudioContextRef.current;
               nextStartTime.current = Math.max(nextStartTime.current, ctx.currentTime);
@@ -267,10 +296,12 @@ Ne dis rien d'autre avant cette salutation. Dis-la maintenant.`;
 
           onclose: (e: any) => {
             console.warn("[GeminiLive] WebSocket closed:", e?.code, e?.reason || "(no reason)");
-            const wasActive = sessionRef.current !== null;
+            lastCloseCodeRef.current = e?.code ?? null;
+            lastCloseReasonRef.current = e?.reason || null;
+            const wasStable = hasStableConnectionRef.current;
             cleanup();
             // Only fire disconnect if we weren't intentionally stopped
-            if (!intentionallyStopped.current && wasActive) {
+            if (!intentionallyStopped.current && wasStable) {
               callbacksRef.current?.onDisconnect?.();
             }
           },
@@ -319,8 +350,15 @@ Ne dis rien d'autre avant cette salutation. Dis-la maintenant.`;
         throw connectErr;
       }
 
-      console.log("[GeminiLive] ✅ WebSocket connected!");
       sessionRef.current = session;
+
+      await new Promise((resolve) => setTimeout(resolve, LIVE_POST_CONNECT_GRACE_MS));
+      if (!sessionRef.current) {
+        throw new Error(getFriendlyLiveCloseReason(lastCloseCodeRef.current, lastCloseReasonRef.current));
+      }
+
+      hasStableConnectionRef.current = true;
+      console.log("[GeminiLive] ✅ WebSocket connected!");
       setIsActive(true);
       setIsConnecting(false);
       callbacksRef.current?.onConnect?.();

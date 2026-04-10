@@ -204,6 +204,11 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
 
   setError: (type: string, message: string, recoverable: boolean) => {
     const state = get();
+
+    const isSameError = state.errorType === type && state.errorMessage === message;
+    if (isSameError && (state.machineState === "error_recoverable" || state.machineState === "error_fatal")) {
+      return;
+    }
     
     if (recoverable) {
       set({
@@ -235,10 +240,14 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
 
   incrementHeartbeatFailure: () => {
     const state = get();
+
+    if (!state.isOverlayOpen) return;
+    if (["error_recoverable", "error_fatal", "closing", "idle"].includes(state.machineState)) return;
+
     const newCount = state.heartbeatFailures + 1;
     set({ heartbeatFailures: newCount });
     
-    if (newCount >= 3) {
+    if (newCount >= 3 && state.errorType !== "heartbeat_lost") {
       state.setError("heartbeat_lost", "Connexion perdue. Tentative de reconnexion…", true);
     }
   },

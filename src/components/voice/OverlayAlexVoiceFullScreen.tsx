@@ -23,6 +23,7 @@ import logo from "@/assets/unpro-robot.png";
 const STABILIZATION_MS = 4000;
 const HEARTBEAT_INTERVAL_MS = 2000;
 const BOOT_TIMEOUT_MS = 10000;
+const FIRST_AUDIO_TIMEOUT_MS = 5000;
 
 // Helper to always get fresh state
 const getStore = () => useAlexVoiceLockedStore.getState();
@@ -33,10 +34,12 @@ export default function OverlayAlexVoiceFullScreen() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stabilizationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const firstAudioTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [transcripts, setTranscripts] = useState<Array<{ id: string; role: "user" | "alex"; text: string }>>([]);
   const entryIdRef = useRef(0);
   const lastAlexIdRef = useRef<string | null>(null);
   const hasConnectedRef = useRef(false);
+  const firstAudioReceivedRef = useRef(false);
   const bootTimeRef = useRef<number>(0);
   const [bootStep, setBootStep] = useState<string>("init");
 
@@ -54,6 +57,26 @@ export default function OverlayAlexVoiceFullScreen() {
 
   // Gemini Live voice
   const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
+    onFirstAudio: () => {
+      firstAudioReceivedRef.current = true;
+      if (firstAudioTimerRef.current) {
+        clearTimeout(firstAudioTimerRef.current);
+        firstAudioTimerRef.current = null;
+      }
+
+      setBootStep("live");
+
+      const s = getStore();
+      if (!s.isOverlayOpen) return;
+
+      const current = s.machineState;
+      if (["stabilizing", "opening_session", "session_ready", "listening", "awaiting_user"].includes(current)) {
+        if (current === "stabilizing" || current === "opening_session") {
+          s.transitionTo("session_ready", "first_audio_frame");
+        }
+        s.transitionTo("speaking", "first_audio_frame");
+      }
+    },
     onTranscript: (text) => {
       const s = getStore();
       if (!s.isOverlayOpen) return;
@@ -105,6 +128,12 @@ export default function OverlayAlexVoiceFullScreen() {
     onDisconnect: () => {
       const s = getStore();
       console.warn("[VoiceOverlay] Gemini disconnected. state:", s.machineState);
+      hasConnectedRef.current = false;
+      firstAudioReceivedRef.current = false;
+      if (firstAudioTimerRef.current) {
+        clearTimeout(firstAudioTimerRef.current);
+        firstAudioTimerRef.current = null;
+      }
       const timeSinceBoot = Date.now() - bootTimeRef.current;
       if (s.isOverlayOpen && hasConnectedRef.current && timeSinceBoot > 2000) {
         s.setError("connection_lost", "Connexion perdue. Réessayez ou passez au chat.", true);
@@ -116,7 +145,12 @@ export default function OverlayAlexVoiceFullScreen() {
       console.error("[VoiceOverlay] Error:", error);
       const s = getStore();
       if (s.isOverlayOpen) {
-        const msg = (error as any)?.message || "Erreur de connexion vocale.";
+        const rawMessage = (error as any)?.message || "Erreur de connexion vocale.";
+        const msg = rawMessage.includes("moteur vocal") || rawMessage.includes("serveur vocal")
+          ? rawMessage
+          : rawMessage.includes("not available") || rawMessage.includes("bidiGenerateContent")
+          ? "Le moteur vocal est indisponible pour le moment. Passez au chat ou réessayez."
+          : rawMessage;
         s.setError("voice_error", msg, true);
       }
     },
@@ -153,6 +187,12 @@ export default function OverlayAlexVoiceFullScreen() {
     const boot = async () => {
       try {
         setBootStep("opening");
+        hasConnectedRef.current = false;
+        firstAudioReceivedRef.current = false;
+        if (firstAudioTimerRef.current) {
+          clearTimeout(firstAudioTimerRef.current);
+          firstAudioTimerRef.current = null;
+        }
         getStore().transitionTo("opening_session", "boot_start");
 
         // Unlock audio and play intro
@@ -185,13 +225,19 @@ export default function OverlayAlexVoiceFullScreen() {
         if (cancelled) return;
 
         setBootStep("waiting_audio");
+        firstAudioTimerRef.current = setTimeout(() => {
+          if (cancelled) return;
+          const s = getStore();
+          if (!firstAudioReceivedRef.current && s.isOverlayOpen && ["stabilizing", "opening_session", "session_ready"].includes(s.machineState)) {
+            s.setError("no_first_audio", "Alex ne parle pas. Réessayez ou passez au chat.", true);
+          }
+        }, FIRST_AUDIO_TIMEOUT_MS);
 
         // Stabilization timer — uses getState() for fresh check
         stabilizationTimerRef.current = setTimeout(() => {
           const s = getStore();
-          if (s.machineState === "stabilizing") {
-            s.transitionTo("session_ready", "stabilization_complete");
-            s.transitionTo("listening", "ready_to_listen");
+          if (firstAudioReceivedRef.current && s.machineState === "stabilizing") {
+            s.transitionTo("session_ready", "stabilization_complete_after_audio");
           }
         }, STABILIZATION_MS);
 
@@ -213,6 +259,10 @@ export default function OverlayAlexVoiceFullScreen() {
     return () => {
       cancelled = true;
       if (bootTimeoutId) clearTimeout(bootTimeoutId);
+      if (firstAudioTimerRef.current) {
+        clearTimeout(firstAudioTimerRef.current);
+        firstAudioTimerRef.current = null;
+      }
     };
   }, [store.isOverlayOpen, store.machineState === "requesting_permission"]);
 
@@ -242,11 +292,13 @@ export default function OverlayAlexVoiceFullScreen() {
     if (!store.isOverlayOpen) {
       if (stabilizationTimerRef.current) clearTimeout(stabilizationTimerRef.current);
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+      if (firstAudioTimerRef.current) clearTimeout(firstAudioTimerRef.current);
       if (isActive) {
         try { audioEngine.play("outro"); } catch {}
         stop();
       }
       hasConnectedRef.current = false;
+      firstAudioReceivedRef.current = false;
       setTranscripts([]);
       entryIdRef.current = 0;
       lastAlexIdRef.current = null;
@@ -277,19 +329,31 @@ export default function OverlayAlexVoiceFullScreen() {
 
   const handleRetry = useCallback(async () => {
     const s = getStore();
+    stop();
     s.clearError();
     s.transitionTo("opening_session", "retry");
     hasConnectedRef.current = false;
+    firstAudioReceivedRef.current = false;
+    if (firstAudioTimerRef.current) {
+      clearTimeout(firstAudioTimerRef.current);
+      firstAudioTimerRef.current = null;
+    }
     setBootStep("connecting");
     try {
       s.transitionTo("stabilizing", "retry_stabilization");
       const greeting = buildGreeting();
       await start({ initialGreeting: greeting });
+      setBootStep("waiting_audio");
+      firstAudioTimerRef.current = setTimeout(() => {
+        const latest = getStore();
+        if (!firstAudioReceivedRef.current && latest.isOverlayOpen && ["stabilizing", "opening_session", "session_ready"].includes(latest.machineState)) {
+          latest.setError("no_first_audio", "Alex ne parle pas. Réessayez ou passez au chat.", true);
+        }
+      }, FIRST_AUDIO_TIMEOUT_MS);
       stabilizationTimerRef.current = setTimeout(() => {
         const latest = getStore();
-        if (latest.machineState === "stabilizing") {
-          latest.transitionTo("session_ready", "retry_stabilization_complete");
-          latest.transitionTo("listening", "retry_ready");
+        if (firstAudioReceivedRef.current && latest.machineState === "stabilizing") {
+          latest.transitionTo("session_ready", "retry_stabilization_complete_after_audio");
         }
       }, STABILIZATION_MS);
     } catch (err: any) {
@@ -451,6 +515,7 @@ function getBootStepLabel(step: string): string {
     case "connecting": return "Connexion au serveur vocal…";
     case "connected": return "Serveur connecté ✓";
     case "waiting_audio": return "En attente du premier son…";
+    case "live": return "Premier contact vocal ✓";
     case "error": return "Erreur de démarrage";
     default: return "Préparation…";
   }
@@ -466,7 +531,7 @@ function BootChecklist({ step }: { step: string }) {
     { key: "waiting_audio", label: "Premier contact vocal" },
   ];
 
-  const stepOrder = ["init", "opening", "stabilizing", "connecting", "connected", "waiting_audio"];
+  const stepOrder = ["init", "opening", "stabilizing", "connecting", "connected", "waiting_audio", "live"];
   const currentIdx = stepOrder.indexOf(step);
 
   return (
