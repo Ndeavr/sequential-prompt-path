@@ -11,6 +11,9 @@ import HomeWithFeatureFlag from "@/components/home-intent/HomeWithFeatureFlag";
 import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
 
+// Visual Search
+const ProVisualSearchPage = lazy(() => import("@/pages/ProVisualSearchPage"));
+
 // Intent homepage (direct route for testing)
 const PageHomeIntentUNPRO = lazy(() => import("@/pages/PageHomeIntentUNPRO"));
 const PageHomeAlexConversationalLite = lazy(() => import("@/pages/PageHomeAlexConversationalLite"));
