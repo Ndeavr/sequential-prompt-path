@@ -62,7 +62,6 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       }
 
       if (!intentionallyStopped.current) {
-        audioEngine.play("outro");
         callbacksRef.current?.onDisconnect?.();
       }
     },
@@ -130,9 +129,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     setIsConnecting(true);
 
     try {
-      // Play intro chime before connecting
       audioEngine.unlock();
-      await audioEngine.play("intro");
 
       console.log("[ElevenLabs] Requesting microphone...");
       await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -147,14 +144,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       }
       console.log("[ElevenLabs] ✅ Got signed URL");
 
-      // Connect with language override only — French default
+      // Connect with NO overrides — language configured on ElevenLabs dashboard
       await conversation.startSession({
         signedUrl: data.signed_url,
-        overrides: {
-          agent: {
-            language: "fr",
-          },
-        },
       });
 
     } catch (err: unknown) {
