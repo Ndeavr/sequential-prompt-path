@@ -214,7 +214,7 @@ const PageAdminActivitiesSecondaryManager = () => {
   const generateMutation = useGenerateSecondaryTargets();
   const [tab, setTab] = useState("services");
 
-  if (isLoading) return <AdminLayout><LoadingState message="Chargement des services..." /></AdminLayout>;
+  if (isLoading) return <AdminLayout><LoadingState /></AdminLayout>;
 
   const activities = data ?? [];
   const categories = Object.keys(CATEGORY_META);
