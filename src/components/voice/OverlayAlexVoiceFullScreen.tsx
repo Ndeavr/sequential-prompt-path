@@ -10,7 +10,7 @@
  * 
  * FIX V5: All timeouts/async use getState() instead of stale store snapshot.
  */
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback, useState, type MutableRefObject } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, PhoneOff, RefreshCw, AlertCircle, MessageSquare, Sparkles, WifiOff, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
