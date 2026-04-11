@@ -237,7 +237,7 @@ export default function OverlayAlexVoiceFullScreen() {
         getStore().transitionTo("opening_session", "boot_start");
 
         // Unlock audio context only — no local chimes in voice mode
-        audioEngine.unlock();
+        // audioEngine.unlock() removed — no chimes needed, avoids click artifacts
 
         setBootStep("stabilizing");
         getStore().transitionTo("stabilizing", "stabilization_start");
