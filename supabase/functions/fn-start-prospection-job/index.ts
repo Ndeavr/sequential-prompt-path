@@ -62,9 +62,6 @@ Deno.serve(async (req) => {
 
     // 2. Generate search queries
     const queries: string[] = [];
-    const cityList = target_cities as string[];
-    const keywordList = (keywords || []) as string[];
-    const langList = (languages || ["fr"]) as string[];
 
     for (const city of effectiveCities) {
       queries.push(`${effectiveCategory} ${city}`);
