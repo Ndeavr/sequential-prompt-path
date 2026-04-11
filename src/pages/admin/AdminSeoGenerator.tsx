@@ -1,6 +1,7 @@
 /**
  * UNPRO — Admin SEO Programmatic Generator
  * Bulk seed queue, trigger generation, publish pages, monitor stats.
+ * Now includes mass generation engine (fn-seo-generate-pages).
  */
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -12,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   Globe, FileText, Zap, CheckCircle, AlertTriangle,
-  Play, Upload, BarChart3, Loader2, Eye,
+  Play, Upload, BarChart3, Loader2, Eye, Rocket,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -45,7 +46,7 @@ export default function AdminSeoGenerator() {
     queryFn: async () => {
       const { data } = await supabase
         .from("seo_pages")
-        .select("id, slug, title, city, profession, page_type, is_published, created_at, views")
+        .select("id, slug, title, city, profession, page_type, is_published, created_at, views, quality_score")
         .order("created_at", { ascending: false })
         .limit(50);
       return data || [];
@@ -64,6 +65,18 @@ export default function AdminSeoGenerator() {
       return data || [];
     },
     refetchInterval: 5000,
+  });
+
+  const { data: genLogs = [] } = useQuery({
+    queryKey: ["seo-gen-logs"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("seo_generation_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      return data || [];
+    },
   });
 
   const bulkSeed = useMutation({
@@ -115,6 +128,24 @@ export default function AdminSeoGenerator() {
     onError: (e) => toast.error(`Erreur: ${e.message}`),
   });
 
+  // Mass generation engine
+  const massGenerate = useMutation({
+    mutationFn: async (mode: string) => {
+      const { data, error } = await supabase.functions.invoke("fn-seo-generate-pages", {
+        body: { mode },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      toast.success(`🚀 ${data.total_generated} pages générées en ${(data.generation_time_ms / 1000).toFixed(1)}s`);
+      qc.invalidateQueries({ queryKey: ["seo-gen-stats"] });
+      qc.invalidateQueries({ queryKey: ["seo-recent-pages"] });
+      qc.invalidateQueries({ queryKey: ["seo-gen-logs"] });
+    },
+    onError: (e) => toast.error(`Erreur génération massive: ${e.message}`),
+  });
+
   const q = stats?.queue;
   const p = stats?.pages;
 
@@ -141,9 +172,51 @@ export default function AdminSeoGenerator() {
         <KPI icon={<AlertTriangle className="h-4 w-4 text-destructive" />} label="Erreurs" value={q?.error ?? 0} />
       </div>
 
-      {/* Actions */}
+      {/* Mass Generation Engine */}
+      <Card className="border-primary/30 bg-primary/5">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Rocket className="h-5 w-5 text-primary" />
+            Moteur de génération massive
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Génère automatiquement toutes les combinaisons ville × métier et ville × problème avec contenu unique, FAQ, JSON-LD et maillage interne.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Button
+              onClick={() => massGenerate.mutate("all")}
+              disabled={massGenerate.isPending}
+              className="bg-primary"
+            >
+              {massGenerate.isPending ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Génération...</>
+              ) : (
+                <><Rocket className="h-4 w-4 mr-2" /> Générer TOUT (métiers + problèmes × villes)</>
+              )}
+            </Button>
+            <Button
+              onClick={() => massGenerate.mutate("profession_city")}
+              disabled={massGenerate.isPending}
+              variant="outline"
+            >
+              Métiers × Villes seulement
+            </Button>
+            <Button
+              onClick={() => massGenerate.mutate("problem_city")}
+              disabled={massGenerate.isPending}
+              variant="outline"
+            >
+              Problèmes × Villes seulement
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Legacy Actions */}
       <Card>
-        <CardHeader><CardTitle className="text-base">Actions</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">Actions (file d'attente)</CardTitle></CardHeader>
         <CardContent className="flex flex-wrap gap-3">
           <Button
             onClick={() => bulkSeed.mutate(["profession_city", "problem_city"])}
@@ -152,24 +225,6 @@ export default function AdminSeoGenerator() {
           >
             <Upload className="h-4 w-4 mr-2" />
             {bulkSeed.isPending ? "Seeding..." : "Seed file (métiers + problèmes × villes)"}
-          </Button>
-
-          <Button
-            onClick={() => bulkSeed.mutate(["profession_city"])}
-            disabled={bulkSeed.isPending}
-            variant="outline"
-            size="sm"
-          >
-            Seed métiers seulement
-          </Button>
-
-          <Button
-            onClick={() => bulkSeed.mutate(["problem_city"])}
-            disabled={bulkSeed.isPending}
-            variant="outline"
-            size="sm"
-          >
-            Seed problèmes seulement
           </Button>
 
           <div className="flex items-center gap-2 border rounded-md px-3 py-1">
@@ -217,6 +272,7 @@ export default function AdminSeoGenerator() {
         <TabsList>
           <TabsTrigger value="pages">Pages ({recentPages.length})</TabsTrigger>
           <TabsTrigger value="queue">File ({queueItems.length})</TabsTrigger>
+          <TabsTrigger value="logs">Historique ({genLogs.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pages" className="mt-4">
@@ -228,6 +284,7 @@ export default function AdminSeoGenerator() {
                   <th className="text-left p-3">Ville</th>
                   <th className="text-left p-3">Profession</th>
                   <th className="text-left p-3">Type</th>
+                  <th className="text-center p-3">Score</th>
                   <th className="text-center p-3">Vues</th>
                   <th className="text-center p-3">Statut</th>
                   <th className="text-center p-3">Lien</th>
@@ -241,6 +298,13 @@ export default function AdminSeoGenerator() {
                     <td className="p-3">{page.profession || "—"}</td>
                     <td className="p-3">
                       <Badge variant="outline" className="text-xs">{page.page_type}</Badge>
+                    </td>
+                    <td className="p-3 text-center font-mono text-xs">
+                      {page.quality_score ? (
+                        <span className={page.quality_score >= 70 ? "text-emerald-500" : "text-amber-500"}>
+                          {page.quality_score}
+                        </span>
+                      ) : "—"}
                     </td>
                     <td className="p-3 text-center font-mono">{page.views || 0}</td>
                     <td className="p-3 text-center">
@@ -287,6 +351,35 @@ export default function AdminSeoGenerator() {
                 </CardContent>
               </Card>
             ))
+          )}
+        </TabsContent>
+
+        <TabsContent value="logs" className="mt-4 space-y-2">
+          {genLogs.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">Aucun historique</p>
+          ) : (
+            genLogs.map((log: any) => {
+              const meta = log.metadata as any;
+              return (
+                <Card key={log.id}>
+                  <CardContent className="p-3 flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{log.generation_type}</Badge>
+                      <span className="text-sm text-muted-foreground">
+                        v{log.agent_version} • {log.generation_time_ms ? `${(log.generation_time_ms / 1000).toFixed(1)}s` : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      {meta?.total && <span className="font-mono">{meta.total} pages</span>}
+                      {meta?.errors > 0 && <span className="text-destructive font-mono">{meta.errors} erreurs</span>}
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(log.created_at).toLocaleString("fr-CA")}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </TabsContent>
       </Tabs>
