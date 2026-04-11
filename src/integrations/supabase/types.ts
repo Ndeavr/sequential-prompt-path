@@ -35399,6 +35399,69 @@ export type Database = {
           },
         ]
       }
+      prospection_agent_rules: {
+        Row: {
+          created_at: string
+          frequency_hours: number
+          id: string
+          is_active: boolean
+          keywords_json: Json
+          last_run_at: string | null
+          max_concurrent_jobs: number
+          next_run_at: string | null
+          notes: string | null
+          priority: number
+          radius_km: number
+          rule_name: string
+          rule_type: string
+          target_category: string
+          target_cities_json: Json
+          total_jobs_run: number
+          total_leads_generated: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          frequency_hours?: number
+          id?: string
+          is_active?: boolean
+          keywords_json?: Json
+          last_run_at?: string | null
+          max_concurrent_jobs?: number
+          next_run_at?: string | null
+          notes?: string | null
+          priority?: number
+          radius_km?: number
+          rule_name: string
+          rule_type?: string
+          target_category: string
+          target_cities_json?: Json
+          total_jobs_run?: number
+          total_leads_generated?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          frequency_hours?: number
+          id?: string
+          is_active?: boolean
+          keywords_json?: Json
+          last_run_at?: string | null
+          max_concurrent_jobs?: number
+          next_run_at?: string | null
+          notes?: string | null
+          priority?: number
+          radius_km?: number
+          rule_name?: string
+          rule_type?: string
+          target_category?: string
+          target_cities_json?: Json
+          total_jobs_run?: number
+          total_leads_generated?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       prospection_campaigns: {
         Row: {
           campaign_type: string | null
