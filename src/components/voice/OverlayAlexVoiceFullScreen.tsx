@@ -236,9 +236,8 @@ export default function OverlayAlexVoiceFullScreen() {
         }
         getStore().transitionTo("opening_session", "boot_start");
 
-        // Unlock audio and play intro
+        // Unlock audio context only — no local chimes in voice mode
         audioEngine.unlock();
-        void audioEngine.play("intro").catch(() => {});
 
         setBootStep("stabilizing");
         getStore().transitionTo("stabilizing", "stabilization_start");
@@ -327,7 +326,6 @@ export default function OverlayAlexVoiceFullScreen() {
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
       if (firstAudioTimerRef.current) clearTimeout(firstAudioTimerRef.current);
       if (isActive) {
-        try { audioEngine.play("outro"); } catch {}
         stop();
       }
       hasConnectedRef.current = false;
