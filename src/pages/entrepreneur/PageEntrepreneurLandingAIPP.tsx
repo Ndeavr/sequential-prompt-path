@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, Zap, TrendingUp, Shield, ArrowRight, Sparkles } from "lucide-react";
+import { Search, Zap, TrendingUp, Shield, ArrowRight, Sparkles, CreditCard } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -167,9 +167,20 @@ const PageEntrepreneurLandingAIPP = () => {
               <span className="text-primary">l'IA vous perçoit</span>
             </h1>
 
-            <p className="text-lg text-muted-foreground mb-10 max-w-lg mx-auto">
+            <p className="text-lg text-muted-foreground mb-6 max-w-lg mx-auto">
               Votre entreprise est-elle visible… ou invisible ? Obtenez votre score AIPP en 10 secondes.
             </p>
+
+            {/* Business card import shortcut */}
+            <button
+              type="button"
+              onClick={() => navigate("/business-card-import")}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border bg-card/60 backdrop-blur-sm text-sm font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-primary/5 transition-all duration-200 mb-10 group"
+            >
+              <CreditCard className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
+              Importer une carte d'affaires
+              <ArrowRight className="w-3.5 h-3.5 opacity-50 group-hover:opacity-100 transition-opacity" />
+            </button>
           </motion.div>
 
           {/* Form */}
