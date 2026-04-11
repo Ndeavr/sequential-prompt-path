@@ -43,7 +43,6 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       connectedAtRef.current = Date.now();
       setIsActive(true);
       setIsConnecting(false);
-      audioEngine.play("success");
       callbacksRef.current?.onConnect?.();
     },
     onDisconnect: () => {
@@ -113,7 +112,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     return () => window.removeEventListener("alex-voice-cleanup", handleCleanup);
   }, [conversation]);
 
-  const start = useCallback(async (_options?: { initialGreeting?: string }) => {
+  const start = useCallback(async (options?: { initialGreeting?: string }) => {
     if (isActive || isConnecting) return;
 
     // Cooldown guard: prevent rapid reconnect loop
@@ -129,6 +128,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     setIsConnecting(true);
 
     try {
+      const initialGreeting = options?.initialGreeting?.trim() || "Bonjour. C'est Alex d'UNPRO. Comment puis-je vous aider?";
       audioEngine.unlock();
 
       console.log("[ElevenLabs] Requesting microphone...");
@@ -149,6 +149,15 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         signedUrl: data.signed_url,
       });
 
+      const conversationApi = conversation as any;
+      if (typeof conversationApi.sendUserMessage === "function") {
+        await conversationApi.sendUserMessage(
+          `Réponds uniquement en français québécois naturel. Commence maintenant par cette salutation exacte : \"${initialGreeting}\" Ensuite, attends la réponse de l'utilisateur.`
+        );
+        console.log("[ElevenLabs] ✅ French-first greeting sent");
+      } else {
+        console.warn("[ElevenLabs] French-first greeting unavailable — sendUserMessage is not supported");
+      }
     } catch (err: unknown) {
       console.error("[ElevenLabs] Failed to start:", err);
       setIsConnecting(false);
