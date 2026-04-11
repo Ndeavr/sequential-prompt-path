@@ -66,24 +66,20 @@ Deno.serve(async (req) => {
     const keywordList = (keywords || []) as string[];
     const langList = (languages || ["fr"]) as string[];
 
-    for (const city of cityList) {
-      // Base query
-      queries.push(`${target_category} ${city}`);
-      queries.push(`entrepreneur ${target_category} ${city}`);
+    for (const city of effectiveCities) {
+      queries.push(`${effectiveCategory} ${city}`);
+      queries.push(`entrepreneur ${effectiveCategory} ${city}`);
       
-      // With keywords
-      for (const kw of keywordList) {
+      for (const kw of effectiveKeywords) {
         queries.push(`${kw} ${city}`);
       }
 
-      // English variants if applicable
-      if (langList.includes("en")) {
-        queries.push(`${target_category} contractor ${city}`);
+      if (effectiveLangs.includes("en")) {
+        queries.push(`${effectiveCategory} contractor ${city}`);
       }
 
-      // Long tail
-      queries.push(`meilleur ${target_category} ${city}`);
-      queries.push(`${target_category} résidentiel ${city}`);
+      queries.push(`meilleur ${effectiveCategory} ${city}`);
+      queries.push(`${effectiveCategory} résidentiel ${city}`);
     }
 
     // 3. Insert queries
