@@ -59,7 +59,7 @@ export default function PageAlexVoiceDebugAdmin() {
       if (healthData) setHealth(healthData);
 
       // Recent errors
-      const { data: errorData } = await supabase
+      const { data: errorData } = await (supabase as any)
         .from("voice_reliability_errors")
         .select("*")
         .order("created_at", { ascending: false })
@@ -67,7 +67,7 @@ export default function PageAlexVoiceDebugAdmin() {
       if (errorData) setErrors(errorData as VoiceError[]);
 
       // Recent sessions
-      const { data: sessionData } = await supabase
+      const { data: sessionData } = await (supabase as any)
         .from("voice_reliability_sessions")
         .select("*")
         .order("created_at", { ascending: false })
