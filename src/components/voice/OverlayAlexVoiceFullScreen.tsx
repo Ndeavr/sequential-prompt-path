@@ -523,10 +523,19 @@ export default function OverlayAlexVoiceFullScreen() {
 
           {/* Controls */}
           <div className="px-4 pb-6 pt-3 flex items-center justify-center gap-3 border-t border-border/20">
-            {isError ? (
+            {isRecoveringNow ? (
+              <div className="flex gap-3">
+                <Button disabled className="rounded-full gap-2 px-6" variant="default">
+                  <Zap className="w-4 h-4 animate-pulse" /> {recovery.phaseLabel || 'Réinitialisation…'}
+                </Button>
+                <Button onClick={handleFallbackChat} variant="outline" className="rounded-full gap-2 px-4">
+                  <MessageSquare className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : isError ? (
               <>
                 <Button onClick={handleRetry} className="rounded-full gap-2 px-6" variant="default">
-                  <RefreshCw className="w-4 h-4" /> Réessayer
+                  <Zap className="w-4 h-4" /> Réinitialiser Alex
                 </Button>
                 <Button onClick={handleFallbackChat} variant="outline" className="rounded-full gap-2 px-6">
                   <MessageSquare className="w-4 h-4" /> Passer au chat
