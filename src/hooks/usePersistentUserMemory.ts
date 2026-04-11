@@ -29,7 +29,7 @@ export function usePersistentUserMemory() {
     queryKey: ['user-memory-facts', userId],
     queryFn: async () => {
       if (!userId) return [];
-      const { data, error } = await supabase
+      const { data, error } = await db()
         .from('user_memory_facts' as any)
         .select('*')
         .eq('user_id', userId)
@@ -48,7 +48,7 @@ export function usePersistentUserMemory() {
     queryKey: ['user-memory-entities', userId],
     queryFn: async () => {
       if (!userId) return [];
-      const { data, error } = await supabase
+      const { data, error } = await db()
         .from('user_memory_entities' as any)
         .select('*')
         .eq('user_id', userId)
@@ -70,7 +70,7 @@ export function usePersistentUserMemory() {
       // Create entity if specified
       let entityId: string | null = null;
       if (fact.entityType) {
-        const { data: existingEntity } = await supabase
+        const { data: existingEntity } = await db()
           .from('user_memory_entities' as any)
           .select('id')
           .eq('user_id', userId)
@@ -82,7 +82,7 @@ export function usePersistentUserMemory() {
         if (existingEntity) {
           entityId = (existingEntity as any).id;
         } else {
-          const { data: newEntity } = await supabase
+          const { data: newEntity } = await db()
             .from('user_memory_entities' as any)
             .insert({
               user_id: userId,
@@ -100,7 +100,7 @@ export function usePersistentUserMemory() {
       }
 
       // Check for existing fact with same key
-      const existingQuery = supabase
+      const existingQuery = db()
         .from('user_memory_facts' as any)
         .select('id, fact_value_json, confidence_score')
         .eq('fact_key', fact.factKey);
@@ -116,7 +116,7 @@ export function usePersistentUserMemory() {
       if (existing) {
         // Update if new confidence is higher
         if (fact.confidence >= ((existing as any).confidence_score ?? 0)) {
-          await supabase
+          await db()
             .from('user_memory_facts' as any)
             .update({
               fact_value_json: fact.factValue,
@@ -133,7 +133,7 @@ export function usePersistentUserMemory() {
 
       // Create source record
       let sourceId: string | null = null;
-      const { data: source } = await supabase
+      const { data: source } = await db()
         .from('user_memory_sources' as any)
         .insert({
           user_id: userId,
@@ -145,7 +145,7 @@ export function usePersistentUserMemory() {
       if (source) sourceId = (source as any).id;
 
       // Insert new fact
-      const { data: newFact } = await supabase
+      const { data: newFact } = await db()
         .from('user_memory_facts' as any)
         .insert({
           user_id: userId,
@@ -181,7 +181,7 @@ export function usePersistentUserMemory() {
       reason,
     }: { factId: string; correctedValue: Record<string, unknown>; reason?: string }) => {
       // Get current value
-      const { data: current } = await supabase
+      const { data: current } = await db()
         .from('user_memory_facts' as any)
         .select('fact_value_json')
         .eq('id', factId)
@@ -189,7 +189,7 @@ export function usePersistentUserMemory() {
 
       // Log correction
       if (userId) {
-        await supabase.from('user_memory_corrections' as any).insert({
+        await db().from('user_memory_corrections' as any).insert({
           user_id: userId,
           fact_id: factId,
           previous_value_json: (current as any)?.fact_value_json,
@@ -199,7 +199,7 @@ export function usePersistentUserMemory() {
       }
 
       // Update fact
-      await supabase
+      await db()
         .from('user_memory_facts' as any)
         .update({
           fact_value_json: correctedValue,
@@ -218,7 +218,7 @@ export function usePersistentUserMemory() {
   // Archive/dismiss a fact
   const dismissFact = useMutation({
     mutationFn: async (factId: string) => {
-      await supabase
+      await db()
         .from('user_memory_facts' as any)
         .update({ status: 'archived' } as any)
         .eq('id', factId);
@@ -231,7 +231,7 @@ export function usePersistentUserMemory() {
   // Promote fact to profile
   const promoteFact = useMutation({
     mutationFn: async (factId: string) => {
-      await supabase
+      await db()
         .from('user_memory_facts' as any)
         .update({
           is_persistent: true,
@@ -252,21 +252,21 @@ export function usePersistentUserMemory() {
     if (!sid) return;
 
     // Update facts
-    await supabase
+    await db()
       .from('user_memory_facts' as any)
       .update({ user_id: targetUserId, session_memory_id: null } as any)
       .eq('session_memory_id', sid)
       .is('user_id', null);
 
     // Update entities
-    await supabase
+    await db()
       .from('user_memory_entities' as any)
       .update({ user_id: targetUserId, session_memory_id: null } as any)
       .eq('session_memory_id', sid)
       .is('user_id', null);
 
     // Update session record
-    await supabase
+    await db()
       .from('user_memory_sessions' as any)
       .update({ migrated_to_user_id: targetUserId } as any)
       .eq('session_memory_id', sid);
@@ -283,7 +283,7 @@ export function usePersistentUserMemory() {
     timeSavedSeconds: number
   ) => {
     if (!userId) return;
-    await supabase.from('user_memory_reuse_logs' as any).insert({
+    await db().from('user_memory_reuse_logs' as any).insert({
       user_id: userId,
       fact_id: factId,
       reuse_context: context,
