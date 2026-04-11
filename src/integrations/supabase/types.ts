@@ -103,6 +103,72 @@ export type Database = {
           },
         ]
       }
+      activities_primary: {
+        Row: {
+          aeo_keywords_json: Json
+          avg_job_value: number
+          category: string
+          created_at: string
+          id: string
+          name: string
+          seasonality: string
+          status: string
+          urgency_level: number
+        }
+        Insert: {
+          aeo_keywords_json?: Json
+          avg_job_value?: number
+          category?: string
+          created_at?: string
+          id?: string
+          name: string
+          seasonality?: string
+          status?: string
+          urgency_level?: number
+        }
+        Update: {
+          aeo_keywords_json?: Json
+          avg_job_value?: number
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          seasonality?: string
+          status?: string
+          urgency_level?: number
+        }
+        Relationships: []
+      }
+      activities_secondary: {
+        Row: {
+          aeo_keywords_json: Json
+          created_at: string
+          cross_sell_score: number
+          id: string
+          linked_primary_names_json: Json
+          name: string
+          status: string
+        }
+        Insert: {
+          aeo_keywords_json?: Json
+          created_at?: string
+          cross_sell_score?: number
+          id?: string
+          linked_primary_names_json?: Json
+          name: string
+          status?: string
+        }
+        Update: {
+          aeo_keywords_json?: Json
+          created_at?: string
+          cross_sell_score?: number
+          id?: string
+          linked_primary_names_json?: Json
+          name?: string
+          status?: string
+        }
+        Relationships: []
+      }
       ad_campaigns: {
         Row: {
           ad_copy: Json | null
@@ -9468,6 +9534,45 @@ export type Database = {
         }
         Relationships: []
       }
+      cities_quebec_clusters: {
+        Row: {
+          cities_json: Json
+          cluster_name: string
+          created_at: string
+          density_score: number
+          gdp_estimate_millions: number | null
+          id: string
+          population_total: number
+          renovation_potential_score: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cities_json?: Json
+          cluster_name: string
+          created_at?: string
+          density_score?: number
+          gdp_estimate_millions?: number | null
+          id?: string
+          population_total?: number
+          renovation_potential_score?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cities_json?: Json
+          cluster_name?: string
+          created_at?: string
+          density_score?: number
+          gdp_estimate_millions?: number | null
+          id?: string
+          population_total?: number
+          renovation_potential_score?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       city_service_demand_grid: {
         Row: {
           city_slug: string
@@ -14030,6 +14135,76 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_generation_targets: {
+        Row: {
+          city_cluster_id: string
+          created_at: string
+          enriched_count: number
+          estimated_contractors: number
+          generated_count: number
+          id: string
+          last_scraped_at: string | null
+          primary_activity_id: string
+          priority_score: number
+          scraped_count: number
+          secondary_activity_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          city_cluster_id: string
+          created_at?: string
+          enriched_count?: number
+          estimated_contractors?: number
+          generated_count?: number
+          id?: string
+          last_scraped_at?: string | null
+          primary_activity_id: string
+          priority_score?: number
+          scraped_count?: number
+          secondary_activity_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          city_cluster_id?: string
+          created_at?: string
+          enriched_count?: number
+          estimated_contractors?: number
+          generated_count?: number
+          id?: string
+          last_scraped_at?: string | null
+          primary_activity_id?: string
+          priority_score?: number
+          scraped_count?: number
+          secondary_activity_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_generation_targets_city_cluster_id_fkey"
+            columns: ["city_cluster_id"]
+            isOneToOne: false
+            referencedRelation: "cities_quebec_clusters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_generation_targets_primary_activity_id_fkey"
+            columns: ["primary_activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities_primary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_generation_targets_secondary_activity_id_fkey"
+            columns: ["secondary_activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities_secondary"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -38285,6 +38460,47 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scraping_generation_jobs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          job_status: string
+          last_run_at: string | null
+          results_count: number
+          source: string
+          target_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_status?: string
+          last_run_at?: string | null
+          results_count?: number
+          source?: string
+          target_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_status?: string
+          last_run_at?: string | null
+          results_count?: number
+          source?: string
+          target_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scraping_generation_jobs_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_generation_targets"
             referencedColumns: ["id"]
           },
         ]
