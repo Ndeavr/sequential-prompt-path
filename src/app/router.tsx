@@ -434,6 +434,7 @@ export const AppRouter = () => (
         <Route path="/go" element={<PageAdLandingAipp />} />
         <Route path="/aipp-check" element={<PageAdLandingAipp />} />
         <Route path="/business-import" element={<PageBusinessImport />} />
+        <Route path="/business-card-import" element={<PageBusinessCardImport />} />
         <Route path="/profile-completion" element={<PageBusinessImport />} />
         <Route path="/search" element={<Search />} />
         <Route path="/contractors/:id" element={<ContractorProfile />} />
