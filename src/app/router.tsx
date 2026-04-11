@@ -56,6 +56,7 @@ const OwnerMenuPreviewPage = lazy(() => import("@/pages/OwnerMenuPreviewPage"));
 const MenuIntelligenceAdminPage = lazy(() => import("@/pages/admin/MenuIntelligenceAdminPage"));
 const PageAdminEmailLogs = lazy(() => import("@/pages/admin/PageAdminEmailLogs"));
 const AdminProspectionEngine = lazy(() => import("@/pages/admin/AdminProspectionEngine"));
+const PageProspectionDashboard = lazy(() => import("@/pages/admin/PageProspectionDashboard"));
 const AdminProspectionProspects = lazy(() => import("@/pages/admin/AdminProspectionProspects"));
 const AdminProspectionAnalytics = lazy(() => import("@/pages/admin/AdminProspectionAnalytics"));
 const PageAlexPersonalizedLanding = lazy(() => import("@/pages/public/PageAlexPersonalizedLanding"));
@@ -847,6 +848,7 @@ export const AppRouter = () => (
         <Route path="/alex/predictive-seller" element={<PageAlexPredictiveSeller />} />
         <Route path="/signature" element={<PageAlexGuidedOnboarding />} />
         <Route path="/admin/prospection" element={<ProtectedRoute requiredRole="admin"><AdminProspectionEngine /></ProtectedRoute>} />
+        <Route path="/admin/prospection-engine" element={<ProtectedRoute requiredRole="admin"><PageProspectionDashboard /></ProtectedRoute>} />
         <Route path="/admin/prospection/prospects" element={<ProtectedRoute requiredRole="admin"><AdminProspectionProspects /></ProtectedRoute>} />
         <Route path="/admin/prospection/analytics" element={<ProtectedRoute requiredRole="admin"><AdminProspectionAnalytics /></ProtectedRoute>} />
         <Route path="/alex-landing" element={<PageAlexPersonalizedLanding />} />
