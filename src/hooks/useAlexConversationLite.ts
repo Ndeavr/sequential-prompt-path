@@ -14,6 +14,7 @@ import { useState, useCallback, useRef } from "react";
 import type { ConversationMessage, InlineCardType } from "@/components/alex-conversation/types";
 import {
   MOCK_CONTRACTORS,
+  MOCK_SLOTS,
   MOCK_BUSINESS_ANALYSIS,
   MOCK_QUOTE_ANALYSIS,
   MOCK_PHOTO_DESIGN,
