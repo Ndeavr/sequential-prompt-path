@@ -1,14 +1,23 @@
 /**
- * useAlexConversationLite — V4: Strict Conversation Guards
+ * useAlexConversationLite — V5: Brain-Driven Orchestration
  * 
- * GUARDS ENFORCED:
- * - Single welcome per session (welcomeSentRef)
- * - No city/address questions before problem assessment
- * - No internal/technical text in user-facing messages (contentSanitizer)
- * - Strict phase sequencing via state machine
- * - No duplicate messages (dedup check)
- * - Login only after problem assessment
- * - Address only when operationally needed
+ * INTEGRATES:
+ * - AlexIntentClassifier: deterministic intent detection
+ * - AlexMemoryEngine: session memory (never re-ask, never forget)
+ * - AlexRouteEngine: strict routing with preconditions
+ * - AlexNeedResolver: next best action computation
+ * - AlexResponsePolicyEngine: response quality enforcement
+ * - AlexSessionRepairEngine: inconsistency detection + repair
+ * 
+ * GUARDS:
+ * - Single welcome per session
+ * - No city/address before problem assessment
+ * - No contractor recommendation without qualified need + service
+ * - "Choisir un plan" → entrepreneur flow, NEVER homeowner search
+ * - "Montréal" alone → store city, continue qualification
+ * - No internal/technical text leaks
+ * - No filler messages
+ * - No false booking states
  */
 import { useState, useCallback, useRef } from "react";
 import type { ConversationMessage, InlineCardType } from "@/components/alex-conversation/types";
@@ -21,85 +30,52 @@ import {
   MOCK_PHOTO_PROBLEM,
 } from "@/components/alex-conversation/types";
 import { audioEngine } from "@/services/audioEngineUNPRO";
-import {
-  type ConversationFlowState,
-  type ConversationPhase,
-  createInitialFlowState,
-  detectProblemFromText,
-  isProblemAssessmentComplete,
-  resolveNextPhase,
-} from "@/services/alexConversationOrderEngine";
+import { classifyIntent, isEntrepreneurIntent, type AlexIntent } from "@/services/alexIntentClassifier";
+import { AlexMemoryStore, createEmptyMemory } from "@/services/alexMemoryEngine";
+import { resolveRoute, type AlexRoute } from "@/services/alexRouteEngine";
+import { computeNextBestAction, inferServiceFromProblem } from "@/services/alexNeedResolver";
+import { enforcePolicy } from "@/services/alexResponsePolicyEngine";
+import { diagnoseSession, applyRepairs } from "@/services/alexSessionRepairEngine";
 
 // ─── INTERNAL LEAK DETECTOR ───
-// Any message containing these patterns MUST be suppressed from the user chat.
 const INTERNAL_LEAK_PATTERNS = [
   /build\s+(conversation|new|inline|state|cards|hook|page|module|component)/i,
   /update\s+(conversation|hook|page|component|state)/i,
-  /exploring\s+module/i,
   /task\s*(tracking|list|status|created|done|in_progress)/i,
-  /checklist\s+technique/i,
   /migration\s+(tool|sql|database)/i,
   /supabase\s+(table|migration|schema)/i,
-  /lovable\s+(tagger|build|deploy)/i,
-  /\btodo\b.*\btask\b/i,
-  /creating\s+file/i,
-  /writing\s+(code|file|component)/i,
-  /implementing\s+(the|a|an)\s/i,
-  /^(Task|Step)\s+\d+/,
   /RLS\s+polic/i,
   /edge\s+function/i,
+  /creating\s+file/i,
+  /implementing\s+(the|a|an)\s/i,
 ];
 
 function isInternalContent(text: string): boolean {
   return INTERNAL_LEAK_PATTERNS.some(p => p.test(text));
 }
 
-// ─── DUPLICATE DETECTOR ───
 function isDuplicateMessage(messages: ConversationMessage[], content: string, role: string): boolean {
   if (messages.length === 0) return false;
   const last = messages[messages.length - 1];
   return last.role === role && last.content === content;
 }
 
-// ─── ANALYSIS KEYWORDS ───
-interface IntentMatch {
-  intent: InlineCardType;
-  response: string;
-  data?: any;
-}
+// ─── ANALYSIS KEYWORDS (bypass for specific inline cards) ───
+interface IntentMatch { intent: InlineCardType; response: string; data?: any; }
 
 const ANALYSIS_KEYWORDS: Record<string, IntentMatch> = {
   "analyser mon entreprise": { intent: "business_analysis", response: "J'analyse votre entreprise. Voici les résultats.", data: MOCK_BUSINESS_ANALYSIS },
   "score entreprise": { intent: "business_analysis", response: "Voici l'analyse complète de votre positionnement.", data: MOCK_BUSINESS_ANALYSIS },
-  "visibilité": { intent: "business_analysis", response: "Je vérifie votre visibilité en ligne.", data: MOCK_BUSINESS_ANALYSIS },
   "aipp": { intent: "aipp_score", response: "Voici votre score AIPP.", data: { entityName: MOCK_BUSINESS_ANALYSIS.entityName, score: MOCK_BUSINESS_ANALYSIS.aippScore, tier: "gold" } },
   "analyser soumission": { intent: "quote_analysis", response: "J'ai analysé votre soumission. Voici le verdict.", data: MOCK_QUOTE_ANALYSIS },
   "comparer soumission": { intent: "quote_analysis", response: "Analyse de soumission terminée.", data: MOCK_QUOTE_ANALYSIS },
-};
-
-// ─── ORCHESTRATOR KEYWORDS (V1) ───
-const ORCHESTRATOR_KEYWORDS: Record<string, IntentMatch> = {
-  "compléter mon profil": { intent: "inline_form", response: "Je peux compléter votre profil ici. Vérifiez simplement ces informations.", data: { formKey: "profile", title: "Compléter votre profil", fields: [{ key: "firstName", label: "Prénom", type: "text", placeholder: "Votre prénom", required: true }, { key: "phone", label: "Téléphone", type: "phone", placeholder: "(514) 000-0000" }, { key: "email", label: "Courriel", type: "email", placeholder: "vous@example.com" }], submitLabel: "Enregistrer" } },
-  "trouver un pro": { intent: "contractor_picker", response: "Voici les meilleurs professionnels pour votre projet.", data: { contractors: MOCK_CONTRACTORS, reason: "Sélectionnés selon votre besoin et votre secteur." } },
-  "chercher un professionnel": { intent: "contractor_picker", response: "J'ai trouvé ces professionnels qualifiés pour vous.", data: { contractors: MOCK_CONTRACTORS, reason: "Basé sur votre demande et la disponibilité." } },
-  "réserver un rendez-vous": { intent: "booking_scheduler", response: "Voici les disponibilités. Choisissez le créneau qui vous convient.", data: { contractorId: "c1", contractorName: MOCK_CONTRACTORS[0].name, slots: MOCK_SLOTS, appointmentType: "évaluation" } },
-  "planifier": { intent: "booking_scheduler", response: "Je peux planifier un rendez-vous. Voici les créneaux disponibles.", data: { contractorId: "c1", contractorName: MOCK_CONTRACTORS[0].name, slots: MOCK_SLOTS } },
-  "activer mon plan": { intent: "checkout_embedded", response: "Je peux finaliser votre activation ici.", data: { planCode: "pro", planName: "Pro", price: 349, interval: "monthly" } },
-  "paiement": { intent: "checkout_embedded", response: "Voici le résumé de votre plan. Procédez au paiement.", data: { planCode: "pro", planName: "Pro", price: 349, interval: "monthly" } },
   "avant après": { intent: "before_after", response: "Je génère un avant/après de votre espace.", data: { beforeUrl: "/placeholder.svg", generating: true, roomType: "Cuisine" } },
   "transformation": { intent: "before_after", response: "Voici une transformation possible.", data: { beforeUrl: "/placeholder.svg", afterUrl: "/placeholder.svg", roomType: "Salon", style: "Moderne minimaliste" } },
   "inspirations": { intent: "image_gallery", response: "Voici quelques inspirations pour votre projet.", data: { title: "Inspirations", images: [{ url: "/placeholder.svg", label: "Moderne" }, { url: "/placeholder.svg", label: "Scandinave" }, { url: "/placeholder.svg", label: "Industriel" }] } },
-  "confirmer adresse": { intent: "address_confirmation", response: "C'est bien pour cette adresse ?", data: { address: "1234 rue Principale", city: "Laval", postalCode: "H7N 1A1", propertyType: "Condo" } },
-  "mon adresse": { intent: "address_confirmation", response: "Je retrouve votre adresse. Confirmez-la.", data: { address: "1234 rue Principale", city: "Laval", postalCode: "H7N 1A1" } },
 };
 
 function detectAnalysisIntent(text: string): IntentMatch | null {
   const lower = text.toLowerCase();
-  // Check orchestrator keywords first (higher specificity)
-  const orchSorted = Object.entries(ORCHESTRATOR_KEYWORDS).sort((a, b) => b[0].length - a[0].length);
-  for (const [keyword, result] of orchSorted) {
-    if (lower.includes(keyword)) return result;
-  }
   const sorted = Object.entries(ANALYSIS_KEYWORDS).sort((a, b) => b[0].length - a[0].length);
   for (const [keyword, result] of sorted) {
     if (lower.includes(keyword)) return result;
@@ -107,52 +83,78 @@ function detectAnalysisIntent(text: string): IntentMatch | null {
   return null;
 }
 
-// ─── ASSESSMENT FOLLOW-UP QUESTIONS ───
-// These are the ONLY questions Alex can ask during problem assessment.
-// NEVER includes city, address, postal code, or location.
-const ASSESSMENT_QUESTIONS = [
-  "Est-ce un problème urgent ou un projet planifié ?",
-  "De quel type de travaux s'agit-il exactement ?",
-  "Depuis quand observez-vous ce problème ?",
-  "Avez-vous une photo à me montrer ?",
-  "Pouvez-vous me donner plus de détails ?",
+// ─── CITIES (for location detection) ───
+const CITIES = [
+  "montréal", "montreal", "laval", "québec", "quebec", "gatineau",
+  "sherbrooke", "longueuil", "lévis", "levis", "trois-rivières",
+  "drummondville", "saint-jean", "rimouski", "saguenay", "terrebonne",
+  "repentigny", "brossard", "saint-jérôme", "granby",
 ];
+
+function detectCity(text: string): string | null {
+  const lower = text.toLowerCase();
+  return CITIES.find(c => lower.includes(c)) || null;
+}
+
+// ─── PROBLEM DETECTION ───
+const PROBLEM_KEYWORDS: Record<string, { type: string; service: string; urgency: "low" | "medium" | "high" | "emergency" }> = {
+  "fuite": { type: "infiltration", service: "Plombier", urgency: "high" },
+  "barrage de glace": { type: "barrage_glace", service: "Couvreur / Isolation", urgency: "high" },
+  "glace sur le toit": { type: "barrage_glace", service: "Couvreur / Isolation", urgency: "high" },
+  "humidité": { type: "humidite", service: "Inspection / Décontamination", urgency: "medium" },
+  "moisissure": { type: "moisissure", service: "Décontamination", urgency: "high" },
+  "toiture": { type: "toiture", service: "Couvreur", urgency: "medium" },
+  "toit": { type: "toiture", service: "Couvreur", urgency: "medium" },
+  "plomberie": { type: "plomberie", service: "Plombier", urgency: "medium" },
+  "chauffage": { type: "chauffage", service: "Chauffagiste", urgency: "medium" },
+  "fenêtre": { type: "fenetres", service: "Portes et fenêtres", urgency: "low" },
+  "isolation": { type: "isolation", service: "Isolation", urgency: "medium" },
+  "cuisine": { type: "renovation", service: "Rénovation cuisine", urgency: "low" },
+  "salle de bain": { type: "renovation", service: "Rénovation salle de bain", urgency: "low" },
+  "peinture": { type: "peinture", service: "Peintre", urgency: "low" },
+  "fondation": { type: "fondation", service: "Fondation", urgency: "high" },
+  "drain": { type: "plomberie", service: "Plombier", urgency: "medium" },
+  "urgent": { type: "urgence", service: "", urgency: "emergency" },
+  "électricité": { type: "electricite", service: "Électricien", urgency: "medium" },
+};
+
+function detectProblem(text: string): { type: string; service: string; urgency: "low" | "medium" | "high" | "emergency" } | null {
+  const lower = text.toLowerCase();
+  // Longer keywords first
+  const sorted = Object.entries(PROBLEM_KEYWORDS).sort((a, b) => b[0].length - a[0].length);
+  for (const [kw, data] of sorted) {
+    if (lower.includes(kw)) return data;
+  }
+  return null;
+}
 
 export function useAlexConversationLite(userName?: string, isAuthenticated = false, hasAddress = false) {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [isThinking, setIsThinking] = useState(false);
   const idRef = useRef(0);
-  const welcomeSentRef = useRef(false); // GUARD: single welcome
-  const [flowState, setFlowState] = useState<ConversationFlowState>(() =>
-    createInitialFlowState({
-      isAuthenticated,
-      firstName: userName || null,
-      hasAddress,
-      profileComplete: isAuthenticated && !!userName,
-      missingFields: isAuthenticated ? (userName ? [] : ["first_name"]) : ["first_name", "phone"],
-    })
-  );
+  const welcomeSentRef = useRef(false);
+  const memoryRef = useRef(new AlexMemoryStore({
+    resolved_role: isAuthenticated ? "homeowner" : "unknown",
+    role_confidence: isAuthenticated ? 0.6 : 0,
+    role_source: isAuthenticated ? "auth" : "default",
+    address_known: hasAddress,
+  }));
 
   // ─── SAFE MESSAGE EMITTER ───
-  // Every message to the user goes through this. Internal content is blocked.
   const emitSafe = useCallback((
     role: ConversationMessage["role"],
     content: string,
     cardType?: InlineCardType,
     cardData?: any,
   ) => {
-    // GUARD: block internal content
-    if (role === "alex" && isInternalContent(content)) {
-      console.warn("[AlexGuard] Blocked internal leak:", content.substring(0, 60));
-      return null;
-    }
-    // GUARD: block empty messages
+    if (role === "alex" && isInternalContent(content)) return null;
     if (role === "alex" && !content.trim() && !cardType) return null;
 
-    // GUARD: block duplicates
-    if (isDuplicateMessage(messages, content, role)) {
-      console.warn("[AlexGuard] Blocked duplicate:", content.substring(0, 40));
-      return null;
+    // Apply response policy
+    if (role === "alex") {
+      const mem = memoryRef.current.get();
+      content = enforcePolicy(content, mem);
+      if (!content && !cardType) return null;
     }
 
     const msg: ConversationMessage = {
@@ -164,7 +166,6 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
       timestamp: Date.now(),
     };
     setMessages(prev => {
-      // Double-check dedup against latest state
       if (prev.length > 0) {
         const last = prev[prev.length - 1];
         if (last.role === role && last.content === content) return prev;
@@ -172,49 +173,17 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
       return [...prev, msg];
     });
     return msg;
-  }, [messages]);
-
-  // ─── INITIALIZE (welcome guard) ───
-  const initialize = useCallback(() => {
-    // GUARD: never send welcome twice
-    if (welcomeSentRef.current) return;
-    welcomeSentRef.current = true;
-
-    const greeting = userName
-      ? `Bonjour ${userName}. Décrivez-moi votre besoin, je m'en occupe.`
-      : "Bonjour. Je suis Alex, votre assistante UNPRO. Décrivez-moi votre besoin, je m'en occupe.";
-    emitSafe("alex", greeting);
-    setFlowState(prev => ({
-      ...prev,
-      problem: { ...prev.problem, questionsAsked: 1 },
-    }));
-  }, [userName, emitSafe]);
-
-  // ─── FLOW ADVANCER ───
-  const advanceFlow = useCallback((state: ConversationFlowState): ConversationFlowState => {
-    const nextPhase = resolveNextPhase(state);
-    if (nextPhase === "check_auth" && state.userContext.isAuthenticated) {
-      return advanceFlow({ ...state, phase: "complete_profile" });
-    }
-    if (nextPhase === "complete_profile" && state.userContext.profileComplete) {
-      return advanceFlow({ ...state, phase: "request_address" });
-    }
-    if (nextPhase === "request_address" && state.userContext.hasAddress) {
-      return advanceFlow({ ...state, phase: "run_match" });
-    }
-    return { ...state, phase: nextPhase };
   }, []);
 
-  // ─── EXECUTE MATCH ───
-  const executeMatch = useCallback((state: ConversationFlowState) => {
-    emitSafe("alex", "Je m'en occupe. Je cherche le meilleur professionnel.");
-    setTimeout(() => {
-      const contractor = MOCK_CONTRACTORS[0];
-      audioEngine.play("success");
-      emitSafe("alex", "J'ai trouvé la meilleure option.", "entrepreneur", contractor);
-    }, 1200);
-    return { ...state, matchAttempted: true, matchFound: true };
-  }, [emitSafe]);
+  // ─── INITIALIZE ───
+  const initialize = useCallback(() => {
+    if (welcomeSentRef.current) return;
+    welcomeSentRef.current = true;
+    const greeting = userName
+      ? `Bonjour ${userName}. Comment puis-je vous aider ?`
+      : "Bonjour! Comment puis-je vous aider aujourd'hui?";
+    emitSafe("alex", greeting);
+  }, [userName, emitSafe]);
 
   // ─── SEND MESSAGE ───
   const sendMessage = useCallback(async (text: string) => {
@@ -222,9 +191,18 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
     setIsThinking(true);
     audioEngine.play("thinking");
 
-    await new Promise(r => setTimeout(r, 600 + Math.random() * 500));
+    await new Promise(r => setTimeout(r, 500 + Math.random() * 400));
 
-    // 1. Analysis intents bypass normal flow
+    const mem = memoryRef.current;
+
+    // 1. Detect city from message (always, store silently)
+    const city = detectCity(text);
+    if (city) {
+      mem.set("city", city);
+      mem.set("address_known", true);
+    }
+
+    // 2. Analysis intents bypass (specific card renderers)
     const analysisIntent = detectAnalysisIntent(text);
     if (analysisIntent) {
       audioEngine.play("success");
@@ -233,142 +211,309 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
       return;
     }
 
-    // 2. State machine routing
-    let newState = { ...flowState };
-    const currentPhase = resolveNextPhase(newState);
+    // 3. Classify intent with brain
+    const classification = classifyIntent(text, mem.get().resolved_role);
+    mem.set("current_intent", classification.primary_intent);
+    mem.set("intent_confidence", classification.confidence_score);
 
-    switch (currentPhase) {
-      case "assess_problem": {
-        const detected = detectProblemFromText(text);
-        if (detected) {
-          newState.problem = { ...newState.problem, ...detected, questionsAsked: newState.problem.questionsAsked + 1 };
-        } else {
-          newState.problem.questionsAsked += 1;
-        }
-
-        if (isProblemAssessmentComplete(newState.problem)) {
-          newState.problem.assessmentComplete = true;
-          audioEngine.play("success");
-          emitSafe("alex", "Compris, je note votre besoin.", "problem_summary", {
-            problemType: newState.problem.problemType || "autre",
-            projectType: newState.problem.projectType,
-            urgency: newState.problem.urgencyLevel,
-            summary: newState.problem.summary,
-          });
-
-          newState = advanceFlow(newState);
-          const next = resolveNextPhase(newState);
-
-          if (next === "check_auth" && !newState.userContext.isAuthenticated) {
-            setTimeout(() => {
-              emitSafe("alex", "Pour continuer et sauvegarder votre dossier, connectez-vous ou créez votre compte gratuit.", "login_prompt");
-            }, 800);
-          } else if (next === "request_address") {
-            setTimeout(() => {
-              emitSafe("alex", "Il me manque votre adresse pour chercher les meilleurs entrepreneurs près de chez vous.", "address_required" as InlineCardType);
-            }, 800);
-          } else if (next === "run_match") {
-            setTimeout(() => {
-              newState = executeMatch(newState);
-              setFlowState(newState);
-            }, 800);
-          }
-        } else {
-          // GUARD: only ask from approved assessment questions list
-          const qIdx = Math.min(newState.problem.questionsAsked - 1, ASSESSMENT_QUESTIONS.length - 1);
-          emitSafe("alex", ASSESSMENT_QUESTIONS[qIdx]);
-        }
-        break;
-      }
-
-      case "check_auth": {
-        emitSafe("alex", "Connectez-vous pour continuer. C'est gratuit et prend 10 secondes.", "login_prompt");
-        break;
-      }
-
-      case "complete_profile": {
-        newState.userContext.profileComplete = true;
-        newState.userContext.missingFields = [];
-        emitSafe("alex", "Merci ! Votre profil est à jour.");
-        newState = advanceFlow(newState);
-        const next = resolveNextPhase(newState);
-        if (next === "request_address") {
-          setTimeout(() => {
-            emitSafe("alex", "Il me manque votre adresse pour chercher les meilleurs entrepreneurs.", "address_required" as InlineCardType);
-          }, 800);
-        }
-        break;
-      }
-
-      case "request_address": {
-        const lower = text.toLowerCase();
-        const cities = ["montréal", "montreal", "laval", "québec", "quebec", "gatineau", "sherbrooke", "longueuil", "lévis", "levis", "trois-rivières", "drummondville", "saint-jean", "rimouski"];
-        const detected = cities.find(c => lower.includes(c));
-        if (detected) {
-          newState.userContext.hasAddress = true;
-          newState.userContext.city = detected;
-          emitSafe("alex", `Parfait, ${detected}. Je cherche le meilleur professionnel dans votre secteur.`);
-          setTimeout(() => {
-            newState = executeMatch(newState);
-            setFlowState(newState);
-          }, 400);
-        } else {
-          emitSafe("alex", "Dans quelle ville se situe votre propriété ?");
-        }
-        break;
-      }
-
-      case "run_match":
-      case "show_result": {
-        const lower = text.toLowerCase();
-        if (lower.includes("réserver") || lower.includes("rendez-vous") || lower.includes("disponibilité")) {
-          emitSafe("alex", "Voici les créneaux disponibles.", "availability");
-        } else if (lower.includes("soumission") || lower.includes("devis")) {
-          emitSafe("alex", "Envoyez-moi votre soumission, je l'analyse immédiatement.", "upload_quote");
-        } else if (lower.includes("photo")) {
-          emitSafe("alex", "Envoyez-moi une photo, j'analyse immédiatement.", "upload_photo");
-        } else {
-          emitSafe("alex", "On bloque un rendez-vous ? Je vous montre les créneaux disponibles.", "availability");
-        }
-        break;
-      }
-
-      case "fallback": {
-        emitSafe("alex", "Je surveille et je vous avertis dès qu'un professionnel est disponible.", "no_match");
-        break;
+    // 4. Detect problem details from text
+    const problem = detectProblem(text);
+    if (problem) {
+      mem.set("problem_type", problem.type);
+      if (problem.service) mem.set("service_category", problem.service);
+      mem.set("urgency", problem.urgency);
+      mem.set("need_summary", text);
+      // Mark need as qualified if we have problem + service
+      if (problem.service) {
+        mem.set("need_qualified", true);
       }
     }
 
-    setFlowState(newState);
+    // Also try to infer service from text if not yet set
+    if (!mem.get().service_category) {
+      const inferred = inferServiceFromProblem(text);
+      if (inferred) mem.set("service_category", inferred);
+    }
+
+    // 5. Role resolution
+    if (isEntrepreneurIntent(classification.primary_intent)) {
+      mem.update({ resolved_role: "entrepreneur", role_confidence: 0.9, role_source: "intent" });
+    } else if (classification.primary_intent.startsWith("homeowner_")) {
+      mem.update({ resolved_role: "homeowner", role_confidence: 0.8, role_source: "intent" });
+    }
+
+    // 6. Session repair check
+    const currentMemory = mem.get();
+    const repair = diagnoseSession(
+      currentMemory,
+      currentMemory.current_route as AlexRoute | null,
+      classification.primary_intent as AlexIntent,
+    );
+    if (!repair.isHealthy) {
+      const repaired = applyRepairs(currentMemory, repair.repairs);
+      mem.update(repaired);
+    }
+
+    // 7. Route decision
+    const route = resolveRoute(classification.primary_intent as AlexIntent, mem.get());
+    mem.set("current_route", route.route);
+
+    // 8. Handle specific intents
+    const intent = classification.primary_intent;
+
+    // ─── GREETING ───
+    if (intent === "greeting") {
+      emitSafe("alex", userName
+        ? `Oui ${userName}, je vous écoute.`
+        : "Oui, je vous écoute."
+      );
+      setIsThinking(false);
+      return;
+    }
+
+    // ─── CONFIRMATION (contextual) ───
+    if (intent === "confirmation") {
+      const lastQ = mem.get().last_question_asked;
+      if (lastQ === "booking_slot") {
+        // Confirm booking
+        mem.set("booking_confirmed", true);
+        audioEngine.play("success");
+        emitSafe("alex", "Rendez-vous confirmé.", "booking_confirmed" as InlineCardType, {
+          confirmed: true,
+          contractorName: mem.get().recommended_contractor_name || "Professionnel",
+          slot: mem.get().proposed_slot,
+        });
+        setIsThinking(false);
+        return;
+      }
+      emitSafe("alex", "Parfait. Que souhaitez-vous faire ?");
+      setIsThinking(false);
+      return;
+    }
+
+    // ─── LOCATION CONTEXT (city alone, NO contractor recommendation) ───
+    if (intent === "location_context") {
+      if (mem.get().need_qualified && mem.get().service_category) {
+        // Need is qualified → proceed to match
+        const contractor = MOCK_CONTRACTORS[0];
+        emitSafe("alex", `Parfait, ${city || "votre secteur"}. Je cherche le meilleur professionnel.`);
+        setTimeout(() => {
+          mem.update({
+            recommended_contractor_id: contractor.id,
+            recommended_contractor_name: contractor.name,
+          });
+          audioEngine.play("success");
+          emitSafe("alex", `Je vous propose ${contractor.name}.`, "entrepreneur", contractor);
+        }, 1000);
+      } else {
+        // Need NOT qualified → store city, ask for need
+        emitSafe("alex", `Merci. Quel type de travaux recherchez-vous ?`);
+        mem.set("last_question_asked", "service_type");
+      }
+      setIsThinking(false);
+      return;
+    }
+
+    // ─── ENTREPRENEUR PLAN FLOW ───
+    if (intent === "contractor_choose_plan" || intent === "contractor_join_platform") {
+      emitSafe("alex", route.message, "checkout_embedded" as InlineCardType, {
+        planCode: "pro",
+        planName: "Pro",
+        price: 349,
+        interval: "monthly",
+        features: ["Profil public complet", "5 à 12 rendez-vous/mois", "Visibilité améliorée", "Badge Pro"],
+      });
+      mem.set("last_question_asked", "plan_selection");
+      setIsThinking(false);
+      return;
+    }
+
+    if (intent === "contractor_visibility_score" || intent === "contractor_revenue_projection") {
+      emitSafe("alex", "Voici votre analyse de visibilité.", "business_analysis", MOCK_BUSINESS_ANALYSIS);
+      setIsThinking(false);
+      return;
+    }
+
+    if (intent === "contractor_payment_checkout") {
+      emitSafe("alex", "Procédons au paiement.", "checkout_embedded" as InlineCardType, {
+        planCode: "pro", planName: "Pro", price: 349, interval: "monthly",
+      });
+      setIsThinking(false);
+      return;
+    }
+
+    // ─── HOMEOWNER PROBLEM DIAGNOSIS ───
+    if (intent === "homeowner_problem_diagnosis") {
+      if (mem.get().need_qualified && mem.get().service_category) {
+        // Need already qualified → advance
+        const svc = mem.get().service_category;
+        emitSafe("alex", `Compris. ${svc}. ${mem.get().address_known ? "Je cherche le meilleur professionnel." : "Dans quelle ville se situe votre propriété ?"}`,
+          mem.get().need_qualified ? "problem_summary" : undefined,
+          mem.get().need_qualified ? { problemType: mem.get().problem_type, urgency: mem.get().urgency, summary: text } : undefined,
+        );
+        if (mem.get().address_known) {
+          setTimeout(() => {
+            const contractor = MOCK_CONTRACTORS[0];
+            mem.update({ recommended_contractor_id: contractor.id, recommended_contractor_name: contractor.name });
+            audioEngine.play("success");
+            emitSafe("alex", `Je vous propose ${contractor.name}.`, "entrepreneur", contractor);
+          }, 1200);
+        } else {
+          mem.set("last_question_asked", "city");
+        }
+      } else {
+        // Show diagnosis response
+        if (problem) {
+          audioEngine.play("success");
+          emitSafe("alex", `Ah je vois. ${problem.type === "barrage_glace" ? "Barrage de glace + perte de chaleur. Probable manque d'isolation dans l'entretoit." : `Problème de ${problem.type} détecté.`}`,
+            "problem_summary",
+            { problemType: problem.type, urgency: problem.urgency, summary: text, confidence: 0.92 },
+          );
+          // If we have service + location → auto-advance
+          if (mem.get().service_category && mem.get().address_known) {
+            setTimeout(() => {
+              const contractor = MOCK_CONTRACTORS[0];
+              mem.update({ recommended_contractor_id: contractor.id, recommended_contractor_name: contractor.name });
+              audioEngine.play("success");
+              emitSafe("alex", `Je vous propose ${contractor.name}.`, "entrepreneur", contractor);
+            }, 1500);
+          } else if (!mem.get().address_known) {
+            mem.set("last_question_asked", "city");
+          }
+        } else {
+          emitSafe("alex", "Pourriez-vous me donner plus de détails sur votre problème ?");
+          mem.set("last_question_asked", "problem_details");
+        }
+      }
+      setIsThinking(false);
+      return;
+    }
+
+    // ─── PHOTO UPLOAD REQUEST ───
+    if (intent === "homeowner_upload_photo_analysis") {
+      emitSafe("alex", "Pourriez-vous téléverser une photo pour que je l'analyse?");
+      setIsThinking(false);
+      return;
+    }
+
+    // ─── FIND CONTRACTOR ───
+    if (intent === "homeowner_find_contractor") {
+      if (!mem.get().need_qualified || !mem.get().service_category) {
+        emitSafe("alex", route.message);
+        mem.set("last_question_asked", "service_type");
+      } else if (!mem.get().address_known) {
+        emitSafe("alex", "Dans quelle ville se situe votre propriété ?");
+        mem.set("last_question_asked", "city");
+      } else {
+        const contractor = MOCK_CONTRACTORS[0];
+        mem.update({ recommended_contractor_id: contractor.id, recommended_contractor_name: contractor.name });
+        audioEngine.play("success");
+        emitSafe("alex", `Je vous propose ${contractor.name}.`, "entrepreneur", contractor);
+      }
+      setIsThinking(false);
+      return;
+    }
+
+    // ─── BOOK APPOINTMENT ───
+    if (intent === "homeowner_book_appointment") {
+      if (!mem.get().recommended_contractor_id) {
+        emitSafe("alex", "D'abord, trouvons le bon professionnel. Quel type de travaux recherchez-vous ?");
+        mem.set("last_question_asked", "service_type");
+      } else {
+        emitSafe("alex", "Voici les créneaux disponibles.", "booking_scheduler" as InlineCardType, {
+          contractorId: mem.get().recommended_contractor_id,
+          contractorName: mem.get().recommended_contractor_name,
+          slots: MOCK_SLOTS,
+          appointmentType: "évaluation",
+        });
+        mem.set("last_question_asked", "booking_slot");
+      }
+      setIsThinking(false);
+      return;
+    }
+
+    // ─── COMPARE QUOTES ───
+    if (intent === "homeowner_compare_quotes") {
+      emitSafe("alex", "Je vais vous guider vers l'analyse comparative de vos soumissions.", "quote_analysis", MOCK_QUOTE_ANALYSIS);
+      setIsThinking(false);
+      return;
+    }
+
+    // ─── PROFILE / ADDRESS ───
+    if (intent === "homeowner_complete_profile") {
+      emitSafe("alex", "Je peux compléter votre profil ici.", "inline_form", {
+        formKey: "profile", title: "Compléter votre profil",
+        fields: [
+          { key: "firstName", label: "Prénom", type: "text", placeholder: "Votre prénom", required: true },
+          { key: "phone", label: "Téléphone", type: "phone", placeholder: "(514) 000-0000" },
+          { key: "email", label: "Courriel", type: "email", placeholder: "vous@example.com" },
+        ],
+        submitLabel: "Enregistrer",
+      });
+      setIsThinking(false);
+      return;
+    }
+
+    if (intent === "homeowner_add_address") {
+      emitSafe("alex", "C'est bien pour cette adresse ?", "address_confirmation", {
+        address: "1234 rue Principale", city: mem.get().city || "Laval", postalCode: "H7N 1A1",
+      });
+      setIsThinking(false);
+      return;
+    }
+
+    // ─── AMBIGUOUS / CLARIFICATION ───
+    if (intent === "ambiguous_need" || intent === "needs_clarification") {
+      // Use next best action from memory
+      const nextAction = computeNextBestAction(mem.get(), classification.primary_intent as AlexIntent);
+      emitSafe("alex", nextAction.message);
+      mem.set("last_question_asked", nextAction.action_key);
+      setIsThinking(false);
+      return;
+    }
+
+    // ─── FALLBACK: compute next best action ───
+    const nextAction = computeNextBestAction(mem.get(), classification.primary_intent as AlexIntent);
+    emitSafe("alex", nextAction.message);
+    mem.set("last_question_asked", nextAction.action_key);
     setIsThinking(false);
-  }, [emitSafe, flowState, advanceFlow, executeMatch]);
+  }, [emitSafe, userName]);
 
   // ─── FILE UPLOAD ───
   const handleFileUpload = useCallback(async (file: File, type: "photo" | "quote") => {
-    const label = type === "photo" ? "📷 Photo envoyée" : "📄 Soumission envoyée";
+    const label = type === "photo" ? "📷 Photo uploadée" : "📄 Soumission envoyée";
     emitSafe("user", `${label}: ${file.name}`);
     setIsThinking(true);
     audioEngine.play("thinking");
 
-    setFlowState(prev => ({
-      ...prev,
-      problem: {
-        ...prev.problem,
-        hasPhoto: type === "photo" ? true : prev.problem.hasPhoto,
-        hasQuote: type === "quote" ? true : prev.problem.hasQuote,
-        assessmentComplete: true,
-      },
-    }));
+    const mem = memoryRef.current;
+    mem.set(type === "photo" ? "has_photo" : "has_quote", true);
+    mem.set("need_qualified", true);
 
     await new Promise(r => setTimeout(r, 1200 + Math.random() * 800));
     audioEngine.play("success");
 
     if (type === "photo") {
-      const isDesign = Math.random() > 0.4;
-      if (isDesign) {
-        emitSafe("alex", "J'ai analysé votre photo. Voici mes suggestions design.", "photo_design", MOCK_PHOTO_DESIGN);
-      } else {
-        emitSafe("alex", "J'ai détecté un problème potentiel. Voici mon diagnostic.", "photo_problem", MOCK_PHOTO_PROBLEM);
+      // Detect problem from photo (mock)
+      emitSafe("alex",
+        "Ah je vois. Barrage de glace + perte de chaleur. Probable manque d'isolation dans l'entretoit.",
+        "photo_problem",
+        { ...MOCK_PHOTO_PROBLEM, confidence: 0.92 },
+      );
+      mem.update({
+        problem_type: "barrage_glace",
+        service_category: "Couvreur / Isolation",
+        urgency: "high",
+      });
+
+      // Auto-advance to contractor if we have location
+      if (mem.get().address_known) {
+        setTimeout(() => {
+          const contractor = MOCK_CONTRACTORS[0];
+          mem.update({ recommended_contractor_id: contractor.id, recommended_contractor_name: contractor.name });
+          audioEngine.play("success");
+          emitSafe("alex", `Je vous propose ${contractor.name}.`, "entrepreneur", contractor);
+        }, 1500);
       }
     } else {
       emitSafe("alex", "Analyse de soumission terminée. Voici le verdict.", "quote_analysis", MOCK_QUOTE_ANALYSIS);
@@ -376,46 +521,29 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
     setIsThinking(false);
   }, [emitSafe]);
 
-  // ─── AUTH STATE UPDATE (resume after login) ───
+  // ─── AUTH STATE UPDATE ───
   const updateAuthState = useCallback((authenticated: boolean, name?: string) => {
-    setFlowState(prev => {
-      const updated: ConversationFlowState = {
-        ...prev,
-        userContext: {
-          ...prev.userContext,
-          isAuthenticated: authenticated,
-          firstName: name || prev.userContext.firstName,
-          profileComplete: authenticated && !!name,
-          missingFields: authenticated ? (name ? [] : ["first_name"]) : ["first_name", "phone"],
-        },
-        resumedAfterAuth: authenticated,
-      };
+    const mem = memoryRef.current;
+    if (authenticated) {
+      mem.update({
+        resolved_role: mem.get().resolved_role === "unknown" ? "homeowner" : mem.get().resolved_role,
+        role_confidence: Math.max(mem.get().role_confidence, 0.6),
+      });
+    }
+    if (authenticated && name) {
+      emitSafe("alex", `Content de vous retrouver, ${name}. ${
+        mem.get().need_qualified
+          ? "On continue avec votre demande."
+          : "Comment puis-je vous aider ?"
+      }`);
+    }
+  }, [emitSafe]);
 
-      if (authenticated && name) {
-        // GUARD: only emit resume message, never re-welcome
-        emitSafe("alex", `Content de vous retrouver, ${name}. On reprend où on en était.`);
-
-        const advanced = advanceFlow(updated);
-        const phase = resolveNextPhase(advanced);
-        if (phase === "request_address" && !updated.userContext.hasAddress) {
-          setTimeout(() => {
-            emitSafe("alex", "Il me manque votre adresse pour chercher les meilleurs entrepreneurs.", "address_required" as InlineCardType);
-          }, 800);
-        } else if (phase === "run_match") {
-          setTimeout(() => {
-            emitSafe("alex", "Je m'en occupe. Je cherche le meilleur professionnel.");
-            setTimeout(() => {
-              const contractor = MOCK_CONTRACTORS[0];
-              audioEngine.play("success");
-              emitSafe("alex", "J'ai trouvé la meilleure option.", "entrepreneur", contractor);
-            }, 1200);
-          }, 800);
-        }
-        return advanced;
-      }
-      return updated;
-    });
-  }, [emitSafe, advanceFlow]);
+  // ─── EXPOSED STATE ───
+  const mem = memoryRef.current.get();
+  const currentPhase = mem.need_qualified
+    ? (mem.recommended_contractor_id ? "show_result" : (mem.address_known ? "run_match" : "request_address"))
+    : "assess_problem";
 
   return {
     messages,
@@ -423,8 +551,41 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
     sendMessage,
     initialize,
     handleFileUpload,
-    flowState,
-    currentPhase: resolveNextPhase(flowState),
+    flowState: {
+      phase: currentPhase,
+      problem: {
+        problemType: mem.problem_type,
+        projectType: mem.service_category,
+        urgencyLevel: mem.urgency || "unknown",
+        hasPhoto: mem.has_photo,
+        hasQuote: mem.has_quote,
+        summary: mem.need_summary,
+        assessmentComplete: mem.need_qualified,
+        questionsAsked: mem.questions_asked_count,
+      },
+      userContext: {
+        isAuthenticated,
+        userId: null,
+        firstName: userName || null,
+        email: null,
+        hasAddress: mem.address_known,
+        city: mem.city,
+        profileComplete: isAuthenticated && !!userName,
+        missingFields: [],
+      },
+      matchAttempted: !!mem.recommended_contractor_id,
+      matchFound: !!mem.recommended_contractor_id,
+      resumedAfterAuth: false,
+      phaseBeforeAuth: null,
+    },
+    currentPhase,
     updateAuthState,
+    // V5: Exposed brain state for debug panel
+    brainState: {
+      memory: mem,
+      lastIntent: mem.current_intent,
+      intentConfidence: mem.intent_confidence,
+      currentRoute: mem.current_route,
+    },
   };
 }
