@@ -38,6 +38,7 @@ const PageUnproFAQ25 = lazy(() => import("@/pages/PageUnproFAQ25"));
 // Public
 const PageAdLandingAipp = lazy(() => import("@/pages/ad-landing/PageAdLandingAipp"));
 const PageBusinessImport = lazy(() => import("@/pages/business-import/PageBusinessImport"));
+const PageBusinessCardImport = lazy(() => import("@/pages/business-card/PageBusinessCardImport"));
 const PageAlexGoalsStrategy = lazy(() => import("@/pages/goals/PageAlexGoalsStrategy"));
 const PageCheckoutStripe = lazy(() => import("@/pages/checkout/PageCheckoutStripe"));
 const PageCheckoutSuccess = lazy(() => import("@/pages/checkout/PageCheckoutSuccess"));
