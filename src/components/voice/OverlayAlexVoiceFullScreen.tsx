@@ -444,7 +444,7 @@ export default function OverlayAlexVoiceFullScreen() {
           {isStabilizing && (
             <div className="px-6 py-4 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary animate-spin" />
-              <span className="text-sm text-muted-foreground">Connexion…</span>
+              <span className="text-sm text-muted-foreground">{getBootStepLabel(bootStep)}</span>
             </div>
           )}
 
@@ -511,7 +511,7 @@ export default function OverlayAlexVoiceFullScreen() {
             ) : isStabilizing ? (
               <div className="flex gap-3">
                 <Button disabled className="rounded-full gap-2 px-6" variant="default">
-                  <Sparkles className="w-4 h-4 animate-spin" /> Connexion…
+                  <Sparkles className="w-4 h-4 animate-spin" /> Alex démarre…
                 </Button>
                 <Button onClick={handleFallbackChat} variant="outline" className="rounded-full gap-2 px-4">
                   <MessageSquare className="w-4 h-4" />
@@ -537,26 +537,26 @@ export default function OverlayAlexVoiceFullScreen() {
 // ─── Boot Step Label ───
 function getBootStepLabel(step: string): string {
   switch (step) {
-    case "init": return "Initialisation…";
-    case "opening": return "Ouverture session…";
-    case "stabilizing": return "Préparation…";
-    case "connecting": return "Connexion au serveur vocal…";
-    case "connected": return "Serveur connecté ✓";
-    case "waiting_audio": return "En attente du premier son…";
-    case "live": return "Premier contact vocal ✓";
+    case "init": return "Alex démarre…";
+    case "opening": return "Alex démarre…";
+    case "stabilizing": return "Alex démarre…";
+    case "connecting": return "Alex démarre…";
+    case "connected": return "Alex se prépare…";
+    case "waiting_audio": return "Alex se prépare…";
+    case "live": return "Alex vous parle";
     case "error": return "Erreur de démarrage";
-    default: return "Préparation…";
+    default: return "Alex démarre…";
   }
 }
 
 // ─── Boot Checklist ───
 function BootChecklist({ step }: { step: string }) {
   const steps = [
-    { key: "opening", label: "Ouverture de session" },
+    { key: "opening", label: "Démarrage" },
     { key: "stabilizing", label: "Préparation audio" },
-    { key: "connecting", label: "Connexion serveur vocal" },
-    { key: "connected", label: "Serveur connecté" },
-    { key: "waiting_audio", label: "Premier contact vocal" },
+    { key: "connecting", label: "Activation vocale" },
+    { key: "connected", label: "Moteur vocal prêt" },
+    { key: "waiting_audio", label: "Alex démarre sa salutation" },
   ];
 
   const stepOrder = ["init", "opening", "stabilizing", "connecting", "connected", "waiting_audio", "live"];

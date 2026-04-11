@@ -216,12 +216,19 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       const outputGain = outputAudioContextRef.current.createGain();
       outputGain.connect(outputAudioContextRef.current.destination);
 
-      // 4. Build system instruction WITH greeting baked in
-      const greetingText = options?.initialGreeting || "Bonjour. Que puis-je faire pour vous?";
-      const systemText = `Tu es Alex, concierge IA d'UnPRO.ca. Français international neutre, professionnel. Tu es un agent décisionnel : tu agis, tu ne converses pas. Phrases courtes, maximum 2 phrases. Une seule question à la fois. Jamais de markdown. Ne verbalise jamais ton raisonnement interne. Ton calme, confiant, direct. Féminin : 'ravie', 'certaine', 'prête'.
+      // 4. Build system instruction — international French premium
+      const systemText = `Tu es Alex, concierge IA d'UnPRO.ca.
 
-IMPORTANT: Commence IMMÉDIATEMENT la conversation en disant: "${greetingText}"
-Ne dis rien d'autre avant cette salutation. Dis-la maintenant.`;
+DICTION OBLIGATOIRE — FRANÇAIS INTERNATIONAL PREMIUM :
+- Parle en français international neutre, naturel, fluide, SANS accent régional marqué.
+- Ton professionnel, moderne, chaleureux. Diction claire, aucune exagération québécoise.
+- Prononce UNPRO comme "un pro".
+- Prononce "dessus" comme "de-su" (jamais "dessis" ou "de-si").
+- Prononce "dessous" comme "de-sou" (jamais nasal).
+- Prononce "plus" normalement (jamais "plusse").
+- Prononce chaque syllabe clairement. Pas de contractions régionales.
+
+Tu es un agent décisionnel : tu agis, tu ne converses pas. Phrases courtes, maximum 2 phrases. Une seule question à la fois. Jamais de markdown. Ne verbalise jamais ton raisonnement interne. Ton calme, confiant, direct. Féminin : 'ravie', 'certaine', 'prête'.`;
 
       const ai = new GoogleGenAI({ apiKey });
 
@@ -363,8 +370,21 @@ Ne dis rien d'autre avant cette salutation. Dis-la maintenant.`;
       setIsConnecting(false);
       callbacksRef.current?.onConnect?.();
 
-      // Wait a moment then start mic to avoid any race condition.
-      await new Promise((r) => setTimeout(r, 500));
+      // STEP 1: Trigger greeting BEFORE mic to prevent VAD interruption
+      if (sessionRef.current && options?.initialGreeting) {
+        try {
+          sessionRef.current.sendClientContent({
+            turns: [{ role: "user", parts: [{ text: `[Tu es Alex. Dis maintenant ta salutation d'accueil à voix haute. Salutation: "${options.initialGreeting}". Parle immédiatement, en français international neutre, sans accent régional. Prononce chaque mot clairement.]` }] }],
+            turnComplete: true,
+          });
+          console.log("[GeminiLive] ✅ Greeting trigger sent BEFORE mic");
+        } catch (e) {
+          console.warn("[GeminiLive] Failed to send greeting trigger:", e);
+        }
+      }
+
+      // STEP 2: Wait for greeting to start playing before enabling mic
+      await new Promise((r) => setTimeout(r, 1500));
 
       // Resume audio contexts
       if (inputAudioContextRef.current?.state === "suspended") {
@@ -374,23 +394,10 @@ Ne dis rien d'autre avant cette salutation. Dis-la maintenant.`;
         await outputAudioContextRef.current.resume().catch(() => {});
       }
 
-      // Start mic pipeline
+      // STEP 3: Start mic pipeline AFTER greeting has begun
       if (inputAudioContextRef.current && mediaStreamRef.current) {
         await setupMicPipeline(mediaStreamRef.current, inputAudioContextRef.current);
-      }
-
-      // Trigger model to speak the greeting proactively
-      // Gemini Live does NOT speak from systemInstruction alone — needs a client turn
-      if (sessionRef.current && options?.initialGreeting) {
-        try {
-          sessionRef.current.sendClientContent({
-            turns: [{ role: "user", parts: [{ text: `[Instructions: Dis maintenant ta salutation d'accueil. Voici le contexte: ${options.initialGreeting}]` }] }],
-            turnComplete: true,
-          });
-          console.log("[GeminiLive] ✅ Greeting trigger sent");
-        } catch (e) {
-          console.warn("[GeminiLive] Failed to send greeting trigger:", e);
-        }
+        console.log("[GeminiLive] ✅ Mic started after greeting delay");
       }
 
       setTimeout(() => {
