@@ -215,8 +215,6 @@ export default function PageContractorLeads() {
                               <Shield className="w-3 h-3" /> {lead.category_primary}
                             </span>
                           )}
-                          {lead.rbq_license && (
-                            <span className="text-[11px] text-emerald-400 flex items-center gap-1">
                               <CheckCircle2 className="w-3 h-3" /> RBQ
                             </span>
                           )}
