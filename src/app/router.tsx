@@ -59,6 +59,7 @@ const AdminProspectionEngine = lazy(() => import("@/pages/admin/AdminProspection
 const PageProspectionDashboard = lazy(() => import("@/pages/admin/PageProspectionDashboard"));
 const AdminProspectionProspects = lazy(() => import("@/pages/admin/AdminProspectionProspects"));
 const AdminProspectionAnalytics = lazy(() => import("@/pages/admin/AdminProspectionAnalytics"));
+const PageAdminCityActivityMatrix = lazy(() => import("@/pages/admin/PageAdminCityActivityMatrix"));
 const PageAlexPersonalizedLanding = lazy(() => import("@/pages/public/PageAlexPersonalizedLanding"));
 const PageAdminEmailTemplates = lazy(() => import("@/pages/admin/PageAdminEmailTemplates"));
 const ProfessionalsPage = lazy(() => import("@/pages/ProfessionalsPage"));
@@ -851,6 +852,7 @@ export const AppRouter = () => (
         <Route path="/admin/prospection-engine" element={<ProtectedRoute requiredRole="admin"><PageProspectionDashboard /></ProtectedRoute>} />
         <Route path="/admin/prospection/prospects" element={<ProtectedRoute requiredRole="admin"><AdminProspectionProspects /></ProtectedRoute>} />
         <Route path="/admin/prospection/analytics" element={<ProtectedRoute requiredRole="admin"><AdminProspectionAnalytics /></ProtectedRoute>} />
+        <Route path="/admin/city-activity-matrix" element={<ProtectedRoute requiredRole="admin"><PageAdminCityActivityMatrix /></ProtectedRoute>} />
         <Route path="/alex-landing" element={<PageAlexPersonalizedLanding />} />
         <Route path="/admin/outreach" element={<ProtectedRoute requiredRole="admin"><AdminOutreachDashboard /></ProtectedRoute>} />
         <Route path="/admin/outreach/new" element={<ProtectedRoute requiredRole="admin"><AdminOutreachCampaignNew /></ProtectedRoute>} />
