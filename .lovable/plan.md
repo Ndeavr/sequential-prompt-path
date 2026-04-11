@@ -2,38 +2,20 @@
 
 ## Problem
 
-Two issues confirmed from logs:
-
-1. **Instant disconnect (44ms/97ms)**: The `overrides: { agent: { language: "fr" } }` in `startSession()` causes ElevenLabs to reject the session immediately. This override is NOT enabled on the agent dashboard.
-
-2. **Chime overlap**: `audioEngine.play("intro")` fires before connecting, then `audioEngine.play("success")` fires in `onConnect` — both try to play within ~1 second. On disconnect, `audioEngine.play("outro")` fires too. Multiple chimes stack up and create audio noise.
+1. **Click sound**: `audioEngine.unlock()` creates an AudioContext on connection, producing an audible click artifact on some devices.
+2. **Not French**: `sendUserMessage` sends a visible user message that the agent processes as conversation — unreliable for language forcing.
 
 ## Solution
 
-### 1. Remove ALL overrides from startSession (fixes disconnect)
+### 1. Remove audioEngine.unlock() from useLiveVoice
+No chimes are played anymore, so AudioContext creation is unnecessary. Removes the click artifact.
 
-In `src/hooks/useLiveVoice.ts`, change `startSession` to use only the signed URL with zero overrides:
+### 2. Use sendContextualUpdate for French injection
+`sendContextualUpdate` injects context without triggering a user-visible message or response. Falls back to `sendUserMessage` if unavailable.
 
-```typescript
-await conversation.startSession({
-  signedUrl: data.signed_url,
-});
-```
-
-French language must be configured directly on the ElevenLabs agent dashboard — not via client overrides.
-
-### 2. Remove chime overlap (keep only one sound)
-
-- **Remove** the `await audioEngine.play("intro")` call before connecting
-- **Keep** the `audioEngine.play("success")` on connect as the single connection confirmation sound
-- **Remove** the `audioEngine.play("outro")` on disconnect (it fires even on instant disconnects, creating noise)
-
-This means: one single chime on successful connection, nothing else.
-
-### 3. Redeploy edge function
-
-Redeploy `elevenlabs-conversation-token` for consistency.
+### 3. Remove audioEngine.unlock() from OverlayAlexVoiceFullScreen
+Same reason — no chimes needed.
 
 ### Files modified
-- `src/hooks/useLiveVoice.ts` — remove overrides, remove intro/outro chimes, keep only success chime on connect
-
+- `src/hooks/useLiveVoice.ts` — removed audioEngine import/unlock, switched to sendContextualUpdate
+- `src/components/voice/OverlayAlexVoiceFullScreen.tsx` — removed audioEngine.unlock()
