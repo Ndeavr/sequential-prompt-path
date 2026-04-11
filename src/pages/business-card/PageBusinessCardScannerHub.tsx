@@ -57,7 +57,7 @@ const MODE_META: Record<string, Omit<ScannerMode, "code" | "name" | "description
 export default function PageBusinessCardScannerHub() {
   const navigate = useNavigate();
   const { user, isAuthenticated, role } = useAuth();
-  const { activeRole } = useActiveRole();
+  const { activeRole, setActiveRole } = useActiveRole();
 
   // Fetch available modes from DB
   const { data: modes } = useQuery({
@@ -189,12 +189,41 @@ export default function PageBusinessCardScannerHub() {
         {/* Available modes */}
         {!canScan ? (
           <Card>
-            <CardContent className="py-8 text-center space-y-3">
+            <CardContent className="py-8 text-center space-y-4">
               <Lock className="w-8 h-8 text-muted-foreground mx-auto" />
               <p className="text-sm font-medium text-foreground">Accès non autorisé</p>
               <p className="text-xs text-muted-foreground">
-                Votre rôle actuel ({role || "aucun"}) ne permet pas d'utiliser le scanner.
+                Votre rôle actuel ({role || activeRole || "aucun"}) ne permet pas d'utiliser le scanner.
               </p>
+              <div className="flex flex-col gap-2 pt-2">
+                <Button size="sm" onClick={() => navigate("/login")} className="gap-1.5">
+                  <Lock className="w-3.5 h-3.5" /> Se connecter avec un autre compte
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => { setActiveRole("contractor" as any); }}
+                  className="gap-1.5"
+                >
+                  <Briefcase className="w-3.5 h-3.5" /> Mode Entrepreneur
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => { setActiveRole("partner" as any); }}
+                  className="gap-1.5"
+                >
+                  <Users className="w-3.5 h-3.5" /> Mode Affilié
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => { setActiveRole("admin" as any); }}
+                  className="gap-1.5"
+                >
+                  <Handshake className="w-3.5 h-3.5" /> Mode Représentant
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ) : (
@@ -230,18 +259,6 @@ export default function PageBusinessCardScannerHub() {
             })}
           </div>
         )}
-
-        {/* Quick access to guest scanner */}
-        <div className="text-center pt-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs text-muted-foreground"
-            onClick={() => navigate("/business-card-import")}
-          >
-            Utiliser le scanner rapide (sans attribution)
-          </Button>
-        </div>
       </div>
     </div>
   );
