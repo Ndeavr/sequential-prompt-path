@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Plus, Play, Pause, Search, Filter, Target, MapPin } from "lucide-react";
+import { ArrowLeft, Plus, Play, Pause, Search, Filter, Target, MapPin, Timer } from "lucide-react";
 import { toast } from "sonner";
+import PanelCampaignScheduling from "@/components/outbound/PanelCampaignScheduling";
+import PanelSendLogs from "@/components/outbound/PanelSendLogs";
 
 const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
