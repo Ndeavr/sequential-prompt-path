@@ -46,7 +46,7 @@ export default function PanelAlexCheckoutEmbedded({ data, onCheckout }: Props) {
       </div>
 
       <div className="space-y-1.5">
-        {["Rendez-vous qualifiés", "Profil vérifié premium", "Visibilité prioritaire"].map(f => (
+        {["Profil public complet", "5 à 12 rendez-vous / mois", "Visibilité améliorée", "Badge Pro"].map(f => (
           <div key={f} className="flex items-center gap-2">
             <Check className="h-3.5 w-3.5 text-green-500" />
             <span className="text-xs text-muted-foreground">{f}</span>
