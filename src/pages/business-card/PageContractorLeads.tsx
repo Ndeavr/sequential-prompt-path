@@ -57,7 +57,7 @@ export default function PageContractorLeads() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contractor_leads")
-        .select("id, company_name, full_name, first_name, last_name, email, phone, city, province, category_primary, lead_status, profile_status, rbq_license, created_at")
+        .select("id, company_name, full_name, first_name, last_name, email, phone, city, province, category_primary, lead_status, profile_status, created_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []) as ContractorLead[];
