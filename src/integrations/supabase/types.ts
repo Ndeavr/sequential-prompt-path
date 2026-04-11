@@ -8888,7 +8888,7 @@ export type Database = {
           processing_duration_ms: number | null
           raw_ocr_text: string | null
           updated_at: string
-          uploaded_by_user_id: string
+          uploaded_by_user_id: string | null
         }
         Insert: {
           ai_model_used?: string | null
@@ -8902,7 +8902,7 @@ export type Database = {
           processing_duration_ms?: number | null
           raw_ocr_text?: string | null
           updated_at?: string
-          uploaded_by_user_id: string
+          uploaded_by_user_id?: string | null
         }
         Update: {
           ai_model_used?: string | null
@@ -8916,7 +8916,7 @@ export type Database = {
           processing_duration_ms?: number | null
           raw_ocr_text?: string | null
           updated_at?: string
-          uploaded_by_user_id?: string
+          uploaded_by_user_id?: string | null
         }
         Relationships: [
           {
