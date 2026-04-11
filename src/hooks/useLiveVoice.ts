@@ -3,61 +3,19 @@
  * 
  * Uses @elevenlabs/react useConversation for WebSocket-based
  * real-time voice conversation with an ElevenLabs agent.
+ * 
+ * NOTE: The French system prompt is configured directly on the
+ * ElevenLabs agent dashboard (agent_5901kmg4ra2eee5bbp9r7ew5jcs7).
+ * Do NOT pass overrides here — they cause instant disconnects
+ * unless explicitly enabled in the ElevenLabs dashboard.
  */
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useConversation } from "@elevenlabs/react";
 import { supabase } from "@/integrations/supabase/client";
 import { audioEngine } from "@/services/audioEngineUNPRO";
 
-const ALEX_FRENCH_SYSTEM_PROMPT = `Tu es Alex d'UnPRO, assistant vocal intelligent spécialisé dans la mise en relation entre propriétaires et professionnels du bâtiment au Québec.
-
-═══ LANGUE ═══
-- TOUJOURS parler en français québécois naturel. Chaque réponse DOIT être en français.
-- Si l'utilisateur parle anglais, réponds quand même en français sauf s'il insiste explicitement en anglais après 2 messages consécutifs.
-- Contractions naturelles : "c'est", "y'a", "j'peux", "on va".
-- Pas de caricature, pas de vulgarité, pas d'anglicismes inutiles.
-
-═══ MISSION ═══
-Comprendre rapidement le besoin du client. Identifier le problème avant de parler de service. Recommander LE meilleur professionnel. Amener directement à la prise de rendez-vous. Tu ne donnes pas d'options ouvertes. Tu guides vers une décision.
-
-═══ IDENTITÉ ═══
-- Homme intelligent, expérience terrain en construction, rénovation, copropriété, immobilier au Québec.
-- Ton calme, posé, humain, légèrement chaleureux, jamais pressant, toujours en contrôle.
-- Tu dis "je suis Alex" ou "votre concierge". Jamais IA, robot, assistant virtuel.
-- Masculin toujours : "ravi", "certain", "prêt".
-- Phrases courtes et claires. Comme au téléphone.
-
-═══ GARDE-FOUS CONVERSATION ═══
-- Tu parles UNIQUEMENT de : services résidentiels, rénovation, construction, entretien de bâtiment, entrepreneurs professionnels, gestion immobilière, copropriétés, projets immobiliers, rendez-vous et services UnPRO.
-- Si l'utilisateur demande de la philosophie de vie, politique, conseils personnels, culture générale, météo, sports, nouvelles ou TOUT sujet hors services résidentiels : redirige poliment.
-- Phrase de redirection : "Bonne question, mais ma spécialité c'est les services résidentiels et la rénovation. Comment je peux vous aider avec votre propriété?"
-- JAMAIS de conversation hors sujet. Une redirection, puis on avance.
-
-═══ RÈGLES ABSOLUES ═══
-- Jamais plus de 2 questions avant de recommander.
-- TOUJOURS proposer UN SEUL choix. Jamais 2. Jamais 3.
-- Maximum 1-2 phrases par réponse. C'est de la voix. Court.
-- UNE question à la fois. Jamais deux.
-- Pas de listes, puces, tirets, gras, markdown.
-- UNPRO N'EST PAS une plateforme de 3 soumissions. Tu CHOISIS le meilleur professionnel pour le client.
-
-═══ FLOW PRINCIPAL ═══
-ACCUEIL : "Bonjour. Je suis Alex d'UnPRO. Qu'est-ce que je peux faire pour vous?"
-CLARIFICATION (MAX 2 QUESTIONS) : "C'est pour quel type de propriété?" / "C'est urgent ou planifié?"
-PRISE EN CHARGE : "Je m'en occupe."
-RÉSULTAT : "J'ai le professionnel idéal pour vous."
-CLOSE : "On réserve?"
-
-═══ FLOW — AUCUN MATCH ═══
-"Je n'ai pas encore un entrepreneur validé et disponible à vous proposer pour ce dossier. Ajoutez l'adresse exacte du projet et je pourrai préparer la suite correctement."
-
-═══ MICRO-PHRASES ═══
-"Parfait." / "Je m'en occupe." / "On simplifie ça." / "C'est le meilleur choix pour vous."
-
-═══ OBJECTION HANDLING ═══
-"Je veux comparer" → "Je comprends. Celui-ci reste le plus adapté pour vous."
-"Je ne suis pas sûr" → "C'est normal. C'est justement pour ça que je vous recommande celui-ci."
-"Je veux réfléchir" → "Bien sûr. Je peux vérifier les disponibilités pendant que vous y pensez."`;
+/** Cooldown (ms) after a disconnect before allowing reconnection */
+const RECONNECT_COOLDOWN_MS = 5000;
 
 interface UseLiveVoiceCallbacks {
   onTranscript?: (text: string) => void;
@@ -76,20 +34,33 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   callbacksRef.current = callbacks;
   const intentionallyStopped = useRef(false);
   const hasDeliveredFirstAudioRef = useRef(false);
+  const connectedAtRef = useRef<number>(0);
+  const lastDisconnectAtRef = useRef<number>(0);
 
   const conversation = useConversation({
     onConnect: () => {
       console.log("[ElevenLabs] ✅ Connected to agent");
+      connectedAtRef.current = Date.now();
       setIsActive(true);
       setIsConnecting(false);
       audioEngine.play("success");
       callbacksRef.current?.onConnect?.();
     },
     onDisconnect: () => {
-      console.log("[ElevenLabs] Disconnected from agent");
+      const sessionDuration = connectedAtRef.current ? Date.now() - connectedAtRef.current : 0;
+      console.log(`[ElevenLabs] Disconnected from agent (session lasted ${sessionDuration}ms)`);
+      lastDisconnectAtRef.current = Date.now();
       setIsActive(false);
       setIsConnecting(false);
       hasDeliveredFirstAudioRef.current = false;
+
+      // Detect instant disconnect (< 2s) as a connection error
+      if (sessionDuration > 0 && sessionDuration < 2000 && !intentionallyStopped.current) {
+        console.error("[ElevenLabs] ⚠️ Instant disconnect detected — likely a config issue");
+        callbacksRef.current?.onError?.(new Error("Session disconnected immediately — check agent config"));
+        return;
+      }
+
       if (!intentionallyStopped.current) {
         audioEngine.play("outro");
         callbacksRef.current?.onDisconnect?.();
@@ -146,8 +117,16 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const start = useCallback(async (_options?: { initialGreeting?: string }) => {
     if (isActive || isConnecting) return;
 
+    // Cooldown guard: prevent rapid reconnect loop
+    const timeSinceLastDisconnect = Date.now() - lastDisconnectAtRef.current;
+    if (lastDisconnectAtRef.current > 0 && timeSinceLastDisconnect < RECONNECT_COOLDOWN_MS) {
+      console.warn(`[ElevenLabs] Reconnect blocked — cooldown (${timeSinceLastDisconnect}ms < ${RECONNECT_COOLDOWN_MS}ms)`);
+      return;
+    }
+
     intentionallyStopped.current = false;
     hasDeliveredFirstAudioRef.current = false;
+    connectedAtRef.current = 0;
     setIsConnecting(true);
 
     try {
@@ -159,7 +138,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       await navigator.mediaDevices.getUserMedia({ audio: true });
       console.log("[ElevenLabs] ✅ Microphone granted");
 
-      // Get signed URL for WebSocket connection (more compatible than WebRTC)
+      // Get signed URL for WebSocket connection
       console.log("[ElevenLabs] Fetching signed URL...");
       const { data, error } = await supabase.functions.invoke("elevenlabs-conversation-token");
 
@@ -168,17 +147,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       }
       console.log("[ElevenLabs] ✅ Got signed URL");
 
+      // Connect WITHOUT overrides — prompt is configured on ElevenLabs dashboard
       await conversation.startSession({
         signedUrl: data.signed_url,
-        overrides: {
-          agent: {
-            prompt: {
-              prompt: ALEX_FRENCH_SYSTEM_PROMPT,
-            },
-            firstMessage: "Bonjour. Je suis Alex d'UnPRO. Qu'est-ce que je peux faire pour vous?",
-            language: "fr",
-          },
-        },
       });
 
     } catch (err: unknown) {
