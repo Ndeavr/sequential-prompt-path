@@ -44578,6 +44578,47 @@ export type Database = {
           },
         ]
       }
+      voice_audio_failures: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          failure_stage: string | null
+          failure_type: string
+          id: string
+          recovery_attempt_id: string | null
+          session_id: string | null
+          stack_trace: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          failure_stage?: string | null
+          failure_type: string
+          id?: string
+          recovery_attempt_id?: string | null
+          session_id?: string | null
+          stack_trace?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          failure_stage?: string | null
+          failure_type?: string
+          id?: string
+          recovery_attempt_id?: string | null
+          session_id?: string | null
+          stack_trace?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_audio_failures_recovery_attempt_id_fkey"
+            columns: ["recovery_attempt_id"]
+            isOneToOne: false
+            referencedRelation: "voice_recovery_attempts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voice_events: {
         Row: {
           created_at: string
@@ -44649,6 +44690,83 @@ export type Database = {
             foreignKeyName: "voice_preferences_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_reconnect_metrics: {
+        Row: {
+          created_at: string
+          first_audio_start_ms: number | null
+          id: string
+          mic_ready_ms: number | null
+          recovery_needed: boolean | null
+          session_id: string
+          tts_ready_ms: number | null
+          websocket_ready_ms: number | null
+        }
+        Insert: {
+          created_at?: string
+          first_audio_start_ms?: number | null
+          id?: string
+          mic_ready_ms?: number | null
+          recovery_needed?: boolean | null
+          session_id: string
+          tts_ready_ms?: number | null
+          websocket_ready_ms?: number | null
+        }
+        Update: {
+          created_at?: string
+          first_audio_start_ms?: number | null
+          id?: string
+          mic_ready_ms?: number | null
+          recovery_needed?: boolean | null
+          session_id?: string
+          tts_ready_ms?: number | null
+          websocket_ready_ms?: number | null
+        }
+        Relationships: []
+      }
+      voice_recovery_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          new_session_id: string | null
+          previous_session_id: string | null
+          recovery_type: string
+          result: string
+          total_duration_ms: number | null
+          trigger_reason: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          new_session_id?: string | null
+          previous_session_id?: string | null
+          recovery_type?: string
+          result?: string
+          total_duration_ms?: number | null
+          trigger_reason?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          new_session_id?: string | null
+          previous_session_id?: string | null
+          recovery_type?: string
+          result?: string
+          total_duration_ms?: number | null
+          trigger_reason?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_recovery_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -44779,6 +44897,47 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      voice_transport_logs: {
+        Row: {
+          created_at: string
+          event_name: string | null
+          id: string
+          metadata_json: Json | null
+          recovery_attempt_id: string | null
+          session_id: string | null
+          transport_state: string
+          transport_type: string
+        }
+        Insert: {
+          created_at?: string
+          event_name?: string | null
+          id?: string
+          metadata_json?: Json | null
+          recovery_attempt_id?: string | null
+          session_id?: string | null
+          transport_state: string
+          transport_type?: string
+        }
+        Update: {
+          created_at?: string
+          event_name?: string | null
+          id?: string
+          metadata_json?: Json | null
+          recovery_attempt_id?: string | null
+          session_id?: string | null
+          transport_state?: string
+          transport_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_transport_logs_recovery_attempt_id_fkey"
+            columns: ["recovery_attempt_id"]
+            isOneToOne: false
+            referencedRelation: "voice_recovery_attempts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       waitlist_replacements: {
         Row: {

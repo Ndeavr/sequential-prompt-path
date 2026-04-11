@@ -12,12 +12,15 @@
  */
 import { useEffect, useRef, useCallback, useState, type MutableRefObject } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, PhoneOff, RefreshCw, AlertCircle, MessageSquare, Sparkles, WifiOff, CheckCircle2 } from "lucide-react";
+import { X, PhoneOff, RefreshCw, AlertCircle, MessageSquare, Sparkles, WifiOff, CheckCircle2, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAlexVoiceLockedStore, type LockedVoiceState } from "@/stores/alexVoiceLockedStore";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
+import { useAlexVoiceRecovery, type RecoveryPhase } from "@/hooks/useAlexVoiceRecovery";
+import { executeHardReset } from "@/services/voiceHardResetEngine";
 import { audioEngine } from "@/services/audioEngineUNPRO";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 import logo from "@/assets/unpro-robot.png";
 
 const STABILIZATION_MS = 4000;
@@ -45,6 +48,9 @@ export default function OverlayAlexVoiceFullScreen() {
   const bootInitiatedRef = useRef(false);
   const startRef = useRef<typeof start>(null as any);
   const buildGreetingRef = useRef<typeof buildGreeting>(null as any);
+
+  // Voice recovery hook
+  const recovery = useAlexVoiceRecovery();
 
   const firstName = user?.user_metadata?.first_name
     || user?.user_metadata?.full_name?.split(" ")[0]
@@ -354,39 +360,49 @@ export default function OverlayAlexVoiceFullScreen() {
     getStore().closeVoiceSession("user_explicit_close");
   }, []);
 
+  // ─── HARD RESET RETRY (replaces old soft retry) ───
   const handleRetry = useCallback(async () => {
-    const s = getStore();
-    stop();
-    s.clearError();
-    s.transitionTo("opening_session", "retry");
+    console.log('[VoiceOverlay] 🔄 HARD RESET initiated');
+    
+    // Clear all local timers
+    if (firstAudioTimerRef.current) { clearTimeout(firstAudioTimerRef.current); firstAudioTimerRef.current = null; }
+    if (stabilizationTimerRef.current) { clearTimeout(stabilizationTimerRef.current); stabilizationTimerRef.current = null; }
+    if (heartbeatRef.current) { clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
+    
+    // Reset local refs
     hasConnectedRef.current = false;
     firstAudioReceivedRef.current = false;
-    if (firstAudioTimerRef.current) {
-      clearTimeout(firstAudioTimerRef.current);
-      firstAudioTimerRef.current = null;
-    }
-    setBootStep("connecting");
-    try {
-      s.transitionTo("stabilizing", "retry_stabilization");
-      const greeting = buildGreeting();
-      await start({ initialGreeting: greeting });
-      setBootStep("waiting_audio");
-      firstAudioTimerRef.current = setTimeout(() => {
-        const latest = getStore();
-        if (!firstAudioReceivedRef.current && latest.isOverlayOpen && ["stabilizing", "opening_session", "session_ready"].includes(latest.machineState)) {
-          latest.setError("no_first_audio", "Alex ne parle pas. Réessayez ou passez au chat.", true);
-        }
-      }, FIRST_AUDIO_TIMEOUT_MS);
-      stabilizationTimerRef.current = setTimeout(() => {
-        const latest = getStore();
-        if (firstAudioReceivedRef.current && latest.machineState === "stabilizing") {
-          latest.transitionTo("session_ready", "retry_stabilization_complete_after_audio");
-        }
-      }, STABILIZATION_MS);
-    } catch (err: any) {
-      getStore().setError("retry_failed", "Impossible de reconnecter. Passez au chat.", true);
-    }
-  }, [buildGreeting, start]);
+    bootInitiatedRef.current = false;
+    setTranscripts([]);
+    entryIdRef.current = 0;
+    lastAlexIdRef.current = null;
+    
+    await recovery.executeRecovery(
+      stop,
+      start,
+      buildGreeting,
+      // onRecovered
+      () => {
+        setBootStep("waiting_audio");
+        bootTimeRef.current = Date.now();
+        toast.success("Alex est reconnectée", { duration: 2000 });
+        
+        // Set first audio timeout for the new session
+        firstAudioTimerRef.current = setTimeout(() => {
+          const latest = getStore();
+          if (!firstAudioReceivedRef.current && latest.isOverlayOpen && 
+              ["stabilizing", "opening_session", "session_ready"].includes(latest.machineState)) {
+            latest.setError("no_first_audio", "Alex ne parle pas. Réessayez ou passez au chat.", true);
+          }
+        }, FIRST_AUDIO_TIMEOUT_MS);
+      },
+      // onFallbackChat
+      () => {
+        toast.error("Mode chat activé", { description: "La voix n'est pas disponible pour le moment.", duration: 3000 });
+        getStore().closeVoiceSession("recovery_fallback_chat");
+      },
+    );
+  }, [buildGreeting, start, stop, recovery]);
 
   const handleFallbackChat = useCallback(() => {
     getStore().closeVoiceSession("fallback_to_chat");
@@ -398,9 +414,11 @@ export default function OverlayAlexVoiceFullScreen() {
   const isError = state === "error_recoverable" || state === "error_fatal";
   const isStabilizing = state === "stabilizing" || state === "opening_session" || state === "requesting_permission";
   const isSessionActive = ["session_ready", "listening", "capturing_voice", "processing_stt", "processing_response", "speaking", "awaiting_user"].includes(state);
+  const isRecoveringNow = recovery.isRecovering;
 
   const statusText =
-    isError ? (store.errorMessage || "Erreur")
+    isRecoveringNow ? recovery.phaseLabel
+    : isError ? (store.errorMessage || "Erreur")
     : isStabilizing ? getBootStepLabel(bootStep)
     : state === "listening" || state === "awaiting_user" ? "Je vous écoute…"
     : state === "capturing_voice" ? "Vous parlez…"
@@ -440,11 +458,17 @@ export default function OverlayAlexVoiceFullScreen() {
             </Button>
           </div>
 
-          {/* Minimal loader during connection */}
-          {isStabilizing && (
+          {/* Recovery / boot loader */}
+          {(isStabilizing || isRecoveringNow) && (
             <div className="px-6 py-4 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-primary animate-spin" />
-              <span className="text-sm text-muted-foreground">{getBootStepLabel(bootStep)}</span>
+              {isRecoveringNow ? (
+                <Zap className="w-4 h-4 text-primary animate-pulse" />
+              ) : (
+                <Sparkles className="w-4 h-4 text-primary animate-spin" />
+              )}
+              <span className="text-sm text-muted-foreground">
+                {isRecoveringNow ? recovery.phaseLabel : getBootStepLabel(bootStep)}
+              </span>
             </div>
           )}
 
@@ -499,10 +523,19 @@ export default function OverlayAlexVoiceFullScreen() {
 
           {/* Controls */}
           <div className="px-4 pb-6 pt-3 flex items-center justify-center gap-3 border-t border-border/20">
-            {isError ? (
+            {isRecoveringNow ? (
+              <div className="flex gap-3">
+                <Button disabled className="rounded-full gap-2 px-6" variant="default">
+                  <Zap className="w-4 h-4 animate-pulse" /> {recovery.phaseLabel || 'Réinitialisation…'}
+                </Button>
+                <Button onClick={handleFallbackChat} variant="outline" className="rounded-full gap-2 px-4">
+                  <MessageSquare className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : isError ? (
               <>
                 <Button onClick={handleRetry} className="rounded-full gap-2 px-6" variant="default">
-                  <RefreshCw className="w-4 h-4" /> Réessayer
+                  <Zap className="w-4 h-4" /> Réinitialiser Alex
                 </Button>
                 <Button onClick={handleFallbackChat} variant="outline" className="rounded-full gap-2 px-6">
                   <MessageSquare className="w-4 h-4" /> Passer au chat
