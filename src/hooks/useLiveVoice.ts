@@ -45,7 +45,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         callbacksRef.current?.onDisconnect?.();
       }
     },
-    onMessage: (message: Record<string, unknown>) => {
+    onMessage: (message: any) => {
       const msgType = (message as any)?.type as string | undefined;
 
       // Agent response text
