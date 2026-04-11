@@ -12,12 +12,15 @@
  */
 import { useEffect, useRef, useCallback, useState, type MutableRefObject } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, PhoneOff, RefreshCw, AlertCircle, MessageSquare, Sparkles, WifiOff, CheckCircle2 } from "lucide-react";
+import { X, PhoneOff, RefreshCw, AlertCircle, MessageSquare, Sparkles, WifiOff, CheckCircle2, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAlexVoiceLockedStore, type LockedVoiceState } from "@/stores/alexVoiceLockedStore";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
+import { useAlexVoiceRecovery, type RecoveryPhase } from "@/hooks/useAlexVoiceRecovery";
+import { executeHardReset } from "@/services/voiceHardResetEngine";
 import { audioEngine } from "@/services/audioEngineUNPRO";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 import logo from "@/assets/unpro-robot.png";
 
 const STABILIZATION_MS = 4000;
