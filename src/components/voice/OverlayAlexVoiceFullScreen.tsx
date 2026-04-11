@@ -42,6 +42,9 @@ export default function OverlayAlexVoiceFullScreen() {
   const firstAudioReceivedRef = useRef(false);
   const bootTimeRef = useRef<number>(0);
   const [bootStep, setBootStep] = useState<string>("init");
+  const bootInitiatedRef = useRef(false);
+  const startRef = useRef<typeof start>(null as any);
+  const buildGreetingRef = useRef<typeof buildGreeting>(null as any);
 
   const firstName = user?.user_metadata?.first_name
     || user?.user_metadata?.full_name?.split(" ")[0]
