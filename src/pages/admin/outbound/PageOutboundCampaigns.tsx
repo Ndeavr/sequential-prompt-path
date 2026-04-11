@@ -29,6 +29,7 @@ export default function PageOutboundCampaigns() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
 
   useEffect(() => { load(); }, []);
 
