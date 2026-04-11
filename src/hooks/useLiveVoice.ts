@@ -12,7 +12,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useConversation } from "@elevenlabs/react";
 import { supabase } from "@/integrations/supabase/client";
-import { audioEngine } from "@/services/audioEngineUNPRO";
+
 
 /** Cooldown (ms) after a disconnect before allowing reconnection */
 const RECONNECT_COOLDOWN_MS = 5000;
@@ -128,9 +128,6 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     setIsConnecting(true);
 
     try {
-      const initialGreeting = options?.initialGreeting?.trim() || "Bonjour. C'est Alex d'UNPRO. Comment puis-je vous aider?";
-      audioEngine.unlock();
-
       console.log("[ElevenLabs] Requesting microphone...");
       await navigator.mediaDevices.getUserMedia({ audio: true });
       console.log("[ElevenLabs] ✅ Microphone granted");
@@ -149,14 +146,21 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         signedUrl: data.signed_url,
       });
 
+      // Force French context — sendContextualUpdate injects context without triggering a visible response
       const conversationApi = conversation as any;
-      if (typeof conversationApi.sendUserMessage === "function") {
-        await conversationApi.sendUserMessage(
-          `Réponds uniquement en français québécois naturel. Commence maintenant par cette salutation exacte : \"${initialGreeting}\" Ensuite, attends la réponse de l'utilisateur.`
+      if (typeof conversationApi.sendContextualUpdate === "function") {
+        conversationApi.sendContextualUpdate(
+          "INSTRUCTION ABSOLUE : Tu dois TOUJOURS répondre en français québécois naturel. Ne parle JAMAIS en anglais. Commence par saluer l'utilisateur en français."
         );
-        console.log("[ElevenLabs] ✅ French-first greeting sent");
+        console.log("[ElevenLabs] ✅ French context injected via sendContextualUpdate");
+      } else if (typeof conversationApi.sendUserMessage === "function") {
+        // Fallback: send as user message
+        conversationApi.sendUserMessage(
+          "Parle-moi en français québécois s'il te plaît."
+        );
+        console.log("[ElevenLabs] ✅ French-first greeting sent via sendUserMessage");
       } else {
-        console.warn("[ElevenLabs] French-first greeting unavailable — sendUserMessage is not supported");
+        console.warn("[ElevenLabs] No method available to inject French context");
       }
     } catch (err: unknown) {
       console.error("[ElevenLabs] Failed to start:", err);
