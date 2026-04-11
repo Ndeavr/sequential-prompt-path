@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Plus, Play, Pause, Search, Filter, Target, MapPin } from "lucide-react";
+import { ArrowLeft, Plus, Play, Pause, Search, Filter, Target, MapPin, Timer } from "lucide-react";
 import { toast } from "sonner";
+import PanelCampaignScheduling from "@/components/outbound/PanelCampaignScheduling";
+import PanelSendLogs from "@/components/outbound/PanelSendLogs";
 
 const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -27,6 +29,7 @@ export default function PageOutboundCampaigns() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
 
   useEffect(() => { load(); }, []);
 
@@ -141,6 +144,9 @@ export default function PageOutboundCampaigns() {
                                 {c.campaign_status === "active" ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
                               </Button>
                             )}
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedCampaign(selectedCampaign?.id === c.id ? null : c)}>
+                              <Timer className="h-3.5 w-3.5" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -152,6 +158,14 @@ export default function PageOutboundCampaigns() {
           )}
         </CardContent>
       </Card>
+
+      {/* Scheduling Panel */}
+      {selectedCampaign && (
+        <div className="grid md:grid-cols-2 gap-4">
+          <PanelCampaignScheduling campaign={selectedCampaign} onUpdate={load} />
+          <PanelSendLogs campaignId={selectedCampaign.id} />
+        </div>
+      )}
 
       {/* City × Specialty Grid */}
       <Card>
@@ -169,13 +183,23 @@ export default function PageOutboundCampaigns() {
                     </Badge>
                   </div>
                   <p className="text-sm font-semibold">{c.specialty}</p>
-                  <p className="text-xs text-muted-foreground">{count} leads · {c.daily_send_limit}/jour</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">{count} leads · {c.daily_send_limit}/jour</p>
+                    {c.auto_send_enabled && (
+                      <Badge variant="outline" className="text-[9px] bg-emerald-500/20 text-emerald-400">
+                        Auto
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
         </CardContent>
       </Card>
+
+      {/* Global Send Logs */}
+      <PanelSendLogs />
     </div>
   );
 }

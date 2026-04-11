@@ -29409,6 +29409,7 @@ export type Database = {
       }
       outbound_campaigns: {
         Row: {
+          auto_send_enabled: boolean | null
           campaign_name: string
           campaign_status: string | null
           campaign_type: string | null
@@ -29420,12 +29421,17 @@ export type Database = {
           mailbox_id: string | null
           notes: string | null
           priority_index: number | null
+          send_days: Json | null
+          send_timezone: string | null
+          send_window_end: string | null
+          send_window_start: string | null
           sequence_id: string | null
           specialty: string | null
           start_date: string | null
           updated_at: string | null
         }
         Insert: {
+          auto_send_enabled?: boolean | null
           campaign_name: string
           campaign_status?: string | null
           campaign_type?: string | null
@@ -29437,12 +29443,17 @@ export type Database = {
           mailbox_id?: string | null
           notes?: string | null
           priority_index?: number | null
+          send_days?: Json | null
+          send_timezone?: string | null
+          send_window_end?: string | null
+          send_window_start?: string | null
           sequence_id?: string | null
           specialty?: string | null
           start_date?: string | null
           updated_at?: string | null
         }
         Update: {
+          auto_send_enabled?: boolean | null
           campaign_name?: string
           campaign_status?: string | null
           campaign_type?: string | null
@@ -29454,6 +29465,10 @@ export type Database = {
           mailbox_id?: string | null
           notes?: string | null
           priority_index?: number | null
+          send_days?: Json | null
+          send_timezone?: string | null
+          send_window_end?: string | null
+          send_window_start?: string | null
           sequence_id?: string | null
           specialty?: string | null
           start_date?: string | null
@@ -30208,6 +30223,56 @@ export type Database = {
             columns: ["message_id"]
             isOneToOne: false
             referencedRelation: "outbound_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_send_logs: {
+        Row: {
+          campaign_id: string | null
+          created_at: string | null
+          emails_failed: number | null
+          emails_sent: number | null
+          emails_skipped: number | null
+          error_message: string | null
+          id: string
+          leads_processed: number | null
+          run_at: string
+          run_duration_ms: number | null
+          run_status: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string | null
+          emails_failed?: number | null
+          emails_sent?: number | null
+          emails_skipped?: number | null
+          error_message?: string | null
+          id?: string
+          leads_processed?: number | null
+          run_at?: string
+          run_duration_ms?: number | null
+          run_status?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string | null
+          emails_failed?: number | null
+          emails_sent?: number | null
+          emails_skipped?: number | null
+          error_message?: string | null
+          id?: string
+          leads_processed?: number | null
+          run_at?: string
+          run_duration_ms?: number | null
+          run_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_send_logs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_campaigns"
             referencedColumns: ["id"]
           },
         ]
