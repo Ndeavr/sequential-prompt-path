@@ -107,7 +107,20 @@ const useProspectionLeads = (filter: string) =>
     },
   });
 
-/* ─── Page ─── */
+const useAgentRules = () =>
+  useQuery({
+    queryKey: ["prospection-agent-rules"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("prospection_agent_rules")
+        .select("*")
+        .order("priority", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+
 const PageProspectionDashboard = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
