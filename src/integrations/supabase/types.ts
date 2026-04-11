@@ -14608,12 +14608,16 @@ export type Database = {
           payment_status: string
           phone: string | null
           postal_code: string | null
+          priority_level: string | null
+          priority_score: number | null
           profile_status: string
           province: string | null
           role_title: string | null
           scanner_session_id: string | null
           score_status: string
+          source_job_id: string | null
           source_label: string | null
+          source_query_id: string | null
           source_type: string
           street_address: string | null
           updated_at: string
@@ -14646,12 +14650,16 @@ export type Database = {
           payment_status?: string
           phone?: string | null
           postal_code?: string | null
+          priority_level?: string | null
+          priority_score?: number | null
           profile_status?: string
           province?: string | null
           role_title?: string | null
           scanner_session_id?: string | null
           score_status?: string
+          source_job_id?: string | null
           source_label?: string | null
+          source_query_id?: string | null
           source_type?: string
           street_address?: string | null
           updated_at?: string
@@ -14684,12 +14692,16 @@ export type Database = {
           payment_status?: string
           phone?: string | null
           postal_code?: string | null
+          priority_level?: string | null
+          priority_score?: number | null
           profile_status?: string
           province?: string | null
           role_title?: string | null
           scanner_session_id?: string | null
           score_status?: string
+          source_job_id?: string | null
           source_label?: string | null
+          source_query_id?: string | null
           source_type?: string
           street_address?: string | null
           updated_at?: string
@@ -14729,6 +14741,20 @@ export type Database = {
             columns: ["scanner_session_id"]
             isOneToOne: false
             referencedRelation: "scanner_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_source_job_id_fkey"
+            columns: ["source_job_id"]
+            isOneToOne: false
+            referencedRelation: "prospection_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_source_query_id_fkey"
+            columns: ["source_query_id"]
+            isOneToOne: false
+            referencedRelation: "prospection_queries"
             referencedColumns: ["id"]
           },
         ]
@@ -25219,6 +25245,117 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_deduplication_index: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          duplicate_group_id: string | null
+          fingerprint_hash: string
+          id: string
+          lead_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          duplicate_group_id?: string | null
+          fingerprint_hash: string
+          id?: string
+          lead_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          duplicate_group_id?: string | null
+          fingerprint_hash?: string
+          id?: string
+          lead_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_deduplication_index_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_enrichment_data: {
+        Row: {
+          created_at: string
+          data_confidence_score: number | null
+          geo_detected_json: Json | null
+          id: string
+          lead_id: string
+          review_analysis_json: Json | null
+          services_detected_json: Json | null
+          website_analysis_json: Json | null
+        }
+        Insert: {
+          created_at?: string
+          data_confidence_score?: number | null
+          geo_detected_json?: Json | null
+          id?: string
+          lead_id: string
+          review_analysis_json?: Json | null
+          services_detected_json?: Json | null
+          website_analysis_json?: Json | null
+        }
+        Update: {
+          created_at?: string
+          data_confidence_score?: number | null
+          geo_detected_json?: Json | null
+          id?: string
+          lead_id?: string
+          review_analysis_json?: Json | null
+          services_detected_json?: Json | null
+          website_analysis_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_enrichment_data_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_priority_scores: {
+        Row: {
+          created_at: string
+          id: string
+          lead_id: string
+          priority_level: string | null
+          priority_score: number | null
+          scoring_breakdown_json: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lead_id: string
+          priority_level?: string | null
+          priority_score?: number | null
+          scoring_breakdown_json?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lead_id?: string
+          priority_level?: string | null
+          priority_score?: number | null
+          scoring_breakdown_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_priority_scores_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_qualifications: {
         Row: {
           appointment_id: string
@@ -25312,6 +25449,41 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      lead_source_links: {
+        Row: {
+          created_at: string
+          id: string
+          lead_id: string
+          source_type: string
+          source_url: string | null
+          verified: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lead_id: string
+          source_type: string
+          source_url?: string | null
+          verified?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lead_id?: string
+          source_type?: string
+          source_url?: string | null
+          verified?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_source_links_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -35330,6 +35502,167 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      prospection_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by_user_id: string | null
+          id: string
+          job_name: string
+          job_status: string
+          keywords_json: Json | null
+          languages_json: Json | null
+          leads_generated_count: number | null
+          radius_km: number | null
+          started_at: string | null
+          target_category: string | null
+          target_cities_json: Json | null
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          job_name: string
+          job_status?: string
+          keywords_json?: Json | null
+          languages_json?: Json | null
+          leads_generated_count?: number | null
+          radius_km?: number | null
+          started_at?: string | null
+          target_category?: string | null
+          target_cities_json?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          job_name?: string
+          job_status?: string
+          keywords_json?: Json | null
+          languages_json?: Json | null
+          leads_generated_count?: number | null
+          radius_km?: number | null
+          started_at?: string | null
+          target_category?: string | null
+          target_cities_json?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      prospection_queries: {
+        Row: {
+          created_at: string
+          executed_at: string | null
+          id: string
+          job_id: string
+          query_text: string
+          query_type: string | null
+          results_count: number | null
+          source: string | null
+        }
+        Insert: {
+          created_at?: string
+          executed_at?: string | null
+          id?: string
+          job_id: string
+          query_text: string
+          query_type?: string | null
+          results_count?: number | null
+          source?: string | null
+        }
+        Update: {
+          created_at?: string
+          executed_at?: string | null
+          id?: string
+          job_id?: string
+          query_text?: string
+          query_type?: string | null
+          results_count?: number | null
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospection_queries_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "prospection_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospection_results_raw: {
+        Row: {
+          created_at: string
+          extracted_flag: boolean | null
+          id: string
+          query_id: string
+          raw_payload_json: Json | null
+          source_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          extracted_flag?: boolean | null
+          id?: string
+          query_id: string
+          raw_payload_json?: Json | null
+          source_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          extracted_flag?: boolean | null
+          id?: string
+          query_id?: string
+          raw_payload_json?: Json | null
+          source_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospection_results_raw_query_id_fkey"
+            columns: ["query_id"]
+            isOneToOne: false
+            referencedRelation: "prospection_queries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospection_results_raw_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "prospection_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospection_sources: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          id: string
+          reliability_score: number | null
+          source_name: string
+          source_type: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          id?: string
+          reliability_score?: number | null
+          source_name: string
+          source_type?: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          id?: string
+          reliability_score?: number | null
+          source_name?: string
+          source_type?: string
+        }
+        Relationships: []
       }
       prospects: {
         Row: {
