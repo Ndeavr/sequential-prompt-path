@@ -2219,6 +2219,44 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_decision_logs: {
+        Row: {
+          created_at: string
+          decision_type: string
+          id: string
+          input_snapshot_json: Json | null
+          output_snapshot_json: Json | null
+          policy_version: string | null
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          decision_type: string
+          id?: string
+          input_snapshot_json?: Json | null
+          output_snapshot_json?: Json | null
+          policy_version?: string | null
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          decision_type?: string
+          id?: string
+          input_snapshot_json?: Json | null
+          output_snapshot_json?: Json | null
+          policy_version?: string | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_decision_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alex_detected_contexts: {
         Row: {
           confidence_score: number | null
@@ -2257,6 +2295,50 @@ export type Database = {
           suggested_intent?: string | null
         }
         Relationships: []
+      }
+      alex_detected_intents: {
+        Row: {
+          classifier_version: string | null
+          confidence_score: number
+          created_at: string
+          id: string
+          primary_intent: string
+          requires_clarification: boolean | null
+          secondary_intent: string | null
+          session_id: string
+          user_message: string | null
+        }
+        Insert: {
+          classifier_version?: string | null
+          confidence_score?: number
+          created_at?: string
+          id?: string
+          primary_intent: string
+          requires_clarification?: boolean | null
+          secondary_intent?: string | null
+          session_id: string
+          user_message?: string | null
+        }
+        Update: {
+          classifier_version?: string | null
+          confidence_score?: number
+          created_at?: string
+          id?: string
+          primary_intent?: string
+          requires_clarification?: boolean | null
+          secondary_intent?: string | null
+          session_id?: string
+          user_message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_detected_intents_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       alex_device_audio_capabilities: {
         Row: {
@@ -3011,6 +3093,44 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_learning_feedback: {
+        Row: {
+          created_at: string
+          feedback_note: string | null
+          feedback_type: string
+          id: string
+          resolved: boolean | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          feedback_note?: string | null
+          feedback_type: string
+          id?: string
+          resolved?: boolean | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          feedback_note?: string | null
+          feedback_type?: string
+          id?: string
+          resolved?: boolean | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_learning_feedback_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alex_learning_memory: {
         Row: {
           applied: boolean | null
@@ -3621,6 +3741,36 @@ export type Database = {
           },
         ]
       }
+      alex_profile_gaps: {
+        Row: {
+          created_at: string
+          gap_type: string
+          id: string
+          is_resolved: boolean | null
+          resolved_at: string | null
+          source: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          gap_type: string
+          id?: string
+          is_resolved?: boolean | null
+          resolved_at?: string | null
+          source?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          gap_type?: string
+          id?: string
+          is_resolved?: boolean | null
+          resolved_at?: string | null
+          source?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       alex_prompt_logs: {
         Row: {
           created_at: string
@@ -3836,6 +3986,30 @@ export type Database = {
           role_type?: string | null
           session_id?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      alex_response_policy_versions: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          policy_json: Json
+          version_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          policy_json?: Json
+          version_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          policy_json?: Json
+          version_name?: string
         }
         Relationships: []
       }
@@ -4351,22 +4525,70 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_session_memory: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          id: string
+          memory_key: string
+          memory_scope: string
+          memory_value_json: Json
+          session_id: string
+          updated_at: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          memory_key: string
+          memory_scope?: string
+          memory_value_json?: Json
+          session_id: string
+          updated_at?: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          memory_key?: string
+          memory_scope?: string
+          memory_value_json?: Json
+          session_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_session_memory_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alex_sessions: {
         Row: {
           auth_state: string
           booking_intent: boolean
+          context_json: Json | null
           created_at: string
+          current_route: string | null
+          current_stage: string | null
           current_step: string
           id: string
           intake_data: Json | null
           language: string
           last_intent: string | null
           no_result_state: boolean
+          primary_intent: string | null
           project_city: string | null
           project_summary: string | null
           project_type: string | null
           recommended_contractor_id: string | null
+          resolved_role: string | null
           role_detected: string
+          secondary_intent: string | null
+          session_health: string | null
           session_token: string
           session_type: string
           updated_at: string
@@ -4376,18 +4598,25 @@ export type Database = {
         Insert: {
           auth_state?: string
           booking_intent?: boolean
+          context_json?: Json | null
           created_at?: string
+          current_route?: string | null
+          current_stage?: string | null
           current_step?: string
           id?: string
           intake_data?: Json | null
           language?: string
           last_intent?: string | null
           no_result_state?: boolean
+          primary_intent?: string | null
           project_city?: string | null
           project_summary?: string | null
           project_type?: string | null
           recommended_contractor_id?: string | null
+          resolved_role?: string | null
           role_detected?: string
+          secondary_intent?: string | null
+          session_health?: string | null
           session_token: string
           session_type?: string
           updated_at?: string
@@ -4397,18 +4626,25 @@ export type Database = {
         Update: {
           auth_state?: string
           booking_intent?: boolean
+          context_json?: Json | null
           created_at?: string
+          current_route?: string | null
+          current_stage?: string | null
           current_step?: string
           id?: string
           intake_data?: Json | null
           language?: string
           last_intent?: string | null
           no_result_state?: boolean
+          primary_intent?: string | null
           project_city?: string | null
           project_summary?: string | null
           project_type?: string | null
           recommended_contractor_id?: string | null
+          resolved_role?: string | null
           role_detected?: string
+          secondary_intent?: string | null
+          session_health?: string | null
           session_token?: string
           session_type?: string
           updated_at?: string
