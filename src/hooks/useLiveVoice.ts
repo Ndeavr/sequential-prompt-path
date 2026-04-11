@@ -120,6 +120,15 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
 
       await conversation.startSession({
         signedUrl: data.signed_url,
+        overrides: {
+          agent: {
+            prompt: {
+              prompt: ALEX_FRENCH_SYSTEM_PROMPT,
+            },
+            firstMessage: "Bonjour. Je suis Alex d'UnPRO. Qu'est-ce que je peux faire pour vous?",
+            language: "fr",
+          },
+        },
       });
 
     } catch (err: unknown) {
