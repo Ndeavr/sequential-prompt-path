@@ -557,10 +557,7 @@ const PageProspectionDashboard = () => {
           </div>
 
           {(!agentRules || agentRules.length === 0) && (
-            <EmptyState
-              title="Aucune règle d'agent"
-              description="Les règles seront créées automatiquement."
-            />
+            <EmptyState message="Aucune règle d'agent configurée." />
           )}
         </TabsContent>
       </Tabs>
