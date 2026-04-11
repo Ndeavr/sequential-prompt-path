@@ -37,6 +37,8 @@ const PreLoginRolePage = lazy(() => import("@/pages/PreLoginRolePage"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const PageManifesto = lazy(() => import("@/pages/PageManifesto"));
 const PageUnproFAQ25 = lazy(() => import("@/pages/PageUnproFAQ25"));
+const PageAlexPromptRulesAdmin = lazy(() => import("@/pages/PageAlexPromptRulesAdmin"));
+const PageAlexConversationDebugAdmin = lazy(() => import("@/pages/PageAlexConversationDebugAdmin"));
 
 // Public
 const PageAdLandingAipp = lazy(() => import("@/pages/ad-landing/PageAdLandingAipp"));
