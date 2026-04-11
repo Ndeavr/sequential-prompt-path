@@ -1,31 +1,51 @@
 
 
 ## Problem
-The `ALEX_VOICE_SYSTEM_PROMPT` in `supabase/functions/_shared/alex-french-voice.ts` (lines 614-779) is 100% English-only. It literally says "ALWAYS speak English" and all example phrases, flows, and micro-phrases are in English. This is why Alex keeps speaking English.
+
+Alex connects to ElevenLabs then **immediately disconnects** (within ~50ms). This happens repeatedly in a loop. Two root causes:
+
+1. **Overrides rejection**: The `startSession` call passes `overrides` (prompt, firstMessage, language) but these must be **explicitly enabled in the ElevenLabs agent dashboard**. If not enabled, ElevenLabs silently rejects the session → instant disconnect.
+
+2. **Reconnect loop**: After disconnect, `releaseLock()` is called → the autostart's `sessionStorage` guard should prevent re-fire, but the component may be re-mounting or the lock state change triggers a cascade → new connection attempt → same instant disconnect → loop.
 
 ## Solution
-Rewrite the entire system prompt to be **French-first (québécois)**, keeping the same structure and business logic but:
 
-1. **Language section**: Default = français québécois naturel. Switch to English ONLY if user speaks English for 2+ consecutive messages.
-2. **Identity**: Masculine, québécois, field experience — all self-references in French.
-3. **All example phrases in French**: Welcome, clarification, taking charge, result, close, no-match, objection handling, micro-phrases.
-4. **Conversation guardrails in French**: Redirect phrase becomes "Bonne question, mais ma spécialité c'est les services résidentiels. Comment je peux vous aider avec votre propriété?"
-5. **Business rules remain identical** — just expressed in French.
-6. **Redeploy** the `elevenlabs-conversation-token` edge function.
+### 1. Remove overrides from startSession (primary fix)
 
-### Key changes in the prompt:
+In `src/hooks/useLiveVoice.ts`, remove the `overrides` block from `conversation.startSession()`. The French prompt must be configured directly on the ElevenLabs agent (agent ID `agent_5901kmg4ra2eee5bbp9r7ew5jcs7`) via their dashboard — not passed as client-side overrides.
 
-| Current (English) | New (French) |
-|---|---|
-| "ALWAYS speak English" | "TOUJOURS parler en français québécois naturel" |
-| "Hi. I'm Alex from UnPRO" | "Bonjour. C'est Alex d'UNPRO" |
-| "I'm on it." | "Je m'en occupe." |
-| "Shall we book it?" | "On le réserve?" |
-| "I don't have a verified contractor..." | "J'ai pas encore un entrepreneur validé..." |
+```typescript
+// BEFORE (broken)
+await conversation.startSession({
+  signedUrl: data.signed_url,
+  overrides: {
+    agent: {
+      prompt: { prompt: ALEX_FRENCH_SYSTEM_PROMPT },
+      firstMessage: "Bonjour...",
+      language: "fr",
+    },
+  },
+});
+
+// AFTER (working)
+await conversation.startSession({
+  signedUrl: data.signed_url,
+});
+```
+
+### 2. Add reconnect guard to prevent loop
+
+In `useLiveVoice.ts`, add a cooldown ref that blocks reconnection within 5 seconds of a disconnect, preventing the rapid connect/disconnect loop.
+
+### 3. Add error containment on disconnect
+
+Wrap `onDisconnect` to detect instant disconnects (connected < 2 seconds) and flag them as a connection error instead of silently retrying.
+
+### 4. Redeploy edge function
+
+Redeploy `elevenlabs-conversation-token` to ensure consistency.
 
 ### Files modified
-- `supabase/functions/_shared/alex-french-voice.ts` — lines 614-779 (system prompt only)
-
-### Deployment
-- Redeploy `elevenlabs-conversation-token` edge function
+- `src/hooks/useLiveVoice.ts` — remove overrides, add cooldown guard
+- `src/hooks/useAlexHomeAutostart.ts` — no changes needed (guards are correct)
 
