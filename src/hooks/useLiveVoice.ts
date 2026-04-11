@@ -147,9 +147,14 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       }
       console.log("[ElevenLabs] ✅ Got signed URL");
 
-      // Connect WITHOUT overrides — prompt is configured on ElevenLabs dashboard
+      // Connect with language override only — French default
       await conversation.startSession({
         signedUrl: data.signed_url,
+        overrides: {
+          agent: {
+            language: "fr",
+          },
+        },
       });
 
     } catch (err: unknown) {
