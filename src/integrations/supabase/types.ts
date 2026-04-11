@@ -31655,6 +31655,44 @@ export type Database = {
           },
         ]
       }
+      paywall_events: {
+        Row: {
+          converted: boolean | null
+          created_at: string | null
+          id: string
+          syndicate_id: string | null
+          trigger_context: Json | null
+          trigger_type: string
+          user_id: string | null
+        }
+        Insert: {
+          converted?: boolean | null
+          created_at?: string | null
+          id?: string
+          syndicate_id?: string | null
+          trigger_context?: Json | null
+          trigger_type: string
+          user_id?: string | null
+        }
+        Update: {
+          converted?: boolean | null
+          created_at?: string | null
+          id?: string
+          syndicate_id?: string | null
+          trigger_context?: Json | null
+          trigger_type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paywall_events_syndicate_id_fkey"
+            columns: ["syndicate_id"]
+            isOneToOne: false
+            referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       placement_assets: {
         Row: {
           asset_type: string
