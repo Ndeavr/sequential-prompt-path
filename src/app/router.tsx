@@ -39,6 +39,7 @@ const PageUnproFAQ25 = lazy(() => import("@/pages/PageUnproFAQ25"));
 const PageAdLandingAipp = lazy(() => import("@/pages/ad-landing/PageAdLandingAipp"));
 const PageBusinessImport = lazy(() => import("@/pages/business-import/PageBusinessImport"));
 const PageBusinessCardImport = lazy(() => import("@/pages/business-card/PageBusinessCardImport"));
+const PageContractorLeads = lazy(() => import("@/pages/business-card/PageContractorLeads"));
 const PageAlexGoalsStrategy = lazy(() => import("@/pages/goals/PageAlexGoalsStrategy"));
 const PageCheckoutStripe = lazy(() => import("@/pages/checkout/PageCheckoutStripe"));
 const PageCheckoutSuccess = lazy(() => import("@/pages/checkout/PageCheckoutSuccess"));
@@ -435,6 +436,7 @@ export const AppRouter = () => (
         <Route path="/aipp-check" element={<PageAdLandingAipp />} />
         <Route path="/business-import" element={<PageBusinessImport />} />
         <Route path="/business-card-import" element={<PageBusinessCardImport />} />
+        <Route path="/leads" element={<PageContractorLeads />} />
         <Route path="/profile-completion" element={<PageBusinessImport />} />
         <Route path="/search" element={<Search />} />
         <Route path="/contractors/:id" element={<ContractorProfile />} />
