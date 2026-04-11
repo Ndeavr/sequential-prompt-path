@@ -387,6 +387,11 @@ const PageOutboundSuppressionCenter = lazy(() => import("@/pages/admin/outbound/
 const PageOutboundLandingPages = lazy(() => import("@/pages/admin/outbound/PageOutboundLandingPages"));
 const PageAdminExecutionControl = lazy(() => import("@/pages/admin/PageAdminExecutionControl"));
 const PageAdminDominanceControl = lazy(() => import("@/pages/admin/PageAdminDominanceControl"));
+const PageShareImageDashboard = lazy(() => import("@/pages/admin/share-images/PageShareImageDashboard"));
+const PageShareImageGenerate = lazy(() => import("@/pages/admin/share-images/PageShareImageGenerate"));
+const PageShareImageTemplates = lazy(() => import("@/pages/admin/share-images/PageShareImageTemplates"));
+const PageShareImageHistory = lazy(() => import("@/pages/admin/share-images/PageShareImageHistory"));
+const PageShareImagePreview = lazy(() => import("@/pages/admin/share-images/PageShareImagePreview"));
 const PageServiceEntityLanding = lazy(() => import("@/pages/seo/PageServiceEntityLanding"));
 const MesProprietesPage = lazy(() => import("@/pages/MesProprietesPage"));
 const AnalyserSoumissionsPage = lazy(() => import("@/pages/AnalyserSoumissionsPage"));
