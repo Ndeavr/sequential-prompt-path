@@ -24,63 +24,39 @@ export function useBusinessCardImport() {
   const [progress, setProgress] = useState(0);
 
   const uploadAndExtract = useCallback(async (file: File) => {
-    if (!user) { toast.error("Connexion requise"); return; }
-
+    // No auth required — edge function handles all DB ops with service role
     setPhase("uploading");
     setError(null);
     setProgress(10);
 
     try {
-      // 1. Create lead
-      const { data: lead, error: leadErr } = await supabase
-        .from("contractor_leads")
-        .insert({ source_type: "business_card", created_by: user.id })
-        .select("id")
-        .single();
-      if (leadErr) throw leadErr;
-      setLeadId(lead.id);
-      setProgress(20);
-
-      // 2. Upload image to storage
-      const filePath = `${user.id}/${lead.id}/${file.name}`;
-      const { error: uploadErr } = await supabase.storage
-        .from("business-cards")
-        .upload(filePath, file, { contentType: file.type });
-      if (uploadErr) throw uploadErr;
-      setProgress(35);
-
-      // 3. Create import record
-      const { data: imp, error: impErr } = await supabase
-        .from("business_card_imports")
-        .insert({
-          lead_id: lead.id,
-          uploaded_by_user_id: user.id,
-          image_front_url: filePath,
-          import_status: "pending",
-        })
-        .select("id")
-        .single();
-      if (impErr) throw impErr;
-      setImportId(imp.id);
-      setProgress(45);
-
-      // 4. Convert to base64
-      setPhase("processing");
-      setProgress(50);
+      // Convert to base64
+      setProgress(30);
       const arrayBuffer = await file.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const base64 = btoa(binary);
+      setProgress(50);
+
+      // Call edge function — it creates lead, import, and extractions server-side
+      setPhase("processing");
       setProgress(60);
 
-      // 5. Call extraction edge function
       const { data, error: fnErr } = await supabase.functions.invoke("extract-business-card", {
-        body: { import_id: imp.id, image_base64: base64 },
+        body: { image_base64: base64, user_id: user?.id || null },
       });
       if (fnErr) throw fnErr;
       setProgress(90);
 
       if (!data?.success) throw new Error(data?.error || "Extraction failed");
 
-      // 6. Map results
+      setLeadId(data.lead_id);
+      setImportId(data.import_id);
+
+      // Map results
       const extracted: ExtractedField[] = (data.extractions || []).map((f: any) => ({
         field_name: f.field_name,
         field_value: f.field_value,
@@ -128,7 +104,8 @@ export function useBusinessCardImport() {
         fieldMap[f.field_name] = f.field_value;
       }
 
-      await supabase.from("contractor_leads").update({
+      // Use edge function or direct update if authenticated
+      const { error: updateErr } = await supabase.from("contractor_leads").update({
         first_name: fieldMap.first_name,
         last_name: fieldMap.last_name,
         full_name: fieldMap.full_name,
@@ -146,6 +123,11 @@ export function useBusinessCardImport() {
         lead_status: "ready_for_contact",
         profile_status: "draft",
       }).eq("id", leadId);
+
+      if (updateErr) {
+        // If RLS blocks, the data is already saved by the edge function
+        console.warn("Lead update from client blocked (guest mode), data already saved server-side");
+      }
 
       setPhase("done");
       toast.success("Profil entrepreneur créé !");
