@@ -390,6 +390,7 @@ const PageOutboundSuppressionCenter = lazy(() => import("@/pages/admin/outbound/
 const PageOutboundLandingPages = lazy(() => import("@/pages/admin/outbound/PageOutboundLandingPages"));
 const PageAdminExecutionControl = lazy(() => import("@/pages/admin/PageAdminExecutionControl"));
 const PageAdminDominanceControl = lazy(() => import("@/pages/admin/PageAdminDominanceControl"));
+const PageAlexVoiceDebugAdmin = lazy(() => import("@/pages/admin/PageAlexVoiceDebugAdmin"));
 const PageShareImageDashboard = lazy(() => import("@/pages/admin/share-images/PageShareImageDashboard"));
 const PageShareImageGenerate = lazy(() => import("@/pages/admin/share-images/PageShareImageGenerate"));
 const PageShareImageTemplates = lazy(() => import("@/pages/admin/share-images/PageShareImageTemplates"));
@@ -899,6 +900,7 @@ export const AppRouter = () => (
         <Route path="/admin/outbound/landing-pages" element={<ProtectedRoute requiredRole="admin"><PageOutboundLandingPages /></ProtectedRoute>} />
         <Route path="/admin/execution-control" element={<ProtectedRoute requiredRole="admin"><PageAdminExecutionControl /></ProtectedRoute>} />
         <Route path="/admin/dominance" element={<ProtectedRoute requiredRole="admin"><PageAdminDominanceControl /></ProtectedRoute>} />
+        <Route path="/admin/voice-debug" element={<ProtectedRoute requiredRole="admin"><PageAlexVoiceDebugAdmin /></ProtectedRoute>} />
         <Route path="/admin/share-images" element={<ProtectedRoute requiredRole="admin"><PageShareImageDashboard /></ProtectedRoute>} />
         <Route path="/admin/share-images/generate" element={<ProtectedRoute requiredRole="admin"><PageShareImageGenerate /></ProtectedRoute>} />
         <Route path="/admin/share-images/templates" element={<ProtectedRoute requiredRole="admin"><PageShareImageTemplates /></ProtectedRoute>} />
