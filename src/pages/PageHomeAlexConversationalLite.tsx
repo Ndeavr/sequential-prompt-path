@@ -38,6 +38,17 @@ import CardAlexBookingNextStep from "@/components/alex-conversation/CardAlexBook
 import WidgetUploadInline from "@/components/alex-conversation/WidgetUploadInline";
 import SheetEntrepreneurDetails from "@/components/alex-conversation/SheetEntrepreneurDetails";
 import SheetBookingSlots from "@/components/alex-conversation/SheetBookingSlots";
+// ── Orchestrator V1 inline cards ──
+import PanelAlexInlineFormRenderer from "@/components/alex-conversation/PanelAlexInlineFormRenderer";
+import PanelAlexContractorPicker from "@/components/alex-conversation/PanelAlexContractorPicker";
+import PanelAlexBookingScheduler from "@/components/alex-conversation/PanelAlexBookingScheduler";
+import PanelAlexCheckoutEmbedded from "@/components/alex-conversation/PanelAlexCheckoutEmbedded";
+import PanelAlexBeforeAfterStudio from "@/components/alex-conversation/PanelAlexBeforeAfterStudio";
+import PanelAlexInlineImageGallery from "@/components/alex-conversation/PanelAlexInlineImageGallery";
+import PanelAlexNextBestActionCard from "@/components/alex-conversation/PanelAlexNextBestActionCard";
+import PanelAlexLiveTaskStack from "@/components/alex-conversation/PanelAlexLiveTaskStack";
+import CardAlexAddressConfirmation from "@/components/alex-conversation/CardAlexAddressConfirmation";
+import PanelAlexFormAutoFillPreview from "@/components/alex-conversation/PanelAlexFormAutoFillPreview";
 import { MOCK_SLOTS, type MockContractor, type MockSlot } from "@/components/alex-conversation/types";
 import { toast } from "sonner";
 
