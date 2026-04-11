@@ -229,7 +229,7 @@ const PageAdminActivitiesSecondaryManager = () => {
     <AdminLayout>
       <PageHeader
         title="Services Secondaires"
-        subtitle="Services du quotidien haute fréquence — Extension viralité locale"
+        description="Services du quotidien haute fréquence — Extension viralité locale"
       />
 
       {/* KPIs */}
@@ -256,7 +256,7 @@ const PageAdminActivitiesSecondaryManager = () => {
 
         <TabsContent value="services" className="space-y-6">
           {grouped.length === 0 ? (
-            <EmptyState message="Aucun service secondaire trouvé" />
+            <EmptyState title="Aucun service secondaire trouvé" />
           ) : (
             grouped.map((g) => <CategorySection key={g.key} catKey={g.key} items={g.items} />)
           )}
