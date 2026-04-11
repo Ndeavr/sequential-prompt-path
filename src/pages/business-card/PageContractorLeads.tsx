@@ -28,7 +28,6 @@ interface ContractorLead {
   category_primary: string | null;
   lead_status: string;
   profile_status: string;
-  rbq_license: string | null;
   created_at: string;
 }
 
