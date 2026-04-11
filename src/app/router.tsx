@@ -895,6 +895,11 @@ export const AppRouter = () => (
         <Route path="/admin/outbound/landing-pages" element={<ProtectedRoute requiredRole="admin"><PageOutboundLandingPages /></ProtectedRoute>} />
         <Route path="/admin/execution-control" element={<ProtectedRoute requiredRole="admin"><PageAdminExecutionControl /></ProtectedRoute>} />
         <Route path="/admin/dominance" element={<ProtectedRoute requiredRole="admin"><PageAdminDominanceControl /></ProtectedRoute>} />
+        <Route path="/admin/share-images" element={<ProtectedRoute requiredRole="admin"><PageShareImageDashboard /></ProtectedRoute>} />
+        <Route path="/admin/share-images/generate" element={<ProtectedRoute requiredRole="admin"><PageShareImageGenerate /></ProtectedRoute>} />
+        <Route path="/admin/share-images/templates" element={<ProtectedRoute requiredRole="admin"><PageShareImageTemplates /></ProtectedRoute>} />
+        <Route path="/admin/share-images/history" element={<ProtectedRoute requiredRole="admin"><PageShareImageHistory /></ProtectedRoute>} />
+        <Route path="/admin/share-images/preview" element={<ProtectedRoute requiredRole="admin"><PageShareImagePreview /></ProtectedRoute>} />
         <Route path="/services/:entitySlug/:citySlug" element={<PageServiceEntityLanding />} />
         <Route path="/audit/:slug" element={<AuditLandingPage />} />
         <Route path="/articles/:slug" element={<SeoArticlePage />} />
