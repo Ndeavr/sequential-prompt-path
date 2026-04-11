@@ -80,6 +80,14 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        "section-glow": {
+          blue: "var(--section-glow-blue)",
+          purple: "var(--section-glow-purple)",
+          cyan: "var(--section-glow-cyan)",
+          green: "var(--section-glow-green)",
+          warm: "var(--section-glow-warm)",
+          neutral: "var(--section-glow-neutral)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
