@@ -42,6 +42,7 @@ const navItems = [
   { to: "/admin/predictive-market-board", label: "Centre Prédictif", icon: Zap },
   { to: "/admin/zone-value", label: "Zones & Exclusivité", icon: MapPin },
   { to: "/admin/coupons", label: "Coupons", icon: Tag },
+  { to: "/admin/prospection-engine", label: "Prospection Engine", icon: Rocket },
   { to: "/admin/uos", label: "UNPRO OS", icon: Sparkles },
 ];
 
