@@ -552,11 +552,11 @@ function getBootStepLabel(step: string): string {
 // ─── Boot Checklist ───
 function BootChecklist({ step }: { step: string }) {
   const steps = [
-    { key: "opening", label: "Ouverture de session" },
+    { key: "opening", label: "Démarrage" },
     { key: "stabilizing", label: "Préparation audio" },
-    { key: "connecting", label: "Connexion serveur vocal" },
-    { key: "connected", label: "Serveur connecté" },
-    { key: "waiting_audio", label: "Premier contact vocal" },
+    { key: "connecting", label: "Activation vocale" },
+    { key: "connected", label: "Moteur vocal prêt" },
+    { key: "waiting_audio", label: "Alex démarre sa salutation" },
   ];
 
   const stepOrder = ["init", "opening", "stabilizing", "connecting", "connected", "waiting_audio", "live"];
