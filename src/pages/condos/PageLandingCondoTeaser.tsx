@@ -17,7 +17,7 @@ import SectionCondoCompliancePreview from "@/components/condo-landing/SectionCon
 import SectionCondoTrustSignals from "@/components/condo-landing/SectionCondoTrustSignals";
 import SectionCondoFAQAEO from "@/components/condo-landing/SectionCondoFAQAEO";
 import SectionCondoCTAWaitlist from "@/components/condo-landing/SectionCondoCTAWaitlist";
-import SectionCondoLeadMagnet from "@/components/condo-landing/SectionCondoLeadMagnet";
+import SectionCondoDiagnosticCTA from "@/components/condo-landing/SectionCondoDiagnosticCTA";
 import SectionCondoSEOBody from "@/components/condo-landing/SectionCondoSEOBody";
 import SectionCondoInternalLinks from "@/components/condo-landing/SectionCondoInternalLinks";
 
@@ -86,7 +86,7 @@ export default function PageLandingCondoTeaser() {
         <SectionCondoRecordsChaos />
         <SectionCondoCompliancePreview />
         <SectionCondoTrustSignals />
-        <SectionCondoLeadMagnet />
+        <SectionCondoDiagnosticCTA />
         <SectionCondoFAQAEO />
         <div ref={waitlistRef}>
           <SectionCondoCTAWaitlist />

@@ -231,6 +231,7 @@ const BlogArticlePage = lazy(() => import("@/pages/blog/BlogArticlePage"));
 // Condos
 const CondoHomePage = lazy(() => import("@/pages/condos/CondoHomePage"));
 const PageLandingCondoTeaser = lazy(() => import("@/pages/condos/PageLandingCondoTeaser"));
+const PageDiagnosticCondoIA = lazy(() => import("@/pages/condos/PageDiagnosticCondoIA"));
 const CondoLoi16Page = lazy(() => import("@/pages/condos/CondoLoi16Page"));
 const CondoCarnetPage = lazy(() => import("@/pages/condos/CondoCarnetPage"));
 const CondoFondsPage = lazy(() => import("@/pages/condos/CondoFondsPage"));
@@ -922,6 +923,9 @@ export const AppRouter = () => (
         <Route path="/condos/attestation" element={<CondoAttestationPage />} />
         <Route path="/condos/tarifs" element={<CondoTarifsPage />} />
         <Route path="/condos/onboarding" element={<ProtectedRoute requiredRole="homeowner"><CondoOnboardingPage /></ProtectedRoute>} />
+
+        {/* Condos — Diagnostic (public, no auth) */}
+        <Route path="/condos/diagnostic" element={<PageDiagnosticCondoIA />} />
 
         {/* Condos — Authenticated Dashboard (multi-role) */}
         <Route path="/condos/dashboard" element={<ProtectedRoute requiredRole="homeowner"><CondoDashboardPage /></ProtectedRoute>} />
