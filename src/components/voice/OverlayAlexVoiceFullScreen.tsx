@@ -360,39 +360,49 @@ export default function OverlayAlexVoiceFullScreen() {
     getStore().closeVoiceSession("user_explicit_close");
   }, []);
 
+  // ─── HARD RESET RETRY (replaces old soft retry) ───
   const handleRetry = useCallback(async () => {
-    const s = getStore();
-    stop();
-    s.clearError();
-    s.transitionTo("opening_session", "retry");
+    console.log('[VoiceOverlay] 🔄 HARD RESET initiated');
+    
+    // Clear all local timers
+    if (firstAudioTimerRef.current) { clearTimeout(firstAudioTimerRef.current); firstAudioTimerRef.current = null; }
+    if (stabilizationTimerRef.current) { clearTimeout(stabilizationTimerRef.current); stabilizationTimerRef.current = null; }
+    if (heartbeatRef.current) { clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
+    
+    // Reset local refs
     hasConnectedRef.current = false;
     firstAudioReceivedRef.current = false;
-    if (firstAudioTimerRef.current) {
-      clearTimeout(firstAudioTimerRef.current);
-      firstAudioTimerRef.current = null;
-    }
-    setBootStep("connecting");
-    try {
-      s.transitionTo("stabilizing", "retry_stabilization");
-      const greeting = buildGreeting();
-      await start({ initialGreeting: greeting });
-      setBootStep("waiting_audio");
-      firstAudioTimerRef.current = setTimeout(() => {
-        const latest = getStore();
-        if (!firstAudioReceivedRef.current && latest.isOverlayOpen && ["stabilizing", "opening_session", "session_ready"].includes(latest.machineState)) {
-          latest.setError("no_first_audio", "Alex ne parle pas. Réessayez ou passez au chat.", true);
-        }
-      }, FIRST_AUDIO_TIMEOUT_MS);
-      stabilizationTimerRef.current = setTimeout(() => {
-        const latest = getStore();
-        if (firstAudioReceivedRef.current && latest.machineState === "stabilizing") {
-          latest.transitionTo("session_ready", "retry_stabilization_complete_after_audio");
-        }
-      }, STABILIZATION_MS);
-    } catch (err: any) {
-      getStore().setError("retry_failed", "Impossible de reconnecter. Passez au chat.", true);
-    }
-  }, [buildGreeting, start]);
+    bootInitiatedRef.current = false;
+    setTranscripts([]);
+    entryIdRef.current = 0;
+    lastAlexIdRef.current = null;
+    
+    await recovery.executeRecovery(
+      stop,
+      start,
+      buildGreeting,
+      // onRecovered
+      () => {
+        setBootStep("waiting_audio");
+        bootTimeRef.current = Date.now();
+        toast.success("Alex est reconnectée", { duration: 2000 });
+        
+        // Set first audio timeout for the new session
+        firstAudioTimerRef.current = setTimeout(() => {
+          const latest = getStore();
+          if (!firstAudioReceivedRef.current && latest.isOverlayOpen && 
+              ["stabilizing", "opening_session", "session_ready"].includes(latest.machineState)) {
+            latest.setError("no_first_audio", "Alex ne parle pas. Réessayez ou passez au chat.", true);
+          }
+        }, FIRST_AUDIO_TIMEOUT_MS);
+      },
+      // onFallbackChat
+      () => {
+        toast.error("Mode chat activé", { description: "La voix n'est pas disponible pour le moment.", duration: 3000 });
+        getStore().closeVoiceSession("recovery_fallback_chat");
+      },
+    );
+  }, [buildGreeting, start, stop, recovery]);
 
   const handleFallbackChat = useCallback(() => {
     getStore().closeVoiceSession("fallback_to_chat");
