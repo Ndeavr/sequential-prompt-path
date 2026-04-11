@@ -16,7 +16,7 @@ interface AlexVoiceContextType {
   isOpen: boolean;
   feature: string;
   voiceActive: boolean;
-  openAlex: (feature?: string) => void;
+  openAlex: (feature?: string, contextHint?: string) => void;
   closeAlex: () => void;
 }
 
@@ -33,8 +33,7 @@ export function AlexVoiceProvider({ children }: { children: ReactNode }) {
   const [feature, setFeature] = useState("general");
   const [voiceActive, setVoiceActive] = useState(false);
 
-  const openAlex = useCallback((feat = "general") => {
-    // Use the locked voice overlay instead of the old inline mode
+  const openAlex = useCallback((feat = "general", contextHint?: string) => {
     const lockedStore = useAlexVoiceLockedStore.getState();
     
     // If locked overlay is already open, don't interfere
@@ -46,15 +45,12 @@ export function AlexVoiceProvider({ children }: { children: ReactNode }) {
     // Kill ALL audio and voice sources before opening
     alexAudioChannel.hardStop();
     audioEngine.unlock();
-    // NOTE: Do NOT dispatch alex-voice-cleanup here — it causes the race condition
-    // that kills the session we're about to start
     
-    // Open the locked full-screen voice overlay
-    lockedStore.openVoiceSession(feat, "user_openAlex");
+    // Open the locked full-screen voice overlay (single instance)
+    lockedStore.openVoiceSession(feat, "user_openAlex", contextHint);
     
     setFeature(feat);
-    setIsOpen(true);
-    setVoiceActive(true);
+    // Do NOT set isOpen=true — only the locked overlay renders voice UI now
   }, []);
 
   const closeAlex = useCallback(() => {
