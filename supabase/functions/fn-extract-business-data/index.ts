@@ -48,35 +48,33 @@ Deno.serve(async (req) => {
 
     console.log(`Extracting business data from: ${url}`);
 
-    // Call Gemini via Lovable AI Gateway
-    const gatewayUrl = `https://ai-gateway.lovable.dev/v1/chat/completions`;
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+    // Call Gemini directly
+    const geminiKey = Deno.env.get("GEMINI_API_KEY");
     
-    if (!lovableApiKey) {
-      console.error("LOVABLE_API_KEY not available, using basic extraction");
-      // Fallback: basic regex extraction
+    if (!geminiKey) {
+      console.error("GEMINI_API_KEY not available, using basic extraction");
       return await basicExtraction(supabase, { url, title, markdown, job_id, query_id });
     }
 
-    const aiResp = await fetch(gatewayUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${lovableApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: GEMINI_PROMPT },
-          { role: "user", content: `URL: ${url}\nTitre: ${title}\n\nContenu:\n${markdown}` },
-        ],
-        temperature: 0.1,
-      }),
-    });
+    const aiResp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `${GEMINI_PROMPT}\n\nURL: ${url}\nTitre: ${title}\n\nContenu:\n${markdown}`,
+            }],
+          }],
+          generationConfig: { temperature: 0.1 },
+        }),
+      }
+    );
 
     if (!aiResp.ok) {
       const errText = await aiResp.text();
-      console.error("AI Gateway error:", errText);
+      console.error("Gemini API error:", errText);
       return await basicExtraction(supabase, { url, title, markdown, job_id, query_id });
     }
 
