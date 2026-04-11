@@ -126,8 +126,39 @@ const PageProspectionDashboard = () => {
   const { user } = useAuth();
   const { data: stats, isLoading: statsLoading } = useProspectionStats();
   const { data: jobs } = useProspectionJobs();
+  const { data: agentRules } = useAgentRules();
   const [priorityFilter, setPriorityFilter] = useState("all");
   const { data: leads, isLoading: leadsLoading } = useProspectionLeads(priorityFilter);
+
+  // Agent trigger
+  const triggerAgentMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("fn-prospection-agent");
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data: any) => {
+      toast.success(`Agent exécuté — ${data?.results?.length ?? 0} règles traitées`);
+      queryClient.invalidateQueries({ queryKey: ["prospection-agent-rules"] });
+      queryClient.invalidateQueries({ queryKey: ["prospection-engine-jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["prospection-engine-stats"] });
+    },
+    onError: (e) => toast.error("Erreur agent: " + e.message),
+  });
+
+  const toggleRuleMutation = useMutation({
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      const { error } = await supabase
+        .from("prospection_agent_rules")
+        .update({ is_active })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["prospection-agent-rules"] });
+      toast.success("Règle mise à jour");
+    },
+  });
 
   // Job creation state
   const [showCreate, setShowCreate] = useState(false);
