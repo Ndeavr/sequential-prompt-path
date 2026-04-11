@@ -6,6 +6,9 @@ import { ExtractedFact, computeFreshnessScore, classifyPersistence } from '@/ser
 
 const SESSION_MEMORY_KEY = 'unpro_memory_session_id';
 
+// Helper to bypass deep type inference on new tables not yet in generated types
+const db = () => supabase as any;
+
 function getOrCreateSessionMemoryId(): string {
   let id = sessionStorage.getItem(SESSION_MEMORY_KEY);
   if (!id) {
