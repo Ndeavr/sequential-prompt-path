@@ -41154,6 +41154,207 @@ export type Database = {
         }
         Relationships: []
       }
+      share_image_assets: {
+        Row: {
+          category: string | null
+          created_at: string
+          focal_point: string | null
+          id: string
+          is_active: boolean
+          type: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          focal_point?: string | null
+          id?: string
+          is_active?: boolean
+          type?: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          focal_point?: string | null
+          id?: string
+          is_active?: boolean
+          type?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      share_image_generations: {
+        Row: {
+          city: string | null
+          contractor_name: string | null
+          created_at: string
+          generated_image_url: string | null
+          generation_time_ms: number | null
+          height: number
+          id: string
+          intent: string | null
+          metadata_json: Json | null
+          persona: string | null
+          service: string | null
+          share_link_id: string | null
+          template_id: string | null
+          variant_id: string | null
+          width: number
+        }
+        Insert: {
+          city?: string | null
+          contractor_name?: string | null
+          created_at?: string
+          generated_image_url?: string | null
+          generation_time_ms?: number | null
+          height?: number
+          id?: string
+          intent?: string | null
+          metadata_json?: Json | null
+          persona?: string | null
+          service?: string | null
+          share_link_id?: string | null
+          template_id?: string | null
+          variant_id?: string | null
+          width?: number
+        }
+        Update: {
+          city?: string | null
+          contractor_name?: string | null
+          created_at?: string
+          generated_image_url?: string | null
+          generation_time_ms?: number | null
+          height?: number
+          id?: string
+          intent?: string | null
+          metadata_json?: Json | null
+          persona?: string | null
+          service?: string | null
+          share_link_id?: string | null
+          template_id?: string | null
+          variant_id?: string | null
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "share_image_generations_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "share_image_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "share_image_generations_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "share_image_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      share_image_templates: {
+        Row: {
+          background_type: string
+          brand_rules_json: Json
+          created_at: string
+          font_style: string
+          id: string
+          image_rules_json: Json
+          intent: string
+          is_active: boolean
+          layout_type: string
+          name: string
+          text_rules_json: Json
+          updated_at: string
+        }
+        Insert: {
+          background_type?: string
+          brand_rules_json?: Json
+          created_at?: string
+          font_style?: string
+          id?: string
+          image_rules_json?: Json
+          intent?: string
+          is_active?: boolean
+          layout_type?: string
+          name: string
+          text_rules_json?: Json
+          updated_at?: string
+        }
+        Update: {
+          background_type?: string
+          brand_rules_json?: Json
+          created_at?: string
+          font_style?: string
+          id?: string
+          image_rules_json?: Json
+          intent?: string
+          is_active?: boolean
+          layout_type?: string
+          name?: string
+          text_rules_json?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      share_image_variants: {
+        Row: {
+          created_at: string
+          id: string
+          image_asset_id: string | null
+          is_active: boolean
+          performance_score: number | null
+          subtitle_text: string | null
+          template_id: string
+          title_text: string
+          updated_at: string
+          variant_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_asset_id?: string | null
+          is_active?: boolean
+          performance_score?: number | null
+          subtitle_text?: string | null
+          template_id: string
+          title_text: string
+          updated_at?: string
+          variant_name?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_asset_id?: string | null
+          is_active?: boolean
+          performance_score?: number | null
+          subtitle_text?: string | null
+          template_id?: string
+          title_text?: string
+          updated_at?: string
+          variant_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "share_image_variants_image_asset_id_fkey"
+            columns: ["image_asset_id"]
+            isOneToOne: false
+            referencedRelation: "share_image_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "share_image_variants_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "share_image_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       share_link_events: {
         Row: {
           created_at: string
