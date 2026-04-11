@@ -1,3 +1,7 @@
+/**
+ * UNPRO — useBusinessCardImport hook (v2)
+ * Supports multi-role scanner sessions with attribution tracking.
+ */
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,6 +17,8 @@ export interface ExtractedField {
 
 export type ImportPhase = "idle" | "uploading" | "processing" | "extracted" | "reviewing" | "creating_lead" | "done" | "error";
 
+export type ScannerModeCode = "admin_assist" | "field_rep_activation" | "affiliate_referral_capture" | "contractor_self_or_team_capture" | null;
+
 export function useBusinessCardImport() {
   const { user } = useAuth();
   const [phase, setPhase] = useState<ImportPhase>("idle");
@@ -20,17 +26,39 @@ export function useBusinessCardImport() {
   const [globalConfidence, setGlobalConfidence] = useState<number>(0);
   const [importId, setImportId] = useState<string | null>(null);
   const [leadId, setLeadId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
 
+  const startSession = useCallback(async (modeCode: ScannerModeCode, roleCode: string) => {
+    if (!user?.id || !modeCode) return null;
+    try {
+      const { data, error: err } = await supabase
+        .from("scanner_sessions")
+        .insert({
+          scanned_by_user_id: user.id,
+          active_role_code: roleCode,
+          session_mode_code: modeCode,
+          session_status: "started",
+          attribution_status: "pending",
+        })
+        .select("id")
+        .single();
+      if (err) throw err;
+      setSessionId(data.id);
+      return data.id;
+    } catch (e: any) {
+      console.warn("Session creation failed:", e.message);
+      return null;
+    }
+  }, [user]);
+
   const uploadAndExtract = useCallback(async (file: File) => {
-    // No auth required — edge function handles all DB ops with service role
     setPhase("uploading");
     setError(null);
     setProgress(10);
 
     try {
-      // Convert to base64
       setProgress(30);
       const arrayBuffer = await file.arrayBuffer();
       const bytes = new Uint8Array(arrayBuffer);
@@ -41,7 +69,6 @@ export function useBusinessCardImport() {
       const base64 = btoa(binary);
       setProgress(50);
 
-      // Call edge function — it creates lead, import, and extractions server-side
       setPhase("processing");
       setProgress(60);
 
@@ -56,7 +83,19 @@ export function useBusinessCardImport() {
       setLeadId(data.lead_id);
       setImportId(data.import_id);
 
-      // Map results
+      // Link session to import/lead if session exists
+      if (sessionId && data.import_id) {
+        supabase
+          .from("scanner_sessions")
+          .update({
+            business_card_import_id: data.import_id,
+            contractor_lead_id: data.lead_id,
+            session_status: "extracted",
+          })
+          .eq("id", sessionId)
+          .then(() => {});
+      }
+
       const extracted: ExtractedField[] = (data.extractions || []).map((f: any) => ({
         field_name: f.field_name,
         field_value: f.field_value,
@@ -76,7 +115,7 @@ export function useBusinessCardImport() {
       setPhase("error");
       toast.error("Erreur lors de l'extraction");
     }
-  }, [user]);
+  }, [user, sessionId]);
 
   const updateField = useCallback((fieldName: string, newValue: string) => {
     setFields((prev) =>
@@ -104,7 +143,6 @@ export function useBusinessCardImport() {
         fieldMap[f.field_name] = f.field_value;
       }
 
-      // Use edge function or direct update if authenticated
       const { error: updateErr } = await supabase.from("contractor_leads").update({
         first_name: fieldMap.first_name,
         last_name: fieldMap.last_name,
@@ -125,8 +163,16 @@ export function useBusinessCardImport() {
       }).eq("id", leadId);
 
       if (updateErr) {
-        // If RLS blocks, the data is already saved by the edge function
         console.warn("Lead update from client blocked (guest mode), data already saved server-side");
+      }
+
+      // Complete session
+      if (sessionId) {
+        supabase
+          .from("scanner_sessions")
+          .update({ session_status: "completed", completed_at: new Date().toISOString() })
+          .eq("id", sessionId)
+          .then(() => {});
       }
 
       setPhase("done");
@@ -135,7 +181,27 @@ export function useBusinessCardImport() {
       setError(e.message);
       setPhase("error");
     }
-  }, [leadId, fields]);
+  }, [leadId, fields, sessionId]);
+
+  const createAttribution = useCallback(async (
+    attributionType: string,
+    attributedUserId?: string,
+    sourceRoleCode?: string,
+  ) => {
+    if (!sessionId) return;
+    try {
+      await supabase.from("scanner_session_attributions").insert({
+        scanner_session_id: sessionId,
+        attribution_type: attributionType,
+        attributed_user_id: attributedUserId || user?.id || null,
+        source_role_code: sourceRoleCode || "unknown",
+        confidence_score: 100,
+        resolution_status: "auto_assigned",
+      });
+    } catch (e: any) {
+      console.warn("Attribution creation failed:", e.message);
+    }
+  }, [sessionId, user]);
 
   const reset = useCallback(() => {
     setPhase("idle");
@@ -143,12 +209,14 @@ export function useBusinessCardImport() {
     setGlobalConfidence(0);
     setImportId(null);
     setLeadId(null);
+    setSessionId(null);
     setError(null);
     setProgress(0);
   }, []);
 
   return {
-    phase, fields, globalConfidence, importId, leadId, error, progress,
+    phase, fields, globalConfidence, importId, leadId, sessionId, error, progress,
     uploadAndExtract, updateField, verifyField, createLeadFromExtraction, reset,
+    startSession, createAttribution,
   };
 }

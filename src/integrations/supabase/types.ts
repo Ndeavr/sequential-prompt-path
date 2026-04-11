@@ -14584,6 +14584,8 @@ export type Database = {
         Row: {
           activation_status: string
           assigned_admin_id: string | null
+          attributed_user_id: string | null
+          attribution_type: string | null
           category_primary: string | null
           category_secondary: string | null
           city: string | null
@@ -14591,6 +14593,7 @@ export type Database = {
           contractor_id: string | null
           created_at: string
           created_by: string | null
+          created_by_role_code: string | null
           email: string | null
           enrichment_status: string
           first_name: string | null
@@ -14608,6 +14611,7 @@ export type Database = {
           profile_status: string
           province: string | null
           role_title: string | null
+          scanner_session_id: string | null
           score_status: string
           source_label: string | null
           source_type: string
@@ -14618,6 +14622,8 @@ export type Database = {
         Insert: {
           activation_status?: string
           assigned_admin_id?: string | null
+          attributed_user_id?: string | null
+          attribution_type?: string | null
           category_primary?: string | null
           category_secondary?: string | null
           city?: string | null
@@ -14625,6 +14631,7 @@ export type Database = {
           contractor_id?: string | null
           created_at?: string
           created_by?: string | null
+          created_by_role_code?: string | null
           email?: string | null
           enrichment_status?: string
           first_name?: string | null
@@ -14642,6 +14649,7 @@ export type Database = {
           profile_status?: string
           province?: string | null
           role_title?: string | null
+          scanner_session_id?: string | null
           score_status?: string
           source_label?: string | null
           source_type?: string
@@ -14652,6 +14660,8 @@ export type Database = {
         Update: {
           activation_status?: string
           assigned_admin_id?: string | null
+          attributed_user_id?: string | null
+          attribution_type?: string | null
           category_primary?: string | null
           category_secondary?: string | null
           city?: string | null
@@ -14659,6 +14669,7 @@ export type Database = {
           contractor_id?: string | null
           created_at?: string
           created_by?: string | null
+          created_by_role_code?: string | null
           email?: string | null
           enrichment_status?: string
           first_name?: string | null
@@ -14676,6 +14687,7 @@ export type Database = {
           profile_status?: string
           province?: string | null
           role_title?: string | null
+          scanner_session_id?: string | null
           score_status?: string
           source_label?: string | null
           source_type?: string
@@ -14711,6 +14723,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_scanner_session_id_fkey"
+            columns: ["scanner_session_id"]
+            isOneToOne: false
+            referencedRelation: "scanner_sessions"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -37554,6 +37573,33 @@ export type Database = {
         }
         Relationships: []
       }
+      role_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          is_allowed: boolean
+          permission_code: string
+          role_code: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_allowed?: boolean
+          permission_code: string
+          role_code: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_allowed?: boolean
+          permission_code?: string
+          role_code?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sales_microcopy: {
         Row: {
           ab_test_variant: string | null
@@ -37607,6 +37653,181 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      scanner_session_attributions: {
+        Row: {
+          attributed_user_id: string | null
+          attribution_type: string
+          confidence_score: number | null
+          created_at: string
+          id: string
+          notes: string | null
+          resolution_status: string
+          scanner_session_id: string
+          source_role_code: string
+          updated_at: string
+        }
+        Insert: {
+          attributed_user_id?: string | null
+          attribution_type?: string
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          resolution_status?: string
+          scanner_session_id: string
+          source_role_code: string
+          updated_at?: string
+        }
+        Update: {
+          attributed_user_id?: string | null
+          attribution_type?: string
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          resolution_status?: string
+          scanner_session_id?: string
+          source_role_code?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scanner_session_attributions_scanner_session_id_fkey"
+            columns: ["scanner_session_id"]
+            isOneToOne: false
+            referencedRelation: "scanner_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scanner_session_modes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          role_code: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          role_code: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          role_code?: string
+        }
+        Relationships: []
+      }
+      scanner_sessions: {
+        Row: {
+          active_role_code: string
+          attribution_status: string
+          business_card_import_id: string | null
+          completed_at: string | null
+          contractor_id: string | null
+          contractor_lead_id: string | null
+          created_at: string
+          id: string
+          scanned_by_user_id: string
+          session_mode_code: string
+          session_status: string
+          started_at: string
+          updated_at: string
+        }
+        Insert: {
+          active_role_code: string
+          attribution_status?: string
+          business_card_import_id?: string | null
+          completed_at?: string | null
+          contractor_id?: string | null
+          contractor_lead_id?: string | null
+          created_at?: string
+          id?: string
+          scanned_by_user_id: string
+          session_mode_code: string
+          session_status?: string
+          started_at?: string
+          updated_at?: string
+        }
+        Update: {
+          active_role_code?: string
+          attribution_status?: string
+          business_card_import_id?: string | null
+          completed_at?: string | null
+          contractor_id?: string | null
+          contractor_lead_id?: string | null
+          created_at?: string
+          id?: string
+          scanned_by_user_id?: string
+          session_mode_code?: string
+          session_status?: string
+          started_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scanner_sessions_business_card_import_id_fkey"
+            columns: ["business_card_import_id"]
+            isOneToOne: false
+            referencedRelation: "business_card_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scanner_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scanner_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scanner_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scanner_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "scanner_sessions_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scanner_sessions_session_mode_code_fkey"
+            columns: ["session_mode_code"]
+            isOneToOne: false
+            referencedRelation: "scanner_session_modes"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       scheduled_reminders: {
         Row: {
