@@ -113,10 +113,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
 
       // 2. Connect directly to the public agent via WebRTC
       const agentId = "agent_5901kmg4ra2eee5bbp9r7ew5jcs7";
-      console.log("[ElevenLabs] Connecting WebRTC to agent:", agentId);
+      console.log("[ElevenLabs] Connecting WebSocket to agent:", agentId);
       await conversation.startSession({
         agentId,
-        connectionType: "webrtc",
       });
 
     } catch (err: unknown) {
