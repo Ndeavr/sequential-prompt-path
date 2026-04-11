@@ -57,7 +57,7 @@ const MODE_META: Record<string, Omit<ScannerMode, "code" | "name" | "description
 export default function PageBusinessCardScannerHub() {
   const navigate = useNavigate();
   const { user, isAuthenticated, role } = useAuth();
-  const { activeRole } = useActiveRole();
+  const { activeRole, setActiveRole } = useActiveRole();
 
   // Fetch available modes from DB
   const { data: modes } = useQuery({
