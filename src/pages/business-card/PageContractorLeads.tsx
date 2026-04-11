@@ -214,10 +214,7 @@ export default function PageContractorLeads() {
                             <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                               <Shield className="w-3 h-3" /> {lead.category_primary}
                             </span>
-                          )}
-                              <CheckCircle2 className="w-3 h-3" /> RBQ
-                            </span>
-                          )}
+                        </div>
                         </div>
 
                         <div className="flex items-center justify-between mt-2">
