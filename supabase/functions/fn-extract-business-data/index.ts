@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     }
 
     const aiData = await aiResp.json();
-    const content = aiData.choices?.[0]?.message?.content || "";
+    const content = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
     
     // Parse JSON from response
     let extracted: any;
