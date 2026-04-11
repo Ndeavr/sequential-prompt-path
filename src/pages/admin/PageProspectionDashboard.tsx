@@ -21,7 +21,8 @@ import {
   Rocket, Plus, Search, Users, Target, Zap, Activity,
   Globe, Phone, Mail, Star, ExternalLink, Play, Clock,
   CheckCircle2, AlertTriangle, Database, Filter, ArrowUpDown,
-  Eye, TrendingUp, MapPin, Building2, BarChart3,
+  Eye, TrendingUp, MapPin, Building2, BarChart3, Bot,
+  Power, PowerOff, RefreshCw, Trash2,
 } from "lucide-react";
 
 const CATEGORIES = [
