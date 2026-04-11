@@ -678,6 +678,15 @@ export const AppRouter = () => (
         {/* New V3 public pages */}
         <Route path="/mes-proprietes" element={<MesProprietesPage />} />
         <Route path="/analyser-soumissions" element={<AnalyserSoumissionsPage />} />
+
+        {/* Quote Separation: Comparison flow */}
+        <Route path="/analyse-soumissions" element={<PageAnalyseTroisSoumissions />} />
+        <Route path="/analyse-soumissions/importer" element={<PageImporterSoumissionComparative />} />
+        <Route path="/analyse-soumissions/resultats" element={<PageResultatAnalyseSoumissions />} />
+
+        {/* Quote Separation: Client record flow */}
+        <Route path="/dossier-soumissions" element={<PageSoumissionsDossierClient />} />
+        <Route path="/dossier-soumissions/ajouter" element={<PageAjouterSoumissionAuDossier />} />
         <Route path="/decrire-mon-projet" element={<DecrireMonProjetPage />} />
         <Route path="/parler-a-alex" element={<ParlerAAlexPage />} />
         <Route path="/problemes-maison" element={<ProblemesMaisonPage />} />
