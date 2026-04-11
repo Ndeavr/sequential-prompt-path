@@ -120,17 +120,18 @@ Deno.serve(async (req) => {
       .from("contractor_leads")
       .insert({
         company_name: extracted.company_name,
-        contact_name: extracted.contact_name,
+        full_name: extracted.contact_name,
         phone: extracted.phone,
         email: extracted.email,
         website_url: extracted.website || url,
         city: extracted.city,
-        category: extracted.category,
-        status: "new",
+        province: extracted.province || "QC",
+        category_primary: extracted.category,
+        lead_status: "new",
         source_type: "prospection_engine",
         source_job_id: job_id,
         source_query_id: query_id,
-        notes: extracted.description,
+        metadata_json: { description: extracted.description, rbq: extracted.rbq_license, neq: extracted.neq_number },
       })
       .select()
       .single();
