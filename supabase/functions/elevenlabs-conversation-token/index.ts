@@ -17,7 +17,7 @@ serve(async (req) => {
 
   try {
     const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
-    const ELEVENLABS_AGENT_ID = Deno.env.get("ELEVENLABS_AGENT_ID") || "agent_5901kmg4ra2eee5bbp9r7ew5jcs7";
+    const ELEVENLABS_AGENT_ID = "agent_5901kmg4ra2eee5bbp9r7ew5jcs7";
 
     if (!ELEVENLABS_API_KEY) {
       console.error("Missing ELEVENLABS_API_KEY");
