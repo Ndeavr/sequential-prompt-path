@@ -142,30 +142,48 @@ export type Database = {
       activities_secondary: {
         Row: {
           aeo_keywords_json: Json
+          avg_ticket_value: number | null
+          category: string | null
           created_at: string
           cross_sell_score: number
+          frequency_score: number | null
           id: string
           linked_primary_names_json: Json
           name: string
+          repeat_frequency: string | null
+          seasonality_peak: string | null
           status: string
+          urgency_level: number | null
         }
         Insert: {
           aeo_keywords_json?: Json
+          avg_ticket_value?: number | null
+          category?: string | null
           created_at?: string
           cross_sell_score?: number
+          frequency_score?: number | null
           id?: string
           linked_primary_names_json?: Json
           name: string
+          repeat_frequency?: string | null
+          seasonality_peak?: string | null
           status?: string
+          urgency_level?: number | null
         }
         Update: {
           aeo_keywords_json?: Json
+          avg_ticket_value?: number | null
+          category?: string | null
           created_at?: string
           cross_sell_score?: number
+          frequency_score?: number | null
           id?: string
           linked_primary_names_json?: Json
           name?: string
+          repeat_frequency?: string | null
+          seasonality_peak?: string | null
           status?: string
+          urgency_level?: number | null
         }
         Relationships: []
       }

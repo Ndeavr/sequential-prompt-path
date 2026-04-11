@@ -44,6 +44,7 @@ const navItems = [
   { to: "/admin/coupons", label: "Coupons", icon: Tag },
   { to: "/admin/prospection-engine", label: "Prospection Engine", icon: Rocket },
   { to: "/admin/city-activity-matrix", label: "Matrice Ville×Activité", icon: Grid3X3 },
+  { to: "/admin/services-secondaires", label: "Services Quotidiens", icon: Zap },
   { to: "/admin/uos", label: "UNPRO OS", icon: Sparkles },
 ];
 
