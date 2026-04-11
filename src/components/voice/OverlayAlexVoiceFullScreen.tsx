@@ -10,7 +10,7 @@
  * 
  * FIX V5: All timeouts/async use getState() instead of stale store snapshot.
  */
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback, useState, type MutableRefObject } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, PhoneOff, RefreshCw, AlertCircle, MessageSquare, Sparkles, WifiOff, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,9 @@ export default function OverlayAlexVoiceFullScreen() {
   const firstAudioReceivedRef = useRef(false);
   const bootTimeRef = useRef<number>(0);
   const [bootStep, setBootStep] = useState<string>("init");
+  const bootInitiatedRef = useRef(false);
+  const startRef = useRef<typeof start>(null as any);
+  const buildGreetingRef = useRef<typeof buildGreeting>(null as any);
 
   const firstName = user?.user_metadata?.first_name
     || user?.user_metadata?.full_name?.split(" ")[0]
@@ -196,11 +199,24 @@ export default function OverlayAlexVoiceFullScreen() {
     }
   }, [isSpeaking, isActive]);
 
+  // Keep refs up to date so the boot effect doesn't depend on start/buildGreeting identity
+  startRef.current = start;
+  buildGreetingRef.current = buildGreeting;
+
   // ─── BOOT SEQUENCE when overlay opens ───
   useEffect(() => {
-    if (!store.isOverlayOpen || store.machineState !== "requesting_permission") return;
+    if (!store.isOverlayOpen) {
+      // Reset boot flag when overlay closes so next open can boot
+      bootInitiatedRef.current = false;
+      return;
+    }
 
-    let cancelled = false;
+    // Only boot once per overlay open — guard via ref, not machineState dep
+    const s = getStore();
+    if (s.machineState !== "requesting_permission") return;
+    if (bootInitiatedRef.current) return;
+    bootInitiatedRef.current = true;
+
     let bootTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const boot = async () => {
@@ -218,14 +234,11 @@ export default function OverlayAlexVoiceFullScreen() {
         audioEngine.unlock();
         void audioEngine.play("intro").catch(() => {});
 
-        if (cancelled) return;
-
         setBootStep("stabilizing");
         getStore().transitionTo("stabilizing", "stabilization_start");
 
         // HARD boot timeout — uses getState() for fresh check
         bootTimeoutId = setTimeout(() => {
-          if (cancelled) return;
           const s = getStore();
           const isStuck = s.isOverlayOpen && 
             ["stabilizing", "opening_session", "requesting_permission"].includes(s.machineState);
@@ -235,17 +248,17 @@ export default function OverlayAlexVoiceFullScreen() {
           }
         }, BOOT_TIMEOUT_MS);
 
-        // Connect Gemini Live
+        // Connect Gemini Live — use ref for stable reference
         setBootStep("connecting");
-        const greeting = buildGreeting();
+        const greeting = buildGreetingRef.current();
         console.log("[VoiceOverlay] Starting Gemini Live with greeting:", greeting);
-        await start({ initialGreeting: greeting });
+        await startRef.current({ initialGreeting: greeting });
 
-        if (cancelled) return;
+        // After await: check overlay is still open via getState()
+        if (!getStore().isOverlayOpen) return;
 
         setBootStep("waiting_audio");
         firstAudioTimerRef.current = setTimeout(() => {
-          if (cancelled) return;
           const s = getStore();
           if (!firstAudioReceivedRef.current && s.isOverlayOpen && ["stabilizing", "opening_session", "session_ready"].includes(s.machineState)) {
             s.setError("no_first_audio", "Alex ne parle pas. Réessayez ou passez au chat.", true);
@@ -261,7 +274,7 @@ export default function OverlayAlexVoiceFullScreen() {
         }, STABILIZATION_MS);
 
       } catch (err: any) {
-        if (cancelled) return;
+        if (!getStore().isOverlayOpen) return;
         console.error("[VoiceOverlay] Boot failed:", err);
         setBootStep("error");
         const s = getStore();
@@ -276,14 +289,9 @@ export default function OverlayAlexVoiceFullScreen() {
     boot();
 
     return () => {
-      cancelled = true;
       if (bootTimeoutId) clearTimeout(bootTimeoutId);
-      if (firstAudioTimerRef.current) {
-        clearTimeout(firstAudioTimerRef.current);
-        firstAudioTimerRef.current = null;
-      }
     };
-  }, [store.isOverlayOpen, store.machineState, buildGreeting, start]);
+  }, [store.isOverlayOpen]);
 
   // ─── HEARTBEAT ───
   useEffect(() => {
