@@ -405,6 +405,13 @@ const BlogPage2 = lazy(() => import("@/pages/BlogPage2"));
 const EmergencyPage = lazy(() => import("@/pages/EmergencyPage"));
 const RefusalSeoPage = lazy(() => import("@/pages/seo/RefusalSeoPage"));
 
+// Quote Separation: Comparison vs Client Record
+const PageAnalyseTroisSoumissions = lazy(() => import("@/pages/PageAnalyseTroisSoumissions"));
+const PageImporterSoumissionComparative = lazy(() => import("@/pages/PageImporterSoumissionComparative"));
+const PageResultatAnalyseSoumissions = lazy(() => import("@/pages/PageResultatAnalyseSoumissions"));
+const PageSoumissionsDossierClient = lazy(() => import("@/pages/PageSoumissionsDossierClient"));
+const PageAjouterSoumissionAuDossier = lazy(() => import("@/pages/PageAjouterSoumissionAuDossier"));
+
 // Contractor Join + Onboarding
 const PageEntrepreneurJoin = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurJoin"));
 const PageEntrepreneurHowItWorks = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurHowItWorks"));
@@ -671,6 +678,15 @@ export const AppRouter = () => (
         {/* New V3 public pages */}
         <Route path="/mes-proprietes" element={<MesProprietesPage />} />
         <Route path="/analyser-soumissions" element={<AnalyserSoumissionsPage />} />
+
+        {/* Quote Separation: Comparison flow */}
+        <Route path="/analyse-soumissions" element={<PageAnalyseTroisSoumissions />} />
+        <Route path="/analyse-soumissions/importer" element={<PageImporterSoumissionComparative />} />
+        <Route path="/analyse-soumissions/resultats" element={<PageResultatAnalyseSoumissions />} />
+
+        {/* Quote Separation: Client record flow */}
+        <Route path="/dossier-soumissions" element={<PageSoumissionsDossierClient />} />
+        <Route path="/dossier-soumissions/ajouter" element={<PageAjouterSoumissionAuDossier />} />
         <Route path="/decrire-mon-projet" element={<DecrireMonProjetPage />} />
         <Route path="/parler-a-alex" element={<ParlerAAlexPage />} />
         <Route path="/problemes-maison" element={<ProblemesMaisonPage />} />

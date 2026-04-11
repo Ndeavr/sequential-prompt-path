@@ -52,6 +52,10 @@ const INTENT_MAP: Array<{
   { keywords: ["adresse", "confirmer adresse", "mon adresse"], action: "confirm_address", card: "address_confirmation", confirm: false },
   { keywords: ["galerie", "photos", "inspirations", "exemples"], action: "show_gallery", card: "image_gallery", confirm: false },
   { keywords: ["étapes", "progrès", "avancement", "progression"], action: "show_task_progress", card: "task_progress", confirm: false },
+  // Quote comparison intent → route to /analyse-soumissions
+  { keywords: ["comparer mes prix", "3 soumissions", "laquelle choisir", "analyser soumissions", "comparer soumissions", "analyse comparative"], action: "analyze_quote", card: "quote_analysis", confirm: false },
+  // Quote record intent → route to /dossier-soumissions
+  { keywords: ["ajouter soumission au dossier", "envoyer soumission au client", "mettre soumission dans la propriété", "soumission dossier"], action: "show_form", card: "inline_form", confirm: false },
 ];
 
 export function planAction(ctx: PlannerContext): ActionPlan {
