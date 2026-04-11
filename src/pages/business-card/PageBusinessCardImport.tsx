@@ -1,24 +1,60 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, CreditCard, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useNavigate } from "react-router-dom";
-import { useBusinessCardImport } from "@/hooks/useBusinessCardImport";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useBusinessCardImport, ScannerModeCode } from "@/hooks/useBusinessCardImport";
+import { useAuth } from "@/hooks/useAuth";
+import { useActiveRole } from "@/contexts/ActiveRoleContext";
 import DropzoneBusinessCardScan from "@/components/business-card/DropzoneBusinessCardScan";
 import PanelBusinessIdentityExtraction from "@/components/business-card/PanelBusinessIdentityExtraction";
 import BannerImportConfidence from "@/components/business-card/BannerImportConfidence";
 import CardBusinessCardImport from "@/components/business-card/CardBusinessCardImport";
 import WidgetBusinessDataCoverage from "@/components/business-card/WidgetBusinessDataCoverage";
 
+const MODE_LABELS: Record<string, string> = {
+  admin_assist: "Mode admin",
+  field_rep_activation: "Activation terrain",
+  affiliate_referral_capture: "Capture affilié",
+  contractor_self_or_team_capture: "Mon entreprise",
+};
+
+const ATTRIBUTION_MAP: Record<string, string> = {
+  admin_assist: "admin_created",
+  field_rep_activation: "field_rep",
+  affiliate_referral_capture: "affiliate",
+  contractor_self_or_team_capture: "contractor_self_profile",
+};
+
 export default function PageBusinessCardImport() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const modeCode = (searchParams.get("mode") as ScannerModeCode) || null;
+  const { user, role } = useAuth();
+  const { activeRole } = useActiveRole();
+
   const {
     phase, fields, globalConfidence, error, progress,
     uploadAndExtract, updateField, verifyField, createLeadFromExtraction, reset,
+    startSession, createAttribution,
   } = useBusinessCardImport();
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [sessionStarted, setSessionStarted] = useState(false);
+
+  // Auto-start session if mode is set and user is authenticated
+  useEffect(() => {
+    if (modeCode && user?.id && role && !sessionStarted) {
+      setSessionStarted(true);
+      startSession(modeCode, role).then((sid) => {
+        if (sid) {
+          const attrType = ATTRIBUTION_MAP[modeCode] || "unassigned";
+          createAttribution(attrType, user.id, role);
+        }
+      });
+    }
+  }, [modeCode, user, role, sessionStarted, startSession, createAttribution]);
 
   const handleFile = (file: File) => {
     const url = URL.createObjectURL(file);
@@ -30,6 +66,7 @@ export default function PageBusinessCardImport() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
     reset();
+    setSessionStarted(false);
   };
 
   const companyName = fields.find((f) => f.field_name === "company_name")?.field_value;
@@ -46,13 +83,24 @@ export default function PageBusinessCardImport() {
           </Button>
           <div className="flex-1">
             <h1 className="text-sm font-bold text-foreground">Import carte d'affaires</h1>
-            <p className="text-[10px] text-muted-foreground">Scannez → Extrayez → Créez le profil</p>
+            <p className="text-[10px] text-muted-foreground">
+              {modeCode ? MODE_LABELS[modeCode] || "Scanner" : "Scannez → Extrayez → Créez le profil"}
+            </p>
           </div>
           <CreditCard className="w-5 h-5 text-primary" />
         </div>
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-5">
+        {/* Mode badge */}
+        {modeCode && (
+          <div className="flex justify-center">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+              {MODE_LABELS[modeCode]}
+            </span>
+          </div>
+        )}
+
         {/* Progress bar during processing */}
         <AnimatePresence>
           {isProcessing && (
@@ -105,24 +153,17 @@ export default function PageBusinessCardImport() {
         <AnimatePresence>
           {(phase === "extracted" || phase === "reviewing" || phase === "creating_lead" || phase === "done") && fields.length > 0 && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-              {/* Confidence banner */}
               <BannerImportConfidence
                 confidence={globalConfidence}
                 fieldsCount={fields.length}
                 reviewCount={reviewCount}
               />
-
-              {/* Data coverage */}
               <WidgetBusinessDataCoverage fields={fields} />
-
-              {/* Extracted fields */}
               <PanelBusinessIdentityExtraction
                 fields={fields}
                 onUpdateField={updateField}
                 onVerifyField={verifyField}
               />
-
-              {/* Action card */}
               <CardBusinessCardImport
                 phase={phase}
                 companyName={companyName}
