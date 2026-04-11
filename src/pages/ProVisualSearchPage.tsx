@@ -301,8 +301,8 @@ export default function ProVisualSearchPage() {
 
               {/* Seasonal note */}
               {diagnostic.seasonal_note && (
-                <div className="p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 flex items-start gap-3">
-                  <Clock className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
+                <div className="p-4 rounded-2xl bg-accent/50 border border-accent flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-accent-foreground shrink-0 mt-0.5" />
                   <p className="text-sm leading-relaxed">{diagnostic.seasonal_note}</p>
                 </div>
               )}
