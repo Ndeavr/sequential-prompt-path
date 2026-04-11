@@ -12,7 +12,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useConversation } from "@elevenlabs/react";
 import { supabase } from "@/integrations/supabase/client";
-import { audioEngine } from "@/services/audioEngineUNPRO";
+
 
 /** Cooldown (ms) after a disconnect before allowing reconnection */
 const RECONNECT_COOLDOWN_MS = 5000;
