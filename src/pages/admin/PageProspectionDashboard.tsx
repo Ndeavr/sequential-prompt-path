@@ -303,6 +303,7 @@ const PageProspectionDashboard = () => {
         <TabsList>
           <TabsTrigger value="leads" className="gap-1.5"><Users className="h-3.5 w-3.5" />Leads</TabsTrigger>
           <TabsTrigger value="jobs" className="gap-1.5"><Zap className="h-3.5 w-3.5" />Jobs</TabsTrigger>
+          <TabsTrigger value="agent" className="gap-1.5"><Bot className="h-3.5 w-3.5" />Agent</TabsTrigger>
         </TabsList>
 
         {/* ── Leads Tab ── */}
