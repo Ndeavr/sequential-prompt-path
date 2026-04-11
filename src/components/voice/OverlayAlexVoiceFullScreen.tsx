@@ -414,9 +414,11 @@ export default function OverlayAlexVoiceFullScreen() {
   const isError = state === "error_recoverable" || state === "error_fatal";
   const isStabilizing = state === "stabilizing" || state === "opening_session" || state === "requesting_permission";
   const isSessionActive = ["session_ready", "listening", "capturing_voice", "processing_stt", "processing_response", "speaking", "awaiting_user"].includes(state);
+  const isRecoveringNow = recovery.isRecovering;
 
   const statusText =
-    isError ? (store.errorMessage || "Erreur")
+    isRecoveringNow ? recovery.phaseLabel
+    : isError ? (store.errorMessage || "Erreur")
     : isStabilizing ? getBootStepLabel(bootStep)
     : state === "listening" || state === "awaiting_user" ? "Je vous écoute…"
     : state === "capturing_voice" ? "Vous parlez…"
