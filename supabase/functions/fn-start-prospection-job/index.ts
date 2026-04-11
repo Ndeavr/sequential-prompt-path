@@ -14,56 +14,69 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { job_name, target_category, target_cities, radius_km, languages, keywords } = await req.json();
+    const body = await req.json();
+    const { job_id, job_name, target_category, target_cities, radius_km, languages, keywords } = body;
 
-    if (!job_name || !target_category || !target_cities?.length) {
-      return new Response(JSON.stringify({ error: "job_name, target_category, target_cities required" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    let job: any;
+
+    if (job_id) {
+      // Resume existing job created by the dashboard
+      const { data, error } = await supabase
+        .from("prospection_jobs")
+        .update({ job_status: "running", started_at: new Date().toISOString() })
+        .eq("id", job_id)
+        .select()
+        .single();
+      if (error) throw error;
+      job = data;
+    } else {
+      // Create a new job from scratch
+      if (!job_name || !target_category || !target_cities?.length) {
+        return new Response(JSON.stringify({ error: "job_name, target_category, target_cities required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data, error } = await supabase
+        .from("prospection_jobs")
+        .insert({
+          job_name,
+          target_category,
+          target_cities_json: target_cities,
+          radius_km: radius_km || 25,
+          languages_json: languages || ["fr"],
+          keywords_json: keywords || [],
+          job_status: "running",
+          started_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      job = data;
     }
 
-    // 1. Create the job
-    const { data: job, error: jobErr } = await supabase
-      .from("prospection_jobs")
-      .insert({
-        job_name,
-        target_category,
-        target_cities_json: target_cities,
-        radius_km: radius_km || 25,
-        languages_json: languages || ["fr"],
-        keywords_json: keywords || [],
-        job_status: "running",
-        started_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (jobErr) throw jobErr;
+    const effectiveCategory = job.target_category || target_category;
+    const effectiveCities = (job.target_cities_json || target_cities) as string[];
+    const effectiveKeywords = (job.keywords_json || keywords || []) as string[];
+    const effectiveLangs = (job.languages_json || languages || ["fr"]) as string[];
 
     // 2. Generate search queries
     const queries: string[] = [];
-    const cityList = target_cities as string[];
-    const keywordList = (keywords || []) as string[];
-    const langList = (languages || ["fr"]) as string[];
 
-    for (const city of cityList) {
-      // Base query
-      queries.push(`${target_category} ${city}`);
-      queries.push(`entrepreneur ${target_category} ${city}`);
+    for (const city of effectiveCities) {
+      queries.push(`${effectiveCategory} ${city}`);
+      queries.push(`entrepreneur ${effectiveCategory} ${city}`);
       
-      // With keywords
-      for (const kw of keywordList) {
+      for (const kw of effectiveKeywords) {
         queries.push(`${kw} ${city}`);
       }
 
-      // English variants if applicable
-      if (langList.includes("en")) {
-        queries.push(`${target_category} contractor ${city}`);
+      if (effectiveLangs.includes("en")) {
+        queries.push(`${effectiveCategory} contractor ${city}`);
       }
 
-      // Long tail
-      queries.push(`meilleur ${target_category} ${city}`);
-      queries.push(`${target_category} résidentiel ${city}`);
+      queries.push(`meilleur ${effectiveCategory} ${city}`);
+      queries.push(`${effectiveCategory} résidentiel ${city}`);
     }
 
     // 3. Insert queries
