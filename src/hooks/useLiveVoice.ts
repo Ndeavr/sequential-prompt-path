@@ -45,10 +45,12 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         callbacksRef.current?.onDisconnect?.();
       }
     },
-    onMessage: (message) => {
+    onMessage: (message: Record<string, unknown>) => {
+      const msgType = (message as any)?.type as string | undefined;
+
       // Agent response text
-      if (message.type === "agent_response") {
-        const text = (message as any).agent_response_event?.agent_response;
+      if (msgType === "agent_response") {
+        const text = (message as any)?.agent_response_event?.agent_response as string | undefined;
         if (text) {
           if (!hasDeliveredFirstAudioRef.current) {
             hasDeliveredFirstAudioRef.current = true;
@@ -59,14 +61,14 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       }
 
       // User transcript
-      if (message.type === "user_transcript") {
-        const text = (message as any).user_transcription_event?.user_transcript;
+      if (msgType === "user_transcript") {
+        const text = (message as any)?.user_transcription_event?.user_transcript as string | undefined;
         if (text && text.trim().length >= 2) {
           callbacksRef.current?.onUserTranscript?.(text);
         }
       }
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error("[ElevenLabs] Error:", error);
       setIsConnecting(false);
       callbacksRef.current?.onError?.(error);
@@ -125,7 +127,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         connectionType: "webrtc",
       });
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[ElevenLabs] Failed to start:", err);
       setIsConnecting(false);
       callbacksRef.current?.onError?.(err);
