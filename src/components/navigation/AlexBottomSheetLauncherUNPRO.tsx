@@ -12,7 +12,7 @@ export default function AlexBottomSheetLauncherUNPRO() {
 
   return (
     <button
-      onClick={() => navigate("/alex")}
+      onClick={() => navigate("/alex/voice")}
       className="relative flex flex-col items-center justify-center gap-0.5 flex-1 py-1"
       aria-label="Alex"
     >

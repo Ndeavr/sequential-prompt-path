@@ -102,7 +102,7 @@ export default function PageHomeAlexConversationalLite() {
   // Auto-start voice on /alex/voice route
   const autoStartedRef = useRef(false);
   useEffect(() => {
-    if (location.pathname === "/alex/voice" && !autoStartedRef.current && !voiceStore.isOverlayOpen) {
+    if ((location.pathname === "/alex/voice" || location.pathname === "/alex") && !autoStartedRef.current && !voiceStore.isOverlayOpen) {
       autoStartedRef.current = true;
       setTimeout(() => voiceStore.openVoiceSession("conversation", "auto_start_voice_route"), 500);
     }

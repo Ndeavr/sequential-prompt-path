@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
-import HelpPopup from "@/components/shared/HelpPopup";
+
 import ProtectedRoute from "@/components/ProtectedRoute";
 import UniversalRouteGuard from "@/guards/UniversalRouteGuard";
 import ScrollRestoration from "@/components/ScrollRestoration";
@@ -940,6 +940,5 @@ export const AppRouter = () => (
         <Route path="*" element={<FallbackRoutePage />} />
       </Routes>
     </Suspense>
-    <HelpPopup />
   </BrowserRouter>
 );
