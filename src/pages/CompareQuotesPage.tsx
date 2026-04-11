@@ -22,7 +22,7 @@ const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } }
 
 export default function CompareQuotesPage() {
   const { isAuthenticated } = useAuth();
-  const cta = isAuthenticated ? "/dashboard/quotes/upload" : "/signup";
+  const cta = "/analyse-soumissions/importer";
 
   return (
     <div className="min-h-screen bg-background">
@@ -44,7 +44,7 @@ export default function CompareQuotesPage() {
             </motion.p>
             <motion.div variants={fadeUp} custom={3}>
               <Button asChild size="xl" className="rounded-2xl shadow-glow">
-                <Link to={cta}>Analyser mes soumissions <ArrowRight className="h-4 w-4 ml-1" /></Link>
+                <Link to={cta}>Analyser jusqu'à 3 soumissions <ArrowRight className="h-4 w-4 ml-1" /></Link>
               </Button>
             </motion.div>
           </motion.div>
@@ -156,7 +156,7 @@ export default function CompareQuotesPage() {
             C'est gratuit, rapide et confidentiel.
           </p>
           <Button asChild size="xl" variant="premium" className="rounded-2xl">
-            <Link to={cta}>Commencer l'analyse <ChevronRight className="h-5 w-5 ml-1" /></Link>
+            <Link to={cta}>Analyser jusqu'à 3 soumissions <ChevronRight className="h-5 w-5 ml-1" /></Link>
           </Button>
           <div className="flex items-center justify-center gap-4">
             {[
