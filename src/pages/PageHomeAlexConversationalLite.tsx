@@ -89,6 +89,20 @@ export default function PageHomeAlexConversationalLite() {
     }
   }, [messages, isThinking]);
 
+  // Scroll to bottom when mobile keyboard opens (viewport shrinks)
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => {
+      requestAnimationFrame(() => {
+        const el = scrollRef.current;
+        if (el) el.scrollTop = el.scrollHeight;
+      });
+    };
+    vv.addEventListener("resize", onResize);
+    return () => vv.removeEventListener("resize", onResize);
+  }, []);
+
   // Mic toggle — opens/closes the locked voice overlay
   const handleMicToggle = useCallback(() => {
     if (voiceStore.isOverlayOpen) {

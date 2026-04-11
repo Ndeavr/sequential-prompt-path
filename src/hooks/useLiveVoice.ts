@@ -363,8 +363,7 @@ Ne dis rien d'autre avant cette salutation. Dis-la maintenant.`;
       setIsConnecting(false);
       callbacksRef.current?.onConnect?.();
 
-      // NO sendClientContent — greeting is in systemInstruction.
-      // Just wait a moment then start mic to avoid any race condition.
+      // Wait a moment then start mic to avoid any race condition.
       await new Promise((r) => setTimeout(r, 500));
 
       // Resume audio contexts
@@ -378,6 +377,20 @@ Ne dis rien d'autre avant cette salutation. Dis-la maintenant.`;
       // Start mic pipeline
       if (inputAudioContextRef.current && mediaStreamRef.current) {
         await setupMicPipeline(mediaStreamRef.current, inputAudioContextRef.current);
+      }
+
+      // Trigger model to speak the greeting proactively
+      // Gemini Live does NOT speak from systemInstruction alone — needs a client turn
+      if (sessionRef.current && options?.initialGreeting) {
+        try {
+          sessionRef.current.sendClientContent({
+            turns: [{ role: "user", parts: [{ text: `[Instructions: Dis maintenant ta salutation d'accueil. Voici le contexte: ${options.initialGreeting}]` }] }],
+            turnComplete: true,
+          });
+          console.log("[GeminiLive] ✅ Greeting trigger sent");
+        } catch (e) {
+          console.warn("[GeminiLive] Failed to send greeting trigger:", e);
+        }
       }
 
       setTimeout(() => {
