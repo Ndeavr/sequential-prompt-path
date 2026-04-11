@@ -190,7 +190,7 @@ export function classifyIntent(
     for (const kw of rule.keywords) {
       if (lower.includes(kw)) {
         matches++;
-        matchedSignals.push(kw);
+        matched_signals.push(kw);
       }
     }
     if (matches > 0) {
