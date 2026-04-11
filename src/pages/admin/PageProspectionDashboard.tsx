@@ -21,7 +21,8 @@ import {
   Rocket, Plus, Search, Users, Target, Zap, Activity,
   Globe, Phone, Mail, Star, ExternalLink, Play, Clock,
   CheckCircle2, AlertTriangle, Database, Filter, ArrowUpDown,
-  Eye, TrendingUp, MapPin, Building2, BarChart3,
+  Eye, TrendingUp, MapPin, Building2, BarChart3, Bot,
+  Power, PowerOff, RefreshCw, Trash2,
 } from "lucide-react";
 
 const CATEGORIES = [
@@ -106,14 +107,58 @@ const useProspectionLeads = (filter: string) =>
     },
   });
 
-/* ─── Page ─── */
+const useAgentRules = () =>
+  useQuery({
+    queryKey: ["prospection-agent-rules"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("prospection_agent_rules")
+        .select("*")
+        .order("priority", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+
 const PageProspectionDashboard = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { data: stats, isLoading: statsLoading } = useProspectionStats();
   const { data: jobs } = useProspectionJobs();
+  const { data: agentRules } = useAgentRules();
   const [priorityFilter, setPriorityFilter] = useState("all");
   const { data: leads, isLoading: leadsLoading } = useProspectionLeads(priorityFilter);
+
+  // Agent trigger
+  const triggerAgentMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("fn-prospection-agent");
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data: any) => {
+      toast.success(`Agent exécuté — ${data?.results?.length ?? 0} règles traitées`);
+      queryClient.invalidateQueries({ queryKey: ["prospection-agent-rules"] });
+      queryClient.invalidateQueries({ queryKey: ["prospection-engine-jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["prospection-engine-stats"] });
+    },
+    onError: (e) => toast.error("Erreur agent: " + e.message),
+  });
+
+  const toggleRuleMutation = useMutation({
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      const { error } = await supabase
+        .from("prospection_agent_rules")
+        .update({ is_active })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["prospection-agent-rules"] });
+      toast.success("Règle mise à jour");
+    },
+  });
 
   // Job creation state
   const [showCreate, setShowCreate] = useState(false);
@@ -258,6 +303,7 @@ const PageProspectionDashboard = () => {
         <TabsList>
           <TabsTrigger value="leads" className="gap-1.5"><Users className="h-3.5 w-3.5" />Leads</TabsTrigger>
           <TabsTrigger value="jobs" className="gap-1.5"><Zap className="h-3.5 w-3.5" />Jobs</TabsTrigger>
+          <TabsTrigger value="agent" className="gap-1.5"><Bot className="h-3.5 w-3.5" />Agent</TabsTrigger>
         </TabsList>
 
         {/* ── Leads Tab ── */}
@@ -406,6 +452,113 @@ const PageProspectionDashboard = () => {
               </table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ── Agent Tab ── */}
+        <TabsContent value="agent" className="space-y-4">
+          {/* Agent Controls */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <Bot className="h-5 w-5 text-primary" />
+                Agent de prospection autonome
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {(agentRules ?? []).filter((r: any) => r.is_active).length} règles actives sur {(agentRules ?? []).length}
+              </p>
+            </div>
+            <Button
+              onClick={() => triggerAgentMutation.mutate()}
+              disabled={triggerAgentMutation.isPending}
+              className="gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${triggerAgentMutation.isPending ? "animate-spin" : ""}`} />
+              {triggerAgentMutation.isPending ? "Exécution…" : "Lancer l'agent maintenant"}
+            </Button>
+          </div>
+
+          {/* Rules Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {(agentRules ?? []).map((rule: any) => {
+              const isOverdue = rule.next_run_at && new Date(rule.next_run_at) < new Date();
+              const typeBadge = rule.rule_type === "homeowner_need"
+                ? { bg: "bg-cyan-500/15", text: "text-cyan-400", label: "🏠 Demande" }
+                : { bg: "bg-emerald-500/15", text: "text-emerald-400", label: "🔧 Métier" };
+              const priorityColor = rule.priority <= 1 ? "text-red-400" : rule.priority <= 2 ? "text-amber-400" : "text-muted-foreground";
+
+              return (
+                <Card key={rule.id} className={`border-border/30 transition-opacity ${!rule.is_active ? "opacity-50" : ""}`}>
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <Badge className={`text-xs border-0 ${typeBadge.bg} ${typeBadge.text}`}>{typeBadge.label}</Badge>
+                          <span className={`text-xs font-mono ${priorityColor}`}>P{rule.priority}</span>
+                          {isOverdue && rule.is_active && (
+                            <Badge className="text-xs border-0 bg-amber-500/15 text-amber-400">⏰ Dû</Badge>
+                          )}
+                        </div>
+                        <h4 className="font-semibold text-sm truncate">{rule.rule_name}</h4>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 shrink-0"
+                        onClick={() => toggleRuleMutation.mutate({ id: rule.id, is_active: !rule.is_active })}
+                      >
+                        {rule.is_active ? <Power className="h-4 w-4 text-emerald-400" /> : <PowerOff className="h-4 w-4 text-muted-foreground" />}
+                      </Button>
+                    </div>
+
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <Target className="h-3 w-3" />
+                        <span>{rule.target_category}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="h-3 w-3" />
+                        <span className="truncate">{Array.isArray(rule.target_cities_json) ? rule.target_cities_json.join(", ") : "—"}</span>
+                      </div>
+                      {rule.keywords_json && Array.isArray(rule.keywords_json) && rule.keywords_json.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {(rule.keywords_json as string[]).slice(0, 3).map((kw: string) => (
+                            <span key={kw} className="px-1.5 py-0.5 rounded bg-muted/50 text-[10px]">{kw}</span>
+                          ))}
+                          {rule.keywords_json.length > 3 && (
+                            <span className="text-[10px] text-muted-foreground">+{rule.keywords_json.length - 3}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs border-t border-border/20 pt-2 mt-2">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          /{rule.frequency_hours}h
+                        </span>
+                        <span className="font-mono">{rule.total_jobs_run} runs</span>
+                        <span className="font-mono">{rule.total_leads_generated} leads</span>
+                      </div>
+                      {rule.last_run_at && (
+                        <span className="text-muted-foreground">
+                          {new Date(rule.last_run_at).toLocaleDateString("fr-CA")}
+                        </span>
+                      )}
+                    </div>
+
+                    {rule.notes && (
+                      <p className="text-[11px] text-muted-foreground/70 italic">{rule.notes}</p>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {(!agentRules || agentRules.length === 0) && (
+            <EmptyState message="Aucune règle d'agent configurée." />
+          )}
         </TabsContent>
       </Tabs>
     </AdminLayout>
