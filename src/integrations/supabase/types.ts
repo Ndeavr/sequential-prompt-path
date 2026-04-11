@@ -46079,6 +46079,57 @@ export type Database = {
           },
         ]
       }
+      voice_provider_configs: {
+        Row: {
+          config_json: Json | null
+          created_at: string
+          fallback_priority: number
+          id: string
+          is_active: boolean
+          is_primary: boolean
+          language_code: string
+          model_id: string | null
+          provider_name: string
+          provider_type: string
+          supports_stt: boolean
+          supports_tts: boolean
+          updated_at: string
+          voice_id: string | null
+        }
+        Insert: {
+          config_json?: Json | null
+          created_at?: string
+          fallback_priority?: number
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          language_code?: string
+          model_id?: string | null
+          provider_name: string
+          provider_type?: string
+          supports_stt?: boolean
+          supports_tts?: boolean
+          updated_at?: string
+          voice_id?: string | null
+        }
+        Update: {
+          config_json?: Json | null
+          created_at?: string
+          fallback_priority?: number
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          language_code?: string
+          model_id?: string | null
+          provider_name?: string
+          provider_type?: string
+          supports_stt?: boolean
+          supports_tts?: boolean
+          updated_at?: string
+          voice_id?: string | null
+        }
+        Relationships: []
+      }
       voice_reconnect_metrics: {
         Row: {
           created_at: string
@@ -46152,6 +46203,192 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_reliability_errors: {
+        Row: {
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          fallback_applied: boolean | null
+          http_status: number | null
+          id: string
+          module_name: string | null
+          provider_name: string | null
+          retryable: boolean | null
+          voice_session_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          fallback_applied?: boolean | null
+          http_status?: number | null
+          id?: string
+          module_name?: string | null
+          provider_name?: string | null
+          retryable?: boolean | null
+          voice_session_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          fallback_applied?: boolean | null
+          http_status?: number | null
+          id?: string
+          module_name?: string | null
+          provider_name?: string | null
+          retryable?: boolean | null
+          voice_session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_reliability_errors_voice_session_id_fkey"
+            columns: ["voice_session_id"]
+            isOneToOne: false
+            referencedRelation: "voice_reliability_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_reliability_events: {
+        Row: {
+          created_at: string
+          event_source: string | null
+          event_type: string
+          id: string
+          payload_json: Json | null
+          voice_session_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_source?: string | null
+          event_type: string
+          id?: string
+          payload_json?: Json | null
+          voice_session_id: string
+        }
+        Update: {
+          created_at?: string
+          event_source?: string | null
+          event_type?: string
+          id?: string
+          payload_json?: Json | null
+          voice_session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_reliability_events_voice_session_id_fkey"
+            columns: ["voice_session_id"]
+            isOneToOne: false
+            referencedRelation: "voice_reliability_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_reliability_sessions: {
+        Row: {
+          active_stt_provider: string | null
+          active_tts_provider: string | null
+          browser_name: string | null
+          created_at: string
+          device_type: string | null
+          ended_at: string | null
+          ended_reason: string | null
+          entry_point: string | null
+          fallback_used: boolean | null
+          id: string
+          locale: string | null
+          session_status: string
+          silence_timeout_ms: number | null
+          started_at: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          active_stt_provider?: string | null
+          active_tts_provider?: string | null
+          browser_name?: string | null
+          created_at?: string
+          device_type?: string | null
+          ended_at?: string | null
+          ended_reason?: string | null
+          entry_point?: string | null
+          fallback_used?: boolean | null
+          id?: string
+          locale?: string | null
+          session_status?: string
+          silence_timeout_ms?: number | null
+          started_at?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          active_stt_provider?: string | null
+          active_tts_provider?: string | null
+          browser_name?: string | null
+          created_at?: string
+          device_type?: string | null
+          ended_at?: string | null
+          ended_reason?: string | null
+          entry_point?: string | null
+          fallback_used?: boolean | null
+          id?: string
+          locale?: string | null
+          session_status?: string
+          silence_timeout_ms?: number | null
+          started_at?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      voice_reliability_transcripts: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          detected_language: string | null
+          id: string
+          normalized_transcript: string | null
+          raw_transcript: string | null
+          rejected: boolean | null
+          rejected_reason: string | null
+          speaker_role: string
+          voice_session_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          detected_language?: string | null
+          id?: string
+          normalized_transcript?: string | null
+          raw_transcript?: string | null
+          rejected?: boolean | null
+          rejected_reason?: string | null
+          speaker_role?: string
+          voice_session_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          detected_language?: string | null
+          id?: string
+          normalized_transcript?: string | null
+          raw_transcript?: string | null
+          rejected?: boolean | null
+          rejected_reason?: string | null
+          speaker_role?: string
+          voice_session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_reliability_transcripts_voice_session_id_fkey"
+            columns: ["voice_session_id"]
+            isOneToOne: false
+            referencedRelation: "voice_reliability_sessions"
             referencedColumns: ["id"]
           },
         ]
