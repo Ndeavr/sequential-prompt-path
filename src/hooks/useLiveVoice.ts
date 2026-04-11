@@ -146,19 +146,25 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         signedUrl: data.signed_url,
       });
 
-      // Force French context — sendContextualUpdate injects context without triggering a visible response
+      // Force French context + greeting
+      const greeting = options?.initialGreeting || "Bonjour. Comment puis-je vous aider?";
       const conversationApi = conversation as any;
+      const frenchPrompt = `INSTRUCTION SYSTÈME ABSOLUE — PRIORITÉ MAXIMALE:
+Tu es Alex, assistant vocal UNPRO. Tu parles UNIQUEMENT en français québécois naturel.
+RÈGLES STRICTES:
+- JAMAIS d'anglais, peu importe ce que l'utilisateur dit
+- Accent québécois naturel (pas de France)
+- Réponses courtes: 1-2 phrases maximum
+- Ton chaleureux et professionnel
+COMMENCE IMMÉDIATEMENT par dire exactement ceci: "${greeting}"
+Ensuite, attends que l'utilisateur parle.`;
+
       if (typeof conversationApi.sendContextualUpdate === "function") {
-        conversationApi.sendContextualUpdate(
-          "INSTRUCTION ABSOLUE : Tu dois TOUJOURS répondre en français québécois naturel. Ne parle JAMAIS en anglais. Commence par saluer l'utilisateur en français."
-        );
-        console.log("[ElevenLabs] ✅ French context injected via sendContextualUpdate");
+        conversationApi.sendContextualUpdate(frenchPrompt);
+        console.log("[ElevenLabs] ✅ French context injected with greeting:", greeting);
       } else if (typeof conversationApi.sendUserMessage === "function") {
-        // Fallback: send as user message
-        conversationApi.sendUserMessage(
-          "Parle-moi en français québécois s'il te plaît."
-        );
-        console.log("[ElevenLabs] ✅ French-first greeting sent via sendUserMessage");
+        conversationApi.sendUserMessage(frenchPrompt);
+        console.log("[ElevenLabs] ✅ French prompt sent via sendUserMessage");
       } else {
         console.warn("[ElevenLabs] No method available to inject French context");
       }
