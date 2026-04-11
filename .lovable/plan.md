@@ -1,37 +1,47 @@
 
 
-# Fix Alex: Remove Popup, Voice-First Launch
+# Fix: Alex Voice "Connexion" Never Completes
 
-## Problems
+## Root Cause
 
-1. **HelpPopup still active**: `<HelpPopup />` is rendered in `src/app/router.tsx` line 943 — the "Comment on peut vous aider?" popup still appears after 10 seconds.
-2. **Alex opens messenger, not voice**: Bottom orb navigates to `/alex` which shows chat/messenger UI. Voice only auto-starts on `/alex/voice` route. User wants voice to start immediately.
-3. **Boot checklist visible**: The overlay shows technical boot steps (Ouverture de session, Preparation audio, etc.) — this is debug UI that should be hidden or minimal.
+The boot sequence `useEffect` (line 286) has **`store.machineState`** and **`start`** in its dependency array:
 
-## Plan
+```
+[store.isOverlayOpen, store.machineState, buildGreeting, start]
+```
 
-### Step 1 — Remove HelpPopup from router
+During boot, the code transitions the machine state multiple times:
+1. `requesting_permission` → `opening_session` → `stabilizing`
 
-In `src/app/router.tsx`, remove the `<HelpPopup />` component (line 943) and its import (line 3). The file `src/components/shared/HelpPopup.tsx` is kept but no longer rendered.
+Each transition triggers a React re-render. Because `store.machineState` is a dependency, the effect **cleanup runs** — setting `cancelled = true` — and the effect re-evaluates. Since the guard checks `machineState !== "requesting_permission"`, the new run returns early. But the running `boot()` function now has `cancelled = true`.
 
-### Step 2 — Bottom orb navigates to `/alex/voice`
+The `await start()` call (line 242) yields to React's render cycle. When it resumes, `if (cancelled) return;` (line 244) aborts the boot. The critical first-audio timeout and boot timeout timers are **never set**, so:
 
-In `src/components/navigation/AlexBottomSheetLauncherUNPRO.tsx`, change `navigate("/alex")` to `navigate("/alex/voice")` so clicking the orb triggers the voice-first experience with auto-start.
+- If Gemini doesn't immediately speak, there's no timeout to detect it
+- The UI stays stuck on "Connexion…" forever
+- The boot timeout was also cleared by the cleanup
 
-### Step 3 — Auto-start voice on `/alex` too
+Additionally, `start` from `useLiveVoice` is recreated every render (depends on `isActive`, `isConnecting`), further destabilizing the effect.
 
-In `src/pages/PageHomeAlexConversationalLite.tsx`, expand the auto-start condition (line 105) from only `/alex/voice` to include `/alex` as well. This way both routes trigger voice automatically.
+## Fix
 
-### Step 4 — Hide boot checklist UI
+### Step 1 — Decouple boot effect from machineState
 
-In `src/components/voice/OverlayAlexVoiceFullScreen.tsx`, replace the verbose boot step checklist (Ouverture de session, Preparation audio, Connexion serveur, etc.) with a simple "Connexion..." label or a minimal loading spinner. No technical steps visible to the user.
+Use a **ref** to track whether boot has been initiated for the current session. The effect should only depend on `store.isOverlayOpen`. Check `machineState === "requesting_permission"` via `getStore()` inside the function body, not as a reactive dependency.
+
+Remove `store.machineState`, `start`, and `buildGreeting` from the dependency array. Use refs for `start` and `buildGreeting` instead.
+
+### Step 2 — Use refs for start and buildGreeting
+
+Store `start` and `buildGreeting` in refs so the boot effect doesn't re-trigger when these functions are recreated on re-render.
+
+### Step 3 — Keep boot timeout alive
+
+Since the cleanup no longer runs on every machineState change, the boot timeout and first-audio timeout will survive the full boot sequence.
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| `src/app/router.tsx` | Remove `<HelpPopup />` and import |
-| `src/components/navigation/AlexBottomSheetLauncherUNPRO.tsx` | Navigate to `/alex/voice` |
-| `src/pages/PageHomeAlexConversationalLite.tsx` | Auto-start voice on `/alex` too |
-| `src/components/voice/OverlayAlexVoiceFullScreen.tsx` | Replace boot checklist with minimal loader |
+| `src/components/voice/OverlayAlexVoiceFullScreen.tsx` | Fix boot effect dependencies, use refs for `start`/`buildGreeting` |
 
