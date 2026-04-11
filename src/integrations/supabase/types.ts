@@ -39149,6 +39149,50 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_generation_logs: {
+        Row: {
+          agent_version: string | null
+          content_hash: string | null
+          created_at: string
+          generation_time_ms: number | null
+          generation_type: string
+          id: string
+          metadata: Json | null
+          page_id: string | null
+          quality_score: number | null
+        }
+        Insert: {
+          agent_version?: string | null
+          content_hash?: string | null
+          created_at?: string
+          generation_time_ms?: number | null
+          generation_type?: string
+          id?: string
+          metadata?: Json | null
+          page_id?: string | null
+          quality_score?: number | null
+        }
+        Update: {
+          agent_version?: string | null
+          content_hash?: string | null
+          created_at?: string
+          generation_time_ms?: number | null
+          generation_type?: string
+          id?: string
+          metadata?: Json | null
+          page_id?: string | null
+          quality_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_generation_logs_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "seo_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_generation_queue: {
         Row: {
           city: string
@@ -39192,6 +39236,56 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "seo_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_indexation_tracking: {
+        Row: {
+          clicks: number | null
+          created_at: string
+          first_indexed_at: string | null
+          id: string
+          impressions: number | null
+          indexed: boolean | null
+          last_checked_at: string | null
+          page_id: string
+          position_avg: number | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          clicks?: number | null
+          created_at?: string
+          first_indexed_at?: string | null
+          id?: string
+          impressions?: number | null
+          indexed?: boolean | null
+          last_checked_at?: string | null
+          page_id: string
+          position_avg?: number | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          clicks?: number | null
+          created_at?: string
+          first_indexed_at?: string | null
+          id?: string
+          impressions?: number | null
+          indexed?: boolean | null
+          last_checked_at?: string | null
+          page_id?: string
+          position_avg?: number | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_indexation_tracking_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: true
+            referencedRelation: "seo_pages"
             referencedColumns: ["id"]
           },
         ]
@@ -39380,8 +39474,10 @@ export type Database = {
           city: string | null
           city_id: string | null
           content_data: Json | null
+          content_hash: string | null
           created_at: string
           faq_json: Json | null
+          generation_version: string | null
           h1: string | null
           id: string
           intent: string | null
@@ -39391,6 +39487,7 @@ export type Database = {
           page_type: string
           profession: string | null
           published_at: string | null
+          quality_score: number | null
           schema_json: Json | null
           slug: string
           specialty: string | null
@@ -39405,8 +39502,10 @@ export type Database = {
           city?: string | null
           city_id?: string | null
           content_data?: Json | null
+          content_hash?: string | null
           created_at?: string
           faq_json?: Json | null
+          generation_version?: string | null
           h1?: string | null
           id?: string
           intent?: string | null
@@ -39416,6 +39515,7 @@ export type Database = {
           page_type: string
           profession?: string | null
           published_at?: string | null
+          quality_score?: number | null
           schema_json?: Json | null
           slug: string
           specialty?: string | null
@@ -39430,8 +39530,10 @@ export type Database = {
           city?: string | null
           city_id?: string | null
           content_data?: Json | null
+          content_hash?: string | null
           created_at?: string
           faq_json?: Json | null
+          generation_version?: string | null
           h1?: string | null
           id?: string
           intent?: string | null
@@ -39441,6 +39543,7 @@ export type Database = {
           page_type?: string
           profession?: string | null
           published_at?: string | null
+          quality_score?: number | null
           schema_json?: Json | null
           slug?: string
           specialty?: string | null
