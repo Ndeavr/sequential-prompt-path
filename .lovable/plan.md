@@ -1,155 +1,54 @@
 
 
-# AlexInChatAppOrchestratorV1 — Plan
+# Fix: Correct Pro Price in Alex Chat + Fix Edge Function 401
 
-## Summary
+## Problems Identified
 
-Transform Alex's chat into a transactional cockpit where actions (forms, contractor selection, booking, checkout, image analysis, before/after) render inline as interactive cards — without leaving the conversation. Build on the existing `useAlexConversationLite` + `InlineCardType` pattern already in place.
+1. **Wrong price in Alex checkout card**: `useAlexConversationLite.ts` hardcodes `price: 149` for "Pro" plan. The real Pro plan is **349$/month** (34900 cents in `plan_catalog`). The card shows "149,00$" instead of "349,00$".
 
-## What Already Exists
+2. **Edge function crash (401)**: `create-subscription-intent` uses `npm:@supabase/supabase-js@2.57.2` which triggers `Deno.core.runMicrotasks() is not supported` errors in edge runtime, causing the 401/500 shown on the checkout page.
 
-The codebase already has a strong foundation:
-- `PageHomeAlexConversationalLite` renders inline cards via `cardType` on messages
-- 15+ inline card types already working (entrepreneur, booking, quote analysis, photo, address, profile completion)
-- `useAlexConversationLite` with intent detection, guards, and flow state machine
-- `alexUiActionDispatcher.ts` for dispatching UI actions from Alex brain
-- Mock data for contractors, slots, analysis
+## Plan
 
-**Key insight**: The existing `InlineCardType` + `renderCard()` pattern IS the orchestrator pattern. We extend it, not replace it.
+### Step 1 — Fix hardcoded prices in conversation hook
 
----
+**File: `src/hooks/useAlexConversationLite.ts` (lines 87-88)**
 
-## Phase 1 — Core Runtime + New Inline Surfaces (priority)
+Change the two `checkout_embedded` entries from:
+- `price: 149` → `price: 349`
 
-### 1A. Extend InlineCardType system
+This matches the `plan_catalog` table where Pro = 34900 cents = 349$/month.
 
-**File: `src/components/alex-conversation/types.ts`**
-- Add new card types: `"inline_form"`, `"before_after"`, `"contractor_picker"`, `"booking_scheduler"`, `"checkout_embedded"`, `"next_best_action"`, `"image_gallery"`, `"task_progress"`, `"address_confirmation"`, `"form_autofill_preview"`
-- Add corresponding data interfaces
+Also update the features list in `PanelAlexCheckoutEmbedded.tsx` to match the real Pro features from `plan_catalog`:
+- "Profil public complet"
+- "5 à 12 rendez-vous / mois"  
+- "Visibilité améliorée dans la recherche"
+- "Badge Pro"
 
-### 1B. Build Action Planner service
+### Step 2 — Fix edge function import compatibility
 
-**File: `src/services/alexActionPlanner.ts`**
-- Given user message + flow state + memory context → determine:
-  - `actionType` (show_form, suggest_contractors, book, checkout, analyze_photo, etc.)
-  - `renderMode` (inline_card, drawer, modal)
-  - `prefillData` from memory
-  - `confirmationRequired` boolean
-  - `nextBestAction`
-- Replaces/extends current `ANALYSIS_KEYWORDS` keyword matching with a structured planner
+**File: `supabase/functions/create-subscription-intent/index.ts`**
 
-### 1C. Build core inline action cards
+Replace `npm:@supabase/supabase-js@2.57.2` with the esm.sh import pattern that works in edge runtime:
+```
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1"
+```
 
-| Component | Purpose |
-|-----------|---------|
-| `PanelAlexInlineFormRenderer.tsx` | Generic form rendered inline in chat (fields from schema, prefilled from memory) |
-| `PanelAlexContractorPicker.tsx` | 2-3 contractor cards with Compare/Select/Book buttons |
-| `PanelAlexBookingScheduler.tsx` | Inline slot picker with confirm button |
-| `PanelAlexCheckoutEmbedded.tsx` | Plan summary + Stripe Payment Element inline |
-| `PanelAlexBeforeAfterStudio.tsx` | Before/after image comparison with regenerate button |
-| `PanelAlexInlineImageGallery.tsx` | Scrollable image gallery inline |
-| `PanelAlexNextBestActionCard.tsx` | "I can do X next" proactive suggestion card |
-| `PanelAlexLiveTaskStack.tsx` | Visual step progress (done/active/pending) |
-| `CardAlexAddressConfirmation.tsx` | "C'est bien pour votre condo à Laval?" confirm/edit card |
-| `PanelAlexFormAutoFillPreview.tsx` | Shows prefilled data with "Vérifiez" CTA |
+This avoids the `Deno.core.runMicrotasks()` crash.
 
-### 1D. Wire into PageHomeAlexConversationalLite
+### Step 3 — Redeploy edge function
 
-- Extend `renderCard()` switch with new card types
-- Connect action planner to `sendMessage` flow in `useAlexConversationLite`
+Deploy `create-subscription-intent` and verify with curl.
 
----
+### Step 4 — Make checkout card dynamic (bonus)
 
-## Phase 2 — Task Stack + Memory Integration
+Instead of hardcoding plan data in keywords, the `checkout_embedded` card should ideally pull from `usePlanCatalog`. For now, we fix the hardcoded values to match reality and add a TODO for dynamic fetching.
 
-### 2A. Task State Machine
+## Files Modified
 
-**File: `src/services/alexTaskStateMachine.ts`**
-- Track multi-step flows: problem → match → book → pay
-- States: pending, active, done, blocked, skipped
-- Rendered via `PanelAlexLiveTaskStack`
-
-### 2B. Memory-powered prefill
-
-- Connect `usePersistentUserMemory` to action planner
-- Auto-prefill address, property type, project context
-- Show "Déjà connu" badges on prefilled fields
-
-### 2C. Proactive next-best-action
-
-**File: `src/services/alexNextBestActionEngine.ts`** (already exists, extend)
-- After each action completes, compute next step
-- Render as `PanelAlexNextBestActionCard` inline
-
----
-
-## Phase 3 — Embedded Checkout + Advanced
-
-### 3A. Embedded checkout card
-- Use existing Stripe integration (`stripeService.ts`)
-- Render Payment Element inside chat card
-- Show plan summary, taxes, coupon inline
-- Confirm success as chat message
-
-### 3B. Image generation before/after
-- Use Lovable AI gateway (Gemini image models) for before/after generation
-- Upload source photo inline → generate → display comparison
-
-### 3C. Undo/retry
-- Each action run gets an ID
-- "Annuler" button on completed actions
-- Retry on failed actions
-
----
-
-## Database (12 tables)
-
-Single migration creating:
-- `alex_action_sessions` — session tracking
-- `alex_action_runs` — individual action executions
-- `alex_action_intents` — detected intents with confidence
-- `alex_ui_surfaces` — registered UI surfaces
-- `alex_generated_assets` — generated images/documents
-- `alex_form_drafts` — form state persistence
-- `alex_booking_intents` — booking flow state
-- `alex_checkout_intents` — checkout flow state
-- `alex_contractor_shortlists` — contractor comparison lists
-- `alex_task_state` — multi-step task progress
-- `alex_inline_confirmations` — user confirmations
-- `alex_action_failures` — failure logging
-
-All with RLS policies scoped to `auth.uid()`, nullable `user_id` for anonymous sessions, and indexes on `user_id`, `alex_action_session_id`, `created_at`.
-
----
-
-## Files Created/Modified
-
-| File | Action |
+| File | Change |
 |------|--------|
-| `src/components/alex-conversation/types.ts` | Extend with new card types + interfaces |
-| `src/services/alexActionPlanner.ts` | **New** — intent → action → render mode |
-| `src/services/alexTaskStateMachine.ts` | **New** — multi-step flow tracker |
-| `src/components/alex-conversation/PanelAlexInlineFormRenderer.tsx` | **New** |
-| `src/components/alex-conversation/PanelAlexContractorPicker.tsx` | **New** |
-| `src/components/alex-conversation/PanelAlexBookingScheduler.tsx` | **New** |
-| `src/components/alex-conversation/PanelAlexCheckoutEmbedded.tsx` | **New** |
-| `src/components/alex-conversation/PanelAlexBeforeAfterStudio.tsx` | **New** |
-| `src/components/alex-conversation/PanelAlexInlineImageGallery.tsx` | **New** |
-| `src/components/alex-conversation/PanelAlexNextBestActionCard.tsx` | **New** |
-| `src/components/alex-conversation/PanelAlexLiveTaskStack.tsx` | **New** |
-| `src/components/alex-conversation/PanelAlexFormAutoFillPreview.tsx` | **New** |
-| `src/components/alex-conversation/CardAlexAddressConfirmation.tsx` | **New** |
-| `src/hooks/useAlexConversationLite.ts` | Integrate action planner |
-| `src/pages/PageHomeAlexConversationalLite.tsx` | Add new card renderers |
-| `supabase/migrations/[timestamp].sql` | 12 tables + RLS + indexes |
-
----
-
-## Implementation Priority
-
-1. **Database migration** (12 tables)
-2. **Action planner service** + task state machine
-3. **Phase 1 inline cards** (form, contractor picker, booking, checkout, gallery, before/after, next action, task stack)
-4. **Wire into conversation hook + page**
-5. **Memory prefill integration**
+| `src/hooks/useAlexConversationLite.ts` | Fix Pro price 149→349 |
+| `src/components/alex-conversation/PanelAlexCheckoutEmbedded.tsx` | Update features to match real Pro features |
+| `supabase/functions/create-subscription-intent/index.ts` | Fix import to esm.sh |
 
