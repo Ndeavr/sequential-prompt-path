@@ -43698,6 +43698,352 @@ export type Database = {
         }
         Relationships: []
       }
+      user_memory_corrections: {
+        Row: {
+          corrected_value_json: Json | null
+          correction_reason: string | null
+          created_at: string
+          entity_id: string | null
+          fact_id: string | null
+          id: string
+          previous_value_json: Json | null
+          user_id: string
+        }
+        Insert: {
+          corrected_value_json?: Json | null
+          correction_reason?: string | null
+          created_at?: string
+          entity_id?: string | null
+          fact_id?: string | null
+          id?: string
+          previous_value_json?: Json | null
+          user_id: string
+        }
+        Update: {
+          corrected_value_json?: Json | null
+          correction_reason?: string | null
+          created_at?: string
+          entity_id?: string | null
+          fact_id?: string | null
+          id?: string
+          previous_value_json?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_memory_corrections_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "user_memory_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_memory_corrections_fact_id_fkey"
+            columns: ["fact_id"]
+            isOneToOne: false
+            referencedRelation: "user_memory_facts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_memory_corrections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_memory_entities: {
+        Row: {
+          canonical_value_json: Json | null
+          confidence_score: number | null
+          created_at: string
+          entity_label: string | null
+          entity_type: string
+          freshness_score: number | null
+          id: string
+          session_memory_id: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          canonical_value_json?: Json | null
+          confidence_score?: number | null
+          created_at?: string
+          entity_label?: string | null
+          entity_type?: string
+          freshness_score?: number | null
+          id?: string
+          session_memory_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          canonical_value_json?: Json | null
+          confidence_score?: number | null
+          created_at?: string
+          entity_label?: string | null
+          entity_type?: string
+          freshness_score?: number | null
+          id?: string
+          session_memory_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_memory_entities_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_memory_facts: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          entity_id: string | null
+          expires_at: string | null
+          fact_key: string
+          fact_type: string
+          fact_value_json: Json | null
+          freshness_score: number | null
+          id: string
+          is_confirmed: boolean | null
+          is_persistent: boolean | null
+          is_sensitive: boolean | null
+          normalized_value_json: Json | null
+          session_memory_id: string | null
+          source_id: string | null
+          source_priority: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          entity_id?: string | null
+          expires_at?: string | null
+          fact_key: string
+          fact_type?: string
+          fact_value_json?: Json | null
+          freshness_score?: number | null
+          id?: string
+          is_confirmed?: boolean | null
+          is_persistent?: boolean | null
+          is_sensitive?: boolean | null
+          normalized_value_json?: Json | null
+          session_memory_id?: string | null
+          source_id?: string | null
+          source_priority?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          entity_id?: string | null
+          expires_at?: string | null
+          fact_key?: string
+          fact_type?: string
+          fact_value_json?: Json | null
+          freshness_score?: number | null
+          id?: string
+          is_confirmed?: boolean | null
+          is_persistent?: boolean | null
+          is_sensitive?: boolean | null
+          normalized_value_json?: Json | null
+          session_memory_id?: string | null
+          source_id?: string | null
+          source_priority?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_memory_facts_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "user_memory_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_memory_facts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_memory_links: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          from_entity_id: string
+          id: string
+          link_type: string
+          to_entity_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          from_entity_id: string
+          id?: string
+          link_type?: string
+          to_entity_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          from_entity_id?: string
+          id?: string
+          link_type?: string
+          to_entity_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_memory_links_from_entity_id_fkey"
+            columns: ["from_entity_id"]
+            isOneToOne: false
+            referencedRelation: "user_memory_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_memory_links_to_entity_id_fkey"
+            columns: ["to_entity_id"]
+            isOneToOne: false
+            referencedRelation: "user_memory_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_memory_reuse_logs: {
+        Row: {
+          created_at: string
+          fact_id: string | null
+          id: string
+          reuse_context: string
+          surface: string | null
+          time_saved_seconds: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fact_id?: string | null
+          id?: string
+          reuse_context: string
+          surface?: string | null
+          time_saved_seconds?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fact_id?: string | null
+          id?: string
+          reuse_context?: string
+          surface?: string | null
+          time_saved_seconds?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_memory_reuse_logs_fact_id_fkey"
+            columns: ["fact_id"]
+            isOneToOne: false
+            referencedRelation: "user_memory_facts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_memory_reuse_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_memory_sessions: {
+        Row: {
+          anonymous_fingerprint: string | null
+          device_id: string | null
+          id: string
+          last_seen_at: string
+          migrated_to_user_id: string | null
+          session_memory_id: string
+          started_at: string
+        }
+        Insert: {
+          anonymous_fingerprint?: string | null
+          device_id?: string | null
+          id?: string
+          last_seen_at?: string
+          migrated_to_user_id?: string | null
+          session_memory_id: string
+          started_at?: string
+        }
+        Update: {
+          anonymous_fingerprint?: string | null
+          device_id?: string | null
+          id?: string
+          last_seen_at?: string
+          migrated_to_user_id?: string | null
+          session_memory_id?: string
+          started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_memory_sessions_migrated_to_user_id_fkey"
+            columns: ["migrated_to_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_memory_sources: {
+        Row: {
+          created_at: string
+          id: string
+          metadata_json: Json | null
+          source_label: string | null
+          source_ref: string | null
+          source_type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata_json?: Json | null
+          source_label?: string | null
+          source_ref?: string | null
+          source_type?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata_json?: Json | null
+          source_label?: string | null
+          source_ref?: string | null
+          source_type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_memory_sources_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_navigation_preferences: {
         Row: {
           collapsed_sections_json: Json | null
