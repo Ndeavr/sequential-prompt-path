@@ -7,6 +7,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useConversation } from "@elevenlabs/react";
 import { supabase } from "@/integrations/supabase/client";
+import { audioEngine } from "@/services/audioEngineUNPRO";
 
 interface UseLiveVoiceCallbacks {
   onTranscript?: (text: string) => void;
@@ -31,6 +32,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       console.log("[ElevenLabs] ✅ Connected to agent");
       setIsActive(true);
       setIsConnecting(false);
+      audioEngine.play("success");
       callbacksRef.current?.onConnect?.();
     },
     onDisconnect: () => {
@@ -39,6 +41,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       setIsConnecting(false);
       hasDeliveredFirstAudioRef.current = false;
       if (!intentionallyStopped.current) {
+        audioEngine.play("outro");
         callbacksRef.current?.onDisconnect?.();
       }
     },
@@ -98,6 +101,10 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     setIsConnecting(true);
 
     try {
+      // Play intro chime before connecting
+      audioEngine.unlock();
+      await audioEngine.play("intro");
+
       console.log("[ElevenLabs] Requesting microphone...");
       await navigator.mediaDevices.getUserMedia({ audio: true });
       console.log("[ElevenLabs] ✅ Microphone granted");
