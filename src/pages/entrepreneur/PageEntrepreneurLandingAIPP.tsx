@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, Zap, TrendingUp, Shield, ArrowRight, Sparkles } from "lucide-react";
+import { Search, Zap, TrendingUp, Shield, ArrowRight, Sparkles, CreditCard } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
