@@ -405,6 +405,13 @@ const BlogPage2 = lazy(() => import("@/pages/BlogPage2"));
 const EmergencyPage = lazy(() => import("@/pages/EmergencyPage"));
 const RefusalSeoPage = lazy(() => import("@/pages/seo/RefusalSeoPage"));
 
+// Quote Separation: Comparison vs Client Record
+const PageAnalyseTroisSoumissions = lazy(() => import("@/pages/PageAnalyseTroisSoumissions"));
+const PageImporterSoumissionComparative = lazy(() => import("@/pages/PageImporterSoumissionComparative"));
+const PageResultatAnalyseSoumissions = lazy(() => import("@/pages/PageResultatAnalyseSoumissions"));
+const PageSoumissionsDossierClient = lazy(() => import("@/pages/PageSoumissionsDossierClient"));
+const PageAjouterSoumissionAuDossier = lazy(() => import("@/pages/PageAjouterSoumissionAuDossier"));
+
 // Contractor Join + Onboarding
 const PageEntrepreneurJoin = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurJoin"));
 const PageEntrepreneurHowItWorks = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurHowItWorks"));
