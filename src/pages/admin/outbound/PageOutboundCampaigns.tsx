@@ -159,6 +159,14 @@ export default function PageOutboundCampaigns() {
         </CardContent>
       </Card>
 
+      {/* Scheduling Panel */}
+      {selectedCampaign && (
+        <div className="grid md:grid-cols-2 gap-4">
+          <PanelCampaignScheduling campaign={selectedCampaign} onUpdate={load} />
+          <PanelSendLogs campaignId={selectedCampaign.id} />
+        </div>
+      )}
+
       {/* City × Specialty Grid */}
       <Card>
         <CardHeader><CardTitle className="text-base">Couverture Ville × Spécialité</CardTitle></CardHeader>
@@ -175,13 +183,23 @@ export default function PageOutboundCampaigns() {
                     </Badge>
                   </div>
                   <p className="text-sm font-semibold">{c.specialty}</p>
-                  <p className="text-xs text-muted-foreground">{count} leads · {c.daily_send_limit}/jour</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">{count} leads · {c.daily_send_limit}/jour</p>
+                    {c.auto_send_enabled && (
+                      <Badge variant="outline" className="text-[9px] bg-emerald-500/20 text-emerald-400">
+                        Auto
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
         </CardContent>
       </Card>
+
+      {/* Global Send Logs */}
+      <PanelSendLogs />
     </div>
   );
 }
