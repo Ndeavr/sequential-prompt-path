@@ -38,6 +38,17 @@ import CardAlexBookingNextStep from "@/components/alex-conversation/CardAlexBook
 import WidgetUploadInline from "@/components/alex-conversation/WidgetUploadInline";
 import SheetEntrepreneurDetails from "@/components/alex-conversation/SheetEntrepreneurDetails";
 import SheetBookingSlots from "@/components/alex-conversation/SheetBookingSlots";
+// ── Orchestrator V1 inline cards ──
+import PanelAlexInlineFormRenderer from "@/components/alex-conversation/PanelAlexInlineFormRenderer";
+import PanelAlexContractorPicker from "@/components/alex-conversation/PanelAlexContractorPicker";
+import PanelAlexBookingScheduler from "@/components/alex-conversation/PanelAlexBookingScheduler";
+import PanelAlexCheckoutEmbedded from "@/components/alex-conversation/PanelAlexCheckoutEmbedded";
+import PanelAlexBeforeAfterStudio from "@/components/alex-conversation/PanelAlexBeforeAfterStudio";
+import PanelAlexInlineImageGallery from "@/components/alex-conversation/PanelAlexInlineImageGallery";
+import PanelAlexNextBestActionCard from "@/components/alex-conversation/PanelAlexNextBestActionCard";
+import PanelAlexLiveTaskStack from "@/components/alex-conversation/PanelAlexLiveTaskStack";
+import CardAlexAddressConfirmation from "@/components/alex-conversation/CardAlexAddressConfirmation";
+import PanelAlexFormAutoFillPreview from "@/components/alex-conversation/PanelAlexFormAutoFillPreview";
 import { MOCK_SLOTS, type MockContractor, type MockSlot } from "@/components/alex-conversation/types";
 import { toast } from "sonner";
 
@@ -167,6 +178,27 @@ export default function PageHomeAlexConversationalLite() {
       case "improvement_actions": return <CardImprovementActions actions={msg.cardData || []} />;
       case "upload_photo": return <WidgetUploadInline type="photo" onFileSelected={(f) => handleFileUpload(f, "photo")} />;
       case "upload_quote": return <WidgetUploadInline type="quote" onFileSelected={(f) => handleFileUpload(f, "quote")} />;
+      // ── Orchestrator V1 cards ──
+      case "inline_form":
+        return <PanelAlexInlineFormRenderer data={msg.cardData} onSubmit={(vals) => sendMessage(`Formulaire soumis: ${JSON.stringify(vals)}`)} />;
+      case "contractor_picker":
+        return <PanelAlexContractorPicker data={msg.cardData} onSelect={(c) => setDetailContractor(c)} onViewProfile={(c) => setDetailContractor(c)} />;
+      case "booking_scheduler":
+        return <PanelAlexBookingScheduler data={msg.cardData} onConfirm={(slot) => { audioEngine.play("success"); toast.success(`Rendez-vous confirmé : ${slot.label}`); }} />;
+      case "checkout_embedded":
+        return <PanelAlexCheckoutEmbedded data={msg.cardData} onCheckout={() => { window.location.href = `/checkout/native/${msg.cardData?.planCode}`; }} />;
+      case "before_after":
+        return <PanelAlexBeforeAfterStudio data={msg.cardData} onRegenerate={() => sendMessage("Régénérer l'avant/après")} />;
+      case "image_gallery":
+        return <PanelAlexInlineImageGallery data={msg.cardData} />;
+      case "next_best_action":
+        return <PanelAlexNextBestActionCard data={msg.cardData} onAccept={(key) => sendMessage(msg.cardData?.label || key)} />;
+      case "task_progress":
+        return <PanelAlexLiveTaskStack data={msg.cardData} />;
+      case "address_confirmation":
+        return <CardAlexAddressConfirmation data={msg.cardData} onConfirm={() => sendMessage("Adresse confirmée")} onEdit={(addr) => sendMessage(`Nouvelle adresse: ${addr}`)} />;
+      case "form_autofill_preview":
+        return <PanelAlexFormAutoFillPreview data={msg.cardData} onConfirm={() => sendMessage("Données confirmées")} onEdit={() => sendMessage("Je veux modifier mes informations")} />;
       default: return null;
     }
   };

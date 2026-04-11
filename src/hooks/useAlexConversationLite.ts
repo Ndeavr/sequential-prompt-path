@@ -14,6 +14,7 @@ import { useState, useCallback, useRef } from "react";
 import type { ConversationMessage, InlineCardType } from "@/components/alex-conversation/types";
 import {
   MOCK_CONTRACTORS,
+  MOCK_SLOTS,
   MOCK_BUSINESS_ANALYSIS,
   MOCK_QUOTE_ANALYSIS,
   MOCK_PHOTO_DESIGN,
@@ -76,8 +77,29 @@ const ANALYSIS_KEYWORDS: Record<string, IntentMatch> = {
   "comparer soumission": { intent: "quote_analysis", response: "Analyse de soumission terminée.", data: MOCK_QUOTE_ANALYSIS },
 };
 
+// ─── ORCHESTRATOR KEYWORDS (V1) ───
+const ORCHESTRATOR_KEYWORDS: Record<string, IntentMatch> = {
+  "compléter mon profil": { intent: "inline_form", response: "Je peux compléter votre profil ici. Vérifiez simplement ces informations.", data: { formKey: "profile", title: "Compléter votre profil", fields: [{ key: "firstName", label: "Prénom", type: "text", placeholder: "Votre prénom", required: true }, { key: "phone", label: "Téléphone", type: "phone", placeholder: "(514) 000-0000" }, { key: "email", label: "Courriel", type: "email", placeholder: "vous@example.com" }], submitLabel: "Enregistrer" } },
+  "trouver un pro": { intent: "contractor_picker", response: "Voici les meilleurs professionnels pour votre projet.", data: { contractors: MOCK_CONTRACTORS, reason: "Sélectionnés selon votre besoin et votre secteur." } },
+  "chercher un professionnel": { intent: "contractor_picker", response: "J'ai trouvé ces professionnels qualifiés pour vous.", data: { contractors: MOCK_CONTRACTORS, reason: "Basé sur votre demande et la disponibilité." } },
+  "réserver un rendez-vous": { intent: "booking_scheduler", response: "Voici les disponibilités. Choisissez le créneau qui vous convient.", data: { contractorId: "c1", contractorName: MOCK_CONTRACTORS[0].name, slots: MOCK_SLOTS, appointmentType: "évaluation" } },
+  "planifier": { intent: "booking_scheduler", response: "Je peux planifier un rendez-vous. Voici les créneaux disponibles.", data: { contractorId: "c1", contractorName: MOCK_CONTRACTORS[0].name, slots: MOCK_SLOTS } },
+  "activer mon plan": { intent: "checkout_embedded", response: "Je peux finaliser votre activation ici.", data: { planCode: "pro", planName: "Pro", price: 149, interval: "monthly" } },
+  "paiement": { intent: "checkout_embedded", response: "Voici le résumé de votre plan. Procédez au paiement.", data: { planCode: "pro", planName: "Pro", price: 149, interval: "monthly" } },
+  "avant après": { intent: "before_after", response: "Je génère un avant/après de votre espace.", data: { beforeUrl: "/placeholder.svg", generating: true, roomType: "Cuisine" } },
+  "transformation": { intent: "before_after", response: "Voici une transformation possible.", data: { beforeUrl: "/placeholder.svg", afterUrl: "/placeholder.svg", roomType: "Salon", style: "Moderne minimaliste" } },
+  "inspirations": { intent: "image_gallery", response: "Voici quelques inspirations pour votre projet.", data: { title: "Inspirations", images: [{ url: "/placeholder.svg", label: "Moderne" }, { url: "/placeholder.svg", label: "Scandinave" }, { url: "/placeholder.svg", label: "Industriel" }] } },
+  "confirmer adresse": { intent: "address_confirmation", response: "C'est bien pour cette adresse ?", data: { address: "1234 rue Principale", city: "Laval", postalCode: "H7N 1A1", propertyType: "Condo" } },
+  "mon adresse": { intent: "address_confirmation", response: "Je retrouve votre adresse. Confirmez-la.", data: { address: "1234 rue Principale", city: "Laval", postalCode: "H7N 1A1" } },
+};
+
 function detectAnalysisIntent(text: string): IntentMatch | null {
   const lower = text.toLowerCase();
+  // Check orchestrator keywords first (higher specificity)
+  const orchSorted = Object.entries(ORCHESTRATOR_KEYWORDS).sort((a, b) => b[0].length - a[0].length);
+  for (const [keyword, result] of orchSorted) {
+    if (lower.includes(keyword)) return result;
+  }
   const sorted = Object.entries(ANALYSIS_KEYWORDS).sort((a, b) => b[0].length - a[0].length);
   for (const [keyword, result] of sorted) {
     if (lower.includes(keyword)) return result;

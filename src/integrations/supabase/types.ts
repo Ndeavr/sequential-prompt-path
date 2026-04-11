@@ -1506,6 +1506,186 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_action_failures: {
+        Row: {
+          action_key: string
+          alex_action_session_id: string | null
+          created_at: string
+          error_message: string | null
+          failure_domain: string
+          failure_stage: string
+          failure_type: string
+          id: string
+          metadata_json: Json | null
+        }
+        Insert: {
+          action_key: string
+          alex_action_session_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          failure_domain: string
+          failure_stage: string
+          failure_type: string
+          id?: string
+          metadata_json?: Json | null
+        }
+        Update: {
+          action_key?: string
+          alex_action_session_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          failure_domain?: string
+          failure_stage?: string
+          failure_type?: string
+          id?: string
+          metadata_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_action_failures_alex_action_session_id_fkey"
+            columns: ["alex_action_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_action_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_action_intents: {
+        Row: {
+          alex_action_session_id: string
+          confidence_score: number | null
+          created_at: string
+          extracted_entities_json: Json | null
+          id: string
+          missing_fields_json: Json | null
+          next_best_action: string | null
+          primary_intent: string
+          secondary_intent: string | null
+        }
+        Insert: {
+          alex_action_session_id: string
+          confidence_score?: number | null
+          created_at?: string
+          extracted_entities_json?: Json | null
+          id?: string
+          missing_fields_json?: Json | null
+          next_best_action?: string | null
+          primary_intent: string
+          secondary_intent?: string | null
+        }
+        Update: {
+          alex_action_session_id?: string
+          confidence_score?: number | null
+          created_at?: string
+          extracted_entities_json?: Json | null
+          id?: string
+          missing_fields_json?: Json | null
+          next_best_action?: string | null
+          primary_intent?: string
+          secondary_intent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_action_intents_alex_action_session_id_fkey"
+            columns: ["alex_action_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_action_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_action_runs: {
+        Row: {
+          action_key: string
+          action_type: string
+          alex_action_session_id: string
+          confirmation_required: boolean | null
+          created_at: string
+          error_message: string | null
+          execution_status: string
+          id: string
+          input_payload_json: Json | null
+          output_payload_json: Json | null
+          render_mode: string
+          updated_at: string
+        }
+        Insert: {
+          action_key: string
+          action_type: string
+          alex_action_session_id: string
+          confirmation_required?: boolean | null
+          created_at?: string
+          error_message?: string | null
+          execution_status?: string
+          id?: string
+          input_payload_json?: Json | null
+          output_payload_json?: Json | null
+          render_mode?: string
+          updated_at?: string
+        }
+        Update: {
+          action_key?: string
+          action_type?: string
+          alex_action_session_id?: string
+          confirmation_required?: boolean | null
+          created_at?: string
+          error_message?: string | null
+          execution_status?: string
+          id?: string
+          input_payload_json?: Json | null
+          output_payload_json?: Json | null
+          render_mode?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_action_runs_alex_action_session_id_fkey"
+            columns: ["alex_action_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_action_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_action_sessions: {
+        Row: {
+          active_task_key: string | null
+          alex_session_id: string | null
+          channel_type: string
+          id: string
+          session_family_id: string | null
+          started_at: string
+          status: string
+          surface: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          active_task_key?: string | null
+          alex_session_id?: string | null
+          channel_type?: string
+          id?: string
+          session_family_id?: string | null
+          started_at?: string
+          status?: string
+          surface?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          active_task_key?: string | null
+          alex_session_id?: string | null
+          channel_type?: string
+          id?: string
+          session_family_id?: string | null
+          started_at?: string
+          status?: string
+          surface?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       alex_actions: {
         Row: {
           action_status: string
@@ -1655,6 +1835,62 @@ export type Database = {
           },
         ]
       }
+      alex_booking_intents: {
+        Row: {
+          address_id: string | null
+          alex_action_session_id: string | null
+          appointment_size: string
+          appointment_type: string
+          contractor_id: string | null
+          created_at: string
+          id: string
+          preferred_time_windows_json: Json | null
+          property_id: string | null
+          selected_slot_json: Json | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address_id?: string | null
+          alex_action_session_id?: string | null
+          appointment_size?: string
+          appointment_type?: string
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          preferred_time_windows_json?: Json | null
+          property_id?: string | null
+          selected_slot_json?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address_id?: string | null
+          alex_action_session_id?: string | null
+          appointment_size?: string
+          appointment_type?: string
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          preferred_time_windows_json?: Json | null
+          property_id?: string | null
+          selected_slot_json?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_booking_intents_alex_action_session_id_fkey"
+            columns: ["alex_action_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_action_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alex_brand_phonetic_lock: {
         Row: {
           brand_key: string
@@ -1705,6 +1941,59 @@ export type Database = {
           voice_engine?: string | null
         }
         Relationships: []
+      }
+      alex_checkout_intents: {
+        Row: {
+          alex_action_session_id: string | null
+          checkout_status: string
+          coupon_code: string | null
+          created_at: string
+          id: string
+          payment_provider_ref: string | null
+          pricing_json: Json | null
+          product_ref: string
+          product_type: string
+          tax_json: Json | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          alex_action_session_id?: string | null
+          checkout_status?: string
+          coupon_code?: string | null
+          created_at?: string
+          id?: string
+          payment_provider_ref?: string | null
+          pricing_json?: Json | null
+          product_ref: string
+          product_type: string
+          tax_json?: Json | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          alex_action_session_id?: string | null
+          checkout_status?: string
+          coupon_code?: string | null
+          created_at?: string
+          id?: string
+          payment_provider_ref?: string | null
+          pricing_json?: Json | null
+          product_ref?: string
+          product_type?: string
+          tax_json?: Json | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_checkout_intents_alex_action_session_id_fkey"
+            columns: ["alex_action_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_action_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       alex_city_aliases: {
         Row: {
@@ -1825,6 +2114,47 @@ export type Database = {
           room_type?: string | null
         }
         Relationships: []
+      }
+      alex_contractor_shortlists: {
+        Row: {
+          alex_action_session_id: string | null
+          contractor_ids_json: Json | null
+          created_at: string
+          id: string
+          selected_contractor_id: string | null
+          shortlist_name: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          alex_action_session_id?: string | null
+          contractor_ids_json?: Json | null
+          created_at?: string
+          id?: string
+          selected_contractor_id?: string | null
+          shortlist_name?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          alex_action_session_id?: string | null
+          contractor_ids_json?: Json | null
+          created_at?: string
+          id?: string
+          selected_contractor_id?: string | null
+          shortlist_name?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_contractor_shortlists_alex_action_session_id_fkey"
+            columns: ["alex_action_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_action_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       alex_conversation_rules: {
         Row: {
@@ -2025,6 +2355,91 @@ export type Database = {
           winner?: string | null
         }
         Relationships: []
+      }
+      alex_form_drafts: {
+        Row: {
+          alex_action_session_id: string | null
+          completion_ratio: number | null
+          form_data_json: Json | null
+          form_key: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          alex_action_session_id?: string | null
+          completion_ratio?: number | null
+          form_data_json?: Json | null
+          form_key: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          alex_action_session_id?: string | null
+          completion_ratio?: number | null
+          form_data_json?: Json | null
+          form_key?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_form_drafts_alex_action_session_id_fkey"
+            columns: ["alex_action_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_action_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_generated_assets: {
+        Row: {
+          alex_action_session_id: string | null
+          asset_type: string
+          created_at: string
+          generation_prompt: string | null
+          id: string
+          metadata_json: Json | null
+          output_url: string | null
+          source_asset_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          alex_action_session_id?: string | null
+          asset_type: string
+          created_at?: string
+          generation_prompt?: string | null
+          id?: string
+          metadata_json?: Json | null
+          output_url?: string | null
+          source_asset_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          alex_action_session_id?: string | null
+          asset_type?: string
+          created_at?: string
+          generation_prompt?: string | null
+          id?: string
+          metadata_json?: Json | null
+          output_url?: string | null
+          source_asset_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_generated_assets_alex_action_session_id_fkey"
+            columns: ["alex_action_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_action_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       alex_greeting_rules: {
         Row: {
@@ -2383,6 +2798,47 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      alex_inline_confirmations: {
+        Row: {
+          alex_action_session_id: string
+          confirmation_key: string
+          confirmation_label: string
+          confirmation_payload_json: Json | null
+          created_at: string
+          id: string
+          response_state: string
+          updated_at: string
+        }
+        Insert: {
+          alex_action_session_id: string
+          confirmation_key: string
+          confirmation_label: string
+          confirmation_payload_json?: Json | null
+          created_at?: string
+          id?: string
+          response_state?: string
+          updated_at?: string
+        }
+        Update: {
+          alex_action_session_id?: string
+          confirmation_key?: string
+          confirmation_label?: string
+          confirmation_payload_json?: Json | null
+          created_at?: string
+          id?: string
+          response_state?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_inline_confirmations_alex_action_session_id_fkey"
+            columns: ["alex_action_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_action_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       alex_intents: {
         Row: {
@@ -3991,6 +4447,50 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_task_state: {
+        Row: {
+          alex_action_session_id: string
+          created_at: string
+          id: string
+          payload_json: Json | null
+          task_key: string
+          task_label: string
+          task_order: number
+          task_status: string
+          updated_at: string
+        }
+        Insert: {
+          alex_action_session_id: string
+          created_at?: string
+          id?: string
+          payload_json?: Json | null
+          task_key: string
+          task_label: string
+          task_order?: number
+          task_status?: string
+          updated_at?: string
+        }
+        Update: {
+          alex_action_session_id?: string
+          created_at?: string
+          id?: string
+          payload_json?: Json | null
+          task_key?: string
+          task_label?: string
+          task_order?: number
+          task_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_task_state_alex_action_session_id_fkey"
+            columns: ["alex_action_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_action_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alex_thread_messages: {
         Row: {
           content: Json
@@ -4176,6 +4676,42 @@ export type Database = {
           screen_name?: string | null
           session_id?: string
           spoken_text?: string | null
+        }
+        Relationships: []
+      }
+      alex_ui_surfaces: {
+        Row: {
+          action_scope_json: Json | null
+          channel_scope: string
+          component_key: string
+          context_requirements_json: Json | null
+          created_at: string
+          id: string
+          is_enabled: boolean | null
+          render_mode: string
+          surface_key: string
+        }
+        Insert: {
+          action_scope_json?: Json | null
+          channel_scope?: string
+          component_key: string
+          context_requirements_json?: Json | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean | null
+          render_mode?: string
+          surface_key: string
+        }
+        Update: {
+          action_scope_json?: Json | null
+          channel_scope?: string
+          component_key?: string
+          context_requirements_json?: Json | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean | null
+          render_mode?: string
+          surface_key?: string
         }
         Relationships: []
       }
