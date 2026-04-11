@@ -31,7 +31,100 @@ export type InlineCardType =
   | "upload_quote"
   | "problem_summary"
   | "address_required"
-  | "booking_next_step";
+  | "booking_next_step"
+  // ── Orchestrator V1 ──
+  | "inline_form"
+  | "contractor_picker"
+  | "booking_scheduler"
+  | "checkout_embedded"
+  | "before_after"
+  | "next_best_action"
+  | "image_gallery"
+  | "task_progress"
+  | "address_confirmation"
+  | "form_autofill_preview";
+
+// ── Orchestrator Data Interfaces ──
+
+export interface InlineFormField {
+  key: string;
+  label: string;
+  type: "text" | "select" | "phone" | "email" | "textarea";
+  value?: string;
+  placeholder?: string;
+  options?: string[];
+  prefilled?: boolean;
+  required?: boolean;
+}
+
+export interface InlineFormData {
+  formKey: string;
+  title: string;
+  fields: InlineFormField[];
+  submitLabel?: string;
+  prefillSource?: string;
+}
+
+export interface ContractorPickerData {
+  contractors: MockContractor[];
+  reason?: string;
+  projectType?: string;
+}
+
+export interface BookingSchedulerData {
+  contractorId: string;
+  contractorName: string;
+  slots: MockSlot[];
+  appointmentType?: string;
+}
+
+export interface CheckoutEmbeddedData {
+  planCode: string;
+  planName: string;
+  price: number;
+  interval: "monthly" | "yearly";
+  currency?: string;
+}
+
+export interface BeforeAfterData {
+  beforeUrl: string;
+  afterUrl?: string;
+  roomType?: string;
+  style?: string;
+  generating?: boolean;
+}
+
+export interface NextBestActionData {
+  actionKey: string;
+  label: string;
+  description: string;
+  icon?: string;
+  priority: "high" | "medium" | "low";
+}
+
+export interface ImageGalleryData {
+  images: Array<{ url: string; label?: string; }>;
+  title?: string;
+}
+
+export interface TaskProgressData {
+  tasks: Array<{ key: string; label: string; status: "pending" | "active" | "done" | "blocked"; }>;
+  currentStep?: number;
+}
+
+export interface AddressConfirmationData {
+  address: string;
+  city: string;
+  postalCode?: string;
+  propertyType?: string;
+}
+
+export interface FormAutoFillPreviewData {
+  formKey: string;
+  title: string;
+  prefilledFields: Array<{ label: string; value: string; source: string; }>;
+  missingCount: number;
+}
 
 export interface MockContractor {
   id: string;
