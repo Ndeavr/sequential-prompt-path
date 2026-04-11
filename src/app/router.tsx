@@ -11,6 +11,9 @@ import HomeWithFeatureFlag from "@/components/home-intent/HomeWithFeatureFlag";
 import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
 
+// Visual Search
+const ProVisualSearchPage = lazy(() => import("@/pages/ProVisualSearchPage"));
+
 // Intent homepage (direct route for testing)
 const PageHomeIntentUNPRO = lazy(() => import("@/pages/PageHomeIntentUNPRO"));
 const PageHomeAlexConversationalLite = lazy(() => import("@/pages/PageHomeAlexConversationalLite"));
@@ -458,6 +461,7 @@ export const AppRouter = () => (
         <Route path="/leads" element={<PageContractorLeads />} />
         <Route path="/profile-completion" element={<PageBusinessImport />} />
         <Route path="/search" element={<Search />} />
+        <Route path="/diagnostic-photo" element={<Suspense fallback={<LazyFallback />}><ProVisualSearchPage /></Suspense>} />
         <Route path="/contractors/:id" element={<ContractorProfile />} />
         <Route path="/login" element={<LoginPageUnpro />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
