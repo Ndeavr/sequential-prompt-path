@@ -2,50 +2,38 @@
 
 ## Problem
 
-Alex connects to ElevenLabs then **immediately disconnects** (within ~50ms). This happens repeatedly in a loop. Two root causes:
+Two issues confirmed from logs:
 
-1. **Overrides rejection**: The `startSession` call passes `overrides` (prompt, firstMessage, language) but these must be **explicitly enabled in the ElevenLabs agent dashboard**. If not enabled, ElevenLabs silently rejects the session → instant disconnect.
+1. **Instant disconnect (44ms/97ms)**: The `overrides: { agent: { language: "fr" } }` in `startSession()` causes ElevenLabs to reject the session immediately. This override is NOT enabled on the agent dashboard.
 
-2. **Reconnect loop**: After disconnect, `releaseLock()` is called → the autostart's `sessionStorage` guard should prevent re-fire, but the component may be re-mounting or the lock state change triggers a cascade → new connection attempt → same instant disconnect → loop.
+2. **Chime overlap**: `audioEngine.play("intro")` fires before connecting, then `audioEngine.play("success")` fires in `onConnect` — both try to play within ~1 second. On disconnect, `audioEngine.play("outro")` fires too. Multiple chimes stack up and create audio noise.
 
 ## Solution
 
-### 1. Remove overrides from startSession (primary fix)
+### 1. Remove ALL overrides from startSession (fixes disconnect)
 
-In `src/hooks/useLiveVoice.ts`, remove the `overrides` block from `conversation.startSession()`. The French prompt must be configured directly on the ElevenLabs agent (agent ID `agent_5901kmg4ra2eee5bbp9r7ew5jcs7`) via their dashboard — not passed as client-side overrides.
+In `src/hooks/useLiveVoice.ts`, change `startSession` to use only the signed URL with zero overrides:
 
 ```typescript
-// BEFORE (broken)
-await conversation.startSession({
-  signedUrl: data.signed_url,
-  overrides: {
-    agent: {
-      prompt: { prompt: ALEX_FRENCH_SYSTEM_PROMPT },
-      firstMessage: "Bonjour...",
-      language: "fr",
-    },
-  },
-});
-
-// AFTER (working)
 await conversation.startSession({
   signedUrl: data.signed_url,
 });
 ```
 
-### 2. Add reconnect guard to prevent loop
+French language must be configured directly on the ElevenLabs agent dashboard — not via client overrides.
 
-In `useLiveVoice.ts`, add a cooldown ref that blocks reconnection within 5 seconds of a disconnect, preventing the rapid connect/disconnect loop.
+### 2. Remove chime overlap (keep only one sound)
 
-### 3. Add error containment on disconnect
+- **Remove** the `await audioEngine.play("intro")` call before connecting
+- **Keep** the `audioEngine.play("success")` on connect as the single connection confirmation sound
+- **Remove** the `audioEngine.play("outro")` on disconnect (it fires even on instant disconnects, creating noise)
 
-Wrap `onDisconnect` to detect instant disconnects (connected < 2 seconds) and flag them as a connection error instead of silently retrying.
+This means: one single chime on successful connection, nothing else.
 
-### 4. Redeploy edge function
+### 3. Redeploy edge function
 
-Redeploy `elevenlabs-conversation-token` to ensure consistency.
+Redeploy `elevenlabs-conversation-token` for consistency.
 
 ### Files modified
-- `src/hooks/useLiveVoice.ts` — remove overrides, add cooldown guard
-- `src/hooks/useAlexHomeAutostart.ts` — no changes needed (guards are correct)
+- `src/hooks/useLiveVoice.ts` — remove overrides, remove intro/outro chimes, keep only success chime on connect
 
