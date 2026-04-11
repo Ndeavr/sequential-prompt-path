@@ -111,19 +111,11 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       await navigator.mediaDevices.getUserMedia({ audio: true });
       console.log("[ElevenLabs] ✅ Microphone granted");
 
-      // 2. Get conversation token from edge function
-      console.log("[ElevenLabs] Fetching conversation token...");
-      const { data, error } = await supabase.functions.invoke("elevenlabs-conversation-token");
-
-      if (error || !data?.token) {
-        throw new Error(error?.message || "Impossible d'obtenir le token de conversation");
-      }
-      console.log("[ElevenLabs] ✅ Got conversation token");
-
-      // 3. Start the conversation session via WebRTC
-      console.log("[ElevenLabs] Connecting WebRTC...");
+      // 2. Connect directly to the public agent via WebRTC
+      const agentId = "agent_5901kmg4ra2eee5bbp9r7ew5jcs7";
+      console.log("[ElevenLabs] Connecting WebRTC to agent:", agentId);
       await conversation.startSession({
-        conversationToken: data.token,
+        agentId,
         connectionType: "webrtc",
       });
 
