@@ -10238,6 +10238,115 @@ export type Database = {
         }
         Relationships: []
       }
+      client_record_quote_files: {
+        Row: {
+          client_record_quote_id: string
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string
+          id: string
+          uploaded_by_user_id: string
+        }
+        Insert: {
+          client_record_quote_id: string
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string
+          id?: string
+          uploaded_by_user_id: string
+        }
+        Update: {
+          client_record_quote_id?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string
+          id?: string
+          uploaded_by_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_record_quote_files_client_record_quote_id_fkey"
+            columns: ["client_record_quote_id"]
+            isOneToOne: false
+            referencedRelation: "client_record_quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_record_quotes: {
+        Row: {
+          client_profile_id: string | null
+          comparison_session_id: string | null
+          contractor_id: string | null
+          created_at: string
+          created_by_role: string
+          created_by_user_id: string
+          currency_code: string
+          id: string
+          property_id: string | null
+          quote_amount: number | null
+          quote_date: string | null
+          quote_description: string | null
+          quote_status: string
+          quote_title: string
+          source_type: string
+          updated_at: string
+          visibility_scope: string
+        }
+        Insert: {
+          client_profile_id?: string | null
+          comparison_session_id?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          created_by_role?: string
+          created_by_user_id: string
+          currency_code?: string
+          id?: string
+          property_id?: string | null
+          quote_amount?: number | null
+          quote_date?: string | null
+          quote_description?: string | null
+          quote_status?: string
+          quote_title: string
+          source_type?: string
+          updated_at?: string
+          visibility_scope?: string
+        }
+        Update: {
+          client_profile_id?: string | null
+          comparison_session_id?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          created_by_role?: string
+          created_by_user_id?: string
+          currency_code?: string
+          id?: string
+          property_id?: string | null
+          quote_amount?: number | null
+          quote_date?: string | null
+          quote_description?: string | null
+          quote_status?: string
+          quote_title?: string
+          source_type?: string
+          updated_at?: string
+          visibility_scope?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_record_quotes_comparison_session_id_fkey"
+            columns: ["comparison_session_id"]
+            isOneToOne: false
+            referencedRelation: "quote_comparison_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cluster_domain_capacity: {
         Row: {
           annual_demand_estimated: number
@@ -37002,6 +37111,36 @@ export type Database = {
           },
         ]
       }
+      quote_activity_logs: {
+        Row: {
+          action_type: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          metadata_json: Json | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          metadata_json?: Json | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          metadata_json?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       quote_analysis: {
         Row: {
           ai_model: string | null
@@ -37057,6 +37196,175 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      quote_analysis_results: {
+        Row: {
+          best_value_quote_item_id: string | null
+          comparison_session_id: string
+          confidence_score: number | null
+          coverage_matrix_json: Json
+          created_at: string
+          highest_coverage_quote_item_id: string | null
+          id: string
+          lowest_price_quote_item_id: string | null
+          price_matrix_json: Json
+          risk_flags_json: Json
+          summary_recommendation: string | null
+        }
+        Insert: {
+          best_value_quote_item_id?: string | null
+          comparison_session_id: string
+          confidence_score?: number | null
+          coverage_matrix_json?: Json
+          created_at?: string
+          highest_coverage_quote_item_id?: string | null
+          id?: string
+          lowest_price_quote_item_id?: string | null
+          price_matrix_json?: Json
+          risk_flags_json?: Json
+          summary_recommendation?: string | null
+        }
+        Update: {
+          best_value_quote_item_id?: string | null
+          comparison_session_id?: string
+          confidence_score?: number | null
+          coverage_matrix_json?: Json
+          created_at?: string
+          highest_coverage_quote_item_id?: string | null
+          id?: string
+          lowest_price_quote_item_id?: string | null
+          price_matrix_json?: Json
+          risk_flags_json?: Json
+          summary_recommendation?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_analysis_results_best_value_quote_item_id_fkey"
+            columns: ["best_value_quote_item_id"]
+            isOneToOne: false
+            referencedRelation: "quote_comparison_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_analysis_results_comparison_session_id_fkey"
+            columns: ["comparison_session_id"]
+            isOneToOne: true
+            referencedRelation: "quote_comparison_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_analysis_results_highest_coverage_quote_item_id_fkey"
+            columns: ["highest_coverage_quote_item_id"]
+            isOneToOne: false
+            referencedRelation: "quote_comparison_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_analysis_results_lowest_price_quote_item_id_fkey"
+            columns: ["lowest_price_quote_item_id"]
+            isOneToOne: false
+            referencedRelation: "quote_comparison_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_comparison_items: {
+        Row: {
+          comparison_session_id: string
+          created_at: string
+          file_name: string
+          file_path: string
+          file_type: string
+          id: string
+          ocr_status: string
+          parsed_amount: number | null
+          parsed_exclusions_summary: string | null
+          parsed_scope_summary: string | null
+          parsed_vendor_name: string | null
+          parsed_warranty_summary: string | null
+          slot_index: number
+          uploaded_by_user_id: string
+        }
+        Insert: {
+          comparison_session_id: string
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_type?: string
+          id?: string
+          ocr_status?: string
+          parsed_amount?: number | null
+          parsed_exclusions_summary?: string | null
+          parsed_scope_summary?: string | null
+          parsed_vendor_name?: string | null
+          parsed_warranty_summary?: string | null
+          slot_index: number
+          uploaded_by_user_id: string
+        }
+        Update: {
+          comparison_session_id?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_type?: string
+          id?: string
+          ocr_status?: string
+          parsed_amount?: number | null
+          parsed_exclusions_summary?: string | null
+          parsed_scope_summary?: string | null
+          parsed_vendor_name?: string | null
+          parsed_warranty_summary?: string | null
+          slot_index?: number
+          uploaded_by_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_comparison_items_comparison_session_id_fkey"
+            columns: ["comparison_session_id"]
+            isOneToOne: false
+            referencedRelation: "quote_comparison_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_comparison_sessions: {
+        Row: {
+          comparison_count: number
+          comparison_status: string
+          created_at: string
+          id: string
+          property_id: string | null
+          selected_result_id: string | null
+          session_title: string
+          source_context: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comparison_count?: number
+          comparison_status?: string
+          created_at?: string
+          id?: string
+          property_id?: string | null
+          selected_result_id?: string | null
+          session_title?: string
+          source_context?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comparison_count?: number
+          comparison_status?: string
+          created_at?: string
+          id?: string
+          property_id?: string | null
+          selected_result_id?: string | null
+          session_title?: string
+          source_context?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       quotes: {
         Row: {
