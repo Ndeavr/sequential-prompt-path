@@ -177,7 +177,7 @@ export default function SeoPageRenderer() {
             <p className="text-sm text-muted-foreground mb-4">
               Décrivez votre situation et recevez des profils vérifiés en quelques secondes.
             </p>
-            <Button onClick={() => alexVoice.openAlex("seo", page ? `${page.profession || page.service || ''} à ${page.city || ''}`.trim() : undefined)}>
+            <Button onClick={() => alexVoice.openAlex("seo", page ? `${page.profession || ''} à ${page.city || ''}`.trim() : undefined)}>
               Parler à Alex <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </CardContent>
