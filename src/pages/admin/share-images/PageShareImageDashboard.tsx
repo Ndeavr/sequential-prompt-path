@@ -71,21 +71,21 @@ export default function PageShareImageDashboard() {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <Clock className="h-5 w-5 mx-auto mb-2 text-amber-400" />
+            <Clock className="h-5 w-5 mx-auto mb-2 text-warning" />
             <p className="text-2xl font-bold">{stats.avgTime}ms</p>
             <p className="text-xs text-muted-foreground">Temps moyen</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <Layout className="h-5 w-5 mx-auto mb-2 text-emerald-400" />
+            <Layout className="h-5 w-5 mx-auto mb-2 text-success" />
             <p className="text-2xl font-bold">{INTENTS.length}</p>
             <p className="text-xs text-muted-foreground">Types de cartes</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <BarChart3 className="h-5 w-5 mx-auto mb-2 text-blue-400" />
+            <BarChart3 className="h-5 w-5 mx-auto mb-2 text-accent-foreground" />
             <p className="text-2xl font-bold">3</p>
             <p className="text-xs text-muted-foreground">Variantes A/B</p>
           </CardContent>
