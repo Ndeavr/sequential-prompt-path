@@ -8825,6 +8825,109 @@ export type Database = {
         }
         Relationships: []
       }
+      business_card_extractions: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          field_name: string
+          field_value: string | null
+          id: string
+          import_id: string
+          is_verified: boolean | null
+          needs_manual_review: boolean | null
+          source_side: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          field_name: string
+          field_value?: string | null
+          id?: string
+          import_id: string
+          is_verified?: boolean | null
+          needs_manual_review?: boolean | null
+          source_side?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          field_name?: string
+          field_value?: string | null
+          id?: string
+          import_id?: string
+          is_verified?: boolean | null
+          needs_manual_review?: boolean | null
+          source_side?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_card_extractions_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "business_card_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_card_imports: {
+        Row: {
+          ai_model_used: string | null
+          created_at: string
+          extraction_confidence_global: number | null
+          id: string
+          image_back_url: string | null
+          image_front_url: string | null
+          import_status: string
+          lead_id: string | null
+          processing_duration_ms: number | null
+          raw_ocr_text: string | null
+          updated_at: string
+          uploaded_by_user_id: string
+        }
+        Insert: {
+          ai_model_used?: string | null
+          created_at?: string
+          extraction_confidence_global?: number | null
+          id?: string
+          image_back_url?: string | null
+          image_front_url?: string | null
+          import_status?: string
+          lead_id?: string | null
+          processing_duration_ms?: number | null
+          raw_ocr_text?: string | null
+          updated_at?: string
+          uploaded_by_user_id: string
+        }
+        Update: {
+          ai_model_used?: string | null
+          created_at?: string
+          extraction_confidence_global?: number | null
+          id?: string
+          image_back_url?: string | null
+          image_front_url?: string | null
+          import_status?: string
+          lead_id?: string | null
+          processing_duration_ms?: number | null
+          raw_ocr_text?: string | null
+          updated_at?: string
+          uploaded_by_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_card_imports_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_entities: {
         Row: {
           business_name: string
@@ -14470,6 +14573,140 @@ export type Database = {
           },
           {
             foreignKeyName: "contractor_insurances_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_leads: {
+        Row: {
+          activation_status: string
+          assigned_admin_id: string | null
+          category_primary: string | null
+          category_secondary: string | null
+          city: string | null
+          company_name: string | null
+          contractor_id: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          enrichment_status: string
+          first_name: string | null
+          full_name: string | null
+          id: string
+          language_primary: string | null
+          last_name: string | null
+          lead_status: string
+          metadata_json: Json | null
+          mobile_phone: string | null
+          outreach_status: string
+          payment_status: string
+          phone: string | null
+          postal_code: string | null
+          profile_status: string
+          province: string | null
+          role_title: string | null
+          score_status: string
+          source_label: string | null
+          source_type: string
+          street_address: string | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          activation_status?: string
+          assigned_admin_id?: string | null
+          category_primary?: string | null
+          category_secondary?: string | null
+          city?: string | null
+          company_name?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          enrichment_status?: string
+          first_name?: string | null
+          full_name?: string | null
+          id?: string
+          language_primary?: string | null
+          last_name?: string | null
+          lead_status?: string
+          metadata_json?: Json | null
+          mobile_phone?: string | null
+          outreach_status?: string
+          payment_status?: string
+          phone?: string | null
+          postal_code?: string | null
+          profile_status?: string
+          province?: string | null
+          role_title?: string | null
+          score_status?: string
+          source_label?: string | null
+          source_type?: string
+          street_address?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          activation_status?: string
+          assigned_admin_id?: string | null
+          category_primary?: string | null
+          category_secondary?: string | null
+          city?: string | null
+          company_name?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          enrichment_status?: string
+          first_name?: string | null
+          full_name?: string | null
+          id?: string
+          language_primary?: string | null
+          last_name?: string | null
+          lead_status?: string
+          metadata_json?: Json | null
+          mobile_phone?: string | null
+          outreach_status?: string
+          payment_status?: string
+          phone?: string | null
+          postal_code?: string | null
+          profile_status?: string
+          province?: string | null
+          role_title?: string | null
+          score_status?: string
+          source_label?: string | null
+          source_type?: string
+          street_address?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_leads_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_leads_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
