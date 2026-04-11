@@ -62,6 +62,14 @@
     --glass-metal-border: hsl(0 0% 100% / 0.07);
     --glass-metal-shine: linear-gradient(135deg, hsl(0 0% 100% / 0.04) 0%, transparent 50%, hsl(0 0% 100% / 0.02) 100%);
 
+    /* ─── Section Underglow Tokens ─── */
+    --section-glow-blue: hsl(222 100% 60% / 0.04);
+    --section-glow-purple: hsl(252 100% 68% / 0.04);
+    --section-glow-cyan: hsl(195 100% 52% / 0.04);
+    --section-glow-green: hsl(152 69% 42% / 0.03);
+    --section-glow-warm: hsl(38 92% 50% / 0.03);
+    --section-glow-neutral: hsl(222 25% 11% / 0.5);
+
     --sidebar-background: 222 40% 5%;
     --sidebar-foreground: 216 30% 95%;
     --sidebar-primary: 222 100% 60%;
