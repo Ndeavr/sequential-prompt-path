@@ -49,6 +49,9 @@ export default function OverlayAlexVoiceFullScreen() {
   const startRef = useRef<typeof start>(null as any);
   const buildGreetingRef = useRef<typeof buildGreeting>(null as any);
 
+  // Voice recovery hook
+  const recovery = useAlexVoiceRecovery();
+
   const firstName = user?.user_metadata?.first_name
     || user?.user_metadata?.full_name?.split(" ")[0]
     || null;
