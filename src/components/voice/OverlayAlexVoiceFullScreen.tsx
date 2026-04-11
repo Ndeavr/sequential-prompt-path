@@ -432,10 +432,11 @@ export default function OverlayAlexVoiceFullScreen() {
             </Button>
           </div>
 
-          {/* Boot checklist during connection */}
+          {/* Minimal loader during connection */}
           {isStabilizing && (
-            <div className="px-6 py-4">
-              <BootChecklist step={bootStep} />
+            <div className="px-6 py-4 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary animate-spin" />
+              <span className="text-sm text-muted-foreground">Connexion…</span>
             </div>
           )}
 
