@@ -1749,6 +1749,47 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_booking_candidates: {
+        Row: {
+          contractor_id: string | null
+          conversation_session_id: string
+          created_at: string
+          id: string
+          slot_end_at: string | null
+          slot_start_at: string | null
+          slot_status: string | null
+          slot_type: string | null
+        }
+        Insert: {
+          contractor_id?: string | null
+          conversation_session_id: string
+          created_at?: string
+          id?: string
+          slot_end_at?: string | null
+          slot_start_at?: string | null
+          slot_status?: string | null
+          slot_type?: string | null
+        }
+        Update: {
+          contractor_id?: string | null
+          conversation_session_id?: string
+          created_at?: string
+          id?: string
+          slot_end_at?: string | null
+          slot_start_at?: string | null
+          slot_status?: string | null
+          slot_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_booking_candidates_conversation_session_id_fkey"
+            columns: ["conversation_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_conversation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alex_booking_drafts: {
         Row: {
           booking_status: string
@@ -2186,6 +2227,57 @@ export type Database = {
           rule_label?: string
           severity?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      alex_conversation_sessions: {
+        Row: {
+          active_address_id: string | null
+          active_property_type: string | null
+          conversation_memory_json: Json | null
+          created_at: string
+          current_intent: string | null
+          current_problem_summary: string | null
+          detected_role: string | null
+          id: string
+          preferred_language: string
+          selected_booking_slot: Json | null
+          selected_contractor_id: string | null
+          session_status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          active_address_id?: string | null
+          active_property_type?: string | null
+          conversation_memory_json?: Json | null
+          created_at?: string
+          current_intent?: string | null
+          current_problem_summary?: string | null
+          detected_role?: string | null
+          id?: string
+          preferred_language?: string
+          selected_booking_slot?: Json | null
+          selected_contractor_id?: string | null
+          session_status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          active_address_id?: string | null
+          active_property_type?: string | null
+          conversation_memory_json?: Json | null
+          created_at?: string
+          current_intent?: string | null
+          current_problem_summary?: string | null
+          detected_role?: string | null
+          id?: string
+          preferred_language?: string
+          selected_booking_slot?: Json | null
+          selected_contractor_id?: string | null
+          session_status?: string
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -3670,6 +3762,44 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_policy_violations: {
+        Row: {
+          conversation_session_id: string | null
+          corrected_text: string | null
+          created_at: string
+          detected_text: string | null
+          id: string
+          severity: string | null
+          violation_type: string
+        }
+        Insert: {
+          conversation_session_id?: string | null
+          corrected_text?: string | null
+          created_at?: string
+          detected_text?: string | null
+          id?: string
+          severity?: string | null
+          violation_type: string
+        }
+        Update: {
+          conversation_session_id?: string | null
+          corrected_text?: string | null
+          created_at?: string
+          detected_text?: string | null
+          id?: string
+          severity?: string | null
+          violation_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_policy_violations_conversation_session_id_fkey"
+            columns: ["conversation_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_conversation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alex_predictive_matches: {
         Row: {
           availability_score: number
@@ -3738,6 +3868,56 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      alex_problem_assessments: {
+        Row: {
+          assessment_confidence: number | null
+          conversation_session_id: string
+          created_at: string
+          id: string
+          probable_problem: string | null
+          recommended_trade: string | null
+          requires_address: boolean | null
+          requires_login: boolean | null
+          requires_photo: boolean | null
+          symptom_label: string | null
+          urgency_level: string | null
+        }
+        Insert: {
+          assessment_confidence?: number | null
+          conversation_session_id: string
+          created_at?: string
+          id?: string
+          probable_problem?: string | null
+          recommended_trade?: string | null
+          requires_address?: boolean | null
+          requires_login?: boolean | null
+          requires_photo?: boolean | null
+          symptom_label?: string | null
+          urgency_level?: string | null
+        }
+        Update: {
+          assessment_confidence?: number | null
+          conversation_session_id?: string
+          created_at?: string
+          id?: string
+          probable_problem?: string | null
+          recommended_trade?: string | null
+          requires_address?: boolean | null
+          requires_login?: boolean | null
+          requires_photo?: boolean | null
+          symptom_label?: string | null
+          urgency_level?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_problem_assessments_conversation_session_id_fkey"
+            columns: ["conversation_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_conversation_sessions"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -3823,6 +4003,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      alex_prompt_rules: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          priority_order: number
+          rule_key: string
+          rule_label: string
+          rule_text: string
+          rule_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          priority_order?: number
+          rule_key: string
+          rule_label: string
+          rule_text: string
+          rule_type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          priority_order?: number
+          rule_key?: string
+          rule_label?: string
+          rule_text?: string
+          rule_type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       alex_pronunciation_fixes: {
         Row: {
@@ -3919,6 +4135,50 @@ export type Database = {
           voice_profile?: string | null
         }
         Relationships: []
+      }
+      alex_recommendation_decisions: {
+        Row: {
+          availability_score: number | null
+          compatibility_score: number | null
+          contractor_id: string | null
+          conversation_session_id: string
+          created_at: string
+          id: string
+          is_primary_match: boolean | null
+          reason_summary: string | null
+          trust_score: number | null
+        }
+        Insert: {
+          availability_score?: number | null
+          compatibility_score?: number | null
+          contractor_id?: string | null
+          conversation_session_id: string
+          created_at?: string
+          id?: string
+          is_primary_match?: boolean | null
+          reason_summary?: string | null
+          trust_score?: number | null
+        }
+        Update: {
+          availability_score?: number | null
+          compatibility_score?: number | null
+          contractor_id?: string | null
+          conversation_session_id?: string
+          created_at?: string
+          id?: string
+          is_primary_match?: boolean | null
+          reason_summary?: string | null
+          trust_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_recommendation_decisions_conversation_session_id_fkey"
+            columns: ["conversation_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_conversation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       alex_response_latency: {
         Row: {
