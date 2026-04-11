@@ -600,7 +600,7 @@ export function getAlexVoiceSettings(profile: AlexVoiceProfile = "default") {
 }
 
 export const ALEX_VOICE_CONFIG = {
-  voiceId: "FGY2WhTYpPnrIDTdsKH5",
+  voiceId: "onwK4e9ZLuTAKqWW03F9",  // Daniel — masculine French voice
   modelId: "eleven_multilingual_v2",
   outputFormat: "mp3_44100_128",
   chunkLengthSchedule: [70, 110, 150],
