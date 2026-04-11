@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Users, Briefcase, FileText, Star, FolderOpen,
   CalendarDays, TrendingUp, LogOut, MapPin, BarChart3, Sparkles,
   Brain, Palette, Menu, X, ShieldCheck, Shield, Bell, SearchCheck,
-  Bot, Network, Camera, Wand2, Zap, Tag, Rocket,
+  Bot, Network, Camera, Wand2, Zap, Tag, Rocket, Grid3X3,
 } from "lucide-react";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import type { ReactNode } from "react";
@@ -43,7 +43,7 @@ const navItems = [
   { to: "/admin/zone-value", label: "Zones & Exclusivité", icon: MapPin },
   { to: "/admin/coupons", label: "Coupons", icon: Tag },
   { to: "/admin/prospection-engine", label: "Prospection Engine", icon: Rocket },
-  { to: "/admin/city-activity-matrix", label: "Matrice Ville×Activité", icon: Grid3x3 },
+  { to: "/admin/city-activity-matrix", label: "Matrice Ville×Activité", icon: Grid3X3 },
   { to: "/admin/uos", label: "UNPRO OS", icon: Sparkles },
 ];
 
