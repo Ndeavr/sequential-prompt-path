@@ -47,11 +47,17 @@ export default function OverlayAlexVoiceFullScreen() {
     || user?.user_metadata?.full_name?.split(" ")[0]
     || null;
 
-  // Build greeting
+  // Build greeting — contextual when available
   const buildGreeting = useCallback(() => {
     const hour = new Date().getHours();
     const time = hour >= 5 && hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
     const name = firstName ? `${time} ${firstName}.` : `${time}.`;
+    
+    // Use contextHint from store for contextual greeting
+    const hint = getStore().contextHint;
+    if (hint) {
+      return `${name} Je vois que vous vous intéressez à ${hint}. Comment puis-je vous aider?`;
+    }
     return `${name} Que puis-je faire pour vous?`;
   }, [firstName]);
 

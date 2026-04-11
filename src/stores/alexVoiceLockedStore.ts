@@ -66,6 +66,7 @@ interface AlexVoiceLockedState {
   
   // Feature context
   feature: string;
+  contextHint: string | null;
   
   // Error
   errorMessage: string | null;
@@ -83,7 +84,7 @@ interface AlexVoiceLockedState {
   transcriptsForFallback: Array<{ role: "user" | "alex"; text: string }>;
 
   // Actions
-  openVoiceSession: (feature?: string, openReason?: string) => void;
+  openVoiceSession: (feature?: string, openReason?: string, contextHint?: string) => void;
   closeVoiceSession: (closeReason: string) => void;
   transitionTo: (newState: LockedVoiceState, reason?: string) => boolean;
   setError: (type: string, message: string, recoverable: boolean) => void;
@@ -103,6 +104,7 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
   sessionId: null,
   sessionLog: null,
   feature: "general",
+  contextHint: null,
   errorMessage: null,
   errorType: null,
   recoveryAttempts: 0,
@@ -111,7 +113,7 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
   stabilizationEnd: null,
   transcriptsForFallback: [],
 
-  openVoiceSession: (feature = "general", openReason = "user_initiated") => {
+  openVoiceSession: (feature = "general", openReason = "user_initiated", contextHint?: string) => {
     const sessionId = crypto.randomUUID();
     const now = new Date().toISOString();
     
@@ -119,6 +121,7 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
       isOverlayOpen: true,
       sessionId,
       feature,
+      contextHint: contextHint || null,
       machineState: "requesting_permission",
       errorMessage: null,
       errorType: null,
@@ -156,6 +159,7 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
       isOverlayOpen: false,
       machineState: "idle",
       sessionId: null,
+      contextHint: null,
       errorMessage: null,
       errorType: null,
       stabilizationEnd: null,
