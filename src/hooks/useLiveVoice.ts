@@ -363,8 +363,21 @@ Ne dis rien d'autre avant cette salutation. Dis-la maintenant.`;
       setIsConnecting(false);
       callbacksRef.current?.onConnect?.();
 
-      // Wait a moment then start mic to avoid any race condition.
-      await new Promise((r) => setTimeout(r, 500));
+      // STEP 1: Trigger greeting BEFORE mic to prevent VAD interruption
+      if (sessionRef.current && options?.initialGreeting) {
+        try {
+          sessionRef.current.sendClientContent({
+            turns: [{ role: "user", parts: [{ text: `[Tu es Alex. Dis maintenant ta salutation d'accueil à voix haute. Salutation: "${options.initialGreeting}". Parle immédiatement, en français international neutre, sans accent régional. Prononce chaque mot clairement.]` }] }],
+            turnComplete: true,
+          });
+          console.log("[GeminiLive] ✅ Greeting trigger sent BEFORE mic");
+        } catch (e) {
+          console.warn("[GeminiLive] Failed to send greeting trigger:", e);
+        }
+      }
+
+      // STEP 2: Wait for greeting to start playing before enabling mic
+      await new Promise((r) => setTimeout(r, 1500));
 
       // Resume audio contexts
       if (inputAudioContextRef.current?.state === "suspended") {
@@ -374,23 +387,10 @@ Ne dis rien d'autre avant cette salutation. Dis-la maintenant.`;
         await outputAudioContextRef.current.resume().catch(() => {});
       }
 
-      // Start mic pipeline
+      // STEP 3: Start mic pipeline AFTER greeting has begun
       if (inputAudioContextRef.current && mediaStreamRef.current) {
         await setupMicPipeline(mediaStreamRef.current, inputAudioContextRef.current);
-      }
-
-      // Trigger model to speak the greeting proactively
-      // Gemini Live does NOT speak from systemInstruction alone — needs a client turn
-      if (sessionRef.current && options?.initialGreeting) {
-        try {
-          sessionRef.current.sendClientContent({
-            turns: [{ role: "user", parts: [{ text: `[Instructions: Dis maintenant ta salutation d'accueil. Voici le contexte: ${options.initialGreeting}]` }] }],
-            turnComplete: true,
-          });
-          console.log("[GeminiLive] ✅ Greeting trigger sent");
-        } catch (e) {
-          console.warn("[GeminiLive] Failed to send greeting trigger:", e);
-        }
+        console.log("[GeminiLive] ✅ Mic started after greeting delay");
       }
 
       setTimeout(() => {
