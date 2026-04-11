@@ -32,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import { useAlexVoiceFull, type VoiceState, type UIAction } from "@/hooks/useAlexVoice";
 import { useAuth } from "@/hooks/useAuth";
 import { dispatchAlexActions, cleanupAlexOverlays, type AlexUIAction, type DispatcherDeps } from "@/lib/alexUiActionDispatcher";
+import { audioEngine } from "@/services/audioEngineUNPRO";
 
 // ─── Quick action chip data ───
 const QUICK_ACTIONS = [
@@ -238,10 +239,18 @@ export default function AlexVoicePage() {
     currentPage: pathname,
   });
 
-  // Auto-start session on mount
+  // Auto-start session on mount with intro chime
   useEffect(() => {
-    startSession();
+    audioEngine.unlock();
+    audioEngine.play("intro").then(() => startSession());
+    return () => { audioEngine.play("outro"); };
   }, []);
+
+  // Sonic feedback on state transitions
+  useEffect(() => {
+    if (state === "thinking") audioEngine.play("thinking");
+    if (state === "speaking") audioEngine.play("listening");
+  }, [state]);
 
   // Auto-scroll
   useEffect(() => {
