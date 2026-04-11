@@ -1,11 +1,8 @@
 /**
  * useLiveVoice — ElevenLabs Conversational AI voice hook.
  * 
- * Uses @elevenlabs/react useConversation for WebRTC-based
+ * Uses @elevenlabs/react useConversation for WebSocket-based
  * real-time voice conversation with an ElevenLabs agent.
- * 
- * Keeps the same external API as the previous Gemini Live implementation
- * so overlay/bootstrap hooks work without changes.
  */
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useConversation } from "@elevenlabs/react";
@@ -48,7 +45,6 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     onMessage: (message: any) => {
       const msgType = (message as any)?.type as string | undefined;
 
-      // Agent response text
       if (msgType === "agent_response") {
         const text = (message as any)?.agent_response_event?.agent_response as string | undefined;
         if (text) {
@@ -60,7 +56,6 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         }
       }
 
-      // User transcript
       if (msgType === "user_transcript") {
         const text = (message as any)?.user_transcription_event?.user_transcript as string | undefined;
         if (text && text.trim().length >= 2) {
@@ -75,10 +70,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     },
   });
 
-  // Track isSpeaking from the conversation hook
   const isSpeaking = conversation.isSpeaking;
 
-  // Detect first audio from isSpeaking changing to true
   useEffect(() => {
     if (isSpeaking && !hasDeliveredFirstAudioRef.current) {
       hasDeliveredFirstAudioRef.current = true;
@@ -86,7 +79,6 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     }
   }, [isSpeaking]);
 
-  // Listen for cleanup events
   useEffect(() => {
     const handleCleanup = () => {
       if (conversation.status === "connected") {
@@ -106,16 +98,21 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     setIsConnecting(true);
 
     try {
-      // 1. Request microphone permission
       console.log("[ElevenLabs] Requesting microphone...");
       await navigator.mediaDevices.getUserMedia({ audio: true });
       console.log("[ElevenLabs] ✅ Microphone granted");
 
-      // 2. Connect directly to the public agent via WebRTC
-      const agentId = "agent_5901kmg4ra2eee5bbp9r7ew5jcs7";
-      console.log("[ElevenLabs] Connecting WebSocket to agent:", agentId);
+      // Get signed URL for WebSocket connection (more compatible than WebRTC)
+      console.log("[ElevenLabs] Fetching signed URL...");
+      const { data, error } = await supabase.functions.invoke("elevenlabs-conversation-token");
+
+      if (error || !data?.signed_url) {
+        throw new Error(error?.message || "Impossible d'obtenir l'URL de connexion");
+      }
+      console.log("[ElevenLabs] ✅ Got signed URL");
+
       await conversation.startSession({
-        agentId,
+        signedUrl: data.signed_url,
       });
 
     } catch (err: unknown) {
