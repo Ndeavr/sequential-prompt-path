@@ -1,5 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
-import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.49.4/cors";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 const GEMINI_PROMPT = `Tu es un extracteur de données d'entreprise québécoise.
 Analyse le contenu suivant et extrais les informations d'un entrepreneur/entreprise en construction ou rénovation.
