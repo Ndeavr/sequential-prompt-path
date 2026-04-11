@@ -101,6 +101,10 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     setIsConnecting(true);
 
     try {
+      // Play intro chime before connecting
+      audioEngine.unlock();
+      await audioEngine.play("intro");
+
       console.log("[ElevenLabs] Requesting microphone...");
       await navigator.mediaDevices.getUserMedia({ audio: true });
       console.log("[ElevenLabs] ✅ Microphone granted");
