@@ -1,5 +1,5 @@
 /**
- * elevenlabs-conversation-token — Returns a short-lived WebRTC conversation token
+ * elevenlabs-conversation-token — Returns a signed WebSocket URL
  * for the ElevenLabs Conversational AI agent.
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -17,18 +17,20 @@ serve(async (req) => {
 
   try {
     const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
-    const ELEVENLABS_AGENT_ID = Deno.env.get("ELEVENLABS_AGENT_ID");
+    const ELEVENLABS_AGENT_ID = Deno.env.get("ELEVENLABS_AGENT_ID") || "agent_5901kmg4ra2eee5bbp9r7ew5jcs7";
 
-    if (!ELEVENLABS_API_KEY || !ELEVENLABS_AGENT_ID) {
-      console.error("Missing ELEVENLABS_API_KEY or ELEVENLABS_AGENT_ID");
+    if (!ELEVENLABS_API_KEY) {
+      console.error("Missing ELEVENLABS_API_KEY");
       return new Response(
         JSON.stringify({ error: "Voice service not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    console.log("Fetching signed URL for agent:", ELEVENLABS_AGENT_ID);
+
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${ELEVENLABS_AGENT_ID}`,
+      `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${ELEVENLABS_AGENT_ID}`,
       {
         headers: { "xi-api-key": ELEVENLABS_API_KEY },
       }
@@ -36,17 +38,18 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("ElevenLabs token error:", response.status, errorText);
+      console.error("ElevenLabs signed-url error:", response.status, errorText);
       return new Response(
-        JSON.stringify({ error: "Failed to get conversation token", status: response.status }),
+        JSON.stringify({ error: "Failed to get signed URL", status: response.status, detail: errorText }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const { token } = await response.json();
+    const data = await response.json();
+    console.log("Got signed URL successfully");
 
     return new Response(
-      JSON.stringify({ token, agentId: ELEVENLABS_AGENT_ID }),
+      JSON.stringify({ signed_url: data.signed_url, agentId: ELEVENLABS_AGENT_ID }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
