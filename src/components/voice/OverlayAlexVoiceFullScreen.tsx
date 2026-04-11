@@ -18,7 +18,7 @@ import { useAlexVoiceLockedStore, type LockedVoiceState } from "@/stores/alexVoi
 import { useLiveVoice } from "@/hooks/useLiveVoice";
 import { useAlexVoiceRecovery, type RecoveryPhase } from "@/hooks/useAlexVoiceRecovery";
 import { executeHardReset } from "@/services/voiceHardResetEngine";
-import { audioEngine } from "@/services/audioEngineUNPRO";
+// audioEngine removed — no chimes in voice mode, prevents click artifacts
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import logo from "@/assets/unpro-robot.png";
