@@ -257,7 +257,7 @@ Deno.serve(async (req) => {
 
     return json({
       subscriptionId: subscription.id,
-      clientSecret: paymentIntent.client_secret,
+      clientSecret,
       customerId,
     });
   } catch (error: unknown) {
