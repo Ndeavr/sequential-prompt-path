@@ -936,8 +936,11 @@ export const AppRouter = () => (
         <Route path="/carriere/onboarding" element={<PageRepresentativeOnboarding />} />
         <Route path="/import-entrepreneur" element={<PageRepresentativeOnboarding />} />
 
-        {/* Catch-all: try fallback, then 404 */}
-        <Route path="*" element={<FallbackRoutePage />} />
+         {/* Memory Center */}
+         <Route path="/ma-memoire" element={<PageMemoryCenter />} />
+
+         {/* Catch-all: try fallback, then 404 */}
+         <Route path="*" element={<FallbackRoutePage />} />
       </Routes>
     </Suspense>
   </BrowserRouter>
