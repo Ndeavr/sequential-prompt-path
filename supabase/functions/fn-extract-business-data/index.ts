@@ -284,7 +284,7 @@ async function basicExtraction(supabase: any, params: any) {
       phone: phoneMatch?.[0],
       email: emailMatch?.[0],
       website_url: url,
-      status: "new",
+      lead_status: "new",
       source_type: "prospection_engine",
       source_job_id: job_id,
       source_query_id: query_id,
