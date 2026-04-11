@@ -53,6 +53,7 @@ const Login = lazy(() => import("@/pages/Login"));
 const Signup = lazy(() => import("@/pages/Signup"));
 const HomeownersPage = lazy(() => import("@/pages/HomeownersPage"));
 const OwnerMenuPreviewPage = lazy(() => import("@/pages/OwnerMenuPreviewPage"));
+const PageMemoryCenter = lazy(() => import("@/pages/PageMemoryCenter"));
 const MenuIntelligenceAdminPage = lazy(() => import("@/pages/admin/MenuIntelligenceAdminPage"));
 const PageAdminEmailLogs = lazy(() => import("@/pages/admin/PageAdminEmailLogs"));
 const AdminProspectionEngine = lazy(() => import("@/pages/admin/AdminProspectionEngine"));
