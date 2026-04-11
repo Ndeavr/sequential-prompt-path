@@ -10,20 +10,38 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { import_id, image_base64, image_url } = await req.json();
-    if (!import_id) throw new Error("import_id required");
+    const { image_base64, image_url, user_id } = await req.json();
+    if (!image_base64 && !image_url) throw new Error("image_base64 or image_url required");
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Update status
-    await supabase.from("business_card_imports").update({ import_status: "processing" }).eq("id", import_id);
+    // 1. Create lead (server-side, no auth needed)
+    const { data: lead, error: leadErr } = await supabase
+      .from("contractor_leads")
+      .insert({ source_type: "business_card", created_by: user_id || null })
+      .select("id")
+      .single();
+    if (leadErr) throw new Error(`Lead creation failed: ${leadErr.message}`);
 
+    // 2. Create import record
+    const { data: imp, error: impErr } = await supabase
+      .from("business_card_imports")
+      .insert({
+        lead_id: lead.id,
+        uploaded_by_user_id: user_id || null,
+        import_status: "processing",
+      })
+      .select("id")
+      .single();
+    if (impErr) throw new Error(`Import creation failed: ${impErr.message}`);
+
+    const import_id = imp.id;
     const startMs = Date.now();
 
-    // Build image content for AI
+    // 3. Build image content for AI
     const imageContent = image_base64
       ? { type: "image_url" as const, image_url: { url: `data:image/jpeg;base64,${image_base64}` } }
       : { type: "image_url" as const, image_url: { url: image_url } };
@@ -95,8 +113,6 @@ Règles :
 
     const aiData = await aiResponse.json();
     let rawContent = aiData.choices?.[0]?.message?.content || "";
-
-    // Clean markdown fences if present
     rawContent = rawContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
 
     let parsed: { fields: Array<{ field_name: string; field_value: string; confidence: number }>; global_confidence: number; raw_text: string };
@@ -108,7 +124,7 @@ Règles :
 
     const durationMs = Date.now() - startMs;
 
-    // Insert extractions
+    // 4. Insert extractions
     const extractions = parsed.fields
       .filter((f) => f.field_value && f.field_value.trim())
       .map((f) => ({
@@ -124,7 +140,7 @@ Règles :
       await supabase.from("business_card_extractions").insert(extractions);
     }
 
-    // Update import
+    // 5. Update import record
     await supabase.from("business_card_imports").update({
       import_status: "extracted",
       extraction_confidence_global: parsed.global_confidence,
@@ -133,41 +149,34 @@ Règles :
       processing_duration_ms: durationMs,
     }).eq("id", import_id);
 
-    // Create or update lead if linked
-    const { data: importData } = await supabase
-      .from("business_card_imports")
-      .select("lead_id")
-      .eq("id", import_id)
-      .single();
-
-    if (importData?.lead_id) {
-      const fieldMap: Record<string, string> = {};
-      for (const f of parsed.fields) {
-        if (f.field_value?.trim()) fieldMap[f.field_name] = f.field_value.trim();
-      }
-
-      await supabase.from("contractor_leads").update({
-        first_name: fieldMap.first_name,
-        last_name: fieldMap.last_name,
-        full_name: fieldMap.full_name,
-        company_name: fieldMap.company_name,
-        role_title: fieldMap.role_title,
-        email: fieldMap.email,
-        phone: fieldMap.phone,
-        mobile_phone: fieldMap.mobile_phone,
-        website_url: fieldMap.website_url,
-        street_address: fieldMap.street_address,
-        city: fieldMap.city,
-        province: fieldMap.province || "QC",
-        postal_code: fieldMap.postal_code,
-        category_primary: fieldMap.category_primary,
-        lead_status: "enriching",
-        enrichment_status: "complete",
-      }).eq("id", importData.lead_id);
+    // 6. Update lead with extracted fields
+    const fieldMap: Record<string, string> = {};
+    for (const f of parsed.fields) {
+      if (f.field_value?.trim()) fieldMap[f.field_name] = f.field_value.trim();
     }
+
+    await supabase.from("contractor_leads").update({
+      first_name: fieldMap.first_name,
+      last_name: fieldMap.last_name,
+      full_name: fieldMap.full_name,
+      company_name: fieldMap.company_name,
+      role_title: fieldMap.role_title,
+      email: fieldMap.email,
+      phone: fieldMap.phone,
+      mobile_phone: fieldMap.mobile_phone,
+      website_url: fieldMap.website_url,
+      street_address: fieldMap.street_address,
+      city: fieldMap.city,
+      province: fieldMap.province || "QC",
+      postal_code: fieldMap.postal_code,
+      category_primary: fieldMap.category_primary,
+      lead_status: "enriching",
+      enrichment_status: "complete",
+    }).eq("id", lead.id);
 
     return new Response(JSON.stringify({
       success: true,
+      lead_id: lead.id,
       import_id,
       fields_extracted: extractions.length,
       global_confidence: parsed.global_confidence,
