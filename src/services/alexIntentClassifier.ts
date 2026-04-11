@@ -159,7 +159,7 @@ export function classifyIntent(
   sessionHistory?: string[],
 ): IntentClassification {
   const lower = message.toLowerCase().trim();
-  const matchedSignals: string[] = [];
+  const matched_signals: string[] = [];
   const scores: { intent: AlexIntent; score: number }[] = [];
 
   // ─── Check greetings ───
