@@ -70,7 +70,7 @@ export default function OverlayAlexVoiceFullScreen() {
     return `${name} Que puis-je faire pour vous?`;
   }, [firstName]);
 
-  // Gemini Live voice
+  // ElevenLabs voice
   const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
     onFirstAudio: () => {
       firstAudioReceivedRef.current = true;
@@ -134,7 +134,7 @@ export default function OverlayAlexVoiceFullScreen() {
       ]);
     },
     onConnect: () => {
-      console.log("[VoiceOverlay] ✅ Gemini connected");
+      console.log("[VoiceOverlay] ✅ ElevenLabs connected");
       hasConnectedRef.current = true;
       bootTimeRef.current = Date.now();
       setBootStep("connected");
@@ -142,7 +142,7 @@ export default function OverlayAlexVoiceFullScreen() {
     },
     onDisconnect: () => {
       const s = getStore();
-      console.warn("[VoiceOverlay] Gemini disconnected. state:", s.machineState);
+      console.warn("[VoiceOverlay] ElevenLabs disconnected. state:", s.machineState);
       const wasConnected = hasConnectedRef.current;
       hasConnectedRef.current = false;
       firstAudioReceivedRef.current = false;
@@ -190,11 +190,11 @@ export default function OverlayAlexVoiceFullScreen() {
     const s = getStore();
     if (isSpeaking) {
       if (["listening", "awaiting_user", "session_ready", "capturing_voice"].includes(s.machineState)) {
-        s.transitionTo("speaking", "gemini_speaking");
+        s.transitionTo("speaking", "elevenlabs_speaking");
       }
     } else if (hasConnectedRef.current) {
       if (s.machineState === "speaking") {
-        s.transitionTo("awaiting_user", "gemini_done_speaking");
+        s.transitionTo("awaiting_user", "elevenlabs_done_speaking");
         setTimeout(() => {
           const latest = getStore();
           if (latest.machineState === "awaiting_user") {
@@ -254,10 +254,10 @@ export default function OverlayAlexVoiceFullScreen() {
           }
         }, BOOT_TIMEOUT_MS);
 
-        // Connect Gemini Live — use ref for stable reference
+        // Connect ElevenLabs — use ref for stable reference
         setBootStep("connecting");
         const greeting = buildGreetingRef.current();
-        console.log("[VoiceOverlay] Starting Gemini Live with greeting:", greeting);
+        console.log("[VoiceOverlay] Starting ElevenLabs with greeting:", greeting);
         await startRef.current({ initialGreeting: greeting });
 
         // After await: check overlay is still open via getState()
