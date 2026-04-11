@@ -106,7 +106,7 @@ export function useVoiceReliability(options: VoiceReliabilityOptions = {}) {
   const logEvent = useCallback(async (eventType: string, payload?: Record<string, unknown>) => {
     if (!sessionId) return;
     try {
-      await supabase.from("voice_reliability_events").insert({
+      await (supabase as any).from("voice_reliability_events").insert({
         voice_session_id: sessionId,
         event_type: eventType,
         event_source: "client",
@@ -335,7 +335,7 @@ export function useVoiceReliability(options: VoiceReliabilityOptions = {}) {
     cleanup();
     if (sessionId) {
       logEvent("session_closed");
-      supabase.from("voice_reliability_sessions")
+      (supabase as any).from("voice_reliability_sessions")
         .update({ session_status: "completed", ended_at: new Date().toISOString(), ended_reason: "user_stop" })
         .eq("id", sessionId)
         .then(() => {});
