@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     if (!planCode) return json({ error: "planCode required" }, 400);
 
     const serviceClient = createClient(supabaseUrl, serviceRoleKey);
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     // 1. Fetch plan from catalog
     const priceColumn = interval === "year" ? "stripe_yearly_price_id" : "stripe_monthly_price_id";
