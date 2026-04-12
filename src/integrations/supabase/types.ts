@@ -1007,6 +1007,86 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_city_service_targets: {
+        Row: {
+          city_target_id: string
+          combined_market_key: string
+          created_at: string
+          estimated_contract_value: number | null
+          estimated_lead_volume: number | null
+          execution_rank: number
+          id: string
+          priority_score: number
+          service_name: string
+          specialty_slug: string
+          status: string
+        }
+        Insert: {
+          city_target_id: string
+          combined_market_key: string
+          created_at?: string
+          estimated_contract_value?: number | null
+          estimated_lead_volume?: number | null
+          execution_rank?: number
+          id?: string
+          priority_score?: number
+          service_name: string
+          specialty_slug: string
+          status?: string
+        }
+        Update: {
+          city_target_id?: string
+          combined_market_key?: string
+          created_at?: string
+          estimated_contract_value?: number | null
+          estimated_lead_volume?: number | null
+          execution_rank?: number
+          id?: string
+          priority_score?: number
+          service_name?: string
+          specialty_slug?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_city_service_targets_city_target_id_fkey"
+            columns: ["city_target_id"]
+            isOneToOne: false
+            referencedRelation: "agent_city_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_city_targets: {
+        Row: {
+          city_name: string
+          city_slug: string
+          created_at: string
+          id: string
+          notes: string | null
+          priority_score: number
+          status: string
+        }
+        Insert: {
+          city_name: string
+          city_slug: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          priority_score?: number
+          status?: string
+        }
+        Update: {
+          city_name?: string
+          city_slug?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          priority_score?: number
+          status?: string
+        }
+        Relationships: []
+      }
       agent_logs: {
         Row: {
           agent_name: string
@@ -30717,10 +30797,15 @@ export type Database = {
         Row: {
           agent_target_item_id: string | null
           campaign_id: string | null
+          city_execution_wave_id: string | null
+          city_service_target_id: string | null
+          city_target_id: string | null
           created_at: string
           current_stage: string
+          diagnostic_summary: Json | null
           finished_at: string | null
           id: string
+          last_transition_at: string | null
           logs: Json | null
           priority_score: number | null
           scraping_run_id: string | null
@@ -30734,10 +30819,15 @@ export type Database = {
         Insert: {
           agent_target_item_id?: string | null
           campaign_id?: string | null
+          city_execution_wave_id?: string | null
+          city_service_target_id?: string | null
+          city_target_id?: string | null
           created_at?: string
           current_stage?: string
+          diagnostic_summary?: Json | null
           finished_at?: string | null
           id?: string
+          last_transition_at?: string | null
           logs?: Json | null
           priority_score?: number | null
           scraping_run_id?: string | null
@@ -30751,10 +30841,15 @@ export type Database = {
         Update: {
           agent_target_item_id?: string | null
           campaign_id?: string | null
+          city_execution_wave_id?: string | null
+          city_service_target_id?: string | null
+          city_target_id?: string | null
           created_at?: string
           current_stage?: string
+          diagnostic_summary?: Json | null
           finished_at?: string | null
           id?: string
+          last_transition_at?: string | null
           logs?: Json | null
           priority_score?: number | null
           scraping_run_id?: string | null
@@ -30771,6 +30866,27 @@ export type Database = {
             columns: ["agent_target_item_id"]
             isOneToOne: false
             referencedRelation: "agent_target_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_autopilot_runs_city_execution_wave_id_fkey"
+            columns: ["city_execution_wave_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_city_execution_waves"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_autopilot_runs_city_service_target_id_fkey"
+            columns: ["city_service_target_id"]
+            isOneToOne: false
+            referencedRelation: "agent_city_service_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_autopilot_runs_city_target_id_fkey"
+            columns: ["city_target_id"]
+            isOneToOne: false
+            referencedRelation: "agent_city_targets"
             referencedColumns: ["id"]
           },
           {
@@ -30927,6 +31043,97 @@ export type Database = {
             columns: ["sequence_id"]
             isOneToOne: false
             referencedRelation: "outbound_sequences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_city_clusters: {
+        Row: {
+          active_wave_count: number
+          approved_services_count: number
+          city_target_id: string
+          completed_wave_count: number
+          created_at: string
+          id: string
+          services_count: number
+          status: string
+        }
+        Insert: {
+          active_wave_count?: number
+          approved_services_count?: number
+          city_target_id: string
+          completed_wave_count?: number
+          created_at?: string
+          id?: string
+          services_count?: number
+          status?: string
+        }
+        Update: {
+          active_wave_count?: number
+          approved_services_count?: number
+          city_target_id?: string
+          completed_wave_count?: number
+          created_at?: string
+          id?: string
+          services_count?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_city_clusters_city_target_id_fkey"
+            columns: ["city_target_id"]
+            isOneToOne: false
+            referencedRelation: "agent_city_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_city_execution_waves: {
+        Row: {
+          city_cluster_id: string
+          created_at: string
+          daily_send_limit: number
+          finished_at: string | null
+          id: string
+          label: string
+          mailbox_id: string | null
+          scheduled_start_at: string | null
+          started_at: string | null
+          status: string
+          wave_number: number
+        }
+        Insert: {
+          city_cluster_id: string
+          created_at?: string
+          daily_send_limit?: number
+          finished_at?: string | null
+          id?: string
+          label?: string
+          mailbox_id?: string | null
+          scheduled_start_at?: string | null
+          started_at?: string | null
+          status?: string
+          wave_number?: number
+        }
+        Update: {
+          city_cluster_id?: string
+          created_at?: string
+          daily_send_limit?: number
+          finished_at?: string | null
+          id?: string
+          label?: string
+          mailbox_id?: string | null
+          scheduled_start_at?: string | null
+          started_at?: string | null
+          status?: string
+          wave_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_city_execution_waves_city_cluster_id_fkey"
+            columns: ["city_cluster_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_city_clusters"
             referencedColumns: ["id"]
           },
         ]
@@ -31740,6 +31947,75 @@ export type Database = {
           },
         ]
       }
+      outbound_pipeline_errors: {
+        Row: {
+          created_at: string
+          error_code: string
+          error_message: string | null
+          id: string
+          is_blocking: boolean
+          metadata: Json | null
+          run_id: string
+          stage: string
+        }
+        Insert: {
+          created_at?: string
+          error_code?: string
+          error_message?: string | null
+          id?: string
+          is_blocking?: boolean
+          metadata?: Json | null
+          run_id: string
+          stage: string
+        }
+        Update: {
+          created_at?: string
+          error_code?: string
+          error_message?: string | null
+          id?: string
+          is_blocking?: boolean
+          metadata?: Json | null
+          run_id?: string
+          stage?: string
+        }
+        Relationships: []
+      }
+      outbound_qualification_runs: {
+        Row: {
+          candidate_count: number
+          finished_at: string | null
+          id: string
+          logs: Json | null
+          qualified_count: number
+          rejected_count: number
+          run_id: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          candidate_count?: number
+          finished_at?: string | null
+          id?: string
+          logs?: Json | null
+          qualified_count?: number
+          rejected_count?: number
+          run_id: string
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          candidate_count?: number
+          finished_at?: string | null
+          id?: string
+          logs?: Json | null
+          qualified_count?: number
+          rejected_count?: number
+          run_id?: string
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       outbound_replies: {
         Row: {
           assigned_to: string | null
@@ -31809,6 +32085,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      outbound_run_stage_transitions: {
+        Row: {
+          created_at: string
+          from_stage: string | null
+          id: string
+          message: string | null
+          payload: Json | null
+          run_id: string
+          to_stage: string
+          transition_status: string
+        }
+        Insert: {
+          created_at?: string
+          from_stage?: string | null
+          id?: string
+          message?: string | null
+          payload?: Json | null
+          run_id: string
+          to_stage: string
+          transition_status?: string
+        }
+        Update: {
+          created_at?: string
+          from_stage?: string | null
+          id?: string
+          message?: string | null
+          payload?: Json | null
+          run_id?: string
+          to_stage?: string
+          transition_status?: string
+        }
+        Relationships: []
       }
       outbound_scraped_entities: {
         Row: {
@@ -31892,9 +32201,12 @@ export type Database = {
           error_count: number | null
           finished_at: string | null
           id: string
+          lead_candidate_count: number | null
           lead_created_count: number | null
           logs: Json | null
+          normalized_entity_count: number | null
           raw_entity_count: number | null
+          run_id: string | null
           source_count: number | null
           started_at: string | null
           status: string | null
@@ -31906,9 +32218,12 @@ export type Database = {
           error_count?: number | null
           finished_at?: string | null
           id?: string
+          lead_candidate_count?: number | null
           lead_created_count?: number | null
           logs?: Json | null
+          normalized_entity_count?: number | null
           raw_entity_count?: number | null
+          run_id?: string | null
           source_count?: number | null
           started_at?: string | null
           status?: string | null
@@ -31920,9 +32235,12 @@ export type Database = {
           error_count?: number | null
           finished_at?: string | null
           id?: string
+          lead_candidate_count?: number | null
           lead_created_count?: number | null
           logs?: Json | null
+          normalized_entity_count?: number | null
           raw_entity_count?: number | null
+          run_id?: string | null
           source_count?: number | null
           started_at?: string | null
           status?: string | null

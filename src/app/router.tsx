@@ -410,6 +410,9 @@ const PageOutboundSettingsAutonomous = lazy(() => import("@/pages/admin/outbound
 const PageOutboundTargetListInbox = lazy(() => import("@/pages/admin/outbound/PageOutboundTargetListInbox"));
 const PageOutboundTargetReviewQueue = lazy(() => import("@/pages/admin/outbound/PageOutboundTargetReviewQueue"));
 const PageOutboundAutopilotRuns = lazy(() => import("@/pages/admin/outbound/PageOutboundAutopilotRuns"));
+const PageCityFirstTargetHub = lazy(() => import("@/pages/admin/outbound/PageCityFirstTargetHub"));
+const PageCityExecutionMonitor = lazy(() => import("@/pages/admin/outbound/PageCityExecutionMonitor"));
+const PageRunDiagnostics = lazy(() => import("@/pages/admin/outbound/PageRunDiagnostics"));
 const PageAdminExecutionControl = lazy(() => import("@/pages/admin/PageAdminExecutionControl"));
 const PageAdminDominanceControl = lazy(() => import("@/pages/admin/PageAdminDominanceControl"));
 const PageAlexVoiceDebugAdmin = lazy(() => import("@/pages/admin/PageAlexVoiceDebugAdmin"));
@@ -941,6 +944,9 @@ export const AppRouter = () => (
         <Route path="/admin/outbound/targets" element={<ProtectedRoute requiredRole="admin"><PageOutboundTargetListInbox /></ProtectedRoute>} />
         <Route path="/admin/outbound/targets/review" element={<ProtectedRoute requiredRole="admin"><PageOutboundTargetReviewQueue /></ProtectedRoute>} />
         <Route path="/admin/outbound/autopilot/runs" element={<ProtectedRoute requiredRole="admin"><PageOutboundAutopilotRuns /></ProtectedRoute>} />
+        <Route path="/admin/outbound/cities" element={<ProtectedRoute requiredRole="admin"><PageCityFirstTargetHub /></ProtectedRoute>} />
+        <Route path="/admin/outbound/cities/:slug" element={<ProtectedRoute requiredRole="admin"><PageCityExecutionMonitor /></ProtectedRoute>} />
+        <Route path="/admin/outbound/diagnostics" element={<ProtectedRoute requiredRole="admin"><PageRunDiagnostics /></ProtectedRoute>} />
         <Route path="/admin/execution-control" element={<ProtectedRoute requiredRole="admin"><PageAdminExecutionControl /></ProtectedRoute>} />
         <Route path="/admin/dominance" element={<ProtectedRoute requiredRole="admin"><PageAdminDominanceControl /></ProtectedRoute>} />
         <Route path="/admin/voice-debug" element={<ProtectedRoute requiredRole="admin"><PageAlexVoiceDebugAdmin /></ProtectedRoute>} />
