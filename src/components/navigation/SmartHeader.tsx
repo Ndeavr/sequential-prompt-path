@@ -69,13 +69,7 @@ const SmartHeader = () => {
   return (
     <>
       <header
-        className="sticky top-0 z-50"
-        style={{
-          background: "hsl(220 40% 6% / 0.82)",
-          backdropFilter: "blur(20px) saturate(1.6)",
-          WebkitBackdropFilter: "blur(20px) saturate(1.6)",
-          borderBottom: "1px solid hsl(0 0% 100% / 0.06)",
-        }}
+        className="sticky top-0 z-50 h-12 border-b border-border bg-background/90 backdrop-blur-sm"
       >
         <div className="mx-auto max-w-7xl px-1 sm:px-4 lg:px-6">
           <div className="flex items-center justify-between h-14 sm:h-14 lg:h-16">

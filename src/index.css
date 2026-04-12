@@ -729,10 +729,44 @@
 
   /* ═══════════════════════════════════════════════
      WARM NEUTRAL LANDING SYSTEM
+     Overrides ALL semantic tokens so existing components
+     automatically render in warm neutral when inside .landing-warm
      ═══════════════════════════════════════════════ */
   .landing-warm {
-    background-color: var(--landing-bg);
-    color: var(--landing-dark);
+    /* ── Remap core semantic tokens to warm neutral ── */
+    --background: 50 22% 95%;
+    --foreground: 30 8% 12%;
+    --card: 60 14% 98%;
+    --card-foreground: 30 8% 12%;
+    --popover: 60 14% 98%;
+    --popover-foreground: 30 8% 12%;
+    --muted: 45 10% 92%;
+    --muted-foreground: 30 4% 45%;
+    --border: 45 10% 85%;
+    --input: 60 14% 98%;
+    --ring: 30 8% 12%;
+    --primary: 30 8% 12%;
+    --primary-foreground: 50 22% 95%;
+    --secondary: 30 6% 18%;
+    --secondary-foreground: 50 22% 95%;
+    --accent: 45 10% 92%;
+    --accent-foreground: 30 8% 12%;
+
+    /* ── Override glass system for warm neutral ── */
+    --glass-bg: hsl(60 14% 98% / 0.9);
+    --glass-border: hsl(45 10% 85%);
+    --glass-highlight: none;
+    --glass-blur: 8px;
+    --shadow-inner-glow: none;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+    --shadow-md: 0 2px 4px -1px rgb(0 0 0 / 0.06);
+    --shadow-lg: 0 4px 8px -2px rgb(0 0 0 / 0.06);
+    --shadow-glow: none;
+    --shadow-glow-lg: none;
+    --shadow-metal: none;
+
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     font-family: var(--font-landing);
   }
 
@@ -743,7 +777,104 @@
   .landing-warm h5,
   .landing-warm h6 {
     font-family: var(--font-landing);
-    color: var(--landing-dark);
+    color: hsl(var(--foreground));
+  }
+
+  /* Glass cards become flat white cards in warm context */
+  .landing-warm .glass-card,
+  .landing-warm .glass-card-elevated,
+  .landing-warm .premium-card,
+  .landing-warm .card-floating-premium,
+  .landing-warm .surface-metal-glass {
+    background: hsl(var(--card));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  }
+  .landing-warm .glass-card::before,
+  .landing-warm .glass-card-elevated::before,
+  .landing-warm .premium-card::before,
+  .landing-warm .card-floating-premium::before,
+  .landing-warm .surface-metal-glass::before {
+    display: none;
+  }
+  .landing-warm .glass-card:hover,
+  .landing-warm .glass-card-elevated:hover,
+  .landing-warm .premium-card:hover {
+    box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.06);
+    border-color: hsl(30 8% 12% / 0.2);
+    transform: none;
+  }
+
+  /* Noise/leather textures disabled in warm */
+  .landing-warm .noise-overlay::after,
+  .landing-warm .leather-texture::before {
+    display: none;
+  }
+
+  /* Section gradient becomes subtle warm */
+  .landing-warm .section-gradient {
+    background: hsl(45 10% 92% / 0.5);
+  }
+
+  /* Hero/premium backgrounds become flat cream */
+  .landing-warm .premium-bg,
+  .landing-warm .hero-gradient,
+  .landing-warm .mesh-gradient {
+    background: hsl(var(--background));
+  }
+
+  /* Logo glow disabled */
+  .landing-warm .logo-hero-glow {
+    filter: none;
+  }
+  .landing-warm .logo-hero-glow:hover {
+    filter: none;
+  }
+
+  /* Text gradient becomes solid dark */
+  .landing-warm .text-gradient,
+  .landing-warm .text-gradient-accent {
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: hsl(var(--foreground));
+    background-clip: unset;
+  }
+
+  /* CTA buttons become pill-shaped charcoal */
+  .landing-warm .btn-liquid-metal,
+  .landing-warm .cta-gradient {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    box-shadow: none;
+    border-radius: 9999px;
+  }
+  .landing-warm .btn-liquid-metal::before,
+  .landing-warm .cta-gradient::before {
+    display: none;
+  }
+  .landing-warm .btn-liquid-metal:hover,
+  .landing-warm .cta-gradient:hover {
+    opacity: 0.88;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Stat cards become flat */
+  .landing-warm .stat-card {
+    background: hsl(var(--card));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  }
+  .landing-warm .stat-card::before {
+    display: none;
+  }
+  .landing-warm .stat-card:hover {
+    transform: none;
+    box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.06);
   }
 
   .landing-dot-grid {

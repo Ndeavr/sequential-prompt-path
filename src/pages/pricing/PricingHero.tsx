@@ -21,10 +21,7 @@ const KEY_POINTS = [
 
 export default function PricingHero() {
   return (
-    <section className="relative overflow-hidden">
-      <div className="absolute inset-0 hero-gradient" />
-      <div className="absolute top-[-20%] left-[10%] w-[50vw] h-[50vw] rounded-full bg-primary/8 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[5%] w-[30vw] h-[30vw] rounded-full bg-secondary/6 blur-[100px] pointer-events-none" />
+    <section className="relative overflow-hidden landing-dot-grid">
 
       <div className="relative z-10 text-center px-5 pt-28 pb-14 md:pt-36 md:pb-20 max-w-3xl mx-auto">
         <motion.div className="space-y-6" initial="hidden" animate="visible">

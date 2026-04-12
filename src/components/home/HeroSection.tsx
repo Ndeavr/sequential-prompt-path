@@ -180,41 +180,9 @@ export default function HeroSection() {
   return (
     <>
       <section
-        className="relative min-h-[calc(100vh-80px)] flex flex-col items-center justify-center overflow-hidden"
+        className="relative min-h-[calc(100vh-80px)] flex flex-col items-center justify-center overflow-hidden landing-dot-grid"
         data-testid="hero-section-alex"
       >
-        {/* ── Cinematic Background ── */}
-        <motion.div
-          className="absolute inset-0 z-0"
-          animate={{ scale: [1, 1.04, 1] }}
-          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-        >
-          <img src={cinematicBg} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} />
-        </motion.div>
-
-        {/* ── Deep cinematic overlay ── */}
-        <div className="absolute inset-0 z-[1]" style={{
-          background: "linear-gradient(to bottom, rgba(4,8,20,0.55) 0%, rgba(4,8,20,0.72) 40%, rgba(4,8,20,0.94) 100%)",
-        }} />
-
-        {/* ── Dynamic aura glow ── */}
-        <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
-          <motion.div
-            className="absolute top-[35%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px]"
-            animate={{ opacity: [0.12, 0.2, 0.12], scale: [1, 1.05, 1] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            style={{ background: "radial-gradient(ellipse, hsl(222 100% 60% / 0.2) 0%, transparent 70%)" }}
-          />
-          <motion.div
-            className="absolute top-[52%] left-0 right-0 h-[1px]"
-            animate={{ opacity: [0.15, 0.35, 0.15] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            style={{
-              background: "linear-gradient(90deg, transparent 5%, hsl(222 100% 70% / 0.35) 30%, hsl(195 100% 60% / 0.5) 50%, hsl(222 100% 70% / 0.35) 70%, transparent 95%)",
-              filter: "blur(1px)",
-            }}
-          />
-        </div>
 
         {/* ── Content ── */}
         <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto w-full px-5 pt-6 pb-20">
@@ -225,14 +193,14 @@ export default function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           >
-            <h1 className="font-display text-[28px] sm:text-[38px] md:text-[48px] font-bold text-white leading-[1.1] tracking-tight">
+            <h1 className="font-landing text-[32px] sm:text-[44px] md:text-[52px] font-normal text-foreground leading-[1.1] tracking-tight">
               Passez à{" "}
-              <span className="bg-gradient-to-r from-[hsl(222,100%,70%)] via-[hsl(195,100%,60%)] to-[hsl(252,100%,72%)] bg-clip-text text-transparent">
+              <span className="font-semibold">
                 l'intelligence
               </span>
               <br />du bâtiment
             </h1>
-            <p className="mt-4 text-sm sm:text-base text-white/55 max-w-md mx-auto leading-relaxed">
+            <p className="mt-4 text-[17px] text-muted-foreground max-w-md mx-auto leading-relaxed">
               Photo, voix ou texte — trouvez le bon professionnel en quelques secondes.
             </p>
           </motion.div>
@@ -250,17 +218,12 @@ export default function HeroSection() {
                 <motion.button
                   key={intent.slug}
                   onClick={() => setActiveIntent(intent.slug)}
-                  className="relative flex items-center gap-1.5 rounded-full px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all duration-250"
+                  className={`relative flex items-center gap-1.5 rounded-full px-4 py-2.5 text-xs sm:text-sm font-medium transition-all duration-250 ${
+                    isAct
+                      ? "bg-foreground text-background border border-foreground"
+                      : "bg-transparent text-muted-foreground border border-border hover:border-foreground/20"
+                  }`}
                   whileTap={{ scale: 0.95 }}
-                  style={{
-                    background: isAct
-                      ? "linear-gradient(135deg, hsl(222 100% 50% / 0.9), hsl(222 100% 35% / 0.95))"
-                      : "rgba(255,255,255,0.06)",
-                    backdropFilter: "blur(16px)",
-                    border: isAct ? "1px solid hsl(222 100% 70% / 0.45)" : "1px solid rgba(255,255,255,0.1)",
-                    boxShadow: isAct ? "0 0 30px hsl(222 100% 60% / 0.3), inset 0 1px 0 hsl(0 0% 100% / 0.1)" : "none",
-                    color: isAct ? "#fff" : "rgba(255,255,255,0.5)",
-                  }}
                 >
                   <intent.icon className="h-3.5 w-3.5" />
                   {intent.label}
@@ -278,33 +241,18 @@ export default function HeroSection() {
             data-testid="alex-orb-primary"
           >
             <div className="relative flex items-center justify-center">
-              {/* Outer breathing glow */}
+              {/* Outer breathing ring */}
               <motion.div
-                className="absolute rounded-full pointer-events-none"
-                style={{
-                  width: 150, height: 150,
-                  background: "radial-gradient(circle, hsl(222 100% 60% / 0.12) 0%, transparent 70%)",
-                }}
-                animate={{ scale: voiceActive ? [1, 1.2, 1] : [1, 1.08, 1], opacity: voiceActive ? [0.4, 0.8, 0.4] : [0.3, 0.5, 0.3] }}
-                transition={{ duration: voiceActive ? 1.5 : 3, repeat: Infinity, ease: "easeInOut" }}
-              />
-
-              {/* Ring */}
-              <motion.div
-                className="absolute rounded-full pointer-events-none"
-                style={{
-                  width: 130, height: 130,
-                  border: "1.5px solid hsl(222 100% 65% / 0.2)",
-                  boxShadow: "0 0 40px hsl(222 100% 65% / 0.1)",
-                }}
+                className="absolute rounded-full pointer-events-none border border-border"
+                style={{ width: 130, height: 130 }}
                 animate={{ scale: voiceActive ? [1, 1.12, 1] : [1, 1.04, 1] }}
                 transition={{ duration: voiceActive ? 1.2 : 2.5, repeat: Infinity, ease: "easeInOut" }}
               />
 
               {/* Listening pulses */}
               {orbState === "listening" && [0, 1].map((i) => (
-                <motion.div key={i} className="absolute rounded-full pointer-events-none"
-                  style={{ width: 120, height: 120, border: "1.5px solid hsl(222 100% 70% / 0.2)" }}
+                <motion.div key={i} className="absolute rounded-full pointer-events-none border border-foreground/15"
+                  style={{ width: 120, height: 120 }}
                   animate={{ scale: [1, 1.8], opacity: [0.5, 0] }}
                   transition={{ duration: 2, repeat: Infinity, delay: i * 0.6 }}
                 />
@@ -312,8 +260,8 @@ export default function HeroSection() {
 
               {/* Speaking waves */}
               {orbState === "speaking" && [0, 1].map((i) => (
-                <motion.div key={`s${i}`} className="absolute rounded-full pointer-events-none"
-                  style={{ width: 120, height: 120, border: "1.5px solid hsl(195 100% 60% / 0.25)" }}
+                <motion.div key={`s${i}`} className="absolute rounded-full pointer-events-none border border-foreground/15"
+                  style={{ width: 120, height: 120 }}
                   animate={{ scale: [1, 1.6], opacity: [0.6, 0] }}
                   transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.4 }}
                 />
@@ -321,42 +269,34 @@ export default function HeroSection() {
 
               {/* Thinking */}
               {orbState === "thinking" && (
-                <motion.div className="absolute rounded-full pointer-events-none"
-                  style={{ width: 130, height: 130, border: "2px dashed hsl(252 100% 70% / 0.2)" }}
+                <motion.div className="absolute rounded-full pointer-events-none border-2 border-dashed border-foreground/15"
+                  style={{ width: 130, height: 130 }}
                   animate={{ rotate: -360 }}
                   transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                 />
               )}
 
-              {/* Main orb */}
+              {/* Main orb — charcoal */}
               <motion.button
                 onClick={() => voiceActive ? stopVoice() : startVoice()}
-                className="relative rounded-full flex items-center justify-center overflow-hidden z-10"
-                style={{
-                  width: 96, height: 96,
-                  background: "linear-gradient(135deg, hsl(222 100% 45% / 0.9), hsl(222 100% 25% / 0.95))",
-                  border: "2px solid hsl(222 100% 70% / 0.3)",
-                  boxShadow: "0 0 60px -10px hsl(222 100% 65% / 0.5), 0 0 100px -20px hsl(222 100% 55% / 0.3), inset 0 1px 1px hsl(0 0% 100% / 0.1)",
-                }}
+                className="relative rounded-full flex items-center justify-center overflow-hidden z-10 bg-foreground"
+                style={{ width: 96, height: 96 }}
                 animate={
                   orbState === "speaking" ? { scale: [1, 1.08, 1] }
                   : orbState === "listening" ? { scale: [1, 1.05, 1] }
                   : { scale: [1, 1.03, 1] }
                 }
                 transition={{ duration: orbState === "speaking" ? 0.6 : orbState === "listening" ? 1.2 : 2.5, repeat: Infinity, ease: "easeInOut" }}
-                whileHover={{ scale: 1.1, boxShadow: "0 0 80px -10px hsl(222 100% 65% / 0.6)" }}
+                whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.92 }}
                 data-testid="alex-orb-button"
               >
-                <div className="absolute inset-0 rounded-full" style={{
-                  background: "radial-gradient(circle at 38% 32%, hsl(222 100% 75% / 0.35), transparent 60%)",
-                }} />
                 {orbState === "speaking" ? (
-                  <Volume2 className="h-9 w-9 text-white/90 relative z-10" />
+                  <Volume2 className="h-9 w-9 text-background relative z-10" />
                 ) : orbState === "thinking" ? (
-                  <Loader2 className="h-9 w-9 text-white/90 relative z-10 animate-spin" />
+                  <Loader2 className="h-9 w-9 text-background relative z-10 animate-spin" />
                 ) : (
-                  <Mic className="h-9 w-9 text-white/90 relative z-10" />
+                  <Mic className="h-9 w-9 text-background relative z-10" />
                 )}
               </motion.button>
             </div>
@@ -368,7 +308,7 @@ export default function HeroSection() {
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
-                className="mt-4 text-xs font-medium text-white/45"
+                className="mt-4 text-xs font-medium text-muted-foreground"
               >
                 {statusText}
               </motion.p>
@@ -379,14 +319,14 @@ export default function HeroSection() {
               {voiceActive && (
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="mt-3 flex items-center gap-2">
                   {orbState === "speaking" && (
-                    <button onClick={stopVoice} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                    <button onClick={stopVoice} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-muted-foreground border border-border hover:border-foreground/20 transition-colors">
                       <VolumeX className="h-3 w-3" /> Couper
                     </button>
                   )}
-                  <button onClick={() => { stopVoice(); setTextSheetOpen(true); }} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                  <button onClick={() => { stopVoice(); setTextSheetOpen(true); }} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-muted-foreground border border-border hover:border-foreground/20 transition-colors">
                     <Keyboard className="h-3 w-3" /> Écrire
                   </button>
-                  <button onClick={stopVoice} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-red-400/80 bg-red-500/5 border border-red-500/15 hover:bg-red-500/10 transition-colors">
+                  <button onClick={stopVoice} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-red-600 border border-red-200 hover:bg-red-50 transition-colors">
                     <Square className="h-2.5 w-2.5" /> Arrêter
                   </button>
                 </motion.div>
@@ -394,7 +334,7 @@ export default function HeroSection() {
             </AnimatePresence>
           </motion.div>
 
-          {/* ── Context CTA ── */}
+          {/* ── Context CTA — pill-shaped charcoal ── */}
           <AnimatePresence mode="wait">
             <motion.div
               key={activeIntent}
@@ -406,12 +346,7 @@ export default function HeroSection() {
             >
               <button
                 onClick={() => startVoice(activeIntent)}
-                className="w-full h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold transition-all active:scale-[0.97]"
-                style={{
-                  background: "linear-gradient(135deg, hsl(222 100% 55%), hsl(222 100% 42%))",
-                  boxShadow: "0 4px 24px hsl(222 100% 55% / 0.35), inset 0 1px 0 hsl(0 0% 100% / 0.15)",
-                  color: "#fff",
-                }}
+                className="w-full h-12 rounded-full flex items-center justify-center gap-2 text-sm font-semibold transition-all active:scale-[0.97] bg-foreground text-background hover:opacity-90"
               >
                 <current.ctaIcon className="h-4 w-4" />
                 {current.cta}
@@ -420,11 +355,6 @@ export default function HeroSection() {
             </motion.div>
           </AnimatePresence>
         </div>
-
-        {/* Bottom gradient */}
-        <div className="absolute bottom-0 left-0 right-0 h-40 z-20 pointer-events-none" style={{
-          background: "linear-gradient(to top, hsl(228 40% 7%) 0%, transparent 100%)",
-        }} />
       </section>
 
       <AlexAssistantSheet open={textSheetOpen} onClose={() => setTextSheetOpen(false)} />
