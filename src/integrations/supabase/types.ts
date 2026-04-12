@@ -15453,7 +15453,7 @@ export type Database = {
           generated_count: number
           id: string
           last_scraped_at: string | null
-          primary_activity_id: string
+          primary_activity_id: string | null
           priority_score: number
           scraped_count: number
           secondary_activity_id: string | null
@@ -15468,7 +15468,7 @@ export type Database = {
           generated_count?: number
           id?: string
           last_scraped_at?: string | null
-          primary_activity_id: string
+          primary_activity_id?: string | null
           priority_score?: number
           scraped_count?: number
           secondary_activity_id?: string | null
@@ -15483,7 +15483,7 @@ export type Database = {
           generated_count?: number
           id?: string
           last_scraped_at?: string | null
-          primary_activity_id?: string
+          primary_activity_id?: string | null
           priority_score?: number
           scraped_count?: number
           secondary_activity_id?: string | null
