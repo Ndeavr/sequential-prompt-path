@@ -31,6 +31,7 @@ export default function PageAdLandingAipp() {
   const [businessName, setBusinessName] = useState("");
   const [businessCity, setBusinessCity] = useState("");
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [scannedUrl, setScannedUrl] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const scoreRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
