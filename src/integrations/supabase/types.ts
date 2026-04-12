@@ -4785,6 +4785,153 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_score_reveal_events: {
+        Row: {
+          created_at: string
+          event_key: string
+          event_value: string | null
+          id: string
+          metadata: Json | null
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_key: string
+          event_value?: string | null
+          id?: string
+          metadata?: Json | null
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          event_key?: string
+          event_value?: string | null
+          id?: string
+          metadata?: Json | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_score_reveal_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_score_reveal_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_score_reveal_sessions: {
+        Row: {
+          aipp_score_id: string | null
+          created_at: string
+          current_step_index: number
+          id: string
+          interpretation_json: Json | null
+          last_active_at: string | null
+          prospect_id: string | null
+          reveal_completed: boolean
+          reveal_status: string
+          score_breakdown_json: Json | null
+          score_global: number
+          score_level: string
+          script_json: Json | null
+          session_token: string
+          updated_at: string
+          voice_enabled: boolean
+        }
+        Insert: {
+          aipp_score_id?: string | null
+          created_at?: string
+          current_step_index?: number
+          id?: string
+          interpretation_json?: Json | null
+          last_active_at?: string | null
+          prospect_id?: string | null
+          reveal_completed?: boolean
+          reveal_status?: string
+          score_breakdown_json?: Json | null
+          score_global?: number
+          score_level?: string
+          script_json?: Json | null
+          session_token?: string
+          updated_at?: string
+          voice_enabled?: boolean
+        }
+        Update: {
+          aipp_score_id?: string | null
+          created_at?: string
+          current_step_index?: number
+          id?: string
+          interpretation_json?: Json | null
+          last_active_at?: string | null
+          prospect_id?: string | null
+          reveal_completed?: boolean
+          reveal_status?: string
+          score_breakdown_json?: Json | null
+          score_global?: number
+          score_level?: string
+          script_json?: Json | null
+          session_token?: string
+          updated_at?: string
+          voice_enabled?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_score_reveal_sessions_aipp_score_id_fkey"
+            columns: ["aipp_score_id"]
+            isOneToOne: false
+            referencedRelation: "aipp_score_checks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_score_reveal_steps: {
+        Row: {
+          completed_at: string | null
+          delay_ms: number
+          display_text: string | null
+          id: string
+          is_completed: boolean
+          session_id: string
+          spoken_text: string | null
+          step_index: number
+          step_key: string
+          trigger_type: string
+        }
+        Insert: {
+          completed_at?: string | null
+          delay_ms?: number
+          display_text?: string | null
+          id?: string
+          is_completed?: boolean
+          session_id: string
+          spoken_text?: string | null
+          step_index?: number
+          step_key: string
+          trigger_type?: string
+        }
+        Update: {
+          completed_at?: string | null
+          delay_ms?: number
+          display_text?: string | null
+          id?: string
+          is_completed?: boolean
+          session_id?: string
+          spoken_text?: string | null
+          step_index?: number
+          step_key?: string
+          trigger_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_score_reveal_steps_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_score_reveal_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alex_session_memory: {
         Row: {
           confidence_score: number | null
