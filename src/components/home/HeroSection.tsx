@@ -193,14 +193,14 @@ export default function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           >
-            <h1 className="font-display text-[28px] sm:text-[38px] md:text-[48px] font-bold text-white leading-[1.1] tracking-tight">
+            <h1 className="font-landing text-[32px] sm:text-[44px] md:text-[52px] font-normal text-foreground leading-[1.1] tracking-tight">
               Passez à{" "}
-              <span className="bg-gradient-to-r from-[hsl(222,100%,70%)] via-[hsl(195,100%,60%)] to-[hsl(252,100%,72%)] bg-clip-text text-transparent">
+              <span className="font-semibold">
                 l'intelligence
               </span>
               <br />du bâtiment
             </h1>
-            <p className="mt-4 text-sm sm:text-base text-white/55 max-w-md mx-auto leading-relaxed">
+            <p className="mt-4 text-[17px] text-muted-foreground max-w-md mx-auto leading-relaxed">
               Photo, voix ou texte — trouvez le bon professionnel en quelques secondes.
             </p>
           </motion.div>
