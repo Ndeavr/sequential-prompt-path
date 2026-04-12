@@ -132,7 +132,7 @@ export function AutocompleteInput({
             {filtered.length === 0 ? (
               <p className="py-4 text-center text-xs text-muted-foreground">{emptyMessage}</p>
             ) : (
-              filtered.map((option) => (
+              filtered.map((option, idx) => (
                 <button
                   key={option.value}
                   type="button"
