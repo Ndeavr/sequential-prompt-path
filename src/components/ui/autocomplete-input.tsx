@@ -1,7 +1,9 @@
 /**
  * AutocompleteInput — combobox with search filtering, keyboard nav, mobile-friendly.
+ * Uses a portal to render the dropdown above all stacking contexts.
  */
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +37,9 @@ export function AutocompleteInput({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [highlightIndex, setHighlightIndex] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const selectedLabel = options.find((o) => o.value === value)?.label ?? "";
@@ -50,15 +54,43 @@ export function AutocompleteInput({
     });
   }, [options, search]);
 
-  // Reset highlight when filtered list changes
   useEffect(() => {
     setHighlightIndex(0);
   }, [filtered.length, search]);
 
+  // Position dropdown relative to trigger
+  const updatePosition = useCallback(() => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    setDropdownStyle({
+      position: "fixed",
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+      zIndex: 99999,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      updatePosition();
+      window.addEventListener("scroll", updatePosition, true);
+      window.addEventListener("resize", updatePosition);
+    }
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [open, updatePosition]);
+
   // Close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        triggerRef.current && !triggerRef.current.contains(target) &&
+        dropdownRef.current && !dropdownRef.current.contains(target)
+      ) {
         setOpen(false);
       }
     }
@@ -89,30 +121,13 @@ export function AutocompleteInput({
     }
   };
 
-  return (
-    <div ref={containerRef} className={cn("relative", className)}>
-      {/* Trigger button */}
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => {
-          setOpen(!open);
-          if (!open) setTimeout(() => inputRef.current?.focus(), 50);
-        }}
-        className={cn(
-          "flex h-10 w-full items-center justify-between rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background",
-          "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-          "disabled:cursor-not-allowed disabled:opacity-50",
-          !value && "text-muted-foreground"
-        )}
-      >
-        <span className="truncate">{selectedLabel || placeholder}</span>
-        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-      </button>
-
-      {/* Dropdown */}
-      {open && (
-        <div className="absolute z-[9999] mt-1 w-full rounded-xl border border-border bg-popover shadow-2xl animate-in fade-in-0 zoom-in-95">
+  const dropdown = open
+    ? createPortal(
+        <div
+          ref={dropdownRef}
+          style={dropdownStyle}
+          className="rounded-xl border border-border bg-popover shadow-2xl animate-in fade-in-0 zoom-in-95"
+        >
           {/* Search input */}
           <div className="flex items-center gap-2 border-b border-border px-3 py-2">
             <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -158,8 +173,32 @@ export function AutocompleteInput({
               ))
             )}
           </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      )
+    : null;
+
+  return (
+    <div className={cn("relative", className)}>
+      <button
+        ref={triggerRef}
+        type="button"
+        disabled={disabled}
+        onClick={() => {
+          setOpen(!open);
+          if (!open) setTimeout(() => inputRef.current?.focus(), 50);
+        }}
+        className={cn(
+          "flex h-10 w-full items-center justify-between rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background",
+          "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+          "disabled:cursor-not-allowed disabled:opacity-50",
+          !value && "text-muted-foreground"
+        )}
+      >
+        <span className="truncate">{selectedLabel || placeholder}</span>
+        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+      </button>
+      {dropdown}
     </div>
   );
 }
