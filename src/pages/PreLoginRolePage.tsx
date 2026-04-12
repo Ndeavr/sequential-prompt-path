@@ -68,7 +68,7 @@ export default function PreLoginRolePage() {
         {/* Header */}
         <div className="text-center mb-6">
           <div className="flex justify-center mb-3">
-            <img src={logo} alt="UNPRO" className="h-14 w-14 object-contain" />
+            <UnproIcon size={56} variant="primary" />
           </div>
           <h1 className="text-xl font-bold text-foreground">Quel est votre profil ?</h1>
           <p className="text-sm text-muted-foreground mt-1">

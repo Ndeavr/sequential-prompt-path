@@ -114,7 +114,7 @@ export default function HomepageRevealFlow() {
               {/* Alex avatar */}
               <div className="shrink-0 relative">
                 <div className="h-10 w-10 rounded-full overflow-hidden shadow-soft border-2 border-card">
-                  <img src={unproRobot} alt="Alex" className="w-full h-full object-cover" />
+                  <UnproIcon size={40} variant="blue" />
                 </div>
                 {/* Green dot */}
                 <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-success border-2 border-card" />

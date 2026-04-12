@@ -66,7 +66,7 @@ const Login = () => {
         <Card style={{ background: "rgba(255,255,255,0.92)", border: "1px solid #DFE9F5", boxShadow: "0 8px 32px -6px hsl(220 40% 30% / 0.1)" }}>
           <CardHeader className="text-center pb-2 pt-8">
             <div className="flex justify-center mb-3">
-              <img src={logo} alt="UNPRO" className="h-14 w-14 object-contain" />
+              <UnproIcon size={56} variant="primary" />
             </div>
             <h1 className="text-2xl font-bold" style={{ color: "#0B1533" }}>
               Connectez-vous

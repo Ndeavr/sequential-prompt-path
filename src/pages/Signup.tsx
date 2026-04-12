@@ -72,7 +72,7 @@ const Signup = () => {
         <Card className="border border-border bg-card/95 backdrop-blur-sm shadow-xl">
           <CardHeader className="text-center pt-8 pb-2 space-y-1">
             <div className="flex justify-center mb-2">
-              <img src={logo} alt="UNPRO" className="h-14 w-14 object-contain" />
+              <UnproIcon size={56} variant="primary" />
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">{stepTitle}</h1>
             <p className="text-sm text-muted-foreground">{stepDesc}</p>

@@ -126,7 +126,7 @@ export default function AuthCallbackPage() {
         animate={{ opacity: 1, scale: 1 }}
         className="flex flex-col items-center gap-4"
       >
-        <img src={logo} alt="UNPRO" className="h-16 w-16 object-contain" />
+        <UnproIcon size={64} variant="primary" />
         
         {state !== "error" && (
           <div className="h-1 w-48 bg-muted rounded-full overflow-hidden">

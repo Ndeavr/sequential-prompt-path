@@ -107,7 +107,7 @@ export default function StartPage() {
         {/* Hero */}
         <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-center mb-10">
           <Link to="/" className="inline-block mb-6">
-            <img src={logo} alt="UNPRO" className="h-16 w-16 mx-auto" />
+            <UnproIcon size={64} variant="primary" className="mx-auto" />
           </Link>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground font-display">
             Avant de continuer…
