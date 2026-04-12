@@ -22,7 +22,7 @@ const SmartFooter = () => {
   const sections = getFooterSections(activeRole as UserRole | "guest");
 
   return (
-    <footer className="border-t border-border/20 pb-24 lg:pb-0" style={{ background: "hsl(220 40% 4% / 0.8)" }}>
+    <footer className="border-t border-border pb-24 lg:pb-0 bg-background">
       <div className="mx-auto max-w-7xl px-4 lg:px-6 py-12 lg:py-16">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-10 mb-12">
           {/* Brand column */}
