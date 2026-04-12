@@ -113,8 +113,8 @@ export default function AlexConversationShell({ onClose, entrypoint = "voice" }:
       <header className="flex items-center justify-between px-4 py-3 border-b border-border/30 bg-card/80 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-8 h-8 rounded-full overflow-hidden border border-primary/30 bg-card/60">
-              <img src={logo} alt="Alex" className="w-full h-full object-contain" />
+            <div className="w-8 h-8 rounded-full overflow-hidden border border-primary/30 bg-card/60 flex items-center justify-center">
+              <UnproIcon size={28} variant="blue" />
             </div>
             <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-success rounded-full border-2 border-background" />
           </div>

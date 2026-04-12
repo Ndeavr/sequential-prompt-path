@@ -228,7 +228,7 @@ export default function OnboardingPageUnpro() {
     >
       {/* Header */}
       <div className="flex items-center justify-center py-6">
-        <img src={logo} alt="UNPRO" className="h-10 w-10 object-contain" />
+        <UnproIcon size={40} variant="primary" />
       </div>
 
       {/* Stepper - show after role selected */}
