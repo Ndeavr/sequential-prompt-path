@@ -33,15 +33,8 @@ const MobileBottomNav = () => {
 
   return (
     <nav
-      className="lg:hidden fixed bottom-2 left-2 right-2 z-40 rounded-2xl safe-area-bottom"
+      className="lg:hidden fixed bottom-2 left-2 right-2 z-40 rounded-2xl safe-area-bottom bg-background/90 backdrop-blur-sm border border-border"
       aria-label="Mobile navigation"
-      style={{
-        background: "hsl(220 40% 6% / 0.78)",
-        backdropFilter: "blur(20px) saturate(1.5)",
-        WebkitBackdropFilter: "blur(20px) saturate(1.5)",
-        border: "1px solid hsl(0 0% 100% / 0.06)",
-        boxShadow: "0 -4px 24px -4px hsl(222 100% 55% / 0.08), 0 8px 32px -8px hsl(228 40% 2% / 0.6)",
-      }}
     >
       <div className="flex items-center justify-around h-14 px-1">
         {leftTabs.map((tab) => {
