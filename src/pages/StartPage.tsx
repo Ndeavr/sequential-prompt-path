@@ -17,7 +17,7 @@ import OAuthButtons from "@/components/auth/OAuthButtons";
 import AuthDivider from "@/components/auth/AuthDivider";
 import PhoneOtpForm from "@/components/auth/PhoneOtpForm";
 import { saveAuthIntent, consumeAuthIntent, getDefaultRedirectForRole } from "@/services/auth/authIntentService";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 const INTENT_TYPE_MAP: Record<string, "homeowner" | "contractor" | "ambassador"> = {
   "analyse-soumissions": "homeowner",

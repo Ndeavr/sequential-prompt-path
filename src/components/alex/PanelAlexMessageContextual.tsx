@@ -6,7 +6,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, X, Camera, ArrowRight } from "lucide-react";
 import type { AlexContextPrompt } from "@/services/alexContextPromptEngine";
-import unproRobot from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 interface PanelAlexMessageContextualProps {
   prompt: AlexContextPrompt;

@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, Wrench, Building2, Briefcase, Users, Landmark, Globe, Factory, Star, ChevronDown, ArrowRight } from "lucide-react";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 interface RoleOption {
   key: string;

@@ -11,7 +11,7 @@ import { Link } from "react-router-dom";
 import {
   CheckCircle2, MapPin, Star, ArrowRight, Shield, Sparkles,
 } from "lucide-react";
-import unproRobot from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 /* ─── Session guard: only animate once ─── */
 const SESSION_KEY = "unpro_reveal_seen";

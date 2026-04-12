@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { consumeAuthIntent, getDefaultRedirectForRole } from "@/services/auth/authIntentService";
 import { motion } from "framer-motion";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 type CallbackState = "processing" | "creating_profile" | "redirecting" | "error";
 

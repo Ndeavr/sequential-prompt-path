@@ -14,7 +14,7 @@ import PhoneOtpForm from "@/components/auth/PhoneOtpForm";
 import { consumeAuthIntent, getDefaultRedirectForRole } from "@/services/auth/authIntentService";
 import { consumeNavigationContext, getResumePath } from "@/services/navigation/journeyService";
 import { Smartphone, Lock } from "lucide-react";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 const Login = () => {
   const [showPhone, setShowPhone] = useState(false);

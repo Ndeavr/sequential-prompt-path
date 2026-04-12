@@ -17,7 +17,7 @@ import PhoneOtpForm from "@/components/auth/PhoneOtpForm";
 import { consumeAuthIntent, getDefaultRedirectForRole } from "@/services/auth/authIntentService";
 import RoleCardSelector from "@/components/menu/RoleCardSelector";
 import { ROLE_CARDS } from "@/data/menuTaxonomy";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 const PROPERTY_TYPES = [
   { value: "unifamiliale", label: "Unifamiliale", icon: Home },
