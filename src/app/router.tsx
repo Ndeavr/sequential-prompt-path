@@ -398,6 +398,12 @@ const PageOutboundAutomations = lazy(() => import("@/pages/admin/outbound/PageOu
 const PageOutboundLogs = lazy(() => import("@/pages/admin/outbound/PageOutboundLogs"));
 const PageOutboundSettingsLite = lazy(() => import("@/pages/admin/outbound/PageOutboundSettingsLite"));
 const PageOutboundEmailHealth = lazy(() => import("@/pages/admin/outbound/PageOutboundEmailHealth"));
+const PageOutboundSequencesElite = lazy(() => import("@/pages/admin/outbound/PageOutboundSequencesElite"));
+const PageOutboundSendingArchitecture = lazy(() => import("@/pages/admin/outbound/PageOutboundSendingArchitecture"));
+const PageOutboundDeliverability = lazy(() => import("@/pages/admin/outbound/PageOutboundDeliverability"));
+const PageOutboundAIRewrite = lazy(() => import("@/pages/admin/outbound/PageOutboundAIRewrite"));
+const PageOutboundRevenue = lazy(() => import("@/pages/admin/outbound/PageOutboundRevenue"));
+const PageOutboundSMSFallback = lazy(() => import("@/pages/admin/outbound/PageOutboundSMSFallback"));
 const PageAdminExecutionControl = lazy(() => import("@/pages/admin/PageAdminExecutionControl"));
 const PageAdminDominanceControl = lazy(() => import("@/pages/admin/PageAdminDominanceControl"));
 const PageAlexVoiceDebugAdmin = lazy(() => import("@/pages/admin/PageAlexVoiceDebugAdmin"));
@@ -917,6 +923,12 @@ export const AppRouter = () => (
         <Route path="/admin/outbound/logs" element={<ProtectedRoute requiredRole="admin"><PageOutboundLogs /></ProtectedRoute>} />
         <Route path="/admin/outbound/settings-lite" element={<ProtectedRoute requiredRole="admin"><PageOutboundSettingsLite /></ProtectedRoute>} />
         <Route path="/admin/outbound/email-health" element={<ProtectedRoute requiredRole="admin"><PageOutboundEmailHealth /></ProtectedRoute>} />
+        <Route path="/admin/outbound/sequences-elite" element={<ProtectedRoute requiredRole="admin"><PageOutboundSequencesElite /></ProtectedRoute>} />
+        <Route path="/admin/outbound/sending-architecture" element={<ProtectedRoute requiredRole="admin"><PageOutboundSendingArchitecture /></ProtectedRoute>} />
+        <Route path="/admin/outbound/deliverability" element={<ProtectedRoute requiredRole="admin"><PageOutboundDeliverability /></ProtectedRoute>} />
+        <Route path="/admin/outbound/ai-rewrite" element={<ProtectedRoute requiredRole="admin"><PageOutboundAIRewrite /></ProtectedRoute>} />
+        <Route path="/admin/outbound/revenue" element={<ProtectedRoute requiredRole="admin"><PageOutboundRevenue /></ProtectedRoute>} />
+        <Route path="/admin/outbound/sms-fallback" element={<ProtectedRoute requiredRole="admin"><PageOutboundSMSFallback /></ProtectedRoute>} />
         <Route path="/admin/execution-control" element={<ProtectedRoute requiredRole="admin"><PageAdminExecutionControl /></ProtectedRoute>} />
         <Route path="/admin/dominance" element={<ProtectedRoute requiredRole="admin"><PageAdminDominanceControl /></ProtectedRoute>} />
         <Route path="/admin/voice-debug" element={<ProtectedRoute requiredRole="admin"><PageAlexVoiceDebugAdmin /></ProtectedRoute>} />
