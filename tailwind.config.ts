@@ -16,6 +16,7 @@ export default {
       fontFamily: {
         sans: ["Manrope", "system-ui", "-apple-system", "sans-serif"],
         display: ["Space Grotesk", "Manrope", "system-ui", "sans-serif"],
+        landing: ["Onest", "system-ui", "sans-serif"],
       },
       fontSize: {
         "display": ["3.75rem", { lineHeight: "1.02", fontWeight: "700", letterSpacing: "-0.035em" }],
@@ -87,6 +88,17 @@ export default {
           green: "var(--section-glow-green)",
           warm: "var(--section-glow-warm)",
           neutral: "var(--section-glow-neutral)",
+        },
+        landing: {
+          bg: "var(--landing-bg)",
+          dark: "var(--landing-dark)",
+          "dark-subtle": "var(--landing-dark-subtle)",
+          light: "var(--landing-light)",
+          "light-muted": "var(--landing-light-muted)",
+          accent: "var(--landing-accent)",
+          "accent-soft": "var(--landing-accent-soft)",
+          grid: "var(--landing-grid)",
+          border: "var(--landing-border)",
         },
       },
       borderRadius: {
