@@ -112,7 +112,7 @@ export function AutocompleteInput({
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute z-50 mt-1 w-full rounded-xl border border-border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95">
+        <div className="absolute z-[9999] mt-1 w-full rounded-xl border border-border bg-popover shadow-2xl animate-in fade-in-0 zoom-in-95">
           {/* Search input */}
           <div className="flex items-center gap-2 border-b border-border px-3 py-2">
             <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
