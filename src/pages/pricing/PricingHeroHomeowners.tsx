@@ -23,10 +23,7 @@ const PROOFS = [
 
 export default function PricingHeroHomeowners() {
   return (
-    <section className="relative overflow-hidden">
-      <div className="absolute inset-0 hero-gradient" />
-      <div className="absolute top-[-20%] left-[10%] w-[50vw] h-[50vw] rounded-full bg-primary/8 blur-[120px] pointer-events-none" />
-
+    <section className="relative overflow-hidden landing-dot-grid">
       <div className="relative z-10 text-center px-5 pt-20 pb-12 md:pt-28 md:pb-16 max-w-3xl mx-auto">
         <motion.div className="space-y-5" initial="hidden" animate="visible">
           <motion.div variants={fadeUp} custom={0}>
