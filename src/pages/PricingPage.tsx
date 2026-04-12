@@ -51,9 +51,9 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-background landing-warm">
       {/* Tab Toggle — sticky on mobile */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30">
+      <div className="sticky top-0 z-40 bg-background/90 backdrop-blur-sm border-b border-border">
         <div className="max-w-md mx-auto px-4 py-3">
-          <div className="flex rounded-2xl p-1 bg-muted/40 border border-border/30">
+          <div className="flex rounded-full p-1 bg-muted/40 border border-border">
             <TabButton
               active={activeTab === "proprietaires"}
               onClick={() => handleTabChange("proprietaires")}
