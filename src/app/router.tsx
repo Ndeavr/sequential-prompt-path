@@ -397,6 +397,7 @@ const PageOutboundTests = lazy(() => import("@/pages/admin/outbound/PageOutbound
 const PageOutboundAutomations = lazy(() => import("@/pages/admin/outbound/PageOutboundAutomations"));
 const PageOutboundLogs = lazy(() => import("@/pages/admin/outbound/PageOutboundLogs"));
 const PageOutboundSettingsLite = lazy(() => import("@/pages/admin/outbound/PageOutboundSettingsLite"));
+const PageOutboundEmailHealth = lazy(() => import("@/pages/admin/outbound/PageOutboundEmailHealth"));
 const PageAdminExecutionControl = lazy(() => import("@/pages/admin/PageAdminExecutionControl"));
 const PageAdminDominanceControl = lazy(() => import("@/pages/admin/PageAdminDominanceControl"));
 const PageAlexVoiceDebugAdmin = lazy(() => import("@/pages/admin/PageAlexVoiceDebugAdmin"));
