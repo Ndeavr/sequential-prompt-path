@@ -391,6 +391,12 @@ const PageOutboundMailboxes = lazy(() => import("@/pages/admin/outbound/PageOutb
 const PageOutboundAnalytics = lazy(() => import("@/pages/admin/outbound/PageOutboundAnalytics"));
 const PageOutboundSuppressionCenter = lazy(() => import("@/pages/admin/outbound/PageOutboundSuppressionCenter"));
 const PageOutboundLandingPages = lazy(() => import("@/pages/admin/outbound/PageOutboundLandingPages"));
+const PageOutboundOpsCenter = lazy(() => import("@/pages/admin/outbound/PageOutboundOpsCenter"));
+const PageOutboundVerification = lazy(() => import("@/pages/admin/outbound/PageOutboundVerification"));
+const PageOutboundTests = lazy(() => import("@/pages/admin/outbound/PageOutboundTests"));
+const PageOutboundAutomations = lazy(() => import("@/pages/admin/outbound/PageOutboundAutomations"));
+const PageOutboundLogs = lazy(() => import("@/pages/admin/outbound/PageOutboundLogs"));
+const PageOutboundSettingsLite = lazy(() => import("@/pages/admin/outbound/PageOutboundSettingsLite"));
 const PageAdminExecutionControl = lazy(() => import("@/pages/admin/PageAdminExecutionControl"));
 const PageAdminDominanceControl = lazy(() => import("@/pages/admin/PageAdminDominanceControl"));
 const PageAlexVoiceDebugAdmin = lazy(() => import("@/pages/admin/PageAlexVoiceDebugAdmin"));
@@ -903,6 +909,12 @@ export const AppRouter = () => (
         <Route path="/admin/outbound/analytics" element={<ProtectedRoute requiredRole="admin"><PageOutboundAnalytics /></ProtectedRoute>} />
         <Route path="/admin/outbound/suppressions" element={<ProtectedRoute requiredRole="admin"><PageOutboundSuppressionCenter /></ProtectedRoute>} />
         <Route path="/admin/outbound/landing-pages" element={<ProtectedRoute requiredRole="admin"><PageOutboundLandingPages /></ProtectedRoute>} />
+        <Route path="/admin/outbound/ops" element={<ProtectedRoute requiredRole="admin"><PageOutboundOpsCenter /></ProtectedRoute>} />
+        <Route path="/admin/outbound/verification" element={<ProtectedRoute requiredRole="admin"><PageOutboundVerification /></ProtectedRoute>} />
+        <Route path="/admin/outbound/tests" element={<ProtectedRoute requiredRole="admin"><PageOutboundTests /></ProtectedRoute>} />
+        <Route path="/admin/outbound/automations" element={<ProtectedRoute requiredRole="admin"><PageOutboundAutomations /></ProtectedRoute>} />
+        <Route path="/admin/outbound/logs" element={<ProtectedRoute requiredRole="admin"><PageOutboundLogs /></ProtectedRoute>} />
+        <Route path="/admin/outbound/settings-lite" element={<ProtectedRoute requiredRole="admin"><PageOutboundSettingsLite /></ProtectedRoute>} />
         <Route path="/admin/execution-control" element={<ProtectedRoute requiredRole="admin"><PageAdminExecutionControl /></ProtectedRoute>} />
         <Route path="/admin/dominance" element={<ProtectedRoute requiredRole="admin"><PageAdminDominanceControl /></ProtectedRoute>} />
         <Route path="/admin/voice-debug" element={<ProtectedRoute requiredRole="admin"><PageAlexVoiceDebugAdmin /></ProtectedRoute>} />
