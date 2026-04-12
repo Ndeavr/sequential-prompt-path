@@ -69,7 +69,7 @@ const SmartFooter = () => {
         </div>
 
         {/* Bottom bar */}
-        <div className="h-px bg-gradient-to-r from-transparent via-border/30 to-transparent mb-6" />
+        <div className="h-px bg-border mb-6" />
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4 text-xs text-muted-foreground/60">
             <span>© {new Date().getFullYear()} UNPRO</span>
