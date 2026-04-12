@@ -115,24 +115,28 @@ export default function PageOutboundLeadProfile() {
 
   if (loading) return (
     <AdminLayout>
-      <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="animate-pulse text-muted-foreground">Chargement du profil…</div>
-    </div>
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-pulse text-muted-foreground">Chargement du profil…</div>
+      </div>
+    </AdminLayout>
   );
 
   if (!lead) return (
-    <div className="min-h-screen bg-background p-6 text-center">
-      <p className="text-muted-foreground">Lead introuvable</p>
-      <Button variant="outline" className="mt-4" onClick={() => navigate("/admin/outbound/leads")}>
-        <ArrowLeft className="h-4 w-4 mr-1" /> Retour
-      </Button>
-    </div>
+    <AdminLayout>
+      <div className="p-6 text-center">
+        <p className="text-muted-foreground">Lead introuvable</p>
+        <Button variant="outline" className="mt-4" onClick={() => navigate("/admin/outbound/leads")}>
+          <ArrowLeft className="h-4 w-4 mr-1" /> Retour
+        </Button>
+      </div>
+    </AdminLayout>
   );
 
   const cfg = crmStatusConfig[lead.crm_status] || crmStatusConfig.new;
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
+    <AdminLayout>
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate("/admin/outbound/leads")}>
