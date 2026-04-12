@@ -1,3 +1,4 @@
+import AdminLayout from "@/layouts/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, AlertCircle, Phone, ArrowRight } from "lucide-react";
@@ -15,7 +16,8 @@ export default function PageOutboundSMSFallback() {
   const { data: messages, isLoading: messagesLoading } = useSmsMessages();
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 space-y-6">
+    <AdminLayout>
+      <div className="space-y-6">
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-lg bg-primary/10">
           <MessageSquare className="h-6 w-6 text-primary" />
@@ -137,5 +139,6 @@ export default function PageOutboundSMSFallback() {
         </CardContent>
       </Card>
     </div>
+  </AdminLayout>
   );
 }

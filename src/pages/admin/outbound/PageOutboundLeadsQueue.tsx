@@ -1,3 +1,4 @@
+import AdminLayout from "@/layouts/AdminLayout";
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -87,7 +88,8 @@ export default function PageOutboundLeadsQueue() {
   }, [enrichedLeads, filterCity, filterStatus, search, sortBy]);
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
+    <AdminLayout>
+      <div className="min-h-screen bg-background p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
       <Button variant="ghost" size="sm" onClick={() => navigate("/admin/outbound")}>
         <ArrowLeft className="h-4 w-4 mr-1" /> Retour
       </Button>
@@ -202,5 +204,6 @@ export default function PageOutboundLeadsQueue() {
         </CardContent>
       </Card>
     </div>
+  </AdminLayout>
   );
 }

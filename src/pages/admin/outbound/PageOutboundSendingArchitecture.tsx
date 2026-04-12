@@ -1,3 +1,4 @@
+import AdminLayout from "@/layouts/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,8 @@ export default function PageOutboundSendingArchitecture() {
   const { data: mailboxes, isLoading: mailboxesLoading } = useSendingMailboxes();
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 space-y-6">
+    <AdminLayout>
+      <div className="space-y-6">
       {/* Hero */}
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-lg bg-primary/10">
@@ -170,5 +172,6 @@ export default function PageOutboundSendingArchitecture() {
         </CardContent>
       </Card>
     </div>
+  </AdminLayout>
   );
 }

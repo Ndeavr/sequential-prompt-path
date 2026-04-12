@@ -1,3 +1,4 @@
+import AdminLayout from "@/layouts/AdminLayout";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -113,7 +114,8 @@ export default function PageOutboundLeadProfile() {
   }
 
   if (loading) return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
+    <AdminLayout>
+      <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="animate-pulse text-muted-foreground">Chargement du profil…</div>
     </div>
   );
@@ -280,5 +282,6 @@ export default function PageOutboundLeadProfile() {
         </div>
       </div>
     </div>
+  </AdminLayout>
   );
 }

@@ -1,3 +1,4 @@
+import AdminLayout from "@/layouts/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,8 @@ export default function PageOutboundAIRewrite() {
   const { data: personalizations, isLoading } = useEmailPersonalizations();
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 space-y-6">
+    <AdminLayout>
+      <div className="space-y-6">
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-lg bg-primary/10">
           <Sparkles className="h-6 w-6 text-primary" />
@@ -126,5 +128,6 @@ export default function PageOutboundAIRewrite() {
         </CardContent>
       </Card>
     </div>
+  </AdminLayout>
   );
 }

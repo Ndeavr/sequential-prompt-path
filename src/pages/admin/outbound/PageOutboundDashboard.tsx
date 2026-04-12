@@ -1,3 +1,4 @@
+import AdminLayout from "@/layouts/AdminLayout";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,7 +58,8 @@ export default function PageOutboundDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
+    <AdminLayout>
+      <div className="min-h-screen bg-background p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -226,5 +228,6 @@ export default function PageOutboundDashboard() {
         ))}
       </div>
     </div>
+  </AdminLayout>
   );
 }

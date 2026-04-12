@@ -1,3 +1,4 @@
+import AdminLayout from "@/layouts/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,8 @@ function ScoreGauge({ score }: { score: number }) {
   const bgColor = score >= 80 ? "bg-green-500" : score >= 50 ? "bg-yellow-500" : "bg-red-500";
   const label = score >= 80 ? "Excellent" : score >= 50 ? "Moyen" : "Critique";
   return (
-    <div className="flex flex-col items-center gap-2">
+    <AdminLayout>
+      <div className="flex flex-col items-center gap-2">
       <div className="relative w-24 h-24">
         <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="8" className="text-muted/20" />
@@ -22,6 +24,7 @@ function ScoreGauge({ score }: { score: number }) {
       </div>
       <Badge className={`${bgColor} text-white`}>{label}</Badge>
     </div>
+  </AdminLayout>
   );
 }
 
@@ -36,7 +39,7 @@ export default function PageOutboundDeliverability() {
   const latestScore = scores?.[0];
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-lg bg-primary/10">
           <ShieldCheck className="h-6 w-6 text-primary" />

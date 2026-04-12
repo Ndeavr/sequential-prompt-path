@@ -1,3 +1,4 @@
+import AdminLayout from "@/layouts/AdminLayout";
 import { useState } from "react";
 import { Shield, Play, RotateCcw, Eye, CheckCircle2, XCircle, Clock, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -93,7 +94,8 @@ export default function PageOutboundVerification() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto">
+    <AdminLayout>
+      <div className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-primary/10"><Shield className="h-5 w-5 text-primary" /></div>
@@ -139,5 +141,6 @@ export default function PageOutboundVerification() {
         </CardContent>
       </Card>
     </div>
+  </AdminLayout>
   );
 }

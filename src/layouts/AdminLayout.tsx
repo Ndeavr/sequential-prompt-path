@@ -11,9 +11,13 @@ import {
   CalendarDays, TrendingUp, LogOut, MapPin, BarChart3, Sparkles,
   Brain, Palette, Menu, X, ShieldCheck, Shield, Bell, SearchCheck,
   Bot, Network, Camera, Wand2, Zap, Tag, Rocket, Grid3X3,
+  ChevronDown, ChevronRight, Mail, Send, Activity, Settings,
+  MessageSquare, TestTube, ScrollText, Inbox, Heart, DollarSign,
+  Smartphone, Ban, LayoutList, Server, Cpu,
 } from "lucide-react";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 
 const navItems = [
   { to: "/admin", label: "Tableau de bord", icon: LayoutDashboard },
@@ -48,17 +52,127 @@ const navItems = [
   { to: "/admin/uos", label: "UNPRO OS", icon: Sparkles },
 ];
 
+interface OutboundSubGroup {
+  label: string;
+  items: { to: string; label: string; icon: LucideIcon }[];
+}
+
+const outboundGroups: OutboundSubGroup[] = [
+  {
+    label: "Core",
+    items: [
+      { to: "/admin/outbound", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/admin/outbound/leads", label: "Prospects", icon: Users },
+      { to: "/admin/outbound/campaigns", label: "Campagnes", icon: Rocket },
+    ],
+  },
+  {
+    label: "Pipeline & Ops",
+    items: [
+      { to: "/admin/outbound/ops", label: "Centre Ops", icon: Activity },
+      { to: "/admin/outbound/verification", label: "Vérification", icon: ShieldCheck },
+      { to: "/admin/outbound/tests", label: "Tests manuels", icon: TestTube },
+      { to: "/admin/outbound/automations", label: "Automatisations", icon: Bot },
+      { to: "/admin/outbound/logs", label: "Logs", icon: ScrollText },
+    ],
+  },
+  {
+    label: "Email Engine",
+    items: [
+      { to: "/admin/outbound/sequences", label: "Séquences", icon: Mail },
+      { to: "/admin/outbound/sequences-elite", label: "Séquences AIPP", icon: Send },
+      { to: "/admin/outbound/mailboxes", label: "Boîtes d'envoi", icon: Inbox },
+      { to: "/admin/outbound/sending-architecture", label: "Architecture", icon: Server },
+      { to: "/admin/outbound/email-health", label: "Santé Email", icon: Heart },
+      { to: "/admin/outbound/deliverability", label: "Délivrabilité", icon: Activity },
+    ],
+  },
+  {
+    label: "Intelligence",
+    items: [
+      { to: "/admin/outbound/ai-rewrite", label: "Personnalisation IA", icon: Cpu },
+      { to: "/admin/outbound/revenue", label: "Revenue Loss", icon: DollarSign },
+      { to: "/admin/outbound/sms-fallback", label: "SMS Fallback", icon: Smartphone },
+      { to: "/admin/outbound/analytics", label: "Analytics", icon: BarChart3 },
+      { to: "/admin/outbound/suppressions", label: "Suppressions", icon: Ban },
+      { to: "/admin/outbound/settings-lite", label: "Settings", icon: Settings },
+    ],
+  },
+];
+
+const NavLinkItem = ({ to, label, icon: Icon, pathname, onNavigate, indent = false }: {
+  to: string; label: string; icon: LucideIcon; pathname: string; onNavigate?: () => void; indent?: boolean;
+}) => {
+  const active = pathname === to || (to !== "/admin" && to !== "/admin/outbound" && pathname.startsWith(to));
+  return (
+    <Link
+      to={to}
+      onClick={onNavigate}
+      className={`flex items-center gap-3 rounded-xl px-3 py-2 text-meta font-medium transition-all duration-200 ${
+        indent ? "pl-7 text-[13px]" : ""
+      } ${
+        active
+          ? "bg-primary text-primary-foreground shadow-soft"
+          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+      }`}
+    >
+      <Icon className="h-4 w-4 shrink-0" />
+      {label}
+    </Link>
+  );
+};
+
+const OutboundNavGroup = ({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) => {
+  const isOnOutbound = pathname.startsWith("/admin/outbound");
+  const [open, setOpen] = useState(isOnOutbound);
+
+  return (
+    <div className="mt-2">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-meta font-semibold transition-all duration-200 ${
+          isOnOutbound && !open
+            ? "bg-primary/10 text-primary"
+            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+        }`}
+      >
+        <Send className="h-4 w-4 shrink-0" />
+        <span className="flex-1 text-left">Outbound</span>
+        {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+      </button>
+
+      {open && (
+        <div className="mt-1 space-y-2">
+          {outboundGroups.map((group) => (
+            <div key={group.label}>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 px-3 py-1 pl-7">
+                {group.label}
+              </p>
+              <div className="space-y-0.5">
+                {group.items.map((item) => (
+                  <NavLinkItem key={item.to} {...item} pathname={pathname} onNavigate={onNavigate} indent />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const NavLinks = ({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) => (
   <>
     {navItems.map(({ to, label, icon: Icon }) => {
-      const active = pathname === to || (to !== "/admin" && pathname.startsWith(to));
+      const active = pathname === to || (to !== "/admin" && pathname.startsWith(to + "/"));
+      const exactActive = pathname === to;
       return (
         <Link
           key={to}
           to={to}
           onClick={onNavigate}
           className={`flex items-center gap-3 rounded-xl px-3 py-2 text-meta font-medium transition-all duration-200 ${
-            active
+            active || exactActive
               ? "bg-primary text-primary-foreground shadow-soft"
               : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
           }`}
@@ -68,6 +182,7 @@ const NavLinks = ({ pathname, onNavigate }: { pathname: string; onNavigate?: () 
         </Link>
       );
     })}
+    <OutboundNavGroup pathname={pathname} onNavigate={onNavigate} />
   </>
 );
 

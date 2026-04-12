@@ -1,3 +1,4 @@
+import AdminLayout from "@/layouts/AdminLayout";
 import { useState } from "react";
 import { Bot, Play, Pause, RotateCcw, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,7 +71,8 @@ export default function PageOutboundAutomations() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto">
+    <AdminLayout>
+      <div className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto">
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-xl bg-primary/10"><Bot className="h-5 w-5 text-primary" /></div>
         <div>
@@ -186,5 +188,6 @@ export default function PageOutboundAutomations() {
         </SheetContent>
       </Sheet>
     </div>
+  </AdminLayout>
   );
 }

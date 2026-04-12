@@ -1,3 +1,4 @@
+import AdminLayout from "@/layouts/AdminLayout";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,7 +41,8 @@ export default function PageOutboundSuppressionCenter() {
   const activeCount = filtered.filter(s => s.active).length;
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 space-y-6 max-w-5xl mx-auto">
+    <AdminLayout>
+      <div className="min-h-screen bg-background p-4 md:p-8 space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate("/admin/outbound")}>
           <ArrowLeft className="h-5 w-5" />
@@ -90,5 +92,6 @@ export default function PageOutboundSuppressionCenter() {
         </div>
       )}
     </div>
+  </AdminLayout>
   );
 }

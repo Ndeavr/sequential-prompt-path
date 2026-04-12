@@ -1,3 +1,4 @@
+import AdminLayout from "@/layouts/AdminLayout";
 import { Suspense } from "react";
 import { Shield, CheckCircle2, XCircle, Activity, Zap, FlaskConical, Bot, ScrollText, Settings } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +16,8 @@ export default function PageOutboundOpsCenter() {
   const lastFailure = runs?.find(r => r.status === "failed");
 
   return (
-    <div className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto">
+    <AdminLayout>
+      <div className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto">
       {/* Hero */}
       <div className="space-y-2">
         <div className="flex items-center gap-3">
@@ -90,5 +92,6 @@ export default function PageOutboundOpsCenter() {
         </CardContent>
       </Card>
     </div>
+  </AdminLayout>
   );
 }
