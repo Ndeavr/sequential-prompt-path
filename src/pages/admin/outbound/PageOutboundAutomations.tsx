@@ -1,17 +1,14 @@
 import { useState } from "react";
-import { Bot, Play, Pause, RotateCcw, Loader2, Clock, Zap } from "lucide-react";
+import { Bot, Play, Pause, RotateCcw, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import BadgePipelineState from "@/components/admin/outbound-ops/BadgePipelineState";
 import { useAutomationJobs, useAutomationSchedules } from "@/hooks/useOutboundOpsData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
 
 const automationTypes = [
   { key: "scrape_prospect_batch", label: "Scraping prospects", icon: "🔍" },
@@ -28,12 +25,11 @@ const automationTypes = [
 export default function PageOutboundAutomations() {
   const { data: jobs, refetch: refetchJobs } = useAutomationJobs();
   const { data: schedules, refetch: refetchSchedules } = useAutomationSchedules();
-  const qc = useQueryClient();
   const [triggering, setTriggering] = useState<string | null>(null);
   const [selectedJob, setSelectedJob] = useState<any>(null);
 
-      const activeJobs = (jobs as any[])?.filter(j => j.status === "running" || j.status === "queued").length || 0;
-  const failedJobs = (jobs as any[])?.filter(j => j.status === "failed").length || 0;
+  const activeJobs = (jobs || []).filter((j: any) => j.status === "running" || j.status === "queued").length;
+  const failedJobs = (jobs || []).filter((j: any) => j.status === "failed").length;
 
   async function triggerJob(type: string) {
     setTriggering(type);
@@ -58,13 +54,13 @@ export default function PageOutboundAutomations() {
   }
 
   async function updateJobStatus(jobId: string, newStatus: string) {
-    await supabase.from("automation_jobs").update({ status: newStatus, updated_at: new Date().toISOString() }).eq("id", jobId);
+    await supabase.from("automation_jobs").update({ status: newStatus }).eq("id", jobId);
     refetchJobs();
     toast({ title: "Statut mis à jour" });
   }
 
   async function toggleSchedule(type: string, enabled: boolean) {
-    const existing = schedules?.find(s => s.automation_type === type);
+    const existing = schedules?.find((s: any) => s.automation_type === type);
     if (existing) {
       await supabase.from("automation_schedules").update({ is_enabled: enabled }).eq("id", existing.id);
     } else {
@@ -83,7 +79,6 @@ export default function PageOutboundAutomations() {
         </div>
       </div>
 
-      {/* Health summary */}
       <div className="grid grid-cols-3 gap-3">
         <Card><CardContent className="p-3 text-center">
           <p className="text-xs text-muted-foreground">Actifs</p>
@@ -91,7 +86,7 @@ export default function PageOutboundAutomations() {
         </CardContent></Card>
         <Card><CardContent className="p-3 text-center">
           <p className="text-xs text-muted-foreground">Échoués</p>
-          <p className="text-xl font-bold text-red-400">{failedJobs}</p>
+          <p className="text-xl font-bold text-destructive">{failedJobs}</p>
         </CardContent></Card>
         <Card><CardContent className="p-3 text-center">
           <p className="text-xs text-muted-foreground">Total</p>
@@ -104,7 +99,7 @@ export default function PageOutboundAutomations() {
         <CardHeader className="pb-3"><CardTitle className="text-sm">Planification</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           {automationTypes.map(at => {
-            const schedule = schedules?.find(s => s.automation_type === at.key);
+            const schedule = schedules?.find((s: any) => s.automation_type === at.key);
             return (
               <div key={at.key} className="flex items-center justify-between border rounded-lg p-3">
                 <div className="flex items-center gap-2">
@@ -112,7 +107,7 @@ export default function PageOutboundAutomations() {
                   <span className="text-sm font-medium">{at.label}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Switch checked={schedule?.is_enabled || false} onCheckedChange={v => toggleSchedule(at.key, v)} />
+                  <Switch checked={schedule?.is_enabled || false} onCheckedChange={(v: boolean) => toggleSchedule(at.key, v)} />
                   <Button variant="outline" size="sm" onClick={() => triggerJob(at.key)} disabled={triggering === at.key} className="h-7 text-xs gap-1">
                     {triggering === at.key ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
                     Lancer
@@ -133,18 +128,18 @@ export default function PageOutboundAutomations() {
               <TableRow>
                 <TableHead>Type</TableHead>
                 <TableHead>Statut</TableHead>
-                <TableHead className="hidden md:table-cell">Dry-run</TableHead>
+                <TableHead className="hidden md:table-cell">Source</TableHead>
                 <TableHead className="hidden md:table-cell">Date</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {jobs?.map(j => (
+              {(jobs || []).map((j: any) => (
                 <TableRow key={j.id}>
-                  <TableCell className="text-sm font-medium">{j.job_type}</TableCell>
+                  <TableCell className="text-sm font-medium">{j.job_type || j.title}</TableCell>
                   <TableCell><BadgePipelineState state={j.status} /></TableCell>
-                  <TableCell className="hidden md:table-cell text-xs">{j.dry_run ? "✓ Oui" : "⚠️ Live"}</TableCell>
-                  <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{new Date(j.created_at).toLocaleString("fr-CA")}</TableCell>
+                  <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{j.source_trigger || "—"}</TableCell>
+                  <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{j.created_at ? new Date(j.created_at).toLocaleString("fr-CA") : "—"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
                       {j.status === "running" && (
@@ -174,11 +169,18 @@ export default function PageOutboundAutomations() {
           <SheetHeader><SheetTitle>Détails du job</SheetTitle></SheetHeader>
           {selectedJob && (
             <div className="mt-4 space-y-4">
-              <div className="flex items-center gap-2"><span className="text-sm font-medium">{selectedJob.job_type}</span><BadgePipelineState state={selectedJob.status} /></div>
-              <div><p className="text-xs text-muted-foreground">Dry-run: {selectedJob.dry_run ? "Oui" : "Non"}</p></div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">{selectedJob.job_type || selectedJob.title}</span>
+                <BadgePipelineState state={selectedJob.status} />
+              </div>
               <div><p className="text-xs text-muted-foreground">Priorité: {selectedJob.priority}</p></div>
-              {selectedJob.failure_reason && <div><p className="text-xs text-muted-foreground">Erreur</p><p className="text-sm text-red-400">{selectedJob.failure_reason}</p></div>}
-              <div><p className="text-xs text-muted-foreground mb-1">Payload</p><pre className="text-xs bg-muted p-3 rounded-lg overflow-auto max-h-40">{JSON.stringify(selectedJob.payload, null, 2)}</pre></div>
+              {selectedJob.error_message && (
+                <div><p className="text-xs text-muted-foreground">Erreur</p><p className="text-sm text-destructive">{selectedJob.error_message}</p></div>
+              )}
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Payload</p>
+                <pre className="text-xs bg-muted p-3 rounded-lg overflow-auto max-h-40">{JSON.stringify(selectedJob.payload, null, 2)}</pre>
+              </div>
             </div>
           )}
         </SheetContent>
