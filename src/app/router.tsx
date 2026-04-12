@@ -397,6 +397,7 @@ const PageOutboundTests = lazy(() => import("@/pages/admin/outbound/PageOutbound
 const PageOutboundAutomations = lazy(() => import("@/pages/admin/outbound/PageOutboundAutomations"));
 const PageOutboundLogs = lazy(() => import("@/pages/admin/outbound/PageOutboundLogs"));
 const PageOutboundSettingsLite = lazy(() => import("@/pages/admin/outbound/PageOutboundSettingsLite"));
+const PageOutboundEmailHealth = lazy(() => import("@/pages/admin/outbound/PageOutboundEmailHealth"));
 const PageAdminExecutionControl = lazy(() => import("@/pages/admin/PageAdminExecutionControl"));
 const PageAdminDominanceControl = lazy(() => import("@/pages/admin/PageAdminDominanceControl"));
 const PageAlexVoiceDebugAdmin = lazy(() => import("@/pages/admin/PageAlexVoiceDebugAdmin"));
@@ -915,6 +916,7 @@ export const AppRouter = () => (
         <Route path="/admin/outbound/automations" element={<ProtectedRoute requiredRole="admin"><PageOutboundAutomations /></ProtectedRoute>} />
         <Route path="/admin/outbound/logs" element={<ProtectedRoute requiredRole="admin"><PageOutboundLogs /></ProtectedRoute>} />
         <Route path="/admin/outbound/settings-lite" element={<ProtectedRoute requiredRole="admin"><PageOutboundSettingsLite /></ProtectedRoute>} />
+        <Route path="/admin/outbound/email-health" element={<ProtectedRoute requiredRole="admin"><PageOutboundEmailHealth /></ProtectedRoute>} />
         <Route path="/admin/execution-control" element={<ProtectedRoute requiredRole="admin"><PageAdminExecutionControl /></ProtectedRoute>} />
         <Route path="/admin/dominance" element={<ProtectedRoute requiredRole="admin"><PageAdminDominanceControl /></ProtectedRoute>} />
         <Route path="/admin/voice-debug" element={<ProtectedRoute requiredRole="admin"><PageAlexVoiceDebugAdmin /></ProtectedRoute>} />

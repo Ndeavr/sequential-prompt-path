@@ -21528,6 +21528,77 @@ export type Database = {
         }
         Relationships: []
       }
+      email_authentication_checks: {
+        Row: {
+          alignment_details: Json | null
+          alignment_status: string | null
+          checked_at: string | null
+          created_at: string | null
+          dkim_issues: Json | null
+          dkim_record: string | null
+          dkim_selector: string | null
+          dkim_status: string | null
+          dmarc_issues: Json | null
+          dmarc_policy: string | null
+          dmarc_record: string | null
+          dmarc_status: string | null
+          domain_config_id: string
+          id: string
+          raw_dns_payload: Json | null
+          spf_issues: Json | null
+          spf_record: string | null
+          spf_status: string | null
+        }
+        Insert: {
+          alignment_details?: Json | null
+          alignment_status?: string | null
+          checked_at?: string | null
+          created_at?: string | null
+          dkim_issues?: Json | null
+          dkim_record?: string | null
+          dkim_selector?: string | null
+          dkim_status?: string | null
+          dmarc_issues?: Json | null
+          dmarc_policy?: string | null
+          dmarc_record?: string | null
+          dmarc_status?: string | null
+          domain_config_id: string
+          id?: string
+          raw_dns_payload?: Json | null
+          spf_issues?: Json | null
+          spf_record?: string | null
+          spf_status?: string | null
+        }
+        Update: {
+          alignment_details?: Json | null
+          alignment_status?: string | null
+          checked_at?: string | null
+          created_at?: string | null
+          dkim_issues?: Json | null
+          dkim_record?: string | null
+          dkim_selector?: string | null
+          dkim_status?: string | null
+          dmarc_issues?: Json | null
+          dmarc_policy?: string | null
+          dmarc_record?: string | null
+          dmarc_status?: string | null
+          domain_config_id?: string
+          id?: string
+          raw_dns_payload?: Json | null
+          spf_issues?: Json | null
+          spf_record?: string | null
+          spf_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_authentication_checks_domain_config_id_fkey"
+            columns: ["domain_config_id"]
+            isOneToOne: false
+            referencedRelation: "email_domain_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_automation_rules: {
         Row: {
           audience_type: string | null
@@ -21572,6 +21643,148 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      email_domain_configs: {
+        Row: {
+          created_at: string | null
+          domain: string
+          from_email: string | null
+          health_score: number | null
+          id: string
+          is_active: boolean | null
+          provider: string | null
+          reply_to: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          domain: string
+          from_email?: string | null
+          health_score?: number | null
+          id?: string
+          is_active?: boolean | null
+          provider?: string | null
+          reply_to?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          domain?: string
+          from_email?: string | null
+          health_score?: number | null
+          id?: string
+          is_active?: boolean | null
+          provider?: string | null
+          reply_to?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      email_fix_recommendations: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          dns_record_to_add: string | null
+          domain_config_id: string
+          fix_instructions: string | null
+          id: string
+          impact: string | null
+          is_resolved: boolean | null
+          issue_type: string
+          resolved_at: string | null
+          severity: string
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          dns_record_to_add?: string | null
+          domain_config_id: string
+          fix_instructions?: string | null
+          id?: string
+          impact?: string | null
+          is_resolved?: boolean | null
+          issue_type: string
+          resolved_at?: string | null
+          severity?: string
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          dns_record_to_add?: string | null
+          domain_config_id?: string
+          fix_instructions?: string | null
+          id?: string
+          impact?: string | null
+          is_resolved?: boolean | null
+          issue_type?: string
+          resolved_at?: string | null
+          severity?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_fix_recommendations_domain_config_id_fkey"
+            columns: ["domain_config_id"]
+            isOneToOne: false
+            referencedRelation: "email_domain_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_health_reports: {
+        Row: {
+          alignment_score: number | null
+          auth_score: number | null
+          behavior_score: number | null
+          content_score: number | null
+          created_at: string | null
+          domain_config_id: string
+          id: string
+          issues: Json | null
+          level: string | null
+          overall_score: number | null
+          recommendations: Json | null
+          reputation_score: number | null
+        }
+        Insert: {
+          alignment_score?: number | null
+          auth_score?: number | null
+          behavior_score?: number | null
+          content_score?: number | null
+          created_at?: string | null
+          domain_config_id: string
+          id?: string
+          issues?: Json | null
+          level?: string | null
+          overall_score?: number | null
+          recommendations?: Json | null
+          reputation_score?: number | null
+        }
+        Update: {
+          alignment_score?: number | null
+          auth_score?: number | null
+          behavior_score?: number | null
+          content_score?: number | null
+          created_at?: string | null
+          domain_config_id?: string
+          id?: string
+          issues?: Json | null
+          level?: string | null
+          overall_score?: number | null
+          recommendations?: Json | null
+          reputation_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_health_reports_domain_config_id_fkey"
+            columns: ["domain_config_id"]
+            isOneToOne: false
+            referencedRelation: "email_domain_configs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_send_log: {
         Row: {
@@ -21783,6 +21996,59 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      email_test_runs: {
+        Row: {
+          auth_results: Json | null
+          completed_at: string | null
+          created_at: string | null
+          domain_config_id: string | null
+          error_message: string | null
+          headers: Json | null
+          id: string
+          inbox_result: string | null
+          spam_result: string | null
+          status: string | null
+          target_inbox: string | null
+          test_type: string
+        }
+        Insert: {
+          auth_results?: Json | null
+          completed_at?: string | null
+          created_at?: string | null
+          domain_config_id?: string | null
+          error_message?: string | null
+          headers?: Json | null
+          id?: string
+          inbox_result?: string | null
+          spam_result?: string | null
+          status?: string | null
+          target_inbox?: string | null
+          test_type?: string
+        }
+        Update: {
+          auth_results?: Json | null
+          completed_at?: string | null
+          created_at?: string | null
+          domain_config_id?: string | null
+          error_message?: string | null
+          headers?: Json | null
+          id?: string
+          inbox_result?: string | null
+          spam_result?: string | null
+          status?: string | null
+          target_inbox?: string | null
+          test_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_test_runs_domain_config_id_fkey"
+            columns: ["domain_config_id"]
+            isOneToOne: false
+            referencedRelation: "email_domain_configs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_unsubscribe_tokens: {
         Row: {
