@@ -1,3 +1,4 @@
+import AdminLayout from "@/layouts/AdminLayout";
 import { Suspense } from "react";
 import { Shield, CheckCircle2, XCircle, Activity, Zap, FlaskConical, Bot, ScrollText, Settings } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

@@ -1,3 +1,4 @@
+import AdminLayout from "@/layouts/AdminLayout";
 import { useState } from "react";
 import { Shield, Search, AlertTriangle, CheckCircle2, XCircle, Copy, RefreshCw, Mail } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
