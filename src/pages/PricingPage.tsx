@@ -49,7 +49,7 @@ export default function PricingPage() {
   }, [preSelectedPlan, activeTab]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background landing-warm">
       {/* Tab Toggle — sticky on mobile */}
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30">
         <div className="max-w-md mx-auto px-4 py-3">
