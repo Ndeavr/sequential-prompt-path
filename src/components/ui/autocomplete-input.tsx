@@ -34,6 +34,7 @@ export function AutocompleteInput({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [highlightIndex, setHighlightIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -48,6 +49,11 @@ export function AutocompleteInput({
       return label.includes(q) || val.includes(q);
     });
   }, [options, search]);
+
+  // Reset highlight when filtered list changes
+  useEffect(() => {
+    setHighlightIndex(0);
+  }, [filtered.length, search]);
 
   // Close on outside click
   useEffect(() => {
@@ -64,6 +70,23 @@ export function AutocompleteInput({
     onValueChange(val);
     setOpen(false);
     setSearch("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightIndex((prev) => Math.min(prev + 1, filtered.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightIndex((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (filtered.length > 0) {
+        handleSelect(filtered[highlightIndex]?.value ?? filtered[0].value);
+      }
+    } else if (e.key === "Escape") {
+      setOpen(false);
+    }
   };
 
   return (
@@ -97,6 +120,7 @@ export function AutocompleteInput({
               ref={inputRef}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder={searchPlaceholder}
               className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
               autoComplete="off"
@@ -108,7 +132,7 @@ export function AutocompleteInput({
             {filtered.length === 0 ? (
               <p className="py-4 text-center text-xs text-muted-foreground">{emptyMessage}</p>
             ) : (
-              filtered.map((option) => (
+              filtered.map((option, idx) => (
                 <button
                   key={option.value}
                   type="button"
@@ -116,7 +140,8 @@ export function AutocompleteInput({
                   className={cn(
                     "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-foreground transition-colors",
                     "hover:bg-accent/10",
-                    option.value === value && "bg-primary/10 text-primary font-medium"
+                    option.value === value && "bg-primary/10 text-primary font-medium",
+                    idx === highlightIndex && "bg-accent/20"
                   )}
                 >
                   <Check
