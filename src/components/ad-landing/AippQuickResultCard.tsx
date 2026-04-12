@@ -89,9 +89,10 @@ export default function AippQuickResultCard({ result, businessName, city, onCrea
           <Card className="overflow-hidden border-primary/20">
             <div className="relative w-full bg-muted overflow-hidden rounded-t-lg">
               <img
-                src={`data:image/png;base64,${result.screenshot}`}
+                src={result.screenshot.startsWith("http") ? result.screenshot : `data:image/png;base64,${result.screenshot}`}
                 alt={`Capture d'écran de ${businessName}`}
                 className="w-full h-auto max-h-56 object-cover object-top"
+                loading="eager"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
               <div className="absolute bottom-2 left-3 right-3">

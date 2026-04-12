@@ -167,8 +167,12 @@ function extractSignals(
     } catch { return false; }
   });
 
-  // Business name from title
-  const businessNameFromSite = title.split("|")[0]?.split("-")[0]?.split("–")[0]?.trim() || "";
+  // Business name from title — clean up common patterns
+  let businessNameFromSite = title.split("|")[0]?.split("–")[0]?.trim() || "";
+  // Remove trailing " - " prefix
+  businessNameFromSite = businessNameFromSite.split(" - ")[0]?.trim() || businessNameFromSite;
+  // Remove "— " patterns like "UNPRO — Rendez"
+  businessNameFromSite = businessNameFromSite.split("—")[0]?.trim() || businessNameFromSite;
 
   return {
     business_name_detected: businessNameFromSite,
