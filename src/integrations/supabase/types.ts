@@ -1202,6 +1202,136 @@ export type Database = {
           },
         ]
       }
+      agent_target_items: {
+        Row: {
+          approval_status: string
+          campaign_id: string | null
+          city_name: string | null
+          city_slug: string | null
+          combined_market_key: string | null
+          created_at: string
+          estimated_density: number | null
+          estimated_lead_volume: number | null
+          id: string
+          notes: string | null
+          priority_score: number | null
+          raw_label: string
+          recommendation_id: string | null
+          region_name: string | null
+          review_status: string
+          service_name: string | null
+          specialty_slug: string | null
+          target_list_id: string
+          updated_at: string
+        }
+        Insert: {
+          approval_status?: string
+          campaign_id?: string | null
+          city_name?: string | null
+          city_slug?: string | null
+          combined_market_key?: string | null
+          created_at?: string
+          estimated_density?: number | null
+          estimated_lead_volume?: number | null
+          id?: string
+          notes?: string | null
+          priority_score?: number | null
+          raw_label: string
+          recommendation_id?: string | null
+          region_name?: string | null
+          review_status?: string
+          service_name?: string | null
+          specialty_slug?: string | null
+          target_list_id: string
+          updated_at?: string
+        }
+        Update: {
+          approval_status?: string
+          campaign_id?: string | null
+          city_name?: string | null
+          city_slug?: string | null
+          combined_market_key?: string | null
+          created_at?: string
+          estimated_density?: number | null
+          estimated_lead_volume?: number | null
+          id?: string
+          notes?: string | null
+          priority_score?: number | null
+          raw_label?: string
+          recommendation_id?: string | null
+          region_name?: string | null
+          review_status?: string
+          service_name?: string | null
+          specialty_slug?: string | null
+          target_list_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_target_items_target_list_id_fkey"
+            columns: ["target_list_id"]
+            isOneToOne: false
+            referencedRelation: "agent_target_lists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_agent_target_items_campaign"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_agent_target_items_recommendation"
+            columns: ["recommendation_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_autopilot_recommendations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_target_lists: {
+        Row: {
+          approved_count: number
+          created_at: string
+          id: string
+          item_count: number
+          metadata: Json | null
+          name: string
+          rejected_count: number
+          source_agent: string
+          started_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_count?: number
+          created_at?: string
+          id?: string
+          item_count?: number
+          metadata?: Json | null
+          name: string
+          rejected_count?: number
+          source_agent?: string
+          started_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_count?: number
+          created_at?: string
+          id?: string
+          item_count?: number
+          metadata?: Json | null
+          name?: string
+          rejected_count?: number
+          source_agent?: string
+          started_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agent_tasks: {
         Row: {
           action_plan: Json | null
@@ -30515,6 +30645,143 @@ export type Database = {
           },
         ]
       }
+      outbound_autopilot_recommendations: {
+        Row: {
+          agent_target_item_id: string | null
+          confidence_score: number | null
+          created_at: string
+          explanation: Json | null
+          id: string
+          predicted_city: string | null
+          predicted_daily_send_limit: number | null
+          predicted_hourly_send_limit: number | null
+          predicted_keywords: string[] | null
+          predicted_mailbox_id: string | null
+          predicted_max_leads: number | null
+          predicted_radius_km: number | null
+          predicted_send_window: Json | null
+          predicted_sequence_id: string | null
+          predicted_source_keys: string[] | null
+          predicted_specialty: string | null
+          review_status: string
+        }
+        Insert: {
+          agent_target_item_id?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          explanation?: Json | null
+          id?: string
+          predicted_city?: string | null
+          predicted_daily_send_limit?: number | null
+          predicted_hourly_send_limit?: number | null
+          predicted_keywords?: string[] | null
+          predicted_mailbox_id?: string | null
+          predicted_max_leads?: number | null
+          predicted_radius_km?: number | null
+          predicted_send_window?: Json | null
+          predicted_sequence_id?: string | null
+          predicted_source_keys?: string[] | null
+          predicted_specialty?: string | null
+          review_status?: string
+        }
+        Update: {
+          agent_target_item_id?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          explanation?: Json | null
+          id?: string
+          predicted_city?: string | null
+          predicted_daily_send_limit?: number | null
+          predicted_hourly_send_limit?: number | null
+          predicted_keywords?: string[] | null
+          predicted_mailbox_id?: string | null
+          predicted_max_leads?: number | null
+          predicted_radius_km?: number | null
+          predicted_send_window?: Json | null
+          predicted_sequence_id?: string | null
+          predicted_source_keys?: string[] | null
+          predicted_specialty?: string | null
+          review_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_autopilot_recommendations_agent_target_item_id_fkey"
+            columns: ["agent_target_item_id"]
+            isOneToOne: false
+            referencedRelation: "agent_target_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_autopilot_runs: {
+        Row: {
+          agent_target_item_id: string | null
+          campaign_id: string | null
+          created_at: string
+          current_stage: string
+          finished_at: string | null
+          id: string
+          logs: Json | null
+          priority_score: number | null
+          scraping_run_id: string | null
+          sending_run_id: string | null
+          started_at: string | null
+          started_by: string | null
+          status: string
+          target_list_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          agent_target_item_id?: string | null
+          campaign_id?: string | null
+          created_at?: string
+          current_stage?: string
+          finished_at?: string | null
+          id?: string
+          logs?: Json | null
+          priority_score?: number | null
+          scraping_run_id?: string | null
+          sending_run_id?: string | null
+          started_at?: string | null
+          started_by?: string | null
+          status?: string
+          target_list_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agent_target_item_id?: string | null
+          campaign_id?: string | null
+          created_at?: string
+          current_stage?: string
+          finished_at?: string | null
+          id?: string
+          logs?: Json | null
+          priority_score?: number | null
+          scraping_run_id?: string | null
+          sending_run_id?: string | null
+          started_at?: string | null
+          started_by?: string | null
+          status?: string
+          target_list_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_autopilot_runs_agent_target_item_id_fkey"
+            columns: ["agent_target_item_id"]
+            isOneToOne: false
+            referencedRelation: "agent_target_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_autopilot_runs_target_list_id_fkey"
+            columns: ["target_list_id"]
+            isOneToOne: false
+            referencedRelation: "agent_target_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outbound_campaign_targets: {
         Row: {
           campaign_id: string
@@ -30561,6 +30828,7 @@ export type Database = {
       }
       outbound_campaigns: {
         Row: {
+          agent_target_item_id: string | null
           auto_scraping_enabled: boolean | null
           auto_send_enabled: boolean | null
           auto_sending_enabled: boolean | null
@@ -30589,6 +30857,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          agent_target_item_id?: string | null
           auto_scraping_enabled?: boolean | null
           auto_send_enabled?: boolean | null
           auto_sending_enabled?: boolean | null
@@ -30617,6 +30886,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          agent_target_item_id?: string | null
           auto_scraping_enabled?: boolean | null
           auto_send_enabled?: boolean | null
           auto_sending_enabled?: boolean | null
