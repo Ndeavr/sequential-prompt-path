@@ -729,10 +729,44 @@
 
   /* ═══════════════════════════════════════════════
      WARM NEUTRAL LANDING SYSTEM
+     Overrides ALL semantic tokens so existing components
+     automatically render in warm neutral when inside .landing-warm
      ═══════════════════════════════════════════════ */
   .landing-warm {
-    background-color: var(--landing-bg);
-    color: var(--landing-dark);
+    /* ── Remap core semantic tokens to warm neutral ── */
+    --background: 50 22% 95%;
+    --foreground: 30 8% 12%;
+    --card: 60 14% 98%;
+    --card-foreground: 30 8% 12%;
+    --popover: 60 14% 98%;
+    --popover-foreground: 30 8% 12%;
+    --muted: 45 10% 92%;
+    --muted-foreground: 30 4% 45%;
+    --border: 45 10% 85%;
+    --input: 60 14% 98%;
+    --ring: 30 8% 12%;
+    --primary: 30 8% 12%;
+    --primary-foreground: 50 22% 95%;
+    --secondary: 30 6% 18%;
+    --secondary-foreground: 50 22% 95%;
+    --accent: 45 10% 92%;
+    --accent-foreground: 30 8% 12%;
+
+    /* ── Override glass system for warm neutral ── */
+    --glass-bg: hsl(60 14% 98% / 0.9);
+    --glass-border: hsl(45 10% 85%);
+    --glass-highlight: none;
+    --glass-blur: 8px;
+    --shadow-inner-glow: none;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+    --shadow-md: 0 2px 4px -1px rgb(0 0 0 / 0.06);
+    --shadow-lg: 0 4px 8px -2px rgb(0 0 0 / 0.06);
+    --shadow-glow: none;
+    --shadow-glow-lg: none;
+    --shadow-metal: none;
+
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     font-family: var(--font-landing);
   }
 
