@@ -202,7 +202,7 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
         </Link>
         <span className="text-caption text-muted-foreground px-3 mb-6">Administration</span>
 
-        <nav className="flex-1 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 min-h-0 space-y-0.5 overflow-y-auto">
           <NavLinks pathname={pathname} />
         </nav>
 
