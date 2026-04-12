@@ -4,15 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ArrowLeft, Building2, User, Mail, Phone, Globe, MapPin,
   Star, TrendingUp, Clock, MessageSquare, Eye, MousePointerClick,
-  Send, AlertTriangle, CalendarCheck, FileText, Plus, ChevronRight
+  Send, AlertTriangle, CalendarCheck, FileText, Plus
 } from "lucide-react";
 import { toast } from "sonner";
+import { CardProspectAIPPScore } from "@/components/outbound/CardProspectAIPPScore";
+import { PanelProspectWebsiteSignals } from "@/components/outbound/PanelProspectWebsiteSignals";
+import { PanelProspectWebsiteCapture } from "@/components/outbound/PanelProspectWebsiteCapture";
+import { PanelAIPPPreviewGenerator } from "@/components/outbound/PanelAIPPPreviewGenerator";
 
 const crmStatusConfig: Record<string, { label: string; color: string }> = {
   new: { label: "Nouveau", color: "bg-muted text-muted-foreground" },
@@ -33,16 +36,11 @@ const crmStatusConfig: Record<string, { label: string; color: string }> = {
 };
 
 const eventTypeIcons: Record<string, any> = {
-  imported: FileText,
-  email_sent: Send,
-  email_opened: Eye,
-  email_clicked: MousePointerClick,
-  email_replied: MessageSquare,
-  bounce_received: AlertTriangle,
-  meeting_booked: CalendarCheck,
-  crm_status_changed: TrendingUp,
-  owner_assigned: User,
-  scored: Star,
+  imported: FileText, email_sent: Send, email_opened: Eye,
+  email_clicked: MousePointerClick, email_replied: MessageSquare,
+  bounce_received: AlertTriangle, meeting_booked: CalendarCheck,
+  crm_status_changed: TrendingUp, owner_assigned: User, scored: Star,
+  reply_classified: MessageSquare,
 };
 
 export default function PageOutboundLeadProfile() {
@@ -54,6 +52,9 @@ export default function PageOutboundLeadProfile() {
   const [events, setEvents] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [notes, setNotes] = useState<any[]>([]);
+  const [aippScore, setAippScore] = useState<any>(null);
+  const [enrichment, setEnrichment] = useState<any>(null);
+  const [domainData, setDomainData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [newNote, setNewNote] = useState("");
 
@@ -69,12 +70,20 @@ export default function PageOutboundLeadProfile() {
     ]);
     if (leadRes.data) {
       setLead(leadRes.data);
-      const [compRes, contRes] = await Promise.all([
-        leadRes.data.company_id ? supabase.from("outbound_companies").select("*").eq("id", leadRes.data.company_id).maybeSingle() : Promise.resolve({ data: null }),
-        leadRes.data.contact_id ? supabase.from("outbound_contacts").select("*").eq("id", leadRes.data.contact_id).maybeSingle() : Promise.resolve({ data: null }),
+      const companyId = leadRes.data.company_id;
+      const contactId = leadRes.data.contact_id;
+      const [compRes, contRes, scoreRes, enrichRes, domRes] = await Promise.all([
+        companyId ? supabase.from("outbound_companies").select("*").eq("id", companyId).maybeSingle() : Promise.resolve({ data: null }),
+        contactId ? supabase.from("outbound_contacts").select("*").eq("id", contactId).maybeSingle() : Promise.resolve({ data: null }),
+        companyId ? supabase.from("prospect_aipp_scores").select("*").eq("prospect_id", companyId).maybeSingle() : Promise.resolve({ data: null }),
+        companyId ? supabase.from("prospect_enrichments").select("*").eq("prospect_id", companyId).maybeSingle() : Promise.resolve({ data: null }),
+        companyId ? supabase.from("prospect_domains").select("*").eq("prospect_id", companyId).maybeSingle() : Promise.resolve({ data: null }),
       ]);
       setCompany(compRes.data);
       setContact(contRes.data);
+      setAippScore(scoreRes.data);
+      setEnrichment(enrichRes.data);
+      setDomainData(domRes.data);
     }
     setEvents(evtRes.data || []);
     setMessages(msgRes.data || []);
@@ -121,7 +130,7 @@ export default function PageOutboundLeadProfile() {
   const cfg = crmStatusConfig[lead.crm_status] || crmStatusConfig.new;
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 space-y-6 max-w-6xl mx-auto">
+    <div className="min-h-screen bg-background p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate("/admin/outbound/leads")}>
@@ -135,7 +144,7 @@ export default function PageOutboundLeadProfile() {
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
-        {/* Left — Identity & Signals */}
+        {/* Left Column — Identity, AIPP, Signals */}
         <div className="space-y-4">
           {/* Company Card */}
           <Card className="border-border/40">
@@ -160,25 +169,25 @@ export default function PageOutboundLeadProfile() {
             </CardContent>
           </Card>
 
-          {/* Scores */}
-          <Card className="border-border/40">
-            <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="h-4 w-4" /> Scores</CardTitle></CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              {[
-                { label: "Priorité totale", val: lead.total_priority_score },
-                { label: "Ville", val: lead.city_priority_score },
-                { label: "Spécialité", val: lead.specialty_priority_score },
-                { label: "AIPP upside", val: lead.aipp_upside_score },
-                { label: "Personnalisation", val: lead.personalization_score },
-                { label: "Outbound readiness", val: lead.outbound_readiness_score },
-              ].map(s => (
-                <div key={s.label} className="flex justify-between">
-                  <span className="text-muted-foreground">{s.label}</span>
-                  <span className="font-medium">{s.val ?? "—"}</span>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+          {/* AIPP Preview Generator */}
+          {company && (
+            <PanelAIPPPreviewGenerator
+              companyId={company.id}
+              companyName={company.company_name}
+              hasEnrichment={!!enrichment}
+              hasScore={!!aippScore}
+              onComplete={loadLead}
+            />
+          )}
+
+          {/* AIPP Score */}
+          {aippScore && <CardProspectAIPPScore score={aippScore} />}
+
+          {/* Website Signals */}
+          {enrichment && <PanelProspectWebsiteSignals enrichment={enrichment} />}
+
+          {/* Website Capture */}
+          {domainData && <PanelProspectWebsiteCapture domain={domainData} />}
 
           {/* CRM Actions */}
           <Card className="border-border/40">
@@ -196,7 +205,7 @@ export default function PageOutboundLeadProfile() {
           </Card>
         </div>
 
-        {/* Center — Timeline */}
+        {/* Center + Right — Timeline, Messages, Notes */}
         <div className="md:col-span-2 space-y-4">
           {/* Messages */}
           <Card className="border-border/40">

@@ -36096,6 +36096,102 @@ export type Database = {
           },
         ]
       }
+      prospect_aipp_factors: {
+        Row: {
+          created_at: string
+          factor_key: string
+          factor_label: string
+          factor_note: string | null
+          factor_status: string | null
+          factor_value: number | null
+          factor_weight: number | null
+          id: string
+          prospect_id: string
+        }
+        Insert: {
+          created_at?: string
+          factor_key: string
+          factor_label: string
+          factor_note?: string | null
+          factor_status?: string | null
+          factor_value?: number | null
+          factor_weight?: number | null
+          id?: string
+          prospect_id: string
+        }
+        Update: {
+          created_at?: string
+          factor_key?: string
+          factor_label?: string
+          factor_note?: string | null
+          factor_status?: string | null
+          factor_value?: number | null
+          factor_weight?: number | null
+          id?: string
+          prospect_id?: string
+        }
+        Relationships: []
+      }
+      prospect_aipp_scores: {
+        Row: {
+          ai_readiness_score: number | null
+          content_score: number | null
+          conversion_score: number | null
+          created_at: string
+          generated_at: string | null
+          id: string
+          local_presence_score: number | null
+          prospect_id: string
+          quick_wins: Json | null
+          score_global: number | null
+          score_level: string | null
+          structure_score: number | null
+          summary_headline: string | null
+          summary_short: string | null
+          top_issues: Json | null
+          trust_score: number | null
+          visibility_score: number | null
+        }
+        Insert: {
+          ai_readiness_score?: number | null
+          content_score?: number | null
+          conversion_score?: number | null
+          created_at?: string
+          generated_at?: string | null
+          id?: string
+          local_presence_score?: number | null
+          prospect_id: string
+          quick_wins?: Json | null
+          score_global?: number | null
+          score_level?: string | null
+          structure_score?: number | null
+          summary_headline?: string | null
+          summary_short?: string | null
+          top_issues?: Json | null
+          trust_score?: number | null
+          visibility_score?: number | null
+        }
+        Update: {
+          ai_readiness_score?: number | null
+          content_score?: number | null
+          conversion_score?: number | null
+          created_at?: string
+          generated_at?: string | null
+          id?: string
+          local_presence_score?: number | null
+          prospect_id?: string
+          quick_wins?: Json | null
+          score_global?: number | null
+          score_level?: string | null
+          structure_score?: number | null
+          summary_headline?: string | null
+          summary_short?: string | null
+          top_issues?: Json | null
+          trust_score?: number | null
+          visibility_score?: number | null
+        }
+        Relationships: []
+      }
       prospect_alex_links: {
         Row: {
           campaign_id: string | null
@@ -36356,6 +36452,42 @@ export type Database = {
           },
         ]
       }
+      prospect_domains: {
+        Row: {
+          created_at: string
+          dns_payload: Json | null
+          domain: string
+          id: string
+          mx_detected: boolean | null
+          prospect_id: string
+          screenshot_url: string | null
+          status: string | null
+          website_live: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          dns_payload?: Json | null
+          domain: string
+          id?: string
+          mx_detected?: boolean | null
+          prospect_id: string
+          screenshot_url?: string | null
+          status?: string | null
+          website_live?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          dns_payload?: Json | null
+          domain?: string
+          id?: string
+          mx_detected?: boolean | null
+          prospect_id?: string
+          screenshot_url?: string | null
+          status?: string | null
+          website_live?: boolean | null
+        }
+        Relationships: []
+      }
       prospect_email_campaigns: {
         Row: {
           body_html: string | null
@@ -36459,6 +36591,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      prospect_enrichments: {
+        Row: {
+          created_at: string
+          detected_platform: string | null
+          enriched_at: string | null
+          enrichment_payload: Json | null
+          estimated_google_rating: number | null
+          estimated_review_count: number | null
+          has_before_after_gallery: boolean | null
+          has_booking_cta: boolean | null
+          has_city_pages: boolean | null
+          has_email_visible: boolean | null
+          has_faq: boolean | null
+          has_financing_visible: boolean | null
+          has_https: boolean | null
+          has_phone_visible: boolean | null
+          has_reviews_widget: boolean | null
+          has_schema: boolean | null
+          has_service_pages: boolean | null
+          id: string
+          prospect_id: string
+          website_meta_description: string | null
+          website_title: string | null
+        }
+        Insert: {
+          created_at?: string
+          detected_platform?: string | null
+          enriched_at?: string | null
+          enrichment_payload?: Json | null
+          estimated_google_rating?: number | null
+          estimated_review_count?: number | null
+          has_before_after_gallery?: boolean | null
+          has_booking_cta?: boolean | null
+          has_city_pages?: boolean | null
+          has_email_visible?: boolean | null
+          has_faq?: boolean | null
+          has_financing_visible?: boolean | null
+          has_https?: boolean | null
+          has_phone_visible?: boolean | null
+          has_reviews_widget?: boolean | null
+          has_schema?: boolean | null
+          has_service_pages?: boolean | null
+          id?: string
+          prospect_id: string
+          website_meta_description?: string | null
+          website_title?: string | null
+        }
+        Update: {
+          created_at?: string
+          detected_platform?: string | null
+          enriched_at?: string | null
+          enrichment_payload?: Json | null
+          estimated_google_rating?: number | null
+          estimated_review_count?: number | null
+          has_before_after_gallery?: boolean | null
+          has_booking_cta?: boolean | null
+          has_city_pages?: boolean | null
+          has_email_visible?: boolean | null
+          has_faq?: boolean | null
+          has_financing_visible?: boolean | null
+          has_https?: boolean | null
+          has_phone_visible?: boolean | null
+          has_reviews_widget?: boolean | null
+          has_schema?: boolean | null
+          has_service_pages?: boolean | null
+          id?: string
+          prospect_id?: string
+          website_meta_description?: string | null
+          website_title?: string | null
+        }
+        Relationships: []
       }
       prospect_import_jobs: {
         Row: {
@@ -36898,6 +37102,36 @@ export type Database = {
           key?: string
           updated_at?: string | null
           value?: Json | null
+        }
+        Relationships: []
+      }
+      prospect_social_profiles: {
+        Row: {
+          active_status: string | null
+          created_at: string
+          followers_estimate: number | null
+          id: string
+          platform: string
+          profile_url: string | null
+          prospect_id: string
+        }
+        Insert: {
+          active_status?: string | null
+          created_at?: string
+          followers_estimate?: number | null
+          id?: string
+          platform: string
+          profile_url?: string | null
+          prospect_id: string
+        }
+        Update: {
+          active_status?: string | null
+          created_at?: string
+          followers_estimate?: number | null
+          id?: string
+          platform?: string
+          profile_url?: string | null
+          prospect_id?: string
         }
         Relationships: []
       }
