@@ -60,14 +60,14 @@ export function useManualTestRuns(limit = 20) {
 
 export function useAutomationJobs(limit = 20) {
   return useQuery({
-    queryKey: ["automation-jobs", limit],
+    queryKey: ["automation-jobs-ops", limit],
     queryFn: async () => {
       const { data } = await supabase
         .from("automation_jobs")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(limit);
-      return data || [];
+      return (data || []) as any[];
     },
   });
 }
