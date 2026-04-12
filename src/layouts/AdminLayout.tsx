@@ -62,8 +62,10 @@ const outboundGroups: OutboundSubGroup[] = [
     label: "Core",
     items: [
       { to: "/admin/outbound", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/admin/outbound/leads", label: "Prospects", icon: Users },
       { to: "/admin/outbound/campaigns", label: "Campagnes", icon: Rocket },
+      { to: "/admin/outbound/campaigns/new", label: "Nouvelle campagne", icon: Zap },
+      { to: "/admin/outbound/leads", label: "Prospects", icon: Users },
+      { to: "/admin/outbound/runs", label: "Run Monitor", icon: Activity },
     ],
   },
   {
@@ -95,7 +97,8 @@ const outboundGroups: OutboundSubGroup[] = [
       { to: "/admin/outbound/sms-fallback", label: "SMS Fallback", icon: Smartphone },
       { to: "/admin/outbound/analytics", label: "Analytics", icon: BarChart3 },
       { to: "/admin/outbound/suppressions", label: "Suppressions", icon: Ban },
-      { to: "/admin/outbound/settings-lite", label: "Settings", icon: Settings },
+      { to: "/admin/outbound/settings", label: "Settings", icon: Settings },
+      { to: "/admin/outbound/settings-lite", label: "Settings (legacy)", icon: LayoutList },
     ],
   },
 ];

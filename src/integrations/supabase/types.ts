@@ -30515,16 +30515,65 @@ export type Database = {
           },
         ]
       }
+      outbound_campaign_targets: {
+        Row: {
+          campaign_id: string
+          city: string
+          created_at: string | null
+          id: string
+          keyword_query: string | null
+          max_results: number | null
+          radius_km: number | null
+          source_key: string | null
+          specialty: string
+        }
+        Insert: {
+          campaign_id: string
+          city: string
+          created_at?: string | null
+          id?: string
+          keyword_query?: string | null
+          max_results?: number | null
+          radius_km?: number | null
+          source_key?: string | null
+          specialty: string
+        }
+        Update: {
+          campaign_id?: string
+          city?: string
+          created_at?: string | null
+          id?: string
+          keyword_query?: string | null
+          max_results?: number | null
+          radius_km?: number | null
+          source_key?: string | null
+          specialty?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_campaign_targets_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outbound_campaigns: {
         Row: {
+          auto_scraping_enabled: boolean | null
           auto_send_enabled: boolean | null
+          auto_sending_enabled: boolean | null
           campaign_name: string
           campaign_status: string | null
           campaign_type: string | null
           city: string | null
           created_at: string | null
+          created_by: string | null
           daily_send_limit: number | null
           end_date: string | null
+          goal: string | null
+          hourly_send_limit: number | null
           id: string
           mailbox_id: string | null
           notes: string | null
@@ -30536,17 +30585,23 @@ export type Database = {
           sequence_id: string | null
           specialty: string | null
           start_date: string | null
+          target_lead_count: number | null
           updated_at: string | null
         }
         Insert: {
+          auto_scraping_enabled?: boolean | null
           auto_send_enabled?: boolean | null
+          auto_sending_enabled?: boolean | null
           campaign_name: string
           campaign_status?: string | null
           campaign_type?: string | null
           city?: string | null
           created_at?: string | null
+          created_by?: string | null
           daily_send_limit?: number | null
           end_date?: string | null
+          goal?: string | null
+          hourly_send_limit?: number | null
           id?: string
           mailbox_id?: string | null
           notes?: string | null
@@ -30558,17 +30613,23 @@ export type Database = {
           sequence_id?: string | null
           specialty?: string | null
           start_date?: string | null
+          target_lead_count?: number | null
           updated_at?: string | null
         }
         Update: {
+          auto_scraping_enabled?: boolean | null
           auto_send_enabled?: boolean | null
+          auto_sending_enabled?: boolean | null
           campaign_name?: string
           campaign_status?: string | null
           campaign_type?: string | null
           city?: string | null
           created_at?: string | null
+          created_by?: string | null
           daily_send_limit?: number | null
           end_date?: string | null
+          goal?: string | null
+          hourly_send_limit?: number | null
           id?: string
           mailbox_id?: string | null
           notes?: string | null
@@ -30580,6 +30641,7 @@ export type Database = {
           sequence_id?: string | null
           specialty?: string | null
           start_date?: string | null
+          target_lead_count?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -30835,6 +30897,45 @@ export type Database = {
           },
         ]
       }
+      outbound_global_settings: {
+        Row: {
+          created_at: string | null
+          dedupe_window_days: number | null
+          default_country: string | null
+          default_region: string | null
+          id: string
+          max_daily_per_mailbox: number | null
+          max_hourly_per_mailbox: number | null
+          pause_bounce_threshold: number | null
+          pause_spam_threshold: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dedupe_window_days?: number | null
+          default_country?: string | null
+          default_region?: string | null
+          id?: string
+          max_daily_per_mailbox?: number | null
+          max_hourly_per_mailbox?: number | null
+          pause_bounce_threshold?: number | null
+          pause_spam_threshold?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dedupe_window_days?: number | null
+          default_country?: string | null
+          default_region?: string | null
+          id?: string
+          max_daily_per_mailbox?: number | null
+          max_hourly_per_mailbox?: number | null
+          pause_bounce_threshold?: number | null
+          pause_spam_threshold?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       outbound_landing_pages: {
         Row: {
           aipp_summary: string | null
@@ -30913,6 +31014,53 @@ export type Database = {
           },
         ]
       }
+      outbound_lead_enrichment: {
+        Row: {
+          aipp_estimate_score: number | null
+          created_at: string | null
+          email_detected: boolean | null
+          enrichment_payload: Json | null
+          google_rating: number | null
+          id: string
+          lead_id: string
+          phone_detected: boolean | null
+          review_count: number | null
+          website_detected: boolean | null
+        }
+        Insert: {
+          aipp_estimate_score?: number | null
+          created_at?: string | null
+          email_detected?: boolean | null
+          enrichment_payload?: Json | null
+          google_rating?: number | null
+          id?: string
+          lead_id: string
+          phone_detected?: boolean | null
+          review_count?: number | null
+          website_detected?: boolean | null
+        }
+        Update: {
+          aipp_estimate_score?: number | null
+          created_at?: string | null
+          email_detected?: boolean | null
+          enrichment_payload?: Json | null
+          google_rating?: number | null
+          id?: string
+          lead_id?: string
+          phone_detected?: boolean | null
+          review_count?: number | null
+          website_detected?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_lead_enrichment_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outbound_lead_tags: {
         Row: {
           created_at: string | null
@@ -30959,24 +31107,38 @@ export type Database = {
           city_priority_score: number | null
           closed_at: string | null
           company_id: string | null
+          company_name: string | null
           contact_id: string | null
+          contact_name: string | null
           converted_at: string | null
           created_at: string | null
           crm_status: string | null
+          domain: string | null
+          email: string | null
           hook_summary: string | null
           id: string
           last_contacted_at: string | null
+          lead_score: number | null
           legitimacy_score: number | null
+          mailbox_id: string | null
+          next_step_at: string | null
+          notes: string | null
           outbound_readiness_score: number | null
           owner_user_id: string | null
           personalization_score: number | null
+          phone: string | null
           pipeline_stage: string | null
+          qualification_status: string | null
           rejection_reason: string | null
           replied_at: string | null
+          sending_status: string | null
+          sequence_id: string | null
+          specialty: string | null
           specialty_priority_score: number | null
           total_priority_score: number | null
           unsubscribed_at: string | null
           updated_at: string | null
+          website_url: string | null
         }
         Insert: {
           aipp_upside_score?: number | null
@@ -30987,24 +31149,38 @@ export type Database = {
           city_priority_score?: number | null
           closed_at?: string | null
           company_id?: string | null
+          company_name?: string | null
           contact_id?: string | null
+          contact_name?: string | null
           converted_at?: string | null
           created_at?: string | null
           crm_status?: string | null
+          domain?: string | null
+          email?: string | null
           hook_summary?: string | null
           id?: string
           last_contacted_at?: string | null
+          lead_score?: number | null
           legitimacy_score?: number | null
+          mailbox_id?: string | null
+          next_step_at?: string | null
+          notes?: string | null
           outbound_readiness_score?: number | null
           owner_user_id?: string | null
           personalization_score?: number | null
+          phone?: string | null
           pipeline_stage?: string | null
+          qualification_status?: string | null
           rejection_reason?: string | null
           replied_at?: string | null
+          sending_status?: string | null
+          sequence_id?: string | null
+          specialty?: string | null
           specialty_priority_score?: number | null
           total_priority_score?: number | null
           unsubscribed_at?: string | null
           updated_at?: string | null
+          website_url?: string | null
         }
         Update: {
           aipp_upside_score?: number | null
@@ -31015,24 +31191,38 @@ export type Database = {
           city_priority_score?: number | null
           closed_at?: string | null
           company_id?: string | null
+          company_name?: string | null
           contact_id?: string | null
+          contact_name?: string | null
           converted_at?: string | null
           created_at?: string | null
           crm_status?: string | null
+          domain?: string | null
+          email?: string | null
           hook_summary?: string | null
           id?: string
           last_contacted_at?: string | null
+          lead_score?: number | null
           legitimacy_score?: number | null
+          mailbox_id?: string | null
+          next_step_at?: string | null
+          notes?: string | null
           outbound_readiness_score?: number | null
           owner_user_id?: string | null
           personalization_score?: number | null
+          phone?: string | null
           pipeline_stage?: string | null
+          qualification_status?: string | null
           rejection_reason?: string | null
           replied_at?: string | null
+          sending_status?: string | null
+          sequence_id?: string | null
+          specialty?: string | null
           specialty_priority_score?: number | null
           total_priority_score?: number | null
           unsubscribed_at?: string | null
           updated_at?: string | null
+          website_url?: string | null
         }
         Relationships: [
           {
@@ -31103,47 +31293,62 @@ export type Database = {
         Row: {
           created_at: string | null
           daily_limit: number | null
+          domain: string | null
           health_score: number | null
+          hourly_send_limit: number | null
           id: string
           mailbox_status: string | null
+          provider: string | null
           reply_to_email: string | null
           sender_email: string
           sender_name: string
           sender_title: string | null
+          sent_today: number | null
           signature_html: string | null
           tracking_domain: string | null
           updated_at: string | null
           warmup_enabled: boolean | null
+          warmup_status: string | null
         }
         Insert: {
           created_at?: string | null
           daily_limit?: number | null
+          domain?: string | null
           health_score?: number | null
+          hourly_send_limit?: number | null
           id?: string
           mailbox_status?: string | null
+          provider?: string | null
           reply_to_email?: string | null
           sender_email: string
           sender_name: string
           sender_title?: string | null
+          sent_today?: number | null
           signature_html?: string | null
           tracking_domain?: string | null
           updated_at?: string | null
           warmup_enabled?: boolean | null
+          warmup_status?: string | null
         }
         Update: {
           created_at?: string | null
           daily_limit?: number | null
+          domain?: string | null
           health_score?: number | null
+          hourly_send_limit?: number | null
           id?: string
           mailbox_status?: string | null
+          provider?: string | null
           reply_to_email?: string | null
           sender_email?: string
           sender_name?: string
           sender_title?: string | null
+          sent_today?: number | null
           signature_html?: string | null
           tracking_domain?: string | null
           updated_at?: string | null
           warmup_enabled?: boolean | null
+          warmup_status?: string | null
         }
         Relationships: []
       }
@@ -31335,6 +31540,164 @@ export type Database = {
           },
         ]
       }
+      outbound_scraped_entities: {
+        Row: {
+          campaign_id: string
+          city: string | null
+          company_name: string | null
+          created_at: string | null
+          dedupe_hash: string | null
+          domain: string | null
+          email: string | null
+          external_id: string | null
+          id: string
+          normalized_payload: Json | null
+          phone: string | null
+          raw_payload: Json | null
+          scraping_run_id: string
+          source_key: string | null
+          specialty: string | null
+          status: string | null
+          website_url: string | null
+        }
+        Insert: {
+          campaign_id: string
+          city?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          dedupe_hash?: string | null
+          domain?: string | null
+          email?: string | null
+          external_id?: string | null
+          id?: string
+          normalized_payload?: Json | null
+          phone?: string | null
+          raw_payload?: Json | null
+          scraping_run_id: string
+          source_key?: string | null
+          specialty?: string | null
+          status?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          city?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          dedupe_hash?: string | null
+          domain?: string | null
+          email?: string | null
+          external_id?: string | null
+          id?: string
+          normalized_payload?: Json | null
+          phone?: string | null
+          raw_payload?: Json | null
+          scraping_run_id?: string
+          source_key?: string | null
+          specialty?: string | null
+          status?: string | null
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_scraped_entities_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_scraped_entities_scraping_run_id_fkey"
+            columns: ["scraping_run_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_scraping_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_scraping_runs: {
+        Row: {
+          campaign_id: string
+          deduplicated_count: number | null
+          error_count: number | null
+          finished_at: string | null
+          id: string
+          lead_created_count: number | null
+          logs: Json | null
+          raw_entity_count: number | null
+          source_count: number | null
+          started_at: string | null
+          status: string | null
+          valid_entity_count: number | null
+        }
+        Insert: {
+          campaign_id: string
+          deduplicated_count?: number | null
+          error_count?: number | null
+          finished_at?: string | null
+          id?: string
+          lead_created_count?: number | null
+          logs?: Json | null
+          raw_entity_count?: number | null
+          source_count?: number | null
+          started_at?: string | null
+          status?: string | null
+          valid_entity_count?: number | null
+        }
+        Update: {
+          campaign_id?: string
+          deduplicated_count?: number | null
+          error_count?: number | null
+          finished_at?: string | null
+          id?: string
+          lead_created_count?: number | null
+          logs?: Json | null
+          raw_entity_count?: number | null
+          source_count?: number | null
+          started_at?: string | null
+          status?: string | null
+          valid_entity_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_scraping_runs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_scraping_sources: {
+        Row: {
+          config: Json | null
+          created_at: string | null
+          id: string
+          key: string
+          name: string
+          priority: number | null
+          status: string | null
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string | null
+          id?: string
+          key: string
+          name: string
+          priority?: number | null
+          status?: string | null
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string | null
+          id?: string
+          key?: string
+          name?: string
+          priority?: number | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       outbound_send_logs: {
         Row: {
           campaign_id: string | null
@@ -31381,6 +31744,141 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "outbound_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_sending_runs: {
+        Row: {
+          campaign_id: string
+          error_count: number | null
+          finished_at: string | null
+          id: string
+          logs: Json | null
+          mailbox_id: string
+          queued_count: number | null
+          sent_count: number | null
+          skipped_count: number | null
+          started_at: string | null
+          status: string | null
+        }
+        Insert: {
+          campaign_id: string
+          error_count?: number | null
+          finished_at?: string | null
+          id?: string
+          logs?: Json | null
+          mailbox_id: string
+          queued_count?: number | null
+          sent_count?: number | null
+          skipped_count?: number | null
+          started_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          error_count?: number | null
+          finished_at?: string | null
+          id?: string
+          logs?: Json | null
+          mailbox_id?: string
+          queued_count?: number | null
+          sent_count?: number | null
+          skipped_count?: number | null
+          started_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_sending_runs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_sending_runs_mailbox_id_fkey"
+            columns: ["mailbox_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_mailboxes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_sent_messages: {
+        Row: {
+          body_preview: string | null
+          campaign_id: string | null
+          delivery_status: string | null
+          id: string
+          lead_id: string
+          mailbox_id: string | null
+          provider_message_id: string | null
+          sent_at: string | null
+          sequence_id: string | null
+          sequence_step_id: string | null
+          subject: string | null
+        }
+        Insert: {
+          body_preview?: string | null
+          campaign_id?: string | null
+          delivery_status?: string | null
+          id?: string
+          lead_id: string
+          mailbox_id?: string | null
+          provider_message_id?: string | null
+          sent_at?: string | null
+          sequence_id?: string | null
+          sequence_step_id?: string | null
+          subject?: string | null
+        }
+        Update: {
+          body_preview?: string | null
+          campaign_id?: string | null
+          delivery_status?: string | null
+          id?: string
+          lead_id?: string
+          mailbox_id?: string | null
+          provider_message_id?: string | null
+          sent_at?: string | null
+          sequence_id?: string | null
+          sequence_step_id?: string | null
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_sent_messages_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_sent_messages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_sent_messages_mailbox_id_fkey"
+            columns: ["mailbox_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_mailboxes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_sent_messages_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_sequences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_sent_messages_sequence_step_id_fkey"
+            columns: ["sequence_step_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_sequence_steps"
             referencedColumns: ["id"]
           },
         ]
@@ -31434,7 +31932,9 @@ export type Database = {
       }
       outbound_sequences: {
         Row: {
+          channel: string | null
           created_at: string | null
+          goal: string | null
           id: string
           is_active: boolean | null
           is_default: boolean | null
@@ -31445,7 +31945,9 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          channel?: string | null
           created_at?: string | null
+          goal?: string | null
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
@@ -31456,7 +31958,9 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          channel?: string | null
           created_at?: string | null
+          goal?: string | null
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
