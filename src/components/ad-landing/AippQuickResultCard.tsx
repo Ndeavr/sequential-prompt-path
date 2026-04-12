@@ -10,6 +10,7 @@ interface Props {
   result: AIPPQuickResult;
   businessName: string;
   city?: string;
+  websiteUrl?: string;
   onCreateProfile: () => void;
   onTalkToAlex: () => void;
 }
@@ -73,7 +74,7 @@ function MarketPositionMini({ position }: { position: string }) {
   );
 }
 
-export default function AippQuickResultCard({ result, businessName, city, onCreateProfile, onTalkToAlex }: Props) {
+export default function AippQuickResultCard({ result, businessName, city, websiteUrl, onCreateProfile, onTalkToAlex }: Props) {
   const [showDetails, setShowDetails] = useState(false);
 
   return (
@@ -107,7 +108,7 @@ export default function AippQuickResultCard({ result, businessName, city, onCrea
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Votre site web analysé</span>
                 <Button size="sm" variant="ghost" className="h-7 text-xs" asChild>
-                  <a href={result.signals ? `https://${businessName}` : "#"} target="_blank" rel="noopener noreferrer">
+                  <a href={websiteUrl || "#"} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-3 w-3 mr-1" /> Voir le site
                   </a>
                 </Button>
