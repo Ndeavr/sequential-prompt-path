@@ -13,7 +13,7 @@ import {
   Bot, Network, Camera, Wand2, Zap, Tag, Rocket, Grid3X3,
   ChevronDown, ChevronRight, Mail, Send, Activity, Settings,
   MessageSquare, TestTube, ScrollText, Inbox, Heart, DollarSign,
-  Smartphone, Ban, LayoutList, Server, Cpu,
+  Smartphone, Ban, LayoutList, Server, Cpu, Target,
 } from "lucide-react";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import type { ReactNode } from "react";
@@ -58,6 +58,13 @@ interface OutboundSubGroup {
 }
 
 const outboundGroups: OutboundSubGroup[] = [
+  {
+    label: "Autopilot",
+    items: [
+      { to: "/admin/outbound/targets", label: "Marchés Cibles", icon: Target },
+      { to: "/admin/outbound/autopilot/runs", label: "Autopilot Runs", icon: Rocket },
+    ],
+  },
   {
     label: "Core",
     items: [
