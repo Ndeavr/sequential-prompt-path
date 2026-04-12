@@ -59,6 +59,13 @@ interface OutboundSubGroup {
 
 const outboundGroups: OutboundSubGroup[] = [
   {
+    label: "Autopilot",
+    items: [
+      { to: "/admin/outbound/targets", label: "Marchés Cibles", icon: Target },
+      { to: "/admin/outbound/autopilot/runs", label: "Autopilot Runs", icon: Rocket },
+    ],
+  },
+  {
     label: "Core",
     items: [
       { to: "/admin/outbound", label: "Dashboard", icon: LayoutDashboard },
