@@ -404,6 +404,9 @@ const PageOutboundDeliverability = lazy(() => import("@/pages/admin/outbound/Pag
 const PageOutboundAIRewrite = lazy(() => import("@/pages/admin/outbound/PageOutboundAIRewrite"));
 const PageOutboundRevenue = lazy(() => import("@/pages/admin/outbound/PageOutboundRevenue"));
 const PageOutboundSMSFallback = lazy(() => import("@/pages/admin/outbound/PageOutboundSMSFallback"));
+const PageCampaignBuilderAutonomous = lazy(() => import("@/pages/admin/outbound/PageCampaignBuilderAutonomous"));
+const PageRunMonitorAutonomous = lazy(() => import("@/pages/admin/outbound/PageRunMonitorAutonomous"));
+const PageOutboundSettingsAutonomous = lazy(() => import("@/pages/admin/outbound/PageOutboundSettingsAutonomous"));
 const PageAdminExecutionControl = lazy(() => import("@/pages/admin/PageAdminExecutionControl"));
 const PageAdminDominanceControl = lazy(() => import("@/pages/admin/PageAdminDominanceControl"));
 const PageAlexVoiceDebugAdmin = lazy(() => import("@/pages/admin/PageAlexVoiceDebugAdmin"));
