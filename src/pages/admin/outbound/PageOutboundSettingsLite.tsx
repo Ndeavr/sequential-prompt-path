@@ -15,7 +15,8 @@ export default function PageOutboundSettingsLite() {
   const [jobFrequency, setJobFrequency] = useState("60");
 
   return (
-    <div className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto">
+    <AdminLayout>
+      <div className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto">
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-xl bg-primary/10"><Settings className="h-5 w-5 text-primary" /></div>
         <div>
@@ -86,5 +87,6 @@ export default function PageOutboundSettingsLite() {
         </div>
       )}
     </div>
+  </AdminLayout>
   );
 }

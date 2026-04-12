@@ -10,7 +10,8 @@ function ScoreGauge({ score }: { score: number }) {
   const bgColor = score >= 80 ? "bg-green-500" : score >= 50 ? "bg-yellow-500" : "bg-red-500";
   const label = score >= 80 ? "Excellent" : score >= 50 ? "Moyen" : "Critique";
   return (
-    <div className="flex flex-col items-center gap-2">
+    <AdminLayout>
+      <div className="flex flex-col items-center gap-2">
       <div className="relative w-24 h-24">
         <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="8" className="text-muted/20" />
@@ -23,6 +24,7 @@ function ScoreGauge({ score }: { score: number }) {
       </div>
       <Badge className={`${bgColor} text-white`}>{label}</Badge>
     </div>
+  </AdminLayout>
   );
 }
 

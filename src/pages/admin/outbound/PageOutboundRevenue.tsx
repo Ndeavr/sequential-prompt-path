@@ -11,7 +11,8 @@ export default function PageOutboundRevenue() {
   const totalYearly = estimations?.reduce((a: number, e: any) => a + (e.yearly_loss || 0), 0) || 0;
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 space-y-6">
+    <AdminLayout>
+      <div className="min-h-screen bg-background p-4 md:p-8 space-y-6">
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-lg bg-primary/10">
           <DollarSign className="h-6 w-6 text-primary" />
@@ -85,5 +86,6 @@ export default function PageOutboundRevenue() {
         </CardContent>
       </Card>
     </div>
+  </AdminLayout>
   );
 }
