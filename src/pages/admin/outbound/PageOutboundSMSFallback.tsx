@@ -17,7 +17,7 @@ export default function PageOutboundSMSFallback() {
 
   return (
     <AdminLayout>
-      <div className="min-h-screen bg-background p-4 md:p-8 space-y-6">
+      <div className="space-y-6">
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-lg bg-primary/10">
           <MessageSquare className="h-6 w-6 text-primary" />
