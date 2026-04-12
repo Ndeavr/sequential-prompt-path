@@ -141,13 +141,36 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       }
       console.log("[ElevenLabs] ✅ Got signed URL");
 
-      // Connect — language is configured on ElevenLabs dashboard (French default)
-      // NO overrides passed — they cause instant disconnects if not enabled in dashboard
+      // Connect — NO overrides (cause instant disconnects if not enabled in dashboard)
       await conversation.startSession({
         signedUrl: data.signed_url,
       });
 
-      console.log("[ElevenLabs] ✅ Session started — French configured on agent dashboard");
+      console.log("[ElevenLabs] ✅ Session started");
+
+      // Inject Alex persona + French-first context post-connection
+      const conversationApi = conversation as any;
+      const alexSystemContext = `Tu es Alex de UNPRO.
+Langue: Français uniquement. Accent: Français naturel Québec, fluide, professionnel.
+Règles absolues:
+- Ne jamais répondre en anglais sauf si explicitement demandé
+- Ne jamais proposer 3 soumissions
+- Toujours guider vers une solution directe
+- Poser une seule question à la fois
+- Ne jamais inventer si info manquante
+- Ne jamais promettre un rappel sans coordonnées
+- Toujours prioriser clarté, rapidité, action
+Logique: 1. Comprendre le symptôme 2. Déduire le problème 3. Proposer estimation 4. Recommander professionnel 5. Amener vers prise de rendez-vous
+Comportement: Court, Direct, Utile, Proactif.
+Tu es le cerveau de décision UNPRO.
+Commence maintenant en disant: "${options?.initialGreeting || 'Bonjour. Comment puis-je vous aider?'}"`;
+
+      if (typeof conversationApi.sendContextualUpdate === "function") {
+        conversationApi.sendContextualUpdate(alexSystemContext);
+        console.log("[ElevenLabs] ✅ Alex persona injected via sendContextualUpdate");
+      } else {
+        console.warn("[ElevenLabs] sendContextualUpdate not available — relying on dashboard config");
+      }
     } catch (err: unknown) {
       console.error("[ElevenLabs] Failed to start:", err);
       setIsConnecting(false);
