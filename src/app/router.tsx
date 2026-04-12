@@ -495,6 +495,8 @@ export const AppRouter = () => (
         <Route path="/entrepreneurs" element={<PageEntrepreneursLanding />} />
         <Route path="/entrepreneur/analysis/loading" element={<PageAIPPAnalysisLoading />} />
         <Route path="/entrepreneur/score" element={<PageEntrepreneurScoreResult />} />
+        <Route path="/aipp/:token/results" element={<PageAIPPScoreReveal />} />
+        <Route path="/aipp/local/results" element={<PageAIPPScoreReveal />} />
         <Route path="/entrepreneur/pricing" element={<PageEntrepreneurPricing />} />
         <Route path="/entrepreneur/pricing-calculator" element={<PagePricingCalculator />} />
         <Route path="/entrepreneur/plan-result" element={<PagePlanResult />} />
