@@ -398,6 +398,12 @@ const PageOutboundAutomations = lazy(() => import("@/pages/admin/outbound/PageOu
 const PageOutboundLogs = lazy(() => import("@/pages/admin/outbound/PageOutboundLogs"));
 const PageOutboundSettingsLite = lazy(() => import("@/pages/admin/outbound/PageOutboundSettingsLite"));
 const PageOutboundEmailHealth = lazy(() => import("@/pages/admin/outbound/PageOutboundEmailHealth"));
+const PageOutboundSequencesElite = lazy(() => import("@/pages/admin/outbound/PageOutboundSequencesElite"));
+const PageOutboundSendingArchitecture = lazy(() => import("@/pages/admin/outbound/PageOutboundSendingArchitecture"));
+const PageOutboundDeliverability = lazy(() => import("@/pages/admin/outbound/PageOutboundDeliverability"));
+const PageOutboundAIRewrite = lazy(() => import("@/pages/admin/outbound/PageOutboundAIRewrite"));
+const PageOutboundRevenue = lazy(() => import("@/pages/admin/outbound/PageOutboundRevenue"));
+const PageOutboundSMSFallback = lazy(() => import("@/pages/admin/outbound/PageOutboundSMSFallback"));
 const PageAdminExecutionControl = lazy(() => import("@/pages/admin/PageAdminExecutionControl"));
 const PageAdminDominanceControl = lazy(() => import("@/pages/admin/PageAdminDominanceControl"));
 const PageAlexVoiceDebugAdmin = lazy(() => import("@/pages/admin/PageAlexVoiceDebugAdmin"));
