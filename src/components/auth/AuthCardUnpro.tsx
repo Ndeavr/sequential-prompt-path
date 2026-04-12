@@ -3,7 +3,7 @@
  */
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 interface AuthCardUnproProps {
   title: string;
@@ -50,7 +50,7 @@ export default function AuthCardUnpro({ title, subtitle, children }: AuthCardUnp
                 className="h-16 w-16 rounded-2xl flex items-center justify-center"
                 style={{ background: "hsl(222 100% 65% / 0.1)" }}
               >
-                <img src={logo} alt="UNPRO" className="h-11 w-11 object-contain" />
+                <UnproIcon size={44} variant="primary" />
               </div>
             </div>
             <h1 className="text-2xl font-bold text-foreground">{title}</h1>
