@@ -19,7 +19,7 @@ import OAuthButtons from "@/components/auth/OAuthButtons";
 import AuthDivider from "@/components/auth/AuthDivider";
 import LoginMagicLinkForm from "@/components/auth/LoginMagicLinkForm";
 import PhoneOtpForm from "@/components/auth/PhoneOtpForm";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 type AuthMode = "role" | "choice" | "login" | "signup";
 type SecondaryMethod = null | "email" | "phone";
