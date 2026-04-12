@@ -299,6 +299,7 @@ const PagePlanResult = lazy(() => import("@/pages/entrepreneur/PagePlanResult"))
 const PageEntrepreneurGoalToPlanLanding = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurGoalToPlanLanding"));
 const PagePaymentSuccess = lazy(() => import("@/pages/entrepreneur/PagePaymentSuccess"));
 const PagePaymentCancelled = lazy(() => import("@/pages/entrepreneur/PagePaymentCancelled"));
+const PageAIPPScoreReveal = lazy(() => import("@/pages/entrepreneur/PageAIPPScoreReveal"));
 
 // Contractor Pro
 const ProDashboard = lazy(() => import("@/pages/pro/ProDashboard"));
@@ -494,6 +495,8 @@ export const AppRouter = () => (
         <Route path="/entrepreneurs" element={<PageEntrepreneursLanding />} />
         <Route path="/entrepreneur/analysis/loading" element={<PageAIPPAnalysisLoading />} />
         <Route path="/entrepreneur/score" element={<PageEntrepreneurScoreResult />} />
+        <Route path="/aipp/:token/results" element={<PageAIPPScoreReveal />} />
+        <Route path="/aipp/local/results" element={<PageAIPPScoreReveal />} />
         <Route path="/entrepreneur/pricing" element={<PageEntrepreneurPricing />} />
         <Route path="/entrepreneur/pricing-calculator" element={<PagePricingCalculator />} />
         <Route path="/entrepreneur/plan-result" element={<PagePlanResult />} />
