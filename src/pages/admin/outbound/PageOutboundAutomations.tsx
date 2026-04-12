@@ -32,16 +32,17 @@ export default function PageOutboundAutomations() {
   const [triggering, setTriggering] = useState<string | null>(null);
   const [selectedJob, setSelectedJob] = useState<any>(null);
 
-  const activeJobs = jobs?.filter(j => j.status === "running" || j.status === "queued").length || 0;
-  const failedJobs = jobs?.filter(j => j.status === "failed").length || 0;
+      const activeJobs = (jobs as any[])?.filter(j => j.status === "running" || j.status === "queued").length || 0;
+  const failedJobs = (jobs as any[])?.filter(j => j.status === "failed").length || 0;
 
   async function triggerJob(type: string) {
     setTriggering(type);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       await supabase.from("automation_jobs").insert({
-        job_type: type, status: "queued", dry_run: true, created_by: user?.id,
-        payload: { triggered_manually: true },
+        job_type: type, status: "queued", created_by: user?.id,
+        payload: { triggered_manually: true, dry_run: true },
+        title: `Manual: ${type}`, source_trigger: "admin_ops_center",
       });
       await supabase.from("pipeline_logs").insert({
         log_type: "info", source_module: type, status: "queued",
