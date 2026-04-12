@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Send, FileText, Calendar, TrendingUp, BarChart3, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 interface Props { userId?: string; }
 

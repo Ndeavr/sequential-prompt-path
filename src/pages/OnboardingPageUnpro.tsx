@@ -20,7 +20,7 @@ import FormHomeownerDNA from "@/components/onboarding/FormHomeownerDNA";
 import FormContractorBusinessCore from "@/components/onboarding/FormContractorBusinessCore";
 import FormContractorDNA from "@/components/onboarding/FormContractorDNA";
 import AlexWelcomePanel from "@/components/onboarding/AlexWelcomePanel";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 const HOMEOWNER_STEPS = ["Rôle", "Identité", "Propriété", "Besoin", "Préférences"];
 const CONTRACTOR_STEPS = ["Rôle", "Identité", "Entreprise", "ADN", "Plan"];

@@ -18,7 +18,7 @@ import { useAlexSession, type AlexStep } from "@/hooks/useAlexSession";
 import { useAlexConversation, type AlexMessage, type AlexNextAction } from "@/hooks/useAlexConversation";
 import { useAlexVoiceInput } from "@/hooks/useAlexVoiceInput";
 import ReactMarkdown from "react-markdown";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 interface AlexConversationShellProps {
   onClose: () => void;

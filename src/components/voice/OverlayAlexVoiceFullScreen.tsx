@@ -21,7 +21,7 @@ import { executeHardReset } from "@/services/voiceHardResetEngine";
 // audioEngine removed — no chimes in voice mode, prevents click artifacts
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 const STABILIZATION_MS = 4000;
 const HEARTBEAT_INTERVAL_MS = 2000;

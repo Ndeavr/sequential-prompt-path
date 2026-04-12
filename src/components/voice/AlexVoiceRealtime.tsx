@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mic, X, Phone, PhoneOff, Sparkles, Volume2, RefreshCw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAlexVoiceBootstrap, type VoiceBootState } from "@/hooks/useAlexVoiceBootstrap";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 interface AlexVoiceRealtimeProps {
   agentId?: string;

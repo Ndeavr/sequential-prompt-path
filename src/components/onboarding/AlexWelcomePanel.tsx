@@ -3,7 +3,7 @@
  * Shows contextual guidance from Alex during onboarding.
  */
 import { motion } from "framer-motion";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 interface AlexWelcomePanelProps {
   role?: string | null;
@@ -40,7 +40,7 @@ export default function AlexWelcomePanel({ role, step, firstName }: AlexWelcomeP
       animate={{ opacity: 1, y: 0 }}
       className="flex items-center gap-3 p-3 rounded-2xl bg-card/80 backdrop-blur-lg border border-border shadow-[var(--shadow-md)]"
     >
-      <img src={logo} alt="Alex" className="h-8 w-8 object-contain shrink-0" />
+      <UnproIcon size={32} variant="blue" className="shrink-0" />
       <p className="text-xs text-muted-foreground leading-relaxed">
         {firstName && step === 1 ? `${firstName}, ${message.charAt(0).toLowerCase()}${message.slice(1)}` : message}
       </p>
