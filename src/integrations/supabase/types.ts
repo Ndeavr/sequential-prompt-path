@@ -20512,6 +20512,65 @@ export type Database = {
         }
         Relationships: []
       }
+      deliverability_scores: {
+        Row: {
+          bounce_rate: number | null
+          complaint_rate: number | null
+          created_at: string
+          details_json: Json | null
+          dkim_ok: boolean | null
+          dmarc_ok: boolean | null
+          domain: string
+          domain_id: string | null
+          id: string
+          open_rate: number | null
+          reply_rate: number | null
+          risk_level: string
+          score: number
+          spf_ok: boolean | null
+        }
+        Insert: {
+          bounce_rate?: number | null
+          complaint_rate?: number | null
+          created_at?: string
+          details_json?: Json | null
+          dkim_ok?: boolean | null
+          dmarc_ok?: boolean | null
+          domain: string
+          domain_id?: string | null
+          id?: string
+          open_rate?: number | null
+          reply_rate?: number | null
+          risk_level?: string
+          score?: number
+          spf_ok?: boolean | null
+        }
+        Update: {
+          bounce_rate?: number | null
+          complaint_rate?: number | null
+          created_at?: string
+          details_json?: Json | null
+          dkim_ok?: boolean | null
+          dmarc_ok?: boolean | null
+          domain?: string
+          domain_id?: string | null
+          id?: string
+          open_rate?: number | null
+          reply_rate?: number | null
+          risk_level?: string
+          score?: number
+          spf_ok?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deliverability_scores_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "sending_domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demand_signals_qc: {
         Row: {
           city: string | null
@@ -21786,6 +21845,57 @@ export type Database = {
           },
         ]
       }
+      email_personalizations: {
+        Row: {
+          aipp_score: number | null
+          city: string | null
+          company_name: string | null
+          created_at: string
+          first_name: string | null
+          id: string
+          model_used: string | null
+          original_body: string | null
+          personalization_score: number | null
+          prospect_id: string | null
+          rewritten_body: string | null
+          rewritten_subject: string | null
+          service: string | null
+          website_url: string | null
+        }
+        Insert: {
+          aipp_score?: number | null
+          city?: string | null
+          company_name?: string | null
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          model_used?: string | null
+          original_body?: string | null
+          personalization_score?: number | null
+          prospect_id?: string | null
+          rewritten_body?: string | null
+          rewritten_subject?: string | null
+          service?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          aipp_score?: number | null
+          city?: string | null
+          company_name?: string | null
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          model_used?: string | null
+          original_body?: string | null
+          personalization_score?: number | null
+          prospect_id?: string | null
+          rewritten_body?: string | null
+          rewritten_subject?: string | null
+          service?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -21845,6 +21955,89 @@ export type Database = {
           retry_after_until?: string | null
           send_delay_ms?: number
           transactional_email_ttl_minutes?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      email_sequence_steps: {
+        Row: {
+          body_template: string
+          created_at: string
+          delay_hours: number
+          id: string
+          max_links: number
+          sequence_id: string
+          step_order: number
+          subject_template: string
+          tone: string | null
+        }
+        Insert: {
+          body_template: string
+          created_at?: string
+          delay_hours?: number
+          id?: string
+          max_links?: number
+          sequence_id: string
+          step_order?: number
+          subject_template: string
+          tone?: string | null
+        }
+        Update: {
+          body_template?: string
+          created_at?: string
+          delay_hours?: number
+          id?: string
+          max_links?: number
+          sequence_id?: string
+          step_order?: number
+          subject_template?: string
+          tone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_sequence_steps_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "email_sequences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_sequences: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          language: string | null
+          sequence_key: string
+          sequence_label: string
+          status: string
+          step_count: number
+          target_persona: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          language?: string | null
+          sequence_key: string
+          sequence_label: string
+          status?: string
+          step_count?: number
+          target_persona?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          language?: string | null
+          sequence_key?: string
+          sequence_label?: string
+          status?: string
+          step_count?: number
+          target_persona?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -22073,6 +22266,44 @@ export type Database = {
           used_at?: string | null
         }
         Relationships: []
+      }
+      email_warmup_logs: {
+        Row: {
+          bounces: number
+          complaints: number
+          created_at: string
+          emails_sent: number
+          id: string
+          log_date: string
+          mailbox_id: string
+        }
+        Insert: {
+          bounces?: number
+          complaints?: number
+          created_at?: string
+          emails_sent?: number
+          id?: string
+          log_date?: string
+          mailbox_id: string
+        }
+        Update: {
+          bounces?: number
+          complaints?: number
+          created_at?: string
+          emails_sent?: number
+          id?: string
+          log_date?: string
+          mailbox_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_warmup_logs_mailbox_id_fkey"
+            columns: ["mailbox_id"]
+            isOneToOne: false
+            referencedRelation: "sending_mailboxes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       emergency_assignments: {
         Row: {
@@ -39906,6 +40137,48 @@ export type Database = {
           },
         ]
       }
+      revenue_loss_estimations: {
+        Row: {
+          aipp_score: number | null
+          avg_job_value: number | null
+          city: string | null
+          company_name: string | null
+          created_at: string
+          id: string
+          lost_leads_per_month: number | null
+          monthly_loss: number | null
+          opportunity_label: string | null
+          prospect_id: string | null
+          yearly_loss: number | null
+        }
+        Insert: {
+          aipp_score?: number | null
+          avg_job_value?: number | null
+          city?: string | null
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          lost_leads_per_month?: number | null
+          monthly_loss?: number | null
+          opportunity_label?: string | null
+          prospect_id?: string | null
+          yearly_loss?: number | null
+        }
+        Update: {
+          aipp_score?: number | null
+          avg_job_value?: number | null
+          city?: string | null
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          lost_leads_per_month?: number | null
+          monthly_loss?: number | null
+          opportunity_label?: string | null
+          prospect_id?: string | null
+          yearly_loss?: number | null
+        }
+        Relationships: []
+      }
       review_insights: {
         Row: {
           authenticity_flags: Json | null
@@ -41498,6 +41771,104 @@ export type Database = {
           visitor_id?: string | null
         }
         Relationships: []
+      }
+      sending_domains: {
+        Row: {
+          created_at: string
+          current_daily_sent: number
+          daily_cap: number
+          dkim_valid: boolean | null
+          dmarc_valid: boolean | null
+          domain: string
+          health_score: number | null
+          id: string
+          is_active: boolean | null
+          purpose: string | null
+          spf_valid: boolean | null
+          updated_at: string
+          warmup_stage: string | null
+        }
+        Insert: {
+          created_at?: string
+          current_daily_sent?: number
+          daily_cap?: number
+          dkim_valid?: boolean | null
+          dmarc_valid?: boolean | null
+          domain: string
+          health_score?: number | null
+          id?: string
+          is_active?: boolean | null
+          purpose?: string | null
+          spf_valid?: boolean | null
+          updated_at?: string
+          warmup_stage?: string | null
+        }
+        Update: {
+          created_at?: string
+          current_daily_sent?: number
+          daily_cap?: number
+          dkim_valid?: boolean | null
+          dmarc_valid?: boolean | null
+          domain?: string
+          health_score?: number | null
+          id?: string
+          is_active?: boolean | null
+          purpose?: string | null
+          spf_valid?: boolean | null
+          updated_at?: string
+          warmup_stage?: string | null
+        }
+        Relationships: []
+      }
+      sending_mailboxes: {
+        Row: {
+          created_at: string
+          current_daily_sent: number
+          daily_cap: number
+          display_name: string | null
+          email_address: string
+          id: string
+          is_active: boolean | null
+          rotation_weight: number | null
+          sending_domain_id: string
+          updated_at: string
+          warmup_day: number
+        }
+        Insert: {
+          created_at?: string
+          current_daily_sent?: number
+          daily_cap?: number
+          display_name?: string | null
+          email_address: string
+          id?: string
+          is_active?: boolean | null
+          rotation_weight?: number | null
+          sending_domain_id: string
+          updated_at?: string
+          warmup_day?: number
+        }
+        Update: {
+          created_at?: string
+          current_daily_sent?: number
+          daily_cap?: number
+          display_name?: string | null
+          email_address?: string
+          id?: string
+          is_active?: boolean | null
+          rotation_weight?: number | null
+          sending_domain_id?: string
+          updated_at?: string
+          warmup_day?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sending_mailboxes_sending_domain_id_fkey"
+            columns: ["sending_domain_id"]
+            isOneToOne: false
+            referencedRelation: "sending_domains"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       seo_admin_queue: {
         Row: {
@@ -43387,6 +43758,77 @@ export type Database = {
           template_key?: string
         }
         Relationships: []
+      }
+      sms_fallback_sequences: {
+        Row: {
+          created_at: string
+          id: string
+          sequence_key: string
+          sequence_label: string
+          status: string
+          step_count: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          sequence_key: string
+          sequence_label: string
+          status?: string
+          step_count?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          sequence_key?: string
+          sequence_label?: string
+          status?: string
+          step_count?: number
+        }
+        Relationships: []
+      }
+      sms_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message_body: string
+          phone_number: string
+          prospect_id: string
+          sent_at: string | null
+          sequence_id: string | null
+          status: string
+          step_order: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_body: string
+          phone_number: string
+          prospect_id: string
+          sent_at?: string | null
+          sequence_id?: string | null
+          status?: string
+          step_order?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_body?: string
+          phone_number?: string
+          prospect_id?: string
+          sent_at?: string | null
+          sequence_id?: string | null
+          status?: string
+          step_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_messages_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "sms_fallback_sequences"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sms_templates: {
         Row: {
@@ -46076,6 +46518,42 @@ export type Database = {
           is_experimentable?: boolean
           risk_level?: string
           screen_key?: string
+        }
+        Relationships: []
+      }
+      unopened_email_flags: {
+        Row: {
+          created_at: string
+          email_count_sent: number
+          email_count_unopened: number
+          flagged_for_sms: boolean | null
+          id: string
+          last_email_sent_at: string | null
+          prospect_id: string
+          sms_sent: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email_count_sent?: number
+          email_count_unopened?: number
+          flagged_for_sms?: boolean | null
+          id?: string
+          last_email_sent_at?: string | null
+          prospect_id: string
+          sms_sent?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email_count_sent?: number
+          email_count_unopened?: number
+          flagged_for_sms?: boolean | null
+          id?: string
+          last_email_sent_at?: string | null
+          prospect_id?: string
+          sms_sent?: boolean | null
+          updated_at?: string
         }
         Relationships: []
       }
