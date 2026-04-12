@@ -337,7 +337,7 @@ export default function AppointmentCalculator() {
     <section className="px-5 py-16 md:py-20" id="calculateur">
       <div className="max-w-4xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-          <div className="glass-card-elevated rounded-3xl p-6 md:p-10 space-y-8">
+          <div className="glass-card-elevated rounded-3xl p-6 md:p-10 space-y-8 overflow-visible">
             {/* ═══ HEADER ═══ */}
             <div className="text-center space-y-3">
               <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 bg-accent/10 text-accent text-sm font-semibold">
@@ -374,7 +374,7 @@ export default function AppointmentCalculator() {
             </div>
 
             {/* City + Trade — Autocomplete */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-visible relative">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-3.5 w-3.5 text-primary" />
