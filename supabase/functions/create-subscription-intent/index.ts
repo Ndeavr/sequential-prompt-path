@@ -221,37 +221,51 @@ Deno.serve(async (req) => {
     const subscription = await stripe.subscriptions.create(subParams);
     console.log("Subscription created:", subscription.id, "status:", subscription.status);
 
-    // Retrieve the latest invoice separately with expand
-    const invoiceId = typeof subscription.latest_invoice === "string" 
-      ? subscription.latest_invoice 
-      : subscription.latest_invoice?.id;
-    
-    console.log("Invoice ID:", invoiceId);
-    
-    if (!invoiceId) {
-      return json({ error: "Aucune facture créée pour cet abonnement" }, 500);
-    }
-
-    const invoice = await stripe.invoices.retrieve(invoiceId, {
-      expand: ["payment_intent"],
-    });
-    
-    console.log("Invoice status:", invoice.status, "PI type:", typeof invoice.payment_intent);
+    // Extract client_secret from the expanded latest_invoice.payment_intent
+    const latestInvoice = subscription.latest_invoice as any;
+    console.log("latest_invoice type:", typeof latestInvoice, "id:", latestInvoice?.id || latestInvoice);
 
     let clientSecret: string | null = null;
-    
-    if (typeof invoice.payment_intent === "string") {
-      const pi = await stripe.paymentIntents.retrieve(invoice.payment_intent);
-      clientSecret = pi.client_secret;
-    } else if (invoice.payment_intent) {
-      clientSecret = (invoice.payment_intent as any).client_secret;
+
+    if (latestInvoice && typeof latestInvoice === "object") {
+      const pi = latestInvoice.payment_intent;
+      console.log("PI from expanded invoice:", typeof pi, pi?.id || pi);
+
+      if (typeof pi === "string") {
+        // payment_intent wasn't expanded — retrieve it
+        const paymentIntent = await stripe.paymentIntents.retrieve(pi);
+        clientSecret = paymentIntent.client_secret;
+      } else if (pi && pi.client_secret) {
+        clientSecret = pi.client_secret;
+      }
+    } else if (typeof latestInvoice === "string") {
+      // latest_invoice wasn't expanded — retrieve invoice + PI
+      const invoice = await stripe.invoices.retrieve(latestInvoice, {
+        expand: ["payment_intent"],
+      });
+      const pi = invoice.payment_intent as any;
+      if (typeof pi === "string") {
+        const paymentIntent = await stripe.paymentIntents.retrieve(pi);
+        clientSecret = paymentIntent.client_secret;
+      } else if (pi && pi.client_secret) {
+        clientSecret = pi.client_secret;
+      }
     }
 
     console.log("clientSecret present:", !!clientSecret);
 
     if (!clientSecret) {
-      console.error("No client_secret found. Invoice PI:", JSON.stringify(invoice.payment_intent));
-      return json({ error: "Impossible d'obtenir le secret de paiement" }, 500);
+      // Last resort: list payment intents for this customer
+      const pis = await stripe.paymentIntents.list({ customer: customerId, limit: 1 });
+      if (pis.data.length > 0 && pis.data[0].client_secret) {
+        clientSecret = pis.data[0].client_secret;
+        console.log("Recovered clientSecret from PI list");
+      }
+    }
+
+    if (!clientSecret) {
+      console.error("No client_secret found. Subscription:", subscription.id, "Status:", subscription.status);
+      return json({ error: "Impossible d'obtenir le secret de paiement. Veuillez réessayer." }, 500);
     }
 
     return json({
