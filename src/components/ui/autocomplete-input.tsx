@@ -120,6 +120,7 @@ export function AutocompleteInput({
               ref={inputRef}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder={searchPlaceholder}
               className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
               autoComplete="off"
@@ -139,7 +140,8 @@ export function AutocompleteInput({
                   className={cn(
                     "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-foreground transition-colors",
                     "hover:bg-accent/10",
-                    option.value === value && "bg-primary/10 text-primary font-medium"
+                    option.value === value && "bg-primary/10 text-primary font-medium",
+                    idx === highlightIndex && "bg-accent/20"
                   )}
                 >
                   <Check
