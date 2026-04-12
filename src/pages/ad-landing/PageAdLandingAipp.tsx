@@ -90,6 +90,7 @@ export default function PageAdLandingAipp() {
 
         setBusinessName(detectedName);
         setBusinessCity(detectedCity);
+        setScannedUrl(scanData.normalized_url || "");
         setResult(scored);
 
         // Persist
@@ -304,8 +305,9 @@ export default function PageAdLandingAipp() {
               {phase === "result" && result && (
                 <AippQuickResultCard
                   result={result}
-                  businessName={businessName}
-                  city={businessCity}
+                   businessName={businessName}
+                   city={businessCity}
+                   websiteUrl={scannedUrl}
                   onCreateProfile={() => {
                     trackEvent("cta_create_profile", "ad_landing", { score: result.score });
                     navigate("/contractor-onboarding");
