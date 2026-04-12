@@ -34,6 +34,7 @@ export function AutocompleteInput({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [highlightIndex, setHighlightIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -48,6 +49,11 @@ export function AutocompleteInput({
       return label.includes(q) || val.includes(q);
     });
   }, [options, search]);
+
+  // Reset highlight when filtered list changes
+  useEffect(() => {
+    setHighlightIndex(0);
+  }, [filtered.length, search]);
 
   // Close on outside click
   useEffect(() => {
@@ -64,6 +70,23 @@ export function AutocompleteInput({
     onValueChange(val);
     setOpen(false);
     setSearch("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightIndex((prev) => Math.min(prev + 1, filtered.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightIndex((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (filtered.length > 0) {
+        handleSelect(filtered[highlightIndex]?.value ?? filtered[0].value);
+      }
+    } else if (e.key === "Escape") {
+      setOpen(false);
+    }
   };
 
   return (

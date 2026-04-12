@@ -368,9 +368,9 @@ export default function AppointmentCalculator() {
                 >
                   {revenueGoal[0].toLocaleString()} $
                 </motion.span>
-                <span className="text-xs text-muted-foreground">200 000 $</span>
+                <span className="text-xs text-muted-foreground">100 000 $</span>
               </div>
-              <Slider value={revenueGoal} onValueChange={setRevenueGoal} min={2000} max={200000} step={1000} />
+              <Slider value={revenueGoal} onValueChange={setRevenueGoal} min={2000} max={100000} step={1000} />
             </div>
 
             {/* City + Trade — Autocomplete */}
