@@ -193,7 +193,7 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
 
   return (
     <div className="min-h-screen flex bg-background">
-      <aside className="hidden md:flex w-60 flex-col border-r border-border/30 bg-card/40 p-4">
+      <aside className="hidden md:flex w-60 flex-col border-r border-border/30 bg-card/40 p-4 overflow-hidden">
         <Link to="/" className="flex items-center gap-2 px-3 mb-1 mt-2">
           <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
             <Sparkles className="h-3 w-3 text-primary-foreground" />
