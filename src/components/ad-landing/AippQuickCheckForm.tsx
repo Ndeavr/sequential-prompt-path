@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowRight, Building2, MapPin, Globe, Phone, Search } from "lucide-react";
+import { ArrowRight, Globe, Phone, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface AippQuickCheckFormProps {
@@ -16,26 +16,58 @@ interface AippQuickCheckFormProps {
   isLoading?: boolean;
 }
 
+/** Normalize any user-typed URL into a clean domain */
+function normalizeUrl(raw: string): string {
+  let v = raw.trim().replace(/\s+/g, ""); // remove all spaces
+  if (!v) return "";
+  // Remove protocol fragments like "http:", "https//", "http:/", etc.
+  v = v.replace(/^(https?)?:?\/?\/*/i, "");
+  // Remove trailing slashes
+  v = v.replace(/\/+$/, "");
+  return v;
+}
+
+function looksLikeUrl(raw: string): boolean {
+  const normalized = normalizeUrl(raw);
+  // Must have a dot and at least 2 char TLD
+  return /^[\w.-]+\.\w{2,}/.test(normalized);
+}
+
+function looksLikePhone(raw: string): boolean {
+  const digits = raw.replace(/\D/g, "");
+  return digits.length >= 10;
+}
+
 export default function AippQuickCheckForm({ onSubmit, isLoading }: AippQuickCheckFormProps) {
-  const [businessName, setBusinessName] = useState("");
-  const [city, setCity] = useState("");
-  const [website, setWebsite] = useState("");
-  const [phone, setPhone] = useState("");
-  const [googleUrl, setGoogleUrl] = useState("");
+  const [input, setInput] = useState("");
+  const [inputType, setInputType] = useState<"unknown" | "website" | "phone">("unknown");
 
-  const canSubmit = businessName.trim().length >= 2 && city.trim().length >= 2;
+  // Auto-detect input type
+  useEffect(() => {
+    const v = input.trim();
+    if (!v) { setInputType("unknown"); return; }
+    if (looksLikePhone(v)) { setInputType("phone"); return; }
+    if (looksLikeUrl(v)) { setInputType("website"); return; }
+    setInputType("unknown");
+  }, [input]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const canSubmit = inputType === "website" || inputType === "phone";
+
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit || isLoading) return;
+
+    const websiteUrl = inputType === "website" ? normalizeUrl(input) : "";
+    const phone = inputType === "phone" ? input.trim() : "";
+
     onSubmit({
-      business_name: businessName.trim(),
-      city: city.trim(),
-      website_url: website.trim(),
-      phone: phone.trim(),
-      google_profile_url: googleUrl.trim(),
+      business_name: "", // will be detected from scrape
+      city: "",          // will be detected from scrape
+      website_url: websiteUrl ? `https://${websiteUrl}` : "",
+      phone,
+      google_profile_url: "",
     });
-  };
+  }, [canSubmit, isLoading, input, inputType, onSubmit]);
 
   return (
     <motion.form
@@ -45,77 +77,48 @@ export default function AippQuickCheckForm({ onSubmit, isLoading }: AippQuickChe
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <div className="space-y-3">
-        <div>
-          <Label htmlFor="biz-name" className="text-sm font-semibold text-foreground flex items-center gap-1.5 mb-1.5">
-            <Building2 className="h-3.5 w-3.5 text-primary" /> Nom d'entreprise *
-          </Label>
-          <Input
-            id="biz-name"
-            placeholder="Ex: Rénovation Martin Inc."
-            value={businessName}
-            onChange={(e) => setBusinessName(e.target.value)}
-            className="h-11"
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="biz-city" className="text-sm font-semibold text-foreground flex items-center gap-1.5 mb-1.5">
-            <MapPin className="h-3.5 w-3.5 text-primary" /> Ville *
-          </Label>
-          <Input
-            id="biz-city"
-            placeholder="Ex: Montréal"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            className="h-11"
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="biz-web" className="text-sm font-semibold text-foreground flex items-center gap-1.5 mb-1.5">
-            <Globe className="h-3.5 w-3.5 text-muted-foreground" /> Site web <span className="text-muted-foreground font-normal">(optionnel)</span>
-          </Label>
-          <Input
-            id="biz-web"
-            placeholder="https://..."
-            value={website}
-            onChange={(e) => setWebsite(e.target.value)}
-            className="h-11"
-          />
-        </div>
-        <div>
-          <Label htmlFor="biz-phone" className="text-sm font-semibold text-foreground flex items-center gap-1.5 mb-1.5">
-            <Phone className="h-3.5 w-3.5 text-muted-foreground" /> Téléphone <span className="text-muted-foreground font-normal">(optionnel)</span>
-          </Label>
-          <Input
-            id="biz-phone"
-            placeholder="514-..."
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="h-11"
-          />
-        </div>
-        <div>
-          <Label htmlFor="biz-google" className="text-sm font-semibold text-foreground flex items-center gap-1.5 mb-1.5">
-            <Search className="h-3.5 w-3.5 text-muted-foreground" /> Fiche Google <span className="text-muted-foreground font-normal">(optionnel)</span>
-          </Label>
-          <Input
-            id="biz-google"
-            placeholder="URL Google Maps..."
-            value={googleUrl}
-            onChange={(e) => setGoogleUrl(e.target.value)}
-            className="h-11"
-          />
-        </div>
+      <div>
+        <Label htmlFor="aipp-input" className="text-sm font-semibold text-foreground flex items-center gap-1.5 mb-1.5">
+          {inputType === "phone" ? (
+            <Phone className="h-3.5 w-3.5 text-primary" />
+          ) : (
+            <Globe className="h-3.5 w-3.5 text-primary" />
+          )}
+          Site web ou téléphone
+        </Label>
+        <Input
+          id="aipp-input"
+          placeholder="Ex: monentreprise.ca ou 514-555-1234"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          className="h-12 text-base"
+          autoFocus
+        />
+        {input.trim() && !canSubmit && (
+          <p className="text-xs text-muted-foreground mt-1.5">
+            Entrez un site web (ex: monsite.ca) ou un numéro de téléphone (10 chiffres)
+          </p>
+        )}
+        {canSubmit && (
+          <p className="text-xs text-primary mt-1.5 font-medium">
+            {inputType === "website" ? "🌐 Site web détecté" : "📞 Téléphone détecté"} — prêt pour l'analyse
+          </p>
+        )}
       </div>
 
       <Button type="submit" size="lg" className="w-full h-12 text-base font-bold" disabled={!canSubmit || isLoading}>
-        {isLoading ? "Analyse en cours..." : "Voir mon score gratuit"}
-        {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyse en cours...
+          </>
+        ) : (
+          <>
+            Analyser gratuitement <ArrowRight className="ml-2 h-4 w-4" />
+          </>
+        )}
       </Button>
       <p className="text-xs text-muted-foreground text-center">
-        Gratuit • 30 secondes • Aucun engagement
+        Gratuit • Résultat instantané • Aucun engagement
       </p>
     </motion.form>
   );
