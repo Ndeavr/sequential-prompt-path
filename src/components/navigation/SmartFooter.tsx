@@ -22,7 +22,7 @@ const SmartFooter = () => {
   const sections = getFooterSections(activeRole as UserRole | "guest");
 
   return (
-    <footer className="border-t border-border pb-24 lg:pb-0 bg-background">
+    <footer className="border-t border-border/20 pb-24 lg:pb-0" style={{ background: "hsl(220 40% 4% / 0.8)" }}>
       <div className="mx-auto max-w-7xl px-4 lg:px-6 py-12 lg:py-16">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-10 mb-12">
           {/* Brand column */}
@@ -69,7 +69,7 @@ const SmartFooter = () => {
         </div>
 
         {/* Bottom bar */}
-        <div className="h-px bg-border mb-6" />
+        <div className="h-px bg-gradient-to-r from-transparent via-border/30 to-transparent mb-6" />
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4 text-xs text-muted-foreground/60">
             <span>© {new Date().getFullYear()} UNPRO</span>

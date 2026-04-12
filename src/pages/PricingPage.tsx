@@ -49,11 +49,11 @@ export default function PricingPage() {
   }, [preSelectedPlan, activeTab]);
 
   return (
-    <div className="min-h-screen bg-background landing-warm">
+    <div className="min-h-screen bg-background">
       {/* Tab Toggle — sticky on mobile */}
-      <div className="sticky top-0 z-40 bg-background/90 backdrop-blur-sm border-b border-border">
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30">
         <div className="max-w-md mx-auto px-4 py-3">
-          <div className="flex rounded-full p-1 bg-muted/40 border border-border">
+          <div className="flex rounded-2xl p-1 bg-muted/40 border border-border/30">
             <TabButton
               active={activeTab === "proprietaires"}
               onClick={() => handleTabChange("proprietaires")}
@@ -150,7 +150,7 @@ function TabButton({ active, onClick, icon, label }: {
       {active && (
         <motion.div
           layoutId="pricing-tab-bg"
-          className="absolute inset-0 bg-card border border-border rounded-full shadow-sm"
+          className="absolute inset-0 bg-card border border-border/40 rounded-xl shadow-sm"
           transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
         />
       )}
