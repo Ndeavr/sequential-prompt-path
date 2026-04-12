@@ -18,7 +18,7 @@ import {
 import AippQuickCheckForm from "@/components/ad-landing/AippQuickCheckForm";
 import AippLoadingSequence from "@/components/ad-landing/AippLoadingSequence";
 import AippQuickResultCard from "@/components/ad-landing/AippQuickResultCard";
-import { computeQuickAIPPScore, type AIPPQuickResult } from "@/services/aippQuickScoreService";
+import { computeRealAIPPScore, computeQuickAIPPScore, type AIPPQuickResult } from "@/services/aippQuickScoreService";
 import { supabase } from "@/integrations/supabase/client";
 
 type Phase = "form" | "loading" | "result";
@@ -31,10 +31,11 @@ export default function PageAdLandingAipp() {
   const [businessName, setBusinessName] = useState("");
   const [businessCity, setBusinessCity] = useState("");
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [scannedUrl, setScannedUrl] = useState("");
+  const [isScanning, setIsScanning] = useState(false);
   const scoreRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
 
-  // Track CTA events
   const trackEvent = useCallback(async (eventName: string, pageName: string, meta?: Record<string, string | number | boolean>) => {
     try {
       await supabase.from("landing_cta_events" as never).insert({
@@ -46,7 +47,6 @@ export default function PageAdLandingAipp() {
     } catch { /* silent */ }
   }, [sessionId]);
 
-  // Create lead session on first interaction
   const ensureSession = useCallback(async () => {
     if (sessionId) return sessionId;
     const source = searchParams.get("utm_source") || searchParams.get("source") || "direct";
@@ -67,37 +67,73 @@ export default function PageAdLandingAipp() {
   const handleFormSubmit = useCallback(async (data: {
     business_name: string; city: string; website_url: string; phone: string; google_profile_url: string;
   }) => {
-    setBusinessName(data.business_name);
-    setBusinessCity(data.city);
-    try {
-      sessionStorage.setItem("unpro_aipp_prefill", JSON.stringify({
-        businessName: data.business_name,
-        city: data.city,
-        phone: data.phone,
-        website: data.website_url,
-      }));
-    } catch {}
+    setIsScanning(true);
     setPhase("loading");
     const sid = await ensureSession();
-    const scored = computeQuickAIPPScore(data);
-    setResult(scored);
 
-    // Persist to DB
     try {
-      await supabase.from("aipp_score_checks" as never).insert({
-        session_id: sid || null,
-        business_name: data.business_name,
-        city: data.city,
-        website_url: data.website_url || null,
-        phone: data.phone || null,
-        google_profile_url: data.google_profile_url || null,
-        quick_score: scored.score,
-        score_label: scored.label,
-        market_position_label: scored.marketPosition,
-      } as never);
-    } catch { /* silent */ }
+      // Call real scan edge function
+      const { data: scanData, error } = await supabase.functions.invoke("aipp-real-scan", {
+        body: {
+          website_url: data.website_url || undefined,
+          phone: data.phone || undefined,
+        },
+      });
 
-    trackEvent("aipp_check_started", "ad_landing", { score: scored.score });
+      if (!error && scanData?.success && scanData.signals) {
+        // Use real scraped data
+        const scored = computeRealAIPPScore(scanData.signals, data.phone);
+        scored.screenshot = scanData.screenshot || null;
+
+        const detectedName = scanData.signals.business_name_detected || data.business_name || scanData.normalized_url || "";
+        const detectedCity = scanData.signals.cities_detected?.[0] || data.city || "";
+
+        setBusinessName(detectedName);
+        setBusinessCity(detectedCity);
+        setScannedUrl(scanData.normalized_url || "");
+        setResult(scored);
+
+        // Persist
+        try {
+          await supabase.from("aipp_score_checks" as never).insert({
+            session_id: sid || null,
+            business_name: detectedName,
+            city: detectedCity,
+            website_url: scanData.normalized_url || data.website_url || null,
+            phone: data.phone || (scanData.signals.phones_found?.[0]) || null,
+            quick_score: scored.score,
+            score_label: scored.label,
+            market_position_label: scored.marketPosition,
+          } as never);
+        } catch { /* silent */ }
+
+        try {
+          sessionStorage.setItem("unpro_aipp_prefill", JSON.stringify({
+            businessName: detectedName,
+            city: detectedCity,
+            phone: data.phone || scanData.signals.phones_found?.[0] || "",
+            website: scanData.normalized_url || data.website_url || "",
+          }));
+        } catch {}
+
+        trackEvent("aipp_real_scan_complete", "ad_landing", { score: scored.score });
+      } else {
+        // Fallback to quick score
+        const scored = computeQuickAIPPScore(data);
+        setBusinessName(data.business_name || data.website_url);
+        setBusinessCity(data.city);
+        setResult(scored);
+        trackEvent("aipp_fallback_score", "ad_landing", { score: scored.score });
+      }
+    } catch (err) {
+      console.error("Scan error:", err);
+      const scored = computeQuickAIPPScore(data);
+      setBusinessName(data.business_name || data.website_url);
+      setBusinessCity(data.city);
+      setResult(scored);
+    } finally {
+      setIsScanning(false);
+    }
   }, [ensureSession, trackEvent]);
 
   const handleLoadingComplete = useCallback(() => setPhase("result"), []);
@@ -130,7 +166,7 @@ export default function PageAdLandingAipp() {
                 </span>
               </h1>
               <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto mb-8 leading-relaxed">
-                Découvrez votre score AIPP et voyez si votre entreprise est vraiment prête à être recommandée par l'IA.
+                Entrez simplement votre site web ou votre numéro de téléphone. On s'occupe du reste.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button size="lg" className="h-13 text-base font-bold px-8" onClick={scrollToForm}>
@@ -145,7 +181,6 @@ export default function PageAdLandingAipp() {
               </div>
             </motion.div>
           </div>
-          {/* Trust strip */}
           <div className="max-w-2xl mx-auto px-5 mt-10">
             <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
               {["Gratuit", "Sans engagement", "Résultat instantané", "100% confidentiel"].map((t) => (
@@ -178,7 +213,6 @@ export default function PageAdLandingAipp() {
                 </Card>
               ))}
             </div>
-            {/* Callouts */}
             <div className="mt-6 space-y-2">
               {[
                 "Aucun lead partagé — chaque rendez-vous est exclusif",
@@ -228,9 +262,9 @@ export default function PageAdLandingAipp() {
             </h2>
             <div className="space-y-6">
               {[
-                { step: "1", title: "Vérifiez votre score", desc: "Entrez votre nom d'entreprise et votre ville. Résultat en 30 secondes.", icon: Zap },
-                { step: "2", title: "Complétez votre profil intelligent", desc: "Alex vous guide pour optimiser votre visibilité et attirer les bons clients.", icon: Brain },
-                { step: "3", title: "Recevez des rendez-vous qualifiés", desc: "Des clients prêts à agir, dans votre zone, exclusifs à votre entreprise.", icon: Calendar },
+                { step: "1", title: "Entrez votre site web", desc: "Juste votre URL ou votre numéro de téléphone. On fait le reste.", icon: Zap },
+                { step: "2", title: "Analyse automatique", desc: "On scanne votre présence en ligne et on détecte vos forces et faiblesses.", icon: Brain },
+                { step: "3", title: "Recevez votre score", desc: "Score AIPP détaillé avec captures d'écran et recommandations.", icon: Calendar },
               ].map((s) => (
                 <div key={s.step} className="flex gap-4 items-start">
                   <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-black text-lg flex-shrink-0">
@@ -257,13 +291,13 @@ export default function PageAdLandingAipp() {
                 Découvrez votre score AIPP
               </h2>
               <p className="text-sm text-muted-foreground">
-                Votre entreprise est-elle vraiment visible pour l'IA?
+                Un seul champ suffit. Site web ou téléphone.
               </p>
             </div>
 
             <div ref={scoreRef}>
               {phase === "form" && (
-                <AippQuickCheckForm onSubmit={handleFormSubmit} />
+                <AippQuickCheckForm onSubmit={handleFormSubmit} isLoading={isScanning} />
               )}
               {phase === "loading" && (
                 <AippLoadingSequence onComplete={handleLoadingComplete} />
@@ -271,8 +305,9 @@ export default function PageAdLandingAipp() {
               {phase === "result" && result && (
                 <AippQuickResultCard
                   result={result}
-                  businessName={businessName}
-                  city={businessCity}
+                   businessName={businessName}
+                   city={businessCity}
+                   websiteUrl={scannedUrl}
                   onCreateProfile={() => {
                     trackEvent("cta_create_profile", "ad_landing", { score: result.score });
                     navigate("/contractor-onboarding");
