@@ -4,6 +4,7 @@
  * Premium dark-first, mobile-first with progress bar.
  */
 import { ReactNode } from "react";
+import UnproLogo from "@/components/brand/UnproLogo";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { fadeUp } from "@/lib/motion";
