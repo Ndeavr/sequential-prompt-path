@@ -150,7 +150,7 @@ function TabButton({ active, onClick, icon, label }: {
       {active && (
         <motion.div
           layoutId="pricing-tab-bg"
-          className="absolute inset-0 bg-card border border-border/40 rounded-xl shadow-sm"
+          className="absolute inset-0 bg-card border border-border rounded-full shadow-sm"
           transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
         />
       )}
