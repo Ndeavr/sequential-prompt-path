@@ -218,17 +218,12 @@ export default function HeroSection() {
                 <motion.button
                   key={intent.slug}
                   onClick={() => setActiveIntent(intent.slug)}
-                  className="relative flex items-center gap-1.5 rounded-full px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all duration-250"
+                  className={`relative flex items-center gap-1.5 rounded-full px-4 py-2.5 text-xs sm:text-sm font-medium transition-all duration-250 ${
+                    isAct
+                      ? "bg-foreground text-background border border-foreground"
+                      : "bg-transparent text-muted-foreground border border-border hover:border-foreground/20"
+                  }`}
                   whileTap={{ scale: 0.95 }}
-                  style={{
-                    background: isAct
-                      ? "linear-gradient(135deg, hsl(222 100% 50% / 0.9), hsl(222 100% 35% / 0.95))"
-                      : "rgba(255,255,255,0.06)",
-                    backdropFilter: "blur(16px)",
-                    border: isAct ? "1px solid hsl(222 100% 70% / 0.45)" : "1px solid rgba(255,255,255,0.1)",
-                    boxShadow: isAct ? "0 0 30px hsl(222 100% 60% / 0.3), inset 0 1px 0 hsl(0 0% 100% / 0.1)" : "none",
-                    color: isAct ? "#fff" : "rgba(255,255,255,0.5)",
-                  }}
                 >
                   <intent.icon className="h-3.5 w-3.5" />
                   {intent.label}
