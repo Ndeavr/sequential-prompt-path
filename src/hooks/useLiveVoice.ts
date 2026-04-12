@@ -141,33 +141,13 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       }
       console.log("[ElevenLabs] ✅ Got signed URL");
 
-      // Connect with NO overrides — language configured on ElevenLabs dashboard
+      // Connect — language is configured on ElevenLabs dashboard (French default)
+      // NO overrides passed — they cause instant disconnects if not enabled in dashboard
       await conversation.startSession({
         signedUrl: data.signed_url,
       });
 
-      // Force French context + greeting
-      const greeting = options?.initialGreeting || "Bonjour. Comment puis-je vous aider?";
-      const conversationApi = conversation as any;
-      const frenchPrompt = `INSTRUCTION SYSTÈME ABSOLUE — PRIORITÉ MAXIMALE:
-Tu es Alex, assistant vocal UNPRO. Tu parles UNIQUEMENT en français québécois naturel.
-RÈGLES STRICTES:
-- JAMAIS d'anglais, peu importe ce que l'utilisateur dit
-- Accent québécois naturel (pas de France)
-- Réponses courtes: 1-2 phrases maximum
-- Ton chaleureux et professionnel
-COMMENCE IMMÉDIATEMENT par dire exactement ceci: "${greeting}"
-Ensuite, attends que l'utilisateur parle.`;
-
-      if (typeof conversationApi.sendContextualUpdate === "function") {
-        conversationApi.sendContextualUpdate(frenchPrompt);
-        console.log("[ElevenLabs] ✅ French context injected with greeting:", greeting);
-      } else if (typeof conversationApi.sendUserMessage === "function") {
-        conversationApi.sendUserMessage(frenchPrompt);
-        console.log("[ElevenLabs] ✅ French prompt sent via sendUserMessage");
-      } else {
-        console.warn("[ElevenLabs] No method available to inject French context");
-      }
+      console.log("[ElevenLabs] ✅ Session started — French configured on agent dashboard");
     } catch (err: unknown) {
       console.error("[ElevenLabs] Failed to start:", err);
       setIsConnecting(false);
