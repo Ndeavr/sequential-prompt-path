@@ -8356,6 +8356,85 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_failures: {
+        Row: {
+          automation_job_id: string | null
+          created_at: string
+          failure_code: string | null
+          failure_message: string | null
+          failure_payload: Json | null
+          failure_stage: string
+          id: string
+        }
+        Insert: {
+          automation_job_id?: string | null
+          created_at?: string
+          failure_code?: string | null
+          failure_message?: string | null
+          failure_payload?: Json | null
+          failure_stage: string
+          id?: string
+        }
+        Update: {
+          automation_job_id?: string | null
+          created_at?: string
+          failure_code?: string | null
+          failure_message?: string | null
+          failure_payload?: Json | null
+          failure_stage?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_failures_automation_job_id_fkey"
+            columns: ["automation_job_id"]
+            isOneToOne: false
+            referencedRelation: "automation_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_job_steps: {
+        Row: {
+          automation_job_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          result_payload: Json | null
+          started_at: string | null
+          status: string
+          step_key: string
+        }
+        Insert: {
+          automation_job_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          result_payload?: Json | null
+          started_at?: string | null
+          status?: string
+          step_key: string
+        }
+        Update: {
+          automation_job_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          result_payload?: Json | null
+          started_at?: string | null
+          status?: string
+          step_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_job_steps_automation_job_id_fkey"
+            columns: ["automation_job_id"]
+            isOneToOne: false
+            referencedRelation: "automation_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automation_jobs: {
         Row: {
           agent_id: string | null
@@ -8532,6 +8611,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      automation_schedules: {
+        Row: {
+          automation_type: string
+          created_at: string
+          daily_limit: number
+          days_active: Json | null
+          frequency_type: string
+          id: string
+          is_enabled: boolean
+          last_run_at: string | null
+          next_run_at: string | null
+          run_hour: number
+          updated_at: string
+        }
+        Insert: {
+          automation_type: string
+          created_at?: string
+          daily_limit?: number
+          days_active?: Json | null
+          frequency_type?: string
+          id?: string
+          is_enabled?: boolean
+          last_run_at?: string | null
+          next_run_at?: string | null
+          run_hour?: number
+          updated_at?: string
+        }
+        Update: {
+          automation_type?: string
+          created_at?: string
+          daily_limit?: number
+          days_active?: Json | null
+          frequency_type?: string
+          id?: string
+          is_enabled?: boolean
+          last_run_at?: string | null
+          next_run_at?: string | null
+          run_hour?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       automation_settings: {
         Row: {
@@ -27189,6 +27310,89 @@ export type Database = {
         }
         Relationships: []
       }
+      manual_test_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          id: string
+          input_payload: Json | null
+          result_payload: Json | null
+          scenario_id: string | null
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          input_payload?: Json | null
+          result_payload?: Json | null
+          scenario_id?: string | null
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          input_payload?: Json | null
+          result_payload?: Json | null
+          scenario_id?: string | null
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_test_runs_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "manual_test_scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manual_test_scenarios: {
+        Row: {
+          created_at: string
+          default_payload: Json | null
+          expected_result: Json | null
+          id: string
+          is_active: boolean
+          scenario_description: string | null
+          scenario_key: string
+          scenario_label: string
+          test_type: string
+        }
+        Insert: {
+          created_at?: string
+          default_payload?: Json | null
+          expected_result?: Json | null
+          id?: string
+          is_active?: boolean
+          scenario_description?: string | null
+          scenario_key: string
+          scenario_label: string
+          test_type?: string
+        }
+        Update: {
+          created_at?: string
+          default_payload?: Json | null
+          expected_result?: Json | null
+          id?: string
+          is_active?: boolean
+          scenario_description?: string | null
+          scenario_key?: string
+          scenario_label?: string
+          test_type?: string
+        }
+        Relationships: []
+      }
       market_capacity: {
         Row: {
           active_slots: number
@@ -32161,6 +32365,173 @@ export type Database = {
             columns: ["syndicate_id"]
             isOneToOne: false
             referencedRelation: "syndicates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pipeline_health_snapshots: {
+        Row: {
+          automation_health: string
+          created_at: string
+          emailing_health: string
+          enrichment_health: string
+          global_health: string
+          id: string
+          reply_health: string
+          scoring_health: string
+          scraping_health: string
+          snapshot_date: string
+          snapshot_payload: Json | null
+        }
+        Insert: {
+          automation_health?: string
+          created_at?: string
+          emailing_health?: string
+          enrichment_health?: string
+          global_health?: string
+          id?: string
+          reply_health?: string
+          scoring_health?: string
+          scraping_health?: string
+          snapshot_date?: string
+          snapshot_payload?: Json | null
+        }
+        Update: {
+          automation_health?: string
+          created_at?: string
+          emailing_health?: string
+          enrichment_health?: string
+          global_health?: string
+          id?: string
+          reply_health?: string
+          scoring_health?: string
+          scraping_health?: string
+          snapshot_date?: string
+          snapshot_payload?: Json | null
+        }
+        Relationships: []
+      }
+      pipeline_logs: {
+        Row: {
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          log_type: string
+          message: string
+          payload: Json | null
+          source_module: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          log_type?: string
+          message: string
+          payload?: Json | null
+          source_module: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          log_type?: string
+          message?: string
+          payload?: Json | null
+          source_module?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
+      pipeline_verification_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          failure_count: number
+          id: string
+          run_type: string
+          started_at: string | null
+          status: string
+          success_count: number
+          summary: string | null
+          target_scope: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          failure_count?: number
+          id?: string
+          run_type?: string
+          started_at?: string | null
+          status?: string
+          success_count?: number
+          summary?: string | null
+          target_scope?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          failure_count?: number
+          id?: string
+          run_type?: string
+          started_at?: string | null
+          status?: string
+          success_count?: number
+          summary?: string | null
+          target_scope?: string | null
+        }
+        Relationships: []
+      }
+      pipeline_verification_steps: {
+        Row: {
+          completed_at: string | null
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          result_payload: Json | null
+          started_at: string | null
+          status: string
+          step_key: string
+          step_label: string
+          verification_run_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          result_payload?: Json | null
+          started_at?: string | null
+          status?: string
+          step_key: string
+          step_label: string
+          verification_run_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          result_payload?: Json | null
+          started_at?: string | null
+          status?: string
+          step_key?: string
+          step_label?: string
+          verification_run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_verification_steps_verification_run_id_fkey"
+            columns: ["verification_run_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_verification_runs"
             referencedColumns: ["id"]
           },
         ]
