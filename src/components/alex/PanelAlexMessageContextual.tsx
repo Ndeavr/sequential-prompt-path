@@ -6,7 +6,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, X, Camera, ArrowRight } from "lucide-react";
 import type { AlexContextPrompt } from "@/services/alexContextPromptEngine";
-import unproRobot from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 interface PanelAlexMessageContextualProps {
   prompt: AlexContextPrompt;
@@ -51,7 +51,7 @@ export default function PanelAlexMessageContextual({
             className="flex items-center gap-3 py-2"
           >
             <div className="relative shrink-0">
-              <img src={unproRobot} alt="Alex" className="h-10 w-10 rounded-full object-cover" />
+              <UnproIcon size={40} variant="blue" className="rounded-full" />
               <motion.div
                 animate={{ scale: [1, 1.3, 1] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
@@ -80,7 +80,7 @@ export default function PanelAlexMessageContextual({
             {/* Alex avatar + greeting */}
             <div className="flex items-start gap-3">
               <div className="relative shrink-0">
-                <img src={unproRobot} alt="Alex" className="h-10 w-10 rounded-full object-cover" />
+                <UnproIcon size={40} variant="blue" className="rounded-full" />
                 <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-success border-2 border-background" />
               </div>
               <div className="space-y-1.5 flex-1 min-w-0">

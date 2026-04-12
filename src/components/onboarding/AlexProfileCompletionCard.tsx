@@ -5,7 +5,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, AlertCircle } from "lucide-react";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 interface AlexProfileCompletionCardProps {
   completionPercent: number;
@@ -33,7 +33,7 @@ export default function AlexProfileCompletionCard({
       className="p-4 rounded-2xl bg-card border border-border shadow-[var(--shadow-sm)]"
     >
       <div className="flex items-start gap-3">
-        <img src={logo} alt="Alex" className="h-8 w-8 object-contain shrink-0 mt-0.5" />
+        <UnproIcon size={32} variant="blue" className="shrink-0 mt-0.5" />
         <div className="flex-1 space-y-3">
           <p className="text-sm text-foreground">{alexMessage}</p>
 

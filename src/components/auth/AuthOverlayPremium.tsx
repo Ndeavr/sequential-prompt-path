@@ -19,7 +19,7 @@ import OAuthButtons from "@/components/auth/OAuthButtons";
 import AuthDivider from "@/components/auth/AuthDivider";
 import LoginMagicLinkForm from "@/components/auth/LoginMagicLinkForm";
 import PhoneOtpForm from "@/components/auth/PhoneOtpForm";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 type AuthMode = "role" | "choice" | "login" | "signup";
 type SecondaryMethod = null | "email" | "phone";
@@ -183,7 +183,7 @@ export default function AuthOverlayPremium() {
               <div className="text-center space-y-2">
                 <div className="flex justify-center mb-2">
                   <div className="h-14 w-14 rounded-2xl flex items-center justify-center" style={{ background: "hsl(222 100% 65% / 0.1)" }}>
-                    <img src={logo} alt="UNPRO" className="h-10 w-10 object-contain" />
+                    <UnproIcon size={40} variant="primary" />
                   </div>
                 </div>
                 <h2 className="text-xl font-bold text-foreground font-display">{modeTitle}</h2>

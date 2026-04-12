@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, Wrench, Building2, Briefcase, Users, Landmark, Globe, Factory, Star, ChevronDown, ArrowRight } from "lucide-react";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 interface RoleOption {
   key: string;
@@ -68,7 +68,7 @@ export default function PreLoginRolePage() {
         {/* Header */}
         <div className="text-center mb-6">
           <div className="flex justify-center mb-3">
-            <img src={logo} alt="UNPRO" className="h-14 w-14 object-contain" />
+            <UnproIcon size={56} variant="primary" />
           </div>
           <h1 className="text-xl font-bold text-foreground">Quel est votre profil ?</h1>
           <p className="text-sm text-muted-foreground mt-1">

@@ -8,6 +8,7 @@ import { BarChart3, TrendingUp, Eye, Calendar, CheckCircle2, ArrowRight, Zap, St
 import { Button } from "@/components/ui/button";
 import CardGlass from "@/components/unpro/CardGlass";
 import SectionContainer from "@/components/unpro/SectionContainer";
+import UnproLogo from "@/components/brand/UnproLogo";
 import { fadeUp, staggerContainer } from "@/lib/motion";
 import { useContractorFunnel } from "@/hooks/useContractorFunnel";
 
@@ -40,11 +41,7 @@ export default function PageContractorDashboardPostActivation() {
         <div className="border-b border-border/50 bg-background/80 backdrop-blur-xl">
           <div className="max-w-screen-xl mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img
-                src="/lovable-uploads/5765c794-4b87-4c57-84c0-5a4fdb8e2407.png"
-                alt="UNPRO"
-                className="h-6 w-auto"
-              />
+              <UnproLogo size={100} variant="primary" animated={false} showWordmark={false} />
               <span className="text-sm font-medium text-foreground">
                 {state.businessName || "Dashboard Pro"}
               </span>

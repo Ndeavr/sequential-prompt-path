@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mic, X, Phone, PhoneOff, Sparkles, Volume2, RefreshCw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAlexVoiceBootstrap, type VoiceBootState } from "@/hooks/useAlexVoiceBootstrap";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 interface AlexVoiceRealtimeProps {
   agentId?: string;
@@ -78,8 +78,8 @@ export default function AlexVoiceRealtime({ onClose, userName, className = "" }:
           )}
           <div className="flex items-center gap-2">
             <div className="relative">
-              <div className="w-8 h-8 rounded-full overflow-hidden border border-primary/30 bg-card/60">
-                <img src={logo} alt="Alex" className="w-full h-full object-contain" />
+              <div className="w-8 h-8 rounded-full overflow-hidden border border-primary/30 bg-card/60 flex items-center justify-center">
+                <UnproIcon size={28} variant="blue" />
               </div>
               {isActive && (
                 <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background" />

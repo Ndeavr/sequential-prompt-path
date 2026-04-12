@@ -4,6 +4,7 @@
  * Premium dark-first, mobile-first with progress bar.
  */
 import { ReactNode } from "react";
+import UnproLogo from "@/components/brand/UnproLogo";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { fadeUp } from "@/lib/motion";
@@ -39,11 +40,7 @@ export default function FunnelLayout({
         <div className="sticky top-0 z-40 border-b border-border/50 bg-background/80 backdrop-blur-xl">
           <div className={cn("mx-auto px-4 py-3", widthMap[width])}>
             <div className="flex items-center gap-3">
-              <img
-                src="/lovable-uploads/5765c794-4b87-4c57-84c0-5a4fdb8e2407.png"
-                alt="UNPRO"
-                className="h-6 w-auto"
-              />
+              <UnproLogo size={100} variant="primary" animated={false} showWordmark={false} />
               <div className="flex-1">
                 <FunnelProgressBar currentStep={currentStep} />
               </div>

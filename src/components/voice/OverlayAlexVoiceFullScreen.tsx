@@ -21,7 +21,7 @@ import { executeHardReset } from "@/services/voiceHardResetEngine";
 // audioEngine removed — no chimes in voice mode, prevents click artifacts
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 const STABILIZATION_MS = 4000;
 const HEARTBEAT_INTERVAL_MS = 2000;
@@ -439,8 +439,8 @@ export default function OverlayAlexVoiceFullScreen() {
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/20">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="w-8 h-8 rounded-full overflow-hidden border border-primary/30 bg-card/60">
-                  <img src={logo} alt="Alex" className="w-full h-full object-contain" />
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-primary/30 bg-card/60 flex items-center justify-center">
+                  <UnproIcon size={28} variant="blue" />
                 </div>
                 {isSessionActive && (
                   <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background bg-primary" />
@@ -673,7 +673,7 @@ function LockedVoiceOrb({ state, isSpeaking }: { state: LockedVoiceState; isSpea
         } : {}}
         transition={{ duration: isConnecting ? 1.5 : 0.6, repeat: Infinity }}
       >
-        <img src={logo} alt="Alex" className="w-2/3 h-2/3 object-contain opacity-80" />
+        <UnproIcon size={48} variant="blue" className="opacity-80" />
       </motion.div>
     </div>
   );

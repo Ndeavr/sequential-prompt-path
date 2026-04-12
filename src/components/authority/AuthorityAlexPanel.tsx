@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Send, FileText, Calendar, TrendingUp, BarChart3, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 interface Props { userId?: string; }
 
@@ -66,7 +66,7 @@ export default function AuthorityAlexPanel({ userId }: Props) {
             transition={{ duration: orbState === "thinking" ? 1 : 3, repeat: Infinity }}
           />
           <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-primary/30 bg-card/60 flex items-center justify-center">
-            <img src={logo} alt="Alex" className="h-10 w-10 object-contain" />
+            <UnproIcon size={40} variant="blue" />
           </div>
         </div>
 

@@ -5,7 +5,7 @@
  */
 import { useState } from "react";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
-import unproRobot from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 interface FloatingAlexRobotProps {
   alexSectionRef: React.RefObject<HTMLElement>;
@@ -24,9 +24,7 @@ export default function FloatingAlexRobot({ alexSectionRef }: FloatingAlexRobotP
   if (docked) return null;
 
   return (
-    <motion.img
-      src={unproRobot}
-      alt="Alex UNPRO"
+    <motion.div
       className="fixed z-40 w-[72px] right-4 md:hidden drop-shadow-[0_6px_20px_hsl(222_100%_61%_/_0.25)] pointer-events-none"
       style={{ top: "42vh" }}
       initial={{ opacity: 1 }}
@@ -39,6 +37,8 @@ export default function FloatingAlexRobot({ alexSectionRef }: FloatingAlexRobotP
         repeat: Infinity,
         ease: "easeInOut",
       }}
-    />
+    >
+      <UnproIcon size={72} variant="blue" />
+    </motion.div>
   );
 }

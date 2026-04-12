@@ -20,7 +20,7 @@ import FormHomeownerDNA from "@/components/onboarding/FormHomeownerDNA";
 import FormContractorBusinessCore from "@/components/onboarding/FormContractorBusinessCore";
 import FormContractorDNA from "@/components/onboarding/FormContractorDNA";
 import AlexWelcomePanel from "@/components/onboarding/AlexWelcomePanel";
-import logo from "@/assets/unpro-robot.png";
+import UnproIcon from "@/components/brand/UnproIcon";
 
 const HOMEOWNER_STEPS = ["Rôle", "Identité", "Propriété", "Besoin", "Préférences"];
 const CONTRACTOR_STEPS = ["Rôle", "Identité", "Entreprise", "ADN", "Plan"];
@@ -228,7 +228,7 @@ export default function OnboardingPageUnpro() {
     >
       {/* Header */}
       <div className="flex items-center justify-center py-6">
-        <img src={logo} alt="UNPRO" className="h-10 w-10 object-contain" />
+        <UnproIcon size={40} variant="primary" />
       </div>
 
       {/* Stepper - show after role selected */}
