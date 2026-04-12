@@ -72,7 +72,7 @@ export default function PageAIPPAnalysisLoading() {
         });
       }
 
-      navigate("/entrepreneur/score", { replace: true });
+      navigate("/aipp/local/results", { replace: true });
     };
 
     run();
