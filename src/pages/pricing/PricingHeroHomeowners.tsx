@@ -50,7 +50,7 @@ export default function PricingHeroHomeowners() {
           </motion.div>
 
           <motion.div variants={fadeUp} custom={4} className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-            <Button asChild size="lg" className="rounded-2xl h-13 px-8 text-base shadow-glow">
+            <Button asChild size="lg" className="rounded-full h-13 px-8 text-base">
               <Link to="/signup?type=homeowner&plan=discovery">
                 Commencer gratuitement <ArrowRight className="h-4 w-4 ml-2" />
               </Link>
