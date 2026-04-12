@@ -180,41 +180,9 @@ export default function HeroSection() {
   return (
     <>
       <section
-        className="relative min-h-[calc(100vh-80px)] flex flex-col items-center justify-center overflow-hidden"
+        className="relative min-h-[calc(100vh-80px)] flex flex-col items-center justify-center overflow-hidden landing-dot-grid"
         data-testid="hero-section-alex"
       >
-        {/* ── Cinematic Background ── */}
-        <motion.div
-          className="absolute inset-0 z-0"
-          animate={{ scale: [1, 1.04, 1] }}
-          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-        >
-          <img src={cinematicBg} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} />
-        </motion.div>
-
-        {/* ── Deep cinematic overlay ── */}
-        <div className="absolute inset-0 z-[1]" style={{
-          background: "linear-gradient(to bottom, rgba(4,8,20,0.55) 0%, rgba(4,8,20,0.72) 40%, rgba(4,8,20,0.94) 100%)",
-        }} />
-
-        {/* ── Dynamic aura glow ── */}
-        <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
-          <motion.div
-            className="absolute top-[35%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px]"
-            animate={{ opacity: [0.12, 0.2, 0.12], scale: [1, 1.05, 1] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            style={{ background: "radial-gradient(ellipse, hsl(222 100% 60% / 0.2) 0%, transparent 70%)" }}
-          />
-          <motion.div
-            className="absolute top-[52%] left-0 right-0 h-[1px]"
-            animate={{ opacity: [0.15, 0.35, 0.15] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            style={{
-              background: "linear-gradient(90deg, transparent 5%, hsl(222 100% 70% / 0.35) 30%, hsl(195 100% 60% / 0.5) 50%, hsl(222 100% 70% / 0.35) 70%, transparent 95%)",
-              filter: "blur(1px)",
-            }}
-          />
-        </div>
 
         {/* ── Content ── */}
         <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto w-full px-5 pt-6 pb-20">
