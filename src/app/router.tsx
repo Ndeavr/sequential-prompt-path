@@ -419,6 +419,7 @@ const PageRunDiagnostics = lazy(() => import("@/pages/admin/outbound/PageRunDiag
 const PageAdminExecutionControl = lazy(() => import("@/pages/admin/PageAdminExecutionControl"));
 const PageAdminDominanceControl = lazy(() => import("@/pages/admin/PageAdminDominanceControl"));
 const PageAlexVoiceDebugAdmin = lazy(() => import("@/pages/admin/PageAlexVoiceDebugAdmin"));
+const PageAdminSMSImageTemplates = lazy(() => import("@/pages/admin/sms-images/PageAdminSMSImageTemplates"));
 const PageShareImageDashboard = lazy(() => import("@/pages/admin/share-images/PageShareImageDashboard"));
 const PageShareImageGenerate = lazy(() => import("@/pages/admin/share-images/PageShareImageGenerate"));
 const PageShareImageTemplates = lazy(() => import("@/pages/admin/share-images/PageShareImageTemplates"));
@@ -958,6 +959,7 @@ export const AppRouter = () => (
         <Route path="/admin/voice-debug" element={<ProtectedRoute requiredRole="admin"><PageAlexVoiceDebugAdmin /></ProtectedRoute>} />
         <Route path="/admin/alex-prompt-rules" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAlexPromptRulesAdmin /></Suspense></ProtectedRoute>} />
         <Route path="/admin/alex-conversation-debug" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAlexConversationDebugAdmin /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/sms-images" element={<ProtectedRoute requiredRole="admin"><PageAdminSMSImageTemplates /></ProtectedRoute>} />
         <Route path="/admin/share-images" element={<ProtectedRoute requiredRole="admin"><PageShareImageDashboard /></ProtectedRoute>} />
         <Route path="/admin/share-images/generate" element={<ProtectedRoute requiredRole="admin"><PageShareImageGenerate /></ProtectedRoute>} />
         <Route path="/admin/share-images/templates" element={<ProtectedRoute requiredRole="admin"><PageShareImageTemplates /></ProtectedRoute>} />

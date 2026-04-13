@@ -109,6 +109,7 @@ const outboundGroups: OutboundSubGroup[] = [
       { to: "/admin/outbound/ai-rewrite", label: "Personnalisation IA", icon: Cpu },
       { to: "/admin/outbound/revenue", label: "Revenue Loss", icon: DollarSign },
       { to: "/admin/outbound/sms-fallback", label: "SMS Fallback", icon: Smartphone },
+      { to: "/admin/sms-images", label: "Images SMS", icon: Image },
       { to: "/admin/outbound/analytics", label: "Analytics", icon: BarChart3 },
       { to: "/admin/outbound/suppressions", label: "Suppressions", icon: Ban },
       { to: "/admin/outbound/settings", label: "Settings", icon: Settings },
