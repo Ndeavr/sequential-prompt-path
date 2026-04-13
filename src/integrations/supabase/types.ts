@@ -10230,6 +10230,141 @@ export type Database = {
         }
         Relationships: []
       }
+      brand_assets: {
+        Row: {
+          asset_type: string
+          created_at: string
+          height: number | null
+          id: string
+          is_active: boolean
+          is_default: boolean
+          label: string | null
+          theme: string
+          updated_at: string
+          url: string
+          width: number | null
+        }
+        Insert: {
+          asset_type?: string
+          created_at?: string
+          height?: number | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          label?: string | null
+          theme?: string
+          updated_at?: string
+          url: string
+          width?: number | null
+        }
+        Update: {
+          asset_type?: string
+          created_at?: string
+          height?: number | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          label?: string | null
+          theme?: string
+          updated_at?: string
+          url?: string
+          width?: number | null
+        }
+        Relationships: []
+      }
+      brand_logs: {
+        Row: {
+          asset_used_id: string | null
+          channel: string | null
+          created_at: string
+          id: string
+          image_ref: string | null
+          metadata_json: Json | null
+          override_applied: boolean
+          previous_brand_detected: string | null
+          rule_used_id: string | null
+          template_id: string | null
+        }
+        Insert: {
+          asset_used_id?: string | null
+          channel?: string | null
+          created_at?: string
+          id?: string
+          image_ref?: string | null
+          metadata_json?: Json | null
+          override_applied?: boolean
+          previous_brand_detected?: string | null
+          rule_used_id?: string | null
+          template_id?: string | null
+        }
+        Update: {
+          asset_used_id?: string | null
+          channel?: string | null
+          created_at?: string
+          id?: string
+          image_ref?: string | null
+          metadata_json?: Json | null
+          override_applied?: boolean
+          previous_brand_detected?: string | null
+          rule_used_id?: string | null
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_logs_asset_used_id_fkey"
+            columns: ["asset_used_id"]
+            isOneToOne: false
+            referencedRelation: "brand_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_logs_rule_used_id_fkey"
+            columns: ["rule_used_id"]
+            isOneToOne: false
+            referencedRelation: "brand_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brand_rules: {
+        Row: {
+          blocked_patterns: string[] | null
+          created_at: string
+          enforce_override: boolean
+          id: string
+          is_active: boolean
+          padding_px: number
+          placement: string
+          rule_name: string
+          size_ratio: number
+          updated_at: string
+        }
+        Insert: {
+          blocked_patterns?: string[] | null
+          created_at?: string
+          enforce_override?: boolean
+          id?: string
+          is_active?: boolean
+          padding_px?: number
+          placement?: string
+          rule_name: string
+          size_ratio?: number
+          updated_at?: string
+        }
+        Update: {
+          blocked_patterns?: string[] | null
+          created_at?: string
+          enforce_override?: boolean
+          id?: string
+          is_active?: boolean
+          padding_px?: number
+          placement?: string
+          rule_name?: string
+          size_ratio?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       broker_profiles: {
         Row: {
           agency_name: string | null
