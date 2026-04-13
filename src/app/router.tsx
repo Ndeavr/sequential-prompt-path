@@ -69,6 +69,7 @@ const PageAdminCityActivityMatrix = lazy(() => import("@/pages/admin/PageAdminCi
 const PageAdminActivitiesSecondaryManager = lazy(() => import("@/pages/admin/PageAdminActivitiesSecondaryManager"));
 const PageAlexPersonalizedLanding = lazy(() => import("@/pages/public/PageAlexPersonalizedLanding"));
 const PageAdminEmailTemplates = lazy(() => import("@/pages/admin/PageAdminEmailTemplates"));
+const PageAdminHandoffAnalytics = lazy(() => import("@/pages/admin/PageAdminHandoffAnalytics"));
 const ProfessionalsPage = lazy(() => import("@/pages/ProfessionalsPage"));
 const PartnersPage = lazy(() => import("@/pages/PartnersPage"));
 const DescribeProjectPage = lazy(() => import("@/pages/DescribeProjectPage"));
@@ -821,6 +822,7 @@ export const AppRouter = () => (
 
         {/* Admin */}
         <Route path="/admin/menu-intelligence" element={<ProtectedRoute requiredRole="admin"><MenuIntelligenceAdminPage /></ProtectedRoute>} />
+        <Route path="/admin/handoff-analytics" element={<ProtectedRoute requiredRole="admin"><PageAdminHandoffAnalytics /></ProtectedRoute>} />
         <Route path="/admin/emails" element={<ProtectedRoute requiredRole="admin"><PageAdminEmailLogs /></ProtectedRoute>} />
         <Route path="/admin/email-templates" element={<ProtectedRoute requiredRole="admin"><PageAdminEmailTemplates /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
