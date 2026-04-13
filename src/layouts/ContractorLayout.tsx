@@ -13,6 +13,7 @@ import type { ReactNode } from "react";
 const navItems = [
   { to: "/pro", label: "Tableau de bord", icon: LayoutDashboard },
   { to: "/pro/incoming", label: "Projets entrants", icon: Inbox },
+  { to: "/pro/inbox", label: "Inbox intelligent", icon: Sparkles },
   { to: "/pro/profile", label: "Mon profil", icon: User },
   { to: "/pro/expertise", label: "Champ d'expertise", icon: Wrench },
   { to: "/pro/leads", label: "Opportunités", icon: TrendingUp },
