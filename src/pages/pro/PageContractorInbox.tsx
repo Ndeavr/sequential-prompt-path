@@ -327,8 +327,7 @@ const PageContractorInbox = () => {
         {!tickets || tickets.length === 0 ? (
           <EmptyState
             icon={<Inbox className="w-10 h-10 text-muted-foreground/50" />}
-            title="Aucun job pour le moment"
-            description="Les demandes structurées par Alex apparaîtront ici."
+            message="Aucun job pour le moment — les demandes structurées par Alex apparaîtront ici."
           />
         ) : (
           <div className="space-y-3">
