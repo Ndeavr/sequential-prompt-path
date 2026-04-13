@@ -45130,6 +45130,151 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_image_logs: {
+        Row: {
+          city_slug: string | null
+          click: boolean | null
+          clicked_at: string | null
+          created_at: string | null
+          fallback_type: string | null
+          fallback_used: boolean | null
+          id: string
+          metadata_json: Json | null
+          phone_number: string | null
+          service_slug: string | null
+          template_id: string | null
+          template_name: string | null
+        }
+        Insert: {
+          city_slug?: string | null
+          click?: boolean | null
+          clicked_at?: string | null
+          created_at?: string | null
+          fallback_type?: string | null
+          fallback_used?: boolean | null
+          id?: string
+          metadata_json?: Json | null
+          phone_number?: string | null
+          service_slug?: string | null
+          template_id?: string | null
+          template_name?: string | null
+        }
+        Update: {
+          city_slug?: string | null
+          click?: boolean | null
+          clicked_at?: string | null
+          created_at?: string | null
+          fallback_type?: string | null
+          fallback_used?: boolean | null
+          id?: string
+          metadata_json?: Json | null
+          phone_number?: string | null
+          service_slug?: string | null
+          template_id?: string | null
+          template_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_image_logs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "sms_image_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_image_rules: {
+        Row: {
+          city_match: string | null
+          created_at: string | null
+          fallback_type: string | null
+          id: string
+          intent_match: string | null
+          is_active: boolean | null
+          priority: number | null
+          service_match: string | null
+          template_id: string | null
+          user_type_match: string | null
+        }
+        Insert: {
+          city_match?: string | null
+          created_at?: string | null
+          fallback_type?: string | null
+          id?: string
+          intent_match?: string | null
+          is_active?: boolean | null
+          priority?: number | null
+          service_match?: string | null
+          template_id?: string | null
+          user_type_match?: string | null
+        }
+        Update: {
+          city_match?: string | null
+          created_at?: string | null
+          fallback_type?: string | null
+          id?: string
+          intent_match?: string | null
+          is_active?: boolean | null
+          priority?: number | null
+          service_match?: string | null
+          template_id?: string | null
+          user_type_match?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_image_rules_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "sms_image_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_image_templates: {
+        Row: {
+          city_slug: string | null
+          created_at: string | null
+          cta_text: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          service_slug: string | null
+          subtitle_text: string | null
+          title_text: string | null
+          updated_at: string | null
+          user_type: string | null
+        }
+        Insert: {
+          city_slug?: string | null
+          created_at?: string | null
+          cta_text?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          service_slug?: string | null
+          subtitle_text?: string | null
+          title_text?: string | null
+          updated_at?: string | null
+          user_type?: string | null
+        }
+        Update: {
+          city_slug?: string | null
+          created_at?: string | null
+          cta_text?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          service_slug?: string | null
+          subtitle_text?: string | null
+          title_text?: string | null
+          updated_at?: string | null
+          user_type?: string | null
+        }
+        Relationships: []
+      }
       sms_messages: {
         Row: {
           created_at: string

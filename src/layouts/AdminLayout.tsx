@@ -13,7 +13,7 @@ import {
   Bot, Network, Camera, Wand2, Zap, Tag, Rocket, Grid3X3,
   ChevronDown, ChevronRight, Mail, Send, Activity, Settings,
   MessageSquare, TestTube, ScrollText, Inbox, Heart, DollarSign,
-  Smartphone, Ban, LayoutList, Server, Cpu, Target,
+  Smartphone, Ban, LayoutList, Server, Cpu, Target, ImageIcon,
 } from "lucide-react";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import type { ReactNode } from "react";
@@ -109,6 +109,7 @@ const outboundGroups: OutboundSubGroup[] = [
       { to: "/admin/outbound/ai-rewrite", label: "Personnalisation IA", icon: Cpu },
       { to: "/admin/outbound/revenue", label: "Revenue Loss", icon: DollarSign },
       { to: "/admin/outbound/sms-fallback", label: "SMS Fallback", icon: Smartphone },
+      { to: "/admin/sms-images", label: "Images SMS", icon: ImageIcon },
       { to: "/admin/outbound/analytics", label: "Analytics", icon: BarChart3 },
       { to: "/admin/outbound/suppressions", label: "Suppressions", icon: Ban },
       { to: "/admin/outbound/settings", label: "Settings", icon: Settings },
