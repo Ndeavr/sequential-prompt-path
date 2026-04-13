@@ -141,9 +141,9 @@ function LogsSection() {
         <Card key={l.id}>
           <CardContent className="p-3 flex items-center gap-3">
             {l.override_applied ? (
-              <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+              <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
             ) : (
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
             )}
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium truncate">{l.image_ref ?? "Image sans ref"}</p>
@@ -211,7 +211,7 @@ function PreviewWidget() {
               {result.override_applied ? (
                 <Badge variant="destructive">Override appliqué</Badge>
               ) : (
-                <Badge className="bg-emerald-500/20 text-emerald-500">Conforme</Badge>
+                <Badge className="bg-primary/20 text-primary">Conforme</Badge>
               )}
               {result.previous_brand_detected && (
                 <Badge variant="outline">Détecté: {result.previous_brand_detected}</Badge>
