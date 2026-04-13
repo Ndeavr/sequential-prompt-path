@@ -16902,6 +16902,81 @@ export type Database = {
           },
         ]
       }
+      contractor_matches: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          id: string
+          match_score: number
+          notified_at: string | null
+          rank: number
+          request_id: string
+          responded_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          id?: string
+          match_score?: number
+          notified_at?: string | null
+          rank?: number
+          request_id: string
+          responded_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          match_score?: number
+          notified_at?: string | null
+          rank?: number
+          request_id?: string
+          responded_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_matches_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_matches_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "project_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_media: {
         Row: {
           alt_text: string | null
@@ -26983,6 +27058,44 @@ export type Database = {
         }
         Relationships: []
       }
+      job_status_logs: {
+        Row: {
+          actor: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          request_id: string
+          status: string
+        }
+        Insert: {
+          actor?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          request_id: string
+          status: string
+        }
+        Update: {
+          actor?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          request_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_status_logs_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "project_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jve_calculator_sessions: {
         Row: {
           city_id: string | null
@@ -27758,6 +27871,41 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      lead_scores: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          request_id: string
+          score: number
+          scoring_breakdown: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string
+          request_id: string
+          score?: number
+          scoring_breakdown?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          request_id?: string
+          score?: number
+          scoring_breakdown?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_scores_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "project_requests"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -35906,6 +36054,77 @@ export type Database = {
           },
         ]
       }
+      project_handoff: {
+        Row: {
+          category: string | null
+          client_availability: string | null
+          complexity: string | null
+          created_at: string
+          estimated_budget_max: number | null
+          estimated_budget_min: number | null
+          estimated_duration: string | null
+          id: string
+          location_address: string | null
+          location_city: string | null
+          missing_fields: Json | null
+          request_id: string
+          structured_data: Json | null
+          sub_category: string | null
+          summary: string | null
+          title: string
+          updated_at: string
+          urgency_level: string
+        }
+        Insert: {
+          category?: string | null
+          client_availability?: string | null
+          complexity?: string | null
+          created_at?: string
+          estimated_budget_max?: number | null
+          estimated_budget_min?: number | null
+          estimated_duration?: string | null
+          id?: string
+          location_address?: string | null
+          location_city?: string | null
+          missing_fields?: Json | null
+          request_id: string
+          structured_data?: Json | null
+          sub_category?: string | null
+          summary?: string | null
+          title: string
+          updated_at?: string
+          urgency_level?: string
+        }
+        Update: {
+          category?: string | null
+          client_availability?: string | null
+          complexity?: string | null
+          created_at?: string
+          estimated_budget_max?: number | null
+          estimated_budget_min?: number | null
+          estimated_duration?: string | null
+          id?: string
+          location_address?: string | null
+          location_city?: string | null
+          missing_fields?: Json | null
+          request_id?: string
+          structured_data?: Json | null
+          sub_category?: string | null
+          summary?: string | null
+          title?: string
+          updated_at?: string
+          urgency_level?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_handoff_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "project_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_likes: {
         Row: {
           created_at: string | null
@@ -36003,6 +36222,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      project_requests: {
+        Row: {
+          address_id: string | null
+          created_at: string
+          id: string
+          intent: string | null
+          raw_conversation: Json | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address_id?: string | null
+          created_at?: string
+          id?: string
+          intent?: string | null
+          raw_conversation?: Json | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address_id?: string | null
+          created_at?: string
+          id?: string
+          intent?: string | null
+          raw_conversation?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       project_saves: {
         Row: {

@@ -69,6 +69,7 @@ const PageAdminCityActivityMatrix = lazy(() => import("@/pages/admin/PageAdminCi
 const PageAdminActivitiesSecondaryManager = lazy(() => import("@/pages/admin/PageAdminActivitiesSecondaryManager"));
 const PageAlexPersonalizedLanding = lazy(() => import("@/pages/public/PageAlexPersonalizedLanding"));
 const PageAdminEmailTemplates = lazy(() => import("@/pages/admin/PageAdminEmailTemplates"));
+const PageAdminHandoffAnalytics = lazy(() => import("@/pages/admin/PageAdminHandoffAnalytics"));
 const ProfessionalsPage = lazy(() => import("@/pages/ProfessionalsPage"));
 const PartnersPage = lazy(() => import("@/pages/PartnersPage"));
 const DescribeProjectPage = lazy(() => import("@/pages/DescribeProjectPage"));
@@ -315,6 +316,8 @@ const ProBilling = lazy(() => import("@/pages/pro/ProBilling"));
 const ProTerritories = lazy(() => import("@/pages/pro/ProTerritories"));
 const ProAuthorityScore = lazy(() => import("@/pages/pro/ProAuthorityScore"));
 const ProIncomingProjects = lazy(() => import("@/pages/pro/ProIncomingProjects"));
+const PageContractorInbox = lazy(() => import("@/pages/pro/PageContractorInbox"));
+const PageJobDetailsLive = lazy(() => import("@/pages/pro/PageJobDetailsLive"));
 const ProPartnerNetwork = lazy(() => import("@/pages/pro/ProPartnerNetwork"));
 const ProExpertise = lazy(() => import("@/pages/pro/ProExpertise"));
 const ProTeams = lazy(() => import("@/pages/pro/ProTeams"));
@@ -804,6 +807,8 @@ export const AppRouter = () => (
         <Route path="/pro/questionnaire" element={<ProtectedRoute requiredRole="contractor"><ContractorQuestionnairePage /></ProtectedRoute>} />
         <Route path="/pro/authority-score" element={<ProtectedRoute requiredRole="contractor"><ProAuthorityScore /></ProtectedRoute>} />
         <Route path="/pro/incoming" element={<ProtectedRoute requiredRole="contractor"><ProIncomingProjects /></ProtectedRoute>} />
+        <Route path="/pro/inbox" element={<ProtectedRoute requiredRole="contractor"><PageContractorInbox /></ProtectedRoute>} />
+        <Route path="/pro/inbox/:id" element={<ProtectedRoute requiredRole="contractor"><PageJobDetailsLive /></ProtectedRoute>} />
         <Route path="/pro/partners" element={<ProtectedRoute requiredRole="contractor"><ProPartnerNetwork /></ProtectedRoute>} />
         <Route path="/pro/expertise" element={<ProtectedRoute requiredRole="contractor"><ProExpertise /></ProtectedRoute>} />
         <Route path="/pro/teams" element={<ProtectedRoute requiredRole="contractor"><ProTeams /></ProtectedRoute>} />
@@ -817,6 +822,7 @@ export const AppRouter = () => (
 
         {/* Admin */}
         <Route path="/admin/menu-intelligence" element={<ProtectedRoute requiredRole="admin"><MenuIntelligenceAdminPage /></ProtectedRoute>} />
+        <Route path="/admin/handoff-analytics" element={<ProtectedRoute requiredRole="admin"><PageAdminHandoffAnalytics /></ProtectedRoute>} />
         <Route path="/admin/emails" element={<ProtectedRoute requiredRole="admin"><PageAdminEmailLogs /></ProtectedRoute>} />
         <Route path="/admin/email-templates" element={<ProtectedRoute requiredRole="admin"><PageAdminEmailTemplates /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
