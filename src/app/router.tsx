@@ -315,6 +315,8 @@ const ProBilling = lazy(() => import("@/pages/pro/ProBilling"));
 const ProTerritories = lazy(() => import("@/pages/pro/ProTerritories"));
 const ProAuthorityScore = lazy(() => import("@/pages/pro/ProAuthorityScore"));
 const ProIncomingProjects = lazy(() => import("@/pages/pro/ProIncomingProjects"));
+const PageContractorInbox = lazy(() => import("@/pages/pro/PageContractorInbox"));
+const PageJobDetailsLive = lazy(() => import("@/pages/pro/PageJobDetailsLive"));
 const ProPartnerNetwork = lazy(() => import("@/pages/pro/ProPartnerNetwork"));
 const ProExpertise = lazy(() => import("@/pages/pro/ProExpertise"));
 const ProTeams = lazy(() => import("@/pages/pro/ProTeams"));
