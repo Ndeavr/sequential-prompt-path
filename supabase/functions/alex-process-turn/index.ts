@@ -103,8 +103,8 @@ Deno.serve(async (req) => {
 
     // 8. Get AI response via brain
     const brainResult = await alexVoiceBrain({
-      transcript: user_message,
-      messages: messages.slice(0, -1), // exclude current (already in transcript)
+      transcript: processedMessage,
+      messages: messages.slice(0, -1),
       userId: session.user_id,
       sessionId: session.id,
       pageContext: {
