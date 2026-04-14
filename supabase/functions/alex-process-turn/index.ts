@@ -1,5 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { alexVoiceBrain } from "../_shared/alex-voice-brain.ts";
+import { cleanTranscript } from "../_shared/alex-transcript-cleaner.ts";
+import { resolveIntentFirst } from "../_shared/alex-intent-first-engine.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
