@@ -169,15 +169,11 @@ export function useAlexVoiceBootstrap(options: UseAlexVoiceBootstrapOptions = {}
     lastAgentIdRef.current = null;
     
     try {
-      // 1. Unlock audio
+      // 1. Unlock audio (no chime — chimes cause clicking/interference with ElevenLabs stream)
       setBootState("preloading");
       audioEngine.unlock();
 
-      // 2. Play intro chime without blocking the voice connection
-      setBootState("intro_playing");
-      void audioEngine.play("intro").catch(() => {});
-
-      // 3. Connect Gemini Live with greeting
+      // 2. Connect directly — no intro sound to avoid audio interference
       setBootState("connecting");
       const greeting = buildGreeting();
       greetingSentRef.current = true;
@@ -212,7 +208,7 @@ export function useAlexVoiceBootstrap(options: UseAlexVoiceBootstrapOptions = {}
       clearTimeout(connectionTimeoutRef.current);
       connectionTimeoutRef.current = null;
     }
-    audioEngine.play("outro");
+    // No outro chime — causes clicking artifacts on mobile
     stop();
     setBootState("session_closed");
   }, [stop]);
