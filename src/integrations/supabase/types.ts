@@ -20425,6 +20425,39 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_activity_logs: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          last_user_action_at: string
+          reengagement_count: number
+          state: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          id?: string
+          last_user_action_at?: string
+          reengagement_count?: number
+          state?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          last_user_action_at?: string
+          reengagement_count?: number
+          state?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       conversation_context_signals: {
         Row: {
           confidence_score: number | null
