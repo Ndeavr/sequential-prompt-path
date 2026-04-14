@@ -472,8 +472,9 @@ const PageAdminProspectExecutionRunDetail = lazy(() => import("@/pages/admin/pro
 // Affiliate Tracking
 const PageAffiliateDashboard = lazy(() => import("@/pages/admin/affiliate/PageAffiliateDashboard"));
 
-// Email Health Center
-const PageEmailHealthCenter = lazy(() => import("@/pages/admin/email-health/PageEmailHealthCenter"));
+// Email Audit Center
+const PageEmailAuditCenter = lazy(() => import("@/pages/admin/email-health/PageEmailAuditCenter"));
+const PageEmailAuditHistory = lazy(() => import("@/pages/admin/email-health/PageEmailAuditHistory"));
 
 const PageEntrepreneurJoin = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurJoin"));
 const PageEntrepreneurHowItWorks = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurHowItWorks"));
@@ -997,7 +998,8 @@ export const AppRouter = () => (
         <Route path="/admin/prospect-execution" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminProspectExecutionDashboard /></Suspense></ProtectedRoute>} />
         <Route path="/admin/prospect-execution/:runId" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminProspectExecutionRunDetail /></Suspense></ProtectedRoute>} />
         <Route path="/admin/affiliates" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAffiliateDashboard /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/email-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailHealthCenter /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/email-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailAuditCenter /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/email-audit-history" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailAuditHistory /></Suspense></ProtectedRoute>} />
         <Route path="/services/:entitySlug/:citySlug" element={<PageServiceEntityLanding />} />
         <Route path="/audit/:slug" element={<AuditLandingPage />} />
         <Route path="/articles/:slug" element={<SeoArticlePage />} />
