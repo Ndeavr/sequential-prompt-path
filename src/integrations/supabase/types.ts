@@ -8340,6 +8340,42 @@ export type Database = {
           },
         ]
       }
+      audit_action_recommendations: {
+        Row: {
+          action_description: string
+          action_priority: number | null
+          action_title: string
+          check_code: string
+          created_at: string
+          docs_url: string | null
+          execution_status: string
+          id: string
+          severity_level: string
+        }
+        Insert: {
+          action_description: string
+          action_priority?: number | null
+          action_title: string
+          check_code: string
+          created_at?: string
+          docs_url?: string | null
+          execution_status?: string
+          id?: string
+          severity_level?: string
+        }
+        Update: {
+          action_description?: string
+          action_priority?: number | null
+          action_title?: string
+          check_code?: string
+          created_at?: string
+          docs_url?: string | null
+          execution_status?: string
+          id?: string
+          severity_level?: string
+        }
+        Relationships: []
+      }
       authority_articles: {
         Row: {
           aeo_score: number | null
@@ -22829,6 +22865,128 @@ export type Database = {
         }
         Relationships: []
       }
+      email_audit_checks: {
+        Row: {
+          blocking_boolean: boolean | null
+          category: string
+          check_code: string
+          check_label: string
+          created_at: string
+          details_json: Json | null
+          executed_at: string | null
+          execution_status: string
+          id: string
+          message: string | null
+          passed_boolean: boolean | null
+          recommendation: string | null
+          result_value: string | null
+          run_id: string
+          severity_level: string
+          sort_order: number | null
+        }
+        Insert: {
+          blocking_boolean?: boolean | null
+          category?: string
+          check_code: string
+          check_label: string
+          created_at?: string
+          details_json?: Json | null
+          executed_at?: string | null
+          execution_status?: string
+          id?: string
+          message?: string | null
+          passed_boolean?: boolean | null
+          recommendation?: string | null
+          result_value?: string | null
+          run_id: string
+          severity_level?: string
+          sort_order?: number | null
+        }
+        Update: {
+          blocking_boolean?: boolean | null
+          category?: string
+          check_code?: string
+          check_label?: string
+          created_at?: string
+          details_json?: Json | null
+          executed_at?: string | null
+          execution_status?: string
+          id?: string
+          message?: string | null
+          passed_boolean?: boolean | null
+          recommendation?: string | null
+          result_value?: string | null
+          run_id?: string
+          severity_level?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_audit_checks_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "email_audit_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_audit_runs: {
+        Row: {
+          blocking_count: number | null
+          created_at: string
+          environment: string | null
+          failed_count: number | null
+          finished_at: string | null
+          id: string
+          passed_count: number | null
+          provider_key: string | null
+          score_percent: number | null
+          started_at: string | null
+          status: string
+          summary_json: Json | null
+          total_checks: number | null
+          triggered_by: string | null
+          updated_at: string
+          warning_count: number | null
+        }
+        Insert: {
+          blocking_count?: number | null
+          created_at?: string
+          environment?: string | null
+          failed_count?: number | null
+          finished_at?: string | null
+          id?: string
+          passed_count?: number | null
+          provider_key?: string | null
+          score_percent?: number | null
+          started_at?: string | null
+          status?: string
+          summary_json?: Json | null
+          total_checks?: number | null
+          triggered_by?: string | null
+          updated_at?: string
+          warning_count?: number | null
+        }
+        Update: {
+          blocking_count?: number | null
+          created_at?: string
+          environment?: string | null
+          failed_count?: number | null
+          finished_at?: string | null
+          id?: string
+          passed_count?: number | null
+          provider_key?: string | null
+          score_percent?: number | null
+          started_at?: string | null
+          status?: string
+          summary_json?: Json | null
+          total_checks?: number | null
+          triggered_by?: string | null
+          updated_at?: string
+          warning_count?: number | null
+        }
+        Relationships: []
+      }
       email_authentication_checks: {
         Row: {
           alignment_details: Json | null
@@ -23631,6 +23789,98 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      email_test_messages: {
+        Row: {
+          accepted_at: string | null
+          audit_run_id: string | null
+          body_preview: string | null
+          bounced_at: string | null
+          clicked_at: string | null
+          complained_at: string | null
+          created_at: string
+          delivered_at: string | null
+          delivery_status: string | null
+          environment: string | null
+          error_code: string | null
+          error_message: string | null
+          id: string
+          last_event: string | null
+          opened_at: string | null
+          provider_key: string | null
+          provider_message_id: string | null
+          raw_response_json: Json | null
+          recipient_email: string
+          rejected_at: string | null
+          reply_to_email: string | null
+          send_status: string | null
+          sender_email: string | null
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          audit_run_id?: string | null
+          body_preview?: string | null
+          bounced_at?: string | null
+          clicked_at?: string | null
+          complained_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          delivery_status?: string | null
+          environment?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          last_event?: string | null
+          opened_at?: string | null
+          provider_key?: string | null
+          provider_message_id?: string | null
+          raw_response_json?: Json | null
+          recipient_email: string
+          rejected_at?: string | null
+          reply_to_email?: string | null
+          send_status?: string | null
+          sender_email?: string | null
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          audit_run_id?: string | null
+          body_preview?: string | null
+          bounced_at?: string | null
+          clicked_at?: string | null
+          complained_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          delivery_status?: string | null
+          environment?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          last_event?: string | null
+          opened_at?: string | null
+          provider_key?: string | null
+          provider_message_id?: string | null
+          raw_response_json?: Json | null
+          recipient_email?: string
+          rejected_at?: string | null
+          reply_to_email?: string | null
+          send_status?: string | null
+          sender_email?: string | null
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_test_messages_audit_run_id_fkey"
+            columns: ["audit_run_id"]
+            isOneToOne: false
+            referencedRelation: "email_audit_runs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_test_runs: {
         Row: {
