@@ -73,6 +73,9 @@ Deno.serve(async (req) => {
     }
     if (intentFirst.urgency > 0.7) signals.urgent = true;
 
+    // 5. Score intent
+    const intentResult = scoreIntent(signals);
+
     // 6. Save intent
     await supabase.from("alex_intents").insert({
       session_id: token,
