@@ -44,6 +44,8 @@ export interface VoiceBrainOutput {
 
 // ─── System prompt (imported from shared French voice pipeline) ───
 import { ALEX_VOICE_SYSTEM_PROMPT } from "./alex-french-voice.ts";
+import { cleanTranscript } from "./alex-transcript-cleaner.ts";
+import { resolveIntentFirst, buildIntentContext } from "./alex-intent-first-engine.ts";
 
 // ─── Helpers ───
 
