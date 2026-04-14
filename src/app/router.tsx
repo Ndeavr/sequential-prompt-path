@@ -18,6 +18,12 @@ const PageAdminCoverageCityDomain = lazy(() => import("@/pages/admin/PageAdminCo
 // Outbound Approvals
 const PageAdminOutboundApprovals = lazy(() => import("@/pages/admin/outbound/PageAdminOutboundApprovals"));
 
+// Contractor Voice-First Landing
+const PageContractorVoiceFirstLanding = lazy(() => import("@/pages/contractor-landing/PageContractorVoiceFirstLanding"));
+
+// Voice Sales Plan Onboarding
+const PageContractorPlanOnboarding = lazy(() => import("@/pages/voice-sales/PageContractorPlanOnboarding"));
+
 // Visual Search
 const ProVisualSearchPage = lazy(() => import("@/pages/ProVisualSearchPage"));
 
