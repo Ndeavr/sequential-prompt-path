@@ -22945,6 +22945,89 @@ export type Database = {
         }
         Relationships: []
       }
+      email_configuration_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          message: string
+          recommended_action: string | null
+          related_check_key: string | null
+          resolved_at: string | null
+          severity: string
+          status: string
+          title: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          id?: string
+          message: string
+          recommended_action?: string | null
+          related_check_key?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          title: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          message?: string
+          recommended_action?: string | null
+          related_check_key?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_configuration_alerts_related_check_key_fkey"
+            columns: ["related_check_key"]
+            isOneToOne: false
+            referencedRelation: "email_system_checks"
+            referencedColumns: ["check_key"]
+          },
+        ]
+      }
+      email_delivery_events: {
+        Row: {
+          campaign_id: string | null
+          event_at: string
+          event_type: string
+          id: string
+          inbox_id: string | null
+          message_id: string | null
+          metadata_json: Json | null
+          provider_name: string | null
+          recipient_email: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          event_at?: string
+          event_type: string
+          id?: string
+          inbox_id?: string | null
+          message_id?: string | null
+          metadata_json?: Json | null
+          provider_name?: string | null
+          recipient_email?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          event_at?: string
+          event_type?: string
+          id?: string
+          inbox_id?: string | null
+          message_id?: string | null
+          metadata_json?: Json | null
+          provider_name?: string | null
+          recipient_email?: string | null
+        }
+        Relationships: []
+      }
       email_domain_configs: {
         Row: {
           created_at: string | null
@@ -22978,6 +23061,45 @@ export type Database = {
           provider?: string | null
           reply_to?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      email_domain_health_snapshots: {
+        Row: {
+          created_at: string
+          dkim_status: string
+          dmarc_status: string
+          domain: string
+          id: string
+          mx_status: string
+          overall_status: string
+          return_path_status: string
+          score: number
+          spf_status: string
+        }
+        Insert: {
+          created_at?: string
+          dkim_status?: string
+          dmarc_status?: string
+          domain: string
+          id?: string
+          mx_status?: string
+          overall_status?: string
+          return_path_status?: string
+          score?: number
+          spf_status?: string
+        }
+        Update: {
+          created_at?: string
+          dkim_status?: string
+          dmarc_status?: string
+          domain?: string
+          id?: string
+          mx_status?: string
+          overall_status?: string
+          return_path_status?: string
+          score?: number
+          spf_status?: string
         }
         Relationships: []
       }
@@ -23138,6 +23260,48 @@ export type Database = {
         }
         Relationships: []
       }
+      email_provider_status: {
+        Row: {
+          api_connected: boolean
+          checked_at: string
+          current_usage: number
+          daily_limit: number
+          id: string
+          provider_mode: string
+          provider_name: string
+          sender_verified: boolean
+          smtp_connected: boolean
+          status: string
+          webhook_connected: boolean
+        }
+        Insert: {
+          api_connected?: boolean
+          checked_at?: string
+          current_usage?: number
+          daily_limit?: number
+          id?: string
+          provider_mode?: string
+          provider_name: string
+          sender_verified?: boolean
+          smtp_connected?: boolean
+          status?: string
+          webhook_connected?: boolean
+        }
+        Update: {
+          api_connected?: boolean
+          checked_at?: string
+          current_usage?: number
+          daily_limit?: number
+          id?: string
+          provider_mode?: string
+          provider_name?: string
+          sender_verified?: boolean
+          smtp_connected?: boolean
+          status?: string
+          webhook_connected?: boolean
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -23281,6 +23445,42 @@ export type Database = {
           step_count?: number
           target_persona?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      email_system_checks: {
+        Row: {
+          check_key: string
+          check_type: string
+          checked_at: string
+          id: string
+          is_blocking: boolean
+          message: string | null
+          recommended_action: string | null
+          severity: string
+          status: string
+        }
+        Insert: {
+          check_key: string
+          check_type: string
+          checked_at?: string
+          id?: string
+          is_blocking?: boolean
+          message?: string | null
+          recommended_action?: string | null
+          severity?: string
+          status?: string
+        }
+        Update: {
+          check_key?: string
+          check_type?: string
+          checked_at?: string
+          id?: string
+          is_blocking?: boolean
+          message?: string | null
+          recommended_action?: string | null
+          severity?: string
+          status?: string
         }
         Relationships: []
       }
@@ -52485,6 +52685,7 @@ export type Database = {
         Args: { _usage_id: string }
         Returns: undefined
       }
+      compute_email_system_status: { Args: never; Returns: Json }
       compute_extra_appointment_value: {
         Args: {
           _cluster_value_tier?: string
