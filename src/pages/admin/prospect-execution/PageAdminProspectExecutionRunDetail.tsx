@@ -169,7 +169,7 @@ export default function PageAdminProspectExecutionRunDetail() {
         {/* Left column */}
         <div className="space-y-4">
           <PanelProspectIdentity prospect={prospect ?? null} />
-          <PanelAIPPScorePreview snapshot={aippSnapshot ?? null} />
+          <PanelAIPPScorePreview snapshot={aippSnapshot ? { ...aippSnapshot, weaknesses_json: (aippSnapshot.weaknesses_json as any[] | null) ?? [], opportunities_json: (aippSnapshot.opportunities_json as any[] | null) ?? [] } : null} />
         </div>
 
         {/* Center — timeline */}
