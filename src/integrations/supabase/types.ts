@@ -31414,6 +31414,57 @@ export type Database = {
           },
         ]
       }
+      outbound_approvals: {
+        Row: {
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
+          campaign_id: string | null
+          correction_notes: string | null
+          created_at: string
+          id: string
+          prospect_id: string
+          updated_at: string
+        }
+        Insert: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          campaign_id?: string | null
+          correction_notes?: string | null
+          created_at?: string
+          id?: string
+          prospect_id: string
+          updated_at?: string
+        }
+        Update: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          campaign_id?: string | null
+          correction_notes?: string | null
+          created_at?: string
+          id?: string
+          prospect_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_approvals_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_approvals_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outbound_autopilot_recommendations: {
         Row: {
           agent_target_item_id: string | null
@@ -49811,6 +49862,72 @@ export type Database = {
           },
         ]
       }
+      visibility_scores: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          generated_at: string
+          id: string
+          prospect_id: string | null
+          score_ai_search: number | null
+          score_content: number | null
+          score_conversion: number | null
+          score_local_presence: number | null
+          score_reviews: number | null
+          score_schema: number | null
+          score_total: number
+          score_trust: number | null
+          summary_short: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          generated_at?: string
+          id?: string
+          prospect_id?: string | null
+          score_ai_search?: number | null
+          score_content?: number | null
+          score_conversion?: number | null
+          score_local_presence?: number | null
+          score_reviews?: number | null
+          score_schema?: number | null
+          score_total?: number
+          score_trust?: number | null
+          summary_short?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          generated_at?: string
+          id?: string
+          prospect_id?: string | null
+          score_ai_search?: number | null
+          score_content?: number | null
+          score_conversion?: number | null
+          score_local_presence?: number | null
+          score_reviews?: number | null
+          score_schema?: number | null
+          score_total?: number
+          score_trust?: number | null
+          summary_short?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visibility_scores_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visibility_scores_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voice_audio_failures: {
         Row: {
           created_at: string
@@ -51117,6 +51234,14 @@ export type Database = {
         Args: { _actor_id: string; _company_id: string }
         Returns: Json
       }
+      approve_prospect: {
+        Args: {
+          _actor_id?: string
+          _campaign_id?: string
+          _prospect_id: string
+        }
+        Returns: undefined
+      }
       calculate_contractor_live_score: {
         Args: { p_contractor_id: string }
         Returns: Json
@@ -51358,6 +51483,10 @@ export type Database = {
       reject_company: {
         Args: { _actor_id: string; _company_id: string; _notes?: string }
         Returns: Json
+      }
+      reject_prospect: {
+        Args: { _actor_id?: string; _notes?: string; _prospect_id: string }
+        Returns: undefined
       }
       reserve_promo_code_redemption: {
         Args: {
