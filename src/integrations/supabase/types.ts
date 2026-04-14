@@ -976,6 +976,9 @@ export type Database = {
       }
       affiliate_attributions: {
         Row: {
+          confidence_score: number | null
+          confirmation_status: string | null
+          confirmed_at: string | null
           conversion_type: string | null
           created_at: string
           id: string
@@ -984,8 +987,13 @@ export type Database = {
           referred_user_id: string | null
           referrer_user_id: string | null
           role_origin: string | null
+          session_id: string | null
+          source_type: string | null
         }
         Insert: {
+          confidence_score?: number | null
+          confirmation_status?: string | null
+          confirmed_at?: string | null
           conversion_type?: string | null
           created_at?: string
           id?: string
@@ -994,8 +1002,13 @@ export type Database = {
           referred_user_id?: string | null
           referrer_user_id?: string | null
           role_origin?: string | null
+          session_id?: string | null
+          source_type?: string | null
         }
         Update: {
+          confidence_score?: number | null
+          confirmation_status?: string | null
+          confirmed_at?: string | null
           conversion_type?: string | null
           created_at?: string
           id?: string
@@ -1004,6 +1017,261 @@ export type Database = {
           referred_user_id?: string | null
           referrer_user_id?: string | null
           role_origin?: string | null
+          session_id?: string | null
+          source_type?: string | null
+        }
+        Relationships: []
+      }
+      affiliate_clicks: {
+        Row: {
+          affiliate_id: string | null
+          created_at: string
+          device: string | null
+          id: string
+          ip_hash: string | null
+          landing_url: string | null
+          link_id: string | null
+          ref_code: string
+          source: string
+          user_agent: string | null
+        }
+        Insert: {
+          affiliate_id?: string | null
+          created_at?: string
+          device?: string | null
+          id?: string
+          ip_hash?: string | null
+          landing_url?: string | null
+          link_id?: string | null
+          ref_code: string
+          source?: string
+          user_agent?: string | null
+        }
+        Update: {
+          affiliate_id?: string | null
+          created_at?: string
+          device?: string | null
+          id?: string
+          ip_hash?: string | null
+          landing_url?: string | null
+          link_id?: string | null
+          ref_code?: string
+          source?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_clicks_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_clicks_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_conversions: {
+        Row: {
+          affiliate_id: string | null
+          attribution_id: string | null
+          commission_amount_cents: number
+          commission_rate: number
+          conversion_type: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          status: string
+          user_id: string | null
+          value_cents: number
+        }
+        Insert: {
+          affiliate_id?: string | null
+          attribution_id?: string | null
+          commission_amount_cents?: number
+          commission_rate?: number
+          conversion_type: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          status?: string
+          user_id?: string | null
+          value_cents?: number
+        }
+        Update: {
+          affiliate_id?: string | null
+          attribution_id?: string | null
+          commission_amount_cents?: number
+          commission_rate?: number
+          conversion_type?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          status?: string
+          user_id?: string | null
+          value_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_conversions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_conversions_attribution_id_fkey"
+            columns: ["attribution_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_attributions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_links: {
+        Row: {
+          affiliate_id: string
+          click_count: number
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          qr_code_url: string | null
+          url: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          affiliate_id: string
+          click_count?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          qr_code_url?: string | null
+          url: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          affiliate_id?: string
+          click_count?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          qr_code_url?: string | null
+          url?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_links_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_sessions: {
+        Row: {
+          affiliate_id: string | null
+          created_at: string
+          device: string | null
+          expires_at: string
+          id: string
+          ref_code: string
+          session_token: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          affiliate_id?: string | null
+          created_at?: string
+          device?: string | null
+          expires_at?: string
+          id?: string
+          ref_code: string
+          session_token: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          affiliate_id?: string | null
+          created_at?: string
+          device?: string | null
+          expires_at?: string
+          id?: string
+          ref_code?: string
+          session_token?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_sessions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliates: {
+        Row: {
+          commission_rate: number
+          created_at: string
+          email: string | null
+          id: string
+          metadata: Json | null
+          name: string
+          referral_code: string
+          status: string
+          total_clicks: number
+          total_conversions: number
+          total_revenue_cents: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          commission_rate?: number
+          created_at?: string
+          email?: string | null
+          id?: string
+          metadata?: Json | null
+          name: string
+          referral_code: string
+          status?: string
+          total_clicks?: number
+          total_conversions?: number
+          total_revenue_cents?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          commission_rate?: number
+          created_at?: string
+          email?: string | null
+          id?: string
+          metadata?: Json | null
+          name?: string
+          referral_code?: string
+          status?: string
+          total_clicks?: number
+          total_conversions?: number
+          total_revenue_cents?: number
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -52238,6 +52506,10 @@ export type Database = {
         Args: { max_slots: number; occupied: number }
         Returns: string
       }
+      confirm_referral_attribution: {
+        Args: { p_attribution_id: string; p_confirmed: boolean }
+        Returns: Json
+      }
       consume_generation_credit: {
         Args: { _generation_type?: string; _user_id: string }
         Returns: Json
@@ -52247,6 +52519,10 @@ export type Database = {
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
+      }
+      detect_referral_source: {
+        Args: { p_ref_code?: string; p_session_token?: string }
+        Returns: Json
       }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
@@ -52465,6 +52741,14 @@ export type Database = {
       set_current_contractor_aipp_score: {
         Args: { _contractor_id: string; _score_id: string }
         Returns: undefined
+      }
+      track_affiliate_conversion: {
+        Args: {
+          p_conversion_type: string
+          p_user_id: string
+          p_value_cents?: number
+        }
+        Returns: Json
       }
       track_appointment_consumption: {
         Args: {
