@@ -15,6 +15,9 @@ import FallbackRoutePage from "@/pages/FallbackRoutePage";
 const PageAdminExtractionQueue = lazy(() => import("@/pages/admin/PageAdminExtractionQueue"));
 const PageAdminCoverageCityDomain = lazy(() => import("@/pages/admin/PageAdminCoverageCityDomain"));
 
+// Outbound Approvals
+const PageAdminOutboundApprovals = lazy(() => import("@/pages/admin/outbound/PageAdminOutboundApprovals"));
+
 // Visual Search
 const ProVisualSearchPage = lazy(() => import("@/pages/ProVisualSearchPage"));
 
