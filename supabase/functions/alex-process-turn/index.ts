@@ -38,11 +38,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 2. Save user message
+    // 2. Clean transcript before processing
+    const cleaned = cleanTranscript(user_message);
+    const processedMessage = cleaned.cleaned || user_message;
+
+    // 2b. Save user message (original + cleaned)
     await supabase.from("alex_messages").insert({
       session_id: session.id,
       sender: "user",
-      message: user_message,
+      message: processedMessage,
       message_type: message_mode || "text",
     });
 
@@ -59,11 +63,15 @@ Deno.serve(async (req) => {
       content: m.message,
     }));
 
-    // 4. Extract signals from user message
-    const signals = extractSignals(user_message, ui_context);
+    // 4. Extract signals from CLEANED message
+    const signals = extractSignals(processedMessage, ui_context);
 
-    // 5. Score intent
-    const intentResult = scoreIntent(signals);
+    // 4b. Intent-first resolution for enriched context
+    const intentFirst = resolveIntentFirst(processedMessage);
+    if (intentFirst.interpretedService && !signals.service) {
+      signals.service = intentFirst.interpretedService;
+    }
+    if (intentFirst.urgency > 0.7) signals.urgent = true;
 
     // 6. Save intent
     await supabase.from("alex_intents").insert({
