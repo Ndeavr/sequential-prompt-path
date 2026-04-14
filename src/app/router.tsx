@@ -988,6 +988,8 @@ export const AppRouter = () => (
         <Route path="/admin/extraction" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminExtractionQueue /></Suspense></ProtectedRoute>} />
         <Route path="/admin/extraction/coverage" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminCoverageCityDomain /></Suspense></ProtectedRoute>} />
         <Route path="/admin/outbound/approvals" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOutboundApprovals /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/prospect-execution" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminProspectExecutionDashboard /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/prospect-execution/:runId" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminProspectExecutionRunDetail /></Suspense></ProtectedRoute>} />
         <Route path="/services/:entitySlug/:citySlug" element={<PageServiceEntityLanding />} />
         <Route path="/audit/:slug" element={<AuditLandingPage />} />
         <Route path="/articles/:slug" element={<SeoArticlePage />} />
