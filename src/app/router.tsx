@@ -11,6 +11,10 @@ import HomeWithFeatureFlag from "@/components/home-intent/HomeWithFeatureFlag";
 import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
 
+// Extraction Engine
+const PageAdminExtractionQueue = lazy(() => import("@/pages/admin/PageAdminExtractionQueue"));
+const PageAdminCoverageCityDomain = lazy(() => import("@/pages/admin/PageAdminCoverageCityDomain"));
+
 // Visual Search
 const ProVisualSearchPage = lazy(() => import("@/pages/ProVisualSearchPage"));
 
