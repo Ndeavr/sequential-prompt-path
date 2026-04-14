@@ -21447,6 +21447,45 @@ export type Database = {
         }
         Relationships: []
       }
+      deliverability_domain_profiles: {
+        Row: {
+          created_at: string
+          dkim_status: string | null
+          dmarc_status: string | null
+          id: string
+          last_checked_at: string | null
+          provider_name: string | null
+          risk_score: number | null
+          sending_domain: string
+          spf_status: string | null
+          warmup_status: string | null
+        }
+        Insert: {
+          created_at?: string
+          dkim_status?: string | null
+          dmarc_status?: string | null
+          id?: string
+          last_checked_at?: string | null
+          provider_name?: string | null
+          risk_score?: number | null
+          sending_domain: string
+          spf_status?: string | null
+          warmup_status?: string | null
+        }
+        Update: {
+          created_at?: string
+          dkim_status?: string | null
+          dmarc_status?: string | null
+          id?: string
+          last_checked_at?: string | null
+          provider_name?: string | null
+          risk_score?: number | null
+          sending_domain?: string
+          spf_status?: string | null
+          warmup_status?: string | null
+        }
+        Relationships: []
+      }
       deliverability_scores: {
         Row: {
           bounce_rate: number | null
@@ -39320,6 +39359,65 @@ export type Database = {
         }
         Relationships: []
       }
+      prospect_aipp_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          money_left_on_table_estimate: number | null
+          opportunities_json: Json | null
+          prospect_id: string
+          score_authority: number | null
+          score_brand: number | null
+          score_content: number | null
+          score_conversion: number | null
+          score_global: number | null
+          score_structure: number | null
+          score_trust: number | null
+          score_visibility: number | null
+          weaknesses_json: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          money_left_on_table_estimate?: number | null
+          opportunities_json?: Json | null
+          prospect_id: string
+          score_authority?: number | null
+          score_brand?: number | null
+          score_content?: number | null
+          score_conversion?: number | null
+          score_global?: number | null
+          score_structure?: number | null
+          score_trust?: number | null
+          score_visibility?: number | null
+          weaknesses_json?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          money_left_on_table_estimate?: number | null
+          opportunities_json?: Json | null
+          prospect_id?: string
+          score_authority?: number | null
+          score_brand?: number | null
+          score_content?: number | null
+          score_conversion?: number | null
+          score_global?: number | null
+          score_structure?: number | null
+          score_trust?: number | null
+          score_visibility?: number | null
+          weaknesses_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_aipp_snapshots_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prospect_alex_links: {
         Row: {
           campaign_id: string | null
@@ -39720,6 +39818,204 @@ export type Database = {
           },
         ]
       }
+      prospect_email_messages: {
+        Row: {
+          approval_status: string
+          body_html: string | null
+          body_text: string | null
+          created_at: string
+          id: string
+          message_type: string
+          personalization_tokens_json: Json | null
+          preheader: string | null
+          prospect_id: string
+          scheduled_for: string | null
+          send_status: string
+          sent_at: string | null
+          sequence_id: string | null
+          subject: string | null
+        }
+        Insert: {
+          approval_status?: string
+          body_html?: string | null
+          body_text?: string | null
+          created_at?: string
+          id?: string
+          message_type?: string
+          personalization_tokens_json?: Json | null
+          preheader?: string | null
+          prospect_id: string
+          scheduled_for?: string | null
+          send_status?: string
+          sent_at?: string | null
+          sequence_id?: string | null
+          subject?: string | null
+        }
+        Update: {
+          approval_status?: string
+          body_html?: string | null
+          body_text?: string | null
+          created_at?: string
+          id?: string
+          message_type?: string
+          personalization_tokens_json?: Json | null
+          preheader?: string | null
+          prospect_id?: string
+          scheduled_for?: string | null
+          send_status?: string
+          sent_at?: string | null
+          sequence_id?: string | null
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_email_messages_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_email_messages_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_email_sequences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_email_send_attempts: {
+        Row: {
+          attempt_number: number
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          from_email: string | null
+          id: string
+          message_id: string
+          provider_message_id: string | null
+          provider_name: string | null
+          send_status: string
+          to_email: string | null
+        }
+        Insert: {
+          attempt_number?: number
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          from_email?: string | null
+          id?: string
+          message_id: string
+          provider_message_id?: string | null
+          provider_name?: string | null
+          send_status?: string
+          to_email?: string | null
+        }
+        Update: {
+          attempt_number?: number
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          from_email?: string | null
+          id?: string
+          message_id?: string
+          provider_message_id?: string | null
+          provider_name?: string | null
+          send_status?: string
+          to_email?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_email_send_attempts_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_email_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_email_sequences: {
+        Row: {
+          created_at: string
+          current_step: number | null
+          id: string
+          language: string
+          prospect_id: string
+          send_mode: string
+          sequence_type: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          current_step?: number | null
+          id?: string
+          language?: string
+          prospect_id: string
+          send_mode?: string
+          sequence_type?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          current_step?: number | null
+          id?: string
+          language?: string
+          prospect_id?: string
+          send_mode?: string
+          sequence_type?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_email_sequences_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_enrichment_signals: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          id: string
+          label: string
+          prospect_id: string
+          signal_type: string
+          source_url: string | null
+          value: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          label: string
+          prospect_id: string
+          signal_type: string
+          source_url?: string | null
+          value?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          label?: string
+          prospect_id?: string
+          signal_type?: string
+          source_url?: string | null
+          value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_enrichment_signals_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prospect_enrichments: {
         Row: {
           created_at: string
@@ -39792,6 +40088,106 @@ export type Database = {
         }
         Relationships: []
       }
+      prospect_execution_runs: {
+        Row: {
+          completion_percent: number | null
+          created_at: string
+          current_step: string | null
+          id: string
+          prospect_id: string | null
+          run_type: string
+          status: string
+          summary_json: Json | null
+          triggered_by: string | null
+        }
+        Insert: {
+          completion_percent?: number | null
+          created_at?: string
+          current_step?: string | null
+          id?: string
+          prospect_id?: string | null
+          run_type?: string
+          status?: string
+          summary_json?: Json | null
+          triggered_by?: string | null
+        }
+        Update: {
+          completion_percent?: number | null
+          created_at?: string
+          current_step?: string | null
+          id?: string
+          prospect_id?: string | null
+          run_type?: string
+          status?: string
+          summary_json?: Json | null
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_execution_runs_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_execution_steps: {
+        Row: {
+          completed_at: string | null
+          error_code: string | null
+          error_message: string | null
+          id: string
+          payload_json: Json | null
+          result_json: Json | null
+          retry_count: number | null
+          run_id: string
+          started_at: string | null
+          status: string
+          step_key: string
+          step_label: string
+          step_order: number
+        }
+        Insert: {
+          completed_at?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          payload_json?: Json | null
+          result_json?: Json | null
+          retry_count?: number | null
+          run_id: string
+          started_at?: string | null
+          status?: string
+          step_key: string
+          step_label: string
+          step_order?: number
+        }
+        Update: {
+          completed_at?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          payload_json?: Json | null
+          result_json?: Json | null
+          retry_count?: number | null
+          run_id?: string
+          started_at?: string | null
+          status?: string
+          step_key?: string
+          step_label?: string
+          step_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_execution_steps_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_execution_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prospect_import_jobs: {
         Row: {
           errors: Json | null
@@ -39830,6 +40226,53 @@ export type Database = {
           storage_path?: string | null
         }
         Relationships: []
+      }
+      prospect_import_runs: {
+        Row: {
+          created_at: string
+          id: string
+          input_type: string
+          input_value: string
+          linked_prospect_id: string | null
+          normalized_domain: string | null
+          notes: string | null
+          source_label: string | null
+          started_by: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          input_type?: string
+          input_value: string
+          linked_prospect_id?: string | null
+          normalized_domain?: string | null
+          notes?: string | null
+          source_label?: string | null
+          started_by?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          input_type?: string
+          input_value?: string
+          linked_prospect_id?: string | null
+          normalized_domain?: string | null
+          notes?: string | null
+          source_label?: string | null
+          started_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_import_run_prospect"
+            columns: ["linked_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_records"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       prospect_loom_jobs: {
         Row: {
@@ -40018,6 +40461,62 @@ export type Database = {
           },
         ]
       }
+      prospect_plan_sessions: {
+        Row: {
+          capacity_score: number | null
+          competition_score: number | null
+          created_at: string
+          estimated_monthly_appointments: number | null
+          estimated_monthly_revenue: number | null
+          founders_offer_shown: boolean | null
+          id: string
+          prospect_id: string
+          recommended_plan: string | null
+          recommended_plan_reason: string | null
+          signature_offer_shown: boolean | null
+          status: string
+          territory_score: number | null
+        }
+        Insert: {
+          capacity_score?: number | null
+          competition_score?: number | null
+          created_at?: string
+          estimated_monthly_appointments?: number | null
+          estimated_monthly_revenue?: number | null
+          founders_offer_shown?: boolean | null
+          id?: string
+          prospect_id: string
+          recommended_plan?: string | null
+          recommended_plan_reason?: string | null
+          signature_offer_shown?: boolean | null
+          status?: string
+          territory_score?: number | null
+        }
+        Update: {
+          capacity_score?: number | null
+          competition_score?: number | null
+          created_at?: string
+          estimated_monthly_appointments?: number | null
+          estimated_monthly_revenue?: number | null
+          founders_offer_shown?: boolean | null
+          id?: string
+          prospect_id?: string
+          recommended_plan?: string | null
+          recommended_plan_reason?: string | null
+          signature_offer_shown?: boolean | null
+          status?: string
+          territory_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_plan_sessions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prospect_raw_data: {
         Row: {
           created_at: string | null
@@ -40049,6 +40548,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      prospect_records: {
+        Row: {
+          assigned_to: string | null
+          categories_secondary: Json | null
+          category_primary: string | null
+          city_primary: string | null
+          company_name: string | null
+          contact_confidence_score: number | null
+          created_at: string
+          domain: string | null
+          email: string | null
+          id: string
+          lead_source: string | null
+          phone: string | null
+          province: string | null
+          status: string
+          updated_at: string
+          website_status: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          categories_secondary?: Json | null
+          category_primary?: string | null
+          city_primary?: string | null
+          company_name?: string | null
+          contact_confidence_score?: number | null
+          created_at?: string
+          domain?: string | null
+          email?: string | null
+          id?: string
+          lead_source?: string | null
+          phone?: string | null
+          province?: string | null
+          status?: string
+          updated_at?: string
+          website_status?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          categories_secondary?: Json | null
+          category_primary?: string | null
+          city_primary?: string | null
+          company_name?: string | null
+          contact_confidence_score?: number | null
+          created_at?: string
+          domain?: string | null
+          email?: string | null
+          id?: string
+          lead_source?: string | null
+          phone?: string | null
+          province?: string | null
+          status?: string
+          updated_at?: string
+          website_status?: string | null
+        }
+        Relationships: []
       }
       prospect_reviews_summary: {
         Row: {
