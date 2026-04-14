@@ -28178,6 +28178,42 @@ export type Database = {
           },
         ]
       }
+      landing_visits: {
+        Row: {
+          device_type: string | null
+          id: string
+          page_key: string
+          referrer: string | null
+          session_id: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          visited_at: string
+        }
+        Insert: {
+          device_type?: string | null
+          id?: string
+          page_key?: string
+          referrer?: string | null
+          session_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          visited_at?: string
+        }
+        Update: {
+          device_type?: string | null
+          id?: string
+          page_key?: string
+          referrer?: string | null
+          session_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          visited_at?: string
+        }
+        Relationships: []
+      }
       lead_capture_sessions: {
         Row: {
           campaign_name: string | null
@@ -30907,6 +30943,87 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onboarding_conversion_events: {
+        Row: {
+          contractor_id: string | null
+          conversion_stage: string
+          conversion_value: number | null
+          created_at: string
+          id: string
+          plan_session_id: string | null
+          session_id: string | null
+        }
+        Insert: {
+          contractor_id?: string | null
+          conversion_stage?: string
+          conversion_value?: number | null
+          created_at?: string
+          id?: string
+          plan_session_id?: string | null
+          session_id?: string | null
+        }
+        Update: {
+          contractor_id?: string | null
+          conversion_stage?: string
+          conversion_value?: number | null
+          created_at?: string
+          id?: string
+          plan_session_id?: string | null
+          session_id?: string | null
+        }
+        Relationships: []
+      }
+      onboarding_entry_events: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          entry_mode: string
+          event_payload_json: Json | null
+          event_type: string
+          id: string
+          prospect_id: string | null
+          session_id: string | null
+          source_channel: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          entry_mode?: string
+          event_payload_json?: Json | null
+          event_type?: string
+          id?: string
+          prospect_id?: string | null
+          session_id?: string | null
+          source_channel?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          entry_mode?: string
+          event_payload_json?: Json | null
+          event_type?: string
+          id?: string
+          prospect_id?: string | null
+          session_id?: string | null
+          source_channel?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_entry_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_entry_events_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_prospects"
             referencedColumns: ["id"]
           },
         ]
