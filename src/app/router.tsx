@@ -465,7 +465,10 @@ const PageResultatAnalyseSoumissions = lazy(() => import("@/pages/PageResultatAn
 const PageSoumissionsDossierClient = lazy(() => import("@/pages/PageSoumissionsDossierClient"));
 const PageAjouterSoumissionAuDossier = lazy(() => import("@/pages/PageAjouterSoumissionAuDossier"));
 
-// Contractor Join + Onboarding
+// Prospect Execution Engine
+const PageAdminProspectExecutionDashboard = lazy(() => import("@/pages/admin/prospect-execution/PageAdminProspectExecutionDashboard"));
+const PageAdminProspectExecutionRunDetail = lazy(() => import("@/pages/admin/prospect-execution/PageAdminProspectExecutionRunDetail"));
+
 const PageEntrepreneurJoin = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurJoin"));
 const PageEntrepreneurHowItWorks = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurHowItWorks"));
 const PageEntrepreneurPlans = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurPlans"));
