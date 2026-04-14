@@ -57,7 +57,10 @@ export function useEmailSystemStatus() {
     queryKey: ["email-system-status"],
     queryFn: async () => {
       const { data } = await supabase.rpc("compute_email_system_status");
-      return (data as unknown as EmailSystemStatus) || { status: "pending", score: 0, total_checks: 0, passed: 0, failed: 0, warnings: 0, blocking_issues: 0, active_alerts: 0, checked_at: new Date().toISOString() };
+      const fallback: EmailSystemStatus = { status: "pending", score: 0, total_checks: 0, passed: 0, failed: 0, warnings: 0, blocking_issues: 0, active_alerts: 0, checked_at: new Date().toISOString() };
+      if (!data) return fallback;
+      const d = data as Record<string, unknown>;
+      return { ...fallback, ...d, status: (d.status as EmailSystemStatus["status"]) || "pending" };
     },
   });
 }
