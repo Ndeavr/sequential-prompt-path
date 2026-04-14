@@ -472,8 +472,9 @@ const PageAdminProspectExecutionRunDetail = lazy(() => import("@/pages/admin/pro
 // Affiliate Tracking
 const PageAffiliateDashboard = lazy(() => import("@/pages/admin/affiliate/PageAffiliateDashboard"));
 
-// Email Health Center
-const PageEmailHealthCenter = lazy(() => import("@/pages/admin/email-health/PageEmailHealthCenter"));
+// Email Audit Center
+const PageEmailAuditCenter = lazy(() => import("@/pages/admin/email-health/PageEmailAuditCenter"));
+const PageEmailAuditHistory = lazy(() => import("@/pages/admin/email-health/PageEmailAuditHistory"));
 
 const PageEntrepreneurJoin = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurJoin"));
 const PageEntrepreneurHowItWorks = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurHowItWorks"));
