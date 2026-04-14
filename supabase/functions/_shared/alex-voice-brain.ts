@@ -97,12 +97,20 @@ export async function alexVoiceBrain(
 ): Promise<VoiceBrainOutput> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 
-  const contextBlock = buildContextBlock(input);
+  // Clean transcript before processing
+  const cleaned = cleanTranscript(input.transcript);
+  const processedTranscript = cleaned.cleaned || input.transcript;
+
+  // Resolve intent-first for context enrichment
+  const intentResult = resolveIntentFirst(processedTranscript);
+  const intentContext = buildIntentContext(intentResult, cleaned.detectedKeywords);
+
+  const contextBlock = buildContextBlock(input) + intentContext;
 
   const conversationMessages = [
     { role: "system", content: ALEX_VOICE_SYSTEM_PROMPT + contextBlock },
     ...(input.messages || []),
-    { role: "user", content: input.transcript },
+    { role: "user", content: processedTranscript },
   ];
 
   const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
