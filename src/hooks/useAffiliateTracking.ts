@@ -65,7 +65,7 @@ export function useAffiliateTracking() {
         p_session_token: sessionToken || null,
       });
 
-      const result = (data as DetectedSource) || { detected: false };
+      const result = (data as unknown as DetectedSource) || { detected: false };
       setDetectedSource(result);
       return result;
     } catch {
