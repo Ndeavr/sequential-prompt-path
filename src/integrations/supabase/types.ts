@@ -14547,6 +14547,76 @@ export type Database = {
           },
         ]
       }
+      contractor_checkouts: {
+        Row: {
+          amount_subtotal: number | null
+          amount_tax: number | null
+          amount_total: number | null
+          contractor_id: string | null
+          contractor_plan_session_id: string | null
+          created_at: string
+          id: string
+          lead_pack_id: string | null
+          paid_at: string | null
+          payment_status: string
+          pricing_plan_id: string | null
+          selected_variant: string | null
+          stripe_checkout_reference: string | null
+        }
+        Insert: {
+          amount_subtotal?: number | null
+          amount_tax?: number | null
+          amount_total?: number | null
+          contractor_id?: string | null
+          contractor_plan_session_id?: string | null
+          created_at?: string
+          id?: string
+          lead_pack_id?: string | null
+          paid_at?: string | null
+          payment_status?: string
+          pricing_plan_id?: string | null
+          selected_variant?: string | null
+          stripe_checkout_reference?: string | null
+        }
+        Update: {
+          amount_subtotal?: number | null
+          amount_tax?: number | null
+          amount_total?: number | null
+          contractor_id?: string | null
+          contractor_plan_session_id?: string | null
+          created_at?: string
+          id?: string
+          lead_pack_id?: string | null
+          paid_at?: string | null
+          payment_status?: string
+          pricing_plan_id?: string | null
+          selected_variant?: string | null
+          stripe_checkout_reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_checkouts_contractor_plan_session_id_fkey"
+            columns: ["contractor_plan_session_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_plan_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_checkouts_lead_pack_id_fkey"
+            columns: ["lead_pack_id"]
+            isOneToOne: false
+            referencedRelation: "lead_packs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_checkouts_pricing_plan_id_fkey"
+            columns: ["pricing_plan_id"]
+            isOneToOne: false
+            referencedRelation: "plan_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_coach_insights: {
         Row: {
           contractor_id: string
@@ -17920,6 +17990,38 @@ export type Database = {
           },
         ]
       }
+      contractor_plan_events: {
+        Row: {
+          contractor_plan_session_id: string
+          created_at: string
+          event_payload_json: Json | null
+          event_type: string
+          id: string
+        }
+        Insert: {
+          contractor_plan_session_id: string
+          created_at?: string
+          event_payload_json?: Json | null
+          event_type: string
+          id?: string
+        }
+        Update: {
+          contractor_plan_session_id?: string
+          created_at?: string
+          event_payload_json?: Json | null
+          event_type?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_plan_events_contractor_plan_session_id_fkey"
+            columns: ["contractor_plan_session_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_plan_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_plan_fits: {
         Row: {
           contractor_id: string
@@ -18020,6 +18122,84 @@ export type Database = {
           plan_name?: string
         }
         Relationships: []
+      }
+      contractor_plan_sessions: {
+        Row: {
+          average_job_value: number | null
+          biggest_pain: string | null
+          city: string | null
+          close_rate: number | null
+          contractor_id: string | null
+          created_at: string
+          domain: string | null
+          founders_fit_score: number | null
+          growth_intent: string | null
+          id: string
+          monthly_capacity: number | null
+          monthly_revenue_goal: number | null
+          plan_fit_score: number | null
+          prospect_id: string | null
+          recommended_founders: boolean | null
+          recommended_plan_id: string | null
+          session_status: string
+          updated_at: string
+        }
+        Insert: {
+          average_job_value?: number | null
+          biggest_pain?: string | null
+          city?: string | null
+          close_rate?: number | null
+          contractor_id?: string | null
+          created_at?: string
+          domain?: string | null
+          founders_fit_score?: number | null
+          growth_intent?: string | null
+          id?: string
+          monthly_capacity?: number | null
+          monthly_revenue_goal?: number | null
+          plan_fit_score?: number | null
+          prospect_id?: string | null
+          recommended_founders?: boolean | null
+          recommended_plan_id?: string | null
+          session_status?: string
+          updated_at?: string
+        }
+        Update: {
+          average_job_value?: number | null
+          biggest_pain?: string | null
+          city?: string | null
+          close_rate?: number | null
+          contractor_id?: string | null
+          created_at?: string
+          domain?: string | null
+          founders_fit_score?: number | null
+          growth_intent?: string | null
+          id?: string
+          monthly_capacity?: number | null
+          monthly_revenue_goal?: number | null
+          plan_fit_score?: number | null
+          prospect_id?: string | null
+          recommended_founders?: boolean | null
+          recommended_plan_id?: string | null
+          session_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_plan_sessions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractors_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_plan_sessions_recommended_plan_id_fkey"
+            columns: ["recommended_plan_id"]
+            isOneToOne: false
+            referencedRelation: "plan_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contractor_portfolio_projects: {
         Row: {
@@ -28319,6 +28499,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      lead_packs: {
+        Row: {
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          pack_name: string
+          pack_price: number
+          pack_quantity: number
+        }
+        Insert: {
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          pack_name: string
+          pack_price: number
+          pack_quantity: number
+        }
+        Update: {
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          pack_name?: string
+          pack_price?: number
+          pack_quantity?: number
+        }
+        Relationships: []
       }
       lead_priority_scores: {
         Row: {
@@ -43027,6 +43234,36 @@ export type Database = {
           text_en?: string | null
           text_fr?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      sales_voice_prompts: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          language_code: string
+          prompt_key: string
+          version: number | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          language_code?: string
+          prompt_key: string
+          version?: number | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          language_code?: string
+          prompt_key?: string
+          version?: number | null
         }
         Relationships: []
       }
