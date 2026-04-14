@@ -36777,6 +36777,30 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_completion_logs: {
+        Row: {
+          created_at: string
+          field_updated: string
+          id: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          field_updated: string
+          id?: string
+          source?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          field_updated?: string
+          id?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profile_missing_fields: {
         Row: {
           contractor_id: string | null
@@ -36819,6 +36843,7 @@ export type Database = {
           full_name: string | null
           id: string
           invited_by_user_id: string | null
+          is_profile_complete: boolean
           language: string | null
           language_pref: string
           last_name: string | null
@@ -36826,6 +36851,7 @@ export type Database = {
           phone: string | null
           postal_code: string | null
           preferred_channel: string
+          profile_completion_score: number
           province: string | null
           quiet_hours_end: number
           quiet_hours_start: number
@@ -36848,6 +36874,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           invited_by_user_id?: string | null
+          is_profile_complete?: boolean
           language?: string | null
           language_pref?: string
           last_name?: string | null
@@ -36855,6 +36882,7 @@ export type Database = {
           phone?: string | null
           postal_code?: string | null
           preferred_channel?: string
+          profile_completion_score?: number
           province?: string | null
           quiet_hours_end?: number
           quiet_hours_start?: number
@@ -36877,6 +36905,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           invited_by_user_id?: string | null
+          is_profile_complete?: boolean
           language?: string | null
           language_pref?: string
           last_name?: string | null
@@ -36884,6 +36913,7 @@ export type Database = {
           phone?: string | null
           postal_code?: string | null
           preferred_channel?: string
+          profile_completion_score?: number
           province?: string | null
           quiet_hours_end?: number
           quiet_hours_start?: number
@@ -52284,6 +52314,7 @@ export type Database = {
         Returns: Json
       }
       get_contractor_public_profile: { Args: { _slug: string }; Returns: Json }
+      get_profile_completeness: { Args: { p_user_id: string }; Returns: Json }
       get_profile_completion: {
         Args: { _contractor_id: string }
         Returns: Json
@@ -52446,6 +52477,10 @@ export type Database = {
         Returns: Json
       }
       unpro_aipp_tier: { Args: { score: number }; Returns: string }
+      update_profile_field_partial: {
+        Args: { p_field: string; p_value: string }
+        Returns: Json
+      }
       validate_article_readiness: {
         Args: { _article_id: string }
         Returns: Json
