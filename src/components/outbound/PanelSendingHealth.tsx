@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Server } from "lucide-react";
 
 function statusBadge(status: string) {
-  if (status === "active" || status === "warm") return <Badge className="bg-green-500/20 text-green-600 text-xs">{status}</Badge>;
-  if (status === "warming") return <Badge className="bg-yellow-500/20 text-yellow-600 text-xs">{status}</Badge>;
+  if (status === "active" || status === "warm") return <Badge className="bg-primary/20 text-primary text-xs">{status}</Badge>;
+  if (status === "warming") return <Badge className="bg-accent/20 text-accent-foreground text-xs">{status}</Badge>;
   return <Badge variant="outline" className="text-xs">{status}</Badge>;
 }
 
