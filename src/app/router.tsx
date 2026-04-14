@@ -516,6 +516,7 @@ export const AppRouter = () => (
 
         {/* Contractor Onboarding AIPP Funnel */}
         <Route path="/entrepreneur/join" element={<PageContractorLandingAcquisition />} />
+        <Route path="/entrepreneur/onboarding-voice" element={<Suspense fallback={<LazyFallback />}><PageContractorVoiceFirstLanding /></Suspense>} />
         <Route path="/entrepreneur/onboarding" element={<PageContractorOnboardingStart />} />
         <Route path="/entrepreneur/import" element={<PageContractorImportWorkspace />} />
         <Route path="/entrepreneur/import/processing" element={<PageEntrepreneurImportProcessing />} />
