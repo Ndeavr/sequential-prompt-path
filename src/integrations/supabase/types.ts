@@ -12109,6 +12109,308 @@ export type Database = {
         }
         Relationships: []
       }
+      companies: {
+        Row: {
+          address_line_1: string | null
+          approved_at: string | null
+          approved_by: string | null
+          city_id: string | null
+          created_at: string
+          display_name: string | null
+          domain_id: string | null
+          id: string
+          legal_name: string | null
+          merged_into_company_id: string | null
+          neq_number: string | null
+          postal_code: string | null
+          primary_email: string | null
+          primary_phone: string | null
+          rbq_number: string | null
+          status: string
+          updated_at: string
+          verification_status: string
+          website: string | null
+        }
+        Insert: {
+          address_line_1?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          city_id?: string | null
+          created_at?: string
+          display_name?: string | null
+          domain_id?: string | null
+          id?: string
+          legal_name?: string | null
+          merged_into_company_id?: string | null
+          neq_number?: string | null
+          postal_code?: string | null
+          primary_email?: string | null
+          primary_phone?: string | null
+          rbq_number?: string | null
+          status?: string
+          updated_at?: string
+          verification_status?: string
+          website?: string | null
+        }
+        Update: {
+          address_line_1?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          city_id?: string | null
+          created_at?: string
+          display_name?: string | null
+          domain_id?: string | null
+          id?: string
+          legal_name?: string | null
+          merged_into_company_id?: string | null
+          neq_number?: string | null
+          postal_code?: string | null
+          primary_email?: string | null
+          primary_phone?: string | null
+          rbq_number?: string | null
+          status?: string
+          updated_at?: string
+          verification_status?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "companies_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "companies_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "service_domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "companies_merged_into_company_id_fkey"
+            columns: ["merged_into_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_aliases: {
+        Row: {
+          alias_name: string
+          alias_type: string
+          company_id: string
+          confidence_score: number | null
+          created_at: string
+          id: string
+          source_connector_id: string | null
+        }
+        Insert: {
+          alias_name: string
+          alias_type?: string
+          company_id: string
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          source_connector_id?: string | null
+        }
+        Update: {
+          alias_name?: string
+          alias_type?: string
+          company_id?: string
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          source_connector_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_aliases_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_aliases_source_connector_id_fkey"
+            columns: ["source_connector_id"]
+            isOneToOne: false
+            referencedRelation: "source_connectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_city_domains: {
+        Row: {
+          city_id: string
+          company_id: string
+          created_at: string
+          domain_id: string
+          fit_score: number | null
+          id: string
+          is_primary: boolean
+          status: string
+        }
+        Insert: {
+          city_id: string
+          company_id: string
+          created_at?: string
+          domain_id: string
+          fit_score?: number | null
+          id?: string
+          is_primary?: boolean
+          status?: string
+        }
+        Update: {
+          city_id?: string
+          company_id?: string
+          created_at?: string
+          domain_id?: string
+          fit_score?: number | null
+          id?: string
+          is_primary?: boolean
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_city_domains_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_city_domains_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_city_domains_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "service_domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_raw_records: {
+        Row: {
+          city_guess: string | null
+          company_id: string | null
+          company_name_raw: string | null
+          created_at: string
+          domain_guess: string | null
+          email_raw: string | null
+          external_id: string | null
+          fetched_at: string
+          id: string
+          phone_raw: string | null
+          raw_payload_json: Json | null
+          source_connector_id: string
+          status: string
+          website_raw: string | null
+        }
+        Insert: {
+          city_guess?: string | null
+          company_id?: string | null
+          company_name_raw?: string | null
+          created_at?: string
+          domain_guess?: string | null
+          email_raw?: string | null
+          external_id?: string | null
+          fetched_at?: string
+          id?: string
+          phone_raw?: string | null
+          raw_payload_json?: Json | null
+          source_connector_id: string
+          status?: string
+          website_raw?: string | null
+        }
+        Update: {
+          city_guess?: string | null
+          company_id?: string | null
+          company_name_raw?: string | null
+          created_at?: string
+          domain_guess?: string | null
+          email_raw?: string | null
+          external_id?: string | null
+          fetched_at?: string
+          id?: string
+          phone_raw?: string | null
+          raw_payload_json?: Json | null
+          source_connector_id?: string
+          status?: string
+          website_raw?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_raw_records_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_raw_records_source_connector_id_fkey"
+            columns: ["source_connector_id"]
+            isOneToOne: false
+            referencedRelation: "source_connectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_source_fields: {
+        Row: {
+          company_id: string
+          confidence_score: number | null
+          extracted_at: string
+          field_name: string
+          field_value_text: string | null
+          id: string
+          is_selected: boolean
+          source_connector_id: string | null
+        }
+        Insert: {
+          company_id: string
+          confidence_score?: number | null
+          extracted_at?: string
+          field_name: string
+          field_value_text?: string | null
+          id?: string
+          is_selected?: boolean
+          source_connector_id?: string | null
+        }
+        Update: {
+          company_id?: string
+          confidence_score?: number | null
+          extracted_at?: string
+          field_name?: string
+          field_value_text?: string | null
+          id?: string
+          is_selected?: boolean
+          source_connector_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_source_fields_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_source_fields_source_connector_id_fkey"
+            columns: ["source_connector_id"]
+            isOneToOne: false
+            referencedRelation: "source_connectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       condo_action_plans: {
         Row: {
           assigned_contractor_id: string | null
@@ -24865,6 +25167,39 @@ export type Database = {
         }
         Relationships: []
       }
+      extraction_audit_logs: {
+        Row: {
+          action_type: string
+          actor_id: string | null
+          after_json: Json | null
+          before_json: Json | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+        }
+        Insert: {
+          action_type: string
+          actor_id?: string | null
+          after_json?: Json | null
+          before_json?: Json | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+        }
+        Update: {
+          action_type?: string
+          actor_id?: string | null
+          after_json?: Json | null
+          before_json?: Json | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+        }
+        Relationships: []
+      }
       extraction_jobs: {
         Row: {
           completed_at: string | null
@@ -24942,6 +25277,44 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      extraction_reviews: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          review_notes: string | null
+          review_status: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          review_notes?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          review_notes?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extraction_reviews_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -44202,6 +44575,36 @@ export type Database = {
           },
         ]
       }
+      service_domains: {
+        Row: {
+          category_parent: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          category_parent?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          category_parent?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       service_entity_city: {
         Row: {
           avg_price_high_local: number | null
@@ -45516,6 +45919,39 @@ export type Database = {
           is_active?: boolean
           template_key?: string
           template_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      source_connectors: {
+        Row: {
+          config_json: Json | null
+          created_at: string
+          id: string
+          last_sync_at: string | null
+          source_key: string
+          source_name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          config_json?: Json | null
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          source_key: string
+          source_name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          config_json?: Json | null
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          source_key?: string
+          source_name?: string
+          status?: string
           updated_at?: string
         }
         Relationships: []
@@ -50677,6 +51113,10 @@ export type Database = {
       }
     }
     Functions: {
+      approve_company: {
+        Args: { _actor_id: string; _company_id: string }
+        Returns: Json
+      }
       calculate_contractor_live_score: {
         Args: { p_contractor_id: string }
         Returns: Json
@@ -50884,6 +51324,10 @@ export type Database = {
           similarity: number
         }[]
       }
+      merge_companies: {
+        Args: { _actor_id: string; _source_id: string; _target_id: string }
+        Returns: Json
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -50911,6 +51355,10 @@ export type Database = {
         }[]
       }
       refresh_appointment_value_matrix: { Args: never; Returns: Json }
+      reject_company: {
+        Args: { _actor_id: string; _company_id: string; _notes?: string }
+        Returns: Json
+      }
       reserve_promo_code_redemption: {
         Args: {
           p_code: string
