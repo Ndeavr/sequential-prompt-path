@@ -1,5 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { alexVoiceBrain } from "../_shared/alex-voice-brain.ts";
+import { cleanTranscript } from "../_shared/alex-transcript-cleaner.ts";
+import { resolveIntentFirst } from "../_shared/alex-intent-first-engine.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,11 +38,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 2. Save user message
+    // 2. Clean transcript before processing
+    const cleaned = cleanTranscript(user_message);
+    const processedMessage = cleaned.cleaned || user_message;
+
+    // 2b. Save user message (original + cleaned)
     await supabase.from("alex_messages").insert({
       session_id: session.id,
       sender: "user",
-      message: user_message,
+      message: processedMessage,
       message_type: message_mode || "text",
     });
 
@@ -57,8 +63,15 @@ Deno.serve(async (req) => {
       content: m.message,
     }));
 
-    // 4. Extract signals from user message
-    const signals = extractSignals(user_message, ui_context);
+    // 4. Extract signals from CLEANED message
+    const signals = extractSignals(processedMessage, ui_context);
+
+    // 4b. Intent-first resolution for enriched context
+    const intentFirst = resolveIntentFirst(processedMessage);
+    if (intentFirst.interpretedService && !signals.service) {
+      signals.service = intentFirst.interpretedService;
+    }
+    if (intentFirst.urgency > 0.7) signals.urgent = true;
 
     // 5. Score intent
     const intentResult = scoreIntent(signals);
@@ -90,8 +103,8 @@ Deno.serve(async (req) => {
 
     // 8. Get AI response via brain
     const brainResult = await alexVoiceBrain({
-      transcript: user_message,
-      messages: messages.slice(0, -1), // exclude current (already in transcript)
+      transcript: processedMessage,
+      messages: messages.slice(0, -1),
       userId: session.user_id,
       sessionId: session.id,
       pageContext: {
