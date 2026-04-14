@@ -18,6 +18,12 @@ const PageAdminCoverageCityDomain = lazy(() => import("@/pages/admin/PageAdminCo
 // Outbound Approvals
 const PageAdminOutboundApprovals = lazy(() => import("@/pages/admin/outbound/PageAdminOutboundApprovals"));
 
+// Contractor Voice-First Landing
+const PageContractorVoiceFirstLanding = lazy(() => import("@/pages/contractor-landing/PageContractorVoiceFirstLanding"));
+
+// Voice Sales Plan Onboarding
+const PageContractorPlanOnboarding = lazy(() => import("@/pages/voice-sales/PageContractorPlanOnboarding"));
+
 // Visual Search
 const ProVisualSearchPage = lazy(() => import("@/pages/ProVisualSearchPage"));
 
@@ -513,6 +519,8 @@ export const AppRouter = () => (
 
         {/* Contractor Onboarding AIPP Funnel */}
         <Route path="/entrepreneur/join" element={<PageContractorLandingAcquisition />} />
+        <Route path="/entrepreneur/onboarding-voice" element={<Suspense fallback={<LazyFallback />}><PageContractorVoiceFirstLanding /></Suspense>} />
+        <Route path="/entrepreneur/plan" element={<Suspense fallback={<LazyFallback />}><PageContractorPlanOnboarding /></Suspense>} />
         <Route path="/entrepreneur/onboarding" element={<PageContractorOnboardingStart />} />
         <Route path="/entrepreneur/import" element={<PageContractorImportWorkspace />} />
         <Route path="/entrepreneur/import/processing" element={<PageEntrepreneurImportProcessing />} />
