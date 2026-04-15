@@ -1,114 +1,84 @@
 
 
-# AIPP v2 — AI Visibility & Authority Engine
+# Make /alex Live — Voice + Transcription + Mute
 
-## Context
+## Current State
 
-Strong existing foundation:
-- `aipp-real-scan` edge function: Firecrawl-based website scraping with signal extraction
-- `edge-generate-aipp-preview`: Factor-based scoring (18 factors, 7 categories) for outbound prospects
-- `aippScoreService.ts`: Client-side contractor profile scoring
-- DB tables: `aipp_scores`, `prospect_aipp_scores`, `prospect_aipp_factors`
-- Pages: `PageAIPPAnalysisLoading`, `PageAIPPScoreReveal`, entrepreneur landing
+- `/alex` uses **fully client-side mock logic** (`useAlexConversationLite`) with hardcoded keyword matching and mock contractors. No real AI.
+- Voice exists as a **separate full-screen overlay** (`OverlayAlexVoiceFullScreen`) using ElevenLabs Conversational AI via `useLiveVoice` hook. It works but takes over the entire screen.
+- The edge function `alex-process-turn` already handles real AI responses via `alexVoiceBrain`, signal extraction, intent scoring, and contractor matching.
+- `alex-tts` edge function exists for text-to-speech via ElevenLabs.
 
-**Gap**: No unified public-facing audit page where any user enters a domain and gets a full v2 analysis with AEO, entity authority, conversion intelligence, local dominance, and revenue loss estimation. The existing system is split between contractor profiles and outbound prospect pipelines.
+## What We Build
 
-## Plan
+### 1. Wire /alex to Real AI (alex-process-turn)
 
-### Phase 1 — Database (Migration)
+Replace the client-side mock response generation in `useAlexConversationLite.sendMessage` with a real call to the `alex-process-turn` edge function:
 
-4 new tables:
+- On user message → call `supabase.functions.invoke("alex-process-turn", { body: { session_token, user_message, message_mode, ui_context } })`
+- Display the `alex_response` in the thread
+- Use `detected_intent`, `ui_actions`, and `primary_match` from the response to render inline cards
+- Keep the client-side keyword matching as **fallback** if the edge function fails
+- Create/resume an `alex_sessions` row on page load via `alex-voice-session-start`
 
-```text
-aipp_audits         — id, user_id (nullable), domain, status (pending/processing/done/failed), created_at
-aipp_audit_scores   — id, audit_id FK, score_global, score_aeo, score_authority, score_conversion, score_local, score_tech, revenue_loss_estimate, created_at
-aipp_audit_entities — id, audit_id FK, entity_type (service/city/brand/faq/schema), name, confidence, created_at
-aipp_audit_recommendations — id, audit_id FK, title, description, priority (high/medium/low), impact_score, created_at
-```
+**Modified file**: `src/hooks/useAlexConversationLite.ts`
+- Add `supabase.functions.invoke` call in `sendMessage`
+- Wrap in try/catch, fallback to existing mock logic on error
+- Map edge function response fields to existing card types
 
-RLS: public insert (for anonymous audits), select own rows or public via audit_id.
+### 2. Inline Voice Mode (No Full-Screen Takeover)
 
-### Phase 2 — Edge Function: `aipp-v2-analyze`
+Instead of the full-screen overlay, integrate voice **directly into the /alex chat**:
 
-Single orchestrator edge function that:
-1. Calls existing `aipp-real-scan` logic (Firecrawl scrape)
-2. Extracts entities (services, cities, brand signals)
-3. Scores 6 dimensions with new AEO-focused weights:
-   - **AEO** (30%): Q&A presence, direct answers, problem→solution structure, semantic density
-   - **Authority** (25%): Brand coherence, reviews, mentions, credibility signals
-   - **Conversion** (20%): CTAs, friction level, trust signals, offer clarity
-   - **Local** (15%): City coverage, geographic coherence, local business signals
-   - **Tech SEO** (10%): SSL, structured data, meta, schema.org
-4. Generates recommendations sorted by impact
-5. Estimates revenue loss based on weak dimensions
-6. Saves to `aipp_audits` + `aipp_audit_scores` + `aipp_audit_entities` + `aipp_audit_recommendations`
+- Use `useLiveVoice` hook directly in the page (already partially done via `handleMicToggle`)
+- When mic is active, show real-time transcription in the chat thread as bubbles
+- Alex's spoken responses appear as text bubbles (from `onTranscript` callback)
+- User's speech appears as user bubbles (from `onUserTranscript` callback)
+- Remove the redirect to `OverlayAlexVoiceFullScreen` — keep voice inline
 
-Reuses existing Firecrawl integration and signal extraction from `aipp-real-scan`.
+**Modified files**:
+- `src/pages/PageHomeAlexConversationalLite.tsx` — integrate `useLiveVoice` directly, feed transcripts into the message thread
+- `src/components/alex-conversation/InputAlexDockExpanded.tsx` — add mute button
 
-### Phase 3 — Pages & Components
+### 3. Mute Alex Voice Toggle
 
-**`/audit-aipp` — PageAuditAIPPv2**
-- `HeroSectionAuditAIVisibility`: Gradient headline, domain input, CTA "Analyser avec IA"
-- `InputWebsiteAnalysis`: Domain field with validation + submit
-- On submit → create audit row, call edge function, navigate to loading
+Add a mute/unmute button so users can silence Alex's voice while keeping text responses:
 
-**`/audit-aipp/loading/:auditId` — Reuse/extend PageAIPPAnalysisLoading**
-- Poll audit status, redirect to results when done
+- New state `isVoiceMuted` in the page
+- When muted: `conversation.setVolume({ volume: 0 })` 
+- When unmuted: `conversation.setVolume({ volume: 1 })`
+- Visual indicator: `VolumeX` / `Volume2` icon in the input dock or header
+- Mute state persisted in localStorage
 
-**`/audit-aipp/results/:auditId` — PageAuditResultsAIPPv2**
-- `CardScoreGlobalAIPP`: Big score gauge with gradient aura
-- `WidgetRadarScoreBreakdown`: Radar chart (5 axes: AEO, Authority, Conversion, Local, Tech)
-- `PanelAEOReadiness`: AEO-specific signals breakdown
-- `PanelEntityAuthority`: Detected entities list with confidence
-- `PanelConversionIntelligence`: CTA, friction, trust analysis
-- `PanelLocalDominance`: City coverage map
-- `PanelRevenueLeak`: Revenue loss counter with animation
-- `ListRecommendationsAIPP`: Priority-sorted action items
-- `CTAUpgradePlanAIPP`: Persistent upgrade CTA
-- `PanelAlexInterpretation`: Natural language summary (static template, no AI call)
+**New component**: `src/components/alex-conversation/ButtonAlexMuteToggle.tsx`
+- Simple icon toggle button with tooltip
+- Uses `conversation.setVolume` from `useLiveVoice`
 
-### Phase 4 — Admin Dashboard
+### 4. Live Transcription Display
 
-**`/admin/aipp-v2` — PageAdminAIPPv2Dashboard**
-- Recent audits table with scores
-- Score distribution chart
-- Conversion tracking (audit → plan upgrade)
+Show voice activity visually in the chat thread:
 
-### Phase 5 — Routing
+- When Alex speaks → bubble appears with text + small audio wave indicator
+- When user speaks → user bubble appears with real-time partial text
+- Typing indicator shows "Alex écoute..." or "Alex parle..." based on state
 
-Add 3 routes to `router.tsx`:
-- `/audit-aipp` → PageAuditAIPPv2
-- `/audit-aipp/results/:auditId` → PageAuditResultsAIPPv2
-- `/admin/aipp-v2` → PageAdminAIPPv2Dashboard
+**Modified**: `BubbleAlexMessage.tsx` — add optional voice indicator  
+**Modified**: `LoaderAlexThinking.tsx` — contextual label for voice states
 
 ## File Changes
 
-| Action | File |
-|--------|------|
-| Create | Migration SQL (4 tables) |
-| Create | `supabase/functions/aipp-v2-analyze/index.ts` |
-| Create | `src/pages/PageAuditAIPPv2.tsx` |
-| Create | `src/pages/PageAuditResultsAIPPv2.tsx` |
-| Create | `src/pages/admin/PageAdminAIPPv2Dashboard.tsx` |
-| Create | `src/components/aipp-v2/CardScoreGlobalAIPP.tsx` |
-| Create | `src/components/aipp-v2/WidgetRadarScoreBreakdown.tsx` |
-| Create | `src/components/aipp-v2/PanelAEOReadiness.tsx` |
-| Create | `src/components/aipp-v2/PanelEntityAuthority.tsx` |
-| Create | `src/components/aipp-v2/PanelConversionIntelligence.tsx` |
-| Create | `src/components/aipp-v2/PanelLocalDominance.tsx` |
-| Create | `src/components/aipp-v2/PanelRevenueLeak.tsx` |
-| Create | `src/components/aipp-v2/ListRecommendationsAIPP.tsx` |
-| Create | `src/components/aipp-v2/CTAUpgradePlanAIPP.tsx` |
-| Create | `src/components/aipp-v2/HeroSectionAuditAIVisibility.tsx` |
-| Create | `src/components/aipp-v2/PanelAlexInterpretation.tsx` |
-| Create | `src/hooks/useAIPPv2Audit.ts` |
-| Modify | `src/app/router.tsx` (add routes) |
+| Action | File | Purpose |
+|--------|------|---------|
+| Modify | `src/hooks/useAlexConversationLite.ts` | Wire to `alex-process-turn` edge function with fallback |
+| Modify | `src/pages/PageHomeAlexConversationalLite.tsx` | Integrate `useLiveVoice` inline, feed transcripts to thread, add mute |
+| Modify | `src/components/alex-conversation/InputAlexDockExpanded.tsx` | Add mute toggle button |
+| Create | `src/components/alex-conversation/ButtonAlexMuteToggle.tsx` | Volume mute/unmute toggle |
+| Modify | `src/components/alex-conversation/HeroSectionAlexOrbLite.tsx` | Show voice status (speaking/listening) |
 
-## Constraints
+## Key Decisions
 
-- Reuses existing `aipp-real-scan` Firecrawl logic — no duplication
-- Does not modify existing AIPP scoring for contractors or prospects
-- Mobile-first, dark premium theme
-- Mock fallback if Firecrawl unavailable
-- fr-CA first
+- **No new tables** — reuses existing `alex_sessions`, `alex_messages`, `alex_intents`
+- **No new edge functions** — reuses `alex-process-turn` and `elevenlabs-conversation-token`
+- **Graceful degradation** — if edge function fails, falls back to client-side mock logic
+- **Volume control via ElevenLabs SDK** — `setVolume({ volume: 0 })` for mute, no custom audio pipeline needed
 
