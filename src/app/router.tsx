@@ -506,7 +506,7 @@ const PageEmailAuditCenter = lazy(() => import("@/pages/admin/email-health/PageE
 const PageEmailAuditHistory = lazy(() => import("@/pages/admin/email-health/PageEmailAuditHistory"));
 const PageAdminEmailControlCenter = lazy(() => import("@/pages/admin/email-health/PageAdminEmailControlCenter"));
 const PageAdminEmailWarmup = lazy(() => import("@/pages/admin/email-health/PageAdminEmailWarmup"));
-const PageAdminEmailLogs = lazy(() => import("@/pages/admin/email-health/PageAdminEmailLogs"));
+const PageAdminEmailDeliveryLogs = lazy(() => import("@/pages/admin/email-health/PageAdminEmailLogs"));
 
 const PageEntrepreneurJoin = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurJoin"));
 const PageEntrepreneurHowItWorks = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurHowItWorks"));
@@ -1054,7 +1054,7 @@ export const AppRouter = () => (
         <Route path="/admin/email-audit-history" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailAuditHistory /></Suspense></ProtectedRoute>} />
         <Route path="/admin/email-control-center" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailControlCenter /></Suspense></ProtectedRoute>} />
         <Route path="/admin/email-warmup" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailWarmup /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/email-logs" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailLogs /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/email-delivery-logs" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailDeliveryLogs /></Suspense></ProtectedRoute>} />
         <Route path="/admin/acquisition-pipeline" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminPipelineProspects /></Suspense></ProtectedRoute>} />
         <Route path="/services/:entitySlug/:citySlug" element={<PageServiceEntityLanding />} />
         <Route path="/audit/:slug" element={<AuditLandingPage />} />
