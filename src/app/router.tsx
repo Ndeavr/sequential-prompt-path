@@ -238,6 +238,11 @@ const PageAdminAlexResponseAudit = lazy(() => import("@/pages/admin/PageAdminAle
 const PageAdminRecruitmentCommandCenter = lazy(() => import("@/pages/admin/PageAdminRecruitmentCommandCenter"));
 const PageAdminDataExtractionMonitor = lazy(() => import("@/pages/admin/PageAdminDataExtractionMonitor"));
 const PageAdminEmailCampaigns = lazy(() => import("@/pages/admin/PageAdminEmailCampaigns"));
+
+// 36h Strike Engine
+const PageAdmin36hStrikeDashboard = lazy(() => import("@/pages/admin/PageAdmin36hStrikeDashboard"));
+const PageAdminStrikeLiveFeed = lazy(() => import("@/pages/admin/PageAdminStrikeLiveFeed"));
+const PageAdminStrikeAdjustments = lazy(() => import("@/pages/admin/PageAdminStrikeAdjustments"));
 const PageAdminContractorConversionFunnel = lazy(() => import("@/pages/admin/PageAdminContractorConversionFunnel"));
 
 // Recruitment Automation Engine
@@ -1191,6 +1196,11 @@ export const AppRouter = () => (
          <Route path="/admin/data-extraction-monitor" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminDataExtractionMonitor /></UniversalRouteGuard>} />
          <Route path="/admin/email-campaigns" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminEmailCampaigns /></UniversalRouteGuard>} />
          <Route path="/admin/contractor-conversion-funnel" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminContractorConversionFunnel /></UniversalRouteGuard>} />
+
+         {/* 36h Strike Engine */}
+         <Route path="/admin/36h-strike-dashboard" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdmin36hStrikeDashboard /></UniversalRouteGuard>} />
+         <Route path="/admin/strike-live-feed" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminStrikeLiveFeed /></UniversalRouteGuard>} />
+         <Route path="/admin/strike-adjustments" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminStrikeAdjustments /></UniversalRouteGuard>} />
 
          {/* Recruitment Automation Engine — Admin */}
          <Route path="/admin/recruitment" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentOverview /></UniversalRouteGuard>} />
