@@ -1186,6 +1186,12 @@ export const AppRouter = () => (
          {/* Memory Center */}
          <Route path="/ma-memoire" element={<PageMemoryCenter />} />
 
+         {/* Autonomous Recruitment Engine — Command Pages */}
+         <Route path="/admin/recruitment-command-center" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentCommandCenter /></UniversalRouteGuard>} />
+         <Route path="/admin/data-extraction-monitor" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminDataExtractionMonitor /></UniversalRouteGuard>} />
+         <Route path="/admin/email-campaigns" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminEmailCampaigns /></UniversalRouteGuard>} />
+         <Route path="/admin/contractor-conversion-funnel" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminContractorConversionFunnel /></UniversalRouteGuard>} />
+
          {/* Recruitment Automation Engine — Admin */}
          <Route path="/admin/recruitment" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentOverview /></UniversalRouteGuard>} />
          <Route path="/admin/recruitment/clusters" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentClusters /></UniversalRouteGuard>} />
