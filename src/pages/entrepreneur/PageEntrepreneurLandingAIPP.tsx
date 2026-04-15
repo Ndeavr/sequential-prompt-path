@@ -1,31 +1,19 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Search, Zap, TrendingUp, Shield, ArrowRight, Sparkles, CreditCard } from "lucide-react";
-import { z } from "zod";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, Zap, TrendingUp, Shield, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { createFlowSession, getActiveFlowSession, getStepRoute } from "@/services/flowStateService";
-
-const analyzeSchema = z.object({
-  businessName: z.string().trim().min(2).max(120),
-  city: z.string().trim().min(2).max(120),
-  website: z.union([
-    z.literal(""),
-    z.string().trim().url().max(255),
-  ]),
-});
+import ImportSourceConnectorGrid, { type ImportSource } from "@/components/business-import/ImportSourceConnectorGrid";
+import BusinessImportForm, { type ImportFormData } from "@/components/business-import/BusinessImportForm";
 
 const PageEntrepreneurLandingAIPP = () => {
   const navigate = useNavigate();
-  const [businessName, setBusinessName] = useState("");
-  const [city, setCity] = useState("");
-  const [website, setWebsite] = useState("");
+  const [selectedSource, setSelectedSource] = useState<ImportSource | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Check for active flow session — redirect if exists
   useEffect(() => {
     getActiveFlowSession("AIPP_ANALYSIS").then((session) => {
       if (session && session.step !== "loading") {
@@ -34,36 +22,28 @@ const PageEntrepreneurLandingAIPP = () => {
     });
   }, [navigate]);
 
-  const handleAnalyze = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleImportSubmit = async (data: ImportFormData) => {
+    const cleanBusinessName = (data.business_name || "").trim();
+    const cleanCity = (data.city || "").trim();
+    const cleanWebsite = (data.url || "").trim() || null;
 
-    const parsed = analyzeSchema.safeParse({
-      businessName,
-      city,
-      website: website.trim(),
-    });
-
-    if (!parsed.success) {
-      toast.error("Vérifiez le nom, la ville et l’URL du site web.");
+    if (!cleanBusinessName && !data.rbq_number && !data.neq_number && !data.phone && !data.url && !data.business_card_file) {
+      toast.error("Remplissez au moins un champ.");
       return;
     }
-
-    const cleanBusinessName = parsed.data.businessName.trim();
-    const cleanCity = parsed.data.city.trim();
-    const cleanWebsite = parsed.data.website.trim() || null;
 
     setLoading(true);
     try {
       const leadId = crypto.randomUUID();
-
-      // Generate score first so UX never blocks on analytics persistence
       const score = Math.floor(Math.random() * 35) + 25;
       const visibility = score >= 55 ? "moyenne" : score >= 40 ? "faible" : "très faible";
       const oppMin = Math.floor(score / 5) + 3;
       const oppMax = oppMin + Math.floor(Math.random() * 15) + 8;
 
+      const displayName = cleanBusinessName || data.rbq_number || data.neq_number || data.phone || data.url || "Entreprise";
+
       sessionStorage.setItem("unpro_lead_id", leadId);
-      sessionStorage.setItem("unpro_lead_name", cleanBusinessName);
+      sessionStorage.setItem("unpro_lead_name", displayName);
       sessionStorage.setItem("unpro_lead_city", cleanCity);
       sessionStorage.setItem("unpro_lead_score", String(score));
       sessionStorage.setItem("unpro_lead_visibility", visibility);
@@ -74,9 +54,13 @@ const PageEntrepreneurLandingAIPP = () => {
       await createFlowSession({
         flowType: "AIPP_ANALYSIS",
         inputPayload: {
-          company_name: cleanBusinessName,
+          company_name: displayName,
           city: cleanCity,
           website: cleanWebsite,
+          import_source: data.source,
+          rbq_number: data.rbq_number || null,
+          neq_number: data.neq_number || null,
+          phone: data.phone || null,
         },
         userId: user?.id || null,
         leadId,
@@ -85,31 +69,21 @@ const PageEntrepreneurLandingAIPP = () => {
       navigate("/entrepreneur/analysis/loading");
 
       void (async () => {
-        let leadSaved = false;
-
         try {
           const { error } = await supabase
             .from("entrepreneur_leads")
             .insert({
               id: leadId,
-              business_name: cleanBusinessName,
-              city: cleanCity,
+              business_name: displayName,
+              city: cleanCity || null,
               website: cleanWebsite,
-              source: "funnel",
+              source: `funnel_${data.source}`,
             });
-
-          if (error) {
-            console.error("AIPP lead insert failed:", error);
-            return;
-          }
-
-          leadSaved = true;
-        } catch (leadError) {
-          console.error("AIPP lead insert exception:", leadError);
+          if (error) console.error("AIPP lead insert failed:", error);
+        } catch (e) {
+          console.error("AIPP lead insert exception:", e);
           return;
         }
-
-        if (!leadSaved) return;
 
         try {
           const { error: scoreErr } = await supabase
@@ -127,16 +101,12 @@ const PageEntrepreneurLandingAIPP = () => {
                 conversion: Math.floor(Math.random() * 35) + 15,
               },
             });
-
-          if (scoreErr) {
-            console.error("AIPP score insert failed:", scoreErr);
-          }
-        } catch (scoreError) {
-          console.error("AIPP score insert exception:", scoreError);
+          if (scoreErr) console.error("AIPP score insert failed:", scoreErr);
+        } catch (e) {
+          console.error("AIPP score insert exception:", e);
         }
       })();
-    } catch (error) {
-      console.error("AIPP analysis failed:", error);
+    } catch {
       toast.error("Une erreur est survenue. Réessayez.");
     } finally {
       setLoading(false);
@@ -167,79 +137,44 @@ const PageEntrepreneurLandingAIPP = () => {
               <span className="text-primary">l'IA vous perçoit</span>
             </h1>
 
-            <p className="text-lg text-muted-foreground mb-6 max-w-lg mx-auto">
-              Votre entreprise est-elle visible… ou invisible ? Obtenez votre score AIPP en 10 secondes.
+            <p className="text-lg text-muted-foreground mb-8 max-w-lg mx-auto">
+              {selectedSource
+                ? "Remplissez les informations pour lancer l'analyse."
+                : "Votre entreprise est-elle visible… ou invisible ? Obtenez votre score AIPP en 10 secondes."}
             </p>
-
-            {/* Business card import shortcut */}
-            <button
-              type="button"
-              onClick={() => navigate("/business-card-import")}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border bg-card/60 backdrop-blur-sm text-sm font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-primary/5 transition-all duration-200 mb-10 group"
-            >
-              <CreditCard className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
-              Importer une carte d'affaires
-              <ArrowRight className="w-3.5 h-3.5 opacity-50 group-hover:opacity-100 transition-opacity" />
-            </button>
           </motion.div>
 
-          {/* Form */}
-          <motion.form
-            onSubmit={handleAnalyze}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="bg-card rounded-2xl p-6 md:p-8 shadow-xl border border-border space-y-4 text-left"
-          >
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Nom de votre entreprise</label>
-              <Input
-                placeholder="Ex: Toitures Dupont Inc."
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                className="h-12 text-base"
-                required
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Ville</label>
-              <Input
-                placeholder="Ex: Montréal"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                className="h-12 text-base"
-                required
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Site web <span className="text-muted-foreground">(optionnel)</span></label>
-              <Input
-                placeholder="https://www.monentreprise.ca"
-                value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-                className="h-12 text-base"
-              />
-            </div>
-
-            <Button
-              type="submit"
-              disabled={loading}
-              size="lg"
-              className="w-full h-14 text-lg font-bold gap-2 rounded-xl"
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                  Analyse en cours…
-                </>
-              ) : (
-                <>
-                  <Search className="w-5 h-5" />
-                  Analyser mon entreprise
-                </>
-              )}
-            </Button>
-          </motion.form>
+          {/* Import Grid / Form */}
+          <AnimatePresence mode="wait">
+            {!selectedSource ? (
+              <motion.div
+                key="grid"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.4 }}
+                className="text-left"
+              >
+                <ImportSourceConnectorGrid onSelectSource={setSelectedSource} />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="form"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.4 }}
+                className="text-left"
+              >
+                <BusinessImportForm
+                  source={selectedSource}
+                  onSubmit={handleImportSubmit}
+                  onBack={() => setSelectedSource(null)}
+                  isLoading={loading}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </section>
 
