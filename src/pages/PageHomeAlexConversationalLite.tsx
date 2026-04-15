@@ -16,6 +16,7 @@ import { useAlexVoiceLockedStore } from "@/stores/alexVoiceLockedStore";
 import { audioEngine } from "@/services/audioEngineUNPRO";
 import { detectIntentAndLocation, buildAlexOpening, POPULAR_SEARCH_INTENTS } from "@/services/intentLocationDetector";
 import HeroSectionAlexOrbLite from "@/components/alex-conversation/HeroSectionAlexOrbLite";
+import LayoutAlexCinematicShell from "@/components/alex-conversation/LayoutAlexCinematicShell";
 import InputAlexDockExpanded from "@/components/alex-conversation/InputAlexDockExpanded";
 import BubbleAlexMessage from "@/components/alex-conversation/BubbleAlexMessage";
 import BubbleUserMessage from "@/components/alex-conversation/BubbleUserMessage";
