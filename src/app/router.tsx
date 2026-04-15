@@ -1107,6 +1107,23 @@ export const AppRouter = () => (
          {/* Memory Center */}
          <Route path="/ma-memoire" element={<PageMemoryCenter />} />
 
+         {/* Recruitment Automation Engine — Admin */}
+         <Route path="/admin/recruitment" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentOverview /></UniversalRouteGuard>} />
+         <Route path="/admin/recruitment/clusters" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentClusters /></UniversalRouteGuard>} />
+         <Route path="/admin/recruitment/campaigns" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentCampaigns /></UniversalRouteGuard>} />
+         <Route path="/admin/recruitment/prospects" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentProspects /></UniversalRouteGuard>} />
+         <Route path="/admin/recruitment/sequences" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentSequences /></UniversalRouteGuard>} />
+         <Route path="/admin/recruitment/onboarding" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentOnboarding /></UniversalRouteGuard>} />
+         <Route path="/admin/recruitment/payments" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentPayments /></UniversalRouteGuard>} />
+         <Route path="/admin/recruitment/logs" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentLogs /></UniversalRouteGuard>} />
+
+         {/* Recruitment — Prospect-facing (public) */}
+         <Route path="/join/:token" element={<PageContractorJoinOffer />} />
+         <Route path="/join/:token/checkout" element={<PageContractorJoinCheckout />} />
+         <Route path="/join/:token/success" element={<PageContractorJoinSuccess />} />
+         <Route path="/join/:token/resume" element={<PageContractorJoinResume />} />
+         <Route path="/join/access/:magicToken" element={<PageContractorPublicMagicAccess />} />
+
          {/* Catch-all: try fallback, then 404 */}
          <Route path="*" element={<FallbackRoutePage />} />
       </Routes>
