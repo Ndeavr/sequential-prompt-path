@@ -491,6 +491,19 @@ export default function DashboardProductionVerificationCenter() {
             <WidgetLiveConversionFunnel steps={funnelSteps} />
           </div>
 
+          {/* Deep Validation Panels */}
+          <div className="grid grid-cols-1 gap-4">
+            <PanelGoogleBusinessRealTest />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <PanelOutboundDeliveryValidation />
+              <PanelAlexFrenchFirstValidation />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <PanelRealStripeValidation />
+              <PanelActivationFlowValidation />
+            </div>
+          </div>
+
           {/* Timeline */}
           <Card>
             <CardHeader className="pb-2">
