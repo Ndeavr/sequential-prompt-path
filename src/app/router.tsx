@@ -245,6 +245,9 @@ const PageAdminStrikeLiveFeed = lazy(() => import("@/pages/admin/PageAdminStrike
 const PageAdminStrikeAdjustments = lazy(() => import("@/pages/admin/PageAdminStrikeAdjustments"));
 const PageAdminContractorConversionFunnel = lazy(() => import("@/pages/admin/PageAdminContractorConversionFunnel"));
 
+// Stripe Live Verification
+const PageAdminStripeVerificationCenter = lazy(() => import("@/pages/admin/PageAdminStripeVerificationCenter"));
+
 // Recruitment Automation Engine
 const PageAdminRecruitmentOverview = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentOverview"));
 const PageAdminRecruitmentClusters = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentClusters"));
