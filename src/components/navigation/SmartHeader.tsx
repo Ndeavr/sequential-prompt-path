@@ -101,18 +101,10 @@ const SmartHeader = () => {
 
             {/* Zone 1 — Brand */}
             <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0" style={{ minWidth: "fit-content" }}>
-              {/* Mobile: wordmark maximized | Desktop: wordmark standard */}
               <img
                 src={unproLogoWordmark}
                 alt="UNPRO"
-                className="h-10 sm:h-9 lg:h-10 w-auto transition-all duration-300 group-hover:scale-105 hidden xs:block"
-                draggable={false}
-              />
-              {/* Very small screens: icon only */}
-              <img
-                src={unproLogoIcon}
-                alt="UNPRO"
-                className="h-9 w-auto transition-all duration-300 group-hover:scale-105 block xs:hidden"
+                className="h-10 sm:h-9 lg:h-10 w-auto transition-all duration-300 group-hover:scale-105"
                 draggable={false}
               />
             </Link>
