@@ -53,6 +53,25 @@ const BANNED_PATTERNS: Array<{
     violation: "ACKNOWLEDGE_WITHOUT_UNDERSTANDING",
     replacement: "Pouvez-vous me donner plus de détails ?",
   },
+  // ── Plan Truth Engine Rules ──
+  {
+    pattern: /gestion de projet|facturation|crm|suivi de chantier/i,
+    condition: () => true,
+    violation: "HALLUCINATION_NONEXISTENT_FEATURE",
+    replacement: "UNPRO vous connecte avec des rendez-vous exclusifs qualifiés par IA. Voulez-vous voir les plans disponibles ?",
+  },
+  {
+    pattern: /comptabilit[ée]|paie|inventaire|erp|feuille de temps/i,
+    condition: () => true,
+    violation: "HALLUCINATION_NONEXISTENT_FEATURE",
+    replacement: "UNPRO se concentre sur la génération de rendez-vous exclusifs et le matching IA. Comment puis-je vous aider ?",
+  },
+  {
+    pattern: /gestion\s+des?\s+(?:employ[ée]s|factures|documents)|bon\s+de\s+commande/i,
+    condition: () => true,
+    violation: "HALLUCINATION_ADMIN_TOOLS",
+    replacement: "UNPRO optimise vos revenus via des rendez-vous exclusifs. Voulez-vous découvrir nos plans ?",
+  },
 ];
 
 // Generic filler messages to suppress
