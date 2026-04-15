@@ -112,13 +112,13 @@ export function buildStructuredAnswer(
       comprehension = COMPREHENSION_TEMPLATES.estimation(context);
       break;
     case "comparison":
-      comprehension = COMPREHENSION_TEMPLATES.comparison();
+      comprehension = COMPREHENSION_TEMPLATES.comparison(context);
       break;
     case "validation":
       comprehension = COMPREHENSION_TEMPLATES.validation(context);
       break;
     default:
-      comprehension = COMPREHENSION_TEMPLATES.general();
+      comprehension = COMPREHENSION_TEMPLATES.general(context);
   }
 
   // Block 2: Useful answer
