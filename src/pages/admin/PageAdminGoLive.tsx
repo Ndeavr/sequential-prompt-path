@@ -1,9 +1,13 @@
 import { useState } from "react";
 import PanelGoogleBusinessSearchTester from "@/components/go-live/PanelGoogleBusinessSearchTester";
 import CardBusinessImportPreview from "@/components/go-live/CardBusinessImportPreview";
+import DashboardGoLiveControlCenter from "@/components/go-live/DashboardGoLiveControlCenter";
+import WidgetConversionByStep from "@/components/go-live/WidgetConversionByStep";
+import TimelineContractorActivationFlow from "@/components/go-live/TimelineContractorActivationFlow";
+import PanelOutboundSequenceStatus from "@/components/go-live/PanelOutboundSequenceStatus";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity, CheckCircle2, AlertTriangle, XCircle, Search } from "lucide-react";
+import { Activity, CheckCircle2, AlertTriangle, Search, CreditCard } from "lucide-react";
 import type { GmbCandidate } from "@/components/go-live/FormGoogleBusinessLookup";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +25,6 @@ export default function PageAdminGoLive() {
     if (!importedCandidate) return;
     setIsImporting(true);
     try {
-      // Save to contractor_import_snapshots
       const { error } = await supabase.from("contractor_import_snapshots").insert({
         business_name: importedCandidate.name,
         google_place_id: importedCandidate.place_id,
@@ -84,7 +87,7 @@ export default function PageAdminGoLive() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6 space-y-6 max-w-4xl mx-auto">
+    <div className="min-h-screen bg-background p-4 sm:p-6 space-y-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="space-y-1">
         <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
@@ -92,7 +95,7 @@ export default function PageAdminGoLive() {
           Go-Live Control Center
         </h1>
         <p className="text-sm text-muted-foreground">
-          Tableau de bord opérationnel pour le funnel contractor
+          Tableau de bord opérationnel — funnel contractor complet
         </p>
       </div>
 
@@ -102,7 +105,7 @@ export default function PageAdminGoLive() {
           { label: "GMB Search", status: "ok", icon: Search },
           { label: "Import", status: "ok", icon: CheckCircle2 },
           { label: "Outbound", status: "warning", icon: AlertTriangle },
-          { label: "Stripe", status: "ok", icon: CheckCircle2 },
+          { label: "Stripe", status: "ok", icon: CreditCard },
         ].map((item) => (
           <Card key={item.label}>
             <CardContent className="p-3 flex items-center gap-2">
@@ -116,20 +119,38 @@ export default function PageAdminGoLive() {
         ))}
       </div>
 
+      {/* Real-time Metrics Dashboard */}
+      <DashboardGoLiveControlCenter />
+
+      {/* Conversion Funnel + Timeline */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <WidgetConversionByStep />
+        <TimelineContractorActivationFlow />
+      </div>
+
+      {/* Outbound Status */}
+      <PanelOutboundSequenceStatus />
+
       {/* GMB Search Tester */}
-      {importedCandidate ? (
-        <CardBusinessImportPreview
-          candidate={importedCandidate}
-          onConfirm={handleConfirmImport}
-          onCancel={() => setImportedCandidate(null)}
-          isImporting={isImporting}
-        />
-      ) : (
-        <PanelGoogleBusinessSearchTester
-          onImport={handleImport}
-          onManualImport={handleManualImport}
-        />
-      )}
+      <div>
+        <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+          <Search className="h-4 w-4 text-primary" />
+          Testeur de recherche GMB
+        </h2>
+        {importedCandidate ? (
+          <CardBusinessImportPreview
+            candidate={importedCandidate}
+            onConfirm={handleConfirmImport}
+            onCancel={() => setImportedCandidate(null)}
+            isImporting={isImporting}
+          />
+        ) : (
+          <PanelGoogleBusinessSearchTester
+            onImport={handleImport}
+            onManualImport={handleManualImport}
+          />
+        )}
+      </div>
     </div>
   );
 }
