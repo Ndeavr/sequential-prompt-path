@@ -238,6 +238,11 @@ const PageAdminAlexResponseAudit = lazy(() => import("@/pages/admin/PageAdminAle
 const PageAdminRecruitmentCommandCenter = lazy(() => import("@/pages/admin/PageAdminRecruitmentCommandCenter"));
 const PageAdminDataExtractionMonitor = lazy(() => import("@/pages/admin/PageAdminDataExtractionMonitor"));
 const PageAdminEmailCampaigns = lazy(() => import("@/pages/admin/PageAdminEmailCampaigns"));
+
+// 36h Strike Engine
+const PageAdmin36hStrikeDashboard = lazy(() => import("@/pages/admin/PageAdmin36hStrikeDashboard"));
+const PageAdminStrikeLiveFeed = lazy(() => import("@/pages/admin/PageAdminStrikeLiveFeed"));
+const PageAdminStrikeAdjustments = lazy(() => import("@/pages/admin/PageAdminStrikeAdjustments"));
 const PageAdminContractorConversionFunnel = lazy(() => import("@/pages/admin/PageAdminContractorConversionFunnel"));
 
 // Recruitment Automation Engine
