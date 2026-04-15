@@ -10728,6 +10728,83 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_checkout_sessions: {
+        Row: {
+          amount_total: number
+          checkout_status: string
+          contractor_id: string | null
+          coupon_code: string | null
+          created_at: string
+          currency: string
+          id: string
+          metadata_json: Json | null
+          payment_status: string
+          plan_code: string | null
+          stripe_checkout_session_id: string | null
+          stripe_customer_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_total?: number
+          checkout_status?: string
+          contractor_id?: string | null
+          coupon_code?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata_json?: Json | null
+          payment_status?: string
+          plan_code?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_customer_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_total?: number
+          checkout_status?: string
+          contractor_id?: string | null
+          coupon_code?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata_json?: Json | null
+          payment_status?: string
+          plan_code?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_customer_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_checkout_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_checkout_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_checkout_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_checkout_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       billing_events_log: {
         Row: {
           created_at: string | null
@@ -10758,6 +10835,42 @@ export type Database = {
           payload_json?: Json | null
           processing_status?: string | null
           stripe_event_id?: string | null
+        }
+        Relationships: []
+      }
+      billing_webhook_events: {
+        Row: {
+          delivery_status: string
+          event_type: string
+          id: string
+          livemode: boolean | null
+          payload_json: Json | null
+          processed_at: string | null
+          processing_error: string | null
+          received_at: string
+          stripe_event_id: string
+        }
+        Insert: {
+          delivery_status?: string
+          event_type: string
+          id?: string
+          livemode?: boolean | null
+          payload_json?: Json | null
+          processed_at?: string | null
+          processing_error?: string | null
+          received_at?: string
+          stripe_event_id: string
+        }
+        Update: {
+          delivery_status?: string
+          event_type?: string
+          id?: string
+          livemode?: boolean | null
+          payload_json?: Json | null
+          processed_at?: string | null
+          processing_error?: string | null
+          received_at?: string
+          stripe_event_id?: string
         }
         Relationships: []
       }
