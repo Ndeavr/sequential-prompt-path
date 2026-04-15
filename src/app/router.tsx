@@ -65,6 +65,7 @@ const PageCheckoutSuccess = lazy(() => import("@/pages/checkout/PageCheckoutSucc
 const PageActivationStart = lazy(() => import("@/pages/checkout/PageActivationStart"));
 const PageCheckoutNativeScrollable = lazy(() => import("@/pages/checkout/PageCheckoutNativeScrollable"));
 const LandingContractorAIActivation = lazy(() => import("@/pages/acquisition/LandingContractorAIActivation"));
+const PageAdminPipelineProspects = lazy(() => import("@/pages/admin/acquisition/PageAdminPipelineProspects"));
 const Search = lazy(() => import("@/pages/Search"));
 const ContractorProfile = lazy(() => import("@/pages/ContractorProfile"));
 const Login = lazy(() => import("@/pages/Login"));
@@ -1012,6 +1013,7 @@ export const AppRouter = () => (
         <Route path="/admin/affiliates" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAffiliateDashboard /></Suspense></ProtectedRoute>} />
         <Route path="/admin/email-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailAuditCenter /></Suspense></ProtectedRoute>} />
         <Route path="/admin/email-audit-history" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailAuditHistory /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/acquisition-pipeline" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminPipelineProspects /></Suspense></ProtectedRoute>} />
         <Route path="/services/:entitySlug/:citySlug" element={<PageServiceEntityLanding />} />
         <Route path="/audit/:slug" element={<AuditLandingPage />} />
         <Route path="/articles/:slug" element={<SeoArticlePage />} />
