@@ -18018,6 +18018,53 @@ export type Database = {
         }
         Relationships: []
       }
+      contractor_import_snapshots: {
+        Row: {
+          aipp_preview_payload: Json | null
+          business_name: string
+          business_payload: Json | null
+          created_at: string
+          enrichment_payload: Json | null
+          google_place_id: string | null
+          id: string
+          import_source: string | null
+          onboarding_session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          aipp_preview_payload?: Json | null
+          business_name: string
+          business_payload?: Json | null
+          created_at?: string
+          enrichment_payload?: Json | null
+          google_place_id?: string | null
+          id?: string
+          import_source?: string | null
+          onboarding_session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          aipp_preview_payload?: Json | null
+          business_name?: string
+          business_payload?: Json | null
+          created_at?: string
+          enrichment_payload?: Json | null
+          google_place_id?: string | null
+          id?: string
+          import_source?: string | null
+          onboarding_session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_import_snapshots_onboarding_session_id_fkey"
+            columns: ["onboarding_session_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_onboarding_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_import_sources: {
         Row: {
           confidence_score: number | null
@@ -19374,6 +19421,62 @@ export type Database = {
           plan_name?: string
         }
         Relationships: []
+      }
+      contractor_plan_recommendations: {
+        Row: {
+          appointment_capacity: number | null
+          average_job_value: number | null
+          category: string | null
+          close_rate: number | null
+          created_at: string
+          explanation_payload: Json | null
+          id: string
+          onboarding_session_id: string | null
+          recommended_plan: string
+          required_appointments: number | null
+          target_revenue: number | null
+          territory: string | null
+          user_id: string | null
+        }
+        Insert: {
+          appointment_capacity?: number | null
+          average_job_value?: number | null
+          category?: string | null
+          close_rate?: number | null
+          created_at?: string
+          explanation_payload?: Json | null
+          id?: string
+          onboarding_session_id?: string | null
+          recommended_plan?: string
+          required_appointments?: number | null
+          target_revenue?: number | null
+          territory?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          appointment_capacity?: number | null
+          average_job_value?: number | null
+          category?: string | null
+          close_rate?: number | null
+          created_at?: string
+          explanation_payload?: Json | null
+          id?: string
+          onboarding_session_id?: string | null
+          recommended_plan?: string
+          required_appointments?: number | null
+          target_revenue?: number | null
+          territory?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_plan_recommendations_onboarding_session_id_fkey"
+            columns: ["onboarding_session_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_onboarding_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contractor_plan_sessions: {
         Row: {
@@ -42699,6 +42802,68 @@ export type Database = {
           },
         ]
       }
+      prospect_business_matches: {
+        Row: {
+          all_categories: Json | null
+          business_name: string
+          confidence_score: number | null
+          created_at: string
+          formatted_address: string | null
+          google_place_id: string
+          id: string
+          is_selected: boolean | null
+          phone: string | null
+          primary_category: string | null
+          prospect_import_run_id: string | null
+          rating: number | null
+          raw_payload: Json | null
+          review_count: number | null
+          website: string | null
+        }
+        Insert: {
+          all_categories?: Json | null
+          business_name: string
+          confidence_score?: number | null
+          created_at?: string
+          formatted_address?: string | null
+          google_place_id: string
+          id?: string
+          is_selected?: boolean | null
+          phone?: string | null
+          primary_category?: string | null
+          prospect_import_run_id?: string | null
+          rating?: number | null
+          raw_payload?: Json | null
+          review_count?: number | null
+          website?: string | null
+        }
+        Update: {
+          all_categories?: Json | null
+          business_name?: string
+          confidence_score?: number | null
+          created_at?: string
+          formatted_address?: string | null
+          google_place_id?: string
+          id?: string
+          is_selected?: boolean | null
+          phone?: string | null
+          primary_category?: string | null
+          prospect_import_run_id?: string | null
+          rating?: number | null
+          raw_payload?: Json | null
+          review_count?: number | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_business_matches_prospect_import_run_id_fkey"
+            columns: ["prospect_import_run_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_import_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prospect_categories: {
         Row: {
           category_key: string
@@ -52887,6 +53052,78 @@ export type Database = {
           unit_count?: number | null
           updated_at?: string
           year_built?: number | null
+        }
+        Relationships: []
+      }
+      system_health_checks: {
+        Row: {
+          check_type: string
+          component_name: string
+          created_at: string
+          id: string
+          message: string | null
+          metadata: Json | null
+          metric_value: number | null
+          status: string
+        }
+        Insert: {
+          check_type?: string
+          component_name: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          metric_value?: number | null
+          status?: string
+        }
+        Update: {
+          check_type?: string
+          component_name?: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          metric_value?: number | null
+          status?: string
+        }
+        Relationships: []
+      }
+      system_incidents: {
+        Row: {
+          component_name: string
+          created_at: string
+          details: Json | null
+          id: string
+          incident_type: string
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          status: string
+          summary: string
+        }
+        Insert: {
+          component_name: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          incident_type: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          summary: string
+        }
+        Update: {
+          component_name?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          incident_type?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          summary?: string
         }
         Relationships: []
       }
