@@ -279,6 +279,7 @@ const PageAdminGoLiveIncidents = lazy(() => import("@/pages/admin/PageAdminGoLiv
 const PageAdminGoLiveE2ETests = lazy(() => import("@/pages/admin/PageAdminGoLiveE2ETests"));
 const PageAdminGoLiveFunctionHealth = lazy(() => import("@/pages/admin/PageAdminGoLiveFunctionHealth"));
 const PageAdminGoLivePaymentHealth = lazy(() => import("@/pages/admin/PageAdminGoLivePaymentHealth"));
+const PageAdminNavigation = lazy(() => import("@/pages/admin/PageAdminNavigation"));
 
 // Entrepreneur Onboarding Flow
 const PageOnboardingImport = lazy(() => import("@/pages/entrepreneur/PageOnboardingImport"));
@@ -957,6 +958,7 @@ export const AppRouter = () => (
         <Route path="/admin/go-live/e2e-tests" element={<ProtectedRoute requiredRole="admin"><PageAdminGoLiveE2ETests /></ProtectedRoute>} />
         <Route path="/admin/go-live/function-health" element={<ProtectedRoute requiredRole="admin"><PageAdminGoLiveFunctionHealth /></ProtectedRoute>} />
         <Route path="/admin/go-live/payment-health" element={<ProtectedRoute requiredRole="admin"><PageAdminGoLivePaymentHealth /></ProtectedRoute>} />
+        <Route path="/admin/navigation" element={<ProtectedRoute requiredRole="admin"><PageAdminNavigation /></ProtectedRoute>} />
         <Route path="/admin/home-graph" element={<ProtectedRoute requiredRole="admin"><AdminHomeGraph /></ProtectedRoute>} />
         <Route path="/admin/uos" element={<ProtectedRoute requiredRole="admin"><AdminUOS /></ProtectedRoute>} />
         <Route path="/admin/qa-simulation" element={<ProtectedRoute requiredRole="admin"><PageAdminQASimulation /></ProtectedRoute>} />

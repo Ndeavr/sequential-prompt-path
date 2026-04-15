@@ -11572,6 +11572,48 @@ export type Database = {
         }
         Relationships: []
       }
+      broken_link_events: {
+        Row: {
+          attempted_path: string
+          created_at: string
+          id: string
+          referrer: string | null
+          resolution_type: string
+          resolved_path: string | null
+          source_path: string | null
+          user_agent: string | null
+          user_id: string | null
+          user_role: string | null
+          was_google_entry: boolean
+        }
+        Insert: {
+          attempted_path: string
+          created_at?: string
+          id?: string
+          referrer?: string | null
+          resolution_type?: string
+          resolved_path?: string | null
+          source_path?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          user_role?: string | null
+          was_google_entry?: boolean
+        }
+        Update: {
+          attempted_path?: string
+          created_at?: string
+          id?: string
+          referrer?: string | null
+          resolution_type?: string
+          resolved_path?: string | null
+          source_path?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          user_role?: string | null
+          was_google_entry?: boolean
+        }
+        Relationships: []
+      }
       broker_profiles: {
         Row: {
           agency_name: string | null
@@ -30450,6 +30492,39 @@ export type Database = {
           },
         ]
       }
+      indexed_route_fallbacks: {
+        Row: {
+          created_at: string
+          http_status: number
+          id: string
+          is_active: boolean
+          obsolete_path: string
+          replacement_path: string
+          replacement_reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          http_status?: number
+          id?: string
+          is_active?: boolean
+          obsolete_path: string
+          replacement_path: string
+          replacement_reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          http_status?: number
+          id?: string
+          is_active?: boolean
+          obsolete_path?: string
+          replacement_path?: string
+          replacement_reason?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ingestion_job_items: {
         Row: {
           created_at: string
@@ -47231,6 +47306,78 @@ export type Database = {
           is_allowed?: boolean
           permission_code?: string
           role_code?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      route_access_policies: {
+        Row: {
+          access_type: string
+          allowed_roles: Json
+          created_at: string
+          fallback_strategy: string
+          id: string
+          is_active: boolean
+          noindex: boolean
+          path_pattern: string
+          updated_at: string
+        }
+        Insert: {
+          access_type?: string
+          allowed_roles?: Json
+          created_at?: string
+          fallback_strategy?: string
+          id?: string
+          is_active?: boolean
+          noindex?: boolean
+          path_pattern: string
+          updated_at?: string
+        }
+        Update: {
+          access_type?: string
+          allowed_roles?: Json
+          created_at?: string
+          fallback_strategy?: string
+          id?: string
+          is_active?: boolean
+          noindex?: boolean
+          path_pattern?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      route_redirect_rules: {
+        Row: {
+          created_at: string
+          id: string
+          intent_type: string
+          is_active: boolean
+          priority: number
+          redirect_type: string
+          source_path: string
+          target_path: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          intent_type?: string
+          is_active?: boolean
+          priority?: number
+          redirect_type?: string
+          source_path: string
+          target_path: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          intent_type?: string
+          is_active?: boolean
+          priority?: number
+          redirect_type?: string
+          source_path?: string
+          target_path?: string
           updated_at?: string
         }
         Relationships: []

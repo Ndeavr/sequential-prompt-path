@@ -21,7 +21,8 @@ import SmartCTA from "@/components/cta/SmartCTA";
 import QRShareSheet from "@/components/sharing/QRShareSheet";
 import MenuQuickActionsContextual from "./MenuQuickActionsContextual";
 import DrawerNavigationMobileIntent from "./DrawerNavigationMobileIntent";
-import unproLogoPng from "@/assets/unpro-logo.png";
+import unproLogoWordmark from "@/assets/unpro-logo-wordmark.png";
+import unproLogoIcon from "@/assets/unpro-logo.png";
 import type { UserRole } from "@/types/navigation";
 
 const guestMegaKeys = [
@@ -100,7 +101,20 @@ const SmartHeader = () => {
 
             {/* Zone 1 — Brand */}
             <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0" style={{ minWidth: "fit-content" }}>
-              <img src={unproLogoPng} alt="UNPRO" className="h-12 w-auto transition-all duration-300 group-hover:scale-105" />
+              {/* Mobile: wordmark maximized | Desktop: wordmark standard */}
+              <img
+                src={unproLogoWordmark}
+                alt="UNPRO"
+                className="h-10 sm:h-9 lg:h-10 w-auto transition-all duration-300 group-hover:scale-105 hidden xs:block"
+                draggable={false}
+              />
+              {/* Very small screens: icon only */}
+              <img
+                src={unproLogoIcon}
+                alt="UNPRO"
+                className="h-9 w-auto transition-all duration-300 group-hover:scale-105 block xs:hidden"
+                draggable={false}
+              />
             </Link>
 
             {/* Zone 2 — Desktop main nav */}

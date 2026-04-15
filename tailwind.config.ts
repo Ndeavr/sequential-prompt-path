@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      screens: {
+        "xs": "375px",
+      },
       fontFamily: {
         sans: ["Manrope", "system-ui", "-apple-system", "sans-serif"],
         display: ["Space Grotesk", "Manrope", "system-ui", "sans-serif"],
