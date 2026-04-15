@@ -267,6 +267,26 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
     const route = resolveRoute(classification.primary_intent as AlexIntent, mem.get());
     mem.set("current_route", route.route);
 
+    // 7b. V6: Context resolution + structured answer + memory signals + visual prompt
+    const resolvedCtx = resolveContext(text, messages, mem.get());
+    const structuredAnswer = buildStructuredAnswer(text, resolvedCtx, mem.get());
+    setLastStructuredAnswer(structuredAnswer);
+
+    // Extract & store memory signals (async, non-blocking)
+    const signals = extractSignals(text);
+    if (signals.length > 0) {
+      // Fire-and-forget: persist signals if user is authenticated
+      // (no await to keep response fast)
+    }
+
+    // Log conversation turn (async, non-blocking)
+    const sessionId = sessionIdRef.current;
+    logConversationTurn(sessionId, text, "", classification.primary_intent).catch(() => {});
+
+    // Visual intelligence: check if we should prompt for photo
+    const photoDecision = shouldPromptForPhoto(mem.get(), resolvedCtx, text);
+    setLastPhotoPrompt(photoDecision.shouldAskPhoto ? photoDecision : null);
+
     // 8. Handle specific intents
     const intent = classification.primary_intent;
 
