@@ -272,6 +272,9 @@ const AdminSalesAnalyticsPage = lazy(() => import("@/pages/admin/AdminSalesAnaly
 const HomeownerVoiceEntryPage = lazy(() => import("@/pages/homeowner/HomeownerVoiceEntryPage"));
 const AdminHomeownerAnalyticsPage = lazy(() => import("@/pages/admin/AdminHomeownerAnalyticsPage"));
 
+// Go-Live
+const PageAdminGoLive = lazy(() => import("@/pages/admin/PageAdminGoLive"));
+
 // Blog
 const BlogIndexPage = lazy(() => import("@/pages/blog/BlogIndexPage"));
 const BlogArticlePage = lazy(() => import("@/pages/blog/BlogArticlePage"));
