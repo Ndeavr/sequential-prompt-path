@@ -126,9 +126,9 @@ export default function PageAlexConversationAnimated() {
         return;
       }
 
-      // Don't add thinking/wait to visible steps
-      if (step.type !== "thinking" && step.type !== "wait_user") {
-        setVisibleSteps(prev => [...prev, step as FlowStep]);
+      // Don't add thinking to visible steps
+      if ((step.type as string) !== "thinking") {
+        setVisibleSteps(prev => [...prev, step]);
       }
 
       // Clear thinking status after a beat
