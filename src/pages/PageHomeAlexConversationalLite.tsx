@@ -129,15 +129,15 @@ export default function PageHomeAlexConversationalLite() {
     return combined;
   }, [messages, voiceMessages]);
 
-  // Apply mute state when it changes
+  // Apply mute state via ElevenLabs volume control
   useEffect(() => {
-    if (voice.isActive) {
-      // Access the conversation object to set volume
-      // useLiveVoice doesn't expose setVolume directly, so we use a workaround
-      // The mute is handled at the audio output level
+    if (voice.isActive && voice.conversation) {
+      try {
+        voice.conversation.setVolume({ volume: isVoiceMuted ? 0 : 1 });
+      } catch {}
     }
     try { localStorage.setItem("alex-voice-muted", String(isVoiceMuted)); } catch {}
-  }, [isVoiceMuted, voice.isActive]);
+  }, [isVoiceMuted, voice.isActive, voice.conversation]);
 
   const handleMuteToggle = useCallback(() => {
     setIsVoiceMuted(prev => !prev);
