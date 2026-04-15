@@ -282,6 +282,11 @@ const PageAdminGoLiveFunctionHealth = lazy(() => import("@/pages/admin/PageAdmin
 const PageAdminGoLivePaymentHealth = lazy(() => import("@/pages/admin/PageAdminGoLivePaymentHealth"));
 const PageAdminNavigation = lazy(() => import("@/pages/admin/PageAdminNavigation"));
 
+// AIPP v2
+const PageAuditAIPPv2 = lazy(() => import("@/pages/PageAuditAIPPv2"));
+const PageAuditResultsAIPPv2 = lazy(() => import("@/pages/PageAuditResultsAIPPv2"));
+const PageAdminAIPPv2Dashboard = lazy(() => import("@/pages/admin/PageAdminAIPPv2Dashboard"));
+
 // Entrepreneur Onboarding Flow
 const PageOnboardingImport = lazy(() => import("@/pages/entrepreneur/PageOnboardingImport"));
 const PageOnboardingAnalyse = lazy(() => import("@/pages/entrepreneur/PageOnboardingAnalyse"));
