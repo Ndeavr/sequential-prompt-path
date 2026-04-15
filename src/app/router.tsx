@@ -274,6 +274,11 @@ const AdminHomeownerAnalyticsPage = lazy(() => import("@/pages/admin/AdminHomeow
 
 // Go-Live
 const PageAdminGoLive = lazy(() => import("@/pages/admin/PageAdminGoLive"));
+const PageAdminGoLiveVerification = lazy(() => import("@/pages/admin/PageAdminGoLiveVerification"));
+const PageAdminGoLiveIncidents = lazy(() => import("@/pages/admin/PageAdminGoLiveIncidents"));
+const PageAdminGoLiveE2ETests = lazy(() => import("@/pages/admin/PageAdminGoLiveE2ETests"));
+const PageAdminGoLiveFunctionHealth = lazy(() => import("@/pages/admin/PageAdminGoLiveFunctionHealth"));
+const PageAdminGoLivePaymentHealth = lazy(() => import("@/pages/admin/PageAdminGoLivePaymentHealth"));
 
 // Entrepreneur Onboarding Flow
 const PageOnboardingImport = lazy(() => import("@/pages/entrepreneur/PageOnboardingImport"));
@@ -947,6 +952,11 @@ export const AppRouter = () => (
         <Route path="/admin/automation" element={<ProtectedRoute requiredRole="admin"><AdminAutomation /></ProtectedRoute>} />
         <Route path="/admin/automation-command-center" element={<ProtectedRoute requiredRole="admin"><PageAdminAutomationCommandCenter /></ProtectedRoute>} />
         <Route path="/admin/go-live" element={<ProtectedRoute requiredRole="admin"><PageAdminGoLive /></ProtectedRoute>} />
+        <Route path="/admin/go-live/verification" element={<ProtectedRoute requiredRole="admin"><PageAdminGoLiveVerification /></ProtectedRoute>} />
+        <Route path="/admin/go-live/incidents" element={<ProtectedRoute requiredRole="admin"><PageAdminGoLiveIncidents /></ProtectedRoute>} />
+        <Route path="/admin/go-live/e2e-tests" element={<ProtectedRoute requiredRole="admin"><PageAdminGoLiveE2ETests /></ProtectedRoute>} />
+        <Route path="/admin/go-live/function-health" element={<ProtectedRoute requiredRole="admin"><PageAdminGoLiveFunctionHealth /></ProtectedRoute>} />
+        <Route path="/admin/go-live/payment-health" element={<ProtectedRoute requiredRole="admin"><PageAdminGoLivePaymentHealth /></ProtectedRoute>} />
         <Route path="/admin/home-graph" element={<ProtectedRoute requiredRole="admin"><AdminHomeGraph /></ProtectedRoute>} />
         <Route path="/admin/uos" element={<ProtectedRoute requiredRole="admin"><AdminUOS /></ProtectedRoute>} />
         <Route path="/admin/qa-simulation" element={<ProtectedRoute requiredRole="admin"><PageAdminQASimulation /></ProtectedRoute>} />
