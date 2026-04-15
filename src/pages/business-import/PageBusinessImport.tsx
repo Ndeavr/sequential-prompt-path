@@ -42,7 +42,7 @@ export default function PageBusinessImport() {
   const initialScore = parseInt(searchParams.get("score") || "0", 10);
 
   const [step, setStep] = useState<Step>("source");
-  const [source, setSource] = useState<"google" | "website" | "manual">("manual");
+  const [source, setSource] = useState<ImportSource>("gmb");
   const [isLoading, setIsLoading] = useState(false);
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
   const [profileData, setProfileData] = useState<ProfileData>({});
@@ -54,7 +54,7 @@ export default function PageBusinessImport() {
 
   const completion = useMemo(() => detectMissingFields(profileData), [profileData]);
 
-  const handleSourceSelect = useCallback((s: "google" | "website" | "manual") => {
+  const handleSourceSelect = useCallback((s: ImportSource) => {
     setSource(s);
     setStep("form");
   }, []);
