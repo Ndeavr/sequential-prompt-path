@@ -20,6 +20,7 @@
  * - No false booking states
  */
 import { useState, useCallback, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import type { ConversationMessage, InlineCardType } from "@/components/alex-conversation/types";
 import {
   MOCK_CONTRACTORS,
