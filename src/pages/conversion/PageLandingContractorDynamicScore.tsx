@@ -39,55 +39,60 @@ const PageLandingContractorDynamicScore = () => {
 
   useEffect(() => {
     if (!token) return;
-    loadData();
-  }, [token]);
-
-  const loadData = async () => {
-    try {
-      // Try outbound_email_tokens first
-      const { data: tokenData, error: tokenErr } = await supabase
-        .from("outbound_email_tokens")
-        .select("*")
-        .eq("id", token!)
-        .maybeSingle();
-
-      if (tokenErr || !tokenData) {
-        setError("Lien invalide ou expiré.");
-        setLoading(false);
-        return;
-      }
-
-      // Get enriched data if available
-      let enriched = null;
-      if (tokenData.prospect_id) {
-        const { data: ep } = await supabase
-          .from("contractor_enriched_profiles")
+    (async () => {
+      try {
+        // Fetch lead data by ID
+        const { data: lead } = await supabase
+          .from("contractor_leads")
           .select("*")
-          .eq("lead_id", tokenData.prospect_id)
+          .eq("id", token!)
           .maybeSingle();
-        enriched = ep;
-      }
 
-      setData({
-        company_name: tokenData.company_name || "Votre entreprise",
-        city: tokenData.city || "Québec",
-        category: tokenData.category || "Services résidentiels",
-        score: tokenData.score || 42,
-        revenue_lost: tokenData.revenue_lost || 35000,
-        reviews_count: enriched?.reviews_count || 0,
-        rating: enriched?.rating || 0,
-        rbq_status: enriched?.rbq_status,
-        visibility: 35,
-        trust: enriched?.rbq_status === "active" ? 80 : 30,
-        conversion: 45,
-        content: 28,
-      });
-    } catch (e: any) {
-      setError("Erreur de chargement.");
-    } finally {
-      setLoading(false);
-    }
-  };
+        if (!lead) {
+          setError("Lien invalide ou expiré.");
+          setLoading(false);
+          return;
+        }
+
+        // Get enriched data if available
+        const { data: enriched } = await supabase
+          .from("contractor_enriched_profiles" as any)
+          .select("*")
+          .eq("lead_id", token!)
+          .maybeSingle();
+
+        // Get AIPP score
+        const { data: scoreData } = await supabase
+          .from("contractor_aipp_scores")
+          .select("*")
+          .eq("contractor_id", lead.contractor_id || token!)
+          .maybeSingle();
+
+        const ep = enriched as any;
+        const sc = scoreData as any;
+        const score = sc?.score_total || 42;
+
+        setData({
+          company_name: (lead as any).company_name || "Votre entreprise",
+          city: (lead as any).city || "Québec",
+          category: (lead as any).category || "Services résidentiels",
+          score,
+          revenue_lost: Math.round((100 - score) * 850),
+          reviews_count: ep?.reviews_count || 0,
+          rating: ep?.rating || 0,
+          rbq_status: ep?.rbq_status,
+          visibility: sc?.score_visibility || 35,
+          trust: sc?.score_trust || 30,
+          conversion: sc?.score_conversion || 45,
+          content: sc?.score_content || 28,
+        });
+      } catch {
+        setError("Erreur de chargement.");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [token]);
 
   const handleActivate = () => {
     toast.success("Redirection vers l'activation...");
