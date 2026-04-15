@@ -512,6 +512,11 @@ export const AppRouter = () => (
         <Route path="/alex/analysis" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
         <Route path="/conversation" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
         <Route path="/" element={<HomeWithFeatureFlag />} />
+        <Route path="/intent" element={<Suspense fallback={<LazyFallback />}><HomeIntentRouterDynamic /></Suspense>} />
+        <Route path="/homeowner" element={<Suspense fallback={<LazyFallback />}><HomeHomeownerAdaptive /></Suspense>} />
+        <Route path="/contractor" element={<Suspense fallback={<LazyFallback />}><HomeContractorAdaptive /></Suspense>} />
+        <Route path="/condo-home" element={<Suspense fallback={<LazyFallback />}><HomeCondoAdaptive /></Suspense>} />
+        <Route path="/professional" element={<Suspense fallback={<LazyFallback />}><HomeProfessionalAdaptive /></Suspense>} />
         <Route path="/manifeste" element={<Suspense fallback={<LazyFallback />}><PageManifesto /></Suspense>} />
         <Route path="/cest-quoi-unpro" element={<Suspense fallback={<LazyFallback />}><PageUnproFAQ25 /></Suspense>} />
         <Route path="/go" element={<PageAdLandingAipp />} />
