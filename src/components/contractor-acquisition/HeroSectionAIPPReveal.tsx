@@ -1,20 +1,13 @@
 /**
- * HeroSectionAIPPReveal — Premium hero with animated AIPP score reveal.
+ * HeroSectionAIPPReveal — Premium hero with 6-method import grid + AIPP score reveal.
  * Mobile-first, dark premium aesthetic.
  */
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ArrowRight, Zap } from "lucide-react";
+import { Sparkles, ArrowRight, Zap, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { z } from "zod";
-import { toast } from "sonner";
-
-const formSchema = z.object({
-  businessName: z.string().trim().min(2, "Minimum 2 caractères").max(120),
-  city: z.string().trim().min(2, "Minimum 2 caractères").max(120),
-  website: z.union([z.literal(""), z.string().trim().url().max(255)]),
-});
+import ImportSourceConnectorGrid, { type ImportSource } from "@/components/business-import/ImportSourceConnectorGrid";
+import BusinessImportForm, { type ImportFormData } from "@/components/business-import/BusinessImportForm";
 
 interface Props {
   onAnalyze: (data: { businessName: string; city: string; website: string }) => void;
@@ -22,18 +15,18 @@ interface Props {
 }
 
 export default function HeroSectionAIPPReveal({ onAnalyze, loading }: Props) {
-  const [businessName, setBusinessName] = useState("");
-  const [city, setCity] = useState("");
-  const [website, setWebsite] = useState("");
+  const [selectedSource, setSelectedSource] = useState<ImportSource | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const parsed = formSchema.safeParse({ businessName, city, website: website.trim() });
-    if (!parsed.success) {
-      toast.error("Vérifiez les champs.");
-      return;
-    }
-    onAnalyze({ businessName: parsed.data.businessName!, city: parsed.data.city!, website: parsed.data.website ?? "" });
+  const handleSourceSelect = (source: ImportSource) => {
+    setSelectedSource(source);
+  };
+
+  const handleImportSubmit = (data: ImportFormData) => {
+    onAnalyze({
+      businessName: data.business_name || "",
+      city: data.city || "",
+      website: data.url || "",
+    });
   };
 
   return (
@@ -73,59 +66,41 @@ export default function HeroSectionAIPPReveal({ onAnalyze, loading }: Props) {
           transition={{ delay: 0.2 }}
           className="text-sm text-muted-foreground max-w-sm mx-auto"
         >
-          Score AIPP instantané. Identifiez vos forces, lacunes et opportunités de revenus perdues.
+          {selectedSource
+            ? "Remplissez les informations pour lancer l'analyse."
+            : "Choisissez comment importer votre profil. Score AIPP instantané."}
         </motion.p>
 
-        {/* Form */}
-        <motion.form
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          onSubmit={handleSubmit}
-          className="space-y-3 text-left"
-        >
-          <Input
-            placeholder="Nom de votre entreprise"
-            value={businessName}
-            onChange={(e) => setBusinessName(e.target.value)}
-            className="h-12 bg-card/60 border-border/40 backdrop-blur-sm"
-            required
-          />
-          <Input
-            placeholder="Ville principale"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            className="h-12 bg-card/60 border-border/40 backdrop-blur-sm"
-            required
-          />
-          <Input
-            placeholder="Site web (optionnel)"
-            value={website}
-            onChange={(e) => setWebsite(e.target.value)}
-            className="h-12 bg-card/60 border-border/40 backdrop-blur-sm"
-            type="url"
-          />
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full h-12 text-base font-semibold gap-2"
-          >
-            {loading ? (
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-              >
-                <Sparkles className="w-4 h-4" />
-              </motion.div>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4" />
-                Analyser mon entreprise
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </Button>
-        </motion.form>
+        {/* Grid / Form */}
+        <AnimatePresence mode="wait">
+          {!selectedSource ? (
+            <motion.div
+              key="grid"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ delay: 0.3 }}
+              className="text-left"
+            >
+              <ImportSourceConnectorGrid onSelectSource={handleSourceSelect} />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="form"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="text-left"
+            >
+              <BusinessImportForm
+                source={selectedSource}
+                onSubmit={handleImportSubmit}
+                onBack={() => setSelectedSource(null)}
+                isLoading={loading}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Trust signals */}
         <motion.div
