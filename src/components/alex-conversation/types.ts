@@ -45,7 +45,11 @@ export type InlineCardType =
   | "form_autofill_preview"
   // ── Entrepreneur Onboarding ──
   | "entrepreneur_onboarding"
-  | "stripe_payment_inline";
+  | "stripe_payment_inline"
+  // ── Plan Truth Engine ──
+  | "plan_comparison"
+  | "revenue_projection"
+  | "hallucination_alert";
 
 // ── Orchestrator Data Interfaces ──
 

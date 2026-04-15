@@ -43,6 +43,7 @@ import { buildStructuredAnswer, formatStructuredAnswer } from "@/services/alexAn
 import { classifyQuestionType, type StructuredAnswer } from "@/services/alexCognitiveRulesEngine";
 import { extractSignals, logConversationTurn, logLearningEvent } from "@/services/alexMemoryLearningEngine";
 import { shouldPromptForPhoto, generateMockAnalysis, generateMockProjection, type PhotoPromptDecision } from "@/services/alexVisualIntelligenceEngine";
+import { fetchPlanDefinitions, quickValidate, type PlanDefinition } from "@/services/alexPlanTruthEngine";
 
 // ─── INTERNAL LEAK DETECTOR ───
 const INTERNAL_LEAK_PATTERNS = [
@@ -81,8 +82,44 @@ const ANALYSIS_KEYWORDS: Record<string, IntentMatch> = {
   "inspirations": { intent: "image_gallery", response: "Voici quelques inspirations pour votre projet.", data: { title: "Inspirations", images: [{ url: "/placeholder.svg", label: "Moderne" }, { url: "/placeholder.svg", label: "Scandinave" }, { url: "/placeholder.svg", label: "Industriel" }] } },
 };
 
+// ─── PLAN TRUTH ENGINE: detect plan-related questions ───
+const PLAN_QUESTION_PATTERNS = [
+  /quels?\s*(sont\s*)?(?:vos|les)\s*(?:plans?|forfaits?|abonnements?)/i,
+  /combien\s*(?:ça\s*)?co[uû]te/i,
+  /(?:prix|tarifs?|co[uû]ts?)\s*(?:des?\s*)?(?:plans?|forfaits?|abonnements?)/i,
+  /c'est\s*(?:combien|quoi\s*les\s*prix)/i,
+  /(?:plans?|forfaits?)\s*(?:disponibles?|offerts?)/i,
+  /je\s*(?:veux|voudrais)\s*(?:un\s*)?(?:plan|forfait|m'abonner)/i,
+  /(?:quel|quelle)\s*(?:plan|forfait)\s*(?:choisir|prendre|recommand)/i,
+  /(?:différence|comparer)\s*(?:entre\s*les\s*)?(?:plans?|forfaits?)/i,
+];
+
+// Plan definitions cache
+let _planCache: PlanDefinition[] | null = null;
+async function getCachedPlans(): Promise<PlanDefinition[]> {
+  if (_planCache) return _planCache;
+  try {
+    _planCache = await fetchPlanDefinitions();
+    return _planCache;
+  } catch { return []; }
+}
+
+function isPlanQuestion(text: string): boolean {
+  return PLAN_QUESTION_PATTERNS.some(p => p.test(text));
+}
+
 function detectAnalysisIntent(text: string): IntentMatch | null {
   const lower = text.toLowerCase();
+
+  // Plan selection from comparison card
+  if (lower.startsWith("je choisis le plan ")) {
+    const planName = text.replace(/je choisis le plan /i, "").trim();
+    return {
+      intent: "entrepreneur_onboarding",
+      response: `Excellent choix ! Pour activer votre plan ${planName}, créons d'abord votre profil.`,
+      data: { selectedPlan: planName },
+    };
+  }
 
   // Onboarding completion → transition to payment
   if (lower.startsWith("inscription:")) {
@@ -101,6 +138,9 @@ function detectAnalysisIntent(text: string): IntentMatch | null {
       data: { tasks: [{ label: "Profil créé", done: true }, { label: "Paiement confirmé", done: true }, { label: "Activation en cours…", done: false }] },
     };
   }
+
+  // Plan questions → will be handled async in sendMessage
+  // (detectAnalysisIntent is sync, so we just flag it)
 
   const sorted = Object.entries(ANALYSIS_KEYWORDS).sort((a, b) => b[0].length - a[0].length);
   for (const [keyword, result] of sorted) {
@@ -290,7 +330,28 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
     // ─── FALLBACK: CLIENT-SIDE LOGIC ───
     await new Promise(r => setTimeout(r, 300 + Math.random() * 300));
 
-    // 2. Analysis intents bypass (specific card renderers)
+    // 2a. Plan questions → fetch real plans from DB
+    if (isPlanQuestion(text)) {
+      try {
+        const plans = await getCachedPlans();
+        if (plans.length > 0) {
+          const recommended = plans.find(p => p.code === "premium") || plans[1];
+          audioEngine.play("success");
+          emitSafe(
+            "alex",
+            "Voici les plans UNPRO — chaque rendez-vous est exclusif, vous êtes le seul professionnel recommandé. Pas de leads partagés, que des opportunités qualifiées par notre IA.",
+            "plan_comparison" as InlineCardType,
+            { plans, recommendedCode: recommended?.code || "premium" }
+          );
+          setIsThinking(false);
+          return;
+        }
+      } catch (err) {
+        console.warn("[AlexConversation] Plan fetch failed:", err);
+      }
+    }
+
+    // 2b. Analysis intents bypass (specific card renderers)
     const analysisIntent = detectAnalysisIntent(text);
     if (analysisIntent) {
       audioEngine.play("success");

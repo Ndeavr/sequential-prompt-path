@@ -49,6 +49,9 @@ import PanelAlexFormAutoFillPreview from "@/components/alex-conversation/PanelAl
 import ButtonAlexMuteToggle from "@/components/alex-conversation/ButtonAlexMuteToggle";
 import PanelAlexEntrepreneurOnboarding from "@/components/alex-conversation/PanelAlexEntrepreneurOnboarding";
 import PanelAlexStripePaymentInline from "@/components/alex-conversation/PanelAlexStripePaymentInline";
+import CardPlanComparisonInline from "@/components/alex-conversation/CardPlanComparisonInline";
+import CardRevenueProjectionInline from "@/components/alex-conversation/CardRevenueProjectionInline";
+import AlertHallucinationDetected from "@/components/alex-conversation/AlertHallucinationDetected";
 import { MOCK_SLOTS, type MockContractor, type MockSlot } from "@/components/alex-conversation/types";
 import { toast } from "sonner";
 
@@ -359,6 +362,18 @@ export default function PageHomeAlexConversationalLite() {
             onError={(msg) => sendMessage(`Erreur de paiement: ${msg}`)}
           />
         );
+      case "plan_comparison":
+        return (
+          <CardPlanComparisonInline
+            plans={cardData?.plans || []}
+            recommendedCode={cardData?.recommendedCode}
+            onSelectPlan={(plan) => sendMessage(`Je choisis le plan ${plan.name}`)}
+          />
+        );
+      case "revenue_projection":
+        return <CardRevenueProjectionInline plan={cardData?.plan} avgContractValue={cardData?.avgContractValue} closeRate={cardData?.closeRate} />;
+      case "hallucination_alert":
+        return <AlertHallucinationDetected detectedTerms={cardData?.detectedTerms || []} severity={cardData?.severity || "low"} autoCorrected={cardData?.autoCorrected || false} />;
       default: return null;
     }
   };
