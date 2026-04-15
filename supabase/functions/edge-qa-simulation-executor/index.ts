@@ -34,17 +34,18 @@ async function executeExtract(): Promise<StepResult> {
   const checks: Check[] = [];
   const errors: string[] = [];
 
-  // 1. Check edge function responds
+  // 1. Check edge function responds with correct payload (url + markdown required)
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/fn-extract-business-data`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${ANON_KEY}`,
+        Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        business_name: "Toiture ABC Test",
-        city: "Laval",
+        url: "https://test-simulation.unpro.ca",
+        markdown: "# Toiture ABC\nEntreprise de toiture à Laval.\nTéléphone: 450-555-1234\nEmail: info@toiture-abc.ca\nCatégorie: Toiture\nVille: Laval",
+        title: "Toiture ABC Test - Simulation QA",
         simulation: true,
       }),
     });
@@ -55,9 +56,11 @@ async function executeExtract(): Promise<StepResult> {
     });
     if (res.status < 500) {
       const body = await res.json().catch(() => null);
-      const fields = ["business_name", "category", "city"];
+      // Response may have extracted data at top level or nested in data/result
+      const data = body?.data || body?.result || body;
+      const fields = ["company_name", "category", "city"];
       for (const f of fields) {
-        const has = body && (body[f] || body?.data?.[f]);
+        const has = data && data[f];
         checks.push({
           label: `Réponse contient ${f}`,
           passed: !!has,
@@ -129,20 +132,20 @@ async function executeEmail(): Promise<StepResult> {
     errors.push("EMAIL_FUNCTION_UNREACHABLE");
   }
 
-  // 2. Check outbound_email_queue table
+  // 2. Check outbound_messages table (email queue)
   const db = adminClient();
-  const { error: qErr } = await db.from("outbound_email_queue").select("id").limit(1);
+  const { error: qErr } = await db.from("outbound_messages").select("id").limit(1);
   checks.push({
-    label: "Table outbound_email_queue accessible",
+    label: "Table outbound_messages accessible",
     passed: !qErr,
     detail: qErr ? qErr.message : "OK",
   });
   if (qErr) errors.push("EMAIL_QUEUE_TABLE_MISSING");
 
   // 3. Check email templates table
-  const { error: tErr } = await db.from("outbound_email_templates").select("id").limit(1);
+  const { error: tErr } = await db.from("email_templates").select("id").limit(1);
   checks.push({
-    label: "Table outbound_email_templates accessible",
+    label: "Table email_templates accessible",
     passed: !tErr,
     detail: tErr ? tErr.message : "OK",
   });
@@ -313,7 +316,7 @@ async function executePayment(): Promise<StepResult> {
   }
 
   // 3. plan_catalog table
-  const { data: plans, error: plErr } = await db.from("plan_catalog").select("id, plan_code").limit(5);
+  const { data: plans, error: plErr } = await db.from("plan_catalog").select("id, code").limit(5);
   checks.push({
     label: "Table plan_catalog accessible",
     passed: !plErr,
@@ -324,7 +327,7 @@ async function executePayment(): Promise<StepResult> {
     checks.push({ label: "Plan catalog contient des plans", passed: false, detail: "Aucun plan trouvé" });
     errors.push("PAYMENT_NO_PLANS");
   } else if (plans && plans.length > 0) {
-    checks.push({ label: "Plan catalog contient des plans", passed: true, detail: plans.map((p: any) => p.plan_code).join(", ") });
+    checks.push({ label: "Plan catalog contient des plans", passed: true, detail: plans.map((p: any) => p.code).join(", ") });
   }
 
   // 4. contractor_subscriptions table
@@ -358,7 +361,7 @@ async function executeProfile(): Promise<StepResult> {
   } else {
     checks.push({ label: "Table contractors accessible", passed: true, detail: "OK" });
     // Verify required columns exist by checking keys of a row or empty result
-    const requiredCols = ["id", "company_name", "status", "user_id"];
+    const requiredCols = ["id", "business_name", "activation_status", "user_id"];
     if (sample && sample.length > 0) {
       const keys = Object.keys(sample[0]);
       for (const col of requiredCols) {
@@ -384,10 +387,10 @@ async function executeProfile(): Promise<StepResult> {
   });
   if (catErr) errors.push("PROFILE_CATEGORIES_TABLE_MISSING");
 
-  // 3. service_regions table
-  const { error: srErr } = await db.from("service_regions").select("id").limit(1);
+  // 3. contractor_category_assignments table serves as service regions
+  const { error: srErr } = await db.from("contractor_category_assignments").select("id").limit(1);
   checks.push({
-    label: "Table service_regions accessible",
+    label: "Table contractor_category_assignments accessible (régions)",
     passed: !srErr,
     detail: srErr ? srErr.message : "OK",
   });
