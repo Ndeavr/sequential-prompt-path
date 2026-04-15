@@ -10827,6 +10827,75 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_requests: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          session_id: string | null
+          status: string
+          time_slot: string
+          user_id: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          session_id?: string | null
+          status?: string
+          time_slot: string
+          user_id: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          session_id?: string | null
+          status?: string
+          time_slot?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_requests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_requests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_requests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_requests_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "booking_requests_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "intent_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_slot_scores: {
         Row: {
           booking_id: string | null
@@ -30249,28 +30318,78 @@ export type Database = {
           },
         ]
       }
-      intent_sessions: {
+      intent_answers: {
         Row: {
+          answer: string | null
           created_at: string
           id: string
+          question: string
+          session_id: string
+          weight: number | null
+        }
+        Insert: {
+          answer?: string | null
+          created_at?: string
+          id?: string
+          question: string
+          session_id: string
+          weight?: number | null
+        }
+        Update: {
+          answer?: string | null
+          created_at?: string
+          id?: string
+          question?: string
+          session_id?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intent_answers_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "intent_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intent_sessions: {
+        Row: {
+          confidence_score: number | null
+          context_json: Json | null
+          created_at: string
+          detected_intent: string | null
+          id: string
           input_mode: string
+          input_type: string | null
           matched_contractor_id: string | null
+          raw_input: string | null
           session_status: string
           user_id: string | null
         }
         Insert: {
+          confidence_score?: number | null
+          context_json?: Json | null
           created_at?: string
+          detected_intent?: string | null
           id?: string
           input_mode?: string
+          input_type?: string | null
           matched_contractor_id?: string | null
+          raw_input?: string | null
           session_status?: string
           user_id?: string | null
         }
         Update: {
+          confidence_score?: number | null
+          context_json?: Json | null
           created_at?: string
+          detected_intent?: string | null
           id?: string
           input_mode?: string
+          input_type?: string | null
           matched_contractor_id?: string | null
+          raw_input?: string | null
           session_status?: string
           user_id?: string | null
         }
@@ -31410,6 +31529,30 @@ export type Database = {
           },
         ]
       }
+      live_activity_events: {
+        Row: {
+          city: string | null
+          created_at: string
+          event_type: string
+          id: string
+          message: string
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          message: string
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          message?: string
+        }
+        Relationships: []
+      }
       login_interstitial_content: {
         Row: {
           benefits_json: Json | null
@@ -32474,6 +32617,72 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_scores: {
+        Row: {
+          breakdown_json: Json | null
+          contractor_id: string
+          created_at: string
+          id: string
+          rank: number | null
+          score: number
+          session_id: string
+        }
+        Insert: {
+          breakdown_json?: Json | null
+          contractor_id: string
+          created_at?: string
+          id?: string
+          rank?: number | null
+          score?: number
+          session_id: string
+        }
+        Update: {
+          breakdown_json?: Json | null
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          rank?: number | null
+          score?: number
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "match_scores_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "intent_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -46649,6 +46858,33 @@ export type Database = {
           },
         ]
       }
+      scarcity_tracker: {
+        Row: {
+          category_slug: string
+          city_slug: string
+          filled_slots: number
+          id: string
+          total_slots: number
+          updated_at: string
+        }
+        Insert: {
+          category_slug: string
+          city_slug: string
+          filled_slots?: number
+          id?: string
+          total_slots?: number
+          updated_at?: string
+        }
+        Update: {
+          category_slug?: string
+          city_slug?: string
+          filled_slots?: number
+          id?: string
+          total_slots?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       scheduled_reminders: {
         Row: {
           appointment_id: string
@@ -53124,6 +53360,47 @@ export type Database = {
           session_id?: string
         }
         Relationships: []
+      }
+      user_profiles_extended: {
+        Row: {
+          address: string | null
+          city: string | null
+          constraints_json: Json | null
+          phone: string | null
+          preferences_json: Json | null
+          property_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          constraints_json?: Json | null
+          phone?: string | null
+          preferences_json?: Json | null
+          property_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          constraints_json?: Json | null
+          phone?: string | null
+          preferences_json?: Json | null
+          property_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_profiles_extended_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_project_privacy: {
         Row: {

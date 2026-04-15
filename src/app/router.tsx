@@ -247,6 +247,11 @@ const PageAdminAlexVoice = lazy(() => import("@/pages/admin/alex/PageAdminAlexVo
 const PageAdminAlexContext = lazy(() => import("@/pages/admin/alex/PageAdminAlexContext"));
 const PageAdminAlexAnalytics = lazy(() => import("@/pages/admin/alex/PageAdminAlexAnalytics"));
 
+// Intent Funnel + Match Engine
+const PageEntryUnifiedIntent = lazy(() => import("@/pages/intent/PageEntryUnifiedIntent"));
+const PageMatchResultsDynamic = lazy(() => import("@/pages/intent/PageMatchResultsDynamic"));
+const PageBookingInstant = lazy(() => import("@/pages/intent/PageBookingInstant"));
+const PageAlexConversationIntent = lazy(() => import("@/pages/intent/PageAlexConversationIntent"));
 const AdminPredictiveLeads = lazy(() => import("@/pages/admin/AdminPredictiveLeads"));
 const AdminDynamicMarketPricing = lazy(() => import("@/pages/admin/AdminDynamicMarketPricing"));
 const AdminPredictiveMarketBoard = lazy(() => import("@/pages/admin/AdminPredictiveMarketBoard"));
@@ -1123,6 +1128,12 @@ export const AppRouter = () => (
          <Route path="/join/:token/success" element={<PageContractorJoinSuccess />} />
          <Route path="/join/:token/resume" element={<PageContractorJoinResume />} />
          <Route path="/join/access/:magicToken" element={<PageContractorPublicMagicAccess />} />
+
+         {/* Intent Funnel + Match Engine */}
+         <Route path="/intent-funnel" element={<Suspense fallback={<LazyFallback />}><PageEntryUnifiedIntent /></Suspense>} />
+         <Route path="/match/:sessionId" element={<Suspense fallback={<LazyFallback />}><PageMatchResultsDynamic /></Suspense>} />
+         <Route path="/book/:contractorId" element={<Suspense fallback={<LazyFallback />}><PageBookingInstant /></Suspense>} />
+         <Route path="/alex-conversation" element={<Suspense fallback={<LazyFallback />}><PageAlexConversationIntent /></Suspense>} />
 
          {/* Catch-all: try fallback, then 404 */}
          <Route path="*" element={<FallbackRoutePage />} />
