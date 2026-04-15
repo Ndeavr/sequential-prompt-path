@@ -1197,6 +1197,11 @@ export const AppRouter = () => (
          <Route path="/admin/email-campaigns" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminEmailCampaigns /></UniversalRouteGuard>} />
          <Route path="/admin/contractor-conversion-funnel" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminContractorConversionFunnel /></UniversalRouteGuard>} />
 
+         {/* 36h Strike Engine */}
+         <Route path="/admin/36h-strike-dashboard" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdmin36hStrikeDashboard /></UniversalRouteGuard>} />
+         <Route path="/admin/strike-live-feed" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminStrikeLiveFeed /></UniversalRouteGuard>} />
+         <Route path="/admin/strike-adjustments" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminStrikeAdjustments /></UniversalRouteGuard>} />
+
          {/* Recruitment Automation Engine — Admin */}
          <Route path="/admin/recruitment" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentOverview /></UniversalRouteGuard>} />
          <Route path="/admin/recruitment/clusters" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentClusters /></UniversalRouteGuard>} />
