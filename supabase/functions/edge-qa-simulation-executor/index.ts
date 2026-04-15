@@ -155,7 +155,7 @@ async function executeEmail(): Promise<StepResult> {
   const db = adminClient();
 
   // 2. Check email_templates table
-  const { data: templates, error: tErr } = await db.from("email_templates").select("id, name, has_cta").limit(10);
+  const { data: templates, error: tErr } = await db.from("email_templates").select("id, template_name, template_key, is_active").limit(10);
   checks.push({
     label: "Table email_templates accessible",
     passed: !tErr,
@@ -163,15 +163,15 @@ async function executeEmail(): Promise<StepResult> {
   });
   if (tErr) errors.push("EMAIL_TEMPLATES_TABLE_MISSING");
 
-  // 3. Check at least one template has CTA
+  // 3. Check templates exist
   if (templates && templates.length > 0) {
-    const withCTA = templates.filter((t: any) => t.has_cta);
+    const activeTemplates = templates.filter((t: any) => t.is_active);
     checks.push({
-      label: "Au moins un template avec CTA",
-      passed: withCTA.length > 0,
-      detail: withCTA.length > 0 ? `${withCTA.length} template(s) avec CTA` : "Aucun template avec CTA",
+      label: "Templates actifs disponibles",
+      passed: activeTemplates.length > 0,
+      detail: `${activeTemplates.length} template(s) actif(s)`,
     });
-    if (withCTA.length === 0) errors.push("EMAIL_NO_CTA");
+    if (activeTemplates.length === 0) errors.push("EMAIL_NO_ACTIVE_TEMPLATES");
   }
 
   // 4. Check outbound_messages table (email queue)
