@@ -2227,6 +2227,39 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_answer_scores: {
+        Row: {
+          clarity_score: number | null
+          conversion_score: number | null
+          created_at: string
+          id: string
+          message_id: string | null
+          progression_score: number | null
+          session_id: string
+          usefulness_score: number | null
+        }
+        Insert: {
+          clarity_score?: number | null
+          conversion_score?: number | null
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          progression_score?: number | null
+          session_id: string
+          usefulness_score?: number | null
+        }
+        Update: {
+          clarity_score?: number | null
+          conversion_score?: number | null
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          progression_score?: number | null
+          session_id?: string
+          usefulness_score?: number | null
+        }
+        Relationships: []
+      }
       alex_blocked_patterns: {
         Row: {
           created_at: string
@@ -2771,6 +2804,30 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_context_snapshots: {
+        Row: {
+          context_json: Json
+          created_at: string
+          id: string
+          session_id: string
+          sources_used: Json | null
+        }
+        Insert: {
+          context_json?: Json
+          created_at?: string
+          id?: string
+          session_id: string
+          sources_used?: Json | null
+        }
+        Update: {
+          context_json?: Json
+          created_at?: string
+          id?: string
+          session_id?: string
+          sources_used?: Json | null
+        }
+        Relationships: []
+      }
       alex_contractor_shortlists: {
         Row: {
           alex_action_session_id: string | null
@@ -2811,6 +2868,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      alex_conversation_log: {
+        Row: {
+          alex_response: string | null
+          context_snapshot_id: string | null
+          created_at: string
+          id: string
+          intent_detected: string | null
+          question_type: string | null
+          session_id: string
+          user_id: string | null
+          user_message: string | null
+        }
+        Insert: {
+          alex_response?: string | null
+          context_snapshot_id?: string | null
+          created_at?: string
+          id?: string
+          intent_detected?: string | null
+          question_type?: string | null
+          session_id: string
+          user_id?: string | null
+          user_message?: string | null
+        }
+        Update: {
+          alex_response?: string | null
+          context_snapshot_id?: string | null
+          created_at?: string
+          id?: string
+          intent_detected?: string | null
+          question_type?: string | null
+          session_id?: string
+          user_id?: string | null
+          user_message?: string | null
+        }
+        Relationships: []
       }
       alex_conversation_rules: {
         Row: {
@@ -3588,6 +3681,36 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_inferred_prefs: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          id: string
+          preference_key: string
+          preference_value: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          preference_key: string
+          preference_value: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          preference_key?: string
+          preference_value?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       alex_inline_confirmations: {
         Row: {
           alex_action_session_id: string
@@ -3848,6 +3971,36 @@ export type Database = {
           profile_name?: string
           silence_duration_ms?: number
           start_sensitivity?: string
+        }
+        Relationships: []
+      }
+      alex_learning_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata_json: Json | null
+          outcome: string
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata_json?: Json | null
+          outcome: string
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata_json?: Json | null
+          outcome?: string
+          session_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -4397,6 +4550,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      alex_photo_prompt_events: {
+        Row: {
+          accepted: boolean | null
+          created_at: string
+          id: string
+          ignored: boolean | null
+          session_id: string
+          trigger_reason: string | null
+          triggered: boolean | null
+          user_id: string | null
+        }
+        Insert: {
+          accepted?: boolean | null
+          created_at?: string
+          id?: string
+          ignored?: boolean | null
+          session_id: string
+          trigger_reason?: string | null
+          triggered?: boolean | null
+          user_id?: string | null
+        }
+        Update: {
+          accepted?: boolean | null
+          created_at?: string
+          id?: string
+          ignored?: boolean | null
+          session_id?: string
+          trigger_reason?: string | null
+          triggered?: boolean | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      alex_photo_requests: {
+        Row: {
+          context_type: string | null
+          created_at: string
+          id: string
+          message_text: string | null
+          session_id: string
+          trigger_reason: string
+          user_id: string | null
+        }
+        Insert: {
+          context_type?: string | null
+          created_at?: string
+          id?: string
+          message_text?: string | null
+          session_id: string
+          trigger_reason: string
+          user_id?: string | null
+        }
+        Update: {
+          context_type?: string | null
+          created_at?: string
+          id?: string
+          message_text?: string | null
+          session_id?: string
+          trigger_reason?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       alex_phrase_boosts: {
         Row: {
@@ -6128,6 +6344,151 @@ export type Database = {
             columns: ["used_voice_profile_id"]
             isOneToOne: false
             referencedRelation: "alex_voice_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_uploaded_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_type: string | null
+          image_url: string
+          session_id: string
+          storage_path: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_type?: string | null
+          image_url: string
+          session_id: string
+          storage_path?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_type?: string | null
+          image_url?: string
+          session_id?: string
+          storage_path?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      alex_user_memory: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          id: string
+          last_used_at: string | null
+          memory_key: string
+          memory_value: string
+          source: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          memory_key: string
+          memory_value: string
+          source?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          memory_key?: string
+          memory_value?: string
+          source?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      alex_visual_analyses: {
+        Row: {
+          analysis_status: string | null
+          analysis_summary: string | null
+          confidence_score: number | null
+          created_at: string
+          id: string
+          image_id: string | null
+          issue_detected: string | null
+          recommendation: string | null
+        }
+        Insert: {
+          analysis_status?: string | null
+          analysis_summary?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          image_id?: string | null
+          issue_detected?: string | null
+          recommendation?: string | null
+        }
+        Update: {
+          analysis_status?: string | null
+          analysis_summary?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          image_id?: string | null
+          issue_detected?: string | null
+          recommendation?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_visual_analyses_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "alex_uploaded_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_visual_projections: {
+        Row: {
+          base_image_id: string | null
+          created_at: string
+          description: string | null
+          generated_image_url: string | null
+          id: string
+          session_id: string
+          style_type: string | null
+        }
+        Insert: {
+          base_image_id?: string | null
+          created_at?: string
+          description?: string | null
+          generated_image_url?: string | null
+          id?: string
+          session_id: string
+          style_type?: string | null
+        }
+        Update: {
+          base_image_id?: string | null
+          created_at?: string
+          description?: string | null
+          generated_image_url?: string | null
+          id?: string
+          session_id?: string
+          style_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_visual_projections_base_image_id_fkey"
+            columns: ["base_image_id"]
+            isOneToOne: false
+            referencedRelation: "alex_uploaded_images"
             referencedColumns: ["id"]
           },
         ]
