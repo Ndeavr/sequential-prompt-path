@@ -2610,6 +2610,41 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_context_events: {
+        Row: {
+          context_session_id: string
+          created_at: string
+          event_type: string
+          id: string
+          normalized_payload: Json | null
+          raw_payload: Json | null
+        }
+        Insert: {
+          context_session_id: string
+          created_at?: string
+          event_type: string
+          id?: string
+          normalized_payload?: Json | null
+          raw_payload?: Json | null
+        }
+        Update: {
+          context_session_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          normalized_payload?: Json | null
+          raw_payload?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_context_events_context_session_id_fkey"
+            columns: ["context_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_context_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alex_context_prompts: {
         Row: {
           active: boolean
@@ -2661,6 +2696,78 @@ export type Database = {
           quick_replies_json?: Json
           role_type?: string | null
           room_type?: string | null
+        }
+        Relationships: []
+      }
+      alex_context_sessions: {
+        Row: {
+          address_status: string | null
+          address_text: string | null
+          booking_intent: boolean | null
+          city: string | null
+          contractor_validation_intent: boolean | null
+          conversation_status: string
+          ended_at: string | null
+          id: string
+          language_mode: string
+          last_question_asked: string | null
+          last_recommended_trade: string | null
+          missing_critical_fields: Json | null
+          primary_problem: string | null
+          property_type: string | null
+          quote_uploaded: boolean | null
+          secondary_problem: string | null
+          session_token: string
+          started_at: string
+          updated_at: string
+          urgency_level: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address_status?: string | null
+          address_text?: string | null
+          booking_intent?: boolean | null
+          city?: string | null
+          contractor_validation_intent?: boolean | null
+          conversation_status?: string
+          ended_at?: string | null
+          id?: string
+          language_mode?: string
+          last_question_asked?: string | null
+          last_recommended_trade?: string | null
+          missing_critical_fields?: Json | null
+          primary_problem?: string | null
+          property_type?: string | null
+          quote_uploaded?: boolean | null
+          secondary_problem?: string | null
+          session_token: string
+          started_at?: string
+          updated_at?: string
+          urgency_level?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address_status?: string | null
+          address_text?: string | null
+          booking_intent?: boolean | null
+          city?: string | null
+          contractor_validation_intent?: boolean | null
+          conversation_status?: string
+          ended_at?: string | null
+          id?: string
+          language_mode?: string
+          last_question_asked?: string | null
+          last_recommended_trade?: string | null
+          missing_critical_fields?: Json | null
+          primary_problem?: string | null
+          property_type?: string | null
+          quote_uploaded?: boolean | null
+          secondary_problem?: string | null
+          session_token?: string
+          started_at?: string
+          updated_at?: string
+          urgency_level?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -3521,6 +3628,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      alex_intent_rules: {
+        Row: {
+          created_at: string
+          id: string
+          intent_code: string
+          is_active: boolean
+          keywords: Json
+          label: string
+          negative_keywords: Json
+          priority_rank: number
+          requires_booking_offer: boolean
+          requires_location: boolean
+          requires_photo: boolean
+          requires_quote: boolean
+          trade_target: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          intent_code: string
+          is_active?: boolean
+          keywords?: Json
+          label: string
+          negative_keywords?: Json
+          priority_rank?: number
+          requires_booking_offer?: boolean
+          requires_location?: boolean
+          requires_photo?: boolean
+          requires_quote?: boolean
+          trade_target?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          intent_code?: string
+          is_active?: boolean
+          keywords?: Json
+          label?: string
+          negative_keywords?: Json
+          priority_rank?: number
+          requires_booking_offer?: boolean
+          requires_location?: boolean
+          requires_photo?: boolean
+          requires_quote?: boolean
+          trade_target?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       alex_intents: {
         Row: {
@@ -5710,6 +5868,45 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_transcript_corrections: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_regex: boolean
+          language_code: string
+          normalized_value: string
+          priority_rank: number
+          raw_pattern: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_regex?: boolean
+          language_code?: string
+          normalized_value: string
+          priority_rank?: number
+          raw_pattern: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_regex?: boolean
+          language_code?: string
+          normalized_value?: string
+          priority_rank?: number
+          raw_pattern?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       alex_transcript_rules: {
         Row: {
           confidence_threshold: number | null
@@ -5865,6 +6062,75 @@ export type Database = {
           surface_key?: string
         }
         Relationships: []
+      }
+      alex_understanding_logs: {
+        Row: {
+          context_session_id: string | null
+          created_at: string
+          detected_intent: string | null
+          detected_language: string | null
+          fallback_triggered: boolean | null
+          id: string
+          latency_llm_ms: number | null
+          latency_stt_ms: number | null
+          latency_tts_ms: number | null
+          normalized_transcript: string | null
+          raw_transcript: string | null
+          response_mode: string | null
+          total_latency_ms: number | null
+          understanding_confidence: number | null
+          used_voice_profile_id: string | null
+        }
+        Insert: {
+          context_session_id?: string | null
+          created_at?: string
+          detected_intent?: string | null
+          detected_language?: string | null
+          fallback_triggered?: boolean | null
+          id?: string
+          latency_llm_ms?: number | null
+          latency_stt_ms?: number | null
+          latency_tts_ms?: number | null
+          normalized_transcript?: string | null
+          raw_transcript?: string | null
+          response_mode?: string | null
+          total_latency_ms?: number | null
+          understanding_confidence?: number | null
+          used_voice_profile_id?: string | null
+        }
+        Update: {
+          context_session_id?: string | null
+          created_at?: string
+          detected_intent?: string | null
+          detected_language?: string | null
+          fallback_triggered?: boolean | null
+          id?: string
+          latency_llm_ms?: number | null
+          latency_stt_ms?: number | null
+          latency_tts_ms?: number | null
+          normalized_transcript?: string | null
+          raw_transcript?: string | null
+          response_mode?: string | null
+          total_latency_ms?: number | null
+          understanding_confidence?: number | null
+          used_voice_profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_understanding_logs_context_session_id_fkey"
+            columns: ["context_session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_context_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alex_understanding_logs_used_voice_profile_id_fkey"
+            columns: ["used_voice_profile_id"]
+            isOneToOne: false
+            referencedRelation: "alex_voice_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       alex_voice_admin_changes: {
         Row: {
@@ -6063,6 +6329,48 @@ export type Database = {
             columns: ["voice_session_id"]
             isOneToOne: false
             referencedRelation: "alex_voice_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alex_voice_fallbacks: {
+        Row: {
+          created_at: string
+          fallback_voice_profile_id: string
+          id: string
+          is_active: boolean
+          primary_voice_profile_id: string
+          priority_rank: number
+        }
+        Insert: {
+          created_at?: string
+          fallback_voice_profile_id: string
+          id?: string
+          is_active?: boolean
+          primary_voice_profile_id: string
+          priority_rank?: number
+        }
+        Update: {
+          created_at?: string
+          fallback_voice_profile_id?: string
+          id?: string
+          is_active?: boolean
+          primary_voice_profile_id?: string
+          priority_rank?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_voice_fallbacks_fallback_voice_profile_id_fkey"
+            columns: ["fallback_voice_profile_id"]
+            isOneToOne: false
+            referencedRelation: "alex_voice_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alex_voice_fallbacks_primary_voice_profile_id_fkey"
+            columns: ["primary_voice_profile_id"]
+            isOneToOne: false
+            referencedRelation: "alex_voice_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -6693,6 +7001,53 @@ export type Database = {
           },
         ]
       }
+      alex_voice_runtime_metrics: {
+        Row: {
+          avg_accent_issue_flag: number | null
+          avg_context_retention_score: number | null
+          avg_tts_latency_ms: number | null
+          avg_understanding_confidence: number | null
+          created_at: string
+          day_bucket: string
+          fallback_count: number
+          id: string
+          requests_count: number
+          voice_profile_id: string
+        }
+        Insert: {
+          avg_accent_issue_flag?: number | null
+          avg_context_retention_score?: number | null
+          avg_tts_latency_ms?: number | null
+          avg_understanding_confidence?: number | null
+          created_at?: string
+          day_bucket: string
+          fallback_count?: number
+          id?: string
+          requests_count?: number
+          voice_profile_id: string
+        }
+        Update: {
+          avg_accent_issue_flag?: number | null
+          avg_context_retention_score?: number | null
+          avg_tts_latency_ms?: number | null
+          avg_understanding_confidence?: number | null
+          created_at?: string
+          day_bucket?: string
+          fallback_count?: number
+          id?: string
+          requests_count?: number
+          voice_profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_voice_runtime_metrics_voice_profile_id_fkey"
+            columns: ["voice_profile_id"]
+            isOneToOne: false
+            referencedRelation: "alex_voice_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alex_voice_runtime_sessions: {
         Row: {
           created_at: string | null
@@ -6934,6 +7289,102 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      alex_voice_test_phrases: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          phrase_text: string
+          sort_order: number
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          phrase_text: string
+          sort_order?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          phrase_text?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      alex_voice_tests: {
+        Row: {
+          admin_notes: string | null
+          audio_url: string | null
+          clarity_score: number | null
+          construction_vocab_score: number | null
+          created_at: string
+          french_accent_score: number | null
+          id: string
+          naturalness_score: number | null
+          no_english_accent_score: number | null
+          test_phrase_id: string
+          tested_by: string | null
+          trust_score: number | null
+          voice_profile_id: string
+          warmth_score: number | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          audio_url?: string | null
+          clarity_score?: number | null
+          construction_vocab_score?: number | null
+          created_at?: string
+          french_accent_score?: number | null
+          id?: string
+          naturalness_score?: number | null
+          no_english_accent_score?: number | null
+          test_phrase_id: string
+          tested_by?: string | null
+          trust_score?: number | null
+          voice_profile_id: string
+          warmth_score?: number | null
+        }
+        Update: {
+          admin_notes?: string | null
+          audio_url?: string | null
+          clarity_score?: number | null
+          construction_vocab_score?: number | null
+          created_at?: string
+          french_accent_score?: number | null
+          id?: string
+          naturalness_score?: number | null
+          no_english_accent_score?: number | null
+          test_phrase_id?: string
+          tested_by?: string | null
+          trust_score?: number | null
+          voice_profile_id?: string
+          warmth_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_voice_tests_test_phrase_id_fkey"
+            columns: ["test_phrase_id"]
+            isOneToOne: false
+            referencedRelation: "alex_voice_test_phrases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alex_voice_tests_voice_profile_id_fkey"
+            columns: ["voice_profile_id"]
+            isOneToOne: false
+            referencedRelation: "alex_voice_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       alex_voice_tone_settings: {
         Row: {
