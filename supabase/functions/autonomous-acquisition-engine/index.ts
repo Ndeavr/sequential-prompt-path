@@ -149,7 +149,7 @@ Deno.serve(async (req) => {
       const hasErrors = steps.some(s => s.status === "error");
       await supabase.from("agent_tasks").update({
         status: hasErrors ? "partial" : "completed",
-        execution_result: { steps, aipp_score: aippScore, token: outreachToken } as any,
+        execution_result: { steps, aipp_score: aippScore, landing_url: landingUrl } as any,
         executed_at: new Date().toISOString(),
       }).eq("id", taskId);
 
@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
         success: !hasErrors,
         lead_id: leadRecord.id,
         aipp_score: aippScore,
-        landing_url: outreachToken ? `/aipp/${outreachToken}/results` : null,
+        landing_url: landingUrl,
         steps,
       });
     }
