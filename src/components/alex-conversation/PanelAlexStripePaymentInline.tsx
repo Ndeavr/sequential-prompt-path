@@ -135,10 +135,10 @@ export default function PanelAlexStripePaymentInline({ planCode, planName, price
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="rounded-2xl border border-green-500/30 bg-green-500/5 p-5 text-center space-y-3"
+        className="rounded-2xl border border-primary/30 bg-primary/5 p-5 text-center space-y-3"
       >
-        <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mx-auto">
-          <Check className="h-6 w-6 text-green-500" />
+        <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mx-auto">
+          <Check className="h-6 w-6 text-primary" />
         </div>
         <h4 className="text-sm font-bold text-foreground">Paiement confirmé!</h4>
         <p className="text-xs text-muted-foreground">
