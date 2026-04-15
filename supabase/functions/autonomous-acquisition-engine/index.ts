@@ -48,11 +48,12 @@ Deno.serve(async (req) => {
         } else {
           const { data, error } = await supabase.from("contractor_leads").insert({
             company_name: business_name,
-            website: domain,
+            website_url: domain,
             city: city || "Montréal",
-            category: category || "general",
-            source: "autonomous_agent",
-            status: "new",
+            category_primary: category || "general",
+            source_type: "autonomous_agent",
+            source_label: "autonomous_acquisition_engine",
+            lead_status: "new",
           }).select().single();
           if (error) throw error;
           leadRecord = data;
