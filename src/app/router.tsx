@@ -225,6 +225,21 @@ const AdminWinningVariantsPage = lazy(() => import("@/pages/admin/AdminWinningVa
 
 // Alex
 const PageAdminAlexConversationRules = lazy(() => import("@/pages/admin/PageAdminAlexConversationRules"));
+
+// Recruitment Automation Engine
+const PageAdminRecruitmentOverview = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentOverview"));
+const PageAdminRecruitmentClusters = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentClusters"));
+const PageAdminRecruitmentCampaigns = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentCampaigns"));
+const PageAdminRecruitmentProspects = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentProspects"));
+const PageAdminRecruitmentSequences = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentSequences"));
+const PageAdminRecruitmentOnboarding = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentOnboarding"));
+const PageAdminRecruitmentPayments = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentPayments"));
+const PageAdminRecruitmentLogs = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentLogs"));
+const PageContractorJoinOffer = lazy(() => import("@/pages/join/PageContractorJoinOffer"));
+const PageContractorJoinCheckout = lazy(() => import("@/pages/join/PageContractorJoinCheckout"));
+const PageContractorJoinSuccess = lazy(() => import("@/pages/join/PageContractorJoinSuccess"));
+const PageContractorJoinResume = lazy(() => import("@/pages/join/PageContractorJoinResume"));
+const PageContractorPublicMagicAccess = lazy(() => import("@/pages/join/PageContractorPublicMagicAccess"));
 const PageAdminAlexDebugHome = lazy(() => import("@/pages/admin/PageAdminAlexDebugHome"));
 const PageAdminAlexSpeechTuning = lazy(() => import("@/pages/admin/AlexSpeechTuning"));
 const AlexVoiceAdmin = lazy(() => import("@/pages/admin/AlexVoiceAdmin"));
@@ -1091,6 +1106,23 @@ export const AppRouter = () => (
 
          {/* Memory Center */}
          <Route path="/ma-memoire" element={<PageMemoryCenter />} />
+
+         {/* Recruitment Automation Engine — Admin */}
+         <Route path="/admin/recruitment" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentOverview /></UniversalRouteGuard>} />
+         <Route path="/admin/recruitment/clusters" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentClusters /></UniversalRouteGuard>} />
+         <Route path="/admin/recruitment/campaigns" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentCampaigns /></UniversalRouteGuard>} />
+         <Route path="/admin/recruitment/prospects" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentProspects /></UniversalRouteGuard>} />
+         <Route path="/admin/recruitment/sequences" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentSequences /></UniversalRouteGuard>} />
+         <Route path="/admin/recruitment/onboarding" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentOnboarding /></UniversalRouteGuard>} />
+         <Route path="/admin/recruitment/payments" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentPayments /></UniversalRouteGuard>} />
+         <Route path="/admin/recruitment/logs" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentLogs /></UniversalRouteGuard>} />
+
+         {/* Recruitment — Prospect-facing (public) */}
+         <Route path="/join/:token" element={<PageContractorJoinOffer />} />
+         <Route path="/join/:token/checkout" element={<PageContractorJoinCheckout />} />
+         <Route path="/join/:token/success" element={<PageContractorJoinSuccess />} />
+         <Route path="/join/:token/resume" element={<PageContractorJoinResume />} />
+         <Route path="/join/access/:magicToken" element={<PageContractorPublicMagicAccess />} />
 
          {/* Catch-all: try fallback, then 404 */}
          <Route path="*" element={<FallbackRoutePage />} />
