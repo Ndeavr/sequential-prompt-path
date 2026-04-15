@@ -126,9 +126,9 @@ export default function PageAlexConversationAnimated() {
         return;
       }
 
-      // Don't add thinking to visible steps directly - show as transient
+      // Don't add thinking/wait to visible steps
       if (step.type !== "thinking" && step.type !== "wait_user") {
-        setVisibleSteps(prev => [...prev, step]);
+        setVisibleSteps(prev => [...prev, step as FlowStep]);
       }
 
       // Clear thinking status after a beat
