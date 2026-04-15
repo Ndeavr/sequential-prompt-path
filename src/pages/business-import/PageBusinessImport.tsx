@@ -30,7 +30,7 @@ function simulateImport(data: ImportFormData): PreviewData {
     website_url: data.url || undefined,
     city: data.city || undefined,
     description: data.description || undefined,
-    services: data.source !== "manual" ? ["Rénovation résidentielle", "Plomberie"] : undefined,
+    services: data.source !== "phone" ? ["Rénovation résidentielle", "Plomberie"] : undefined,
     logo_url: undefined,
     photos: undefined,
   };
