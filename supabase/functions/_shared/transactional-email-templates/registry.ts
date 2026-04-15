@@ -18,6 +18,7 @@ import { template as entrepreneurWelcome } from './entrepreneur-welcome.tsx'
 import { template as contractorProfileActivated } from './contractor-profile-activated.tsx'
 import { template as noResponseFollowup } from './no-response-followup.tsx'
 import { template as incompleteCheckoutFollowup } from './incomplete-checkout-followup.tsx'
+import { template as prospectOutreach } from './prospect-outreach.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'contact-comment': contactComment,
@@ -29,4 +30,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'contractor-profile-activated': contractorProfileActivated,
   'no-response-followup': noResponseFollowup,
   'incomplete-checkout-followup': incompleteCheckoutFollowup,
+  'prospect-outreach': prospectOutreach,
 }
