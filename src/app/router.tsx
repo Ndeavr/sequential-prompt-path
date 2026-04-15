@@ -508,6 +508,10 @@ const PageAdminEmailControlCenter = lazy(() => import("@/pages/admin/email-healt
 const PageAdminEmailWarmup = lazy(() => import("@/pages/admin/email-health/PageAdminEmailWarmup"));
 const PageAdminEmailDeliveryLogs = lazy(() => import("@/pages/admin/email-health/PageAdminEmailLogs"));
 
+// Email-to-Booking Conversion
+const PageLandingPersonalizedAIPP = lazy(() => import("@/pages/conversion/PageLandingPersonalizedAIPP"));
+const PageBookingContractor = lazy(() => import("@/pages/conversion/PageBookingContractor"));
+
 const PageEntrepreneurJoin = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurJoin"));
 const PageEntrepreneurHowItWorks = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurHowItWorks"));
 const PageEntrepreneurPlans = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurPlans"));
@@ -536,6 +540,10 @@ export const AppRouter = () => (
         {/* Redirects for common mismatched entry points */}
         <Route path="/index" element={<HomeWithFeatureFlag />} />
         <Route path="/entrepreneur/aipp-analysis" element={<PageAIPPAnalysisLoading />} />
+
+        {/* Email-to-Booking Conversion (public, unauthenticated) */}
+        <Route path="/pro/demo/:token" element={<Suspense fallback={<LazyFallback />}><PageLandingPersonalizedAIPP /></Suspense>} />
+        <Route path="/pro/book/:token" element={<Suspense fallback={<LazyFallback />}><PageBookingContractor /></Suspense>} />
 
         {/* Public */}
         <Route path="/home-intent" element={<Suspense fallback={<LazyFallback />}><PageHomeIntentUNPRO /></Suspense>} />
