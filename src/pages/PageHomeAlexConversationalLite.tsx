@@ -16,6 +16,7 @@ import { useAlexVoiceLockedStore } from "@/stores/alexVoiceLockedStore";
 import { audioEngine } from "@/services/audioEngineUNPRO";
 import { detectIntentAndLocation, buildAlexOpening, POPULAR_SEARCH_INTENTS } from "@/services/intentLocationDetector";
 import HeroSectionAlexOrbLite from "@/components/alex-conversation/HeroSectionAlexOrbLite";
+import LayoutAlexCinematicShell from "@/components/alex-conversation/LayoutAlexCinematicShell";
 import InputAlexDockExpanded from "@/components/alex-conversation/InputAlexDockExpanded";
 import BubbleAlexMessage from "@/components/alex-conversation/BubbleAlexMessage";
 import BubbleUserMessage from "@/components/alex-conversation/BubbleUserMessage";
@@ -271,15 +272,7 @@ export default function PageHomeAlexConversationalLite() {
   const isVoiceListening = voiceIsActive && !voiceIsSpeaking && voiceStore.machineState === "listening";
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-background relative overflow-hidden">
-      {/* Ambient glow */}
-      <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] pointer-events-none"
-        style={{
-          background: "radial-gradient(ellipse at center, hsl(var(--primary) / 0.05) 0%, transparent 70%)",
-          filter: "blur(50px)",
-        }}
-      />
+    <LayoutAlexCinematicShell>
 
       {/* Compact Header */}
       <HeroSectionAlexOrbLite
@@ -357,6 +350,6 @@ export default function PageHomeAlexConversationalLite() {
         slots={MOCK_SLOTS}
         onConfirm={handleBookingConfirm}
       />
-    </div>
+    </LayoutAlexCinematicShell>
   );
 }
