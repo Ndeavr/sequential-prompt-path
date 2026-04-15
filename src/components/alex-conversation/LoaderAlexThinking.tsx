@@ -1,3 +1,6 @@
+/**
+ * LoaderAlexThinking — Premium thinking indicator with glow.
+ */
 import { motion } from "framer-motion";
 import { Bot } from "lucide-react";
 
@@ -6,18 +9,30 @@ export default function LoaderAlexThinking() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       className="flex gap-2.5 items-center"
     >
-      <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center">
+      <div
+        className="w-8 h-8 rounded-full flex items-center justify-center border border-primary/20"
+        style={{
+          background: "radial-gradient(circle at 35% 35%, hsl(var(--primary) / 0.25), hsl(262 80% 50% / 0.08))",
+        }}
+      >
         <Bot className="w-3.5 h-3.5 text-primary" />
       </div>
-      <div className="flex gap-1 px-3 py-2.5">
+      <div
+        className="flex gap-1.5 px-4 py-3 rounded-2xl rounded-tl-md border border-border/30"
+        style={{
+          background: "linear-gradient(135deg, hsl(var(--muted) / 0.5), hsl(var(--muted) / 0.3))",
+          backdropFilter: "blur(12px)",
+        }}
+      >
         {[0, 1, 2].map(i => (
           <motion.div
             key={i}
-            className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60"
-            animate={{ opacity: [0.3, 1, 0.3], scale: [0.85, 1.1, 0.85] }}
-            transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
+            className="w-1.5 h-1.5 rounded-full bg-primary/60"
+            animate={{ opacity: [0.3, 1, 0.3], scale: [0.85, 1.15, 0.85] }}
+            transition={{ duration: 1, repeat: Infinity, delay: i * 0.2, ease: "easeInOut" }}
           />
         ))}
       </div>
