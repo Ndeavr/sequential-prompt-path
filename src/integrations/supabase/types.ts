@@ -24919,6 +24919,45 @@ export type Database = {
         }
         Relationships: []
       }
+      email_delivery_logs: {
+        Row: {
+          created_at: string
+          domain_used: string | null
+          id: string
+          message_id: string | null
+          provider: string | null
+          provider_response: string | null
+          recipient_email: string | null
+          spam_score: string | null
+          status: string
+          template_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          domain_used?: string | null
+          id?: string
+          message_id?: string | null
+          provider?: string | null
+          provider_response?: string | null
+          recipient_email?: string | null
+          spam_score?: string | null
+          status?: string
+          template_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          domain_used?: string | null
+          id?: string
+          message_id?: string | null
+          provider?: string | null
+          provider_response?: string | null
+          recipient_email?: string | null
+          spam_score?: string | null
+          status?: string
+          template_name?: string | null
+        }
+        Relationships: []
+      }
       email_domain_configs: {
         Row: {
           created_at: string | null
@@ -24952,6 +24991,48 @@ export type Database = {
           provider?: string | null
           reply_to?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      email_domain_health: {
+        Row: {
+          created_at: string
+          dkim_status: string
+          dmarc_policy: string | null
+          dmarc_status: string
+          domain: string
+          id: string
+          last_checked: string
+          overall_score: number
+          spf_status: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dkim_status?: string
+          dmarc_policy?: string | null
+          dmarc_status?: string
+          domain: string
+          id?: string
+          last_checked?: string
+          overall_score?: number
+          spf_status?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dkim_status?: string
+          dmarc_policy?: string | null
+          dmarc_status?: string
+          domain?: string
+          id?: string
+          last_checked?: string
+          overall_score?: number
+          spf_status?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -25729,6 +25810,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      email_warmup_schedule: {
+        Row: {
+          created_at: string
+          day_number: number
+          domain: string
+          id: string
+          max_emails: number
+          scheduled_date: string
+          sent_count: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_number?: number
+          domain: string
+          id?: string
+          max_emails?: number
+          scheduled_date?: string
+          sent_count?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_number?: number
+          domain?: string
+          id?: string
+          max_emails?: number
+          scheduled_date?: string
+          sent_count?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       emergency_assignments: {
         Row: {
