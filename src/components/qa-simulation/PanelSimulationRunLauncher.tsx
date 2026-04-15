@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Play, Loader2, Zap, TestTube } from "lucide-react";
 import { useSimulationScenarios, useLaunchSimulation } from "@/hooks/useQASimulation";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -12,11 +13,12 @@ export default function PanelSimulationRunLauncher() {
   const { toast } = useToast();
   const [scenarioId, setScenarioId] = useState("");
   const [environment, setEnvironment] = useState("test");
+  const [realMode, setRealMode] = useState(true);
 
   const handleLaunch = async () => {
     if (!scenarioId) return;
     try {
-      const runId = await launch.mutateAsync({ scenarioId, environment });
+      const runId = await launch.mutateAsync({ scenarioId, environment, realMode });
       toast({ title: "Simulation terminée", description: "Voir les résultats" });
       navigate(`/admin/qa-simulation/run/${runId}`);
     } catch (e: any) {
@@ -48,6 +50,23 @@ export default function PanelSimulationRunLauncher() {
           <option value="safe-production">Safe Production</option>
         </select>
       </div>
+
+      {/* Mode toggle */}
+      <div className="flex items-center justify-between rounded-lg bg-muted/20 border border-border/30 px-3 py-2">
+        <div className="flex items-center gap-2">
+          {realMode ? <Zap className="w-4 h-4 text-amber-400" /> : <TestTube className="w-4 h-4 text-muted-foreground" />}
+          <span className="text-sm font-medium text-foreground">
+            {realMode ? "Mode réel" : "Mode mock"}
+          </span>
+        </div>
+        <Switch checked={realMode} onCheckedChange={setRealMode} />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {realMode
+          ? "Valide l'infrastructure réelle — edge functions, tables, schemas"
+          : "Simule les résultats sans appels réels (test rapide)"}
+      </p>
+
       <Button onClick={handleLaunch} disabled={!scenarioId || launch.isPending} className="w-full">
         {launch.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Play className="w-4 h-4 mr-2" />}
         {launch.isPending ? "Exécution en cours…" : "Lancer la simulation"}
