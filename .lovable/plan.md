@@ -1,113 +1,105 @@
 
 
-# Plan: ModuleAlexIntentFunnelAndMatchEngine + ModulePlatformEnhancementsPriorityStack
+# Plan: ModuleOperationalSimulationAndQAFlow
 
-## Current State
-
-**Already exists:**
-- `intent_sessions` table (minimal — missing `raw_input`, `detected_intent`, `confidence_score`)
-- `quote_analysis_results` table
-- `contractor_scores` table
-- Alex conversation UI (`PageHomeAlexConversationalLite`) with inline cards for quotes, business analysis, match results
-- Mock intent detection in `useAlexConversationLite.ts`
-- Existing booking infrastructure (`bookings`, `availability_slots`)
-
-**Does NOT exist (must build):**
-- Module 1 pages: `PageEntryUnifiedIntent`, `PageMatchResultsDynamic`, `PageBookingInstant`
-- Module 1 components: `CardPredictionProblem`, `CardContractorMatchScore`, `PanelDNAFitBreakdown`, `WidgetInstantBookingSlots`, `ModalProfileCompletionGate`
-- Module 1 tables: `intent_answers`, `match_scores`, `user_profiles_extended` (need to add `raw_input`/`detected_intent` to `intent_sessions`)
-- Module 1 RPCs: `detect_intent_from_input`, `generate_followup_questions`, `compute_dna_match_score`, `rank_contractors`, `generate_booking_slots`
-- Module 2 components: `PanelQuoteAnalysisAI`, `PanelTrustSignalsUltra`, `PanelRevenueProjectionContractor`, `PanelLiveActivityFeed`, `WidgetScarcityTerritory`, `BadgeFounderAccess`, `PanelAlexPredictionSavings`
-
----
+## Summary
+Build a complete operational simulation and QA module enabling admins to run end-to-end validation of the contractor recruitment funnel (extract → email → CTA → signup → payment → profile → activation) with real-time timeline tracking, error surfacing, and step-level retry.
 
 ## Phase 1 — Database (1 migration)
 
-**Alter** `intent_sessions`: add `raw_input text`, `detected_intent text`, `confidence_score numeric`, `input_type text`, `context_json jsonb`.
+Create 8 tables with RLS (admin-only):
 
-**Create** 4 new tables:
-- `intent_answers` (id, session_id FK, question, answer, weight, created_at)
-- `match_scores` (id, session_id FK, contractor_id FK, score, breakdown_json, rank, created_at)
-- `booking_requests` (id, user_id, contractor_id, session_id, time_slot timestamptz, status, notes, created_at)
-- `user_profiles_extended` (user_id FK profiles, address, phone, city, property_type, preferences_json, constraints_json, updated_at)
+- `simulation_scenarios` — reusable scenario definitions with step_order_json, severity, default_environment
+- `simulation_runs` — execution instances with status, health_score, critical_failures_count
+- `simulation_steps` — ordered steps per run with status, duration_ms, expected/actual result, retry_count
+- `simulation_events` — granular event log per step
+- `simulation_errors` — errors with severity, context, resolution tracking
+- `simulation_email_events` — email delivery/open/click tracking per run
+- `simulation_payment_events` — Stripe session/webhook status per run
+- `simulation_profile_events` — profile completion before/after per run
 
-**Create** 2 new tables for Module 2:
-- `scarcity_tracker` (id, city_slug, category_slug, total_slots, filled_slots, updated_at)
-- `live_activity_events` (id, event_type, city, message, created_at)
+Seed data: 6 default scenarios (FullFunnelContractor, ExtractOnly, ExtractToEmail, ExtractToSignup, PaymentRecovery, WebhookIntegrityAudit).
 
-RLS: authenticated users on own data; admin full access.
+Enable Realtime on `simulation_steps` for live timeline updates.
 
-Seed mock data: 5 scarcity entries, 10 activity events.
+## Phase 2 — Hook
 
-## Phase 2 — Intent Funnel Hook + RPCs
+Create `src/hooks/useQASimulation.ts`:
+- `useSimulationRuns` — list/filter/search runs
+- `useSimulationRun` — single run with steps, events, errors
+- `useSimulationScenarios` — list scenarios
+- `useLaunchSimulation` — create run + execute steps sequentially with mock logic
+- `useRetryStep` — retry a single failed step
+- `useCancelRun` — cancel active run
 
-Create `src/hooks/useIntentFunnel.ts`:
-- `useDetectIntent` — calls edge function `alex-intent-detect` (already partially exists) or uses mock fallback
-- `useFollowupQuestions` — generates 3-5 smart questions based on detected intent
-- `useDNAMatchScore` — computes match score (service fit, region, availability, language, style)
-- `useRankContractors` — returns 1-3 ranked contractors
-- `useBookingSlots` — fetches available slots for matched contractor
+All simulation logic runs client-side with mock results (no real emails/payments). Each step inserts into `simulation_steps` with pass/fail + duration.
 
-All functions use existing `contractors`, `availability_slots`, `contractor_scores` tables.
+## Phase 3 — Admin Pages (3 pages)
 
-## Phase 3 — Module 1 Pages (4 pages)
+1. **PageAdminQASimulation** (`/admin/qa-simulation`) — Overview dashboard with:
+   - HeroSectionOperationalSimulation
+   - WidgetCriticalFailures, WidgetFunnelDropoffSummary, WidgetConversionPathIntegrity
+   - PanelSimulationRunLauncher (scenario select, environment select, launch button)
+   - TableSimulationRuns (filterable by status, scenario, date)
 
-1. **PageEntryUnifiedIntent** (`/intent`) — Hero with voice orb + text input, zero search fields, chips for common intents. Replaces directory browsing entry point.
+2. **PageAdminQASimulationRun** (`/admin/qa-simulation/run/:runId`) — Single run detail:
+   - BannerSimulationEnvironment
+   - PanelSimulationResultSummary (health score, pass/fail counts)
+   - TimelineSimulationExecution (vertical timeline of steps with CardSimulationStepStatus)
+   - TableSimulationEvents + TableSimulationErrors
+   - PanelSimulationManualOverride (retry failed step, cancel run)
 
-2. **PageAlexConversation** — Enhanced version of existing `PageHomeAlexConversationalLite`, wired to intent funnel. Shows `CardPredictionProblem` after intent detection, transitions to match results.
+3. **PageAdminQASimulationTemplates** (`/admin/qa-simulation/templates`) — Scenario management:
+   - List/edit scenarios, step order, severity levels
 
-3. **PageMatchResultsDynamic** (`/match/:sessionId`) — Shows 1-3 `CardContractorMatchScore` with `PanelDNAFitBreakdown`. Single primary recommendation highlighted.
+## Phase 4 — Components (~18 components)
 
-4. **PageBookingInstant** (`/book/:contractorId`) — `WidgetInstantBookingSlots` with calendar, instant confirmation. `ModalProfileCompletionGate` triggers if address/phone missing.
+All in `src/components/qa-simulation/`:
 
-## Phase 4 — Module 1 Components (8 components)
+- **Hero**: HeroSectionOperationalSimulation
+- **Panels**: SimulationRunLauncher, SimulationScenarioSelector, SimulationResultSummary, EmailSequencePreview, PaymentWebhookStatus, ProfileCreationStatus, SimulationManualOverride
+- **Cards**: SimulationStepStatus (with pass/fail/running/skipped states + duration)
+- **Timeline**: SimulationExecution (vertical step-by-step with real-time updates)
+- **Tables**: SimulationRuns, SimulationEvents, SimulationErrors
+- **Widgets**: FunnelDropoffSummary, CriticalFailures, ConversionPathIntegrity
+- **Banner**: SimulationEnvironment (test/staging/production indicator)
+- **Modal**: SimulationRunDetails
 
-All in `src/components/intent-funnel/`:
+## Phase 5 — Mock Simulation Engine
 
-- `HeroSectionIntentEntry` — Voice orb + text, zero filters
-- `PanelAlexVoiceChat` — Embedded Alex with intent context
-- `ChatThreadDynamic` — Conversation thread with inline cards
-- `CardPredictionProblem` — Shows detected problem + confidence + icon
-- `CardContractorMatchScore` — Contractor card with DNA score ring, badges (RBQ, NEQ, reviews)
-- `PanelDNAFitBreakdown` — Radar chart showing fit dimensions (service, region, availability, language, style)
-- `WidgetInstantBookingSlots` — Calendar grid with available slots
-- `ModalProfileCompletionGate` — Drawer asking for missing fields (address, phone) before booking
+The `useLaunchSimulation` hook executes steps sequentially with simulated delays:
 
-## Phase 5 — Module 2 Components (8 components)
+1. **Extract** — validates mock prospect data structure, inserts step as passed
+2. **Email** — validates template rendering with mock variables, checks CTA URL validity
+3. **CTA Click** — validates target route exists in router config (no 404)
+4. **Signup** — validates auth flow mock (creates test record in simulation_events)
+5. **Payment** — validates Stripe session creation mock + webhook receipt mock
+6. **Profile** — validates completion percentage calculation + activation flag
 
-All in `src/components/platform-enhancements/`:
-
-- `PanelQuoteAnalysisAI` — Upload 3 quotes, auto-analyze, show quality/price/risk scores + recommendation
-- `PanelTrustSignalsUltra` — RBQ verified, NEQ confirmed, AI-analyzed reviews, dynamic trust badges
-- `PanelRevenueProjectionContractor` — "Revenue lost without UNPRO" based on closing rate, capacity, avg job value
-- `PanelLiveActivityFeed` — Real-time social proof: "3 propriétaires ont réservé aujourd'hui"
-- `WidgetScarcityTerritory` — Dynamic counter: "Il reste 2 places à Laval en isolation"
-- `BadgeFounderAccess` — Founder badge with priority territory access indicator
-- `PanelAlexPredictionSavings` — Estimated savings + errors avoided
-- `ModeUrgence24` — Emergency button for instant no-friction booking
+Each step: records duration_ms, expected vs actual result, and any errors with context. Final step computes health_score (0-100) based on pass rate weighted by criticality.
 
 ## Phase 6 — Route Registration
 
-Add routes to `router.tsx`:
-- `/intent` → PageEntryUnifiedIntent
-- `/match/:sessionId` → PageMatchResultsDynamic
-- `/book/:contractorId` → PageBookingInstant
+Add 3 routes to `router.tsx` under admin guard:
+- `/admin/qa-simulation`
+- `/admin/qa-simulation/run/:runId`
+- `/admin/qa-simulation/templates`
 
 ## Technical Details
 
-- All components use glassmorphism + glow effects matching existing UNPRO dark theme (#060B14)
-- Mobile-first (384px viewport currently active)
-- Mock data for contractors/slots when no real matches exist
-- DNA match scoring uses weighted formula: service_fit (30%) + region (25%) + availability (20%) + reviews (15%) + language (10%)
-- Realtime subscription on `live_activity_events` for social proof feed
-- French-first labels throughout
+- All tables use UUID PKs, jsonb for payloads, timestamptz
+- RLS: admin-only (uses `has_role` function)
+- Realtime on `simulation_steps` for live timeline
+- Mobile-first glassmorphism design matching existing admin pages
+- French-first labels
+- No real external calls — all simulation is mock/safe by default
+- Step retry is idempotent (resets step status, re-executes)
 
-## Files Created/Modified
+## Files
 
-- 1 migration file (alter intent_sessions + 6 new tables)
-- 1 hook file (`useIntentFunnel.ts`)
-- 4 page files (Module 1)
-- 8 component files (Module 1 — `src/components/intent-funnel/`)
-- 8 component files (Module 2 — `src/components/platform-enhancements/`)
-- `src/app/router.tsx` (3 new routes)
+- 1 migration (8 tables + seed scenarios + RLS)
+- 1 hook file
+- 3 page files
+- ~18 component files
+- `router.tsx` update (3 routes)
 
