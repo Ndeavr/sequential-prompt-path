@@ -34,17 +34,18 @@ async function executeExtract(): Promise<StepResult> {
   const checks: Check[] = [];
   const errors: string[] = [];
 
-  // 1. Check edge function responds
+  // 1. Check edge function responds with correct payload (url + markdown required)
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/fn-extract-business-data`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${ANON_KEY}`,
+        Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        business_name: "Toiture ABC Test",
-        city: "Laval",
+        url: "https://test-simulation.unpro.ca",
+        markdown: "# Toiture ABC\nEntreprise de toiture à Laval.\nTéléphone: 450-555-1234\nEmail: info@toiture-abc.ca\nCatégorie: Toiture\nVille: Laval",
+        title: "Toiture ABC Test - Simulation QA",
         simulation: true,
       }),
     });
@@ -55,9 +56,11 @@ async function executeExtract(): Promise<StepResult> {
     });
     if (res.status < 500) {
       const body = await res.json().catch(() => null);
-      const fields = ["business_name", "category", "city"];
+      // Response may have extracted data at top level or nested in data/result
+      const data = body?.data || body?.result || body;
+      const fields = ["company_name", "category", "city"];
       for (const f of fields) {
-        const has = body && (body[f] || body?.data?.[f]);
+        const has = data && data[f];
         checks.push({
           label: `Réponse contient ${f}`,
           passed: !!has,
