@@ -10896,6 +10896,62 @@ export type Database = {
           },
         ]
       }
+      booking_sessions: {
+        Row: {
+          alex_session_id: string | null
+          category: string | null
+          city: string | null
+          company_id: string | null
+          company_name: string | null
+          created_at: string
+          id: string
+          lead_id: string | null
+          metadata_json: Json | null
+          scheduled_at: string | null
+          status: string
+          token: string | null
+          updated_at: string
+        }
+        Insert: {
+          alex_session_id?: string | null
+          category?: string | null
+          city?: string | null
+          company_id?: string | null
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          metadata_json?: Json | null
+          scheduled_at?: string | null
+          status?: string
+          token?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alex_session_id?: string | null
+          category?: string | null
+          city?: string | null
+          company_id?: string | null
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          metadata_json?: Json | null
+          scheduled_at?: string | null
+          status?: string
+          token?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_sessions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_slot_scores: {
         Row: {
           booking_id: string | null
@@ -35024,6 +35080,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      outbound_clicks: {
+        Row: {
+          clicked_at: string
+          company_id: string | null
+          created_at: string
+          id: string
+          landing_url: string | null
+          source_email_id: string | null
+          token: string
+          user_agent: string | null
+        }
+        Insert: {
+          clicked_at?: string
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          landing_url?: string | null
+          source_email_id?: string | null
+          token: string
+          user_agent?: string | null
+        }
+        Update: {
+          clicked_at?: string
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          landing_url?: string | null
+          source_email_id?: string | null
+          token?: string
+          user_agent?: string | null
+        }
+        Relationships: []
       }
       outbound_companies: {
         Row: {
