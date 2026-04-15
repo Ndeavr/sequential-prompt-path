@@ -228,6 +228,9 @@ const PageAdminAlexConversationRules = lazy(() => import("@/pages/admin/PageAdmi
 const PageAdminAlexDebugHome = lazy(() => import("@/pages/admin/PageAdminAlexDebugHome"));
 const PageAdminAlexSpeechTuning = lazy(() => import("@/pages/admin/AlexSpeechTuning"));
 const AlexVoiceAdmin = lazy(() => import("@/pages/admin/AlexVoiceAdmin"));
+const PageAdminAlexVoice = lazy(() => import("@/pages/admin/alex/PageAdminAlexVoice"));
+const PageAdminAlexContext = lazy(() => import("@/pages/admin/alex/PageAdminAlexContext"));
+const PageAdminAlexAnalytics = lazy(() => import("@/pages/admin/alex/PageAdminAlexAnalytics"));
 
 const AdminPredictiveLeads = lazy(() => import("@/pages/admin/AdminPredictiveLeads"));
 const AdminDynamicMarketPricing = lazy(() => import("@/pages/admin/AdminDynamicMarketPricing"));
