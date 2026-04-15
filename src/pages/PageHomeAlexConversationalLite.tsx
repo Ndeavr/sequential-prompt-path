@@ -341,6 +341,24 @@ export default function PageHomeAlexConversationalLite() {
         return <CardAlexAddressConfirmation data={cardData} onConfirm={() => sendMessage("Adresse confirmée")} onEdit={(addr) => sendMessage(`Nouvelle adresse: ${addr}`)} />;
       case "form_autofill_preview":
         return <PanelAlexFormAutoFillPreview data={cardData} onConfirm={() => sendMessage("Données confirmées")} onEdit={() => sendMessage("Je veux modifier mes informations")} />;
+      case "entrepreneur_onboarding":
+        return (
+          <PanelAlexEntrepreneurOnboarding
+            prefilled={cardData}
+            onComplete={(info) => sendMessage(`Inscription: ${info.businessName} | ${info.contactName} | ${info.phone} | ${info.service}`)}
+          />
+        );
+      case "stripe_payment_inline":
+        return (
+          <PanelAlexStripePaymentInline
+            planCode={cardData?.planCode || "pro"}
+            planName={cardData?.planName || "Pro"}
+            price={cardData?.price || 349}
+            interval={cardData?.interval || "monthly"}
+            onSuccess={() => sendMessage("Paiement confirmé!")}
+            onError={(msg) => sendMessage(`Erreur de paiement: ${msg}`)}
+          />
+        );
       default: return null;
     }
   };
