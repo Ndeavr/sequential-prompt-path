@@ -187,5 +187,5 @@ Commence maintenant en disant: "${options?.initialGreeting || 'Bonjour. Comment 
     callbacksRef.current?.onDisconnect?.();
   }, [conversation]);
 
-  return { start, stop, isActive, isConnecting, isSpeaking };
+  return { start, stop, isActive, isConnecting, isSpeaking, conversation };
 }
