@@ -15,6 +15,11 @@ import FallbackRoutePage from "@/pages/FallbackRoutePage";
 const PageAdminExtractionQueue = lazy(() => import("@/pages/admin/PageAdminExtractionQueue"));
 const PageAdminCoverageCityDomain = lazy(() => import("@/pages/admin/PageAdminCoverageCityDomain"));
 
+// QA Simulation
+const PageAdminQASimulation = lazy(() => import("@/pages/admin/PageAdminQASimulation"));
+const PageAdminQASimulationRun = lazy(() => import("@/pages/admin/PageAdminQASimulationRun"));
+const PageAdminQASimulationTemplates = lazy(() => import("@/pages/admin/PageAdminQASimulationTemplates"));
+
 // Outbound Approvals
 const PageAdminOutboundApprovals = lazy(() => import("@/pages/admin/outbound/PageAdminOutboundApprovals"));
 
