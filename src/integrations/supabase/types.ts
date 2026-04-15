@@ -49094,6 +49094,421 @@ export type Database = {
         }
         Relationships: []
       }
+      simulation_email_events: {
+        Row: {
+          click_status: string
+          created_at: string
+          cta_url: string | null
+          delivery_status: string
+          id: string
+          open_status: string
+          provider_message_id: string | null
+          recipient_email: string | null
+          run_id: string
+          sequence_name: string | null
+          template_code: string | null
+        }
+        Insert: {
+          click_status?: string
+          created_at?: string
+          cta_url?: string | null
+          delivery_status?: string
+          id?: string
+          open_status?: string
+          provider_message_id?: string | null
+          recipient_email?: string | null
+          run_id: string
+          sequence_name?: string | null
+          template_code?: string | null
+        }
+        Update: {
+          click_status?: string
+          created_at?: string
+          cta_url?: string | null
+          delivery_status?: string
+          id?: string
+          open_status?: string
+          provider_message_id?: string | null
+          recipient_email?: string | null
+          run_id?: string
+          sequence_name?: string | null
+          template_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulation_email_events_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simulation_errors: {
+        Row: {
+          created_at: string
+          error_code: string | null
+          error_context_json: Json | null
+          error_message: string | null
+          error_title: string
+          id: string
+          resolved: boolean
+          resolved_at: string | null
+          run_id: string
+          severity: string
+          step_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_code?: string | null
+          error_context_json?: Json | null
+          error_message?: string | null
+          error_title: string
+          id?: string
+          resolved?: boolean
+          resolved_at?: string | null
+          run_id: string
+          severity?: string
+          step_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_code?: string | null
+          error_context_json?: Json | null
+          error_message?: string | null
+          error_title?: string
+          id?: string
+          resolved?: boolean
+          resolved_at?: string | null
+          run_id?: string
+          severity?: string
+          step_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulation_errors_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "simulation_errors_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simulation_events: {
+        Row: {
+          created_at: string
+          event_label: string | null
+          event_payload_json: Json | null
+          event_type: string
+          id: string
+          run_id: string
+          status: string
+          step_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_label?: string | null
+          event_payload_json?: Json | null
+          event_type: string
+          id?: string
+          run_id: string
+          status?: string
+          step_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_label?: string | null
+          event_payload_json?: Json | null
+          event_type?: string
+          id?: string
+          run_id?: string
+          status?: string
+          step_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulation_events_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "simulation_events_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simulation_payment_events: {
+        Row: {
+          amount_cents: number | null
+          contractor_id: string | null
+          created_at: string
+          currency: string | null
+          id: string
+          payment_status: string
+          plan_code: string | null
+          run_id: string
+          stripe_customer_id: string | null
+          stripe_session_id: string | null
+          stripe_subscription_id: string | null
+          webhook_status: string
+        }
+        Insert: {
+          amount_cents?: number | null
+          contractor_id?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          payment_status?: string
+          plan_code?: string | null
+          run_id: string
+          stripe_customer_id?: string | null
+          stripe_session_id?: string | null
+          stripe_subscription_id?: string | null
+          webhook_status?: string
+        }
+        Update: {
+          amount_cents?: number | null
+          contractor_id?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          payment_status?: string
+          plan_code?: string | null
+          run_id?: string
+          stripe_customer_id?: string | null
+          stripe_session_id?: string | null
+          stripe_subscription_id?: string | null
+          webhook_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulation_payment_events_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simulation_profile_events: {
+        Row: {
+          activated: boolean | null
+          completion_after: number | null
+          completion_before: number | null
+          contractor_id: string | null
+          created_at: string
+          id: string
+          profile_status_after: string | null
+          profile_status_before: string | null
+          run_id: string
+          user_id: string | null
+        }
+        Insert: {
+          activated?: boolean | null
+          completion_after?: number | null
+          completion_before?: number | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          profile_status_after?: string | null
+          profile_status_before?: string | null
+          run_id: string
+          user_id?: string | null
+        }
+        Update: {
+          activated?: boolean | null
+          completion_after?: number | null
+          completion_before?: number | null
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          profile_status_after?: string | null
+          profile_status_before?: string | null
+          run_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulation_profile_events_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simulation_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          critical_failures_count: number | null
+          environment: string
+          health_score: number | null
+          id: string
+          notes: string | null
+          run_name: string | null
+          scenario_id: string | null
+          started_at: string | null
+          started_by: string | null
+          status: string
+          updated_at: string
+          warnings_count: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          critical_failures_count?: number | null
+          environment?: string
+          health_score?: number | null
+          id?: string
+          notes?: string | null
+          run_name?: string | null
+          scenario_id?: string | null
+          started_at?: string | null
+          started_by?: string | null
+          status?: string
+          updated_at?: string
+          warnings_count?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          critical_failures_count?: number | null
+          environment?: string
+          health_score?: number | null
+          id?: string
+          notes?: string | null
+          run_name?: string | null
+          scenario_id?: string | null
+          started_at?: string | null
+          started_by?: string | null
+          status?: string
+          updated_at?: string
+          warnings_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulation_runs_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simulation_scenarios: {
+        Row: {
+          code: string
+          created_at: string
+          default_environment: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          severity_level: string
+          step_order_json: Json
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          default_environment?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          severity_level?: string
+          step_order_json?: Json
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          default_environment?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          severity_level?: string
+          step_order_json?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      simulation_steps: {
+        Row: {
+          actual_result: string | null
+          completed_at: string | null
+          created_at: string
+          duration_ms: number | null
+          expected_result: string | null
+          id: string
+          is_critical: boolean
+          retry_count: number
+          run_id: string
+          started_at: string | null
+          status: string
+          step_code: string
+          step_label: string
+          step_order: number
+          updated_at: string
+        }
+        Insert: {
+          actual_result?: string | null
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          expected_result?: string | null
+          id?: string
+          is_critical?: boolean
+          retry_count?: number
+          run_id: string
+          started_at?: string | null
+          status?: string
+          step_code: string
+          step_label: string
+          step_order?: number
+          updated_at?: string
+        }
+        Update: {
+          actual_result?: string | null
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          expected_result?: string | null
+          id?: string
+          is_critical?: boolean
+          retry_count?: number
+          run_id?: string
+          started_at?: string | null
+          status?: string
+          step_code?: string
+          step_label?: string
+          step_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulation_steps_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sla_assignments: {
         Row: {
           achieved: boolean | null
