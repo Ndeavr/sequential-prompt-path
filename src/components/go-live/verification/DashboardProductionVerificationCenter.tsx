@@ -264,7 +264,7 @@ export default function DashboardProductionVerificationCenter() {
       const planStart = Date.now();
       try {
         const { data: planData, error: planErr } = await supabase.functions.invoke("compute-plan-recommendation", {
-          body: { avg_ticket: 5000, close_rate: 35, revenue_goal: 25000, capacity: "medium" },
+          body: { target_revenue: 25000, average_job_value: 5000, close_rate: 35 },
         });
         newSteps.push({
           step_key: "plan_recommendation",
