@@ -52090,6 +52090,203 @@ export type Database = {
         }
         Relationships: []
       }
+      strike_adjustments: {
+        Row: {
+          created_at: string
+          id: string
+          impact_score: number | null
+          new_value: string | null
+          previous_value: string | null
+          session_id: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          impact_score?: number | null
+          new_value?: string | null
+          previous_value?: string | null
+          session_id: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          impact_score?: number | null
+          new_value?: string | null
+          previous_value?: string | null
+          session_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strike_adjustments_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "strike_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      strike_events: {
+        Row: {
+          contractor_id: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          session_id: string
+          type: string
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          session_id: string
+          type: string
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strike_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "strike_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      strike_results: {
+        Row: {
+          created_at: string
+          id: string
+          revenue_generated: number
+          session_id: string
+          total_clicked: number
+          total_converted: number
+          total_emails_sent: number
+          total_opened: number
+          total_replied: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          revenue_generated?: number
+          session_id: string
+          total_clicked?: number
+          total_converted?: number
+          total_emails_sent?: number
+          total_opened?: number
+          total_replied?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          revenue_generated?: number
+          session_id?: string
+          total_clicked?: number
+          total_converted?: number
+          total_emails_sent?: number
+          total_opened?: number
+          total_replied?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strike_results_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "strike_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      strike_sessions: {
+        Row: {
+          actual_conversions: number
+          created_at: string
+          end_time: string
+          id: string
+          start_time: string
+          status: string
+          target_conversions: number
+          updated_at: string
+        }
+        Insert: {
+          actual_conversions?: number
+          created_at?: string
+          end_time?: string
+          id?: string
+          start_time?: string
+          status?: string
+          target_conversions?: number
+          updated_at?: string
+        }
+        Update: {
+          actual_conversions?: number
+          created_at?: string
+          end_time?: string
+          id?: string
+          start_time?: string
+          status?: string
+          target_conversions?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      strike_targets: {
+        Row: {
+          business_name: string | null
+          category: string | null
+          city: string | null
+          contractor_id: string | null
+          created_at: string
+          engagement_level: string
+          id: string
+          priority_score: number
+          session_id: string
+          status: string
+        }
+        Insert: {
+          business_name?: string | null
+          category?: string | null
+          city?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          engagement_level?: string
+          id?: string
+          priority_score?: number
+          session_id: string
+          status?: string
+        }
+        Update: {
+          business_name?: string | null
+          category?: string | null
+          city?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          engagement_level?: string
+          id?: string
+          priority_score?: number
+          session_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strike_targets_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "strike_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subcontract_requests: {
         Row: {
           appointment_id: string | null
