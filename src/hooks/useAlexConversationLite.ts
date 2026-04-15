@@ -43,6 +43,7 @@ import { buildStructuredAnswer, formatStructuredAnswer } from "@/services/alexAn
 import { classifyQuestionType, type StructuredAnswer } from "@/services/alexCognitiveRulesEngine";
 import { extractSignals, logConversationTurn, logLearningEvent } from "@/services/alexMemoryLearningEngine";
 import { shouldPromptForPhoto, generateMockAnalysis, generateMockProjection, type PhotoPromptDecision } from "@/services/alexVisualIntelligenceEngine";
+import { fetchPlanDefinitions, quickValidate, type PlanDefinition } from "@/services/alexPlanTruthEngine";
 
 // ─── INTERNAL LEAK DETECTOR ───
 const INTERNAL_LEAK_PATTERNS = [
@@ -93,8 +94,32 @@ const PLAN_QUESTION_PATTERNS = [
   /(?:différence|comparer)\s*(?:entre\s*les\s*)?(?:plans?|forfaits?)/i,
 ];
 
+// Plan definitions cache
+let _planCache: PlanDefinition[] | null = null;
+async function getCachedPlans(): Promise<PlanDefinition[]> {
+  if (_planCache) return _planCache;
+  try {
+    _planCache = await fetchPlanDefinitions();
+    return _planCache;
+  } catch { return []; }
+}
+
+function isPlanQuestion(text: string): boolean {
+  return PLAN_QUESTION_PATTERNS.some(p => p.test(text));
+}
+
 function detectAnalysisIntent(text: string): IntentMatch | null {
   const lower = text.toLowerCase();
+
+  // Plan selection from comparison card
+  if (lower.startsWith("je choisis le plan ")) {
+    const planName = text.replace(/je choisis le plan /i, "").trim();
+    return {
+      intent: "entrepreneur_onboarding",
+      response: `Excellent choix ! Pour activer votre plan ${planName}, créons d'abord votre profil.`,
+      data: { selectedPlan: planName },
+    };
+  }
 
   // Onboarding completion → transition to payment
   if (lower.startsWith("inscription:")) {
@@ -113,6 +138,9 @@ function detectAnalysisIntent(text: string): IntentMatch | null {
       data: { tasks: [{ label: "Profil créé", done: true }, { label: "Paiement confirmé", done: true }, { label: "Activation en cours…", done: false }] },
     };
   }
+
+  // Plan questions → will be handled async in sendMessage
+  // (detectAnalysisIntent is sync, so we just flag it)
 
   const sorted = Object.entries(ANALYSIS_KEYWORDS).sort((a, b) => b[0].length - a[0].length);
   for (const [keyword, result] of sorted) {
