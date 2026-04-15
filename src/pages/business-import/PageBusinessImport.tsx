@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, ArrowLeft, CheckCircle, MessageCircle, Target } from "lucide-react";
-import ImportSourceConnectorGrid from "@/components/business-import/ImportSourceConnectorGrid";
+import ImportSourceConnectorGrid, { type ImportSource } from "@/components/business-import/ImportSourceConnectorGrid";
 import BusinessImportForm, { type ImportFormData } from "@/components/business-import/BusinessImportForm";
 import ImportedProfilePreview, { type PreviewData } from "@/components/business-import/ImportedProfilePreview";
 import ProfileCompletionProgressHero from "@/components/business-import/ProfileCompletionProgressHero";
@@ -30,7 +30,7 @@ function simulateImport(data: ImportFormData): PreviewData {
     website_url: data.url || undefined,
     city: data.city || undefined,
     description: data.description || undefined,
-    services: data.source !== "manual" ? ["Rénovation résidentielle", "Plomberie"] : undefined,
+    services: data.source !== "phone" ? ["Rénovation résidentielle", "Plomberie"] : undefined,
     logo_url: undefined,
     photos: undefined,
   };
@@ -42,7 +42,7 @@ export default function PageBusinessImport() {
   const initialScore = parseInt(searchParams.get("score") || "0", 10);
 
   const [step, setStep] = useState<Step>("source");
-  const [source, setSource] = useState<"google" | "website" | "manual">("manual");
+  const [source, setSource] = useState<ImportSource>("gmb");
   const [isLoading, setIsLoading] = useState(false);
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
   const [profileData, setProfileData] = useState<ProfileData>({});
@@ -54,7 +54,7 @@ export default function PageBusinessImport() {
 
   const completion = useMemo(() => detectMissingFields(profileData), [profileData]);
 
-  const handleSourceSelect = useCallback((s: "google" | "website" | "manual") => {
+  const handleSourceSelect = useCallback((s: ImportSource) => {
     setSource(s);
     setStep("form");
   }, []);
