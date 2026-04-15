@@ -19,9 +19,9 @@ const COMPREHENSION_TEMPLATES: Record<string, (ctx: ResolvedContext) => string> 
   problem_with_service: (ctx) => `Je vois que vous avez un problème ${ctx.knownService ? `en lien avec ${ctx.knownService}` : ""}${ctx.knownCity ? ` à ${ctx.knownCity}` : ""}.`,
   project_with_service: (ctx) => `Je comprends votre projet ${ctx.knownService ? `de ${ctx.knownService}` : ""}${ctx.knownCity ? ` à ${ctx.knownCity}` : ""}.`,
   estimation: (ctx) => `Vous aimeriez connaître le coût ${ctx.knownService ? `pour ${ctx.knownService}` : "de votre projet"}.`,
-  comparison: () => `Bonne question pour la comparaison.`,
-  validation: (ctx) => `Je vais vérifier ça ${ctx.knownService ? `pour ${ctx.knownService}` : "pour vous"}.`,
-  general: () => `Je comprends votre demande.`,
+  comparison: (_ctx: ResolvedContext) => `Bonne question pour la comparaison.`,
+  validation: (ctx: ResolvedContext) => `Je vais vérifier ça ${ctx.knownService ? `pour ${ctx.knownService}` : "pour vous"}.`,
+  general: (_ctx: ResolvedContext) => `Je comprends votre demande.`,
 };
 
 // ─── USEFUL ANSWER TEMPLATES ───
