@@ -806,6 +806,13 @@ export const AppRouter = () => (
         <Route path="/sitemap" element={<FallbackRoutePage />} />
         <Route path="/accessibilite" element={<FallbackRoutePage />} />
 
+        {/* Entrepreneur Onboarding Flow */}
+        <Route path="/entrepreneur/onboarding/import" element={<PageOnboardingImport />} />
+        <Route path="/entrepreneur/onboarding/analyse" element={<PageOnboardingAnalyse />} />
+        <Route path="/entrepreneur/onboarding/plan" element={<PageOnboardingPlan />} />
+        <Route path="/entrepreneur/onboarding/payment" element={<PageOnboardingPayment />} />
+        <Route path="/entrepreneur/onboarding/success" element={<PageOnboardingSuccess />} />
+
         {/* New V3 public pages */}
         <Route path="/mes-proprietes" element={<MesProprietesPage />} />
         <Route path="/analyser-soumissions" element={<AnalyserSoumissionsPage />} />
