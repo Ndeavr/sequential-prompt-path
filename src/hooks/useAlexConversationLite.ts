@@ -81,6 +81,18 @@ const ANALYSIS_KEYWORDS: Record<string, IntentMatch> = {
   "inspirations": { intent: "image_gallery", response: "Voici quelques inspirations pour votre projet.", data: { title: "Inspirations", images: [{ url: "/placeholder.svg", label: "Moderne" }, { url: "/placeholder.svg", label: "Scandinave" }, { url: "/placeholder.svg", label: "Industriel" }] } },
 };
 
+// ─── PLAN TRUTH ENGINE: detect plan-related questions ───
+const PLAN_QUESTION_PATTERNS = [
+  /quels?\s*(sont\s*)?(?:vos|les)\s*(?:plans?|forfaits?|abonnements?)/i,
+  /combien\s*(?:ça\s*)?co[uû]te/i,
+  /(?:prix|tarifs?|co[uû]ts?)\s*(?:des?\s*)?(?:plans?|forfaits?|abonnements?)/i,
+  /c'est\s*(?:combien|quoi\s*les\s*prix)/i,
+  /(?:plans?|forfaits?)\s*(?:disponibles?|offerts?)/i,
+  /je\s*(?:veux|voudrais)\s*(?:un\s*)?(?:plan|forfait|m'abonner)/i,
+  /(?:quel|quelle)\s*(?:plan|forfait)\s*(?:choisir|prendre|recommand)/i,
+  /(?:différence|comparer)\s*(?:entre\s*les\s*)?(?:plans?|forfaits?)/i,
+];
+
 function detectAnalysisIntent(text: string): IntentMatch | null {
   const lower = text.toLowerCase();
 
