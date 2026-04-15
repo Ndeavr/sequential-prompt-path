@@ -56,10 +56,10 @@ export default function BusinessImportForm({ source, onSubmit, onBack, isLoading
     if (isLoading) return;
     onSubmit({
       source,
-      url: url.trim() || undefined,
-      business_name: name.trim() || undefined,
-      phone: phone.trim() || undefined,
-      city: city.trim() || undefined,
+      url: url.trim() || selectedPlace?.website || undefined,
+      business_name: name.trim() || selectedPlace?.name || undefined,
+      phone: phone.trim() || selectedPlace?.phone || undefined,
+      city: city.trim() || selectedPlace?.city || undefined,
       description: desc.trim() || undefined,
       rbq_number: rbq.trim() || undefined,
       neq_number: neq.trim() || undefined,
