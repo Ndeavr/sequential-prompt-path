@@ -245,6 +245,9 @@ const PageAdminStrikeLiveFeed = lazy(() => import("@/pages/admin/PageAdminStrike
 const PageAdminStrikeAdjustments = lazy(() => import("@/pages/admin/PageAdminStrikeAdjustments"));
 const PageAdminContractorConversionFunnel = lazy(() => import("@/pages/admin/PageAdminContractorConversionFunnel"));
 
+// Stripe Live Verification
+const PageAdminStripeVerificationCenter = lazy(() => import("@/pages/admin/PageAdminStripeVerificationCenter"));
+
 // Recruitment Automation Engine
 const PageAdminRecruitmentOverview = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentOverview"));
 const PageAdminRecruitmentClusters = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentClusters"));
@@ -1201,6 +1204,9 @@ export const AppRouter = () => (
          <Route path="/admin/36h-strike-dashboard" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdmin36hStrikeDashboard /></UniversalRouteGuard>} />
          <Route path="/admin/strike-live-feed" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminStrikeLiveFeed /></UniversalRouteGuard>} />
          <Route path="/admin/strike-adjustments" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminStrikeAdjustments /></UniversalRouteGuard>} />
+
+         {/* Stripe Live Verification */}
+         <Route path="/admin/stripe-verification" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminStripeVerificationCenter /></UniversalRouteGuard>} />
 
          {/* Recruitment Automation Engine — Admin */}
          <Route path="/admin/recruitment" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentOverview /></UniversalRouteGuard>} />
