@@ -66,6 +66,11 @@ export const ROUTES = {
   ADMIN_ACTIVATION: "/admin/activation",
   ADMIN_ACTIVATION_HISTORY: "/admin/activation/history",
   ADMIN_GO_LIVE: "/admin/go-live",
+  ADMIN_GO_LIVE_VERIFICATION: "/admin/go-live/verification",
+  ADMIN_GO_LIVE_INCIDENTS: "/admin/go-live/incidents",
+  ADMIN_GO_LIVE_E2E_TESTS: "/admin/go-live/e2e-tests",
+  ADMIN_GO_LIVE_FUNCTION_HEALTH: "/admin/go-live/function-health",
+  ADMIN_GO_LIVE_PAYMENT_HEALTH: "/admin/go-live/payment-health",
 
   // Broker / Courtier
   COURTIERS: "/courtiers",
