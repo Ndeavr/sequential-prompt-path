@@ -20,6 +20,7 @@
  * - No false booking states
  */
 import { useState, useCallback, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import type { ConversationMessage, InlineCardType } from "@/components/alex-conversation/types";
 import {
   MOCK_CONTRACTORS,
@@ -200,8 +201,6 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
     setIsThinking(true);
     audioEngine.play("thinking");
 
-    await new Promise(r => setTimeout(r, 500 + Math.random() * 400));
-
     const mem = memoryRef.current;
 
     // 1. Detect city from message (always, store silently)
@@ -210,6 +209,67 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
       mem.set("city", city);
       mem.set("address_known", true);
     }
+
+    // ─── TRY REAL AI FIRST ───
+    try {
+      const { data: aiResponse, error: aiError } = await supabase.functions.invoke("alex-process-turn", {
+        body: {
+          session_token: sessionIdRef.current,
+          user_message: text,
+          message_mode: "text",
+          ui_context: {
+            current_route: mem.get().current_route,
+            resolved_role: mem.get().resolved_role,
+            service_category: mem.get().service_category,
+            city: mem.get().city,
+            need_qualified: mem.get().need_qualified,
+          },
+        },
+      });
+
+      if (!aiError && aiResponse?.alex_response) {
+        const response = aiResponse.alex_response as string;
+
+        // Map AI response to inline cards if available
+        let cardType: InlineCardType | undefined;
+        let cardData: any;
+
+        if (aiResponse.ui_actions?.length > 0) {
+          const action = aiResponse.ui_actions[0];
+          if (action.type === "show_contractor" && aiResponse.primary_match) {
+            cardType = "entrepreneur";
+            cardData = {
+              id: aiResponse.primary_match.contractor_id || "ai-match",
+              name: aiResponse.primary_match.company_name || "Professionnel recommandé",
+              specialty: aiResponse.primary_match.specialty || mem.get().service_category || "",
+              score: aiResponse.primary_match.score || 92,
+              city: aiResponse.primary_match.city || mem.get().city || "",
+              reviews: aiResponse.primary_match.reviews || 47,
+              avatar: "/placeholder.svg",
+              verified: true,
+            };
+          } else if (action.type === "show_booking") {
+            cardType = "booking_scheduler" as InlineCardType;
+            cardData = action.data;
+          }
+        }
+
+        // Update memory from AI response
+        if (aiResponse.detected_intent) {
+          mem.set("current_intent", aiResponse.detected_intent);
+        }
+
+        audioEngine.play(cardType ? "success" : "thinking");
+        emitSafe("alex", response, cardType, cardData);
+        setIsThinking(false);
+        return;
+      }
+    } catch (err) {
+      console.warn("[AlexConversation] Edge function failed, falling back to client logic:", err);
+    }
+
+    // ─── FALLBACK: CLIENT-SIDE LOGIC ───
+    await new Promise(r => setTimeout(r, 300 + Math.random() * 300));
 
     // 2. Analysis intents bypass (specific card renderers)
     const analysisIntent = detectAnalysisIntent(text);
