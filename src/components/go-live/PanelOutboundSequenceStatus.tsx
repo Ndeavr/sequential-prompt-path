@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Mail, MessageSquare, Pause, Play, Square, AlertCircle, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { Mail, Pause, Play, CheckCircle2, Clock, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface OutboundSequence {
@@ -14,15 +14,6 @@ interface OutboundSequence {
   target_type: string;
   created_at: string;
 }
-
-const STATUS_CONFIG: Record<string, { color: string; icon: typeof CheckCircle2 }> = {
-  draft: { color: "text-muted-foreground", icon: Clock },
-  running: { color: "text-emerald-400", icon: Play },
-  paused: { color: "text-amber-400", icon: Pause },
-  blocked: { color: "text-destructive", icon: AlertCircle },
-  completed: { color: "text-primary", icon: CheckCircle2 },
-  cancelled: { color: "text-muted-foreground", icon: Square },
-};
 
 export default function PanelOutboundSequenceStatus() {
   const [sequences, setSequences] = useState<OutboundSequence[]>([]);
@@ -36,15 +27,15 @@ export default function PanelOutboundSequenceStatus() {
     setLoading(true);
     const { data } = await supabase
       .from("outbound_sequences")
-      .select("*")
+      .select("id, sequence_name, is_active, channel, sequence_type, target_type, created_at")
       .order("created_at", { ascending: false })
       .limit(20);
     setSequences((data as any[]) || []);
     setLoading(false);
   };
 
-  const updateStatus = async (id: string, newStatus: string) => {
-    await supabase.from("outbound_sequences").update({ status: newStatus }).eq("id", id);
+  const toggleActive = async (id: string, currentActive: boolean) => {
+    await supabase.from("outbound_sequences").update({ is_active: !currentActive }).eq("id", id);
     loadSequences();
   };
 
@@ -69,42 +60,33 @@ export default function PanelOutboundSequenceStatus() {
       </CardHeader>
       <CardContent className="space-y-2">
         {sequences.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-4">Aucune séquence active</p>
+          <p className="text-sm text-muted-foreground text-center py-4">Aucune séquence</p>
         )}
-        {sequences.map((seq) => {
-          const config = STATUS_CONFIG[seq.status] || STATUS_CONFIG.draft;
-          const Icon = config.icon;
-          return (
-            <div key={seq.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/60 bg-card">
-              <Icon className={`h-4 w-4 shrink-0 ${config.color}`} />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{seq.sequence_name || "Sans nom"}</p>
-                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                  <span>Étape {seq.current_step_order || 0}</span>
-                  <span>•</span>
-                  <span className="capitalize">{seq.status}</span>
-                </div>
-              </div>
-              <div className="flex gap-1 shrink-0">
-                {seq.status === "running" && (
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateStatus(seq.id, "paused")}>
-                    <Pause className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-                {seq.status === "paused" && (
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateStatus(seq.id, "running")}>
-                    <Play className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-                {(seq.status === "running" || seq.status === "paused") && (
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => updateStatus(seq.id, "cancelled")}>
-                    <Square className="h-3.5 w-3.5" />
-                  </Button>
-                )}
+        {sequences.map((seq) => (
+          <div key={seq.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/60 bg-card">
+            {seq.is_active ? (
+              <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+            ) : (
+              <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">{seq.sequence_name || "Sans nom"}</p>
+              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                <span className="capitalize">{seq.channel || "email"}</span>
+                <span>•</span>
+                <span>{seq.is_active ? "Active" : "Inactive"}</span>
               </div>
             </div>
-          );
-        })}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => toggleActive(seq.id, seq.is_active)}
+            >
+              {seq.is_active ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+            </Button>
+          </div>
+        ))}
       </CardContent>
     </Card>
   );
