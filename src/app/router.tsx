@@ -508,6 +508,10 @@ const PageAdminEmailControlCenter = lazy(() => import("@/pages/admin/email-healt
 const PageAdminEmailWarmup = lazy(() => import("@/pages/admin/email-health/PageAdminEmailWarmup"));
 const PageAdminEmailDeliveryLogs = lazy(() => import("@/pages/admin/email-health/PageAdminEmailLogs"));
 
+// Email-to-Booking Conversion
+const PageLandingPersonalizedAIPP = lazy(() => import("@/pages/conversion/PageLandingPersonalizedAIPP"));
+const PageBookingContractor = lazy(() => import("@/pages/conversion/PageBookingContractor"));
+
 const PageEntrepreneurJoin = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurJoin"));
 const PageEntrepreneurHowItWorks = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurHowItWorks"));
 const PageEntrepreneurPlans = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurPlans"));
