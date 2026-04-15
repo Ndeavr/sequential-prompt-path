@@ -488,6 +488,13 @@ const MesProprietes = lazy(() => import("@/pages/MesProprietesPage"));
 const AnalyserSoumissions = lazy(() => import("@/pages/AnalyserSoumissionsPage"));
 const LandingPageFounderPlans = lazy(() => import("@/pages/LandingPageFounderPlansUNPRO"));
 
+// Adaptive Homepage System
+const HomeIntentRouterDynamic = lazy(() => import("@/pages/HomeIntentRouterDynamic"));
+const HomeHomeownerAdaptive = lazy(() => import("@/pages/homeowner/HomeHomeownerAdaptive"));
+const HomeContractorAdaptive = lazy(() => import("@/pages/contractor-landing/HomeContractorAdaptive"));
+const HomeCondoAdaptive = lazy(() => import("@/pages/condos/HomeCondoAdaptive"));
+const HomeProfessionalAdaptive = lazy(() => import("@/pages/HomeProfessionalAdaptive"));
+
 export const AppRouter = () => (
   <BrowserRouter>
     <ScrollRestoration />
