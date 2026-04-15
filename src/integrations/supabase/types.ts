@@ -47235,6 +47235,105 @@ export type Database = {
         }
         Relationships: []
       }
+      runtime_function_health: {
+        Row: {
+          checked_at: string
+          function_name: string
+          health_status: string
+          http_status: number | null
+          id: string
+          latency_ms: number | null
+          response_excerpt: string | null
+        }
+        Insert: {
+          checked_at?: string
+          function_name: string
+          health_status?: string
+          http_status?: number | null
+          id?: string
+          latency_ms?: number | null
+          response_excerpt?: string | null
+        }
+        Update: {
+          checked_at?: string
+          function_name?: string
+          health_status?: string
+          http_status?: number | null
+          id?: string
+          latency_ms?: number | null
+          response_excerpt?: string | null
+        }
+        Relationships: []
+      }
+      runtime_outbound_checks: {
+        Row: {
+          channel: string
+          checked_at: string
+          delivery_status: string
+          id: string
+          message_id: string | null
+          provider: string | null
+          provider_response: Json | null
+          sequence_id: string | null
+        }
+        Insert: {
+          channel?: string
+          checked_at?: string
+          delivery_status?: string
+          id?: string
+          message_id?: string | null
+          provider?: string | null
+          provider_response?: Json | null
+          sequence_id?: string | null
+        }
+        Update: {
+          channel?: string
+          checked_at?: string
+          delivery_status?: string
+          id?: string
+          message_id?: string | null
+          provider?: string | null
+          provider_response?: Json | null
+          sequence_id?: string | null
+        }
+        Relationships: []
+      }
+      runtime_payment_checks: {
+        Row: {
+          activation_triggered: boolean | null
+          checked_at: string
+          checkout_created: boolean | null
+          checkout_session_id: string | null
+          id: string
+          mode: string
+          provider: string
+          status: string
+          webhook_received: boolean | null
+        }
+        Insert: {
+          activation_triggered?: boolean | null
+          checked_at?: string
+          checkout_created?: boolean | null
+          checkout_session_id?: string | null
+          id?: string
+          mode?: string
+          provider?: string
+          status?: string
+          webhook_received?: boolean | null
+        }
+        Update: {
+          activation_triggered?: boolean | null
+          checked_at?: string
+          checkout_created?: boolean | null
+          checkout_session_id?: string | null
+          id?: string
+          mode?: string
+          provider?: string
+          status?: string
+          webhook_received?: boolean | null
+        }
+        Relationships: []
+      }
       sales_microcopy: {
         Row: {
           ab_test_variant: string | null
@@ -54901,6 +55000,66 @@ export type Database = {
         }
         Relationships: []
       }
+      verification_failures: {
+        Row: {
+          component_name: string
+          created_at: string
+          failure_message: string
+          failure_type: string
+          id: string
+          recommended_fix: string | null
+          resolved_at: string | null
+          severity: string
+          status: string
+          step_id: string | null
+          technical_details: Json | null
+          verification_run_id: string
+        }
+        Insert: {
+          component_name: string
+          created_at?: string
+          failure_message: string
+          failure_type: string
+          id?: string
+          recommended_fix?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          step_id?: string | null
+          technical_details?: Json | null
+          verification_run_id: string
+        }
+        Update: {
+          component_name?: string
+          created_at?: string
+          failure_message?: string
+          failure_type?: string
+          id?: string
+          recommended_fix?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          step_id?: string | null
+          technical_details?: Json | null
+          verification_run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_failures_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "verification_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_failures_verification_run_id_fkey"
+            columns: ["verification_run_id"]
+            isOneToOne: false
+            referencedRelation: "verification_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       verification_reports: {
         Row: {
           contractor_identity: Json | null
@@ -54987,6 +55146,89 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      verification_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          environment: string
+          id: string
+          overall_status: string
+          run_type: string
+          started_at: string
+          summary: Json | null
+          triggered_by: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          environment?: string
+          id?: string
+          overall_status?: string
+          run_type?: string
+          started_at?: string
+          summary?: Json | null
+          triggered_by?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          environment?: string
+          id?: string
+          overall_status?: string
+          run_type?: string
+          started_at?: string
+          summary?: Json | null
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
+      verification_steps: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          duration_ms: number | null
+          evidence_payload: Json | null
+          id: string
+          started_at: string | null
+          status: string
+          step_key: string
+          step_name: string
+          verification_run_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          evidence_payload?: Json | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          step_key: string
+          step_name: string
+          verification_run_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          evidence_payload?: Json | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          step_key?: string
+          step_name?: string
+          verification_run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_steps_verification_run_id_fkey"
+            columns: ["verification_run_id"]
+            isOneToOne: false
+            referencedRelation: "verification_runs"
+            referencedColumns: ["id"]
           },
         ]
       }
