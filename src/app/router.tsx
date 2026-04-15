@@ -247,6 +247,11 @@ const PageAdminAlexVoice = lazy(() => import("@/pages/admin/alex/PageAdminAlexVo
 const PageAdminAlexContext = lazy(() => import("@/pages/admin/alex/PageAdminAlexContext"));
 const PageAdminAlexAnalytics = lazy(() => import("@/pages/admin/alex/PageAdminAlexAnalytics"));
 
+// Intent Funnel + Match Engine
+const PageEntryUnifiedIntent = lazy(() => import("@/pages/intent/PageEntryUnifiedIntent"));
+const PageMatchResultsDynamic = lazy(() => import("@/pages/intent/PageMatchResultsDynamic"));
+const PageBookingInstant = lazy(() => import("@/pages/intent/PageBookingInstant"));
+const PageAlexConversationIntent = lazy(() => import("@/pages/intent/PageAlexConversationIntent"));
 const AdminPredictiveLeads = lazy(() => import("@/pages/admin/AdminPredictiveLeads"));
 const AdminDynamicMarketPricing = lazy(() => import("@/pages/admin/AdminDynamicMarketPricing"));
 const AdminPredictiveMarketBoard = lazy(() => import("@/pages/admin/AdminPredictiveMarketBoard"));
