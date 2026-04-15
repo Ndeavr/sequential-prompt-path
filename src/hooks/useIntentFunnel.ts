@@ -208,14 +208,14 @@ export function useBookingSlots() {
     const slot = MOCK_SLOTS.find(s => s.id === slotId);
     if (!slot) throw new Error("Slot introuvable");
 
-    const { error } = await supabase
-      .from("booking_requests" as any)
-      .insert({
-        user_id: userId,
-        contractor_id: contractorId,
-        time_slot: `${slot.date}T${slot.time}:00`,
-        status: "pending",
-      } as any);
+      const { error } = await (supabase as any)
+        .from("booking_requests")
+        .insert({
+          user_id: userId,
+          contractor_id: contractorId,
+          time_slot: `${slot.date}T${slot.time}:00`,
+          status: "pending",
+        });
 
     if (error) throw error;
     return true;

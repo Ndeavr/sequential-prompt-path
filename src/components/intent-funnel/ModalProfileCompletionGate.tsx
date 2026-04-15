@@ -25,12 +25,12 @@ export default function ModalProfileCompletionGate({ open, onClose, onComplete }
     setSaving(true);
 
     try {
-      await supabase.from("user_profiles_extended" as any).upsert({
+      await (supabase as any).from("user_profiles_extended").upsert({
         user_id: user.id,
         phone: phone.trim(),
         address: address.trim(),
         city: city.trim() || null,
-      } as any);
+      });
 
       onComplete();
     } catch (e) {

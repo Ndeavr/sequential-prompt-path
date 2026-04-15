@@ -36,11 +36,11 @@ export default function WidgetScarcityTerritory({ citySlug, categorySlug }: Prop
   const [entries, setEntries] = useState<ScarcityEntry[]>(MOCK_DATA);
 
   useEffect(() => {
-    supabase
-      .from("scarcity_tracker" as any)
+    (supabase as any)
+      .from("scarcity_tracker")
       .select("*")
-      .then(({ data }) => {
-        if (data && (data as any[]).length > 0) setEntries(data as any[]);
+      .then(({ data }: any) => {
+        if (data && data.length > 0) setEntries(data);
       });
   }, []);
 
