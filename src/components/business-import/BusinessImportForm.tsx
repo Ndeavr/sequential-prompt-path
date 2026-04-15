@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Globe, Search, ArrowRight, Loader2, Camera, Shield, Building2, Phone, CreditCard } from "lucide-react";
+import { Globe, Search, ArrowRight, Loader2, Camera, Shield, Building2, Phone, CreditCard, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import type { ImportSource } from "./ImportSourceConnectorGrid";
+import GooglePlacesAutocomplete, { type PlaceResult } from "./GooglePlacesAutocomplete";
 
 export interface ImportFormData {
   source: ImportSource;
@@ -45,6 +46,7 @@ export default function BusinessImportForm({ source, onSubmit, onBack, isLoading
   const [rbq, setRbq] = useState("");
   const [neq, setNeq] = useState("");
   const [cardFile, setCardFile] = useState<File | null>(null);
+  const [selectedPlace, setSelectedPlace] = useState<PlaceResult | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const config = SOURCE_CONFIG[source];
@@ -54,10 +56,10 @@ export default function BusinessImportForm({ source, onSubmit, onBack, isLoading
     if (isLoading) return;
     onSubmit({
       source,
-      url: url.trim() || undefined,
-      business_name: name.trim() || undefined,
-      phone: phone.trim() || undefined,
-      city: city.trim() || undefined,
+      url: url.trim() || selectedPlace?.website || undefined,
+      business_name: name.trim() || selectedPlace?.name || undefined,
+      phone: phone.trim() || selectedPlace?.phone || undefined,
+      city: city.trim() || selectedPlace?.city || undefined,
       description: desc.trim() || undefined,
       rbq_number: rbq.trim() || undefined,
       neq_number: neq.trim() || undefined,
@@ -68,12 +70,20 @@ export default function BusinessImportForm({ source, onSubmit, onBack, isLoading
   const isValid = () => {
     switch (source) {
       case "business_card": return !!cardFile;
-      case "gmb": return !!name.trim();
+      case "gmb": return !!selectedPlace;
       case "website": return !!url.trim();
       case "rbq": return !!rbq.trim();
       case "neq": return !!neq.trim();
       case "phone": return !!phone.trim();
     }
+  };
+
+  const handlePlaceSelect = (place: PlaceResult) => {
+    setSelectedPlace(place);
+    setName(place.name);
+    setCity(place.city);
+    setPhone(place.phone);
+    setUrl(place.website);
   };
 
   return (
@@ -128,19 +138,35 @@ export default function BusinessImportForm({ source, onSubmit, onBack, isLoading
           {source === "gmb" && (
             <div className="space-y-3">
               <div>
-                <Label className="text-sm font-semibold mb-1.5 block">Nom de votre entreprise</Label>
-                <Input
-                  placeholder="Ex: Toitures Dupont Inc."
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="h-11"
-                  required
+                <Label className="text-sm font-semibold mb-1.5 block">Rechercher votre entreprise</Label>
+                <GooglePlacesAutocomplete
+                  onSelect={handlePlaceSelect}
+                  placeholder="Ex: Toitures Dupont Montréal"
                 />
               </div>
-              <div>
-                <Label className="text-sm font-medium mb-1 block text-muted-foreground">Ville (optionnel)</Label>
-                <Input placeholder="Ex: Montréal" value={city} onChange={(e) => setCity(e.target.value)} className="h-10" />
-              </div>
+              {selectedPlace && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-1.5"
+                >
+                  <p className="font-bold text-sm text-foreground">{selectedPlace.name}</p>
+                  <p className="text-xs text-muted-foreground">{selectedPlace.address}</p>
+                  {selectedPlace.phone && (
+                    <p className="text-xs text-muted-foreground">📞 {selectedPlace.phone}</p>
+                  )}
+                  {selectedPlace.website && (
+                    <p className="text-xs text-muted-foreground truncate">🌐 {selectedPlace.website}</p>
+                  )}
+                  {selectedPlace.rating > 0 && (
+                    <div className="flex items-center gap-1 text-xs">
+                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                      <span className="font-medium text-foreground">{selectedPlace.rating}</span>
+                      <span className="text-muted-foreground">({selectedPlace.review_count} avis)</span>
+                    </div>
+                  )}
+                </motion.div>
+              )}
             </div>
           )}
 
