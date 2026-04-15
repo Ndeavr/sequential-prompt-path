@@ -1,105 +1,94 @@
 
 
-# Plan: ModuleOperationalSimulationAndQAFlow
+# Plan: Make QA Simulation Module Real and Executable
 
-## Summary
-Build a complete operational simulation and QA module enabling admins to run end-to-end validation of the contractor recruitment funnel (extract → email → CTA → signup → payment → profile → activation) with real-time timeline tracking, error surfacing, and step-level retry.
+## Problem
+The current `simulateStep()` function in `useQASimulation.ts` uses `Math.random()` to randomly pass/fail each step. Nothing actually tests real infrastructure — no real edge function calls, no real route validation, no real database checks.
 
-## Phase 1 — Database (1 migration)
+## What "Real" Means
 
-Create 8 tables with RLS (admin-only):
+Replace each mock step with actual validation logic that tests the live system:
 
-- `simulation_scenarios` — reusable scenario definitions with step_order_json, severity, default_environment
-- `simulation_runs` — execution instances with status, health_score, critical_failures_count
-- `simulation_steps` — ordered steps per run with status, duration_ms, expected/actual result, retry_count
-- `simulation_events` — granular event log per step
-- `simulation_errors` — errors with severity, context, resolution tracking
-- `simulation_email_events` — email delivery/open/click tracking per run
-- `simulation_payment_events` — Stripe session/webhook status per run
-- `simulation_profile_events` — profile completion before/after per run
+### Step 1 — Extract (Real)
+- Call the real `edge-enrich-prospect` or `fn-extract-business-data` edge function with a test company payload
+- Validate the response contains required fields (business_name, category, city, email, phone)
+- Check `outbound_companies` table for correct data insertion/update
+- Report actual missing fields or errors from the real function
 
-Seed data: 6 default scenarios (FullFunnelContractor, ExtractOnly, ExtractToEmail, ExtractToSignup, PaymentRecovery, WebhookIntegrityAudit).
+### Step 2 — Email (Real)
+- Call `process-outbound-queue` or `send-transactional-email` with a dry-run/test flag
+- Validate template rendering by calling `preview-transactional-email` with test variables
+- Check that CTA URLs in the template resolve to valid routes
+- Validate tracking pixel and open/click URL formation
 
-Enable Realtime on `simulation_steps` for live timeline updates.
+### Step 3 — CTA Click (Real)
+- Dynamically import the router config and check that target routes exist (`/entrepreneur/join`, `/entrepreneur/onboarding-voice`, `/join/:token`, etc.)
+- Fetch each critical route's lazy component to verify it loads without error
+- Validate URL parameters are preserved through navigation
 
-## Phase 2 — Hook
+### Step 4 — Signup (Real)
+- Query `profiles` table to validate schema is correct for new contractor insertion
+- Query `contractors` table to confirm FK structure
+- Validate the auth flow by checking edge function `auth-email-hook` is deployed
+- Check `user_roles` table structure for contractor role assignment
 
-Create `src/hooks/useQASimulation.ts`:
-- `useSimulationRuns` — list/filter/search runs
-- `useSimulationRun` — single run with steps, events, errors
-- `useSimulationScenarios` — list scenarios
-- `useLaunchSimulation` — create run + execute steps sequentially with mock logic
-- `useRetryStep` — retry a single failed step
-- `useCancelRun` — cancel active run
+### Step 5 — Payment (Real)
+- Call `create-checkout-session` edge function with a test payload (dry-run mode)
+- Validate Stripe webhook edge function `stripe-webhook` is deployed and responds to OPTIONS
+- Check `contractor_checkout_sessions` table schema
+- Validate plan catalog exists in `plan_catalog` table
 
-All simulation logic runs client-side with mock results (no real emails/payments). Each step inserts into `simulation_steps` with pass/fail + duration.
+### Step 6 — Profile (Real)
+- Query `contractors` table schema to verify all required columns exist
+- Validate profile completion calculation logic against real column list
+- Check that `contractor_category_assignments` and `service_regions` tables accept inserts
+- Verify activation flow edge functions are deployed (`admin-activation-publish`)
 
-## Phase 3 — Admin Pages (3 pages)
+## Implementation
 
-1. **PageAdminQASimulation** (`/admin/qa-simulation`) — Overview dashboard with:
-   - HeroSectionOperationalSimulation
-   - WidgetCriticalFailures, WidgetFunnelDropoffSummary, WidgetConversionPathIntegrity
-   - PanelSimulationRunLauncher (scenario select, environment select, launch button)
-   - TableSimulationRuns (filterable by status, scenario, date)
+### 1. Create Edge Function `edge-qa-simulation-executor`
+A single edge function that receives a step_code and executes the real validation server-side (with service_role access):
 
-2. **PageAdminQASimulationRun** (`/admin/qa-simulation/run/:runId`) — Single run detail:
-   - BannerSimulationEnvironment
-   - PanelSimulationResultSummary (health score, pass/fail counts)
-   - TimelineSimulationExecution (vertical timeline of steps with CardSimulationStepStatus)
-   - TableSimulationEvents + TableSimulationErrors
-   - PanelSimulationManualOverride (retry failed step, cancel run)
+- `extract`: Calls `fn-extract-business-data` internally, validates response
+- `email`: Calls `preview-transactional-email`, validates template + CTA URLs  
+- `cta_click`: Makes HTTP HEAD requests to critical app routes
+- `signup`: Validates table schemas and auth infrastructure
+- `payment`: Pings checkout/webhook edge functions, validates plan_catalog
+- `profile`: Validates contractor table schema and activation functions
 
-3. **PageAdminQASimulationTemplates** (`/admin/qa-simulation/templates`) — Scenario management:
-   - List/edit scenarios, step order, severity levels
+Returns structured `{ passed, actual, checks[], errors[] }` for each step.
 
-## Phase 4 — Components (~18 components)
+### 2. Update `useQASimulation.ts`
+- Replace `simulateStep()` mock with a call to the real edge function
+- Keep the same DB insertion logic (steps, events, errors)
+- Add detailed check-level reporting in `event_payload_json`
+- Fallback to mock mode if edge function is unreachable (with warning)
 
-All in `src/components/qa-simulation/`:
+### 3. Update UI Components
+- **CardSimulationStepStatus**: Show individual check results (expandable list of sub-checks)
+- **PanelSimulationResultSummary**: Show real infrastructure health, not random results
+- Add a toggle "Mode réel / Mode mock" in PanelSimulationRunLauncher
 
-- **Hero**: HeroSectionOperationalSimulation
-- **Panels**: SimulationRunLauncher, SimulationScenarioSelector, SimulationResultSummary, EmailSequencePreview, PaymentWebhookStatus, ProfileCreationStatus, SimulationManualOverride
-- **Cards**: SimulationStepStatus (with pass/fail/running/skipped states + duration)
-- **Timeline**: SimulationExecution (vertical step-by-step with real-time updates)
-- **Tables**: SimulationRuns, SimulationEvents, SimulationErrors
-- **Widgets**: FunnelDropoffSummary, CriticalFailures, ConversionPathIntegrity
-- **Banner**: SimulationEnvironment (test/staging/production indicator)
-- **Modal**: SimulationRunDetails
+### 4. Add Sub-Check Granularity
+Each step runs multiple sub-checks. Example for `extract`:
+- ✅ Edge function `fn-extract-business-data` responds (200)
+- ✅ Response contains `business_name`
+- ✅ Response contains `category`  
+- ❌ Response missing `phone` → EXTRACT_MISSING_FIELD
 
-## Phase 5 — Mock Simulation Engine
+## Files Changed/Created
 
-The `useLaunchSimulation` hook executes steps sequentially with simulated delays:
-
-1. **Extract** — validates mock prospect data structure, inserts step as passed
-2. **Email** — validates template rendering with mock variables, checks CTA URL validity
-3. **CTA Click** — validates target route exists in router config (no 404)
-4. **Signup** — validates auth flow mock (creates test record in simulation_events)
-5. **Payment** — validates Stripe session creation mock + webhook receipt mock
-6. **Profile** — validates completion percentage calculation + activation flag
-
-Each step: records duration_ms, expected vs actual result, and any errors with context. Final step computes health_score (0-100) based on pass rate weighted by criticality.
-
-## Phase 6 — Route Registration
-
-Add 3 routes to `router.tsx` under admin guard:
-- `/admin/qa-simulation`
-- `/admin/qa-simulation/run/:runId`
-- `/admin/qa-simulation/templates`
+- **New**: `supabase/functions/edge-qa-simulation-executor/index.ts` — real validation engine
+- **Modified**: `src/hooks/useQASimulation.ts` — replace mock with real edge function call
+- **Modified**: `src/components/qa-simulation/CardSimulationStepStatus.tsx` — show sub-checks
+- **Modified**: `src/components/qa-simulation/PanelSimulationRunLauncher.tsx` — add mode toggle
+- **Modified**: `src/components/qa-simulation/PanelSimulationResultSummary.tsx` — real health display
 
 ## Technical Details
 
-- All tables use UUID PKs, jsonb for payloads, timestamptz
-- RLS: admin-only (uses `has_role` function)
-- Realtime on `simulation_steps` for live timeline
-- Mobile-first glassmorphism design matching existing admin pages
-- French-first labels
-- No real external calls — all simulation is mock/safe by default
-- Step retry is idempotent (resets step status, re-executes)
-
-## Files
-
-- 1 migration (8 tables + seed scenarios + RLS)
-- 1 hook file
-- 3 page files
-- ~18 component files
-- `router.tsx` update (3 routes)
+- Edge function uses service_role key to access all tables
+- Each sub-check has a timeout (5s default)
+- Results are deterministic (no randomness) — same infrastructure state = same results
+- French-first labels on all check descriptions
+- Backward compatible: existing simulation_runs data still displays correctly
 
