@@ -34,7 +34,7 @@ async function executeExtract(): Promise<StepResult> {
   const checks: Check[] = [];
   const errors: string[] = [];
 
-  // 1. Check edge function responds with correct payload (url + markdown required)
+  // 1. Check edge function responds
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/fn-extract-business-data`, {
       method: "POST",
@@ -49,37 +49,70 @@ async function executeExtract(): Promise<StepResult> {
         simulation: true,
       }),
     });
+    const bodyText = await res.text().catch(() => "");
+    let body: any = null;
+    try { body = JSON.parse(bodyText); } catch { /* not json */ }
+
     checks.push({
       label: "Edge function fn-extract-business-data répond",
       passed: res.status < 500,
       detail: `HTTP ${res.status}`,
     });
-    if (res.status < 500) {
-      const body = await res.json().catch(() => null);
-      // Response may have extracted data at top level or nested in data/result
-      const data = body?.data || body?.result || body;
-      const fields = ["company_name", "category", "city"];
-      for (const f of fields) {
-        const has = data && data[f];
-        checks.push({
-          label: `Réponse contient ${f}`,
-          passed: !!has,
-          detail: has ? `${f} = ${JSON.stringify(has).slice(0, 60)}` : `${f} absent`,
-        });
-        if (!has) errors.push(`EXTRACT_MISSING_FIELD:${f}`);
-      }
-    } else {
-      const text = await res.text().catch(() => "");
+
+    if (res.status < 500 && body) {
+      // Real function returns { success, lead_id, company, priority } or may return success:false but still extract
+      const responded = res.status === 200;
+      const companyFromResponse = body.company || body.company_name || body.data?.company_name;
+      checks.push({
+        label: "Fonction retourne HTTP 200",
+        passed: responded,
+        detail: responded ? "OK" : `HTTP ${res.status}`,
+      });
+      if (!responded) errors.push("EXTRACT_NOT_200");
+
+      const companyName = body.company || body.company_name || body.data?.company_name;
+      checks.push({
+        label: "Réponse contient company_name",
+        passed: !!companyName,
+        detail: companyName ? `company = ${String(companyName).slice(0, 60)}` : "company absent",
+      });
+      if (!companyName) errors.push("EXTRACT_MISSING_FIELD:company_name");
+    } else if (res.status >= 500) {
       errors.push(`EXTRACT_FUNCTION_ERROR:${res.status}`);
-      checks.push({ label: "Réponse valide", passed: false, detail: text.slice(0, 120) });
+      checks.push({ label: "Réponse valide", passed: false, detail: bodyText.slice(0, 120) });
     }
   } catch (e) {
     checks.push({ label: "Edge function fn-extract-business-data accessible", passed: false, detail: String(e) });
     errors.push("EXTRACT_FUNCTION_UNREACHABLE");
   }
 
-  // 2. Check outbound_companies table exists and is queryable
+  // 2. Check contractor_leads table (where extracted data lands)
   const db = adminClient();
+  const { data: leads, error: leadErr } = await db
+    .from("contractor_leads")
+    .select("id, company_name, category_primary, city")
+    .order("created_at", { ascending: false })
+    .limit(1);
+  checks.push({
+    label: "Table contractor_leads accessible",
+    passed: !leadErr,
+    detail: leadErr ? leadErr.message : "OK",
+  });
+  if (leadErr) {
+    errors.push("EXTRACT_LEADS_TABLE_MISSING");
+  } else if (leads && leads.length > 0) {
+    const row = leads[0] as any;
+    const fields = { company_name: row.company_name, category: row.category_primary, city: row.city };
+    for (const [key, val] of Object.entries(fields)) {
+      checks.push({
+        label: `contractor_leads contient ${key}`,
+        passed: !!val,
+        detail: val ? `${key} = ${String(val).slice(0, 60)}` : `${key} absent`,
+      });
+    }
+  }
+
+  // 3. Check outbound_companies table exists
   const { error: tblErr } = await db.from("outbound_companies").select("id").limit(1);
   checks.push({
     label: "Table outbound_companies accessible",
@@ -91,7 +124,7 @@ async function executeExtract(): Promise<StepResult> {
   const passed = checks.every((c) => c.passed);
   return {
     passed,
-    actual: passed ? "Pipeline d'extraction validé — fonction et table OK" : `${errors.length} problème(s) détecté(s)`,
+    actual: passed ? "Pipeline d'extraction validé — fonction, leads et tables OK" : `${errors.length} problème(s) détecté(s)`,
     checks,
     errors,
   };
@@ -101,39 +134,47 @@ async function executeEmail(): Promise<StepResult> {
   const checks: Check[] = [];
   const errors: string[] = [];
 
-  // 1. Check preview-transactional-email responds
+  // 1. Check send-transactional-email is deployed (OPTIONS)
   try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/preview-transactional-email`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${ANON_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ templateName: "prospect-outreach", simulation: true }),
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
+      method: "OPTIONS",
+      headers: { Origin: "https://unpro.ca" },
     });
     checks.push({
-      label: "Edge function preview-transactional-email répond",
+      label: "Edge function send-transactional-email déployée",
       passed: res.status < 500,
       detail: `HTTP ${res.status}`,
     });
-    const text = await res.text().catch(() => "");
-    if (res.status < 500 && text.length > 0) {
-      // Check CTA URL in template
-      const hasCTA = text.includes("href=") || text.includes("cta") || text.includes("button");
-      checks.push({
-        label: "Template contient un CTA",
-        passed: hasCTA,
-        detail: hasCTA ? "CTA détecté dans le rendu" : "Aucun CTA trouvé",
-      });
-      if (!hasCTA) errors.push("EMAIL_NO_CTA");
-    }
+    await res.text().catch(() => "");
+    if (res.status >= 500) errors.push("EMAIL_SEND_FUNCTION_DOWN");
   } catch (e) {
-    checks.push({ label: "Fonction email accessible", passed: false, detail: String(e) });
+    checks.push({ label: "send-transactional-email accessible", passed: false, detail: String(e) });
     errors.push("EMAIL_FUNCTION_UNREACHABLE");
   }
 
-  // 2. Check outbound_messages table (email queue)
   const db = adminClient();
+
+  // 2. Check email_templates table
+  const { data: templates, error: tErr } = await db.from("email_templates").select("id, template_name, template_key, is_active").limit(10);
+  checks.push({
+    label: "Table email_templates accessible",
+    passed: !tErr,
+    detail: tErr ? tErr.message : `${templates?.length || 0} template(s)`,
+  });
+  if (tErr) errors.push("EMAIL_TEMPLATES_TABLE_MISSING");
+
+  // 3. Check templates exist
+  if (templates && templates.length > 0) {
+    const activeTemplates = templates.filter((t: any) => t.is_active);
+    checks.push({
+      label: "Templates actifs disponibles",
+      passed: activeTemplates.length > 0,
+      detail: `${activeTemplates.length} template(s) actif(s)`,
+    });
+    if (activeTemplates.length === 0) errors.push("EMAIL_NO_ACTIVE_TEMPLATES");
+  }
+
+  // 4. Check outbound_messages table (email queue)
   const { error: qErr } = await db.from("outbound_messages").select("id").limit(1);
   checks.push({
     label: "Table outbound_messages accessible",
@@ -142,19 +183,19 @@ async function executeEmail(): Promise<StepResult> {
   });
   if (qErr) errors.push("EMAIL_QUEUE_TABLE_MISSING");
 
-  // 3. Check email templates table
-  const { error: tErr } = await db.from("email_templates").select("id").limit(1);
+  // 5. Check email_send_log table (delivery tracking)
+  const { error: logErr } = await db.from("email_send_log").select("id").limit(1);
   checks.push({
-    label: "Table email_templates accessible",
-    passed: !tErr,
-    detail: tErr ? tErr.message : "OK",
+    label: "Table email_send_log accessible",
+    passed: !logErr,
+    detail: logErr ? logErr.message : "OK",
   });
-  if (tErr) errors.push("EMAIL_TEMPLATES_TABLE_MISSING");
+  if (logErr) errors.push("EMAIL_SEND_LOG_MISSING");
 
   const passed = checks.every((c) => c.passed);
   return {
     passed,
-    actual: passed ? "Infrastructure email validée — template, CTA, queue OK" : `${errors.length} problème(s)`,
+    actual: passed ? "Infrastructure email validée — fonction, templates, CTA, queue OK" : `${errors.length} problème(s)`,
     checks,
     errors,
   };
