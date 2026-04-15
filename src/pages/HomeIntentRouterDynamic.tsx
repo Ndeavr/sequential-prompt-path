@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 const ROLES = [
   { id: "homeowner", label: "Propriétaire", sub: "J'ai un projet ou un problème", icon: Home, href: "/homeowner" },
   { id: "contractor", label: "Entrepreneur", sub: "Je veux des rendez-vous", icon: Wrench, href: "/contractor" },
-  { id: "condo", label: "Gestionnaire condo", sub: "Je gère une copropriété", icon: Building2, href: "/condo" },
+  { id: "condo", label: "Gestionnaire condo", sub: "Je gère une copropriété", icon: Building2, href: "/condo-home" },
   { id: "professional", label: "Professionnel", sub: "Je veux rejoindre le réseau", icon: Briefcase, href: "/professional" },
 ] as const;
 
