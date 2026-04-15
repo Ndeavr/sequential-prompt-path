@@ -225,6 +225,21 @@ const AdminWinningVariantsPage = lazy(() => import("@/pages/admin/AdminWinningVa
 
 // Alex
 const PageAdminAlexConversationRules = lazy(() => import("@/pages/admin/PageAdminAlexConversationRules"));
+
+// Recruitment Automation Engine
+const PageAdminRecruitmentOverview = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentOverview"));
+const PageAdminRecruitmentClusters = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentClusters"));
+const PageAdminRecruitmentCampaigns = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentCampaigns"));
+const PageAdminRecruitmentProspects = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentProspects"));
+const PageAdminRecruitmentSequences = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentSequences"));
+const PageAdminRecruitmentOnboarding = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentOnboarding"));
+const PageAdminRecruitmentPayments = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentPayments"));
+const PageAdminRecruitmentLogs = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentLogs"));
+const PageContractorJoinOffer = lazy(() => import("@/pages/join/PageContractorJoinOffer"));
+const PageContractorJoinCheckout = lazy(() => import("@/pages/join/PageContractorJoinCheckout"));
+const PageContractorJoinSuccess = lazy(() => import("@/pages/join/PageContractorJoinSuccess"));
+const PageContractorJoinResume = lazy(() => import("@/pages/join/PageContractorJoinResume"));
+const PageContractorPublicMagicAccess = lazy(() => import("@/pages/join/PageContractorPublicMagicAccess"));
 const PageAdminAlexDebugHome = lazy(() => import("@/pages/admin/PageAdminAlexDebugHome"));
 const PageAdminAlexSpeechTuning = lazy(() => import("@/pages/admin/AlexSpeechTuning"));
 const AlexVoiceAdmin = lazy(() => import("@/pages/admin/AlexVoiceAdmin"));
