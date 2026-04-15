@@ -83,6 +83,25 @@ const ANALYSIS_KEYWORDS: Record<string, IntentMatch> = {
 
 function detectAnalysisIntent(text: string): IntentMatch | null {
   const lower = text.toLowerCase();
+
+  // Onboarding completion → transition to payment
+  if (lower.startsWith("inscription:")) {
+    return {
+      intent: "stripe_payment_inline",
+      response: "Merci! Votre profil est prêt. Procédons au paiement pour activer votre plan Pro.",
+      data: { planCode: "pro", planName: "Pro", price: 349, interval: "monthly" },
+    };
+  }
+
+  // Payment confirmation
+  if (lower.startsWith("paiement confirmé")) {
+    return {
+      intent: "task_progress",
+      response: "🎉 Paiement reçu! Votre plan Pro est en cours d'activation. Bienvenue dans UNPRO!",
+      data: { tasks: [{ label: "Profil créé", done: true }, { label: "Paiement confirmé", done: true }, { label: "Activation en cours…", done: false }] },
+    };
+  }
+
   const sorted = Object.entries(ANALYSIS_KEYWORDS).sort((a, b) => b[0].length - a[0].length);
   for (const [keyword, result] of sorted) {
     if (lower.includes(keyword)) return result;
