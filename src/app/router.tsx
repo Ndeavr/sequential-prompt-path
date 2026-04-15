@@ -228,6 +228,9 @@ const PageAdminAlexConversationRules = lazy(() => import("@/pages/admin/PageAdmi
 const PageAdminAlexDebugHome = lazy(() => import("@/pages/admin/PageAdminAlexDebugHome"));
 const PageAdminAlexSpeechTuning = lazy(() => import("@/pages/admin/AlexSpeechTuning"));
 const AlexVoiceAdmin = lazy(() => import("@/pages/admin/AlexVoiceAdmin"));
+const PageAdminAlexVoice = lazy(() => import("@/pages/admin/alex/PageAdminAlexVoice"));
+const PageAdminAlexContext = lazy(() => import("@/pages/admin/alex/PageAdminAlexContext"));
+const PageAdminAlexAnalytics = lazy(() => import("@/pages/admin/alex/PageAdminAlexAnalytics"));
 
 const AdminPredictiveLeads = lazy(() => import("@/pages/admin/AdminPredictiveLeads"));
 const AdminDynamicMarketPricing = lazy(() => import("@/pages/admin/AdminDynamicMarketPricing"));
@@ -943,6 +946,11 @@ export const AppRouter = () => (
         <Route path="/admin/voice-optimizer" element={<ProtectedRoute requiredRole="admin"><AdminVoiceOptimizerPage /></ProtectedRoute>} />
         <Route path="/admin/voice-optimizer/:id" element={<ProtectedRoute requiredRole="admin"><AdminVoiceOptimizerPage /></ProtectedRoute>} />
         <Route path="/admin/voice-pronunciation" element={<ProtectedRoute requiredRole="admin"><PageAdminVoicePronunciation /></ProtectedRoute>} />
+        <Route path="/admin/alex/voice" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexVoice /></ProtectedRoute>} />
+        <Route path="/admin/alex/voice/tests" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexVoice /></ProtectedRoute>} />
+        <Route path="/admin/alex/context" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexContext /></ProtectedRoute>} />
+        <Route path="/admin/alex/analytics" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexAnalytics /></ProtectedRoute>} />
+        <Route path="/admin/alex/fallbacks" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexVoice /></ProtectedRoute>} />
         <Route path="/admin/no-match-monitoring" element={<ProtectedRoute requiredRole="admin"><PageAdminNoMatchMonitoring /></ProtectedRoute>} />
         <Route path="/admin/sales-analytics" element={<ProtectedRoute requiredRole="admin"><AdminSalesAnalyticsPage /></ProtectedRoute>} />
         <Route path="/entrepreneur/sales" element={<EntrepreneurVoiceSalesPage />} />
