@@ -405,14 +405,8 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
 
     // ─── ENTREPRENEUR PLAN FLOW ───
     if (intent === "contractor_choose_plan" || intent === "contractor_join_platform") {
-      emitSafe("alex", route.message, "checkout_embedded" as InlineCardType, {
-        planCode: "pro",
-        planName: "Pro",
-        price: 349,
-        interval: "monthly",
-        features: ["Profil public complet", "5 à 12 rendez-vous/mois", "Visibilité améliorée", "Badge Pro"],
-      });
-      mem.set("last_question_asked", "plan_selection");
+      emitSafe("alex", "Parfait! Commençons votre inscription. Quelques informations rapides.", "entrepreneur_onboarding" as InlineCardType, {});
+      mem.set("last_question_asked", "onboarding_form");
       setIsThinking(false);
       return;
     }
@@ -424,7 +418,7 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
     }
 
     if (intent === "contractor_payment_checkout") {
-      emitSafe("alex", "Procédons au paiement.", "checkout_embedded" as InlineCardType, {
+      emitSafe("alex", "Procédons au paiement. Entrez vos informations de carte ci-dessous.", "stripe_payment_inline" as InlineCardType, {
         planCode: "pro", planName: "Pro", price: 349, interval: "monthly",
       });
       setIsThinking(false);
