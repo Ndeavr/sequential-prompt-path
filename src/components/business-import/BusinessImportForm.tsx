@@ -70,12 +70,20 @@ export default function BusinessImportForm({ source, onSubmit, onBack, isLoading
   const isValid = () => {
     switch (source) {
       case "business_card": return !!cardFile;
-      case "gmb": return !!name.trim();
+      case "gmb": return !!selectedPlace;
       case "website": return !!url.trim();
       case "rbq": return !!rbq.trim();
       case "neq": return !!neq.trim();
       case "phone": return !!phone.trim();
     }
+  };
+
+  const handlePlaceSelect = (place: PlaceResult) => {
+    setSelectedPlace(place);
+    setName(place.name);
+    setCity(place.city);
+    setPhone(place.phone);
+    setUrl(place.website);
   };
 
   return (
