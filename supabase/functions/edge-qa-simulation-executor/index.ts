@@ -132,20 +132,20 @@ async function executeEmail(): Promise<StepResult> {
     errors.push("EMAIL_FUNCTION_UNREACHABLE");
   }
 
-  // 2. Check outbound_email_queue table
+  // 2. Check outbound_messages table (email queue)
   const db = adminClient();
-  const { error: qErr } = await db.from("outbound_email_queue").select("id").limit(1);
+  const { error: qErr } = await db.from("outbound_messages").select("id").limit(1);
   checks.push({
-    label: "Table outbound_email_queue accessible",
+    label: "Table outbound_messages accessible",
     passed: !qErr,
     detail: qErr ? qErr.message : "OK",
   });
   if (qErr) errors.push("EMAIL_QUEUE_TABLE_MISSING");
 
   // 3. Check email templates table
-  const { error: tErr } = await db.from("outbound_email_templates").select("id").limit(1);
+  const { error: tErr } = await db.from("email_templates").select("id").limit(1);
   checks.push({
-    label: "Table outbound_email_templates accessible",
+    label: "Table email_templates accessible",
     passed: !tErr,
     detail: tErr ? tErr.message : "OK",
   });
