@@ -275,6 +275,13 @@ const AdminHomeownerAnalyticsPage = lazy(() => import("@/pages/admin/AdminHomeow
 // Go-Live
 const PageAdminGoLive = lazy(() => import("@/pages/admin/PageAdminGoLive"));
 
+// Entrepreneur Onboarding Flow
+const PageOnboardingImport = lazy(() => import("@/pages/entrepreneur/PageOnboardingImport"));
+const PageOnboardingAnalyse = lazy(() => import("@/pages/entrepreneur/PageOnboardingAnalyse"));
+const PageOnboardingPlan = lazy(() => import("@/pages/entrepreneur/PageOnboardingPlan"));
+const PageOnboardingPayment = lazy(() => import("@/pages/entrepreneur/PageOnboardingPayment"));
+const PageOnboardingSuccess = lazy(() => import("@/pages/entrepreneur/PageOnboardingSuccess"));
+
 // Blog
 const BlogIndexPage = lazy(() => import("@/pages/blog/BlogIndexPage"));
 const BlogArticlePage = lazy(() => import("@/pages/blog/BlogArticlePage"));
@@ -798,6 +805,13 @@ export const AppRouter = () => (
         <Route path="/cookies" element={<FallbackRoutePage />} />
         <Route path="/sitemap" element={<FallbackRoutePage />} />
         <Route path="/accessibilite" element={<FallbackRoutePage />} />
+
+        {/* Entrepreneur Onboarding Flow */}
+        <Route path="/entrepreneur/onboarding/import" element={<PageOnboardingImport />} />
+        <Route path="/entrepreneur/onboarding/analyse" element={<PageOnboardingAnalyse />} />
+        <Route path="/entrepreneur/onboarding/plan" element={<PageOnboardingPlan />} />
+        <Route path="/entrepreneur/onboarding/payment" element={<PageOnboardingPayment />} />
+        <Route path="/entrepreneur/onboarding/success" element={<PageOnboardingSuccess />} />
 
         {/* New V3 public pages */}
         <Route path="/mes-proprietes" element={<MesProprietesPage />} />
