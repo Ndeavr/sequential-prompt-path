@@ -1205,6 +1205,9 @@ export const AppRouter = () => (
          <Route path="/admin/strike-live-feed" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminStrikeLiveFeed /></UniversalRouteGuard>} />
          <Route path="/admin/strike-adjustments" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminStrikeAdjustments /></UniversalRouteGuard>} />
 
+         {/* Stripe Live Verification */}
+         <Route path="/admin/stripe-verification" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminStripeVerificationCenter /></UniversalRouteGuard>} />
+
          {/* Recruitment Automation Engine — Admin */}
          <Route path="/admin/recruitment" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentOverview /></UniversalRouteGuard>} />
          <Route path="/admin/recruitment/clusters" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentClusters /></UniversalRouteGuard>} />
