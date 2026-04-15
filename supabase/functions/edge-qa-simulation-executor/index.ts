@@ -327,7 +327,7 @@ async function executePayment(): Promise<StepResult> {
     checks.push({ label: "Plan catalog contient des plans", passed: false, detail: "Aucun plan trouvé" });
     errors.push("PAYMENT_NO_PLANS");
   } else if (plans && plans.length > 0) {
-    checks.push({ label: "Plan catalog contient des plans", passed: true, detail: plans.map((p: any) => p.plan_code).join(", ") });
+    checks.push({ label: "Plan catalog contient des plans", passed: true, detail: plans.map((p: any) => p.code).join(", ") });
   }
 
   // 4. contractor_subscriptions table
