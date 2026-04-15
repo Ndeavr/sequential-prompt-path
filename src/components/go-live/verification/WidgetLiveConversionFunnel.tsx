@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface FunnelStep {
   label: string;
   count: number;
-  status: "passed" | "partial" | "failed" | "not_tested";
+  status: string;
 }
 
 export default function WidgetLiveConversionFunnel({ steps }: { steps: FunnelStep[] }) {
