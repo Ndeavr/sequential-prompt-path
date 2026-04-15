@@ -1089,6 +1089,8 @@ export const AppRouter = () => (
         <Route path="/admin/voice-debug" element={<ProtectedRoute requiredRole="admin"><PageAlexVoiceDebugAdmin /></ProtectedRoute>} />
         <Route path="/admin/alex-prompt-rules" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAlexPromptRulesAdmin /></Suspense></ProtectedRoute>} />
         <Route path="/admin/alex-conversation-debug" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAlexConversationDebugAdmin /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/alex-knowledge-plans" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAlexKnowledgePlans /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/alex-response-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAlexResponseAudit /></Suspense></ProtectedRoute>} />
         <Route path="/admin/sms-images" element={<ProtectedRoute requiredRole="admin"><PageAdminSMSImageTemplates /></ProtectedRoute>} />
         <Route path="/admin/brand" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminBrandSettings /></Suspense></ProtectedRoute>} />
         <Route path="/admin/share-images" element={<ProtectedRoute requiredRole="admin"><PageShareImageDashboard /></ProtectedRoute>} />
