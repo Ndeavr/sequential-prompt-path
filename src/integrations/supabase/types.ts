@@ -17134,6 +17134,54 @@ export type Database = {
           },
         ]
       }
+      contractor_conversions: {
+        Row: {
+          campaign_id: string | null
+          contractor_id: string
+          conversion_source: string
+          created_at: string
+          id: string
+          notes: string | null
+          plan_selected: string
+          revenue_projection: number | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          contractor_id: string
+          conversion_source?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          plan_selected?: string
+          revenue_projection?: number | null
+        }
+        Update: {
+          campaign_id?: string | null
+          contractor_id?: string
+          conversion_source?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          plan_selected?: string
+          revenue_projection?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_conversions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_conversions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_credentials: {
         Row: {
           contractor_id: string
