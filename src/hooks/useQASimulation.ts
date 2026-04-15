@@ -328,9 +328,9 @@ export function useLaunchSimulation() {
           step_id: step.id,
           event_type: result.passed ? "step_passed" : "step_failed",
           event_label: result.actual,
-          event_payload_json: { checks: result.checks, mode: realMode ? "real" : "mock" },
+          event_payload_json: { checks: result.checks, mode: realMode ? "real" : "mock" } as any,
           status: result.passed ? "success" : "error",
-        });
+        } as any);
 
         if (result.passed) {
           passed++;
@@ -344,9 +344,9 @@ export function useLaunchSimulation() {
               error_code: errCode,
               error_title: `Échec: ${step.step_label}`,
               error_message: result.checks.filter((c) => !c.passed).map((c) => `${c.label}: ${c.detail}`).join(" | "),
-              error_context_json: { checks: result.checks },
+              error_context_json: { checks: result.checks } as any,
               severity: step.is_critical ? "critical" : "medium",
-            });
+            } as any);
           }
         }
 
