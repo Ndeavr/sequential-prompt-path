@@ -3497,6 +3497,47 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_hallucination_flags: {
+        Row: {
+          auto_corrected: boolean
+          context_json: Json | null
+          corrected_response: string | null
+          created_at: string
+          detected_terms: string[]
+          id: string
+          response_log_id: string | null
+          severity: string
+        }
+        Insert: {
+          auto_corrected?: boolean
+          context_json?: Json | null
+          corrected_response?: string | null
+          created_at?: string
+          detected_terms?: string[]
+          id?: string
+          response_log_id?: string | null
+          severity?: string
+        }
+        Update: {
+          auto_corrected?: boolean
+          context_json?: Json | null
+          corrected_response?: string | null
+          created_at?: string
+          detected_terms?: string[]
+          id?: string
+          response_log_id?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_hallucination_flags_response_log_id_fkey"
+            columns: ["response_log_id"]
+            isOneToOne: false
+            referencedRelation: "alex_response_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alex_homeowner_booking_drafts: {
         Row: {
           booking_status: string
@@ -4040,6 +4081,42 @@ export type Database = {
           time_to_action_ms?: number | null
           user_id?: string | null
           user_response?: string | null
+        }
+        Relationships: []
+      }
+      alex_knowledge_plans: {
+        Row: {
+          allowed_topics: string[]
+          core_positioning: string
+          created_at: string
+          forbidden_topics: string[]
+          id: string
+          is_active: boolean
+          language: string
+          last_updated: string
+          response_template: string | null
+        }
+        Insert: {
+          allowed_topics?: string[]
+          core_positioning?: string
+          created_at?: string
+          forbidden_topics?: string[]
+          id?: string
+          is_active?: boolean
+          language?: string
+          last_updated?: string
+          response_template?: string | null
+        }
+        Update: {
+          allowed_topics?: string[]
+          core_positioning?: string
+          created_at?: string
+          forbidden_topics?: string[]
+          id?: string
+          is_active?: boolean
+          language?: string
+          last_updated?: string
+          response_template?: string | null
         }
         Relationships: []
       }
@@ -5238,7 +5315,10 @@ export type Database = {
           blocked_patterns_detected: string[] | null
           created_at: string
           final_status: string
+          hallucination_detected: boolean | null
+          hallucination_terms: string[] | null
           id: string
+          original_message: string | null
           raw_response: string
           response_time_ms: number | null
           rewrite_applied: boolean | null
@@ -5251,7 +5331,10 @@ export type Database = {
           blocked_patterns_detected?: string[] | null
           created_at?: string
           final_status?: string
+          hallucination_detected?: boolean | null
+          hallucination_terms?: string[] | null
           id?: string
+          original_message?: string | null
           raw_response: string
           response_time_ms?: number | null
           rewrite_applied?: boolean | null
@@ -5264,7 +5347,10 @@ export type Database = {
           blocked_patterns_detected?: string[] | null
           created_at?: string
           final_status?: string
+          hallucination_detected?: boolean | null
+          hallucination_terms?: string[] | null
           id?: string
+          original_message?: string | null
           raw_response?: string
           response_time_ms?: number | null
           rewrite_applied?: boolean | null
@@ -19835,6 +19921,60 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      contractor_plan_definitions: {
+        Row: {
+          appointment_type: string
+          appointments_included: number
+          code: string
+          created_at: string
+          differentiator: string | null
+          features: Json
+          id: string
+          is_active: boolean
+          name: string
+          optimization_level: string
+          position_rank: number
+          price_monthly: number
+          priority_level: number
+          territory_access: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_type?: string
+          appointments_included?: number
+          code: string
+          created_at?: string
+          differentiator?: string | null
+          features?: Json
+          id?: string
+          is_active?: boolean
+          name: string
+          optimization_level?: string
+          position_rank?: number
+          price_monthly?: number
+          priority_level?: number
+          territory_access?: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_type?: string
+          appointments_included?: number
+          code?: string
+          created_at?: string
+          differentiator?: string | null
+          features?: Json
+          id?: string
+          is_active?: boolean
+          name?: string
+          optimization_level?: string
+          position_rank?: number
+          price_monthly?: number
+          priority_level?: number
+          territory_access?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       contractor_plan_events: {
         Row: {
