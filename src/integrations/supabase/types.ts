@@ -3086,6 +3086,7 @@ export type Database = {
         Row: {
           active_address_id: string | null
           active_property_type: string | null
+          anonymous_id: string | null
           conversation_memory_json: Json | null
           created_at: string
           current_intent: string | null
@@ -3096,12 +3097,14 @@ export type Database = {
           selected_booking_slot: Json | null
           selected_contractor_id: string | null
           session_status: string
+          silence_count: number | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
           active_address_id?: string | null
           active_property_type?: string | null
+          anonymous_id?: string | null
           conversation_memory_json?: Json | null
           created_at?: string
           current_intent?: string | null
@@ -3112,12 +3115,14 @@ export type Database = {
           selected_booking_slot?: Json | null
           selected_contractor_id?: string | null
           session_status?: string
+          silence_count?: number | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
           active_address_id?: string | null
           active_property_type?: string | null
+          anonymous_id?: string | null
           conversation_memory_json?: Json | null
           created_at?: string
           current_intent?: string | null
@@ -3128,6 +3133,7 @@ export type Database = {
           selected_booking_slot?: Json | null
           selected_contractor_id?: string | null
           session_status?: string
+          silence_count?: number | null
           updated_at?: string
           user_id?: string | null
         }
@@ -7136,6 +7142,7 @@ export type Database = {
           device_type: string | null
           end_sensitivity: string | null
           first_reply_boost: boolean | null
+          gender: string | null
           id: string
           interruptibility: boolean
           interruption_mode: string | null
@@ -7179,6 +7186,7 @@ export type Database = {
           vad_threshold: number | null
           voice_display_name: string | null
           voice_id_primary: string
+          voice_provider: string | null
         }
         Insert: {
           accent_target?: string
@@ -7188,6 +7196,7 @@ export type Database = {
           device_type?: string | null
           end_sensitivity?: string | null
           first_reply_boost?: boolean | null
+          gender?: string | null
           id?: string
           interruptibility?: boolean
           interruption_mode?: string | null
@@ -7231,6 +7240,7 @@ export type Database = {
           vad_threshold?: number | null
           voice_display_name?: string | null
           voice_id_primary: string
+          voice_provider?: string | null
         }
         Update: {
           accent_target?: string
@@ -7240,6 +7250,7 @@ export type Database = {
           device_type?: string | null
           end_sensitivity?: string | null
           first_reply_boost?: boolean | null
+          gender?: string | null
           id?: string
           interruptibility?: boolean
           interruption_mode?: string | null
@@ -7283,6 +7294,7 @@ export type Database = {
           vad_threshold?: number | null
           voice_display_name?: string | null
           voice_id_primary?: string
+          voice_provider?: string | null
         }
         Relationships: []
       }
