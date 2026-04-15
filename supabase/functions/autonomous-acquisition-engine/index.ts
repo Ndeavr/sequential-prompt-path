@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
       // STEP 5 — Update lead status
       try {
         await supabase.from("contractor_leads")
-          .update({ status: "enriched" })
+          .update({ enrichment_status: "enriched" })
           .eq("id", leadRecord.id);
         steps.push({ step: "update_status", status: "success" });
       } catch (e: any) {
