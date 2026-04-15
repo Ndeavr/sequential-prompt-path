@@ -21,7 +21,7 @@ import SmartCTA from "@/components/cta/SmartCTA";
 import QRShareSheet from "@/components/sharing/QRShareSheet";
 import MenuQuickActionsContextual from "./MenuQuickActionsContextual";
 import DrawerNavigationMobileIntent from "./DrawerNavigationMobileIntent";
-import UnproLogo from "@/components/brand/UnproLogo";
+import unproLogoPng from "@/assets/unpro-logo.png";
 import type { UserRole } from "@/types/navigation";
 
 const guestMegaKeys = [
