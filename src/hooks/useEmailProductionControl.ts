@@ -46,9 +46,10 @@ export function useEmailDeliveryLogs(limit = 50) {
 export function useCheckDomainHealth() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (domain = "mail.unpro.ca") => {
+    mutationFn: async (domain?: string) => {
+      const d = domain || "mail.unpro.ca";
       const { data, error } = await supabase.functions.invoke("fn-check-email-domain-health", {
-        body: { domain },
+        body: { domain: d },
       });
       if (error) throw error;
       return data;
@@ -62,9 +63,10 @@ export function useCheckDomainHealth() {
 export function useInitWarmup() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (domain = "mail.unpro.ca") => {
+    mutationFn: async (domain?: string) => {
+      const d = domain || "mail.unpro.ca";
       const { data, error } = await supabase.functions.invoke("fn-schedule-email-warmup", {
-        body: { domain, action: "init" },
+        body: { domain: d, action: "init" },
       });
       if (error) throw error;
       return data;
@@ -77,9 +79,10 @@ export function useInitWarmup() {
 
 export function useAnalyzeSpamRisk() {
   return useMutation({
-    mutationFn: async (domain = "mail.unpro.ca") => {
+    mutationFn: async (domain?: string) => {
+      const d = domain || "mail.unpro.ca";
       const { data, error } = await supabase.functions.invoke("fn-analyze-spam-risk", {
-        body: { domain },
+        body: { domain: d },
       });
       if (error) throw error;
       return data;
