@@ -1,146 +1,114 @@
 
 
-# ModuleAlexIntelligenceCoreRulesAndMemoryEngine + ModuleAlexVisualIntelligenceAndPhotoPromptingEngine
+# AIPP v2 — AI Visibility & Authority Engine
 
-## Overview
+## Context
 
-Two complementary modules that transform Alex from a static keyword-matching chatbot into an intelligent, contextual, learning AI decision engine with visual analysis capabilities.
+Strong existing foundation:
+- `aipp-real-scan` edge function: Firecrawl-based website scraping with signal extraction
+- `edge-generate-aipp-preview`: Factor-based scoring (18 factors, 7 categories) for outbound prospects
+- `aippScoreService.ts`: Client-side contractor profile scoring
+- DB tables: `aipp_scores`, `prospect_aipp_scores`, `prospect_aipp_factors`
+- Pages: `PageAIPPAnalysisLoading`, `PageAIPPScoreReveal`, entrepreneur landing
 
-**Current state**: Alex uses client-side keyword matching (`useAlexConversationLite.ts`) with mock data and a basic edge function (`alex-process-turn`) that calls `alexVoiceBrain`. Memory exists in `alexMemoryBrain.ts` but is limited to simple key-value caching. No learning loop, no structured answers, no quality scoring, no visual intelligence.
+**Gap**: No unified public-facing audit page where any user enters a domain and gets a full v2 analysis with AEO, entity authority, conversion intelligence, local dominance, and revenue loss estimation. The existing system is split between contractor profiles and outbound prospect pipelines.
 
-**Target state**: Alex understands intent deeply, uses persistent memory to avoid redundant questions, produces structured 4-block answers, learns from outcomes, and proactively requests/analyzes photos when visual context would improve decisions.
+## Plan
 
----
+### Phase 1 — Database (Migration)
 
-## Technical Design
-
-### Phase 1 — Database Schema (Migration)
-
-**6 new tables** for intelligence core + **5 new tables** for visual intelligence:
+4 new tables:
 
 ```text
-alex_user_memory        — persistent per-user facts (property, preferences, constraints)
-alex_conversation_log   — full conversation log with intent tagging  
-alex_context_snapshots  — consolidated context JSON per turn
-alex_learning_events    — outcome tracking (accepted, abandoned, converted)
-alex_answer_scores      — clarity/usefulness/progression/conversion per message
-alex_inferred_prefs     — derived preferences with confidence
-
-alex_photo_requests     — when/why Alex asked for a photo
-alex_uploaded_images    — user photos linked to sessions
-alex_visual_analyses    — AI analysis results per image  
-alex_visual_projections — generated before/after renders
-alex_photo_prompt_events— acceptance/dismissal tracking
+aipp_audits         — id, user_id (nullable), domain, status (pending/processing/done/failed), created_at
+aipp_audit_scores   — id, audit_id FK, score_global, score_aeo, score_authority, score_conversion, score_local, score_tech, revenue_loss_estimate, created_at
+aipp_audit_entities — id, audit_id FK, entity_type (service/city/brand/faq/schema), name, confidence, created_at
+aipp_audit_recommendations — id, audit_id FK, title, description, priority (high/medium/low), impact_score, created_at
 ```
 
-All tables RLS-protected: authenticated users see only their own data; service role for edge functions.
+RLS: public insert (for anonymous audits), select own rows or public via audit_id.
 
-### Phase 2 — Cognitive Rules Engine (Client-Side)
+### Phase 2 — Edge Function: `aipp-v2-analyze`
 
-**New file**: `src/services/alexCognitiveRulesEngine.ts`
+Single orchestrator edge function that:
+1. Calls existing `aipp-real-scan` logic (Firecrawl scrape)
+2. Extracts entities (services, cities, brand signals)
+3. Scores 6 dimensions with new AEO-focused weights:
+   - **AEO** (30%): Q&A presence, direct answers, problem→solution structure, semantic density
+   - **Authority** (25%): Brand coherence, reviews, mentions, credibility signals
+   - **Conversion** (20%): CTAs, friction level, trust signals, offer clarity
+   - **Local** (15%): City coverage, geographic coherence, local business signals
+   - **Tech SEO** (10%): SSL, structured data, meta, schema.org
+4. Generates recommendations sorted by impact
+5. Estimates revenue loss based on weak dimensions
+6. Saves to `aipp_audits` + `aipp_audit_scores` + `aipp_audit_entities` + `aipp_audit_recommendations`
 
-8 strict rules encoded as a pipeline that wraps every Alex response:
+Reuses existing Firecrawl integration and signal extraction from `aipp-real-scan`.
 
-1. **Fast intent classification** — reuse existing `alexIntentClassifier` but add question-type detection (problem/project/comparison/validation/estimation/urgency)
-2. **Structured answer builder** — enforces 4-block pattern: Comprehension → Useful Answer → Context → Action
-3. **No-repeat guard** — checks `alex_user_memory` before asking any question
-4. **Forward-only** — every response must include a next-step CTA
-5. **Precision over length** — word budget per block
-6. **Expert tone** — domain-specific vocabulary injection
-7. **Adaptive tone** — adjusts based on urgency/hesitation signals
-8. **Single question** — max 1 question per turn
+### Phase 3 — Pages & Components
 
-### Phase 3 — Memory Learning Engine (Client + Edge)
+**`/audit-aipp` — PageAuditAIPPv2**
+- `HeroSectionAuditAIVisibility`: Gradient headline, domain input, CTA "Analyser avec IA"
+- `InputWebsiteAnalysis`: Domain field with validation + submit
+- On submit → create audit row, call edge function, navigate to loading
 
-**New file**: `src/services/alexMemoryLearningEngine.ts`
+**`/audit-aipp/loading/:auditId` — Reuse/extend PageAIPPAnalysisLoading**
+- Poll audit status, redirect to results when done
 
-- After each user message: extract implicit signals (property type, budget hints, location, constraints) and persist to `alex_user_memory`
-- Before each Alex response: load user memory, inject into context
-- **New edge function**: `alex-store-memory` — persists extracted signals server-side
-- **New edge function**: `alex-score-answer` — logs answer quality post-interaction
+**`/audit-aipp/results/:auditId` — PageAuditResultsAIPPv2**
+- `CardScoreGlobalAIPP`: Big score gauge with gradient aura
+- `WidgetRadarScoreBreakdown`: Radar chart (5 axes: AEO, Authority, Conversion, Local, Tech)
+- `PanelAEOReadiness`: AEO-specific signals breakdown
+- `PanelEntityAuthority`: Detected entities list with confidence
+- `PanelConversionIntelligence`: CTA, friction, trust analysis
+- `PanelLocalDominance`: City coverage map
+- `PanelRevenueLeak`: Revenue loss counter with animation
+- `ListRecommendationsAIPP`: Priority-sorted action items
+- `CTAUpgradePlanAIPP`: Persistent upgrade CTA
+- `PanelAlexInterpretation`: Natural language summary (static template, no AI call)
 
-### Phase 4 — Context Resolver
+### Phase 4 — Admin Dashboard
 
-**New file**: `src/services/alexContextResolver.ts`
+**`/admin/aipp-v2` — PageAdminAIPPv2Dashboard**
+- Recent audits table with scores
+- Score distribution chart
+- Conversion tracking (audit → plan upgrade)
 
-Consolidates from 4 sources into a single context object:
-- Current message
-- Conversation history (last 10 turns)
-- User memory (persistent)
-- Implicit signals (time of day, device, page origin)
+### Phase 5 — Routing
 
-### Phase 5 — Answer Builder Integration
+Add 3 routes to `router.tsx`:
+- `/audit-aipp` → PageAuditAIPPv2
+- `/audit-aipp/results/:auditId` → PageAuditResultsAIPPv2
+- `/admin/aipp-v2` → PageAdminAIPPv2Dashboard
 
-**Modify**: `src/hooks/useAlexConversationLite.ts`
+## File Changes
 
-Replace the current intent-based switch/case response generation with:
-1. Context resolution → cognitive rules pipeline → structured answer output
-2. Follow-up suggestions card (`CardAlexFollowUpSuggestions`)
-3. Contextual badges (memory used, confidence score)
+| Action | File |
+|--------|------|
+| Create | Migration SQL (4 tables) |
+| Create | `supabase/functions/aipp-v2-analyze/index.ts` |
+| Create | `src/pages/PageAuditAIPPv2.tsx` |
+| Create | `src/pages/PageAuditResultsAIPPv2.tsx` |
+| Create | `src/pages/admin/PageAdminAIPPv2Dashboard.tsx` |
+| Create | `src/components/aipp-v2/CardScoreGlobalAIPP.tsx` |
+| Create | `src/components/aipp-v2/WidgetRadarScoreBreakdown.tsx` |
+| Create | `src/components/aipp-v2/PanelAEOReadiness.tsx` |
+| Create | `src/components/aipp-v2/PanelEntityAuthority.tsx` |
+| Create | `src/components/aipp-v2/PanelConversionIntelligence.tsx` |
+| Create | `src/components/aipp-v2/PanelLocalDominance.tsx` |
+| Create | `src/components/aipp-v2/PanelRevenueLeak.tsx` |
+| Create | `src/components/aipp-v2/ListRecommendationsAIPP.tsx` |
+| Create | `src/components/aipp-v2/CTAUpgradePlanAIPP.tsx` |
+| Create | `src/components/aipp-v2/HeroSectionAuditAIVisibility.tsx` |
+| Create | `src/components/aipp-v2/PanelAlexInterpretation.tsx` |
+| Create | `src/hooks/useAIPPv2Audit.ts` |
+| Modify | `src/app/router.tsx` (add routes) |
 
-### Phase 6 — Visual Intelligence Engine
+## Constraints
 
-**New file**: `src/services/alexVisualIntelligenceEngine.ts`
-
-- **Photo prompting rules**: Detects when visual input would accelerate diagnosis (problem keywords: fuite, moisissure, fissure, toiture) or enable design projection (cuisine, salle de bain)
-- **Visual mode**: When `visual_mode=true`, relaxes the 1-question limit to allow guided photo-driven qualification
-- **Analysis integration**: Calls existing `visual-search` edge function for AI analysis, renders results via `CardPhotoAnalysisResult`
-
-### Phase 7 — UI Components
-
-**New components**:
-- `CardAlexAnswerStructured.tsx` — renders 4-block answer with visual hierarchy
-- `CardAlexFollowUpSuggestions.tsx` — contextual next-step buttons
-- `BadgeContextUsed.tsx` — "Based on your history" indicator
-- `BadgeConfidenceScore.tsx` — confidence level badge
-- `CardPhotoRequestContextual.tsx` — natural photo request with benefit explanation
-- `CardPhotoAnalysisResult.tsx` — visual analysis summary with confidence
-- `CardVisualProjectionPreview.tsx` — before/after projection display
-- `BadgeVisualModeActive.tsx` — indicates visual analysis mode
-
-### Phase 8 — Learning Loop (Edge Function)
-
-**New edge function**: `alex-learning-loop`
-
-Post-conversation analysis:
-- Did user continue after response? → positive signal
-- Did user abandon? → negative signal  
-- Did user convert (booking/signup)? → strong positive
-- Adjusts response templates and question ordering based on aggregate outcomes
-
----
-
-## File Changes Summary
-
-| Action | File | Purpose |
-|--------|------|---------|
-| Create | `src/services/alexCognitiveRulesEngine.ts` | 8-rule pipeline |
-| Create | `src/services/alexContextResolver.ts` | Context consolidation |
-| Create | `src/services/alexAnswerBuilder.ts` | Structured 4-block answers |
-| Create | `src/services/alexMemoryLearningEngine.ts` | Memory extraction + injection |
-| Create | `src/services/alexVisualIntelligenceEngine.ts` | Photo prompting + visual mode |
-| Modify | `src/hooks/useAlexConversationLite.ts` | Wire new engines into conversation flow |
-| Create | `src/components/alex-conversation/CardAlexAnswerStructured.tsx` | Structured answer UI |
-| Create | `src/components/alex-conversation/CardAlexFollowUpSuggestions.tsx` | Follow-up CTAs |
-| Create | `src/components/alex-conversation/BadgeContextUsed.tsx` | Memory indicator |
-| Create | `src/components/alex-conversation/BadgeConfidenceScore.tsx` | Confidence badge |
-| Create | `src/components/alex-conversation/CardPhotoRequestContextual.tsx` | Smart photo request |
-| Create | `src/components/alex-conversation/CardPhotoAnalysisResult.tsx` | Analysis results |
-| Create | `src/components/alex-conversation/CardVisualProjectionPreview.tsx` | Before/after preview |
-| Create | `src/components/alex-conversation/BadgeVisualModeActive.tsx` | Visual mode indicator |
-| Create | `supabase/functions/alex-store-memory/index.ts` | Persist memory signals |
-| Create | `supabase/functions/alex-score-answer/index.ts` | Answer quality scoring |
-| Create | Migration SQL | 11 new tables |
-
----
-
-## Constraints Respected
-
-- Does not break existing Alex flow — new engines wrap existing logic
-- Client-side first with edge function persistence (works offline)
-- Mock data for contractor matching preserved
-- All tables RLS-protected
-- Response time target < 2 seconds (cognitive pipeline is synchronous, memory calls are async)
-- Mobile-first UI for all new components
-- French-first (fr-CA) for all user-facing text
+- Reuses existing `aipp-real-scan` Firecrawl logic — no duplication
+- Does not modify existing AIPP scoring for contractors or prospects
+- Mobile-first, dark premium theme
+- Mock fallback if Firecrawl unavailable
+- fr-CA first
 
