@@ -54,7 +54,7 @@ export default function PanelRealStripeValidation() {
 
     // 3. Check payment_events table
     try {
-      const { count, error } = await supabase.from("payment_events").select("*", { count: "exact", head: true });
+      const { count, error } = await (supabase as any).from("payment_events").select("*", { count: "exact", head: true });
       results.push({
         label: "Table payment_events",
         status: error ? "failed" : "passed",

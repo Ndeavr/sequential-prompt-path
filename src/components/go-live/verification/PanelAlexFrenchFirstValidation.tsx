@@ -66,7 +66,7 @@ export default function PanelAlexFrenchFirstValidation() {
 
     // 4. Check alex_session_state table
     try {
-      const { error } = await supabase.from("alex_session_state").select("id", { count: "exact", head: true });
+      const { error } = await (supabase as any).from("alex_session_state").select("id", { count: "exact", head: true });
       results.push({
         label: "Table alex_session_state",
         status: error ? "failed" : "passed",
