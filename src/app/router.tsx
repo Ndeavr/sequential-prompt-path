@@ -234,6 +234,12 @@ const PageAdminAlexConversationRules = lazy(() => import("@/pages/admin/PageAdmi
 const PageAdminAlexKnowledgePlans = lazy(() => import("@/pages/admin/PageAdminAlexKnowledgePlans"));
 const PageAdminAlexResponseAudit = lazy(() => import("@/pages/admin/PageAdminAlexResponseAudit"));
 
+// Recruitment Autonomous Engine
+const PageAdminRecruitmentCommandCenter = lazy(() => import("@/pages/admin/PageAdminRecruitmentCommandCenter"));
+const PageAdminDataExtractionMonitor = lazy(() => import("@/pages/admin/PageAdminDataExtractionMonitor"));
+const PageAdminEmailCampaigns = lazy(() => import("@/pages/admin/PageAdminEmailCampaigns"));
+const PageAdminContractorConversionFunnel = lazy(() => import("@/pages/admin/PageAdminContractorConversionFunnel"));
+
 // Recruitment Automation Engine
 const PageAdminRecruitmentOverview = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentOverview"));
 const PageAdminRecruitmentClusters = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentClusters"));
