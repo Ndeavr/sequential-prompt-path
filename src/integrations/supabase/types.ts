@@ -9254,6 +9254,73 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_action_logs: {
+        Row: {
+          action_label: string | null
+          action_message: string | null
+          action_status: string
+          action_type: string
+          created_at: string
+          engine_name: string
+          id: string
+          job_id: string | null
+          metadata_json: Json | null
+          route_target: string | null
+          run_id: string | null
+          workflow_id: string | null
+        }
+        Insert: {
+          action_label?: string | null
+          action_message?: string | null
+          action_status?: string
+          action_type: string
+          created_at?: string
+          engine_name?: string
+          id?: string
+          job_id?: string | null
+          metadata_json?: Json | null
+          route_target?: string | null
+          run_id?: string | null
+          workflow_id?: string | null
+        }
+        Update: {
+          action_label?: string | null
+          action_message?: string | null
+          action_status?: string
+          action_type?: string
+          created_at?: string
+          engine_name?: string
+          id?: string
+          job_id?: string | null
+          metadata_json?: Json | null
+          route_target?: string | null
+          run_id?: string | null
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_action_logs_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "automation_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_action_logs_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "automation_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_action_logs_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "automation_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automation_agents: {
         Row: {
           adaptive_frequency_enabled: boolean | null
@@ -9380,6 +9447,117 @@ export type Database = {
           metadata?: Json | null
           source?: string | null
           title?: string | null
+        }
+        Relationships: []
+      }
+      automation_blockers: {
+        Row: {
+          blocker_key: string
+          blocker_message: string | null
+          blocker_title: string
+          blocker_type: string
+          created_at: string
+          detected_at: string
+          engine_name: string
+          fallback_available: boolean
+          id: string
+          job_id: string | null
+          resolved_at: string | null
+          retry_possible: boolean
+          run_id: string | null
+          severity_level: string
+          status: string
+          suggested_resolution: string | null
+          updated_at: string
+          workflow_id: string | null
+        }
+        Insert: {
+          blocker_key: string
+          blocker_message?: string | null
+          blocker_title: string
+          blocker_type?: string
+          created_at?: string
+          detected_at?: string
+          engine_name?: string
+          fallback_available?: boolean
+          id?: string
+          job_id?: string | null
+          resolved_at?: string | null
+          retry_possible?: boolean
+          run_id?: string | null
+          severity_level?: string
+          status?: string
+          suggested_resolution?: string | null
+          updated_at?: string
+          workflow_id?: string | null
+        }
+        Update: {
+          blocker_key?: string
+          blocker_message?: string | null
+          blocker_title?: string
+          blocker_type?: string
+          created_at?: string
+          detected_at?: string
+          engine_name?: string
+          fallback_available?: boolean
+          id?: string
+          job_id?: string | null
+          resolved_at?: string | null
+          retry_possible?: boolean
+          run_id?: string | null
+          severity_level?: string
+          status?: string
+          suggested_resolution?: string | null
+          updated_at?: string
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_blockers_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "automation_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_blockers_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "automation_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_dashboard_preferences: {
+        Row: {
+          created_at: string
+          default_time_range: string
+          id: string
+          layout_mode: string
+          pinned_engines_json: Json | null
+          pinned_widgets_json: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_time_range?: string
+          id?: string
+          layout_mode?: string
+          pinned_engines_json?: Json | null
+          pinned_widgets_json?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          default_time_range?: string
+          id?: string
+          layout_mode?: string
+          pinned_engines_json?: Json | null
+          pinned_widgets_json?: Json | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -9580,6 +9758,48 @@ export type Database = {
           },
         ]
       }
+      automation_rules: {
+        Row: {
+          action_config_json: Json
+          action_type: string
+          created_at: string
+          engine_name: string
+          id: string
+          is_enabled: boolean
+          priority_level: number
+          rule_key: string
+          rule_name: string
+          trigger_condition: Json
+          updated_at: string
+        }
+        Insert: {
+          action_config_json?: Json
+          action_type?: string
+          created_at?: string
+          engine_name?: string
+          id?: string
+          is_enabled?: boolean
+          priority_level?: number
+          rule_key: string
+          rule_name: string
+          trigger_condition?: Json
+          updated_at?: string
+        }
+        Update: {
+          action_config_json?: Json
+          action_type?: string
+          created_at?: string
+          engine_name?: string
+          id?: string
+          is_enabled?: boolean
+          priority_level?: number
+          rule_key?: string
+          rule_name?: string
+          trigger_condition?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       automation_runs: {
         Row: {
           agent_id: string | null
@@ -9699,6 +9919,51 @@ export type Database = {
           key?: string
           updated_at?: string | null
           value?: Json
+        }
+        Relationships: []
+      }
+      automation_workflows: {
+        Row: {
+          auto_retry_enabled: boolean
+          created_at: string
+          description: string | null
+          engine_name: string
+          id: string
+          priority_level: number
+          requires_approval: boolean
+          status: string
+          trigger_type: string
+          updated_at: string
+          workflow_key: string
+          workflow_name: string
+        }
+        Insert: {
+          auto_retry_enabled?: boolean
+          created_at?: string
+          description?: string | null
+          engine_name?: string
+          id?: string
+          priority_level?: number
+          requires_approval?: boolean
+          status?: string
+          trigger_type?: string
+          updated_at?: string
+          workflow_key: string
+          workflow_name: string
+        }
+        Update: {
+          auto_retry_enabled?: boolean
+          created_at?: string
+          description?: string | null
+          engine_name?: string
+          id?: string
+          priority_level?: number
+          requires_approval?: boolean
+          status?: string
+          trigger_type?: string
+          updated_at?: string
+          workflow_key?: string
+          workflow_name?: string
         }
         Relationships: []
       }
