@@ -116,27 +116,23 @@ Deno.serve(async (req) => {
         steps.push({ step: "score", status: "error", error: e.message });
       }
 
-      // STEP 4 — Generate outreach token
-      let outreachToken: string | null = null;
+      // STEP 4 — Generate landing URL (based on lead ID directly)
+      let landingUrl: string | null = null;
       try {
-        outreachToken = crypto.randomUUID();
         const revenueLost = Math.round((100 - aippScore) * 850);
+        landingUrl = `/contractor/score/${leadRecord.id}`;
 
-        await supabase.from("outbound_email_tokens").insert({
-          id: outreachToken,
-          prospect_id: leadRecord.id,
-          company_name: business_name || leadRecord.company_name,
-          city: city || leadRecord.city,
-          category: category || leadRecord.category,
-          score: aippScore,
-          revenue_lost: revenueLost,
-          token_type: "acquisition_pipeline",
-          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        // Log the outreach opportunity
+        await supabase.from("agent_logs").insert({
+          agent_name: "autonomous-acquisition",
+          log_type: "landing_generated",
+          message: `Landing generated for ${business_name}: ${landingUrl} (revenue_lost=${revenueLost})`,
+          metadata: { lead_id: leadRecord.id, revenue_lost: revenueLost, url: landingUrl } as any,
         });
 
-        steps.push({ step: "generate_token", status: "success", data: { token: outreachToken, revenue_lost: revenueLost } });
+        steps.push({ step: "generate_landing", status: "success", data: { url: landingUrl, revenue_lost: revenueLost } });
       } catch (e: any) {
-        steps.push({ step: "generate_token", status: "error", error: e.message });
+        steps.push({ step: "generate_landing", status: "error", error: e.message });
       }
 
       // STEP 5 — Update lead status
