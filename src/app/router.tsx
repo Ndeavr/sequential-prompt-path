@@ -929,6 +929,7 @@ export const AppRouter = () => (
         <Route path="/admin/duplicates" element={<ProtectedRoute requiredRole="admin"><AdminDuplicates /></ProtectedRoute>} />
         <Route path="/admin/automation" element={<ProtectedRoute requiredRole="admin"><AdminAutomation /></ProtectedRoute>} />
         <Route path="/admin/automation-command-center" element={<ProtectedRoute requiredRole="admin"><PageAdminAutomationCommandCenter /></ProtectedRoute>} />
+        <Route path="/admin/go-live" element={<ProtectedRoute requiredRole="admin"><PageAdminGoLive /></ProtectedRoute>} />
         <Route path="/admin/home-graph" element={<ProtectedRoute requiredRole="admin"><AdminHomeGraph /></ProtectedRoute>} />
         <Route path="/admin/uos" element={<ProtectedRoute requiredRole="admin"><AdminUOS /></ProtectedRoute>} />
         <Route path="/admin/qa-simulation" element={<ProtectedRoute requiredRole="admin"><PageAdminQASimulation /></ProtectedRoute>} />
