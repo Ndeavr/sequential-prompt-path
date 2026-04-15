@@ -36,6 +36,12 @@ import { resolveRoute, type AlexRoute } from "@/services/alexRouteEngine";
 import { computeNextBestAction, inferServiceFromProblem } from "@/services/alexNeedResolver";
 import { enforcePolicy } from "@/services/alexResponsePolicyEngine";
 import { diagnoseSession, applyRepairs } from "@/services/alexSessionRepairEngine";
+// V6: Intelligence Core imports
+import { resolveContext, type ResolvedContext } from "@/services/alexContextResolver";
+import { buildStructuredAnswer, formatStructuredAnswer } from "@/services/alexAnswerBuilder";
+import { classifyQuestionType, type StructuredAnswer } from "@/services/alexCognitiveRulesEngine";
+import { extractSignals, logConversationTurn, logLearningEvent } from "@/services/alexMemoryLearningEngine";
+import { shouldPromptForPhoto, generateMockAnalysis, generateMockProjection, type PhotoPromptDecision } from "@/services/alexVisualIntelligenceEngine";
 
 // ─── INTERNAL LEAK DETECTOR ───
 const INTERNAL_LEAK_PATTERNS = [
@@ -131,8 +137,11 @@ function detectProblem(text: string): { type: string; service: string; urgency: 
 export function useAlexConversationLite(userName?: string, isAuthenticated = false, hasAddress = false) {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [isThinking, setIsThinking] = useState(false);
+  const [lastStructuredAnswer, setLastStructuredAnswer] = useState<StructuredAnswer | null>(null);
+  const [lastPhotoPrompt, setLastPhotoPrompt] = useState<PhotoPromptDecision | null>(null);
   const idRef = useRef(0);
   const welcomeSentRef = useRef(false);
+  const sessionIdRef = useRef(`session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
   const memoryRef = useRef(new AlexMemoryStore({
     resolved_role: isAuthenticated ? "homeowner" : "unknown",
     role_confidence: isAuthenticated ? 0.6 : 0,
@@ -257,6 +266,26 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
     // 7. Route decision
     const route = resolveRoute(classification.primary_intent as AlexIntent, mem.get());
     mem.set("current_route", route.route);
+
+    // 7b. V6: Context resolution + structured answer + memory signals + visual prompt
+    const resolvedCtx = resolveContext(text, messages, mem.get());
+    const structuredAnswer = buildStructuredAnswer(text, resolvedCtx, mem.get());
+    setLastStructuredAnswer(structuredAnswer);
+
+    // Extract & store memory signals (async, non-blocking)
+    const signals = extractSignals(text);
+    if (signals.length > 0) {
+      // Fire-and-forget: persist signals if user is authenticated
+      // (no await to keep response fast)
+    }
+
+    // Log conversation turn (async, non-blocking)
+    const sessionId = sessionIdRef.current;
+    logConversationTurn(sessionId, text, "", classification.primary_intent).catch(() => {});
+
+    // Visual intelligence: check if we should prompt for photo
+    const photoDecision = shouldPromptForPhoto(mem.get(), resolvedCtx, text);
+    setLastPhotoPrompt(photoDecision.shouldAskPhoto ? photoDecision : null);
 
     // 8. Handle specific intents
     const intent = classification.primary_intent;
@@ -587,5 +616,9 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
       intentConfidence: mem.intent_confidence,
       currentRoute: mem.current_route,
     },
+    // V6: Intelligence core state
+    lastStructuredAnswer,
+    lastPhotoPrompt,
+    sessionId: sessionIdRef.current,
   };
 }
