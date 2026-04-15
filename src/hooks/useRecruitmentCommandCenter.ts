@@ -62,22 +62,22 @@ export function useOutreachMessageStats() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("outreach_messages")
-        .select("status, channel, created_at")
-        .order("created_at", { ascending: false })
+        .select("message_status, channel_type, sent_at")
+        .order("sent_at", { ascending: false })
         .limit(1000);
       if (error) throw error;
       const rows = data ?? [];
       return {
         total: rows.length,
-        sent: rows.filter(r => r.status === "sent").length,
-        delivered: rows.filter(r => r.status === "delivered").length,
-        opened: rows.filter(r => r.status === "opened").length,
-        clicked: rows.filter(r => r.status === "clicked").length,
-        replied: rows.filter(r => r.status === "replied").length,
-        bounced: rows.filter(r => r.status === "bounced").length,
+        sent: rows.filter(r => r.message_status === "sent").length,
+        delivered: rows.filter(r => r.message_status === "delivered").length,
+        opened: rows.filter(r => r.message_status === "opened").length,
+        clicked: rows.filter(r => r.message_status === "clicked").length,
+        replied: rows.filter(r => r.message_status === "replied").length,
+        bounced: rows.filter(r => r.message_status === "bounced").length,
         byChannel: {
-          email: rows.filter(r => r.channel === "email").length,
-          sms: rows.filter(r => r.channel === "sms").length,
+          email: rows.filter(r => r.channel_type === "email").length,
+          sms: rows.filter(r => r.channel_type === "sms").length,
         },
       };
     },
