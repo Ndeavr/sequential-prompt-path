@@ -541,6 +541,10 @@ export const AppRouter = () => (
         <Route path="/index" element={<HomeWithFeatureFlag />} />
         <Route path="/entrepreneur/aipp-analysis" element={<PageAIPPAnalysisLoading />} />
 
+        {/* Email-to-Booking Conversion (public, unauthenticated) */}
+        <Route path="/pro/demo/:token" element={<Suspense fallback={<LazyFallback />}><PageLandingPersonalizedAIPP /></Suspense>} />
+        <Route path="/pro/book/:token" element={<Suspense fallback={<LazyFallback />}><PageBookingContractor /></Suspense>} />
+
         {/* Public */}
         <Route path="/home-intent" element={<Suspense fallback={<LazyFallback />}><PageHomeIntentUNPRO /></Suspense>} />
         <Route path="/alex" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
