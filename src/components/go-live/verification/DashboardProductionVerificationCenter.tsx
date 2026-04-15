@@ -15,6 +15,11 @@ import WidgetLiveConversionFunnel from "./WidgetLiveConversionFunnel";
 import TimelineCriticalPathExecution from "./TimelineCriticalPathExecution";
 import DrawerExecutionLogs from "./DrawerExecutionLogs";
 import ModalForceRetest from "./ModalForceRetest";
+import PanelGoogleBusinessRealTest from "./PanelGoogleBusinessRealTest";
+import PanelOutboundDeliveryValidation from "./PanelOutboundDeliveryValidation";
+import PanelAlexFrenchFirstValidation from "./PanelAlexFrenchFirstValidation";
+import PanelRealStripeValidation from "./PanelRealStripeValidation";
+import PanelActivationFlowValidation from "./PanelActivationFlowValidation";
 
 interface VerificationStep {
   step_key: string;
