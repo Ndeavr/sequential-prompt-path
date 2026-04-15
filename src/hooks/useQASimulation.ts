@@ -75,6 +75,12 @@ export interface SimulationError {
   created_at: string;
 }
 
+export interface StepCheck {
+  label: string;
+  passed: boolean;
+  detail: string;
+}
+
 // Step definitions
 const STEP_DEFINITIONS: Record<string, { label: string; critical: boolean }> = {
   extract: { label: "Pipeline d'extraction", critical: true },
@@ -140,7 +146,6 @@ export function useSimulationRun(runId: string | undefined) {
 export function useSimulationSteps(runId: string | undefined) {
   const queryClient = useQueryClient();
 
-  // Realtime subscription
   useEffect(() => {
     if (!runId) return;
     const channel = supabase
@@ -202,46 +207,49 @@ export function useSimulationErrors(runId: string | undefined) {
   });
 }
 
-// ─── Mock simulation engine ───
-async function simulateStep(stepCode: string): Promise<{ passed: boolean; actual: string; error?: string }> {
-  // Simulate realistic delays
+// ─── Real simulation engine ───
+async function executeStepReal(stepCode: string): Promise<{ passed: boolean; actual: string; checks: StepCheck[]; errors: string[] }> {
+  try {
+    const { data, error } = await supabase.functions.invoke("edge-qa-simulation-executor", {
+      body: { step_code: stepCode, mode: "real" },
+    });
+    if (error) throw error;
+    return data as { passed: boolean; actual: string; checks: StepCheck[]; errors: string[] };
+  } catch (e: any) {
+    // Fallback: edge function unreachable
+    return {
+      passed: false,
+      actual: `Exécuteur QA inaccessible: ${e.message || String(e)}`,
+      checks: [{ label: "Edge function edge-qa-simulation-executor accessible", passed: false, detail: String(e) }],
+      errors: ["EXECUTOR_UNREACHABLE"],
+    };
+  }
+}
+
+// Mock fallback
+async function executeStepMock(stepCode: string): Promise<{ passed: boolean; actual: string; checks: StepCheck[]; errors: string[] }> {
   const delay = 300 + Math.random() * 700;
   await new Promise((r) => setTimeout(r, delay));
 
+  const mockChecks: StepCheck[] = [
+    { label: `Mock: ${stepCode} simulé`, passed: true, detail: "Résultat simulé (mode mock)" },
+  ];
+
   switch (stepCode) {
-    case "extract": {
-      const fields = ["business_name", "category", "city", "email", "phone"];
-      const missing = Math.random() < 0.1 ? [fields[Math.floor(Math.random() * fields.length)]] : [];
-      if (missing.length > 0) return { passed: false, actual: `Champ manquant: ${missing.join(", ")}`, error: `EXTRACT_MISSING_FIELD` };
-      return { passed: true, actual: "Prospect extrait et normalisé: Toiture ABC, Laval, toiture@test.com" };
-    }
-    case "email": {
-      const templateOk = Math.random() > 0.08;
-      if (!templateOk) return { passed: false, actual: "Variable {{business_name}} non injectée", error: "EMAIL_TEMPLATE_ERROR" };
-      return { passed: true, actual: "Email envoyé: template prospect_v2, CTA valide, tracking OK" };
-    }
-    case "cta_click": {
-      const routeOk = Math.random() > 0.05;
-      if (!routeOk) return { passed: false, actual: "Route cible /signup/contractor retourne 404", error: "CTA_ROUTE_404" };
-      return { passed: true, actual: "CTA cliqué → /signup/contractor, session conservée, tracking enregistré" };
-    }
-    case "signup": {
-      const authOk = Math.random() > 0.07;
-      if (!authOk) return { passed: false, actual: "Création auth.users échouée: email déjà utilisé", error: "SIGNUP_DUPLICATE_EMAIL" };
-      return { passed: true, actual: "Compte créé: auth.users + profiles + contractors + rôle assigné" };
-    }
-    case "payment": {
-      const stripeOk = Math.random() > 0.1;
-      if (!stripeOk) return { passed: false, actual: "Webhook Stripe non reçu après 30s", error: "PAYMENT_WEBHOOK_TIMEOUT" };
-      return { passed: true, actual: "Session Stripe créée, paiement réussi, webhook reçu, abonnement actif" };
-    }
-    case "profile": {
-      const profileOk = Math.random() > 0.06;
-      if (!profileOk) return { passed: false, actual: "Completion 45% — champs requis manquants: villes, catégories", error: "PROFILE_INCOMPLETE" };
-      return { passed: true, actual: "Profil complété à 100%, activé, données persistées après refresh" };
-    }
+    case "extract":
+      return { passed: true, actual: "Mock: Prospect extrait et normalisé", checks: mockChecks, errors: [] };
+    case "email":
+      return { passed: true, actual: "Mock: Email template validé", checks: mockChecks, errors: [] };
+    case "cta_click":
+      return { passed: true, actual: "Mock: Routes CTA valides", checks: mockChecks, errors: [] };
+    case "signup":
+      return { passed: true, actual: "Mock: Inscription validée", checks: mockChecks, errors: [] };
+    case "payment":
+      return { passed: true, actual: "Mock: Paiement validé", checks: mockChecks, errors: [] };
+    case "profile":
+      return { passed: true, actual: "Mock: Profil validé", checks: mockChecks, errors: [] };
     default:
-      return { passed: true, actual: `Étape ${stepCode} passée` };
+      return { passed: true, actual: `Mock: ${stepCode} passé`, checks: mockChecks, errors: [] };
   }
 }
 
@@ -250,7 +258,7 @@ export function useLaunchSimulation() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ scenarioId, environment }: { scenarioId: string; environment: string }) => {
+    mutationFn: async ({ scenarioId, environment, realMode = true }: { scenarioId: string; environment: string; realMode?: boolean }) => {
       // 1. Get scenario
       const { data: scenario, error: sErr } = await supabase
         .from("simulation_scenarios")
@@ -267,7 +275,7 @@ export function useLaunchSimulation() {
         .insert({
           scenario_id: scenarioId,
           environment,
-          run_name: `${scenario.name} — ${new Date().toLocaleString("fr-CA")}`,
+          run_name: `${scenario.name} — ${realMode ? "réel" : "mock"} — ${new Date().toLocaleString("fr-CA")}`,
           status: "running",
           started_at: new Date().toISOString(),
           started_by: user?.id || null,
@@ -296,17 +304,16 @@ export function useLaunchSimulation() {
       let failed = 0;
       let criticalFails = 0;
 
+      const executor = realMode ? executeStepReal : executeStepMock;
+
       for (const step of (createdSteps || []).sort((a: any, b: any) => a.step_order - b.step_order)) {
         const startTime = Date.now();
 
-        // Mark running
         await supabase.from("simulation_steps").update({ status: "running", started_at: new Date().toISOString() }).eq("id", step.id);
 
-        // Execute
-        const result = await simulateStep(step.step_code);
+        const result = await executor(step.step_code);
         const duration = Date.now() - startTime;
 
-        // Update step
         await supabase.from("simulation_steps").update({
           status: result.passed ? "passed" : "failed",
           completed_at: new Date().toISOString(),
@@ -315,29 +322,32 @@ export function useLaunchSimulation() {
           actual_result: result.actual,
         }).eq("id", step.id);
 
-        // Log event
+        // Log event with checks detail
         await supabase.from("simulation_events").insert({
           run_id: run.id,
           step_id: step.id,
           event_type: result.passed ? "step_passed" : "step_failed",
           event_label: result.actual,
+          event_payload_json: { checks: result.checks, mode: realMode ? "real" : "mock" } as any,
           status: result.passed ? "success" : "error",
-        });
+        } as any);
 
         if (result.passed) {
           passed++;
         } else {
           failed++;
           if (step.is_critical) criticalFails++;
-          // Log error
-          await supabase.from("simulation_errors").insert({
-            run_id: run.id,
-            step_id: step.id,
-            error_code: result.error || "UNKNOWN",
-            error_title: `Échec: ${step.step_label}`,
-            error_message: result.actual,
-            severity: step.is_critical ? "critical" : "medium",
-          });
+          for (const errCode of result.errors) {
+            await supabase.from("simulation_errors").insert({
+              run_id: run.id,
+              step_id: step.id,
+              error_code: errCode,
+              error_title: `Échec: ${step.step_label}`,
+              error_message: result.checks.filter((c) => !c.passed).map((c) => `${c.label}: ${c.detail}`).join(" | "),
+              error_context_json: { checks: result.checks } as any,
+              severity: step.is_critical ? "critical" : "medium",
+            } as any);
+          }
         }
 
         // Log specialized events
@@ -402,12 +412,10 @@ export function useRetryStep() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (stepId: string) => {
-      // Get step
+    mutationFn: async ({ stepId, realMode = true }: { stepId: string; realMode?: boolean }) => {
       const { data: step } = await supabase.from("simulation_steps").select("*").eq("id", stepId).single();
       if (!step) throw new Error("Étape introuvable");
 
-      // Reset and re-execute
       await supabase.from("simulation_steps").update({
         status: "running",
         started_at: new Date().toISOString(),
@@ -418,7 +426,8 @@ export function useRetryStep() {
       }).eq("id", stepId);
 
       const startTime = Date.now();
-      const result = await simulateStep(step.step_code);
+      const executor = realMode ? executeStepReal : executeStepMock;
+      const result = await executor(step.step_code);
       const duration = Date.now() - startTime;
 
       await supabase.from("simulation_steps").update({
@@ -447,7 +456,7 @@ export function useRetryStep() {
 
       return result;
     },
-    onSuccess: (_, stepId) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["simulation-steps"] });
       queryClient.invalidateQueries({ queryKey: ["simulation-run"] });
       queryClient.invalidateQueries({ queryKey: ["simulation-runs"] });

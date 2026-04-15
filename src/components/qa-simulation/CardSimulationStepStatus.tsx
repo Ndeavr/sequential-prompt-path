@@ -1,6 +1,7 @@
-import { CheckCircle2, XCircle, Clock, Loader2, SkipForward, RotateCcw } from "lucide-react";
+import { useState } from "react";
+import { CheckCircle2, XCircle, Clock, Loader2, SkipForward, RotateCcw, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { SimulationStep } from "@/hooks/useQASimulation";
+import type { SimulationStep, StepCheck } from "@/hooks/useQASimulation";
 
 const STATUS_CONFIG: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
   pending: { icon: <Clock className="w-4 h-4" />, color: "text-muted-foreground", label: "En attente" },
@@ -12,19 +13,32 @@ const STATUS_CONFIG: Record<string, { icon: React.ReactNode; color: string; labe
 
 interface Props {
   step: SimulationStep;
+  checks?: StepCheck[];
   onRetry?: (stepId: string) => void;
 }
 
-export default function CardSimulationStepStatus({ step, onRetry }: Props) {
+export default function CardSimulationStepStatus({ step, checks, onRetry }: Props) {
   const cfg = STATUS_CONFIG[step.status] || STATUS_CONFIG.pending;
+  const [expanded, setExpanded] = useState(false);
+  const hasChecks = checks && checks.length > 0;
 
   return (
     <div className="glass-card rounded-lg p-3 border border-border/50">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
+        <div
+          className={`flex items-center gap-2 min-w-0 ${hasChecks ? "cursor-pointer" : ""}`}
+          onClick={() => hasChecks && setExpanded(!expanded)}
+        >
           <span className={cfg.color}>{cfg.icon}</span>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">{step.step_label}</p>
+            <div className="flex items-center gap-1">
+              {hasChecks && (
+                expanded
+                  ? <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0" />
+                  : <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
+              )}
+              <p className="text-sm font-medium text-foreground truncate">{step.step_label}</p>
+            </div>
             {step.actual_result && (
               <p className="text-xs text-muted-foreground truncate mt-0.5">{step.actual_result}</p>
             )}
@@ -44,6 +58,23 @@ export default function CardSimulationStepStatus({ step, onRetry }: Props) {
           )}
         </div>
       </div>
+
+      {/* Sub-checks detail */}
+      {expanded && hasChecks && (
+        <div className="mt-2 pt-2 border-t border-border/30 space-y-1">
+          {checks.map((check, i) => (
+            <div key={i} className="flex items-start gap-2 text-xs">
+              {check.passed
+                ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                : <XCircle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />}
+              <div className="min-w-0">
+                <span className={check.passed ? "text-foreground" : "text-red-300"}>{check.label}</span>
+                <span className="text-muted-foreground ml-1">— {check.detail}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

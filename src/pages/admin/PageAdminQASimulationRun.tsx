@@ -72,7 +72,8 @@ export default function PageAdminQASimulationRun() {
           <h2 className="text-sm font-semibold text-foreground mb-2">Exécution</h2>
           <TimelineSimulationExecution
             steps={steps}
-            onRetryStep={(id) => retryStep.mutate(id)}
+            events={events}
+            onRetryStep={(id) => retryStep.mutate({ stepId: id })}
           />
         </div>
 
