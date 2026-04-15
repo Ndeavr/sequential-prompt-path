@@ -234,6 +234,12 @@ const PageAdminAlexConversationRules = lazy(() => import("@/pages/admin/PageAdmi
 const PageAdminAlexKnowledgePlans = lazy(() => import("@/pages/admin/PageAdminAlexKnowledgePlans"));
 const PageAdminAlexResponseAudit = lazy(() => import("@/pages/admin/PageAdminAlexResponseAudit"));
 
+// Recruitment Autonomous Engine
+const PageAdminRecruitmentCommandCenter = lazy(() => import("@/pages/admin/PageAdminRecruitmentCommandCenter"));
+const PageAdminDataExtractionMonitor = lazy(() => import("@/pages/admin/PageAdminDataExtractionMonitor"));
+const PageAdminEmailCampaigns = lazy(() => import("@/pages/admin/PageAdminEmailCampaigns"));
+const PageAdminContractorConversionFunnel = lazy(() => import("@/pages/admin/PageAdminContractorConversionFunnel"));
+
 // Recruitment Automation Engine
 const PageAdminRecruitmentOverview = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentOverview"));
 const PageAdminRecruitmentClusters = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentClusters"));
@@ -1179,6 +1185,12 @@ export const AppRouter = () => (
 
          {/* Memory Center */}
          <Route path="/ma-memoire" element={<PageMemoryCenter />} />
+
+         {/* Autonomous Recruitment Engine — Command Pages */}
+         <Route path="/admin/recruitment-command-center" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentCommandCenter /></UniversalRouteGuard>} />
+         <Route path="/admin/data-extraction-monitor" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminDataExtractionMonitor /></UniversalRouteGuard>} />
+         <Route path="/admin/email-campaigns" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminEmailCampaigns /></UniversalRouteGuard>} />
+         <Route path="/admin/contractor-conversion-funnel" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminContractorConversionFunnel /></UniversalRouteGuard>} />
 
          {/* Recruitment Automation Engine — Admin */}
          <Route path="/admin/recruitment" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentOverview /></UniversalRouteGuard>} />
