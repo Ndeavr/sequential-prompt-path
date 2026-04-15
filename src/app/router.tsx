@@ -504,6 +504,9 @@ const PageAffiliateDashboard = lazy(() => import("@/pages/admin/affiliate/PageAf
 // Email Audit Center
 const PageEmailAuditCenter = lazy(() => import("@/pages/admin/email-health/PageEmailAuditCenter"));
 const PageEmailAuditHistory = lazy(() => import("@/pages/admin/email-health/PageEmailAuditHistory"));
+const PageAdminEmailControlCenter = lazy(() => import("@/pages/admin/email-health/PageAdminEmailControlCenter"));
+const PageAdminEmailWarmup = lazy(() => import("@/pages/admin/email-health/PageAdminEmailWarmup"));
+const PageAdminEmailLogs = lazy(() => import("@/pages/admin/email-health/PageAdminEmailLogs"));
 
 const PageEntrepreneurJoin = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurJoin"));
 const PageEntrepreneurHowItWorks = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurHowItWorks"));
@@ -1049,6 +1052,9 @@ export const AppRouter = () => (
         <Route path="/admin/affiliates" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAffiliateDashboard /></Suspense></ProtectedRoute>} />
         <Route path="/admin/email-health" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailAuditCenter /></Suspense></ProtectedRoute>} />
         <Route path="/admin/email-audit-history" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageEmailAuditHistory /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/email-control-center" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailControlCenter /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/email-warmup" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailWarmup /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/email-logs" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminEmailLogs /></Suspense></ProtectedRoute>} />
         <Route path="/admin/acquisition-pipeline" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminPipelineProspects /></Suspense></ProtectedRoute>} />
         <Route path="/services/:entitySlug/:citySlug" element={<PageServiceEntityLanding />} />
         <Route path="/audit/:slug" element={<AuditLandingPage />} />
