@@ -21,7 +21,7 @@ import SmartCTA from "@/components/cta/SmartCTA";
 import QRShareSheet from "@/components/sharing/QRShareSheet";
 import MenuQuickActionsContextual from "./MenuQuickActionsContextual";
 import DrawerNavigationMobileIntent from "./DrawerNavigationMobileIntent";
-import UnproLogo from "@/components/brand/UnproLogo";
+import unproLogoPng from "@/assets/unpro-logo.png";
 import type { UserRole } from "@/types/navigation";
 
 const guestMegaKeys = [
@@ -99,10 +99,8 @@ const SmartHeader = () => {
             )}
 
             {/* Zone 1 — Brand */}
-            <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0 logo-metal-wrap" style={{ minWidth: "fit-content" }}>
-              <UnproLogo size={140} variant="primary" animated={false}
-                className="transition-all duration-300 group-hover:scale-105"
-              />
+            <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0" style={{ minWidth: "fit-content" }}>
+              <img src={unproLogoPng} alt="UNPRO" className="h-8 w-auto transition-all duration-300 group-hover:scale-105" />
             </Link>
 
             {/* Zone 2 — Desktop main nav */}
