@@ -34,13 +34,13 @@ export default function PageBookingInstant() {
     }
 
     // Check if profile extended exists
-    const { data: profile } = await supabase
-      .from("user_profiles_extended" as any)
+    const { data: profile } = await (supabase as any)
+      .from("user_profiles_extended")
       .select("phone, address")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (!profile || !profile.phone || !profile.address) {
+    if (!profile || !(profile as any).phone || !(profile as any).address) {
       setPendingSlotId(slotId);
       setShowGate(true);
       return;

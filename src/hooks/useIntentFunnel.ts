@@ -125,15 +125,19 @@ export function useDetectIntent() {
       const detected = matched ? matched[1] : MOCK_INTENTS.default;
 
       // Try to create intent_session in DB
-      const { data: session } = await supabase
-        .from("intent_sessions" as any)
-        .insert({ raw_input: input, detected_intent: detected.primary, confidence_score: detected.confidence, input_type: inputType } as any)
-        .select("id")
-        .single();
+      let sid = `mock-${Date.now()}`;
+      try {
+        const { data: session } = await (supabase as any)
+          .from("intent_sessions")
+          .insert({ raw_input: input, detected_intent: detected.primary, confidence_score: detected.confidence, input_type: inputType })
+          .select("id")
+          .single();
+        if (session?.id) sid = session.id;
+      } catch { /* mock fallback */ }
 
       setIntent(detected);
-      setSessionId(session?.id ?? `mock-${Date.now()}`);
-      return { intent: detected, sessionId: session?.id ?? `mock-${Date.now()}` };
+      setSessionId(sid);
+      return { intent: detected, sessionId: sid };
     } catch {
       const detected = MOCK_INTENTS.default;
       setIntent(detected);
