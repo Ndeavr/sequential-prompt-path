@@ -138,19 +138,35 @@ export default function BusinessImportForm({ source, onSubmit, onBack, isLoading
           {source === "gmb" && (
             <div className="space-y-3">
               <div>
-                <Label className="text-sm font-semibold mb-1.5 block">Nom de votre entreprise</Label>
-                <Input
-                  placeholder="Ex: Toitures Dupont Inc."
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="h-11"
-                  required
+                <Label className="text-sm font-semibold mb-1.5 block">Rechercher votre entreprise</Label>
+                <GooglePlacesAutocomplete
+                  onSelect={handlePlaceSelect}
+                  placeholder="Ex: Toitures Dupont Montréal"
                 />
               </div>
-              <div>
-                <Label className="text-sm font-medium mb-1 block text-muted-foreground">Ville (optionnel)</Label>
-                <Input placeholder="Ex: Montréal" value={city} onChange={(e) => setCity(e.target.value)} className="h-10" />
-              </div>
+              {selectedPlace && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-1.5"
+                >
+                  <p className="font-bold text-sm text-foreground">{selectedPlace.name}</p>
+                  <p className="text-xs text-muted-foreground">{selectedPlace.address}</p>
+                  {selectedPlace.phone && (
+                    <p className="text-xs text-muted-foreground">📞 {selectedPlace.phone}</p>
+                  )}
+                  {selectedPlace.website && (
+                    <p className="text-xs text-muted-foreground truncate">🌐 {selectedPlace.website}</p>
+                  )}
+                  {selectedPlace.rating > 0 && (
+                    <div className="flex items-center gap-1 text-xs">
+                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                      <span className="font-medium text-foreground">{selectedPlace.rating}</span>
+                      <span className="text-muted-foreground">({selectedPlace.review_count} avis)</span>
+                    </div>
+                  )}
+                </motion.div>
+              )}
             </div>
           )}
 
