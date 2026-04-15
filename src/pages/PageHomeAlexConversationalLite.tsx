@@ -272,15 +272,7 @@ export default function PageHomeAlexConversationalLite() {
   const isVoiceListening = voiceIsActive && !voiceIsSpeaking && voiceStore.machineState === "listening";
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-background relative overflow-hidden">
-      {/* Ambient glow */}
-      <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] pointer-events-none"
-        style={{
-          background: "radial-gradient(ellipse at center, hsl(var(--primary) / 0.05) 0%, transparent 70%)",
-          filter: "blur(50px)",
-        }}
-      />
+    <LayoutAlexCinematicShell>
 
       {/* Compact Header */}
       <HeroSectionAlexOrbLite
