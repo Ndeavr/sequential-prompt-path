@@ -361,7 +361,7 @@ async function executeProfile(): Promise<StepResult> {
   } else {
     checks.push({ label: "Table contractors accessible", passed: true, detail: "OK" });
     // Verify required columns exist by checking keys of a row or empty result
-    const requiredCols = ["id", "company_name", "status", "user_id"];
+    const requiredCols = ["id", "business_name", "activation_status", "user_id"];
     if (sample && sample.length > 0) {
       const keys = Object.keys(sample[0]);
       for (const col of requiredCols) {
@@ -387,10 +387,10 @@ async function executeProfile(): Promise<StepResult> {
   });
   if (catErr) errors.push("PROFILE_CATEGORIES_TABLE_MISSING");
 
-  // 3. service_regions table
-  const { error: srErr } = await db.from("service_regions").select("id").limit(1);
+  // 3. contractor_category_assignments table serves as service regions
+  const { error: srErr } = await db.from("contractor_category_assignments").select("id").limit(1);
   checks.push({
-    label: "Table service_regions accessible",
+    label: "Table contractor_category_assignments accessible (régions)",
     passed: !srErr,
     detail: srErr ? srErr.message : "OK",
   });
