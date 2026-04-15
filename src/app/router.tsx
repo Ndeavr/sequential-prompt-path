@@ -248,6 +248,10 @@ const PageAdminContractorConversionFunnel = lazy(() => import("@/pages/admin/Pag
 // Stripe Live Verification
 const PageAdminStripeVerificationCenter = lazy(() => import("@/pages/admin/PageAdminStripeVerificationCenter"));
 
+// Autonomous Acquisition Engine
+const PageAgentAcquisitionMonitoring = lazy(() => import("@/pages/admin/PageAgentAcquisitionMonitoring"));
+const PageLandingContractorDynamicScore = lazy(() => import("@/pages/conversion/PageLandingContractorDynamicScore"));
+
 // Recruitment Automation Engine
 const PageAdminRecruitmentOverview = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentOverview"));
 const PageAdminRecruitmentClusters = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentClusters"));
@@ -1207,6 +1211,10 @@ export const AppRouter = () => (
 
          {/* Stripe Live Verification */}
          <Route path="/admin/stripe-verification" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminStripeVerificationCenter /></UniversalRouteGuard>} />
+
+         {/* Autonomous Acquisition Engine */}
+         <Route path="/admin/acquisition-engine" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAgentAcquisitionMonitoring /></UniversalRouteGuard>} />
+         <Route path="/contractor/score/:token" element={<PageLandingContractorDynamicScore />} />
 
          {/* Recruitment Automation Engine — Admin */}
          <Route path="/admin/recruitment" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentOverview /></UniversalRouteGuard>} />

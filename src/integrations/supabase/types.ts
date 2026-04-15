@@ -18041,6 +18041,71 @@ export type Database = {
           },
         ]
       }
+      contractor_enriched_profiles: {
+        Row: {
+          aeo_score: number | null
+          created_at: string
+          enriched_at: string | null
+          enrichment_source: string | null
+          gmb_data: Json | null
+          id: string
+          images: Json | null
+          lead_id: string
+          neq_status: string | null
+          rating: number | null
+          rbq_status: string | null
+          reviews_count: number | null
+          seo_score: number | null
+          services: Json | null
+          social_profiles: Json | null
+          updated_at: string
+        }
+        Insert: {
+          aeo_score?: number | null
+          created_at?: string
+          enriched_at?: string | null
+          enrichment_source?: string | null
+          gmb_data?: Json | null
+          id?: string
+          images?: Json | null
+          lead_id: string
+          neq_status?: string | null
+          rating?: number | null
+          rbq_status?: string | null
+          reviews_count?: number | null
+          seo_score?: number | null
+          services?: Json | null
+          social_profiles?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          aeo_score?: number | null
+          created_at?: string
+          enriched_at?: string | null
+          enrichment_source?: string | null
+          gmb_data?: Json | null
+          id?: string
+          images?: Json | null
+          lead_id?: string
+          neq_status?: string | null
+          rating?: number | null
+          rbq_status?: string | null
+          reviews_count?: number | null
+          seo_score?: number | null
+          services?: Json | null
+          social_profiles?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_enriched_profiles_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: true
+            referencedRelation: "contractor_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_entity_flags: {
         Row: {
           contractor_id: string
