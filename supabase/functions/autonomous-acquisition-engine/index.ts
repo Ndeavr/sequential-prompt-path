@@ -190,13 +190,13 @@ Deno.serve(async (req) => {
       const { count: totalLeads } = await supabase
         .from("contractor_leads")
         .select("*", { count: "exact", head: true })
-        .eq("source", "autonomous_agent");
+        .eq("source_type", "autonomous_agent");
 
       const { count: enrichedLeads } = await supabase
         .from("contractor_leads")
         .select("*", { count: "exact", head: true })
-        .eq("source", "autonomous_agent")
-        .eq("status", "enriched");
+        .eq("source_type", "autonomous_agent")
+        .eq("enrichment_status", "enriched");
 
       return respond({
         tasks,
