@@ -1129,6 +1129,12 @@ export const AppRouter = () => (
          <Route path="/join/:token/resume" element={<PageContractorJoinResume />} />
          <Route path="/join/access/:magicToken" element={<PageContractorPublicMagicAccess />} />
 
+         {/* Intent Funnel + Match Engine */}
+         <Route path="/intent-funnel" element={<Suspense fallback={<LazyFallback />}><PageEntryUnifiedIntent /></Suspense>} />
+         <Route path="/match/:sessionId" element={<Suspense fallback={<LazyFallback />}><PageMatchResultsDynamic /></Suspense>} />
+         <Route path="/book/:contractorId" element={<Suspense fallback={<LazyFallback />}><PageBookingInstant /></Suspense>} />
+         <Route path="/alex-conversation" element={<Suspense fallback={<LazyFallback />}><PageAlexConversationIntent /></Suspense>} />
+
          {/* Catch-all: try fallback, then 404 */}
          <Route path="*" element={<FallbackRoutePage />} />
       </Routes>
