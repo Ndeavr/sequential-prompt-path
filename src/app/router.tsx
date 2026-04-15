@@ -394,6 +394,7 @@ const AdminAlerts = lazy(() => import("@/pages/admin/AdminAlerts"));
 const AdminVerifiedContractors = lazy(() => import("@/pages/admin/AdminVerifiedContractors"));
 const AdminDuplicates = lazy(() => import("@/pages/admin/AdminDuplicates"));
 const AdminAutomation = lazy(() => import("@/pages/admin/AdminAutomation"));
+const PageAdminAutomationCommandCenter = lazy(() => import("@/pages/admin/PageAdminAutomationCommandCenter"));
 const AdminHomeGraph = lazy(() => import("@/pages/admin/AdminHomeGraph"));
 const AdminUOS = lazy(() => import("@/pages/admin/AdminUOS"));
 const AdminGrowthEngine = lazy(() => import("@/pages/admin/AdminGrowthEngine"));
@@ -927,6 +928,7 @@ export const AppRouter = () => (
         <Route path="/admin/verified-contractors" element={<ProtectedRoute requiredRole="admin"><AdminVerifiedContractors /></ProtectedRoute>} />
         <Route path="/admin/duplicates" element={<ProtectedRoute requiredRole="admin"><AdminDuplicates /></ProtectedRoute>} />
         <Route path="/admin/automation" element={<ProtectedRoute requiredRole="admin"><AdminAutomation /></ProtectedRoute>} />
+        <Route path="/admin/automation-command-center" element={<ProtectedRoute requiredRole="admin"><PageAdminAutomationCommandCenter /></ProtectedRoute>} />
         <Route path="/admin/home-graph" element={<ProtectedRoute requiredRole="admin"><AdminHomeGraph /></ProtectedRoute>} />
         <Route path="/admin/uos" element={<ProtectedRoute requiredRole="admin"><AdminUOS /></ProtectedRoute>} />
         <Route path="/admin/qa-simulation" element={<ProtectedRoute requiredRole="admin"><PageAdminQASimulation /></ProtectedRoute>} />
