@@ -330,7 +330,28 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
     // ─── FALLBACK: CLIENT-SIDE LOGIC ───
     await new Promise(r => setTimeout(r, 300 + Math.random() * 300));
 
-    // 2. Analysis intents bypass (specific card renderers)
+    // 2a. Plan questions → fetch real plans from DB
+    if (isPlanQuestion(text)) {
+      try {
+        const plans = await getCachedPlans();
+        if (plans.length > 0) {
+          const recommended = plans.find(p => p.code === "premium") || plans[1];
+          audioEngine.play("success");
+          emitSafe(
+            "alex",
+            "Voici les plans UNPRO — chaque rendez-vous est exclusif, vous êtes le seul professionnel recommandé. Pas de leads partagés, que des opportunités qualifiées par notre IA.",
+            "plan_comparison" as InlineCardType,
+            { plans, recommendedCode: recommended?.code || "premium" }
+          );
+          setIsThinking(false);
+          return;
+        }
+      } catch (err) {
+        console.warn("[AlexConversation] Plan fetch failed:", err);
+      }
+    }
+
+    // 2b. Analysis intents bypass (specific card renderers)
     const analysisIntent = detectAnalysisIntent(text);
     if (analysisIntent) {
       audioEngine.play("success");
