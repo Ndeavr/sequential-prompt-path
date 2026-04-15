@@ -616,5 +616,9 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
       intentConfidence: mem.intent_confidence,
       currentRoute: mem.current_route,
     },
+    // V6: Intelligence core state
+    lastStructuredAnswer,
+    lastPhotoPrompt,
+    sessionId: sessionIdRef.current,
   };
 }
