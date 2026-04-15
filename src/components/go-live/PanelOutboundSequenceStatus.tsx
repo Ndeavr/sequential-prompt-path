@@ -8,12 +8,11 @@ import { supabase } from "@/integrations/supabase/client";
 interface OutboundSequence {
   id: string;
   sequence_name: string;
-  status: string;
-  channel_mix: string;
-  current_step_order: number;
-  started_at: string | null;
-  paused_at: string | null;
-  completed_at: string | null;
+  is_active: boolean;
+  channel: string;
+  sequence_type: string;
+  target_type: string;
+  created_at: string;
 }
 
 const STATUS_CONFIG: Record<string, { color: string; icon: typeof CheckCircle2 }> = {
