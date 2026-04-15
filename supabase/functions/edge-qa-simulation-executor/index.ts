@@ -316,7 +316,7 @@ async function executePayment(): Promise<StepResult> {
   }
 
   // 3. plan_catalog table
-  const { data: plans, error: plErr } = await db.from("plan_catalog").select("id, plan_code").limit(5);
+  const { data: plans, error: plErr } = await db.from("plan_catalog").select("id, code").limit(5);
   checks.push({
     label: "Table plan_catalog accessible",
     passed: !plErr,
