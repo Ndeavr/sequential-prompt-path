@@ -137,8 +137,11 @@ function detectProblem(text: string): { type: string; service: string; urgency: 
 export function useAlexConversationLite(userName?: string, isAuthenticated = false, hasAddress = false) {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [isThinking, setIsThinking] = useState(false);
+  const [lastStructuredAnswer, setLastStructuredAnswer] = useState<StructuredAnswer | null>(null);
+  const [lastPhotoPrompt, setLastPhotoPrompt] = useState<PhotoPromptDecision | null>(null);
   const idRef = useRef(0);
   const welcomeSentRef = useRef(false);
+  const sessionIdRef = useRef(`session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
   const memoryRef = useRef(new AlexMemoryStore({
     resolved_role: isAuthenticated ? "homeowner" : "unknown",
     role_confidence: isAuthenticated ? 0.6 : 0,
