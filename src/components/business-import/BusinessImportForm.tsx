@@ -46,6 +46,7 @@ export default function BusinessImportForm({ source, onSubmit, onBack, isLoading
   const [rbq, setRbq] = useState("");
   const [neq, setNeq] = useState("");
   const [cardFile, setCardFile] = useState<File | null>(null);
+  const [selectedPlace, setSelectedPlace] = useState<PlaceResult | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const config = SOURCE_CONFIG[source];
