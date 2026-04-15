@@ -390,6 +390,36 @@ export type Database = {
         }
         Relationships: []
       }
+      adaptive_sessions: {
+        Row: {
+          conversion_stage: string
+          created_at: string
+          current_variant: string | null
+          id: string
+          intent: string | null
+          pain_selected: string | null
+          session_id: string
+        }
+        Insert: {
+          conversion_stage?: string
+          created_at?: string
+          current_variant?: string | null
+          id?: string
+          intent?: string | null
+          pain_selected?: string | null
+          session_id: string
+        }
+        Update: {
+          conversion_stage?: string
+          created_at?: string
+          current_variant?: string | null
+          id?: string
+          intent?: string | null
+          pain_selected?: string | null
+          session_id?: string
+        }
+        Relationships: []
+      }
       admin_action_logs: {
         Row: {
           action_type: string
@@ -21530,6 +21560,30 @@ export type Database = {
           session_type?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      conversion_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          session_id: string
+          value: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          session_id: string
+          value?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          session_id?: string
+          value?: string | null
         }
         Relationships: []
       }
@@ -51052,6 +51106,30 @@ export type Database = {
           status?: string
           type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_pain_points: {
+        Row: {
+          created_at: string
+          id: string
+          pain_selected: string
+          role: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pain_selected: string
+          role: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pain_selected?: string
+          role?: string
+          session_id?: string
         }
         Relationships: []
       }
