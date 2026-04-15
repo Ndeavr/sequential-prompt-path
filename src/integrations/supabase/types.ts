@@ -8406,6 +8406,38 @@ export type Database = {
         }
         Relationships: []
       }
+      audits_screenshots: {
+        Row: {
+          annotations: Json | null
+          created_at: string
+          id: string
+          prospect_id: string
+          url_image: string | null
+        }
+        Insert: {
+          annotations?: Json | null
+          created_at?: string
+          id?: string
+          prospect_id: string
+          url_image?: string | null
+        }
+        Update: {
+          annotations?: Json | null
+          created_at?: string
+          id?: string
+          prospect_id?: string
+          url_image?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audits_screenshots_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       authority_articles: {
         Row: {
           aeo_score: number | null
@@ -11126,6 +11158,51 @@ export type Database = {
           service_category?: string
           service_subcategory?: string | null
           specialization_label?: string | null
+        }
+        Relationships: []
+      }
+      campagnes_acquisition: {
+        Row: {
+          created_at: string
+          id: string
+          metadata_json: Json | null
+          nom: string
+          statut: string
+          taux_clic: number | null
+          taux_ouverture: number | null
+          total_clics: number | null
+          total_envoyes: number | null
+          total_ouverts: number | null
+          total_reponses: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata_json?: Json | null
+          nom: string
+          statut?: string
+          taux_clic?: number | null
+          taux_ouverture?: number | null
+          total_clics?: number | null
+          total_envoyes?: number | null
+          total_ouverts?: number | null
+          total_reponses?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata_json?: Json | null
+          nom?: string
+          statut?: string
+          taux_clic?: number | null
+          taux_ouverture?: number | null
+          total_clics?: number | null
+          total_envoyes?: number | null
+          total_ouverts?: number | null
+          total_reponses?: number | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -25455,6 +25532,47 @@ export type Database = {
           },
         ]
       }
+      evenements_sms: {
+        Row: {
+          created_at: string
+          date_envoi: string | null
+          id: string
+          langue: string
+          message: string
+          metadata_json: Json | null
+          prospect_id: string
+          statut: string
+        }
+        Insert: {
+          created_at?: string
+          date_envoi?: string | null
+          id?: string
+          langue?: string
+          message: string
+          metadata_json?: Json | null
+          prospect_id: string
+          statut?: string
+        }
+        Update: {
+          created_at?: string
+          date_envoi?: string | null
+          id?: string
+          langue?: string
+          message?: string
+          metadata_json?: Json | null
+          prospect_id?: string
+          statut?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evenements_sms_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       execution_agent_tasks: {
         Row: {
           agent_type: string
@@ -28340,6 +28458,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      insights_prospects: {
+        Row: {
+          created_at: string
+          faiblesses: Json | null
+          forces: Json | null
+          id: string
+          opportunites: Json | null
+          prospect_id: string
+        }
+        Insert: {
+          created_at?: string
+          faiblesses?: Json | null
+          forces?: Json | null
+          id?: string
+          opportunites?: Json | null
+          prospect_id: string
+        }
+        Update: {
+          created_at?: string
+          faiblesses?: Json | null
+          forces?: Json | null
+          id?: string
+          opportunites?: Json | null
+          prospect_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insights_prospects_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inspiration_posts: {
         Row: {
@@ -42040,19 +42193,28 @@ export type Database = {
           country: string | null
           created_at: string | null
           dedup_status: string | null
+          domaine: string | null
+          email: string | null
           has_email: boolean | null
           has_google_presence: boolean | null
           has_phone: boolean | null
           has_reviews: boolean | null
           has_website: boolean | null
           id: string
+          langue_preferee: string
           main_city: string | null
+          nom: string | null
+          prenom: string | null
           priority_level: string | null
           province: string | null
           region_name: string | null
+          service: string | null
           slug: string | null
+          source: string | null
           status: string | null
+          telephone: string | null
           updated_at: string | null
+          url_google: string | null
         }
         Insert: {
           aipp_pre_score?: number | null
@@ -42062,19 +42224,28 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           dedup_status?: string | null
+          domaine?: string | null
+          email?: string | null
           has_email?: boolean | null
           has_google_presence?: boolean | null
           has_phone?: boolean | null
           has_reviews?: boolean | null
           has_website?: boolean | null
           id?: string
+          langue_preferee?: string
           main_city?: string | null
+          nom?: string | null
+          prenom?: string | null
           priority_level?: string | null
           province?: string | null
           region_name?: string | null
+          service?: string | null
           slug?: string | null
+          source?: string | null
           status?: string | null
+          telephone?: string | null
           updated_at?: string | null
+          url_google?: string | null
         }
         Update: {
           aipp_pre_score?: number | null
@@ -42084,19 +42255,28 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           dedup_status?: string | null
+          domaine?: string | null
+          email?: string | null
           has_email?: boolean | null
           has_google_presence?: boolean | null
           has_phone?: boolean | null
           has_reviews?: boolean | null
           has_website?: boolean | null
           id?: string
+          langue_preferee?: string
           main_city?: string | null
+          nom?: string | null
+          prenom?: string | null
           priority_level?: string | null
           province?: string | null
           region_name?: string | null
+          service?: string | null
           slug?: string | null
+          source?: string | null
           status?: string | null
+          telephone?: string | null
           updated_at?: string | null
+          url_google?: string | null
         }
         Relationships: [
           {
@@ -44864,6 +45044,83 @@ export type Database = {
           },
         ]
       }
+      scores_aipp_prospects: {
+        Row: {
+          created_at: string
+          details_json: Json | null
+          ecart_conversion: number | null
+          id: string
+          nombre_avis: number
+          prospect_id: string
+          revenu_manque_estime: number | null
+          score_confiance: number
+          score_conversion: number
+          score_visibilite: number
+        }
+        Insert: {
+          created_at?: string
+          details_json?: Json | null
+          ecart_conversion?: number | null
+          id?: string
+          nombre_avis?: number
+          prospect_id: string
+          revenu_manque_estime?: number | null
+          score_confiance?: number
+          score_conversion?: number
+          score_visibilite?: number
+        }
+        Update: {
+          created_at?: string
+          details_json?: Json | null
+          ecart_conversion?: number | null
+          id?: string
+          nombre_avis?: number
+          prospect_id?: string
+          revenu_manque_estime?: number | null
+          score_confiance?: number
+          score_conversion?: number
+          score_visibilite?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scores_aipp_prospects_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scores_delivrabilite: {
+        Row: {
+          created_at: string
+          derniere_verification: string | null
+          details_json: Json | null
+          domaine: string
+          id: string
+          risque_spam: number | null
+          score_boite_reception: number | null
+        }
+        Insert: {
+          created_at?: string
+          derniere_verification?: string | null
+          details_json?: Json | null
+          domaine: string
+          id?: string
+          risque_spam?: number | null
+          score_boite_reception?: number | null
+        }
+        Update: {
+          created_at?: string
+          derniere_verification?: string | null
+          details_json?: Json | null
+          domaine?: string
+          id?: string
+          risque_spam?: number | null
+          score_boite_reception?: number | null
+        }
+        Relationships: []
+      }
       scraping_generation_jobs: {
         Row: {
           created_at: string
@@ -46180,6 +46437,72 @@ export type Database = {
           template_type?: string
         }
         Relationships: []
+      }
+      sequences_emails: {
+        Row: {
+          campagne_id: string | null
+          clique: boolean | null
+          contenu: string
+          created_at: string
+          date_envoi: string | null
+          etape: number
+          id: string
+          langue: string
+          metadata_json: Json | null
+          ouvert: boolean | null
+          prospect_id: string
+          repondu: boolean | null
+          statut: string
+          sujet: string
+        }
+        Insert: {
+          campagne_id?: string | null
+          clique?: boolean | null
+          contenu: string
+          created_at?: string
+          date_envoi?: string | null
+          etape?: number
+          id?: string
+          langue?: string
+          metadata_json?: Json | null
+          ouvert?: boolean | null
+          prospect_id: string
+          repondu?: boolean | null
+          statut?: string
+          sujet: string
+        }
+        Update: {
+          campagne_id?: string | null
+          clique?: boolean | null
+          contenu?: string
+          created_at?: string
+          date_envoi?: string | null
+          etape?: number
+          id?: string
+          langue?: string
+          metadata_json?: Json | null
+          ouvert?: boolean | null
+          prospect_id?: string
+          repondu?: boolean | null
+          statut?: string
+          sujet?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_seq_campagne"
+            columns: ["campagne_id"]
+            isOneToOne: false
+            referencedRelation: "campagnes_acquisition"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sequences_emails_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       serp_validation: {
         Row: {
