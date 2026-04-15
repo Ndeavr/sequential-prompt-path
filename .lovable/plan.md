@@ -1,84 +1,84 @@
 
 
-# Make /alex Live — Voice + Transcription + Mute
+# Module36hRevenueStrikeEngine — Plan
 
-## Current State
+## Overview
 
-- `/alex` uses **fully client-side mock logic** (`useAlexConversationLite`) with hardcoded keyword matching and mock contractors. No real AI.
-- Voice exists as a **separate full-screen overlay** (`OverlayAlexVoiceFullScreen`) using ElevenLabs Conversational AI via `useLiveVoice` hook. It works but takes over the entire screen.
-- The edge function `alex-process-turn` already handles real AI responses via `alexVoiceBrain`, signal extraction, intent scoring, and contractor matching.
-- `alex-tts` edge function exists for text-to-speech via ElevenLabs.
+War room dashboard for a 36-hour revenue sprint. Admin launches a strike session, the system tracks extraction, email sends, engagement, Alex conversions, and payments in real-time with a countdown timer and live feed.
 
-## What We Build
+## Phase 1 — Database Migration (5 tables)
 
-### 1. Wire /alex to Real AI (alex-process-turn)
+```sql
+strike_sessions    — id, start_time, end_time, target_conversions, actual_conversions, status (pending/active/critical/success/closed)
+strike_targets     — id, session_id FK, contractor_id, priority_score, engagement_level, status (new/contacted/hot/converted/lost)
+strike_events      — id, session_id FK, type (email_sent/opened/clicked/replied/alex_triggered/converted), contractor_id, metadata jsonb, created_at
+strike_adjustments — id, session_id FK, type, previous_value, new_value, impact_score, created_at
+strike_results     — id, session_id FK, total_emails_sent, total_opened, total_clicked, total_replied, total_converted, revenue_generated, created_at
+```
 
-Replace the client-side mock response generation in `useAlexConversationLite.sendMessage` with a real call to the `alex-process-turn` edge function:
+RLS: admin-only via `has_role(auth.uid(), 'admin')`. Enable realtime on `strike_events`.
 
-- On user message → call `supabase.functions.invoke("alex-process-turn", { body: { session_token, user_message, message_mode, ui_context } })`
-- Display the `alex_response` in the thread
-- Use `detected_intent`, `ui_actions`, and `primary_match` from the response to render inline cards
-- Keep the client-side keyword matching as **fallback** if the edge function fails
-- Create/resume an `alex_sessions` row on page load via `alex-voice-session-start`
+## Phase 2 — Edge Functions (2)
 
-**Modified file**: `src/hooks/useAlexConversationLite.ts`
-- Add `supabase.functions.invoke` call in `sendMessage`
-- Wrap in try/catch, fallback to existing mock logic on error
-- Map edge function response fields to existing card types
+**`start-strike-session`** — Creates session row with 36h window, seeds `strike_targets` from top-scored `contractor_prospects`, returns session_id.
 
-### 2. Inline Voice Mode (No Full-Screen Takeover)
+**`update-strike-metrics`** — Aggregates `strike_events` into `strike_results`, detects hot leads (opened+clicked), inserts auto-adjustments if metrics are below threshold.
 
-Instead of the full-screen overlay, integrate voice **directly into the /alex chat**:
+No new extraction/email functions — reuses existing outbound pipeline functions.
 
-- Use `useLiveVoice` hook directly in the page (already partially done via `handleMicToggle`)
-- When mic is active, show real-time transcription in the chat thread as bubbles
-- Alex's spoken responses appear as text bubbles (from `onTranscript` callback)
-- User's speech appears as user bubbles (from `onUserTranscript` callback)
-- Remove the redirect to `OverlayAlexVoiceFullScreen` — keep voice inline
+## Phase 3 — Hook
 
-**Modified files**:
-- `src/pages/PageHomeAlexConversationalLite.tsx` — integrate `useLiveVoice` directly, feed transcripts into the message thread
-- `src/components/alex-conversation/InputAlexDockExpanded.tsx` — add mute button
+**`src/hooks/useStrikeDashboard.ts`** — Queries all 5 tables filtered by active session. Subscribes to realtime on `strike_events`. Provides `startStrike`, `closeStrike`, `triggerAdjustment` mutations.
 
-### 3. Mute Alex Voice Toggle
+## Phase 4 — Components (9)
 
-Add a mute/unmute button so users can silence Alex's voice while keeping text responses:
+All in `src/components/strike/`:
 
-- New state `isVoiceMuted` in the page
-- When muted: `conversation.setVolume({ volume: 0 })` 
-- When unmuted: `conversation.setVolume({ volume: 1 })`
-- Visual indicator: `VolumeX` / `Volume2` icon in the input dock or header
-- Mute state persisted in localStorage
+| Component | Purpose |
+|-----------|---------|
+| `Countdown36hTimer` | Animated countdown with color transitions (green→orange→red) |
+| `Dashboard36hStrikeKPI` | 6 KPI cards (sent, opened, clicked, replied, converted, revenue) |
+| `FeedLiveRecruitmentEvents` | Real-time scrolling event feed (trading desk style) |
+| `CardHotProspect` | Glowing card for high-engagement prospects with "INTERVENIR" CTA |
+| `PanelConversionOpportunities` | Sorted list of hot leads ready for Alex push |
+| `WidgetEmailPerformanceLive` | Open/click/reply rates with mini progress bars |
+| `PanelAlexConversionControl` | Trigger Alex intervention on specific prospects |
+| `AlertCriticalBlocker` | Red alert banner for blockers (low open rate, SMTP issue) |
+| `HeroSection36hStrike` | Launch/status hero with big CTA button |
 
-**New component**: `src/components/alex-conversation/ButtonAlexMuteToggle.tsx`
-- Simple icon toggle button with tooltip
-- Uses `conversation.setVolume` from `useLiveVoice`
+## Phase 5 — Pages (3)
 
-### 4. Live Transcription Display
+| Route | Page | Content |
+|-------|------|---------|
+| `/admin/36h-strike-dashboard` | Main war room | Hero + Countdown + KPIs + Hot prospects + Email perf |
+| `/admin/strike-live-feed` | Live feed | Full-screen event stream + conversion opportunities |
+| `/admin/strike-adjustments` | Adjustment log | Table of all adjustments made + impact scores |
 
-Show voice activity visually in the chat thread:
+All wrapped in `AdminLayout`.
 
-- When Alex speaks → bubble appears with text + small audio wave indicator
-- When user speaks → user bubble appears with real-time partial text
-- Typing indicator shows "Alex écoute..." or "Alex parle..." based on state
+## Phase 6 — Routing
 
-**Modified**: `BubbleAlexMessage.tsx` — add optional voice indicator  
-**Modified**: `LoaderAlexThinking.tsx` — contextual label for voice states
+Add 3 routes to `router.tsx` under admin lazy imports.
 
 ## File Changes
 
-| Action | File | Purpose |
-|--------|------|---------|
-| Modify | `src/hooks/useAlexConversationLite.ts` | Wire to `alex-process-turn` edge function with fallback |
-| Modify | `src/pages/PageHomeAlexConversationalLite.tsx` | Integrate `useLiveVoice` inline, feed transcripts to thread, add mute |
-| Modify | `src/components/alex-conversation/InputAlexDockExpanded.tsx` | Add mute toggle button |
-| Create | `src/components/alex-conversation/ButtonAlexMuteToggle.tsx` | Volume mute/unmute toggle |
-| Modify | `src/components/alex-conversation/HeroSectionAlexOrbLite.tsx` | Show voice status (speaking/listening) |
+| Action | File |
+|--------|------|
+| Create | Migration SQL (5 tables + realtime) |
+| Create | `supabase/functions/start-strike-session/index.ts` |
+| Create | `supabase/functions/update-strike-metrics/index.ts` |
+| Create | `src/hooks/useStrikeDashboard.ts` |
+| Create | 9 components in `src/components/strike/` |
+| Create | `src/pages/admin/PageAdmin36hStrikeDashboard.tsx` |
+| Create | `src/pages/admin/PageAdminStrikeLiveFeed.tsx` |
+| Create | `src/pages/admin/PageAdminStrikeAdjustments.tsx` |
+| Modify | `src/app/router.tsx` |
 
-## Key Decisions
+## Constraints
 
-- **No new tables** — reuses existing `alex_sessions`, `alex_messages`, `alex_intents`
-- **No new edge functions** — reuses `alex-process-turn` and `elevenlabs-conversation-token`
-- **Graceful degradation** — if edge function fails, falls back to client-side mock logic
-- **Volume control via ElevenLabs SDK** — `setVolume({ volume: 0 })` for mute, no custom audio pipeline needed
+- Reuses existing outbound pipeline (no duplication of email/extraction logic)
+- Admin-only RLS
+- Realtime subscriptions for live feed
+- Dark premium theme, mobile-first
+- Does not modify existing modules
 
