@@ -83,6 +83,25 @@ const ANALYSIS_KEYWORDS: Record<string, IntentMatch> = {
 
 function detectAnalysisIntent(text: string): IntentMatch | null {
   const lower = text.toLowerCase();
+
+  // Onboarding completion → transition to payment
+  if (lower.startsWith("inscription:")) {
+    return {
+      intent: "stripe_payment_inline",
+      response: "Merci! Votre profil est prêt. Procédons au paiement pour activer votre plan Pro.",
+      data: { planCode: "pro", planName: "Pro", price: 349, interval: "monthly" },
+    };
+  }
+
+  // Payment confirmation
+  if (lower.startsWith("paiement confirmé")) {
+    return {
+      intent: "task_progress",
+      response: "🎉 Paiement reçu! Votre plan Pro est en cours d'activation. Bienvenue dans UNPRO!",
+      data: { tasks: [{ label: "Profil créé", done: true }, { label: "Paiement confirmé", done: true }, { label: "Activation en cours…", done: false }] },
+    };
+  }
+
   const sorted = Object.entries(ANALYSIS_KEYWORDS).sort((a, b) => b[0].length - a[0].length);
   for (const [keyword, result] of sorted) {
     if (lower.includes(keyword)) return result;
@@ -405,14 +424,8 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
 
     // ─── ENTREPRENEUR PLAN FLOW ───
     if (intent === "contractor_choose_plan" || intent === "contractor_join_platform") {
-      emitSafe("alex", route.message, "checkout_embedded" as InlineCardType, {
-        planCode: "pro",
-        planName: "Pro",
-        price: 349,
-        interval: "monthly",
-        features: ["Profil public complet", "5 à 12 rendez-vous/mois", "Visibilité améliorée", "Badge Pro"],
-      });
-      mem.set("last_question_asked", "plan_selection");
+      emitSafe("alex", "Parfait! Commençons votre inscription. Quelques informations rapides.", "entrepreneur_onboarding" as InlineCardType, {});
+      mem.set("last_question_asked", "onboarding_form");
       setIsThinking(false);
       return;
     }
@@ -424,7 +437,7 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
     }
 
     if (intent === "contractor_payment_checkout") {
-      emitSafe("alex", "Procédons au paiement.", "checkout_embedded" as InlineCardType, {
+      emitSafe("alex", "Procédons au paiement. Entrez vos informations de carte ci-dessous.", "stripe_payment_inline" as InlineCardType, {
         planCode: "pro", planName: "Pro", price: 349, interval: "monthly",
       });
       setIsThinking(false);
