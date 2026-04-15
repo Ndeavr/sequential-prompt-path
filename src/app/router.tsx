@@ -282,6 +282,11 @@ const PageAdminGoLiveFunctionHealth = lazy(() => import("@/pages/admin/PageAdmin
 const PageAdminGoLivePaymentHealth = lazy(() => import("@/pages/admin/PageAdminGoLivePaymentHealth"));
 const PageAdminNavigation = lazy(() => import("@/pages/admin/PageAdminNavigation"));
 
+// AIPP v2
+const PageAuditAIPPv2 = lazy(() => import("@/pages/PageAuditAIPPv2"));
+const PageAuditResultsAIPPv2 = lazy(() => import("@/pages/PageAuditResultsAIPPv2"));
+const PageAdminAIPPv2Dashboard = lazy(() => import("@/pages/admin/PageAdminAIPPv2Dashboard"));
+
 // Entrepreneur Onboarding Flow
 const PageOnboardingImport = lazy(() => import("@/pages/entrepreneur/PageOnboardingImport"));
 const PageOnboardingAnalyse = lazy(() => import("@/pages/entrepreneur/PageOnboardingAnalyse"));
@@ -659,6 +664,8 @@ export const AppRouter = () => (
         <Route path="/activation" element={<PageActivationStart />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/aipp-score" element={<AIPPScorePage />} />
+        <Route path="/audit-aipp" element={<PageAuditAIPPv2 />} />
+        <Route path="/audit-aipp/results/:auditId" element={<PageAuditResultsAIPPv2 />} />
         <Route path="/matching" element={<ProtectedRoute requiredRole="homeowner"><MatchingResultsPage /></ProtectedRoute>} />
         <Route path="/comparer" element={<ContractorComparisonPage />} />
         <Route path="/decision" element={<ProtectedRoute requiredRole="homeowner"><DecisionAssistantPage /></ProtectedRoute>} />
@@ -961,6 +968,7 @@ export const AppRouter = () => (
         <Route path="/admin/go-live/function-health" element={<ProtectedRoute requiredRole="admin"><PageAdminGoLiveFunctionHealth /></ProtectedRoute>} />
         <Route path="/admin/go-live/payment-health" element={<ProtectedRoute requiredRole="admin"><PageAdminGoLivePaymentHealth /></ProtectedRoute>} />
         <Route path="/admin/navigation" element={<ProtectedRoute requiredRole="admin"><PageAdminNavigation /></ProtectedRoute>} />
+        <Route path="/admin/aipp-v2" element={<ProtectedRoute requiredRole="admin"><PageAdminAIPPv2Dashboard /></ProtectedRoute>} />
         <Route path="/admin/home-graph" element={<ProtectedRoute requiredRole="admin"><AdminHomeGraph /></ProtectedRoute>} />
         <Route path="/admin/uos" element={<ProtectedRoute requiredRole="admin"><AdminUOS /></ProtectedRoute>} />
         <Route path="/admin/qa-simulation" element={<ProtectedRoute requiredRole="admin"><PageAdminQASimulation /></ProtectedRoute>} />

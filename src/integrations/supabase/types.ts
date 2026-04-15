@@ -1931,6 +1931,150 @@ export type Database = {
         }
         Relationships: []
       }
+      aipp_audit_entities: {
+        Row: {
+          audit_id: string
+          confidence: number
+          created_at: string
+          entity_type: string
+          id: string
+          name: string
+        }
+        Insert: {
+          audit_id: string
+          confidence?: number
+          created_at?: string
+          entity_type?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          audit_id?: string
+          confidence?: number
+          created_at?: string
+          entity_type?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aipp_audit_entities_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "aipp_audits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aipp_audit_recommendations: {
+        Row: {
+          audit_id: string
+          created_at: string
+          description: string
+          id: string
+          impact_score: number
+          priority: string
+          title: string
+        }
+        Insert: {
+          audit_id: string
+          created_at?: string
+          description?: string
+          id?: string
+          impact_score?: number
+          priority?: string
+          title: string
+        }
+        Update: {
+          audit_id?: string
+          created_at?: string
+          description?: string
+          id?: string
+          impact_score?: number
+          priority?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aipp_audit_recommendations_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "aipp_audits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aipp_audit_scores: {
+        Row: {
+          audit_id: string
+          created_at: string
+          id: string
+          revenue_loss_estimate: number | null
+          score_aeo: number
+          score_authority: number
+          score_conversion: number
+          score_global: number
+          score_local: number
+          score_tech: number
+        }
+        Insert: {
+          audit_id: string
+          created_at?: string
+          id?: string
+          revenue_loss_estimate?: number | null
+          score_aeo?: number
+          score_authority?: number
+          score_conversion?: number
+          score_global?: number
+          score_local?: number
+          score_tech?: number
+        }
+        Update: {
+          audit_id?: string
+          created_at?: string
+          id?: string
+          revenue_loss_estimate?: number | null
+          score_aeo?: number
+          score_authority?: number
+          score_conversion?: number
+          score_global?: number
+          score_local?: number
+          score_tech?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aipp_audit_scores_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "aipp_audits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aipp_audits: {
+        Row: {
+          created_at: string
+          domain: string
+          id: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          domain: string
+          id?: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          domain?: string
+          id?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       aipp_score_checks: {
         Row: {
           business_name: string
