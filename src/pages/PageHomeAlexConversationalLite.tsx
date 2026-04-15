@@ -350,6 +350,6 @@ export default function PageHomeAlexConversationalLite() {
         slots={MOCK_SLOTS}
         onConfirm={handleBookingConfirm}
       />
-    </div>
+    </LayoutAlexCinematicShell>
   );
 }
