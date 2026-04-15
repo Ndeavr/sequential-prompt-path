@@ -19416,6 +19416,277 @@ export type Database = {
           },
         ]
       }
+      contractor_prospect_contacts: {
+        Row: {
+          bounce_status: string | null
+          contact_type: string
+          contact_value: string
+          created_at: string
+          id: string
+          is_primary: boolean
+          last_contacted_at: string | null
+          opt_out_status: string | null
+          prospect_id: string
+          verified_status: string | null
+        }
+        Insert: {
+          bounce_status?: string | null
+          contact_type?: string
+          contact_value: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          last_contacted_at?: string | null
+          opt_out_status?: string | null
+          prospect_id: string
+          verified_status?: string | null
+        }
+        Update: {
+          bounce_status?: string | null
+          contact_type?: string
+          contact_value?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          last_contacted_at?: string | null
+          opt_out_status?: string | null
+          prospect_id?: string
+          verified_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_prospect_contacts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_prospect_enrichment: {
+        Row: {
+          ad_activity_estimate: string | null
+          aeo_score_estimate: number | null
+          business_size_estimate: string | null
+          cities_detected_json: Json | null
+          enrichment_payload_json: Json | null
+          extraction_payload_json: Json | null
+          id: string
+          last_enriched_at: string | null
+          prospect_id: string
+          seo_score_estimate: number | null
+          services_detected_json: Json | null
+          site_quality_score: number | null
+          social_links_json: Json | null
+          trust_signal_score: number | null
+        }
+        Insert: {
+          ad_activity_estimate?: string | null
+          aeo_score_estimate?: number | null
+          business_size_estimate?: string | null
+          cities_detected_json?: Json | null
+          enrichment_payload_json?: Json | null
+          extraction_payload_json?: Json | null
+          id?: string
+          last_enriched_at?: string | null
+          prospect_id: string
+          seo_score_estimate?: number | null
+          services_detected_json?: Json | null
+          site_quality_score?: number | null
+          social_links_json?: Json | null
+          trust_signal_score?: number | null
+        }
+        Update: {
+          ad_activity_estimate?: string | null
+          aeo_score_estimate?: number | null
+          business_size_estimate?: string | null
+          cities_detected_json?: Json | null
+          enrichment_payload_json?: Json | null
+          extraction_payload_json?: Json | null
+          id?: string
+          last_enriched_at?: string | null
+          prospect_id?: string
+          seo_score_estimate?: number | null
+          services_detected_json?: Json | null
+          site_quality_score?: number | null
+          social_links_json?: Json | null
+          trust_signal_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_prospect_enrichment_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: true
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_prospect_scores: {
+        Row: {
+          category_slug: string | null
+          cluster_id: string | null
+          exclusivity_value_score: number | null
+          final_recruitment_score: number | null
+          fit_score: number | null
+          id: string
+          payment_probability_score: number | null
+          prospect_id: string
+          response_probability_score: number | null
+          score_reason_json: Json | null
+          scored_at: string | null
+          season_code: string | null
+          urgency_score: number | null
+        }
+        Insert: {
+          category_slug?: string | null
+          cluster_id?: string | null
+          exclusivity_value_score?: number | null
+          final_recruitment_score?: number | null
+          fit_score?: number | null
+          id?: string
+          payment_probability_score?: number | null
+          prospect_id: string
+          response_probability_score?: number | null
+          score_reason_json?: Json | null
+          scored_at?: string | null
+          season_code?: string | null
+          urgency_score?: number | null
+        }
+        Update: {
+          category_slug?: string | null
+          cluster_id?: string | null
+          exclusivity_value_score?: number | null
+          final_recruitment_score?: number | null
+          fit_score?: number | null
+          id?: string
+          payment_probability_score?: number | null
+          prospect_id?: string
+          response_probability_score?: number | null
+          score_reason_json?: Json | null
+          scored_at?: string | null
+          season_code?: string | null
+          urgency_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_prospect_scores_cluster_id_fkey"
+            columns: ["cluster_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_clusters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_prospect_scores_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_prospects: {
+        Row: {
+          activation_status: string
+          business_name: string
+          category_slug: string | null
+          city: string | null
+          created_at: string
+          do_not_contact: boolean
+          domain_status: string | null
+          email: string | null
+          enrichment_status: string
+          extraction_confidence: number | null
+          google_business_url: string | null
+          id: string
+          language_guess: string | null
+          legal_name: string | null
+          neq: string | null
+          onboarding_status: string
+          outreach_status: string
+          owner_name: string | null
+          payment_status: string
+          phone: string | null
+          postal_code: string | null
+          province: string | null
+          qualification_status: string
+          rbq: string | null
+          region: string | null
+          review_count: number | null
+          review_rating: number | null
+          source_name: string | null
+          source_record_id: string | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          activation_status?: string
+          business_name: string
+          category_slug?: string | null
+          city?: string | null
+          created_at?: string
+          do_not_contact?: boolean
+          domain_status?: string | null
+          email?: string | null
+          enrichment_status?: string
+          extraction_confidence?: number | null
+          google_business_url?: string | null
+          id?: string
+          language_guess?: string | null
+          legal_name?: string | null
+          neq?: string | null
+          onboarding_status?: string
+          outreach_status?: string
+          owner_name?: string | null
+          payment_status?: string
+          phone?: string | null
+          postal_code?: string | null
+          province?: string | null
+          qualification_status?: string
+          rbq?: string | null
+          region?: string | null
+          review_count?: number | null
+          review_rating?: number | null
+          source_name?: string | null
+          source_record_id?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          activation_status?: string
+          business_name?: string
+          category_slug?: string | null
+          city?: string | null
+          created_at?: string
+          do_not_contact?: boolean
+          domain_status?: string | null
+          email?: string | null
+          enrichment_status?: string
+          extraction_confidence?: number | null
+          google_business_url?: string | null
+          id?: string
+          language_guess?: string | null
+          legal_name?: string | null
+          neq?: string | null
+          onboarding_status?: string
+          outreach_status?: string
+          owner_name?: string | null
+          payment_status?: string
+          phone?: string | null
+          postal_code?: string | null
+          province?: string | null
+          qualification_status?: string
+          rbq?: string | null
+          region?: string | null
+          review_count?: number | null
+          review_rating?: number | null
+          source_name?: string | null
+          source_record_id?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       contractor_public_pages: {
         Row: {
           canonical_url: string | null
@@ -19561,6 +19832,817 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_recruitment_audit_logs: {
+        Row: {
+          actor_id: string | null
+          actor_type: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          event_payload_json: Json | null
+          event_type: string
+          id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          event_payload_json?: Json | null
+          event_type: string
+          id?: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          event_payload_json?: Json | null
+          event_type?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      contractor_recruitment_campaigns: {
+        Row: {
+          budget_limit: number | null
+          category_slug: string | null
+          channel_mix: string | null
+          cluster_id: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          daily_send_limit: number | null
+          id: string
+          name: string
+          paused_at: string | null
+          season_code: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          budget_limit?: number | null
+          category_slug?: string | null
+          channel_mix?: string | null
+          cluster_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          daily_send_limit?: number | null
+          id?: string
+          name: string
+          paused_at?: string | null
+          season_code?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          budget_limit?: number | null
+          category_slug?: string | null
+          channel_mix?: string | null
+          cluster_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          daily_send_limit?: number | null
+          id?: string
+          name?: string
+          paused_at?: string | null
+          season_code?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_recruitment_campaigns_cluster_id_fkey"
+            columns: ["cluster_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_clusters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_recruitment_checkout_sessions: {
+        Row: {
+          abandoned_at: string | null
+          checkout_provider: string | null
+          checkout_session_id: string | null
+          checkout_url: string | null
+          completed_at: string | null
+          id: string
+          offer_id: string | null
+          prospect_id: string
+          recovered_at: string | null
+          session_status: string
+          started_at: string | null
+        }
+        Insert: {
+          abandoned_at?: string | null
+          checkout_provider?: string | null
+          checkout_session_id?: string | null
+          checkout_url?: string | null
+          completed_at?: string | null
+          id?: string
+          offer_id?: string | null
+          prospect_id: string
+          recovered_at?: string | null
+          session_status?: string
+          started_at?: string | null
+        }
+        Update: {
+          abandoned_at?: string | null
+          checkout_provider?: string | null
+          checkout_session_id?: string | null
+          checkout_url?: string | null
+          completed_at?: string | null
+          id?: string
+          offer_id?: string | null
+          prospect_id?: string
+          recovered_at?: string | null
+          session_status?: string
+          started_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_recruitment_checkout_sessions_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_recruitment_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_checkout_sessions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_recruitment_conversions: {
+        Row: {
+          activated_contractor_id: string | null
+          campaign_id: string | null
+          category_slug: string | null
+          cluster_id: string | null
+          conversion_source: string | null
+          conversion_type: string
+          converted_at: string | null
+          id: string
+          offer_id: string | null
+          payment_id: string | null
+          prospect_id: string
+        }
+        Insert: {
+          activated_contractor_id?: string | null
+          campaign_id?: string | null
+          category_slug?: string | null
+          cluster_id?: string | null
+          conversion_source?: string | null
+          conversion_type?: string
+          converted_at?: string | null
+          id?: string
+          offer_id?: string | null
+          payment_id?: string | null
+          prospect_id: string
+        }
+        Update: {
+          activated_contractor_id?: string | null
+          campaign_id?: string | null
+          category_slug?: string | null
+          cluster_id?: string | null
+          conversion_source?: string | null
+          conversion_type?: string
+          converted_at?: string | null
+          id?: string
+          offer_id?: string | null
+          payment_id?: string | null
+          prospect_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_recruitment_conversions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_recruitment_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_conversions_cluster_id_fkey"
+            columns: ["cluster_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_clusters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_conversions_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_recruitment_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_conversions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_recruitment_payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_conversions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_recruitment_events: {
+        Row: {
+          actor_id: string | null
+          actor_type: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          event_type: string
+          id: string
+          payload_json: Json | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type: string
+          id?: string
+          payload_json?: Json | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type?: string
+          id?: string
+          payload_json?: Json | null
+        }
+        Relationships: []
+      }
+      contractor_recruitment_exceptions: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          exception_type: string
+          id: string
+          message: string | null
+          prospect_id: string | null
+          recovery_action: string | null
+          resolved_at: string | null
+          severity: string
+          status: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          exception_type: string
+          id?: string
+          message?: string | null
+          prospect_id?: string | null
+          recovery_action?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          exception_type?: string
+          id?: string
+          message?: string | null
+          prospect_id?: string | null
+          recovery_action?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_recruitment_exceptions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_recruitment_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_exceptions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_recruitment_messages: {
+        Row: {
+          campaign_id: string | null
+          channel_type: string
+          click_status: string | null
+          clicked_at: string | null
+          created_at: string
+          delivered_at: string | null
+          delivery_status: string | null
+          error_code: string | null
+          error_message: string | null
+          id: string
+          open_status: string | null
+          opened_at: string | null
+          prospect_id: string
+          provider_message_id: string | null
+          provider_name: string | null
+          replied_at: string | null
+          reply_status: string | null
+          send_status: string
+          sent_at: string | null
+          step_id: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          channel_type?: string
+          click_status?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          delivery_status?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          open_status?: string | null
+          opened_at?: string | null
+          prospect_id: string
+          provider_message_id?: string | null
+          provider_name?: string | null
+          replied_at?: string | null
+          reply_status?: string | null
+          send_status?: string
+          sent_at?: string | null
+          step_id?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          channel_type?: string
+          click_status?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          delivery_status?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          open_status?: string | null
+          opened_at?: string | null
+          prospect_id?: string
+          provider_message_id?: string | null
+          provider_name?: string | null
+          replied_at?: string | null
+          reply_status?: string | null
+          send_status?: string
+          sent_at?: string | null
+          step_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_recruitment_messages_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_recruitment_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_messages_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_messages_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_recruitment_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_recruitment_offers: {
+        Row: {
+          accepted_at: string | null
+          category_slug: string | null
+          cluster_id: string | null
+          coupon_code: string | null
+          created_at: string
+          declined_at: string | null
+          expires_at: string | null
+          founder_discount_percent: number | null
+          id: string
+          magic_token: string | null
+          offer_type: string | null
+          plan_code: string | null
+          price_amount: number | null
+          pricing_mode: string | null
+          prospect_id: string
+          recurring_amount: number | null
+          scarcity_message: string | null
+          setup_fee_amount: number | null
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          category_slug?: string | null
+          cluster_id?: string | null
+          coupon_code?: string | null
+          created_at?: string
+          declined_at?: string | null
+          expires_at?: string | null
+          founder_discount_percent?: number | null
+          id?: string
+          magic_token?: string | null
+          offer_type?: string | null
+          plan_code?: string | null
+          price_amount?: number | null
+          pricing_mode?: string | null
+          prospect_id: string
+          recurring_amount?: number | null
+          scarcity_message?: string | null
+          setup_fee_amount?: number | null
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          category_slug?: string | null
+          cluster_id?: string | null
+          coupon_code?: string | null
+          created_at?: string
+          declined_at?: string | null
+          expires_at?: string | null
+          founder_discount_percent?: number | null
+          id?: string
+          magic_token?: string | null
+          offer_type?: string | null
+          plan_code?: string | null
+          price_amount?: number | null
+          pricing_mode?: string | null
+          prospect_id?: string
+          recurring_amount?: number | null
+          scarcity_message?: string | null
+          setup_fee_amount?: number | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_recruitment_offers_cluster_id_fkey"
+            columns: ["cluster_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_clusters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_offers_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_recruitment_payments: {
+        Row: {
+          amount_subtotal: number | null
+          amount_tax: number | null
+          amount_total: number | null
+          created_at: string
+          currency: string | null
+          external_payment_id: string | null
+          failed_at: string | null
+          id: string
+          offer_id: string | null
+          paid_at: string | null
+          payment_method_type: string | null
+          payment_status: string
+          prospect_id: string
+          raw_payload_json: Json | null
+          refunded_at: string | null
+        }
+        Insert: {
+          amount_subtotal?: number | null
+          amount_tax?: number | null
+          amount_total?: number | null
+          created_at?: string
+          currency?: string | null
+          external_payment_id?: string | null
+          failed_at?: string | null
+          id?: string
+          offer_id?: string | null
+          paid_at?: string | null
+          payment_method_type?: string | null
+          payment_status?: string
+          prospect_id: string
+          raw_payload_json?: Json | null
+          refunded_at?: string | null
+        }
+        Update: {
+          amount_subtotal?: number | null
+          amount_tax?: number | null
+          amount_total?: number | null
+          created_at?: string
+          currency?: string | null
+          external_payment_id?: string | null
+          failed_at?: string | null
+          id?: string
+          offer_id?: string | null
+          paid_at?: string | null
+          payment_method_type?: string | null
+          payment_status?: string
+          prospect_id?: string
+          raw_payload_json?: Json | null
+          refunded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_recruitment_payments_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_recruitment_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_payments_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_recruitment_replies: {
+        Row: {
+          campaign_id: string | null
+          channel_type: string | null
+          confidence_score: number | null
+          created_at: string
+          id: string
+          intent_label: string | null
+          message_id: string | null
+          objection_label: string | null
+          processed_at: string | null
+          prospect_id: string
+          reply_text: string | null
+          requires_human_review: boolean
+          sentiment_label: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          channel_type?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          intent_label?: string | null
+          message_id?: string | null
+          objection_label?: string | null
+          processed_at?: string | null
+          prospect_id: string
+          reply_text?: string | null
+          requires_human_review?: boolean
+          sentiment_label?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          channel_type?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          intent_label?: string | null
+          message_id?: string | null
+          objection_label?: string | null
+          processed_at?: string | null
+          prospect_id?: string
+          reply_text?: string | null
+          requires_human_review?: boolean
+          sentiment_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_recruitment_replies_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_recruitment_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_replies_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_recruitment_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_replies_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_recruitment_sequences: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          name: string
+          personalization_level: string | null
+          sequence_status: string
+          trigger_type: string | null
+          variant_code: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          name: string
+          personalization_level?: string | null
+          sequence_status?: string
+          trigger_type?: string | null
+          variant_code?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          personalization_level?: string | null
+          sequence_status?: string
+          trigger_type?: string | null
+          variant_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_recruitment_sequences_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_recruitment_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_recruitment_steps: {
+        Row: {
+          channel_type: string
+          created_at: string
+          delay_hours: number
+          id: string
+          sequence_id: string
+          status: string
+          step_order: number
+          stop_if_cluster_full: boolean
+          stop_if_replied: boolean
+          template_key: string | null
+        }
+        Insert: {
+          channel_type?: string
+          created_at?: string
+          delay_hours?: number
+          id?: string
+          sequence_id: string
+          status?: string
+          step_order?: number
+          stop_if_cluster_full?: boolean
+          stop_if_replied?: boolean
+          template_key?: string | null
+        }
+        Update: {
+          channel_type?: string
+          created_at?: string
+          delay_hours?: number
+          id?: string
+          sequence_id?: string
+          status?: string
+          step_order?: number
+          stop_if_cluster_full?: boolean
+          stop_if_replied?: boolean
+          template_key?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_recruitment_steps_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_recruitment_sequences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_recruitment_stop_rules: {
+        Row: {
+          category_slug: string | null
+          cluster_id: string
+          created_at: string
+          id: string
+          is_enabled: boolean
+          season_code: string | null
+          stop_rule_type: string
+          threshold_value: number
+          triggered_at: string | null
+        }
+        Insert: {
+          category_slug?: string | null
+          cluster_id: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          season_code?: string | null
+          stop_rule_type?: string
+          threshold_value?: number
+          triggered_at?: string | null
+        }
+        Update: {
+          category_slug?: string | null
+          cluster_id?: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          season_code?: string | null
+          stop_rule_type?: string
+          threshold_value?: number
+          triggered_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_recruitment_stop_rules_cluster_id_fkey"
+            columns: ["cluster_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_clusters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_recruitment_tasks: {
+        Row: {
+          assigned_to: string | null
+          campaign_id: string | null
+          created_at: string
+          due_at: string | null
+          id: string
+          payload_json: Json | null
+          prospect_id: string | null
+          status: string
+          task_type: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          campaign_id?: string | null
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          payload_json?: Json | null
+          prospect_id?: string | null
+          status?: string
+          task_type?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          campaign_id?: string | null
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          payload_json?: Json | null
+          prospect_id?: string | null
+          status?: string
+          task_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_recruitment_tasks_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_recruitment_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_recruitment_tasks_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -43824,6 +44906,142 @@ export type Database = {
           },
         ]
       }
+      recruitment_capacity_targets: {
+        Row: {
+          category_slug: string
+          cluster_id: string
+          created_at: string
+          fill_ratio_cached: number
+          id: string
+          last_recomputed_at: string | null
+          recruitment_status: string
+          season_code: string
+          stop_when_full: boolean
+          target_slots_paid: number
+          target_slots_reserved: number
+          target_slots_total: number
+          target_slots_waitlist: number
+          updated_at: string
+        }
+        Insert: {
+          category_slug: string
+          cluster_id: string
+          created_at?: string
+          fill_ratio_cached?: number
+          id?: string
+          last_recomputed_at?: string | null
+          recruitment_status?: string
+          season_code?: string
+          stop_when_full?: boolean
+          target_slots_paid?: number
+          target_slots_reserved?: number
+          target_slots_total?: number
+          target_slots_waitlist?: number
+          updated_at?: string
+        }
+        Update: {
+          category_slug?: string
+          cluster_id?: string
+          created_at?: string
+          fill_ratio_cached?: number
+          id?: string
+          last_recomputed_at?: string | null
+          recruitment_status?: string
+          season_code?: string
+          stop_when_full?: boolean
+          target_slots_paid?: number
+          target_slots_reserved?: number
+          target_slots_total?: number
+          target_slots_waitlist?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_capacity_targets_cluster_id_fkey"
+            columns: ["cluster_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_clusters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recruitment_cluster_categories: {
+        Row: {
+          category_slug: string
+          cluster_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          priority_score: number
+          season_code: string
+        }
+        Insert: {
+          category_slug: string
+          cluster_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          priority_score?: number
+          season_code?: string
+        }
+        Update: {
+          category_slug?: string
+          cluster_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          priority_score?: number
+          season_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_cluster_categories_cluster_id_fkey"
+            columns: ["cluster_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_clusters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recruitment_clusters: {
+        Row: {
+          city_list_json: Json | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          postal_prefixes_json: Json | null
+          province_code: string
+          region_name: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          city_list_json?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          postal_prefixes_json?: Json | null
+          province_code?: string
+          region_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          city_list_json?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          postal_prefixes_json?: Json | null
+          province_code?: string
+          region_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       recruitment_events: {
         Row: {
           created_at: string | null
@@ -54019,6 +55237,19 @@ export type Database = {
         Returns: Json
       }
       resolve_qr_token: { Args: { _token: string }; Returns: Json }
+      rpc_get_cluster_fill_ratio: {
+        Args: { p_category_slug?: string; p_cluster_id: string }
+        Returns: {
+          category_slug: string
+          cluster_id: string
+          fill_ratio: number
+          season_code: string
+          target_slots_paid: number
+          target_slots_reserved: number
+          target_slots_total: number
+        }[]
+      }
+      rpc_get_recruitment_funnel_stats: { Args: never; Returns: Json }
       search_rag_chunks_text: {
         Args: {
           filter_namespaces?: string[]
