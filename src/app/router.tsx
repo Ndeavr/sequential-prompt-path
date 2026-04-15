@@ -231,6 +231,8 @@ const AdminWinningVariantsPage = lazy(() => import("@/pages/admin/AdminWinningVa
 
 // Alex
 const PageAdminAlexConversationRules = lazy(() => import("@/pages/admin/PageAdminAlexConversationRules"));
+const PageAdminAlexKnowledgePlans = lazy(() => import("@/pages/admin/PageAdminAlexKnowledgePlans"));
+const PageAdminAlexResponseAudit = lazy(() => import("@/pages/admin/PageAdminAlexResponseAudit"));
 
 // Recruitment Automation Engine
 const PageAdminRecruitmentOverview = lazy(() => import("@/pages/admin/recruitment/PageAdminRecruitmentOverview"));
