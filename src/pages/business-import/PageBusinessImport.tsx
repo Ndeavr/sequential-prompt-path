@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, ArrowLeft, CheckCircle, MessageCircle, Target } from "lucide-react";
-import ImportSourceConnectorGrid from "@/components/business-import/ImportSourceConnectorGrid";
+import ImportSourceConnectorGrid, { type ImportSource } from "@/components/business-import/ImportSourceConnectorGrid";
 import BusinessImportForm, { type ImportFormData } from "@/components/business-import/BusinessImportForm";
 import ImportedProfilePreview, { type PreviewData } from "@/components/business-import/ImportedProfilePreview";
 import ProfileCompletionProgressHero from "@/components/business-import/ProfileCompletionProgressHero";
