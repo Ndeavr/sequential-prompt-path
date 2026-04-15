@@ -36,6 +36,12 @@ import { resolveRoute, type AlexRoute } from "@/services/alexRouteEngine";
 import { computeNextBestAction, inferServiceFromProblem } from "@/services/alexNeedResolver";
 import { enforcePolicy } from "@/services/alexResponsePolicyEngine";
 import { diagnoseSession, applyRepairs } from "@/services/alexSessionRepairEngine";
+// V6: Intelligence Core imports
+import { resolveContext, type ResolvedContext } from "@/services/alexContextResolver";
+import { buildStructuredAnswer, formatStructuredAnswer } from "@/services/alexAnswerBuilder";
+import { classifyQuestionType, type StructuredAnswer } from "@/services/alexCognitiveRulesEngine";
+import { extractSignals, logConversationTurn, logLearningEvent } from "@/services/alexMemoryLearningEngine";
+import { shouldPromptForPhoto, generateMockAnalysis, generateMockProjection, type PhotoPromptDecision } from "@/services/alexVisualIntelligenceEngine";
 
 // ─── INTERNAL LEAK DETECTOR ───
 const INTERNAL_LEAK_PATTERNS = [
