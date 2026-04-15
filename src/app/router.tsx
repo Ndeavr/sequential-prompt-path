@@ -35,6 +35,7 @@ const ProVisualSearchPage = lazy(() => import("@/pages/ProVisualSearchPage"));
 // Intent homepage (direct route for testing)
 const PageHomeIntentUNPRO = lazy(() => import("@/pages/PageHomeIntentUNPRO"));
 const PageHomeAlexConversationalLite = lazy(() => import("@/pages/PageHomeAlexConversationalLite"));
+const PageAlexConversationAnimated = lazy(() => import("@/pages/PageAlexConversationAnimated"));
 
 // Lightweight loading fallback
 const LazyFallback = () => (
