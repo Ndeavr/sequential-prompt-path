@@ -272,6 +272,9 @@ const AdminSalesAnalyticsPage = lazy(() => import("@/pages/admin/AdminSalesAnaly
 const HomeownerVoiceEntryPage = lazy(() => import("@/pages/homeowner/HomeownerVoiceEntryPage"));
 const AdminHomeownerAnalyticsPage = lazy(() => import("@/pages/admin/AdminHomeownerAnalyticsPage"));
 
+// Go-Live
+const PageAdminGoLive = lazy(() => import("@/pages/admin/PageAdminGoLive"));
+
 // Blog
 const BlogIndexPage = lazy(() => import("@/pages/blog/BlogIndexPage"));
 const BlogArticlePage = lazy(() => import("@/pages/blog/BlogArticlePage"));
@@ -929,6 +932,7 @@ export const AppRouter = () => (
         <Route path="/admin/duplicates" element={<ProtectedRoute requiredRole="admin"><AdminDuplicates /></ProtectedRoute>} />
         <Route path="/admin/automation" element={<ProtectedRoute requiredRole="admin"><AdminAutomation /></ProtectedRoute>} />
         <Route path="/admin/automation-command-center" element={<ProtectedRoute requiredRole="admin"><PageAdminAutomationCommandCenter /></ProtectedRoute>} />
+        <Route path="/admin/go-live" element={<ProtectedRoute requiredRole="admin"><PageAdminGoLive /></ProtectedRoute>} />
         <Route path="/admin/home-graph" element={<ProtectedRoute requiredRole="admin"><AdminHomeGraph /></ProtectedRoute>} />
         <Route path="/admin/uos" element={<ProtectedRoute requiredRole="admin"><AdminUOS /></ProtectedRoute>} />
         <Route path="/admin/qa-simulation" element={<ProtectedRoute requiredRole="admin"><PageAdminQASimulation /></ProtectedRoute>} />

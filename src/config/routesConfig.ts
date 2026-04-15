@@ -65,6 +65,7 @@ export const ROUTES = {
   ADMIN_DOMAIN_INTELLIGENCE: "/admin/domain-intelligence",
   ADMIN_ACTIVATION: "/admin/activation",
   ADMIN_ACTIVATION_HISTORY: "/admin/activation/history",
+  ADMIN_GO_LIVE: "/admin/go-live",
 
   // Broker / Courtier
   COURTIERS: "/courtiers",
