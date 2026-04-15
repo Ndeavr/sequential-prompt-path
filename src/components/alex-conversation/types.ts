@@ -42,7 +42,10 @@ export type InlineCardType =
   | "image_gallery"
   | "task_progress"
   | "address_confirmation"
-  | "form_autofill_preview";
+  | "form_autofill_preview"
+  // ── Entrepreneur Onboarding ──
+  | "entrepreneur_onboarding"
+  | "stripe_payment_inline";
 
 // ── Orchestrator Data Interfaces ──
 

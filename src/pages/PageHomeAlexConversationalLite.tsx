@@ -47,6 +47,8 @@ import PanelAlexLiveTaskStack from "@/components/alex-conversation/PanelAlexLive
 import CardAlexAddressConfirmation from "@/components/alex-conversation/CardAlexAddressConfirmation";
 import PanelAlexFormAutoFillPreview from "@/components/alex-conversation/PanelAlexFormAutoFillPreview";
 import ButtonAlexMuteToggle from "@/components/alex-conversation/ButtonAlexMuteToggle";
+import PanelAlexEntrepreneurOnboarding from "@/components/alex-conversation/PanelAlexEntrepreneurOnboarding";
+import PanelAlexStripePaymentInline from "@/components/alex-conversation/PanelAlexStripePaymentInline";
 import { MOCK_SLOTS, type MockContractor, type MockSlot } from "@/components/alex-conversation/types";
 import { toast } from "sonner";
 
