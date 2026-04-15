@@ -30,11 +30,11 @@ interface SearchSuggestion {
 }
 
 const popularSearches: SearchSuggestion[] = [
-  { type: "problem", label: "Toiture qui fuit", to: "/problemes/toiture-qui-fuit", icon: Home },
-  { type: "service", label: "Isolation grenier", to: "/services/isolation-grenier", icon: Wrench },
-  { type: "tool", label: "Vérifier entrepreneur", to: "/verifier-entrepreneur", icon: Users },
-  { type: "service", label: "Rénover cuisine", to: "/services/renovation-cuisine", icon: Wrench },
-  { type: "faq", label: "Loi 16 condo", to: "/condo/loi-16", icon: HelpCircle },
+  { type: "problem", label: "Toiture qui fuit", to: "/alex?intent=roofing_leak&label=Toiture+qui+fuit", icon: Home },
+  { type: "service", label: "Isolation grenier", to: "/alex?intent=insulation_attic&label=Isolation+grenier", icon: Wrench },
+  { type: "tool", label: "Vérifier entrepreneur", to: "/alex?intent=verify_contractor&label=Vérifier+entrepreneur", icon: Users },
+  { type: "service", label: "Rénover cuisine", to: "/alex?intent=kitchen_renovation&label=Rénover+cuisine", icon: Wrench },
+  { type: "faq", label: "Loi 16 condo", to: "/alex?intent=condo_law16&label=Loi+16+condo", icon: HelpCircle },
 ];
 
 const categories: { label: string; labelEn: string; icon: typeof Search; to: string }[] = [
@@ -70,7 +70,8 @@ export default function HeaderSearch({ lang, variant = "desktop", onClose }: Hea
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      navigate(`/recherche?q=${encodeURIComponent(query.trim())}`);
+      // Route free-text queries to Alex with the query as context
+      navigate(`/alex?q=${encodeURIComponent(query.trim())}`);
       setFocused(false);
       setQuery("");
       onClose?.();
