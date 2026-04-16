@@ -21,7 +21,7 @@ export default function PageArticlesRecentCompressedFeed() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("seo_articles")
-        .select("slug, title, meta_description, word_count, city, service_category, created_at")
+        .select("id, slug, title, meta_description, word_count, city, service_category, created_at")
         .eq("published", true)
         .order("created_at", { ascending: false })
         .limit(20);
