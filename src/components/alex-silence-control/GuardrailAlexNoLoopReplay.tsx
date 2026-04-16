@@ -1,8 +1,7 @@
 /**
  * GuardrailAlexNoLoopReplay — Prevents Alex from replaying prompts or looping.
  *
- * This is a pure logic guard — wraps children only if conditions allow.
- * If paused or already prompted, blocks children from re-triggering.
+ * Blocks children when paused or currently pausing — no re-triggering allowed.
  */
 import type { AlexSilenceStatus } from "@/hooks/useAlexSilenceControl";
 import type { ReactNode } from "react";
@@ -10,7 +9,6 @@ import type { ReactNode } from "react";
 interface Props {
   status: AlexSilenceStatus;
   children: ReactNode;
-  /** What to show when blocked */
   fallback?: ReactNode;
 }
 
