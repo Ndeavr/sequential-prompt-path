@@ -221,8 +221,8 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
 
     // Try to fetch from DB if not in memory
     if (!restoredSnapshot && sessionId) {
-      const { data } = await supabase
-        .from("alex_resume_snapshots")
+      const { data } = await (supabase
+        .from("alex_resume_snapshots" as any) as any)
         .select("*")
         .eq("session_id", sessionId)
         .order("created_at", { ascending: false })
