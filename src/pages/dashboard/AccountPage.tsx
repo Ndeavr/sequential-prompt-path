@@ -8,7 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
+import { useActiveRole } from "@/contexts/ActiveRoleContext";
 import { toast } from "sonner";
+import BecomeRoleCTA from "@/components/account/BecomeRoleCTA";
 
 interface ProfileForm {
   salutation: string;
@@ -20,6 +22,9 @@ interface ProfileForm {
 const AccountPage = () => {
   const { user } = useAuth();
   const { data: profile, isLoading } = useProfile();
+  const { availableRoles } = useActiveRole();
+  const hasContractor = availableRoles.includes("contractor");
+  const hasHomeowner = availableRoles.includes("homeowner");
   const updateProfile = useUpdateProfile();
   const [form, setForm] = useState<ProfileForm | null>(null);
 
@@ -90,6 +95,12 @@ const AccountPage = () => {
           </form>
         </CardContent>
       </Card>
+
+      {/* Cross-role CTAs */}
+      <div className="max-w-lg mt-6">
+        {!hasContractor && <BecomeRoleCTA targetRole="contractor" />}
+        {!hasHomeowner && <BecomeRoleCTA targetRole="homeowner" />}
+      </div>
     </DashboardLayout>
   );
 };
