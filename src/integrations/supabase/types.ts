@@ -13052,6 +13052,233 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_connection_nudges: {
+        Row: {
+          accept_count: number
+          created_at: string
+          dismiss_count: number
+          id: string
+          last_shown_at: string | null
+          next_eligible_at: string | null
+          nudge_status: string
+          role_context: string
+          surface: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accept_count?: number
+          created_at?: string
+          dismiss_count?: number
+          id?: string
+          last_shown_at?: string | null
+          next_eligible_at?: string | null
+          nudge_status?: string
+          role_context?: string
+          surface: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accept_count?: number
+          created_at?: string
+          dismiss_count?: number
+          id?: string
+          last_shown_at?: string | null
+          next_eligible_at?: string | null
+          nudge_status?: string
+          role_context?: string
+          surface?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      calendar_connection_prompts: {
+        Row: {
+          created_at: string
+          headline: string
+          id: string
+          is_active: boolean
+          language: string
+          primary_cta: string
+          role_type: string
+          secondary_cta: string | null
+          sort_order: number
+          subtext: string
+          surface: string
+        }
+        Insert: {
+          created_at?: string
+          headline: string
+          id?: string
+          is_active?: boolean
+          language?: string
+          primary_cta: string
+          role_type: string
+          secondary_cta?: string | null
+          sort_order?: number
+          subtext: string
+          surface: string
+        }
+        Update: {
+          created_at?: string
+          headline?: string
+          id?: string
+          is_active?: boolean
+          language?: string
+          primary_cta?: string
+          role_type?: string
+          secondary_cta?: string | null
+          sort_order?: number
+          subtext?: string
+          surface?: string
+        }
+        Relationships: []
+      }
+      calendar_connections: {
+        Row: {
+          access_token_encrypted: string | null
+          connected_at: string | null
+          connection_status: string
+          created_at: string
+          expires_at: string | null
+          ics_token: string | null
+          id: string
+          is_primary: boolean
+          last_error_message: string | null
+          last_synced_at: string | null
+          metadata: Json
+          provider: string
+          provider_account_email: string | null
+          refresh_token_encrypted: string | null
+          scopes_json: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          connected_at?: string | null
+          connection_status?: string
+          created_at?: string
+          expires_at?: string | null
+          ics_token?: string | null
+          id?: string
+          is_primary?: boolean
+          last_error_message?: string | null
+          last_synced_at?: string | null
+          metadata?: Json
+          provider: string
+          provider_account_email?: string | null
+          refresh_token_encrypted?: string | null
+          scopes_json?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          connected_at?: string | null
+          connection_status?: string
+          created_at?: string
+          expires_at?: string | null
+          ics_token?: string | null
+          id?: string
+          is_primary?: boolean
+          last_error_message?: string | null
+          last_synced_at?: string | null
+          metadata?: Json
+          provider?: string
+          provider_account_email?: string | null
+          refresh_token_encrypted?: string | null
+          scopes_json?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      calendar_conversion_events: {
+        Row: {
+          anonymous_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          prompt_variant: string | null
+          provider: string | null
+          role_context: string
+          surface: string
+          user_id: string | null
+        }
+        Insert: {
+          anonymous_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          prompt_variant?: string | null
+          provider?: string | null
+          role_context?: string
+          surface: string
+          user_id?: string | null
+        }
+        Update: {
+          anonymous_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          prompt_variant?: string | null
+          provider?: string | null
+          role_context?: string
+          surface?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      calendar_sync_logs: {
+        Row: {
+          calendar_connection_id: string
+          created_at: string
+          ended_at: string | null
+          error_message: string | null
+          id: string
+          records_imported: number
+          started_at: string
+          sync_status: string
+          sync_type: string
+        }
+        Insert: {
+          calendar_connection_id: string
+          created_at?: string
+          ended_at?: string | null
+          error_message?: string | null
+          id?: string
+          records_imported?: number
+          started_at?: string
+          sync_status?: string
+          sync_type?: string
+        }
+        Update: {
+          calendar_connection_id?: string
+          created_at?: string
+          ended_at?: string | null
+          error_message?: string | null
+          id?: string
+          records_imported?: number
+          started_at?: string
+          sync_status?: string
+          sync_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_sync_logs_calendar_connection_id_fkey"
+            columns: ["calendar_connection_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campagnes_acquisition: {
         Row: {
           created_at: string
