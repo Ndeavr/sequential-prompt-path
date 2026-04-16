@@ -13,9 +13,9 @@ interface ComponentLogoWordmarkAdaptiveProps {
 }
 
 const variantClasses: Record<LogoVariant, { img: string; useWordmark: boolean }> = {
-  "icon-only": { img: "h-8 w-auto", useWordmark: false },
-  standard: { img: "h-9 w-auto", useWordmark: true },
-  maximized: { img: "h-10 w-auto", useWordmark: true },
+  "icon-only": { img: "h-10 w-auto", useWordmark: false },
+  standard: { img: "h-12 w-auto", useWordmark: true },
+  maximized: { img: "h-14 w-auto max-w-[200px]", useWordmark: true },
 };
 
 export default function ComponentLogoWordmarkAdaptive({
