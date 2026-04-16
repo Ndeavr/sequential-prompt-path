@@ -569,7 +569,7 @@ function extractNextAction(text: string): { cleanText: string; nextAction: strin
 }
 
 // ─── 6. ElevenLabs Voice Config ───
-// Locked voice ID: gCr8TeSJgJaeaIoV4RWH
+// Locked voice ID: mVjOqyqTPfwlXPjV5sjX
 // Do NOT change without explicit approval.
 
 export type AlexVoiceProfile = "default" | "profile_a" | "profile_b";
@@ -600,7 +600,7 @@ export function getAlexVoiceSettings(profile: AlexVoiceProfile = "default") {
 }
 
 export const ALEX_VOICE_CONFIG = {
-  voiceId: "93nuHbke4dTER9x2pDwE",  // French masculine voice
+  voiceId: "mVjOqyqTPfwlXPjV5sjX",  // Alex masculine voice (FR + EN)
   modelId: "eleven_multilingual_v2",
   outputFormat: "mp3_44100_128",
   chunkLengthSchedule: [70, 110, 150],

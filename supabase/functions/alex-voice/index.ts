@@ -12,7 +12,7 @@
  *   → normalizeTextForFrenchTts
  *   → shapeTextForHumanSpeech
  *   → splitForSpeech
- *   → ElevenLabs TTS (voice gCr8TeSJgJaeaIoV4RWH)
+ *   → ElevenLabs TTS (voice mVjOqyqTPfwlXPjV5sjX)
  *
  * Actions:
  * - create-session: deterministic greeting + TTS

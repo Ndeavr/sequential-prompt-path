@@ -4,7 +4,7 @@
  * Uses ElevenLabs Input Streaming API (WebSocket) for ultra-low latency
  * sentence-by-sentence audio delivery.
  *
- * Voice: Alex (gCr8TeSJgJaeaIoV4RWH) — locked, no fallback.
+ * Voice: Alex (mVjOqyqTPfwlXPjV5sjX) — locked, no fallback.
  * Settings sourced from ALEX_VOICE_CONFIG — single source of truth.
  */
 
