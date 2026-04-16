@@ -21,7 +21,7 @@ export default function PageArticlesRecentCompressedFeed() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("seo_articles")
-        .select("slug, title, meta_description, word_count, city, service_category, created_at")
+        .select("id, slug, title, meta_description, word_count, city, service_category, created_at")
         .eq("published", true)
         .order("created_at", { ascending: false })
         .limit(20);
@@ -86,6 +86,7 @@ export default function PageArticlesRecentCompressedFeed() {
           {/* Featured */}
           {featured && (
             <HeroArticleFeatured
+              id={featured.id}
               slug={featured.slug}
               title={featured.title}
               excerpt={featured.meta_description || ""}
@@ -107,6 +108,7 @@ export default function PageArticlesRecentCompressedFeed() {
                   transition={{ delay: 0.05 * Math.min(i, 8) }}
                 >
                   <CardArticleCompressed
+                    id={a.id}
                     slug={a.slug}
                     title={a.title}
                     excerpt={a.meta_description || ""}

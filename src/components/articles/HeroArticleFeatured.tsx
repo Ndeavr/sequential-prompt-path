@@ -2,8 +2,10 @@ import { Link } from "react-router-dom";
 import { Clock, MapPin, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import ButtonTalkToAlexArticle from "./ButtonTalkToAlexArticle";
+import BarArticleEngagementActions from "./BarArticleEngagementActions";
 
 interface Props {
+  id: string;
   slug: string;
   title: string;
   excerpt: string;
@@ -13,7 +15,7 @@ interface Props {
   publishedAt: string;
 }
 
-export default function HeroArticleFeatured({ slug, title, excerpt, category, city, readingTime, publishedAt }: Props) {
+export default function HeroArticleFeatured({ id, slug, title, excerpt, category, city, readingTime, publishedAt }: Props) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -53,6 +55,7 @@ export default function HeroArticleFeatured({ slug, title, excerpt, category, ci
           >
             Lire l'article <ArrowRight className="h-3.5 w-3.5" />
           </Link>
+          <BarArticleEngagementActions articleId={id} slug={slug} title={title} />
           <ButtonTalkToAlexArticle title={title} slug={slug} category={category} />
         </div>
       </div>
