@@ -12,6 +12,7 @@ import { getProfileActions, getStateActions } from "@/config/navigationConfig";
 import { resolveIcon, ChevronDown, ArrowRightLeft, LogOut, Settings, HelpCircle, Globe } from "./IconResolver";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import type { UserRole } from "@/types/navigation";
+import BecomeRoleCTA from "@/components/account/BecomeRoleCTA";
 
 const roleLabels: Record<UserRole, { fr: string; en: string }> = {
   homeowner: { fr: "Propriétaire", en: "Homeowner" },
@@ -172,6 +173,18 @@ const ProfileMenu = () => {
                 );
               })}
             </div>
+
+            {/* Become another role */}
+            {!ctx.user.roles.includes("contractor") && (
+              <div className="px-1 py-1 border-b border-border/20">
+                <BecomeRoleCTA targetRole="contractor" compact />
+              </div>
+            )}
+            {!ctx.user.roles.includes("homeowner") && (
+              <div className="px-1 py-1 border-b border-border/20">
+                <BecomeRoleCTA targetRole="homeowner" compact />
+              </div>
+            )}
 
             {/* Account section */}
             <div className="px-1 py-1">
