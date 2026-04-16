@@ -46,7 +46,7 @@ export default function HomeProfessionalAdaptive() {
         <meta name="description" content="Recevez des références qualifiées automatiquement. UNPRO fait la prospection pour vous." />
       </Helmet>
 
-      <BarStickyCounterRealtime intentLabel="demandes mieux qualifiées" metricType="submissions" />
+      <BarStickyCounterRealtime />
 
       <div className="flex flex-col min-h-screen">
         <HeroSectionIntentWithAlexOrb

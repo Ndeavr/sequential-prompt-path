@@ -37,7 +37,7 @@ export default function HomeIntentRouterDynamic() {
         <link rel="canonical" href="https://unpro.ca/intent" />
       </Helmet>
 
-      <BarStickyCounterRealtime intentLabel="soumissions évitées" metricType="submissions" />
+      <BarStickyCounterRealtime />
 
       <div className="flex flex-col min-h-screen">
         <HeroSectionIntentWithAlexOrb
