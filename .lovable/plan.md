@@ -1,84 +1,61 @@
 
 
-# Module36hRevenueStrikeEngine — Plan
+# PageArticlesRecentCompressedFeed — Plan
 
-## Overview
+## What exists today
+- **No `/articles` route** — only `/articles/:slug` (detail page using `SeoArticlePage.tsx`)
+- Data lives in `seo_articles` table (6 published articles) with `content_html`, `word_count`, `city`, `service_category`, `slug`, `title`, `meta_description`
+- An unused `BlogPage2.tsx` uses mock data — will not be touched
+- `ArticleCard.tsx` exists as a shared component but uses mock blog post shape
 
-War room dashboard for a 36-hour revenue sprint. Admin launches a strike session, the system tracks extraction, email sends, engagement, Alex conversions, and payments in real-time with a countdown timer and live feed.
+## What we'll build
 
-## Phase 1 — Database Migration (5 tables)
+### 1. New page: `src/pages/articles/PageArticlesRecentCompressedFeed.tsx`
+- Fetches all published `seo_articles` ordered by `created_at DESC`
+- **Hero**: Most recent article featured large (title, excerpt, category badge, reading time, cover/gradient fallback)
+- **Feed**: Remaining articles as compact cards in vertical stack (mobile) / 2-col grid (desktop)
+- Skeleton loading state, empty state, error with retry
+- Dark premium theme consistent with UNPRO cinematic style
 
-```sql
-strike_sessions    — id, start_time, end_time, target_conversions, actual_conversions, status (pending/active/critical/success/closed)
-strike_targets     — id, session_id FK, contractor_id, priority_score, engagement_level, status (new/contacted/hot/converted/lost)
-strike_events      — id, session_id FK, type (email_sent/opened/clicked/replied/alex_triggered/converted), contractor_id, metadata jsonb, created_at
-strike_adjustments — id, session_id FK, type, previous_value, new_value, impact_score, created_at
-strike_results     — id, session_id FK, total_emails_sent, total_opened, total_clicked, total_replied, total_converted, revenue_generated, created_at
-```
-
-RLS: admin-only via `has_role(auth.uid(), 'admin')`. Enable realtime on `strike_events`.
-
-## Phase 2 — Edge Functions (2)
-
-**`start-strike-session`** — Creates session row with 36h window, seeds `strike_targets` from top-scored `contractor_prospects`, returns session_id.
-
-**`update-strike-metrics`** — Aggregates `strike_events` into `strike_results`, detects hot leads (opened+clicked), inserts auto-adjustments if metrics are below threshold.
-
-No new extraction/email functions — reuses existing outbound pipeline functions.
-
-## Phase 3 — Hook
-
-**`src/hooks/useStrikeDashboard.ts`** — Queries all 5 tables filtered by active session. Subscribes to realtime on `strike_events`. Provides `startStrike`, `closeStrike`, `triggerAdjustment` mutations.
-
-## Phase 4 — Components (9)
-
-All in `src/components/strike/`:
+### 2. Components in `src/components/articles/`
 
 | Component | Purpose |
 |-----------|---------|
-| `Countdown36hTimer` | Animated countdown with color transitions (green→orange→red) |
-| `Dashboard36hStrikeKPI` | 6 KPI cards (sent, opened, clicked, replied, converted, revenue) |
-| `FeedLiveRecruitmentEvents` | Real-time scrolling event feed (trading desk style) |
-| `CardHotProspect` | Glowing card for high-engagement prospects with "INTERVENIR" CTA |
-| `PanelConversionOpportunities` | Sorted list of hot leads ready for Alex push |
-| `WidgetEmailPerformanceLive` | Open/click/reply rates with mini progress bars |
-| `PanelAlexConversionControl` | Trigger Alex intervention on specific prospects |
-| `AlertCriticalBlocker` | Red alert banner for blockers (low open rate, SMTP issue) |
-| `HeroSection36hStrike` | Launch/status hero with big CTA button |
+| `CardArticleCompressed` | Compact card: gradient visual fallback, title, excerpt (2 lines), category pill, reading time, date, "Lire" CTA |
+| `HeroArticleFeatured` | Large featured card for newest article with prominent visual + description |
+| `ButtonTalkToAlexArticle` | CTA injecting `{title, slug, category}` into Alex context |
+| `SkeletonArticleCard` | Shimmer placeholder matching card shape |
 
-## Phase 5 — Pages (3)
+### 3. Route addition in `router.tsx`
+- Add `/articles` route pointing to `PageArticlesRecentCompressedFeed` (lazy loaded)
+- Keep existing `/articles/:slug` unchanged
 
-| Route | Page | Content |
-|-------|------|---------|
-| `/admin/36h-strike-dashboard` | Main war room | Hero + Countdown + KPIs + Hot prospects + Email perf |
-| `/admin/strike-live-feed` | Live feed | Full-screen event stream + conversion opportunities |
-| `/admin/strike-adjustments` | Adjustment log | Table of all adjustments made + impact scores |
+### 4. Detail page fixes (`SeoArticlePage.tsx`)
+- Remove duplicate author display
+- Fix bullet list alignment in chunked content
+- Improve mobile paragraph spacing and max-width
 
-All wrapped in `AdminLayout`.
+### 5. No database migration needed
+- Uses existing `seo_articles` table as-is
+- Reading time computed from `word_count` client-side
+- Category derived from `service_category` field
 
-## Phase 6 — Routing
-
-Add 3 routes to `router.tsx` under admin lazy imports.
-
-## File Changes
+## File changes
 
 | Action | File |
 |--------|------|
-| Create | Migration SQL (5 tables + realtime) |
-| Create | `supabase/functions/start-strike-session/index.ts` |
-| Create | `supabase/functions/update-strike-metrics/index.ts` |
-| Create | `src/hooks/useStrikeDashboard.ts` |
-| Create | 9 components in `src/components/strike/` |
-| Create | `src/pages/admin/PageAdmin36hStrikeDashboard.tsx` |
-| Create | `src/pages/admin/PageAdminStrikeLiveFeed.tsx` |
-| Create | `src/pages/admin/PageAdminStrikeAdjustments.tsx` |
-| Modify | `src/app/router.tsx` |
+| Create | `src/pages/articles/PageArticlesRecentCompressedFeed.tsx` |
+| Create | `src/components/articles/CardArticleCompressed.tsx` |
+| Create | `src/components/articles/HeroArticleFeatured.tsx` |
+| Create | `src/components/articles/ButtonTalkToAlexArticle.tsx` |
+| Create | `src/components/articles/SkeletonArticleCard.tsx` |
+| Modify | `src/app/router.tsx` (add `/articles` route) |
+| Modify | `src/pages/seo/SeoArticlePage.tsx` (fix duplicates + mobile spacing) |
 
 ## Constraints
-
-- Reuses existing outbound pipeline (no duplication of email/extraction logic)
-- Admin-only RLS
-- Realtime subscriptions for live feed
-- Dark premium theme, mobile-first
-- Does not modify existing modules
+- No new tables or migrations
+- Dark cinematic theme (#060B14)
+- Mobile-first, compact cards
+- Does not touch any other route
+- Alex context bridge via existing `useAlexVoice`
 
