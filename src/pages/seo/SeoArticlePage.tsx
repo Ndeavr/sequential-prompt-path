@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
+import BarArticleEngagementActions from "@/components/articles/BarArticleEngagementActions";
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
@@ -225,6 +226,9 @@ export default function SeoArticlePage() {
             <BookOpen className="h-3 w-3" />
             {focusMode ? "Mode normal" : "Mode lecture"}
           </button>
+
+          {/* Engagement actions */}
+          <BarArticleEngagementActions articleId={article.id} slug={article.slug} title={article.title} />
         </motion.header>
 
         {/* ── Key Takeaways (if any) ── */}
@@ -347,14 +351,18 @@ export default function SeoArticlePage() {
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
-            className="fixed bottom-4 left-4 right-4 z-40 md:left-auto md:right-6 md:max-w-xs"
+            className="fixed bottom-4 left-4 right-4 z-40 md:left-auto md:right-6 md:max-w-sm"
           >
-            <button
-              onClick={openAlexContextual}
-              className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-5 py-3 rounded-xl font-medium shadow-lg shadow-primary/20 hover:bg-primary/90 transition"
-            >
-              Parler à Alex <ArrowRight className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-2 bg-card/95 backdrop-blur-md border border-border/50 rounded-xl px-3 py-2 shadow-lg">
+              <BarArticleEngagementActions articleId={article.id} slug={article.slug} title={article.title} compact />
+              <div className="flex-1" />
+              <button
+                onClick={openAlexContextual}
+                className="shrink-0 flex items-center gap-1.5 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition"
+              >
+                Alex <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
