@@ -3049,6 +3049,38 @@ export type Database = {
         }
         Relationships: []
       }
+      alex_conversation_presence_events: {
+        Row: {
+          event_type: string
+          id: string
+          metadata: Json | null
+          occurred_at: string
+          session_id: string
+        }
+        Insert: {
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string
+          session_id: string
+        }
+        Update: {
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_conversation_presence_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_conversation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alex_conversation_rules: {
         Row: {
           created_at: string
@@ -3091,13 +3123,22 @@ export type Database = {
           created_at: string
           current_intent: string | null
           current_problem_summary: string | null
+          current_route: string | null
+          current_step_key: string | null
           detected_role: string | null
+          feature: string | null
           id: string
+          last_user_activity_at: string | null
+          paused_at: string | null
           preferred_language: string
+          prompt_final_sent_at: string | null
+          prompt_presence_sent_at: string | null
+          resumed_at: string | null
           selected_booking_slot: Json | null
           selected_contractor_id: string | null
           session_status: string
           silence_count: number | null
+          silence_cycle_count: number
           updated_at: string
           user_id: string | null
         }
@@ -3109,13 +3150,22 @@ export type Database = {
           created_at?: string
           current_intent?: string | null
           current_problem_summary?: string | null
+          current_route?: string | null
+          current_step_key?: string | null
           detected_role?: string | null
+          feature?: string | null
           id?: string
+          last_user_activity_at?: string | null
+          paused_at?: string | null
           preferred_language?: string
+          prompt_final_sent_at?: string | null
+          prompt_presence_sent_at?: string | null
+          resumed_at?: string | null
           selected_booking_slot?: Json | null
           selected_contractor_id?: string | null
           session_status?: string
           silence_count?: number | null
+          silence_cycle_count?: number
           updated_at?: string
           user_id?: string | null
         }
@@ -3127,13 +3177,22 @@ export type Database = {
           created_at?: string
           current_intent?: string | null
           current_problem_summary?: string | null
+          current_route?: string | null
+          current_step_key?: string | null
           detected_role?: string | null
+          feature?: string | null
           id?: string
+          last_user_activity_at?: string | null
+          paused_at?: string | null
           preferred_language?: string
+          prompt_final_sent_at?: string | null
+          prompt_presence_sent_at?: string | null
+          resumed_at?: string | null
           selected_booking_slot?: Json | null
           selected_contractor_id?: string | null
           session_status?: string
           silence_count?: number | null
+          silence_cycle_count?: number
           updated_at?: string
           user_id?: string | null
         }
@@ -5429,6 +5488,56 @@ export type Database = {
           warmth_level?: number
         }
         Relationships: []
+      }
+      alex_resume_snapshots: {
+        Row: {
+          active_form_state: Json | null
+          collected_entities: Json | null
+          created_at: string
+          current_intent: string | null
+          current_step_key: string | null
+          id: string
+          last_alex_message: string | null
+          last_user_message: string | null
+          route_path: string | null
+          session_id: string
+          ui_state: Json | null
+        }
+        Insert: {
+          active_form_state?: Json | null
+          collected_entities?: Json | null
+          created_at?: string
+          current_intent?: string | null
+          current_step_key?: string | null
+          id?: string
+          last_alex_message?: string | null
+          last_user_message?: string | null
+          route_path?: string | null
+          session_id: string
+          ui_state?: Json | null
+        }
+        Update: {
+          active_form_state?: Json | null
+          collected_entities?: Json | null
+          created_at?: string
+          current_intent?: string | null
+          current_step_key?: string | null
+          id?: string
+          last_alex_message?: string | null
+          last_user_message?: string | null
+          route_path?: string | null
+          session_id?: string
+          ui_state?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alex_resume_snapshots_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "alex_conversation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       alex_runtime_conflicts: {
         Row: {
