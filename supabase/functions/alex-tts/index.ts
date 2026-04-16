@@ -1,8 +1,8 @@
 /**
  * alex-tts — Reliable TTS with automatic fallback.
  * 
- * Primary: voice UJCi4DDncuo0VJDSIegj (custom clone)
- * Fallback: voice FGY2WhTYpPnrIDTdsKH5 (Laura standard)
+ * Primary: voice mVjOqyqTPfwlXPjV5sjX (Alex FR+EN)
+ * Fallback: voice mVjOqyqTPfwlXPjV5sjX (same — single locked voice)
  * 
  * Returns raw audio/mpeg with headers indicating active provider.
  */

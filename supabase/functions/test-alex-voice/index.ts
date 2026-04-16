@@ -459,7 +459,7 @@ function testVoiceConfig(): TestResult[] {
 
   // Locked voice ID
   try {
-    assert(ALEX_VOICE_CONFIG.voiceId === "gCr8TeSJgJaeaIoV4RWH", `Voice ID mismatch: ${ALEX_VOICE_CONFIG.voiceId}`);
+    assert(ALEX_VOICE_CONFIG.voiceId === "mVjOqyqTPfwlXPjV5sjX", `Voice ID mismatch: ${ALEX_VOICE_CONFIG.voiceId}`);
     results.push({ name: "config_voice_id_locked", passed: true });
   } catch (e) {
     results.push({ name: "config_voice_id_locked", passed: false, error: e.message });
@@ -615,7 +615,7 @@ function testConsistencyChecks(): TestResult[] {
   // voice-gateway should use same voice ID as config
   try {
     // We can't import voice-gateway directly, but we verify the config is correct
-    assert(ALEX_VOICE_CONFIG.voiceId === "gCr8TeSJgJaeaIoV4RWH", "Voice ID should be locked");
+    assert(ALEX_VOICE_CONFIG.voiceId === "mVjOqyqTPfwlXPjV5sjX", "Voice ID should be locked");
     assert(ALEX_VOICE_CONFIG.modelId === "eleven_turbo_v2_5", "Model should be turbo v2.5");
     results.push({ name: "consistency_voice_config", passed: true });
   } catch (e) {
@@ -743,7 +743,7 @@ serve(async (req) => {
       fixesNeeded.push("🗣️ French Rewrite: Le modèle génère encore des phrases corporatives — renforcer le system prompt ou la couche de réécriture");
     }
     if (r.name.includes("voice_id")) {
-      fixesNeeded.push("🔒 Voice Lock: Le voice ID ne correspond pas à gCr8TeSJgJaeaIoV4RWH");
+      fixesNeeded.push("🔒 Voice Lock: Le voice ID ne correspond pas à mVjOqyqTPfwlXPjV5sjX");
     }
     if (r.name.includes("greeting")) {
       fixesNeeded.push(`⏰ Greeting: ${r.error}`);
