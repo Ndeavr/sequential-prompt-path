@@ -23,6 +23,7 @@ import MenuQuickActionsContextual from "./MenuQuickActionsContextual";
 import DrawerNavigationMobileIntent from "./DrawerNavigationMobileIntent";
 import unproLogoWordmark from "@/assets/unpro-logo-wordmark.png";
 import unproLogoIcon from "@/assets/unpro-logo.png";
+import unproLogoHouse from "@/assets/unpro-logo-house.png";
 import type { UserRole } from "@/types/navigation";
 
 const guestMegaKeys = [
@@ -102,9 +103,9 @@ const SmartHeader = () => {
             {/* Zone 1 — Brand */}
             <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0" style={{ minWidth: "fit-content" }}>
               <img
-                src={unproLogoWordmark}
+                src={isHome ? unproLogoWordmark : unproLogoHouse}
                 alt="UNPRO"
-                className="h-7 sm:h-8 lg:h-9 w-auto transition-all duration-300 group-hover:scale-105"
+                className={`${isHome ? "h-7 sm:h-8 lg:h-9" : "h-9 sm:h-10 lg:h-11"} w-auto transition-all duration-300 group-hover:scale-105`}
                 draggable={false}
               />
             </Link>
