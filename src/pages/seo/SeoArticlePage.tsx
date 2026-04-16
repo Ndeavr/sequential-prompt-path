@@ -2,30 +2,28 @@
  * UNPRO — SEO Article Page (public)
  * Route: /articles/:slug
  *
- * Premium reading UX: chunked content, progress bar, contextual Alex CTA,
- * estimated reading time, focus mode, sticky key takeaways.
+ * Premium reading UX with SEO optimization: structured data, clean highlights,
+ * readable paragraphs, FAQ with JSON-LD, internal links, contextual Alex CTA.
  */
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SeoHead from "@/seo/components/SeoHead";
-import SeoFaqSection from "@/seo/components/SeoFaqSection";
-import SeoInternalLinks from "@/seo/components/SeoInternalLinks";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CalendarDays, MapPin, ArrowRight, Clock, BookOpen,
-  ChevronDown, Lightbulb,
 } from "lucide-react";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import BarArticleEngagementActions from "@/components/articles/BarArticleEngagementActions";
-import {
-  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
-} from "@/components/ui/accordion";
+import BlockArticleParagraphReadable from "@/components/articles/BlockArticleParagraphReadable";
+import PanelArticleHighlightsClean from "@/components/articles/PanelArticleHighlightsClean";
+import SectionArticleFAQSEO from "@/components/articles/SectionArticleFAQSEO";
+import SectionArticleInternalLinksSEO from "@/components/articles/SectionArticleInternalLinksSEO";
+import SectionArticleStructuredData from "@/components/articles/SectionArticleStructuredData";
 
 /* ── Helpers ── */
 
-/** Estimate reading time from word count or HTML */
 function estimateReadingTime(wordCount?: number, html?: string): number {
   if (wordCount && wordCount > 0) return Math.max(1, Math.ceil(wordCount / 250));
   if (!html) return 3;
@@ -36,9 +34,7 @@ function estimateReadingTime(wordCount?: number, html?: string): number {
 /** Split HTML into semantic chunks at <h2>, <h3>, <hr> boundaries */
 function chunkHtml(html: string): string[] {
   if (!html) return [];
-  // Split before headings and hrs
   const parts = html.split(/(?=<h[23][^>]*>)|(?=<hr\s*\/?>)/gi).filter(Boolean);
-  // Merge tiny fragments into previous chunk
   const merged: string[] = [];
   for (const part of parts) {
     const stripped = part.replace(/<[^>]*>/g, "").trim();
@@ -51,13 +47,20 @@ function chunkHtml(html: string): string[] {
   return merged.length > 0 ? merged : [html];
 }
 
-/** Extract key insights (bold sentences) from HTML */
+/** Extract key insights (bold sentences) from HTML, deduplicating */
 function extractKeyTakeaways(html: string): string[] {
   if (!html) return [];
   const matches = html.match(/<strong>([^<]{20,})<\/strong>/gi) || [];
+  const seen = new Set<string>();
   return matches
     .map((m) => m.replace(/<\/?strong>/gi, "").trim())
-    .filter((t) => t.length > 15 && t.length < 200)
+    .filter((t) => {
+      if (t.length < 15 || t.length > 200) return false;
+      const norm = t.toLowerCase();
+      if (seen.has(norm)) return false;
+      seen.add(norm);
+      return true;
+    })
     .slice(0, 5);
 }
 
@@ -85,22 +88,6 @@ export default function SeoArticlePage() {
     enabled: !!slug,
   });
 
-  // JSON-LD injection
-  useEffect(() => {
-    if (!article?.schema_json_ld) return;
-    const schemas = Array.isArray(article.schema_json_ld) ? article.schema_json_ld : [article.schema_json_ld];
-    const scripts: HTMLScriptElement[] = [];
-    schemas.forEach((schema: any, i: number) => {
-      const script = document.createElement("script");
-      script.type = "application/ld+json";
-      script.id = `article-jsonld-${i}`;
-      script.text = JSON.stringify(schema);
-      document.head.appendChild(script);
-      scripts.push(script);
-    });
-    return () => scripts.forEach((s) => s.remove());
-  }, [article]);
-
   // Scroll tracking
   useEffect(() => {
     const handleScroll = () => {
@@ -127,8 +114,8 @@ export default function SeoArticlePage() {
     () => (article?.faq || []).map((f: any) => ({ question: f.question || f.q, answer: f.answer || f.a })),
     [article]
   );
-  const links = useMemo(
-    () => (article?.internal_links || []).map((l: any) => ({ to: l.url, label: l.anchor })),
+  const internalLinks = useMemo(
+    () => (article?.internal_links || []).map((l: any) => ({ url: l.url, anchor: l.anchor })),
     [article]
   );
 
@@ -137,13 +124,12 @@ export default function SeoArticlePage() {
     if (!article) return;
     const contextHint = [
       `L'utilisateur lit l'article "${article.title}".`,
-      article.category ? `Catégorie: ${article.category}.` : "",
+      article.service_category ? `Catégorie: ${article.service_category}.` : "",
       article.city ? `Ville: ${article.city}.` : "",
       `Sujet principal: ${article.h1 || article.title}.`,
       takeaways.length > 0 ? `Points clés: ${takeaways.slice(0, 3).join("; ")}.` : "",
       "Aide-le avec son problème en lien avec cet article.",
     ].filter(Boolean).join(" ");
-
     alexVoice.openAlex("article_context", contextHint);
   }, [article, alexVoice, takeaways]);
 
@@ -160,11 +146,14 @@ export default function SeoArticlePage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold text-foreground">Article introuvable</h1>
-          <Link to="/" className="text-primary hover:underline">Retour à l'accueil</Link>
+          <Link to="/articles" className="text-primary hover:underline">Voir tous les articles</Link>
         </div>
       </div>
     );
   }
+
+  // AEO intro: first 2 sentences of meta_description as direct answer
+  const aeoIntro = article.meta_description || "";
 
   return (
     <>
@@ -172,6 +161,20 @@ export default function SeoArticlePage() {
         title={article.meta_title || article.title}
         description={article.meta_description || ""}
         canonical={`https://unpro.ca/articles/${article.slug}`}
+        ogType="article"
+      />
+
+      {/* Structured Data (Article + Breadcrumb JSON-LD) */}
+      <SectionArticleStructuredData
+        title={article.meta_title || article.title}
+        description={article.meta_description || ""}
+        slug={article.slug}
+        datePublished={article.created_at}
+        dateModified={article.updated_at || article.created_at}
+        wordCount={article.word_count}
+        category={article.service_category}
+        city={article.city}
+        h1={article.h1}
       />
 
       {/* ── Reading Progress Bar ── */}
@@ -189,14 +192,30 @@ export default function SeoArticlePage() {
           focusMode ? "text-lg leading-relaxed" : ""
         }`}
       >
+        {/* ── Breadcrumb (visible + semantic) ── */}
+        <nav aria-label="Fil d'Ariane" className="text-xs text-muted-foreground">
+          <ol className="flex items-center gap-1.5 flex-wrap">
+            <li><Link to="/" className="hover:text-primary transition">Accueil</Link></li>
+            <li>/</li>
+            <li><Link to="/articles" className="hover:text-primary transition">Articles</Link></li>
+            <li>/</li>
+            <li className="text-foreground/60 truncate max-w-[200px]">{article.title}</li>
+          </ol>
+        </nav>
+
         {/* ── Smart Header ── */}
         <motion.header
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="space-y-4"
         >
-          {/* Meta line */}
+          {/* Category + Meta line — author appears ONLY here */}
           <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
+            {article.service_category && (
+              <span className="bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-medium text-xs">
+                {article.service_category}
+              </span>
+            )}
             {article.city && (
               <span className="flex items-center gap-1">
                 <MapPin className="h-3.5 w-3.5" />
@@ -205,71 +224,52 @@ export default function SeoArticlePage() {
             )}
             <span className="flex items-center gap-1">
               <CalendarDays className="h-3.5 w-3.5" />
-              {new Date(article.created_at).toLocaleDateString("fr-CA")}
+              {new Date(article.created_at).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}
             </span>
             <span className="flex items-center gap-1 text-primary/80 font-medium">
               <Clock className="h-3.5 w-3.5" />
-              Lecture {readingTime} min
+              {readingTime} min de lecture
             </span>
           </div>
 
-          {/* H1 */}
+          {/* H1 — SEO optimized */}
           <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">
             {article.h1 || article.title}
           </h1>
 
-          {/* Focus mode toggle */}
-          <button
-            onClick={() => setFocusMode((v) => !v)}
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition px-2 py-1 rounded-md border border-border/50"
-          >
-            <BookOpen className="h-3 w-3" />
-            {focusMode ? "Mode normal" : "Mode lecture"}
-          </button>
+          {/* AEO intro — direct answer for AI engines */}
+          {aeoIntro && (
+            <p className="text-base text-foreground/80 leading-relaxed border-l-2 border-primary/30 pl-4">
+              {aeoIntro}
+            </p>
+          )}
 
-          {/* Engagement actions */}
-          <BarArticleEngagementActions articleId={article.id} slug={article.slug} title={article.title} />
+          {/* Controls row */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setFocusMode((v) => !v)}
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition px-2 py-1 rounded-md border border-border/50"
+            >
+              <BookOpen className="h-3 w-3" />
+              {focusMode ? "Mode normal" : "Mode lecture"}
+            </button>
+            <BarArticleEngagementActions articleId={article.id} slug={article.slug} title={article.title} />
+          </div>
         </motion.header>
 
-        {/* ── Key Takeaways (if any) ── */}
-        {takeaways.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2"
-          >
-            <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-              <Lightbulb className="h-4 w-4" />
-              Points clés
-            </div>
-            <ul className="space-y-1.5">
-              {takeaways.map((t, i) => (
-                <li key={i} className="text-sm text-foreground/90 flex items-start gap-2">
-                  <span className="text-primary mt-0.5 shrink-0">•</span>
-                  {t}
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-        )}
+        {/* ── Key Takeaways (deduplicated, no author) ── */}
+        <PanelArticleHighlightsClean takeaways={takeaways} authorName="UNPRO" />
 
-        {/* ── Chunked Content ── */}
+        {/* ── Chunked Content with readable blocks ── */}
         {chunks.map((chunk, i) => (
           <motion.section
             key={i}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 * Math.min(i, 6) }}
-            className="prose prose-sm md:prose-base max-w-none text-foreground
-              prose-headings:text-foreground prose-headings:font-bold prose-headings:mt-8 prose-headings:mb-4
-              prose-p:mb-5 prose-p:leading-[1.8]
-              prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-              prose-strong:text-foreground prose-li:text-muted-foreground
-              prose-ul:space-y-2 prose-ul:pl-5 prose-ol:space-y-2 prose-ol:pl-5
-              prose-li:leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: chunk }}
-          />
+          >
+            <BlockArticleParagraphReadable html={chunk} />
+          </motion.section>
         ))}
 
         {/* ── Inline CTA (mid-article) ── */}
@@ -293,36 +293,11 @@ export default function SeoArticlePage() {
           </motion.div>
         )}
 
-        {/* ── FAQ ── */}
-        {faqs.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="space-y-3"
-          >
-            <h2 className="text-xl font-bold text-foreground">Questions fréquentes</h2>
-            <Accordion type="single" collapsible className="space-y-0">
-              {faqs.map((faq: any, i: number) => (
-                <AccordionItem key={i} value={`faq-${i}`} className="border-b border-border/30">
-                  <AccordionTrigger className="text-sm font-medium text-foreground py-4 hover:no-underline">
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-sm text-muted-foreground pb-4 leading-relaxed">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </motion.div>
-        )}
+        {/* ── FAQ with JSON-LD ── */}
+        <SectionArticleFAQSEO faqs={faqs} />
 
         {/* ── Internal Links ── */}
-        {links.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-            <SeoInternalLinks heading="Articles connexes" links={links} />
-          </motion.div>
-        )}
+        <SectionArticleInternalLinksSEO links={internalLinks} />
 
         {/* ── Bottom CTA ── */}
         <motion.div
