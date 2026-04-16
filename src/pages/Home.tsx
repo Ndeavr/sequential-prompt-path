@@ -8,6 +8,7 @@ import SectionHowItWorks from "@/components/home/SectionHowItWorks";
 import SectionEntrepreneurCTA from "@/components/home/SectionEntrepreneurCTA";
 import SectionTrustProof from "@/components/home/SectionTrustProof";
 import SectionManifestoCTA from "@/components/home/SectionManifestoCTA";
+import SectionHomeCounterImpactIA from "@/components/impact-counter/SectionHomeCounterImpactIA";
 
 const Home = () => {
   const jsonLd = {
@@ -65,6 +66,9 @@ const Home = () => {
 
         {/* Banner entrepreneur */}
         <SectionEntrepreneurCTA />
+
+        {/* Compteur impact IA Québec */}
+        <SectionHomeCounterImpactIA />
 
         {/* Social proof, testimonials, FAQ */}
         <SectionTrustProof />
