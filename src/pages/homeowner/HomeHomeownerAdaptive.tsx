@@ -10,6 +10,7 @@ import GridPainSelectionInteractive from "@/components/adaptive-home/GridPainSel
 import PanelDynamicContentSwitch from "@/components/adaptive-home/PanelDynamicContentSwitch";
 import PanelAlexRealtimeAssist from "@/components/adaptive-home/PanelAlexRealtimeAssist";
 import { HOMEOWNER_PAINS } from "@/components/adaptive-home/painData";
+import SectionHomeCounterImpactIA from "@/components/impact-counter/SectionHomeCounterImpactIA";
 
 export default function HomeHomeownerAdaptive() {
   const navigate = useNavigate();
@@ -43,6 +44,7 @@ export default function HomeHomeownerAdaptive() {
         />
         <PanelDynamicContentSwitch selectedPain={selectedPain} />
         <PanelAlexRealtimeAssist selectedPain={selectedPain} onTalk={() => navigate("/alex")} />
+        <SectionHomeCounterImpactIA />
       </div>
     </MainLayout>
   );

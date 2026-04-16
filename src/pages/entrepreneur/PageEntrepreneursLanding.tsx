@@ -12,6 +12,7 @@ import SectionTerritories from "@/components/entrepreneur-landing/SectionTerrito
 import SectionFAQEntrepreneurs from "@/components/entrepreneur-landing/SectionFAQEntrepreneurs";
 import SectionFinalCTA from "@/components/entrepreneur-landing/SectionFinalCTA";
 import StickyMobileCTAEntrepreneur from "@/components/entrepreneur-landing/StickyMobileCTAEntrepreneur";
+import SectionLandingContractorProofOfSavings from "@/components/impact-counter/SectionLandingContractorProofOfSavings";
 
 const PageEntrepreneursLanding = () => {
   const trackCta = useCallback((ctaKey: string, section: string) => {
@@ -38,6 +39,7 @@ const PageEntrepreneursLanding = () => {
         <SectionAlexConsultation onTrackCta={trackCta} />
         <SectionObjectivesToPlan onTrackCta={trackCta} />
         <SectionTerritories onTrackCta={trackCta} />
+        <SectionLandingContractorProofOfSavings />
         <SectionFAQEntrepreneurs />
         <SectionFinalCTA onTrackCta={trackCta} />
         <StickyMobileCTAEntrepreneur onTrackCta={trackCta} />
