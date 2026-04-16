@@ -96,8 +96,8 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
     (eventType: string, metadata?: Record<string, unknown>) => {
       if (!sessionId) return;
       supabase
-        .from("alex_conversation_presence_events")
-        .insert({ session_id: sessionId, event_type: eventType, metadata: metadata || {} })
+        .from("alex_conversation_presence_events" as any)
+        .insert({ session_id: sessionId, event_type: eventType, metadata: metadata || {} } as any)
         .then(() => {});
     },
     [sessionId]
@@ -195,7 +195,7 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
       setSnapshot(snap);
       if (!sessionId) return;
       supabase
-        .from("alex_resume_snapshots")
+        .from("alex_resume_snapshots" as any)
         .insert({
           session_id: sessionId,
           route_path: snap.routePath,
@@ -206,7 +206,7 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
           current_step_key: snap.currentStepKey,
           ui_state: snap.uiState,
           active_form_state: snap.activeFormState,
-        })
+        } as any)
         .then(() => {});
     },
     [sessionId]
