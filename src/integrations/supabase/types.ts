@@ -9459,6 +9459,57 @@ export type Database = {
           },
         ]
       }
+      article_internal_links: {
+        Row: {
+          anchor_text: string
+          article_id: string
+          created_at: string
+          id: string
+          target_url: string
+        }
+        Insert: {
+          anchor_text: string
+          article_id: string
+          created_at?: string
+          id?: string
+          target_url: string
+        }
+        Update: {
+          anchor_text?: string
+          article_id?: string
+          created_at?: string
+          id?: string
+          target_url?: string
+        }
+        Relationships: []
+      }
+      article_keywords: {
+        Row: {
+          article_id: string
+          created_at: string
+          density_score: number | null
+          id: string
+          keyword: string
+          priority: number
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          density_score?: number | null
+          id?: string
+          keyword: string
+          priority?: number
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          density_score?: number | null
+          id?: string
+          keyword?: string
+          priority?: number
+        }
+        Relationships: []
+      }
       article_likes: {
         Row: {
           article_id: string
@@ -9490,6 +9541,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      article_seo_scores: {
+        Row: {
+          aeo_score: number | null
+          article_id: string
+          created_at: string
+          id: string
+          readability_score: number | null
+          seo_score: number | null
+          updated_at: string
+        }
+        Insert: {
+          aeo_score?: number | null
+          article_id: string
+          created_at?: string
+          id?: string
+          readability_score?: number | null
+          seo_score?: number | null
+          updated_at?: string
+        }
+        Update: {
+          aeo_score?: number | null
+          article_id?: string
+          created_at?: string
+          id?: string
+          readability_score?: number | null
+          seo_score?: number | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       article_shares: {
         Row: {
