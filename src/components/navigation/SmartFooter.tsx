@@ -2,12 +2,13 @@
  * UNPRO — Footer (Dark Sharp)
  */
 
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { getFooterSections } from "@/config/navigationConfig";
 import type { UserRole } from "@/types/navigation";
 import unproLogoHouse from "@/assets/unpro-logo-house.png";
+import unproLogoWordmark from "@/assets/unpro-logo-wordmark.png";
 
 const socialLinks = [
   { href: "#", label: "Facebook", icon: "f" },
@@ -18,6 +19,8 @@ const socialLinks = [
 const SmartFooter = () => {
   const { lang } = useLanguage();
   const { activeRole } = useNavigationContext();
+  const { pathname } = useLocation();
+  const isHome = pathname === "/";
 
   const sections = getFooterSections(activeRole as UserRole | "guest");
 
@@ -28,7 +31,12 @@ const SmartFooter = () => {
           {/* Brand column */}
           <div className="col-span-2 sm:col-span-3 lg:col-span-1">
             <Link to="/" className="flex items-center gap-2.5 mb-4">
-              <img src={unproLogoHouse} alt="UNPRO" className="h-12 w-auto" draggable={false} />
+              <img
+                src={isHome ? unproLogoWordmark : unproLogoHouse}
+                alt="UNPRO"
+                className={`${isHome ? "h-14" : "h-12"} w-auto`}
+                draggable={false}
+              />
             </Link>
             <p className="text-sm text-muted-foreground mb-4 max-w-[220px] leading-relaxed">
               {lang === "en"

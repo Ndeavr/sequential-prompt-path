@@ -103,9 +103,9 @@ const SmartHeader = () => {
             {/* Zone 1 — Brand */}
             <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0" style={{ minWidth: "fit-content" }}>
               <img
-                src={unproLogoHouse}
+                src={isHome ? unproLogoWordmark : unproLogoHouse}
                 alt="UNPRO"
-                className="h-9 sm:h-10 lg:h-11 w-auto transition-all duration-300 group-hover:scale-105"
+                className={`${isHome ? "h-10 sm:h-11 lg:h-12" : "h-9 sm:h-10 lg:h-11"} w-auto transition-all duration-300 group-hover:scale-105`}
                 draggable={false}
               />
             </Link>
