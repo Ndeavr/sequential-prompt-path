@@ -243,8 +243,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       await navigator.mediaDevices.getUserMedia({ audio: true });
       console.log("[ElevenLabs] ✅ Microphone granted");
 
-      console.log("[ElevenLabs] Fetching signed URL...");
-      const { data, error } = await supabase.functions.invoke("elevenlabs-conversation-token");
+      console.log("[ElevenLabs] Fetching signed URL via voice-get-signed-url...");
+      const { data, error } = await supabase.functions.invoke("voice-get-signed-url");
       const signedUrl = data?.signed_url ?? data?.signedUrl;
 
       if (error || !signedUrl) {

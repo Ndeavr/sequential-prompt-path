@@ -56708,6 +56708,42 @@ export type Database = {
           },
         ]
       }
+      voice_agent_mappings: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          language: string
+          last_verified_at: string | null
+          updated_at: string
+          valid: boolean
+          verification_error: string | null
+          voice_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          language?: string
+          last_verified_at?: string | null
+          updated_at?: string
+          valid?: boolean
+          verification_error?: string | null
+          voice_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          language?: string
+          last_verified_at?: string | null
+          updated_at?: string
+          valid?: boolean
+          verification_error?: string | null
+          voice_id?: string
+        }
+        Relationships: []
+      }
       voice_audio_failures: {
         Row: {
           created_at: string
@@ -56748,6 +56784,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      voice_configs: {
+        Row: {
+          agent_id: string
+          allow_switch: boolean
+          created_at: string
+          environment: string
+          id: string
+          label: string | null
+          language_default: string
+          notes: string | null
+          status: string
+          updated_at: string
+          voice_id: string
+        }
+        Insert: {
+          agent_id: string
+          allow_switch?: boolean
+          created_at?: string
+          environment?: string
+          id?: string
+          label?: string | null
+          language_default?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          voice_id: string
+        }
+        Update: {
+          agent_id?: string
+          allow_switch?: boolean
+          created_at?: string
+          environment?: string
+          id?: string
+          label?: string | null
+          language_default?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          voice_id?: string
+        }
+        Relationships: []
       }
       voice_events: {
         Row: {
@@ -57138,6 +57216,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      voice_runtime_logs: {
+        Row: {
+          agent_id_used: string
+          created_at: string
+          error_message: string | null
+          event_type: string
+          fallback_reason: string | null
+          fallback_used: boolean
+          id: string
+          language: string
+          latency_ms: number | null
+          metadata: Json | null
+          session_id: string | null
+          user_id: string | null
+          voice_id_used: string | null
+        }
+        Insert: {
+          agent_id_used: string
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          fallback_reason?: string | null
+          fallback_used?: boolean
+          id?: string
+          language?: string
+          latency_ms?: number | null
+          metadata?: Json | null
+          session_id?: string | null
+          user_id?: string | null
+          voice_id_used?: string | null
+        }
+        Update: {
+          agent_id_used?: string
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          fallback_reason?: string | null
+          fallback_used?: boolean
+          id?: string
+          language?: string
+          latency_ms?: number | null
+          metadata?: Json | null
+          session_id?: string | null
+          user_id?: string | null
+          voice_id_used?: string | null
+        }
+        Relationships: []
       }
       voice_session_errors: {
         Row: {
