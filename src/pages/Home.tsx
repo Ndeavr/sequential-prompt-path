@@ -9,6 +9,7 @@ import SectionEntrepreneurCTA from "@/components/home/SectionEntrepreneurCTA";
 import SectionTrustProof from "@/components/home/SectionTrustProof";
 import SectionManifestoCTA from "@/components/home/SectionManifestoCTA";
 import SectionHomeCounterImpactIA from "@/components/impact-counter/SectionHomeCounterImpactIA";
+import StickyMiniCounterBar from "@/components/impact-counter/StickyMiniCounterBar";
 
 const Home = () => {
   const jsonLd = {
@@ -45,6 +46,7 @@ const Home = () => {
         <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
       </Helmet>
 
+      <StickyMiniCounterBar />
       <div className="flex flex-col">
         {/* Hero cinématique — Problème / Projet / Avis */}
         <HeroSection />

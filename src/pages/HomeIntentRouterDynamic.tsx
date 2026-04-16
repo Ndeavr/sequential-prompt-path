@@ -1,102 +1,59 @@
 /**
- * HomeIntentRouterDynamic — Entry point that detects role and routes to adaptive landing.
- * Shows role selection grid if no role detected. Zero friction.
+ * HomeIntentRouterDynamic — Generic intent page (PageHomeGenericIntent).
+ * Qualifies the visitor instantly with chips + Alex + mini counter.
  */
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { Home, Wrench, Building2, Briefcase } from "lucide-react";
 import MainLayout from "@/layouts/MainLayout";
-import UnproIcon from "@/components/brand/UnproIcon";
-import { cn } from "@/lib/utils";
+import HeroSectionIntentTrigger from "@/components/intent-pages/HeroSectionIntentTrigger";
+import ChipsQuickIntentSelector from "@/components/intent-pages/ChipsQuickIntentSelector";
+import SectionProofIA from "@/components/intent-pages/SectionProofIA";
+import StickyMiniCounterBar from "@/components/impact-counter/StickyMiniCounterBar";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
+import type { IntentChip } from "@/components/intent-pages/ChipsQuickIntentSelector";
 
-const ROLES = [
-  { id: "homeowner", label: "Propriétaire", sub: "J'ai un projet ou un problème", icon: Home, href: "/homeowner" },
-  { id: "contractor", label: "Entrepreneur", sub: "Je veux des rendez-vous", icon: Wrench, href: "/contractor" },
-  { id: "condo", label: "Gestionnaire condo", sub: "Je gère une copropriété", icon: Building2, href: "/condo-home" },
-  { id: "professional", label: "Professionnel", sub: "Je veux rejoindre le réseau", icon: Briefcase, href: "/professional" },
-] as const;
+const GENERIC_CHIPS: IntentChip[] = [
+  { id: "cold", label: "Trop froid", emoji: "🥶" },
+  { id: "hot", label: "Trop chaud", emoji: "🥵" },
+  { id: "humidity", label: "Humidité / moisissure", emoji: "💧" },
+  { id: "emergency", label: "Urgence", emoji: "🚨" },
+  { id: "quotes", label: "Comparer soumissions", emoji: "📄" },
+  { id: "verify", label: "Vérifier entrepreneur", emoji: "✅" },
+  { id: "unknown", label: "Je ne sais pas", emoji: "🤷" },
+];
 
 export default function HomeIntentRouterDynamic() {
   const navigate = useNavigate();
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const { openAlex } = useAlexVoice();
+
+  const handleChip = (chip: IntentChip) => {
+    openAlex("home_intent", chip.label);
+  };
 
   return (
     <MainLayout>
       <Helmet>
         <title>UNPRO — Votre projet, notre match | IA 24/7</title>
         <meta name="description" content="Décrivez votre besoin en 5 secondes. UNPRO trouve le bon professionnel et vous donne un rendez-vous garanti." />
-        <link rel="canonical" href="https://unpro.ca" />
+        <link rel="canonical" href="https://unpro.ca/intent" />
       </Helmet>
 
-      <div className="relative flex flex-col items-center justify-center min-h-[85vh] px-5 text-center">
-        {/* Aura */}
-        <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/8 blur-[120px]" />
-        </div>
+      <StickyMiniCounterBar />
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4 }}
-          className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-6"
-        >
-          <UnproIcon size={32} variant="blue" />
-        </motion.div>
+      <div className="flex flex-col min-h-screen">
+        <HeroSectionIntentTrigger
+          title="Bonjour, je suis Alex. Qu'est-ce qui se passe chez vous?"
+          subtitle="Décrivez votre besoin ou sélectionnez une option. On s'occupe du reste."
+          ctaPrimary={{ label: "Parler à Alex", onClick: () => openAlex("home_intent") }}
+          ctaSecondary={{ label: "Uploader une photo", onClick: () => navigate("/diagnostic-photo") }}
+        />
 
-        <motion.h1
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="text-3xl md:text-4xl font-bold text-foreground mb-2 font-display"
-        >
-          Bienvenue sur UNPRO
-        </motion.h1>
+        <ChipsQuickIntentSelector chips={GENERIC_CHIPS} onSelect={handleChip} className="mt-2" />
 
-        <motion.p
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.2 }}
-          className="text-base text-muted-foreground mb-10 max-w-sm"
-        >
-          Qui êtes-vous? On adapte tout pour vous.
-        </motion.p>
-
-        <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
-          {ROLES.map((role, i) => {
-            const Icon = role.icon;
-            return (
-              <motion.button
-                key={role.id}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 + i * 0.07, duration: 0.3 }}
-                whileTap={{ scale: 0.96 }}
-                whileHover={{ scale: 1.03 }}
-                onMouseEnter={() => setHoveredId(role.id)}
-                onMouseLeave={() => setHoveredId(null)}
-                onClick={() => navigate(role.href)}
-                className={cn(
-                  "flex flex-col items-center gap-2 rounded-2xl border p-5 transition-all duration-200",
-                  "bg-card/60 backdrop-blur-sm",
-                  hoveredId === role.id
-                    ? "border-primary/40 bg-primary/[0.05] shadow-[0_0_24px_hsl(var(--primary)/0.12)]"
-                    : "border-border/40",
-                )}
-              >
-                <div className={cn(
-                  "w-12 h-12 rounded-xl flex items-center justify-center transition-colors",
-                  hoveredId === role.id ? "bg-primary/15 text-primary" : "bg-muted/50 text-muted-foreground",
-                )}>
-                  <Icon className="w-6 h-6" />
-                </div>
-                <span className="text-sm font-semibold text-foreground">{role.label}</span>
-                <span className="text-[11px] text-muted-foreground leading-tight">{role.sub}</span>
-              </motion.button>
-            );
-          })}
-        </div>
+        <SectionProofIA
+          contextText="Des milliers de Québécois utilisent déjà UNPRO"
+          className="mt-8"
+        />
       </div>
     </MainLayout>
   );
