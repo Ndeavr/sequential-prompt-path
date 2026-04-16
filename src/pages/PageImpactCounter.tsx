@@ -131,15 +131,15 @@ export default function PageImpactCounter() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="rounded-2xl border border-border/30 bg-card/40 p-3 space-y-2">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Volume global</p>
-              <GraphMiniRealtime style="smooth" height={48} baseValue={snap.savedSubmissions} />
+              <GraphMiniRealtime style="smooth" baseValue={snap.savedSubmissions} />
             </div>
             <div className="rounded-2xl border border-border/30 bg-card/40 p-3 space-y-2">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Temps économisé</p>
-              <GraphMiniRealtime style="stepped" height={48} baseValue={snap.hoursSaved} />
+              <GraphMiniRealtime style="stepped" baseValue={snap.hoursSaved} />
             </div>
             <div className="rounded-2xl border border-border/30 bg-card/40 p-3 space-y-2">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Économies pub</p>
-              <GraphMiniRealtime style="dynamic" height={48} baseValue={snap.adSavingsCad} />
+              <GraphMiniRealtime style="dynamic" baseValue={snap.adSavingsCad} />
             </div>
           </div>
         </div>
