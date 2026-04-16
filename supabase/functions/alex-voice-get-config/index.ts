@@ -29,7 +29,7 @@ serve(async (req) => {
       // Fallback defaults
       return new Response(JSON.stringify({
         provider: "elevenlabs",
-        voiceId: "FGY2WhTYpPnrIDTdsKH5",
+        voiceId: "mVjOqyqTPfwlXPjV5sjX",
         locale: "fr-QC",
         toneStyle: "premium_calm",
         speechRate: 1.0,
