@@ -1,5 +1,6 @@
 /**
  * SectionHomeCounterImpactIA — Embeddable counter section for the home page.
+ * Clicking the counter cards navigates to /impact for full detail.
  */
 import { FileCheck, Clock, DollarSign } from "lucide-react";
 import { useImpactCounter } from "@/hooks/useImpactCounter";
@@ -8,9 +9,11 @@ import CounterCard from "./CounterCard";
 import BadgeModelEstimateLive from "./BadgeModelEstimateLive";
 import BannerImpactDisclaimer from "./BannerImpactDisclaimer";
 import SectionContainer from "@/components/unpro/SectionContainer";
+import { useNavigate } from "react-router-dom";
 
 export default function SectionHomeCounterImpactIA() {
   const snap = useImpactCounter("realiste");
+  const navigate = useNavigate();
 
   return (
     <SectionContainer width="default" className="py-10 md:py-14">
@@ -24,29 +27,34 @@ export default function SectionHomeCounterImpactIA() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <CounterCard
-          label="Soumissions épargnées"
-          value={snap.savedSubmissions}
-          formatter={formatNumberQc}
-          icon={<FileCheck />}
-          accentClass="text-primary"
-        />
-        <CounterCard
-          label="Heures récupérées"
-          value={snap.hoursSaved}
-          formatter={formatNumberQc}
-          icon={<Clock />}
-          accentClass="text-accent"
-        />
-        <CounterCard
-          label="Publicité épargnée"
-          value={snap.adSavingsCad}
-          formatter={formatCurrencyQc}
-          icon={<DollarSign />}
-          accentClass="text-success"
-        />
-      </div>
+      <button
+        onClick={() => navigate("/impact")}
+        className="w-full text-left cursor-pointer hover:opacity-90 transition-opacity"
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <CounterCard
+            label="Soumissions épargnées"
+            value={snap.savedSubmissions}
+            formatter={formatNumberQc}
+            icon={<FileCheck />}
+            accentClass="text-primary"
+          />
+          <CounterCard
+            label="Heures récupérées"
+            value={snap.hoursSaved}
+            formatter={formatNumberQc}
+            icon={<Clock />}
+            accentClass="text-accent"
+          />
+          <CounterCard
+            label="Publicité épargnée"
+            value={snap.adSavingsCad}
+            formatter={formatCurrencyQc}
+            icon={<DollarSign />}
+            accentClass="text-success"
+          />
+        </div>
+      </button>
 
       {snap.isDaytime && (
         <p className="text-center text-xs text-muted-foreground/70 mb-3">
