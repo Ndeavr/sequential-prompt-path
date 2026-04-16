@@ -258,11 +258,12 @@ export default function SeoArticlePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 * Math.min(i, 6) }}
             className="prose prose-sm md:prose-base max-w-none text-foreground
-              prose-headings:text-foreground prose-headings:font-bold prose-headings:mt-6 prose-headings:mb-3
-              prose-p:mb-4 prose-p:leading-relaxed
+              prose-headings:text-foreground prose-headings:font-bold prose-headings:mt-8 prose-headings:mb-4
+              prose-p:mb-5 prose-p:leading-[1.8]
               prose-a:text-primary prose-a:no-underline hover:prose-a:underline
               prose-strong:text-foreground prose-li:text-muted-foreground
-              prose-ul:space-y-1 prose-ol:space-y-1"
+              prose-ul:space-y-2 prose-ul:pl-5 prose-ol:space-y-2 prose-ol:pl-5
+              prose-li:leading-relaxed"
             dangerouslySetInnerHTML={{ __html: chunk }}
           />
         ))}

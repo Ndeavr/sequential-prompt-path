@@ -115,6 +115,7 @@ const AdminLocalSeo = lazy(() => import("@/pages/admin/AdminLocalSeo"));
 const AdminSeoArticles = lazy(() => import("@/pages/admin/AdminSeoArticles"));
 const SeoDirectoryPage = lazy(() => import("@/pages/seo/SeoDirectoryPage"));
 const SeoArticlePage = lazy(() => import("@/pages/seo/SeoArticlePage"));
+const PageArticlesRecentCompressedFeed = lazy(() => import("@/pages/articles/PageArticlesRecentCompressedFeed"));
 const ProblemPage = lazy(() => import("@/pages/seo/ProblemPage"));
 const ProblemGraphPage = lazy(() => import("@/pages/seo/ProblemGraphPage"));
 const SolutionPage = lazy(() => import("@/pages/seo/SolutionPage"));
@@ -1130,6 +1131,7 @@ export const AppRouter = () => (
         <Route path="/admin/acquisition-pipeline" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminPipelineProspects /></Suspense></ProtectedRoute>} />
         <Route path="/services/:entitySlug/:citySlug" element={<PageServiceEntityLanding />} />
         <Route path="/audit/:slug" element={<AuditLandingPage />} />
+        <Route path="/articles" element={<PageArticlesRecentCompressedFeed />} />
         <Route path="/articles/:slug" element={<SeoArticlePage />} />
         <Route path="/emergency" element={<EmergencyPage />} />
         <Route path="/emergency/track/:id" element={<EmergencyTrackingPage />} />
