@@ -1,15 +1,15 @@
 /**
- * HomeContractorAdaptive — Intent-driven contractor landing with mini counter.
+ * HomeContractorAdaptive — PageHomeContractor with Alex Orb + compact counter + dynamic graph.
  */
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
 import { useAdaptiveSession } from "@/hooks/useAdaptiveSession";
-import HeroSectionIntentTrigger from "@/components/intent-pages/HeroSectionIntentTrigger";
+import HeroSectionIntentWithAlexOrb from "@/components/intent-pages/HeroSectionIntentWithAlexOrb";
 import ChipsQuickIntentSelector from "@/components/intent-pages/ChipsQuickIntentSelector";
 import SectionProofIA from "@/components/intent-pages/SectionProofIA";
 import BlockProofInstant from "@/components/intent-pages/BlockProofInstant";
-import StickyMiniCounterBar from "@/components/impact-counter/StickyMiniCounterBar";
+import BarStickyCounterRealtime from "@/components/impact-counter/BarStickyCounterRealtime";
 import GridPainSelectionInteractive from "@/components/adaptive-home/GridPainSelectionInteractive";
 import PanelDynamicContentSwitch from "@/components/adaptive-home/PanelDynamicContentSwitch";
 import PanelAlexRealtimeAssist from "@/components/adaptive-home/PanelAlexRealtimeAssist";
@@ -18,9 +18,11 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import type { IntentChip } from "@/components/intent-pages/ChipsQuickIntentSelector";
 
 const CONTRACTOR_CHIPS: IntentChip[] = [
-  { id: "revenue", label: "Objectif revenus", emoji: "💰" },
-  { id: "rdv", label: "Nombre de RDV", emoji: "📅" },
   { id: "score", label: "Voir mon score", emoji: "📊" },
+  { id: "presence", label: "Vérifier ma présence IA", emoji: "🤖" },
+  { id: "revenue", label: "Simuler mes revenus", emoji: "💰" },
+  { id: "import", label: "Importer mon entreprise", emoji: "🏢" },
+  { id: "rdv", label: "Recevoir des rendez-vous", emoji: "📅" },
 ];
 
 export default function HomeContractorAdaptive() {
@@ -35,6 +37,7 @@ export default function HomeContractorAdaptive() {
 
   const handleChip = (chip: IntentChip) => {
     if (chip.id === "score") return navigate("/aipp");
+    if (chip.id === "import") return navigate("/entrepreneur/onboarding-voice");
     openAlex("contractor", chip.label);
   };
 
@@ -45,14 +48,19 @@ export default function HomeContractorAdaptive() {
         <meta name="description" content="Arrêtez de payer par clic. UNPRO vous envoie des rendez-vous qualifiés directement dans votre agenda." />
       </Helmet>
 
-      <StickyMiniCounterBar />
+      <BarStickyCounterRealtime intentLabel="économisés en publicité" metricType="dollars" />
 
       <div className="flex flex-col min-h-screen">
-        <HeroSectionIntentTrigger
-          title="Fatigué de courir après des leads?"
-          subtitle="Des rendez-vous réels, pas des leads partagés. Activez votre croissance."
+        <HeroSectionIntentWithAlexOrb
+          title="Fatigué de courir après des leads ? Remplissez votre agenda avec de vrais rendez-vous."
+          subtitle="UNPRO ne vend pas des clics. UNPRO active des rendez-vous qualifiés."
+          intentFeature="contractor"
           ctaPrimary={{ label: "Voir mon score AIPP", onClick: () => navigate("/aipp") }}
           ctaSecondary={{ label: "Obtenir mes premiers rendez-vous", onClick: () => navigate("/entrepreneur/plan") }}
+          counterPrimary={{ type: "dollars", label: "économisés en publicité" }}
+          counterSecondary={{ type: "custom", label: "rendez-vous mieux qualifiés", customValue: 18924 }}
+          graphStyle="dynamic"
+          graphBaseValue={150}
         />
 
         <ChipsQuickIntentSelector chips={CONTRACTOR_CHIPS} onSelect={handleChip} className="mt-2" />

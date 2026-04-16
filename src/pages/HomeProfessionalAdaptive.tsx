@@ -1,15 +1,15 @@
 /**
- * HomeProfessionalAdaptive — Intent-driven professional landing with mini counter.
+ * HomeProfessionalAdaptive — PageHomeProfessional with Alex Orb + compact counter + stable graph.
  */
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
 import { useAdaptiveSession } from "@/hooks/useAdaptiveSession";
-import HeroSectionIntentTrigger from "@/components/intent-pages/HeroSectionIntentTrigger";
+import HeroSectionIntentWithAlexOrb from "@/components/intent-pages/HeroSectionIntentWithAlexOrb";
 import ChipsQuickIntentSelector from "@/components/intent-pages/ChipsQuickIntentSelector";
 import SectionProofIA from "@/components/intent-pages/SectionProofIA";
 import BlockProofInstant from "@/components/intent-pages/BlockProofInstant";
-import StickyMiniCounterBar from "@/components/impact-counter/StickyMiniCounterBar";
+import BarStickyCounterRealtime from "@/components/impact-counter/BarStickyCounterRealtime";
 import GridPainSelectionInteractive from "@/components/adaptive-home/GridPainSelectionInteractive";
 import PanelDynamicContentSwitch from "@/components/adaptive-home/PanelDynamicContentSwitch";
 import PanelAlexRealtimeAssist from "@/components/adaptive-home/PanelAlexRealtimeAssist";
@@ -18,9 +18,11 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import type { IntentChip } from "@/components/intent-pages/ChipsQuickIntentSelector";
 
 const PRO_CHIPS: IntentChip[] = [
-  { id: "domain", label: "Mon domaine", emoji: "🏗️" },
-  { id: "clients", label: "Type de clients", emoji: "👥" },
-  { id: "network", label: "Rejoindre le réseau", emoji: "🤝" },
+  { id: "clients", label: "Trouver mes clients idéaux", emoji: "🎯" },
+  { id: "opportunities", label: "Voir mes opportunités", emoji: "📈" },
+  { id: "position", label: "Vérifier mon positionnement", emoji: "🔍" },
+  { id: "activate", label: "Activer mon profil", emoji: "🚀" },
+  { id: "score", label: "Comprendre mon score", emoji: "📊" },
 ];
 
 export default function HomeProfessionalAdaptive() {
@@ -44,13 +46,19 @@ export default function HomeProfessionalAdaptive() {
         <meta name="description" content="Recevez des références qualifiées automatiquement. UNPRO fait la prospection pour vous." />
       </Helmet>
 
-      <StickyMiniCounterBar />
+      <BarStickyCounterRealtime intentLabel="demandes mieux qualifiées" metricType="submissions" />
 
       <div className="flex flex-col min-h-screen">
-        <HeroSectionIntentTrigger
-          title="Recevez des clients déjà qualifiés."
-          subtitle="Le matching IA d'UNPRO vous connecte aux bons projets, sans prospection."
+        <HeroSectionIntentWithAlexOrb
+          title="Recevez des clients déjà qualifiés, pas des demandes génériques."
+          subtitle="UNPRO filtre, comprend l'intention et vous connecte avec les bons clients."
+          intentFeature="professional"
           ctaPrimary={{ label: "Recevoir mes clients qualifiés", onClick: () => navigate("/entrepreneur/join") }}
+          ctaSecondary={{ label: "Activer mon profil professionnel", onClick: () => openAlex("professional") }}
+          counterPrimary={{ type: "custom", label: "demandes mieux qualifiées", customValue: 14286 }}
+          counterSecondary={{ type: "custom", label: "correspondances plus précises", customValue: 9842 }}
+          graphStyle="stable"
+          graphBaseValue={80}
         />
 
         <ChipsQuickIntentSelector chips={PRO_CHIPS} onSelect={handleChip} className="mt-2" />

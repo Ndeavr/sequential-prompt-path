@@ -1,15 +1,15 @@
 /**
- * HomeHomeownerAdaptive — Intent-driven homeowner landing with mini counter.
+ * HomeHomeownerAdaptive — PageHomeOwner with Alex Orb + compact counter + stepped graph.
  */
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
 import { useAdaptiveSession } from "@/hooks/useAdaptiveSession";
-import HeroSectionIntentTrigger from "@/components/intent-pages/HeroSectionIntentTrigger";
+import HeroSectionIntentWithAlexOrb from "@/components/intent-pages/HeroSectionIntentWithAlexOrb";
 import ChipsQuickIntentSelector from "@/components/intent-pages/ChipsQuickIntentSelector";
 import SectionProofIA from "@/components/intent-pages/SectionProofIA";
 import BlockProofInstant from "@/components/intent-pages/BlockProofInstant";
-import StickyMiniCounterBar from "@/components/impact-counter/StickyMiniCounterBar";
+import BarStickyCounterRealtime from "@/components/impact-counter/BarStickyCounterRealtime";
 import GridPainSelectionInteractive from "@/components/adaptive-home/GridPainSelectionInteractive";
 import PanelDynamicContentSwitch from "@/components/adaptive-home/PanelDynamicContentSwitch";
 import PanelAlexRealtimeAssist from "@/components/adaptive-home/PanelAlexRealtimeAssist";
@@ -18,9 +18,11 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import type { IntentChip } from "@/components/intent-pages/ChipsQuickIntentSelector";
 
 const OWNER_CHIPS: IntentChip[] = [
-  { id: "problem", label: "Décrire problème", emoji: "🔍" },
-  { id: "photo", label: "Upload photo", emoji: "📸" },
-  { id: "quotes", label: "Analyser soumissions", emoji: "📄" },
+  { id: "problem", label: "Décrire mon problème", emoji: "🔍" },
+  { id: "photo", label: "Ajouter une photo", emoji: "📸" },
+  { id: "quotes", label: "Comparer mes soumissions", emoji: "📄" },
+  { id: "verify", label: "Vérifier un entrepreneur", emoji: "✅" },
+  { id: "savings", label: "Voir ce que j'aurais économisé", emoji: "💰" },
 ];
 
 export default function HomeHomeownerAdaptive() {
@@ -46,14 +48,19 @@ export default function HomeHomeownerAdaptive() {
         <meta name="description" content="Décrivez votre problème. UNPRO trouve le professionnel idéal et vous donne un rendez-vous garanti." />
       </Helmet>
 
-      <StickyMiniCounterBar />
+      <BarStickyCounterRealtime intentLabel="heures économisées" metricType="hours" />
 
       <div className="flex flex-col min-h-screen">
-        <HeroSectionIntentTrigger
+        <HeroSectionIntentWithAlexOrb
           title="Arrêtez les 3 soumissions. Trouvez le bon entrepreneur dès le départ."
-          subtitle="Décrivez votre problème — on vous match avec le meilleur pro en secondes."
+          subtitle="Décrivez votre situation, comparez vos soumissions ou laissez Alex prédire le bon match."
+          intentFeature="homeowner"
           ctaPrimary={{ label: "Trouver mon match parfait", onClick: () => openAlex("homeowner") }}
           ctaSecondary={{ label: "Analyser mes soumissions", onClick: () => navigate("/compare") }}
+          counterPrimary={{ type: "hours", label: "heures économisées" }}
+          counterSecondary={{ type: "submissions", label: "soumissions évitées" }}
+          graphStyle="stepped"
+          graphBaseValue={90}
         />
 
         <ChipsQuickIntentSelector chips={OWNER_CHIPS} onSelect={handleChip} className="mt-2" />
