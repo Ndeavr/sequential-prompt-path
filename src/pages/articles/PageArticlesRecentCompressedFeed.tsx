@@ -86,6 +86,7 @@ export default function PageArticlesRecentCompressedFeed() {
           {/* Featured */}
           {featured && (
             <HeroArticleFeatured
+              id={featured.id}
               slug={featured.slug}
               title={featured.title}
               excerpt={featured.meta_description || ""}

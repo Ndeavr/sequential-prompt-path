@@ -55,6 +55,7 @@ export default function HeroArticleFeatured({ id, slug, title, excerpt, category
           >
             Lire l'article <ArrowRight className="h-3.5 w-3.5" />
           </Link>
+          <BarArticleEngagementActions articleId={id} slug={slug} title={title} />
           <ButtonTalkToAlexArticle title={title} slug={slug} category={category} />
         </div>
       </div>
