@@ -37,7 +37,7 @@ serve(async (req) => {
       .eq("is_active", true)
       .single();
 
-    const voiceId = profile?.voice_id_primary || "FGY2WhTYpPnrIDTdsKH5";
+    const voiceId = profile?.voice_id_primary || "mVjOqyqTPfwlXPjV5sjX";
     const text = test_text || DEFAULT_PHRASES[language || "fr"] || DEFAULT_PHRASES.fr;
 
     const response = await fetch(

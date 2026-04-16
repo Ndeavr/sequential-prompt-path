@@ -569,7 +569,7 @@ function extractNextAction(text: string): { cleanText: string; nextAction: strin
 }
 
 // ─── 6. ElevenLabs Voice Config ───
-// Locked voice ID: gCr8TeSJgJaeaIoV4RWH
+// Locked voice ID: mVjOqyqTPfwlXPjV5sjX
 // Do NOT change without explicit approval.
 
 export type AlexVoiceProfile = "default" | "profile_a" | "profile_b";

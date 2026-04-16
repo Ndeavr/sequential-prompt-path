@@ -40,7 +40,7 @@ serve(async (req) => {
       .single();
 
     // Use DB config, fallback to defaults
-    const voiceId = overrideVoiceId || profile?.voice_id_primary || "FGY2WhTYpPnrIDTdsKH5";
+    const voiceId = overrideVoiceId || profile?.voice_id_primary || "mVjOqyqTPfwlXPjV5sjX";
     const stability = profile?.stability ?? 0.65;
     const similarityBoost = profile?.similarity_boost ?? 0.80;
     const style = profile?.style_exaggeration ?? 0.08;
