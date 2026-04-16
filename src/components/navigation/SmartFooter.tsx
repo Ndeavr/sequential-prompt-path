@@ -7,7 +7,7 @@ import { useLanguage } from "@/components/ui/LanguageToggle";
 import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { getFooterSections } from "@/config/navigationConfig";
 import type { UserRole } from "@/types/navigation";
-import UnproLogo from "@/components/brand/UnproLogo";
+import unproLogoHouse from "@/assets/unpro-logo-house.png";
 
 const socialLinks = [
   { href: "#", label: "Facebook", icon: "f" },
@@ -28,7 +28,7 @@ const SmartFooter = () => {
           {/* Brand column */}
           <div className="col-span-2 sm:col-span-3 lg:col-span-1">
             <Link to="/" className="flex items-center gap-2.5 mb-4">
-              <UnproLogo size={160} variant="primary" animated={false} />
+              <img src={unproLogoHouse} alt="UNPRO" className="h-12 w-auto" draggable={false} />
             </Link>
             <p className="text-sm text-muted-foreground mb-4 max-w-[220px] leading-relaxed">
               {lang === "en"
