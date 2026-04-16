@@ -107,6 +107,7 @@ export default function PageArticlesRecentCompressedFeed() {
                   transition={{ delay: 0.05 * Math.min(i, 8) }}
                 >
                   <CardArticleCompressed
+                    id={a.id}
                     slug={a.slug}
                     title={a.title}
                     excerpt={a.meta_description || ""}
