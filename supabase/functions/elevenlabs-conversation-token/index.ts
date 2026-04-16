@@ -1,6 +1,10 @@
 /**
  * elevenlabs-conversation-token — Returns a signed WebSocket URL
- * for the ElevenLabs Conversational AI agent.
+ * for the active ElevenLabs Conversational AI agent.
+ *
+ * Agent source of truth:
+ * 1. Request body `agentId`
+ * 2. Secret `ELEVENLABS_AGENT_ID`
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -17,12 +21,21 @@ serve(async (req) => {
 
   try {
     const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
-    const ELEVENLABS_AGENT_ID = "agent_5901kmg4ra2eee5bbp9r7ew5jcs7";
+    const body = await req.json().catch(() => ({} as { agentId?: string }));
+    const ELEVENLABS_AGENT_ID = body?.agentId || Deno.env.get("ELEVENLABS_AGENT_ID");
 
     if (!ELEVENLABS_API_KEY) {
       console.error("Missing ELEVENLABS_API_KEY");
       return new Response(
         JSON.stringify({ error: "Voice service not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!ELEVENLABS_AGENT_ID) {
+      console.error("Missing ELEVENLABS_AGENT_ID");
+      return new Response(
+        JSON.stringify({ error: "Voice agent not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
