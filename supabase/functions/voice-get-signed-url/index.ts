@@ -100,17 +100,19 @@ serve(async (req) => {
     const latencyMs = Date.now() - startTime;
 
     // ─── Log the event ───
-    await supabase.from("voice_runtime_logs").insert({
-      agent_id_used: resolvedAgentId,
-      voice_id_used: config?.voice_id || null,
-      language: config?.language_default || "fr",
-      fallback_used: fallbackUsed,
-      fallback_reason: fallbackReason,
-      error_message: response.ok ? null : errorText.slice(0, 500),
-      latency_ms: latencyMs,
-      event_type: fallbackUsed ? "fallback" : response.ok ? "session_start" : "error",
-      metadata: { environment, configAgentId },
-    }).catch(() => {});
+    try {
+      await supabase.from("voice_runtime_logs").insert({
+        agent_id_used: resolvedAgentId,
+        voice_id_used: config?.voice_id || null,
+        language: config?.language_default || "fr",
+        fallback_used: fallbackUsed,
+        fallback_reason: fallbackReason,
+        error_message: response.ok ? null : errorText.slice(0, 500),
+        latency_ms: latencyMs,
+        event_type: fallbackUsed ? "fallback" : response.ok ? "session_start" : "error",
+        metadata: { environment, configAgentId },
+      });
+    } catch (_) { /* non-blocking */ }
 
     if (!response.ok) {
       return new Response(
