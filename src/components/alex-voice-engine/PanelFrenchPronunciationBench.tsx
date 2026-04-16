@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { Play, Save, Loader2 } from "lucide-react";
-import { useVoiceTestPhrases, useSaveVoiceTest } from "@/hooks/useAlexVoiceEngine";
+import { Play, Square, Save, Loader2 } from "lucide-react";
+import { useVoiceTestPhrases, useVoiceProfiles, useSaveVoiceTest } from "@/hooks/useAlexVoiceEngine";
+import { useAlexVoicePreview } from "@/hooks/useAlexVoicePreview";
 import { useToast } from "@/hooks/use-toast";
 
 interface Props {
@@ -23,11 +24,20 @@ const SCORE_LABELS = [
 
 export default function PanelFrenchPronunciationBench({ selectedVoiceProfileId }: Props) {
   const { data: phrases = [], isLoading } = useVoiceTestPhrases();
+  const { data: profiles = [] } = useVoiceProfiles();
   const saveTest = useSaveVoiceTest();
   const { toast } = useToast();
+  const { loadingId, playingId, play, stop } = useAlexVoicePreview();
   const [activePhraseId, setActivePhraseId] = useState<string | null>(null);
   const [scores, setScores] = useState<Record<string, number>>({});
-  const [playing, setPlaying] = useState(false);
+
+  const selectedProfile = profiles.find((p: any) => p.id === selectedVoiceProfileId);
+
+  const handlePlayPhrase = (phrase: any) => {
+    if (!selectedProfile) return;
+    const playId = `phrase-${phrase.id}`;
+    play(playId, selectedProfile.profile_key, selectedProfile.language, phrase.phrase_text);
+  };
 
   const handleScore = (key: string, val: number) => {
     setScores((prev) => ({ ...prev, [key]: val }));
@@ -73,6 +83,10 @@ export default function PanelFrenchPronunciationBench({ selectedVoiceProfileId }
         <div className="grid gap-2">
           {phrases.map((p: any) => {
             const isActive = activePhraseId === p.id;
+            const phrasePlayId = `phrase-${p.id}`;
+            const isPhraseLoading = loadingId === phrasePlayId;
+            const isPhrasePlaying = playingId === phrasePlayId;
+
             return (
               <div
                 key={p.id}
@@ -86,9 +100,21 @@ export default function PanelFrenchPronunciationBench({ selectedVoiceProfileId }
                     </Badge>
                     <span className="text-sm font-medium truncate">{p.phrase_text}</span>
                   </div>
-                  <Button size="sm" variant="ghost" className="shrink-0" disabled={!selectedVoiceProfileId || playing}>
-                    <Play className="w-3 h-3" />
-                  </Button>
+                  {isPhrasePlaying ? (
+                    <Button size="sm" variant="ghost" className="shrink-0" onClick={(e) => { e.stopPropagation(); stop(); }}>
+                      <Square className="w-3 h-3 text-destructive" />
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="shrink-0"
+                      disabled={!selectedVoiceProfileId || isPhraseLoading}
+                      onClick={(e) => { e.stopPropagation(); handlePlayPhrase(p); }}
+                    >
+                      {isPhraseLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
+                    </Button>
+                  )}
                 </div>
 
                 {isActive && selectedVoiceProfileId && (

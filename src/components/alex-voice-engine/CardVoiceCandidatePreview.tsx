@@ -1,20 +1,23 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Play, Star, Shield, Mic } from "lucide-react";
+import { Play, Square, Star, Mic, Loader2 } from "lucide-react";
 
 interface Props {
   profile: any;
+  isLoading?: boolean;
+  isPlaying?: boolean;
   onPreview?: () => void;
+  onStop?: () => void;
   onActivate?: () => void;
 }
 
-export default function CardVoiceCandidatePreview({ profile, onPreview, onActivate }: Props) {
+export default function CardVoiceCandidatePreview({ profile, isLoading, isPlaying, onPreview, onStop, onActivate }: Props) {
   const isDefault = profile.is_default;
   const isActive = profile.is_active;
 
   return (
-    <Card className={`relative overflow-hidden transition-all ${isDefault ? "ring-2 ring-primary" : ""}`}>
+    <Card className={`relative overflow-hidden transition-all ${isDefault ? "ring-2 ring-primary" : ""} ${isPlaying ? "ring-2 ring-emerald-500" : ""}`}>
       {isDefault && (
         <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-bl-md font-medium">
           Principal
@@ -41,9 +44,16 @@ export default function CardVoiceCandidatePreview({ profile, onPreview, onActiva
         </div>
 
         <div className="flex gap-2 pt-1">
-          <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={onPreview}>
-            <Play className="w-3 h-3 mr-1" /> Écouter
-          </Button>
+          {isPlaying ? (
+            <Button size="sm" variant="destructive" className="flex-1 text-xs" onClick={onStop}>
+              <Square className="w-3 h-3 mr-1" /> Arrêter
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={onPreview} disabled={isLoading}>
+              {isLoading ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Play className="w-3 h-3 mr-1" />}
+              {isLoading ? "Chargement…" : "Écouter"}
+            </Button>
+          )}
           {!isDefault && (
             <Button size="sm" className="flex-1 text-xs" onClick={onActivate}>
               <Star className="w-3 h-3 mr-1" /> Activer
