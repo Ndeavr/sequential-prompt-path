@@ -1,19 +1,18 @@
 /**
- * useAlexSilenceControl — Strict silence detection, 1 prompt max, pause, resume.
+ * useAlexSilenceControl — Single compassionate silence prompt, then full stop.
  *
  * RULES:
- * - 1 presence prompt per idle cycle: "Are you still there?"
- * - 1 final phrase: "Don't worry, I'll be here if you need me."
- * - Then: stop speaking, stop listening, pause session, persist snapshot.
- * - Resume only on explicit orb click.
- * - New cycle resets counters.
+ * - 1 single prompt per idle cycle: "Are you still there?" (compassionate tone)
+ * - NOTHING else after. No final phrase. No "I'll close". No "hello?".
+ * - Immediately: stop speaking, stop listening, pause session, persist snapshot.
+ * - Resume ONLY on explicit orb click.
+ * - New cycle resets counter.
  */
 import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export type AlexSilenceStatus =
   | "active"
-  | "awaiting_user"
   | "idle_prompted"
   | "pausing"
   | "paused"
@@ -31,14 +30,12 @@ export interface AlexSilenceSnapshot {
 }
 
 interface SilenceControlConfig {
-  /** Ms before first presence prompt (default 15s) */
+  /** Ms before single presence prompt (default 15s) */
   idleThresholdMs?: number;
-  /** Ms after presence prompt before final phrase (default 12s) */
-  finalThresholdMs?: number;
-  /** Callback to make Alex say the presence prompt */
+  /** Ms after prompt before full pause (default 3s — just enough for TTS) */
+  pauseDelayAfterPromptMs?: number;
+  /** Callback to make Alex say the single compassionate prompt */
   onPresencePrompt?: (text: string) => void;
-  /** Callback to make Alex say the final phrase */
-  onFinalPhrase?: (text: string) => void;
   /** Callback when session is paused — stop mic, stop TTS */
   onPause?: () => void;
   /** Callback when session resumes from orb */
@@ -49,23 +46,16 @@ interface SilenceControlConfig {
   sessionId?: string | null;
 }
 
-const PROMPTS = {
-  fr: {
-    presence: "Êtes-vous toujours là ?",
-    final: "Pas de souci, je serai là si vous avez besoin de moi.",
-  },
-  en: {
-    presence: "Are you still there?",
-    final: "Don't worry, I'll be here if you need me.",
-  },
+const PROMPT_TEXT = {
+  fr: "Êtes-vous toujours là ?",
+  en: "Are you still there?",
 };
 
 export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
   const {
     idleThresholdMs = 15_000,
-    finalThresholdMs = 12_000,
+    pauseDelayAfterPromptMs = 3_000,
     onPresencePrompt,
-    onFinalPhrase,
     onPause,
     onResume,
     language = "fr",
@@ -77,21 +67,17 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
   const [snapshot, setSnapshot] = useState<AlexSilenceSnapshot | null>(null);
 
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const finalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const presenceSentRef = useRef(false);
-  const finalSentRef = useRef(false);
+  const pauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const promptSentRef = useRef(false);
   const mountedRef = useRef(true);
-
-  const prompts = PROMPTS[language];
 
   const clearTimers = useCallback(() => {
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-    if (finalTimerRef.current) clearTimeout(finalTimerRef.current);
+    if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
     idleTimerRef.current = null;
-    finalTimerRef.current = null;
+    pauseTimerRef.current = null;
   }, []);
 
-  // Log presence event to DB
   const logEvent = useCallback(
     (eventType: string, metadata?: Record<string, unknown>) => {
       if (!sessionId) return;
@@ -103,45 +89,6 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
     [sessionId]
   );
 
-  // Start idle detection cycle
-  const startIdleTimer = useCallback(() => {
-    clearTimers();
-    presenceSentRef.current = false;
-    finalSentRef.current = false;
-
-    idleTimerRef.current = setTimeout(() => {
-      if (!mountedRef.current) return;
-
-      // GUARDRAIL: Only 1 presence prompt per cycle
-      if (presenceSentRef.current) return;
-      presenceSentRef.current = true;
-
-      setStatus("idle_prompted");
-      logEvent("idle_detected");
-      logEvent("presence_prompt_sent");
-      onPresencePrompt?.(prompts.presence);
-
-      // Start final timer
-      finalTimerRef.current = setTimeout(() => {
-        if (!mountedRef.current) return;
-
-        // GUARDRAIL: Only 1 final phrase per cycle
-        if (finalSentRef.current) return;
-        finalSentRef.current = true;
-
-        setStatus("pausing");
-        logEvent("final_prompt_sent");
-        onFinalPhrase?.(prompts.final);
-
-        // After a brief delay for TTS to finish, execute full pause
-        setTimeout(() => {
-          if (!mountedRef.current) return;
-          executePause();
-        }, 3000);
-      }, finalThresholdMs);
-    }, idleThresholdMs);
-  }, [idleThresholdMs, finalThresholdMs, onPresencePrompt, onFinalPhrase, prompts, logEvent, clearTimers]);
-
   // Full pause: stop everything, persist snapshot
   const executePause = useCallback(() => {
     clearTimers();
@@ -149,7 +96,6 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
     setSilenceCycle((c) => c + 1);
     logEvent("session_paused");
 
-    // Persist session status
     if (sessionId) {
       supabase
         .from("alex_conversation_sessions")
@@ -165,13 +111,43 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
     onPause?.();
   }, [sessionId, silenceCycle, logEvent, clearTimers, onPause]);
 
-  /** Call on every user activity (message, click, voice, keypress) */
+  // Start idle detection — single prompt then immediate pause
+  const startIdleTimer = useCallback(() => {
+    clearTimers();
+    promptSentRef.current = false;
+
+    idleTimerRef.current = setTimeout(() => {
+      if (!mountedRef.current) return;
+      if (promptSentRef.current) return;
+
+      // Send the ONE and ONLY compassionate prompt
+      promptSentRef.current = true;
+      setStatus("idle_prompted");
+      logEvent("idle_detected");
+      logEvent("single_prompt_sent");
+      onPresencePrompt?.(PROMPT_TEXT[language]);
+
+      // Brief delay for TTS to finish, then FULL STOP — no further words
+      pauseTimerRef.current = setTimeout(() => {
+        if (!mountedRef.current) return;
+        setStatus("pausing");
+        logEvent("listening_stopped");
+
+        // Execute pause after a micro-delay for state propagation
+        setTimeout(() => {
+          if (!mountedRef.current) return;
+          executePause();
+        }, 500);
+      }, pauseDelayAfterPromptMs);
+    }, idleThresholdMs);
+  }, [idleThresholdMs, pauseDelayAfterPromptMs, onPresencePrompt, language, logEvent, clearTimers, executePause]);
+
+  /** Call on every user activity */
   const recordActivity = useCallback(() => {
     clearTimers();
-    presenceSentRef.current = false;
-    finalSentRef.current = false;
+    promptSentRef.current = false;
 
-    if (status === "idle_prompted" || status === "awaiting_user") {
+    if (status === "idle_prompted") {
       setStatus("active");
     }
     if (status !== "paused" && status !== "pausing" && status !== "resuming") {
@@ -179,7 +155,6 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
       startIdleTimer();
     }
 
-    // Update last activity in DB
     if (sessionId) {
       supabase
         .from("alex_conversation_sessions")
@@ -212,14 +187,13 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
     [sessionId]
   );
 
-  /** Resume from orb click — restores exact context */
+  /** Resume from orb click */
   const resumeFromOrb = useCallback(async () => {
     setStatus("resuming");
     logEvent("session_resumed");
 
     let restoredSnapshot: AlexSilenceSnapshot | null = snapshot;
 
-    // Try to fetch from DB if not in memory
     if (!restoredSnapshot && sessionId) {
       const { data } = await (supabase
         .from("alex_resume_snapshots" as any) as any)
@@ -243,7 +217,6 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
       }
     }
 
-    // Update DB
     if (sessionId) {
       supabase
         .from("alex_conversation_sessions")
@@ -255,25 +228,19 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
         .then(() => {});
     }
 
-    // Reset cycle for new idle detection
-    presenceSentRef.current = false;
-    finalSentRef.current = false;
+    promptSentRef.current = false;
     setStatus("active");
     startIdleTimer();
-
     onResume?.(restoredSnapshot);
   }, [snapshot, sessionId, logEvent, startIdleTimer, onResume]);
 
-  /** Start monitoring (call once on session open) */
   const startMonitoring = useCallback(() => {
     setStatus("active");
-    presenceSentRef.current = false;
-    finalSentRef.current = false;
+    promptSentRef.current = false;
     setSilenceCycle(0);
     startIdleTimer();
   }, [startIdleTimer]);
 
-  /** Force close (user explicitly closes) */
   const forceClose = useCallback(() => {
     clearTimers();
     setStatus("paused");

@@ -1,10 +1,10 @@
 /**
- * EngineAlexSilenceStateManager — Wraps Alex voice/chat with strict silence control.
+ * EngineAlexSilenceStateManager — Single compassionate prompt, then full stop.
  *
  * RULES:
  * - 1 presence prompt max per cycle
- * - 1 final phrase max per cycle
- * - Full stop after final phrase
+ * - NO final phrase
+ * - Full stop immediately after single prompt
  * - Resume only on orb click
  */
 import { type ReactNode } from "react";
@@ -14,7 +14,6 @@ interface Props {
   language?: "fr" | "en";
   sessionId?: string | null;
   onPresencePrompt?: (text: string) => void;
-  onFinalPhrase?: (text: string) => void;
   onPause?: () => void;
   onResume?: (snapshot: AlexSilenceSnapshot | null) => void;
   children: (controls: {
@@ -34,7 +33,6 @@ export default function EngineAlexSilenceStateManager({
   language = "fr",
   sessionId,
   onPresencePrompt,
-  onFinalPhrase,
   onPause,
   onResume,
   children,
@@ -43,7 +41,6 @@ export default function EngineAlexSilenceStateManager({
     language,
     sessionId,
     onPresencePrompt,
-    onFinalPhrase,
     onPause,
     onResume,
   });

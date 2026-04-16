@@ -13,14 +13,12 @@ export default function TimerAlexUserPresence({ status }: Props) {
   if (status === "active" || status === "resuming") return null;
 
   const labels: Record<string, string> = {
-    awaiting_user: "En attente…",
     idle_prompted: "Êtes-vous là ?",
-    pausing: "Fermeture…",
+    pausing: "Mise en pause…",
     paused: "En pause",
   };
 
   const colors: Record<string, string> = {
-    awaiting_user: "bg-amber-400",
     idle_prompted: "bg-amber-400",
     pausing: "bg-orange-400",
     paused: "bg-muted-foreground/50",
