@@ -9424,6 +9424,108 @@ export type Database = {
           },
         ]
       }
+      article_downloads: {
+        Row: {
+          article_id: string
+          created_at: string
+          download_type: string
+          id: string
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          download_type?: string
+          id?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          download_type?: string
+          id?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_downloads_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "seo_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      article_likes: {
+        Row: {
+          article_id: string
+          created_at: string
+          id: string
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          id?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          id?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_likes_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "seo_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      article_shares: {
+        Row: {
+          article_id: string
+          created_at: string
+          id: string
+          session_id: string | null
+          share_channel: string
+          user_id: string | null
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          id?: string
+          session_id?: string | null
+          share_channel?: string
+          user_id?: string | null
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          id?: string
+          session_id?: string | null
+          share_channel?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_shares_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "seo_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_action_recommendations: {
         Row: {
           action_description: string
