@@ -11,6 +11,9 @@ import HomeWithFeatureFlag from "@/components/home-intent/HomeWithFeatureFlag";
 import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
 
+// Impact Counter
+const PageImpactCounter = lazy(() => import("@/pages/PageImpactCounter"));
+
 // Extraction Engine
 const PageAdminExtractionQueue = lazy(() => import("@/pages/admin/PageAdminExtractionQueue"));
 const PageAdminCoverageCityDomain = lazy(() => import("@/pages/admin/PageAdminCoverageCityDomain"));
@@ -602,6 +605,7 @@ export const AppRouter = () => (
         <Route path="/contractor" element={<Suspense fallback={<LazyFallback />}><HomeContractorAdaptive /></Suspense>} />
         <Route path="/condo-home" element={<Suspense fallback={<LazyFallback />}><HomeCondoAdaptive /></Suspense>} />
         <Route path="/professional" element={<Suspense fallback={<LazyFallback />}><HomeProfessionalAdaptive /></Suspense>} />
+        <Route path="/impact" element={<Suspense fallback={<LazyFallback />}><PageImpactCounter /></Suspense>} />
         <Route path="/manifeste" element={<Suspense fallback={<LazyFallback />}><PageManifesto /></Suspense>} />
         <Route path="/cest-quoi-unpro" element={<Suspense fallback={<LazyFallback />}><PageUnproFAQ25 /></Suspense>} />
         <Route path="/go" element={<PageAdLandingAipp />} />

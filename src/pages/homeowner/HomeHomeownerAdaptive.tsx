@@ -48,7 +48,7 @@ export default function HomeHomeownerAdaptive() {
         <meta name="description" content="Décrivez votre problème. UNPRO trouve le professionnel idéal et vous donne un rendez-vous garanti." />
       </Helmet>
 
-      <BarStickyCounterRealtime intentLabel="heures économisées" metricType="hours" />
+      <BarStickyCounterRealtime />
 
       <div className="flex flex-col min-h-screen">
         <HeroSectionIntentWithAlexOrb

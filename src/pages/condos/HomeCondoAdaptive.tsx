@@ -47,7 +47,7 @@ export default function HomeCondoAdaptive() {
         <meta name="description" content="Entretien préventif, Loi 16, urgences — tout en un seul endroit pour votre syndicat de copropriété." />
       </Helmet>
 
-      <BarStickyCounterRealtime intentLabel="interventions mieux structurées" metricType="submissions" />
+      <BarStickyCounterRealtime />
 
       <div className="flex flex-col min-h-screen">
         <HeroSectionIntentWithAlexOrb

@@ -48,7 +48,7 @@ export default function HomeContractorAdaptive() {
         <meta name="description" content="Arrêtez de payer par clic. UNPRO vous envoie des rendez-vous qualifiés directement dans votre agenda." />
       </Helmet>
 
-      <BarStickyCounterRealtime intentLabel="économisés en publicité" metricType="dollars" />
+      <BarStickyCounterRealtime />
 
       <div className="flex flex-col min-h-screen">
         <HeroSectionIntentWithAlexOrb

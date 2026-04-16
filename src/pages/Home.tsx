@@ -46,7 +46,7 @@ const Home = () => {
         <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
       </Helmet>
 
-      <BarStickyCounterRealtime intentLabel="soumissions évitées" metricType="submissions" />
+      <BarStickyCounterRealtime />
       <div className="flex flex-col">
         {/* Hero cinématique — Problème / Projet / Avis */}
         <HeroSection />
