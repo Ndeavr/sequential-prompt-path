@@ -104,7 +104,7 @@ const SmartHeader = () => {
               <img
                 src={unproLogoWordmark}
                 alt="UNPRO"
-                className="h-[2.5rem] sm:h-[2.75rem] lg:h-[3rem] w-auto transition-all duration-300 group-hover:scale-105"
+                className="h-8 sm:h-9 lg:h-10 w-auto transition-all duration-300 group-hover:scale-105"
                 draggable={false}
               />
             </Link>
