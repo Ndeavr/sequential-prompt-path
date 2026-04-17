@@ -109,3 +109,5 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.ws-voice]
     verify_jwt = false
+  [functions.challenge-signup-orchestrator]
+    verify_jwt = false

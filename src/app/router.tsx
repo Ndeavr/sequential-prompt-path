@@ -84,6 +84,7 @@ const OwnerMenuPreviewPage = lazy(() => import("@/pages/OwnerMenuPreviewPage"));
 const PageMemoryCenter = lazy(() => import("@/pages/PageMemoryCenter"));
 const MenuIntelligenceAdminPage = lazy(() => import("@/pages/admin/MenuIntelligenceAdminPage"));
 const PageAdminEmailLogs = lazy(() => import("@/pages/admin/PageAdminEmailLogs"));
+const PageChallengeTracker = lazy(() => import("@/pages/admin/PageChallengeTracker"));
 const AdminProspectionEngine = lazy(() => import("@/pages/admin/AdminProspectionEngine"));
 const PageProspectionDashboard = lazy(() => import("@/pages/admin/PageProspectionDashboard"));
 const AdminProspectionProspects = lazy(() => import("@/pages/admin/AdminProspectionProspects"));
@@ -965,6 +966,7 @@ export const AppRouter = () => (
         <Route path="/admin/menu-intelligence" element={<ProtectedRoute requiredRole="admin"><MenuIntelligenceAdminPage /></ProtectedRoute>} />
         <Route path="/admin/handoff-analytics" element={<ProtectedRoute requiredRole="admin"><PageAdminHandoffAnalytics /></ProtectedRoute>} />
         <Route path="/admin/emails" element={<ProtectedRoute requiredRole="admin"><PageAdminEmailLogs /></ProtectedRoute>} />
+        <Route path="/admin/challenge-tracker" element={<ProtectedRoute requiredRole="admin"><PageChallengeTracker /></ProtectedRoute>} />
         <Route path="/admin/email-templates" element={<ProtectedRoute requiredRole="admin"><PageAdminEmailTemplates /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
         <Route path="/admin/activation" element={<ProtectedRoute requiredRole="admin"><PageAdminEntrepreneurActivation /></ProtectedRoute>} />
