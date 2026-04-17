@@ -15,6 +15,7 @@ import {
   Home, FileText, BarChart3, Plus, CalendarDays, Sparkles,
   ArrowRight, Star, Shield, Clock, Upload, TrendingUp, Building2, BrainCircuit
 } from "lucide-react";
+import BannerCalendarMissingWarning from "@/components/calendar/BannerCalendarMissingWarning";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -45,6 +46,9 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
+      <div className="mb-4">
+        <BannerCalendarMissingWarning role="homeowner" />
+      </div>
       <PageHeader
         title="Tableau de bord"
         description="Vue d'ensemble de vos propriétés et projets"

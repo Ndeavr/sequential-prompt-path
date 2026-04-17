@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, ArrowRight, MapPin, Calendar, Camera, UserCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import CardCalendarConnectionRole from "@/components/calendar/CardCalendarConnectionRole";
+import { useCalendarConversionTracking } from "@/hooks/useCalendarConnection";
 
 export default function PageOnboardingSuccess() {
   const navigate = useNavigate();
@@ -13,6 +15,12 @@ export default function PageOnboardingSuccess() {
   const [activating, setActivating] = useState(true);
   const [activation, setActivation] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const { track } = useCalendarConversionTracking();
+
+  const handleSkipCalendar = () => {
+    track({ surface: "onboarding_contractor", role_context: "contractor", event_type: "prompt_dismissed" });
+    navigate("/pro");
+  };
 
   useEffect(() => {
     if (!sessionId) {
@@ -93,10 +101,18 @@ export default function PageOnboardingSuccess() {
         </CardContent>
       </Card>
 
-      <Button className="w-full" size="lg" onClick={() => navigate("/pro")}>
-        Aller à mon tableau de bord
-        <ArrowRight className="ml-2 h-4 w-4" />
-      </Button>
+      {/* Calendar connection step (skippable) */}
+      <CardCalendarConnectionRole role="contractor" surface="onboarding_contractor" />
+
+      <div className="space-y-2">
+        <Button className="w-full" size="lg" onClick={() => navigate("/pro")}>
+          Aller à mon tableau de bord
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+        <Button variant="ghost" className="w-full" onClick={handleSkipCalendar}>
+          Plus tard
+        </Button>
+      </div>
     </div>
   );
 }

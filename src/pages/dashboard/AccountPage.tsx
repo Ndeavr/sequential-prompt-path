@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useActiveRole } from "@/contexts/ActiveRoleContext";
 import { toast } from "sonner";
 import BecomeRoleCTA from "@/components/account/BecomeRoleCTA";
+import CardCalendarConnectionRole from "@/components/calendar/CardCalendarConnectionRole";
 
 interface ProfileForm {
   salutation: string;
@@ -95,6 +96,13 @@ const AccountPage = () => {
           </form>
         </CardContent>
       </Card>
+
+      {/* Calendar connection (per active role) */}
+      <div className="max-w-lg mt-6 space-y-4">
+        {hasHomeowner && <CardCalendarConnectionRole role="homeowner" surface="account" />}
+        {hasContractor && <CardCalendarConnectionRole role="contractor" surface="account" />}
+        {!hasHomeowner && !hasContractor && <CardCalendarConnectionRole role="homeowner" surface="account" />}
+      </div>
 
       {/* Cross-role CTAs */}
       <div className="max-w-lg mt-6">
