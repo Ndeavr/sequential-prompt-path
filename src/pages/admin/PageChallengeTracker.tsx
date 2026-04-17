@@ -88,7 +88,7 @@ export default function PageChallengeTracker() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium">{a.agent_name}</span>
-                  {a.last_run_status === "success" && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                  {a.last_run_status === "success" && <CheckCircle2 className="h-4 w-4 text-primary" />}
                   {a.last_run_status === "error" && <AlertCircle className="h-4 w-4 text-destructive" />}
                 </div>
                 <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1 flex-wrap">
