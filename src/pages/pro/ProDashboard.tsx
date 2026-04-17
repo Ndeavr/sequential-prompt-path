@@ -8,6 +8,7 @@ import { useContractorProfile, useContractorReviews } from "@/hooks/useContracto
 import { useAppointments } from "@/hooks/useAppointments";
 import { useHasActiveSubscription } from "@/hooks/useSubscription";
 import DashHero from "@/components/pro-dashboard/DashHero";
+import CardCalendarConnectionRole from "@/components/calendar/CardCalendarConnectionRole";
 import DashKpiRow from "@/components/pro-dashboard/DashKpiRow";
 import DashProbability from "@/components/pro-dashboard/DashProbability";
 import DashChecklist from "@/components/pro-dashboard/DashChecklist";
@@ -51,6 +52,7 @@ const ProDashboard = () => {
     <ContractorLayout>
       <div className="dark max-w-4xl mx-auto space-y-5 pb-24">
         <DashHero profile={profile} completeness={completeness} aipp={aipp} />
+        <CardCalendarConnectionRole role="contractor" surface="dashboard_pro" />
         <DashKpiRow
           newAppts={newAppts}
           acceptedAppts={acceptedAppts}

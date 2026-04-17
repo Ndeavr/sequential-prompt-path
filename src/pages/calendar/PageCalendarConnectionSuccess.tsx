@@ -17,9 +17,15 @@ export default function PageCalendarConnectionSuccess() {
   const { primary, refresh } = useCalendarConnections();
   const { track } = useCalendarConversionTracking();
 
+  const returnTo = params.get("return_to");
+
   useEffect(() => {
     refresh();
     track({ surface: "callback_success", event_type: "calendar_connected", provider });
+    const t = setTimeout(() => {
+      navigate(returnTo || "/dashboard");
+    }, 3000);
+    return () => clearTimeout(t);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
