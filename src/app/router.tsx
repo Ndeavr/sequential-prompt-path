@@ -168,6 +168,10 @@ const UnlockPage = lazy(() => import("@/pages/UnlockPage"));
 const MyQRPerformancePage = lazy(() => import("@/pages/MyQRPerformancePage"));
 const ContributionApprovalPage = lazy(() => import("@/pages/dashboard/ContributionApprovalPage"));
 const ListingImportPage = lazy(() => import("@/pages/ListingImportPage"));
+const PageCalendarConnectionHub = lazy(() => import("@/pages/calendar/PageCalendarConnectionHub"));
+const PageCalendarConnectionSuccess = lazy(() => import("@/pages/calendar/PageCalendarConnectionSuccess"));
+const PageCalendarConnectionFailure = lazy(() => import("@/pages/calendar/PageCalendarConnectionFailure"));
+const PageAdminCalendarConversionDashboard = lazy(() => import("@/pages/admin/PageAdminCalendarConversionDashboard"));
 const PublicScoreCalculatorPage = lazy(() => import("@/pages/PublicScoreCalculatorPage"));
 const PropertyReportPage = lazy(() => import("@/pages/dashboard/PropertyReportPage"));
 const RenovationVisualizerPage = lazy(() => import("@/pages/RenovationVisualizerPage"));
@@ -1243,7 +1247,13 @@ export const AppRouter = () => (
          <Route path="/intent-funnel" element={<Suspense fallback={<LazyFallback />}><PageEntryUnifiedIntent /></Suspense>} />
          <Route path="/match/:sessionId" element={<Suspense fallback={<LazyFallback />}><PageMatchResultsDynamic /></Suspense>} />
          <Route path="/book/:contractorId" element={<Suspense fallback={<LazyFallback />}><PageBookingInstant /></Suspense>} />
-         <Route path="/alex-conversation" element={<Suspense fallback={<LazyFallback />}><PageAlexConversationIntent /></Suspense>} />
+        <Route path="/alex-conversation" element={<Suspense fallback={<LazyFallback />}><PageAlexConversationIntent /></Suspense>} />
+
+        {/* Calendar Connection Module */}
+        <Route path="/calendar/connect" element={<Suspense fallback={<LazyFallback />}><PageCalendarConnectionHub /></Suspense>} />
+        <Route path="/calendar/connect/success" element={<Suspense fallback={<LazyFallback />}><PageCalendarConnectionSuccess /></Suspense>} />
+        <Route path="/calendar/connect/failure" element={<Suspense fallback={<LazyFallback />}><PageCalendarConnectionFailure /></Suspense>} />
+        <Route path="/admin/calendar-conversion" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageAdminCalendarConversionDashboard /></Suspense></UniversalRouteGuard>} />
 
          {/* Catch-all: try fallback, then 404 */}
          <Route path="*" element={<FallbackRoutePage />} />
