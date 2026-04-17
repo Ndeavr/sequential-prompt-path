@@ -3,7 +3,7 @@
  */
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 
 export type CalendarProvider = "google" | "apple" | "outlook";
 export type CalendarStatus =
@@ -65,15 +65,15 @@ export function useCalendarConversionTracking() {
     metadata?: Record<string, unknown>;
   }) => {
     try {
-      await supabase.from("calendar_conversion_events").insert({
+      await supabase.from("calendar_conversion_events").insert([{
         user_id: user?.id ?? null,
         role_context: params.role_context ?? "guest",
         surface: params.surface,
         prompt_variant: params.prompt_variant ?? null,
         provider: params.provider ?? null,
-        event_type: params.event_type as never,
-        metadata: params.metadata ?? {},
-      });
+        event_type: params.event_type,
+        metadata: (params.metadata ?? {}) as never,
+      } as never]);
     } catch (e) {
       console.warn("[calendar tracking]", e);
     }
