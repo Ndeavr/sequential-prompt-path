@@ -13539,6 +13539,135 @@ export type Database = {
           },
         ]
       }
+      challenge_agent_state: {
+        Row: {
+          agent_key: string
+          agent_name: string
+          config: Json
+          created_at: string
+          enabled: boolean
+          id: string
+          last_error: string | null
+          last_run_at: string | null
+          last_run_status: string | null
+          last_run_summary: Json | null
+          total_processed: number
+          total_runs: number
+          updated_at: string
+        }
+        Insert: {
+          agent_key: string
+          agent_name: string
+          config?: Json
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_error?: string | null
+          last_run_at?: string | null
+          last_run_status?: string | null
+          last_run_summary?: Json | null
+          total_processed?: number
+          total_runs?: number
+          updated_at?: string
+        }
+        Update: {
+          agent_key?: string
+          agent_name?: string
+          config?: Json
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_error?: string | null
+          last_run_at?: string | null
+          last_run_status?: string | null
+          last_run_summary?: Json | null
+          total_processed?: number
+          total_runs?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      challenge_signup_events: {
+        Row: {
+          agent_source: string | null
+          challenge_key: string
+          created_at: string
+          event_type: string
+          funnel_stage: string | null
+          id: string
+          metadata: Json
+          outbound_lead_id: string | null
+          prospect_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          agent_source?: string | null
+          challenge_key?: string
+          created_at?: string
+          event_type: string
+          funnel_stage?: string | null
+          id?: string
+          metadata?: Json
+          outbound_lead_id?: string | null
+          prospect_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          agent_source?: string | null
+          challenge_key?: string
+          created_at?: string
+          event_type?: string
+          funnel_stage?: string | null
+          id?: string
+          metadata?: Json
+          outbound_lead_id?: string | null
+          prospect_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      challenge_targets: {
+        Row: {
+          challenge_key: string
+          created_at: string
+          current_value: number
+          ends_at: string
+          id: string
+          label: string
+          metadata: Json
+          starts_at: string
+          status: string
+          target_value: number
+          updated_at: string
+        }
+        Insert: {
+          challenge_key: string
+          created_at?: string
+          current_value?: number
+          ends_at: string
+          id?: string
+          label: string
+          metadata?: Json
+          starts_at?: string
+          status?: string
+          target_value?: number
+          updated_at?: string
+        }
+        Update: {
+          challenge_key?: string
+          created_at?: string
+          current_value?: number
+          ends_at?: string
+          id?: string
+          label?: string
+          metadata?: Json
+          starts_at?: string
+          status?: string
+          target_value?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       checkout_sessions: {
         Row: {
           adaptive_pricing_enabled: boolean
