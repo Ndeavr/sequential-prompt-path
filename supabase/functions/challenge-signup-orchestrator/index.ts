@@ -27,19 +27,27 @@ async function runAgent(agentKey: string, sb: ReturnType<typeof createClient>): 
       // Scan outbound_leads not yet contacted with email + activity
       const { data: leads } = await sb
         .from("outbound_leads")
-        .select("id, business_name, contact_email, city, primary_activity, status")
-        .not("contact_email", "is", null)
-        .in("status", ["new", "qualified", "approved"])
+        .select("id, company_name, email, specialty, crm_status, last_contacted_at")
+        .not("email", "is", null)
+        .is("last_contacted_at", null)
         .limit(50);
 
       let added = 0;
       for (const l of leads || []) {
+        // Skip if already qualified
+        const { count } = await sb
+          .from("challenge_signup_events")
+          .select("*", { count: "exact", head: true })
+          .eq("outbound_lead_id", l.id)
+          .eq("event_type", "prospect_qualified");
+        if ((count ?? 0) > 0) continue;
+
         await sb.from("challenge_signup_events").insert({
           event_type: "prospect_qualified",
           agent_source: "signup_hunter",
           outbound_lead_id: l.id,
           funnel_stage: "qualified",
-          metadata: { business_name: l.business_name, city: l.city, activity: l.primary_activity },
+          metadata: { company_name: l.company_name, specialty: l.specialty, email: l.email },
         });
         added++;
       }
@@ -70,33 +78,35 @@ async function runAgent(agentKey: string, sb: ReturnType<typeof createClient>): 
         try {
           const { data: lead } = await sb
             .from("outbound_leads")
-            .select("contact_email, business_name, primary_activity, city")
+            .select("email, company_name, specialty")
             .eq("id", ev.outbound_lead_id)
             .maybeSingle();
-          if (!lead?.contact_email) continue;
+          if (!lead?.email) continue;
 
           const idempotencyKey = `challenge-email1-${ev.outbound_lead_id}`;
           await sb.functions.invoke("send-transactional-email", {
             body: {
               template: "challenge_aipp_reveal",
-              to: lead.contact_email,
+              to: lead.email,
               idempotency_key: idempotencyKey,
               data: {
-                business_name: lead.business_name,
-                activity: lead.primary_activity,
-                city: lead.city,
+                company_name: lead.company_name,
+                specialty: lead.specialty,
                 aipp_url: `https://unpro.ca/aipp?lead=${ev.outbound_lead_id}`,
               },
-              subject: `${lead.business_name} — Voici votre score AIPP`,
+              subject: `${lead.company_name} — Voici votre score AIPP`,
             },
           });
+
+          // Mark contacted
+          await sb.from("outbound_leads").update({ last_contacted_at: new Date().toISOString() }).eq("id", ev.outbound_lead_id);
 
           await sb.from("challenge_signup_events").insert({
             event_type: "email_sent",
             agent_source: "email_sequence",
             outbound_lead_id: ev.outbound_lead_id,
             funnel_stage: "contacted",
-            metadata: { email_step: 1, recipient: lead.contact_email, idempotency_key: idempotencyKey },
+            metadata: { email_step: 1, recipient: lead.email, idempotency_key: idempotencyKey },
           });
           queued++;
         } catch (e) {
