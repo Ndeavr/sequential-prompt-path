@@ -503,6 +503,7 @@ const PageOutboundRevenue = lazy(() => import("@/pages/admin/outbound/PageOutbou
 const PageOutboundSMSFallback = lazy(() => import("@/pages/admin/outbound/PageOutboundSMSFallback"));
 const PageCampaignBuilderAutonomous = lazy(() => import("@/pages/admin/outbound/PageCampaignBuilderAutonomous"));
 const PageRunMonitorAutonomous = lazy(() => import("@/pages/admin/outbound/PageRunMonitorAutonomous"));
+const PagePipelineCommandCenterOutbound = lazy(() => import("@/pages/admin/outbound/PagePipelineCommandCenterOutbound"));
 const PageOutboundSettingsAutonomous = lazy(() => import("@/pages/admin/outbound/PageOutboundSettingsAutonomous"));
 const PageOutboundTargetListInbox = lazy(() => import("@/pages/admin/outbound/PageOutboundTargetListInbox"));
 const PageOutboundTargetReviewQueue = lazy(() => import("@/pages/admin/outbound/PageOutboundTargetReviewQueue"));
@@ -1105,7 +1106,8 @@ export const AppRouter = () => (
         <Route path="/admin/outbound/revenue" element={<ProtectedRoute requiredRole="admin"><PageOutboundRevenue /></ProtectedRoute>} />
         <Route path="/admin/outbound/sms-fallback" element={<ProtectedRoute requiredRole="admin"><PageOutboundSMSFallback /></ProtectedRoute>} />
         <Route path="/admin/outbound/campaigns/new" element={<ProtectedRoute requiredRole="admin"><PageCampaignBuilderAutonomous /></ProtectedRoute>} />
-        <Route path="/admin/outbound/runs" element={<ProtectedRoute requiredRole="admin"><PageRunMonitorAutonomous /></ProtectedRoute>} />
+        <Route path="/admin/outbound/runs" element={<ProtectedRoute requiredRole="admin"><PagePipelineCommandCenterOutbound /></ProtectedRoute>} />
+        <Route path="/admin/outbound/runs-legacy" element={<ProtectedRoute requiredRole="admin"><PageRunMonitorAutonomous /></ProtectedRoute>} />
         <Route path="/admin/outbound/settings" element={<ProtectedRoute requiredRole="admin"><PageOutboundSettingsAutonomous /></ProtectedRoute>} />
         <Route path="/admin/outbound/targets" element={<ProtectedRoute requiredRole="admin"><PageOutboundTargetListInbox /></ProtectedRoute>} />
         <Route path="/admin/outbound/targets/review" element={<ProtectedRoute requiredRole="admin"><PageOutboundTargetReviewQueue /></ProtectedRoute>} />

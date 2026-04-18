@@ -79,7 +79,7 @@ const outboundGroups: OutboundSubGroup[] = [
       { to: "/admin/outbound/campaigns", label: "Campagnes", icon: Rocket },
       { to: "/admin/outbound/campaigns/new", label: "Nouvelle campagne", icon: Zap },
       { to: "/admin/outbound/leads", label: "Prospects", icon: Users },
-      { to: "/admin/outbound/runs", label: "Run Monitor", icon: Activity },
+      { to: "/admin/outbound/runs", label: "Pipeline Live", icon: Activity },
     ],
   },
   {
