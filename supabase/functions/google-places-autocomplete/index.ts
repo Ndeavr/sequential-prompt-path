@@ -23,7 +23,7 @@ serve(async (req) => {
 
     // Place Details mode
     if (body.place_id) {
-      const fields = "name,formatted_address,formatted_phone_number,website,rating,user_ratings_total,types,address_components";
+      const fields = "name,formatted_address,formatted_phone_number,website,rating,user_ratings_total,types,address_components,geometry";
       const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(body.place_id)}&fields=${fields}&language=fr&key=${GOOGLE_PLACES_API_KEY}`;
       const res = await fetch(url);
       const data = await res.json();
@@ -36,14 +36,31 @@ serve(async (req) => {
       }
 
       const r = data.result;
-      const city = r.address_components?.find((c: any) => c.types?.includes("locality"))?.long_name || "";
+      const comps: any[] = r.address_components || [];
+      const pick = (type: string, useShort = false): string => {
+        const c = comps.find((x: any) => Array.isArray(x.types) && x.types.includes(type));
+        if (!c) return "";
+        return useShort ? (c.short_name || c.long_name || "") : (c.long_name || c.short_name || "");
+      };
+
+      const city =
+        pick("locality") ||
+        pick("sublocality") ||
+        pick("administrative_area_level_2");
 
       return new Response(JSON.stringify({
         result: {
           place_id: body.place_id,
           name: r.name || "",
           address: r.formatted_address || "",
+          street_number: pick("street_number"),
+          street_name: pick("route"),
           city,
+          province: pick("administrative_area_level_1", true),
+          postal_code: pick("postal_code"),
+          country: pick("country", true) || "CA",
+          latitude: r.geometry?.location?.lat ?? null,
+          longitude: r.geometry?.location?.lng ?? null,
           phone: r.formatted_phone_number || "",
           website: r.website || "",
           rating: r.rating || 0,

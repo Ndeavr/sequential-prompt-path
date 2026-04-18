@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useCreateProperty } from "@/hooks/usePropertyPassport";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import GooglePlacesInput from "@/components/property/GooglePlacesInput";
+import AddressVerifiedInput from "@/components/address/AddressVerifiedInput";
+import { emptyAddress, isVerified, type VerifiedAddress } from "@/types/address";
 
 const PROPERTY_TYPES = [
   { value: "unifamiliale", label: "Maison unifamiliale" },
@@ -23,12 +23,8 @@ const PROPERTY_TYPES = [
 export default function PropertyForm() {
   const navigate = useNavigate();
   const create = useCreateProperty();
+  const [address, setAddress] = useState<VerifiedAddress>(emptyAddress());
   const [form, setForm] = useState({
-    address: "",
-    city: "",
-    province: "QC",
-    postal_code: "",
-    country: "CA",
     property_type: "",
     year_built: "",
     square_footage: "",
@@ -40,18 +36,22 @@ export default function PropertyForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.address.trim()) {
-      toast.error("L'adresse est requise.");
+    if (!isVerified(address)) {
+      toast.error("Veuillez sélectionner une adresse vérifiée dans la liste.");
       return;
     }
 
     try {
+      const fullAddress = address.unit
+        ? `${address.streetNumber} ${address.streetName}, app. ${address.unit}, ${address.city}, ${address.province} ${address.postalCode}`
+        : address.fullAddress;
+
       const data = await create.mutateAsync({
-        address: form.address,
-        city: form.city || undefined,
-        province: form.province || undefined,
-        postal_code: form.postal_code || undefined,
-        country: form.country || undefined,
+        address: fullAddress,
+        city: address.city || undefined,
+        province: address.province || undefined,
+        postal_code: address.postalCode || undefined,
+        country: address.country || "CA",
         property_type: form.property_type || undefined,
         year_built: form.year_built ? parseInt(form.year_built) : undefined,
         square_footage: form.square_footage ? parseInt(form.square_footage) : undefined,
@@ -66,40 +66,12 @@ export default function PropertyForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Address section */}
-      <div className="space-y-4">
-        <div className="space-y-1.5">
-          <Label>Adresse *</Label>
-          <GooglePlacesInput
-            value={form.address}
-            onChange={(v) => setForm((f) => ({ ...f, address: v }))}
-            onPlaceSelect={(place) => {
-              setForm((f) => ({
-                ...f,
-                address: place.address,
-                city: place.city || f.city,
-                postal_code: place.postalCode || f.postal_code,
-              }));
-            }}
-            placeholder="123 rue Principale"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="space-y-1.5">
-            <Label>Ville</Label>
-            <Input value={form.city} onChange={set("city")} placeholder="Montréal" />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Province</Label>
-            <Input value={form.province} onChange={set("province")} placeholder="QC" />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Code postal</Label>
-            <Input value={form.postal_code} onChange={set("postal_code")} placeholder="H2X 1Y4" />
-          </div>
-        </div>
-      </div>
+      <AddressVerifiedInput
+        value={address}
+        onChange={setAddress}
+        label="Adresse"
+        required
+      />
 
       {/* Property details */}
       <div className="space-y-4">
@@ -135,7 +107,7 @@ export default function PropertyForm() {
       </div>
 
       <div className="flex gap-3 pt-2">
-        <Button type="submit" disabled={create.isPending}>
+        <Button type="submit" disabled={create.isPending || !isVerified(address)}>
           {create.isPending ? (
             <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Création...</>
           ) : (
