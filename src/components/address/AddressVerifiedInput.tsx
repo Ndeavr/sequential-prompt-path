@@ -42,7 +42,8 @@ export default function AddressVerifiedInput({
   const [activeIndex, setActiveIndex] = useState(-1);
   const [resolving, setResolving] = useState(false);
 
-  const { predictions, isLoading, search, fetchDetails, reset } = useAddressAutocomplete();
+  const { predictions, isLoading, error: serviceError, search, fetchDetails, reset } = useAddressAutocomplete();
+  const [manualMode, setManualMode] = useState(false);
 
   // Keep draft in sync if parent value changes externally (e.g. reset)
   useEffect(() => {
@@ -214,7 +215,39 @@ export default function AddressVerifiedInput({
               </ul>
             </div>
           )}
-          {draft && !verified && !isLoading && !resolving && predictions.length === 0 && (
+          {serviceError && (
+            <div className="mt-2 rounded-lg border border-destructive/30 bg-destructive/5 p-2.5 space-y-1.5">
+              <div className="flex items-start gap-1.5 text-xs text-destructive">
+                <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <div className="flex-1">
+                  <div className="font-medium">Service d'adresse temporairement indisponible</div>
+                  <div className="text-[11px] opacity-80 mt-0.5">
+                    Code: {serviceError.code}
+                    {serviceError.message && serviceError.code !== serviceError.message ? ` — ${serviceError.message}` : ""}
+                  </div>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs w-full"
+                onClick={() => {
+                  setManualMode(true);
+                  // Mark address as manually entered (unverified) so submit logic can decide
+                  onChange({ verified: false, raw: draft });
+                }}
+              >
+                Saisir manuellement
+              </Button>
+            </div>
+          )}
+          {manualMode && !verified && (
+            <div className="mt-1.5 text-[11px] text-muted-foreground">
+              Mode manuel activé — l'adresse ne sera pas vérifiée par Google.
+            </div>
+          )}
+          {!serviceError && draft && !verified && !isLoading && !resolving && predictions.length === 0 && (
             <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
               <AlertCircle className="h-3 w-3" />
               <span>Sélectionnez une adresse dans la liste pour la vérifier</span>
