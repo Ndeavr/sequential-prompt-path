@@ -132,9 +132,9 @@ export default function AddressVerifiedInput({
       )}
 
       {verified ? (
-        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 space-y-2">
+        <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2">
           <div className="flex items-start gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
+            <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium text-foreground truncate">
                 {value.fullAddress}
@@ -215,7 +215,7 @@ export default function AddressVerifiedInput({
             </div>
           )}
           {draft && !verified && !isLoading && !resolving && predictions.length === 0 && (
-            <div className="flex items-center gap-1.5 mt-1.5 text-xs text-amber-600">
+            <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
               <AlertCircle className="h-3 w-3" />
               <span>Sélectionnez une adresse dans la liste pour la vérifier</span>
             </div>
