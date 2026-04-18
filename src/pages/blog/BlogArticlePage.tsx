@@ -14,6 +14,7 @@ import EnrichedFaqAnswer from "@/components/grants/EnrichedFaqAnswer";
 import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import LikeShareButtons from "@/components/shared/LikeShareButtons";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
+import BlockArticleParagraphReadable from "@/components/articles/BlockArticleParagraphReadable";
 
 export default function BlogArticlePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -158,12 +159,9 @@ export default function BlogArticlePage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.15 }}
-          className="prose prose-lg max-w-none text-foreground
-            prose-headings:text-foreground prose-headings:font-bold
-            prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-            prose-strong:text-foreground prose-li:text-muted-foreground"
-          dangerouslySetInnerHTML={{ __html: article.content_html || "" }}
-        />
+        >
+          <BlockArticleParagraphReadable html={article.content_html || ""} />
+        </motion.div>
 
         {/* FAQ Section */}
         {faqs.length > 0 && (
