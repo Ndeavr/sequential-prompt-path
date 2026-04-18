@@ -24,17 +24,52 @@ async function runAgent(agentKey: string, sb: ReturnType<typeof createClient>): 
 
   try {
     if (agentKey === "signup_hunter") {
-      // Scan outbound_leads not yet contacted with email + activity
+      // Load blocklist (competitors / directories / social)
+      const { data: blocklist } = await sb.from("challenge_domain_blocklist").select("pattern");
+      const patterns = (blocklist ?? []).map((b: { pattern: string }) => b.pattern.toLowerCase());
+
+      const isBlocked = (email: string | null, company: string | null, domain: string | null) => {
+        const haystack = `${email ?? ""} ${company ?? ""} ${domain ?? ""}`.toLowerCase();
+        return patterns.some((p) => haystack.includes(p));
+      };
+
+      // Strict pro-email validation
+      const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      const FREE_PROVIDERS = ["gmail.com", "hotmail.com", "yahoo.com", "outlook.com", "live.com", "icloud.com", "videotron.ca", "sympatico.ca"];
+      const isValidProEmail = (email: string | null) => {
+        if (!email) return false;
+        const e = email.trim().toLowerCase();
+        if (!EMAIL_RE.test(e)) return false;
+        if (e.includes("@www.") || e.includes("..")) return false;
+        const domain = e.split("@")[1];
+        // Allow free providers but require non-generic local part (not info@, contact@, etc on free)
+        const local = e.split("@")[0];
+        const generics = ["info", "contact", "admin", "noreply", "no-reply", "support", "hello", "bonjour", "service", "ventes", "sales"];
+        if (FREE_PROVIDERS.includes(domain) && generics.includes(local)) return false;
+        return true;
+      };
+
       const { data: leads } = await sb
         .from("outbound_leads")
-        .select("id, company_name, email, specialty, crm_status, last_contacted_at")
+        .select("id, company_name, email, specialty, domain, qualification_status, last_contacted_at")
         .not("email", "is", null)
         .is("last_contacted_at", null)
-        .limit(50);
+        .neq("qualification_status", "disqualified_competitor")
+        .limit(100);
 
       let added = 0;
+      let rejected = 0;
       for (const l of leads || []) {
-        // Skip if already qualified
+        if (isBlocked(l.email, l.company_name, l.domain) || !isValidProEmail(l.email)) {
+          await sb.from("outbound_leads").update({
+            qualification_status: "disqualified_competitor",
+            rejection_reason: isBlocked(l.email, l.company_name, l.domain) ? "blocklist_match" : "invalid_pro_email",
+            updated_at: new Date().toISOString(),
+          }).eq("id", l.id);
+          rejected++;
+          continue;
+        }
+
         const { count } = await sb
           .from("challenge_signup_events")
           .select("*", { count: "exact", head: true })
@@ -50,9 +85,10 @@ async function runAgent(agentKey: string, sb: ReturnType<typeof createClient>): 
           metadata: { company_name: l.company_name, specialty: l.specialty, email: l.email },
         });
         added++;
+        if (added >= 50) break;
       }
       result.processed = added;
-      result.details = { qualified_count: added, source_pool: leads?.length ?? 0 };
+      result.details = { qualified_count: added, rejected_count: rejected, blocklist_size: patterns.length, source_pool: leads?.length ?? 0 };
     }
 
     else if (agentKey === "email_sequence") {

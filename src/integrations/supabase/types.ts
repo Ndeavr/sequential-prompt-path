@@ -13587,6 +13587,27 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_domain_blocklist: {
+        Row: {
+          created_at: string
+          id: string
+          pattern: string
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pattern: string
+          reason?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pattern?: string
+          reason?: string
+        }
+        Relationships: []
+      }
       challenge_signup_events: {
         Row: {
           agent_source: string | null
