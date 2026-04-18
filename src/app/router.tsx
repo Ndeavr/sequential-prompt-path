@@ -101,6 +101,8 @@ const CompareQuotesPage = lazy(() => import("@/pages/CompareQuotesPage"));
 const ContractorOnboardingPage = lazy(() => import("@/pages/ContractorOnboardingPage"));
 const OnboardingFlow = lazy(() => import("@/pages/OnboardingFlow"));
 const PricingPage = lazy(() => import("@/pages/PricingPage"));
+const PricingHomeownersPage = lazy(() => import("@/pages/PricingHomeownersPage"));
+const PricingContractorsPage = lazy(() => import("@/pages/PricingContractorsPage"));
 const PageHomeownerWelcome = lazy(() => import("@/pages/proprietaire/PageHomeownerWelcome"));
 const AIPPScorePage = lazy(() => import("@/pages/AIPPScorePage"));
 const MatchingResultsPage = lazy(() => import("@/pages/MatchingResultsPage"));
@@ -697,6 +699,8 @@ export const AppRouter = () => (
         <Route path="/checkout/native/:planCode" element={<PageCheckoutNativeScrollable />} />
         <Route path="/activation" element={<PageActivationStart />} />
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/pricing/proprietaires" element={<PricingHomeownersPage />} />
+        <Route path="/pricing/entrepreneurs" element={<PricingContractorsPage />} />
         <Route path="/aipp-score" element={<AIPPScorePage />} />
         <Route path="/audit-aipp" element={<PageAuditAIPPv2 />} />
         <Route path="/audit-aipp/results/:auditId" element={<PageAuditResultsAIPPv2 />} />
