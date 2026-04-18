@@ -1,113 +1,39 @@
 
-## Goal
-Unifier toutes les saisies d'adresses sur la plateforme avec **vérification Google Places obligatoire**. Une seule étape : on tape, on choisit dans la liste, et tous les champs (ville, province, code postal, lat/lng) sont remplis automatiquement et verrouillés. Plus jamais demander la ville/province/code postal séparément.
+## Diagnostic
 
-## Audit rapide
+L'edge function `google-places-autocomplete` répond bien (200), mais Google retourne **0 prédiction** systématiquement — même avec une adresse claire. Le code actuel ignore complètement le `status` de Google (REQUEST_DENIED, OVER_QUERY_LIMIT, API not enabled, etc.) et renvoie `predictions: []` comme si tout allait bien. C'est pour ça que l'UI affiche "Sélectionnez une adresse dans la liste" sans jamais montrer de liste.
 
-Champs adresse trouvés dans le projet :
-1. `src/components/property/PropertyForm.tsx` — formulaire "Nouvelle propriété" (capture d'écran) → 5 champs séparés
-2. `src/components/onboarding/FormPropertyQuickAdd.tsx` — onboarding propriétaire → 4 champs séparés
-3. `src/components/property/GooglePlacesInput.tsx` — déjà refactorisé sur edge function (bonne base)
-4. `src/components/rep-onboarding/StepSeedCapture.tsx` — entrepreneur (pas d'adresse, ok)
-5. Plusieurs autres surfaces (booking, condo, emergency) à harmoniser
+Causes probables côté Google Cloud :
+1. **Places API (legacy) non activée** sur le projet — c'est le cas le plus fréquent
+2. **Restriction de clé** (HTTP referrer / IP) qui bloque les appels serveur
+3. **Facturation non activée** sur le projet Google Cloud
+4. **Mauvaise clé** dans le secret `GOOGLE_PLACES_API_KEY`
 
-## Architecture cible
+## Plan de correction
 
-### 1. Composant unique : `AddressVerifiedInput`
-Un seul composant React partout. API simple :
+### 1. Rendre l'edge function bavarde (debug + erreurs propres)
+- Logger le `status` et `error_message` de Google côté serveur
+- Si `status !== "OK"` ET `status !== "ZERO_RESULTS"` → renvoyer `{ predictions: [], error: status, message: error_message }` avec status HTTP 200 pour que le client puisse afficher l'erreur
+- Ajouter un mode debug : si `?debug=1`, retourner aussi l'URL Google appelée (sans la clé)
 
-```tsx
-<AddressVerifiedInput
-  value={form.verifiedAddress}
-  onChange={(verified) => setForm({ ...form, verifiedAddress: verified })}
-  required
-  label="Adresse"
-/>
-```
+### 2. Afficher l'erreur dans l'UI
+- `useAddressAutocomplete` : capturer le champ `error` retourné et l'exposer
+- `AddressVerifiedInput` : si erreur Google (ex. `REQUEST_DENIED`), afficher un message clair sous le champ : "Service d'adresse temporairement indisponible — contactez l'équipe" + un bouton "Saisir manuellement" comme fallback de secours
 
-**Comportement :**
-- Un seul champ visible : "Tapez votre adresse"
-- Autocomplete via `google-places-autocomplete` (edge function existante)
-- L'utilisateur **doit** sélectionner une suggestion → état `verified: true`
-- Si l'utilisateur tape sans sélectionner → état `verified: false` → bloque le submit
-- Une fois vérifié : badge vert "✓ Adresse vérifiée" + petit récap (ville, province, code postal) en read-only sous le champ
-- Bouton "Modifier" pour repartir à zéro
+### 3. Vérifier le secret
+- Confirmer que `GOOGLE_PLACES_API_KEY` existe bien dans les secrets de l'edge function
+- Si manquant ou invalide, demander à l'utilisateur de le (re)configurer
 
-**Type retourné :**
-```ts
-type VerifiedAddress = {
-  verified: true;
-  placeId: string;
-  fullAddress: string;
-  streetNumber: string;
-  streetName: string;
-  city: string;
-  province: string;
-  postalCode: string;
-  country: string;
-  latitude: number;
-  longitude: number;
-} | { verified: false; raw: string };
-```
+### 4. (Recommandation utilisateur, hors code)
+Vérifier dans Google Cloud Console :
+- **Places API** activée (et non Places API New si la clé est legacy)
+- **Billing** actif
+- **Key restrictions** : aucune restriction HTTP referrer (puisqu'on appelle depuis le serveur), ou ajouter l'IP des edge functions Supabase
 
-### 2. Edge function : enrichir `google-places-autocomplete`
-Ajouter un mode `details` qui retourne tous les composants structurés (street_number, route, locality, administrative_area_level_1, postal_code, geometry). Probablement déjà présent — à vérifier et compléter au besoin.
+### 5. Test end-to-end
+Une fois l'edge function redéployée, retester via curl puis via l'UI mobile.
 
-### 3. Migration des formulaires
-Remplacer les blocs adresse multi-champs par `<AddressVerifiedInput />` dans :
-- `PropertyForm.tsx` → supprimer Adresse, Ville, Province, Code postal → 1 seul champ
-- `FormPropertyQuickAdd.tsx` → idem
-- Vérifier autres surfaces (booking, condo onboarding, emergency)
-
-### 4. Validation côté serveur (RPC)
-Ajouter une RPC `rpc_validate_address_verified(place_id, lat, lng)` qui re-confirme que `place_id` existe via Google Places (cache 30 jours). Empêche de bypasser le front. Appelée dans `createProperty` côté service.
-
-### 5. Garde-fou DB
-- Colonne `properties.address_verified boolean default false`
-- Colonne `properties.google_place_id text`
-- Trigger : refuser INSERT/UPDATE si `address_verified = false` (sauf admin)
-
-## Ce que ça change pour l'utilisateur
-
-**Avant :** 5 champs à remplir, erreurs de saisie, doublons "Montréal" / "Montreal" / "MTL"
-**Après :** 1 champ, suggestions live, données 100% normalisées
-
-```text
-┌─────────────────────────────────────┐
-│ Adresse *                           │
-│ ┌─────────────────────────────────┐ │
-│ │ 📍 128 78e Avenue, Laval, QC... │ │
-│ └─────────────────────────────────┘ │
-│   ✓ Adresse vérifiée                │
-│   Laval, QC H7V 3K1                 │
-│   [Modifier]                        │
-└─────────────────────────────────────┘
-```
-
-## Lots de livraison
-
-**Lot 1 — Composant + edge function**
-- Audit `google-places-autocomplete` (champs retournés)
-- Créer `src/components/address/AddressVerifiedInput.tsx`
-- Créer hook `useAddressAutocomplete.ts`
-- Type `VerifiedAddress` dans `src/types/address.ts`
-
-**Lot 2 — Migration formulaires propriété**
-- `PropertyForm.tsx` : remplacer 5 champs par 1
-- `FormPropertyQuickAdd.tsx` : idem
-- Adapter `useCreateProperty` / `propertyService.createProperty` pour accepter `VerifiedAddress`
-
-**Lot 3 — Garde-fou DB**
-- Migration : `address_verified`, `google_place_id` sur `properties`
-- Trigger de validation
-- Adapter le service pour passer `place_id`
-
-**Lot 4 — Audit autres surfaces**
-- Recensement complet (booking, condo, emergency, contractor onboarding)
-- Migration au cas par cas
-
-## Questions
-
-1. **Scope du lot 1+2** : on commence par les 2 formulaires propriété (PropertyForm + FormPropertyQuickAdd) puis on étend, OK ?
-2. **Garde-fou DB (lot 3)** : on bloque côté trigger toute adresse non vérifiée, ou on laisse en "warning" pour les imports admin/legacy ?
-3. **Champ unité/appartement** : on garde un petit champ optionnel "App. / Unité" séparé après le champ vérifié (Google ne le capture pas toujours) ?
+## Livrables
+- `supabase/functions/google-places-autocomplete/index.ts` : check du `status`, propagation de l'erreur, logs
+- `src/hooks/useAddressAutocomplete.ts` : exposer l'erreur Google
+- `src/components/address/AddressVerifiedInput.tsx` : afficher l'erreur sous le champ
