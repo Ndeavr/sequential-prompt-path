@@ -10616,6 +10616,13 @@ export type Database = {
             referencedRelation: "automation_agents"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "automation_jobs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "v_pipeline_agents_live"
+            referencedColumns: ["id"]
+          },
         ]
       }
       automation_prompt_exports: {
@@ -10750,6 +10757,13 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "automation_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_runs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "v_pipeline_agents_live"
             referencedColumns: ["id"]
           },
         ]
@@ -58427,6 +58441,51 @@ export type Database = {
           },
         ]
       }
+      v_pipeline_agents_live: {
+        Row: {
+          agent_key: string | null
+          agent_name: string | null
+          agent_type: string | null
+          error_streak: number | null
+          health_status: string | null
+          id: string | null
+          is_enabled: boolean | null
+          last_run_at: string | null
+          last_status: string | null
+          next_run_at: string | null
+          priority: number | null
+          seconds_since_last_run: number | null
+        }
+        Insert: {
+          agent_key?: string | null
+          agent_name?: string | null
+          agent_type?: string | null
+          error_streak?: number | null
+          health_status?: never
+          id?: string | null
+          is_enabled?: boolean | null
+          last_run_at?: string | null
+          last_status?: string | null
+          next_run_at?: string | null
+          priority?: number | null
+          seconds_since_last_run?: never
+        }
+        Update: {
+          agent_key?: string | null
+          agent_name?: string | null
+          agent_type?: string | null
+          error_streak?: number | null
+          health_status?: never
+          id?: string | null
+          is_enabled?: boolean | null
+          last_run_at?: string | null
+          last_status?: string | null
+          next_run_at?: string | null
+          priority?: number | null
+          seconds_since_last_run?: never
+        }
+        Relationships: []
+      }
       v_pipeline_dependency_health: {
         Row: {
           avg_latency_ms: number | null
@@ -59009,6 +59068,15 @@ export type Database = {
       }
       rpc_get_recruitment_funnel_stats: { Args: never; Returns: Json }
       rpc_pipeline_get_live_overview: { Args: never; Returns: Json }
+      rpc_pipeline_get_run_details: {
+        Args: { p_run_id: string }
+        Returns: Json
+      }
+      rpc_pipeline_resolve_blocker: {
+        Args: { p_blocker_id: string; p_note?: string }
+        Returns: Json
+      }
+      rpc_pipeline_retry_run: { Args: { p_run_id: string }; Returns: Json }
       search_rag_chunks_text: {
         Args: {
           filter_namespaces?: string[]
