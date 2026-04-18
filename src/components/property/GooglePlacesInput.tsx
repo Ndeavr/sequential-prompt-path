@@ -1,61 +1,36 @@
 /**
- * UNPRO — Google Places Autocomplete Input
- * Uses the Google Places Autocomplete API for address suggestions.
- * Falls back to a regular input if the API key is unavailable.
+ * UNPRO — Address Autocomplete Input
+ * Uses our `google-places-autocomplete` Edge Function as a proxy.
+ * The Google API key never leaves the server, avoiding RefererNotAllowed errors
+ * and removing the need to load the Google Maps JS SDK on the client.
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
-import { MapPin } from "lucide-react";
+import { MapPin, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
-declare global {
-  interface Window {
-    google?: {
-      maps: {
-        places: {
-          Autocomplete: new (input: HTMLInputElement, opts?: any) => any;
-        };
-      };
-    };
-  }
+interface PlaceSelection {
+  address: string;
+  lat?: number;
+  lng?: number;
+  city?: string;
+  postalCode?: string;
 }
 
 interface GooglePlacesInputProps {
   value: string;
   onChange: (value: string) => void;
-  onPlaceSelect?: (place: { address: string; lat?: number; lng?: number; city?: string; postalCode?: string }) => void;
+  onPlaceSelect?: (place: PlaceSelection) => void;
   placeholder?: string;
   className?: string;
 }
 
-const GOOGLE_MAPS_SCRIPT_ID = "unpro-google-maps";
-
-function loadGoogleMapsScript(apiKey: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (window.google?.maps?.places) {
-      resolve();
-      return;
-    }
-    if (document.getElementById(GOOGLE_MAPS_SCRIPT_ID)) {
-      // Script already loading, wait for it
-      const check = setInterval(() => {
-        if (window.google?.maps?.places) {
-          clearInterval(check);
-          resolve();
-        }
-      }, 100);
-      setTimeout(() => { clearInterval(check); reject(new Error("timeout")); }, 8000);
-      return;
-    }
-    const script = document.createElement("script");
-    script.id = GOOGLE_MAPS_SCRIPT_ID;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=fr&region=CA`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Google Maps failed to load"));
-    document.head.appendChild(script);
-  });
+interface Prediction {
+  place_id: string;
+  description: string;
+  structured_formatting?: { main_text?: string; secondary_text?: string };
 }
 
 export default function GooglePlacesInput({
@@ -66,80 +41,103 @@ export default function GooglePlacesInput({
   className = "",
 }: GooglePlacesInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<any>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [loadError, setLoadError] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<number | null>(null);
+  const reqIdRef = useRef(0);
 
-  // Load Google Maps
+  const [predictions, setPredictions] = useState<Prediction[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+
+  // Close dropdown on outside click
   useEffect(() => {
-    let cancelled = false;
-    async function init() {
-      try {
-        let apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
-        if (!apiKey) {
-          const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-          const res = await fetch(`https://${projectId}.supabase.co/functions/v1/get-places-key`);
-          const data = await res.json();
-          apiKey = data?.key;
-        }
-        if (!apiKey) { if (!cancelled) { setLoadError(true); setIsInitializing(false); } return; }
-        await loadGoogleMapsScript(apiKey);
-        if (!cancelled) { setIsLoaded(true); setIsInitializing(false); }
-      } catch {
-        if (!cancelled) { setLoadError(true); setIsInitializing(false); }
-      }
+    function handleClickOutside(e: MouseEvent) {
+      if (!containerRef.current?.contains(e.target as Node)) setIsOpen(false);
     }
-    init();
-    // Fallback: stop waiting after 5s
-    const timeout = setTimeout(() => { if (!cancelled) setIsInitializing(false); }, 5000);
-    return () => { cancelled = true; clearTimeout(timeout); };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Initialize autocomplete
-  useEffect(() => {
-    if (!isLoaded || !inputRef.current || autocompleteRef.current) return;
+  // Debounced query
+  const queryPredictions = useCallback(async (input: string) => {
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    if (input.trim().length < 3) {
+      setPredictions([]);
+      setIsOpen(false);
+      return;
+    }
+    debounceRef.current = window.setTimeout(async () => {
+      const reqId = ++reqIdRef.current;
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("google-places-autocomplete", {
+          body: { input, types: "address", region: "ca", language: "fr" },
+        });
+        if (reqId !== reqIdRef.current) return; // stale
+        if (error) {
+          setPredictions([]);
+          setIsOpen(false);
+          return;
+        }
+        const preds: Prediction[] = data?.predictions || [];
+        setPredictions(preds);
+        setIsOpen(preds.length > 0);
+        setActiveIndex(-1);
+      } finally {
+        if (reqId === reqIdRef.current) setIsLoading(false);
+      }
+    }, 250);
+  }, []);
 
-    const ac = new window.google.maps.places.Autocomplete(inputRef.current, {
-      componentRestrictions: { country: "ca" },
-      types: ["address"],
-      fields: ["formatted_address", "geometry", "address_components"],
-    });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    onChange(v);
+    queryPredictions(v);
+  };
 
-    ac.addListener("place_changed", () => {
-      const place = ac.getPlace();
-      if (!place?.formatted_address) return;
-
-      const address = place.formatted_address;
-      onChange(address);
-
-      // Extract city and postal code
-      let city = "";
-      let postalCode = "";
-      place.address_components?.forEach((comp) => {
-        if (comp.types.includes("locality")) city = comp.long_name;
-        if (comp.types.includes("postal_code")) postalCode = comp.long_name;
+  const handleSelect = async (pred: Prediction) => {
+    onChange(pred.description);
+    setIsOpen(false);
+    setPredictions([]);
+    try {
+      const { data } = await supabase.functions.invoke("google-places-autocomplete", {
+        body: { place_id: pred.place_id },
       });
+      const r = data?.result;
+      if (r) {
+        onPlaceSelect?.({
+          address: r.address || pred.description,
+          city: r.city || "",
+          // lat/lng/postal_code not currently returned by the edge function;
+          // can be added there later without changing this component's contract
+        });
+      } else {
+        onPlaceSelect?.({ address: pred.description });
+      }
+    } catch {
+      onPlaceSelect?.({ address: pred.description });
+    }
+  };
 
-      onPlaceSelect?.({
-        address,
-        lat: place.geometry?.location?.lat(),
-        lng: place.geometry?.location?.lng(),
-        city,
-        postalCode,
-      });
-    });
-
-    autocompleteRef.current = ac;
-  }, [isLoaded, onChange, onPlaceSelect]);
-
-  // Always use controlled mode but let Google Autocomplete update via onChange
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(e.target.value);
-  }, [onChange]);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isOpen || predictions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex(i => (i + 1) % predictions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex(i => (i <= 0 ? predictions.length - 1 : i - 1));
+    } else if (e.key === "Enter" && activeIndex >= 0) {
+      e.preventDefault();
+      handleSelect(predictions[activeIndex]);
+    } else if (e.key === "Escape") {
+      setIsOpen(false);
+    }
+  };
 
   return (
-    <div className={`relative ${className}`}>
+    <div ref={containerRef} className={cn("relative", className)}>
       <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
       <Input
         ref={inputRef}
@@ -147,12 +145,43 @@ export default function GooglePlacesInput({
         placeholder={placeholder}
         value={value}
         onChange={handleChange}
-        className="h-13 rounded-2xl bg-card border-border/40 text-base pl-10 pr-5 shadow-sm w-full"
+        onKeyDown={handleKeyDown}
+        onFocus={() => predictions.length > 0 && setIsOpen(true)}
+        className="h-13 rounded-2xl bg-card border-border/40 text-base pl-10 pr-10 shadow-sm w-full"
         autoComplete="off"
       />
-      {isInitializing && (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2">
-          <div className="h-4 w-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+      {isLoading && (
+        <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
+      )}
+      {isOpen && predictions.length > 0 && (
+        <div className="absolute left-0 right-0 top-full mt-2 z-50 rounded-2xl border border-border/40 bg-popover shadow-lg overflow-hidden">
+          <ul role="listbox" className="max-h-72 overflow-y-auto">
+            {predictions.map((p, idx) => (
+              <li
+                key={p.place_id}
+                role="option"
+                aria-selected={idx === activeIndex}
+                onMouseDown={(e) => { e.preventDefault(); handleSelect(p); }}
+                onMouseEnter={() => setActiveIndex(idx)}
+                className={cn(
+                  "px-4 py-3 cursor-pointer flex items-start gap-3 text-sm transition-colors",
+                  idx === activeIndex ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
+                )}
+              >
+                <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                <div className="min-w-0">
+                  <div className="font-medium truncate">
+                    {p.structured_formatting?.main_text || p.description}
+                  </div>
+                  {p.structured_formatting?.secondary_text && (
+                    <div className="text-xs text-muted-foreground truncate">
+                      {p.structured_formatting.secondary_text}
+                    </div>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
