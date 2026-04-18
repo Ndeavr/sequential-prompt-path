@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Activity, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BadgeRunState from "./BadgeRunState";
@@ -30,7 +29,7 @@ export default function TablePipelineExecutions({ runs }: { runs: PipelineLiveRu
             {runs.map(r => (
               <button
                 key={r.id}
-                onClick={() => navigate(`/admin/outbound/runs-legacy?id=${r.id}`)}
+                onClick={() => navigate(`/admin/outbound/runs/${r.id}`)}
                 className="w-full text-left p-3 hover:bg-muted/40 transition-colors"
               >
                 <div className="flex items-start justify-between gap-3">

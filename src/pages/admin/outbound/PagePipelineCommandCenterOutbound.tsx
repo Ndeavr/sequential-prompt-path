@@ -44,8 +44,11 @@ export default function PagePipelineCommandCenterOutbound() {
                 <span className={`h-1.5 w-1.5 rounded-full ${isFetching ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
                 {isFetching ? "Sync…" : "Live"}
               </span>
-              <Button asChild variant="outline" size="sm" className="h-8 text-xs">
-                <Link to="/admin/outbound/runs-legacy">Vue legacy</Link>
+              <Button asChild variant="outline" size="sm" className="h-8 text-xs px-2">
+                <Link to="/admin/outbound/blockers">Blocages</Link>
+              </Button>
+              <Button asChild variant="outline" size="sm" className="h-8 text-xs px-2">
+                <Link to="/admin/outbound/health">Santé</Link>
               </Button>
             </div>
           </div>
