@@ -1,7 +1,7 @@
 /**
  * UNPRO — Address Autocomplete Hook
  * Wraps the `google-places-autocomplete` edge function with debouncing
- * and request deduplication.
+ * and request deduplication. Surfaces upstream Google errors.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,11 +20,16 @@ interface UseAddressAutocompleteOptions {
   minChars?: number;
 }
 
+export interface AddressServiceError {
+  code: string;       // e.g. REQUEST_DENIED, OVER_QUERY_LIMIT, API_KEY_MISSING, SERVICE_FAILED
+  message: string;
+}
+
 export function useAddressAutocomplete(opts: UseAddressAutocompleteOptions = {}) {
   const { region = "ca", language = "fr", debounceMs = 250, minChars = 3 } = opts;
   const [predictions, setPredictions] = useState<AddressPrediction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<AddressServiceError | null>(null);
   const debounceRef = useRef<number | null>(null);
   const reqIdRef = useRef(0);
 
@@ -36,6 +41,7 @@ export function useAddressAutocomplete(opts: UseAddressAutocompleteOptions = {})
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
     if (!input || input.trim().length < minChars) {
       setPredictions([]);
+      setError(null);
       return;
     }
     debounceRef.current = window.setTimeout(async () => {
@@ -49,11 +55,21 @@ export function useAddressAutocomplete(opts: UseAddressAutocompleteOptions = {})
         );
         if (reqId !== reqIdRef.current) return;
         if (fnError) {
-          setError(fnError.message || "Erreur de recherche");
+          setError({ code: "FUNCTION_ERROR", message: fnError.message || "Erreur réseau" });
+          setPredictions([]);
+          return;
+        }
+        // Upstream Google error surfaced from edge function (HTTP 200 + error field)
+        if (data?.error) {
+          setError({ code: data.error, message: data.message || "Service indisponible" });
           setPredictions([]);
           return;
         }
         setPredictions((data?.predictions as AddressPrediction[]) || []);
+      } catch (e) {
+        if (reqId !== reqIdRef.current) return;
+        setError({ code: "NETWORK_ERROR", message: String(e) });
+        setPredictions([]);
       } finally {
         if (reqId === reqIdRef.current) setIsLoading(false);
       }
@@ -86,7 +102,10 @@ export function useAddressAutocomplete(opts: UseAddressAutocompleteOptions = {})
     }
   }, []);
 
-  const reset = useCallback(() => setPredictions([]), []);
+  const reset = useCallback(() => {
+    setPredictions([]);
+    setError(null);
+  }, []);
 
   return { predictions, isLoading, error, search, fetchDetails, reset };
 }
