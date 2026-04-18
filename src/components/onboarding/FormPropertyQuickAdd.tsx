@@ -1,9 +1,11 @@
 /**
  * UNPRO — Quick Property Add Form (homeowner onboarding step 2)
+ * Address must be verified through Google Places.
  */
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import AddressVerifiedInput from "@/components/address/AddressVerifiedInput";
+import { emptyAddress, isVerified, type VerifiedAddress } from "@/types/address";
 
 const PROPERTY_TYPES = [
   { value: "maison", label: "Maison" },
@@ -26,53 +28,47 @@ interface FormPropertyQuickAddProps {
 }
 
 export default function FormPropertyQuickAdd({ onSave, loading }: FormPropertyQuickAddProps) {
-  const [form, setForm] = useState({
-    address_line_1: "",
-    city: "",
-    postal_code: "",
-    property_type: "",
-  });
+  const [address, setAddress] = useState<VerifiedAddress>(emptyAddress());
+  const [propertyType, setPropertyType] = useState("");
 
-  const update = (key: string, value: string) => setForm(prev => ({ ...prev, [key]: value }));
-  const isValid = form.address_line_1.trim() && form.city.trim() && form.property_type;
+  const isValid = isVerified(address) && propertyType;
+
+  const handleSubmit = () => {
+    if (!isVerified(address)) return;
+    const line1 = address.unit
+      ? `${address.streetNumber} ${address.streetName}, app. ${address.unit}`
+      : `${address.streetNumber} ${address.streetName}`.trim() || address.fullAddress;
+    onSave({
+      address_line_1: line1,
+      city: address.city,
+      postal_code: address.postalCode,
+      property_type: propertyType,
+    });
+  };
 
   return (
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-xl font-bold text-foreground">Votre propriété</h2>
-        <p className="text-sm text-muted-foreground mt-1">Ajoutez votre adresse pour commencer</p>
+        <p className="text-sm text-muted-foreground mt-1">Recherchez votre adresse pour commencer</p>
       </div>
 
-      <div className="space-y-3">
-        <Input
-          placeholder="Adresse"
-          value={form.address_line_1}
-          onChange={(e) => update("address_line_1", e.target.value)}
-          className="h-11 rounded-xl"
+      <div className="space-y-4">
+        <AddressVerifiedInput
+          value={address}
+          onChange={setAddress}
+          label="Adresse"
+          required
         />
-        <div className="grid grid-cols-2 gap-3">
-          <Input
-            placeholder="Ville"
-            value={form.city}
-            onChange={(e) => update("city", e.target.value)}
-            className="h-11 rounded-xl"
-          />
-          <Input
-            placeholder="Code postal"
-            value={form.postal_code}
-            onChange={(e) => update("postal_code", e.target.value)}
-            className="h-11 rounded-xl"
-          />
-        </div>
 
         <div className="grid grid-cols-2 gap-2">
           {PROPERTY_TYPES.map((pt) => (
             <button
               key={pt.value}
               type="button"
-              onClick={() => update("property_type", pt.value)}
+              onClick={() => setPropertyType(pt.value)}
               className={`p-3 rounded-xl text-sm font-medium border transition-all ${
-                form.property_type === pt.value
+                propertyType === pt.value
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border bg-card text-foreground hover:border-primary/30"
               }`}
@@ -84,7 +80,7 @@ export default function FormPropertyQuickAdd({ onSave, loading }: FormPropertyQu
       </div>
 
       <Button
-        onClick={() => onSave(form)}
+        onClick={handleSubmit}
         disabled={!isValid || loading}
         className="w-full h-11 rounded-xl"
       >
