@@ -58427,6 +58427,100 @@ export type Database = {
           },
         ]
       }
+      v_pipeline_dependency_health: {
+        Row: {
+          avg_latency_ms: number | null
+          dependency_key: string | null
+          dependency_name: string | null
+          incidents_24h: number | null
+          last_failure_at: string | null
+          last_success_at: string | null
+          open_blockers: number | null
+          status: string | null
+        }
+        Relationships: []
+      }
+      v_pipeline_runs_live: {
+        Row: {
+          campaign_id: string | null
+          created_at: string | null
+          current_stage: string | null
+          diagnostic_summary: Json | null
+          duration_seconds: number | null
+          finished_at: string | null
+          id: string | null
+          last_transition_at: string | null
+          normalized_status: string | null
+          open_blockers_count: number | null
+          priority_score: number | null
+          run_status: string | null
+          started_at: string | null
+          started_by: string | null
+          target_list_id: string | null
+          transitions_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string | null
+          current_stage?: string | null
+          diagnostic_summary?: Json | null
+          duration_seconds?: never
+          finished_at?: string | null
+          id?: string | null
+          last_transition_at?: string | null
+          normalized_status?: never
+          open_blockers_count?: never
+          priority_score?: number | null
+          run_status?: string | null
+          started_at?: string | null
+          started_by?: string | null
+          target_list_id?: string | null
+          transitions_count?: never
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string | null
+          current_stage?: string | null
+          diagnostic_summary?: Json | null
+          duration_seconds?: never
+          finished_at?: string | null
+          id?: string | null
+          last_transition_at?: string | null
+          normalized_status?: never
+          open_blockers_count?: never
+          priority_score?: number | null
+          run_status?: string | null
+          started_at?: string | null
+          started_by?: string | null
+          target_list_id?: string | null
+          transitions_count?: never
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_autopilot_runs_target_list_id_fkey"
+            columns: ["target_list_id"]
+            isOneToOne: false
+            referencedRelation: "agent_target_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_pipeline_stage_metrics_24h: {
+        Row: {
+          blocked_count: number | null
+          failed_count: number | null
+          last_activity_at: string | null
+          queued_count: number | null
+          running_count: number | null
+          stage_key: string | null
+          success_count: number | null
+          total_count: number | null
+        }
+        Relationships: []
+      }
       v_property_map_markers: {
         Row: {
           certification_status: string | null
@@ -58914,6 +59008,7 @@ export type Database = {
         }[]
       }
       rpc_get_recruitment_funnel_stats: { Args: never; Returns: Json }
+      rpc_pipeline_get_live_overview: { Args: never; Returns: Json }
       search_rag_chunks_text: {
         Args: {
           filter_namespaces?: string[]
