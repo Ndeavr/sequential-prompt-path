@@ -1,5 +1,5 @@
-import PageHomeRevenueFocused from "@/pages/PageHomeRevenueFocused";
+import Home from "@/pages/Home";
 
 export default function HomeWithFeatureFlag() {
-  return <PageHomeRevenueFocused />;
+  return <Home />;
 }
