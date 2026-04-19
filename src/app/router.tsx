@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -618,6 +618,17 @@ export const AppRouter = () => (
         <Route path="/alex/analysis" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
         <Route path="/conversation" element={<Suspense fallback={<LazyFallback />}><PageHomeAlexConversationalLite /></Suspense>} />
         <Route path="/" element={<HomeWithFeatureFlag />} />
+
+        {/* ── Conversion-first public surface (whitelist) ── */}
+        <Route path="/alex-match" element={<PageAlexMatch />} />
+        <Route path="/results" element={<PageResults />} />
+        <Route path="/upload-photo" element={<Navigate to="/diagnostic-photo" replace />} />
+        <Route path="/join" element={<PageJoinEntrepreneur />} />
+        <Route path="/import-business" element={<Navigate to="/business-card-import" replace />} />
+        <Route path="/plans" element={<Navigate to="/pricing/entrepreneurs" replace />} />
+        <Route path="/admin-cockpit" element={<ProtectedRoute requiredRole="admin"><AdminCockpitMinimal /></ProtectedRoute>} />
+        <Route path="/coverage" element={<ProtectedRoute requiredRole="admin"><PageCoverageGoNoGo /></ProtectedRoute>} />
+
         <Route path="/intent" element={<Suspense fallback={<LazyFallback />}><HomeIntentRouterDynamic /></Suspense>} />
         <Route path="/homeowner" element={<Suspense fallback={<LazyFallback />}><HomeHomeownerAdaptive /></Suspense>} />
         <Route path="/contractor" element={<Suspense fallback={<LazyFallback />}><HomeContractorAdaptive /></Suspense>} />
