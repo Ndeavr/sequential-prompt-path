@@ -335,7 +335,7 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
       try {
         const plans = await getCachedPlans();
         if (plans.length > 0) {
-          const recommended = plans.find(p => p.code === "premium") || plans[1];
+          const recommended = plans.find(p => p.code === "premium_acq") || plans[1];
           audioEngine.play("success");
           emitSafe(
             "alex",

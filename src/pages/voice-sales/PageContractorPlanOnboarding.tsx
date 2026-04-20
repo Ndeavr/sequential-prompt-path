@@ -46,7 +46,7 @@ export default function PageContractorPlanOnboarding() {
     setSelectedPlanId(planId);
     const plan = plans?.find((p: any) => p.id === planId);
     // Show Founders upsell for Élite/Signature
-    if (plan && (plan.code === "elite" || plan.code === "signature")) {
+    if (plan && (plan.code === "elite_acq" || plan.code === "signature")) {
       setShowFoundersModal(true);
     } else {
       setSelectedVariant("regular");
