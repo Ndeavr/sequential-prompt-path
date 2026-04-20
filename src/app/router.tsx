@@ -599,6 +599,8 @@ export const AppRouter = () => (
   <BrowserRouter>
     <ScrollRestoration />
     <BannerContinueFlow />
+    <AuthReturnRouter />
+    <AuthOverlayPremium />
     <Suspense fallback={<LazyFallback />}>
       <Routes>
         {/* Redirects for common mismatched entry points */}
