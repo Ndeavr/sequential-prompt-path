@@ -41333,6 +41333,50 @@ export type Database = {
           },
         ]
       }
+      pro_landing_views: {
+        Row: {
+          alex_started: boolean
+          created_at: string
+          cta_clicked: string | null
+          id: string
+          prospect_id: string | null
+          referrer: string | null
+          slug: string | null
+          tracking_token: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          alex_started?: boolean
+          created_at?: string
+          cta_clicked?: string | null
+          id?: string
+          prospect_id?: string | null
+          referrer?: string | null
+          slug?: string | null
+          tracking_token?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          alex_started?: boolean
+          created_at?: string
+          cta_clicked?: string | null
+          id?: string
+          prospect_id?: string | null
+          referrer?: string | null
+          slug?: string | null
+          tracking_token?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pro_landing_views_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "war_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       problem_causes: {
         Row: {
           created_at: string | null
@@ -58162,18 +58206,23 @@ export type Database = {
           category: string
           city: string
           company_name: string
+          conversion_score: number | null
           created_at: string
           email: string | null
           email_preview: string | null
           email_subject: string | null
           emailed_at: string | null
           enriched_at: string | null
+          estimated_missed_leads_monthly: number | null
           facebook_url: string | null
           google_maps_url: string | null
           id: string
           instagram_url: string | null
+          landing_views_count: number
+          last_landing_view_at: string | null
           lead_score: number | null
           notes: string | null
+          opportunity_score: number | null
           phone: string | null
           postal_code: string | null
           rating: number | null
@@ -58181,9 +58230,14 @@ export type Database = {
           reviews_count: number | null
           score_breakdown: Json | null
           scored_at: string | null
+          slug: string | null
           source: string | null
+          speed_score: number | null
           status: string
+          tracking_token: string | null
+          trust_score: number | null
           updated_at: string
+          visibility_score: number | null
           website: string | null
         }
         Insert: {
@@ -58194,18 +58248,23 @@ export type Database = {
           category: string
           city?: string
           company_name: string
+          conversion_score?: number | null
           created_at?: string
           email?: string | null
           email_preview?: string | null
           email_subject?: string | null
           emailed_at?: string | null
           enriched_at?: string | null
+          estimated_missed_leads_monthly?: number | null
           facebook_url?: string | null
           google_maps_url?: string | null
           id?: string
           instagram_url?: string | null
+          landing_views_count?: number
+          last_landing_view_at?: string | null
           lead_score?: number | null
           notes?: string | null
+          opportunity_score?: number | null
           phone?: string | null
           postal_code?: string | null
           rating?: number | null
@@ -58213,9 +58272,14 @@ export type Database = {
           reviews_count?: number | null
           score_breakdown?: Json | null
           scored_at?: string | null
+          slug?: string | null
           source?: string | null
+          speed_score?: number | null
           status?: string
+          tracking_token?: string | null
+          trust_score?: number | null
           updated_at?: string
+          visibility_score?: number | null
           website?: string | null
         }
         Update: {
@@ -58226,18 +58290,23 @@ export type Database = {
           category?: string
           city?: string
           company_name?: string
+          conversion_score?: number | null
           created_at?: string
           email?: string | null
           email_preview?: string | null
           email_subject?: string | null
           emailed_at?: string | null
           enriched_at?: string | null
+          estimated_missed_leads_monthly?: number | null
           facebook_url?: string | null
           google_maps_url?: string | null
           id?: string
           instagram_url?: string | null
+          landing_views_count?: number
+          last_landing_view_at?: string | null
           lead_score?: number | null
           notes?: string | null
+          opportunity_score?: number | null
           phone?: string | null
           postal_code?: string | null
           rating?: number | null
@@ -58245,9 +58314,14 @@ export type Database = {
           reviews_count?: number | null
           score_breakdown?: Json | null
           scored_at?: string | null
+          slug?: string | null
           source?: string | null
+          speed_score?: number | null
           status?: string
+          tracking_token?: string | null
+          trust_score?: number | null
           updated_at?: string
+          visibility_score?: number | null
           website?: string | null
         }
         Relationships: []
@@ -59325,6 +59399,7 @@ export type Database = {
         Returns: Json
       }
       unpro_aipp_tier: { Args: { score: number }; Returns: string }
+      unpro_slugify: { Args: { input: string }; Returns: string }
       update_profile_field_partial: {
         Args: { p_field: string; p_value: string }
         Returns: Json
