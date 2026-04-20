@@ -375,6 +375,21 @@ export default function PageProLandingNuclearClose() {
           <MissedLeadsChart missed={prospect.scores.missed} />
         </section>
 
+        {/* Inline embedded Stripe checkout — same-session conversion */}
+        <section className="mt-6">
+          <InlineCheckoutNuclear
+            prospectId={prospect.id}
+            prospectSlug={prospect.slug}
+            category={prospect.category}
+            city={prospect.city}
+            opportunityScore={prospect.scores.opportunity}
+            onTrack={(event, payload) => {
+              logProLandingCta(prospect.id, `checkout_${event}`).catch(() => {});
+              if (payload) console.debug("[nuclear-checkout]", event, payload);
+            }}
+          />
+        </section>
+
         {/* CTAs */}
         <section className="mt-10 grid gap-3 md:grid-cols-3">
           <Card
