@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   CheckCircle2, ArrowRight, HardHat, TrendingUp, Star, Crown,
-  CalendarCheck, Sparkles, Trophy, Zap, ChevronDown, Seedling,
+  CalendarCheck, Sparkles, Trophy, Zap, ChevronDown, Sprout,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -304,9 +304,18 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
     navigate(`/checkout/native/${planCode}?billing=${interval}`);
   };
 
-  // Split: subscription plans vs one-time (founder)
-  const subscriptionPlans = (plans ?? []).filter((p) => p.billingMode !== "one_time");
+  // Split: main subscription grid (Pro/Premium/Élite, position_rank >= 1)
+  // vs hidden entry plan (Recrue, position_rank = 0) vs Founder (one-time)
+  const subscriptionPlans = (plans ?? []).filter(
+    (p) => p.billingMode !== "one_time" && p.positionRank >= 1
+  );
+  const entryPlan = (plans ?? []).find(
+    (p) => p.billingMode !== "one_time" && p.positionRank === 0
+  );
   const founderPlan = (plans ?? []).find((p) => p.billingMode === "one_time");
+
+  // Auto-expand entry plan section if it's the pre-selected/recommended plan
+  const [showEntryPlan, setShowEntryPlan] = useState(preSelectedPlan === "recrue");
 
   return (
     <section className="px-5 py-16 md:py-20 relative" id="plans">
