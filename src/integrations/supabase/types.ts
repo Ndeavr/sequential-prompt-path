@@ -58061,6 +58061,197 @@ export type Database = {
           },
         ]
       }
+      war_campaigns: {
+        Row: {
+          bookings_count: number | null
+          category: string | null
+          city: string
+          completed_at: string | null
+          created_at: string
+          emails_sent: number | null
+          id: string
+          launched_at: string | null
+          launched_by: string | null
+          metadata: Json | null
+          name: string
+          prospects_count: number | null
+          replies_count: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bookings_count?: number | null
+          category?: string | null
+          city?: string
+          completed_at?: string | null
+          created_at?: string
+          emails_sent?: number | null
+          id?: string
+          launched_at?: string | null
+          launched_by?: string | null
+          metadata?: Json | null
+          name: string
+          prospects_count?: number | null
+          replies_count?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bookings_count?: number | null
+          category?: string | null
+          city?: string
+          completed_at?: string | null
+          created_at?: string
+          emails_sent?: number | null
+          id?: string
+          launched_at?: string | null
+          launched_by?: string | null
+          metadata?: Json | null
+          name?: string
+          prospects_count?: number | null
+          replies_count?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      war_prospect_logs: {
+        Row: {
+          actor: string | null
+          created_at: string
+          event_type: string
+          id: string
+          message: string | null
+          metadata: Json | null
+          prospect_id: string | null
+        }
+        Insert: {
+          actor?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          prospect_id?: string | null
+        }
+        Update: {
+          actor?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          prospect_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "war_prospect_logs_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "war_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      war_prospects: {
+        Row: {
+          address: string | null
+          approved_at: string | null
+          approved_by: string | null
+          campaign_id: string | null
+          category: string
+          city: string
+          company_name: string
+          created_at: string
+          email: string | null
+          email_preview: string | null
+          email_subject: string | null
+          emailed_at: string | null
+          enriched_at: string | null
+          facebook_url: string | null
+          google_maps_url: string | null
+          id: string
+          instagram_url: string | null
+          lead_score: number | null
+          notes: string | null
+          phone: string | null
+          postal_code: string | null
+          rating: number | null
+          replied_at: string | null
+          reviews_count: number | null
+          score_breakdown: Json | null
+          scored_at: string | null
+          source: string | null
+          status: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          campaign_id?: string | null
+          category: string
+          city?: string
+          company_name: string
+          created_at?: string
+          email?: string | null
+          email_preview?: string | null
+          email_subject?: string | null
+          emailed_at?: string | null
+          enriched_at?: string | null
+          facebook_url?: string | null
+          google_maps_url?: string | null
+          id?: string
+          instagram_url?: string | null
+          lead_score?: number | null
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          rating?: number | null
+          replied_at?: string | null
+          reviews_count?: number | null
+          score_breakdown?: Json | null
+          scored_at?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          campaign_id?: string | null
+          category?: string
+          city?: string
+          company_name?: string
+          created_at?: string
+          email?: string | null
+          email_preview?: string | null
+          email_subject?: string | null
+          emailed_at?: string | null
+          enriched_at?: string | null
+          facebook_url?: string | null
+          google_maps_url?: string | null
+          id?: string
+          instagram_url?: string | null
+          lead_score?: number | null
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          rating?: number | null
+          replied_at?: string | null
+          reviews_count?: number | null
+          score_breakdown?: Json | null
+          scored_at?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       winning_variants: {
         Row: {
           approved_by: string | null
