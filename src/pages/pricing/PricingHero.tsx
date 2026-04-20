@@ -13,10 +13,10 @@ const fadeUp = {
 };
 
 const KEY_POINTS = [
-  { icon: CalendarCheck, text: "Chaque projet est envoyé à un seul entrepreneur à la fois." },
-  { icon: Ban, text: "Pas de diffusion massive. Pas de guerre de prix." },
-  { icon: Recycle, text: "Pas de leads recyclés." },
-  { icon: MapPin, text: "Places limitées selon la spécialité et la localité." },
+  { icon: CalendarCheck, text: "1 projet → 1 seul entrepreneur. Jamais 3 soumissions." },
+  { icon: Ban, text: "Pas de leads partagés. Pas de guerre de prix." },
+  { icon: Recycle, text: "Pas de leads recyclés ni revendus." },
+  { icon: MapPin, text: "Places limitées par spécialité et par ville." },
 ];
 
 export default function PricingHero() {
