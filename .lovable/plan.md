@@ -1,99 +1,75 @@
 
 
-## Goal
-Fix two regressions:
-1. After login/signup the user lands on home (or a generic dashboard) instead of returning to the exact route they came from — including `/pricing/entrepreneurs`, `/checkout/native/:planCode`, calculator screens, etc.
-2. Remove every stale plan reference (old Founder $1 997 lifetime price, hidden `pro` / `premium` / `elite` / `starter` legacy codes still listed in `plan_catalog`) so nothing in the UI ever shows pricing that doesn't match the live grid.
+# Plan: TEST/LIVE Mode Toggle for UNPRO Admin
 
----
+Add a global environment switch that controls whether the outbound system runs in safe TEST mode (dry-run, mocked sends) or LIVE PRODUCTION mode (real inboxes, real prospects, real sends), with a kill switch and live KPI banner visible across all admin pages.
 
-## Part 1 — Reliable auth return-to-route
+## What gets built
 
-### Root causes
-- `OAuthButtons` calls `lovable.auth.signInWithOAuth` with `redirect_uri: window.location.origin`, so users always come back to `/` instead of `/auth/callback`. Nothing on `/` consumes `unpro_auth_intent`, so they sit at home.
-- `LoginMagicLinkForm` redirects to `/auth/callback` (correct) but `AuthOverlayPremium` only persists `returnPath` when an overlay is opened with a `pendingAction`. If the user opens `/login` directly, intent is never saved.
-- Home / dashboard never look at `consumeAuthIntent` on auth-state change.
-- Magic links / OTP arriving in a fresh tab lose `sessionStorage` (it's per-tab); intent must also be persisted in `localStorage` as a short-lived fallback.
+### 1. Database (1 new table + extends existing settings)
+- New table `system_environment_state` (single row): `mode` (`test`|`live`), `activated_at`, `activated_by`, `kill_switch_active` (bool), `paused_at`, `paused_by`, `live_requires_approval` (bool, default true), `notes`.
+- Extend `outbound_global_settings` read path so existing safety controls (bounce thresholds, dedupe windows) are surfaced in the LIVE banner.
+- RLS: only `admin` role can SELECT/UPDATE; audit row inserted into `system_events` on every mode change.
 
-### Fixes
-1. **`services/auth/authIntentService.ts`** — write intent to BOTH `sessionStorage` and `localStorage` (15 min TTL on the localStorage copy). `consumeAuthIntent` reads/clears from both. Add `captureCurrentRouteAsIntent(action?)` helper that snapshots `pathname + search + hash`.
+### 2. Edge functions (2 new + guards on existing)
+- `fn-toggle-system-mode`: validates admin, flips `mode`, writes audit event, returns new state. Refuses to flip to LIVE if domain health is `critical` or no active mailbox exists.
+- `fn-kill-switch-pause`: instantly sets `kill_switch_active=true`, marks all `automation_schedules` to `paused`, cancels queued `automation_jobs` (status `running|queued` → `paused`), logs to `system_events`.
+- Guard injected into existing send/queue functions (`process-outbound-queue`, `fn-send-outbound-email`, scraping triggers): early-return with `{skipped:true, reason:"test_mode"}` when `mode=test` OR `kill_switch_active=true`. No refactor — single helper `assertLiveMode()` added at top of each.
 
-2. **`hooks/useAuthOverlay.ts` → `openAuthOverlay`** — if no `returnPath` provided, default to current `location.pathname + search + hash` so we never lose context, and save intent eagerly (don't wait for the overlay's `useEffect`).
+### 3. UI components (new)
+- `BannerSystemEnvironmentStatus` — sticky top banner across `AdminLayout`. Red gradient + pulse when LIVE, green muted when TEST. Shows: mode pill, send volume today / daily cap, domain reputation badge, bounce rate %, failures (24h), kill-switch state.
+- `ButtonGoLiveNow` — large primary CTA in banner when in TEST mode.
+- `ModalConfirmGoLive` — pre-flight checklist (domain health ✓, mailboxes warm ✓, approval queue empty or acknowledged ✓, safety thresholds set ✓), typed confirmation "ACTIVER LIVE", then calls `fn-toggle-system-mode`.
+- `ButtonKillSwitch` — always visible in banner; red, requires single confirm, calls `fn-kill-switch-pause`.
+- `PanelLiveKPIs` — expandable drawer from banner showing: emails sent today, scheduled next 24h, bounces, complaints, replies, queue depth, last successful send timestamp, active mailboxes status.
 
-3. **`components/auth/OAuthButtons.tsx`** — before calling `lovable.auth.signInWithOAuth`, save intent (current path or pending overlay path) and change `redirect_uri` to `${window.location.origin}/auth/callback` so the dedicated callback handler resolves the redirect.
+### 4. Admin page
+- `/admin/system-mode` — full control center: current state card, history of mode changes (from `system_events`), pre-flight checklist with live status, GO LIVE / RETURN TO TEST buttons, kill switch with reactivation control, approval-required toggle.
 
-4. **`pages/AuthCallbackPage.tsx`** — already consumes intent; harden by reading the intent first (before any awaits) so it survives storage races; keep role-based fallback only when no intent.
+### 5. Approval gate enforcement
+- When `live_requires_approval=true` AND `mode=live`, every outbound send batch checks `outbound_prospects.approval_status='approved'` before dispatch (re-uses existing approval gate from `mem://marketing/outbound-prospect-approval-gate`).
 
-5. **`hooks/useAuth.ts`** — on `SIGNED_IN` event, if the user is currently on `/`, `/login`, `/signup`, `/role`, `/start`, or `/auth/callback`, run `consumeAuthIntent()` and `navigate(intent.returnPath)` (using a tiny `authReturnNavigator` singleton wired in `App.tsx` so the hook can dispatch a navigation event picked up by a small `<AuthReturnRouter />` component mounted next to `<AuthOverlayPremium />`). This guarantees return-to-route works for OAuth, magic link, OTP, and whatever ends with `SIGNED_IN`.
+## Files
 
-6. **`components/auth/AuthOverlayPremium.tsx`** — on `SIGNED_IN` while open, close overlay and let the central handler navigate (no more reliance on each consumer page's `useEffect`).
+**New**
+- `supabase/migrations/<ts>_system_environment_state.sql`
+- `supabase/functions/fn-toggle-system-mode/index.ts`
+- `supabase/functions/fn-kill-switch-pause/index.ts`
+- `src/hooks/useSystemEnvironment.ts`
+- `src/components/admin/system/BannerSystemEnvironmentStatus.tsx`
+- `src/components/admin/system/ModalConfirmGoLive.tsx`
+- `src/components/admin/system/ButtonKillSwitch.tsx`
+- `src/components/admin/system/PanelLiveKPIs.tsx`
+- `src/pages/admin/system/PageSystemModeControlCenter.tsx`
 
-7. **Verify pages already calling `consumeAuthIntent`** (`Login`, `Signup`, `StartPage`, `DashboardRedirectHandler`, `LoginPageUnpro`) keep working: the new central handler navigates first, but these pages' guards remain harmless (intent already consumed).
+**Edited (minimal — guard injection only, no refactor)**
+- `src/layouts/AdminLayout.tsx` — mount `BannerSystemEnvironmentStatus` at top.
+- `src/config/routeRegistry.ts` — register `/admin/system-mode` (admin only).
+- `supabase/functions/process-outbound-queue/index.ts` — call `assertLiveMode()` first.
+- `supabase/functions/fn-send-outbound-email/index.ts` — call `assertLiveMode()` first.
+- Existing scraping/automation triggers — same one-line guard.
 
-### Result
-Whatever surface initiates auth — pricing card, checkout button, calculator, AIPP scan, Alex chat — the user always lands back on the exact URL they came from with original query string and hash preserved.
-
----
-
-## Part 2 — Pricing audit & stale plan cleanup
-
-### Database (migration)
-Hard-delete obsolete plans from `plan_catalog` so nothing can resurface them by toggling `active = true`:
-- `pro` (legacy, replaced by `pro_acq`)
-- `premium` (legacy, replaced by `premium_acq`)
-- `elite` (legacy, replaced by `elite_acq`)
-- `starter` (legacy)
-- `founder_lifetime` ($1 997 one-time, no longer public)
-
-Final live catalog after migration:
-
-```text
-recrue       $149/mo   rank 0  hidden behind starter accordion
-pro_acq      $349/mo   rank 1
-premium_acq  $599/mo   rank 2  featured
-elite_acq    $999/mo   rank 3
-signature    $1799/mo  rank 4  contact / apply flow
-```
-
-### Code cleanup
-- **`src/components/founder/FounderContent.tsx`** — remove the hard-coded "1 997 $" pricing block (lines 62-79). Replace with a private "Apply for Founder access" CTA pointing to `/contact?subject=founder`. Keep PIN-locked `/fondateur` route as invite-only.
-- **`src/pages/LandingPageFounderPlansUNPRO.tsx` and `src/components/founder-plans/*`** — these read from `useFounderPlans()` (a separate Founder catalog, not `plan_catalog`). Audit: if any of those plans show $1 997 / lifetime references, remove that block too. Keep Élite/Signature Fondateur if still active in the founder funnel, otherwise remove the route from `router.tsx`.
-- **`src/pages/entrepreneur/PageEntrepreneurPricing.tsx`** — no founder reference; OK.
-- **`src/pages/pricing/ContractorPlans.tsx`** — update header comment (line 3) which still mentions "+ bloc Founder one-time scarcity"; remove the stale comment.
-- **`PricingFaq.tsx` / `PricingCta.tsx`** — already cleaned in previous step; re-verify no Founder mention.
-- **Alex pricing copy** — `src/services/alexResponsePolicyEngine.ts` and any `alex/*` files referencing plan names: ensure they only mention Recrue / Pro / Premium / Élite / Signature. No "Fondateur" in public Alex responses.
-
-### Navigation safety
-- Confirm `/checkout/native/pro_acq`, `/premium_acq`, `/elite_acq`, `/recrue` resolve via the existing checkout route and `create-subscription-intent` edge function.
-- `/contact?subject=signature` and `/contact?subject=founder` route to existing contact form (already handled).
-
----
-
-## Files to touch
+## Visual states
 
 ```text
-Auth return flow
-  src/services/auth/authIntentService.ts          (extend storage + helper)
-  src/hooks/useAuthOverlay.ts                     (eager save + default returnPath)
-  src/hooks/useAuth.ts                            (central post-SIGNED_IN navigation)
-  src/components/auth/OAuthButtons.tsx            (save intent + /auth/callback)
-  src/components/auth/AuthOverlayPremium.tsx      (close on SIGNED_IN, no own nav)
-  src/app/App.tsx                                 (mount <AuthReturnRouter />)
-  src/components/auth/AuthReturnRouter.tsx        (NEW — listens & navigates)
-  src/pages/AuthCallbackPage.tsx                  (read intent first)
+┌──────────────────────────────────────────────────────────────┐
+│ 🟢 TEST MODE  •  0 envois réels  •  Sécurisé    [GO LIVE NOW]│   ← green muted
+└──────────────────────────────────────────────────────────────┘
 
-Pricing cleanup
-  supabase migration                              (delete 5 stale plan rows)
-  src/components/founder/FounderContent.tsx       (remove $1997 block)
-  src/pages/pricing/ContractorPlans.tsx           (header comment)
-  src/services/alexResponsePolicyEngine.ts        (verify plan copy)
-  src/pages/LandingPageFounderPlansUNPRO.tsx +
-    src/components/founder-plans/*                (audit & strip stale prices)
+┌──────────────────────────────────────────────────────────────┐
+│ 🔴 LIVE  •  47/500 envoyés  •  Rep: 98  •  Bounce 0.8%       │   ← red, pulsing
+│        •  ▼ KPIs    [PAUSE TOUT — KILL SWITCH]               │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ ⏸ PAUSED (Kill Switch)  •  Activé il y a 3min   [REPRENDRE]  │   ← amber
+└──────────────────────────────────────────────────────────────┘
 ```
 
----
+## Revenue impact
+Unblocks real outbound from the 10 Laval sniper pages → first paid conversions same day. Kill switch + approval gate protect domain reputation so volume can scale without burning `mail.unpro.ca`.
 
-## Out of scope
-- No new auth provider, no Stripe price changes, no new routes added.
-- Founder funnel stays invite-only; not deleted unless it surfaces stale prices.
+## Out of scope (next ship)
+- Per-campaign mode override (everything is global for now).
+- Auto-rollback to TEST on bounce-rate spike (next iteration).
 
