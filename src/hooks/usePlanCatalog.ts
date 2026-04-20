@@ -7,12 +7,16 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type BillingInterval = "month" | "year";
 
+export type BillingMode = "subscription" | "one_time";
+
 export interface CatalogPlan {
   id: string;
   code: string;
   name: string;
   monthlyPrice: number; // cents CAD
   yearlyPrice: number; // cents CAD (annual total)
+  oneTimePrice: number; // cents CAD (for one-time plans like Founder)
+  billingMode: BillingMode;
   stripeMonthlyPriceId: string;
   stripeYearlyPriceId: string;
   tagline: string;
@@ -45,6 +49,8 @@ async function fetchPlanCatalog(): Promise<CatalogPlan[]> {
     name: row.name,
     monthlyPrice: row.monthly_price ?? 0,
     yearlyPrice: row.annual_price ?? 0,
+    oneTimePrice: row.one_time_price ?? 0,
+    billingMode: (row.billing_mode ?? "subscription") as BillingMode,
     stripeMonthlyPriceId: row.stripe_monthly_price_id ?? "",
     stripeYearlyPriceId: row.stripe_yearly_price_id ?? "",
     tagline: row.tagline ?? row.short_pitch ?? "",
