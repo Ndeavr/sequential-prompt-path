@@ -58,17 +58,27 @@ Deno.serve(async (req) => {
     const serviceClient = createClient(supabaseUrl, serviceRoleKey);
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // 1. Fetch plan from catalog
-    const priceColumn = interval === "year" ? "stripe_yearly_price_id" : "stripe_monthly_price_id";
+    // 1. Fetch plan from catalog (full row — UNPRO is the pricing brain)
     const { data: planRow, error: planError } = await serviceClient
       .from("plan_catalog")
-      .select(`code, name, ${priceColumn}`)
+      .select("code, name, billing_mode, stripe_monthly_price_id, stripe_yearly_price_id, stripe_one_time_price_id")
       .eq("code", planCode)
       .eq("active", true)
       .maybeSingle();
 
     if (planError || !planRow) return json({ error: "Plan introuvable" }, 404);
 
+    // Route one-time plans (Founder) to dedicated checkout flow
+    const isOneTime = (planRow as any).billing_mode === "one_time";
+    if (isOneTime) {
+      return json({
+        error: "ROUTE_ONE_TIME",
+        redirect_function: "create-founder-checkout",
+        plan_code: planCode,
+      }, 400);
+    }
+
+    const priceColumn = interval === "year" ? "stripe_yearly_price_id" : "stripe_monthly_price_id";
     const resolvedPriceId = (planRow as any)[priceColumn];
     if (!resolvedPriceId) return json({ error: "Prix non configuré pour ce plan/intervalle" }, 400);
 
@@ -179,7 +189,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 5. Build subscription with payment_behavior: default_incomplete
+    // 5. Build subscription with payment_behavior: default_incomplete + automatic tax (QC-compliant)
     const subParams: Stripe.SubscriptionCreateParams = {
       customer: customerId,
       items: [{ price: resolvedPriceId }],
@@ -187,6 +197,7 @@ Deno.serve(async (req) => {
       payment_settings: {
         save_default_payment_method: "on_subscription",
       },
+      automatic_tax: { enabled: true },
       expand: ["latest_invoice.payment_intent"],
       metadata: {
         contractor_id: contractor.id,
