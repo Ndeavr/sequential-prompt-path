@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   CheckCircle2, ArrowRight, HardHat, TrendingUp, Star, Crown,
-  CalendarCheck, Sparkles, Trophy, Zap,
+  CalendarCheck, Sparkles, Trophy, Zap, ChevronDown, Seedling,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
