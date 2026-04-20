@@ -29,6 +29,9 @@ const PageAdminOutboundApprovals = lazy(() => import("@/pages/admin/outbound/Pag
 // Contractor Voice-First Landing
 const PageContractorVoiceFirstLanding = lazy(() => import("@/pages/contractor-landing/PageContractorVoiceFirstLanding"));
 
+// Nuclear Close — Personalized prospect landing
+const PageProLandingNuclearClose = lazy(() => import("@/pages/pro-landing/PageProLandingNuclearClose"));
+
 // Voice Sales Plan Onboarding
 const PageContractorPlanOnboarding = lazy(() => import("@/pages/voice-sales/PageContractorPlanOnboarding"));
 
@@ -685,6 +688,7 @@ export const AppRouter = () => (
         <Route path="/professionals" element={<ProfessionalsPage />} />
         <Route path="/entrepreneurs" element={<PageEntrepreneurJoin />} />
         <Route path="/entrepreneurs/disponibilite-categorie-specialite-ville" element={<ContractorAvailabilityPage />} />
+        <Route path="/pro/:slug" element={<Suspense fallback={<LazyFallback />}><PageProLandingNuclearClose /></Suspense>} />
         <Route path="/book/:slug" element={<PublicBookingPage />} />
         <Route path="/book/:slug/:typeSlug" element={<PublicBookingPage />} />
         <Route path="/book/success" element={<BookingPaymentSuccess />} />
