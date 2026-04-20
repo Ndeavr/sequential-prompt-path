@@ -37,8 +37,10 @@ const PLAN_ICONS: Record<string, React.ElementType> = {
   pro_acq: TrendingUp,
   premium_acq: Star,
   elite_acq: Crown,
-  founder_lifetime: Trophy,
+  signature: Shield,
 };
+
+const SIGNATURE_CODES = ["signature"];
 
 // ─── Subscription card (Pro / Premium / Élite) ───
 function PlanCard({
