@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { saveAuthIntent } from "@/services/auth/authIntentService";
 import {
   usePlanCatalog,
@@ -24,6 +24,7 @@ import {
   type CatalogPlan,
 } from "@/hooks/usePlanCatalog";
 import ModalRendezVousValueExplanation from "@/components/pricing/ModalRendezVousValueExplanation";
+import InlineStripeCheckout from "@/components/pricing/InlineStripeCheckout";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -306,27 +307,55 @@ function PlanCard({
 export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?: string | null }) {
   const [interval, setIntervalState] = useState<BillingInterval>("month");
   const [rdvModalOpen, setRdvModalOpen] = useState(false);
+  const [activeCheckout, setActiveCheckout] = useState<{ code: string; name: string; price: number } | null>(null);
   const { data: plans, isLoading } = usePlanCatalog();
   const navigate = useNavigate();
+
+  // Auto-open inline checkout if returning from auth with ?checkout=open
+  useEffect(() => {
+    if (typeof window === "undefined" || !plans?.length) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout") !== "open") return;
+    const planCode = params.get("plan");
+    const billing = params.get("billing");
+    if (billing === "year" || billing === "month") setIntervalState(billing);
+    if (!planCode) return;
+    const plan = plans.find((p) => p.code === planCode);
+    if (!plan) return;
+    setActiveCheckout({
+      code: planCode,
+      name: plan.name,
+      price: billing === "year" ? plan.yearlyPrice : plan.monthlyPrice,
+    });
+    setTimeout(() => {
+      document.getElementById("inline-checkout-zone")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 200);
+  }, [plans]);
 
   const handleCheckout = async (planCode: string) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      const returnPath = `/checkout/native/${planCode}?billing=${interval}`;
+      // Stay on pricing after auth — return here and auto-open inline checkout.
+      const returnPath = `/pricing/entrepreneurs?plan=${planCode}&billing=${interval}&checkout=open`;
       saveAuthIntent({
         returnPath,
         action: "contractor_checkout",
         roleHint: "contractor",
-        metadata: {
-          source: "pricing",
-          planCode,
-          billing: interval,
-        },
+        metadata: { source: "pricing_inline", planCode, billing: interval },
       });
       window.location.href = `/signup?type=contractor&plan=${planCode}&returnTo=${encodeURIComponent(returnPath)}`;
       return;
     }
-    navigate(`/checkout/native/${planCode}?billing=${interval}`);
+    // Logged-in: render Embedded Checkout inline — no redirect.
+    const plan = (plans ?? []).find((p) => p.code === planCode);
+    setActiveCheckout({
+      code: planCode,
+      name: plan?.name ?? planCode,
+      price: interval === "year" ? plan?.yearlyPrice ?? 0 : plan?.monthlyPrice ?? 0,
+    });
+    setTimeout(() => {
+      document.getElementById("inline-checkout-zone")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
   };
 
   const handleApply = (planCode: string) => {
@@ -395,6 +424,36 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
               <span className="ml-1.5 text-xs text-success font-bold">-15%</span>
             </button>
           </div>
+        </div>
+
+        {/* Inline Stripe Embedded Checkout — appears in place when a plan is selected */}
+        <div id="inline-checkout-zone">
+          {activeCheckout && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35 }}
+              className="mb-10 max-w-3xl mx-auto"
+            >
+              <InlineStripeCheckout
+                planCode={activeCheckout.code}
+                planName={activeCheckout.name}
+                interval={interval}
+                basePrice={activeCheckout.price}
+                onCancel={() => {
+                  setActiveCheckout(null);
+                  // Strip the checkout query params on cancel.
+                  if (typeof window !== "undefined" && window.location.search.includes("checkout=open")) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete("checkout");
+                    url.searchParams.delete("plan");
+                    url.searchParams.delete("billing");
+                    window.history.replaceState({}, "", url.toString());
+                  }
+                }}
+              />
+            </motion.div>
+          )}
         </div>
 
         {/* Public subscription plans: Pro · Premium · Élite · Signature (anchor) */}
