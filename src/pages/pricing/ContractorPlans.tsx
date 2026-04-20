@@ -391,6 +391,110 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
           </div>
         )}
 
+        {/* Hidden entry plan reveal — captures price-sensitive contractors without weakening the main grid */}
+        {entryPlan && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="mt-8 max-w-3xl mx-auto"
+          >
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setShowEntryPlan((v) => !v)}
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+                aria-expanded={showEntryPlan}
+              >
+                <Sprout className="h-4 w-4 text-success" />
+                <span className="underline decoration-dotted underline-offset-4">
+                  Vous démarrez plus petit ? Voir le plan d'entrée
+                </span>
+                <ChevronDown className={cn("h-4 w-4 transition-transform", showEntryPlan && "rotate-180")} />
+              </button>
+            </div>
+
+            {showEntryPlan && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden"
+              >
+                <div
+                  data-plan={entryPlan.code}
+                  className="mt-5 rounded-3xl bg-card/60 backdrop-blur border border-dashed border-border/70 p-6 md:p-7"
+                >
+                  <div className="grid md:grid-cols-[1.4fr_1fr] gap-6 items-center">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="h-8 w-8 rounded-lg bg-success/10 text-success flex items-center justify-center">
+                          <Sprout className="h-4 w-4" />
+                        </div>
+                        <h3 className="font-bold text-lg text-foreground">{entryPlan.name}</h3>
+                        {entryPlan.badgeText && (
+                          <Badge variant="outline" className="text-[10px] ml-1">
+                            {entryPlan.badgeText}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-foreground/80 mb-4 leading-relaxed">{entryPlan.tagline}</p>
+
+                      <ul className="space-y-1.5 mb-1">
+                        {entryPlan.features.slice(0, 4).map((f) => (
+                          <li key={f} className="flex items-start gap-2">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0 mt-0.5" />
+                            <span className="text-xs text-muted-foreground">{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="text-center md:text-right">
+                      <div className="flex items-baseline justify-center md:justify-end gap-1 mb-1">
+                        <span className="text-3xl font-extrabold text-foreground">
+                          {formatPlanPrice(
+                            interval === "year"
+                              ? Math.round(entryPlan.yearlyPrice / 12)
+                              : entryPlan.monthlyPrice,
+                          )}
+                        </span>
+                        <span className="text-sm text-muted-foreground">/mois</span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mb-4">
+                        {entryPlan.appointmentsIncluded} rendez-vous inclus · sans engagement
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="w-full md:w-auto rounded-xl"
+                        onClick={() => handleCheckout(entryPlan.code)}
+                      >
+                        Choisir {entryPlan.name}
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-center text-muted-foreground mt-4 italic">
+                    💡 La plupart des entrepreneurs sérieux démarrent directement au plan{" "}
+                    <button
+                      onClick={() => {
+                        document.querySelector('[data-plan="premium_acq"]')
+                          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                        setShowEntryPlan(false);
+                      }}
+                      className="text-primary font-semibold underline decoration-dotted hover:text-primary/80"
+                    >
+                      Premium
+                    </button>{" "}
+                    pour atteindre la rentabilité plus vite.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+
         {/* Signature contact note */}
         <motion.p
           initial={{ opacity: 0 }}
