@@ -32,6 +32,7 @@ import {
 } from "@/hooks/useNuclearCloseFemaleVoice";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import InlineCheckoutNuclear from "@/components/pro-landing/InlineCheckoutNuclear";
 
 type Prospect = NonNullable<Awaited<ReturnType<typeof resolveProspect>>>;
 
