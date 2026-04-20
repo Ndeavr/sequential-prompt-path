@@ -15,15 +15,18 @@ export default function PricingCta() {
             <div className="relative">
               <Sparkles className="h-10 w-10 text-primary mx-auto mb-5" />
               <h2 className="text-3xl md:text-4xl font-extrabold text-foreground mb-3 tracking-tight">
-                Prêt à faire grandir votre entreprise ?
+                Prêt à remplir votre calendrier ?
               </h2>
-              <p className="text-muted-foreground text-lg mb-8 max-w-md mx-auto">
-                Démarrez avec Premium aujourd'hui. Activation immédiate. Aucun lead partagé.
+              <p className="text-muted-foreground text-lg mb-2 max-w-md mx-auto">
+                Activez Premium aujourd'hui. Premiers rendez-vous exclusifs dès cette semaine.
+              </p>
+              <p className="text-xs text-warning/90 font-semibold mb-7">
+                ⚡ Places limitées par ville — verrouillez la vôtre maintenant.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button asChild size="lg" className="rounded-2xl h-13 px-8 text-base shadow-glow font-semibold">
                   <a href="#plans">
-                    Choisir Premium <ArrowRight className="h-4 w-4 ml-2" />
+                    Activer Premium <ArrowRight className="h-4 w-4 ml-2" />
                   </a>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="rounded-2xl h-13 px-8 text-base">
@@ -32,6 +35,9 @@ export default function PricingCta() {
                   </Link>
                 </Button>
               </div>
+              <p className="text-[11px] text-muted-foreground mt-5">
+                Aucun lead partagé · Annulation possible · Onboarding guidé
+              </p>
             </div>
           </div>
         </motion.div>
