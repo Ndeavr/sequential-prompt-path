@@ -30,14 +30,14 @@ export default function PricingHero() {
         <motion.div className="space-y-6" initial="hidden" animate="visible">
           <motion.div variants={fadeUp} custom={0}>
             <Badge className="bg-primary/10 text-primary border-primary/20 text-sm px-4 py-1.5">
-              <CalendarCheck className="h-3.5 w-3.5 mr-1.5" /> Rendez-vous exclusifs
+              <CalendarCheck className="h-3.5 w-3.5 mr-1.5" /> Rendez-vous garantis · Exclusifs
             </Badge>
           </motion.div>
 
           <motion.h1 variants={fadeUp} custom={1} className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1]">
-            Recevez des{" "}
+            Moins de soumissions.{" "}
             <span className="relative inline-block">
-              <span className="text-gradient">rendez-vous garantis</span>
+              <span className="text-gradient">Plus de contrats.</span>
               <motion.span
                 className="absolute -bottom-1 left-0 w-full h-[3px] bg-primary/40 rounded-full"
                 initial={{ scaleX: 0 }}
@@ -46,15 +46,14 @@ export default function PricingHero() {
                 style={{ transformOrigin: "left" }}
               />
             </span>
-            .
             <br />
             <span className="text-muted-foreground text-lg md:text-xl font-normal mt-3 block">
-              Pas des leads partagés.
+              Recevez des rendez-vous qualifiés exclusifs. Pas des leads partagés.
             </span>
           </motion.h1>
 
           <motion.p variants={fadeUp} custom={2} className="text-base text-muted-foreground max-w-lg mx-auto leading-relaxed">
-            UNPRO connecte les propriétaires avec les bons entrepreneurs selon leur spécialité, leur localité, leur capacité réelle et leur niveau de plan.
+            UNPRO connecte les propriétaires aux bons entrepreneurs selon spécialité, localité et capacité réelle. Vous remplissez votre calendrier — pas votre boîte courriel.
           </motion.p>
 
           {/* Key points */}
@@ -68,19 +67,19 @@ export default function PricingHero() {
           </motion.div>
 
           {/* Scarcity note */}
-          <motion.p variants={fadeUp} custom={4} className="text-xs text-muted-foreground/70 max-w-md mx-auto">
-            Certaines combinaisons métier + localité peuvent devenir complètes afin de préserver la qualité des recommandations et la rentabilité des entrepreneurs en place.
+          <motion.p variants={fadeUp} custom={4} className="text-xs text-warning/90 max-w-md mx-auto font-medium">
+            ⚡ Places limitées par ville. Certaines combinaisons métier + localité ferment dès qu'elles sont saturées.
           </motion.p>
 
           <motion.div variants={fadeUp} custom={5} className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-            <Button asChild size="lg" className="rounded-2xl h-13 px-8 text-base shadow-glow">
-              <Link to="/signup?type=contractor">
-                Voir les plans <ArrowRight className="h-4 w-4 ml-2" />
-              </Link>
+            <Button asChild size="lg" className="rounded-2xl h-13 px-8 text-base shadow-glow font-semibold">
+              <a href="#plans">
+                Activer mes rendez-vous <ArrowRight className="h-4 w-4 ml-2" />
+              </a>
             </Button>
             <Button asChild size="lg" variant="outline" className="rounded-2xl h-13 px-8 text-base">
               <Link to="/comment-ca-marche">
-                <Play className="h-4 w-4 mr-2" /> Comment ça fonctionne
+                <Play className="h-4 w-4 mr-2" /> Voir comment ça marche
               </Link>
             </Button>
           </motion.div>
