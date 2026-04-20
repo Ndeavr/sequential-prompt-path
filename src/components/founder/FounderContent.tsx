@@ -59,21 +59,29 @@ export default function FounderContent() {
         </div>
       </section>
 
-      {/* Pricing section */}
+      {/* Private application CTA */}
       <section className="pb-20 px-4">
         <div className="max-w-lg mx-auto text-center space-y-8">
-          <h2 className="text-2xl font-bold text-foreground">Une offre exclusive</h2>
-          <div className="rounded-3xl border border-primary/20 bg-gradient-to-b from-primary/5 to-transparent p-8 space-y-4">
-            <div className="text-5xl font-bold text-foreground">1 997 $</div>
-            <p className="text-muted-foreground">Paiement unique · Accès fondateur permanent</p>
-            <div className="pt-4 space-y-2 text-sm text-left max-w-xs mx-auto">
-              {["Profil AIPP complet", "Recommandation Alex", "1 territoire inclus", "Badge Fondateur", "Support prioritaire"].map(f => (
+          <h2 className="text-2xl font-bold text-foreground">Programme sur invitation</h2>
+          <div className="rounded-3xl border border-primary/20 bg-gradient-to-b from-primary/5 to-transparent p-8 space-y-5">
+            <p className="text-muted-foreground leading-relaxed">
+              L'accès Fondateur est privé et limité par territoire. Soumettez votre candidature
+              pour obtenir une évaluation confidentielle et les conditions actuelles.
+            </p>
+            <div className="pt-2 space-y-2 text-sm text-left max-w-xs mx-auto">
+              {["Profil AIPP complet", "Recommandation Alex", "Territoire réservé", "Badge Fondateur", "Support prioritaire"].map(f => (
                 <div key={f} className="flex items-center gap-2 text-muted-foreground">
                   <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                   {f}
                 </div>
               ))}
             </div>
+            <a
+              href="/contact?subject=founder"
+              className="inline-flex items-center justify-center w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
+            >
+              Postuler en privé
+            </a>
           </div>
         </div>
       </section>

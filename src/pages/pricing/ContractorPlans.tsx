@@ -1,7 +1,8 @@
 /**
  * UNPRO — Contractor Plans (refonte haute conversion)
- * Layout : 3 plans mensuels (Pro / Premium featured / Élite) + bloc Founder one-time scarcity.
- * Premium visuellement dominant. French first. Plans dynamiques via plan_catalog.
+ * Layout : Pro / Premium (featured) / Élite / Signature (apply).
+ * Recrue accessible via accordéon discret. Premium visuellement dominant.
+ * Plans dynamiques via plan_catalog. Aucune référence Founder publique.
  */
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";

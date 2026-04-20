@@ -1,12 +1,15 @@
 /**
  * UNPRO — OAuth Buttons (Google + Apple)
  * Reusable across Login, Signup, and StartPage.
+ * Saves return-path intent and routes the OAuth callback through /auth/callback
+ * so the user always lands back on their originating route.
  */
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { lovable } from "@/integrations/lovable/index";
+import { captureCurrentRouteAsIntent, peekAuthIntent } from "@/services/auth/authIntentService";
 
 interface OAuthButtonsProps {
   loading?: boolean;
@@ -21,8 +24,14 @@ export default function OAuthButtons({ loading: externalLoading, className = "" 
     const setLoading = provider === "google" ? setGoogleLoading : setAppleLoading;
     setLoading(true);
     try {
+      // Make sure an intent is saved before leaving the page.
+      // peekAuthIntent → if nothing yet (e.g. user opened /login directly), capture current route.
+      if (!peekAuthIntent()) {
+        captureCurrentRouteAsIntent("oauth_signin");
+      }
+
       const { error } = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: window.location.origin,
+        redirect_uri: `${window.location.origin}/auth/callback`,
       });
       if (error) {
         toast.error(error.message || "Erreur de connexion");
