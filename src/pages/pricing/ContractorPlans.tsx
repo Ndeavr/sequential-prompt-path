@@ -143,21 +143,47 @@ function PlanCard({
             </p>
           )}
 
-          <p className="text-sm text-foreground/80 mb-5 leading-relaxed font-medium">{plan.tagline}</p>
+          <p className="text-sm text-foreground/80 mb-3 leading-relaxed font-medium">{plan.tagline}</p>
+
+          {/* ROI projection — high-conversion framing */}
+          {plan.appointmentsIncluded > 0 && (
+            <div className={cn(
+              "rounded-xl px-3 py-2.5 mb-5 border",
+              isFeatured
+                ? "bg-primary/8 border-primary/20"
+                : "bg-success/5 border-success/15",
+            )}>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+                Potentiel de revenu / mois
+              </p>
+              <p className={cn(
+                "text-base font-extrabold",
+                isFeatured ? "text-primary" : "text-success",
+              )}>
+                ≈ {(plan.appointmentsIncluded * 2500).toLocaleString()} $ – {(plan.appointmentsIncluded * 6000).toLocaleString()} $
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Basé sur {plan.appointmentsIncluded} RDV exclusifs × valeur moyenne projet
+              </p>
+            </div>
+          )}
 
           {/* CTA — placed early for conversion */}
           <Button
             size="lg"
             variant={isFeatured ? "default" : "outline"}
             className={cn(
-              "w-full rounded-2xl text-sm font-semibold mb-5 h-12",
+              "w-full rounded-2xl text-sm font-semibold mb-2 h-12",
               isFeatured && "shadow-glow bg-primary hover:bg-primary/90",
             )}
             onClick={() => onCheckout(plan.code)}
           >
-            Choisir {plan.name}
+            {isFeatured ? "Activer mes rendez-vous" : `Choisir ${plan.name}`}
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
+          <p className="text-[10px] text-center text-muted-foreground mb-5">
+            Activation immédiate · Sans engagement long
+          </p>
 
           {/* Features */}
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
@@ -511,13 +537,16 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
         {/* Trust strip */}
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 mt-8 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <Zap className="h-3.5 w-3.5 text-primary" /> Activation rapide
+            <Zap className="h-3.5 w-3.5 text-primary" /> Activation le jour même
           </span>
           <span className="flex items-center gap-1.5">
             <CheckCircle2 className="h-3.5 w-3.5 text-success" /> Sans engagement long
           </span>
           <span className="flex items-center gap-1.5">
-            <Star className="h-3.5 w-3.5 text-accent" /> Rendez-vous exclusifs
+            <Star className="h-3.5 w-3.5 text-accent" /> RDV exclusifs · 1 entrepreneur / projet
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Crown className="h-3.5 w-3.5 text-warning" /> Places limitées par ville
           </span>
         </div>
 
