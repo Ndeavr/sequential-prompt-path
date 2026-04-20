@@ -114,7 +114,6 @@ function generateSuggestions(params: {
       type: "upgrade",
     });
   }
-  }
 
   // Premium / Elite upsell
   if (plan === "pro_acq") {
