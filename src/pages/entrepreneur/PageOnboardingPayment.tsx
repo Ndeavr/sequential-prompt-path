@@ -10,29 +10,30 @@ import { useToast } from "@/hooks/use-toast";
 export default function PageOnboardingPayment() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const planCode = searchParams.get("plan") || "premium";
+  const rawPlanCode = searchParams.get("plan") || "premium_acq";
+  const planCode = rawPlanCode === "pro" ? "pro_acq" : rawPlanCode === "premium" ? "premium_acq" : rawPlanCode === "elite" ? "elite_acq" : rawPlanCode;
   const [isLoading, setIsLoading] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const { toast } = useToast();
 
   const planNames: Record<string, string> = {
-    pro: "Pro",
-    premium: "Premium",
-    elite: "Élite",
+    pro_acq: "Pro",
+    premium_acq: "Premium",
+    elite_acq: "Élite",
     signature: "Signature",
     fondateur: "Fondateur",
   };
 
   const planPrices: Record<string, { monthly: number; yearly: number }> = {
-    pro: { monthly: 149, yearly: 1490 },
-    premium: { monthly: 299, yearly: 2990 },
-    elite: { monthly: 499, yearly: 4990 },
+    pro_acq: { monthly: 149, yearly: 1490 },
+    premium_acq: { monthly: 599, yearly: 6108 },
+    elite_acq: { monthly: 999, yearly: 10188 },
     signature: { monthly: 799, yearly: 7990 },
     fondateur: { monthly: 199, yearly: 1990 },
   };
 
-  const price = planPrices[planCode] || planPrices.premium;
+  const price = planPrices[planCode] || planPrices.premium_acq;
   const currentPrice = billingCycle === "monthly" ? price.monthly : price.yearly;
   const savings = billingCycle === "yearly" ? Math.round(price.monthly * 12 - price.yearly) : 0;
 

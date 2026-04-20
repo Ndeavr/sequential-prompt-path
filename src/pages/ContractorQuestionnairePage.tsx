@@ -30,9 +30,11 @@ import { toast } from "sonner";
 /** City limits per plan code */
 const CITY_LIMITS: Record<string, number> = {
   signature: 50, elite: 25, premium: 15, pro: 8, recrue: 3,
+  elite_acq: 25, premium_acq: 15, pro_acq: 8,
 };
 const PLAN_LABELS: Record<string, string> = {
   signature: "Signature", elite: "Élite", premium: "Premium", pro: "Pro", recrue: "Recrue",
+  elite_acq: "Élite", premium_acq: "Premium", pro_acq: "Pro",
 };
 
 const STEPS = [
@@ -299,7 +301,7 @@ export default function ContractorQuestionnairePage() {
               )}
 
               {step === 3 && (() => {
-                const planCode = "pro"; // TODO: get from subscription
+                const planCode = "pro_acq"; // TODO: get from subscription
                 const limits = SERVICE_LIMITS[planCode] || SERVICE_LIMITS.recrue;
                 return (
                   <>
@@ -345,7 +347,7 @@ export default function ContractorQuestionnairePage() {
               })()}
 
               {step === 4 && (() => {
-                const planCode = "pro"; // TODO: get from subscription
+                const planCode = "pro_acq"; // TODO: get from subscription
                 const maxCities = (CITY_LIMITS[planCode] || 3) - 1; // -1 for primary
                 return (
                   <>
