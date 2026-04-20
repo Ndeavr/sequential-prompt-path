@@ -43,7 +43,8 @@ export function clearCalculatorSession() {
 }
 
 /**
- * Plan recommendation engine based on calculator inputs
+ * Plan recommendation engine based on calculator inputs.
+ * Returns plan_catalog codes (pro_acq | premium_acq | elite_acq).
  */
 export function recommendPlan(inputs: {
   revenueGoal: number;
@@ -55,16 +56,12 @@ export function recommendPlan(inputs: {
   const hasXXL = projectTypes.includes("XXL");
   const hasXL = projectTypes.includes("XL");
 
-  // Signature: extreme goals or XXL + high capacity
-  if (revenueGoal >= 40000 || (hasXXL && monthlyCapacity >= 20)) return "signature";
-  // Elite: XXL access or high revenue
-  if (hasXXL || revenueGoal >= 25000) return "elite";
-  // Premium: XL access or ambitious goals
-  if (hasXL || revenueGoal >= 15000) return "premium";
-  // Pro: moderate goals, L projects
-  if (projectTypes.includes("L") || revenueGoal >= 6000) return "pro";
-  // Recrue: discovery
-  return "recrue";
+  // Élite: XXL access, very high revenue or saturated capacity
+  if (hasXXL || revenueGoal >= 25000 || monthlyCapacity >= 20) return "elite_acq";
+  // Premium (featured): XL access or ambitious goals
+  if (hasXL || revenueGoal >= 12000) return "premium_acq";
+  // Pro: entry plan
+  return "pro_acq";
 }
 
 export function estimateAppointments(revenueGoal: number, avgJobValue: number, conversionRate: number): number {
@@ -73,7 +70,14 @@ export function estimateAppointments(revenueGoal: number, avgJobValue: number, c
 }
 
 export function estimateBudget(plan: string, appointments: number): number {
-  const planCost: Record<string, number> = { recrue: 0, pro: 49, premium: 99, elite: 199, signature: 399 };
+  // Monthly subscription cost in dollars (matches plan_catalog refonte)
+  const planCost: Record<string, number> = {
+    pro_acq: 349,
+    premium_acq: 599,
+    elite_acq: 999,
+    // legacy fallbacks
+    recrue: 0, pro: 349, premium: 599, elite: 999, signature: 999,
+  };
   const avgAppointmentCost = 85;
   return (planCost[plan] ?? 0) + appointments * avgAppointmentCost;
 }
