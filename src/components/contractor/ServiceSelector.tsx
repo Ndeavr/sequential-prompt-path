@@ -31,8 +31,11 @@ interface ServiceSelectorProps {
 export const SERVICE_LIMITS: Record<string, { primary: number; secondary: number }> = {
   recrue: { primary: 2, secondary: 2 },
   pro: { primary: 3, secondary: 5 },
+  pro_acq: { primary: 3, secondary: 5 },
   premium: { primary: 4, secondary: 10 },
+  premium_acq: { primary: 4, secondary: 10 },
   elite: { primary: 6, secondary: 15 },
+  elite_acq: { primary: 6, secondary: 15 },
   signature: { primary: 8, secondary: 20 },
 };
 

@@ -27,8 +27,11 @@ const RDV_OPTIONS = [0, 10, 20, 40, 60];
 const PLAN_ICONS: Record<string, React.ElementType> = {
   recrue: Sparkles,
   pro: Zap,
+  pro_acq: Zap,
   premium: Star,
+  premium_acq: Star,
   elite: Crown,
+  elite_acq: Crown,
   signature: Crown,
 };
 
@@ -45,7 +48,7 @@ export default function PagePricingCalculator() {
   // Form state
   const [categorySlug, setCategorySlug] = useState("");
   const [marketSlug, setMarketSlug] = useState("");
-  const [planCode, setPlanCode] = useState("pro");
+  const [planCode, setPlanCode] = useState("pro_acq");
   const [billingPeriod, setBillingPeriod] = useState<"month" | "year">("month");
   const [rdvCount, setRdvCount] = useState(10);
   const [revenueGoal, setRevenueGoal] = useState(10000);
@@ -87,9 +90,10 @@ export default function PagePricingCalculator() {
       setAvgTicket(Math.round((cat.average_contract_value_min + cat.average_contract_value_max) / 2));
       // Auto-set min plan
       const floorPlan = cat.base_plan_floor || "recrue";
-      const planOrder = ["recrue", "pro", "premium", "elite", "signature"];
-      if (planOrder.indexOf(planCode) < planOrder.indexOf(floorPlan)) {
-        setPlanCode(floorPlan);
+      const normalizedFloorPlan = floorPlan === "pro" ? "pro_acq" : floorPlan === "premium" ? "premium_acq" : floorPlan === "elite" ? "elite_acq" : floorPlan;
+      const planOrder = ["recrue", "pro_acq", "premium_acq", "elite_acq", "signature"];
+      if (planOrder.indexOf(planCode) < planOrder.indexOf(normalizedFloorPlan)) {
+        setPlanCode(normalizedFloorPlan);
       }
     }
   }, [categorySlug, categories]);

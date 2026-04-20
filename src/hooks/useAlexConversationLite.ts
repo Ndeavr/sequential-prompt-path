@@ -125,8 +125,8 @@ function detectAnalysisIntent(text: string): IntentMatch | null {
   if (lower.startsWith("inscription:")) {
     return {
       intent: "stripe_payment_inline",
-      response: "Merci! Votre profil est prêt. Procédons au paiement pour activer votre plan Pro.",
-      data: { planCode: "pro", planName: "Pro", price: 349, interval: "monthly" },
+        response: "Merci! Votre profil est prêt. Procédons au paiement pour activer votre plan Pro.",
+        data: { planCode: "pro_acq", planName: "Pro", price: 349, interval: "monthly" },
     };
   }
 
@@ -341,7 +341,7 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
             "alex",
             "Voici les plans UNPRO — chaque rendez-vous est exclusif, vous êtes le seul professionnel recommandé. Pas de leads partagés, que des opportunités qualifiées par notre IA.",
             "plan_comparison" as InlineCardType,
-            { plans, recommendedCode: recommended?.code || "premium" }
+            { plans, recommendedCode: recommended?.code || "premium_acq" }
           );
           setIsThinking(false);
           return;
@@ -499,7 +499,7 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
 
     if (intent === "contractor_payment_checkout") {
       emitSafe("alex", "Procédons au paiement. Entrez vos informations de carte ci-dessous.", "stripe_payment_inline" as InlineCardType, {
-        planCode: "pro", planName: "Pro", price: 349, interval: "monthly",
+        planCode: "pro_acq", planName: "Pro", price: 349, interval: "monthly",
       });
       setIsThinking(false);
       return;

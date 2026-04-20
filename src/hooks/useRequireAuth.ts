@@ -19,7 +19,7 @@ export function useRequireAuth() {
     if (isAuthenticated) return true;
     openAuthOverlay({
       label: actionLabel ?? "Continuer votre action",
-      returnPath: location.pathname + location.search,
+      returnPath: location.pathname + location.search + location.hash,
       action,
     });
     return false;
