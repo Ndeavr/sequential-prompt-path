@@ -54,6 +54,7 @@ export async function fetchAcquisitionMetrics(): Promise<AcquisitionMetrics> {
   const today = todayStart();
 
   // Compteurs en parallèle pour rapidité
+  const sb = supabase as any;
   const [
     leadsTotal,
     leadsToday,
@@ -64,14 +65,14 @@ export async function fetchAcquisitionMetrics(): Promise<AcquisitionMetrics> {
     activeSubs,
     funnelRows,
   ] = await Promise.all([
-    supabase.from("outbound_leads").select("id", { count: "exact", head: true }),
-    supabase.from("outbound_leads").select("id", { count: "exact", head: true }).gte("created_at", today),
-    supabase.from("outbound_sent_messages").select("opened_at,clicked_at,sent_at", { count: "exact" }).gte("sent_at", today).limit(2000),
-    supabase.from("outbound_replies").select("id", { count: "exact", head: true }).gte("received_at", today),
-    supabase.from("outbound_leads").select("id", { count: "exact", head: true }).gte("booked_at", today),
-    supabase.from("contractor_recruitment_payments").select("amount_cents,created_at,status").gte("created_at", today).limit(500),
-    supabase.from("contractor_recruitment_payments").select("amount_cents,status").eq("status", "succeeded").limit(2000),
-    supabase.from("outbound_leads").select("pipeline_stage").limit(5000),
+    sb.from("outbound_leads").select("id", { count: "exact", head: true }),
+    sb.from("outbound_leads").select("id", { count: "exact", head: true }).gte("created_at", today),
+    sb.from("outbound_sent_messages").select("opened_at,clicked_at,sent_at").gte("sent_at", today).limit(2000),
+    sb.from("outbound_replies").select("id", { count: "exact", head: true }).gte("received_at", today),
+    sb.from("outbound_leads").select("id", { count: "exact", head: true }).gte("booked_at", today),
+    sb.from("contractor_recruitment_payments").select("amount_cents,created_at,status").gte("created_at", today).limit(500),
+    sb.from("contractor_recruitment_payments").select("amount_cents,status").eq("status", "succeeded").limit(2000),
+    sb.from("outbound_leads").select("pipeline_stage").limit(5000),
   ]);
 
   const sentRows = emailsToday.data ?? [];
@@ -114,7 +115,8 @@ export async function fetchAcquisitionMetrics(): Promise<AcquisitionMetrics> {
 }
 
 export async function fetchTopCities(limit = 5): Promise<FunnelByCity[]> {
-  const { data } = await supabase
+  const sb = supabase as any;
+  const { data } = await sb
     .from("outbound_leads")
     .select("company_id, booked_at, converted_at, outbound_companies!inner(city)")
     .limit(2000);
@@ -132,7 +134,8 @@ export async function fetchTopCities(limit = 5): Promise<FunnelByCity[]> {
 }
 
 export async function fetchTopCategories(limit = 5): Promise<FunnelByCategory[]> {
-  const { data } = await supabase
+  const sb = supabase as any;
+  const { data } = await sb
     .from("outbound_leads")
     .select("specialty, booked_at, converted_at")
     .limit(2000);
