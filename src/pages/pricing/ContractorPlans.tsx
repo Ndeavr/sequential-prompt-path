@@ -300,71 +300,6 @@ function PlanCard({
   );
 }
 
-// ─── Founder one-time scarcity block ───
-function FounderBlock({ plan, onCheckout }: { plan: CatalogPlan; onCheckout: (code: string) => void }) {
-  const price = plan.oneTimePrice || 199700;
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="mt-12 max-w-4xl mx-auto"
-    >
-      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-accent/10 via-card to-primary/10 border-2 border-accent/30 p-6 md:p-10">
-        {/* Glow */}
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-96 h-96 bg-accent/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-32 right-0 w-72 h-72 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative grid md:grid-cols-[1.4fr_1fr] gap-8 items-center">
-          <div>
-            <Badge className="bg-accent text-accent-foreground mb-4 text-[11px] px-3 py-1 font-bold uppercase tracking-wider">
-              <Trophy className="h-3 w-3 mr-1.5 fill-current" /> {plan.badgeText || "30 places seulement"}
-            </Badge>
-            <h3 className="text-2xl md:text-3xl font-extrabold text-foreground mb-2 leading-tight">
-              Devenez membre <span className="text-gradient">Founder</span>
-            </h3>
-            <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
-              {plan.tagline} Verrouillez vos avantages avant le scale public d'UNPRO au Québec.
-            </p>
-
-            <ul className="space-y-2 mb-6">
-              {plan.features.slice(0, 5).map((f) => (
-                <li key={f} className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />
-                  <span className="text-sm text-foreground/90">{f}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="rounded-2xl bg-card/80 backdrop-blur border border-border/60 p-6 text-center">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
-              Paiement unique
-            </p>
-            <div className="flex items-baseline justify-center gap-1 mb-1">
-              <span className="text-5xl font-extrabold text-foreground">{formatPlanPrice(price)}</span>
-            </div>
-            <p className="text-xs text-muted-foreground mb-5">CAD · taxes en sus</p>
-
-            <Button
-              size="lg"
-              className="w-full rounded-2xl h-12 text-sm font-semibold shadow-glow bg-accent hover:bg-accent/90 text-accent-foreground"
-              onClick={() => onCheckout(plan.code)}
-            >
-              <Sparkles className="h-4 w-4 mr-2" />
-              Devenir Founder
-            </Button>
-
-            <p className="text-[11px] text-muted-foreground mt-3">
-              Avantages verrouillés à vie · Onboarding concierge
-            </p>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
 // ─── Main component ───
 export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?: string | null }) {
   const [interval, setIntervalState] = useState<BillingInterval>("month");
@@ -381,15 +316,19 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
     navigate(`/checkout/native/${planCode}?billing=${interval}`);
   };
 
-  // Split: main subscription grid (Pro/Premium/Élite, position_rank >= 1)
-  // vs hidden entry plan (Recrue, position_rank = 0) vs Founder (one-time)
+  const handleApply = (planCode: string) => {
+    navigate(`/contact?subject=${planCode}`);
+  };
+
+  // Public grid: Pro / Premium / Élite / Signature (position_rank >= 1, subscription only).
+  // Recrue (position_rank = 0) stays hidden behind the starter accordion.
+  // Founder is private — never rendered here.
   const subscriptionPlans = (plans ?? []).filter(
     (p) => p.billingMode !== "one_time" && p.positionRank >= 1
   );
   const entryPlan = (plans ?? []).find(
     (p) => p.billingMode !== "one_time" && p.positionRank === 0
   );
-  const founderPlan = (plans ?? []).find((p) => p.billingMode === "one_time");
 
   // Auto-expand entry plan section if it's the pre-selected/recommended plan
   const [showEntryPlan, setShowEntryPlan] = useState(preSelectedPlan === "recrue");
