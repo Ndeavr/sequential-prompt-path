@@ -55120,6 +55120,51 @@ export type Database = {
         }
         Relationships: []
       }
+      system_environment_state: {
+        Row: {
+          activated_at: string | null
+          activated_by: string | null
+          created_at: string
+          id: string
+          kill_switch_active: boolean
+          live_requires_approval: boolean
+          mode: string
+          notes: string | null
+          paused_at: string | null
+          paused_by: string | null
+          singleton: boolean
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          activated_by?: string | null
+          created_at?: string
+          id?: string
+          kill_switch_active?: boolean
+          live_requires_approval?: boolean
+          mode?: string
+          notes?: string | null
+          paused_at?: string | null
+          paused_by?: string | null
+          singleton?: boolean
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          activated_by?: string | null
+          created_at?: string
+          id?: string
+          kill_switch_active?: boolean
+          live_requires_approval?: boolean
+          mode?: string
+          notes?: string | null
+          paused_at?: string | null
+          paused_by?: string | null
+          singleton?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       system_health_checks: {
         Row: {
           check_type: string
@@ -59253,6 +59298,7 @@ export type Database = {
         Args: { _syndicate_id: string; _user_id: string }
         Returns: boolean
       }
+      is_system_live: { Args: never; Returns: boolean }
       manual_override_appointment_quota: {
         Args: {
           _contractor_id: string
