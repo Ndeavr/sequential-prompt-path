@@ -40252,6 +40252,7 @@ export type Database = {
           appointments_range_min: number | null
           badge_text: string | null
           best_for: string | null
+          billing_mode: string
           code: string
           created_at: string
           features_json: Json | null
@@ -40262,6 +40263,7 @@ export type Database = {
           monthly_price: number
           name: string
           objective_fit_json: Json | null
+          one_time_price: number | null
           position_rank: number
           priority_level: number | null
           project_sizes: Json | null
@@ -40285,6 +40287,7 @@ export type Database = {
           appointments_range_min?: number | null
           badge_text?: string | null
           best_for?: string | null
+          billing_mode?: string
           code: string
           created_at?: string
           features_json?: Json | null
@@ -40295,6 +40298,7 @@ export type Database = {
           monthly_price?: number
           name: string
           objective_fit_json?: Json | null
+          one_time_price?: number | null
           position_rank?: number
           priority_level?: number | null
           project_sizes?: Json | null
@@ -40318,6 +40322,7 @@ export type Database = {
           appointments_range_min?: number | null
           badge_text?: string | null
           best_for?: string | null
+          billing_mode?: string
           code?: string
           created_at?: string
           features_json?: Json | null
@@ -40328,6 +40333,7 @@ export type Database = {
           monthly_price?: number
           name?: string
           objective_fit_json?: Json | null
+          one_time_price?: number | null
           position_rank?: number
           priority_level?: number | null
           project_sizes?: Json | null
