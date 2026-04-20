@@ -42,18 +42,20 @@ const PLAN_ICONS: Record<string, React.ElementType> = {
 
 const SIGNATURE_CODES = ["signature"];
 
-// ─── Subscription card (Pro / Premium / Élite) ───
+// ─── Subscription card (Pro / Premium / Élite / Signature) ───
 function PlanCard({
-  plan, index, isRecommended, interval, onCheckout, onOpenRdvModal,
+  plan, index, isRecommended, interval, onCheckout, onApply, onOpenRdvModal,
 }: {
   plan: CatalogPlan;
   index: number;
   isRecommended: boolean;
   interval: BillingInterval;
   onCheckout: (planCode: string) => void;
+  onApply: (planCode: string) => void;
   onOpenRdvModal: () => void;
 }) {
   const isFeatured = plan.highlighted;
+  const isSignature = SIGNATURE_CODES.includes(plan.code);
   const Icon = PLAN_ICONS[plan.code] || TrendingUp;
 
   const monthlyPrice = interval === "year" ? Math.round(plan.yearlyPrice / 12) : plan.monthlyPrice;
