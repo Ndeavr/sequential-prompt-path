@@ -111,3 +111,7 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.challenge-signup-orchestrator]
     verify_jwt = false
+  [functions.pro-landing-resolve]
+    verify_jwt = false
+  [functions.pro-landing-tts]
+    verify_jwt = false
