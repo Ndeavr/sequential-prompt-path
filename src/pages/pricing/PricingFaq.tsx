@@ -5,28 +5,32 @@ import { cn } from "@/lib/utils";
 
 const FAQS = [
   {
-    q: "Vendez-vous des leads partagés ?",
-    a: "Non. UNPRO envoie des opportunités exclusives à un seul entrepreneur à la fois. Pas de guerre de prix, pas de course aux soumissions.",
+    q: "Combien de revenus puis-je espérer générer ?",
+    a: "Avec un panier moyen de 4 000 $ et un taux de fermeture de 30 %, 10 rendez-vous (Premium) génèrent en moyenne 12 000 $ de contrats par mois. Élite ouvre l'accès aux projets XL/XXL — souvent 25 000 $+ par mois.",
   },
   {
-    q: "Puis-je annuler à tout moment ?",
-    a: "Oui. Aucun engagement long. Vous pouvez ajuster, suspendre ou annuler votre plan selon les conditions affichées au moment du choix.",
+    q: "Vendez-vous des leads partagés ?",
+    a: "Non. Chaque projet est envoyé à un seul entrepreneur à la fois. Pas de guerre de prix, pas de course aux soumissions, pas de leads recyclés.",
   },
   {
     q: "Quelle est la vitesse d'activation ?",
     a: "Le jour même après l'onboarding. Votre profil, votre matching et vos premières opportunités sont prêts en quelques minutes.",
   },
   {
-    q: "Ai-je besoin d'un site web ?",
-    a: "Non. Votre profil UNPRO sert de présence professionnelle complète, optimisée pour la recherche IA et la conversion.",
+    q: "Puis-je annuler à tout moment ?",
+    a: "Oui. Aucun engagement long. Vous pouvez ajuster, suspendre ou annuler votre plan selon les conditions affichées au moment du choix.",
   },
   {
-    q: "Les rendez-vous sont-ils inclus ?",
-    a: "Oui — 5 dans Pro, 10 dans Premium et 25 dans Élite chaque mois. Vous pouvez acheter des rendez-vous supplémentaires à l'unité ou en bloc.",
+    q: "Les rendez-vous sont-ils inclus dans le prix ?",
+    a: "Oui — 5 dans Pro, 10 dans Premium et 25 dans Élite chaque mois. Vous pouvez aussi acheter des rendez-vous supplémentaires à l'unité ou en bloc.",
   },
   {
     q: "Que se passe-t-il si ma zone est complète ?",
     a: "Certaines combinaisons spécialité + ville sont limitées pour préserver la qualité. Founder vous garantit la priorité territoriale à vie.",
+  },
+  {
+    q: "Ai-je besoin d'un site web ?",
+    a: "Non. Votre profil UNPRO sert de présence professionnelle complète, optimisée pour la recherche IA et la conversion.",
   },
   {
     q: "Puis-je changer de plan ?",
