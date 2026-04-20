@@ -426,6 +426,36 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
           </div>
         </div>
 
+        {/* Inline Stripe Embedded Checkout — appears in place when a plan is selected */}
+        <div id="inline-checkout-zone">
+          {activeCheckout && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35 }}
+              className="mb-10 max-w-3xl mx-auto"
+            >
+              <InlineStripeCheckout
+                planCode={activeCheckout.code}
+                planName={activeCheckout.name}
+                interval={interval}
+                basePrice={activeCheckout.price}
+                onCancel={() => {
+                  setActiveCheckout(null);
+                  // Strip the checkout query params on cancel.
+                  if (typeof window !== "undefined" && window.location.search.includes("checkout=open")) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete("checkout");
+                    url.searchParams.delete("plan");
+                    url.searchParams.delete("billing");
+                    window.history.replaceState({}, "", url.toString());
+                  }
+                }}
+              />
+            </motion.div>
+          )}
+        </div>
+
         {/* Public subscription plans: Pro · Premium · Élite · Signature (anchor) */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
