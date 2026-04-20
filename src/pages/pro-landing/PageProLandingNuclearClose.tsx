@@ -32,6 +32,7 @@ import {
 } from "@/hooks/useNuclearCloseFemaleVoice";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import InlineCheckoutNuclear from "@/components/pro-landing/InlineCheckoutNuclear";
 
 type Prospect = NonNullable<Awaited<ReturnType<typeof resolveProspect>>>;
 
@@ -372,6 +373,21 @@ export default function PageProLandingNuclearClose() {
         {/* Missed leads chart */}
         <section className="mt-6">
           <MissedLeadsChart missed={prospect.scores.missed} />
+        </section>
+
+        {/* Inline embedded Stripe checkout — same-session conversion */}
+        <section className="mt-6">
+          <InlineCheckoutNuclear
+            prospectId={prospect.id}
+            prospectSlug={prospect.slug}
+            category={prospect.category}
+            city={prospect.city}
+            opportunityScore={prospect.scores.opportunity}
+            onTrack={(event, payload) => {
+              logProLandingCta(prospect.id, `checkout_${event}`).catch(() => {});
+              if (payload) console.debug("[nuclear-checkout]", event, payload);
+            }}
+          />
         </section>
 
         {/* CTAs */}
