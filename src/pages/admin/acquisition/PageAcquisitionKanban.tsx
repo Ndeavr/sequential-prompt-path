@@ -21,10 +21,7 @@ function LeadCard({
   onDragStart: (e: React.DragEvent) => void;
 }) {
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
+    <div
       draggable
       onDragStart={onDragStart}
       onClick={onClick}
