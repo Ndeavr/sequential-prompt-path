@@ -160,6 +160,14 @@ export default function PageProLandingNuclearClose() {
     let alive = true;
     setLoading(true);
     setNotFound(false);
+
+    // Guard: skip resolve when slug is missing or the literal route placeholder
+    if (!slug || slug === ":slug" || slug.startsWith(":")) {
+      setNotFound(true);
+      setLoading(false);
+      return;
+    }
+
     resolveProspect({ slug, token })
       .then((p) => {
         if (!alive) return;
@@ -167,7 +175,7 @@ export default function PageProLandingNuclearClose() {
         else setProspect(p);
       })
       .catch((err) => {
-        console.error(err);
+        console.warn("[pro-landing] resolve failed", err?.message || err);
         if (alive) setNotFound(true);
       })
       .finally(() => alive && setLoading(false));
