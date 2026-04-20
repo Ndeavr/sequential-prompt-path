@@ -21,6 +21,10 @@ export default function AuthCallbackPage() {
   }, []);
 
   async function handleCallback() {
+    // Read intent FIRST (before any awaits) so it survives storage races
+    // when sessionStorage gets cleared by Supabase auth handshake.
+    const intent = consumeAuthIntent();
+
     try {
       // Wait for auth session to be established
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -78,9 +82,15 @@ export default function AuthCallbackPage() {
 
       setState("redirecting");
 
-      const intent = consumeAuthIntent();
       const hasRole = roles && roles.length > 0;
       const onboardingDone = profile?.onboarding_completed;
+
+      // If we have an explicit return path, honor it (skip onboarding gate
+      // only if the user already has a role; otherwise force onboarding).
+      if (intent?.returnPath && hasRole && !/^\/(login|signup|auth\/callback)\b/.test(intent.returnPath)) {
+        navigate(intent.returnPath, { replace: true });
+        return;
+      }
 
       if (!hasRole) {
         navigate("/onboarding", { replace: true });
@@ -99,8 +109,7 @@ export default function AuthCallbackPage() {
       else if (roleList.includes("contractor")) primaryRole = "contractor";
       else primaryRole = roleList[0];
 
-      const target = intent?.returnPath || getDefaultRedirectForRole(primaryRole);
-      navigate(target, { replace: true });
+      navigate(getDefaultRedirectForRole(primaryRole), { replace: true });
 
     } catch (err: any) {
       console.error("Auth callback error:", err);
