@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { saveAuthIntent } from "@/services/auth/authIntentService";
 import {
   usePlanCatalog,
@@ -312,24 +312,25 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
   const navigate = useNavigate();
 
   // Auto-open inline checkout if returning from auth with ?checkout=open
-  useState(() => {
-    if (typeof window === "undefined") return;
+  useEffect(() => {
+    if (typeof window === "undefined" || !plans?.length) return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("checkout") !== "open") return;
     const planCode = params.get("plan");
     const billing = params.get("billing");
     if (billing === "year" || billing === "month") setIntervalState(billing);
-    if (planCode && plans?.length) {
-      const plan = plans.find((p) => p.code === planCode);
-      if (plan) {
-        setActiveCheckout({
-          code: planCode,
-          name: plan.name,
-          price: billing === "year" ? plan.yearlyPrice : plan.monthlyPrice,
-        });
-      }
-    }
-  });
+    if (!planCode) return;
+    const plan = plans.find((p) => p.code === planCode);
+    if (!plan) return;
+    setActiveCheckout({
+      code: planCode,
+      name: plan.name,
+      price: billing === "year" ? plan.yearlyPrice : plan.monthlyPrice,
+    });
+    setTimeout(() => {
+      document.getElementById("inline-checkout-zone")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 200);
+  }, [plans]);
 
   const handleCheckout = async (planCode: string) => {
     const { data: { session } } = await supabase.auth.getSession();
