@@ -5,6 +5,8 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import UniversalRouteGuard from "@/guards/UniversalRouteGuard";
 import ScrollRestoration from "@/components/ScrollRestoration";
 import BannerContinueFlow from "@/components/flow/BannerContinueFlow";
+import AuthReturnRouter from "@/components/auth/AuthReturnRouter";
+import AuthOverlayPremium from "@/components/auth/AuthOverlayPremium";
 
 // Only eagerly load the home page and critical shared pages
 import HomeWithFeatureFlag from "@/components/home-intent/HomeWithFeatureFlag";
@@ -597,6 +599,8 @@ export const AppRouter = () => (
   <BrowserRouter>
     <ScrollRestoration />
     <BannerContinueFlow />
+    <AuthReturnRouter />
+    <AuthOverlayPremium />
     <Suspense fallback={<LazyFallback />}>
       <Routes>
         {/* Redirects for common mismatched entry points */}
