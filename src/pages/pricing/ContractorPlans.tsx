@@ -124,6 +124,9 @@ function PlanCard({
 
           {/* Price */}
           <div className="mb-1 flex items-baseline gap-1">
+            {isSignature && (
+              <span className="text-xs text-muted-foreground mr-0.5">À partir de</span>
+            )}
             <span
               className={cn(
                 "font-extrabold tracking-tight",
@@ -135,22 +138,27 @@ function PlanCard({
             <span className="text-muted-foreground text-sm">/mois</span>
           </div>
 
-          {interval === "year" && savings > 0 && (
+          {!isSignature && interval === "year" && savings > 0 && (
             <p className="text-xs font-semibold text-success mb-2">
               Économisez {savings}% en facturation annuelle
             </p>
           )}
-          {interval === "month" && savings > 0 && plan.monthlyPrice > 0 && (
+          {!isSignature && interval === "month" && savings > 0 && plan.monthlyPrice > 0 && (
             <p className="text-xs text-muted-foreground mb-2">
               ou {getMonthlyEquivalent(plan)}/mois en annuel{" "}
               <span className="text-success font-semibold">(-{savings}%)</span>
+            </p>
+          )}
+          {isSignature && (
+            <p className="text-xs text-muted-foreground mb-2">
+              Tarification sur mesure · Territoire & équipes
             </p>
           )}
 
           <p className="text-sm text-foreground/80 mb-3 leading-relaxed font-medium">{plan.tagline}</p>
 
           {/* ROI projection — high-conversion framing */}
-          {plan.appointmentsIncluded > 0 && (
+          {plan.appointmentsIncluded > 0 && !isSignature && (
             <div className={cn(
               "rounded-xl px-3 py-2.5 mb-5 border",
               isFeatured
@@ -171,23 +179,62 @@ function PlanCard({
               </p>
             </div>
           )}
+          {isSignature && (
+            <div className="rounded-xl px-3 py-2.5 mb-5 border bg-accent/5 border-accent/20">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+                Mode domination
+              </p>
+              <p className="text-base font-extrabold text-accent">
+                50 à 120 RDV / mois · Multi-territoires
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Onboarding dédié, build IA d'autorité, support VIP
+              </p>
+            </div>
+          )}
 
           {/* CTA — placed early for conversion */}
-          <Button
-            size="lg"
-            variant={isFeatured ? "default" : "outline"}
-            className={cn(
-              "w-full rounded-2xl text-sm font-semibold mb-2 h-12",
-              isFeatured && "shadow-glow bg-primary hover:bg-primary/90",
-            )}
-            onClick={() => onCheckout(plan.code)}
-          >
-            {isFeatured ? "Activer mes rendez-vous" : `Choisir ${plan.name}`}
-            <ArrowRight className="h-4 w-4 ml-2" />
-          </Button>
-          <p className="text-[10px] text-center text-muted-foreground mb-5">
-            Activation immédiate · Sans engagement long
-          </p>
+          {isSignature ? (
+            <>
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full rounded-2xl text-sm font-semibold mb-2 h-12 border-accent/40 hover:bg-accent/10"
+                onClick={() => onApply(plan.code)}
+              >
+                Postuler · Signature
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                variant="ghost"
+                className="w-full rounded-2xl text-xs mb-5 h-9"
+              >
+                <Link to="/alex">
+                  <Mic className="h-3.5 w-3.5 mr-1.5" /> Parler à Alex
+                </Link>
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                size="lg"
+                variant={isFeatured ? "default" : "outline"}
+                className={cn(
+                  "w-full rounded-2xl text-sm font-semibold mb-2 h-12",
+                  isFeatured && "shadow-glow bg-primary hover:bg-primary/90",
+                )}
+                onClick={() => onCheckout(plan.code)}
+              >
+                {isFeatured ? "Activer mes rendez-vous" : `Choisir ${plan.name}`}
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+              <p className="text-[10px] text-center text-muted-foreground mb-5">
+                Activation immédiate · Sans engagement long
+              </p>
+            </>
+          )}
 
           {/* Features */}
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
