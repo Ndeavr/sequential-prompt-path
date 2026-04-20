@@ -14,6 +14,7 @@ import {
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
+import { saveAuthIntent } from "@/services/auth/authIntentService";
 import {
   usePlanCatalog,
   formatPlanPrice,
@@ -311,7 +312,18 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
   const handleCheckout = async (planCode: string) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      window.location.href = `/signup?type=contractor&plan=${planCode}`;
+      const returnPath = `/checkout/native/${planCode}?billing=${interval}`;
+      saveAuthIntent({
+        returnPath,
+        action: "contractor_checkout",
+        roleHint: "contractor",
+        metadata: {
+          source: "pricing",
+          planCode,
+          billing: interval,
+        },
+      });
+      window.location.href = `/signup?type=contractor&plan=${planCode}&returnTo=${encodeURIComponent(returnPath)}`;
       return;
     }
     navigate(`/checkout/native/${planCode}?billing=${interval}`);

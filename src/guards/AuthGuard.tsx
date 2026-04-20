@@ -20,7 +20,7 @@ export default function AuthGuard({ children, actionLabel }: AuthGuardProps) {
     if (!isLoading && !isAuthenticated) {
       openAuthOverlay({
         label: actionLabel ?? "Accéder à cette section",
-        returnPath: location.pathname + location.search,
+        returnPath: location.pathname + location.search + location.hash,
         action: "access_protected",
       });
     }

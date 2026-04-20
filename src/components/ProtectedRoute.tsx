@@ -23,7 +23,7 @@ const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps
   if (!isAuthenticated) {
     // Preserve intent before redirecting to login
     saveAuthIntent({
-      returnPath: location.pathname + location.search,
+      returnPath: location.pathname + location.search + location.hash,
       action: "access_protected",
       roleHint: requiredRole,
     });

@@ -44,15 +44,16 @@ export default function UniversalRouteGuard({ children, allowedRoles, anyAuth }:
 
   // ── Auth check ──
   if (!isAuthenticated) {
+    const fullPath = location.pathname + location.search + location.hash;
     saveAuthIntent({
-      returnPath: location.pathname + location.search,
+      returnPath: fullPath,
       action: "access_protected",
       roleHint: allowedRoles?.[0],
     });
     saveNavigationContext({
       currentPath: location.pathname,
       previousPath: null,
-      intendedDestination: location.pathname,
+      intendedDestination: fullPath,
       intendedRole: allowedRoles?.[0] || null,
       sourceCta: null,
       sourcePage: null,
