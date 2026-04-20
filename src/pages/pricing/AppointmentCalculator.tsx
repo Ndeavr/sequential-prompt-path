@@ -106,13 +106,14 @@ function generateSuggestions(params: {
     });
   }
 
-  // Signature push
+  // Élite push for very high revenue goals
   if (revenueGoal >= 50000) {
     suggestions.push({
       icon: Shield,
-      text: `Avec un objectif de ${revenueGoal.toLocaleString()} $/mois, le plan Signature avec exclusivité territoriale est recommandé.`,
+      text: `Avec un objectif de ${revenueGoal.toLocaleString()} $/mois, le plan Élite avec priorité territoriale est recommandé.`,
       type: "upgrade",
     });
+  }
   }
 
   // Premium / Elite upsell
