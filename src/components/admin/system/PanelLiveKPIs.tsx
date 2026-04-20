@@ -16,9 +16,9 @@ export default function PanelLiveKPIs() {
   const kpis = [
     { label: "Envoyés aujourd'hui", value: `${totalSentToday}/${totalCap}`, icon: Mail },
     { label: "Mailboxes actives", value: activeMailboxes, icon: Inbox },
-    { label: "Réputation", value: domain?.reputation_score ?? "—", icon: Activity },
+    { label: "Réputation", value: (domain as any)?.overall_score ?? "—", icon: Activity },
     { label: "Jobs en file", value: queuedJobs, icon: Clock },
-    { label: "Bounce 24h", value: `${domain?.bounce_rate_24h ?? 0}%`, icon: AlertTriangle },
+    { label: "Statut domaine", value: (domain as any)?.status ?? "—", icon: AlertTriangle },
   ];
 
   return (
