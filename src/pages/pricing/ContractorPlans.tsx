@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   CheckCircle2, ArrowRight, HardHat, TrendingUp, Star, Crown,
-  CalendarCheck, Sparkles, Trophy, Zap, ChevronDown, Sprout,
+  CalendarCheck, Shield, Zap, ChevronDown, Sprout, Mic,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,21 +37,25 @@ const PLAN_ICONS: Record<string, React.ElementType> = {
   pro_acq: TrendingUp,
   premium_acq: Star,
   elite_acq: Crown,
-  founder_lifetime: Trophy,
+  signature: Shield,
 };
 
-// ─── Subscription card (Pro / Premium / Élite) ───
+const SIGNATURE_CODES = ["signature"];
+
+// ─── Subscription card (Pro / Premium / Élite / Signature) ───
 function PlanCard({
-  plan, index, isRecommended, interval, onCheckout, onOpenRdvModal,
+  plan, index, isRecommended, interval, onCheckout, onApply, onOpenRdvModal,
 }: {
   plan: CatalogPlan;
   index: number;
   isRecommended: boolean;
   interval: BillingInterval;
   onCheckout: (planCode: string) => void;
+  onApply: (planCode: string) => void;
   onOpenRdvModal: () => void;
 }) {
   const isFeatured = plan.highlighted;
+  const isSignature = SIGNATURE_CODES.includes(plan.code);
   const Icon = PLAN_ICONS[plan.code] || TrendingUp;
 
   const monthlyPrice = interval === "year" ? Math.round(plan.yearlyPrice / 12) : plan.monthlyPrice;
@@ -120,6 +124,9 @@ function PlanCard({
 
           {/* Price */}
           <div className="mb-1 flex items-baseline gap-1">
+            {isSignature && (
+              <span className="text-xs text-muted-foreground mr-0.5">À partir de</span>
+            )}
             <span
               className={cn(
                 "font-extrabold tracking-tight",
@@ -131,22 +138,27 @@ function PlanCard({
             <span className="text-muted-foreground text-sm">/mois</span>
           </div>
 
-          {interval === "year" && savings > 0 && (
+          {!isSignature && interval === "year" && savings > 0 && (
             <p className="text-xs font-semibold text-success mb-2">
               Économisez {savings}% en facturation annuelle
             </p>
           )}
-          {interval === "month" && savings > 0 && plan.monthlyPrice > 0 && (
+          {!isSignature && interval === "month" && savings > 0 && plan.monthlyPrice > 0 && (
             <p className="text-xs text-muted-foreground mb-2">
               ou {getMonthlyEquivalent(plan)}/mois en annuel{" "}
               <span className="text-success font-semibold">(-{savings}%)</span>
+            </p>
+          )}
+          {isSignature && (
+            <p className="text-xs text-muted-foreground mb-2">
+              Tarification sur mesure · Territoire & équipes
             </p>
           )}
 
           <p className="text-sm text-foreground/80 mb-3 leading-relaxed font-medium">{plan.tagline}</p>
 
           {/* ROI projection — high-conversion framing */}
-          {plan.appointmentsIncluded > 0 && (
+          {plan.appointmentsIncluded > 0 && !isSignature && (
             <div className={cn(
               "rounded-xl px-3 py-2.5 mb-5 border",
               isFeatured
@@ -167,23 +179,62 @@ function PlanCard({
               </p>
             </div>
           )}
+          {isSignature && (
+            <div className="rounded-xl px-3 py-2.5 mb-5 border bg-accent/5 border-accent/20">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+                Mode domination
+              </p>
+              <p className="text-base font-extrabold text-accent">
+                50 à 120 RDV / mois · Multi-territoires
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Onboarding dédié, build IA d'autorité, support VIP
+              </p>
+            </div>
+          )}
 
           {/* CTA — placed early for conversion */}
-          <Button
-            size="lg"
-            variant={isFeatured ? "default" : "outline"}
-            className={cn(
-              "w-full rounded-2xl text-sm font-semibold mb-2 h-12",
-              isFeatured && "shadow-glow bg-primary hover:bg-primary/90",
-            )}
-            onClick={() => onCheckout(plan.code)}
-          >
-            {isFeatured ? "Activer mes rendez-vous" : `Choisir ${plan.name}`}
-            <ArrowRight className="h-4 w-4 ml-2" />
-          </Button>
-          <p className="text-[10px] text-center text-muted-foreground mb-5">
-            Activation immédiate · Sans engagement long
-          </p>
+          {isSignature ? (
+            <>
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full rounded-2xl text-sm font-semibold mb-2 h-12 border-accent/40 hover:bg-accent/10"
+                onClick={() => onApply(plan.code)}
+              >
+                Postuler · Signature
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                variant="ghost"
+                className="w-full rounded-2xl text-xs mb-5 h-9"
+              >
+                <Link to="/alex">
+                  <Mic className="h-3.5 w-3.5 mr-1.5" /> Parler à Alex
+                </Link>
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                size="lg"
+                variant={isFeatured ? "default" : "outline"}
+                className={cn(
+                  "w-full rounded-2xl text-sm font-semibold mb-2 h-12",
+                  isFeatured && "shadow-glow bg-primary hover:bg-primary/90",
+                )}
+                onClick={() => onCheckout(plan.code)}
+              >
+                {isFeatured ? "Activer mes rendez-vous" : `Choisir ${plan.name}`}
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+              <p className="text-[10px] text-center text-muted-foreground mb-5">
+                Activation immédiate · Sans engagement long
+              </p>
+            </>
+          )}
 
           {/* Features */}
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
@@ -249,71 +300,6 @@ function PlanCard({
   );
 }
 
-// ─── Founder one-time scarcity block ───
-function FounderBlock({ plan, onCheckout }: { plan: CatalogPlan; onCheckout: (code: string) => void }) {
-  const price = plan.oneTimePrice || 199700;
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="mt-12 max-w-4xl mx-auto"
-    >
-      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-accent/10 via-card to-primary/10 border-2 border-accent/30 p-6 md:p-10">
-        {/* Glow */}
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-96 h-96 bg-accent/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-32 right-0 w-72 h-72 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative grid md:grid-cols-[1.4fr_1fr] gap-8 items-center">
-          <div>
-            <Badge className="bg-accent text-accent-foreground mb-4 text-[11px] px-3 py-1 font-bold uppercase tracking-wider">
-              <Trophy className="h-3 w-3 mr-1.5 fill-current" /> {plan.badgeText || "30 places seulement"}
-            </Badge>
-            <h3 className="text-2xl md:text-3xl font-extrabold text-foreground mb-2 leading-tight">
-              Devenez membre <span className="text-gradient">Founder</span>
-            </h3>
-            <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
-              {plan.tagline} Verrouillez vos avantages avant le scale public d'UNPRO au Québec.
-            </p>
-
-            <ul className="space-y-2 mb-6">
-              {plan.features.slice(0, 5).map((f) => (
-                <li key={f} className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />
-                  <span className="text-sm text-foreground/90">{f}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="rounded-2xl bg-card/80 backdrop-blur border border-border/60 p-6 text-center">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
-              Paiement unique
-            </p>
-            <div className="flex items-baseline justify-center gap-1 mb-1">
-              <span className="text-5xl font-extrabold text-foreground">{formatPlanPrice(price)}</span>
-            </div>
-            <p className="text-xs text-muted-foreground mb-5">CAD · taxes en sus</p>
-
-            <Button
-              size="lg"
-              className="w-full rounded-2xl h-12 text-sm font-semibold shadow-glow bg-accent hover:bg-accent/90 text-accent-foreground"
-              onClick={() => onCheckout(plan.code)}
-            >
-              <Sparkles className="h-4 w-4 mr-2" />
-              Devenir Founder
-            </Button>
-
-            <p className="text-[11px] text-muted-foreground mt-3">
-              Avantages verrouillés à vie · Onboarding concierge
-            </p>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
 // ─── Main component ───
 export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?: string | null }) {
   const [interval, setIntervalState] = useState<BillingInterval>("month");
@@ -330,15 +316,19 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
     navigate(`/checkout/native/${planCode}?billing=${interval}`);
   };
 
-  // Split: main subscription grid (Pro/Premium/Élite, position_rank >= 1)
-  // vs hidden entry plan (Recrue, position_rank = 0) vs Founder (one-time)
+  const handleApply = (planCode: string) => {
+    navigate(`/contact?subject=${planCode}`);
+  };
+
+  // Public grid: Pro / Premium / Élite / Signature (position_rank >= 1, subscription only).
+  // Recrue (position_rank = 0) stays hidden behind the starter accordion.
+  // Founder is private — never rendered here.
   const subscriptionPlans = (plans ?? []).filter(
     (p) => p.billingMode !== "one_time" && p.positionRank >= 1
   );
   const entryPlan = (plans ?? []).find(
     (p) => p.billingMode !== "one_time" && p.positionRank === 0
   );
-  const founderPlan = (plans ?? []).find((p) => p.billingMode === "one_time");
 
   // Auto-expand entry plan section if it's the pre-selected/recommended plan
   const [showEntryPlan, setShowEntryPlan] = useState(preSelectedPlan === "recrue");
@@ -394,15 +384,15 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
           </div>
         </div>
 
-        {/* 3 subscription plans */}
+        {/* Public subscription plans: Pro · Premium · Élite · Signature (anchor) */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {Array.from({ length: 3 }).map((_, i) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-[560px] rounded-3xl" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6 items-stretch">
             {subscriptionPlans.map((plan, i) => (
               <PlanCard
                 key={plan.code}
@@ -411,6 +401,7 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
                 isRecommended={preSelectedPlan === plan.code}
                 interval={interval}
                 onCheckout={handleCheckout}
+                onApply={handleApply}
                 onOpenRdvModal={() => setRdvModalOpen(true)}
               />
             ))}
@@ -521,18 +512,7 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
           </motion.div>
         )}
 
-        {/* Signature contact note */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="text-center text-sm text-muted-foreground mt-8"
-        >
-          Besoin d'un mode domination ?{" "}
-          <Link to="/contact?subject=signature" className="text-primary font-semibold hover:underline">
-            Parlez-nous des plans Signature
-          </Link>
-        </motion.p>
+
 
         {/* Trust strip */}
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 mt-8 text-xs text-muted-foreground">
@@ -550,9 +530,8 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
           </span>
         </div>
 
-        {/* Founder one-time block */}
-        {founderPlan && <FounderBlock plan={founderPlan} onCheckout={handleCheckout} />}
       </div>
+
 
       <ModalRendezVousValueExplanation
         open={rdvModalOpen}
