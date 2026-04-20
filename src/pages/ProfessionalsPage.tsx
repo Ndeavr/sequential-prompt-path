@@ -48,33 +48,12 @@ const AIPP_BENEFITS = [
   { icon: Shield, label: "Crédibilité auprès des propriétaires", desc: "Un badge vérifié et un score fort inspirent confiance." },
 ];
 
-const PLANS = [
-  {
-    name: "Founder Early",
-    price: "1 997",
-    tag: "Accès fondateur",
-    features: [
-      "Profil AIPP complet",
-      "Recommandation Alex activée",
-      "1 territoire inclus",
-      "Accès fondateur permanent",
-      "Aucun frais mensuel récurrent",
-    ],
-  },
-  {
-    name: "Founder Prime",
-    price: "2 997",
-    tag: "Priorité maximale",
-    highlight: true,
-    features: [
-      "Tout de Founder Early",
-      "Priorité maximale dans Alex",
-      "3 territoires inclus",
-      "Badge Fondateur Prime",
-      "Support prioritaire dédié",
-      "Accès bêta aux nouvelles fonctionnalités",
-    ],
-  },
+const FOUNDER_BENEFITS = [
+  "Profil AIPP complet",
+  "Recommandation Alex activée",
+  "Territoire réservé selon disponibilité",
+  "Badge Fondateur",
+  "Analyse privée de votre marché",
 ];
 
 const TERRITORIES = [
@@ -247,14 +226,14 @@ export default function ProfessionalsPage() {
         </div>
       </section>
 
-      {/* ── Offres Founder ── */}
+      {/* ── Accès Founder privé ── */}
       <section className="px-5 py-16">
         <div className="max-w-5xl mx-auto">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-4">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-warning/10 border border-warning/20 px-3 py-1 text-caption font-semibold text-warning mb-4">
-              <Sparkles className="h-3 w-3" /> Offres Founder
+              <Sparkles className="h-3 w-3" /> Accès Founder privé
             </span>
-            <h2 className="font-display text-2xl font-bold text-foreground mb-2">Accès exclusif, places limitées.</h2>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-2">Accès exclusif, sur approbation.</h2>
           </motion.div>
 
           <motion.div
@@ -263,50 +242,39 @@ export default function ProfessionalsPage() {
             viewport={{ once: true }}
             className="rounded-xl bg-success/8 border border-success/15 px-4 py-3 text-center mb-10 max-w-md mx-auto"
           >
-            <p className="text-xs text-success font-semibold">
-              💡 Vous ne payez que si vous voulez augmenter le nombre de rendez-vous.
+              <p className="text-xs text-success font-semibold">
+               💡 Les conditions Founder sont partagées uniquement après validation du territoire.
             </p>
           </motion.div>
 
-          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid md:grid-cols-2 gap-5 max-w-3xl mx-auto">
-            {PLANS.map((p, i) => (
-              <motion.div key={p.name} variants={fadeUp} custom={i}>
-                <Card className={`h-full ${p.highlight ? "border-secondary/30 shadow-glow relative overflow-hidden" : ""}`}>
-                  {p.highlight && (
-                    <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-secondary via-primary to-accent" />
-                  )}
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="font-display text-base font-bold text-foreground">{p.name}</h3>
-                        <Badge className="mt-1.5 bg-secondary/12 text-secondary border-secondary/20 text-[10px]">{p.tag}</Badge>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-display text-3xl font-extrabold text-foreground">{p.price}<span className="text-sm font-semibold text-muted-foreground">$</span></p>
-                        <p className="text-[10px] text-muted-foreground">paiement unique</p>
-                      </div>
-                    </div>
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="max-w-3xl mx-auto">
+            <Card className="border-secondary/30 shadow-glow relative overflow-hidden">
+              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-secondary via-primary to-accent" />
+              <CardContent className="p-6 md:p-8">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5 mb-6">
+                  <div>
+                    <h3 className="font-display text-xl font-bold text-foreground">Programme Founder UNPRO</h3>
+                    <Badge className="mt-2 bg-secondary/12 text-secondary border-secondary/20 text-[10px]">Invitation privée</Badge>
+                  </div>
+                  <div className="text-left md:text-right">
+                    <p className="text-sm font-semibold text-foreground">Territoires limités · validation manuelle</p>
+                    <p className="text-[10px] text-muted-foreground">Conditions partagées après qualification</p>
+                  </div>
+                </div>
 
-                    <ul className="space-y-2.5 mb-6">
-                      {p.features.map(f => (
-                        <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0 mt-0.5" /> {f}
-                        </li>
-                      ))}
-                    </ul>
+                <ul className="space-y-2.5 mb-6">
+                  {FOUNDER_BENEFITS.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0 mt-0.5" /> {f}
+                    </li>
+                  ))}
+                </ul>
 
-                    <Button
-                      asChild
-                      className={`w-full rounded-xl ${p.highlight ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground shadow-glow" : ""}`}
-                      variant={p.highlight ? "default" : "outline"}
-                      size="lg"
-                    >
-                      <Link to="/contractor-onboarding">Réserver ma place <ArrowRight className="h-4 w-4 ml-1" /></Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                <Button asChild className="w-full rounded-xl bg-secondary hover:bg-secondary/90 text-secondary-foreground shadow-glow" size="lg">
+                  <Link to="/contact?subject=founder">Postuler en privé <ArrowRight className="h-4 w-4 ml-1" /></Link>
+                </Button>
+              </CardContent>
+            </Card>
           </motion.div>
         </div>
       </section>
