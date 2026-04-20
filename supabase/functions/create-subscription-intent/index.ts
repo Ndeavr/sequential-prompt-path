@@ -176,6 +176,15 @@ Deno.serve(async (req) => {
 
     let customerId = existingSub?.stripe_customer_id;
 
+    // Default address required by Stripe automatic_tax (QC-based product)
+    const defaultAddress = {
+      country: "CA",
+      state: "QC",
+      city: contractor.city || "Montréal",
+      postal_code: contractor.postal_code || "H2X 1Y4",
+      line1: contractor.address_line1 || "Adresse à compléter",
+    };
+
     if (!customerId) {
       const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
       if (customers.data.length > 0) {
@@ -183,10 +192,21 @@ Deno.serve(async (req) => {
       } else {
         const customer = await stripe.customers.create({
           email: userEmail,
+          address: defaultAddress,
           metadata: { contractor_id: contractor.id, user_id: userId },
         });
         customerId = customer.id;
       }
+    }
+
+    // Ensure existing customer has an address (required for automatic_tax)
+    try {
+      const existing = await stripe.customers.retrieve(customerId);
+      if (!existing.deleted && (!existing.address || !existing.address.country)) {
+        await stripe.customers.update(customerId, { address: defaultAddress });
+      }
+    } catch (e) {
+      console.warn("[create-subscription-intent] customer address check failed", e);
     }
 
     // 5. Build subscription with payment_behavior: default_incomplete + automatic tax (QC-compliant)
