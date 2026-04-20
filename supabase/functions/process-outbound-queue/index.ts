@@ -51,6 +51,14 @@ Deno.serve(async (req) => {
   const startTime = Date.now()
 
   try {
+    // ─── LIVE MODE GUARD ───
+    const { data: liveCheck } = await supabase.rpc('is_system_live')
+    if (!liveCheck) {
+      return new Response(JSON.stringify({ skipped: true, reason: 'test_mode_or_kill_switch_active' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Get active campaigns with auto_send_enabled
     const { data: campaigns } = await supabase
       .from('outbound_campaigns')

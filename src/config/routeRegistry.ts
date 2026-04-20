@@ -42,6 +42,7 @@ export const ROUTE_REGISTRY: RouteEntry[] = [
 
   // ─── Admin ───
   { path: "/admin", allowedRoles: ["admin"], journeyType: "admin", requiresAuth: true, fallbackRoute: "/", mismatchStrategy: "role_redirect" },
+  { path: "/admin/system-mode", allowedRoles: ["admin"], journeyType: "admin", requiresAuth: true, fallbackRoute: "/", mismatchStrategy: "role_redirect" },
 
   // ─── Condo Dashboard ───
   { path: "/condos/dashboard", allowedRoles: ["homeowner", "condo_manager", "admin"], journeyType: "condo_manager", requiresAuth: true, fallbackRoute: "/condo", mismatchStrategy: "role_redirect" },

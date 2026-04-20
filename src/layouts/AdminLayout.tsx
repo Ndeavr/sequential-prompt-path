@@ -16,6 +16,7 @@ import {
   Smartphone, Ban, LayoutList, Server, Cpu, Target, ImageIcon,
 } from "lucide-react";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
+import BannerSystemEnvironmentStatus from "@/components/admin/system/BannerSystemEnvironmentStatus";
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
@@ -234,6 +235,7 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
+        <BannerSystemEnvironmentStatus />
         <header className="md:hidden flex items-center justify-between border-b border-border/30 px-4 py-2.5 bg-background/80 backdrop-blur-xl sticky top-0 z-30">
           <Link to="/" className="flex items-center gap-2">
             <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
