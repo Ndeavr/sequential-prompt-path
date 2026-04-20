@@ -36,11 +36,15 @@ const PROJECT_TYPES = [
 ];
 
 const PLAN_META: Record<string, { icon: React.ElementType; color: string; label: string; monthly: number }> = {
+  pro_acq: { icon: TrendingUp, color: "text-primary", label: "Pro", monthly: 349 },
+  premium_acq: { icon: Star, color: "text-primary", label: "Premium", monthly: 599 },
+  elite_acq: { icon: Crown, color: "text-accent", label: "Élite", monthly: 999 },
+  // legacy aliases
   recrue: { icon: Users, color: "text-muted-foreground", label: "Recrue", monthly: 0 },
-  pro: { icon: TrendingUp, color: "text-primary", label: "Pro", monthly: 49 },
-  premium: { icon: Star, color: "text-primary", label: "Premium", monthly: 99 },
-  elite: { icon: Crown, color: "text-accent", label: "Élite", monthly: 199 },
-  signature: { icon: Shield, color: "text-secondary", label: "Signature", monthly: 399 },
+  pro: { icon: TrendingUp, color: "text-primary", label: "Pro", monthly: 349 },
+  premium: { icon: Star, color: "text-primary", label: "Premium", monthly: 599 },
+  elite: { icon: Crown, color: "text-accent", label: "Élite", monthly: 999 },
+  signature: { icon: Shield, color: "text-secondary", label: "Signature", monthly: 999 },
 };
 
 // ─── AI Optimization Engine ───
@@ -75,10 +79,12 @@ function generateSuggestions(params: {
 
   // Too many appointments needed
   if (appts > capacity) {
-    if (plan !== "elite" && plan !== "signature") {
+    if (plan !== "elite_acq") {
+      const nextPlan = plan === "premium_acq" ? "Élite" : "Premium";
+      const nextSize = plan === "premium_acq" ? "XXL" : "XL";
       suggestions.push({
         icon: Crown,
-        text: `Passez à ${plan === "premium" ? "Élite" : "Premium"} pour accéder aux projets ${plan === "premium" ? "XXL" : "XL"} et réduire votre volume.`,
+        text: `Passez à ${nextPlan} pour accéder aux projets ${nextSize} et réduire votre volume.`,
         type: "upgrade",
       });
     }
@@ -110,7 +116,7 @@ function generateSuggestions(params: {
   }
 
   // Premium / Elite upsell
-  if (plan === "recrue" || plan === "pro") {
+  if (plan === "pro_acq") {
     suggestions.push({
       icon: Star,
       text: `Les entrepreneurs les plus performants utilisent Premium ou Élite pour maximiser leurs rendez-vous garantis.`,
