@@ -55165,6 +55165,33 @@ export type Database = {
         }
         Relationships: []
       }
+      system_events: {
+        Row: {
+          actor_user_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json
+          severity: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          payload?: Json
+          severity?: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          severity?: string
+        }
+        Relationships: []
+      }
       system_health_checks: {
         Row: {
           check_type: string
