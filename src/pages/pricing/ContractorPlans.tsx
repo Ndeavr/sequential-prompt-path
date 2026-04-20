@@ -24,6 +24,7 @@ import {
   type CatalogPlan,
 } from "@/hooks/usePlanCatalog";
 import ModalRendezVousValueExplanation from "@/components/pricing/ModalRendezVousValueExplanation";
+import InlineStripeCheckout from "@/components/pricing/InlineStripeCheckout";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
