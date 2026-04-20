@@ -541,9 +541,8 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
           </span>
         </div>
 
-        {/* Founder one-time block */}
-        {founderPlan && <FounderBlock plan={founderPlan} onCheckout={handleCheckout} />}
       </div>
+
 
       <ModalRendezVousValueExplanation
         open={rdvModalOpen}
