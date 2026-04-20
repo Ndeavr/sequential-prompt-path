@@ -10,7 +10,7 @@ export default function PanelLiveKPIs() {
 
   const totalSentToday = sending?.mailboxes?.reduce((s: number, m: any) => s + (m.sent_today ?? 0), 0) ?? 0;
   const totalCap = sending?.mailboxes?.reduce((s: number, m: any) => s + (m.daily_limit ?? 0), 0) ?? 0;
-  const activeMailboxes = sending?.mailboxes?.filter((m: any) => m.status === "active")?.length ?? 0;
+  const activeMailboxes = sending?.mailboxes?.filter((m: any) => m.mailbox_status === "active")?.length ?? 0;
   const queuedJobs = jobs?.filter((j: any) => j.status === "queued" || j.status === "running")?.length ?? 0;
 
   const kpis = [
