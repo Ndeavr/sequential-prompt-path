@@ -8,7 +8,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PLAN_PRICES: Record<string, string> = {
+// Legacy founder slugs (kept for compat). The new founder_lifetime plan resolves
+// dynamically from plan_catalog.stripe_one_time_price_id below.
+const LEGACY_PLAN_PRICES: Record<string, string> = {
   "elite-fondateur": "price_1TJcXvCvZwK1QnPVs1YmFLMk",
   "signature-fondateur": "price_1TJcXwCvZwK1QnPVEwq0Eka2",
 };
@@ -35,7 +37,21 @@ serve(async (req) => {
     if (!user?.email) throw new Error("Not authenticated");
 
     const { planSlug, promoCode } = await req.json();
-    const priceId = PLAN_PRICES[planSlug];
+    if (!planSlug) throw new Error("planSlug or planCode required");
+
+    // Resolve price: 1) plan_catalog (new dynamic Founder plans), 2) legacy hard-coded slugs
+    let priceId: string | undefined = LEGACY_PLAN_PRICES[planSlug];
+    if (!priceId) {
+      const { data: planRow } = await adminClient
+        .from("plan_catalog")
+        .select("stripe_one_time_price_id, billing_mode, active")
+        .eq("code", planSlug)
+        .eq("active", true)
+        .maybeSingle();
+      if (planRow?.billing_mode === "one_time" && planRow.stripe_one_time_price_id) {
+        priceId = planRow.stripe_one_time_price_id;
+      }
+    }
     if (!priceId) throw new Error("Invalid plan");
 
     // Check spots remaining
@@ -82,10 +98,17 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "payment",
+      // Tax: UNPRO is the pricing brain; Stripe Tax handles QC GST/QST automatically (exclusive on the price)
+      automatic_tax: { enabled: true },
+      ...(customerId ? { customer_update: { address: "auto", name: "auto" } } : {}),
+      tax_id_collection: { enabled: true },
+      // Promo codes (UNPRO promo + Stripe promo codes accepted at checkout)
+      allow_promotion_codes: !promoCode,
       success_url: `${req.headers.get("origin")}/fondateur/plans?success=true&spot=${spot.id}`,
       cancel_url: `${req.headers.get("origin")}/fondateur/plans?canceled=true&spot=${spot.id}`,
       metadata: {
         plan_slug: planSlug,
+        plan_code: planSlug,
         spot_id: spot.id,
         user_id: user.id,
       },

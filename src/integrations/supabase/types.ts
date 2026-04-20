@@ -40271,10 +40271,12 @@ export type Database = {
           setup_fee: number
           short_pitch: string | null
           stripe_monthly_price_id: string | null
+          stripe_one_time_price_id: string | null
           stripe_yearly_price_id: string | null
           summary_outcome: string | null
           tagline: string | null
           updated_at: string
+          yearly_discount_percent: number | null
         }
         Insert: {
           active?: boolean
@@ -40306,10 +40308,12 @@ export type Database = {
           setup_fee?: number
           short_pitch?: string | null
           stripe_monthly_price_id?: string | null
+          stripe_one_time_price_id?: string | null
           stripe_yearly_price_id?: string | null
           summary_outcome?: string | null
           tagline?: string | null
           updated_at?: string
+          yearly_discount_percent?: number | null
         }
         Update: {
           active?: boolean
@@ -40341,10 +40345,12 @@ export type Database = {
           setup_fee?: number
           short_pitch?: string | null
           stripe_monthly_price_id?: string | null
+          stripe_one_time_price_id?: string | null
           stripe_yearly_price_id?: string | null
           summary_outcome?: string | null
           tagline?: string | null
           updated_at?: string
+          yearly_discount_percent?: number | null
         }
         Relationships: []
       }
