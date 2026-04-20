@@ -26,7 +26,7 @@ const FAQS = [
   },
   {
     q: "Que se passe-t-il si ma zone est complète ?",
-    a: "Certaines combinaisons spécialité + ville sont limitées pour préserver la qualité. Founder vous garantit la priorité territoriale à vie.",
+    a: "Certaines combinaisons spécialité + ville sont limitées pour préserver la qualité. Le plan Signature donne accès à une priorité territoriale et à des options d'exclusivité par zone.",
   },
   {
     q: "Ai-je besoin d'un site web ?",
