@@ -6,40 +6,52 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+function json(payload: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "missing_auth" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+
+    if (!supabaseUrl || !serviceRoleKey || !anonKey) {
+      console.error("fn-toggle-system-mode missing env", {
+        hasSupabaseUrl: !!supabaseUrl,
+        hasServiceRoleKey: !!serviceRoleKey,
+        hasAnonKey: !!anonKey,
       });
+      return json({ success: false, error: "server_configuration_error" });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return json({ success: false, error: "missing_auth" });
+    }
+
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const userClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
+      supabaseUrl,
+      anonKey,
       { global: { headers: { Authorization: authHeader } } }
     );
 
     const { data: { user } } = await userClient.auth.getUser();
     if (!user) {
-      return new Response(JSON.stringify({ error: "unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ success: false, error: "unauthorized" });
     }
 
-    const { data: roleCheck } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
+    const { data: roleCheck, error: roleError } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
+    if (roleError) throw roleError;
     if (!roleCheck) {
-      return new Response(JSON.stringify({ error: "forbidden_admin_only" }), {
-        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ success: false, error: "forbidden_admin_only" });
     }
 
     const body = await req.json().catch(() => ({}));
@@ -55,11 +67,12 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (domainHealth?.status === "critical") {
-        return new Response(JSON.stringify({
+        return json({
+          success: false,
           error: "preflight_failed",
           reason: "domain_health_critical",
           message: "Domain reputation is critical. Resolve before going LIVE.",
-        }), { status: 412, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        });
       }
     }
 
@@ -77,12 +90,9 @@ Deno.serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    return new Response(JSON.stringify({ success: true, state: updated }), {
-      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ success: true, state: updated });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e?.message || e) }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("fn-toggle-system-mode unhandled", e);
+    return json({ success: false, error: String(e?.message || e) });
   }
 });
