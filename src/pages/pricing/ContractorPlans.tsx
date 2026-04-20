@@ -384,15 +384,15 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
           </div>
         </div>
 
-        {/* 3 subscription plans */}
+        {/* Public subscription plans: Pro · Premium · Élite · Signature (anchor) */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {Array.from({ length: 3 }).map((_, i) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-[560px] rounded-3xl" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6 items-stretch">
             {subscriptionPlans.map((plan, i) => (
               <PlanCard
                 key={plan.code}
@@ -401,6 +401,7 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
                 isRecommended={preSelectedPlan === plan.code}
                 interval={interval}
                 onCheckout={handleCheckout}
+                onApply={handleApply}
                 onOpenRdvModal={() => setRdvModalOpen(true)}
               />
             ))}
