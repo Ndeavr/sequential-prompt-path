@@ -560,6 +560,7 @@ const PageCareers = lazy(() => import("@/pages/recruitment/PageCareers"));
 const PageRecruitmentProgrammer = lazy(() => import("@/pages/recruitment/PageRecruitmentProgrammer"));
 const DecrireMonProjetPage = lazy(() => import("@/pages/DecrireMonProjetPage"));
 const ParlerAAlexPage = lazy(() => import("@/pages/ParlerAAlexPage"));
+const Alex100MPage = lazy(() => import("@/pages/AlexPage"));
 const ProblemesMaisonPage = lazy(() => import("@/pages/ProblemesMaisonPage"));
 const VillesDesserviesPage = lazy(() => import("@/pages/VillesDesserviesPage"));
 const CityServicePage = lazy(() => import("@/pages/CityServicePage"));
