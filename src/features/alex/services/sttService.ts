@@ -8,7 +8,7 @@ import { alexLog } from "../utils/alexDebug";
 
 type STTCallback = (event: STTTranscriptEvent) => void;
 
-let recognition: SpeechRecognition | null = null;
+let recognition: ReturnType<typeof getSpeechRecognition> = null;
 let subscriber: STTCallback | null = null;
 let startTime = 0;
 let isRunning = false;
