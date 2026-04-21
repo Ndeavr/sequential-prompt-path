@@ -39,43 +39,44 @@ export function useOutreachTarget(slug: string, token: string | null) {
     async function load() {
       setLoading(true);
       try {
-        let query = supabase.from("outreach_targets").select("*");
+        let query = supabase.from("outreach_targets" as any).select("*");
         if (token) {
           query = query.eq("secure_token", token);
         } else {
           query = query.eq("slug", slug);
         }
         const { data, error: err } = await query.maybeSingle();
-        if (err || !data) {
+        const row = data as any;
+        if (err || !row) {
           setError("Target introuvable");
           return;
         }
 
         // Mark first view
-        if (!data.first_viewed_at) {
-          supabase.from("outreach_targets").update({ first_viewed_at: new Date().toISOString() }).eq("id", data.id).then(() => {});
+        if (!row.first_viewed_at) {
+          supabase.from("outreach_targets" as any).update({ first_viewed_at: new Date().toISOString() } as any).eq("id", row.id).then(() => {});
         }
 
-        const payload = (data.payload || {}) as OutreachLandingPayload;
+        const payload = (row.payload || {}) as OutreachLandingPayload;
         const preAuditStatus = (payload.preAuditStatus || "not_started") as OutreachPageViewModel["preAuditStatus"];
         const ctas = getCtaLabels(preAuditStatus);
 
         setModel({
-          businessName: data.business_name,
-          city: data.city,
-          websiteUrl: data.website_url,
-          category: data.category,
+          businessName: row.business_name,
+          city: row.city,
+          websiteUrl: row.website_url,
+          category: row.category,
           founderMode: payload.founderMode ?? false,
           preAuditStatus,
-          detectedSignals: buildDetectedSignals({ ...payload, websiteUrl: data.website_url, phone: data.phone, rbqNumber: data.rbq_number }),
+          detectedSignals: buildDetectedSignals({ ...payload, websiteUrl: row.website_url, phone: row.phone, rbqNumber: row.rbq_number }),
           primaryCtaLabel: ctas.primary,
           secondaryCtaLabel: ctas.secondary,
           confirmationRequired: preAuditStatus !== "complete",
-          targetId: data.id,
-          secureToken: data.secure_token,
-          slug: data.slug,
-          preAuditId: data.pre_audit_id,
-          contractorId: data.contractor_id,
+          targetId: row.id,
+          secureToken: row.secure_token,
+          slug: row.slug,
+          preAuditId: row.pre_audit_id,
+          contractorId: row.contractor_id,
         });
       } catch {
         setError("Erreur de chargement");
@@ -97,10 +98,10 @@ export function useOutreachTarget(slug: string, token: string | null) {
 
   const confirmIdentity = useCallback(async () => {
     if (!model) return;
-    await supabase.from("outreach_targets").update({
+    await supabase.from("outreach_targets" as any).update({
       claimed_at: new Date().toISOString(),
       landing_status: "claimed",
-    }).eq("id", model.targetId);
+    } as any).eq("id", model.targetId);
     await trackEvent("identity_confirmed");
   }, [model, trackEvent]);
 
