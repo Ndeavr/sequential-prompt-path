@@ -189,9 +189,15 @@ export default function HeroSection() {
     onAutostart: () => startVoice(),
   });
 
+  const retryVoice = useCallback(() => {
+    stop();
+    releaseLock();
+    setTimeout(() => startVoice(), 500);
+  }, [stop, releaseLock, startVoice]);
+
   const statusText =
     orbState === "speaking" ? "Alex vous parle…"
-    : orbState === "thinking" ? "Connexion…"
+    : orbState === "thinking" ? (connectingTooLong ? "Connexion lente…" : "Connexion…")
     : orbState === "listening" ? "Je vous écoute…"
     : "Parlez à Alex";
 
