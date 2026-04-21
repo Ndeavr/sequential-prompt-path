@@ -560,6 +560,7 @@ const PageCareers = lazy(() => import("@/pages/recruitment/PageCareers"));
 const PageRecruitmentProgrammer = lazy(() => import("@/pages/recruitment/PageRecruitmentProgrammer"));
 const DecrireMonProjetPage = lazy(() => import("@/pages/DecrireMonProjetPage"));
 const ParlerAAlexPage = lazy(() => import("@/pages/ParlerAAlexPage"));
+const Alex100MPage = lazy(() => import("@/pages/AlexPage"));
 const ProblemesMaisonPage = lazy(() => import("@/pages/ProblemesMaisonPage"));
 const VillesDesserviesPage = lazy(() => import("@/pages/VillesDesserviesPage"));
 const CityServicePage = lazy(() => import("@/pages/CityServicePage"));
@@ -908,6 +909,7 @@ export const AppRouter = () => (
         <Route path="/dossier-soumissions/ajouter" element={<PageAjouterSoumissionAuDossier />} />
         <Route path="/decrire-mon-projet" element={<DecrireMonProjetPage />} />
         <Route path="/parler-a-alex" element={<ParlerAAlexPage />} />
+        <Route path="/alex-100m" element={<Alex100MPage />} />
         <Route path="/problemes-maison" element={<ProblemesMaisonPage />} />
         <Route path="/villes-desservies" element={<VillesDesserviesPage />} />
         <Route path="/ville-service/:city/:service" element={<CityServicePage />} />
