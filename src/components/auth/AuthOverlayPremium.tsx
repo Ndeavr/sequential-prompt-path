@@ -1,12 +1,11 @@
 /**
- * UNPRO — Premium Auth Overlay
- * Full-screen focus-locked overlay with glass card.
- * Blocks all background interaction. Supports login & signup modes.
+ * UNPRO — Premium Auth Overlay v2
+ * Streamlined: Google + SMS primary, magic link secondary.
+ * No role selection — role detection happens post-login.
  */
-import { useState, useEffect, useRef, useCallback, useSyncExternalStore } from "react";
+import { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, User, Briefcase, Building2, Handshake, Mail, Smartphone, Lock, ChevronRight, Home, Award, Landmark, Globe, Factory, Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { X, Lock, ChevronRight, Mail, CheckCircle2, Smartphone } from "lucide-react";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import {
   subscribeAuthOverlay,
@@ -15,26 +14,13 @@ import {
   type PendingAction,
 } from "@/hooks/useAuthOverlay";
 import { saveAuthIntent } from "@/services/auth/authIntentService";
+import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
 import OAuthButtons from "@/components/auth/OAuthButtons";
-import AuthDivider from "@/components/auth/AuthDivider";
-import LoginMagicLinkForm from "@/components/auth/LoginMagicLinkForm";
 import PhoneOtpForm from "@/components/auth/PhoneOtpForm";
+import LoginMagicLinkForm from "@/components/auth/LoginMagicLinkForm";
 import UnproIcon from "@/components/brand/UnproIcon";
 
-type AuthMode = "role" | "choice" | "login" | "signup";
-type SecondaryMethod = null | "email" | "phone";
-
-const ROLES = [
-  { code: "homeowner", label: "Propriétaire", desc: "Maison, condo, projet", icon: Home },
-  { code: "contractor", label: "Entrepreneur", desc: "Visibilité, matchs, croissance", icon: Briefcase },
-  { code: "professional", label: "Professionnel", desc: "Expertise, crédibilité, clients", icon: Award },
-  { code: "condo_manager", label: "Gestionnaire de copropriétés", desc: "Immeubles, interventions, suivi", icon: Building2 },
-  { code: "partner", label: "Partenaire", desc: "Services, intégration, collaboration", icon: Handshake },
-  { code: "municipality", label: "Municipalité", desc: "Citoyens, orientation, terrain", icon: Landmark },
-  { code: "public_org", label: "Organisation publique", desc: "Services, démarches, accompagnement", icon: Globe },
-  { code: "enterprise", label: "Entreprise", desc: "Bâtiments, actifs, fournisseurs", icon: Factory },
-  { code: "ambassador", label: "Ambassadeur", desc: "Références, commissions, croissance", icon: Users },
-] as const;
+type OverlayView = "main" | "sms" | "magic";
 
 const ACTION_LABELS: Record<string, string> = {
   access_protected: "Accéder à cette section",
@@ -58,23 +44,17 @@ export default function AuthOverlayPremium() {
     getAuthOverlayState
   );
 
-  const [mode, setMode] = useState<AuthMode>("role");
-  const [secondaryMethod, setSecondaryMethod] = useState<SecondaryMethod>(null);
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [view, setView] = useState<OverlayView>("main");
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useScrollLock(isOpen);
 
-  // Reset state when opened
+  // Reset on open
   useEffect(() => {
-    if (isOpen) {
-      setMode("role");
-      setSecondaryMethod(null);
-      setSelectedRoles([]);
-    }
+    if (isOpen) setView("main");
   }, [isOpen]);
 
-  // Save intent when overlay opens
+  // Save intent
   useEffect(() => {
     if (isOpen && pendingAction) {
       saveAuthIntent({
@@ -84,14 +64,11 @@ export default function AuthOverlayPremium() {
     }
   }, [isOpen, pendingAction]);
 
-  // Focus trap
+  // Focus trap + Escape
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        closeAuthOverlay();
-        return;
-      }
+      if (e.key === "Escape") { closeAuthOverlay(); return; }
       if (e.key !== "Tab") return;
       const focusable = overlayRef.current?.querySelectorAll<HTMLElement>(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -99,33 +76,14 @@ export default function AuthOverlayPremium() {
       if (!focusable || focusable.length === 0) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
 
-  const toggleRole = useCallback((code: string) => {
-    setSelectedRoles((prev) =>
-      prev.includes(code) ? prev.filter((r) => r !== code) : [...prev, code]
-    );
-  }, []);
-
   const actionLabel = resolveActionLabel(pendingAction);
-  const modeTitle = mode === "role" ? "Quel est votre rôle ?" : mode === "login" ? "Connectez-vous à votre compte" : mode === "signup" ? "Créez votre accès gratuit" : "Connectez-vous pour continuer";
-  const modeSubtitle = mode === "role"
-    ? "Sélectionnez votre profil pour personnaliser votre expérience."
-    : mode === "login"
-      ? "Retrouvez votre espace UNPRO."
-      : mode === "signup"
-        ? "C'est gratuit. Votre progression est conservée."
-        : "Votre action est prête. Connectez-vous ou créez un compte gratuit pour poursuivre avec UNPRO.";
 
   return (
     <AnimatePresence>
@@ -140,9 +98,7 @@ export default function AuthOverlayPremium() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
           className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) closeAuthOverlay();
-          }}
+          onClick={(e) => { if (e.target === e.currentTarget) closeAuthOverlay(); }}
         >
           {/* Backdrop */}
           <div
@@ -168,7 +124,7 @@ export default function AuthOverlayPremium() {
               boxShadow: "var(--shadow-2xl), 0 0 60px -10px hsl(222 100% 65% / 0.12)",
             }}
           >
-            {/* Close button */}
+            {/* Close */}
             <button
               onClick={() => closeAuthOverlay()}
               className="absolute top-3 right-3 z-20 p-2 rounded-full transition-colors"
@@ -186,9 +142,11 @@ export default function AuthOverlayPremium() {
                     <UnproIcon size={40} variant="primary" />
                   </div>
                 </div>
-                <h2 className="text-xl font-bold text-foreground font-display">{modeTitle}</h2>
-                <p className="text-sm text-muted-foreground leading-relaxed max-w-[300px] mx-auto">
-                  {modeSubtitle}
+                <h2 className="text-xl font-bold text-foreground font-display">
+                  Trouvez le bon pro. Plus vite.
+                </h2>
+                <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px] mx-auto">
+                  Connexion rapide et sécurisée. Aucun mot de passe requis.
                 </p>
               </div>
 
@@ -209,180 +167,85 @@ export default function AuthOverlayPremium() {
                 </div>
               )}
 
-              {/* Role selection mode */}
-              {mode === "role" && (
+              {/* Main view: Google + SMS */}
+              {view === "main" && (
                 <div className="space-y-3">
-                  <div className="grid gap-1.5 max-h-[45vh] overflow-y-auto pr-1">
-                    {ROLES.map((role) => {
-                      const Icon = role.icon;
-                      const active = selectedRoles.includes(role.code);
-                      return (
-                        <motion.button
-                          key={role.code}
-                          onClick={() => {
-                            setSelectedRoles([role.code]);
-                            setTimeout(() => setMode("choice"), 200);
-                          }}
-                          whileTap={{ scale: 0.98 }}
-                          className="flex items-center gap-3 px-3.5 py-3 rounded-xl text-left transition-all w-full"
-                          style={{
-                            background: active ? "hsl(222 100% 65% / 0.12)" : "hsl(228 20% 14% / 0.5)",
-                            border: `1px solid ${active ? "hsl(222 100% 65% / 0.35)" : "hsl(228 18% 18%)"}`,
-                          }}
-                        >
-                          <div
-                            className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
-                            style={{ background: active ? "hsl(222 100% 65% / 0.18)" : "hsl(228 20% 16%)" }}
-                          >
-                            <Icon className="h-4 w-4" style={{ color: active ? "hsl(222 100% 75%)" : "hsl(220 14% 55%)" }} />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-foreground leading-tight">{role.label}</p>
-                            <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">{role.desc}</p>
-                          </div>
-                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 ml-auto shrink-0" />
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                  <button
-                    onClick={() => setMode("choice")}
-                    className="w-full text-xs text-primary hover:underline transition-colors pt-1"
-                  >
-                    J'ai déjà un compte
-                  </button>
-                </div>
-              )}
+                  {/* Google */}
+                  <OAuthButtons />
 
-              {/* Choice mode: signup vs login */}
-              {mode === "choice" && (
-                <div className="space-y-2.5">
-                  {selectedRoles.length > 0 && (
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ background: "hsl(222 100% 65% / 0.08)", border: "1px solid hsl(222 100% 65% / 0.15)" }}>
-                      <span className="text-muted-foreground">Rôle :</span>
-                      <span className="text-foreground font-medium">{ROLES.find(r => r.code === selectedRoles[0])?.label}</span>
-                      <button onClick={() => setMode("role")} className="ml-auto text-primary text-[11px] hover:underline">Changer</button>
-                    </div>
-                  )}
-                  <Button
-                    onClick={() => setMode("signup")}
-                    className="w-full h-12 text-sm font-semibold rounded-xl gap-2"
-                    style={{
-                      background: "linear-gradient(135deg, hsl(222 100% 60%), hsl(222 100% 70%))",
-                      color: "white",
-                      boxShadow: "0 4px 14px -3px hsl(222 100% 65% / 0.4)",
+                  {/* SMS button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      trackAuthEvent("auth_method_selected", { method: "sms" });
+                      setView("sms");
                     }}
-                  >
-                    Créer mon compte gratuit
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setMode("login")}
-                    className="w-full h-11 text-sm font-medium rounded-xl"
+                    className="w-full h-12 flex items-center justify-center gap-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.98]"
                     style={{
-                      background: "hsl(228 20% 14% / 0.6)",
+                      background: "hsl(228 30% 13%)",
                       border: "1px solid hsl(228 18% 20%)",
                       color: "hsl(220 20% 93%)",
+                      boxShadow: "0 2px 8px -2px hsl(228 40% 3% / 0.4)",
                     }}
                   >
-                    J'ai déjà un compte
-                  </Button>
+                    <Smartphone className="h-4 w-4" />
+                    Recevoir un code par SMS
+                  </button>
+
+                  {/* Trust microcopy */}
+                  <div className="flex items-center justify-center gap-4 pt-2">
+                    {["Connexion rapide", "Aucun mot de passe", "Accès sécurisé"].map((t) => (
+                      <span key={t} className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <CheckCircle2 className="h-3 w-3 text-primary/60" />
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Secondary: magic link */}
+                  <div className="pt-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        trackAuthEvent("magic_link_selected");
+                        setView("magic");
+                      }}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+                    >
+                      Autres options de connexion
+                    </button>
+                  </div>
                 </div>
               )}
 
-              {/* Login or Signup mode */}
-              {(mode === "login" || mode === "signup") && (
-                <div className="space-y-4">
-
-                  {/* Divider */}
-                  <div className="flex items-center gap-3">
-                    <div className="h-px flex-1" style={{ background: "hsl(228 18% 18%)" }} />
-                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                      {mode === "login" ? "connexion" : "inscription"}
-                    </span>
-                    <div className="h-px flex-1" style={{ background: "hsl(228 18% 18%)" }} />
-                  </div>
-
-                  {/* OAuth providers */}
-                  {!secondaryMethod && (
-                    <div className="space-y-2">
-                      <OAuthButtons />
-
-                      <AuthDivider text="ou" />
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          onClick={() => setSecondaryMethod("email")}
-                          className="flex items-center justify-center gap-1.5 h-10 rounded-xl text-xs font-medium transition-colors"
-                          style={{
-                            background: "hsl(228 20% 14% / 0.6)",
-                            border: "1px solid hsl(228 18% 18%)",
-                            color: "hsl(220 20% 85%)",
-                          }}
-                        >
-                          <Mail className="h-3.5 w-3.5" />
-                          Courriel
-                        </button>
-                        <button
-                          onClick={() => setSecondaryMethod("phone")}
-                          className="flex items-center justify-center gap-1.5 h-10 rounded-xl text-xs font-medium transition-colors"
-                          style={{
-                            background: "hsl(228 20% 14% / 0.6)",
-                            border: "1px solid hsl(228 18% 18%)",
-                            color: "hsl(220 20% 85%)",
-                          }}
-                        >
-                          <Smartphone className="h-3.5 w-3.5" />
-                          Téléphone
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Email form */}
-                  {secondaryMethod === "email" && (
-                    <div className="space-y-2">
-                      <LoginMagicLinkForm />
-                      <button
-                        onClick={() => setSecondaryMethod(null)}
-                        className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        ← Autres options
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Phone form */}
-                  {secondaryMethod === "phone" && (
-                    <div className="space-y-2">
-                      <PhoneOtpForm onSuccess={() => closeAuthOverlay()} />
-                      <button
-                        onClick={() => setSecondaryMethod(null)}
-                        className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        ← Autres options
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Switch mode */}
+              {/* SMS view */}
+              {view === "sms" && (
+                <div className="space-y-2">
+                  <PhoneOtpForm onSuccess={() => closeAuthOverlay()} />
                   <button
-                    onClick={() => {
-                      setMode(mode === "login" ? "signup" : "login");
-                      setSecondaryMethod(null);
-                    }}
-                    className="w-full text-xs text-primary hover:underline transition-colors pt-1"
+                    onClick={() => setView("main")}
+                    className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors pt-1"
                   >
-                    {mode === "login" ? "Pas encore de compte ? Créer un accès gratuit" : "J'ai déjà un compte"}
+                    ← Retour
                   </button>
                 </div>
               )}
 
-              {/* Reassurance */}
-              {mode === "signup" && (
-                <p className="text-[11px] text-center text-muted-foreground leading-relaxed">
-                  C'est gratuit. Votre progression est conservée et votre expérience sera personnalisée dès la prochaine étape.
-                </p>
+              {/* Magic link view */}
+              {view === "magic" && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-foreground">Recevoir un lien par courriel</span>
+                  </div>
+                  <LoginMagicLinkForm />
+                  <button
+                    onClick={() => setView("main")}
+                    className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    ← Retour
+                  </button>
+                </div>
               )}
 
               {/* Security footer */}

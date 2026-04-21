@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Phone, ArrowLeft, RefreshCw, ShieldCheck, Loader2 } from "lucide-react";
+import { Phone, ArrowLeft, RefreshCw, ShieldCheck, Loader2, CheckCircle2 } from "lucide-react";
+import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface PhoneOtpFormProps {
@@ -41,6 +42,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [verified, setVerified] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [attempts, setAttempts] = useState(0);
   const codeRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -81,6 +83,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       if (data.error) {
         toast.error(data.error);
       } else {
+        trackAuthEvent("sms_sent");
         toast.success("Code envoyé par texto !");
         setStep("code");
         setCooldown(COOLDOWN_SECONDS);
@@ -123,10 +126,11 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
         });
       }
 
-      toast.success("Connexion réussie !");
+      trackAuthEvent("sms_success");
+      setVerified(true);
 
-      // If new user needs role, redirect handled by parent/auth system
-      onSuccess?.();
+      // Brief success animation then callback
+      setTimeout(() => onSuccess?.(), 800);
     } catch {
       toast.error("Erreur réseau. Réessayez.");
     } finally {
@@ -238,6 +242,22 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
                 Maximum atteint. Réessayez dans quelques minutes.
               </p>
             )}
+          </motion.div>
+        ) : verified ? (
+          <motion.div
+            key="success-step"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center gap-3 py-6"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+              <CheckCircle2 className="h-12 w-12 text-green-400" />
+            </motion.div>
+            <p className="text-sm font-medium text-foreground">Connexion réussie !</p>
           </motion.div>
         ) : (
           <motion.div

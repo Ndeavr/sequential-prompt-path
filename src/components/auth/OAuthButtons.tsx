@@ -1,15 +1,13 @@
 /**
- * UNPRO — OAuth Buttons (Google + Apple)
- * Reusable across Login, Signup, and StartPage.
- * Saves return-path intent and routes the OAuth callback through /auth/callback
- * so the user always lands back on their originating route.
+ * UNPRO — Google OAuth Button (Single Provider)
+ * Premium styling with hover glow and tactile press.
  */
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { lovable } from "@/integrations/lovable/index";
 import { captureCurrentRouteAsIntent, peekAuthIntent } from "@/services/auth/authIntentService";
+import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
 
 interface OAuthButtonsProps {
   loading?: boolean;
@@ -18,19 +16,16 @@ interface OAuthButtonsProps {
 
 export default function OAuthButtons({ loading: externalLoading, className = "" }: OAuthButtonsProps) {
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [appleLoading, setAppleLoading] = useState(false);
 
-  const handleOAuth = async (provider: "google" | "apple") => {
-    const setLoading = provider === "google" ? setGoogleLoading : setAppleLoading;
-    setLoading(true);
+  const handleGoogle = async () => {
+    setGoogleLoading(true);
+    trackAuthEvent("auth_method_selected", { method: "google" });
     try {
-      // Make sure an intent is saved before leaving the page.
-      // peekAuthIntent → if nothing yet (e.g. user opened /login directly), capture current route.
       if (!peekAuthIntent()) {
         captureCurrentRouteAsIntent("oauth_signin");
       }
 
-      const { error } = await lovable.auth.signInWithOAuth(provider, {
+      const { error } = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: `${window.location.origin}/auth/callback`,
       });
       if (error) {
@@ -39,19 +34,18 @@ export default function OAuthButtons({ loading: externalLoading, className = "" 
     } catch (err: any) {
       toast.error(err?.message || "Erreur de connexion");
     } finally {
-      setLoading(false);
+      setGoogleLoading(false);
     }
   };
 
-  const isDisabled = externalLoading || googleLoading || appleLoading;
+  const isDisabled = externalLoading || googleLoading;
 
   return (
-    <div className={`space-y-2.5 ${className}`}>
-      {/* Google */}
+    <div className={className}>
       <Button
         type="button"
         variant="outline"
-        className="w-full h-12 text-sm font-semibold rounded-xl gap-3 transition-all active:scale-[0.98]"
+        className="w-full h-12 text-sm font-semibold rounded-xl gap-3 transition-all active:scale-[0.98] hover:shadow-lg"
         style={{
           background: "hsl(0 0% 100% / 0.95)",
           border: "1px solid hsl(0 0% 100% / 0.2)",
@@ -59,7 +53,7 @@ export default function OAuthButtons({ loading: externalLoading, className = "" 
           boxShadow: "0 2px 8px -2px hsl(228 40% 3% / 0.3)",
         }}
         disabled={isDisabled}
-        onClick={() => handleOAuth("google")}
+        onClick={handleGoogle}
       >
         {googleLoading ? (
           "Connexion…"
@@ -72,32 +66,6 @@ export default function OAuthButtons({ loading: externalLoading, className = "" 
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
             Continuer avec Google
-          </>
-        )}
-      </Button>
-
-      {/* Apple */}
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full h-12 text-sm font-semibold rounded-xl gap-3 transition-all active:scale-[0.98]"
-        style={{
-          background: "hsl(228 30% 13%)",
-          border: "1px solid hsl(228 18% 20%)",
-          color: "hsl(220 20% 93%)",
-          boxShadow: "0 2px 8px -2px hsl(228 40% 3% / 0.4)",
-        }}
-        disabled={isDisabled}
-        onClick={() => handleOAuth("apple")}
-      >
-        {appleLoading ? (
-          "Connexion…"
-        ) : (
-          <>
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-            </svg>
-            Continuer avec Apple
           </>
         )}
       </Button>
