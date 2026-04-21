@@ -322,6 +322,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   }, [startInternal]);
 
   const stop = useCallback(() => {
+    clearConnectionTimeout();
+    retryCountRef.current = 0;
     intentionallyStopped.current = true;
     languageSessionRef.current.reset();
     activeLanguageRef.current = "fr-CA";
@@ -330,7 +332,12 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     setIsConnecting(false);
     hasDeliveredFirstAudioRef.current = false;
     callbacksRef.current?.onDisconnect?.();
-  }, [conversation]);
+  }, [conversation, clearConnectionTimeout]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => { clearConnectionTimeout(); };
+  }, [clearConnectionTimeout]);
 
   return { start, stop, isActive, isConnecting, isSpeaking, conversation };
 }
