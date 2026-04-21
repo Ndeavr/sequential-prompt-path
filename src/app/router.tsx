@@ -1305,6 +1305,7 @@ export const AppRouter = () => (
          <Route path="/audit" element={<Suspense fallback={<LazyFallback />}><PageInstantAuditFunnel /></Suspense>} />
          <Route path="/analyse/:slug" element={<Suspense fallback={<LazyFallback />}><PageOutreachLanding /></Suspense>} />
          <Route path="/admin/sniper" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSniperCommandCenter /></Suspense></UniversalRouteGuard>} />
+         <Route path="/admin/seo-index-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSeoIndexHealth /></Suspense></UniversalRouteGuard>} />
 
           {/* Catch-all: try fallback, then 404 */}
           <Route path="*" element={<FallbackRoutePage />} />
