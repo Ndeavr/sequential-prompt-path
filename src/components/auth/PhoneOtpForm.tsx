@@ -83,6 +83,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       if (data.error) {
         toast.error(data.error);
       } else {
+        trackAuthEvent("sms_sent");
         toast.success("Code envoyé par texto !");
         setStep("code");
         setCooldown(COOLDOWN_SECONDS);
