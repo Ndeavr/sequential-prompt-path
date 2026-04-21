@@ -24856,7 +24856,15 @@ export type Database = {
           screenshot_url: string | null
           seo_score: number | null
           service_area: string | null
+          sms_attempt_count: number | null
+          sms_booked: boolean | null
+          sms_message_sid: string | null
+          sms_opted_out: boolean | null
           sms_queue_status: string
+          sms_replied: boolean | null
+          sms_reply_text: string | null
+          sms_sent_at: string | null
+          sms_status: string | null
           social_profiles: Json | null
           source: string | null
           source_detail: string | null
@@ -24911,7 +24919,15 @@ export type Database = {
           screenshot_url?: string | null
           seo_score?: number | null
           service_area?: string | null
+          sms_attempt_count?: number | null
+          sms_booked?: boolean | null
+          sms_message_sid?: string | null
+          sms_opted_out?: boolean | null
           sms_queue_status?: string
+          sms_replied?: boolean | null
+          sms_reply_text?: string | null
+          sms_sent_at?: string | null
+          sms_status?: string | null
           social_profiles?: Json | null
           source?: string | null
           source_detail?: string | null
@@ -24966,7 +24982,15 @@ export type Database = {
           screenshot_url?: string | null
           seo_score?: number | null
           service_area?: string | null
+          sms_attempt_count?: number | null
+          sms_booked?: boolean | null
+          sms_message_sid?: string | null
+          sms_opted_out?: boolean | null
           sms_queue_status?: string
+          sms_replied?: boolean | null
+          sms_reply_text?: string | null
+          sms_sent_at?: string | null
+          sms_status?: string | null
           social_profiles?: Json | null
           source?: string | null
           source_detail?: string | null
