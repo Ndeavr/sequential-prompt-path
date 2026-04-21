@@ -86,7 +86,7 @@ export default function PageAdminManualTestSend() {
           sender_email: SENDER_EMAIL,
           recipient_email: trimmedRecipient,
           subject: subject.trim(),
-          statuses_requested: STATUSES,
+          statuses_requested: [...STATUSES],
           status: "queued",
         },
       }]);

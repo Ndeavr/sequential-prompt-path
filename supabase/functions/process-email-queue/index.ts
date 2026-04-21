@@ -275,6 +275,17 @@ Deno.serve(async (req) => {
           status: 'sent',
         })
 
+        await supabase.from('system_events').insert({
+          event_type: 'email_status_sent',
+          severity: 'info',
+          payload: {
+            message_id: payload.message_id,
+            template_name: payload.label || queue,
+            recipient_email: payload.to,
+            status: 'sent',
+          },
+        })
+
         // Delete from queue
         const { error: delError } = await supabase.rpc('delete_email', {
           queue_name: queue,
