@@ -1,80 +1,35 @@
 
 
-# Alex Premium Female Voice Identity — Full Rebuild
+# Fix Alex Voice Stuck on "Connexion..."
 
-## Summary
+## Problem
 
-Alex is currently a masculine voice identity using ElevenLabs voice `mVjOqyqTPfwlXPjV5sjX` with masculine pronouns and "Homme intelligent" persona throughout the system prompt, TTS functions, and client-side session context. This plan switches Alex to a premium female identity using voice `XB0fDUnXU5powFXDhCwa` (Charlotte — already proven on the Nuclear Close landing), rewrites the entire system prompt and personality layer, updates TTS settings, and aligns all touchpoints.
+Alex connects successfully on first load, but after the session disconnects (after ~5s), subsequent connection attempts hang indefinitely. The ElevenLabs `useConversation` hook calls `startSession()` but `onConnect` never fires, leaving `isConnecting = true` permanently. The orb shows a spinning loader with "Connexion..." forever.
 
----
+**Root cause**: No connection timeout exists in `useLiveVoice.ts`. When `startSession` silently fails (common after a WebSocket disconnect on mobile), nothing resets the `isConnecting` state.
 
-## Technical Details
+## Fix
 
-### Block 1 — Voice Config + TTS Settings (Shared Module)
+### 1. Add connection timeout to `useLiveVoice.ts`
 
-Update `supabase/functions/_shared/alex-french-voice.ts`:
+After calling `conversation.startSession()`, start a 10-second timeout. If `onConnect` hasn't fired by then:
+- Set `isConnecting = false`
+- Fire `onError` callback with a timeout message
+- Log the failure
 
-- Change `ALEX_VOICE_CONFIG.voiceId` from `mVjOqyqTPfwlXPjV5sjX` to `XB0fDUnXU5powFXDhCwa`
-- Update voice settings to match user spec:
-  - stability: 0.43 (was 0.65)
-  - similarity_boost: 0.78 (was 0.80)
-  - style: 0.28 (was 0.08)
-  - use_speaker_boost: true (unchanged)
-- Update profile_a/profile_b accordingly
-- Update all comments referencing "masculine" or "Alex masculine voice"
-- Rewrite `ALEX_VOICE_SYSTEM_PROMPT` entirely with feminine identity, new personality rules, new conversation feel, premium speech design, trust language, emotional intelligence mode, revenue mode, homeowner/contractor/condo flows, wow moments, memory system, closing language
+The timeout is cleared in `onConnect` and `onDisconnect`.
 
-### Block 2 — TTS Edge Functions (Voice ID Swap)
+### 2. Add retry-once logic
 
-Update hardcoded voice IDs in:
+If the connection times out, allow one automatic retry before giving up. On second failure, show text fallback state instead of spinning forever.
 
-- `supabase/functions/alex-tts/index.ts` — `PRIMARY_VOICE_ID` and `FALLBACK_VOICE_ID`
-- `supabase/functions/alex-voice-speak/index.ts` — fallback voice ID
-- `supabase/functions/alex-voice-get-config/index.ts` — config response voiceId
-- `supabase/functions/voice-get-config/index.ts` — fallback config voice_id
-- `supabase/functions/test-alex-voice/index.ts` — assertion checks
-- `supabase/functions/alex-voice-test/index.ts` — fallback voice ID
+### 3. Add visual timeout feedback in `HeroSection.tsx`
 
-### Block 3 — Client-Side Session Context
+When `isConnecting` has been true for >8s, show a subtle "Réessayer" button below the orb instead of just "Connexion...". Clicking it stops and restarts the voice session.
 
-Update `src/hooks/useLiveVoice.ts`:
+### 4. Reset hook state on disconnect
 
-- Rewrite `buildSessionContext()` for both FR and EN:
-  - FR: Feminine persona — "Tu es Alex d'UNPRO. Femme intelligente, calme, élégante..." with new personality rules
-  - EN: "You are Alex from UNPRO. Calm, sharp, warm, confident..." matching the spec
-- Update default greeting from generic to personality-driven: "Bonjour. Quel projet avance aujourd'hui?" (contextual variants)
-
-### Block 4 — Voice Overlay UX Polish
-
-Update `src/components/voice/OverlayAlexVoiceFullScreen.tsx`:
-
-- Update `buildGreeting()` to use new personality-driven greetings instead of generic "Que puis-je faire pour vous?"
-  - With name: "Bonjour {name}. Quel projet avance aujourd'hui?"
-  - Without name: "Bonjour. Décrivez votre besoin."
-  - With contextHint: "Bonjour. Je vois que vous regardez {hint}. On avance ensemble."
-- Update status text labels to match feminine personality
-- Update orb visual states descriptions in comments
-
-### Block 5 — Guardrail + Persona Components
-
-Update `src/hooks/useAlexVoicePersona.ts` and `src/components/alex-voice-persona/GuardrailVoiceConsistency.tsx`:
-
-- Change gender references from masculine to feminine
-- Update `sanitizeAlexResponse()` forbidden phrases if any masculine-specific patterns exist
-- Ensure identity guardrails enforce feminine pronouns: "ravie", "certaine", "prête"
-
-### Block 6 — Nuclear Close Landing Alignment
-
-Update `supabase/functions/pro-landing-tts/index.ts`:
-
-- Charlotte (`XB0fDUnXU5powFXDhCwa`) is already the FR voice here — now it becomes the same as main Alex
-- Remove the concept of "separate female voice for nuclear close" since Alex IS female everywhere
-
-### Block 7 — Memory Updates
-
-- Rewrite `mem://ai/alex/voice-persona-male` → rename to `mem://ai/alex/voice-persona-female` with new identity
-- Update `mem://ai/alex/voice-identity-and-behavior` with feminine persona
-- Update memory index to reflect the change
+In `onDisconnect`, ensure `isConnecting` is also reset (already done, but add a forced cleanup of any pending `startSession` promise via the timeout).
 
 ---
 
@@ -82,20 +37,6 @@ Update `supabase/functions/pro-landing-tts/index.ts`:
 
 | Action | File |
 |---|---|
-| Rewrite | `supabase/functions/_shared/alex-french-voice.ts` — voice ID, TTS settings, full system prompt |
-| Modify | `supabase/functions/alex-tts/index.ts` — voice ID swap |
-| Modify | `supabase/functions/alex-voice-speak/index.ts` — voice ID fallback |
-| Modify | `supabase/functions/alex-voice-get-config/index.ts` — config voiceId |
-| Modify | `supabase/functions/voice-get-config/index.ts` — fallback voiceId |
-| Modify | `supabase/functions/test-alex-voice/index.ts` — assertion voice ID |
-| Modify | `supabase/functions/alex-voice-test/index.ts` — fallback voice ID |
-| Modify | `supabase/functions/pro-landing-tts/index.ts` — align with unified Alex voice |
-| Rewrite | `src/hooks/useLiveVoice.ts` — session context prompts (FR + EN) |
-| Modify | `src/components/voice/OverlayAlexVoiceFullScreen.tsx` — greetings + status labels |
-| Modify | `src/hooks/useAlexVoicePersona.ts` — gender references |
-| Modify | `src/components/alex-voice-persona/GuardrailVoiceConsistency.tsx` — feminine guardrails |
-| Update | `mem://ai/alex/voice-persona-female` (new, replaces male) |
-| Update | `mem://ai/alex/voice-identity-and-behavior` |
-
-No database migration needed — voice config in `voice_configs` table and `alex_voice_profiles` table can be updated via existing admin tools or a simple data update migration if desired.
+| Modify | `src/hooks/useLiveVoice.ts` — add 10s connection timeout + retry logic |
+| Modify | `src/components/home/HeroSection.tsx` — add retry button after 8s of connecting |
 
