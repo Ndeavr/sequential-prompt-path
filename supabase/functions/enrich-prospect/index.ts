@@ -32,7 +32,7 @@ function generateProbableEmails(domain: string, businessName: string): EmailCand
 
 // ─── Junk TLDs and domains to reject ───
 const JUNK_TLDS = new Set(["css","js","jsx","tsx","ts","scss","less","map","svg","png","jpg","jpeg","gif","webp","ico","woff","woff2","ttf","eot","json","xml","html","htm","php","asp","py"]);
-const JUNK_DOMAINS = new Set(["example.com","sentry.io","wixpress.com","cloudflare.com","googleapis.com","gstatic.com","w3.org","schema.org","yellowpages.ca","pagesjaunes.ca","facebook.com","instagram.com","twitter.com","linkedin.com","google.com","youtube.com","wordpress.org","jquery.com","bootstrapcdn.com","cloudfront.net","amazonaws.com","gravatar.com","wp.com"]);
+const JUNK_DOMAINS = new Set(["example.com","sentry.io","wixpress.com","cloudflare.com","googleapis.com","gstatic.com","w3.org","schema.org","yellowpages.ca","pagesjaunes.ca","facebook.com","instagram.com","twitter.com","linkedin.com","google.com","youtube.com","wordpress.org","jquery.com","bootstrapcdn.com","cloudfront.net","amazonaws.com","gravatar.com","wp.com","trustedpros.ca","trustedpros.com","homestars.com","houzz.com","houzz.ca","yelp.com","yelp.ca","bbb.org","mapquest.com","apple.com","microsoft.com","mozilla.org","github.com","canpages.ca","411.ca","pagesdor.com","soumissionrenovation.ca","renovationquotient.com","renoquotes.com"]);
 
 function isValidBusinessEmail(email: string): boolean {
   const parts = email.split("@");
