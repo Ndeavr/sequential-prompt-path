@@ -44,6 +44,9 @@ function isValidBusinessEmail(email: string): boolean {
   if (local.startsWith(".") || local.startsWith("-") || local.startsWith("_")) return false;
   if (local.startsWith("www.")) return false;
   if (/^\d+$/.test(local)) return false;
+  // Reject CSS/HTML class-like patterns
+  if (local.includes("wp-block") || local.includes("wp-") || local.includes("css-")) return false;
+  if (local.includes("patch") || local.includes("templ")) return false;
   
   // Domain sanity
   const domainParts = domain.split(".");
@@ -51,11 +54,26 @@ function isValidBusinessEmail(email: string): boolean {
   const tld = domainParts[domainParts.length - 1];
   if (JUNK_TLDS.has(tld)) return false;
   if (JUNK_DOMAINS.has(domain)) return false;
+  // Reject if any domain part is only 1-2 chars (except TLD like .ca, .io)
+  for (let i = 0; i < domainParts.length - 1; i++) {
+    if (domainParts[i].length < 2) return false;
+  }
   
   // No CSS/JS patterns
   if (/^[0-9a-f]{6,}$/i.test(local)) return false;
   if (local.includes("static") || local.includes("noreply") || local.includes("no-reply")) return false;
   if (domain.includes("cdn") || domain.includes("static")) return false;
+
+  // Reject if local contains suspicious CSS/code fragments
+  if (/[{}()\[\];:,]/.test(local) || /[{}()\[\];:,]/.test(domain)) return false;
+  // Reject emails from obvious directory/aggregator domains
+  if (domain.includes("houzz") || domain.includes("trustedpro") || domain.includes("homestars") || domain.includes("pagesjaunes") || domain.includes("yellowpage")) return false;
+  // Reject if TLD looks like a CSS class (e.g. .iskycbadgev)
+  if (tld.length > 6) return false;
+  
+  // Must have a real TLD
+  const VALID_TLDS = new Set(["com","ca","net","org","io","co","fr","info","biz","us","uk","de","qc","quebec","email","online","pro","me","dev"]);
+  if (!VALID_TLDS.has(tld)) return false;
   
   return true;
 }
