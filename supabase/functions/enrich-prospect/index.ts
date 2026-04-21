@@ -62,16 +62,22 @@ function extractDomain(url: string): string | null {
 
 // ─── Firecrawl scrape ───
 async function scrapeUrl(url: string): Promise<{ markdown: string; html: string } | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
   try {
     const res = await fetch(`${FIRECRAWL_V2}/scrape`, {
       method: "POST",
       headers: { Authorization: `Bearer ${firecrawlKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ url, formats: ["markdown", "html"], onlyMainContent: false, waitFor: 3000 }),
+      body: JSON.stringify({ url, formats: ["markdown"], onlyMainContent: false, waitFor: 1000 }),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
     if (!res.ok) { await res.text(); return null; }
     const data = await res.json();
-    return { markdown: data.data?.markdown || data.markdown || "", html: data.data?.html || data.html || "" };
-  } catch { return null; }
+    const md = data.data?.markdown || data.markdown || "";
+    return { markdown: md, html: "" };
+  } catch { clearTimeout(timeout); return null; }
+}
 }
 
 // ─── Firecrawl search for new prospects ───
