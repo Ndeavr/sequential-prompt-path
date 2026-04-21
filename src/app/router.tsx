@@ -329,6 +329,11 @@ const PageAdminAIPPv2Dashboard = lazy(() => import("@/pages/admin/PageAdminAIPPv
 const PageAippDebug = lazy(() => import("@/pages/admin/PageAippDebug"));
 const PageContractorAippAudit = lazy(() => import("@/pages/PageContractorAippAudit"));
 
+// Instant Audit Intake Funnel + Outreach + Sniper
+const PageInstantAuditFunnel = lazy(() => import("@/pages/PageInstantAuditFunnel"));
+const PageOutreachLanding = lazy(() => import("@/pages/PageOutreachLanding"));
+const PageSniperCommandCenter = lazy(() => import("@/pages/admin/PageSniperCommandCenter"));
+
 // Entrepreneur Onboarding Flow
 const PageOnboardingImport = lazy(() => import("@/pages/entrepreneur/PageOnboardingImport"));
 const PageOnboardingAnalyse = lazy(() => import("@/pages/entrepreneur/PageOnboardingAnalyse"));
@@ -1291,8 +1296,13 @@ export const AppRouter = () => (
         <Route path="/calendar/connect/failure" element={<Suspense fallback={<LazyFallback />}><PageCalendarConnectionFailure /></Suspense>} />
         <Route path="/admin/calendar-conversion" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageAdminCalendarConversionDashboard /></Suspense></UniversalRouteGuard>} />
 
-         {/* Catch-all: try fallback, then 404 */}
-         <Route path="*" element={<FallbackRoutePage />} />
+         {/* Instant Audit Intake Funnel */}
+         <Route path="/audit" element={<Suspense fallback={<LazyFallback />}><PageInstantAuditFunnel /></Suspense>} />
+         <Route path="/analyse/:slug" element={<Suspense fallback={<LazyFallback />}><PageOutreachLanding /></Suspense>} />
+         <Route path="/admin/sniper" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSniperCommandCenter /></Suspense></UniversalRouteGuard>} />
+
+          {/* Catch-all: try fallback, then 404 */}
+          <Route path="*" element={<FallbackRoutePage />} />
       </Routes>
     </Suspense>
   </BrowserRouter>
