@@ -106,6 +106,22 @@ export default function HeroSection() {
     },
   });
 
+  // Track when isConnecting has been true for >8s
+  useEffect(() => {
+    if (isConnecting) {
+      connectingTimerRef.current = setTimeout(() => setConnectingTooLong(true), 8000);
+    } else {
+      setConnectingTooLong(false);
+      if (connectingTimerRef.current) {
+        clearTimeout(connectingTimerRef.current);
+        connectingTimerRef.current = null;
+      }
+    }
+    return () => {
+      if (connectingTimerRef.current) clearTimeout(connectingTimerRef.current);
+    };
+  }, [isConnecting]);
+
   const orbState = isConnecting ? "thinking" : isActive ? (isSpeaking ? "speaking" : "listening") : "idle";
   const voiceActive = isActive || isConnecting;
   const current = INTENTS.find((i) => i.slug === activeIntent)!;
