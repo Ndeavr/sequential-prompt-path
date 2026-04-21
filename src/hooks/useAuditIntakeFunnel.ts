@@ -165,7 +165,7 @@ export function useAuditIntakeFunnel(initialOutreachTargetId?: string) {
   const completeCheckout = useCallback(async () => {
     setVm(prev => ({ ...prev, step: "success" }));
     if (vm.sessionId) {
-      await supabase.from("audit_intake_sessions").update({ funnel_status: "success" }).eq("id", vm.sessionId);
+      await supabase.from("audit_intake_sessions" as any).update({ funnel_status: "success" } as any).eq("id", vm.sessionId);
     }
     await trackEvent("checkout_completed");
   }, [vm.sessionId, trackEvent]);
