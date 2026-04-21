@@ -36,6 +36,8 @@ const FORBIDDEN_PHRASES_FR = [
   "changement de voix",
   "il semble que vous ne répondez pas",
   "êtes-vous encore là",
+  "je suis un assistant",
+  "je suis un robot",
 ];
 
 const FORBIDDEN_PHRASES_EN = [
@@ -45,6 +47,8 @@ const FORBIDDEN_PHRASES_EN = [
   "voice change",
   "it seems you're not responding",
   "are you still there",
+  "i'm just an ai",
+  "i am a robot",
 ];
 
 /** Check text for forbidden identity phrases */

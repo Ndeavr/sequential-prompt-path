@@ -1,8 +1,8 @@
 /**
  * alex-tts — Reliable TTS with automatic fallback.
  * 
- * Primary: voice mVjOqyqTPfwlXPjV5sjX (Alex FR+EN)
- * Fallback: voice mVjOqyqTPfwlXPjV5sjX (same — single locked voice)
+ * Primary: voice XB0fDUnXU5powFXDhCwa (Alex premium female — Charlotte FR+EN)
+ * Fallback: voice XB0fDUnXU5powFXDhCwa (same — single locked voice)
  * 
  * Returns raw audio/mpeg with headers indicating active provider.
  */
@@ -15,8 +15,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PRIMARY_VOICE_ID = "mVjOqyqTPfwlXPjV5sjX";
-const FALLBACK_VOICE_ID = "mVjOqyqTPfwlXPjV5sjX";
+const PRIMARY_VOICE_ID = "XB0fDUnXU5powFXDhCwa";  // Charlotte — Alex premium female
+const FALLBACK_VOICE_ID = "XB0fDUnXU5powFXDhCwa";
 const MODEL_ID = "eleven_multilingual_v2";
 
 const FALLBACK_TRIGGER_ERRORS = [

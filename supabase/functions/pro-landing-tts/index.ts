@@ -1,5 +1,5 @@
-// Female premium TTS for the Nuclear Close landing.
-// Uses ElevenLabs Charlotte (FR) / Sarah (EN). Returns MP3 bytes.
+// Alex premium TTS for the Nuclear Close landing.
+// Uses ElevenLabs Charlotte (FR) / Sarah (EN) — same Alex voice as main platform.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

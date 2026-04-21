@@ -2,7 +2,7 @@
  * useAlexVoicePersona — Voice profile selection with language auto-detection.
  * 
  * Rules:
- * - Always masculine voice
+ * - Always premium female voice
  * - FR priority, EN fallback
  * - Zero accent mixing
  * - Provider: ElevenLabs
@@ -54,8 +54,8 @@ export function useAlexVoicePersona() {
   });
 
   const activeProfile = useMemo(() => {
-    // Find male profile for current language, fallback to any active
-    const langProfiles = profiles.filter(p => p.language === activeLanguage && p.gender === "male");
+    // Find female profile for current language, fallback to any active
+    const langProfiles = profiles.filter(p => p.language === activeLanguage && p.gender === "female");
     return langProfiles[0] || profiles.find(p => p.language === activeLanguage) || profiles[0] || null;
   }, [profiles, activeLanguage]);
 

@@ -56,18 +56,21 @@ export default function OverlayAlexVoiceFullScreen() {
     || user?.user_metadata?.full_name?.split(" ")[0]
     || null;
 
-  // Build greeting — contextual when available
+  // Build greeting — personality-driven
   const buildGreeting = useCallback(() => {
     const hour = new Date().getHours();
-    const time = hour >= 5 && hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
-    const name = firstName ? `${time} ${firstName}.` : `${time}.`;
+    const time = hour >= 5 && hour < 18 ? "Bonjour" : "Bonsoir";
+    const name = firstName ? ` ${firstName}` : "";
     
     // Use contextHint from store for contextual greeting
     const hint = getStore().contextHint;
     if (hint) {
-      return `${name} Je vois que vous vous intéressez à ${hint}. Comment puis-je vous aider?`;
+      return `${time}${name}. Je vois que vous regardez ${hint}. On avance ensemble.`;
     }
-    return `${name} Que puis-je faire pour vous?`;
+    if (firstName) {
+      return `${time} ${firstName}. Quel projet avance aujourd'hui?`;
+    }
+    return `${time}. Décrivez votre besoin.`;
   }, [firstName]);
 
   // ElevenLabs voice
@@ -418,7 +421,7 @@ export default function OverlayAlexVoiceFullScreen() {
     isRecoveringNow ? recovery.phaseLabel
     : isError ? (store.errorMessage || "Erreur")
     : isStabilizing ? getBootStepLabel(bootStep)
-    : state === "listening" || state === "awaiting_user" ? "Je vous écoute…"
+    : state === "listening" || state === "awaiting_user" ? "Alex écoute…"
     : state === "capturing_voice" ? "Vous parlez…"
     : state === "processing_stt" || state === "processing_response" ? "Réflexion…"
     : state === "speaking" ? "Alex parle…"
