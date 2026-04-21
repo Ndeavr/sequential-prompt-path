@@ -245,11 +245,11 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     return () => window.removeEventListener("alex-voice-cleanup", handleCleanup);
   }, [conversation]);
 
-  const start = useCallback(async (options?: StartOptions) => {
+  const startInternal = useCallback(async (options?: StartOptions, isRetry = false) => {
     if (isActive || isConnecting) return;
 
     const timeSinceLastDisconnect = Date.now() - lastDisconnectAtRef.current;
-    if (lastDisconnectAtRef.current > 0 && timeSinceLastDisconnect < RECONNECT_COOLDOWN_MS) {
+    if (!isRetry && lastDisconnectAtRef.current > 0 && timeSinceLastDisconnect < RECONNECT_COOLDOWN_MS) {
       console.warn(`[ElevenLabs] Reconnect blocked — cooldown (${timeSinceLastDisconnect}ms < ${RECONNECT_COOLDOWN_MS}ms)`);
       return;
     }
@@ -259,6 +259,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     connectedAtRef.current = 0;
     languageSessionRef.current.reset();
     activeLanguageRef.current = "fr-CA";
+    pendingStartOptionsRef.current = options;
     setIsConnecting(true);
 
     try {
@@ -276,6 +277,28 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
 
       console.log("[ElevenLabs] ✅ Got signed URL", data?.agentId ? { agentId: data.agentId } : "");
 
+      // Start connection timeout
+      clearConnectionTimeout();
+      connectionTimeoutRef.current = setTimeout(() => {
+        console.error(`[ElevenLabs] ⏱️ Connection timeout after ${CONNECTION_TIMEOUT_MS}ms`);
+        // Force reset connecting state
+        setIsConnecting(false);
+        setIsActive(false);
+        try { conversation.endSession(); } catch {}
+
+        if (retryCountRef.current < 1) {
+          // Retry once
+          retryCountRef.current += 1;
+          console.log("[ElevenLabs] 🔄 Retrying connection (attempt 2)...");
+          lastDisconnectAtRef.current = 0; // bypass cooldown for retry
+          setTimeout(() => startInternal(pendingStartOptionsRef.current, true), 1000);
+        } else {
+          // Give up after 2 attempts
+          retryCountRef.current = 0;
+          callbacksRef.current?.onError?.(new Error("Connection timeout — voice unavailable"));
+        }
+      }, CONNECTION_TIMEOUT_MS);
+
       await conversation.startSession({
         signedUrl,
       });
@@ -286,11 +309,17 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         "[ElevenLabs] ✅ Alex persona injected (FR-first, EN switch enabled)"
       );
     } catch (err: unknown) {
+      clearConnectionTimeout();
       console.error("[ElevenLabs] Failed to start:", err);
       setIsConnecting(false);
       callbacksRef.current?.onError?.(err);
     }
-  }, [isActive, isConnecting, conversation, sendAgentContext]);
+  }, [isActive, isConnecting, conversation, sendAgentContext, clearConnectionTimeout]);
+
+  const start = useCallback((options?: StartOptions) => {
+    retryCountRef.current = 0;
+    return startInternal(options);
+  }, [startInternal]);
 
   const stop = useCallback(() => {
     intentionallyStopped.current = true;
