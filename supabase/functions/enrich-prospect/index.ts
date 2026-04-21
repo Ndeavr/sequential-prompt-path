@@ -78,7 +78,6 @@ async function scrapeUrl(url: string): Promise<{ markdown: string; html: string 
     return { markdown: md, html: "" };
   } catch { clearTimeout(timeout); return null; }
 }
-}
 
 // ─── Firecrawl search for new prospects ───
 async function searchProspects(query: string, limit = 10): Promise<Array<{ url: string; title: string; description: string }>> {
