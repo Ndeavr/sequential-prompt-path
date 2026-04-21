@@ -1,178 +1,75 @@
 
 
-# UNPRO Sales Command Center + Dynamic Pricing Engine — Full Build
+# UNPRO Auth Module — Premium Rebuild
 
 ## Summary
 
-The current Sniper Command Center is a basic tabbed view with flat KPIs, no campaign tracking, no events feed, no recommended actions, no dedicated sub-routes, and no dynamic pricing engine. This plan rebuilds it into a full war dashboard with 8 real-time KPI cards, hot leads panel with recommended actions, pipeline board, rep action queue, territory gap analysis, campaign performance, live events feed, and enriched target drawer. It also creates the Plan Recommendation + Dynamic Pricing Engine with new database tables, pricing rules, and checkout integration.
+The auth components exist (Google OAuth, Phone OTP, Magic Link, Overlay). The main work is restructuring the `AuthOverlayPremium` flow to eliminate the role-selection-first pattern and instead show Google + SMS as primary buttons immediately. Magic link becomes a hidden secondary option. Trust microcopy, conversion tracking, and polished animations are added throughout.
 
 ---
 
 ## Technical Details
 
-### Database Migration
+### Block 1 — Rewrite `AuthOverlayPremium.tsx`
 
-Create two new tables:
+Replace the current 4-mode flow (role → choice → login → signup) with a single streamlined screen:
 
-```sql
--- pricing_rules: admin-managed modifiers
-CREATE TABLE public.pricing_rules (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  rule_type TEXT NOT NULL,
-  rule_key TEXT NOT NULL,
-  rule_name TEXT NOT NULL,
-  applies_to_plan TEXT NULL,
-  applies_to_category TEXT NULL,
-  applies_to_city TEXT NULL,
-  applies_to_cluster_key TEXT NULL,
-  modifier_percent NUMERIC(6,4) NULL,
-  override_price NUMERIC(10,2) NULL,
-  priority INT NOT NULL DEFAULT 100,
-  is_active BOOLEAN NOT NULL DEFAULT true,
-  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+**New flow:**
+1. **Default view**: UNPRO logo + headline "Trouvez le bon pro. Plus vite." + two primary buttons: `Continuer avec Google` and `Recevoir un code par SMS`
+2. Below buttons: trust microcopy (checkmarks for "Connexion rapide", "Aucun mot de passe", "Accès sécurisé")
+3. Below trust: subtle "Autres options de connexion" text link
+4. When clicked → reveals magic link form inline (no page change)
+5. Pending action badge preserved as-is
+6. Security footer preserved
+7. Remove role selection entirely from overlay — role detection happens post-login via `AuthReturnRouter` / existing role system
 
--- pricing_decisions: audit trail of every recommendation
-CREATE TABLE public.pricing_decisions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  contractor_id UUID NULL REFERENCES public.contractors(id) ON DELETE SET NULL,
-  sniper_target_id UUID NULL REFERENCES public.sniper_targets(id) ON DELETE SET NULL,
-  audit_id UUID NULL REFERENCES public.contractor_aipp_audits(id) ON DELETE SET NULL,
-  recommended_plan TEXT NOT NULL,
-  recommended_billing TEXT NOT NULL,
-  base_price NUMERIC(10,2) NOT NULL,
-  adjusted_price NUMERIC(10,2) NOT NULL,
-  founder_price NUMERIC(10,2) NULL,
-  pricing_modifiers JSONB NOT NULL DEFAULT '[]'::jsonb,
-  rationale JSONB NOT NULL DEFAULT '[]'::jsonb,
-  founder_offer_visible BOOLEAN NOT NULL DEFAULT false,
-  cluster_key TEXT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-```
+**Remove:**
+- `AuthMode` type (role/choice/login/signup states)
+- Role grid (9 roles)
+- choice mode (signup vs login buttons)
+- login/signup mode split
+- Apple button from primary view (keep Google only as primary OAuth)
 
-RLS: public read on `pricing_rules` where `is_active = true`, admin-only write. Admin-only on `pricing_decisions`.
+**Keep:**
+- Focus trap, scroll lock, intent saving
+- Close button, backdrop
+- Glass card styling
 
-### Block 1 — Dynamic Pricing Engine Service
+### Block 2 — Update `OAuthButtons.tsx`
 
-Create `src/services/dynamicPricingEngine.ts`:
+Remove Apple button. Keep only Google as the single OAuth provider. Rename component to reflect single-provider usage or keep generic but render only Google.
 
-- `BASE_PLAN_PRICES` map (recrue through signature, monthly + annual)
-- `recommendPlanDynamic(input)` — enhanced version using AIPP score, job value, appointments, service areas, goal, plus category/territory/scarcity/founder inputs
-- `computeAdjustedPrice(basePrice, modifiers[])` with 1.25x cap
-- `buildPricingRecommendation(input)` returning full `PricingRecommendation` object with modifiers, rationale, founder logic
-- `getRecommendedAction(input)` — deterministic action engine for command center (call_now, sms_now, send_email, etc.)
+Update styling to match spec: large button, premium shadow, subtle hover glow, tactile press effect.
 
-Types: `PricingRecommendation`, `PricingModifier`, `CommandCenterLead`, `PipelineColumn`, `RepActionItem`, `TerritoryGapRow`, `CampaignPerformanceRow`, `CommandCenterViewModel`
+### Block 3 — Polish `PhoneOtpForm.tsx`
 
-### Block 2 — Command Center View Model Hook
+Already well-built. Minor enhancements:
+- Add success animation (checkmark with scale) after verification
+- Ensure auto-focus works on mount for both steps
 
-Create `src/hooks/useCommandCenterData.ts`:
+### Block 4 — Analytics Tracking
 
-- Fetches `sniper_targets` (sorted by heat DESC, limit 500)
-- Fetches recent `sniper_engagement_events` (limit 100)
-- Fetches `outreach_campaigns` with join counts
-- Computes: KPIs (8 metrics including revenue + rev/100), pipeline columns with counts, hot leads sorted by heat/priority/founder/recency, rep action items with deterministic recommended actions, territory gaps grouped by city x category, campaign performance rows
-- Returns typed `CommandCenterViewModel`
-- Auto-refreshes every 30s
+Add event tracking via a lightweight `trackAuthEvent(event: string, props?: Record<string, unknown>)` helper that logs to `sniper_engagement_events` or console in dev:
 
-### Block 3 — Command Center Main Page
+Events: `auth_method_selected`, `google_success`, `sms_sent`, `sms_success`, `magic_link_selected`, `dropoff_step`
 
-Rewrite `src/pages/admin/PageSniperCommandCenter.tsx` as the full war dashboard:
+Wire into overlay buttons and form submissions.
 
-- **Top Command Bar**: Title "Command Center", filters (city, category, stage, founder toggle), search, quick action buttons (Import, Launch, Queue, Hot Leads)
-- **KPI Strip**: 8 slim glassmorphic cards — Importés, Envoyés, Engagés, Audits, Checkouts, Convertis, Revenus, Rev/100 cibles — with animated counters
-- **Desktop layout**: 12-col grid. Left 8 cols: Hot Leads + Pipeline. Right 4 cols: Rep Queue + Events Feed. Bottom full width: Territory Gaps + Campaigns
-- **Mobile layout**: Stacked priority order — KPIs, Hot Leads, Rep Queue, Pipeline summary, Events, Territories, Campaigns
+### Block 5 — Post-Login Profile Update
 
-### Block 4 — Hot Leads Panel
+After successful auth (in `AuthReturnRouter` or a new `usePostAuthProfile` hook):
+- Upsert `profiles` row with `auth_provider`, `last_login_at`
+- Extract `first_name`, `last_name`, `email` from session user metadata
+- Extract `phone` if SMS auth was used
+- Only update fields that are currently null (don't overwrite human-validated data per memory rules)
 
-Create `src/components/command-center/HotLeadsPanel.tsx`:
+### Block 6 — User Type Detection
 
-- Sorted by heat > priority > founder > recency
-- Each row: business name, city · category, heat badge (Froid/Tiède/Chaud/Brûlant), priority score, stage badge, last activity with relative time, recommended next action badge
-- Quick row actions: Open, Call, SMS, Email, View Landing, View Audit
-- Heat color coding: red glow for 70+, orange for 40+, yellow for 20+
-
-### Block 5 — Pipeline Board
-
-Create `src/components/command-center/PipelineBoard.tsx`:
-
-- 10 columns: imported → enriched → ready → sent → engaged → audit_started → audit_completed → checkout_started → converted → lost
-- Each column: count + delta badge, mini list of top 3-5 targets
-- Warning highlights: sent > 3 days no engagement, audit > 1 day no completion, checkout > 12h no payment
-- Horizontal scroll on mobile, compact cards
-
-### Block 6 — Rep Action Queue
-
-Create `src/components/command-center/RepActionQueue.tsx`:
-
-- Title: "Prochaines actions"
-- Deterministic sorting: hot founder-eligible → checkout abandoners → audit complete no plan → page viewed no audit → high priority no send
-- Each item: lead name, reason (fr), recommended action badge, urgency (Élevée/Moyenne/Basse), one-click action buttons
-- Max 15 items visible
-
-### Block 7 — Territory Gap Panel
-
-Create `src/components/command-center/TerritoryGapPanel.tsx`:
-
-- Table: Ville, Catégorie, Actifs, Cible (hardcoded 8-10 default), Gap, Cibles chaudes, Convertis, Places fondateur
-- Sorted by gap DESC
-- Red highlight for large gaps
-- Founder slots column from cluster data
-
-### Block 8 — Campaign Performance Panel
-
-Create `src/components/command-center/CampaignPerformancePanel.tsx`:
-
-- Table/cards: campaign name, channel, city, category, sent, opens, clicks, page views, audit starts, checkouts, conversions, revenue
-- Color logic: green outperforming, amber average, red weak (based on click rate thresholds)
-- Aggregated from `outreach_campaigns` + `sniper_targets` + `sniper_engagement_events`
-
-### Block 9 — Recent Events Feed
-
-Create `src/components/command-center/RecentEventsFeed.tsx`:
-
-- Live feed of `sniper_engagement_events` sorted by created_at DESC
-- Each event: timestamp (relative), event icon, business name, event label (fr)
-- Event type mapping to French labels: page_view → "a vu sa page", identity_confirmed → "a confirmé son identité", etc.
-- Max 20 events, auto-scroll
-
-### Block 10 — Enhanced Target Drawer
-
-Update `src/components/sniper/SniperTargetDrawer.tsx`:
-
-- Add AIPP score display if available
-- Add recommended action badge
-- Add recommended plan display
-- Add pricing decision history if any
-- Add notes/tags edit capability
-
-### Block 11 — Sub-Routes
-
-Add to router.tsx:
-- `/admin/command-center` → Main war dashboard (redirect from current sniper route)
-- `/admin/command-center/leads` → Full lead table with all filters + bulk actions
-- `/admin/command-center/campaigns` → Campaign detail view
-- `/admin/command-center/territories` → Territory deep dive
-
-Create lightweight page wrappers for each sub-route.
-
-### Block 12 — Dynamic Pricing Recommendation UI
-
-Create `src/components/pricing/PricingRecommendationCard.tsx`:
-
-- Shows recommended plan badge + adjusted price + billing cadence
-- 3 rationale bullets max
-- Compare strip: lower plan, recommended (highlighted), higher plan
-- Founder offer block (conditional): one-time price, remaining slots, urgency
-- CTA into checkout with full metadata pass-through (plan, cadence, adjusted_price, founder_mode, pricing_decision_id)
-
-### Block 13 — Memory Update
-
-Update memory with command center architecture and dynamic pricing engine details.
+After first login with no existing role:
+- Show a minimal inline question in the overlay before closing: "Comment utiliserez-vous UNPRO?"
+- Three options: "J'ai besoin d'un pro" (homeowner), "Je suis entrepreneur" (contractor), "Autre" (default)
+- Insert selected role into `user_roles` table
+- Then route via existing `getDefaultRedirectForRole()`
 
 ---
 
@@ -180,22 +77,11 @@ Update memory with command center architecture and dynamic pricing engine detail
 
 | Action | File |
 |---|---|
-| Migration | Create `pricing_rules` and `pricing_decisions` tables |
-| Create | `src/services/dynamicPricingEngine.ts` |
-| Create | `src/hooks/useCommandCenterData.ts` |
-| Rewrite | `src/pages/admin/PageSniperCommandCenter.tsx` |
-| Create | `src/components/command-center/HotLeadsPanel.tsx` |
-| Create | `src/components/command-center/PipelineBoard.tsx` |
-| Create | `src/components/command-center/RepActionQueue.tsx` |
-| Create | `src/components/command-center/TerritoryGapPanel.tsx` |
-| Create | `src/components/command-center/CampaignPerformancePanel.tsx` |
-| Create | `src/components/command-center/RecentEventsFeed.tsx` |
-| Create | `src/components/command-center/KpiStrip.tsx` |
-| Create | `src/components/command-center/TopCommandBar.tsx` |
-| Create | `src/components/pricing/PricingRecommendationCard.tsx` |
-| Create | `src/pages/admin/PageCommandCenterLeads.tsx` |
-| Create | `src/pages/admin/PageCommandCenterCampaigns.tsx` |
-| Create | `src/pages/admin/PageCommandCenterTerritories.tsx` |
-| Modify | `src/components/sniper/SniperTargetDrawer.tsx` |
-| Modify | `src/app/router.tsx` |
+| Rewrite | `src/components/auth/AuthOverlayPremium.tsx` |
+| Modify | `src/components/auth/OAuthButtons.tsx` — remove Apple, keep Google only |
+| Modify | `src/components/auth/PhoneOtpForm.tsx` — add success animation |
+| Create | `src/services/auth/trackAuthEvent.ts` — lightweight analytics |
+| Modify | `src/components/auth/AuthReturnRouter.tsx` — add profile upsert + role detection |
+
+No database migration needed — `profiles` and `user_roles` tables already exist.
 
