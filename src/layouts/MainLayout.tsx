@@ -8,6 +8,7 @@ import SmartHeader from "@/components/navigation/SmartHeader";
 import SmartFooter from "@/components/navigation/SmartFooter";
 import FooterSEOGrid from "@/components/navigation/FooterSEOGrid";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
+import SeoStructuredDataInjector from "@/seo/components/SeoStructuredDataInjector";
 import AlexConcierge from "@/components/alex/AlexConcierge";
 import CommandPalette from "@/components/navigation/CommandPalette";
 import BannerResumeJourney from "@/components/navigation/BannerResumeJourney";
@@ -54,6 +55,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       <MobileBottomNav />
       {showAlex && <AlexConcierge />}
       <CommandPalette lang={lang} />
+      <SeoStructuredDataInjector />
     </div>
   );
 };
