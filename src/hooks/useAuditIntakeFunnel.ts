@@ -79,7 +79,7 @@ export function useAuditIntakeFunnel(initialOutreachTargetId?: string) {
       funnel_status: "running",
       outreach_target_id: initialOutreachTargetId || null,
     } as any).select("id").single();
-    const session = sessionRes?.data as { id: string } | null;
+    const session = sessionRes?.data as unknown as { id: string } | null;
 
     // Launch audit
     let auditId: string | null = null;
