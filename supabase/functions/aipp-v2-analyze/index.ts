@@ -312,6 +312,7 @@ Deno.serve(async (req) => {
       score_local,
       score_tech,
       revenue_loss_estimate,
+      score_potential,
     });
 
     if (entities.length > 0) {

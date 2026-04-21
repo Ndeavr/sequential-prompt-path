@@ -10,6 +10,7 @@ export interface AIPPv2AuditScores {
   score_local: number;
   score_tech: number;
   revenue_loss_estimate: number;
+  score_potential: number;
 }
 
 export interface AIPPv2Entity {
@@ -50,7 +51,6 @@ export function useAIPPv2Submit() {
 
       if (error || !audit) throw new Error("Erreur lors de la création de l'audit");
 
-      // Trigger edge function (fire and forget)
       supabase.functions.invoke("aipp-v2-analyze", {
         body: { audit_id: audit.id },
       });
@@ -109,6 +109,7 @@ export function useAIPPv2Results(auditId: string | undefined) {
         score_local: Number(scores.score_local),
         score_tech: Number(scores.score_tech),
         revenue_loss_estimate: Number(scores.revenue_loss_estimate),
+        score_potential: Number((scores as any).score_potential ?? 0),
       } : null,
       entities: (entities || []) as AIPPv2Entity[],
       recommendations: (recommendations || []) as AIPPv2Recommendation[],
