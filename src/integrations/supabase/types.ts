@@ -24827,6 +24827,11 @@ export type Database = {
           diagnostic_summary: string | null
           domain: string | null
           email: string | null
+          email_confidence: number | null
+          emails_found: Json | null
+          enriched_at: string | null
+          enrichment_log: Json | null
+          enrichment_status: string
           estimated_monthly_loss_max: number | null
           estimated_monthly_loss_min: number | null
           google_maps_url: string | null
@@ -24839,6 +24844,7 @@ export type Database = {
           loom_script: string | null
           loom_status: string | null
           notes: string | null
+          outreach_status: string
           paid_intent_confidence: number | null
           phone: string | null
           priority_tier: string
@@ -24850,12 +24856,15 @@ export type Database = {
           screenshot_url: string | null
           seo_score: number | null
           service_area: string | null
+          sms_queue_status: string
+          social_profiles: Json | null
           source: string | null
           source_detail: string | null
           status: string
           subcategory: string | null
           trust_score: number | null
           updated_at: string
+          verified_email: string | null
           website: string | null
         }
         Insert: {
@@ -24873,6 +24882,11 @@ export type Database = {
           diagnostic_summary?: string | null
           domain?: string | null
           email?: string | null
+          email_confidence?: number | null
+          emails_found?: Json | null
+          enriched_at?: string | null
+          enrichment_log?: Json | null
+          enrichment_status?: string
           estimated_monthly_loss_max?: number | null
           estimated_monthly_loss_min?: number | null
           google_maps_url?: string | null
@@ -24885,6 +24899,7 @@ export type Database = {
           loom_script?: string | null
           loom_status?: string | null
           notes?: string | null
+          outreach_status?: string
           paid_intent_confidence?: number | null
           phone?: string | null
           priority_tier?: string
@@ -24896,12 +24911,15 @@ export type Database = {
           screenshot_url?: string | null
           seo_score?: number | null
           service_area?: string | null
+          sms_queue_status?: string
+          social_profiles?: Json | null
           source?: string | null
           source_detail?: string | null
           status?: string
           subcategory?: string | null
           trust_score?: number | null
           updated_at?: string
+          verified_email?: string | null
           website?: string | null
         }
         Update: {
@@ -24919,6 +24937,11 @@ export type Database = {
           diagnostic_summary?: string | null
           domain?: string | null
           email?: string | null
+          email_confidence?: number | null
+          emails_found?: Json | null
+          enriched_at?: string | null
+          enrichment_log?: Json | null
+          enrichment_status?: string
           estimated_monthly_loss_max?: number | null
           estimated_monthly_loss_min?: number | null
           google_maps_url?: string | null
@@ -24931,6 +24954,7 @@ export type Database = {
           loom_script?: string | null
           loom_status?: string | null
           notes?: string | null
+          outreach_status?: string
           paid_intent_confidence?: number | null
           phone?: string | null
           priority_tier?: string
@@ -24942,12 +24966,15 @@ export type Database = {
           screenshot_url?: string | null
           seo_score?: number | null
           service_area?: string | null
+          sms_queue_status?: string
+          social_profiles?: Json | null
           source?: string | null
           source_detail?: string | null
           status?: string
           subcategory?: string | null
           trust_score?: number | null
           updated_at?: string
+          verified_email?: string | null
           website?: string | null
         }
         Relationships: []

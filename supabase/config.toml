@@ -115,3 +115,5 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.pro-landing-tts]
     verify_jwt = false
+  [functions.enrich-prospect]
+    verify_jwt = false
