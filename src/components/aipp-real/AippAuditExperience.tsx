@@ -105,7 +105,7 @@ export default function AippAuditExperience({ model, isAdmin, onLaunchAudit, lau
           <motion.div className="xl:col-span-5 space-y-6" variants={stagger}>
             <motion.div variants={fadeUp}><AippSourcesCard model={model} /></motion.div>
             <motion.div variants={fadeUp}><AippPotentialCard model={model} /></motion.div>
-            <motion.div variants={fadeUp}><AippConversionCard model={model} /></motion.div>
+            <motion.div variants={fadeUp}><AippConversionCard /></motion.div>
             <motion.div variants={fadeUp}><AippAuditTimelineCard model={model} /></motion.div>
           </motion.div>
         </div>
