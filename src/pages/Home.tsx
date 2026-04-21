@@ -10,7 +10,6 @@ import SectionTrustProof from "@/components/home/SectionTrustProof";
 import SectionManifestoCTA from "@/components/home/SectionManifestoCTA";
 import SectionHomeCounterImpactIA from "@/components/impact-counter/SectionHomeCounterImpactIA";
 import BarStickyCounterRealtime from "@/components/impact-counter/BarStickyCounterRealtime";
-import { AlexAssistant, AlexProvider } from "@/features/alex";
 
 const Home = () => {
   const jsonLd = {
@@ -35,52 +34,31 @@ const Home = () => {
   };
 
   return (
-    <AlexProvider>
-      <MainLayout>
-        <Helmet>
-          <title>UNPRO — Rendez-vous garantis avec entrepreneurs vérifiés | IA 24/7</title>
-          <meta name="description" content="Fini les 3 soumissions inutiles. Décrivez votre projet et obtenez un rendez-vous confirmé avec un entrepreneur qualifié. IA Alex 24/7." />
-          <meta property="og:title" content="UNPRO — Rendez-vous garantis avec entrepreneurs vérifiés" />
-          <meta property="og:description" content="UNPRO remplace les soumissions multiples par un rendez-vous garanti avec le bon entrepreneur." />
-          <meta property="og:type" content="website" />
-          <link rel="canonical" href="https://unpro.ca" />
-          <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
-          <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
-        </Helmet>
+    <MainLayout>
+      <Helmet>
+        <title>UNPRO — Rendez-vous garantis avec entrepreneurs vérifiés | IA 24/7</title>
+        <meta name="description" content="Fini les 3 soumissions inutiles. Décrivez votre projet et obtenez un rendez-vous confirmé avec un entrepreneur qualifié. IA Alex 24/7." />
+        <meta property="og:title" content="UNPRO — Rendez-vous garantis avec entrepreneurs vérifiés" />
+        <meta property="og:description" content="UNPRO remplace les soumissions multiples par un rendez-vous garanti avec le bon entrepreneur." />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://unpro.ca" />
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+        <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
+      </Helmet>
 
-        <BarStickyCounterRealtime />
-        <div className="flex flex-col">
-          {/* Hero cinématique — Problème / Projet / Avis */}
-          <HeroSection />
-
-          {/* Alex Conversation Ad Preview */}
-          <SectionAlexConversationAd />
-
-          {/* Bulle explicative — Comparer 3 soumissions ? */}
-          <SectionNoMoreQuotes />
-
-          {/* Manifeste UNPRO — CTA card */}
-          <SectionManifestoCTA />
-
-          {/* Passeport Maison / Condo / Entrepreneur */}
-          <SectionPasseportCards />
-
-          {/* Comment ça marche — 3 étapes */}
-          <SectionHowItWorks />
-
-          {/* Banner entrepreneur */}
-          <SectionEntrepreneurCTA />
-
-          {/* Compteur impact IA Québec */}
-          <SectionHomeCounterImpactIA />
-
-          {/* Social proof, testimonials, FAQ */}
-          <SectionTrustProof />
-        </div>
-
-        <AlexAssistant />
-      </MainLayout>
-    </AlexProvider>
+      <BarStickyCounterRealtime />
+      <div className="flex flex-col">
+        <HeroSection />
+        <SectionAlexConversationAd />
+        <SectionNoMoreQuotes />
+        <SectionManifestoCTA />
+        <SectionPasseportCards />
+        <SectionHowItWorks />
+        <SectionEntrepreneurCTA />
+        <SectionHomeCounterImpactIA />
+        <SectionTrustProof />
+      </div>
+    </MainLayout>
   );
 };
 

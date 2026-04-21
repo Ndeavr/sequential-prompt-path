@@ -1,13 +1,6 @@
 /**
  * useLiveVoice — ElevenLabs Conversational AI voice hook.
- *
- * Uses @elevenlabs/react useConversation for WebSocket-based
- * real-time voice conversation with an ElevenLabs agent.
- *
- * IMPORTANT:
- * - Agent identity/voice is resolved server-side via ELEVENLABS_AGENT_ID
- * - No client overrides are passed to startSession (stability on mobile)
- * - French is the default language, with controlled switching to English
+ * V5: 5s timeout, no auto-retry, instant fallback on failure.
  */
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useConversation } from "@elevenlabs/react";
@@ -15,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AlexLanguageLockSession, type AlexLanguage } from "@/services/alexLanguageLock";
 
 const RECONNECT_COOLDOWN_MS = 5000;
-const CONNECTION_TIMEOUT_MS = 10_000;
+const CONNECTION_TIMEOUT_MS = 5_000;
 
 interface UseLiveVoiceCallbacks {
   onTranscript?: (text: string) => void;
@@ -90,19 +83,8 @@ function buildLanguageSwitchContext(lang: AlexLanguage) {
 
 function getExplicitLanguageRequest(text: string): AlexLanguage | null {
   const lower = text.toLowerCase();
-
-  if (
-    /\b(english please|speak english|in english|switch to english|anglais|en anglais)\b/i.test(lower)
-  ) {
-    return "en-CA";
-  }
-
-  if (
-    /\b(french please|speak french|in french|switch to french|français|en français)\b/i.test(lower)
-  ) {
-    return "fr-CA";
-  }
-
+  if (/\b(english please|speak english|in english|switch to english|anglais|en anglais)\b/i.test(lower)) return "en-CA";
+  if (/\b(french please|speak french|in french|switch to french|français|en français)\b/i.test(lower)) return "fr-CA";
   return null;
 }
 
@@ -121,8 +103,6 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const languageSessionRef = useRef(new AlexLanguageLockSession());
   const activeLanguageRef = useRef<AlexLanguage>("fr-CA");
   const connectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const retryCountRef = useRef(0);
-  const pendingStartOptionsRef = useRef<StartOptions | undefined>(undefined);
 
   const clearConnectionTimeout = useCallback(() => {
     if (connectionTimeoutRef.current) {
@@ -138,28 +118,22 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       if (successLog) console.log(successLog);
       return true;
     }
-
-    console.warn("[ElevenLabs] sendContextualUpdate not available — relying on agent config");
+    console.warn("[ElevenLabs] sendContextualUpdate not available");
     return false;
   }, []);
 
   const syncAgentLanguage = useCallback((nextLanguage: AlexLanguage) => {
     if (nextLanguage === activeLanguageRef.current) return;
     activeLanguageRef.current = nextLanguage;
-
     const label = nextLanguage === "en-CA" ? "EN" : "FR";
     console.log(`[ElevenLabs] 🌐 Language switched to ${label}`);
-    sendAgentContext(
-      buildLanguageSwitchContext(nextLanguage),
-      `[ElevenLabs] ✅ Language context pushed (${label})`
-    );
+    sendAgentContext(buildLanguageSwitchContext(nextLanguage), `[ElevenLabs] ✅ Language context pushed (${label})`);
   }, [sendAgentContext]);
 
   const conversation = useConversation({
     onConnect: () => {
       console.log("[ElevenLabs] ✅ Connected to agent");
       clearConnectionTimeout();
-      retryCountRef.current = 0;
       connectedAtRef.current = Date.now();
       setIsActive(true);
       setIsConnecting(false);
@@ -168,7 +142,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     onDisconnect: () => {
       clearConnectionTimeout();
       const sessionDuration = connectedAtRef.current ? Date.now() - connectedAtRef.current : 0;
-      console.log(`[ElevenLabs] Disconnected from agent (session lasted ${sessionDuration}ms)`);
+      console.log(`[ElevenLabs] Disconnected (session ${sessionDuration}ms)`);
       lastDisconnectAtRef.current = Date.now();
       setIsActive(false);
       setIsConnecting(false);
@@ -177,8 +151,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       activeLanguageRef.current = "fr-CA";
 
       if (sessionDuration > 0 && sessionDuration < 2000 && !intentionallyStopped.current) {
-        console.error("[ElevenLabs] ⚠️ Instant disconnect detected — likely a config issue");
-        callbacksRef.current?.onError?.(new Error("Session disconnected immediately — check agent config"));
+        console.error("[ElevenLabs] ⚠️ Instant disconnect — likely config issue");
+        callbacksRef.current?.onError?.(new Error("Session disconnected immediately"));
         return;
       }
 
@@ -204,14 +178,12 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         const text = (message as any)?.user_transcription_event?.user_transcript as string | undefined;
         if (text && text.trim().length >= 2) {
           callbacksRef.current?.onUserTranscript?.(text);
-
           const explicitLanguage = getExplicitLanguageRequest(text);
           if (explicitLanguage) {
             languageSessionRef.current.forceLock(explicitLanguage);
             syncAgentLanguage(explicitLanguage);
             return;
           }
-
           const nextLanguage = languageSessionRef.current.processUtterance(text);
           syncAgentLanguage(nextLanguage);
         }
@@ -225,7 +197,6 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   });
 
   conversationApiRef.current = conversation as any;
-
   const isSpeaking = conversation.isSpeaking;
 
   useEffect(() => {
@@ -246,13 +217,13 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     return () => window.removeEventListener("alex-voice-cleanup", handleCleanup);
   }, [conversation]);
 
-  const startInternal = useCallback(async (options?: StartOptions, isRetry = false) => {
+  const start = useCallback(async (options?: StartOptions) => {
     if (isActive || isConnecting) return;
 
-    const forced = options?.force || isRetry;
+    const forced = options?.force;
     const timeSinceLastDisconnect = Date.now() - lastDisconnectAtRef.current;
     if (!forced && lastDisconnectAtRef.current > 0 && timeSinceLastDisconnect < RECONNECT_COOLDOWN_MS) {
-      console.warn(`[ElevenLabs] Reconnect blocked — cooldown (${timeSinceLastDisconnect}ms < ${RECONNECT_COOLDOWN_MS}ms)`);
+      console.warn(`[ElevenLabs] Reconnect blocked — cooldown`);
       return;
     }
 
@@ -261,7 +232,6 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     connectedAtRef.current = 0;
     languageSessionRef.current.reset();
     activeLanguageRef.current = "fr-CA";
-    pendingStartOptionsRef.current = options;
     setIsConnecting(true);
 
     try {
@@ -269,7 +239,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       await navigator.mediaDevices.getUserMedia({ audio: true });
       console.log("[ElevenLabs] ✅ Microphone granted");
 
-      console.log("[ElevenLabs] Fetching signed URL via voice-get-signed-url...");
+      console.log("[ElevenLabs] Fetching signed URL...");
       const { data, error } = await supabase.functions.invoke("voice-get-signed-url");
       const signedUrl = data?.signed_url ?? data?.signedUrl;
 
@@ -277,38 +247,24 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         throw new Error(error?.message || "Impossible d'obtenir l'URL de connexion");
       }
 
-      console.log("[ElevenLabs] ✅ Got signed URL", data?.agentId ? { agentId: data.agentId } : "");
+      console.log("[ElevenLabs] ✅ Got signed URL");
 
-      // Start connection timeout
+      // 5s connection timeout — NO retry, instant fallback
       clearConnectionTimeout();
       connectionTimeoutRef.current = setTimeout(() => {
-        console.error(`[ElevenLabs] ⏱️ Connection timeout after ${CONNECTION_TIMEOUT_MS}ms`);
-        // Force reset connecting state
+        console.error(`[ElevenLabs] ⏱️ Connection timeout after ${CONNECTION_TIMEOUT_MS}ms — giving up`);
         setIsConnecting(false);
         setIsActive(false);
         try { conversation.endSession(); } catch {}
-
-        if (retryCountRef.current < 1) {
-          // Retry once
-          retryCountRef.current += 1;
-          console.log("[ElevenLabs] 🔄 Retrying connection (attempt 2)...");
-          lastDisconnectAtRef.current = 0; // bypass cooldown for retry
-          setTimeout(() => startInternal(pendingStartOptionsRef.current, true), 1000);
-        } else {
-          // Give up after 2 attempts
-          retryCountRef.current = 0;
-          callbacksRef.current?.onError?.(new Error("Connection timeout — voice unavailable"));
-        }
+        callbacksRef.current?.onError?.(new Error("Connection timeout — voice unavailable"));
       }, CONNECTION_TIMEOUT_MS);
 
-      await conversation.startSession({
-        signedUrl,
-      });
+      await conversation.startSession({ signedUrl });
 
       console.log("[ElevenLabs] ✅ Session started");
       sendAgentContext(
         buildSessionContext("fr-CA", options?.initialGreeting),
-        "[ElevenLabs] ✅ Alex persona injected (FR-first, EN switch enabled)"
+        "[ElevenLabs] ✅ Alex persona injected"
       );
     } catch (err: unknown) {
       clearConnectionTimeout();
@@ -318,17 +274,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     }
   }, [isActive, isConnecting, conversation, sendAgentContext, clearConnectionTimeout]);
 
-  const start = useCallback((options?: StartOptions) => {
-    retryCountRef.current = 0;
-    if (options?.force) {
-      lastDisconnectAtRef.current = 0;
-    }
-    return startInternal(options);
-  }, [startInternal]);
-
   const stop = useCallback(() => {
     clearConnectionTimeout();
-    retryCountRef.current = 0;
     intentionallyStopped.current = true;
     languageSessionRef.current.reset();
     activeLanguageRef.current = "fr-CA";
@@ -339,7 +286,6 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     callbacksRef.current?.onDisconnect?.();
   }, [conversation, clearConnectionTimeout]);
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => { clearConnectionTimeout(); };
   }, [clearConnectionTimeout]);
