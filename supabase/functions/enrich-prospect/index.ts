@@ -274,8 +274,90 @@ Deno.serve(async (req: Request) => {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    const body = await req.json();
-    const { mode, prospect_id, city, category, limit: searchLimit } = body;
+    const body = await req.json().catch(() => ({}));
+    const { mode, prospect_id, city, category, limit: searchLimit } = body as any;
+
+    // Mode 0: CRON WORKER — process 3 pending prospects, never timeout
+    if (mode === "cron_worker") {
+      const BATCH_SIZE = 3;
+      // Pick oldest pending first, then retry failed (older than 1h)
+      const { data: pending } = await supabase
+        .from("contractors_prospects")
+        .select("id")
+        .eq("enrichment_status", "pending")
+        .order("created_at", { ascending: true })
+        .limit(BATCH_SIZE);
+
+      const remaining = BATCH_SIZE - (pending?.length || 0);
+      let retries: any[] = [];
+      if (remaining > 0) {
+        const oneHourAgo = new Date(Date.now() - 3600_000).toISOString();
+        const { data } = await supabase
+          .from("contractors_prospects")
+          .select("id")
+          .eq("enrichment_status", "failed")
+          .lt("enriched_at", oneHourAgo)
+          .order("enriched_at", { ascending: true })
+          .limit(remaining);
+        retries = data || [];
+      }
+
+      const batch = [...(pending || []), ...retries];
+      if (batch.length === 0) {
+        return new Response(JSON.stringify({ success: true, message: "No prospects to process", processed: 0 }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const results = [];
+      for (const p of batch) {
+        try {
+          const r = await enrichProspect(supabase, p.id);
+          results.push(r);
+        } catch (e) {
+          await supabase.from("contractors_prospects").update({ enrichment_status: "failed", enriched_at: new Date().toISOString() }).eq("id", p.id);
+          results.push({ prospectId: p.id, error: (e as Error).message });
+        }
+      }
+
+      // Check total verified emails — auto-trigger outreach at 10+
+      const { data: verifiedCount } = await supabase
+        .from("contractors_prospects")
+        .select("id", { count: "exact", head: true })
+        .not("verified_email", "is", null)
+        .eq("outreach_status", "pending");
+
+      let autoOutreach = false;
+      if ((verifiedCount as any)?.length >= 10 || (results.filter(r => r.email).length > 0)) {
+        // Check total across DB
+        const { count } = await supabase
+          .from("contractors_prospects")
+          .select("id", { count: "exact", head: true })
+          .not("verified_email", "is", null)
+          .neq("outreach_status", "queued")
+          .neq("outreach_status", "sent");
+        
+        if ((count || 0) >= 10) {
+          autoOutreach = true;
+          await supabase
+            .from("contractors_prospects")
+            .update({ outreach_status: "queued" })
+            .not("verified_email", "is", null)
+            .eq("outreach_status", "pending");
+        }
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        processed: results.length,
+        emailsFound: results.filter(r => r.email).length,
+        failed: results.filter(r => r.error).length,
+        autoOutreachTriggered: autoOutreach,
+        results,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Mode 1: Enrich a single prospect
     if (mode === "enrich_one" && prospect_id) {
