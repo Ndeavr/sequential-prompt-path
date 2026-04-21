@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AlexLanguageLockSession, type AlexLanguage } from "@/services/alexLanguageLock";
 
 const RECONNECT_COOLDOWN_MS = 5000;
+const CONNECTION_TIMEOUT_MS = 10_000;
 
 interface UseLiveVoiceCallbacks {
   onTranscript?: (text: string) => void;
