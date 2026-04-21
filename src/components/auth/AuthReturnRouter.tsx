@@ -21,42 +21,37 @@ function isAuthSurface(pathname: string): boolean {
 
 async function upsertProfile(user: { id: string; email?: string; phone?: string; user_metadata?: Record<string, any> }) {
   const meta = user.user_metadata ?? {};
-  const updates: Record<string, unknown> = {
-    id: user.id,
-    last_login_at: new Date().toISOString(),
-  };
-
-  // Only set fields that come from auth metadata — never overwrite human-validated data
-  const conditionalFields: Record<string, unknown> = {};
-  if (user.email) conditionalFields.email = user.email;
-  if (user.phone) conditionalFields.phone = user.phone;
-  if (meta.full_name) {
-    const parts = (meta.full_name as string).split(" ");
-    conditionalFields.first_name = parts[0] || null;
-    conditionalFields.last_name = parts.slice(1).join(" ") || null;
-  }
-  if (meta.given_name) conditionalFields.first_name = meta.given_name;
-  if (meta.family_name) conditionalFields.last_name = meta.family_name;
 
   // Determine auth provider
   const provider = meta.iss?.includes("google") ? "google"
     : user.phone ? "phone"
     : user.email ? "email"
     : "unknown";
-  conditionalFields.auth_provider = provider;
 
-  // Upsert — only update null fields for conditional ones
+  const profileData: Record<string, unknown> = {
+    user_id: user.id,
+    last_login_at: new Date().toISOString(),
+    auth_provider: provider,
+  };
+
+  if (user.email) profileData.email = user.email;
+  if (user.phone) profileData.phone = user.phone;
+  if (meta.given_name || meta.full_name) {
+    const firstName = meta.given_name || (meta.full_name as string)?.split(" ")[0];
+    if (firstName) profileData.first_name = firstName;
+  }
+  if (meta.family_name || meta.full_name) {
+    const lastName = meta.family_name || (meta.full_name as string)?.split(" ").slice(1).join(" ");
+    if (lastName) profileData.last_name = lastName;
+  }
+
   try {
-    // First try insert
-    const { error: insertError } = await supabase.from("profiles").upsert(
-      { ...updates, ...conditionalFields },
-      { onConflict: "id", ignoreDuplicates: false }
+    await supabase.from("profiles").upsert(
+      profileData as any,
+      { onConflict: "user_id", ignoreDuplicates: false }
     );
-    if (insertError) {
-      console.warn("[AuthReturn] Profile upsert warning:", insertError.message);
-    }
   } catch {
-    // Non-critical — don't block auth flow
+    // Non-critical
   }
 }
 
