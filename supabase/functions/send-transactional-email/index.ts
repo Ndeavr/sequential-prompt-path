@@ -23,9 +23,32 @@ function generateToken(): string {
     .join('')
 }
 
-// Auth note: this function uses verify_jwt = true in config.toml, so Supabase's
-// gateway validates the caller's JWT (anon or service_role) before the request
-// reaches this code. No in-function auth check is needed.
+async function authenticateRequest(supabaseUrl: string, supabaseAnonKey: string, req: Request) {
+  const authHeader = req.headers.get('Authorization')
+
+  if (!authHeader?.startsWith('Bearer ')) {
+    return { ok: false, response: new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    }) }
+  }
+
+  const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: authHeader } },
+  })
+  const token = authHeader.replace('Bearer ', '')
+  const { data, error } = await supabaseAuth.auth.getUser(token)
+
+  if (error || !data?.user) {
+    console.warn('Unauthorized transactional email request', { error })
+    return { ok: false, response: new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    }) }
+  }
+
+  return { ok: true, userId: data.user.id }
+}
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -34,9 +57,10 @@ Deno.serve(async (req) => {
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-  if (!supabaseUrl || !supabaseServiceKey) {
+  if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
     console.error('Missing required environment variables')
     return new Response(
       JSON.stringify({ error: 'Server configuration error' }),
@@ -46,6 +70,9 @@ Deno.serve(async (req) => {
       }
     )
   }
+
+  const auth = await authenticateRequest(supabaseUrl, supabaseAnonKey, req)
+  if (!auth.ok) return auth.response
 
   // Parse request body
   let templateName: string

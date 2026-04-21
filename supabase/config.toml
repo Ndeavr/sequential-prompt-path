@@ -100,7 +100,7 @@ project_id = "clmaqdnphbndvmmqvpff"
   [functions.send-feedback-request]
     verify_jwt = false
   [functions.send-transactional-email]
-    verify_jwt = true
+    verify_jwt = false
   [functions.seo-generator]
     verify_jwt = false
   [functions.submit-appointment-feedback]
