@@ -157,6 +157,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const conversation = useConversation({
     onConnect: () => {
       console.log("[ElevenLabs] ✅ Connected to agent");
+      clearConnectionTimeout();
+      retryCountRef.current = 0;
       connectedAtRef.current = Date.now();
       setIsActive(true);
       setIsConnecting(false);
