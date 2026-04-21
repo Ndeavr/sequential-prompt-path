@@ -1,133 +1,178 @@
 
 
-# UNPRO Google Index Domination System
+# UNPRO Sales Command Center + Dynamic Pricing Engine — Full Build
 
 ## Summary
 
-The site is a pure React SPA with no server-side rendering. Google sees an empty `<div id="root">` for all pages. The sitemap edge function exists but points to a wrong base URL pattern (`/api/sitemap`). Contractor public pages table is empty. This plan fixes all of it across 10 blocks.
+The current Sniper Command Center is a basic tabbed view with flat KPIs, no campaign tracking, no events feed, no recommended actions, no dedicated sub-routes, and no dynamic pricing engine. This plan rebuilds it into a full war dashboard with 8 real-time KPI cards, hot leads panel with recommended actions, pipeline board, rep action queue, territory gap analysis, campaign performance, live events feed, and enriched target drawer. It also creates the Plan Recommendation + Dynamic Pricing Engine with new database tables, pricing rules, and checkout integration.
 
 ---
 
 ## Technical Details
 
-### Block 1 — Prerender Edge Function for Googlebot
+### Database Migration
 
-Create `supabase/functions/prerender/index.ts` — a lightweight HTML renderer that serves static HTML snapshots to crawlers.
-
-- Detect bot user-agents (Googlebot, Bingbot, etc.)
-- For each known route pattern, query Supabase for the page data and return a complete HTML document with:
-  - Proper `<title>`, `<meta description>`, OG tags
-  - JSON-LD structured data
-  - Visible text content in semantic HTML (h1, p, article)
-  - Canonical URL
-- Route patterns to handle: `/blog/:slug`, `/contractors/:id`, `/pro/:slug`, `/probleme/:slug`, `/ville/:slug`, `/services/:cat/:city`, `/s/:slug`, `/profession/:slug`, `/solution/:slug`, `/renovation/:type/:city`
-- Non-bot requests get a redirect to the SPA (302 to same path)
-- Static pages (homepage, /services, /pricing, etc.) return hardcoded HTML with real copy
-
-### Block 2 — Fix robots.txt
-
-Update `public/robots.txt`:
-- Fix sitemap URL to `https://unpro.ca/sitemap.xml`
-- Add `Disallow` for `/dashboard`, `/admin/`, `/pro/dashboard`, `/login`, `/signup`, `/onboarding`, `/settings/`, `/checkout/`
-- Keep `Allow: /` for all public paths
-
-### Block 3 — Sitemap Proxy Route
-
-The current sitemap function uses `/api/sitemap?segment=X` which is an edge function URL, not accessible at `unpro.ca/sitemap.xml`.
-
-Create a lightweight redirect or a new edge function `sitemap-index` that serves at a clean URL. Update the sitemap function's index to use `https://unpro.ca/functions/v1/sitemap?segment=X` as the correct loc URLs.
-
-Also add a `contractors` segment that pulls from the `contractors` table directly (since `contractor_public_pages` is empty), generating `/contractors/:id` URLs.
-
-### Block 4 — Contractor Public SEO Pages
-
-Create a new public route `/entrepreneur/:slug` that renders a SEO-optimized contractor profile page.
-
-- New page: `src/pages/seo/ContractorSeoPage.tsx`
-- Resolves contractor by slug (generate slug from `business_name + city`)
-- Renders: H1 with business name, services, city, description, trust badges, reviews, CTA
-- Injects `SeoHead` + `LocalBusiness` + `BreadcrumbList` JSON-LD
-- Route added to router.tsx
-
-Create an edge function `contractor-seo-resolve` that:
-- Accepts a slug
-- Finds the matching contractor
-- Returns full profile data for rendering
-
-### Block 5 — Auto-Generate `contractor_public_pages` Records
-
-Create a database migration + edge function `seed-contractor-pages` that:
-- For each contractor with `business_name` not null
-- Generates a slug: `kebab(business_name)-kebab(city)`
-- Inserts into `contractor_public_pages` with `is_published = true`
-- Updates sitemap contractor-profiles segment to use these
-
-### Block 6 — Structured Data Engine
-
-Create `src/seo/components/SeoStructuredDataInjector.tsx` — a component used in MainLayout that auto-injects based on current route:
-
-- `/` → `WebSite` + `Organization`
-- `/contractors/:id` or `/entrepreneur/:slug` → `LocalBusiness` + `BreadcrumbList`
-- `/services/:cat/:city` → `Service` + `BreadcrumbList`
-- `/probleme/:slug` → `FAQPage` (from problem FAQ data) + `BreadcrumbList`
-- `/blog/:slug` → `Article` (already exists, ensure consistency)
-
-### Block 7 — Internal Linking Engine
-
-Create `src/components/seo/InternalLinkGrid.tsx`:
-- Given current page context (city, category, problem), renders a grid of related internal links
-- City pages link to services in that city
-- Service pages link to contractors and problems
-- Problem pages link to solutions and cities
-- Auto-injected at bottom of SEO pages via a `SeoInternalLinks` wrapper
-
-### Block 8 — Admin SEO Health Dashboard
-
-Create `src/pages/admin/PageSeoIndexHealth.tsx`:
-- **Index Health Card**: Count of pages in sitemap, pages with metadata, pages missing schema
-- **Contractor Visibility**: List contractors, show which have public pages, which are in sitemap
-- **Page Quality Scanner**: For each public page type, check: has title, has description, has H1, has schema, word count > 300, has CTA
-- **Live Index Tester**: Input a keyword (e.g. "Zappa"), system checks if any page contains it, if it's in sitemap, internal link count
-- **Fast Fixes Queue**: Pages needing attention sorted by priority
-
-Route: `/admin/seo-index-health`
-
-### Block 9 — Meta Tag Hardening
-
-Update `src/seo/components/SeoHead.tsx`:
-- Add `hreflang` support (`fr-CA` primary, `en` alternate)
-- Ensure canonical is always set (derive from current pathname if not provided)
-- Add `article:published_time` and `article:modified_time` for blog pages
-
-Update `index.html`:
-- Add default canonical `<link rel="canonical" href="https://unpro.ca" />`
-
-### Block 10 — Weekly SEO Alert System (Edge Function)
-
-Create `supabase/functions/seo-weekly-digest/index.ts`:
-- Query all contractors without public pages
-- Query pages with thin content (< 300 words in description)
-- Query sitemap segments, count URLs
-- Return JSON summary (can be triggered by cron to send email later)
-
----
-
-## Database Changes
-
-**Migration**: Auto-populate `contractor_public_pages` from existing `contractors` table.
+Create two new tables:
 
 ```sql
-INSERT INTO contractor_public_pages (contractor_id, slug, is_published, seo_title, seo_description)
-SELECT 
-  id,
-  lower(regexp_replace(regexp_replace(business_name || '-' || coalesce(city, ''), '[^a-zA-Z0-9àâäéèêëïîôùûüÿçœæ]+', '-', 'g'), '-+', '-', 'g')),
-  true,
-  business_name || ' — Entrepreneur vérifié | UNPRO',
-  'Profil vérifié de ' || business_name || coalesce(' à ' || city, '') || '. Services, avis et disponibilité sur UNPRO.'
-FROM contractors
-WHERE business_name IS NOT NULL
-ON CONFLICT (contractor_id) DO NOTHING;
+-- pricing_rules: admin-managed modifiers
+CREATE TABLE public.pricing_rules (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  rule_type TEXT NOT NULL,
+  rule_key TEXT NOT NULL,
+  rule_name TEXT NOT NULL,
+  applies_to_plan TEXT NULL,
+  applies_to_category TEXT NULL,
+  applies_to_city TEXT NULL,
+  applies_to_cluster_key TEXT NULL,
+  modifier_percent NUMERIC(6,4) NULL,
+  override_price NUMERIC(10,2) NULL,
+  priority INT NOT NULL DEFAULT 100,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- pricing_decisions: audit trail of every recommendation
+CREATE TABLE public.pricing_decisions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  contractor_id UUID NULL REFERENCES public.contractors(id) ON DELETE SET NULL,
+  sniper_target_id UUID NULL REFERENCES public.sniper_targets(id) ON DELETE SET NULL,
+  audit_id UUID NULL REFERENCES public.contractor_aipp_audits(id) ON DELETE SET NULL,
+  recommended_plan TEXT NOT NULL,
+  recommended_billing TEXT NOT NULL,
+  base_price NUMERIC(10,2) NOT NULL,
+  adjusted_price NUMERIC(10,2) NOT NULL,
+  founder_price NUMERIC(10,2) NULL,
+  pricing_modifiers JSONB NOT NULL DEFAULT '[]'::jsonb,
+  rationale JSONB NOT NULL DEFAULT '[]'::jsonb,
+  founder_offer_visible BOOLEAN NOT NULL DEFAULT false,
+  cluster_key TEXT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 ```
+
+RLS: public read on `pricing_rules` where `is_active = true`, admin-only write. Admin-only on `pricing_decisions`.
+
+### Block 1 — Dynamic Pricing Engine Service
+
+Create `src/services/dynamicPricingEngine.ts`:
+
+- `BASE_PLAN_PRICES` map (recrue through signature, monthly + annual)
+- `recommendPlanDynamic(input)` — enhanced version using AIPP score, job value, appointments, service areas, goal, plus category/territory/scarcity/founder inputs
+- `computeAdjustedPrice(basePrice, modifiers[])` with 1.25x cap
+- `buildPricingRecommendation(input)` returning full `PricingRecommendation` object with modifiers, rationale, founder logic
+- `getRecommendedAction(input)` — deterministic action engine for command center (call_now, sms_now, send_email, etc.)
+
+Types: `PricingRecommendation`, `PricingModifier`, `CommandCenterLead`, `PipelineColumn`, `RepActionItem`, `TerritoryGapRow`, `CampaignPerformanceRow`, `CommandCenterViewModel`
+
+### Block 2 — Command Center View Model Hook
+
+Create `src/hooks/useCommandCenterData.ts`:
+
+- Fetches `sniper_targets` (sorted by heat DESC, limit 500)
+- Fetches recent `sniper_engagement_events` (limit 100)
+- Fetches `outreach_campaigns` with join counts
+- Computes: KPIs (8 metrics including revenue + rev/100), pipeline columns with counts, hot leads sorted by heat/priority/founder/recency, rep action items with deterministic recommended actions, territory gaps grouped by city x category, campaign performance rows
+- Returns typed `CommandCenterViewModel`
+- Auto-refreshes every 30s
+
+### Block 3 — Command Center Main Page
+
+Rewrite `src/pages/admin/PageSniperCommandCenter.tsx` as the full war dashboard:
+
+- **Top Command Bar**: Title "Command Center", filters (city, category, stage, founder toggle), search, quick action buttons (Import, Launch, Queue, Hot Leads)
+- **KPI Strip**: 8 slim glassmorphic cards — Importés, Envoyés, Engagés, Audits, Checkouts, Convertis, Revenus, Rev/100 cibles — with animated counters
+- **Desktop layout**: 12-col grid. Left 8 cols: Hot Leads + Pipeline. Right 4 cols: Rep Queue + Events Feed. Bottom full width: Territory Gaps + Campaigns
+- **Mobile layout**: Stacked priority order — KPIs, Hot Leads, Rep Queue, Pipeline summary, Events, Territories, Campaigns
+
+### Block 4 — Hot Leads Panel
+
+Create `src/components/command-center/HotLeadsPanel.tsx`:
+
+- Sorted by heat > priority > founder > recency
+- Each row: business name, city · category, heat badge (Froid/Tiède/Chaud/Brûlant), priority score, stage badge, last activity with relative time, recommended next action badge
+- Quick row actions: Open, Call, SMS, Email, View Landing, View Audit
+- Heat color coding: red glow for 70+, orange for 40+, yellow for 20+
+
+### Block 5 — Pipeline Board
+
+Create `src/components/command-center/PipelineBoard.tsx`:
+
+- 10 columns: imported → enriched → ready → sent → engaged → audit_started → audit_completed → checkout_started → converted → lost
+- Each column: count + delta badge, mini list of top 3-5 targets
+- Warning highlights: sent > 3 days no engagement, audit > 1 day no completion, checkout > 12h no payment
+- Horizontal scroll on mobile, compact cards
+
+### Block 6 — Rep Action Queue
+
+Create `src/components/command-center/RepActionQueue.tsx`:
+
+- Title: "Prochaines actions"
+- Deterministic sorting: hot founder-eligible → checkout abandoners → audit complete no plan → page viewed no audit → high priority no send
+- Each item: lead name, reason (fr), recommended action badge, urgency (Élevée/Moyenne/Basse), one-click action buttons
+- Max 15 items visible
+
+### Block 7 — Territory Gap Panel
+
+Create `src/components/command-center/TerritoryGapPanel.tsx`:
+
+- Table: Ville, Catégorie, Actifs, Cible (hardcoded 8-10 default), Gap, Cibles chaudes, Convertis, Places fondateur
+- Sorted by gap DESC
+- Red highlight for large gaps
+- Founder slots column from cluster data
+
+### Block 8 — Campaign Performance Panel
+
+Create `src/components/command-center/CampaignPerformancePanel.tsx`:
+
+- Table/cards: campaign name, channel, city, category, sent, opens, clicks, page views, audit starts, checkouts, conversions, revenue
+- Color logic: green outperforming, amber average, red weak (based on click rate thresholds)
+- Aggregated from `outreach_campaigns` + `sniper_targets` + `sniper_engagement_events`
+
+### Block 9 — Recent Events Feed
+
+Create `src/components/command-center/RecentEventsFeed.tsx`:
+
+- Live feed of `sniper_engagement_events` sorted by created_at DESC
+- Each event: timestamp (relative), event icon, business name, event label (fr)
+- Event type mapping to French labels: page_view → "a vu sa page", identity_confirmed → "a confirmé son identité", etc.
+- Max 20 events, auto-scroll
+
+### Block 10 — Enhanced Target Drawer
+
+Update `src/components/sniper/SniperTargetDrawer.tsx`:
+
+- Add AIPP score display if available
+- Add recommended action badge
+- Add recommended plan display
+- Add pricing decision history if any
+- Add notes/tags edit capability
+
+### Block 11 — Sub-Routes
+
+Add to router.tsx:
+- `/admin/command-center` → Main war dashboard (redirect from current sniper route)
+- `/admin/command-center/leads` → Full lead table with all filters + bulk actions
+- `/admin/command-center/campaigns` → Campaign detail view
+- `/admin/command-center/territories` → Territory deep dive
+
+Create lightweight page wrappers for each sub-route.
+
+### Block 12 — Dynamic Pricing Recommendation UI
+
+Create `src/components/pricing/PricingRecommendationCard.tsx`:
+
+- Shows recommended plan badge + adjusted price + billing cadence
+- 3 rationale bullets max
+- Compare strip: lower plan, recommended (highlighted), higher plan
+- Founder offer block (conditional): one-time price, remaining slots, urgency
+- CTA into checkout with full metadata pass-through (plan, cadence, adjusted_price, founder_mode, pricing_decision_id)
+
+### Block 13 — Memory Update
+
+Update memory with command center architecture and dynamic pricing engine details.
 
 ---
 
@@ -135,17 +180,22 @@ ON CONFLICT (contractor_id) DO NOTHING;
 
 | Action | File |
 |---|---|
-| Create | `supabase/functions/prerender/index.ts` |
-| Create | `src/pages/seo/ContractorSeoPage.tsx` |
-| Create | `src/seo/components/SeoStructuredDataInjector.tsx` |
-| Create | `src/components/seo/InternalLinkGrid.tsx` |
-| Create | `src/pages/admin/PageSeoIndexHealth.tsx` |
-| Create | `supabase/functions/seo-weekly-digest/index.ts` |
-| Modify | `public/robots.txt` |
-| Modify | `supabase/functions/sitemap/index.ts` |
-| Modify | `src/seo/components/SeoHead.tsx` |
-| Modify | `index.html` |
-| Modify | `src/layouts/MainLayout.tsx` — add SeoStructuredDataInjector |
-| Modify | `src/app/router.tsx` — add `/entrepreneur/:slug` and `/admin/seo-index-health` routes |
-| Migration | Seed `contractor_public_pages` from contractors |
+| Migration | Create `pricing_rules` and `pricing_decisions` tables |
+| Create | `src/services/dynamicPricingEngine.ts` |
+| Create | `src/hooks/useCommandCenterData.ts` |
+| Rewrite | `src/pages/admin/PageSniperCommandCenter.tsx` |
+| Create | `src/components/command-center/HotLeadsPanel.tsx` |
+| Create | `src/components/command-center/PipelineBoard.tsx` |
+| Create | `src/components/command-center/RepActionQueue.tsx` |
+| Create | `src/components/command-center/TerritoryGapPanel.tsx` |
+| Create | `src/components/command-center/CampaignPerformancePanel.tsx` |
+| Create | `src/components/command-center/RecentEventsFeed.tsx` |
+| Create | `src/components/command-center/KpiStrip.tsx` |
+| Create | `src/components/command-center/TopCommandBar.tsx` |
+| Create | `src/components/pricing/PricingRecommendationCard.tsx` |
+| Create | `src/pages/admin/PageCommandCenterLeads.tsx` |
+| Create | `src/pages/admin/PageCommandCenterCampaigns.tsx` |
+| Create | `src/pages/admin/PageCommandCenterTerritories.tsx` |
+| Modify | `src/components/sniper/SniperTargetDrawer.tsx` |
+| Modify | `src/app/router.tsx` |
 
