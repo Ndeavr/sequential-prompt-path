@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     recipientEmail = body.recipientEmail || body.recipient_email
     senderEmail = body.senderEmail || body.sender_email
     senderName = body.senderName || body.sender_name
-    messageId = crypto.randomUUID()
+    messageId = body.messageId || body.message_id || crypto.randomUUID()
     idempotencyKey = body.idempotencyKey || body.idempotency_key || messageId
     if (body.templateData && typeof body.templateData === 'object') {
       templateData = body.templateData
@@ -367,10 +367,22 @@ Deno.serve(async (req) => {
     })
   }
 
+  await supabase.from('system_events').insert({
+    event_type: 'email_status_queued',
+    severity: 'info',
+    payload: {
+      message_id: messageId,
+      template_name: templateName,
+      recipient_email: effectiveRecipient,
+      sender_email: senderEmail || null,
+      status: 'queued',
+    },
+  })
+
   console.log('Transactional email enqueued', { templateName, effectiveRecipient })
 
   return new Response(
-    JSON.stringify({ success: true, queued: true }),
+    JSON.stringify({ success: true, queued: true, messageId }),
     {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -70,13 +70,14 @@ export default function PageAdminManualTestSend() {
           recipientEmail: trimmedRecipient,
           senderEmail: SENDER_EMAIL,
           senderName: mailbox.data?.sender_name || "Alex UNPRO",
+          messageId: id,
           idempotencyKey: `manual-live-test-${id}`,
           templateData: { subject: subject.trim(), body: body.trim() },
         },
       });
       if (error) throw error;
 
-      await supabase.from("system_events").insert({
+      await supabase.from("system_events").insert([{
         event_type: "manual_live_test_send",
         severity: "info",
         actor_user_id: user?.id ?? null,
@@ -88,7 +89,7 @@ export default function PageAdminManualTestSend() {
           statuses_requested: STATUSES,
           status: "queued",
         },
-      });
+      }]);
 
       return id;
     },
