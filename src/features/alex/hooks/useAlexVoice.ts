@@ -1,6 +1,6 @@
 /**
  * Alex 100M — Voice Hook
- * Single playback. Stops if user speaks. Cleanup on unmount.
+ * Voice is enhancement only. All failures degrade to live text/chat UI.
  */
 
 import { useCallback, useEffect, useRef } from "react";
@@ -11,8 +11,6 @@ import { alexLog } from "../utils/alexDebug";
 export function useAlexVoice() {
   const isMounted = useRef(true);
   const isUserSpeaking = useAlexStore((s) => s.isUserSpeaking);
-  const isVoiceAvailable = useAlexStore((s) => s.isVoiceAvailable);
-  const isAudioUnlocked = useAlexStore((s) => s.isAudioUnlocked);
 
   // Stop playback immediately when user starts speaking
   useEffect(() => {
@@ -26,41 +24,42 @@ export function useAlexVoice() {
     }
   }, [isUserSpeaking]);
 
-  const speak = useCallback(
-    async (text: string): Promise<void> => {
-      if (!isVoiceAvailable || !isAudioUnlocked) {
-        alexLog("voice:skip_no_audio", { isVoiceAvailable, isAudioUnlocked });
-        return;
-      }
+  const speak = useCallback(async (text: string): Promise<void> => {
+    const state = useAlexStore.getState();
 
-      const state = useAlexStore.getState();
+    if (!state.isVoiceAvailable || !state.isAudioUnlocked) {
+      alexLog("voice:skip_no_audio", {
+        isVoiceAvailable: state.isVoiceAvailable,
+        isAudioUnlocked: state.isAudioUnlocked,
+      });
+      return;
+    }
 
-      // Cancel any current playback first
-      if (state.hasActivePlayback) {
-        elevenlabsService.stop();
-        state.stopSpeaking();
-      }
+    // Cancel any current playback first
+    if (state.hasActivePlayback) {
+      elevenlabsService.stop();
+      state.stopSpeaking();
+    }
 
-      try {
-        state.startSpeaking();
-        await elevenlabsService.speak(
-          text,
-          () => alexLog("voice:playback_started"),
-          () => {
-            if (isMounted.current) {
-              useAlexStore.getState().stopSpeaking();
-            }
+    try {
+      state.startSpeaking();
+      await elevenlabsService.speak(
+        text,
+        () => alexLog("voice:playback_started"),
+        () => {
+          if (isMounted.current) {
+            useAlexStore.getState().stopSpeaking();
           }
-        );
-      } catch {
-        if (isMounted.current) {
-          useAlexStore.getState().stopSpeaking();
         }
-        alexLog("voice:playback_error");
+      );
+    } catch (error) {
+      if (isMounted.current) {
+        useAlexStore.getState().stopSpeaking();
+        useAlexStore.setState({ isAutoplayAllowed: false, mode: "ready" });
       }
-    },
-    [isVoiceAvailable, isAudioUnlocked]
-  );
+      alexLog("voice:playback_error", error);
+    }
+  }, []);
 
   const stop = useCallback(() => {
     elevenlabsService.stop();
@@ -70,29 +69,34 @@ export function useAlexVoice() {
 
   const unlockAudio = useCallback(async () => {
     try {
-      const ctx = new AudioContext();
-      await ctx.resume();
-      ctx.close();
+      elevenlabsService.init();
+      useAlexStore.setState({ isVoiceAvailable: elevenlabsService.isReady() });
+
+      const AudioContextCtor = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (AudioContextCtor) {
+        const ctx = new AudioContextCtor();
+        await ctx.resume();
+        await ctx.close();
+      }
+
       useAlexStore.getState().setAudioUnlocked(true);
       useAlexStore.getState().setAutoplayAllowed(true);
+      useAlexStore.getState().setMode("ready");
       alexLog("voice:audio_unlocked");
 
       // Speak greeting if not yet spoken
       const state = useAlexStore.getState();
       if (!state.isGreetingSpoken) {
-        const greetingMsg = state.messages.find(
-          (m) => m.role === "assistant" && !m.isSpoken
-        );
+        const greetingMsg = state.messages.find((m) => m.role === "assistant");
         if (greetingMsg) {
-          // Mark spoken handled by the welcome manager
-          const { alexWelcomeManager } = await import("../services/alexWelcomeManager");
-          if (alexWelcomeManager.markGreetingSpoken()) {
-            await speak(greetingMsg.text);
-          }
+          useAlexStore.setState({ isGreetingSpoken: true });
+          await speak(greetingMsg.text);
         }
       }
-    } catch {
-      alexLog("voice:unlock_failed");
+    } catch (error) {
+      useAlexStore.setState({ isAutoplayAllowed: false, mode: "ready" });
+      useAlexStore.getState().stopSpeaking();
+      alexLog("voice:unlock_failed", error);
     }
   }, [speak]);
 

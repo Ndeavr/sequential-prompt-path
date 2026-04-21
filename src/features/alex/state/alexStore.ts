@@ -32,7 +32,7 @@ export interface AlexState {
   isVoiceAvailable: boolean;
   isSTTAvailable: boolean;
   isAudioUnlocked: boolean;
-  isAutoplayAllowed: boolean;
+  isAutoplayAllowed: boolean | null;
   isGreetingInjected: boolean;
   isGreetingSpoken: boolean;
   isUserEngaged: boolean;
@@ -133,6 +133,14 @@ function makeId(): string {
 
 const now = () => Date.now();
 
+export const DEFAULT_ALEX_QUICK_ACTIONS: AlexQuickAction[] = [
+  { key: "homeowner_problem", labelFr: "Décrire un problème", labelEn: "Describe a problem", intent: "homeowner_problem", icon: "🏠" },
+  { key: "photo_upload", labelFr: "Envoyer une photo", labelEn: "Send a photo", intent: "photo_upload", icon: "📷" },
+  { key: "quote_compare", labelFr: "Comparer des soumissions", labelEn: "Compare quotes", intent: "quote_compare", icon: "📊" },
+  { key: "find_contractor", labelFr: "Trouver un entrepreneur", labelEn: "Find a contractor", intent: "booking", icon: "🔎" },
+  { key: "contractor_onboarding", labelFr: "Je suis un entrepreneur", labelEn: "I'm a contractor", intent: "contractor_onboarding", icon: "🔧" },
+];
+
 // ─── Store ────────────────────────────────────────────────────────
 
 export const useAlexStore = create<AlexState & AlexActions>()((set) => ({
@@ -146,7 +154,7 @@ export const useAlexStore = create<AlexState & AlexActions>()((set) => ({
   isVoiceAvailable: false,
   isSTTAvailable: false,
   isAudioUnlocked: false,
-  isAutoplayAllowed: false,
+  isAutoplayAllowed: null,
   isGreetingInjected: false,
   isGreetingSpoken: false,
   isUserEngaged: false,
@@ -177,7 +185,7 @@ export const useAlexStore = create<AlexState & AlexActions>()((set) => ({
   currentIntent: "unknown",
   currentProjectType: null,
 
-  quickActions: [],
+  quickActions: DEFAULT_ALEX_QUICK_ACTIONS,
   spotlight: null,
   softPromptText: null,
 
@@ -201,7 +209,7 @@ export const useAlexStore = create<AlexState & AlexActions>()((set) => ({
 
   bootstrapFailure: () => {
     alexLog("store:bootstrapFailure");
-    set({ mode: "error", isInitialized: false });
+    set({ mode: "ready", isInitialized: true, isAutoplayAllowed: false });
   },
 
   setMode: (mode) => {
@@ -304,8 +312,7 @@ export const useAlexStore = create<AlexState & AlexActions>()((set) => ({
       mode: s.mode === "soft_prompt_visible" ? "ready" : s.mode,
     })),
 
-  showQuickActions: (actions) =>
-    set({ quickActions: actions, mode: "showing_options" }),
+  showQuickActions: (actions) => set({ quickActions: actions }),
 
   setSpotlight: (spotlight) =>
     set({ spotlight, mode: "guiding_ui" }),

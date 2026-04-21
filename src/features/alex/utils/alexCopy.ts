@@ -50,12 +50,12 @@ const SOFT_PROMPTS_EN = [
 ] as const;
 
 // ─── Fallback text mode ───────────────────────────────────────────
-const FALLBACK_TEXT_FR = "Le micro n'est pas disponible. Écrivez votre message.";
-const FALLBACK_TEXT_EN = "Microphone unavailable. Type your message instead.";
+const FALLBACK_TEXT_FR = "Alex reste disponible en mode texte.";
+const FALLBACK_TEXT_EN = "Alex is available in text mode.";
 
 // ─── Voice blocked ────────────────────────────────────────────────
-const VOICE_BLOCKED_FR = "Activez le micro pour parler à Alex, ou écrivez ci-dessous.";
-const VOICE_BLOCKED_EN = "Enable your mic to talk to Alex, or type below.";
+const VOICE_BLOCKED_FR = "Touchez ici pour démarrer Alex.";
+const VOICE_BLOCKED_EN = "Tap here to start Alex.";
 
 // ─── Minimize CTA ─────────────────────────────────────────────────
 const MINIMIZE_CTA_FR = "Réduire Alex";
