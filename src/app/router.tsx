@@ -652,6 +652,7 @@ export const AppRouter = () => (
         <Route path="/search" element={<Search />} />
         <Route path="/diagnostic-photo" element={<Suspense fallback={<LazyFallback />}><ProVisualSearchPage /></Suspense>} />
         <Route path="/contractors/:id" element={<ContractorProfile />} />
+        <Route path="/entrepreneur/:slug" element={<Suspense fallback={<LazyFallback />}><ContractorSeoPage /></Suspense>} />
         <Route path="/login" element={<LoginPageUnpro />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/signup" element={<LoginPageUnpro />} />
