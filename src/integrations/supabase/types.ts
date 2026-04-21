@@ -2015,6 +2015,7 @@ export type Database = {
           score_conversion: number
           score_global: number
           score_local: number
+          score_potential: number | null
           score_tech: number
         }
         Insert: {
@@ -2027,6 +2028,7 @@ export type Database = {
           score_conversion?: number
           score_global?: number
           score_local?: number
+          score_potential?: number | null
           score_tech?: number
         }
         Update: {
@@ -2039,6 +2041,7 @@ export type Database = {
           score_conversion?: number
           score_global?: number
           score_local?: number
+          score_potential?: number | null
           score_tech?: number
         }
         Relationships: [
