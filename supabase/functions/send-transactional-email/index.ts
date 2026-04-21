@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
 
   // Create Supabase client with service role (bypasses RLS)
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
-  let fromAddress = `${SITE_NAME} <noreply@${FROM_DOMAIN}>`
+  let fromAddress = `${DEFAULT_FROM_NAME} <${DEFAULT_FROM_EMAIL}>`
 
   if (senderEmail) {
     const normalizedSender = senderEmail.toLowerCase()
