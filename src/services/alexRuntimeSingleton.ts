@@ -283,6 +283,19 @@ class AlexRuntimeSingletonClass {
   }
 
   /**
+   * Lightweight reset for restart — clears lock & session status without dispatching cleanup events.
+   */
+  clearForRestart() {
+    this.lockOwner = null;
+    (window as any)[WINDOW_LOCK_KEY] = null;
+    try { sessionStorage.removeItem(SESSION_LOCK_KEY); } catch {}
+    this.state.sessionStatus = 'idle';
+    this.state.autostartTriggered = false;
+    this.state.autostartCompleted = false;
+    this.notify();
+  }
+
+  /**
    * Check if lock is currently held.
    */
   isLocked(): boolean {
