@@ -7,7 +7,7 @@
  * SINGLETON GUARD: This is the PRIMARY Alex source on home page.
  * Uses alexRuntime lock to prevent any duplicate voice.
  */
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
