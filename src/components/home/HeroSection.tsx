@@ -60,7 +60,9 @@ export default function HeroSection() {
   const [textSheetOpen, setTextSheetOpen] = useState(false);
   const [activeIntent, setActiveIntent] = useState<IntentSlug>("probleme");
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [connectingTooLong, setConnectingTooLong] = useState(false);
   const alexTranscriptRef = useRef("");
+  const connectingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Singleton guard — register as primary
   const { isPrimary, acquireLock, releaseLock, markActive } = useAlexSingleton(COMPONENT_NAME, 'primary');
