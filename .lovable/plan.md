@@ -1,134 +1,123 @@
 
 
-# UNPRO Real AIPP Scoring System v1
+# UNPRO Sniper Outreach Engine v1 — Full Implementation
 
 ## Summary
 
-Replace the current approximate AIPP scoring with a deterministic, signal-based scoring engine. New database tables store raw signals and audit provenance. A new edge function (`aipp-run-audit`) performs real website analysis via Firecrawl and computes weighted scores. The frontend renders 4 distinct states (empty, running, partial, complete) with premium glassmorphic UI and trust-first guardrails.
+The database schema, scoring logic, and a basic command center shell exist. This plan builds the 5 backend edge functions (import, enrich, generate assets, queue send, update heat), expands the command center with territory gaps / rep queue / CSV import / target detail, and wires the full pipeline loop.
 
 ---
 
 ## Technical Details
 
-### Block 1 -- Database Migration
+### Block 1 — Edge Function: `sniper-import-targets`
 
-Create one migration with:
+New Deno edge function at `supabase/functions/sniper-import-targets/index.ts`.
 
-**Enums**: `aipp_analysis_status`, `aipp_confidence_level`, `aipp_job_type`, `aipp_job_status`
-
-**Tables** (as specified in the prompt):
-- `contractor_aipp_audits` -- scores, blockers, strengths, recommendations, raw signals, confidence, source counts
-- `contractor_aipp_signal_logs` -- individual signal records per audit
-- `contractor_aipp_jobs` -- job tracking with progress and step info
-
-**Triggers**: `set_updated_at()` on contractors, contractor_aipp_audits, contractor_aipp_jobs
-
-**RLS**: Enable on all 3 new tables. Policies:
-- Contractors can read own audits/signals/jobs via `auth.uid()` matching `contractors.user_id`
-- Service role bypasses for edge functions
-- Public read for audits (needed for unauthenticated AIPP intake)
-
-**Indexes**: On contractor_id, audit_id, status, created_at as specified
-
-Note: The existing `contractors` table already has all needed columns (website, phone, rbq_number, neq, city, etc). No schema changes needed there.
-
-### Block 2 -- Edge Function: `aipp-run-audit`
-
-New Deno edge function at `supabase/functions/aipp-run-audit/index.ts`.
-
-**Input**: `{ contractor_id: string }`
+**Input**: `{ targets: Array<{ businessName, city?, category?, websiteUrl?, phone?, email?, rbqNumber?, neqNumber?, sourceCampaign? }>, campaignId? }`
 
 **Flow**:
-1. Load contractor from `contractors` table
-2. Create `contractor_aipp_audits` row (status: running)
-3. Create `contractor_aipp_jobs` row (job_type: full_audit)
-4. **Website signals** -- Firecrawl scrape of `contractor.website`. Extract all web, AI visibility, and conversion signals from HTML/markdown
-5. **Google signals** -- Parse existing `google_business_url` data. Score GBP presence, rating (from `contractor.rating`), review count (from `contractor.review_count`)
-6. **Trust signals** -- Validate RBQ format, NEQ presence, business name consistency, contact consistency
-7. Persist each signal to `contractor_aipp_signal_logs`
-8. Run deterministic `computeAippScore()` with the exact signal map and formulas from the prompt (Web /20, Google /20, Trust /20, AI Visibility /25, Conversion /15)
-9. Compute confidence level and potential score
-10. Generate blockers/strengths/recommendations in Quebec French business language
-11. Update audit row with all computed data
-12. Mark job complete
+1. Validate input array (max 500 per batch)
+2. For each target: normalize business name, phone, domain using same logic as `normalizers.ts`
+3. Deduplicate against existing `sniper_targets` by (business_name + city) or (phone) or (domain)
+4. Insert new rows with `enrichment_status: 'pending'`, `outreach_status: 'not_started'`
+5. Return `{ imported, skipped_duplicates }`
 
-**Signal model**: Uses the unified `SignalResult` type with key, group, source, found, rawValue, normalizedValue, maxPoints, earnedPoints, reason, blocker, strength, recommendation.
+Uses `https://esm.sh/@supabase/supabase-js@2.49.1`.
 
-**Scoring functions**: All formulas from the prompt implemented exactly (`scoreGbpRating`, `scoreGbpReviewCount`, `scoreServicePages`, `scoreLocationPages`, `scoreOwnerResponses`, `computeConfidence`, `computePotentialScore`, `canShowFinalScore`).
+### Block 2 — Edge Function: `sniper-enrich-target`
 
-Uses `https://esm.sh/@supabase/supabase-js@2.49.1` per project constraint.
+New Deno edge function at `supabase/functions/sniper-enrich-target/index.ts`.
 
-### Block 3 -- Scoring Service (Client-side)
+**Input**: `{ targetId: string }`
 
-New file: `src/services/aippRealScoringService.ts`
-- `mapAuditToViewModel()` function converting DB rows to `AippAuditViewModel`
-- Score label derivation (Critique/Faible/Moyen/Fort/Dominant)
-- Source badge status mapping
-- Technical blocker to business language translation
-- Caps blockers at 3, strengths at 5
+**Flow**:
+1. Load target from `sniper_targets`
+2. **Normalize**: clean name, phone, domain
+3. **Match**: check `contractors` table for existing match by business_name+city or phone or domain. If found, link `contractor_id`
+4. **Enrich signals**: detect website presence (HEAD request), HTTPS check, parse domain for service clues
+5. **Score**: compute `sniper_priority_score` using the existing `computeSniperPriority` formula (server-side copy), plus sub-scores (revenue_potential, readiness, pain_upside, strategic_fit, contactability)
+6. **Channel recommendation**: email-first if email exists + score >= 60, SMS-first if phone + no email, dual if score >= 80
+7. Update target row with all enrichment data, set `enrichment_status: 'enriched'`
+8. Return enriched target
 
-New file: `src/types/aippReal.ts`
-- All TypeScript types: `AippConfidence`, `AippAnalysisStatus`, `AippCategoryBreakdown`, `AippSourceStatus`, `AippBlocker`, `AippStrength`, `AippAuditViewModel`
+### Block 3 — Edge Function: `sniper-generate-assets`
 
-### Block 4 -- React Hook
+New Deno edge function at `supabase/functions/sniper-generate-assets/index.ts`.
 
-New file: `src/hooks/useContractorAippAudit.ts`
-- `useContractorAippAudit(contractorId)` -- fetches latest audit, polls if running/pending
-- `useLaunchAippAudit()` -- triggers `aipp-run-audit` edge function
-- Returns `AippAuditViewModel` via mapper
+**Input**: `{ targetId: string }`
 
-### Block 5 -- Frontend Components
+**Flow**:
+1. Load enriched target
+2. If `sniper_priority_score < 60`, skip with `{ skipped: true, reason: 'below_threshold' }`
+3. **Generate outreach target**: Create row in `outreach_targets` with slug (kebab-case business_name + city), secure_token (crypto.randomUUID), payload from target data, `landing_status: 'prepared'`
+4. Link `latest_outreach_target_id` on sniper target
+5. **Generate message variants**: For each applicable channel (email/SMS based on recommendation), generate 3 variant_types (curiosity, weak_signals, founder_scarcity) using the exact template copy from the prompt with variable interpolation
+6. Mark first variant as `is_selected: true`
+7. Set target `outreach_status: 'page_ready'` or `'message_ready'`
+8. If score >= 80 and contractor_id exists, invoke `aipp-run-audit` to precompute partial audit
 
-All in `src/components/aipp-real/`:
+### Block 4 — Edge Function: `sniper-queue-send`
 
-| Component | Purpose |
-|---|---|
-| `AippAuditExperience` | Root layout: 12-col desktop, single-col mobile |
-| `AippHeroHeader` | Company name, title, subtitle, last updated |
-| `AippStatusBanner` | Running/partial/complete/failed state banners |
-| `AippMainScoreCard` | Score ring (only when real), confidence badge, source badges, CTAs |
-| `AippSourcesCard` | Source provenance badges (validated/in_progress/unavailable) |
-| `AippBreakdownGrid` | 5 category cards with score, summary, expandable details |
-| `AippPriorityBlockersCard` | Top 3 blockers in business French with impact badges |
-| `AippStrengthsCard` | Positive signals with hopeful messaging |
-| `AippPotentialCard` | Current vs potential dual display |
-| `AippActionPlanCard` | 3 priority steps |
-| `AippConversionCard` | Premium CTA: "Corriger maintenant" / "Parler a Alex" |
-| `AippAuditTimelineCard` | Audit step history |
-| `AippDebugDrawer` | Admin-only: raw signals, scoring details, job status, errors |
+New Deno edge function at `supabase/functions/sniper-queue-send/index.ts`.
 
-**State handling**:
-- State A (empty): Input form + "Lancer mon analyse"
-- State B (running): Animated progress, live checklist, no score ring
-- State C (partial): Provisional score with amber badge, confidence label
-- State D (complete): Full experience with all cards
+**Input**: `{ targetId: string }` or `{ batchSize?: number }` for batch mode
 
-**Trust guardrails**: If `overall_score` is null, no ring renders. Score ring animates only on real data. Confidence and source badges always visible.
+**Flow**:
+1. Single mode: load target + selected message variant, create `sniper_send_queue` entry with `send_status: 'queued'`
+2. Batch mode: select up to `batchSize` targets where `outreach_status = 'message_ready'` and no existing queue entry
+3. For each queued item: placeholder for actual send integration (mark as `sent` for now, real Resend/Twilio integration later)
+4. Update target `outreach_status: 'sent'`
+5. Log engagement event `email_sent` or `sms_sent`
 
-### Block 6 -- Page and Routing
+### Block 5 — Edge Function: `sniper-update-heat`
 
-New page: `src/pages/PageContractorAippAudit.tsx`
-- Route: `/contractor/aipp-audit/:contractorId`
-- Renders `AippAuditExperience` with data from `useContractorAippAudit`
+New Deno edge function at `supabase/functions/sniper-update-heat/index.ts`.
 
-Admin debug page: `src/pages/admin/PageAippDebug.tsx`
-- Route: `/admin/aipp-debug`
-- Table of recent audits with raw signals, job status, errors
+**Input**: `{ targetId?: string }` (single) or `{}` (all with engagement)
 
-Register both routes in `src/app/router.tsx`.
+**Flow**:
+1. For each target, aggregate `sniper_engagement_events` using heat weights:
+   - email_open: 5, click: 15, page_view: 10, identity_confirmed: 15, audit_started: 20, audit_completed: 20, recommendation_viewed: 10, checkout_started: 25
+2. Update `heat_score` on `sniper_targets`
+3. If heat >= 70, set tag `close_now`
+4. Return updated counts
 
-### Block 7 -- Visual System
+### Block 6 — Command Center Expansion
 
-- Dark glass panels with `glass-card` classes
-- Rounded 24px cards with translucent borders
-- Framer Motion: stagger reveals for cards, fade-in for source badges
-- Score ring uses existing `ScoreRing` component, only rendered when `canShowFinalScore` is true
-- Colors: blue/teal for complete, amber for partial, muted red for failed, restrained green for strengths
-- Mobile-first responsive, premium at desktop
+Rewrite `PageSniperCommandCenter.tsx` with 4 tabs and CSV import:
 
-### Block 8 -- Memory
+**New tabs:**
+- **Territory Gaps**: Group targets by city × category, show supply_needed count, active targets, conversions, gap score
+- **Rep Queue**: Show targets ordered by heat DESC where `outreach_status` in engaged/audit_started, with action buttons (Call, Resend, Ignore)
 
-Save `mem://features/aipp-real-scoring-engine` documenting the deterministic signal-based scoring system, weights, confidence formula, and trust guardrails.
+**CSV Import panel:**
+- File upload button
+- Parse CSV client-side (Papa Parse)
+- Preview table showing parsed rows
+- "Importer" button calling `sniper-import-targets`
+- Success/error feedback
+
+**Target Detail Drawer:**
+- Click any target row to open a side drawer
+- Show: all fields, enrichment signals, message variants, engagement timeline, linked audit, heat history
+- Action buttons: Enrich, Generate Assets, Queue Send, Update Heat
+
+**Pipeline tab enhancements:**
+- Add status filter dropdown
+- Add bulk action buttons: "Enrichir tout", "Générer pages", "Envoyer batch"
+- These call the respective edge functions
+
+### Block 7 — Batch Orchestration Buttons
+
+In the command center, wire bulk actions:
+- "Enrichir les pendants" → loops `sniper-enrich-target` for all `enrichment_status = 'pending'`
+- "Générer les assets" → loops `sniper-generate-assets` for all enriched + no outreach target
+- "Envoyer le batch" → calls `sniper-queue-send` in batch mode
+
+### Block 8 — Memory
+
+Update `mem://features/instant-audit-intake-funnel` to include sniper engine edge functions and command center expansion.
 
 ---
 
@@ -136,26 +125,16 @@ Save `mem://features/aipp-real-scoring-engine` documenting the deterministic sig
 
 | Action | File |
 |---|---|
-| Create | `supabase/migrations/xxx_aipp_real_scoring.sql` |
-| Create | `supabase/functions/aipp-run-audit/index.ts` |
-| Create | `src/types/aippReal.ts` |
-| Create | `src/services/aippRealScoringService.ts` |
-| Create | `src/hooks/useContractorAippAudit.ts` |
-| Create | `src/components/aipp-real/AippAuditExperience.tsx` |
-| Create | `src/components/aipp-real/AippHeroHeader.tsx` |
-| Create | `src/components/aipp-real/AippStatusBanner.tsx` |
-| Create | `src/components/aipp-real/AippMainScoreCard.tsx` |
-| Create | `src/components/aipp-real/AippSourcesCard.tsx` |
-| Create | `src/components/aipp-real/AippBreakdownGrid.tsx` |
-| Create | `src/components/aipp-real/AippPriorityBlockersCard.tsx` |
-| Create | `src/components/aipp-real/AippStrengthsCard.tsx` |
-| Create | `src/components/aipp-real/AippPotentialCard.tsx` |
-| Create | `src/components/aipp-real/AippActionPlanCard.tsx` |
-| Create | `src/components/aipp-real/AippConversionCard.tsx` |
-| Create | `src/components/aipp-real/AippAuditTimelineCard.tsx` |
-| Create | `src/components/aipp-real/AippDebugDrawer.tsx` |
-| Create | `src/pages/PageContractorAippAudit.tsx` |
-| Create | `src/pages/admin/PageAippDebug.tsx` |
-| Modify | `src/app/router.tsx` -- add 2 routes |
-| Create | `mem://features/aipp-real-scoring-engine` |
+| Create | `supabase/functions/sniper-import-targets/index.ts` |
+| Create | `supabase/functions/sniper-enrich-target/index.ts` |
+| Create | `supabase/functions/sniper-generate-assets/index.ts` |
+| Create | `supabase/functions/sniper-queue-send/index.ts` |
+| Create | `supabase/functions/sniper-update-heat/index.ts` |
+| Rewrite | `src/pages/admin/PageSniperCommandCenter.tsx` |
+| Create | `src/components/sniper/SniperTargetDrawer.tsx` |
+| Create | `src/components/sniper/SniperCsvImport.tsx` |
+| Create | `src/components/sniper/SniperTerritoryGaps.tsx` |
+| Create | `src/components/sniper/SniperRepQueue.tsx` |
+| Create | `src/components/sniper/SniperBulkActions.tsx` |
+| Modify | `mem://features/instant-audit-intake-funnel` |
 
