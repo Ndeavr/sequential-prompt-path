@@ -13,7 +13,7 @@ let subscriber: STTCallback | null = null;
 let startTime = 0;
 let isRunning = false;
 
-function getSpeechRecognition(): SpeechRecognition | null {
+function getSpeechRecognition() {
   const SR =
     (window as any).SpeechRecognition ||
     (window as any).webkitSpeechRecognition;
