@@ -16057,6 +16057,200 @@ export type Database = {
           },
         ]
       }
+      contractor_aipp_audits: {
+        Row: {
+          ai_visibility_score: number
+          analysis_status: Database["public"]["Enums"]["aipp_analysis_status"]
+          blockers: Json
+          completed_at: string | null
+          confidence_level: Database["public"]["Enums"]["aipp_confidence_level"]
+          contractor_id: string
+          conversion_score: number
+          created_at: string
+          google_score: number
+          id: string
+          overall_score: number | null
+          potential_score: number | null
+          raw_signals: Json
+          recommendations: Json
+          scoring_details: Json
+          sources_used: Json
+          started_at: string | null
+          strengths: Json
+          total_possible_signals_count: number
+          trust_score: number
+          updated_at: string
+          validated_signals_count: number
+          validated_sources_count: number
+          web_score: number
+        }
+        Insert: {
+          ai_visibility_score?: number
+          analysis_status?: Database["public"]["Enums"]["aipp_analysis_status"]
+          blockers?: Json
+          completed_at?: string | null
+          confidence_level?: Database["public"]["Enums"]["aipp_confidence_level"]
+          contractor_id: string
+          conversion_score?: number
+          created_at?: string
+          google_score?: number
+          id?: string
+          overall_score?: number | null
+          potential_score?: number | null
+          raw_signals?: Json
+          recommendations?: Json
+          scoring_details?: Json
+          sources_used?: Json
+          started_at?: string | null
+          strengths?: Json
+          total_possible_signals_count?: number
+          trust_score?: number
+          updated_at?: string
+          validated_signals_count?: number
+          validated_sources_count?: number
+          web_score?: number
+        }
+        Update: {
+          ai_visibility_score?: number
+          analysis_status?: Database["public"]["Enums"]["aipp_analysis_status"]
+          blockers?: Json
+          completed_at?: string | null
+          confidence_level?: Database["public"]["Enums"]["aipp_confidence_level"]
+          contractor_id?: string
+          conversion_score?: number
+          created_at?: string
+          google_score?: number
+          id?: string
+          overall_score?: number | null
+          potential_score?: number | null
+          raw_signals?: Json
+          recommendations?: Json
+          scoring_details?: Json
+          sources_used?: Json
+          started_at?: string | null
+          strengths?: Json
+          total_possible_signals_count?: number
+          trust_score?: number
+          updated_at?: string
+          validated_signals_count?: number
+          validated_sources_count?: number
+          web_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_aipp_audits_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_aipp_audits_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_aipp_audits_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_aipp_audits_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_aipp_jobs: {
+        Row: {
+          audit_id: string | null
+          completed_at: string | null
+          contractor_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          job_type: Database["public"]["Enums"]["aipp_job_type"]
+          logs: Json
+          progress_percent: number
+          started_at: string | null
+          status: Database["public"]["Enums"]["aipp_job_status"]
+          step_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          audit_id?: string | null
+          completed_at?: string | null
+          contractor_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_type: Database["public"]["Enums"]["aipp_job_type"]
+          logs?: Json
+          progress_percent?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["aipp_job_status"]
+          step_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          audit_id?: string | null
+          completed_at?: string | null
+          contractor_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_type?: Database["public"]["Enums"]["aipp_job_type"]
+          logs?: Json
+          progress_percent?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["aipp_job_status"]
+          step_key?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_aipp_jobs_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_aipp_audits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_aipp_jobs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_aipp_jobs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_aipp_jobs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_aipp_jobs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       contractor_aipp_scores: {
         Row: {
           ai_seo_readiness_score: number | null
@@ -16130,6 +16324,87 @@ export type Database = {
           },
           {
             foreignKeyName: "contractor_aipp_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_aipp_signal_logs: {
+        Row: {
+          audit_id: string | null
+          collected_at: string
+          contractor_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          normalized_value: Json
+          signal_group: string
+          signal_key: string
+          signal_value: Json
+          source: string
+          status: string
+        }
+        Insert: {
+          audit_id?: string | null
+          collected_at?: string
+          contractor_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          normalized_value?: Json
+          signal_group: string
+          signal_key: string
+          signal_value?: Json
+          source: string
+          status?: string
+        }
+        Update: {
+          audit_id?: string | null
+          collected_at?: string
+          contractor_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          normalized_value?: Json
+          signal_group?: string
+          signal_key?: string
+          signal_value?: Json
+          source?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_aipp_signal_logs_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_aipp_audits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_aipp_signal_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_aipp_signal_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_aipp_signal_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_aipp_signal_logs_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
             referencedRelation: "v_contractor_trust_summary"
@@ -59541,6 +59816,20 @@ export type Database = {
       }
     }
     Enums: {
+      aipp_analysis_status:
+        | "pending"
+        | "running"
+        | "partial"
+        | "complete"
+        | "failed"
+      aipp_confidence_level: "low" | "medium" | "high"
+      aipp_job_status: "queued" | "running" | "complete" | "failed"
+      aipp_job_type:
+        | "full_audit"
+        | "refresh_scores"
+        | "website_scan"
+        | "google_scan"
+        | "verification_scan"
       app_role: "homeowner" | "contractor" | "admin"
       appointment_status:
         | "requested"
@@ -59761,6 +60050,22 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      aipp_analysis_status: [
+        "pending",
+        "running",
+        "partial",
+        "complete",
+        "failed",
+      ],
+      aipp_confidence_level: ["low", "medium", "high"],
+      aipp_job_status: ["queued", "running", "complete", "failed"],
+      aipp_job_type: [
+        "full_audit",
+        "refresh_scores",
+        "website_scan",
+        "google_scan",
+        "verification_scan",
+      ],
       app_role: ["homeowner", "contractor", "admin"],
       appointment_status: [
         "requested",
