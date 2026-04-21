@@ -4,9 +4,11 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 
 // Configuration baked in at scaffold time
-const SITE_NAME = "sequential-prompt-path"
-const SENDER_DOMAIN = "notify.unpro.ca"
-const FROM_DOMAIN = "notify.unpro.ca"
+const SITE_NAME = "Alex UNPRO"
+const SENDER_DOMAIN = "mail.unpro.ca"
+const FROM_DOMAIN = "mail.unpro.ca"
+const DEFAULT_FROM_EMAIL = "alex@mail.unpro.ca"
+const DEFAULT_FROM_NAME = "Alex UNPRO"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -148,7 +150,7 @@ Deno.serve(async (req) => {
 
   // Create Supabase client with service role (bypasses RLS)
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
-  let fromAddress = `${SITE_NAME} <noreply@${FROM_DOMAIN}>`
+  let fromAddress = `${DEFAULT_FROM_NAME} <${DEFAULT_FROM_EMAIL}>`
 
   if (senderEmail) {
     const normalizedSender = senderEmail.toLowerCase()
