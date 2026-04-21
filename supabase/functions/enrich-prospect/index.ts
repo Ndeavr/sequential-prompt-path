@@ -130,17 +130,18 @@ async function enrichProspect(supabase: any, prospectId: string) {
       emails.forEach(e => allEmails.push({ email: e, source: "main_page", confidence: 85 }));
       socials = { ...socials, ...extractSocials(main.markdown + " " + main.html) };
 
-      // Step 3: Scrape contact page
-      const contactPaths = ["/contact", "/nous-joindre", "/contactez-nous", "/about", "/a-propos"];
+      // Step 3: Scrape contact page (only first match to save time)
+      const contactPaths = ["/contact", "/nous-joindre"];
       for (const path of contactPaths) {
+        if (allEmails.length > 0) break; // Already found emails, skip
         try {
           const contactUrl = new URL(path, website.startsWith("http") ? website : `https://${website}`).href;
           log.push({ step: "scrape_contact", url: contactUrl });
           const contact = await scrapeUrl(contactUrl);
           if (contact) {
-            const ce = extractEmails(contact.markdown + " " + contact.html);
+            const ce = extractEmails(contact.markdown);
             ce.forEach(e => allEmails.push({ email: e, source: `contact_page:${path}`, confidence: 90 }));
-            socials = { ...socials, ...extractSocials(contact.markdown + " " + contact.html) };
+            socials = { ...socials, ...extractSocials(contact.markdown) };
           }
         } catch { /* skip */ }
       }
