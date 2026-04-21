@@ -6,15 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import {
   Target, Mail, Phone, Send, Loader2, Play, RefreshCw,
-  CheckCircle2, AlertTriangle, Zap, TrendingUp, Crosshair
+  CheckCircle2, AlertTriangle, Zap, TrendingUp, Crosshair,
+  Clock, XCircle, Activity
 } from "lucide-react";
 
 const STATUS_BADGE: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   pending: { label: "En attente", variant: "outline" },
-  running: { label: "Enrichissement…", variant: "secondary" },
+  running: { label: "En cours…", variant: "secondary" },
   done: { label: "Enrichi", variant: "default" },
   failed: { label: "Échoué", variant: "destructive" },
 };
@@ -50,16 +52,20 @@ export default function PageSniperPipeline() {
   });
 
   // Pipeline KPIs
-  const kpis = {
-    total: prospects?.length || 0,
-    emailsFound: prospects?.filter((p: any) => p.verified_email).length || 0,
-    smsReady: prospects?.filter((p: any) => p.sms_queue_status === "queued").length || 0,
-    queued: prospects?.filter((p: any) => p.outreach_status === "queued").length || 0,
-    sent: prospects?.filter((p: any) => ["sent", "delivered"].includes(p.outreach_status)).length || 0,
-    opened: prospects?.filter((p: any) => p.outreach_status === "opened").length || 0,
-    replied: prospects?.filter((p: any) => p.outreach_status === "replied").length || 0,
-    booked: prospects?.filter((p: any) => p.outreach_status === "booked").length || 0,
-  };
+  const pending = prospects?.filter((p: any) => p.enrichment_status === "pending").length || 0;
+  const processing = prospects?.filter((p: any) => p.enrichment_status === "running").length || 0;
+  const enriched = prospects?.filter((p: any) => p.enrichment_status === "done").length || 0;
+  const failed = prospects?.filter((p: any) => p.enrichment_status === "failed").length || 0;
+  const total = prospects?.length || 0;
+  const emailsFound = prospects?.filter((p: any) => p.verified_email).length || 0;
+  const smsReady = prospects?.filter((p: any) => p.sms_queue_status === "queued").length || 0;
+  const queued = prospects?.filter((p: any) => p.outreach_status === "queued").length || 0;
+  const sent = prospects?.filter((p: any) => ["sent", "delivered"].includes(p.outreach_status)).length || 0;
+  const replied = prospects?.filter((p: any) => p.outreach_status === "replied").length || 0;
+  const booked = prospects?.filter((p: any) => p.outreach_status === "booked").length || 0;
+
+  const enrichmentProgress = total > 0 ? Math.round((enriched / total) * 100) : 0;
+  const outreachReady = emailsFound >= 10;
 
   // Discover new prospects
   const discover = useMutation({
@@ -75,25 +81,6 @@ export default function PageSniperPipeline() {
       qc.invalidateQueries({ queryKey: ["sniper-pipeline"] });
     },
     onError: () => toast.error("Erreur lors de la découverte"),
-  });
-
-  // Enrich all pending
-  const enrichBatch = useMutation({
-    mutationFn: async () => {
-      const res = await supabase.functions.invoke("enrich-prospect", {
-        body: { mode: "enrich_batch", city: "Laval", category: "Insul", limit: 30 },
-      });
-      if (res.error) throw res.error;
-      return res.data;
-    },
-    onSuccess: (data) => {
-      toast.success(`${data.emailsFound} emails trouvés sur ${data.total} prospects`);
-      if (data.autoOutreachTriggered) {
-        toast.success("🎯 Auto-outreach déclenché ! 10+ emails vérifiés.");
-      }
-      qc.invalidateQueries({ queryKey: ["sniper-pipeline"] });
-    },
-    onError: () => toast.error("Erreur d'enrichissement"),
   });
 
   // Enrich single
@@ -123,7 +110,9 @@ export default function PageSniperPipeline() {
             <Crosshair className="h-6 w-6 text-primary" />
             <div>
               <h1 className="text-xl font-bold tracking-tight">Pipeline Sniper — Laval × Isolation</h1>
-              <p className="text-sm text-muted-foreground">Enrichissement → Outreach → Revenue</p>
+              <p className="text-sm text-muted-foreground">
+                Cron actif : 3 prospects / minute • Enrichissement → Outreach → Revenue
+              </p>
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -134,24 +123,40 @@ export default function PageSniperPipeline() {
               {discover.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Target className="h-4 w-4 mr-1" />}
               Découvrir +25
             </Button>
-            <Button size="sm" onClick={() => enrichBatch.mutate()} disabled={enrichBatch.isPending}>
-              {enrichBatch.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Zap className="h-4 w-4 mr-1" />}
-              Enrichir tout
-            </Button>
           </div>
         </div>
+
+        {/* Enrichment Progress Bar */}
+        <Card>
+          <CardContent className="py-4 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <Activity className="h-4 w-4 text-primary animate-pulse" />
+                <span className="font-medium">Enrichissement progressif</span>
+              </div>
+              <span className="text-muted-foreground">{enriched}/{total} ({enrichmentProgress}%)</span>
+            </div>
+            <Progress value={enrichmentProgress} className="h-2" />
+            <div className="flex gap-4 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {pending} en attente</span>
+              <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> {processing} en cours</span>
+              <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-green-500" /> {enriched} enrichis</span>
+              <span className="flex items-center gap-1"><XCircle className="h-3 w-3 text-red-500" /> {failed} échoués</span>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* KPI Cards */}
         <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
           {[
-            { label: "Prospects", value: kpis.total, icon: Target, color: "text-blue-400" },
-            { label: "Emails", value: kpis.emailsFound, icon: Mail, color: "text-green-400" },
-            { label: "SMS prêts", value: kpis.smsReady, icon: Phone, color: "text-amber-400" },
-            { label: "En file", value: kpis.queued, icon: Send, color: "text-purple-400" },
-            { label: "Envoyés", value: kpis.sent, icon: CheckCircle2, color: "text-cyan-400" },
-            { label: "Ouverts", value: kpis.opened, icon: TrendingUp, color: "text-emerald-400" },
-            { label: "Réponses", value: kpis.replied, icon: Zap, color: "text-yellow-400" },
-            { label: "Bookés", value: kpis.booked, icon: Crosshair, color: "text-red-400" },
+            { label: "Prospects", value: total, icon: Target, color: "text-blue-400" },
+            { label: "Emails", value: emailsFound, icon: Mail, color: "text-green-400" },
+            { label: "SMS prêts", value: smsReady, icon: Phone, color: "text-amber-400" },
+            { label: "En file", value: queued, icon: Send, color: "text-purple-400" },
+            { label: "Envoyés", value: sent, icon: CheckCircle2, color: "text-cyan-400" },
+            { label: "Réponses", value: replied, icon: Zap, color: "text-yellow-400" },
+            { label: "Bookés", value: booked, icon: Crosshair, color: "text-red-400" },
+            { label: "Échecs", value: failed, icon: XCircle, color: "text-red-400" },
           ].map(k => (
             <Card key={k.label} className="text-center">
               <CardContent className="py-3 px-2">
@@ -164,29 +169,29 @@ export default function PageSniperPipeline() {
         </div>
 
         {/* Auto-outreach threshold */}
-        {kpis.emailsFound >= 10 && (
+        {outreachReady ? (
           <Card className="border-green-500/50 bg-green-500/5">
             <CardContent className="py-3 flex items-center gap-3">
               <CheckCircle2 className="h-5 w-5 text-green-500" />
-              <span className="text-sm font-medium">Auto-outreach débloqué — {kpis.emailsFound} emails vérifiés</span>
+              <span className="text-sm font-medium">🎯 Auto-outreach débloqué — {emailsFound} emails vérifiés</span>
             </CardContent>
           </Card>
-        )}
-        {kpis.emailsFound < 10 && kpis.total > 0 && (
+        ) : total > 0 ? (
           <Card className="border-amber-500/50 bg-amber-500/5">
             <CardContent className="py-3 flex items-center gap-3">
               <AlertTriangle className="h-5 w-5 text-amber-500" />
               <span className="text-sm font-medium">
-                {10 - kpis.emailsFound} emails manquants pour auto-outreach ({kpis.emailsFound}/10)
+                {10 - emailsFound} emails manquants pour auto-outreach ({emailsFound}/10)
+                {pending > 0 && ` • ${pending} prospects en file d'enrichissement`}
               </span>
             </CardContent>
           </Card>
-        )}
+        ) : null}
 
         {/* Prospects Table */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Prospects ({kpis.total})</CardTitle>
+            <CardTitle className="text-base">Prospects ({total})</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             {isLoading ? (
@@ -202,7 +207,7 @@ export default function PageSniperPipeline() {
                       <TableHead className="text-xs">AIPP</TableHead>
                       <TableHead className="text-xs">Email</TableHead>
                       <TableHead className="text-xs">Conf.</TableHead>
-                      <TableHead className="text-xs">Enrichissement</TableHead>
+                      <TableHead className="text-xs">Statut</TableHead>
                       <TableHead className="text-xs">SMS</TableHead>
                       <TableHead className="text-xs">Outreach</TableHead>
                       <TableHead className="text-xs w-20"></TableHead>
@@ -213,7 +218,7 @@ export default function PageSniperPipeline() {
                       const enrBadge = STATUS_BADGE[p.enrichment_status] || STATUS_BADGE.pending;
                       const outBadge = OUTREACH_BADGE[p.outreach_status] || OUTREACH_BADGE.pending;
                       return (
-                        <TableRow key={p.id}>
+                        <TableRow key={p.id} className={p.enrichment_status === "running" ? "bg-primary/5" : ""}>
                           <TableCell>
                             <div className="font-medium text-xs">{p.business_name}</div>
                             {p.website && <div className="text-[10px] text-muted-foreground truncate max-w-[200px]">{p.domain || p.website}</div>}
@@ -234,7 +239,10 @@ export default function PageSniperPipeline() {
                             ) : "—"}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={enrBadge.variant} className="text-[10px]">{enrBadge.label}</Badge>
+                            <Badge variant={enrBadge.variant} className="text-[10px]">
+                              {p.enrichment_status === "running" && <Loader2 className="h-3 w-3 mr-1 animate-spin inline" />}
+                              {enrBadge.label}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             {p.sms_queue_status === "queued" ? (
