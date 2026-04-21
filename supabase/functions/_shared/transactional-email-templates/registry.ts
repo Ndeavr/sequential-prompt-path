@@ -19,6 +19,7 @@ import { template as contractorProfileActivated } from './contractor-profile-act
 import { template as noResponseFollowup } from './no-response-followup.tsx'
 import { template as incompleteCheckoutFollowup } from './incomplete-checkout-followup.tsx'
 import { template as prospectOutreach } from './prospect-outreach.tsx'
+import { template as manualLiveTest } from './manual-live-test.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'contact-comment': contactComment,
@@ -31,4 +32,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'no-response-followup': noResponseFollowup,
   'incomplete-checkout-followup': incompleteCheckoutFollowup,
   'prospect-outreach': prospectOutreach,
+  'manual-live-test': manualLiveTest,
 }
