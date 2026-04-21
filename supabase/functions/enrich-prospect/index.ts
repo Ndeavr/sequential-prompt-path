@@ -30,14 +30,41 @@ function generateProbableEmails(domain: string, businessName: string): EmailCand
   }));
 }
 
-// ─── Extract emails from text ───
+// ─── Extract emails from text (standard + obfuscated) ───
 function extractEmails(text: string): string[] {
-  const regex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-  const found = text.match(regex) || [];
-  return [...new Set(found)].filter(e => 
-    !e.endsWith(".png") && !e.endsWith(".jpg") && !e.endsWith(".svg") &&
+  const results = new Set<string>();
+
+  // Standard regex
+  const standard = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
+  standard.forEach(e => results.add(e.toLowerCase()));
+
+  // Obfuscated: name [at] domain [dot] com / name(at)domain(dot)com / name {at} domain
+  const obfuscated = text.matchAll(
+    /([a-zA-Z0-9._%+-]+)\s*[\[\({<]?\s*(?:at|AT|arobase|@)\s*[\]\)}>]?\s*([a-zA-Z0-9.-]+)\s*[\[\({<]?\s*(?:dot|DOT|\.)\s*[\]\)}>]?\s*([a-zA-Z]{2,})/g
+  );
+  for (const m of obfuscated) {
+    results.add(`${m[1].trim()}@${m[2].trim()}.${m[3].trim()}`.toLowerCase());
+  }
+
+  // mailto: links in HTML
+  const mailto = text.matchAll(/mailto:([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi);
+  for (const m of mailto) {
+    results.add(m[1].toLowerCase());
+  }
+
+  // href="mailto:..." with HTML entities
+  const encoded = text.matchAll(/&#109;&#97;&#105;&#108;&#116;&#111;:([^"<\s]+)/gi);
+  for (const m of encoded) {
+    const decoded = m[1].replace(/&#(\d+);/g, (_, c) => String.fromCharCode(parseInt(c)));
+    if (decoded.includes("@")) results.add(decoded.toLowerCase());
+  }
+
+  // Filter junk
+  return [...results].filter(e =>
+    !e.endsWith(".png") && !e.endsWith(".jpg") && !e.endsWith(".svg") && !e.endsWith(".webp") &&
     !e.includes("example.com") && !e.includes("sentry.io") &&
-    !e.includes("wixpress") && !e.includes("@2x")
+    !e.includes("wixpress") && !e.includes("@2x") &&
+    !e.includes("webpack") && !e.includes("cloudflare")
   );
 }
 
@@ -60,22 +87,29 @@ function extractDomain(url: string): string | null {
   } catch { return null; }
 }
 
-// ─── Firecrawl scrape ───
-async function scrapeUrl(url: string): Promise<{ markdown: string; html: string } | null> {
+// ─── Firecrawl scrape — full HTML + markdown + screenshot ───
+async function scrapeUrl(url: string, withScreenshot = false): Promise<{ markdown: string; html: string; screenshot?: string } | null> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  const timeout = setTimeout(() => controller.abort(), 15000);
   try {
+    const formats: string[] = ["markdown", "html", "rawHtml"];
+    if (withScreenshot) formats.push("screenshot");
+
     const res = await fetch(`${FIRECRAWL_V2}/scrape`, {
       method: "POST",
       headers: { Authorization: `Bearer ${firecrawlKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ url, formats: ["markdown"], onlyMainContent: false, waitFor: 1000 }),
+      body: JSON.stringify({ url, formats, onlyMainContent: false, waitFor: 2000 }),
       signal: controller.signal,
     });
     clearTimeout(timeout);
     if (!res.ok) { await res.text(); return null; }
     const data = await res.json();
-    const md = data.data?.markdown || data.markdown || "";
-    return { markdown: md, html: "" };
+    const d = data.data || data;
+    return {
+      markdown: d.markdown || "",
+      html: (d.rawHtml || d.html || ""),
+      screenshot: d.screenshot || undefined,
+    };
   } catch { clearTimeout(timeout); return null; }
 }
 
@@ -120,30 +154,33 @@ async function enrichProspect(supabase: any, prospectId: string) {
 
   if (!domain && website) domain = extractDomain(website);
 
-  // Step 2: Scrape main page
+  // Step 2: Scrape FULL homepage (markdown + rawHtml + screenshot)
   if (website) {
-    log.push({ step: "scrape_main", url: website });
-    const main = await scrapeUrl(website);
+    log.push({ step: "scrape_homepage_full", url: website });
+    const main = await scrapeUrl(website, true);
     if (main) {
-      const emails = extractEmails(main.markdown + " " + main.html);
-      emails.forEach(e => allEmails.push({ email: e, source: "main_page", confidence: 85 }));
-      socials = { ...socials, ...extractSocials(main.markdown + " " + main.html) };
+      const combined = `${main.markdown}\n${main.html}`;
+      const emails = extractEmails(combined);
+      emails.forEach(e => allEmails.push({ email: e, source: "homepage", confidence: 85 }));
+      socials = { ...socials, ...extractSocials(combined) };
+      log.push({ step: "homepage_emails", found: emails.length, emails });
+    }
 
-      // Step 3: Scrape contact page (only first match to save time)
-      const contactPaths = ["/contact", "/nous-joindre"];
-      for (const path of contactPaths) {
-        if (allEmails.length > 0) break; // Already found emails, skip
-        try {
-          const contactUrl = new URL(path, website.startsWith("http") ? website : `https://${website}`).href;
-          log.push({ step: "scrape_contact", url: contactUrl });
-          const contact = await scrapeUrl(contactUrl);
-          if (contact) {
-            const ce = extractEmails(contact.markdown);
-            ce.forEach(e => allEmails.push({ email: e, source: `contact_page:${path}`, confidence: 90 }));
-            socials = { ...socials, ...extractSocials(contact.markdown) };
-          }
-        } catch { /* skip */ }
-      }
+    // Step 3: ALWAYS scrape contact pages (don't skip even if emails found on homepage)
+    const contactPaths = ["/contact", "/nous-joindre", "/contactez-nous", "/about", "/a-propos"];
+    for (const path of contactPaths) {
+      try {
+        const contactUrl = new URL(path, website.startsWith("http") ? website : `https://${website}`).href;
+        log.push({ step: "scrape_contact", url: contactUrl });
+        const contact = await scrapeUrl(contactUrl);
+        if (contact) {
+          const combined = `${contact.markdown}\n${contact.html}`;
+          const ce = extractEmails(combined);
+          ce.forEach(e => allEmails.push({ email: e, source: `contact:${path}`, confidence: 92 }));
+          socials = { ...socials, ...extractSocials(combined) };
+          log.push({ step: "contact_emails", path, found: ce.length, emails: ce });
+        }
+      } catch { /* skip */ }
     }
   }
 
@@ -159,7 +196,8 @@ async function enrichProspect(supabase: any, prospectId: string) {
     log.push({ step: "scrape_gmb", url: prospect.google_maps_url });
     const gmb = await scrapeUrl(prospect.google_maps_url);
     if (gmb) {
-      const ge = extractEmails(gmb.markdown + " " + gmb.html);
+      const combined = `${gmb.markdown}\n${gmb.html}`;
+      const ge = extractEmails(combined);
       ge.forEach(e => allEmails.push({ email: e, source: "google_maps", confidence: 80 }));
     }
   }
@@ -219,7 +257,7 @@ Deno.serve(async (req: Request) => {
     // Mode 2: Enrich all pending prospects for a city/category
     if (mode === "enrich_batch") {
       let q = supabase.from("contractors_prospects").select("id")
-        .eq("enrichment_status", "pending")
+        .in("enrichment_status", ["pending", "failed"])
         .order("aipp_score", { ascending: false })
         .limit(searchLimit || 25);
       if (city) q = q.ilike("city", city);
@@ -242,7 +280,6 @@ Deno.serve(async (req: Request) => {
       let autoOutreach = false;
       if (withEmails.length >= 10) {
         autoOutreach = true;
-        // Queue them for outreach
         const ids = withEmails.map(r => r.prospectId);
         await supabase.from("contractors_prospects")
           .update({ outreach_status: "queued" })
@@ -253,6 +290,7 @@ Deno.serve(async (req: Request) => {
         success: true,
         total: results.length,
         emailsFound: withEmails.length,
+        missedPublicEmailCount: results.filter(r => !r.email).length,
         smsQueued: results.filter(r => r.smsStatus === "queued").length,
         autoOutreachTriggered: autoOutreach,
         results,
@@ -271,7 +309,6 @@ Deno.serve(async (req: Request) => {
         const domain = extractDomain(result.url);
         if (!domain) continue;
 
-        // Dedupe by domain
         const { data: existing } = await supabase.from("contractors_prospects")
           .select("id").eq("domain", domain).limit(1);
         if (existing?.length) continue;
