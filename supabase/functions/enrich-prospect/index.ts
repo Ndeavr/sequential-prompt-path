@@ -84,7 +84,8 @@ async function searchProspects(query: string, limit = 10): Promise<Array<{ url: 
     });
     if (!res.ok) { await res.text(); return []; }
     const data = await res.json();
-    return (data.data || []).map((r: any) => ({ url: r.url, title: r.title || "", description: r.description || "" }));
+    const results = data.data?.web || data.data || [];
+    return (Array.isArray(results) ? results : []).map((r: any) => ({ url: r.url, title: r.title || "", description: r.description || "" }));
   } catch { return []; }
 }
 
