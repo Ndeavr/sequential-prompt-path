@@ -30,6 +30,36 @@ function generateProbableEmails(domain: string, businessName: string): EmailCand
   }));
 }
 
+// ─── Junk TLDs and domains to reject ───
+const JUNK_TLDS = new Set(["css","js","jsx","tsx","ts","scss","less","map","svg","png","jpg","jpeg","gif","webp","ico","woff","woff2","ttf","eot","json","xml","html","htm","php","asp","py"]);
+const JUNK_DOMAINS = new Set(["example.com","sentry.io","wixpress.com","cloudflare.com","googleapis.com","gstatic.com","w3.org","schema.org","yellowpages.ca","pagesjaunes.ca","facebook.com","instagram.com","twitter.com","linkedin.com","google.com","youtube.com","wordpress.org","jquery.com","bootstrapcdn.com","cloudfront.net","amazonaws.com","gravatar.com","wp.com"]);
+
+function isValidBusinessEmail(email: string): boolean {
+  const parts = email.split("@");
+  if (parts.length !== 2) return false;
+  const [local, domain] = parts;
+  
+  // Local part sanity
+  if (local.length < 2 || local.length > 64) return false;
+  if (local.startsWith(".") || local.startsWith("-") || local.startsWith("_")) return false;
+  if (local.startsWith("www.")) return false;
+  if (/^\d+$/.test(local)) return false;
+  
+  // Domain sanity
+  const domainParts = domain.split(".");
+  if (domainParts.length < 2) return false;
+  const tld = domainParts[domainParts.length - 1];
+  if (JUNK_TLDS.has(tld)) return false;
+  if (JUNK_DOMAINS.has(domain)) return false;
+  
+  // No CSS/JS patterns
+  if (/^[0-9a-f]{6,}$/i.test(local)) return false;
+  if (local.includes("static") || local.includes("noreply") || local.includes("no-reply")) return false;
+  if (domain.includes("cdn") || domain.includes("static")) return false;
+  
+  return true;
+}
+
 // ─── Extract emails from text (standard + obfuscated) ───
 function extractEmails(text: string): string[] {
   const results = new Set<string>();
@@ -38,9 +68,9 @@ function extractEmails(text: string): string[] {
   const standard = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
   standard.forEach(e => results.add(e.toLowerCase()));
 
-  // Obfuscated: name [at] domain [dot] com / name(at)domain(dot)com / name {at} domain
+  // Obfuscated: name [at] domain [dot] com
   const obfuscated = text.matchAll(
-    /([a-zA-Z0-9._%+-]+)\s*[\[\({<]?\s*(?:at|AT|arobase|@)\s*[\]\)}>]?\s*([a-zA-Z0-9.-]+)\s*[\[\({<]?\s*(?:dot|DOT|\.)\s*[\]\)}>]?\s*([a-zA-Z]{2,})/g
+    /([a-zA-Z0-9._%+-]+)\s*[\[\({<]?\s*(?:at|AT|arobase)\s*[\]\)}>]?\s*([a-zA-Z0-9.-]+)\s*[\[\({<]?\s*(?:dot|DOT)\s*[\]\)}>]?\s*([a-zA-Z]{2,})/g
   );
   for (const m of obfuscated) {
     results.add(`${m[1].trim()}@${m[2].trim()}.${m[3].trim()}`.toLowerCase());
@@ -59,13 +89,8 @@ function extractEmails(text: string): string[] {
     if (decoded.includes("@")) results.add(decoded.toLowerCase());
   }
 
-  // Filter junk
-  return [...results].filter(e =>
-    !e.endsWith(".png") && !e.endsWith(".jpg") && !e.endsWith(".svg") && !e.endsWith(".webp") &&
-    !e.includes("example.com") && !e.includes("sentry.io") &&
-    !e.includes("wixpress") && !e.includes("@2x") &&
-    !e.includes("webpack") && !e.includes("cloudflare")
-  );
+  // Strict filter — only valid business emails survive
+  return [...results].filter(isValidBusinessEmail);
 }
 
 // ─── Extract social profiles ───
