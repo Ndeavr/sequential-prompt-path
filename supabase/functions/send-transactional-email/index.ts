@@ -4,9 +4,11 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 
 // Configuration baked in at scaffold time
-const SITE_NAME = "sequential-prompt-path"
-const SENDER_DOMAIN = "notify.unpro.ca"
-const FROM_DOMAIN = "notify.unpro.ca"
+const SITE_NAME = "Alex UNPRO"
+const SENDER_DOMAIN = "mail.unpro.ca"
+const FROM_DOMAIN = "mail.unpro.ca"
+const DEFAULT_FROM_EMAIL = "alex@mail.unpro.ca"
+const DEFAULT_FROM_NAME = "Alex UNPRO"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

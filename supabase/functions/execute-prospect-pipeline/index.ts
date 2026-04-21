@@ -485,7 +485,7 @@ UNPRO — Recommandation IA pour les pros`;
         await supabase.from("prospect_email_send_attempts").insert({
           message_id: msg.id,
           attempt_number: 1,
-          from_email: "alex@unpro.ca",
+          from_email: "alex@mail.unpro.ca",
           to_email: prospect.email,
           send_status: "sent",
           provider_name: "mock",
