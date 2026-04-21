@@ -1,7 +1,6 @@
 /**
- * UNPRO — Phone OTP Authentication
- * Uses Supabase native phone OTP. Canada default.
- * Architecture-ready for future Twilio custom upgrade.
+ * UNPRO — Phone OTP Authentication (Twilio Verify)
+ * Premium mobile-first UI · Canada formatting · 30s resend · 5 max attempts
  */
 
 import { useState, useRef, useEffect } from "react";
@@ -10,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Phone, ArrowLeft, RefreshCw } from "lucide-react";
+import { Phone, ArrowLeft, RefreshCw, ShieldCheck, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface PhoneOtpFormProps {
@@ -18,6 +17,9 @@ interface PhoneOtpFormProps {
   loading?: boolean;
   className?: string;
 }
+
+const MAX_ATTEMPTS = 5;
+const COOLDOWN_SECONDS = 30;
 
 function formatPhoneDisplay(value: string): string {
   const digits = value.replace(/\D/g, "");
@@ -40,31 +42,55 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [attempts, setAttempts] = useState(0);
   const codeRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Cooldown timer
   useEffect(() => {
     if (cooldown <= 0) return;
     const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
     return () => clearTimeout(t);
   }, [cooldown]);
 
+  const callTwilioVerify = async (action: string, body: Record<string, string>) => {
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    const res = await fetch(
+      `https://${projectId}.supabase.co/functions/v1/twilio-verify`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, ...body }),
+      }
+    );
+    return res.json();
+  };
+
   const handleSendOtp = async () => {
     const e164 = toE164(phone);
-    if (e164.length < 11) {
+    if (e164.length < 12) {
       toast.error("Numéro de téléphone invalide");
       return;
     }
+    if (attempts >= MAX_ATTEMPTS) {
+      toast.error("Nombre maximum de tentatives atteint. Réessayez plus tard.");
+      return;
+    }
+
     setSending(true);
-    const { error } = await supabase.auth.signInWithOtp({ phone: e164 });
-    setSending(false);
-    if (error) {
-      toast.error(error.message || "Erreur d'envoi du code");
-    } else {
-      toast.success("Code envoyé par texto !");
-      setStep("code");
-      setCooldown(60);
-      setTimeout(() => codeRefs.current[0]?.focus(), 100);
+    try {
+      const data = await callTwilioVerify("send-otp", { phone: e164 });
+      if (data.error) {
+        toast.error(data.error);
+      } else {
+        toast.success("Code envoyé par texto !");
+        setStep("code");
+        setCooldown(COOLDOWN_SECONDS);
+        setAttempts((a) => a + 1);
+        setTimeout(() => codeRefs.current[0]?.focus(), 100);
+      }
+    } catch {
+      toast.error("Erreur réseau. Réessayez.");
+    } finally {
+      setSending(false);
     }
   };
 
@@ -74,20 +100,37 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       toast.error("Entrez le code à 6 chiffres");
       return;
     }
+
     setVerifying(true);
-    const { error } = await supabase.auth.verifyOtp({
-      phone: toE164(phone),
-      token: otp,
-      type: "sms",
-    });
-    setVerifying(false);
-    if (error) {
-      toast.error(error.message || "Code invalide ou expiré");
-      setCode(["", "", "", "", "", ""]);
-      codeRefs.current[0]?.focus();
-    } else {
+    try {
+      const data = await callTwilioVerify("verify-otp", {
+        phone: toE164(phone),
+        code: otp,
+      });
+
+      if (data.error) {
+        toast.error(data.error);
+        setCode(["", "", "", "", "", ""]);
+        codeRefs.current[0]?.focus();
+        return;
+      }
+
+      // Set the session from the returned tokens
+      if (data.session) {
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+      }
+
       toast.success("Connexion réussie !");
+
+      // If new user needs role, redirect handled by parent/auth system
       onSuccess?.();
+    } catch {
+      toast.error("Erreur réseau. Réessayez.");
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -96,12 +139,9 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
     const newCode = [...code];
     newCode[index] = value.slice(-1);
     setCode(newCode);
-    if (value && index < 5) {
-      codeRefs.current[index + 1]?.focus();
-    }
-    // Auto-submit when all 6 digits entered
+    if (value && index < 5) codeRefs.current[index + 1]?.focus();
     if (newCode.every((d) => d) && newCode.join("").length === 6) {
-      setTimeout(() => handleVerifyOtp(), 100);
+      setTimeout(() => handleVerifyOtp(), 150);
     }
   };
 
@@ -111,12 +151,24 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
     }
   };
 
+  const handleCodePaste = (e: React.ClipboardEvent) => {
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (pasted.length === 6) {
+      e.preventDefault();
+      const newCode = pasted.split("");
+      setCode(newCode);
+      codeRefs.current[5]?.focus();
+      setTimeout(() => handleVerifyOtp(), 150);
+    }
+  };
+
   const handleResend = async () => {
     if (cooldown > 0) return;
     await handleSendOtp();
   };
 
   const isDisabled = externalLoading || sending || verifying;
+  const attemptsLeft = MAX_ATTEMPTS - attempts;
 
   return (
     <div className={className}>
@@ -130,11 +182,15 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
             className="space-y-4"
           >
             <div className="space-y-2">
-              <Label style={{ color: "#0B1533" }}>Numéro de téléphone</Label>
+              <Label className="text-muted-foreground text-xs">Numéro de téléphone</Label>
               <div className="flex gap-2">
                 <div
-                  className="flex items-center justify-center px-3 rounded-lg text-sm font-medium shrink-0"
-                  style={{ background: "hsl(220 20% 96%)", border: "1px solid #DFE9F5", color: "#0B1533" }}
+                  className="flex items-center justify-center px-3 rounded-xl text-sm font-medium shrink-0 h-12"
+                  style={{
+                    background: "hsl(228 20% 14% / 0.6)",
+                    border: "1px solid hsl(228 18% 18%)",
+                    color: "hsl(220 20% 93%)",
+                  }}
                 >
                   🇨🇦 +1
                 </div>
@@ -143,28 +199,45 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
                   value={formatPhoneDisplay(phone)}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                   placeholder="(514) 555-1234"
-                  style={{ background: "white", border: "1px solid #DFE9F5", color: "#0B1533" }}
+                  className="h-12 rounded-xl text-sm"
+                  style={{
+                    background: "hsl(228 20% 14% / 0.6)",
+                    border: "1px solid hsl(228 18% 18%)",
+                    color: "hsl(220 20% 93%)",
+                  }}
                   disabled={isDisabled}
+                  autoFocus
                 />
               </div>
-              <p className="text-xs" style={{ color: "#6C7A92" }}>
+              <p className="text-xs text-muted-foreground">
                 Recevez un code à 6 chiffres par texto
               </p>
             </div>
             <Button
               type="button"
-              className="w-full h-11 text-sm font-medium rounded-xl gap-2"
-              style={{ background: "linear-gradient(135deg, #2563EB, #3B82F6)", color: "white" }}
-              disabled={isDisabled || phone.replace(/\D/g, "").length < 10}
+              className="w-full h-12 text-sm font-medium rounded-xl gap-2"
+              disabled={isDisabled || phone.replace(/\D/g, "").length < 10 || attempts >= MAX_ATTEMPTS}
               onClick={handleSendOtp}
             >
-              {sending ? "Envoi…" : (
+              {sending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
                 <>
                   <Phone className="h-4 w-4" />
                   Recevoir mon code
                 </>
               )}
             </Button>
+            {attempts > 0 && attemptsLeft > 0 && (
+              <p className="text-xs text-center text-muted-foreground">
+                {attemptsLeft} tentative{attemptsLeft > 1 ? "s" : ""} restante{attemptsLeft > 1 ? "s" : ""}
+              </p>
+            )}
+            {attempts >= MAX_ATTEMPTS && (
+              <p className="text-xs text-center text-destructive">
+                Maximum atteint. Réessayez dans quelques minutes.
+              </p>
+            )}
           </motion.div>
         ) : (
           <motion.div
@@ -175,16 +248,19 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
             className="space-y-4"
           >
             <div className="text-center">
-              <p className="text-sm font-medium" style={{ color: "#0B1533" }}>
+              <div className="flex justify-center mb-2">
+                <ShieldCheck className="h-5 w-5 text-primary" />
+              </div>
+              <p className="text-sm font-medium text-foreground">
                 Code envoyé au +1 {formatPhoneDisplay(phone)}
               </p>
-              <p className="text-xs mt-1" style={{ color: "#6C7A92" }}>
+              <p className="text-xs mt-1 text-muted-foreground">
                 Entrez le code à 6 chiffres reçu par texto
               </p>
             </div>
 
             {/* 6-digit code input */}
-            <div className="flex justify-center gap-2">
+            <div className="flex justify-center gap-2" onPaste={handleCodePaste}>
               {code.map((digit, i) => (
                 <Input
                   key={i}
@@ -195,8 +271,12 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
                   value={digit}
                   onChange={(e) => handleCodeChange(i, e.target.value)}
                   onKeyDown={(e) => handleCodeKeyDown(i, e)}
-                  className="w-11 h-12 text-center text-lg font-bold rounded-lg"
-                  style={{ background: "white", border: "1px solid #DFE9F5", color: "#0B1533" }}
+                  className="w-11 h-13 text-center text-lg font-bold rounded-xl"
+                  style={{
+                    background: "hsl(228 20% 14% / 0.6)",
+                    border: digit ? "1px solid hsl(222 100% 65% / 0.5)" : "1px solid hsl(228 18% 18%)",
+                    color: "hsl(220 20% 93%)",
+                  }}
                   disabled={isDisabled}
                 />
               ))}
@@ -204,20 +284,22 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
 
             <Button
               type="button"
-              className="w-full h-11 text-sm font-medium rounded-xl"
-              style={{ background: "linear-gradient(135deg, #2563EB, #3B82F6)", color: "white" }}
+              className="w-full h-12 text-sm font-medium rounded-xl"
               disabled={isDisabled || code.some((d) => !d)}
               onClick={handleVerifyOtp}
             >
-              {verifying ? "Vérification…" : "Vérifier le code"}
+              {verifying ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Vérifier le code"
+              )}
             </Button>
 
             <div className="flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => { setStep("phone"); setCode(["", "", "", "", "", ""]); }}
-                className="text-xs flex items-center gap-1 hover:underline"
-                style={{ color: "#3F7BFF" }}
+                className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ArrowLeft className="h-3 w-3" /> Changer de numéro
               </button>
@@ -225,8 +307,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
                 type="button"
                 onClick={handleResend}
                 disabled={cooldown > 0}
-                className="text-xs flex items-center gap-1 hover:underline disabled:opacity-50"
-                style={{ color: cooldown > 0 ? "#6C7A92" : "#3F7BFF" }}
+                className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 disabled:hover:text-muted-foreground"
               >
                 <RefreshCw className="h-3 w-3" />
                 {cooldown > 0 ? `Renvoyer (${cooldown}s)` : "Renvoyer le code"}
