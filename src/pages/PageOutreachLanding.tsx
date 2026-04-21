@@ -109,7 +109,10 @@ export default function PageOutreachLanding() {
           <div className="space-y-2 text-sm text-muted-foreground">
             <p>Nous avons déjà détecté une partie de votre empreinte publique. Confirmez votre entreprise pour générer votre lecture complète.</p>
             <div className="grid grid-cols-2 gap-2 mt-4">
-              {["Site web détecté", "Présence Google potentielle", "Signaux de confiance en validation", "Score complet prêt après confirmation"].map((item) => (
+              {(model.detectedSignals.length > 0
+                ? model.detectedSignals.map((s) => s.label)
+                : ["Signaux en cours de détection", "Score complet prêt après confirmation"]
+              ).map((item) => (
                 <div key={item} className="flex items-center gap-2 text-xs">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary/60" />
                   {item}
