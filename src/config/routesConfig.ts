@@ -98,4 +98,9 @@ export const ROUTES = {
   SEO_PROFESSION: "/profession/:slug",
   SEO_VILLE: "/ville/:slug",
   SEO_SERVICES: "/services",
+
+  // Audit Intake Funnel + Outreach
+  AUDIT_FUNNEL: "/audit",
+  OUTREACH_LANDING: "/analyse/:slug",
+  ADMIN_SNIPER: "/admin/sniper",
 } as const;
