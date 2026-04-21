@@ -909,6 +909,7 @@ export const AppRouter = () => (
         <Route path="/dossier-soumissions/ajouter" element={<PageAjouterSoumissionAuDossier />} />
         <Route path="/decrire-mon-projet" element={<DecrireMonProjetPage />} />
         <Route path="/parler-a-alex" element={<ParlerAAlexPage />} />
+        <Route path="/alex-100m" element={<Alex100MPage />} />
         <Route path="/problemes-maison" element={<ProblemesMaisonPage />} />
         <Route path="/villes-desservies" element={<VillesDesserviesPage />} />
         <Route path="/ville-service/:city/:service" element={<CityServicePage />} />
