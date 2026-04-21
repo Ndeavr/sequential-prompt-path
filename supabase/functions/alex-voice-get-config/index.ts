@@ -29,15 +29,15 @@ serve(async (req) => {
       // Fallback defaults
       return new Response(JSON.stringify({
         provider: "elevenlabs",
-        voiceId: "mVjOqyqTPfwlXPjV5sjX",
+        voiceId: "XB0fDUnXU5powFXDhCwa",
         locale: "fr-QC",
-        toneStyle: "premium_calm",
+        toneStyle: "premium_warm",
         speechRate: 1.0,
         accentTarget: "quebec_premium_neutral",
         interruptibility: true,
-        stability: 0.65,
-        similarityBoost: 0.80,
-        styleExaggeration: 0.08,
+        stability: 0.43,
+        similarityBoost: 0.78,
+        styleExaggeration: 0.28,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 

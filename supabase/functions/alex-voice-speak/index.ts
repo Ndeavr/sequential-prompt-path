@@ -40,10 +40,10 @@ serve(async (req) => {
       .single();
 
     // Use DB config, fallback to defaults
-    const voiceId = overrideVoiceId || profile?.voice_id_primary || "mVjOqyqTPfwlXPjV5sjX";
-    const stability = profile?.stability ?? 0.65;
-    const similarityBoost = profile?.similarity_boost ?? 0.80;
-    const style = profile?.style_exaggeration ?? 0.08;
+    const voiceId = overrideVoiceId || profile?.voice_id_primary || "XB0fDUnXU5powFXDhCwa";
+    const stability = profile?.stability ?? 0.43;
+    const similarityBoost = profile?.similarity_boost ?? 0.78;
+    const style = profile?.style_exaggeration ?? 0.28;
     const speechRate = profile?.speech_rate ?? 1.0;
 
     const response = await fetch(
