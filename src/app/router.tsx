@@ -1142,6 +1142,7 @@ export const AppRouter = () => (
         <Route path="/admin/outbound/cities/:slug" element={<ProtectedRoute requiredRole="admin"><PageCityExecutionMonitor /></ProtectedRoute>} />
         <Route path="/admin/outbound/diagnostics" element={<ProtectedRoute requiredRole="admin"><PageRunDiagnostics /></ProtectedRoute>} />
         <Route path="/admin/outbound/sniper" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageSniperPipeline /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/outbound/sms" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageSMSPipeline /></Suspense></ProtectedRoute>} />
         <Route path="/admin/execution-control" element={<ProtectedRoute requiredRole="admin"><PageAdminExecutionControl /></ProtectedRoute>} />
         <Route path="/admin/dominance" element={<ProtectedRoute requiredRole="admin"><PageAdminDominanceControl /></ProtectedRoute>} />
         <Route path="/admin/voice-debug" element={<ProtectedRoute requiredRole="admin"><PageAlexVoiceDebugAdmin /></ProtectedRoute>} />
