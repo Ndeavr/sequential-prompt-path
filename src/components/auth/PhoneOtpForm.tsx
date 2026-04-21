@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Phone, ArrowLeft, RefreshCw, ShieldCheck, Loader2 } from "lucide-react";
+import { Phone, ArrowLeft, RefreshCw, ShieldCheck, Loader2, CheckCircle2 } from "lucide-react";
+import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface PhoneOtpFormProps {
@@ -41,6 +42,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [verified, setVerified] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [attempts, setAttempts] = useState(0);
   const codeRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -123,10 +125,11 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
         });
       }
 
-      toast.success("Connexion réussie !");
+      trackAuthEvent("sms_success");
+      setVerified(true);
 
-      // If new user needs role, redirect handled by parent/auth system
-      onSuccess?.();
+      // Brief success animation then callback
+      setTimeout(() => onSuccess?.(), 800);
     } catch {
       toast.error("Erreur réseau. Réessayez.");
     } finally {
