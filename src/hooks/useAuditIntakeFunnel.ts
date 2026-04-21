@@ -67,7 +67,7 @@ export function useAuditIntakeFunnel(initialOutreachTargetId?: string) {
     const contractorId = contractor?.id;
 
     // Create intake session
-    const { data: session } = await supabase.from("audit_intake_sessions" as any).insert({
+    const sessionRes = await supabase.from("audit_intake_sessions" as any).insert({
       contractor_id: contractorId,
       session_token: sessionToken,
       business_name: intake.businessName,
@@ -79,6 +79,7 @@ export function useAuditIntakeFunnel(initialOutreachTargetId?: string) {
       funnel_status: "running",
       outreach_target_id: initialOutreachTargetId || null,
     } as any).select("id").single();
+    const session = sessionRes?.data as { id: string } | null;
 
     // Launch audit
     let auditId: string | null = null;
@@ -89,7 +90,7 @@ export function useAuditIntakeFunnel(initialOutreachTargetId?: string) {
       auditId = data?.audit_id || null;
 
       if (auditId && session?.id) {
-        await supabase.from("audit_intake_sessions").update({ audit_id: auditId }).eq("id", session.id);
+        await supabase.from("audit_intake_sessions" as any).update({ audit_id: auditId } as any).eq("id", session.id);
       }
     }
 
