@@ -139,14 +139,14 @@ export function useAuditIntakeFunnel(initialOutreachTargetId?: string) {
     setVm(prev => ({ ...prev, goal, recommendedPlan: rec, step: "recommendation" }));
 
     if (vm.sessionId) {
-      await supabase.from("audit_intake_sessions").update({
+      await supabase.from("audit_intake_sessions" as any).update({
         recommended_plan: rec,
         goal,
         monthly_appointment_goal: opts?.monthlyAppointmentGoal,
         average_job_value: opts?.averageJobValue,
         service_area_count: opts?.serviceAreaCount,
         funnel_status: "recommendation",
-      }).eq("id", vm.sessionId);
+      } as any).eq("id", vm.sessionId);
     }
     await trackEvent("plan_recommendation_viewed", { plan: rec, goal });
   }, [vm.auditScore, vm.confidenceLevel, vm.sessionId, trackEvent]);
@@ -154,10 +154,10 @@ export function useAuditIntakeFunnel(initialOutreachTargetId?: string) {
   const selectPlan = useCallback(async (plan: RecommendedPlan) => {
     setVm(prev => ({ ...prev, selectedPlan: plan, step: "checkout" }));
     if (vm.sessionId) {
-      await supabase.from("audit_intake_sessions").update({
+      await supabase.from("audit_intake_sessions" as any).update({
         selected_plan: plan,
         funnel_status: "checkout",
-      }).eq("id", vm.sessionId);
+      } as any).eq("id", vm.sessionId);
     }
     await trackEvent("plan_selected", { plan });
   }, [vm.sessionId, trackEvent]);
