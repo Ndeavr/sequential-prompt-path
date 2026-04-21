@@ -1,123 +1,133 @@
 
 
-# UNPRO Sniper Outreach Engine v1 — Full Implementation
+# UNPRO Google Index Domination System
 
 ## Summary
 
-The database schema, scoring logic, and a basic command center shell exist. This plan builds the 5 backend edge functions (import, enrich, generate assets, queue send, update heat), expands the command center with territory gaps / rep queue / CSV import / target detail, and wires the full pipeline loop.
+The site is a pure React SPA with no server-side rendering. Google sees an empty `<div id="root">` for all pages. The sitemap edge function exists but points to a wrong base URL pattern (`/api/sitemap`). Contractor public pages table is empty. This plan fixes all of it across 10 blocks.
 
 ---
 
 ## Technical Details
 
-### Block 1 — Edge Function: `sniper-import-targets`
+### Block 1 — Prerender Edge Function for Googlebot
 
-New Deno edge function at `supabase/functions/sniper-import-targets/index.ts`.
+Create `supabase/functions/prerender/index.ts` — a lightweight HTML renderer that serves static HTML snapshots to crawlers.
 
-**Input**: `{ targets: Array<{ businessName, city?, category?, websiteUrl?, phone?, email?, rbqNumber?, neqNumber?, sourceCampaign? }>, campaignId? }`
+- Detect bot user-agents (Googlebot, Bingbot, etc.)
+- For each known route pattern, query Supabase for the page data and return a complete HTML document with:
+  - Proper `<title>`, `<meta description>`, OG tags
+  - JSON-LD structured data
+  - Visible text content in semantic HTML (h1, p, article)
+  - Canonical URL
+- Route patterns to handle: `/blog/:slug`, `/contractors/:id`, `/pro/:slug`, `/probleme/:slug`, `/ville/:slug`, `/services/:cat/:city`, `/s/:slug`, `/profession/:slug`, `/solution/:slug`, `/renovation/:type/:city`
+- Non-bot requests get a redirect to the SPA (302 to same path)
+- Static pages (homepage, /services, /pricing, etc.) return hardcoded HTML with real copy
 
-**Flow**:
-1. Validate input array (max 500 per batch)
-2. For each target: normalize business name, phone, domain using same logic as `normalizers.ts`
-3. Deduplicate against existing `sniper_targets` by (business_name + city) or (phone) or (domain)
-4. Insert new rows with `enrichment_status: 'pending'`, `outreach_status: 'not_started'`
-5. Return `{ imported, skipped_duplicates }`
+### Block 2 — Fix robots.txt
 
-Uses `https://esm.sh/@supabase/supabase-js@2.49.1`.
+Update `public/robots.txt`:
+- Fix sitemap URL to `https://unpro.ca/sitemap.xml`
+- Add `Disallow` for `/dashboard`, `/admin/`, `/pro/dashboard`, `/login`, `/signup`, `/onboarding`, `/settings/`, `/checkout/`
+- Keep `Allow: /` for all public paths
 
-### Block 2 — Edge Function: `sniper-enrich-target`
+### Block 3 — Sitemap Proxy Route
 
-New Deno edge function at `supabase/functions/sniper-enrich-target/index.ts`.
+The current sitemap function uses `/api/sitemap?segment=X` which is an edge function URL, not accessible at `unpro.ca/sitemap.xml`.
 
-**Input**: `{ targetId: string }`
+Create a lightweight redirect or a new edge function `sitemap-index` that serves at a clean URL. Update the sitemap function's index to use `https://unpro.ca/functions/v1/sitemap?segment=X` as the correct loc URLs.
 
-**Flow**:
-1. Load target from `sniper_targets`
-2. **Normalize**: clean name, phone, domain
-3. **Match**: check `contractors` table for existing match by business_name+city or phone or domain. If found, link `contractor_id`
-4. **Enrich signals**: detect website presence (HEAD request), HTTPS check, parse domain for service clues
-5. **Score**: compute `sniper_priority_score` using the existing `computeSniperPriority` formula (server-side copy), plus sub-scores (revenue_potential, readiness, pain_upside, strategic_fit, contactability)
-6. **Channel recommendation**: email-first if email exists + score >= 60, SMS-first if phone + no email, dual if score >= 80
-7. Update target row with all enrichment data, set `enrichment_status: 'enriched'`
-8. Return enriched target
+Also add a `contractors` segment that pulls from the `contractors` table directly (since `contractor_public_pages` is empty), generating `/contractors/:id` URLs.
 
-### Block 3 — Edge Function: `sniper-generate-assets`
+### Block 4 — Contractor Public SEO Pages
 
-New Deno edge function at `supabase/functions/sniper-generate-assets/index.ts`.
+Create a new public route `/entrepreneur/:slug` that renders a SEO-optimized contractor profile page.
 
-**Input**: `{ targetId: string }`
+- New page: `src/pages/seo/ContractorSeoPage.tsx`
+- Resolves contractor by slug (generate slug from `business_name + city`)
+- Renders: H1 with business name, services, city, description, trust badges, reviews, CTA
+- Injects `SeoHead` + `LocalBusiness` + `BreadcrumbList` JSON-LD
+- Route added to router.tsx
 
-**Flow**:
-1. Load enriched target
-2. If `sniper_priority_score < 60`, skip with `{ skipped: true, reason: 'below_threshold' }`
-3. **Generate outreach target**: Create row in `outreach_targets` with slug (kebab-case business_name + city), secure_token (crypto.randomUUID), payload from target data, `landing_status: 'prepared'`
-4. Link `latest_outreach_target_id` on sniper target
-5. **Generate message variants**: For each applicable channel (email/SMS based on recommendation), generate 3 variant_types (curiosity, weak_signals, founder_scarcity) using the exact template copy from the prompt with variable interpolation
-6. Mark first variant as `is_selected: true`
-7. Set target `outreach_status: 'page_ready'` or `'message_ready'`
-8. If score >= 80 and contractor_id exists, invoke `aipp-run-audit` to precompute partial audit
+Create an edge function `contractor-seo-resolve` that:
+- Accepts a slug
+- Finds the matching contractor
+- Returns full profile data for rendering
 
-### Block 4 — Edge Function: `sniper-queue-send`
+### Block 5 — Auto-Generate `contractor_public_pages` Records
 
-New Deno edge function at `supabase/functions/sniper-queue-send/index.ts`.
+Create a database migration + edge function `seed-contractor-pages` that:
+- For each contractor with `business_name` not null
+- Generates a slug: `kebab(business_name)-kebab(city)`
+- Inserts into `contractor_public_pages` with `is_published = true`
+- Updates sitemap contractor-profiles segment to use these
 
-**Input**: `{ targetId: string }` or `{ batchSize?: number }` for batch mode
+### Block 6 — Structured Data Engine
 
-**Flow**:
-1. Single mode: load target + selected message variant, create `sniper_send_queue` entry with `send_status: 'queued'`
-2. Batch mode: select up to `batchSize` targets where `outreach_status = 'message_ready'` and no existing queue entry
-3. For each queued item: placeholder for actual send integration (mark as `sent` for now, real Resend/Twilio integration later)
-4. Update target `outreach_status: 'sent'`
-5. Log engagement event `email_sent` or `sms_sent`
+Create `src/seo/components/SeoStructuredDataInjector.tsx` — a component used in MainLayout that auto-injects based on current route:
 
-### Block 5 — Edge Function: `sniper-update-heat`
+- `/` → `WebSite` + `Organization`
+- `/contractors/:id` or `/entrepreneur/:slug` → `LocalBusiness` + `BreadcrumbList`
+- `/services/:cat/:city` → `Service` + `BreadcrumbList`
+- `/probleme/:slug` → `FAQPage` (from problem FAQ data) + `BreadcrumbList`
+- `/blog/:slug` → `Article` (already exists, ensure consistency)
 
-New Deno edge function at `supabase/functions/sniper-update-heat/index.ts`.
+### Block 7 — Internal Linking Engine
 
-**Input**: `{ targetId?: string }` (single) or `{}` (all with engagement)
+Create `src/components/seo/InternalLinkGrid.tsx`:
+- Given current page context (city, category, problem), renders a grid of related internal links
+- City pages link to services in that city
+- Service pages link to contractors and problems
+- Problem pages link to solutions and cities
+- Auto-injected at bottom of SEO pages via a `SeoInternalLinks` wrapper
 
-**Flow**:
-1. For each target, aggregate `sniper_engagement_events` using heat weights:
-   - email_open: 5, click: 15, page_view: 10, identity_confirmed: 15, audit_started: 20, audit_completed: 20, recommendation_viewed: 10, checkout_started: 25
-2. Update `heat_score` on `sniper_targets`
-3. If heat >= 70, set tag `close_now`
-4. Return updated counts
+### Block 8 — Admin SEO Health Dashboard
 
-### Block 6 — Command Center Expansion
+Create `src/pages/admin/PageSeoIndexHealth.tsx`:
+- **Index Health Card**: Count of pages in sitemap, pages with metadata, pages missing schema
+- **Contractor Visibility**: List contractors, show which have public pages, which are in sitemap
+- **Page Quality Scanner**: For each public page type, check: has title, has description, has H1, has schema, word count > 300, has CTA
+- **Live Index Tester**: Input a keyword (e.g. "Zappa"), system checks if any page contains it, if it's in sitemap, internal link count
+- **Fast Fixes Queue**: Pages needing attention sorted by priority
 
-Rewrite `PageSniperCommandCenter.tsx` with 4 tabs and CSV import:
+Route: `/admin/seo-index-health`
 
-**New tabs:**
-- **Territory Gaps**: Group targets by city × category, show supply_needed count, active targets, conversions, gap score
-- **Rep Queue**: Show targets ordered by heat DESC where `outreach_status` in engaged/audit_started, with action buttons (Call, Resend, Ignore)
+### Block 9 — Meta Tag Hardening
 
-**CSV Import panel:**
-- File upload button
-- Parse CSV client-side (Papa Parse)
-- Preview table showing parsed rows
-- "Importer" button calling `sniper-import-targets`
-- Success/error feedback
+Update `src/seo/components/SeoHead.tsx`:
+- Add `hreflang` support (`fr-CA` primary, `en` alternate)
+- Ensure canonical is always set (derive from current pathname if not provided)
+- Add `article:published_time` and `article:modified_time` for blog pages
 
-**Target Detail Drawer:**
-- Click any target row to open a side drawer
-- Show: all fields, enrichment signals, message variants, engagement timeline, linked audit, heat history
-- Action buttons: Enrich, Generate Assets, Queue Send, Update Heat
+Update `index.html`:
+- Add default canonical `<link rel="canonical" href="https://unpro.ca" />`
 
-**Pipeline tab enhancements:**
-- Add status filter dropdown
-- Add bulk action buttons: "Enrichir tout", "Générer pages", "Envoyer batch"
-- These call the respective edge functions
+### Block 10 — Weekly SEO Alert System (Edge Function)
 
-### Block 7 — Batch Orchestration Buttons
+Create `supabase/functions/seo-weekly-digest/index.ts`:
+- Query all contractors without public pages
+- Query pages with thin content (< 300 words in description)
+- Query sitemap segments, count URLs
+- Return JSON summary (can be triggered by cron to send email later)
 
-In the command center, wire bulk actions:
-- "Enrichir les pendants" → loops `sniper-enrich-target` for all `enrichment_status = 'pending'`
-- "Générer les assets" → loops `sniper-generate-assets` for all enriched + no outreach target
-- "Envoyer le batch" → calls `sniper-queue-send` in batch mode
+---
 
-### Block 8 — Memory
+## Database Changes
 
-Update `mem://features/instant-audit-intake-funnel` to include sniper engine edge functions and command center expansion.
+**Migration**: Auto-populate `contractor_public_pages` from existing `contractors` table.
+
+```sql
+INSERT INTO contractor_public_pages (contractor_id, slug, is_published, seo_title, seo_description)
+SELECT 
+  id,
+  lower(regexp_replace(regexp_replace(business_name || '-' || coalesce(city, ''), '[^a-zA-Z0-9àâäéèêëïîôùûüÿçœæ]+', '-', 'g'), '-+', '-', 'g')),
+  true,
+  business_name || ' — Entrepreneur vérifié | UNPRO',
+  'Profil vérifié de ' || business_name || coalesce(' à ' || city, '') || '. Services, avis et disponibilité sur UNPRO.'
+FROM contractors
+WHERE business_name IS NOT NULL
+ON CONFLICT (contractor_id) DO NOTHING;
+```
 
 ---
 
@@ -125,16 +135,17 @@ Update `mem://features/instant-audit-intake-funnel` to include sniper engine edg
 
 | Action | File |
 |---|---|
-| Create | `supabase/functions/sniper-import-targets/index.ts` |
-| Create | `supabase/functions/sniper-enrich-target/index.ts` |
-| Create | `supabase/functions/sniper-generate-assets/index.ts` |
-| Create | `supabase/functions/sniper-queue-send/index.ts` |
-| Create | `supabase/functions/sniper-update-heat/index.ts` |
-| Rewrite | `src/pages/admin/PageSniperCommandCenter.tsx` |
-| Create | `src/components/sniper/SniperTargetDrawer.tsx` |
-| Create | `src/components/sniper/SniperCsvImport.tsx` |
-| Create | `src/components/sniper/SniperTerritoryGaps.tsx` |
-| Create | `src/components/sniper/SniperRepQueue.tsx` |
-| Create | `src/components/sniper/SniperBulkActions.tsx` |
-| Modify | `mem://features/instant-audit-intake-funnel` |
+| Create | `supabase/functions/prerender/index.ts` |
+| Create | `src/pages/seo/ContractorSeoPage.tsx` |
+| Create | `src/seo/components/SeoStructuredDataInjector.tsx` |
+| Create | `src/components/seo/InternalLinkGrid.tsx` |
+| Create | `src/pages/admin/PageSeoIndexHealth.tsx` |
+| Create | `supabase/functions/seo-weekly-digest/index.ts` |
+| Modify | `public/robots.txt` |
+| Modify | `supabase/functions/sitemap/index.ts` |
+| Modify | `src/seo/components/SeoHead.tsx` |
+| Modify | `index.html` |
+| Modify | `src/layouts/MainLayout.tsx` — add SeoStructuredDataInjector |
+| Modify | `src/app/router.tsx` — add `/entrepreneur/:slug` and `/admin/seo-index-health` routes |
+| Migration | Seed `contractor_public_pages` from contractors |
 
