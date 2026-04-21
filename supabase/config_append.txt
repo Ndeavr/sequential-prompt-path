@@ -1,2 +1,0 @@
-  [functions.enrich-prospect]
-    verify_jwt = false
