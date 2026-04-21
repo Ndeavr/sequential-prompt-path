@@ -7,7 +7,7 @@
  * SINGLETON GUARD: This is the PRIMARY Alex source on home page.
  * Uses alexRuntime lock to prevent any duplicate voice.
  */
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
@@ -60,7 +60,9 @@ export default function HeroSection() {
   const [textSheetOpen, setTextSheetOpen] = useState(false);
   const [activeIntent, setActiveIntent] = useState<IntentSlug>("probleme");
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [connectingTooLong, setConnectingTooLong] = useState(false);
   const alexTranscriptRef = useRef("");
+  const connectingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Singleton guard — register as primary
   const { isPrimary, acquireLock, releaseLock, markActive } = useAlexSingleton(COMPONENT_NAME, 'primary');
@@ -103,6 +105,22 @@ export default function HeroSection() {
       releaseLock();
     },
   });
+
+  // Track when isConnecting has been true for >8s
+  useEffect(() => {
+    if (isConnecting) {
+      connectingTimerRef.current = setTimeout(() => setConnectingTooLong(true), 8000);
+    } else {
+      setConnectingTooLong(false);
+      if (connectingTimerRef.current) {
+        clearTimeout(connectingTimerRef.current);
+        connectingTimerRef.current = null;
+      }
+    }
+    return () => {
+      if (connectingTimerRef.current) clearTimeout(connectingTimerRef.current);
+    };
+  }, [isConnecting]);
 
   const orbState = isConnecting ? "thinking" : isActive ? (isSpeaking ? "speaking" : "listening") : "idle";
   const voiceActive = isActive || isConnecting;
@@ -171,9 +189,15 @@ export default function HeroSection() {
     onAutostart: () => startVoice(),
   });
 
+  const retryVoice = useCallback(() => {
+    stop();
+    releaseLock();
+    setTimeout(() => startVoice(), 500);
+  }, [stop, releaseLock, startVoice]);
+
   const statusText =
     orbState === "speaking" ? "Alex vous parle…"
-    : orbState === "thinking" ? "Connexion…"
+    : orbState === "thinking" ? (connectingTooLong ? "Connexion lente…" : "Connexion…")
     : orbState === "listening" ? "Je vous écoute…"
     : "Parlez à Alex";
 
@@ -372,6 +396,21 @@ export default function HeroSection() {
               >
                 {statusText}
               </motion.p>
+            </AnimatePresence>
+
+            {/* Retry button when connection hangs */}
+            <AnimatePresence>
+              {connectingTooLong && isConnecting && (
+                <motion.button
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 6 }}
+                  onClick={retryVoice}
+                  className="mt-2 text-xs font-medium px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/70 hover:bg-white/15 transition-colors"
+                >
+                  Réessayer
+                </motion.button>
+              )}
             </AnimatePresence>
 
             {/* Voice controls */}
