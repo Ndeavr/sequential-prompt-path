@@ -25,8 +25,8 @@ export default function InternalLinkGrid({ city, category }: Props) {
   const { data: problems } = useQuery({
     queryKey: ["seo-problems-links"],
     queryFn: async () => {
-      const { data } = await supabase.from("home_problems").select("name, slug").eq("is_active", true).limit(8);
-      return data || [];
+      const { data } = await supabase.from("home_problems").select("name_fr, slug").eq("is_active", true).limit(8);
+      return (data || []).map(p => ({ name: p.name_fr, slug: p.slug }));
     },
     staleTime: 60_000,
   });

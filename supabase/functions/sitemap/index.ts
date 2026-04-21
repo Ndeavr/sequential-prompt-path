@@ -110,9 +110,10 @@ Deno.serve(async (req) => {
   // ─── Sitemap index ────────────────────────────────────────
   if (!segment) {
     const today = new Date().toISOString().split("T")[0];
+    const fnBase = `${Deno.env.get("SUPABASE_URL")}/functions/v1/sitemap`;
     const entries = SEGMENTS.map(
       (s) =>
-        `  <sitemap>\n    <loc>${BASE_URL}/api/sitemap?segment=${s}</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>`
+        `  <sitemap>\n    <loc>${fnBase}?segment=${s}</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>`
     ).join("\n");
     const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</sitemapindex>`;
     return new Response(xml, { headers: xmlHeaders });
