@@ -326,6 +326,8 @@ const PageAdminNavigation = lazy(() => import("@/pages/admin/PageAdminNavigation
 const PageAuditAIPPv2 = lazy(() => import("@/pages/PageAuditAIPPv2"));
 const PageAuditResultsAIPPv2 = lazy(() => import("@/pages/PageAuditResultsAIPPv2"));
 const PageAdminAIPPv2Dashboard = lazy(() => import("@/pages/admin/PageAdminAIPPv2Dashboard"));
+const PageAippDebug = lazy(() => import("@/pages/admin/PageAippDebug"));
+const PageContractorAippAudit = lazy(() => import("@/pages/PageContractorAippAudit"));
 
 // Entrepreneur Onboarding Flow
 const PageOnboardingImport = lazy(() => import("@/pages/entrepreneur/PageOnboardingImport"));
