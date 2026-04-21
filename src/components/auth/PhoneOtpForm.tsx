@@ -243,6 +243,22 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
               </p>
             )}
           </motion.div>
+        ) : verified ? (
+          <motion.div
+            key="success-step"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center gap-3 py-6"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+              <CheckCircle2 className="h-12 w-12 text-green-400" />
+            </motion.div>
+            <p className="text-sm font-medium text-foreground">Connexion réussie !</p>
+          </motion.div>
         ) : (
           <motion.div
             key="code-step"
