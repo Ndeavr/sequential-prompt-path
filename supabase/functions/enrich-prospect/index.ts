@@ -227,12 +227,18 @@ async function enrichProspect(supabase: any, prospectId: string) {
     }
   }
 
-  // Deduplicate and pick best
+  // Deduplicate and pick best — prioritize emails matching prospect's own domain
   const emailMap = new Map<string, EmailCandidate>();
   for (const ec of allEmails) {
     const key = ec.email.toLowerCase();
-    if (!emailMap.has(key) || (emailMap.get(key)!.confidence < ec.confidence)) {
-      emailMap.set(key, { ...ec, email: key });
+    let boostedConfidence = ec.confidence;
+    // Boost emails that match the prospect's domain
+    if (domain && key.endsWith(`@${domain}`)) boostedConfidence = Math.min(boostedConfidence + 10, 99);
+    // Penalize generated-only emails
+    if (ec.source === "generated") boostedConfidence = Math.max(boostedConfidence - 5, 10);
+    const boosted = { ...ec, email: key, confidence: boostedConfidence };
+    if (!emailMap.has(key) || (emailMap.get(key)!.confidence < boostedConfidence)) {
+      emailMap.set(key, boosted);
     }
   }
   const uniqueEmails = [...emailMap.values()].sort((a, b) => b.confidence - a.confidence);
