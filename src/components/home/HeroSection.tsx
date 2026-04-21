@@ -398,6 +398,21 @@ export default function HeroSection() {
               </motion.p>
             </AnimatePresence>
 
+            {/* Retry button when connection hangs */}
+            <AnimatePresence>
+              {connectingTooLong && isConnecting && (
+                <motion.button
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 6 }}
+                  onClick={retryVoice}
+                  className="mt-2 text-xs font-medium px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/70 hover:bg-white/15 transition-colors"
+                >
+                  Réessayer
+                </motion.button>
+              )}
+            </AnimatePresence>
+
             {/* Voice controls */}
             <AnimatePresence>
               {voiceActive && (
