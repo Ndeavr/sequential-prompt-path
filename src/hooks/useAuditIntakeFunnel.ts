@@ -47,8 +47,8 @@ export function useAuditIntakeFunnel(initialOutreachTargetId?: string) {
     await supabase.from("audit_funnel_events").insert({
       session_id: vm.sessionId,
       event_name: eventName,
-      event_props: props,
-    });
+      event_props: props as any,
+    } as any);
   }, [vm.sessionId]);
 
   const startAudit = useCallback(async (intake: IntakeData) => {
@@ -62,12 +62,12 @@ export function useAuditIntakeFunnel(initialOutreachTargetId?: string) {
       city: intake.city,
       rbq_number: intake.rbqNumber || null,
       email: intake.email || null,
-    }).select("id").single();
+    } as any).select("id").single();
 
     const contractorId = contractor?.id;
 
     // Create intake session
-    const { data: session } = await supabase.from("audit_intake_sessions").insert({
+    const { data: session } = await supabase.from("audit_intake_sessions" as any).insert({
       contractor_id: contractorId,
       session_token: sessionToken,
       business_name: intake.businessName,
@@ -78,7 +78,7 @@ export function useAuditIntakeFunnel(initialOutreachTargetId?: string) {
       email: intake.email,
       funnel_status: "running",
       outreach_target_id: initialOutreachTargetId || null,
-    }).select("id").single();
+    } as any).select("id").single();
 
     // Launch audit
     let auditId: string | null = null;

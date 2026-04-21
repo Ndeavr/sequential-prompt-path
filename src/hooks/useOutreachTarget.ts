@@ -88,11 +88,11 @@ export function useOutreachTarget(slug: string, token: string | null) {
 
   const trackEvent = useCallback(async (eventName: string, props: Record<string, unknown> = {}) => {
     if (!model) return;
-    await supabase.from("outreach_page_events").insert({
+    await supabase.from("outreach_page_events" as any).insert({
       target_id: model.targetId,
       event_name: eventName,
-      event_props: props,
-    });
+      event_props: props as any,
+    } as any);
   }, [model]);
 
   const confirmIdentity = useCallback(async () => {
