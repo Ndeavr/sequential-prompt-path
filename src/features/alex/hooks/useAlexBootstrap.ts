@@ -1,128 +1,119 @@
 /**
  * Alex 100M — Bootstrap Hook
- * Deterministic boot sequence. No service failure blocks text chat.
+ * Deterministic hard boot. Text/chat UI never waits for voice, STT, restore, or backend.
  */
 
 import { useEffect, useRef } from "react";
-import { useAlexStore } from "../state/alexStore";
+import { DEFAULT_ALEX_QUICK_ACTIONS, useAlexStore } from "../state/alexStore";
 import { elevenlabsService } from "../services/elevenlabsService";
 import { sttService } from "../services/sttService";
-import { alexWelcomeManager } from "../services/alexWelcomeManager";
 import { alexLog } from "../utils/alexDebug";
-import {
-  BOOT_GREETING_RENDER_MS,
-  AUTOPLAY_ATTEMPT_MS,
-} from "../utils/alexTimers";
-import type { AlexQuickAction } from "../types/alex.types";
 
-const DEFAULT_QUICK_ACTIONS: AlexQuickAction[] = [
-  { key: "homeowner_problem", labelFr: "J'ai un problème", labelEn: "I have a problem", intent: "homeowner_problem", icon: "🏠" },
-  { key: "photo_upload", labelFr: "Envoyer une photo", labelEn: "Send a photo", intent: "photo_upload", icon: "📷" },
-  { key: "quote_compare", labelFr: "Comparer des soumissions", labelEn: "Compare quotes", intent: "quote_compare", icon: "📊" },
-  { key: "contractor_onboarding", labelFr: "Je suis entrepreneur", labelEn: "I'm a contractor", intent: "contractor_onboarding", icon: "🔧" },
-  { key: "booking", labelFr: "Prendre rendez-vous", labelEn: "Book appointment", intent: "booking", icon: "📅" },
-];
+const HARD_BOOT_GREETING = "Bonjour. Quel est votre projet?";
+const VOICE_ATTEMPT_DELAY_MS = 200;
+const VOICE_AUTOPLAY_TIMEOUT_MS = 3500;
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      window.setTimeout(() => reject(new Error("Alex voice autoplay timeout")), ms);
+    }),
+  ]);
+}
 
 export function useAlexBootstrap() {
   const booted = useRef(false);
-  const store = useAlexStore;
 
   useEffect(() => {
     if (booted.current) return;
     booted.current = true;
 
-    const state = store.getState();
-    if (state.isInitialized) return;
+    const store = useAlexStore.getState();
+    if (store.isInitialized && store.messages.length > 0) return;
 
-    alexLog("boot:start");
-    store.getState().bootstrapStart();
+    alexLog("boot:v5:start");
 
-    const sessionId = crypto.randomUUID();
-    const lang = state.activeLanguage;
-    const role = state.userRole;
-    const isRestore = state.isSessionRestored;
+    try {
+      store.bootstrapStart();
 
-    // Step 1: Inject greeting text immediately
-    setTimeout(() => {
-      const s = store.getState();
-      if (s.isGreetingInjected) return;
+      const sessionId = store.sessionId || crypto.randomUUID();
 
-      const greeting = alexWelcomeManager.buildGreeting(lang, role, isRestore);
-      if (alexWelcomeManager.markGreetingInjected()) {
-        s.injectAssistantMessage(greeting);
-        alexLog("boot:greeting_injected");
+      // Local-first UI boot. Nothing here depends on voice, STT, backend, or restore.
+      useAlexStore.setState({
+        sessionId,
+        activeLanguage: "fr-CA",
+        quickActions: DEFAULT_ALEX_QUICK_ACTIONS,
+      });
+
+      const current = useAlexStore.getState();
+      if (current.messages.length === 0 && !current.isGreetingInjected) {
+        current.injectAssistantMessage(HARD_BOOT_GREETING, false);
+        useAlexStore.setState({ lastAssistantQuestionAt: Date.now() });
+        alexLog("boot:v5:greeting_injected");
       }
-    }, BOOT_GREETING_RENDER_MS);
 
-    // Step 2: Surface quick actions
-    store.getState().showQuickActions(DEFAULT_QUICK_ACTIONS);
-
-    // Step 3: Init services (non-blocking)
-    let voiceAvailable = false;
-    let sttAvailable = false;
-
-    try {
-      elevenlabsService.init();
-      voiceAvailable = elevenlabsService.isReady();
-      alexLog("boot:tts_ready");
-    } catch {
-      alexLog("boot:tts_failed");
+      useAlexStore.getState().showQuickActions(DEFAULT_ALEX_QUICK_ACTIONS);
+      useAlexStore.getState().bootstrapSuccess(sessionId);
+      useAlexStore.getState().setMode("ready");
+      alexLog("boot:v5:ui_ready", { sessionId });
+    } catch (error) {
+      alexLog("boot:v5:ui_boot_error", error);
+      useAlexStore.getState().bootstrapFailure();
     }
 
-    try {
-      sttAvailable = sttService.isAvailable();
-      alexLog("boot:stt_available", { sttAvailable });
-    } catch {
-      alexLog("boot:stt_failed");
-    }
+    window.setTimeout(async () => {
+      try {
+        elevenlabsService.init();
+        useAlexStore.setState({
+          isVoiceAvailable: elevenlabsService.isReady(),
+          isSTTAvailable: sttService.isAvailable(),
+        });
+        alexLog("boot:v5:services_ready");
+      } catch (error) {
+        useAlexStore.setState({
+          isVoiceAvailable: false,
+          isSTTAvailable: false,
+          isAutoplayAllowed: false,
+          mode: "ready",
+        });
+        alexLog("boot:v5:service_init_failed", error);
+        return;
+      }
 
-    store.setState({
-      isVoiceAvailable: voiceAvailable,
-      isSTTAvailable: sttAvailable,
-    });
+      const state = useAlexStore.getState();
+      if (state.isGreetingSpoken || !state.shouldAutoStartOnLoad) return;
 
-    // Step 4: Attempt autoplay greeting
-    if (voiceAvailable) {
-      setTimeout(async () => {
-        const s = store.getState();
-        if (s.isGreetingSpoken) return;
+      const greetingMsg = state.messages.find((m) => m.role === "assistant");
+      if (!greetingMsg) return;
 
-        const greetingMsg = s.messages.find(
-          (m) => m.role === "assistant" && !m.isSpoken
-        );
-        if (!greetingMsg) return;
-
-        try {
-          if (!alexWelcomeManager.markGreetingSpoken()) return;
-
-          s.startSpeaking();
-          await elevenlabsService.speak(
+      try {
+        state.startSpeaking();
+        await withTimeout(
+          elevenlabsService.speak(
             greetingMsg.text,
-            () => alexLog("boot:autoplay_started"),
-            () => {
-              store.getState().stopSpeaking();
-              alexLog("boot:autoplay_ended");
-            }
-          );
-          store.getState().setAutoplayAllowed(true);
-          store.getState().setAudioUnlocked(true);
-        } catch {
-          // Autoplay blocked — user tap will unlock later
-          store.getState().stopSpeaking();
-          store.getState().setAutoplayAllowed(false);
-          alexLog("boot:autoplay_blocked");
-        }
-      }, AUTOPLAY_ATTEMPT_MS);
-    }
-
-    // Step 5: Complete bootstrap
-    store.getState().bootstrapSuccess(sessionId);
-
-    if (!voiceAvailable) {
-      store.setState({ mode: "fallback_text" });
-      alexLog("boot:fallback_text_mode");
-    }
-
-    alexLog("boot:complete", { sessionId, voiceAvailable, sttAvailable });
+            () => alexLog("boot:v5:autoplay_started"),
+            () => useAlexStore.getState().stopSpeaking()
+          ),
+          VOICE_AUTOPLAY_TIMEOUT_MS
+        );
+        useAlexStore.setState({
+          isGreetingSpoken: true,
+          isAutoplayAllowed: true,
+          isAudioUnlocked: true,
+          mode: "ready",
+        });
+        alexLog("boot:v5:autoplay_success");
+      } catch (error) {
+        elevenlabsService.stop();
+        useAlexStore.getState().stopSpeaking();
+        useAlexStore.setState({
+          isAutoplayAllowed: false,
+          isGreetingSpoken: false,
+          mode: "ready",
+        });
+        alexLog("boot:v5:autoplay_fallback", error);
+      }
+    }, VOICE_ATTEMPT_DELAY_MS);
   }, []);
 }

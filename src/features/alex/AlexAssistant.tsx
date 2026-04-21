@@ -38,45 +38,48 @@ export function AlexAssistant() {
     <>
       <AlexSpotlightLayer />
 
-      <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end gap-3">
-        <AnimatePresence mode="wait">
-          {!isMinimized && !isClosing && (
+        <div className="fixed bottom-4 right-4 z-[100] flex w-[min(calc(100vw-2rem),28rem)] flex-col items-end gap-3 sm:bottom-6 sm:right-6">
+          <AnimatePresence mode="wait">
+            {!isMinimized && !isClosing && (
+              <motion.div
+                key="panel"
+                initial={{ opacity: 0, scale: 0.95, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 8 }}
+                transition={{ duration: 0.25 }}
+                className="w-full"
+              >
+                <AlexPanel />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Minimized label */}
+          {isMinimized && (
             <motion.div
-              key="panel"
-              initial={{ opacity: 0, scale: 0.95, y: 8 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 8 }}
-              transition={{ duration: 0.25 }}
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-card/80 backdrop-blur-sm border border-border/30 rounded-full px-3 py-1 text-[11px] text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+              onClick={handleOrbTap}
             >
-              <AlexPanel />
+              {lang === "fr-CA" ? "Reprendre avec Alex" : "Resume with Alex"}
             </motion.div>
           )}
-        </AnimatePresence>
 
-        {/* Minimized label */}
-        {isMinimized && (
-          <motion.div
-            initial={{ opacity: 0, x: 8 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-card/80 backdrop-blur-sm border border-border/30 rounded-full px-3 py-1 text-[11px] text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
-            onClick={handleOrbTap}
-          >
-            {lang === "fr-CA" ? "Reprendre avec Alex" : "Resume with Alex"}
-          </motion.div>
-        )}
+          {/* Tap to start when autoplay blocked */}
+          {!isMinimized && !isAutoplayAllowed && mode === "ready" && (
+            <motion.button
+              type="button"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              onClick={handleOrbTap}
+              className="text-right text-[11px] font-medium text-primary/70 transition-colors hover:text-primary"
+            >
+              {lang === "fr-CA" ? "Touchez ici pour démarrer Alex." : "Tap here to start Alex."}
+            </motion.button>
+          )}
 
-        {/* Tap to start when autoplay blocked */}
-        {!isMinimized && !isAutoplayAllowed && mode === "ready" && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-[10px] text-primary/60 text-right"
-          >
-            {lang === "fr-CA" ? "Touchez pour activer la voix" : "Tap to enable voice"}
-          </motion.div>
-        )}
-
-        <AlexOrb onTap={handleOrbTap} size="md" />
+          <AlexOrb onTap={handleOrbTap} size="md" />
       </div>
 
       <AlexDebugPanel />

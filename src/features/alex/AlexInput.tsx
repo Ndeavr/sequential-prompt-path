@@ -16,7 +16,7 @@ export function AlexInput({ onSend }: AlexInputProps) {
   const mode = useAlexStore((s) => s.mode);
   const lang = useAlexStore((s) => s.activeLanguage);
 
-  const disabled = mode === "booting";
+  const disabled = false;
 
   const placeholder = lang === "fr-CA"
     ? "Décrivez votre projet ou votre problème…"
