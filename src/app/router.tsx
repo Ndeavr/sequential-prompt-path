@@ -1296,8 +1296,13 @@ export const AppRouter = () => (
         <Route path="/calendar/connect/failure" element={<Suspense fallback={<LazyFallback />}><PageCalendarConnectionFailure /></Suspense>} />
         <Route path="/admin/calendar-conversion" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageAdminCalendarConversionDashboard /></Suspense></UniversalRouteGuard>} />
 
-         {/* Catch-all: try fallback, then 404 */}
-         <Route path="*" element={<FallbackRoutePage />} />
+         {/* Instant Audit Intake Funnel */}
+         <Route path="/audit" element={<Suspense fallback={<LazyFallback />}><PageInstantAuditFunnel /></Suspense>} />
+         <Route path="/analyse/:slug" element={<Suspense fallback={<LazyFallback />}><PageOutreachLanding /></Suspense>} />
+         <Route path="/admin/sniper" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSniperCommandCenter /></Suspense></UniversalRouteGuard>} />
+
+          {/* Catch-all: try fallback, then 404 */}
+          <Route path="*" element={<FallbackRoutePage />} />
       </Routes>
     </Suspense>
   </BrowserRouter>
