@@ -9755,6 +9755,153 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_funnel_events: {
+        Row: {
+          created_at: string
+          event_name: string
+          event_props: Json
+          id: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_name: string
+          event_props?: Json
+          id?: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          event_name?: string
+          event_props?: Json
+          id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_funnel_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "audit_intake_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_intake_sessions: {
+        Row: {
+          audit_id: string | null
+          average_job_value: number | null
+          business_name: string | null
+          city: string | null
+          contractor_id: string | null
+          created_at: string
+          email: string | null
+          funnel_status: string
+          goal: string | null
+          id: string
+          monthly_appointment_goal: number | null
+          outreach_target_id: string | null
+          phone: string | null
+          rbq_number: string | null
+          recommended_plan: string | null
+          selected_plan: string | null
+          service_area_count: number | null
+          session_token: string
+          source_campaign: string | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          audit_id?: string | null
+          average_job_value?: number | null
+          business_name?: string | null
+          city?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          email?: string | null
+          funnel_status?: string
+          goal?: string | null
+          id?: string
+          monthly_appointment_goal?: number | null
+          outreach_target_id?: string | null
+          phone?: string | null
+          rbq_number?: string | null
+          recommended_plan?: string | null
+          selected_plan?: string | null
+          service_area_count?: number | null
+          session_token: string
+          source_campaign?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          audit_id?: string | null
+          average_job_value?: number | null
+          business_name?: string | null
+          city?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          email?: string | null
+          funnel_status?: string
+          goal?: string | null
+          id?: string
+          monthly_appointment_goal?: number | null
+          outreach_target_id?: string | null
+          phone?: string | null
+          rbq_number?: string | null
+          recommended_plan?: string | null
+          selected_plan?: string | null
+          service_area_count?: number | null
+          session_token?: string
+          source_campaign?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_intake_sessions_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_aipp_audits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_intake_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_intake_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_intake_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_intake_sessions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "audit_intake_sessions_outreach_target_id_fkey"
+            columns: ["outreach_target_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audits_screenshots: {
         Row: {
           annotations: Json | null
@@ -39428,6 +39575,38 @@ export type Database = {
           },
         ]
       }
+      outreach_page_events: {
+        Row: {
+          created_at: string
+          event_name: string
+          event_props: Json
+          id: string
+          target_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_name: string
+          event_props?: Json
+          id?: string
+          target_id: string
+        }
+        Update: {
+          created_at?: string
+          event_name?: string
+          event_props?: Json
+          id?: string
+          target_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_page_events_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outreach_provider_configs: {
         Row: {
           config_json: Json | null
@@ -39752,6 +39931,115 @@ export type Database = {
           suppression_reason?: string | null
         }
         Relationships: []
+      }
+      outreach_targets: {
+        Row: {
+          business_name: string
+          campaign_id: string | null
+          category: string | null
+          city: string | null
+          claimed_at: string | null
+          contractor_id: string | null
+          created_at: string
+          first_viewed_at: string | null
+          id: string
+          landing_status: string
+          neq_number: string | null
+          payload: Json
+          phone: string | null
+          pre_audit_id: string | null
+          rbq_number: string | null
+          secure_token: string
+          slug: string
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          business_name: string
+          campaign_id?: string | null
+          category?: string | null
+          city?: string | null
+          claimed_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          first_viewed_at?: string | null
+          id?: string
+          landing_status?: string
+          neq_number?: string | null
+          payload?: Json
+          phone?: string | null
+          pre_audit_id?: string | null
+          rbq_number?: string | null
+          secure_token: string
+          slug: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          business_name?: string
+          campaign_id?: string | null
+          category?: string | null
+          city?: string | null
+          claimed_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          first_viewed_at?: string | null
+          id?: string
+          landing_status?: string
+          neq_number?: string | null
+          payload?: Json
+          phone?: string | null
+          pre_audit_id?: string | null
+          rbq_number?: string | null
+          secure_token?: string
+          slug?: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_targets_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_targets_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_targets_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_targets_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_targets_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "outreach_targets_pre_audit_id_fkey"
+            columns: ["pre_audit_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_aipp_audits"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       outreach_template_versions: {
         Row: {
@@ -53161,6 +53449,335 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      sniper_engagement_events: {
+        Row: {
+          created_at: string
+          event_name: string
+          event_props: Json
+          id: string
+          outreach_target_id: string | null
+          send_queue_id: string | null
+          sniper_target_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_name: string
+          event_props?: Json
+          id?: string
+          outreach_target_id?: string | null
+          send_queue_id?: string | null
+          sniper_target_id: string
+        }
+        Update: {
+          created_at?: string
+          event_name?: string
+          event_props?: Json
+          id?: string
+          outreach_target_id?: string | null
+          send_queue_id?: string | null
+          sniper_target_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sniper_engagement_events_outreach_target_id_fkey"
+            columns: ["outreach_target_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sniper_engagement_events_send_queue_id_fkey"
+            columns: ["send_queue_id"]
+            isOneToOne: false
+            referencedRelation: "sniper_send_queue"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sniper_engagement_events_sniper_target_id_fkey"
+            columns: ["sniper_target_id"]
+            isOneToOne: false
+            referencedRelation: "sniper_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sniper_message_variants: {
+        Row: {
+          channel: string
+          created_at: string
+          cta_url: string | null
+          id: string
+          is_selected: boolean
+          message_body: string
+          personalization_payload: Json
+          sniper_target_id: string
+          subject_line: string | null
+          variant_type: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          cta_url?: string | null
+          id?: string
+          is_selected?: boolean
+          message_body: string
+          personalization_payload?: Json
+          sniper_target_id: string
+          subject_line?: string | null
+          variant_type: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          cta_url?: string | null
+          id?: string
+          is_selected?: boolean
+          message_body?: string
+          personalization_payload?: Json
+          sniper_target_id?: string
+          subject_line?: string | null
+          variant_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sniper_message_variants_sniper_target_id_fkey"
+            columns: ["sniper_target_id"]
+            isOneToOne: false
+            referencedRelation: "sniper_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sniper_send_queue: {
+        Row: {
+          channel: string
+          created_at: string
+          delivered_at: string | null
+          destination: string
+          error_message: string | null
+          failed_at: string | null
+          id: string
+          message_variant_id: string | null
+          provider: string | null
+          provider_message_id: string | null
+          scheduled_at: string | null
+          send_status: string
+          sent_at: string | null
+          sniper_target_id: string
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          delivered_at?: string | null
+          destination: string
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          message_variant_id?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
+          scheduled_at?: string | null
+          send_status?: string
+          sent_at?: string | null
+          sniper_target_id: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          delivered_at?: string | null
+          destination?: string
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          message_variant_id?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
+          scheduled_at?: string | null
+          send_status?: string
+          sent_at?: string | null
+          sniper_target_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sniper_send_queue_message_variant_id_fkey"
+            columns: ["message_variant_id"]
+            isOneToOne: false
+            referencedRelation: "sniper_message_variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sniper_send_queue_sniper_target_id_fkey"
+            columns: ["sniper_target_id"]
+            isOneToOne: false
+            referencedRelation: "sniper_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sniper_targets: {
+        Row: {
+          business_name: string
+          category: string | null
+          city: string | null
+          contactability_score: number | null
+          contractor_id: string | null
+          created_at: string
+          domain: string | null
+          email: string | null
+          enrichment_status: string
+          founder_eligible: boolean
+          heat_score: number
+          id: string
+          identity_status: string
+          latest_audit_id: string | null
+          latest_outreach_target_id: string | null
+          legal_name: string | null
+          neq_number: string | null
+          notes: Json
+          outreach_status: string
+          pain_upside_score: number | null
+          phone: string | null
+          province: string | null
+          rbq_number: string | null
+          readiness_score: number | null
+          recommended_channel: string | null
+          revenue_potential_score: number | null
+          sniper_priority_score: number | null
+          source_campaign_id: string | null
+          source_origin: string | null
+          source_reference: Json
+          strategic_fit_score: number | null
+          tags: Json
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          business_name: string
+          category?: string | null
+          city?: string | null
+          contactability_score?: number | null
+          contractor_id?: string | null
+          created_at?: string
+          domain?: string | null
+          email?: string | null
+          enrichment_status?: string
+          founder_eligible?: boolean
+          heat_score?: number
+          id?: string
+          identity_status?: string
+          latest_audit_id?: string | null
+          latest_outreach_target_id?: string | null
+          legal_name?: string | null
+          neq_number?: string | null
+          notes?: Json
+          outreach_status?: string
+          pain_upside_score?: number | null
+          phone?: string | null
+          province?: string | null
+          rbq_number?: string | null
+          readiness_score?: number | null
+          recommended_channel?: string | null
+          revenue_potential_score?: number | null
+          sniper_priority_score?: number | null
+          source_campaign_id?: string | null
+          source_origin?: string | null
+          source_reference?: Json
+          strategic_fit_score?: number | null
+          tags?: Json
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          business_name?: string
+          category?: string | null
+          city?: string | null
+          contactability_score?: number | null
+          contractor_id?: string | null
+          created_at?: string
+          domain?: string | null
+          email?: string | null
+          enrichment_status?: string
+          founder_eligible?: boolean
+          heat_score?: number
+          id?: string
+          identity_status?: string
+          latest_audit_id?: string | null
+          latest_outreach_target_id?: string | null
+          legal_name?: string | null
+          neq_number?: string | null
+          notes?: Json
+          outreach_status?: string
+          pain_upside_score?: number | null
+          phone?: string | null
+          province?: string | null
+          rbq_number?: string | null
+          readiness_score?: number | null
+          recommended_channel?: string | null
+          revenue_potential_score?: number | null
+          sniper_priority_score?: number | null
+          source_campaign_id?: string | null
+          source_origin?: string | null
+          source_reference?: Json
+          strategic_fit_score?: number | null
+          tags?: Json
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sniper_targets_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sniper_targets_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sniper_targets_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sniper_targets_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "sniper_targets_latest_audit_id_fkey"
+            columns: ["latest_audit_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_aipp_audits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sniper_targets_latest_outreach_target_id_fkey"
+            columns: ["latest_outreach_target_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sniper_targets_source_campaign_id_fkey"
+            columns: ["source_campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       source_connectors: {
         Row: {
