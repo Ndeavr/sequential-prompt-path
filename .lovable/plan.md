@@ -1,44 +1,77 @@
 
 
-# Fix Alex Voice Not Starting
+# Alex V5 — Critical Boot Recovery
 
 ## Problem
 
-After an initial session connects and disconnects, Alex cannot restart because multiple guards block it:
+Two separate Alex systems run simultaneously on the homepage, both failing:
 
-1. **`sessionStorage` flag** (`alex_home_autostart_done`) permanently blocks autostart for the tab session
-2. **`alexRuntime.autostartTriggered`** flag stays `true` after first autostart, blocking all future attempts
-3. **5-second reconnect cooldown** in `useLiveVoice.ts` silently blocks manual taps after disconnect
-4. **`alexRuntime` lock state** may not be fully released, causing `acquireLock()` to return false on manual tap
+1. **HeroSection voice orb** (old system) — calls `voice-get-signed-url` edge function, which hangs or times out. User sees "Connexion..." indefinitely.
+2. **Alex 100M floating panel** (new system) — renders bottom-right but the old system dominates the UX and creates confusion.
 
-These guards were designed to prevent duplicate sessions but collectively make Alex unreachable after the first session ends.
+The `voice-get-signed-url` edge function call appears to hang (logs show "Fetching signed URL..." with no response). The 10-second timeout + retry means users wait 20+ seconds before any fallback. Meanwhile the floating Alex 100M panel may render but is overshadowed.
 
-## Fix
+## Root Causes
 
-### 1. Fix `useLiveVoice.ts` -- Remove aggressive cooldown for manual starts
+1. **Edge function `voice-get-signed-url` is not responding** — likely a missing `ELEVENLABS_API_KEY` or `ELEVENLABS_AGENT_ID` secret, or the `voice_configs` table has no active row
+2. **No instant text fallback in HeroSection** — when voice fails, the hero just shows "Connexion..." with no greeting text, no input, no quick actions
+3. **Two competing Alex UIs** — the floating Alex 100M panel and the hero orb both try to be "Alex"
+4. **Autostart fires voice-only path** — `useAlexHomeAutostart` triggers `startVoice()` which requires mic + edge function + WebSocket — all blocking
 
-The 5-second `RECONNECT_COOLDOWN_MS` blocks legitimate user taps. Change: only apply cooldown for automatic reconnects, not for explicit user-initiated starts. Add a `force` parameter to `start()` that bypasses cooldown and resets retry count.
+## Fix Strategy
 
-### 2. Fix `useAlexHomeAutostart.ts` -- Clear stale session flag on disconnect
+Make the **HeroSection** (the Alex the user sees) work in text-first mode. Keep voice as enhancement. Remove the conflicting floating Alex 100M panel from the homepage since HeroSection IS the primary Alex surface.
 
-Remove the `sessionStorage` flag approach entirely. Instead, rely only on `alexRuntime.autostartTriggered` which resets when the page navigates away. Also add a `document.visibilitychange` listener so Alex can re-autostart when the user returns to the tab (if no session ran yet on this page load).
+### 1. Remove Alex 100M floating panel from Home page
 
-### 3. Fix `HeroSection.tsx` -- Ensure orb tap always works
+**File: `src/pages/Home.tsx`**
+- Remove `AlexProvider` and `AlexAssistant` imports and wrappers
+- The HeroSection orb IS Alex on the homepage — no need for a second floating panel
 
-Update `startVoice()` to call `alexRuntime.hardReset()` before acquiring lock when the runtime is in `ended` state. This clears stale lock/session state. Pass `force: true` to `start()` on manual taps.
+### 2. Add instant text fallback to HeroSection
 
-### 4. Fix `alexRuntimeSingleton.ts` -- Add `clearForRestart()` method
+**File: `src/components/home/HeroSection.tsx`**
+- Show greeting text ("Bonjour. Quel est votre projet?") immediately on mount, before any voice attempt
+- Show quick action buttons (Problème, Projet, Avis) that work without voice
+- Add a text input sheet trigger that's always visible ("Écrire à Alex")
+- If voice fails or hangs >3s, show "Touchez l'orb pour démarrer la voix" instead of "Connexion..."
+- Reduce autostart delay from 1500ms to 500ms
+- Add a 5s hard timeout on `voice-get-signed-url` call — if it hangs, immediately show text fallback state
 
-Add a lightweight method that resets `sessionStatus` to `idle` and clears stale flags without a full hard reset (which dispatches cleanup events). This ensures the lock can be re-acquired cleanly.
+### 3. Fix autostart to not block on voice
 
----
+**File: `src/hooks/useAlexHomeAutostart.ts`**
+- Reduce `AUTOSTART_DELAY_MS` from 1500ms to 600ms
+- If autostart triggers but voice fails within 5s, show text mode with greeting visible
+
+### 4. Add voice failure resilience to useLiveVoice
+
+**File: `src/hooks/useLiveVoice.ts`**
+- Reduce `CONNECTION_TIMEOUT_MS` from 10s to 5s
+- On first timeout, don't retry automatically — just call `onError` so HeroSection can show text fallback
+- Add an `AbortController` to the `supabase.functions.invoke` call so it can be cancelled
+
+### 5. Verify edge function secrets
+
+- Check if `ELEVENLABS_API_KEY` and `ELEVENLABS_AGENT_ID` secrets are configured
+- If not, this is why voice never connects — must be set for voice to work
 
 ## Files Modified
 
 | Action | File |
 |---|---|
-| Modify | `src/hooks/useLiveVoice.ts` -- add `force` param to `start()`, skip cooldown when forced |
-| Modify | `src/hooks/useAlexHomeAutostart.ts` -- remove sessionStorage guard, simplify autostart |
-| Modify | `src/components/home/HeroSection.tsx` -- reset runtime state before manual start, force start |
-| Modify | `src/services/alexRuntimeSingleton.ts` -- add `clearForRestart()` method |
+| Modify | `src/pages/Home.tsx` — remove AlexProvider/AlexAssistant wrapper |
+| Modify | `src/components/home/HeroSection.tsx` — add instant greeting text, text input always visible, voice failure fallback |
+| Modify | `src/hooks/useAlexHomeAutostart.ts` — reduce delay |
+| Modify | `src/hooks/useLiveVoice.ts` — reduce timeout, no auto-retry |
+| Verify | Edge function secrets (ELEVENLABS_API_KEY, ELEVENLABS_AGENT_ID) |
+
+## Expected Result
+
+On page load within 1 second:
+- Greeting text visible: "Bonjour. Quel est votre projet?"
+- Intent pills visible (Problème, Projet, Avis)
+- "Écrire à Alex" button always visible
+- Orb pulsing and tappable
+- Voice attempts in background — if it works, Alex speaks; if not, text mode is already live
 
