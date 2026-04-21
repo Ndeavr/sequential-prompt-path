@@ -334,6 +334,10 @@ const PageInstantAuditFunnel = lazy(() => import("@/pages/PageInstantAuditFunnel
 const PageOutreachLanding = lazy(() => import("@/pages/PageOutreachLanding"));
 const PageSniperCommandCenter = lazy(() => import("@/pages/admin/PageSniperCommandCenter"));
 
+// SEO Index Domination
+const ContractorSeoPage = lazy(() => import("@/pages/seo/ContractorSeoPage"));
+const PageSeoIndexHealth = lazy(() => import("@/pages/admin/PageSeoIndexHealth"));
+
 // Entrepreneur Onboarding Flow
 const PageOnboardingImport = lazy(() => import("@/pages/entrepreneur/PageOnboardingImport"));
 const PageOnboardingAnalyse = lazy(() => import("@/pages/entrepreneur/PageOnboardingAnalyse"));
@@ -648,6 +652,7 @@ export const AppRouter = () => (
         <Route path="/search" element={<Search />} />
         <Route path="/diagnostic-photo" element={<Suspense fallback={<LazyFallback />}><ProVisualSearchPage /></Suspense>} />
         <Route path="/contractors/:id" element={<ContractorProfile />} />
+        <Route path="/entrepreneur/:slug" element={<Suspense fallback={<LazyFallback />}><ContractorSeoPage /></Suspense>} />
         <Route path="/login" element={<LoginPageUnpro />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/signup" element={<LoginPageUnpro />} />
@@ -1300,6 +1305,7 @@ export const AppRouter = () => (
          <Route path="/audit" element={<Suspense fallback={<LazyFallback />}><PageInstantAuditFunnel /></Suspense>} />
          <Route path="/analyse/:slug" element={<Suspense fallback={<LazyFallback />}><PageOutreachLanding /></Suspense>} />
          <Route path="/admin/sniper" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSniperCommandCenter /></Suspense></UniversalRouteGuard>} />
+         <Route path="/admin/seo-index-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSeoIndexHealth /></Suspense></UniversalRouteGuard>} />
 
           {/* Catch-all: try fallback, then 404 */}
           <Route path="*" element={<FallbackRoutePage />} />
