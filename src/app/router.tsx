@@ -29,6 +29,7 @@ const PageAdminQASimulationTemplates = lazy(() => import("@/pages/admin/PageAdmi
 // Outbound Approvals
 const PageAdminOutboundApprovals = lazy(() => import("@/pages/admin/outbound/PageAdminOutboundApprovals"));
 const PageSniperPipeline = lazy(() => import("@/pages/admin/outbound/PageSniperPipeline"));
+const PageSMSPipeline = lazy(() => import("@/pages/admin/outbound/PageSMSPipeline"));
 
 // Contractor Voice-First Landing
 const PageContractorVoiceFirstLanding = lazy(() => import("@/pages/contractor-landing/PageContractorVoiceFirstLanding"));
@@ -1141,6 +1142,7 @@ export const AppRouter = () => (
         <Route path="/admin/outbound/cities/:slug" element={<ProtectedRoute requiredRole="admin"><PageCityExecutionMonitor /></ProtectedRoute>} />
         <Route path="/admin/outbound/diagnostics" element={<ProtectedRoute requiredRole="admin"><PageRunDiagnostics /></ProtectedRoute>} />
         <Route path="/admin/outbound/sniper" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageSniperPipeline /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/outbound/sms" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageSMSPipeline /></Suspense></ProtectedRoute>} />
         <Route path="/admin/execution-control" element={<ProtectedRoute requiredRole="admin"><PageAdminExecutionControl /></ProtectedRoute>} />
         <Route path="/admin/dominance" element={<ProtectedRoute requiredRole="admin"><PageAdminDominanceControl /></ProtectedRoute>} />
         <Route path="/admin/voice-debug" element={<ProtectedRoute requiredRole="admin"><PageAlexVoiceDebugAdmin /></ProtectedRoute>} />
