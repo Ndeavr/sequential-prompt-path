@@ -1,11 +1,7 @@
 /**
- * HeroSectionCinematicAlex — Immersive cinematic hero with Alex orb,
- * intent selector pills, and UNPRO brand glow.
- * Voice-first with Gemini Live Native Audio.
- * Pills: Problème, Projet, Avis — all start Alex & allow photo upload.
- * 
- * SINGLETON GUARD: This is the PRIMARY Alex source on home page.
- * Uses alexRuntime lock to prevent any duplicate voice.
+ * HeroSectionCinematicAlex — V5 Hard Boot
+ * Text-first: greeting + pills + input visible immediately.
+ * Voice is enhancement — never blocks UI.
  */
 import { useState, useCallback, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -55,63 +51,69 @@ const INTENTS = [
 
 const COMPONENT_NAME = 'HeroSectionCinematicAlex';
 
+/** V5: Instant greeting shown before voice even attempts */
+function getInstantGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return "Bonjour. Quel est votre projet?";
+  if (hour >= 12 && hour < 18) return "Bon après-midi. Quel est votre projet?";
+  return "Bonsoir. Quel est votre projet?";
+}
+
 export default function HeroSection() {
   const { user } = useAuth();
   const [textSheetOpen, setTextSheetOpen] = useState(false);
   const [activeIntent, setActiveIntent] = useState<IntentSlug>("probleme");
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [connectingTooLong, setConnectingTooLong] = useState(false);
+  const [voiceFailed, setVoiceFailed] = useState(false);
   const alexTranscriptRef = useRef("");
   const connectingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Singleton guard — register as primary
+  // V5: Instant greeting — always visible from first render
+  const [greetingText] = useState(getInstantGreeting);
+
   const { isPrimary, acquireLock, releaseLock, markActive } = useAlexSingleton(COMPONENT_NAME, 'primary');
 
   const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
     onTranscript: (text) => {
-      // Accumulate Alex's transcript to detect photo-related questions
       alexTranscriptRef.current += text;
       const lower = alexTranscriptRef.current.toLowerCase();
       const photoKeywords = ["photo", "image", "téléverser", "téléversez", "envoyer une photo", "uploader", "fichier", "picture"];
-      const hasPhotoAsk = photoKeywords.some(kw => lower.includes(kw));
-      if (hasPhotoAsk && !uploadModalOpen) {
-        // Alex asked about photo — will show upload when user says yes or after turn completes
+      if (photoKeywords.some(kw => lower.includes(kw)) && !uploadModalOpen) {
         console.log("[Hero] Alex mentioned photo — priming upload trigger");
       }
     },
     onUserTranscript: (text) => {
-      // Detect user saying "yes" after Alex asked about photo
       const lower = text.toLowerCase();
       const alexLower = alexTranscriptRef.current.toLowerCase();
       const photoKeywords = ["photo", "image", "téléverser", "téléversez", "envoyer une photo", "uploader"];
       const alexAskedPhoto = photoKeywords.some(kw => alexLower.includes(kw));
       const userSaysYes = ["oui", "yes", "ok", "d'accord", "parfait", "bien sûr", "go", "envoyer", "envoie"].some(y => lower.includes(y));
       if (alexAskedPhoto && userSaysYes) {
-        console.log("[Hero] User confirmed photo — opening upload modal");
         setUploadModalOpen(true);
-        alexTranscriptRef.current = ""; // Reset
+        alexTranscriptRef.current = "";
       }
     },
     onConnect: () => {
-      console.log("[Hero] Gemini Live connected");
+      console.log("[Hero] Voice connected");
+      setVoiceFailed(false);
       markActive('gemini-live');
     },
     onDisconnect: () => {
-      console.log("[Hero] Gemini Live disconnected");
+      console.log("[Hero] Voice disconnected");
       releaseLock();
     },
     onError: (err) => {
-      console.error("[Hero] Gemini Live error:", err);
+      console.error("[Hero] Voice error:", err);
+      setVoiceFailed(true);
       releaseLock();
     },
   });
 
-  // Track when isConnecting has been true for >8s
+  // Track connecting >5s → show fallback
   useEffect(() => {
     if (isConnecting) {
-      connectingTimerRef.current = setTimeout(() => setConnectingTooLong(true), 8000);
+      connectingTimerRef.current = setTimeout(() => setVoiceFailed(true), 5000);
     } else {
-      setConnectingTooLong(false);
       if (connectingTimerRef.current) {
         clearTimeout(connectingTimerRef.current);
         connectingTimerRef.current = null;
@@ -122,23 +124,17 @@ export default function HeroSection() {
     };
   }, [isConnecting]);
 
-  const orbState = isConnecting ? "thinking" : isActive ? (isSpeaking ? "speaking" : "listening") : "idle";
-  const voiceActive = isActive || isConnecting;
+  const orbState = isConnecting && !voiceFailed ? "thinking" : isActive ? (isSpeaking ? "speaking" : "listening") : "idle";
+  const voiceActive = isActive || (isConnecting && !voiceFailed);
   const current = INTENTS.find((i) => i.slug === activeIntent)!;
 
   const getIntentGreeting = useCallback((intent: IntentSlug) => {
     const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || null;
     const hour = new Date().getHours();
-    
-    // Time-based greeting: Bonjour / Bon après-midi / Bonsoir
     let timeGreeting: string;
-    if (hour >= 5 && hour < 12) {
-      timeGreeting = "Bonjour";
-    } else if (hour >= 12 && hour < 18) {
-      timeGreeting = "Bon après-midi";
-    } else {
-      timeGreeting = "Bonsoir";
-    }
+    if (hour >= 5 && hour < 12) timeGreeting = "Bonjour";
+    else if (hour >= 12 && hour < 18) timeGreeting = "Bon après-midi";
+    else timeGreeting = "Bonsoir";
     
     const hi = firstName ? `${timeGreeting} ${firstName}!` : `${timeGreeting}!`;
 
@@ -155,31 +151,23 @@ export default function HeroSection() {
   }, [user]);
 
   const startVoice = useCallback((intent?: IntentSlug) => {
-    // SINGLETON GUARD: Must acquire lock before starting
-    if (!isPrimary) {
-      console.warn(`[Hero] Not primary — cannot start voice`);
-      return;
-    }
+    if (!isPrimary) return;
 
-    // Clear stale runtime state so lock can be re-acquired after a previous session ended
     const rtState = alexRuntime.getState();
     if (rtState.sessionStatus === 'ended' || rtState.sessionStatus === 'failed') {
       alexRuntime.clearForRestart();
     }
 
     const locked = acquireLock();
-    if (!locked) {
-      console.warn(`[Hero] Lock rejected — another Alex instance is active`);
-      return;
-    }
+    if (!locked) return;
 
-    // Kill all other audio sources BEFORE starting
     alexAudioChannel.hardStop();
+    setVoiceFailed(false);
 
     const selectedIntent = intent || activeIntent;
     const greeting = getIntentGreeting(selectedIntent);
     start({ initialGreeting: greeting, force: true });
-    alexTranscriptRef.current = ""; // Reset transcript tracking
+    alexTranscriptRef.current = "";
   }, [start, getIntentGreeting, activeIntent, isPrimary, acquireLock]);
 
   const stopVoice = useCallback(() => {
@@ -187,7 +175,6 @@ export default function HeroSection() {
     releaseLock();
   }, [stop, releaseLock]);
 
-  // Auto-start (controlled via singleton)
   useAlexHomeAutostart({
     enabled: true,
     isPrimary,
@@ -197,13 +184,15 @@ export default function HeroSection() {
   const retryVoice = useCallback(() => {
     stop();
     releaseLock();
-    setTimeout(() => startVoice(), 500);
+    setVoiceFailed(false);
+    setTimeout(() => startVoice(), 300);
   }, [stop, releaseLock, startVoice]);
 
   const statusText =
     orbState === "speaking" ? "Alex vous parle…"
-    : orbState === "thinking" ? (connectingTooLong ? "Connexion lente…" : "Connexion…")
+    : orbState === "thinking" ? "Connexion…"
     : orbState === "listening" ? "Je vous écoute…"
+    : voiceFailed ? "Touchez l'orb pour démarrer la voix"
     : "Parlez à Alex";
 
   return (
@@ -266,12 +255,24 @@ export default function HeroSection() {
             </p>
           </motion.div>
 
+          {/* ── V5: Instant Greeting Text ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mt-6 px-4 py-3 rounded-2xl bg-white/[0.06] border border-white/[0.08] backdrop-blur-sm max-w-sm"
+          >
+            <p className="text-sm text-white/80 font-medium">
+              🤖 Alex : <span className="text-white/90">{greetingText}</span>
+            </p>
+          </motion.div>
+
           {/* ── Intent Pills ── */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.35 }}
-            className="mt-8 flex items-center gap-2"
+            className="mt-5 flex items-center gap-2"
           >
             {INTENTS.map((intent) => {
               const isAct = intent.slug === activeIntent;
@@ -302,8 +303,8 @@ export default function HeroSection() {
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.55, type: "spring", stiffness: 180 }}
-            className="mt-10 mb-5 flex flex-col items-center"
+            transition={{ duration: 0.7, delay: 0.45, type: "spring", stiffness: 180 }}
+            className="mt-8 mb-5 flex flex-col items-center"
             data-testid="alex-orb-primary"
           >
             <div className="relative flex items-center justify-center">
@@ -357,7 +358,7 @@ export default function HeroSection() {
                 />
               )}
 
-              {/* Main orb */}
+              {/* Main orb — ALWAYS pulsing, never dead */}
               <motion.button
                 onClick={() => voiceActive ? stopVoice() : startVoice()}
                 className="relative rounded-full flex items-center justify-center overflow-hidden z-10"
@@ -393,7 +394,7 @@ export default function HeroSection() {
             {/* Status */}
             <AnimatePresence mode="wait">
               <motion.p
-                key={voiceActive ? orbState : "idle"}
+                key={statusText}
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
@@ -403,22 +404,32 @@ export default function HeroSection() {
               </motion.p>
             </AnimatePresence>
 
-            {/* Retry button when connection hangs */}
+            {/* V5: Voice failed — show retry + text fallback */}
             <AnimatePresence>
-              {connectingTooLong && isConnecting && (
-                <motion.button
+              {voiceFailed && !isActive && (
+                <motion.div
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 6 }}
-                  onClick={retryVoice}
-                  className="mt-2 text-xs font-medium px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/70 hover:bg-white/15 transition-colors"
+                  className="mt-3 flex items-center gap-2"
                 >
-                  Réessayer
-                </motion.button>
+                  <button
+                    onClick={retryVoice}
+                    className="text-xs font-medium px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/70 hover:bg-white/15 transition-colors"
+                  >
+                    Réessayer la voix
+                  </button>
+                  <button
+                    onClick={() => setTextSheetOpen(true)}
+                    className="flex items-center gap-1.5 text-xs font-medium px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/70 hover:bg-white/15 transition-colors"
+                  >
+                    <Keyboard className="h-3 w-3" /> Écrire à Alex
+                  </button>
+                </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Voice controls */}
+            {/* Voice controls when active */}
             <AnimatePresence>
               {voiceActive && (
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="mt-3 flex items-center gap-2">
@@ -461,6 +472,15 @@ export default function HeroSection() {
                 {current.cta}
                 <ArrowRight className="h-4 w-4" />
               </button>
+
+              {/* V5: Always-visible text input trigger */}
+              <button
+                onClick={() => setTextSheetOpen(true)}
+                className="flex items-center gap-2 text-xs text-white/40 hover:text-white/60 transition-colors"
+              >
+                <Keyboard className="h-3.5 w-3.5" />
+                Écrire à Alex
+              </button>
             </motion.div>
           </AnimatePresence>
         </div>
@@ -478,7 +498,6 @@ export default function HeroSection() {
         onClose={() => setUploadModalOpen(false)}
         onFilesSelected={(files) => {
           console.log("[Hero] Files uploaded via modal:", files.length, files.map(f => f.name));
-          // TODO: Send files to Alex for analysis
         }}
       />
     </>
