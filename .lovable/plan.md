@@ -1,87 +1,101 @@
 
 
-# UNPRO Auth Module — Premium Rebuild
+# Alex Premium Female Voice Identity — Full Rebuild
 
 ## Summary
 
-The auth components exist (Google OAuth, Phone OTP, Magic Link, Overlay). The main work is restructuring the `AuthOverlayPremium` flow to eliminate the role-selection-first pattern and instead show Google + SMS as primary buttons immediately. Magic link becomes a hidden secondary option. Trust microcopy, conversion tracking, and polished animations are added throughout.
+Alex is currently a masculine voice identity using ElevenLabs voice `mVjOqyqTPfwlXPjV5sjX` with masculine pronouns and "Homme intelligent" persona throughout the system prompt, TTS functions, and client-side session context. This plan switches Alex to a premium female identity using voice `XB0fDUnXU5powFXDhCwa` (Charlotte — already proven on the Nuclear Close landing), rewrites the entire system prompt and personality layer, updates TTS settings, and aligns all touchpoints.
 
 ---
 
 ## Technical Details
 
-### Block 1 — Rewrite `AuthOverlayPremium.tsx`
+### Block 1 — Voice Config + TTS Settings (Shared Module)
 
-Replace the current 4-mode flow (role → choice → login → signup) with a single streamlined screen:
+Update `supabase/functions/_shared/alex-french-voice.ts`:
 
-**New flow:**
-1. **Default view**: UNPRO logo + headline "Trouvez le bon pro. Plus vite." + two primary buttons: `Continuer avec Google` and `Recevoir un code par SMS`
-2. Below buttons: trust microcopy (checkmarks for "Connexion rapide", "Aucun mot de passe", "Accès sécurisé")
-3. Below trust: subtle "Autres options de connexion" text link
-4. When clicked → reveals magic link form inline (no page change)
-5. Pending action badge preserved as-is
-6. Security footer preserved
-7. Remove role selection entirely from overlay — role detection happens post-login via `AuthReturnRouter` / existing role system
+- Change `ALEX_VOICE_CONFIG.voiceId` from `mVjOqyqTPfwlXPjV5sjX` to `XB0fDUnXU5powFXDhCwa`
+- Update voice settings to match user spec:
+  - stability: 0.43 (was 0.65)
+  - similarity_boost: 0.78 (was 0.80)
+  - style: 0.28 (was 0.08)
+  - use_speaker_boost: true (unchanged)
+- Update profile_a/profile_b accordingly
+- Update all comments referencing "masculine" or "Alex masculine voice"
+- Rewrite `ALEX_VOICE_SYSTEM_PROMPT` entirely with feminine identity, new personality rules, new conversation feel, premium speech design, trust language, emotional intelligence mode, revenue mode, homeowner/contractor/condo flows, wow moments, memory system, closing language
 
-**Remove:**
-- `AuthMode` type (role/choice/login/signup states)
-- Role grid (9 roles)
-- choice mode (signup vs login buttons)
-- login/signup mode split
-- Apple button from primary view (keep Google only as primary OAuth)
+### Block 2 — TTS Edge Functions (Voice ID Swap)
 
-**Keep:**
-- Focus trap, scroll lock, intent saving
-- Close button, backdrop
-- Glass card styling
+Update hardcoded voice IDs in:
 
-### Block 2 — Update `OAuthButtons.tsx`
+- `supabase/functions/alex-tts/index.ts` — `PRIMARY_VOICE_ID` and `FALLBACK_VOICE_ID`
+- `supabase/functions/alex-voice-speak/index.ts` — fallback voice ID
+- `supabase/functions/alex-voice-get-config/index.ts` — config response voiceId
+- `supabase/functions/voice-get-config/index.ts` — fallback config voice_id
+- `supabase/functions/test-alex-voice/index.ts` — assertion checks
+- `supabase/functions/alex-voice-test/index.ts` — fallback voice ID
 
-Remove Apple button. Keep only Google as the single OAuth provider. Rename component to reflect single-provider usage or keep generic but render only Google.
+### Block 3 — Client-Side Session Context
 
-Update styling to match spec: large button, premium shadow, subtle hover glow, tactile press effect.
+Update `src/hooks/useLiveVoice.ts`:
 
-### Block 3 — Polish `PhoneOtpForm.tsx`
+- Rewrite `buildSessionContext()` for both FR and EN:
+  - FR: Feminine persona — "Tu es Alex d'UNPRO. Femme intelligente, calme, élégante..." with new personality rules
+  - EN: "You are Alex from UNPRO. Calm, sharp, warm, confident..." matching the spec
+- Update default greeting from generic to personality-driven: "Bonjour. Quel projet avance aujourd'hui?" (contextual variants)
 
-Already well-built. Minor enhancements:
-- Add success animation (checkmark with scale) after verification
-- Ensure auto-focus works on mount for both steps
+### Block 4 — Voice Overlay UX Polish
 
-### Block 4 — Analytics Tracking
+Update `src/components/voice/OverlayAlexVoiceFullScreen.tsx`:
 
-Add event tracking via a lightweight `trackAuthEvent(event: string, props?: Record<string, unknown>)` helper that logs to `sniper_engagement_events` or console in dev:
+- Update `buildGreeting()` to use new personality-driven greetings instead of generic "Que puis-je faire pour vous?"
+  - With name: "Bonjour {name}. Quel projet avance aujourd'hui?"
+  - Without name: "Bonjour. Décrivez votre besoin."
+  - With contextHint: "Bonjour. Je vois que vous regardez {hint}. On avance ensemble."
+- Update status text labels to match feminine personality
+- Update orb visual states descriptions in comments
 
-Events: `auth_method_selected`, `google_success`, `sms_sent`, `sms_success`, `magic_link_selected`, `dropoff_step`
+### Block 5 — Guardrail + Persona Components
 
-Wire into overlay buttons and form submissions.
+Update `src/hooks/useAlexVoicePersona.ts` and `src/components/alex-voice-persona/GuardrailVoiceConsistency.tsx`:
 
-### Block 5 — Post-Login Profile Update
+- Change gender references from masculine to feminine
+- Update `sanitizeAlexResponse()` forbidden phrases if any masculine-specific patterns exist
+- Ensure identity guardrails enforce feminine pronouns: "ravie", "certaine", "prête"
 
-After successful auth (in `AuthReturnRouter` or a new `usePostAuthProfile` hook):
-- Upsert `profiles` row with `auth_provider`, `last_login_at`
-- Extract `first_name`, `last_name`, `email` from session user metadata
-- Extract `phone` if SMS auth was used
-- Only update fields that are currently null (don't overwrite human-validated data per memory rules)
+### Block 6 — Nuclear Close Landing Alignment
 
-### Block 6 — User Type Detection
+Update `supabase/functions/pro-landing-tts/index.ts`:
 
-After first login with no existing role:
-- Show a minimal inline question in the overlay before closing: "Comment utiliserez-vous UNPRO?"
-- Three options: "J'ai besoin d'un pro" (homeowner), "Je suis entrepreneur" (contractor), "Autre" (default)
-- Insert selected role into `user_roles` table
-- Then route via existing `getDefaultRedirectForRole()`
+- Charlotte (`XB0fDUnXU5powFXDhCwa`) is already the FR voice here — now it becomes the same as main Alex
+- Remove the concept of "separate female voice for nuclear close" since Alex IS female everywhere
+
+### Block 7 — Memory Updates
+
+- Rewrite `mem://ai/alex/voice-persona-male` → rename to `mem://ai/alex/voice-persona-female` with new identity
+- Update `mem://ai/alex/voice-identity-and-behavior` with feminine persona
+- Update memory index to reflect the change
 
 ---
 
-## Files Created/Modified
+## Files Modified
 
 | Action | File |
 |---|---|
-| Rewrite | `src/components/auth/AuthOverlayPremium.tsx` |
-| Modify | `src/components/auth/OAuthButtons.tsx` — remove Apple, keep Google only |
-| Modify | `src/components/auth/PhoneOtpForm.tsx` — add success animation |
-| Create | `src/services/auth/trackAuthEvent.ts` — lightweight analytics |
-| Modify | `src/components/auth/AuthReturnRouter.tsx` — add profile upsert + role detection |
+| Rewrite | `supabase/functions/_shared/alex-french-voice.ts` — voice ID, TTS settings, full system prompt |
+| Modify | `supabase/functions/alex-tts/index.ts` — voice ID swap |
+| Modify | `supabase/functions/alex-voice-speak/index.ts` — voice ID fallback |
+| Modify | `supabase/functions/alex-voice-get-config/index.ts` — config voiceId |
+| Modify | `supabase/functions/voice-get-config/index.ts` — fallback voiceId |
+| Modify | `supabase/functions/test-alex-voice/index.ts` — assertion voice ID |
+| Modify | `supabase/functions/alex-voice-test/index.ts` — fallback voice ID |
+| Modify | `supabase/functions/pro-landing-tts/index.ts` — align with unified Alex voice |
+| Rewrite | `src/hooks/useLiveVoice.ts` — session context prompts (FR + EN) |
+| Modify | `src/components/voice/OverlayAlexVoiceFullScreen.tsx` — greetings + status labels |
+| Modify | `src/hooks/useAlexVoicePersona.ts` — gender references |
+| Modify | `src/components/alex-voice-persona/GuardrailVoiceConsistency.tsx` — feminine guardrails |
+| Update | `mem://ai/alex/voice-persona-female` (new, replaces male) |
+| Update | `mem://ai/alex/voice-identity-and-behavior` |
 
-No database migration needed — `profiles` and `user_roles` tables already exist.
+No database migration needed — voice config in `voice_configs` table and `alex_voice_profiles` table can be updated via existing admin tools or a simple data update migration if desired.
 
