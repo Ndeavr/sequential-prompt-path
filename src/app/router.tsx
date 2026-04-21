@@ -333,6 +333,9 @@ const PageContractorAippAudit = lazy(() => import("@/pages/PageContractorAippAud
 const PageInstantAuditFunnel = lazy(() => import("@/pages/PageInstantAuditFunnel"));
 const PageOutreachLanding = lazy(() => import("@/pages/PageOutreachLanding"));
 const PageSniperCommandCenter = lazy(() => import("@/pages/admin/PageSniperCommandCenter"));
+const PageCommandCenterLeads = lazy(() => import("@/pages/admin/PageCommandCenterLeads"));
+const PageCommandCenterCampaigns = lazy(() => import("@/pages/admin/PageCommandCenterCampaigns"));
+const PageCommandCenterTerritories = lazy(() => import("@/pages/admin/PageCommandCenterTerritories"));
 
 // SEO Index Domination
 const ContractorSeoPage = lazy(() => import("@/pages/seo/ContractorSeoPage"));
@@ -1305,6 +1308,10 @@ export const AppRouter = () => (
          <Route path="/audit" element={<Suspense fallback={<LazyFallback />}><PageInstantAuditFunnel /></Suspense>} />
          <Route path="/analyse/:slug" element={<Suspense fallback={<LazyFallback />}><PageOutreachLanding /></Suspense>} />
          <Route path="/admin/sniper" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSniperCommandCenter /></Suspense></UniversalRouteGuard>} />
+         <Route path="/admin/command-center" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSniperCommandCenter /></Suspense></UniversalRouteGuard>} />
+         <Route path="/admin/command-center/leads" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageCommandCenterLeads /></Suspense></UniversalRouteGuard>} />
+         <Route path="/admin/command-center/campaigns" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageCommandCenterCampaigns /></Suspense></UniversalRouteGuard>} />
+         <Route path="/admin/command-center/territories" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageCommandCenterTerritories /></Suspense></UniversalRouteGuard>} />
          <Route path="/admin/seo-index-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSeoIndexHealth /></Suspense></UniversalRouteGuard>} />
 
           {/* Catch-all: try fallback, then 404 */}

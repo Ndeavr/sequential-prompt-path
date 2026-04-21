@@ -103,4 +103,8 @@ export const ROUTES = {
   AUDIT_FUNNEL: "/audit",
   OUTREACH_LANDING: "/analyse/:slug",
   ADMIN_SNIPER: "/admin/sniper",
+  ADMIN_COMMAND_CENTER: "/admin/command-center",
+  ADMIN_COMMAND_CENTER_LEADS: "/admin/command-center/leads",
+  ADMIN_COMMAND_CENTER_CAMPAIGNS: "/admin/command-center/campaigns",
+  ADMIN_COMMAND_CENTER_TERRITORIES: "/admin/command-center/territories",
 } as const;

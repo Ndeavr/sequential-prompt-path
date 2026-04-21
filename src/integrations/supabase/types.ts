@@ -41461,6 +41461,100 @@ export type Database = {
           },
         ]
       }
+      pricing_decisions: {
+        Row: {
+          adjusted_price: number
+          audit_id: string | null
+          base_price: number
+          cluster_key: string | null
+          contractor_id: string | null
+          created_at: string
+          founder_offer_visible: boolean
+          founder_price: number | null
+          id: string
+          pricing_modifiers: Json
+          rationale: Json
+          recommended_billing: string
+          recommended_plan: string
+          sniper_target_id: string | null
+        }
+        Insert: {
+          adjusted_price: number
+          audit_id?: string | null
+          base_price: number
+          cluster_key?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          founder_offer_visible?: boolean
+          founder_price?: number | null
+          id?: string
+          pricing_modifiers?: Json
+          rationale?: Json
+          recommended_billing: string
+          recommended_plan: string
+          sniper_target_id?: string | null
+        }
+        Update: {
+          adjusted_price?: number
+          audit_id?: string | null
+          base_price?: number
+          cluster_key?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          founder_offer_visible?: boolean
+          founder_price?: number | null
+          id?: string
+          pricing_modifiers?: Json
+          rationale?: Json
+          recommended_billing?: string
+          recommended_plan?: string
+          sniper_target_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_decisions_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_aipp_audits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_decisions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_decisions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_decisions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_decisions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "pricing_decisions_sniper_target_id_fkey"
+            columns: ["sniper_target_id"]
+            isOneToOne: false
+            referencedRelation: "sniper_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pricing_markets: {
         Row: {
           city_name: string
@@ -41857,6 +41951,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pricing_rules: {
+        Row: {
+          applies_to_category: string | null
+          applies_to_city: string | null
+          applies_to_cluster_key: string | null
+          applies_to_plan: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          metadata: Json
+          modifier_percent: number | null
+          override_price: number | null
+          priority: number
+          rule_key: string
+          rule_name: string
+          rule_type: string
+          updated_at: string
+        }
+        Insert: {
+          applies_to_category?: string | null
+          applies_to_city?: string | null
+          applies_to_cluster_key?: string | null
+          applies_to_plan?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json
+          modifier_percent?: number | null
+          override_price?: number | null
+          priority?: number
+          rule_key: string
+          rule_name: string
+          rule_type: string
+          updated_at?: string
+        }
+        Update: {
+          applies_to_category?: string | null
+          applies_to_city?: string | null
+          applies_to_cluster_key?: string | null
+          applies_to_plan?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json
+          modifier_percent?: number | null
+          override_price?: number | null
+          priority?: number
+          rule_key?: string
+          rule_name?: string
+          rule_type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       pricing_transactions: {
         Row: {
