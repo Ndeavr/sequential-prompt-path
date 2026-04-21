@@ -119,6 +119,16 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const conversationApiRef = useRef<any>(null);
   const languageSessionRef = useRef(new AlexLanguageLockSession());
   const activeLanguageRef = useRef<AlexLanguage>("fr-CA");
+  const connectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryCountRef = useRef(0);
+  const pendingStartOptionsRef = useRef<StartOptions | undefined>(undefined);
+
+  const clearConnectionTimeout = useCallback(() => {
+    if (connectionTimeoutRef.current) {
+      clearTimeout(connectionTimeoutRef.current);
+      connectionTimeoutRef.current = null;
+    }
+  }, []);
 
   const sendAgentContext = useCallback((context: string, successLog?: string) => {
     const api = conversationApiRef.current;
