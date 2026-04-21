@@ -4,7 +4,7 @@
  * Rules:
  * - Only triggers on home page (/)
  * - Waits for hydration + visibility + stable route
- * - Only fires ONCE per session visit
+ * - Only fires ONCE per page load via alexRuntime.autostartTriggered
  * - Guards against StrictMode double-fire
  * - No restart on tab return if Alex already spoke
  */
@@ -12,7 +12,6 @@ import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { alexRuntime } from '@/services/alexRuntimeSingleton';
 
-const AUTOSTART_SESSION_KEY = 'alex_home_autostart_done';
 const AUTOSTART_DELAY_MS = 1500;
 
 interface UseAlexHomeAutostartOptions {
@@ -27,14 +26,8 @@ export function useAlexHomeAutostart({ enabled, isPrimary, onAutostart }: UseAle
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    // Only on home page
     const isHome = location.pathname === '/' || location.pathname === '/index';
     if (!isHome || !enabled || !isPrimary || firedRef.current) return;
-
-    // Check if already autoplayed this session
-    try {
-      if (sessionStorage.getItem(AUTOSTART_SESSION_KEY)) return;
-    } catch {}
 
     // Check visibility
     if (document.hidden) return;
@@ -50,8 +43,6 @@ export function useAlexHomeAutostart({ enabled, isPrimary, onAutostart }: UseAle
 
       firedRef.current = true;
       alexRuntime.markAutostartTriggered();
-      
-      try { sessionStorage.setItem(AUTOSTART_SESSION_KEY, '1'); } catch {}
       
       onAutostart();
       alexRuntime.markAutostartCompleted();

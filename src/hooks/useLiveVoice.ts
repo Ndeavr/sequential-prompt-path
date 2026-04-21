@@ -28,6 +28,7 @@ interface UseLiveVoiceCallbacks {
 
 interface StartOptions {
   initialGreeting?: string;
+  force?: boolean;
 }
 
 function getDefaultGreeting(lang: AlexLanguage) {
@@ -248,8 +249,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const startInternal = useCallback(async (options?: StartOptions, isRetry = false) => {
     if (isActive || isConnecting) return;
 
+    const forced = options?.force || isRetry;
     const timeSinceLastDisconnect = Date.now() - lastDisconnectAtRef.current;
-    if (!isRetry && lastDisconnectAtRef.current > 0 && timeSinceLastDisconnect < RECONNECT_COOLDOWN_MS) {
+    if (!forced && lastDisconnectAtRef.current > 0 && timeSinceLastDisconnect < RECONNECT_COOLDOWN_MS) {
       console.warn(`[ElevenLabs] Reconnect blocked — cooldown (${timeSinceLastDisconnect}ms < ${RECONNECT_COOLDOWN_MS}ms)`);
       return;
     }
@@ -318,6 +320,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
 
   const start = useCallback((options?: StartOptions) => {
     retryCountRef.current = 0;
+    if (options?.force) {
+      lastDisconnectAtRef.current = 0;
+    }
     return startInternal(options);
   }, [startInternal]);
 

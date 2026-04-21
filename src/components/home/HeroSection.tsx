@@ -161,6 +161,12 @@ export default function HeroSection() {
       return;
     }
 
+    // Clear stale runtime state so lock can be re-acquired after a previous session ended
+    const rtState = alexRuntime.getState();
+    if (rtState.sessionStatus === 'ended' || rtState.sessionStatus === 'failed') {
+      alexRuntime.clearForRestart();
+    }
+
     const locked = acquireLock();
     if (!locked) {
       console.warn(`[Hero] Lock rejected — another Alex instance is active`);
@@ -168,12 +174,11 @@ export default function HeroSection() {
     }
 
     // Kill all other audio sources BEFORE starting
-    // But DON'T dispatch alex-voice-cleanup here — it can race-kill the new session
     alexAudioChannel.hardStop();
 
     const selectedIntent = intent || activeIntent;
     const greeting = getIntentGreeting(selectedIntent);
-    start({ initialGreeting: greeting });
+    start({ initialGreeting: greeting, force: true });
     alexTranscriptRef.current = ""; // Reset transcript tracking
   }, [start, getIntentGreeting, activeIntent, isPrimary, acquireLock]);
 
