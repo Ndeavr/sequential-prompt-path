@@ -52,11 +52,15 @@ Deno.serve(async (req) => {
   let recipientEmail: string
   let idempotencyKey: string
   let messageId: string
+  let senderEmail: string | undefined
+  let senderName: string | undefined
   let templateData: Record<string, any> = {}
   try {
     const body = await req.json()
     templateName = body.templateName || body.template_name
     recipientEmail = body.recipientEmail || body.recipient_email
+    senderEmail = body.senderEmail || body.sender_email
+    senderName = body.senderName || body.sender_name
     messageId = crypto.randomUUID()
     idempotencyKey = body.idempotencyKey || body.idempotency_key || messageId
     if (body.templateData && typeof body.templateData === 'object') {
@@ -117,6 +121,29 @@ Deno.serve(async (req) => {
 
   // Create Supabase client with service role (bypasses RLS)
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
+  let fromAddress = `${SITE_NAME} <noreply@${FROM_DOMAIN}>`
+
+  if (senderEmail) {
+    const normalizedSender = senderEmail.toLowerCase()
+    const { data: senderMailbox, error: senderError } = await supabase
+      .from('outbound_mailboxes')
+      .select('sender_email, sender_name, mailbox_status')
+      .eq('sender_email', normalizedSender)
+      .maybeSingle()
+
+    if (senderError || !senderMailbox || senderMailbox.mailbox_status !== 'active') {
+      console.error('Requested outbound sender is not active', { senderEmail, senderError })
+      return new Response(
+        JSON.stringify({ error: 'Requested outbound sender is not active' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
+    fromAddress = `${senderName || senderMailbox.sender_name || SITE_NAME} <${senderMailbox.sender_email}>`
+  }
 
   // 2. Check suppression list (fail-closed: if we can't verify, don't send)
   const { data: suppressed, error: suppressionError } = await supabase
@@ -306,7 +333,7 @@ Deno.serve(async (req) => {
     payload: {
       message_id: messageId,
       to: effectiveRecipient,
-      from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+      from: fromAddress,
       sender_domain: SENDER_DOMAIN,
       subject: resolvedSubject,
       html,

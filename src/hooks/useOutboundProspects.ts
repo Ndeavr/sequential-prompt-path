@@ -126,17 +126,26 @@ export function useSendingHealth() {
   return useQuery({
     queryKey: ["sending-health"],
     queryFn: async () => {
-      const { data: mailboxes } = await supabase
+      const { data: mailboxes, error: mailboxesError } = await supabase
         .from("outbound_mailboxes")
-        .select("id, sender_email, mailbox_status, health_score, sent_today, daily_limit");
-      const { data: messages } = await supabase
+        .select("id, sender_email, sender_name, provider, mailbox_status, health_score, sent_today, daily_limit, reply_to_email, tracking_domain, updated_at")
+        .order("updated_at", { ascending: false });
+      if (mailboxesError) throw mailboxesError;
+
+      const { data: messages, error: messagesError } = await supabase
         .from("outbound_messages")
         .select("sending_status")
         .gte("sent_at", new Date(Date.now() - 7 * 86400000).toISOString());
+      if (messagesError) throw messagesError;
 
       const msgs = messages ?? [];
+      const boxes = mailboxes ?? [];
+      const activeMailboxes = boxes.filter((m: any) => m.mailbox_status === "active").length;
       return {
-        mailboxes: mailboxes ?? [],
+        mailboxes: boxes,
+        activeMailboxes,
+        providerConnected: boxes.find((m: any) => m.mailbox_status === "active")?.provider ?? null,
+        backendTruthSyncedAt: new Date().toISOString(),
         totalSent7d: msgs.length,
         delivered: msgs.filter((m: any) => m.sending_status === "delivered").length,
         opened: msgs.filter((m: any) => m.sending_status === "opened").length,
@@ -144,7 +153,9 @@ export function useSendingHealth() {
         bounced: msgs.filter((m: any) => m.sending_status === "bounced").length,
       };
     },
-    staleTime: 60_000,
+    staleTime: 0,
+    refetchInterval: 10_000,
+    refetchOnWindowFocus: true,
   });
 }
 
