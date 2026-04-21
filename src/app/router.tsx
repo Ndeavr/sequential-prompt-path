@@ -334,6 +334,10 @@ const PageInstantAuditFunnel = lazy(() => import("@/pages/PageInstantAuditFunnel
 const PageOutreachLanding = lazy(() => import("@/pages/PageOutreachLanding"));
 const PageSniperCommandCenter = lazy(() => import("@/pages/admin/PageSniperCommandCenter"));
 
+// SEO Index Domination
+const ContractorSeoPage = lazy(() => import("@/pages/seo/ContractorSeoPage"));
+const PageSeoIndexHealth = lazy(() => import("@/pages/admin/PageSeoIndexHealth"));
+
 // Entrepreneur Onboarding Flow
 const PageOnboardingImport = lazy(() => import("@/pages/entrepreneur/PageOnboardingImport"));
 const PageOnboardingAnalyse = lazy(() => import("@/pages/entrepreneur/PageOnboardingAnalyse"));
