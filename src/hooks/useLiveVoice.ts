@@ -165,6 +165,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       callbacksRef.current?.onConnect?.();
     },
     onDisconnect: () => {
+      clearConnectionTimeout();
       const sessionDuration = connectedAtRef.current ? Date.now() - connectedAtRef.current : 0;
       console.log(`[ElevenLabs] Disconnected from agent (session lasted ${sessionDuration}ms)`);
       lastDisconnectAtRef.current = Date.now();
