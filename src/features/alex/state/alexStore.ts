@@ -1,6 +1,6 @@
 /**
  * Alex 100M — Zustand Store
- * Single source of truth for Alex assistant state.
+ * V6: Added pendingGreetingText + shouldSpeakGreetingOnUnlock flags.
  */
 
 import { create } from "zustand";
@@ -19,13 +19,9 @@ import { alexLog } from "../utils/alexDebug";
 // ─── State Shape ──────────────────────────────────────────────────
 
 export interface AlexState {
-  // Mode
   mode: AlexMode;
-
-  // Messages
   messages: AlexMessage[];
 
-  // Flags
   isInitialized: boolean;
   isSessionRestored: boolean;
   isVoiceEnabled: boolean;
@@ -48,30 +44,31 @@ export interface AlexState {
   shouldMinimizeOnInactivity: boolean;
   shouldClosePanelOnInactivity: boolean;
 
-  // Counters
+  // V6 — greeting unlock flags
+  audioUnlockRequired: boolean;
+  pendingGreetingText: string | null;
+  shouldSpeakGreetingOnUnlock: boolean;
+  hasAttemptedInitialAutoplay: boolean;
+
   consecutiveNoResponseCount: number;
   autoRepromptCount: number;
   interactionCount: number;
 
-  // Timestamps
   lastUserActivityAt: number | null;
   lastAssistantMessageAt: number | null;
   lastAssistantQuestionAt: number | null;
   lastValidUserInputAt: number | null;
 
-  // Session
   sessionId: string | null;
   activeLanguage: AlexLanguage;
   userRole: AlexUserRole;
   currentIntent: AlexIntent;
   currentProjectType: string | null;
 
-  // UI overlay
   quickActions: AlexQuickAction[];
   spotlight: AlexSpotlight | null;
   softPromptText: string | null;
 
-  // Debug
   debugLog: AlexDebugEntry[];
 }
 
@@ -144,7 +141,6 @@ export const DEFAULT_ALEX_QUICK_ACTIONS: AlexQuickAction[] = [
 // ─── Store ────────────────────────────────────────────────────────
 
 export const useAlexStore = create<AlexState & AlexActions>()((set) => ({
-  // Initial state
   mode: "booting",
   messages: [],
 
@@ -169,6 +165,12 @@ export const useAlexStore = create<AlexState & AlexActions>()((set) => ({
   shouldAutoStartOnLoad: true,
   shouldMinimizeOnInactivity: true,
   shouldClosePanelOnInactivity: false,
+
+  // V6 flags
+  audioUnlockRequired: false,
+  pendingGreetingText: null,
+  shouldSpeakGreetingOnUnlock: false,
+  hasAttemptedInitialAutoplay: false,
 
   consecutiveNoResponseCount: 0,
   autoRepromptCount: 0,

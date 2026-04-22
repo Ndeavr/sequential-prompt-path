@@ -1,6 +1,7 @@
 /**
- * Alex 100M — Panel
+ * Alex 100M — Panel V6
  * Thread + input + uploads + quick actions. Never blank.
+ * Single CTA for audio unlock. No duplicate "touch to talk" prompts.
  */
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,13 +12,11 @@ import { AlexInput } from "./AlexInput";
 import { AlexQuickActions } from "./AlexQuickActions";
 import { AlexUploadDropzone } from "./AlexUploadDropzone";
 import { useAlexUIBridge } from "./hooks/useAlexUIBridge";
-import { getMinimizeCta, getFallbackText, getVoiceBlockedText } from "./utils/alexCopy";
+import { getMinimizeCta, getFallbackText } from "./utils/alexCopy";
 
 export function AlexPanel() {
   const mode = useAlexStore((s) => s.mode);
   const lang = useAlexStore((s) => s.activeLanguage);
-  const isAutoplayAllowed = useAlexStore((s) => s.isAutoplayAllowed);
-  const isVoiceAvailable = useAlexStore((s) => s.isVoiceAvailable);
   const softPromptText = useAlexStore((s) => s.softPromptText);
   const modeLabel = useAlexStore(selectModeLabel);
   const isMinimized = mode === "minimized";
@@ -48,17 +47,10 @@ export function AlexPanel() {
         </button>
       </div>
 
-      {/* Voice fallback notice */}
+      {/* Voice fallback notice — only for permanent fallback, not audio unlock */}
       {mode === "fallback_text" && (
         <div className="px-4 py-2 text-[11px] text-warning/80 bg-warning/5 border-b border-warning/10">
           {getFallbackText(lang)}
-        </div>
-      )}
-
-      {/* Autoplay blocked notice */}
-      {isVoiceAvailable && !isAutoplayAllowed && mode !== "fallback_text" && (
-        <div className="px-4 py-2 text-[11px] text-muted-foreground/70 bg-muted/20 border-b border-border/10">
-          {getVoiceBlockedText(lang)}
         </div>
       )}
 
