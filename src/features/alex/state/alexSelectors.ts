@@ -18,7 +18,7 @@ export const selectCanSpeak = (s: AlexState) =>
 
 /** Can the mic be opened right now? */
 export const selectCanListen = (s: AlexState) =>
-  s.isSTTAvailable && !s.hasActivePlayback && s.mode !== "speaking" && s.mode !== "booting" && s.mode !== "error" && s.mode !== "minimized";
+  s.isSTTAvailable && !s.hasActivePlayback && s.mode !== "speaking" && s.mode !== "connecting_voice" && s.mode !== "booting" && s.mode !== "error" && s.mode !== "minimized";
 
 /** Should we show the soft prompt overlay? */
 export const selectShowSoftPrompt = (s: AlexState) =>
@@ -36,6 +36,9 @@ export const selectIsMinimized = (s: AlexState) => s.mode === "minimized";
 
 /** Is Alex currently speaking? */
 export const selectIsSpeaking = (s: AlexState) => s.mode === "speaking";
+
+/** Is Alex connecting voice (TTS request sent, waiting for audio)? */
+export const selectIsConnectingVoice = (s: AlexState) => s.mode === "connecting_voice";
 
 /** Is Alex currently listening? */
 export const selectIsListening = (s: AlexState) => s.mode === "listening";
@@ -64,13 +67,14 @@ export const selectLastMessage = (s: AlexState) =>
 /** Current mode label for UI display */
 export const selectModeLabel = (s: AlexState): string => {
   const labels: Record<string, { fr: string; en: string }> = {
-    booting: { fr: "Démarrage…", en: "Starting…" },
-    ready: { fr: "Prête", en: "Ready" },
+    booting: { fr: "Chargement…", en: "Loading…" },
+    ready: { fr: "Alex en direct", en: "Alex live" },
+    connecting_voice: { fr: "Connexion…", en: "Connecting…" },
     speaking: { fr: "Alex parle…", en: "Alex speaking…" },
     listening: { fr: "Je vous écoute", en: "Listening" },
     thinking: { fr: "Réflexion…", en: "Thinking…" },
     waiting_for_reply: { fr: "En attente", en: "Waiting" },
-    soft_prompt_visible: { fr: "Prête", en: "Ready" },
+    soft_prompt_visible: { fr: "Alex en direct", en: "Alex live" },
     noise_detected: { fr: "Bruit détecté", en: "Noise detected" },
     low_confidence_audio: { fr: "Parlez plus clairement", en: "Speak more clearly" },
     guiding_ui: { fr: "Je vous montre", en: "Guiding" },
@@ -78,7 +82,7 @@ export const selectModeLabel = (s: AlexState): string => {
     showing_options: { fr: "Vos options", en: "Your options" },
     closing_due_to_inactivity: { fr: "Fermeture…", en: "Closing…" },
     minimized: { fr: "Alex réduite", en: "Alex minimized" },
-    fallback_text: { fr: "Mode texte", en: "Text mode" },
+    fallback_text: { fr: "Écrivez à Alex", en: "Write to Alex" },
     error: { fr: "Erreur", en: "Error" },
   };
   const entry = labels[s.mode] ?? labels.ready;

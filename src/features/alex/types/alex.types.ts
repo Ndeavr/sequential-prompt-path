@@ -7,6 +7,7 @@
 export type AlexMode =
   | "booting"
   | "ready"
+  | "connecting_voice"
   | "speaking"
   | "listening"
   | "thinking"

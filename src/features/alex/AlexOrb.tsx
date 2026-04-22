@@ -1,15 +1,15 @@
 /**
- * Alex 100M — Orb
- * Pure visual state indicator + tap interaction entry.
+ * Alex 100M — Orb V7
+ * Added connecting_voice visual state.
  */
 
 import { motion } from "framer-motion";
 import { useAlexStore } from "./state/alexStore";
-import type { AlexMode } from "./types/alex.types";
 
 const MODE_STYLES: Record<string, { ring: string; bg: string; scale: number; pulse: boolean }> = {
   booting:      { ring: "border-muted-foreground/30", bg: "bg-muted/50",    scale: 0.9,  pulse: false },
   ready:        { ring: "border-primary/60",          bg: "bg-primary/10",  scale: 1,    pulse: true },
+  connecting_voice: { ring: "border-primary/40",      bg: "bg-primary/8",   scale: 0.98, pulse: true },
   speaking:     { ring: "border-primary",             bg: "bg-primary/20",  scale: 1.05, pulse: false },
   listening:    { ring: "border-accent",              bg: "bg-accent/15",   scale: 1.08, pulse: false },
   thinking:     { ring: "border-secondary/70",        bg: "bg-secondary/10",scale: 1,    pulse: true },
@@ -81,6 +81,15 @@ export function AlexOrb({ onTap, size = "md" }: AlexOrbProps) {
           className="absolute inset-0 rounded-full border-2 border-accent/50"
           animate={{ scale: [1, 1.15, 1] }}
           transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
+        />
+      )}
+
+      {/* V7: Connecting voice — subtle spinner ring */}
+      {mode === "connecting_voice" && (
+        <motion.div
+          className="absolute inset-0 rounded-full border-2 border-t-primary/60 border-r-transparent border-b-transparent border-l-transparent"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         />
       )}
     </motion.button>

@@ -1,6 +1,6 @@
 /**
  * Alex 100M — Zustand Store
- * V6: Added pendingGreetingText + shouldSpeakGreetingOnUnlock flags.
+ * V7: connecting_voice mode, verified identity flags.
  */
 
 import { create } from "zustand";
@@ -50,6 +50,12 @@ export interface AlexState {
   shouldSpeakGreetingOnUnlock: boolean;
   hasAttemptedInitialAutoplay: boolean;
 
+  // V7 — verified identity
+  verifiedGreetingName: string | null;
+  identityMismatchDetected: boolean;
+  openingLanguageLocked: boolean;
+  voiceLockedValid: boolean;
+
   consecutiveNoResponseCount: number;
   autoRepromptCount: number;
   interactionCount: number;
@@ -92,6 +98,7 @@ export interface AlexActions {
 
   openMic: () => void;
   closeMic: () => void;
+  startConnectingVoice: () => void;
   startSpeaking: () => void;
   stopSpeaking: () => void;
   startListening: () => void;
@@ -171,6 +178,12 @@ export const useAlexStore = create<AlexState & AlexActions>()((set) => ({
   pendingGreetingText: null,
   shouldSpeakGreetingOnUnlock: false,
   hasAttemptedInitialAutoplay: false,
+
+  // V7 flags
+  verifiedGreetingName: null,
+  identityMismatchDetected: false,
+  openingLanguageLocked: false,
+  voiceLockedValid: true,
 
   consecutiveNoResponseCount: 0,
   autoRepromptCount: 0,
@@ -276,11 +289,16 @@ export const useAlexStore = create<AlexState & AlexActions>()((set) => ({
   openMic: () => set({ isMicOpen: true }),
   closeMic: () => set({ isMicOpen: false, isUserSpeaking: false }),
 
-  startSpeaking: () => set({ mode: "speaking", hasActivePlayback: true }),
+  // V7: connecting_voice — TTS request sent, no audio yet
+  startConnectingVoice: () => set({ mode: "connecting_voice", hasActiveTTSRequest: true }),
+
+  // V7: speaking — only when audio playback actually started
+  startSpeaking: () => set({ mode: "speaking", hasActivePlayback: true, hasActiveTTSRequest: false }),
   stopSpeaking: () =>
     set((s) => ({
-      mode: s.mode === "speaking" ? "ready" : s.mode,
+      mode: s.mode === "speaking" || s.mode === "connecting_voice" ? "ready" : s.mode,
       hasActivePlayback: false,
+      hasActiveTTSRequest: false,
     })),
 
   startListening: () =>
