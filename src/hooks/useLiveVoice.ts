@@ -1,6 +1,6 @@
 /**
  * useLiveVoice — ElevenLabs Conversational AI voice hook.
- * V5: 5s timeout, no auto-retry, instant fallback on failure.
+ * V7: Aggressive reinitialize, French-only opening, honest speaking state.
  */
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useConversation } from "@elevenlabs/react";
@@ -24,18 +24,18 @@ interface StartOptions {
   force?: boolean;
 }
 
-function getDefaultGreeting(lang: AlexLanguage) {
-  return lang === "en-CA"
-    ? "Hello. What project are we working on today?"
-    : "Bonjour. Quel projet avance aujourd'hui?";
+// V7: French-only default greeting — never English for opening
+function getDefaultGreeting(): string {
+  return "Bonjour. Quel projet avance aujourd'hui?";
 }
 
 function sanitizeGreeting(text: string) {
   return text.replace(/"/g, '\\"').trim();
 }
 
+// V7: Always inject French persona context for opening
 function buildSessionContext(lang: AlexLanguage, initialGreeting?: string) {
-  const greeting = sanitizeGreeting(initialGreeting || getDefaultGreeting(lang));
+  const greeting = sanitizeGreeting(initialGreeting || getDefaultGreeting());
 
   if (lang === "en-CA") {
     return `You are Alex from UNPRO. Calm, sharp, warm, confident, elegant.
@@ -132,7 +132,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
 
   const conversation = useConversation({
     onConnect: () => {
-      console.log("[ElevenLabs] ✅ Connected to agent");
+      console.log("[ElevenLabs V7] ✅ Connected to agent");
       clearConnectionTimeout();
       connectedAtRef.current = Date.now();
       setIsActive(true);
@@ -142,7 +142,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     onDisconnect: () => {
       clearConnectionTimeout();
       const sessionDuration = connectedAtRef.current ? Date.now() - connectedAtRef.current : 0;
-      console.log(`[ElevenLabs] Disconnected (session ${sessionDuration}ms)`);
+      console.log(`[ElevenLabs V7] Disconnected (session ${sessionDuration}ms)`);
       lastDisconnectAtRef.current = Date.now();
       setIsActive(false);
       setIsConnecting(false);
@@ -151,7 +151,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       activeLanguageRef.current = "fr-CA";
 
       if (sessionDuration > 0 && sessionDuration < 2000 && !intentionallyStopped.current) {
-        console.error("[ElevenLabs] ⚠️ Instant disconnect — likely config issue");
+        console.error("[ElevenLabs V7] ⚠️ Instant disconnect — likely config issue");
         callbacksRef.current?.onError?.(new Error("Session disconnected immediately"));
         return;
       }
@@ -190,7 +190,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       }
     },
     onError: (error: unknown) => {
-      console.error("[ElevenLabs] Error:", error);
+      console.error("[ElevenLabs V7] Error:", error);
       setIsConnecting(false);
       callbacksRef.current?.onError?.(error);
     },
@@ -209,7 +209,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   useEffect(() => {
     const handleCleanup = () => {
       if (conversation.status === "connected") {
-        console.log("[ElevenLabs] Received alex-voice-cleanup — stopping");
+        console.log("[ElevenLabs V7] Received alex-voice-cleanup — stopping");
         conversation.endSession();
       }
     };
@@ -218,28 +218,40 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   }, [conversation]);
 
   const start = useCallback(async (options?: StartOptions) => {
-    if (isActive || isConnecting) return;
-
+    // V7: If force=true, allow restart even if active/connecting
     const forced = options?.force;
+
+    if (!forced && (isActive || isConnecting)) return;
+
+    // V7: Aggressive reinitialize — end any existing session first
+    if (forced && (isActive || isConnecting)) {
+      console.log("[ElevenLabs V7] Force restart — ending existing session");
+      try { conversation.endSession(); } catch {}
+      setIsActive(false);
+      setIsConnecting(false);
+    }
+
     const timeSinceLastDisconnect = Date.now() - lastDisconnectAtRef.current;
     if (!forced && lastDisconnectAtRef.current > 0 && timeSinceLastDisconnect < RECONNECT_COOLDOWN_MS) {
-      console.warn(`[ElevenLabs] Reconnect blocked — cooldown`);
+      console.warn(`[ElevenLabs V7] Reconnect blocked — cooldown`);
       return;
     }
 
+    // V7: Full state reset for clean session
     intentionallyStopped.current = false;
     hasDeliveredFirstAudioRef.current = false;
     connectedAtRef.current = 0;
     languageSessionRef.current.reset();
     activeLanguageRef.current = "fr-CA";
+    clearConnectionTimeout();
     setIsConnecting(true);
 
     try {
-      console.log("[ElevenLabs] Requesting microphone...");
+      console.log("[ElevenLabs V7] Requesting microphone...");
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      console.log("[ElevenLabs] ✅ Microphone granted");
+      console.log("[ElevenLabs V7] ✅ Microphone granted");
 
-      console.log("[ElevenLabs] Fetching signed URL...");
+      console.log("[ElevenLabs V7] Fetching signed URL...");
       const { data, error } = await supabase.functions.invoke("voice-get-signed-url");
       const signedUrl = data?.signed_url ?? data?.signedUrl;
 
@@ -247,12 +259,11 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         throw new Error(error?.message || "Impossible d'obtenir l'URL de connexion");
       }
 
-      console.log("[ElevenLabs] ✅ Got signed URL");
+      console.log("[ElevenLabs V7] ✅ Got signed URL");
 
       // 5s connection timeout — NO retry, instant fallback
-      clearConnectionTimeout();
       connectionTimeoutRef.current = setTimeout(() => {
-        console.error(`[ElevenLabs] ⏱️ Connection timeout after ${CONNECTION_TIMEOUT_MS}ms — giving up`);
+        console.error(`[ElevenLabs V7] ⏱️ Connection timeout after ${CONNECTION_TIMEOUT_MS}ms — giving up`);
         setIsConnecting(false);
         setIsActive(false);
         try { conversation.endSession(); } catch {}
@@ -261,14 +272,15 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
 
       await conversation.startSession({ signedUrl });
 
-      console.log("[ElevenLabs] ✅ Session started");
+      console.log("[ElevenLabs V7] ✅ Session started");
+      // V7: Always inject French persona for opening
       sendAgentContext(
         buildSessionContext("fr-CA", options?.initialGreeting),
-        "[ElevenLabs] ✅ Alex persona injected"
+        "[ElevenLabs V7] ✅ Alex persona injected (fr-CA)"
       );
     } catch (err: unknown) {
       clearConnectionTimeout();
-      console.error("[ElevenLabs] Failed to start:", err);
+      console.error("[ElevenLabs V7] Failed to start:", err);
       setIsConnecting(false);
       callbacksRef.current?.onError?.(err);
     }
