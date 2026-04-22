@@ -6,36 +6,23 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, CreditCard, Lock, Shield, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { CONTRACTOR_PLANS, PLAN_PRICE_MAP } from "@/config/contractorPlans";
 
 export default function PageOnboardingPayment() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const rawPlanCode = searchParams.get("plan") || "premium_acq";
-  const planCode = rawPlanCode === "pro" ? "pro_acq" : rawPlanCode === "premium" ? "premium_acq" : rawPlanCode === "elite" ? "elite_acq" : rawPlanCode;
+  const planCode = searchParams.get("plan") || "premium";
   const [isLoading, setIsLoading] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const { toast } = useToast();
 
-  const planNames: Record<string, string> = {
-    pro_acq: "Pro",
-    premium_acq: "Premium",
-    elite_acq: "Élite",
-    signature: "Signature",
-    fondateur: "Fondateur",
-  };
+  const planObj = CONTRACTOR_PLANS.find((p) => p.slug === planCode);
+  const planName = planObj?.name || "Premium";
+  const monthlyPrice = planObj?.monthlyPrice || 599;
 
-  const planPrices: Record<string, { monthly: number; yearly: number }> = {
-    pro_acq: { monthly: 149, yearly: 1490 },
-    premium_acq: { monthly: 599, yearly: 6108 },
-    elite_acq: { monthly: 999, yearly: 10188 },
-    signature: { monthly: 799, yearly: 7990 },
-    fondateur: { monthly: 199, yearly: 1990 },
-  };
-
-  const price = planPrices[planCode] || planPrices.premium_acq;
-  const currentPrice = billingCycle === "monthly" ? price.monthly : price.yearly;
-  const savings = billingCycle === "yearly" ? Math.round(price.monthly * 12 - price.yearly) : 0;
+  const currentPrice = billingCycle === "monthly" ? monthlyPrice : Math.round(monthlyPrice * 12 * 0.85);
+  const savings = billingCycle === "yearly" ? Math.round(monthlyPrice * 12 - currentPrice) : 0;
 
   const handleCheckout = async () => {
     setIsLoading(true);

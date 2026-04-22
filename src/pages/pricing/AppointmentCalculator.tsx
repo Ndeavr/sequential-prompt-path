@@ -36,15 +36,11 @@ const PROJECT_TYPES = [
 ];
 
 const PLAN_META: Record<string, { icon: React.ElementType; color: string; label: string; monthly: number }> = {
-  pro_acq: { icon: TrendingUp, color: "text-primary", label: "Pro", monthly: 349 },
-  premium_acq: { icon: Star, color: "text-primary", label: "Premium", monthly: 599 },
-  elite_acq: { icon: Crown, color: "text-accent", label: "Élite", monthly: 999 },
-  // legacy aliases
-  recrue: { icon: Users, color: "text-muted-foreground", label: "Recrue", monthly: 0 },
+  recrue: { icon: Users, color: "text-muted-foreground", label: "Recrue", monthly: 149 },
   pro: { icon: TrendingUp, color: "text-primary", label: "Pro", monthly: 349 },
   premium: { icon: Star, color: "text-primary", label: "Premium", monthly: 599 },
   elite: { icon: Crown, color: "text-accent", label: "Élite", monthly: 999 },
-  signature: { icon: Shield, color: "text-secondary", label: "Signature", monthly: 999 },
+  signature: { icon: Shield, color: "text-secondary", label: "Signature", monthly: 1799 },
 };
 
 // ─── AI Optimization Engine ───

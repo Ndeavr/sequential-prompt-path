@@ -12,37 +12,18 @@ import FunnelLayout from "@/components/contractor-funnel/FunnelLayout";
 import { useActivationFunnel } from "@/hooks/useActivationFunnel";
 import { useHesitationRescue } from "@/hooks/useHesitationRescue";
 import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
+import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
 
-const PLANS = [
-  {
-    code: "pro",
-    name: "Pro",
-    price_monthly: 149,
-    price_yearly: 119,
-    appointments: 5,
-    features: ["Profil UNPRO vérifié", "5 rendez-vous/mois", "Score AIPP de base", "Support courriel"],
-    recommended: false,
-  },
-  {
-    code: "premium",
-    name: "Premium",
-    price_monthly: 299,
-    price_yearly: 249,
-    appointments: 15,
-    features: ["Tout de Pro", "15 rendez-vous/mois", "Score AIPP avancé", "Calendrier intégré", "Visibilité IA prioritaire", "Support prioritaire"],
-    recommended: true,
-    socialProof: "Choisi par 68% des entrepreneurs",
-  },
-  {
-    code: "elite",
-    name: "Élite",
-    price_monthly: 499,
-    price_yearly: 399,
-    appointments: 30,
-    features: ["Tout de Premium", "30 rendez-vous/mois", "Exclusivité territoriale", "Badge vérifié", "Alex dédié", "Optimisation continue"],
-    recommended: false,
-  },
-];
+const PLANS = CONTRACTOR_PLANS.map((p) => ({
+  code: p.slug,
+  name: p.name,
+  price_monthly: p.monthlyPrice,
+  appointments: p.appointmentsIncluded,
+  features: p.features,
+  recommended: p.featured,
+  socialProof: p.featured ? "Choisi par 68% des entrepreneurs" : undefined,
+  subtitle: p.subtitle,
+}));
 
 export default function ScreenPlan() {
   const navigate = useNavigate();

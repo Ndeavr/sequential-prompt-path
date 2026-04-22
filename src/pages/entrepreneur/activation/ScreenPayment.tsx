@@ -15,12 +15,11 @@ import { useToast } from "@/hooks/use-toast";
 import FunnelLayout from "@/components/contractor-funnel/FunnelLayout";
 import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 import { friendlyError } from "@/utils/friendlyErrors";
+import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
 
-const PLAN_DETAILS: Record<string, { name: string; monthly: number; yearly: number }> = {
-  pro: { name: "Pro", monthly: 149, yearly: 119 },
-  premium: { name: "Premium", monthly: 299, yearly: 249 },
-  elite: { name: "Élite", monthly: 499, yearly: 399 },
-};
+const PLAN_DETAILS: Record<string, { name: string; monthly: number }> = Object.fromEntries(
+  CONTRACTOR_PLANS.map((p) => [p.slug, { name: p.name, monthly: p.monthlyPrice }])
+);
 
 const TPS_RATE = 0.05;
 const TVQ_RATE = 0.09975;

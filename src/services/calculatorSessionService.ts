@@ -44,7 +44,7 @@ export function clearCalculatorSession() {
 
 /**
  * Plan recommendation engine based on calculator inputs.
- * Returns plan_catalog codes (pro_acq | premium_acq | elite_acq).
+ * Returns canonical plan slugs: recrue | pro | premium | elite | signature
  */
 export function recommendPlan(inputs: {
   revenueGoal: number;
@@ -56,12 +56,11 @@ export function recommendPlan(inputs: {
   const hasXXL = projectTypes.includes("XXL");
   const hasXL = projectTypes.includes("XL");
 
-  // Élite: XXL access, very high revenue or saturated capacity
-  if (hasXXL || revenueGoal >= 25000 || monthlyCapacity >= 20) return "elite_acq";
-  // Premium (featured): XL access or ambitious goals
-  if (hasXL || revenueGoal >= 12000) return "premium_acq";
-  // Pro: entry plan
-  return "pro_acq";
+  if (hasXXL || revenueGoal >= 50000 || monthlyCapacity >= 40) return "signature";
+  if (revenueGoal >= 25000 || monthlyCapacity >= 20) return "elite";
+  if (hasXL || revenueGoal >= 12000) return "premium";
+  if (revenueGoal >= 5000) return "pro";
+  return "recrue";
 }
 
 export function estimateAppointments(revenueGoal: number, avgJobValue: number, conversionRate: number): number {
@@ -70,13 +69,12 @@ export function estimateAppointments(revenueGoal: number, avgJobValue: number, c
 }
 
 export function estimateBudget(plan: string, appointments: number): number {
-  // Monthly subscription cost in dollars (matches plan_catalog refonte)
   const planCost: Record<string, number> = {
-    pro_acq: 349,
-    premium_acq: 599,
-    elite_acq: 999,
-    // legacy fallbacks
-    recrue: 0, pro: 349, premium: 599, elite: 999, signature: 999,
+    recrue: 149,
+    pro: 349,
+    premium: 599,
+    elite: 999,
+    signature: 1799,
   };
   const avgAppointmentCost = 85;
   return (planCost[plan] ?? 0) + appointments * avgAppointmentCost;

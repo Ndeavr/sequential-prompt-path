@@ -42,13 +42,13 @@ export interface PricingSnapshot {
   snapshotAt: string;
 }
 
-// Base prices
+// Base prices (canonical source of truth)
 const BASE_PRICES: Record<PlanCode, number> = {
-  recrue: 99,
-  pro: 199,
-  premium: 399,
-  elite: 699,
-  signature: 1499,
+  recrue: 149,
+  pro: 349,
+  premium: 599,
+  elite: 999,
+  signature: 1799,
 };
 
 // Size multipliers
