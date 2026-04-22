@@ -1,196 +1,172 @@
 /**
- * UNPRO — Contractor Plans Configuration
- * Single source of truth for plan pricing, features, and Stripe price IDs.
+ * UNPRO — Contractor Plans: Single Source of Truth
+ * All contractor pricing flows MUST import from this file.
+ * No hardcoded prices anywhere else.
+ *
+ * Standard plans: Recrue=149, Pro=349, Premium=599, Élite=999, Signature=1799
+ * Founder offers: Élite Fondateur=19995, Signature Fondateur=29995 (one-time)
  */
 
+export type ContractorPlanSlug = "recrue" | "pro" | "premium" | "elite" | "signature";
 export type BillingInterval = "month" | "year";
 
 export interface ContractorPlan {
-  id: string;
+  slug: ContractorPlanSlug;
   name: string;
-  monthlyPrice: number; // cents CAD — monthly
-  yearlyPrice: number; // cents CAD — yearly total
-  monthlyStripePriceId: string;
-  yearlyStripePriceId: string;
-  tagline: string;
-  features: string[];
+  monthlyPrice: number; // dollars CAD
+  subtitle: string;
+  description: string;
+  cta: string;
+  featured: boolean;
+  eyebrow?: string;
   appointmentsIncluded: number;
-  projectSizes: string[];
-  appointmentNotes: string[];
-  appointmentAccessLevel: "limited" | "standard" | "priority" | "premium" | "exclusive";
-  priorityLevel: number;
-  matchingBoost: number;
-  highlighted?: boolean;
+  features: string[];
+}
+
+export interface FounderOffer {
+  slug: string;
+  name: string;
+  basePlanSlug: ContractorPlanSlug;
+  priceOneTime: number; // dollars CAD
+  termYears: number;
+  billingType: "one_time";
+  inventoryLimited: boolean;
+  description: string;
+  cta: string;
 }
 
 export const CONTRACTOR_PLANS: ContractorPlan[] = [
   {
-    id: "recrue",
+    slug: "recrue",
     name: "Recrue",
-    monthlyPrice: 14900,
-    yearlyPrice: 149900,
-    monthlyStripePriceId: "",
-    yearlyStripePriceId: "",
-    tagline: "Pour commencer sur UNPRO et recevoir vos premiers rendez-vous.",
+    monthlyPrice: 149,
+    subtitle: "Vous existez",
+    description: "Présence de base dans l'écosystème UNPRO pour démarrer proprement avec une présence crédible.",
+    cta: "Activer Recrue",
+    featured: false,
+    appointmentsIncluded: 0,
     features: [
-      "Profil public de base",
-      "Score AIPP visible",
-      "3 rendez-vous inclus / mois",
-      "Accès aux projets XS et S",
-      "Support Alex",
+      "Profil UNPRO",
+      "Présence dans l'écosystème IA",
+      "Réception de demandes de base",
     ],
-    appointmentsIncluded: 3,
-    projectSizes: ["XS", "S"],
-    appointmentNotes: [
-      "3 rendez-vous inclus / mois",
-      "Achat de rendez-vous supplémentaires à la carte",
-      "Projets accessibles : XS, S",
-    ],
-    appointmentAccessLevel: "limited",
-    priorityLevel: 1,
-    matchingBoost: 0,
   },
   {
-    id: "pro",
+    slug: "pro",
     name: "Pro",
-    monthlyPrice: 34900,
-    yearlyPrice: 349900,
-    monthlyStripePriceId: "price_1T9X6pCvZwK1QnPVfBlT13Lw",
-    yearlyStripePriceId: "price_1T9X6pCvZwK1QnPVfBlT13Ly",
-    tagline: "Pour établir une présence solide et recevoir des opportunités ciblées.",
-    features: [
-      "Profil public complet",
-      "5 rendez-vous inclus / mois",
-      "Visibilité améliorée dans la recherche",
-      "Badge Pro",
-      "Support Alex prioritaire",
-      "Accès aux projets XS à M",
-    ],
+    monthlyPrice: 349,
+    subtitle: "Vous recevez des opportunités",
+    description: "Vous entrez dans le système avec des demandes qualifiées et une meilleure visibilité.",
+    cta: "Activer Pro",
+    featured: false,
     appointmentsIncluded: 5,
-    projectSizes: ["XS", "S", "M"],
-    appointmentNotes: [
-      "5 rendez-vous inclus / mois",
-      "Achat de rendez-vous supplémentaires à la carte",
-      "Projets accessibles : XS, S, M",
+    features: [
+      "5 rendez-vous inclus",
+      "Demandes qualifiées",
+      "Profil optimisé (AIPP)",
+      "Statistiques de base",
     ],
-    appointmentAccessLevel: "standard",
-    priorityLevel: 2,
-    matchingBoost: 0.1,
-    highlighted: true,
   },
   {
-    id: "premium",
+    slug: "premium",
     name: "Premium",
-    monthlyPrice: 59900,
-    yearlyPrice: 599900,
-    monthlyStripePriceId: "price_1T9X6qCvZwK1QnPV8V4P18tw",
-    yearlyStripePriceId: "price_1T9X6qCvZwK1QnPV8V4P18ty",
-    tagline: "Pour accélérer avec plus d'automatisation et plus de potentiel.",
-    features: [
-      "Tout le plan Pro",
-      "10 rendez-vous inclus / mois",
-      "Auto-acceptation des projets",
-      "Demandes d'avis automatiques",
-      "Statistiques avancées",
-      "Badge Premium",
-      "Accès aux projets XS à L",
-    ],
+    monthlyPrice: 599,
+    subtitle: "Votre agenda commence à se remplir",
+    eyebrow: "Plan le plus populaire",
+    description: "Des rendez-vous confirmés arrivent directement dans votre calendrier selon vos disponibilités.",
+    cta: "Passer à Premium",
+    featured: true,
     appointmentsIncluded: 10,
-    projectSizes: ["XS", "S", "M", "L"],
-    appointmentNotes: [
-      "10 rendez-vous inclus / mois",
-      "Achat de rendez-vous supplémentaires à la carte",
-      "Projets accessibles : XS, S, M, L",
+    features: [
+      "10 rendez-vous inclus",
+      "Rendez-vous directs à l'agenda",
+      "Synchronisation Google Calendar",
+      "Gestion des disponibilités",
+      "Notifications instantanées",
     ],
-    appointmentAccessLevel: "priority",
-    priorityLevel: 3,
-    matchingBoost: 0.2,
   },
   {
-    id: "elite",
+    slug: "elite",
     name: "Élite",
-    monthlyPrice: 99900,
-    yearlyPrice: 999900,
-    monthlyStripePriceId: "price_1T9X6sCvZwK1QnPV2ZwYQOGT",
-    yearlyStripePriceId: "price_1T9X6sCvZwK1QnPV2ZwYQOGY",
-    tagline: "Pour maximiser la capacité, la rapidité et la domination locale.",
-    features: [
-      "Tout le plan Premium",
-      "25 rendez-vous inclus / mois",
-      "Support dédié",
-      "Analytics avancés",
-      "Priorité renforcée dans les recommandations",
-      "Accès aux projets XS à XL",
-    ],
+    monthlyPrice: 999,
+    subtitle: "Votre agenda devient optimisé",
+    description: "UNPRO protège votre temps avec l'optimisation des routes, des distances et des buffers.",
+    cta: "Activer Élite",
+    featured: false,
     appointmentsIncluded: 25,
-    projectSizes: ["XS", "S", "M", "L", "XL"],
-    appointmentNotes: [
-      "25 rendez-vous inclus / mois",
-      "Achat de rendez-vous supplémentaires à la carte",
-      "Projets accessibles : XS à XL",
+    features: [
+      "25 rendez-vous inclus",
+      "Tout Premium",
+      "Optimisation des routes",
+      "Calcul de distance entre chaque rendez-vous",
+      "Buffers automatiques entre déplacements",
+      "Priorité sur les plages rentables",
     ],
-    appointmentAccessLevel: "premium",
-    priorityLevel: 4,
-    matchingBoost: 0.35,
   },
   {
-    id: "signature",
+    slug: "signature",
     name: "Signature",
-    monthlyPrice: 179900,
-    yearlyPrice: 1799900,
-    monthlyStripePriceId: "price_1T9X6tCvZwK1QnPVxNcBNeBM",
-    yearlyStripePriceId: "price_1T9X6tCvZwK1QnPVxNcBNeBY",
-    tagline: "Pour les entreprises qui veulent verrouiller leur position dans leur marché.",
-    features: [
-      "Visibilité maximale",
-      "50 rendez-vous inclus / mois",
-      "Badge Signature",
-      "Priorité maximale dans les recommandations",
-      "Auto-acceptation intelligente",
-      "Rapports personnalisés",
-      "Potentiel d'exclusivité territoriale",
-      "Accès à tous les projets XS à XXL",
-    ],
+    monthlyPrice: 1799,
+    subtitle: "Vous contrôlez votre marché",
+    description: "Orchestration IA complète de l'agenda et du territoire pour maximiser chaque journée.",
+    cta: "Activer Signature",
+    featured: false,
     appointmentsIncluded: 50,
-    projectSizes: ["XS", "S", "M", "L", "XL", "XXL"],
-    appointmentNotes: [
-      "50 rendez-vous inclus / mois",
-      "Achat de rendez-vous supplémentaires à la carte",
-      "Potentiel d'exclusivité sur certaines combinaisons spécialité + localité",
+    features: [
+      "50 rendez-vous inclus",
+      "Tout Élite",
+      "Optimisation avancée en temps réel",
+      "Regroupement intelligent par secteur",
+      "Priorisation des rendez-vous à haute valeur",
+      "Accès exclusif / limité par territoire",
+      "Visibilité maximale IA (AIPP MAX)",
     ],
-    appointmentAccessLevel: "exclusive",
-    priorityLevel: 5,
-    matchingBoost: 0.5,
   },
 ];
 
-export const getPlanById = (planId: string): ContractorPlan | undefined =>
-  CONTRACTOR_PLANS.find((p) => p.id === planId);
+export const FOUNDER_OFFERS: FounderOffer[] = [
+  {
+    slug: "elite-founder",
+    name: "Élite Fondateur",
+    basePlanSlug: "elite",
+    priceOneTime: 19995,
+    termYears: 10,
+    billingType: "one_time",
+    inventoryLimited: true,
+    description: "Accès Fondateur Élite verrouillé pour 10 ans.",
+    cta: "Réserver Élite Fondateur",
+  },
+  {
+    slug: "signature-founder",
+    name: "Signature Fondateur",
+    basePlanSlug: "signature",
+    priceOneTime: 29995,
+    termYears: 10,
+    billingType: "one_time",
+    inventoryLimited: true,
+    description: "Accès Fondateur Signature verrouillé pour 10 ans.",
+    cta: "Réserver Signature Fondateur",
+  },
+];
 
-/** Format cents to display string */
-export const formatPlanPrice = (cents: number): string =>
-  `${(cents / 100).toFixed(0)} $`;
+/** Lookup a contractor plan by slug */
+export function getContractorPlan(slug: string): ContractorPlan | undefined {
+  return CONTRACTOR_PLANS.find((p) => p.slug === slug);
+}
 
-/** Yearly savings percentage compared to 12× monthly */
-export const getYearlySavingsPercent = (plan: ContractorPlan): number => {
-  const fullYearly = plan.monthlyPrice * 12;
-  if (fullYearly === 0) return 0;
-  return Math.round(((fullYearly - plan.yearlyPrice) / fullYearly) * 100);
+/** Get the recommended plan slug */
+export function getRecommendedPlanSlug(): ContractorPlanSlug {
+  return "premium";
+}
+
+/** Price lookup map for calculators */
+export const PLAN_PRICE_MAP: Record<ContractorPlanSlug, number> = {
+  recrue: 149,
+  pro: 349,
+  premium: 599,
+  elite: 999,
+  signature: 1799,
 };
 
-/** Get the correct Stripe price ID for a plan + interval */
-export const getStripePriceId = (
-  plan: ContractorPlan,
-  interval: BillingInterval
-): string =>
-  interval === "year" ? plan.yearlyStripePriceId : plan.monthlyStripePriceId;
-
-/** Get display price for a plan + interval */
-export const getPlanDisplayPrice = (
-  plan: ContractorPlan,
-  interval: BillingInterval
-): number => (interval === "year" ? plan.yearlyPrice : plan.monthlyPrice);
-
-/** Monthly equivalent when billed yearly */
-export const getMonthlyEquivalent = (plan: ContractorPlan): string =>
-  `${((plan.yearlyPrice / 12) / 100).toFixed(0)} $`;
+/** Format dollars to display string */
+export const formatPrice = (dollars: number): string => `${dollars} $`;
