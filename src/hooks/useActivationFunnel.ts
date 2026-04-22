@@ -179,12 +179,15 @@ export function useActivationFunnel() {
       .eq("id", funnelIdRef.current)
       .single();
     if (data) {
-      setState(prev => ({
-        ...prev,
-        import_status: (data as any).import_status,
-        imported_data: (data as any).imported_data || {},
-        aipp_score: (data as any).aipp_score || null,
-      }));
+      setState(prev => {
+        const updated: ActivationFunnelState = {
+          ...prev,
+          import_status: (data as any).import_status,
+          imported_data: (data as any).imported_data || {},
+          aipp_score: (data as any).aipp_score || null,
+        };
+        return updated;
+      });
     }
     return (data as any)?.import_status;
   }, []);
