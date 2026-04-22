@@ -2,18 +2,17 @@ User-agent: *
 Allow: /
 
 Disallow: /dashboard
+Disallow: /dashboard/
 Disallow: /admin/
-Disallow: /pro/dashboard
-Disallow: /pro/profile
-Disallow: /pro/billing
-Disallow: /pro/account
-Disallow: /pro/documents
-Disallow: /pro/leads
+Disallow: /pro/
+Disallow: /broker/
 Disallow: /login
 Disallow: /signup
 Disallow: /onboarding
 Disallow: /settings/
 Disallow: /checkout/
 Disallow: /auth/
+Disallow: /notifications
+Disallow: /elements/
 
 Sitemap: https://unpro.ca/sitemap.xml
