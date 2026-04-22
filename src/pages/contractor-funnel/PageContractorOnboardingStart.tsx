@@ -10,6 +10,9 @@ import { ArrowRight, Building2, Globe, Phone, MapPin, Shield, Sparkles } from "l
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { WebsiteInput } from "@/components/ui/website-input";
+import { cleanTextField } from "@/utils/cleanInput";
 import FunnelLayout from "@/components/contractor-funnel/FunnelLayout";
 import CardGlass from "@/components/unpro/CardGlass";
 import { useContractorFunnel } from "@/hooks/useContractorFunnel";
@@ -89,6 +92,7 @@ export default function PageContractorOnboardingStart() {
                   placeholder="ex: Toitures Dupont Inc."
                   value={form.businessName}
                   onChange={(e) => updateField("businessName", e.target.value)}
+                  onBlur={() => updateField("businessName", cleanTextField(form.businessName))}
                   className="h-12 rounded-xl bg-muted/50 border-border/50"
                   autoFocus
                 />
@@ -100,10 +104,10 @@ export default function PageContractorOnboardingStart() {
                   <Globe className="h-3.5 w-3.5 text-muted-foreground" />
                   Site web
                 </Label>
-                <Input
+                <WebsiteInput
                   placeholder="www.toituresdupont.com"
                   value={form.website}
-                  onChange={(e) => updateField("website", e.target.value)}
+                  onChange={(v) => updateField("website", v)}
                   className="h-12 rounded-xl bg-muted/50 border-border/50"
                 />
               </motion.div>
@@ -114,12 +118,11 @@ export default function PageContractorOnboardingStart() {
                   <Phone className="h-3.5 w-3.5 text-muted-foreground" />
                   Téléphone
                 </Label>
-                <Input
+                <PhoneInput
                   placeholder="(514) 555-0123"
                   value={form.phone}
-                  onChange={(e) => updateField("phone", e.target.value)}
+                  onChange={(v) => updateField("phone", v)}
                   className="h-12 rounded-xl bg-muted/50 border-border/50"
-                  type="tel"
                 />
               </motion.div>
 
@@ -133,6 +136,7 @@ export default function PageContractorOnboardingStart() {
                   placeholder="Montréal"
                   value={form.city}
                   onChange={(e) => updateField("city", e.target.value)}
+                  onBlur={() => updateField("city", cleanTextField(form.city))}
                   className="h-12 rounded-xl bg-muted/50 border-border/50"
                 />
               </motion.div>

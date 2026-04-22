@@ -1,6 +1,10 @@
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import type { ImportMode, SeedData } from "@/pages/recruitment/PageRepresentativeOnboarding";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { EmailInput } from "@/components/ui/email-input";
+import { WebsiteInput } from "@/components/ui/website-input";
+import { cleanTextField } from "@/utils/cleanInput";
 
 interface Props {
   seed: SeedData;
@@ -8,13 +12,6 @@ interface Props {
   onUpdate: (patch: Partial<SeedData>) => void;
   onContinue: () => void;
   isProcessing: boolean;
-}
-
-function formatPhone(v: string): string {
-  const d = v.replace(/\D/g, "").slice(0, 10);
-  if (d.length <= 3) return d;
-  if (d.length <= 6) return `(${d.slice(0, 3)}) ${d.slice(3)}`;
-  return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
 }
 
 const INPUT_CLS = "w-full h-12 rounded-xl bg-muted/50 border border-border/40 px-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all";
@@ -35,6 +32,7 @@ export default function StepSeedCapture({ seed, mode, onUpdate, onContinue, isPr
             placeholder="Votre nom (représentant)"
             value={seed.rep_name}
             onChange={(e) => onUpdate({ rep_name: e.target.value })}
+            onBlur={() => onUpdate({ rep_name: cleanTextField(seed.rep_name) })}
             className={INPUT_CLS}
           />
         )}
@@ -44,6 +42,7 @@ export default function StepSeedCapture({ seed, mode, onUpdate, onContinue, isPr
           placeholder="Nom de l'entreprise *"
           value={seed.business_name}
           onChange={(e) => onUpdate({ business_name: e.target.value })}
+          onBlur={() => onUpdate({ business_name: cleanTextField(seed.business_name) })}
           className={INPUT_CLS}
         />
 
@@ -52,38 +51,35 @@ export default function StepSeedCapture({ seed, mode, onUpdate, onContinue, isPr
           placeholder="Nom du contact"
           value={seed.contact_name}
           onChange={(e) => onUpdate({ contact_name: e.target.value })}
+          onBlur={() => onUpdate({ contact_name: cleanTextField(seed.contact_name) })}
           className={INPUT_CLS}
         />
 
-        <input
-          type="url"
+        <WebsiteInput
           placeholder="Site web"
           value={seed.website}
-          onChange={(e) => onUpdate({ website: e.target.value })}
+          onChange={(v) => onUpdate({ website: v })}
           className={INPUT_CLS}
         />
 
-        <input
-          type="url"
+        <WebsiteInput
           placeholder="Lien Google Business"
           value={seed.google_business_url}
-          onChange={(e) => onUpdate({ google_business_url: e.target.value })}
+          onChange={(v) => onUpdate({ google_business_url: v })}
           className={INPUT_CLS}
         />
 
-        <input
-          type="tel"
+        <PhoneInput
           placeholder="Téléphone"
           value={seed.phone}
-          onChange={(e) => onUpdate({ phone: formatPhone(e.target.value) })}
+          onChange={(v) => onUpdate({ phone: v })}
           className={INPUT_CLS}
         />
 
-        <input
-          type="email"
+        <EmailInput
           placeholder="Email"
           value={seed.email}
-          onChange={(e) => onUpdate({ email: e.target.value })}
+          onChange={(v) => onUpdate({ email: v })}
           className={INPUT_CLS}
         />
 
@@ -93,6 +89,7 @@ export default function StepSeedCapture({ seed, mode, onUpdate, onContinue, isPr
             placeholder="RBQ (optionnel)"
             value={seed.rbq_number}
             onChange={(e) => onUpdate({ rbq_number: e.target.value })}
+            onBlur={() => onUpdate({ rbq_number: cleanTextField(seed.rbq_number) })}
             className={INPUT_CLS}
           />
           <input
@@ -100,6 +97,7 @@ export default function StepSeedCapture({ seed, mode, onUpdate, onContinue, isPr
             placeholder="NEQ (optionnel)"
             value={seed.neq_number}
             onChange={(e) => onUpdate({ neq_number: e.target.value })}
+            onBlur={() => onUpdate({ neq_number: cleanTextField(seed.neq_number) })}
             className={INPUT_CLS}
           />
         </div>

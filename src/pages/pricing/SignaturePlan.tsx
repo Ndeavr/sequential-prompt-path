@@ -9,6 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2, Shield, ArrowRight, X, Loader2 } from "lucide-react";
+import { formatPhoneDisplay } from "@/utils/formatPhone";
+import { formatEmail } from "@/utils/formatEmail";
+import { cleanTextField } from "@/utils/cleanInput";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -143,10 +146,10 @@ export default function SignaturePlan() {
                       <form onSubmit={handleSubmit} className="space-y-3">
                         <Input placeholder="Nom entreprise *" required className="rounded-xl" value={form.company_name} onChange={(e) => updateField("company_name", e.target.value)} />
                         <Input placeholder="Nom contact *" required className="rounded-xl" value={form.contact_name} onChange={(e) => updateField("contact_name", e.target.value)} />
-                        <Input type="email" placeholder="Email *" required className="rounded-xl" value={form.email} onChange={(e) => updateField("email", e.target.value)} />
-                        <Input type="tel" placeholder="Téléphone" className="rounded-xl" value={form.phone} onChange={(e) => updateField("phone", e.target.value)} />
-                        <Input placeholder="Ville principale *" required className="rounded-xl" value={form.city} onChange={(e) => updateField("city", e.target.value)} />
-                        <Input placeholder="Catégorie principale *" required className="rounded-xl" value={form.category} onChange={(e) => updateField("category", e.target.value)} />
+                        <Input type="email" placeholder="Email *" required className="rounded-xl" value={form.email} onChange={(e) => updateField("email", e.target.value)} onBlur={() => updateField("email", formatEmail(form.email))} />
+                        <Input type="tel" placeholder="Téléphone" className="rounded-xl" value={form.phone} onChange={(e) => updateField("phone", formatPhoneDisplay(e.target.value))} />
+                        <Input placeholder="Ville principale *" required className="rounded-xl" value={form.city} onChange={(e) => updateField("city", e.target.value)} onBlur={() => updateField("city", cleanTextField(form.city))} />
+                        <Input placeholder="Catégorie principale *" required className="rounded-xl" value={form.category} onChange={(e) => updateField("category", e.target.value)} onBlur={() => updateField("category", cleanTextField(form.category))} />
                         <Input placeholder="Spécialité" className="rounded-xl" value={form.specialty} onChange={(e) => updateField("specialty", e.target.value)} />
                         <Input placeholder="Site web" className="rounded-xl" value={form.website} onChange={(e) => updateField("website", e.target.value)} />
                         <Input placeholder="Budget mensuel souhaité" className="rounded-xl" value={form.monthly_budget} onChange={(e) => updateField("monthly_budget", e.target.value)} />

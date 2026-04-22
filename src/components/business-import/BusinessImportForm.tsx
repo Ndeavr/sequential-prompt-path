@@ -4,6 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { WebsiteInput } from "@/components/ui/website-input";
+import { cleanTextField } from "@/utils/cleanInput";
 import { Globe, Search, ArrowRight, Loader2, Camera, Shield, Building2, Phone, CreditCard, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import type { ImportSource } from "./ImportSourceConnectorGrid";
@@ -175,19 +178,18 @@ export default function BusinessImportForm({ source, onSubmit, onBack, isLoading
             <div className="space-y-3">
               <div>
                 <Label className="text-sm font-semibold mb-1.5 block">URL de votre site web</Label>
-                <Input
-                  placeholder="https://monentreprise.ca"
+                <WebsiteInput
+                  placeholder="monentreprise.ca"
                   value={url}
-                  onChange={(e) => setUrl(e.target.value)}
+                  onChange={setUrl}
                   className="h-11"
-                  required
                 />
               </div>
               <div>
                 <Label className="text-sm font-medium mb-1 block text-muted-foreground">
                   Nom d'entreprise <span className="text-xs">(optionnel)</span>
                 </Label>
-                <Input placeholder="Mon entreprise" value={name} onChange={(e) => setName(e.target.value)} className="h-10" />
+                <Input placeholder="Mon entreprise" value={name} onChange={(e) => setName(e.target.value)} onBlur={() => setName(cleanTextField(name))} className="h-10" />
               </div>
             </div>
           )}
@@ -231,13 +233,11 @@ export default function BusinessImportForm({ source, onSubmit, onBack, isLoading
             <div className="space-y-3">
               <div>
                 <Label className="text-sm font-semibold mb-1.5 block">Numéro de téléphone</Label>
-                <Input
-                  placeholder="514-555-1234"
-                  type="tel"
+                <PhoneInput
+                  placeholder="(514) 555-1234"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={setPhone}
                   className="h-11 font-mono"
-                  required
                 />
               </div>
             </div>

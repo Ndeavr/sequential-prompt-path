@@ -1,9 +1,10 @@
 /**
  * ModalProfileCompletionGate — Asks for missing profile fields before booking.
  */
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2 } from "lucide-react";
+import { formatPhoneDisplay } from "@/utils/formatPhone";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -75,7 +76,7 @@ export default function ModalProfileCompletionGate({ open, onClose, onComplete }
                 <input
                   type="tel"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(formatPhoneDisplay(e.target.value))}
                   placeholder="(514) 555-1234"
                   className="w-full h-11 rounded-xl px-4 bg-muted/50 border border-border/60 text-foreground text-sm
                     focus:outline-none focus:ring-2 focus:ring-primary/40"

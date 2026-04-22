@@ -9,10 +9,17 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { EmailInput } from "@/components/ui/email-input";
+import { WebsiteInput } from "@/components/ui/website-input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useActivationFunnel } from "@/hooks/useActivationFunnel";
 import FunnelLayout from "@/components/contractor-funnel/FunnelLayout";
+import { cleanTextField } from "@/utils/cleanInput";
+import { formatEmail } from "@/utils/formatEmail";
+import { formatWebsiteStorage } from "@/utils/formatWebsite";
+import { phoneToE164 } from "@/utils/formatPhone";
 
 export default function ScreenAccount() {
   const navigate = useNavigate();
@@ -36,17 +43,16 @@ export default function ScreenAccount() {
 
     setSubmitting(true);
     try {
-      // Check if already logged in
+      const cleanedEmail = formatEmail(form.email);
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        // Create account
         const { error: signUpError } = await supabase.auth.signUp({
-          email: form.email,
+          email: cleanedEmail,
           password: form.password,
           options: {
             data: {
-              business_name: form.business_name,
+              business_name: cleanTextField(form.business_name),
               role: "contractor",
             },
           },
@@ -54,12 +60,11 @@ export default function ScreenAccount() {
         if (signUpError) throw signUpError;
       }
 
-      // Create funnel row
       await createFunnel({
-        business_name: form.business_name,
-        phone: form.phone,
-        email: form.email,
-        website: form.website,
+        business_name: cleanTextField(form.business_name),
+        phone: phoneToE164(form.phone) || form.phone,
+        email: cleanedEmail,
+        website: formatWebsiteStorage(form.website),
         mode,
       });
 
@@ -91,13 +96,13 @@ export default function ScreenAccount() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="email">Courriel</Label>
-            <Input
+            <EmailInput
               id="email"
-              type="email"
               required
               placeholder="vous@entreprise.ca"
               value={form.email}
-              onChange={(e) => setForm(p => ({ ...p, email: e.target.value }))}
+              onChange={(v) => setForm(p => ({ ...p, email: v }))}
+              showValidation
             />
           </div>
 
@@ -122,29 +127,30 @@ export default function ScreenAccount() {
               placeholder="Ex: Toitures Léger Inc."
               value={form.business_name}
               onChange={(e) => setForm(p => ({ ...p, business_name: e.target.value }))}
+              onBlur={() => setForm(p => ({ ...p, business_name: cleanTextField(p.business_name) }))}
             />
           </div>
 
           <div>
             <Label htmlFor="phone">Téléphone</Label>
-            <Input
+            <PhoneInput
               id="phone"
-              type="tel"
               required
-              placeholder="514-555-0123"
+              placeholder="(514) 555-0123"
               value={form.phone}
-              onChange={(e) => setForm(p => ({ ...p, phone: e.target.value }))}
+              onChange={(v) => setForm(p => ({ ...p, phone: v }))}
+              showValidation
             />
           </div>
 
           <div>
             <Label htmlFor="website">Site web <span className="text-muted-foreground">(optionnel)</span></Label>
-            <Input
+            <WebsiteInput
               id="website"
-              type="url"
-              placeholder="https://www.votreentreprise.ca"
+              placeholder="www.votreentreprise.ca"
               value={form.website}
-              onChange={(e) => setForm(p => ({ ...p, website: e.target.value }))}
+              onChange={(v) => setForm(p => ({ ...p, website: v }))}
+              showValidation
             />
           </div>
 

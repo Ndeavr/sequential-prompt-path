@@ -3,7 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { WebsiteInput } from "@/components/ui/website-input";
 import { AlertTriangle, Building2 } from "lucide-react";
+import { cleanTextField } from "@/utils/cleanInput";
 
 interface Props {
   open: boolean;
@@ -20,7 +23,7 @@ export default function ModalManualFallbackImport({ open, onClose, onSubmit }: P
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    onSubmit({ business_name: name.trim(), city: city.trim(), phone: phone.trim(), website: website.trim() });
+    onSubmit({ business_name: cleanTextField(name), city: cleanTextField(city), phone: phone.trim(), website: website.trim() });
     setName(""); setCity(""); setPhone(""); setWebsite("");
   };
 
@@ -47,19 +50,19 @@ export default function ModalManualFallbackImport({ open, onClose, onSubmit }: P
 
           <div>
             <Label className="text-sm font-semibold">Nom d'entreprise *</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Toitures Dupont" className="h-10 mt-1" required />
+            <Input value={name} onChange={(e) => setName(e.target.value)} onBlur={() => setName(cleanTextField(name))} placeholder="Ex: Toitures Dupont" className="h-10 mt-1" required />
           </div>
           <div>
             <Label className="text-sm font-medium text-muted-foreground">Ville</Label>
-            <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Ex: Montréal" className="h-10 mt-1" />
+            <Input value={city} onChange={(e) => setCity(e.target.value)} onBlur={() => setCity(cleanTextField(city))} placeholder="Ex: Montréal" className="h-10 mt-1" />
           </div>
           <div>
             <Label className="text-sm font-medium text-muted-foreground">Téléphone</Label>
-            <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="514-555-1234" type="tel" className="h-10 mt-1" />
+            <PhoneInput value={phone} onChange={setPhone} placeholder="(514) 555-1234" className="h-10 mt-1" />
           </div>
           <div>
             <Label className="text-sm font-medium text-muted-foreground">Site web</Label>
-            <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://..." className="h-10 mt-1" />
+            <WebsiteInput value={website} onChange={setWebsite} placeholder="www.exemple.ca" className="h-10 mt-1" />
           </div>
 
           <DialogFooter className="gap-2">
