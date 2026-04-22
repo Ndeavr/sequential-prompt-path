@@ -48,7 +48,7 @@ export function useActivationFunnel() {
             id: (data as any).id,
             user_id: (data as any).user_id,
             mode: (data as any).mode || "solo",
-            current_screen: (data as any).current_screen || 1,
+            current_screen: ((data as any).current_screen || 1) as ActivationScreen,
             business_name: (data as any).business_name || "",
             phone: (data as any).phone || "",
             email: (data as any).email || "",
