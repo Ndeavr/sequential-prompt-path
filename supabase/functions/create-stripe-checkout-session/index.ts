@@ -41,29 +41,34 @@ serve(async (req) => {
 
     // Plan pricing map (price IDs from Stripe)
     const planPrices: Record<string, { monthly: string; yearly: string; name: string }> = {
+      recrue: {
+        monthly: "price_1TJf6SCvZwK1QnPVI8AXBIdD",
+        yearly: "price_1TJZb2CvZwK1QnPVCqnR2OM7",
+        name: "UNPRO Recrue",
+      },
       pro: {
-        monthly: "price_pro_monthly",
-        yearly: "price_pro_yearly",
+        monthly: "price_1TJf6lCvZwK1QnPV40NvbcaQ",
+        yearly: "price_1TJZb2CvZwK1QnPVI0hGFF39",
         name: "UNPRO Pro",
       },
       premium: {
-        monthly: "price_premium_monthly",
-        yearly: "price_premium_yearly",
+        monthly: "price_1TJf6mCvZwK1QnPV9GWx7OEM",
+        yearly: "price_1TJZb3CvZwK1QnPVhn0vbYhM",
         name: "UNPRO Premium",
       },
       elite: {
-        monthly: "price_elite_monthly",
-        yearly: "price_elite_yearly",
+        monthly: "price_1TJf6oCvZwK1QnPVX1kQNexL",
+        yearly: "price_1TJZb3CvZwK1QnPVe52XCyib",
         name: "UNPRO Élite",
       },
       signature: {
-        monthly: "price_signature_monthly",
-        yearly: "price_signature_yearly",
+        monthly: "price_1TJf6pCvZwK1QnPV89OqHFPZ",
+        yearly: "price_1TJZb4CvZwK1QnPVtcHaVEhr",
         name: "UNPRO Signature",
       },
       fondateur: {
-        monthly: "price_fondateur_monthly",
-        yearly: "price_fondateur_yearly",
+        monthly: "price_1TOJVLCvZwK1QnPVivhwKQUS",
+        yearly: "price_1TOJVLCvZwK1QnPVivhwKQUS",
         name: "UNPRO Fondateur",
       },
     };
