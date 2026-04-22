@@ -1,188 +1,175 @@
 
-# Alex V7 Hotfix Plan — Make the Real Opening Work
 
-## What is actually broken
+# Autopilot SEO Publisher + 50 Money Pages + AEO/GEO Engine
 
-The production opening the user sees is the homepage hero, not the standalone `src/features/alex/*` assistant route.
+## What exists today
+- `seo_pages` table with 368 published pages (city x profession grid)
+- `seo_articles` table with 8 articles
+- `seo_generation_queue` table for batch generation
+- `seo-generator` edge function with AI content generation via Lovable AI
+- `sitemap-xml` edge function
+- Admin generator UI at `/admin/seo-generator`
 
-Current homepage path:
-- `src/pages/Home.tsx`
-- `src/components/home/HeroSection.tsx`
-- `src/hooks/useLiveVoice.ts`
-- backend functions:
-  - `supabase/functions/voice-get-signed-url/index.ts`
-  - `supabase/functions/alex-tts/index.ts`
+## What is missing
+- No scheduling system (publish_date, drip-feed logic)
+- No autopilot cron to auto-publish on schedule
+- No quality gate before publish (word count, schema check)
+- No AEO-specific blocks (Quick Answer, HowTo, pricing tables)
+- No GEO authority pages (reports, methodology, entity pages)
+- No auto-refresh engine for low performers
+- No internal link back-patching
+- No dedicated command center dashboard
 
-Current Alex feature shell path:
-- `src/features/alex/*`
-- primarily affects `/alex`, not the current `/index` hero
+---
 
-So the fix needs to hit the real hero boot path first, then align the feature shell so both Alex surfaces behave the same.
+## Phase 1 — Database: `pages_queue` table
 
-## Root causes confirmed
+Create migration adding `pages_queue`:
 
-1. Homepage hero still owns the first impression and uses a separate voice system.
-2. `HeroSection.tsx` builds greetings from `user_metadata` directly and can speak stale/wrong names.
-3. `HeroSection.tsx` can show speaking-style UI before real audio is confirmed.
-4. `useLiveVoice.ts` still allows English-capable defaults and does not hard-lock the opening to French-only behavior.
-5. The standalone Alex feature store lacks some debug/identity fields required to prove correctness.
-6. Session restore logic in `src/features/alex/hooks/useAlexSessionRestore.ts` is still too heuristic and can contaminate identity.
-7. There is conflicting project memory about Alex voice persona; code must be aligned to the approved female French voice.
+| Column | Type | Purpose |
+|--------|------|---------|
+| id | uuid PK | |
+| slug | text UNIQUE NOT NULL | URL path |
+| title | text | Display title |
+| city | text | Target city |
+| service | text | Service/problem |
+| page_type | text | city_service, price, problem, comparison, trust, aeo, geo |
+| priority_score | integer default 50 | Higher = publish first |
+| publish_date | date | Scheduled publish date |
+| status | text default 'queued' | queued / generating / published / failed / refreshing |
+| content_json | jsonb | Generated content cache |
+| word_count | integer | Quality gate |
+| has_schema | boolean default false | Schema markup present |
+| has_faq | boolean default false | FAQ section present |
+| has_answer_block | boolean default false | AEO quick answer |
+| index_requested | boolean default false | Sent to indexing |
+| impressions | integer default 0 | Tracking |
+| clicks | integer default 0 | Tracking |
+| leads | integer default 0 | Tracking |
+| last_refreshed_at | timestamptz | Auto-refresh tracking |
+| created_at | timestamptz | |
+| updated_at | timestamptz | |
 
-## Implementation plan
+Enable RLS. Admin-only policies.
 
-### 1. Patch the real homepage opening first
-Update `src/components/home/HeroSection.tsx` so the first 3 seconds are deterministic and honest:
-- Replace random short greeting selection with a deterministic builder:
-  - logged-in verified user: `Bonjour [FirstName].`
-  - otherwise: `Bonjour.`
-- Remove time-based greeting variants for startup.
-- Force opening language to `fr-CA`.
-- Keep the premium staged presence, but only show “Alex parle…”-style copy after confirmed first audio.
-- If voice connection fails, keep the text surface alive and show a single retry/unlock path without drifting into English or wrong identity.
-- Reinitialize aggressively before each new start:
-  - clear runtime lock
-  - stop active audio channel
-  - reset local transcript/opening state
-  - start a clean voice attempt
+## Phase 2 — Seed 50 Money Pages into queue
 
-### 2. Harden the live voice hook used by the hero
-Update `src/hooks/useLiveVoice.ts`:
-- Treat each startup as a fresh session.
-- Add a hard reinitialize path before `startSession()`:
-  - end any old session
-  - clear connection timeout
-  - reset first-audio flags
-  - reset language lock to `fr-CA`
-- Lock opening context to French only.
-- Prevent “speaking” semantics until real first audio/transcript is received.
-- Keep `force` restart behavior, but bypass stale cooldown/ended-session traps cleanly.
-- Fail fast to text mode if signed URL / session start / first audio never arrives.
+Insert 50 rows into `pages_queue` with:
+- The exact slugs from the prompt (Montreal, Laval, Quebec, Longueuil, North Shore, problem pages, price pages, comparison/trust pages)
+- Priority scores: problem/urgency pages highest (90+), price pages (80+), city/service (70), comparison (60)
+- Publish dates: 2 pages/day for days 1-14, 1 page/day for days 15-36
+- Status: `queued`
 
-### 3. Lock identity to verified live auth, not cached metadata guesses
-Patch both hero and Alex feature bootstrap to use the same verified identity source:
-- `src/components/home/HeroSection.tsx`
-- `src/features/alex/hooks/useAlexBootstrap.ts`
+## Phase 3 — Upgrade `seo-generator` edge function
 
-Implementation:
-- Resolve current authenticated user from live session.
-- Query the current profile row matching that user id.
-- Greeting name source priority:
-  1. current auth session + matching current profile
-  2. current auth session metadata only if clearly tied to that same user
-  3. no name
-- Never use previous session, local snapshot, demo/test name, or unrelated metadata.
-- If verification is uncertain, say only `Bonjour.`
+Add new actions to the existing edge function:
 
-### 4. Lock female voice identity and French opening across both systems
-Patch:
-- `src/hooks/useLiveVoice.ts`
-- `src/features/alex/services/elevenlabsService.ts`
-- `supabase/functions/voice-get-signed-url/index.ts`
-- `supabase/functions/alex-tts/index.ts`
+**`action: "generate_money_page"`**
+- Pull next `queued` item from `pages_queue` by priority + publish_date
+- Generate 1200+ word content using Lovable AI (Gemini 2.5 Flash)
+- Include AEO blocks: Quick Answer (40-80 words), pricing table, FAQ (5-10 Qs), HowTo steps, trust section, red flags
+- Include GEO signals: "Selon les données UNPRO...", quotable stats, entity consistency
+- Include JSON-LD: FAQPage, HowTo, Service, BreadcrumbList, Article
+- Include internal links: 3 related cities, 3 related services, 2 guides, homepage
+- Quality gate: reject if < 900 words, no FAQ, no schema
+- On success: insert into `seo_pages`, update `pages_queue` status to `published`
+- On failure: mark `failed` with error
 
-Changes:
-- Keep the approved female voice id as the only valid opening voice.
-- Reject any browser/system speech fallback for the opening.
-- Keep French-first opening context in both conversational voice and TTS.
-- Ensure backend function responses expose enough info to debug which agent/voice actually answered.
-- If the configured voice/agent is wrong or unavailable, degrade to text instead of using the wrong identity.
+**`action: "auto_publish"`**
+- Find all `queued` items where `publish_date <= today`
+- Generate and publish them (max 3 per run)
+- Called by cron
 
-### 5. Make speaking state honest everywhere
-Patch:
-- `src/components/home/HeroSection.tsx`
-- `src/features/alex/state/alexStore.ts`
-- `src/features/alex/hooks/useAlexVoice.ts`
-- `src/features/alex/AlexPanel.tsx`
-- `src/features/alex/AlexAssistant.tsx`
+**`action: "refresh_low_performers"`**
+- Find published pages older than 45 days with low clicks/impressions
+- Regenerate title, meta, and first section
+- Update `seo_pages` and `pages_queue`
 
-Changes:
-- Add/normalize explicit states:
-  - `connecting_voice`
-  - optional `audio_ready`
-  - `speaking`
-- Only enter `speaking` after actual playback start / first audio callback.
-- Use honest labels:
-  - `Chargement…`
-  - `Alex en direct`
-  - `Connexion…`
-  - `Écrivez à Alex`
-- Never show “Alex parle…” during request, connect, or pre-playback phases.
+**`action: "backpatch_links"`**
+- For each newly published page, find 5 related existing pages and add reciprocal internal links
 
-### 6. Fix session restore contamination in the Alex feature shell
-Patch `src/features/alex/hooks/useAlexSessionRestore.ts`:
-- stop restoring identity-sensitive fields from cached snapshot
-- stop using session-id substring heuristics for identity validation
-- compare restored context against current live auth user instead
-- preserve only safe non-identity UI state when mismatch occurs
-- never let restore override:
-  - opening language
-  - verified greeting name
-  - locked voice identity
+## Phase 4 — Cron job for autopilot
 
-### 7. Expand debug visibility so failures are obvious
-Patch:
-- `src/features/alex/state/alexStore.ts`
-- `src/features/alex/AlexDebugPanel.tsx`
-- optionally add a small hero-only dev overlay if needed
+Schedule cron calling `seo-generator` with `action: "auto_publish"` daily at 8am EST. This drip-feeds pages according to `publish_date`.
 
-Expose:
-- `mode`
-- `activeLanguage`
-- `verifiedGreetingName`
-- `authUserId`
-- `profileUserId`
-- `restoredUserId`
-- `greetingText`
-- `greetingInjected`
-- `greetingSpoken`
-- `selectedVoiceId`
-- `approvedVoiceId`
-- `voiceLockedValid`
-- `playbackStarted`
-- `voiceAvailable`
-- `usedBrowserFallback`
-- `isSessionRestored`
-- `identityMismatchDetected`
+## Phase 5 — AEO/GEO content templates
 
-### 8. Align both Alex surfaces after the homepage fix
-After the hero path is stable, mirror the same locks into:
-- `src/features/alex/hooks/useAlexBootstrap.ts`
-- `src/features/alex/hooks/useAlexVoice.ts`
-- `src/features/alex/AlexPanel.tsx`
-- `src/features/alex/AlexAssistant.tsx`
+Enhance the AI generation prompt to produce:
 
-So:
-- home hero Alex
-- `/alex` floating/store-based Alex
+**AEO blocks (per page):**
+- `quick_answer`: 40-80 word direct answer at top
+- `pricing_table`: low/mid/high ranges in CAD
+- `how_to_steps`: numbered actionable steps
+- `red_flags`: warning signs list
+- `questions_before_hiring`: 5 questions
+- 3 quotable passages under 60 words each
 
-both share the same identity, language, and playback truth rules.
+**GEO signals (per page):**
+- Brand entity: "UNPRO" mentioned 2-3 times naturally
+- Data citation: "Selon les données UNPRO..."
+- Consistent entity description
+- Publisher schema with Organization
 
-## Files to patch
+## Phase 6 — Seed 25 AEO + 20 GEO pages
 
-### Priority 1 — real production opening
-- `src/components/home/HeroSection.tsx`
-- `src/hooks/useLiveVoice.ts`
-- `supabase/functions/voice-get-signed-url/index.ts`
-- `supabase/functions/alex-tts/index.ts`
+Add to `pages_queue` with appropriate types:
+- 25 AEO pages (pricing queries, best choice, problem, comparison, trust)
+- 20 GEO pages (brand authority, data reports, trust/education, product entity, thought leadership)
+- Total: 95 pages in queue (50 money + 25 AEO + 20 GEO)
 
-### Priority 2 — feature-shell alignment
-- `src/features/alex/hooks/useAlexBootstrap.ts`
-- `src/features/alex/hooks/useAlexVoice.ts`
-- `src/features/alex/state/alexStore.ts`
-- `src/features/alex/AlexAssistant.tsx`
-- `src/features/alex/AlexPanel.tsx`
-- `src/features/alex/hooks/useAlexSessionRestore.ts`
-- `src/features/alex/AlexDebugPanel.tsx`
+## Phase 7 — Command Center Dashboard
 
-## Expected result
+Create `/admin/seo-autopilot` page with glassmorphism premium UI:
 
-On `/index`:
-- UI visible immediately
-- French opening only
-- approved female voice only
-- correct verified first name only
-- no stale user name ever spoken
-- no “Alex parle…” until real audio starts
-- no browser male/system fallback
-- clean reinitialize/restart behavior when the first startup path is stuck
+**Sections:**
+- Queue overview: queued / generating / published / failed counts
+- Today's schedule: pages publishing today with status
+- Calendar view: 30-day publishing calendar
+- Published pages table: slug, type, word count, impressions, clicks, leads, quality score
+- Top performers: sorted by clicks/leads
+- Refresh candidates: pages older than 45 days with low performance
+- AEO readiness: pages with/without answer blocks, FAQ schema, HowTo
+- GEO authority: pages with brand mentions, data citations
+- Missing API keys / blockers section
+
+**Actions:**
+- Generate next batch (manual trigger)
+- Publish now (skip schedule)
+- Refresh selected pages
+- Request indexing (mark for GSC)
+
+## Phase 8 — Sitemap auto-update
+
+The existing `sitemap-xml` edge function already queries `seo_pages`. New pages inserted by the autopilot will automatically appear in the sitemap. No changes needed.
+
+## Phase 9 — Internal link engine
+
+When a new page is published:
+1. Select 3 existing pages in the same city, 3 in the same service, 2 guide/article pages
+2. Add links from new page to those pages
+3. Update those pages' `internal_links` to include the new page
+4. Store link relationships in `seo_pages.internal_links` jsonb
+
+---
+
+## Files to create/modify
+
+| Action | File | Purpose |
+|--------|------|---------|
+| Migration | `pages_queue` table | Scheduling + tracking |
+| Insert | Seed 95 pages into `pages_queue` | Initial load |
+| Modify | `supabase/functions/seo-generator/index.ts` | Add money page generation, auto_publish, refresh, backpatch actions |
+| Create | `src/pages/admin/PageSeoAutopilot.tsx` | Command center dashboard |
+| Modify | `src/app/router.tsx` | Add route |
+| Insert | Cron job for daily auto_publish | Automation |
+
+## Expected outcome
+- 95 pages queued with scheduled publish dates
+- Daily autopilot generates and publishes 1-2 pages
+- Every page has AEO answer blocks + GEO brand signals
+- Quality gate prevents thin content
+- Internal links auto-wired
+- Sitemap auto-updated
+- Premium command center at `/admin/seo-autopilot`
+- First 50 money pages published within 30 days
+
