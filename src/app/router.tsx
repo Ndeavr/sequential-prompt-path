@@ -216,6 +216,17 @@ const PageContractorPlanRecommendation = lazy(() => import("@/pages/contractor-f
 const PageContractorCheckout = lazy(() => import("@/pages/contractor-funnel/PageContractorCheckout"));
 const PageContractorActivationSuccess = lazy(() => import("@/pages/contractor-funnel/PageContractorActivationSuccess"));
 const PageContractorDashboardPostActivation = lazy(() => import("@/pages/contractor-funnel/PageContractorDashboardPostActivation"));
+
+// Contractor Activation Funnel V2 (9-screen)
+const ScreenActivationLanding = lazy(() => import("@/pages/entrepreneur/activation/ScreenLanding"));
+const ScreenActivationAccount = lazy(() => import("@/pages/entrepreneur/activation/ScreenAccount"));
+const ScreenActivationImport = lazy(() => import("@/pages/entrepreneur/activation/ScreenImport"));
+const ScreenActivationScore = lazy(() => import("@/pages/entrepreneur/activation/ScreenScore"));
+const ScreenActivationChecklist = lazy(() => import("@/pages/entrepreneur/activation/ScreenChecklist"));
+const ScreenActivationCalendar = lazy(() => import("@/pages/entrepreneur/activation/ScreenCalendar"));
+const ScreenActivationPlan = lazy(() => import("@/pages/entrepreneur/activation/ScreenPlan"));
+const ScreenActivationPayment = lazy(() => import("@/pages/entrepreneur/activation/ScreenPayment"));
+const ScreenActivationSuccess = lazy(() => import("@/pages/entrepreneur/activation/ScreenSuccess"));
 const ContractorAvailabilityPage = lazy(() => import("@/pages/ContractorAvailabilityPage"));
 const PublicBookingPage = lazy(() => import("@/pages/PublicBookingPage"));
 const BookingClientDemoPage = lazy(() => import("@/pages/BookingClientDemoPage"));
