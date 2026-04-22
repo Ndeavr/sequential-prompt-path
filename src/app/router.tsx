@@ -506,6 +506,7 @@ const AdminOutreachCampaignDetail = lazy(() => import("@/pages/admin/AdminOutrea
 const AdminOutreachTemplates = lazy(() => import("@/pages/admin/AdminOutreachTemplates"));
 const AdminOutreachAnalytics = lazy(() => import("@/pages/admin/AdminOutreachAnalytics"));
 const PageOutboundDashboard = lazy(() => import("@/pages/admin/outbound/PageOutboundDashboard"));
+const PageOutreachLive = lazy(() => import("@/pages/admin/outbound/PageOutreachLive"));
 const PageOutboundCampaigns = lazy(() => import("@/pages/admin/outbound/PageOutboundCampaigns"));
 const PageOutboundLeadsQueue = lazy(() => import("@/pages/admin/outbound/PageOutboundLeadsQueue"));
 const PageOutboundLeadProfile = lazy(() => import("@/pages/admin/outbound/PageOutboundLeadProfile"));
@@ -1126,6 +1127,7 @@ export const AppRouter = () => (
         <Route path="/admin/outreach/templates" element={<ProtectedRoute requiredRole="admin"><AdminOutreachTemplates /></ProtectedRoute>} />
         <Route path="/admin/outreach/analytics" element={<ProtectedRoute requiredRole="admin"><AdminOutreachAnalytics /></ProtectedRoute>} />
         <Route path="/admin/outbound" element={<ProtectedRoute requiredRole="admin"><PageOutboundDashboard /></ProtectedRoute>} />
+        <Route path="/admin/outreach-live" element={<ProtectedRoute requiredRole="admin"><PageOutreachLive /></ProtectedRoute>} />
         <Route path="/admin/outbound/campaigns" element={<ProtectedRoute requiredRole="admin"><PageOutboundCampaigns /></ProtectedRoute>} />
         <Route path="/admin/outbound/leads" element={<ProtectedRoute requiredRole="admin"><PageOutboundLeadsQueue /></ProtectedRoute>} />
         <Route path="/admin/outbound/leads/:id" element={<ProtectedRoute requiredRole="admin"><PageOutboundLeadProfile /></ProtectedRoute>} />
