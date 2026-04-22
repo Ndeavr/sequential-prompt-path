@@ -43,13 +43,14 @@ export default function ScreenPayment() {
   const handlePay = async () => {
     setProcessing(true);
     try {
+      const planCode = state.selected_plan || "premium";
+      const billingCycle = state.billing_cycle || "yearly";
       const { data, error } = await supabase.functions.invoke("create-stripe-checkout-session", {
         body: {
-          plan_code: state.selected_plan,
-          billing_cycle: state.billing_cycle,
+          plan_code: planCode,
+          billing_cycle: billingCycle,
           coupon_code: coupon || undefined,
-          success_url: `${window.location.origin}/entrepreneur/activer/succes`,
-          cancel_url: `${window.location.origin}/entrepreneur/activer/paiement`,
+          onboarding_session_id: state.id || undefined,
         },
       });
 
