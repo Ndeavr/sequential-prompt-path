@@ -1,77 +1,89 @@
 
 
-# Alex V5 — Critical Boot Recovery
+# Alex V7 — Identity + Voice + Language Lock
 
-## Problem
+## Critical Bugs Found
 
-Two separate Alex systems run simultaneously on the homepage, both failing:
+1. **Fake "Alex parle..." state**: `startSpeaking()` sets `mode: "speaking"` immediately when TTS request is sent, not when audio actually plays. The `onStart` callback in `elevenlabsService.speak()` fires right before `audio.play()` but `startSpeaking()` is called even earlier in the voice hook.
 
-1. **HeroSection voice orb** (old system) — calls `voice-get-signed-url` edge function, which hangs or times out. User sees "Connexion..." indefinitely.
-2. **Alex 100M floating panel** (new system) — renders bottom-right but the old system dominates the UX and creates confusion.
+2. **Client/Edge function body mismatch**: `elevenlabsService.ts` sends `{ text, voiceId, modelId, voiceSettings }` but `alex-tts` edge function expects `{ text, voice_session_id, settings }`. The voice settings are silently ignored.
 
-The `voice-get-signed-url` edge function call appears to hang (logs show "Fetching signed URL..." with no response). The 10-second timeout + retry means users wait 20+ seconds before any fallback. Meanwhile the floating Alex 100M panel may render but is overshadowed.
+3. **No verified user name**: `useAlexBootstrap.ts` reads `localStorage` auth token directly for the name — no verification against current auth session. Stale tokens from other users could leak names.
 
-## Root Causes
+4. **Session restore can override language**: `useAlexSessionRestore.ts` restores `activeLanguage` from snapshot before bootstrap locks it to `fr-CA`.
 
-1. **Edge function `voice-get-signed-url` is not responding** — likely a missing `ELEVENLABS_API_KEY` or `ELEVENLABS_AGENT_ID` secret, or the `voice_configs` table has no active row
-2. **No instant text fallback in HeroSection** — when voice fails, the hero just shows "Connexion..." with no greeting text, no input, no quick actions
-3. **Two competing Alex UIs** — the floating Alex 100M panel and the hero orb both try to be "Alex"
-4. **Autostart fires voice-only path** — `useAlexHomeAutostart` triggers `startVoice()` which requires mic + edge function + WebSocket — all blocking
+5. **No voice ID lock**: Client sends a voice ID to the edge function, but the edge function ignores it and uses its hardcoded `PRIMARY_VOICE_ID`. However, there's no client-side guard preventing a wrong voice from being used if the service is modified.
 
-## Fix Strategy
+## Fixes
 
-Make the **HeroSection** (the Alex the user sees) work in text-first mode. Keep voice as enhancement. Remove the conflicting floating Alex 100M panel from the homepage since HeroSection IS the primary Alex surface.
+### 1. Fix speaking state — only set when audio actually starts
 
-### 1. Remove Alex 100M floating panel from Home page
+**File: `src/features/alex/state/alexStore.ts`**
+- Add `connecting_voice` to the mode type (if not already present)
+- Add `startConnectingVoice()` action that sets `mode: "connecting_voice"` without setting `hasActivePlayback`
+- Change `startSpeaking()` to only be called when audio playback actually begins
 
-**File: `src/pages/Home.tsx`**
-- Remove `AlexProvider` and `AlexAssistant` imports and wrappers
-- The HeroSection orb IS Alex on the homepage — no need for a second floating panel
+**File: `src/features/alex/types/alex.types.ts`**
+- Add `"connecting_voice"` to the `AlexMode` union type
 
-### 2. Add instant text fallback to HeroSection
+**File: `src/features/alex/state/alexSelectors.ts`**
+- Add `connecting_voice` label: `{ fr: "Connexion…", en: "Connecting…" }`
 
-**File: `src/components/home/HeroSection.tsx`**
-- Show greeting text ("Bonjour. Quel est votre projet?") immediately on mount, before any voice attempt
-- Show quick action buttons (Problème, Projet, Avis) that work without voice
-- Add a text input sheet trigger that's always visible ("Écrire à Alex")
-- If voice fails or hangs >3s, show "Touchez l'orb pour démarrer la voix" instead of "Connexion..."
-- Reduce autostart delay from 1500ms to 500ms
-- Add a 5s hard timeout on `voice-get-signed-url` call — if it hangs, immediately show text fallback state
+### 2. Fix voice hook — real playback state + voice ID lock
 
-### 3. Fix autostart to not block on voice
+**File: `src/features/alex/hooks/useAlexVoice.ts`**
+- In `speak()` and `speakGreetingNow()`: call `startConnectingVoice()` first, then only call `startSpeaking()` inside the `onStart` callback of `elevenlabsService.speak()`
+- If voice fails, never fallback to browser speech — set `mode: "ready"` and log `BROWSER_VOICE_FALLBACK_BLOCKED`
 
-**File: `src/hooks/useAlexHomeAutostart.ts`**
-- Reduce `AUTOSTART_DELAY_MS` from 1500ms to 600ms
-- If autostart triggers but voice fails within 5s, show text mode with greeting visible
+### 3. Fix elevenlabs service — match edge function contract + voice ID lock
 
-### 4. Add voice failure resilience to useLiveVoice
+**File: `src/features/alex/services/elevenlabsService.ts`**
+- Change `speak()` body to send `{ text, settings: VOICE_SETTINGS }` matching what the edge function expects
+- Remove `voiceId` and `modelId` from the body (edge function uses hardcoded values)
+- Add `ALEX_PRIMARY_VOICE_ID` constant and log if mismatched
+- Move `onStart?.()` call to fire only after `audio.play()` resolves (not before)
 
-**File: `src/hooks/useLiveVoice.ts`**
-- Reduce `CONNECTION_TIMEOUT_MS` from 10s to 5s
-- On first timeout, don't retry automatically — just call `onError` so HeroSection can show text fallback
-- Add an `AbortController` to the `supabase.functions.invoke` call so it can be cancelled
+### 4. Fix bootstrap — verified user name + forced fr-CA
 
-### 5. Verify edge function secrets
+**File: `src/features/alex/hooks/useAlexBootstrap.ts`**
+- Replace `buildGreeting()` localStorage parsing with `getVerifiedGreetingName()` that uses the Supabase client's `getSession()` to get the current auth user
+- Make bootstrap async-safe: inject greeting with "Bonjour." immediately, then if auth resolves with a first name within 500ms, update the greeting text
+- Force `activeLanguage: "fr-CA"` and log `OPENING_LANGUAGE_LOCKED_FR_CA`
+- Log `USER_NAME_VERIFIED` or `USER_NAME_MISMATCH_BLOCKED`
 
-- Check if `ELEVENLABS_API_KEY` and `ELEVENLABS_AGENT_ID` secrets are configured
-- If not, this is why voice never connects — must be set for voice to work
+### 5. Fix session restore — prevent identity/language contamination
+
+**File: `src/features/alex/hooks/useAlexSessionRestore.ts`**
+- Remove `activeLanguage` from restored fields — bootstrap locks it to `fr-CA`
+- Add auth user ID check: if restored session has messages from a different user context, discard identity fields and log `SESSION_IDENTITY_DISCARDED`
+
+### 6. Fix AlexOrb — add connecting_voice visual state
+
+**File: `src/features/alex/AlexOrb.tsx`**
+- Add `connecting_voice` to `MODE_STYLES` with a subtle loading animation (pulsing ring, slightly smaller scale)
+
+### 7. Update debug panel — V7 fields
+
+**File: `src/features/alex/AlexDebugPanel.tsx`**
+- Add rows: `verifiedName`, `voiceId`, `voiceLocked`, `playbackStarted`, `connectingVoice`
+
+### 8. Update mode labels
+
+**File: `src/features/alex/state/alexSelectors.ts`**
+- `connecting_voice`: `{ fr: "Connexion…", en: "Connecting…" }`
+- Keep `speaking` label as `{ fr: "Alex parle…", en: "Alex speaking…" }` — now only shown when audio is truly playing
 
 ## Files Modified
 
 | Action | File |
 |---|---|
-| Modify | `src/pages/Home.tsx` — remove AlexProvider/AlexAssistant wrapper |
-| Modify | `src/components/home/HeroSection.tsx` — add instant greeting text, text input always visible, voice failure fallback |
-| Modify | `src/hooks/useAlexHomeAutostart.ts` — reduce delay |
-| Modify | `src/hooks/useLiveVoice.ts` — reduce timeout, no auto-retry |
-| Verify | Edge function secrets (ELEVENLABS_API_KEY, ELEVENLABS_AGENT_ID) |
-
-## Expected Result
-
-On page load within 1 second:
-- Greeting text visible: "Bonjour. Quel est votre projet?"
-- Intent pills visible (Problème, Projet, Avis)
-- "Écrire à Alex" button always visible
-- Orb pulsing and tappable
-- Voice attempts in background — if it works, Alex speaks; if not, text mode is already live
+| Modify | `src/features/alex/types/alex.types.ts` — add `connecting_voice` mode |
+| Modify | `src/features/alex/state/alexStore.ts` — add `startConnectingVoice()` action |
+| Modify | `src/features/alex/state/alexSelectors.ts` — add `connecting_voice` label |
+| Modify | `src/features/alex/services/elevenlabsService.ts` — fix body contract, move onStart after play |
+| Modify | `src/features/alex/hooks/useAlexVoice.ts` — use connecting_voice, real playback state |
+| Modify | `src/features/alex/hooks/useAlexBootstrap.ts` — verified auth name, forced fr-CA |
+| Modify | `src/features/alex/hooks/useAlexSessionRestore.ts` — prevent language/identity override |
+| Modify | `src/features/alex/AlexOrb.tsx` — add connecting_voice style |
+| Modify | `src/features/alex/AlexDebugPanel.tsx` — add V7 debug fields |
 
