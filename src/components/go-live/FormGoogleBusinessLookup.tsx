@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Search, MapPin, Phone, Globe, Building2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { formatPhoneDisplay } from "@/utils/formatPhone";
 
 export interface GmbSearchParams {
   business_name: string;
@@ -122,7 +123,7 @@ export default function FormGoogleBusinessLookup({ onResults, onError, onLoading
             <Input
               placeholder="Téléphone"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => setPhone(formatPhoneDisplay(e.target.value))}
               onKeyDown={handleKeyDown}
               className="h-10 pl-8 text-sm"
               type="tel"
