@@ -1,180 +1,116 @@
 
-
-# Friction Elimination System — Global UX Sanity Patch
+# Pricing Source of Truth — Contractor Plans Cleanup
 
 ## Overview
-Apply 27 friction elimination rules across all UNPRO flows by creating a centralized friction detection/rescue system, adding sticky mobile CTAs, autosave, smart defaults, hesitation rescue, and human-friendly error handling platform-wide.
+Create a single canonical pricing constant file and update every file across the platform that hardcodes contractor plan prices, slugs, features, or recommendations. Eliminate `_acq` suffixed plan codes, stale prices, and conflicting definitions.
 
 ---
 
-## Phase 1 — Hesitation Rescue Engine
+## Phase 1 — Canonical Pricing Constants
 
-**New file: `src/hooks/useHesitationRescue.ts`**
+**Create: `src/config/contractorPlans.ts`**
 
-Detects user idle time on any screen and surfaces a contextual help nudge after 8 seconds of inactivity.
+Single source of truth with the exact 5 standard plans and 2 founder offers as defined in the request. All prices in dollars (not cents). Exported types, arrays, and lookup maps.
 
-- Tracks last interaction timestamp (click, scroll, keypress, touch)
-- After 8s idle: shows a dismissible toast/banner with contextual message
-- Messages are screen-aware (e.g. on checklist: "Alex peut compléter ça pour vous", on payment: "Des questions sur les plans?")
-- Connects to existing `alexFrictionEngine.ts` by emitting `createFrictionSignal("inactivity_30s")` etc.
-- Max 2 nudges per screen session, then goes passive (aligns with `alexReEngagementControl`)
+Includes:
+- `CONTRACTOR_PLANS` array (Recrue 149, Pro 349, Premium 599, Élite 999, Signature 1799)
+- `FOUNDER_OFFERS` array (Élite Fondateur 19995, Signature Fondateur 29995)
+- `getContractorPlan(slug)` helper
+- `getRecommendedPlan()` returning `"premium"`
+- Type exports: `ContractorPlanSlug`, `ContractorPlan`, `FounderOffer`
 
-## Phase 2 — Sticky Mobile CTA Component
+## Phase 2 — Update DB `plan_catalog` Table
 
-**New file: `src/components/ui/StickyMobileCTA.tsx`**
+**Migration** to update `plan_catalog` rows with correct monthly prices (in cents for Stripe compatibility):
+- recrue: 14900
+- pro: 34900
+- premium: 59900
+- elite: 99900
+- signature: 179900
 
-Reusable sticky bottom CTA bar for all funnel screens on mobile:
+Update features_json, tagline, appointments_included, and highlighted flag (premium = true) to match the canonical definitions.
 
-- Fixed bottom, backdrop blur, safe-area padding
-- Single primary button (label + icon customizable)
-- Optional secondary ghost action
-- Used on: ScreenScore, ScreenChecklist, ScreenCalendar, ScreenPlan, ScreenPayment
+## Phase 3 — Fix All Hardcoded Price Files
 
-**Modifications to activation screens:**
-- `ScreenScore.tsx`: Wrap CTA in StickyMobileCTA
-- `ScreenChecklist.tsx`: Move "Continuer" to sticky bottom
-- `ScreenCalendar.tsx`: Move CTAs to sticky bottom
-- `ScreenPlan.tsx`: Move "Activer ce plan" to sticky bottom
-- `ScreenPayment.tsx`: Move "Payer" to sticky bottom
+### Files with wrong prices to update:
 
-## Phase 3 — Autosave System
+| File | Current Problem | Fix |
+|------|----------------|-----|
+| `src/pages/entrepreneur/activation/ScreenPlan.tsx` | Pro=149, Premium=299, Elite=499, missing Recrue+Signature | Import from `contractorPlans.ts`, show all 5 plans |
+| `src/pages/entrepreneur/activation/ScreenPayment.tsx` | Pro=149, Premium=299, Elite=499 | Import from `contractorPlans.ts` |
+| `src/pages/contractor-funnel/PageContractorCheckout.tsx` | Pro=149, Premium=299, Elite=599 | Import from `contractorPlans.ts` |
+| `src/pages/entrepreneur/PageOnboardingPlan.tsx` | Pro=149, Premium=299, Elite=499, Signature=799 | Import from `contractorPlans.ts` |
+| `src/pages/entrepreneur/PageOnboardingPayment.tsx` | Uses `_acq` suffixes, wrong prices (pro=149, signature=799) | Replace with canonical slugs and prices |
+| `src/components/onboarding-funnel/StepPlanRecommendation.tsx` | Recrue=0$, Pro=49$, Premium=99$, Elite=199$ | Import from `contractorPlans.ts` |
+| `src/services/calculatorSessionService.ts` | `pro_acq: 349`, `recrue: 0`, `signature: 999` — mixed old/new | Replace with canonical prices, remove `_acq` codes |
+| `src/pages/pricing/AppointmentCalculator.tsx` | Uses `_acq` suffixed codes, `signature: 999` | Replace with canonical slugs and prices |
+| `src/services/engineDynamicPricingBySize.ts` | BASE_PRICES: recrue=99, pro=199, premium=399, elite=699, signature=1499 | Update to 149, 349, 599, 999, 1799 |
+| `src/hooks/useAlexConversationLite.ts` | Hardcoded `pro_acq` with price 349 | Use canonical slug `pro` with price 349 |
+| `src/config/planRules.ts` | Uses `free/pro/premium` — no contractor alignment | Replace with full 5-tier contractor plan rules |
 
-**Modify: `src/hooks/useActivationFunnel.ts`**
+### Files with `_acq` suffixed codes to clean:
 
-Add debounced autosave (1.5s after last change):
-- Every `updateFunnel` call queues a debounced DB write
-- Visual indicator: tiny "Sauvegardé ✓" text near progress bar
-- On page return/refresh: resume exactly where left off (already partially implemented, needs current_screen routing)
+| File | Fix |
+|------|-----|
+| `src/services/calculatorSessionService.ts` | `pro_acq` → `pro`, `premium_acq` → `premium`, `elite_acq` → `elite` |
+| `src/pages/pricing/AppointmentCalculator.tsx` | Same slug cleanup |
+| `src/pages/PricingContractorsPage.tsx` | Remove `_acq` display mapping |
+| `src/pages/entrepreneur/PageOnboardingPayment.tsx` | Remove `_acq` conversion logic |
+| `src/components/contractor/ServiceSelector.tsx` | Remove `_acq` duplicates from `SERVICE_LIMITS` |
+| `src/pages/pricing/ContractorPlans.tsx` | Update `PLAN_ICONS` keys from `_acq` to canonical |
 
-**Modify: `ScreenChecklist.tsx`**
-- Add "Sauvegarde automatique" indicator
-- Save each section independently on change (not just on continue)
+## Phase 4 — Edge Function Price IDs
 
-## Phase 4 — Smart Defaults
+**Verify: `supabase/functions/create-stripe-checkout-session/index.ts`**
 
-**Modify: `ScreenCalendar.tsx`**
-- Pre-select Mon-Fri and 8h-17h (already done — confirm)
-- Default "Passer pour l'instant" is visible (already done)
+The Stripe price IDs are already mapped correctly for all 5 plans. No change needed unless the Stripe prices themselves need updating (they reference real Stripe price objects). Add `signature` monthly price of 1799 confirmation.
 
-**Modify: `ScreenPlan.tsx`**
-- Pre-select "yearly" billing (already done)
-- Pre-select "premium" plan (already done)
-- Add "Pourquoi Premium?" expandable explanation: territory demand, services count, calendar enabled
+**Verify: `supabase/functions/alex-voice-sales/index.ts`**
 
-**Modify: `ScreenChecklist.tsx`**
-- Pre-select Quebec region for zones
-- Pre-select French language in preferences
-- Auto-suggest top 3 most common services based on imported data
+Update the system prompt prices to match: Recrue(149$), Pro(349$), Premium(599$), Élite(999$), Signature(1799$). Already partially correct — confirm and fix any discrepancies.
 
-## Phase 5 — Human-Friendly Error Messages
+## Phase 5 — Founder Offers Separation
 
-**New file: `src/utils/friendlyErrors.ts`**
+**Verify: `supabase/functions/create-founder-checkout/index.ts`**
 
-Maps technical errors to fr-CA human messages:
-- `"Edge function returned 500"` → `"Service temporairement indisponible. Réessayez."`
-- `"No such price"` → `"Plan introuvable. Contactez-nous."`
-- `"Invalid payload"` → `"Données incorrectes. Vérifiez vos informations."`
-- `"IDLE_TIMEOUT"` → `"La connexion a expiré. Réessayez."`
-- Network errors → `"Connexion internet instable. Vérifiez votre réseau."`
+Confirm founder checkout prices align: Élite Fondateur = 19995$, Signature Fondateur = 29995$. Update if different.
 
-**Modify: All screens with `catch` blocks** (ScreenAccount, ScreenPayment, ScreenImport)
-- Replace raw `err.message` with `friendlyError(err)`
-- Never show technical strings to users
+**Update: `src/components/voice-sales/CardPlanFounders.tsx`** and any founder display to use `FOUNDER_OFFERS` from the canonical config.
 
-## Phase 6 — Progress & Momentum Indicators
+## Phase 6 — Memory Update
 
-**Modify: `FunnelLayout` or create wrapper**
-
-Add a persistent top progress bar across all activation screens:
-- Shows step X of 9
-- Shows estimated time remaining (e.g. "~4 min restantes")
-- Shows completion percentage
-
-**Modify: `ScreenChecklist.tsx`**
-- Add total estimated time: "~12 min pour compléter"
-- Show per-section "X min" badges (already done)
-- Add overall completion bar at top
-
-## Phase 7 — Micro-Commitment Reinforcement
-
-**Modify: `ScreenScore.tsx`**
-- After score reveal, add trust reinforcement section before CTA:
-  - "Vos données sont sécurisées"
-  - "Annulez en tout temps"
-  - "Support disponible"
-
-**Modify: `ScreenPayment.tsx`**
-- Before pay button, show:
-  - Price with taxes breakdown
-  - What happens after payment
-  - "Annulez en tout temps" reassurance (already partially done)
-
-## Phase 8 — No Dead Ends
-
-**New file: `src/components/ui/EmptyStateFallback.tsx`**
-
-Reusable component for when no results/data:
-- Never shows "nothing found"
-- Always offers: "Ajouter manuellement", "Parler à Alex", "Réessayer"
-
-**Modify: `ScreenImport.tsx`**
-- If enrichment fails or returns empty: show fallback with manual entry option instead of blank
-- Never leave user on a dead import screen
-
-**Modify: `ScreenChecklist.tsx`**
-- If no auto-detected services: show "Ajoutez vos services" prompt instead of empty chips
-
-## Phase 9 — Instant Feedback
-
-**Global CSS addition in `index.css`:**
-```css
-button:active, [role="button"]:active {
-  transform: scale(0.97);
-  transition: transform 50ms;
-}
-```
-
-- All buttons get instant press feedback via CSS active state
-- Loading states already use `Loader2` spinner (confirmed across screens)
-
-## Phase 10 — Social Proof at Decision Points
-
-**Modify: `ScreenPlan.tsx`**
-- Add near plan cards: "Choisi par 68% des entrepreneurs du Québec" on Premium
-- Add: "147 profils activés ce mois"
-
-**Modify: `ScreenPayment.tsx`**
-- Add: "Paiement sécurisé par Stripe" with lock icon (already present)
-- Add: "Entrepreneurs actifs au Québec: 200+"
+Save the canonical pricing to project memory so all future work respects it.
 
 ---
 
-## Files to create/modify
+## Files Summary
 
-| Action | File | Purpose |
-|--------|------|---------|
-| Create | `src/hooks/useHesitationRescue.ts` | Idle detection + contextual rescue nudges |
-| Create | `src/components/ui/StickyMobileCTA.tsx` | Reusable sticky bottom CTA |
-| Create | `src/utils/friendlyErrors.ts` | Human-friendly error message mapper |
-| Create | `src/components/ui/EmptyStateFallback.tsx` | No dead-end fallback component |
-| Modify | `src/hooks/useActivationFunnel.ts` | Debounced autosave + resume routing |
-| Modify | `src/pages/entrepreneur/activation/ScreenScore.tsx` | Sticky CTA + trust signals |
-| Modify | `src/pages/entrepreneur/activation/ScreenChecklist.tsx` | Sticky CTA + autosave indicator + smart defaults |
-| Modify | `src/pages/entrepreneur/activation/ScreenCalendar.tsx` | Sticky CTA |
-| Modify | `src/pages/entrepreneur/activation/ScreenPlan.tsx` | Sticky CTA + social proof + "why recommended" |
-| Modify | `src/pages/entrepreneur/activation/ScreenPayment.tsx` | Sticky CTA + tax breakdown + friendly errors |
-| Modify | `src/pages/entrepreneur/activation/ScreenImport.tsx` | Dead-end fallback on failure |
-| Modify | `src/pages/entrepreneur/activation/ScreenAccount.tsx` | Friendly errors |
-| Modify | `src/index.css` | Global button active press feedback |
+| Action | File |
+|--------|------|
+| Create | `src/config/contractorPlans.ts` |
+| Migration | Update `plan_catalog` rows |
+| Modify | `src/pages/entrepreneur/activation/ScreenPlan.tsx` |
+| Modify | `src/pages/entrepreneur/activation/ScreenPayment.tsx` |
+| Modify | `src/pages/contractor-funnel/PageContractorCheckout.tsx` |
+| Modify | `src/pages/entrepreneur/PageOnboardingPlan.tsx` |
+| Modify | `src/pages/entrepreneur/PageOnboardingPayment.tsx` |
+| Modify | `src/components/onboarding-funnel/StepPlanRecommendation.tsx` |
+| Modify | `src/services/calculatorSessionService.ts` |
+| Modify | `src/pages/pricing/AppointmentCalculator.tsx` |
+| Modify | `src/services/engineDynamicPricingBySize.ts` |
+| Modify | `src/hooks/useAlexConversationLite.ts` |
+| Modify | `src/config/planRules.ts` |
+| Modify | `src/components/contractor/ServiceSelector.tsx` |
+| Modify | `src/pages/pricing/ContractorPlans.tsx` |
+| Modify | `src/pages/PricingContractorsPage.tsx` |
+| Verify | `supabase/functions/create-stripe-checkout-session/index.ts` |
+| Verify | `supabase/functions/alex-voice-sales/index.ts` |
+| Verify | `supabase/functions/create-founder-checkout/index.ts` |
+| Memory | `mem://pricing/contractor-plans-source-of-truth` |
 
-## Expected outcome
-- 8-second hesitation rescue across all funnel screens
-- Sticky mobile CTAs on every decision screen
-- Autosave on every field change with visual confirmation
-- Smart defaults pre-selected (Quebec, French, yearly, Premium)
-- Zero technical error messages shown to users
-- No dead-end screens — always an escape path
-- Social proof at decision points (plan selection, payment)
-- Instant tap feedback on all buttons
-- Progress momentum indicators showing time remaining
-
+## Expected Outcome
+- One canonical file defines all contractor pricing
+- Every UI, calculator, edge function, and recommendation engine shows identical prices
+- No `_acq` suffixed codes remain anywhere
+- Founder offers are clearly separated from standard plans
+- Recrue=149, Pro=349, Premium=599, Élite=999, Signature=1799 — everywhere, no exceptions
