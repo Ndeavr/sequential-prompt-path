@@ -28,7 +28,6 @@ const PLANS = CONTRACTOR_PLANS.map((p) => ({
 export default function ScreenPlan() {
   const navigate = useNavigate();
   const { state, updateFunnel } = useActivationFunnel();
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
   const [selectedPlan, setSelectedPlan] = useState(state.selected_plan || "premium");
   const [showWhy, setShowWhy] = useState(false);
   useHesitationRescue({ screenKey: "plan" });
