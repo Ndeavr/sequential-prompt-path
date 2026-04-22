@@ -240,7 +240,6 @@ export default function BusinessImportForm({ source, onSubmit, onBack, isLoading
                   className="h-11 font-mono"
                 />
               </div>
-              </div>
             </div>
           )}
         </CardContent>
