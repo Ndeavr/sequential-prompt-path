@@ -1,18 +1,20 @@
 /**
  * Alex 100M — ElevenLabs TTS Service
- * Singleton abstraction. One active playback at a time.
+ * V7: Fixed edge function contract. onStart fires after audio.play() resolves.
+ * Voice ID locked to approved female Charlotte FR.
  */
 
 import { supabase } from "@/integrations/supabase/client";
 import { alexLog } from "../utils/alexDebug";
 
-const VOICE_ID = "XB0fDUnXU5powFXDhCwa"; // Charlotte FR
-const MODEL_ID = "eleven_turbo_v2_5";
+// V7: Locked approved female voice ID
+export const ALEX_PRIMARY_VOICE_ID = "XB0fDUnXU5powFXDhCwa"; // Charlotte FR — Alex premium female
+
 const VOICE_SETTINGS = {
   stability: 0.43,
   similarity_boost: 0.78,
   style: 0.28,
-  use_speaker_boost: true,
+  speed: 1.0,
 };
 
 let currentAudio: HTMLAudioElement | null = null;
@@ -48,17 +50,15 @@ export const elevenlabsService = {
     onStart?: () => void,
     onEnd?: () => void,
   ): Promise<void> {
-    // Cancel any current playback first
     cleanup();
     alexLog("tts:speak:request", { text: text.slice(0, 80) });
 
     try {
+      // V7: Match edge function contract — send { text, settings }
       const { data, error } = await supabase.functions.invoke("alex-tts", {
         body: {
           text,
-          voiceId: VOICE_ID,
-          modelId: MODEL_ID,
-          voiceSettings: VOICE_SETTINGS,
+          settings: VOICE_SETTINGS,
         },
       });
 
@@ -89,8 +89,12 @@ export const elevenlabsService = {
           onEnd?.();
           reject(e);
         };
-        onStart?.();
-        audio.play().catch((e) => {
+
+        // V7: onStart fires AFTER audio.play() resolves — real playback confirmation
+        audio.play().then(() => {
+          alexLog("tts:audio_play_resolved");
+          onStart?.();
+        }).catch((e) => {
           cleanup();
           onEnd?.();
           reject(e);
