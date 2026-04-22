@@ -4,6 +4,8 @@ import { Helmet } from "react-helmet-async";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { EmailInput } from "@/components/ui/email-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
@@ -481,12 +483,12 @@ export default function PublicBookingPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="phone">Téléphone</Label>
-                      <Input
+                      <PhoneInput
                         id="phone"
-                        type="tel"
                         value={clientPhone}
-                        onChange={(e) => setClientPhone(e.target.value)}
-                        placeholder="514-555-1234"
+                        onChange={setClientPhone}
+                        placeholder="(514) 555-1234"
+                        showValidation
                       />
                     </div>
 

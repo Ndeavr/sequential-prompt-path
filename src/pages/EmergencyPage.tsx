@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
@@ -300,7 +301,7 @@ export default function EmergencyPage() {
               </div>
               <div>
                 <Label htmlFor="ph" className="text-sm font-medium">Téléphone</Label>
-                <Input id="ph" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="514-555-1234" className="mt-1" />
+                <PhoneInput id="ph" value={phone} onChange={setPhone} placeholder="(514) 555-1234" className="mt-1" showValidation />
               </div>
 
               {/* Contact preference */}
