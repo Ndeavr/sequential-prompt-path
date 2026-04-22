@@ -60,7 +60,18 @@ serve(async (req) => {
       const data = await res.json();
       if (!res.ok) {
         console.error("Twilio send error:", JSON.stringify(data));
-        return json({ error: data.message || "Failed to send verification" }, res.status);
+        const isSmsDisabled = (data.message || "").includes("Delivery channel disabled");
+        const isServiceError = res.status >= 500;
+        if (isSmsDisabled || isServiceError) {
+          return json({
+            error: isSmsDisabled
+              ? "Le service SMS est temporairement indisponible. Veuillez réessayer plus tard ou utiliser un autre moyen de connexion."
+              : "Service de vérification indisponible.",
+            fallback: true,
+            code: isSmsDisabled ? "SMS_DISABLED" : "SERVICE_UNAVAILABLE",
+          }, 200);
+        }
+        return json({ error: data.message || "Failed to send verification", fallback: false }, res.status);
       }
 
       return json({ success: true, status: data.status });
