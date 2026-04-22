@@ -1,6 +1,7 @@
 /**
- * Alex 100M — Voice Hook
- * Voice is enhancement only. All failures degrade to live text/chat UI.
+ * Alex 100M — Voice Hook V6
+ * Voice is enhancement only. All failures degrade to text/chat.
+ * speakGreetingNow() — speaks pending greeting immediately after unlock.
  */
 
 import { useCallback, useEffect, useRef } from "react";
@@ -67,6 +68,69 @@ export function useAlexVoice() {
     alexLog("voice:manual_stop");
   }, []);
 
+  /**
+   * V6: speakGreetingNow — consumes pendingGreetingText immediately.
+   * Does NOT require mic/STT. Does NOT wait for user speech.
+   */
+  const speakGreetingNow = useCallback(async () => {
+    const state = useAlexStore.getState();
+    const greeting = state.pendingGreetingText;
+
+    if (!greeting) {
+      // Fallback: find first assistant message
+      const firstMsg = state.messages.find((m) => m.role === "assistant");
+      if (!firstMsg) {
+        alexLog("voice:speakGreetingNow:no_greeting_found");
+        return;
+      }
+      await speak(firstMsg.text);
+      useAlexStore.setState({
+        isGreetingSpoken: true,
+        shouldSpeakGreetingOnUnlock: false,
+        audioUnlockRequired: false,
+      });
+      return;
+    }
+
+    alexLog("voice:speakGreetingNow", { greeting: greeting.slice(0, 60) });
+
+    // Stop any current playback
+    if (state.hasActivePlayback) {
+      elevenlabsService.stop();
+      state.stopSpeaking();
+    }
+
+    try {
+      state.startSpeaking();
+      await elevenlabsService.speak(
+        greeting,
+        () => alexLog("voice:greeting_playback_started"),
+        () => {
+          if (isMounted.current) {
+            useAlexStore.getState().stopSpeaking();
+          }
+        }
+      );
+      useAlexStore.setState({
+        isGreetingSpoken: true,
+        pendingGreetingText: null,
+        shouldSpeakGreetingOnUnlock: false,
+        audioUnlockRequired: false,
+      });
+      alexLog("voice:greeting_spoken_success");
+    } catch (error) {
+      if (isMounted.current) {
+        useAlexStore.getState().stopSpeaking();
+        useAlexStore.setState({ mode: "ready" });
+      }
+      alexLog("voice:greeting_speak_error", error);
+    }
+  }, [speak]);
+
+  /**
+   * V6: unlockAudio — unlock AudioContext + immediately speak greeting.
+   * First tap → unlock → speak. Not "unlock → listen → wait".
+   */
   const unlockAudio = useCallback(async () => {
     try {
       elevenlabsService.init();
@@ -79,26 +143,22 @@ export function useAlexVoice() {
         await ctx.close();
       }
 
-      useAlexStore.getState().setAudioUnlocked(true);
-      useAlexStore.getState().setAutoplayAllowed(true);
-      useAlexStore.getState().setMode("ready");
+      useAlexStore.setState({
+        isAudioUnlocked: true,
+        isAutoplayAllowed: true,
+        audioUnlockRequired: false,
+        mode: "ready",
+      });
       alexLog("voice:audio_unlocked");
 
-      // Speak greeting if not yet spoken
-      const state = useAlexStore.getState();
-      if (!state.isGreetingSpoken) {
-        const greetingMsg = state.messages.find((m) => m.role === "assistant");
-        if (greetingMsg) {
-          useAlexStore.setState({ isGreetingSpoken: true });
-          await speak(greetingMsg.text);
-        }
-      }
+      // V6: Speak greeting immediately after unlock — no mic wait
+      await speakGreetingNow();
     } catch (error) {
       useAlexStore.setState({ isAutoplayAllowed: false, mode: "ready" });
       useAlexStore.getState().stopSpeaking();
       alexLog("voice:unlock_failed", error);
     }
-  }, [speak]);
+  }, [speakGreetingNow]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -109,5 +169,5 @@ export function useAlexVoice() {
     };
   }, []);
 
-  return { speak, stop, unlockAudio };
+  return { speak, stop, unlockAudio, speakGreetingNow };
 }
