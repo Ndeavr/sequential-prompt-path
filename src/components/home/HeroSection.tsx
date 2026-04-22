@@ -1,63 +1,50 @@
 /**
- * HeroSectionCinematicAlex — V5 Hard Boot
- * Text-first: greeting + pills + input visible immediately.
- * Voice is enhancement — never blocks UI.
+ * HeroSection — Premium Alex Opening Choreography
+ * 
+ * 4-state staged sequence:
+ * State 1 (0ms):     Arrival — orb alive, hero text visible, background alive
+ * State 2 (200ms):   Dissolve — hero text fades, live surface emerges
+ * State 3 (800ms):   Presence — transcript panel visible, "Alex en direct" label
+ * State 4 (2200ms):  Voice — Alex speaks short French greeting, live transcript
  */
 import { useState, useCallback, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
 import { useAlexSingleton } from "@/hooks/useAlexSingleton";
-import { useAlexHomeAutostart } from "@/hooks/useAlexHomeAutostart";
 import { alexRuntime } from "@/services/alexRuntimeSingleton";
 import { alexAudioChannel } from "@/services/alexSingleAudioChannel";
-import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, AlertTriangle, Sparkles, MessageSquare, ArrowRight, Camera, FileSearch } from "lucide-react";
+import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, Camera, FileSearch, Sparkles, AlertTriangle, MessageSquare, ArrowRight } from "lucide-react";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 import UploadPhotoModal from "@/components/home/UploadPhotoModal";
 
 const cinematicBg = "/images/hero-bg.gif";
 
 type IntentSlug = "probleme" | "projet" | "avis";
+type StagePhase = "arrival" | "dissolve" | "presence" | "speaking" | "ready";
 
 const INTENTS = [
-  {
-    slug: "probleme" as IntentSlug,
-    label: "Problème",
-    icon: AlertTriangle,
-    cta: "Détecter un problème",
-    ctaIcon: Camera,
-    ctaSec: null,
-    route: "/describe-project?intent=problem",
-  },
-  {
-    slug: "projet" as IntentSlug,
-    label: "Projet",
-    icon: Sparkles,
-    cta: "Décrire mon projet",
-    ctaIcon: Camera,
-    ctaSec: null,
-    route: "/describe-project",
-  },
-  {
-    slug: "avis" as IntentSlug,
-    label: "Avis",
-    icon: MessageSquare,
-    cta: "Analyser 3 soumissions",
-    ctaIcon: FileSearch,
-    ctaSec: null,
-    route: "/describe-project?intent=quote-analysis",
-  },
+  { slug: "probleme" as IntentSlug, label: "Problème", icon: AlertTriangle, cta: "Détecter un problème", ctaIcon: Camera, route: "/describe-project?intent=problem" },
+  { slug: "projet" as IntentSlug, label: "Projet", icon: Sparkles, cta: "Décrire mon projet", ctaIcon: Camera, route: "/describe-project" },
+  { slug: "avis" as IntentSlug, label: "Avis", icon: MessageSquare, cta: "Analyser 3 soumissions", ctaIcon: FileSearch, route: "/describe-project?intent=quote-analysis" },
 ];
 
-const COMPONENT_NAME = 'HeroSectionCinematicAlex';
+const COMPONENT_NAME = "HeroSectionCinematicAlex";
 
-/** V5: Instant greeting shown before voice even attempts */
-function getInstantGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return "Bonjour. Quel est votre projet?";
-  if (hour >= 12 && hour < 18) return "Bon après-midi. Quel est votre projet?";
-  return "Bonsoir. Quel est votre projet?";
+const SHORT_GREETINGS = [
+  "Bonjour. Quel est votre projet?",
+  "Bonjour. Je vous écoute.",
+  "Bonjour. Montrez-moi le problème.",
+];
+
+function pickGreeting(): string {
+  return SHORT_GREETINGS[Math.floor(Math.random() * SHORT_GREETINGS.length)];
 }
+
+// Timing constants (ms)
+const T_DISSOLVE = 200;
+const T_PRESENCE = 800;
+const T_VOICE_START = 2200;
 
 export default function HeroSection() {
   const { user } = useAuth();
@@ -68,27 +55,31 @@ export default function HeroSection() {
   const alexTranscriptRef = useRef("");
   const connectingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // V5: Instant greeting — always visible from first render
-  const [greetingText] = useState(getInstantGreeting);
+  // ── Staged choreography state ──
+  const [phase, setPhase] = useState<StagePhase>("arrival");
+  const [liveTranscript, setLiveTranscript] = useState("");
+  const [localGreeting] = useState(pickGreeting);
+  const voiceAttemptedRef = useRef(false);
 
-  const { isPrimary, acquireLock, releaseLock, markActive } = useAlexSingleton(COMPONENT_NAME, 'primary');
+  const { isPrimary, acquireLock, releaseLock, markActive } = useAlexSingleton(COMPONENT_NAME, "primary");
 
   const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
     onTranscript: (text) => {
       alexTranscriptRef.current += text;
+      setLiveTranscript(text);
+      // Auto-detect photo keywords
       const lower = alexTranscriptRef.current.toLowerCase();
-      const photoKeywords = ["photo", "image", "téléverser", "téléversez", "envoyer une photo", "uploader", "fichier", "picture"];
-      if (photoKeywords.some(kw => lower.includes(kw)) && !uploadModalOpen) {
-        console.log("[Hero] Alex mentioned photo — priming upload trigger");
+      const photoKw = ["photo", "image", "téléverser", "envoyer une photo"];
+      if (photoKw.some((kw) => lower.includes(kw)) && !uploadModalOpen) {
+        console.log("[Hero] Alex mentioned photo");
       }
     },
     onUserTranscript: (text) => {
       const lower = text.toLowerCase();
       const alexLower = alexTranscriptRef.current.toLowerCase();
-      const photoKeywords = ["photo", "image", "téléverser", "téléversez", "envoyer une photo", "uploader"];
-      const alexAskedPhoto = photoKeywords.some(kw => alexLower.includes(kw));
-      const userSaysYes = ["oui", "yes", "ok", "d'accord", "parfait", "bien sûr", "go", "envoyer", "envoie"].some(y => lower.includes(y));
-      if (alexAskedPhoto && userSaysYes) {
+      const photoKw = ["photo", "image", "téléverser", "envoyer une photo"];
+      const yesKw = ["oui", "yes", "ok", "d'accord", "parfait", "go", "envoyer"];
+      if (photoKw.some((kw) => alexLower.includes(kw)) && yesKw.some((y) => lower.includes(y))) {
         setUploadModalOpen(true);
         alexTranscriptRef.current = "";
       }
@@ -96,23 +87,51 @@ export default function HeroSection() {
     onConnect: () => {
       console.log("[Hero] Voice connected");
       setVoiceFailed(false);
-      markActive('gemini-live');
+      setPhase("speaking");
+      markActive("gemini-live");
+    },
+    onFirstAudio: () => {
+      setPhase("speaking");
     },
     onDisconnect: () => {
       console.log("[Hero] Voice disconnected");
+      if (phase === "speaking") setPhase("ready");
       releaseLock();
     },
     onError: (err) => {
       console.error("[Hero] Voice error:", err);
       setVoiceFailed(true);
+      setPhase("ready");
       releaseLock();
     },
   });
 
-  // Track connecting >5s → show fallback
+  // ── Choreography timer ──
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase("dissolve"), T_DISSOLVE);
+    const t2 = setTimeout(() => setPhase("presence"), T_PRESENCE);
+    const t3 = setTimeout(() => {
+      if (!voiceAttemptedRef.current) {
+        voiceAttemptedRef.current = true;
+        triggerVoiceStart();
+      }
+    }, T_VOICE_START);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Connecting >5s → fallback
   useEffect(() => {
     if (isConnecting) {
-      connectingTimerRef.current = setTimeout(() => setVoiceFailed(true), 5000);
+      connectingTimerRef.current = setTimeout(() => {
+        setVoiceFailed(true);
+        setPhase("ready");
+      }, 5000);
     } else {
       if (connectingTimerRef.current) {
         clearTimeout(connectingTimerRef.current);
@@ -124,75 +143,90 @@ export default function HeroSection() {
     };
   }, [isConnecting]);
 
-  const orbState = isConnecting && !voiceFailed ? "thinking" : isActive ? (isSpeaking ? "speaking" : "listening") : "idle";
-  const voiceActive = isActive || (isConnecting && !voiceFailed);
-  const current = INTENTS.find((i) => i.slug === activeIntent)!;
+  // Update phase based on voice state
+  useEffect(() => {
+    if (isActive && isSpeaking) setPhase("speaking");
+    else if (isActive && !isSpeaking) setPhase("speaking"); // listening within speaking phase
+  }, [isActive, isSpeaking]);
 
-  const getIntentGreeting = useCallback((intent: IntentSlug) => {
-    const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || null;
-    const hour = new Date().getHours();
-    let timeGreeting: string;
-    if (hour >= 5 && hour < 12) timeGreeting = "Bonjour";
-    else if (hour >= 12 && hour < 18) timeGreeting = "Bon après-midi";
-    else timeGreeting = "Bonsoir";
-    
-    const hi = firstName ? `${timeGreeting} ${firstName}!` : `${timeGreeting}!`;
-
-    switch (intent) {
-      case "probleme":
-        return `${hi} Je peux vous aider à trouver une solution! Avez-vous une photo ou pouvez-vous me décrire votre problème?`;
-      case "projet":
-        return `${hi} Un nouveau projet? Je peux certainement vous aider! Avez-vous une photo de ce que vous voulez améliorer ou pouvez-vous me décrire votre projet?`;
-      case "avis":
-        return `${hi} Vous aimeriez que j'analyse vos soumissions? Pas de problème! Vous pouvez les téléverser ou les prendre en photo ici.`;
-      default:
-        return `${hi} Comment puis-je vous aider?`;
+  const triggerVoiceStart = useCallback(() => {
+    if (!isPrimary) return;
+    const rtState = alexRuntime.getState();
+    if (rtState.sessionStatus === "ended" || rtState.sessionStatus === "failed") {
+      alexRuntime.clearForRestart();
     }
-  }, [user]);
+    const locked = acquireLock();
+    if (!locked) {
+      setPhase("ready");
+      return;
+    }
+    alexAudioChannel.hardStop();
+    setVoiceFailed(false);
+
+    const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || null;
+    const greeting = firstName ? `Bonjour ${firstName}. Quel est votre projet?` : localGreeting;
+    start({ initialGreeting: greeting, force: true });
+    alexTranscriptRef.current = "";
+  }, [isPrimary, acquireLock, start, user, localGreeting]);
 
   const startVoice = useCallback((intent?: IntentSlug) => {
     if (!isPrimary) return;
-
     const rtState = alexRuntime.getState();
-    if (rtState.sessionStatus === 'ended' || rtState.sessionStatus === 'failed') {
+    if (rtState.sessionStatus === "ended" || rtState.sessionStatus === "failed") {
       alexRuntime.clearForRestart();
     }
-
     const locked = acquireLock();
     if (!locked) return;
-
     alexAudioChannel.hardStop();
     setVoiceFailed(false);
 
     const selectedIntent = intent || activeIntent;
-    const greeting = getIntentGreeting(selectedIntent);
-    start({ initialGreeting: greeting, force: true });
+    const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || null;
+    const hour = new Date().getHours();
+    const timeG = hour >= 5 && hour < 12 ? "Bonjour" : hour >= 12 && hour < 18 ? "Bon après-midi" : "Bonsoir";
+    const hi = firstName ? `${timeG} ${firstName}!` : `${timeG}!`;
+    const greetingMap: Record<IntentSlug, string> = {
+      probleme: `${hi} Décrivez-moi votre problème ou envoyez une photo.`,
+      projet: `${hi} Quel projet avez-vous en tête?`,
+      avis: `${hi} Vous aimeriez que j'analyse vos soumissions?`,
+    };
+    start({ initialGreeting: greetingMap[selectedIntent], force: true });
     alexTranscriptRef.current = "";
-  }, [start, getIntentGreeting, activeIntent, isPrimary, acquireLock]);
+    setLiveTranscript("");
+    setPhase("speaking");
+  }, [start, activeIntent, isPrimary, acquireLock, user]);
 
   const stopVoice = useCallback(() => {
     stop();
     releaseLock();
+    setPhase("ready");
   }, [stop, releaseLock]);
-
-  useAlexHomeAutostart({
-    enabled: true,
-    isPrimary,
-    onAutostart: () => startVoice(),
-  });
 
   const retryVoice = useCallback(() => {
     stop();
     releaseLock();
     setVoiceFailed(false);
-    setTimeout(() => startVoice(), 300);
-  }, [stop, releaseLock, startVoice]);
+    setTimeout(() => triggerVoiceStart(), 300);
+  }, [stop, releaseLock, triggerVoiceStart]);
 
-  const statusText =
+  // ── Derived state ──
+  const orbState = isConnecting && !voiceFailed ? "thinking" : isActive ? (isSpeaking ? "speaking" : "listening") : "idle";
+  const voiceActive = isActive || (isConnecting && !voiceFailed);
+  const current = INTENTS.find((i) => i.slug === activeIntent)!;
+
+  // Phase-based visibility
+  const showHeroText = phase === "arrival";
+  const showLiveSurface = phase !== "arrival";
+  const showPresenceLabel = phase === "presence" || phase === "speaking" || phase === "ready";
+  const showVoiceControls = voiceActive;
+
+  // Status text
+  const presenceLabel =
     orbState === "speaking" ? "Alex vous parle…"
+    : orbState === "listening" ? "Alex vous écoute…"
     : orbState === "thinking" ? "Connexion…"
-    : orbState === "listening" ? "Je vous écoute…"
-    : voiceFailed ? "Touchez l'orb pour démarrer la voix"
+    : voiceFailed ? "Touchez l'orb pour démarrer"
+    : phase === "presence" ? "Alex en direct"
     : "Parlez à Alex";
 
   return (
@@ -237,75 +271,35 @@ export default function HeroSection() {
         {/* ── Content ── */}
         <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto w-full px-5 pt-6 pb-20">
 
-          {/* Headline */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <h1 className="font-display text-[28px] sm:text-[38px] md:text-[48px] font-bold text-white leading-[1.1] tracking-tight">
-              Passez à{" "}
-              <span className="bg-gradient-to-r from-[hsl(222,100%,70%)] via-[hsl(195,100%,60%)] to-[hsl(252,100%,72%)] bg-clip-text text-transparent">
-                l'intelligence
-              </span>
-              <br />du bâtiment
-            </h1>
-            <p className="mt-4 text-sm sm:text-base text-white/55 max-w-md mx-auto leading-relaxed">
-              Photo, voix ou texte — trouvez le bon professionnel en quelques secondes.
-            </p>
-          </motion.div>
+          {/* ═══ STATE 1: Hero text — dissolves away ═══ */}
+          <AnimatePresence>
+            {showHeroText && (
+              <motion.div
+                initial={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12, filter: "blur(8px)" }}
+                transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+                className="mb-6"
+              >
+                <h1 className="font-display text-[28px] sm:text-[38px] md:text-[48px] font-bold text-white leading-[1.1] tracking-tight">
+                  Passez à{" "}
+                  <span className="bg-gradient-to-r from-[hsl(222,100%,70%)] via-[hsl(195,100%,60%)] to-[hsl(252,100%,72%)] bg-clip-text text-transparent">
+                    l'intelligence
+                  </span>
+                  <br />du bâtiment
+                </h1>
+                <p className="mt-4 text-sm sm:text-base text-white/55 max-w-md mx-auto leading-relaxed">
+                  Photo, voix ou texte — trouvez le bon professionnel en quelques secondes.
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {/* ── V5: Instant Greeting Text ── */}
+          {/* ═══ Cinematic Voice Orb — ALWAYS visible from 0ms ═══ */}
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="mt-6 px-4 py-3 rounded-2xl bg-white/[0.06] border border-white/[0.08] backdrop-blur-sm max-w-sm"
-          >
-            <p className="text-sm text-white/80 font-medium">
-              🤖 Alex : <span className="text-white/90">{greetingText}</span>
-            </p>
-          </motion.div>
-
-          {/* ── Intent Pills ── */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.35 }}
-            className="mt-5 flex items-center gap-2"
-          >
-            {INTENTS.map((intent) => {
-              const isAct = intent.slug === activeIntent;
-              return (
-                <motion.button
-                  key={intent.slug}
-                  onClick={() => setActiveIntent(intent.slug)}
-                  className="relative flex items-center gap-1.5 rounded-full px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all duration-250"
-                  whileTap={{ scale: 0.95 }}
-                  style={{
-                    background: isAct
-                      ? "linear-gradient(135deg, hsl(222 100% 50% / 0.9), hsl(222 100% 35% / 0.95))"
-                      : "rgba(255,255,255,0.06)",
-                    backdropFilter: "blur(16px)",
-                    border: isAct ? "1px solid hsl(222 100% 70% / 0.45)" : "1px solid rgba(255,255,255,0.1)",
-                    boxShadow: isAct ? "0 0 30px hsl(222 100% 60% / 0.3), inset 0 1px 0 hsl(0 0% 100% / 0.1)" : "none",
-                    color: isAct ? "#fff" : "rgba(255,255,255,0.5)",
-                  }}
-                >
-                  <intent.icon className="h-3.5 w-3.5" />
-                  {intent.label}
-                </motion.button>
-              );
-            })}
-          </motion.div>
-
-          {/* ── Cinematic Voice Orb ── */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.45, type: "spring", stiffness: 180 }}
-            className="mt-8 mb-5 flex flex-col items-center"
-            data-testid="alex-orb-primary"
+            transition={{ duration: 0.5, delay: 0, type: "spring", stiffness: 200 }}
+            className="mb-4 flex flex-col items-center"
           >
             <div className="relative flex items-center justify-center">
               {/* Outer breathing glow */}
@@ -315,7 +309,10 @@ export default function HeroSection() {
                   width: 150, height: 150,
                   background: "radial-gradient(circle, hsl(222 100% 60% / 0.12) 0%, transparent 70%)",
                 }}
-                animate={{ scale: voiceActive ? [1, 1.2, 1] : [1, 1.08, 1], opacity: voiceActive ? [0.4, 0.8, 0.4] : [0.3, 0.5, 0.3] }}
+                animate={{
+                  scale: voiceActive ? [1, 1.2, 1] : [1, 1.08, 1],
+                  opacity: voiceActive ? [0.4, 0.8, 0.4] : [0.3, 0.5, 0.3],
+                }}
                 transition={{ duration: voiceActive ? 1.5 : 3, repeat: Infinity, ease: "easeInOut" }}
               />
 
@@ -349,7 +346,7 @@ export default function HeroSection() {
                 />
               ))}
 
-              {/* Thinking */}
+              {/* Thinking spinner */}
               {orbState === "thinking" && (
                 <motion.div className="absolute rounded-full pointer-events-none"
                   style={{ width: 130, height: 130, border: "2px dashed hsl(252 100% 70% / 0.2)" }}
@@ -358,9 +355,9 @@ export default function HeroSection() {
                 />
               )}
 
-              {/* Main orb — ALWAYS pulsing, never dead */}
+              {/* Main orb */}
               <motion.button
-                onClick={() => voiceActive ? stopVoice() : startVoice()}
+                onClick={() => voiceActive ? stopVoice() : (voiceFailed ? retryVoice() : startVoice())}
                 className="relative rounded-full flex items-center justify-center overflow-hidden z-10"
                 style={{
                   width: 96, height: 96,
@@ -390,63 +387,157 @@ export default function HeroSection() {
                 )}
               </motion.button>
             </div>
+          </motion.div>
 
-            {/* Status */}
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={statusText}
-                initial={{ opacity: 0, y: 4 }}
+          {/* ═══ STATE 3: Presence label + live transcript surface ═══ */}
+          <AnimatePresence>
+            {showLiveSurface && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                className="mt-4 text-xs font-medium text-white/45"
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="w-full max-w-sm flex flex-col items-center gap-3 mb-5"
               >
-                {statusText}
-              </motion.p>
-            </AnimatePresence>
+                {/* Presence label */}
+                {showPresenceLabel && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex items-center gap-2"
+                  >
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+                    </span>
+                    <AnimatePresence mode="wait">
+                      <motion.span
+                        key={presenceLabel}
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        className="text-xs font-medium text-white/50"
+                      >
+                        {presenceLabel}
+                      </motion.span>
+                    </AnimatePresence>
+                  </motion.div>
+                )}
 
-            {/* V5: Voice failed — show retry + text fallback */}
-            <AnimatePresence>
-              {voiceFailed && !isActive && (
+                {/* Live transcript surface — visible BEFORE speech starts */}
                 <motion.div
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 6 }}
-                  className="mt-3 flex items-center gap-2"
+                  initial={{ opacity: 0, scaleY: 0.95 }}
+                  animate={{ opacity: 1, scaleY: 1 }}
+                  transition={{ duration: 0.4, delay: 0.15 }}
+                  className="w-full rounded-2xl px-4 py-3 min-h-[52px] flex items-center"
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    backdropFilter: "blur(12px)",
+                  }}
                 >
-                  <button
-                    onClick={retryVoice}
-                    className="text-xs font-medium px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/70 hover:bg-white/15 transition-colors"
-                  >
-                    Réessayer la voix
-                  </button>
-                  <button
-                    onClick={() => setTextSheetOpen(true)}
-                    className="flex items-center gap-1.5 text-xs font-medium px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/70 hover:bg-white/15 transition-colors"
-                  >
-                    <Keyboard className="h-3 w-3" /> Écrire à Alex
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Voice controls when active */}
-            <AnimatePresence>
-              {voiceActive && (
-                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="mt-3 flex items-center gap-2">
-                  {orbState === "speaking" && (
-                    <button onClick={stopVoice} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-                      <VolumeX className="h-3 w-3" /> Couper
-                    </button>
+                  {liveTranscript ? (
+                    <p className="text-sm text-white/80 leading-relaxed">
+                      <span className="text-white/40 text-xs mr-1.5">Alex :</span>
+                      {liveTranscript}
+                    </p>
+                  ) : phase === "presence" ? (
+                    <p className="text-sm text-white/30 italic">Alex prête…</p>
+                  ) : phase === "speaking" && !liveTranscript ? (
+                    <div className="flex items-center gap-2">
+                      <motion.div className="flex gap-1">
+                        {[0, 1, 2].map((i) => (
+                          <motion.div
+                            key={i}
+                            className="w-1 h-1 rounded-full bg-white/40"
+                            animate={{ scale: [1, 1.5, 1], opacity: [0.4, 1, 0.4] }}
+                            transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }}
+                          />
+                        ))}
+                      </motion.div>
+                      <span className="text-xs text-white/30">Alex parle…</span>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-white/25 italic">{localGreeting}</p>
                   )}
-                  <button onClick={() => { stopVoice(); setTextSheetOpen(true); }} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-                    <Keyboard className="h-3 w-3" /> Écrire
-                  </button>
-                  <button onClick={stopVoice} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-red-400/80 bg-red-500/5 border border-red-500/15 hover:bg-red-500/10 transition-colors">
-                    <Square className="h-2.5 w-2.5" /> Arrêter
-                  </button>
                 </motion.div>
-              )}
-            </AnimatePresence>
+
+                {/* Voice failed → fallback buttons */}
+                <AnimatePresence>
+                  {voiceFailed && !isActive && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 6 }}
+                      className="flex items-center gap-2"
+                    >
+                      <button
+                        onClick={retryVoice}
+                        className="text-xs font-medium px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/70 hover:bg-white/15 transition-colors"
+                      >
+                        Réessayer
+                      </button>
+                      <button
+                        onClick={() => setTextSheetOpen(true)}
+                        className="flex items-center gap-1.5 text-xs font-medium px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/70 hover:bg-white/15 transition-colors"
+                      >
+                        <Keyboard className="h-3 w-3" /> Écrire à Alex
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Voice controls when active */}
+                <AnimatePresence>
+                  {showVoiceControls && (
+                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="flex items-center gap-2">
+                      {orbState === "speaking" && (
+                        <button onClick={stopVoice} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                          <VolumeX className="h-3 w-3" /> Couper
+                        </button>
+                      )}
+                      <button onClick={() => { stopVoice(); setTextSheetOpen(true); }} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                        <Keyboard className="h-3 w-3" /> Écrire
+                      </button>
+                      <button onClick={stopVoice} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-red-400/80 bg-red-500/5 border border-red-500/15 hover:bg-red-500/10 transition-colors">
+                        <Square className="h-2.5 w-2.5" /> Arrêter
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── Intent Pills ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.35 }}
+            className="mb-4 flex items-center gap-2"
+          >
+            {INTENTS.map((intent) => {
+              const isAct = intent.slug === activeIntent;
+              return (
+                <motion.button
+                  key={intent.slug}
+                  onClick={() => setActiveIntent(intent.slug)}
+                  className="relative flex items-center gap-1.5 rounded-full px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all duration-250"
+                  whileTap={{ scale: 0.95 }}
+                  style={{
+                    background: isAct
+                      ? "linear-gradient(135deg, hsl(222 100% 50% / 0.9), hsl(222 100% 35% / 0.95))"
+                      : "rgba(255,255,255,0.06)",
+                    backdropFilter: "blur(16px)",
+                    border: isAct ? "1px solid hsl(222 100% 70% / 0.45)" : "1px solid rgba(255,255,255,0.1)",
+                    boxShadow: isAct ? "0 0 30px hsl(222 100% 60% / 0.3), inset 0 1px 0 hsl(0 0% 100% / 0.1)" : "none",
+                    color: isAct ? "#fff" : "rgba(255,255,255,0.5)",
+                  }}
+                >
+                  <intent.icon className="h-3.5 w-3.5" />
+                  {intent.label}
+                </motion.button>
+              );
+            })}
           </motion.div>
 
           {/* ── Context CTA ── */}
@@ -473,7 +564,6 @@ export default function HeroSection() {
                 <ArrowRight className="h-4 w-4" />
               </button>
 
-              {/* V5: Always-visible text input trigger */}
               <button
                 onClick={() => setTextSheetOpen(true)}
                 className="flex items-center gap-2 text-xs text-white/40 hover:text-white/60 transition-colors"
@@ -497,7 +587,7 @@ export default function HeroSection() {
         open={uploadModalOpen}
         onClose={() => setUploadModalOpen(false)}
         onFilesSelected={(files) => {
-          console.log("[Hero] Files uploaded via modal:", files.length, files.map(f => f.name));
+          console.log("[Hero] Files uploaded via modal:", files.length, files.map((f) => f.name));
         }}
       />
     </>
