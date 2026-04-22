@@ -2,6 +2,7 @@
  * UNPRO — useActivationFunnel
  * Central hook for the 9-screen contractor activation funnel.
  * Persists to Supabase contractor_activation_funnel table.
+ * Includes debounced autosave (1.5s).
  */
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -77,20 +78,41 @@ export function useActivationFunnel() {
     load();
   }, []);
 
-  // Save to DB
-  const saveToDB = useCallback(async (updates: Partial<ActivationFunnelState>) => {
-    if (!funnelIdRef.current) return;
+  // Debounced autosave
+  const pendingUpdatesRef = useRef<Partial<ActivationFunnelState>>({});
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const flushSave = useCallback(async () => {
+    if (!funnelIdRef.current || Object.keys(pendingUpdatesRef.current).length === 0) return;
     setSaving(true);
+    const toSave = { ...pendingUpdatesRef.current };
+    pendingUpdatesRef.current = {};
     try {
       await supabase
         .from("contractor_activation_funnel" as any)
-        .update(updates as any)
+        .update(toSave as any)
         .eq("id", funnelIdRef.current);
     } catch (e) {
       console.error("Failed to save funnel:", e);
     }
     setSaving(false);
   }, []);
+
+  // Save to DB with 1.5s debounce
+  const saveToDB = useCallback(async (updates: Partial<ActivationFunnelState>) => {
+    if (!funnelIdRef.current) return;
+    pendingUpdatesRef.current = { ...pendingUpdatesRef.current, ...updates };
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(flushSave, 1500);
+  }, [flushSave]);
+
+  // Flush on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      flushSave();
+    };
+  }, [flushSave]);
 
   // Create new funnel row
   const createFunnel = useCallback(async (data: {

@@ -1,6 +1,6 @@
 /**
  * Screen 2 — Ultra Fast Account Creation
- * Email, business name, phone, optional website.
+ * Email, business name, phone, optional website + friendly errors.
  */
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -15,11 +15,14 @@ import { WebsiteInput } from "@/components/ui/website-input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useActivationFunnel } from "@/hooks/useActivationFunnel";
+import { useHesitationRescue } from "@/hooks/useHesitationRescue";
 import FunnelLayout from "@/components/contractor-funnel/FunnelLayout";
+import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 import { cleanTextField } from "@/utils/cleanInput";
 import { formatEmail } from "@/utils/formatEmail";
 import { formatWebsiteStorage } from "@/utils/formatWebsite";
 import { phoneToE164 } from "@/utils/formatPhone";
+import { friendlyError } from "@/utils/friendlyErrors";
 
 export default function ScreenAccount() {
   const navigate = useNavigate();
@@ -27,6 +30,7 @@ export default function ScreenAccount() {
   const mode = searchParams.get("mode") === "alex" ? "alex" : "solo";
   const { createFunnel } = useActivationFunnel();
   const { toast } = useToast();
+  useHesitationRescue({ screenKey: "account" });
 
   const [form, setForm] = useState({
     email: "",
@@ -37,9 +41,11 @@ export default function ScreenAccount() {
   });
   const [submitting, setSubmitting] = useState(false);
 
+  const canSubmit = form.email && form.business_name && form.phone && form.password;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.email || !form.business_name || !form.phone) return;
+    if (!canSubmit) return;
 
     setSubmitting(true);
     try {
@@ -72,7 +78,7 @@ export default function ScreenAccount() {
     } catch (err: any) {
       toast({
         title: "Erreur",
-        description: err?.message || "Une erreur est survenue",
+        description: friendlyError(err),
         variant: "destructive",
       });
     }
@@ -82,13 +88,11 @@ export default function ScreenAccount() {
   return (
     <FunnelLayout currentStep="onboarding_start" showProgress={false}>
       <motion.div
-        className="max-w-md mx-auto"
+        className="max-w-md mx-auto pb-24 sm:pb-0"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-2xl font-bold text-foreground mb-1">
-          Créez votre compte
-        </h1>
+        <h1 className="text-2xl font-bold text-foreground mb-1">Créez votre compte</h1>
         <p className="text-sm text-muted-foreground mb-6">
           Quelques informations pour lancer l'import automatique de votre entreprise.
         </p>
@@ -154,21 +158,29 @@ export default function ScreenAccount() {
             />
           </div>
 
+          {/* Desktop submit */}
           <Button
             type="submit"
             size="lg"
-            className="w-full h-14 text-base font-semibold rounded-xl"
-            disabled={submitting}
+            className="w-full h-14 text-base font-semibold rounded-xl hidden sm:flex"
+            disabled={submitting || !canSubmit}
           >
-            {submitting ? (
-              <Loader2 className="w-5 h-5 animate-spin mr-2" />
-            ) : (
-              <ArrowRight className="w-5 h-5 mr-2" />
-            )}
+            {submitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <ArrowRight className="w-5 h-5 mr-2" />}
             Continuer
           </Button>
         </form>
       </motion.div>
+
+      <StickyMobileCTA
+        label="Continuer"
+        onClick={() => {
+          const formEl = document.querySelector("form");
+          if (formEl) formEl.requestSubmit();
+        }}
+        disabled={submitting || !canSubmit}
+        loading={submitting}
+        icon={submitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <ArrowRight className="w-5 h-5 mr-2" />}
+      />
     </FunnelLayout>
   );
 }

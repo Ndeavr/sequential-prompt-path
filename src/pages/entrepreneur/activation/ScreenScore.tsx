@@ -1,12 +1,14 @@
 /**
  * Screen 4 — Preliminary AIPP Score Reveal
- * Cinematic score animation with subscores.
+ * Cinematic score animation with subscores + trust signals + sticky CTA.
  */
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Check, AlertTriangle, Eye, Shield, Star, Image, Target, Globe, Cpu, MapPin } from "lucide-react";
+import { ArrowRight, Check, AlertTriangle, Eye, Shield, Star, Image, Target, Globe, Cpu, MapPin, Lock, HeadphonesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useActivationFunnel } from "@/hooks/useActivationFunnel";
+import { useHesitationRescue } from "@/hooks/useHesitationRescue";
+import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 
 const SUBSCORE_CONFIG = [
   { key: "visibility", label: "Visibilité", icon: Eye, color: "text-blue-400" },
@@ -22,11 +24,11 @@ const SUBSCORE_CONFIG = [
 export default function ScreenScore() {
   const navigate = useNavigate();
   const { state } = useActivationFunnel();
-  
-  // Use real score or generate demo
+  useHesitationRescue({ screenKey: "score" });
+
   const score = state.aipp_score || {
     overall: 47,
-    subscores: SUBSCORE_CONFIG.map((s, i) => ({
+    subscores: SUBSCORE_CONFIG.map((s) => ({
       key: s.key,
       label: s.label,
       score: Math.floor(Math.random() * 60) + 20,
@@ -48,8 +50,10 @@ export default function ScreenScore() {
     ],
   };
 
+  const handleContinue = () => navigate("/entrepreneur/activer/profil");
+
   return (
-    <div className="min-h-screen bg-background px-4 py-6">
+    <div className="min-h-screen bg-background px-4 py-6 pb-28 sm:pb-6">
       {/* Score reveal */}
       <motion.div
         className="text-center mb-8"
@@ -108,12 +112,7 @@ export default function ScreenScore() {
       </div>
 
       {/* Found items */}
-      <motion.div
-        className="mb-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.5 }}
-      >
+      <motion.div className="mb-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}>
         <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
           <Check className="w-4 h-4 text-emerald-500" />
           Trouvé automatiquement
@@ -129,12 +128,7 @@ export default function ScreenScore() {
       </motion.div>
 
       {/* Missing items */}
-      <motion.div
-        className="mb-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.8 }}
-      >
+      <motion.div className="mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.8 }}>
         <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-amber-500" />
           À compléter pour améliorer votre score
@@ -149,15 +143,40 @@ export default function ScreenScore() {
         </div>
       </motion.div>
 
-      {/* CTA */}
+      {/* Trust reinforcement */}
+      <motion.div
+        className="flex items-center justify-center gap-4 mb-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 2 }}
+      >
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Lock className="w-3 h-3" /> Données sécurisées
+        </div>
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Shield className="w-3 h-3" /> Annulez en tout temps
+        </div>
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <HeadphonesIcon className="w-3 h-3" /> Support disponible
+        </div>
+      </motion.div>
+
+      {/* Desktop CTA */}
       <Button
         size="lg"
-        className="w-full h-14 text-base font-semibold rounded-xl"
-        onClick={() => navigate("/entrepreneur/activer/profil")}
+        className="w-full h-14 text-base font-semibold rounded-xl hidden sm:flex"
+        onClick={handleContinue}
       >
         Compléter mon profil
         <ArrowRight className="w-5 h-5 ml-2" />
       </Button>
+
+      {/* Mobile sticky CTA */}
+      <StickyMobileCTA
+        label="Compléter mon profil"
+        onClick={handleContinue}
+        icon={<ArrowRight className="w-5 h-5 mr-2" />}
+      />
     </div>
   );
 }
