@@ -59,9 +59,11 @@ export default function PricingContractorsPage() {
               <p className="text-sm font-bold text-foreground mb-1">
                 📊 Selon vos objectifs, le plan{" "}
                 <span className="text-primary capitalize">
-                  {session.recommendedPlan === "elite_acq" ? "Élite"
-                    : session.recommendedPlan === "premium_acq" ? "Premium"
-                    : session.recommendedPlan === "pro_acq" ? "Pro"
+                  {session.recommendedPlan === "elite" ? "Élite"
+                    : session.recommendedPlan === "premium" ? "Premium"
+                    : session.recommendedPlan === "pro" ? "Pro"
+                    : session.recommendedPlan === "signature" ? "Signature"
+                    : session.recommendedPlan === "recrue" ? "Recrue"
                     : session.recommendedPlan}
                 </span>{" "}
                 est le plus adapté.

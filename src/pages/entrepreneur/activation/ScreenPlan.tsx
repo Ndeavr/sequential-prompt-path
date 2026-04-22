@@ -12,53 +12,33 @@ import FunnelLayout from "@/components/contractor-funnel/FunnelLayout";
 import { useActivationFunnel } from "@/hooks/useActivationFunnel";
 import { useHesitationRescue } from "@/hooks/useHesitationRescue";
 import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
+import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
 
-const PLANS = [
-  {
-    code: "pro",
-    name: "Pro",
-    price_monthly: 149,
-    price_yearly: 119,
-    appointments: 5,
-    features: ["Profil UNPRO vérifié", "5 rendez-vous/mois", "Score AIPP de base", "Support courriel"],
-    recommended: false,
-  },
-  {
-    code: "premium",
-    name: "Premium",
-    price_monthly: 299,
-    price_yearly: 249,
-    appointments: 15,
-    features: ["Tout de Pro", "15 rendez-vous/mois", "Score AIPP avancé", "Calendrier intégré", "Visibilité IA prioritaire", "Support prioritaire"],
-    recommended: true,
-    socialProof: "Choisi par 68% des entrepreneurs",
-  },
-  {
-    code: "elite",
-    name: "Élite",
-    price_monthly: 499,
-    price_yearly: 399,
-    appointments: 30,
-    features: ["Tout de Premium", "30 rendez-vous/mois", "Exclusivité territoriale", "Badge vérifié", "Alex dédié", "Optimisation continue"],
-    recommended: false,
-  },
-];
+const PLANS = CONTRACTOR_PLANS.map((p) => ({
+  code: p.slug,
+  name: p.name,
+  price_monthly: p.monthlyPrice,
+  appointments: p.appointmentsIncluded,
+  features: p.features,
+  recommended: p.featured,
+  socialProof: p.featured ? "Choisi par 68% des entrepreneurs" : undefined,
+  subtitle: p.subtitle,
+}));
 
 export default function ScreenPlan() {
   const navigate = useNavigate();
   const { state, updateFunnel } = useActivationFunnel();
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
   const [selectedPlan, setSelectedPlan] = useState(state.selected_plan || "premium");
   const [showWhy, setShowWhy] = useState(false);
   useHesitationRescue({ screenKey: "plan" });
 
   const handleSelectPlan = async (planCode: string) => {
     setSelectedPlan(planCode);
-    await updateFunnel({ selected_plan: planCode, billing_cycle: billingCycle });
+    await updateFunnel({ selected_plan: planCode, billing_cycle: "monthly" });
   };
 
   const handleContinue = () => {
-    updateFunnel({ selected_plan: selectedPlan, billing_cycle: billingCycle });
+    updateFunnel({ selected_plan: selectedPlan, billing_cycle: "monthly" });
     navigate("/entrepreneur/activer/paiement");
   };
 
@@ -105,32 +85,10 @@ export default function ScreenPlan() {
           <span>147 profils activés ce mois</span>
         </div>
 
-        {/* Billing toggle */}
-        <div className="flex items-center justify-center gap-2 mb-6">
-          <button
-            onClick={() => setBillingCycle("monthly")}
-            className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-              billingCycle === "monthly" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-            )}
-          >
-            Mensuel
-          </button>
-          <button
-            onClick={() => setBillingCycle("yearly")}
-            className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-              billingCycle === "yearly" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-            )}
-          >
-            Annuel <span className="text-xs opacity-80">-20%</span>
-          </button>
-        </div>
-
         {/* Plan cards */}
         <div className="space-y-3 mb-6">
           {PLANS.map((plan) => {
-            const price = billingCycle === "yearly" ? plan.price_yearly : plan.price_monthly;
+            const price = plan.price_monthly;
             const isSelected = selectedPlan === plan.code;
 
             return (

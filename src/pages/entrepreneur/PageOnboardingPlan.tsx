@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Zap } from "lucide-react";
 import PanelPlanCapacityProjection from "@/components/go-live/PanelPlanCapacityProjection";
+import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
 
 export default function PageOnboardingPlan() {
   const navigate = useNavigate();
@@ -36,12 +37,7 @@ export default function PageOnboardingPlan() {
 
       {/* Plan Cards */}
       <div className="space-y-3">
-        {[
-          { code: "pro", name: "Pro", price: 149, appointments: 5, color: "border-blue-500/30" },
-          { code: "premium", name: "Premium", price: 299, appointments: 15, color: "border-purple-500/30", recommended: true },
-          { code: "elite", name: "Élite", price: 499, appointments: 30, color: "border-amber-500/30" },
-          { code: "signature", name: "Signature", price: 799, appointments: 50, color: "border-emerald-500/30" },
-        ].map((plan) => (
+        {CONTRACTOR_PLANS.map((p) => ({ code: p.slug, name: p.name, price: p.monthlyPrice, appointments: p.appointmentsIncluded, color: p.featured ? "border-purple-500/30" : "border-border/50", recommended: p.featured })).map((plan) => (
           <button
             key={plan.code}
             onClick={() => handleSelectPlan(plan.code)}

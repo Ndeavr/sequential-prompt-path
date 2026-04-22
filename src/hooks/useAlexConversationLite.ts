@@ -126,7 +126,7 @@ function detectAnalysisIntent(text: string): IntentMatch | null {
     return {
       intent: "stripe_payment_inline",
         response: "Merci! Votre profil est prêt. Procédons au paiement pour activer votre plan Pro.",
-        data: { planCode: "pro_acq", planName: "Pro", price: 349, interval: "monthly" },
+        data: { planCode: "pro", planName: "Pro", price: 349, interval: "monthly" },
     };
   }
 
@@ -335,13 +335,13 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
       try {
         const plans = await getCachedPlans();
         if (plans.length > 0) {
-          const recommended = plans.find(p => p.code === "premium_acq") || plans[1];
+        const recommended = plans.find(p => p.code === "premium") || plans[1];
           audioEngine.play("success");
           emitSafe(
             "alex",
             "Voici les plans UNPRO — chaque rendez-vous est exclusif, vous êtes le seul professionnel recommandé. Pas de leads partagés, que des opportunités qualifiées par notre IA.",
             "plan_comparison" as InlineCardType,
-            { plans, recommendedCode: recommended?.code || "premium_acq" }
+            { plans, recommendedCode: recommended?.code || "premium" }
           );
           setIsThinking(false);
           return;

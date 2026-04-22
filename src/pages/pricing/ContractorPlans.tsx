@@ -37,9 +37,10 @@ const fadeUp = {
 };
 
 const PLAN_ICONS: Record<string, React.ElementType> = {
-  pro_acq: TrendingUp,
-  premium_acq: Star,
-  elite_acq: Crown,
+  recrue: Sprout,
+  pro: TrendingUp,
+  premium: Star,
+  elite: Crown,
   signature: Shield,
 };
 

@@ -24,13 +24,22 @@ interface Props {
   isProcessing: boolean;
 }
 
-const PLAN_DEFS: Record<string, { icon: any; color: string; price: string; features: string[] }> = {
-  recrue: { icon: Zap, color: "text-muted-foreground", price: "0$", features: ["Profil de base", "1 territoire", "2 catégories"] },
-  pro: { icon: Zap, color: "text-blue-400", price: "49$", features: ["Profil optimisé", "3 territoires", "Rendez-vous qualifiés"] },
-  premium: { icon: Star, color: "text-secondary", price: "99$", features: ["Profil premium", "5 territoires", "Projets S→XL", "Matching prioritaire"] },
-  elite: { icon: Crown, color: "text-yellow-400", price: "199$", features: ["Profil élite", "10 territoires", "Tous projets", "Analytics avancés"] },
-  signature: { icon: Crown, color: "text-rose-400", price: "Sur mesure", features: ["Exclusivité territoriale", "Tous projets", "Alex dédié", "Booking premium"] },
-};
+import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
+
+const PLAN_ICON_MAP: Record<string, any> = { recrue: Zap, pro: Zap, premium: Star, elite: Crown, signature: Crown };
+const PLAN_COLOR_MAP: Record<string, string> = { recrue: "text-muted-foreground", pro: "text-blue-400", premium: "text-secondary", elite: "text-yellow-400", signature: "text-rose-400" };
+
+const PLAN_DEFS: Record<string, { icon: any; color: string; price: string; features: string[] }> = Object.fromEntries(
+  CONTRACTOR_PLANS.map((p) => [
+    p.slug,
+    {
+      icon: PLAN_ICON_MAP[p.slug] || Zap,
+      color: PLAN_COLOR_MAP[p.slug] || "text-muted-foreground",
+      price: `${p.monthlyPrice}$`,
+      features: p.features.slice(0, 4),
+    },
+  ])
+);
 
 function computePlanMatch(objectives: ObjectivesData | null, city: string): PlanMatch {
   if (!objectives) {

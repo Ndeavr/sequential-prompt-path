@@ -17,23 +17,11 @@ import { fadeUp, staggerContainer } from "@/lib/motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const PLAN_DETAILS: Record<string, { name: string; price: number; features: string[] }> = {
-  pro: {
-    name: "Pro",
-    price: 149,
-    features: ["4 rendez-vous/mois", "Profil AIPP vérifié", "Support standard", "Visibilité locale"],
-  },
-  premium: {
-    name: "Premium",
-    price: 299,
-    features: ["8 rendez-vous/mois", "Profil AIPP prioritaire", "FAQ IA illimitées", "Visibilité étendue", "Support prioritaire"],
-  },
-  elite: {
-    name: "Élite",
-    price: 599,
-    features: ["15 rendez-vous/mois", "Profil AIPP premium", "Exclusivité zone", "Visibilité maximale", "Support dédié", "Analytics avancés"],
-  },
-};
+import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
+
+const PLAN_DETAILS: Record<string, { name: string; price: number; features: string[] }> = Object.fromEntries(
+  CONTRACTOR_PLANS.map((p) => [p.slug, { name: p.name, price: p.monthlyPrice, features: p.features }])
+);
 
 export default function PageContractorCheckout() {
   const { state, goToStep } = useContractorFunnel();

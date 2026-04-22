@@ -15,12 +15,11 @@ import { useToast } from "@/hooks/use-toast";
 import FunnelLayout from "@/components/contractor-funnel/FunnelLayout";
 import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 import { friendlyError } from "@/utils/friendlyErrors";
+import { CONTRACTOR_PLANS } from "@/config/contractorPlans";
 
-const PLAN_DETAILS: Record<string, { name: string; monthly: number; yearly: number }> = {
-  pro: { name: "Pro", monthly: 149, yearly: 119 },
-  premium: { name: "Premium", monthly: 299, yearly: 249 },
-  elite: { name: "Élite", monthly: 499, yearly: 399 },
-};
+const PLAN_DETAILS: Record<string, { name: string; monthly: number }> = Object.fromEntries(
+  CONTRACTOR_PLANS.map((p) => [p.slug, { name: p.name, monthly: p.monthlyPrice }])
+);
 
 const TPS_RATE = 0.05;
 const TVQ_RATE = 0.09975;
@@ -33,12 +32,12 @@ export default function ScreenPayment() {
   const [processing, setProcessing] = useState(false);
   useHesitationRescue({ screenKey: "payment" });
 
-  const plan = PLAN_DETAILS[state.selected_plan || "premium"];
-  const price = state.billing_cycle === "yearly" ? plan.yearly : plan.monthly;
+  const plan = PLAN_DETAILS[state.selected_plan || "premium"] || PLAN_DETAILS["premium"];
+  const price = plan.monthly;
   const tps = Math.round(price * TPS_RATE * 100) / 100;
   const tvq = Math.round(price * TVQ_RATE * 100) / 100;
   const total = Math.round((price + tps + tvq) * 100) / 100;
-  const savings = state.billing_cycle === "yearly" ? (plan.monthly - plan.yearly) * 12 : 0;
+  const savings = 0;
 
   const handlePay = async () => {
     setProcessing(true);
