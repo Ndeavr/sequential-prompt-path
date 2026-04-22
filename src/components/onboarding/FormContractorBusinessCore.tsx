@@ -4,6 +4,10 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { EmailInput } from "@/components/ui/email-input";
+import { WebsiteInput } from "@/components/ui/website-input";
+import { cleanTextField } from "@/utils/cleanInput";
 
 interface FormContractorBusinessCoreProps {
   initialData?: Record<string, any>;
@@ -38,34 +42,35 @@ export default function FormContractorBusinessCore({ initialData, onSave, loadin
           placeholder="Nom de l'entreprise *"
           value={form.company_name}
           onChange={(e) => update("company_name", e.target.value)}
+          onBlur={() => update("company_name", cleanTextField(form.company_name))}
           className="h-11 rounded-xl"
         />
         <Input
           placeholder="Nom du contact"
           value={form.contact_name}
           onChange={(e) => update("contact_name", e.target.value)}
+          onBlur={() => update("contact_name", cleanTextField(form.contact_name))}
           className="h-11 rounded-xl"
         />
         <div className="grid grid-cols-2 gap-3">
-          <Input
-            type="email"
+          <EmailInput
             placeholder="Courriel *"
             value={form.email}
-            onChange={(e) => update("email", e.target.value)}
+            onChange={(v) => update("email", v)}
             className="h-11 rounded-xl"
+            showValidation
           />
-          <Input
-            type="tel"
+          <PhoneInput
             placeholder="Téléphone"
             value={form.phone}
-            onChange={(e) => update("phone", e.target.value)}
+            onChange={(v) => update("phone", v)}
             className="h-11 rounded-xl"
           />
         </div>
-        <Input
+        <WebsiteInput
           placeholder="Site web"
           value={form.website}
-          onChange={(e) => update("website", e.target.value)}
+          onChange={(v) => update("website", v)}
           className="h-11 rounded-xl"
         />
         <div className="grid grid-cols-2 gap-3">
@@ -73,12 +78,14 @@ export default function FormContractorBusinessCore({ initialData, onSave, loadin
             placeholder="Catégorie principale"
             value={form.main_category}
             onChange={(e) => update("main_category", e.target.value)}
+            onBlur={() => update("main_category", cleanTextField(form.main_category))}
             className="h-11 rounded-xl"
           />
           <Input
             placeholder="Zone desservie"
             value={form.service_area}
             onChange={(e) => update("service_area", e.target.value)}
+            onBlur={() => update("service_area", cleanTextField(form.service_area))}
             className="h-11 rounded-xl"
           />
         </div>
@@ -86,6 +93,7 @@ export default function FormContractorBusinessCore({ initialData, onSave, loadin
           placeholder="Taille de l'équipe"
           value={form.team_size}
           onChange={(e) => update("team_size", e.target.value)}
+          onBlur={() => update("team_size", cleanTextField(form.team_size))}
           className="h-11 rounded-xl"
         />
       </div>

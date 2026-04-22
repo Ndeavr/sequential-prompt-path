@@ -6,7 +6,12 @@ import { motion } from "framer-motion";
 import { Phone, Mail, User, Send, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { EmailInput } from "@/components/ui/email-input";
 import { supabase } from "@/integrations/supabase/client";
+import { cleanTextField } from "@/utils/cleanInput";
+import { phoneToE164 } from "@/utils/formatPhone";
+import { formatEmail } from "@/utils/formatEmail";
 
 interface AlexContactCaptureProps {
   sessionToken: string;
@@ -21,21 +26,24 @@ export default function AlexContactCapture({ sessionToken, onCaptured }: AlexCon
   const [done, setDone] = useState(false);
 
   const handleSubmit = async () => {
-    if (!firstName.trim() || !phone.trim()) return;
+    const cleanName = cleanTextField(firstName);
+    const cleanPhone = phoneToE164(phone) || phone.trim();
+    const cleanEmail = email.trim() ? formatEmail(email) : null;
+    if (!cleanName || !cleanPhone) return;
     setIsSaving(true);
 
     try {
       await supabase.functions.invoke("alex-capture-contact", {
         body: {
           session_id: sessionToken,
-          first_name: firstName.trim(),
-          phone: phone.trim(),
-          email: email.trim() || null,
+          first_name: cleanName,
+          phone: cleanPhone,
+          email: cleanEmail,
         },
       });
 
       setDone(true);
-      onCaptured({ firstName: firstName.trim(), phone: phone.trim(), email: email.trim() || undefined });
+      onCaptured({ firstName: cleanName, phone: cleanPhone, email: cleanEmail || undefined });
     } catch (err) {
       console.error("[AlexContactCapture] error:", err);
     } finally {
@@ -50,7 +58,7 @@ export default function AlexContactCapture({ sessionToken, onCaptured }: AlexCon
         animate={{ opacity: 1, scale: 1 }}
         className="rounded-2xl border border-success/25 bg-success/[0.06] p-4 text-center space-y-1"
       >
-        <p className="text-sm font-bold text-foreground">Parfait, {firstName}!</p>
+        <p className="text-sm font-bold text-foreground">Parfait, {cleanTextField(firstName)}!</p>
         <p className="text-[11px] text-muted-foreground">Je m'occupe du reste pour vous.</p>
       </motion.div>
     );
@@ -68,31 +76,30 @@ export default function AlexContactCapture({ sessionToken, onCaptured }: AlexCon
 
       <div className="space-y-2">
         <div className="relative">
-          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground z-10" />
           <Input
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
+            onBlur={() => setFirstName(cleanTextField(firstName))}
             placeholder="Prénom"
             className="pl-9 rounded-xl text-sm h-10"
           />
         </div>
         <div className="relative">
-          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-          <Input
+          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground z-10" />
+          <PhoneInput
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={setPhone}
             placeholder="Téléphone"
-            type="tel"
             className="pl-9 rounded-xl text-sm h-10"
           />
         </div>
         <div className="relative">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-          <Input
+          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground z-10" />
+          <EmailInput
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={setEmail}
             placeholder="Courriel (optionnel)"
-            type="email"
             className="pl-9 rounded-xl text-sm h-10"
           />
         </div>
@@ -100,7 +107,7 @@ export default function AlexContactCapture({ sessionToken, onCaptured }: AlexCon
 
       <Button
         onClick={handleSubmit}
-        disabled={!firstName.trim() || !phone.trim() || isSaving}
+        disabled={!cleanTextField(firstName) || !phone.trim() || isSaving}
         className="w-full rounded-xl h-10 text-xs font-bold bg-gradient-to-r from-primary to-accent text-white border-0 gap-1.5"
       >
         <Send className="w-3 h-3" />

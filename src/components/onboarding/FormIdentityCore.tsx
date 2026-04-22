@@ -4,6 +4,9 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { EmailInput } from "@/components/ui/email-input";
+import { cleanTextField } from "@/utils/cleanInput";
 
 interface FormIdentityCoreProps {
   initialData?: {
@@ -40,28 +43,30 @@ export default function FormIdentityCore({ initialData, onSave, loading }: FormI
             placeholder="Prénom"
             value={form.first_name}
             onChange={(e) => update("first_name", e.target.value)}
+            onBlur={() => update("first_name", cleanTextField(form.first_name))}
             className="h-11 rounded-xl"
           />
           <Input
             placeholder="Nom"
             value={form.last_name}
             onChange={(e) => update("last_name", e.target.value)}
+            onBlur={() => update("last_name", cleanTextField(form.last_name))}
             className="h-11 rounded-xl"
           />
         </div>
-        <Input
-          type="email"
+        <EmailInput
           placeholder="Courriel"
           value={form.email}
-          onChange={(e) => update("email", e.target.value)}
+          onChange={(v) => update("email", v)}
           className="h-11 rounded-xl"
+          showValidation
         />
-        <Input
-          type="tel"
+        <PhoneInput
           placeholder="Téléphone"
           value={form.phone}
-          onChange={(e) => update("phone", e.target.value)}
+          onChange={(v) => update("phone", v)}
           className="h-11 rounded-xl"
+          showValidation
         />
       </div>
 

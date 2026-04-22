@@ -5,6 +5,10 @@ import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { EmailInput } from "@/components/ui/email-input";
+import { WebsiteInput } from "@/components/ui/website-input";
+import { cleanTextField } from "@/utils/cleanInput";
 
 interface ContractorDraft {
   business_name: string;
@@ -29,10 +33,10 @@ const FIELDS: { key: FieldKey; label: string; placeholder: string; type?: string
   { key: "business_name", label: "Nom de votre entreprise", placeholder: "Ex: Rénovation Laval Inc.", required: true },
   { key: "first_name", label: "Votre prénom", placeholder: "Ex: Marc", required: true },
   { key: "city", label: "Votre ville", placeholder: "Ex: Laval", required: true },
-  { key: "phone", label: "Téléphone", placeholder: "514-000-0000", type: "tel", required: true },
+  { key: "phone", label: "Téléphone", placeholder: "(514) 555-0000", type: "tel", required: true },
   { key: "email", label: "Courriel professionnel", placeholder: "vous@entreprise.com", type: "email", required: true },
   { key: "activity", label: "Activité principale", placeholder: "Ex: Plomberie, Rénovation...", required: true },
-  { key: "website", label: "Site web (optionnel)", placeholder: "https://...", type: "url", required: false },
+  { key: "website", label: "Site web (optionnel)", placeholder: "www.votreentreprise.com", type: "url", required: false },
 ];
 
 export default function AlexChatStep({ draft, onUpdate, onComplete, isProcessing }: Props) {
@@ -45,27 +49,16 @@ export default function AlexChatStep({ draft, onUpdate, onComplete, isProcessing
   const canProceed = !field.required || value.trim().length > 0;
 
   const handleNext = useCallback(() => {
+    // Clean text fields on advance
+    if (field.type !== "tel" && field.type !== "email" && field.type !== "url") {
+      onUpdate({ [field.key]: cleanTextField(value) });
+    }
     if (isLast) {
       onComplete();
     } else {
       setCurrentField((i) => i + 1);
     }
-  }, [isLast, onComplete]);
-
-  const formatPhone = useCallback((raw: string) => {
-    const digits = raw.replace(/\D/g, "").slice(0, 10);
-    if (digits.length <= 3) return digits;
-    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-  }, []);
-
-  const handleFieldChange = useCallback((key: FieldKey, val: string) => {
-    if (key === "phone") {
-      onUpdate({ [key]: formatPhone(val) });
-    } else {
-      onUpdate({ [key]: val });
-    }
-  }, [onUpdate, formatPhone]);
+  }, [isLast, onComplete, field, value, onUpdate]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -73,6 +66,58 @@ export default function AlexChatStep({ draft, onUpdate, onComplete, isProcessing
     },
     [canProceed, handleNext]
   );
+
+  const renderInput = () => {
+    if (field.type === "tel") {
+      return (
+        <PhoneInput
+          placeholder={field.placeholder}
+          value={value}
+          onChange={(v) => onUpdate({ [field.key]: v })}
+          onKeyDown={handleKeyDown}
+          autoFocus
+          className="h-12 text-base rounded-xl"
+        />
+      );
+    }
+    if (field.type === "email") {
+      return (
+        <EmailInput
+          placeholder={field.placeholder}
+          value={value}
+          onChange={(v) => onUpdate({ [field.key]: v })}
+          onKeyDown={handleKeyDown}
+          autoFocus
+          className="h-12 text-base rounded-xl"
+          showValidation
+        />
+      );
+    }
+    if (field.type === "url") {
+      return (
+        <WebsiteInput
+          placeholder={field.placeholder}
+          value={value}
+          onChange={(v) => onUpdate({ [field.key]: v })}
+          onKeyDown={handleKeyDown}
+          autoFocus
+          className="h-12 text-base rounded-xl"
+        />
+      );
+    }
+    return (
+      <Input
+        type="text"
+        placeholder={field.placeholder}
+        value={value}
+        onChange={(e) => onUpdate({ [field.key]: e.target.value })}
+        onBlur={() => onUpdate({ [field.key]: cleanTextField(value) })}
+        onKeyDown={handleKeyDown}
+        autoFocus
+        className="h-12 text-base rounded-xl"
+      />
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -101,15 +146,7 @@ export default function AlexChatStep({ draft, onUpdate, onComplete, isProcessing
           className="space-y-3"
         >
           <label className="text-sm font-semibold text-foreground">{field.label}</label>
-          <Input
-            type={field.type || "text"}
-            placeholder={field.placeholder}
-            value={value}
-            onChange={(e) => handleFieldChange(field.key, e.target.value)}
-            onKeyDown={handleKeyDown}
-            autoFocus
-            className="h-12 text-base rounded-xl"
-          />
+          {renderInput()}
         </motion.div>
       </AnimatePresence>
 
