@@ -32,12 +32,12 @@ export default function ScreenPayment() {
   const [processing, setProcessing] = useState(false);
   useHesitationRescue({ screenKey: "payment" });
 
-  const plan = PLAN_DETAILS[state.selected_plan || "premium"];
-  const price = state.billing_cycle === "yearly" ? plan.yearly : plan.monthly;
+  const plan = PLAN_DETAILS[state.selected_plan || "premium"] || PLAN_DETAILS["premium"];
+  const price = plan.monthly;
   const tps = Math.round(price * TPS_RATE * 100) / 100;
   const tvq = Math.round(price * TVQ_RATE * 100) / 100;
   const total = Math.round((price + tps + tvq) * 100) / 100;
-  const savings = state.billing_cycle === "yearly" ? (plan.monthly - plan.yearly) * 12 : 0;
+  const savings = 0;
 
   const handlePay = async () => {
     setProcessing(true);

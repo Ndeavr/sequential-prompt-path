@@ -86,32 +86,10 @@ export default function ScreenPlan() {
           <span>147 profils activés ce mois</span>
         </div>
 
-        {/* Billing toggle */}
-        <div className="flex items-center justify-center gap-2 mb-6">
-          <button
-            onClick={() => setBillingCycle("monthly")}
-            className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-              billingCycle === "monthly" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-            )}
-          >
-            Mensuel
-          </button>
-          <button
-            onClick={() => setBillingCycle("yearly")}
-            className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-              billingCycle === "yearly" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-            )}
-          >
-            Annuel <span className="text-xs opacity-80">-20%</span>
-          </button>
-        </div>
-
         {/* Plan cards */}
         <div className="space-y-3 mb-6">
           {PLANS.map((plan) => {
-            const price = billingCycle === "yearly" ? plan.price_yearly : plan.price_monthly;
+            const price = plan.price_monthly;
             const isSelected = selectedPlan === plan.code;
 
             return (

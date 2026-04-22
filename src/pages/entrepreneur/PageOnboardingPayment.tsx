@@ -63,7 +63,7 @@ export default function PageOnboardingPayment() {
             <CreditCard className="h-5 w-5 text-primary" />
             Paiement sécurisé
           </h1>
-          <p className="text-xs text-muted-foreground">Étape 4/5 — Activez votre plan {planNames[planCode]}</p>
+          <p className="text-xs text-muted-foreground">Étape 4/5 — Activez votre plan {planName}</p>
         </div>
       </div>
 
@@ -71,7 +71,7 @@ export default function PageOnboardingPayment() {
       <Card className="border-primary/20">
         <CardContent className="p-4 space-y-3">
           <div className="flex justify-between items-center">
-            <span className="font-semibold text-foreground">Plan {planNames[planCode]}</span>
+            <span className="font-semibold text-foreground">Plan {planName}</span>
             <span className="text-xl font-black text-foreground">{currentPrice}$</span>
           </div>
 
