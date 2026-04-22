@@ -110,7 +110,7 @@ export function useActivationFunnel() {
       email: data.email,
       website: data.website || "",
       mode: data.mode || "solo",
-      current_screen: 2,
+      current_screen: 2 as const,
     };
 
     const { data: inserted, error } = await supabase
