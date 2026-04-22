@@ -1,167 +1,151 @@
 
 
-# Contractor Activation Funnel — Premium Rebuild
+# Friction Elimination System — Global UX Sanity Patch
 
 ## Overview
-Rebuild the contractor onboarding into a 9-screen conversion funnel with two modes (Solo + Alex-assisted). Replace scattered pages with a unified, progressive-trust flow: hook → auto-import → score reveal → smart checklist → plan → pay → activate.
+Apply 27 friction elimination rules across all UNPRO flows by creating a centralized friction detection/rescue system, adding sticky mobile CTAs, autosave, smart defaults, hesitation rescue, and human-friendly error handling platform-wide.
 
 ---
 
-## Phase 1 — Database: `contractor_activation_funnel` table
+## Phase 1 — Hesitation Rescue Engine
 
-New migration creating a unified funnel state table:
+**New file: `src/hooks/useHesitationRescue.ts`**
 
-| Column | Type | Purpose |
-|--------|------|---------|
-| id | uuid PK | |
-| user_id | uuid NOT NULL | Auth user |
-| mode | text default 'solo' | solo / alex |
-| current_screen | integer default 1 | 1-9 screen tracker |
-| business_name | text | Input |
-| phone | text | Input |
-| email | text | Input |
-| website | text | Optional input |
-| import_status | text default 'pending' | pending/running/completed/failed |
-| imported_data | jsonb default '{}' | All auto-imported fields |
-| aipp_score | jsonb | Preliminary score breakdown |
-| checklist_state | jsonb default '{}' | Per-section completion state |
-| selected_services | jsonb default '[]' | Confirmed services |
-| selected_zones | jsonb default '[]' | Confirmed zones |
-| media_uploads | jsonb default '[]' | Uploaded file refs |
-| preferences | jsonb default '{}' | Business preferences |
-| calendar_connected | boolean default false | |
-| selected_plan | text | Plan code |
-| billing_cycle | text | monthly/yearly |
-| stripe_session_id | text | Checkout ref |
-| payment_status | text default 'pending' | pending/paid/failed |
-| completed_at | timestamptz | |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
+Detects user idle time on any screen and surfaces a contextual help nudge after 8 seconds of inactivity.
 
-RLS: Users manage own rows. Admin full access. Auto-update trigger on updated_at.
+- Tracks last interaction timestamp (click, scroll, keypress, touch)
+- After 8s idle: shows a dismissible toast/banner with contextual message
+- Messages are screen-aware (e.g. on checklist: "Alex peut compléter ça pour vous", on payment: "Des questions sur les plans?")
+- Connects to existing `alexFrictionEngine.ts` by emitting `createFrictionSignal("inactivity_30s")` etc.
+- Max 2 nudges per screen session, then goes passive (aligns with `alexReEngagementControl`)
 
-## Phase 2 — Edge Function: `contractor-activation-enrich`
+## Phase 2 — Sticky Mobile CTA Component
 
-New edge function that orchestrates auto-import for the funnel:
+**New file: `src/components/ui/StickyMobileCTA.tsx`**
 
-**Input:** `{ funnel_id, business_name, phone?, website? }`
+Reusable sticky bottom CTA bar for all funnel screens on mobile:
 
-**Actions (sequential, with `EdgeRuntime.waitUntil` for background):**
-1. Google Places Text Search → name, address, phone, website, rating, reviews, categories, photos, hours
-2. Website scrape via Firecrawl (if website provided) → description, logo, services, zones mentioned
-3. RBQ lookup (if detectable from business name/website) → licence number, classes, validity
-4. NEQ lookup stub (structured for future connection)
-5. Compute preliminary AIPP score from imported signals (reuse scoring logic from `aipp-real-scan`)
+- Fixed bottom, backdrop blur, safe-area padding
+- Single primary button (label + icon customizable)
+- Optional secondary ghost action
+- Used on: ScreenScore, ScreenChecklist, ScreenCalendar, ScreenPlan, ScreenPayment
 
-**Output:** Updates `contractor_activation_funnel.imported_data` and `aipp_score` in DB. Returns immediate 202 with polling endpoint.
+**Modifications to activation screens:**
+- `ScreenScore.tsx`: Wrap CTA in StickyMobileCTA
+- `ScreenChecklist.tsx`: Move "Continuer" to sticky bottom
+- `ScreenCalendar.tsx`: Move CTAs to sticky bottom
+- `ScreenPlan.tsx`: Move "Activer ce plan" to sticky bottom
+- `ScreenPayment.tsx`: Move "Payer" to sticky bottom
 
-**Polling action:** `{ action: "status", funnel_id }` returns current import_status and imported_data.
+## Phase 3 — Autosave System
 
-## Phase 3 — 9 Funnel Screen Pages
+**Modify: `src/hooks/useActivationFunnel.ts`**
 
-All screens share `FunnelLayout` with updated progress bar (9 steps). Mobile-first, glassmorphism, fr-CA.
+Add debounced autosave (1.5s after last change):
+- Every `updateFunnel` call queues a debounced DB write
+- Visual indicator: tiny "Sauvegardé ✓" text near progress bar
+- On page return/refresh: resume exactly where left off (already partially implemented, needs current_screen routing)
 
-### Screen 1: `/entrepreneur/activer` — Landing/Promise
-- Headline: "Obtenez votre score AIPP et activez votre profil UNPRO"
-- Subheadline about auto-import
-- Two CTAs: "Créer mon profil maintenant" (solo) → Screen 2, "Le faire avec Alex" (alex) → opens Alex voice with `contractor_activation` surface
-- Value pills, scarcity badge
-- Replaces current `PageEntrepreneurJoin`
+**Modify: `ScreenChecklist.tsx`**
+- Add "Sauvegarde automatique" indicator
+- Save each section independently on change (not just on continue)
 
-### Screen 2: `/entrepreneur/activer/compte` — Quick Account
-- Email or phone field
-- Business name (required)
-- Phone (required)
-- Website (optional)
-- Single "Continuer" CTA
-- If not authenticated: create account with email/password (minimal)
-- If authenticated: pre-fill from profile
-- On submit: create funnel row, navigate to Screen 3, trigger enrichment edge function
+## Phase 4 — Smart Defaults
 
-### Screen 3: `/entrepreneur/activer/analyse` — Auto-Import Loading
-- Animated progress sequence with 10 import steps (reuse `IMPORT_TIMELINE_STEPS` type)
-- Each step animates from pending → running → completed/failed
-- Real polling every 3s to `contractor-activation-enrich` for status
-- Alex observation panel (existing `PanelAlexObservesImport` component)
-- Auto-navigates to Screen 4 when complete
+**Modify: `ScreenCalendar.tsx`**
+- Pre-select Mon-Fri and 8h-17h (already done — confirm)
+- Default "Passer pour l'instant" is visible (already done)
 
-### Screen 4: `/entrepreneur/activer/score` — AIPP Score Reveal
-- Large animated score number with cinematic reveal
-- 8 subscore cards: Visibility, Trust/Compliance, Reviews, Media, Conversion, AI/AEO, Service Precision, Geographic Precision
-- "Found automatically" section with green checkmarks
-- "Missing to improve" section with amber indicators and impact points
-- CTA: "Compléter mon profil" → Screen 5
+**Modify: `ScreenPlan.tsx`**
+- Pre-select "yearly" billing (already done)
+- Pre-select "premium" plan (already done)
+- Add "Pourquoi Premium?" expandable explanation: territory demand, services count, calendar enabled
 
-### Screen 5: `/entrepreneur/activer/profil` — Smart Completion Checklist
-- Accordion/card sections, each showing: title, completion %, estimated time, business impact badge
-- **Section A — Business Identity**: Pre-filled fields with confirm/edit
-- **Section B — RBQ & Compliance**: Licence status, classes, validation states (green/yellow/red)
-- **Section C — Services**: Toggle chips from auto-detected services
-- **Section D — Zones**: Auto-suggested zones + add by city/radius, priority vs secondary
-- **Section E — Media**: Drag-drop logo, photos, before/after. Show auto-detected images for confirm/remove
-- **Section F — Preferences**: Job types, min value, emergency, languages, capacity
-- Each section saves independently to `checklist_state` in DB
-- CTA: "Continuer" → Screen 6
+**Modify: `ScreenChecklist.tsx`**
+- Pre-select Quebec region for zones
+- Pre-select French language in preferences
+- Auto-suggest top 3 most common services based on imported data
 
-### Screen 6: `/entrepreneur/activer/calendrier` — Calendar
-- Google Calendar OAuth connect button (existing `calendar-google-oauth-start` edge function)
-- Simple availability selector: available days + hours
-- "Skip for now" option (calendar not required before payment)
-- CTA: "Voir mon plan recommandé" → Screen 7
+## Phase 5 — Human-Friendly Error Messages
 
-### Screen 7: `/entrepreneur/activer/plan` — Plan Recommendation
-- AI recommendation banner: "Selon votre territoire et capacité, le meilleur plan est Premium"
-- Plan cards (Pro/Premium/Elite/Signature) with appointments, territory exclusivity, features
-- Revenue projection panel (reuse `PanelPlanCapacityProjection`)
-- Monthly/annual toggle
-- CTA: "Activer ce plan" → Screen 8
+**New file: `src/utils/friendlyErrors.ts`**
 
-### Screen 8: `/entrepreneur/activer/paiement` — Stripe Checkout
-- Plan summary card with price, billing cycle, savings
-- Coupon code input
-- Trust signals (SSL, Stripe secure)
-- "Payer" button → invoke `create-stripe-checkout-session` → redirect to Stripe
-- Success redirect to Screen 9
+Maps technical errors to fr-CA human messages:
+- `"Edge function returned 500"` → `"Service temporairement indisponible. Réessayez."`
+- `"No such price"` → `"Plan introuvable. Contactez-nous."`
+- `"Invalid payload"` → `"Données incorrectes. Vérifiez vos informations."`
+- `"IDLE_TIMEOUT"` → `"La connexion a expiré. Réessayez."`
+- Network errors → `"Connexion internet instable. Vérifiez votre réseau."`
 
-### Screen 9: `/entrepreneur/activer/succes` — Activation Dashboard
-- Success animation + plan badge
-- AIPP score progress since start
-- Remaining optimization checklist (missing media, certifications)
-- Profile preview link
-- Calendar connection if skipped
-- "Go to dashboard" CTA
-- Alex button always visible for post-activation help
+**Modify: All screens with `catch` blocks** (ScreenAccount, ScreenPayment, ScreenImport)
+- Replace raw `err.message` with `friendlyError(err)`
+- Never show technical strings to users
 
-## Phase 4 — Alex-Assisted Mode Integration
+## Phase 6 — Progress & Momentum Indicators
 
-When user clicks "Le faire avec Alex" on Screen 1:
-- Set funnel mode to `alex`
-- Open Alex voice/chat with `contractor_activation` surface
-- Alex drives the same 9-screen flow but fills fields via conversation
-- Alex can programmatically navigate between screens using existing `in-chat-orchestration` patterns
-- Each Alex confirmation updates the funnel DB row
-- Alex uses the same `contractor-activation-enrich` edge function for auto-import
+**Modify: `FunnelLayout` or create wrapper**
 
-No new Alex edge functions needed — leverage existing `alex-process-turn` with a new surface context.
+Add a persistent top progress bar across all activation screens:
+- Shows step X of 9
+- Shows estimated time remaining (e.g. "~4 min restantes")
+- Shows completion percentage
 
-## Phase 5 — Funnel Hook: `useActivationFunnel`
+**Modify: `ScreenChecklist.tsx`**
+- Add total estimated time: "~12 min pour compléter"
+- Show per-section "X min" badges (already done)
+- Add overall completion bar at top
 
-New hook replacing `useContractorFunnel` for the activation flow:
-- Loads/creates funnel row from DB
-- Provides: `screen`, `goToScreen`, `nextScreen`, `prevScreen`, `updateFunnel`, `importStatus`, `aippScore`, `completionBySection`
-- Auto-saves on every update
-- Computes per-section completion percentages
-- Handles polling for import status
+## Phase 7 — Micro-Commitment Reinforcement
 
-## Phase 6 — Route Registration
+**Modify: `ScreenScore.tsx`**
+- After score reveal, add trust reinforcement section before CTA:
+  - "Vos données sont sécurisées"
+  - "Annulez en tout temps"
+  - "Support disponible"
 
-Add all 9 routes under `/entrepreneur/activer/*` to router with lazy loading.
-Keep existing `/entrepreneur/onboarding/*` routes as fallback (no breaking changes).
+**Modify: `ScreenPayment.tsx`**
+- Before pay button, show:
+  - Price with taxes breakdown
+  - What happens after payment
+  - "Annulez en tout temps" reassurance (already partially done)
 
-## Phase 7 — Storage Bucket for Media
+## Phase 8 — No Dead Ends
 
-Create `contractor-media` storage bucket (public) for logo, photos, before/after uploads.
-RLS: authenticated users can upload to their own folder (`user_id/`).
+**New file: `src/components/ui/EmptyStateFallback.tsx`**
+
+Reusable component for when no results/data:
+- Never shows "nothing found"
+- Always offers: "Ajouter manuellement", "Parler à Alex", "Réessayer"
+
+**Modify: `ScreenImport.tsx`**
+- If enrichment fails or returns empty: show fallback with manual entry option instead of blank
+- Never leave user on a dead import screen
+
+**Modify: `ScreenChecklist.tsx`**
+- If no auto-detected services: show "Ajoutez vos services" prompt instead of empty chips
+
+## Phase 9 — Instant Feedback
+
+**Global CSS addition in `index.css`:**
+```css
+button:active, [role="button"]:active {
+  transform: scale(0.97);
+  transition: transform 50ms;
+}
+```
+
+- All buttons get instant press feedback via CSS active state
+- Loading states already use `Loader2` spinner (confirmed across screens)
+
+## Phase 10 — Social Proof at Decision Points
+
+**Modify: `ScreenPlan.tsx`**
+- Add near plan cards: "Choisi par 68% des entrepreneurs du Québec" on Premium
+- Add: "147 profils activés ce mois"
+
+**Modify: `ScreenPayment.tsx`**
+- Add: "Paiement sécurisé par Stripe" with lock icon (already present)
+- Add: "Entrepreneurs actifs au Québec: 200+"
 
 ---
 
@@ -169,28 +153,28 @@ RLS: authenticated users can upload to their own folder (`user_id/`).
 
 | Action | File | Purpose |
 |--------|------|---------|
-| Migration | `contractor_activation_funnel` table + storage bucket | Funnel state + media |
-| Create | `supabase/functions/contractor-activation-enrich/index.ts` | Auto-import orchestrator |
-| Create | `src/hooks/useActivationFunnel.ts` | Funnel state hook |
-| Create | `src/pages/entrepreneur/activation/ScreenLanding.tsx` | Screen 1 |
-| Create | `src/pages/entrepreneur/activation/ScreenAccount.tsx` | Screen 2 |
-| Create | `src/pages/entrepreneur/activation/ScreenImport.tsx` | Screen 3 |
-| Create | `src/pages/entrepreneur/activation/ScreenScore.tsx` | Screen 4 |
-| Create | `src/pages/entrepreneur/activation/ScreenChecklist.tsx` | Screen 5 |
-| Create | `src/pages/entrepreneur/activation/ScreenCalendar.tsx` | Screen 6 |
-| Create | `src/pages/entrepreneur/activation/ScreenPlan.tsx` | Screen 7 |
-| Create | `src/pages/entrepreneur/activation/ScreenPayment.tsx` | Screen 8 |
-| Create | `src/pages/entrepreneur/activation/ScreenSuccess.tsx` | Screen 9 |
-| Modify | `src/app/router.tsx` | Add 9 routes |
-| Modify | `src/components/contractor-funnel/FunnelProgressBar.tsx` | Update for 9 screens |
+| Create | `src/hooks/useHesitationRescue.ts` | Idle detection + contextual rescue nudges |
+| Create | `src/components/ui/StickyMobileCTA.tsx` | Reusable sticky bottom CTA |
+| Create | `src/utils/friendlyErrors.ts` | Human-friendly error message mapper |
+| Create | `src/components/ui/EmptyStateFallback.tsx` | No dead-end fallback component |
+| Modify | `src/hooks/useActivationFunnel.ts` | Debounced autosave + resume routing |
+| Modify | `src/pages/entrepreneur/activation/ScreenScore.tsx` | Sticky CTA + trust signals |
+| Modify | `src/pages/entrepreneur/activation/ScreenChecklist.tsx` | Sticky CTA + autosave indicator + smart defaults |
+| Modify | `src/pages/entrepreneur/activation/ScreenCalendar.tsx` | Sticky CTA |
+| Modify | `src/pages/entrepreneur/activation/ScreenPlan.tsx` | Sticky CTA + social proof + "why recommended" |
+| Modify | `src/pages/entrepreneur/activation/ScreenPayment.tsx` | Sticky CTA + tax breakdown + friendly errors |
+| Modify | `src/pages/entrepreneur/activation/ScreenImport.tsx` | Dead-end fallback on failure |
+| Modify | `src/pages/entrepreneur/activation/ScreenAccount.tsx` | Friendly errors |
+| Modify | `src/index.css` | Global button active press feedback |
 
 ## Expected outcome
-- Contractor goes from landing to paid activation in under 8 minutes
-- Auto-import fills 60-80% of profile data automatically
-- AIPP score shown before asking for effort
-- Smart checklist replaces long forms
-- Two modes: solo self-serve + Alex-assisted
-- Stripe checkout after value proof
-- Post-payment activation dashboard with next optimizations
-- Mobile-first, premium glassmorphism UI throughout
+- 8-second hesitation rescue across all funnel screens
+- Sticky mobile CTAs on every decision screen
+- Autosave on every field change with visual confirmation
+- Smart defaults pre-selected (Quebec, French, yearly, Premium)
+- Zero technical error messages shown to users
+- No dead-end screens — always an escape path
+- Social proof at decision points (plan selection, payment)
+- Instant tap feedback on all buttons
+- Progress momentum indicators showing time remaining
 
