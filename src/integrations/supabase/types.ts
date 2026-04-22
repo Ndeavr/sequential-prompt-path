@@ -40522,6 +40522,78 @@ export type Database = {
           },
         ]
       }
+      pages_queue: {
+        Row: {
+          city: string | null
+          clicks: number | null
+          content_json: Json | null
+          created_at: string | null
+          has_answer_block: boolean | null
+          has_faq: boolean | null
+          has_schema: boolean | null
+          id: string
+          impressions: number | null
+          index_requested: boolean | null
+          last_refreshed_at: string | null
+          leads: number | null
+          page_type: string | null
+          priority_score: number | null
+          publish_date: string | null
+          service: string | null
+          slug: string
+          status: string | null
+          title: string | null
+          updated_at: string | null
+          word_count: number | null
+        }
+        Insert: {
+          city?: string | null
+          clicks?: number | null
+          content_json?: Json | null
+          created_at?: string | null
+          has_answer_block?: boolean | null
+          has_faq?: boolean | null
+          has_schema?: boolean | null
+          id?: string
+          impressions?: number | null
+          index_requested?: boolean | null
+          last_refreshed_at?: string | null
+          leads?: number | null
+          page_type?: string | null
+          priority_score?: number | null
+          publish_date?: string | null
+          service?: string | null
+          slug: string
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          word_count?: number | null
+        }
+        Update: {
+          city?: string | null
+          clicks?: number | null
+          content_json?: Json | null
+          created_at?: string | null
+          has_answer_block?: boolean | null
+          has_faq?: boolean | null
+          has_schema?: boolean | null
+          id?: string
+          impressions?: number | null
+          index_requested?: boolean | null
+          last_refreshed_at?: string | null
+          leads?: number | null
+          page_type?: string | null
+          priority_score?: number | null
+          publish_date?: string | null
+          service?: string | null
+          slug?: string
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          word_count?: number | null
+        }
+        Relationships: []
+      }
       paywall_events: {
         Row: {
           converted: boolean | null
