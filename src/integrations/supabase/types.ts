@@ -41365,6 +41365,107 @@ export type Database = {
         }
         Relationships: []
       }
+      pr_assets: {
+        Row: {
+          backlinks_gained: number
+          brand_mentions: number
+          channel: string
+          content_text: string | null
+          created_at: string
+          cta: string | null
+          engagement_clicks: number
+          engagement_shares: number
+          hook: string | null
+          id: string
+          mentions_gained: number
+          published_at: string | null
+          scheduled_date: string | null
+          status: string
+          topic_id: string
+          updated_at: string
+        }
+        Insert: {
+          backlinks_gained?: number
+          brand_mentions?: number
+          channel: string
+          content_text?: string | null
+          created_at?: string
+          cta?: string | null
+          engagement_clicks?: number
+          engagement_shares?: number
+          hook?: string | null
+          id?: string
+          mentions_gained?: number
+          published_at?: string | null
+          scheduled_date?: string | null
+          status?: string
+          topic_id: string
+          updated_at?: string
+        }
+        Update: {
+          backlinks_gained?: number
+          brand_mentions?: number
+          channel?: string
+          content_text?: string | null
+          created_at?: string
+          cta?: string | null
+          engagement_clicks?: number
+          engagement_shares?: number
+          hook?: string | null
+          id?: string
+          mentions_gained?: number
+          published_at?: string | null
+          scheduled_date?: string | null
+          status?: string
+          topic_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pr_assets_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "pr_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pr_topics: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          priority_score: number
+          slug: string
+          status: string
+          title: string
+          updated_at: string
+          week_number: number | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          priority_score?: number
+          slug: string
+          status?: string
+          title: string
+          updated_at?: string
+          week_number?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          priority_score?: number
+          slug?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          week_number?: number | null
+        }
+        Relationships: []
+      }
       prediction_matches: {
         Row: {
           contractor_id: string | null
