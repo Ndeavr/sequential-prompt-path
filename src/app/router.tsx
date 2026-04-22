@@ -888,7 +888,7 @@ export const AppRouter = () => (
         <Route path="/conditions" element={<FallbackRoutePage />} />
         <Route path="/confidentialite" element={<FallbackRoutePage />} />
         <Route path="/cookies" element={<FallbackRoutePage />} />
-        <Route path="/sitemap" element={<FallbackRoutePage />} />
+        <Route path="/sitemap" element={<SeoSitemapPage />} />
         <Route path="/accessibilite" element={<FallbackRoutePage />} />
 
         {/* Entrepreneur Onboarding Flow */}
