@@ -23,7 +23,7 @@ export default function PageCheckoutSuccess() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const { session } = useAuth();
-  const planCode = params.get("plan") || "pro_acq";
+  const planCode = params.get("plan") || "pro";
   const [activating, setActivating] = useState(true);
   const [stepsDone, setStepsDone] = useState<string[]>([]);
 
@@ -72,7 +72,7 @@ export default function PageCheckoutSuccess() {
         const email = session?.user?.email;
         if (email) {
           const planNames: Record<string, string> = {
-            recrue: "Recrue", pro_acq: "Pro", premium_acq: "Premium", elite_acq: "Élite", signature: "Signature",
+            recrue: "Recrue", pro: "Pro", premium: "Premium", elite: "Élite", signature: "Signature",
           };
           await supabase.functions.invoke("send-transactional-email", {
             body: {

@@ -40,11 +40,11 @@ export interface PlanRecommendation {
 // ─── Plan definitions ───
 
 const PLANS: Record<PlanTier, { price: number; label: string; features: string[]; maxRdvMonth: number }> = {
-  recrue:    { price: 0,   label: "Recrue",    features: ["Projets S/M", "Profil de base", "Visibilité locale"], maxRdvMonth: 3 },
-  pro:       { price: 49,  label: "Pro",       features: ["Projets S/M/L", "Score AIPP", "Badge vérifié", "Support prioritaire"], maxRdvMonth: 8 },
-  premium:   { price: 99,  label: "Premium",   features: ["Projets XL inclus", "Auto-acceptation", "Analytics avancés", "Priorité matching"], maxRdvMonth: 15 },
-  elite:     { price: 199, label: "Élite",     features: ["Toutes classes dont XXL", "Analytics prioritaires", "Account manager", "Boosts inclus"], maxRdvMonth: 25 },
-  signature: { price: 399, label: "Signature", features: ["Priorité maximale", "Exclusivité territoriale", "Concierge dédié", "Formation IA"], maxRdvMonth: 30 },
+  recrue:    { price: 149,  label: "Recrue",    features: ["Profil UNPRO", "Présence dans l'écosystème IA", "Réception de demandes de base"], maxRdvMonth: 0 },
+  pro:       { price: 349,  label: "Pro",       features: ["5 rendez-vous inclus", "Demandes qualifiées", "Profil optimisé (AIPP)", "Statistiques de base"], maxRdvMonth: 5 },
+  premium:   { price: 599,  label: "Premium",   features: ["10 rendez-vous inclus", "Rendez-vous directs à l'agenda", "Synchronisation Google Calendar", "Notifications instantanées"], maxRdvMonth: 10 },
+  elite:     { price: 999,  label: "Élite",     features: ["25 rendez-vous inclus", "Optimisation des routes", "Buffers automatiques", "Priorité sur les plages rentables"], maxRdvMonth: 25 },
+  signature: { price: 1799, label: "Signature", features: ["50 rendez-vous inclus", "Optimisation avancée en temps réel", "Exclusivité territoriale", "Visibilité maximale IA"], maxRdvMonth: 50 },
 };
 
 // ─── Revenue projection ───
@@ -77,9 +77,9 @@ function estimateAvgProjectValue(serviceType: string): number {
 
 function recommendPlanFromRdv(rdvMonthly: number, situation: EntrepreneurSituation): PlanTier {
   if (situation === "saturation") return "elite";
-  if (rdvMonthly <= 3) return "recrue";
-  if (rdvMonthly <= 8) return "pro";
-  if (rdvMonthly <= 15) return "premium";
+  if (rdvMonthly <= 0) return "recrue";
+  if (rdvMonthly <= 5) return "pro";
+  if (rdvMonthly <= 10) return "premium";
   if (rdvMonthly <= 25) return "elite";
   return "signature";
 }

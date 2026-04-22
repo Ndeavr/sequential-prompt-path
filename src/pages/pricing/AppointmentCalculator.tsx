@@ -75,9 +75,9 @@ function generateSuggestions(params: {
 
   // Too many appointments needed
   if (appts > capacity) {
-    if (plan !== "elite_acq") {
-      const nextPlan = plan === "premium_acq" ? "Élite" : "Premium";
-      const nextSize = plan === "premium_acq" ? "XXL" : "XL";
+    if (plan !== "elite") {
+      const nextPlan = plan === "premium" ? "Élite" : "Premium";
+      const nextSize = plan === "premium" ? "XXL" : "XL";
       suggestions.push({
         icon: Crown,
         text: `Passez à ${nextPlan} pour accéder aux projets ${nextSize} et réduire votre volume.`,
@@ -112,7 +112,7 @@ function generateSuggestions(params: {
   }
 
   // Premium / Elite upsell
-  if (plan === "pro_acq") {
+  if (plan === "pro") {
     suggestions.push({
       icon: Star,
       text: `Les entrepreneurs les plus performants utilisent Premium ou Élite pour maximiser leurs rendez-vous garantis.`,

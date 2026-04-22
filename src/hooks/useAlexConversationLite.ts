@@ -499,7 +499,7 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
 
     if (intent === "contractor_payment_checkout") {
       emitSafe("alex", "Procédons au paiement. Entrez vos informations de carte ci-dessous.", "stripe_payment_inline" as InlineCardType, {
-        planCode: "pro_acq", planName: "Pro", price: 349, interval: "monthly",
+        planCode: "pro", planName: "Pro", price: 349, interval: "monthly",
       });
       setIsThinking(false);
       return;

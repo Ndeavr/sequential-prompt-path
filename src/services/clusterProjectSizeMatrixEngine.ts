@@ -83,11 +83,11 @@ export const PROJECT_SIZES: ProjectSizeDefinition[] = [
 ];
 
 export const PLANS: PlanDefinition[] = [
-  { code: "recrue", name: "Recrue", rank: 1, base_price_monthly: 99, visibility_weight: 1.0, high_ticket_priority: false },
-  { code: "pro", name: "Pro", rank: 2, base_price_monthly: 199, visibility_weight: 1.2, high_ticket_priority: false },
-  { code: "premium", name: "Premium", rank: 3, base_price_monthly: 399, visibility_weight: 1.5, high_ticket_priority: false },
-  { code: "elite", name: "Élite", rank: 4, base_price_monthly: 699, visibility_weight: 1.8, high_ticket_priority: true },
-  { code: "signature", name: "Signature", rank: 5, base_price_monthly: 1499, visibility_weight: 2.0, high_ticket_priority: true },
+  { code: "recrue", name: "Recrue", rank: 1, base_price_monthly: 149, visibility_weight: 1.0, high_ticket_priority: false },
+  { code: "pro", name: "Pro", rank: 2, base_price_monthly: 349, visibility_weight: 1.2, high_ticket_priority: false },
+  { code: "premium", name: "Premium", rank: 3, base_price_monthly: 599, visibility_weight: 1.5, high_ticket_priority: false },
+  { code: "elite", name: "Élite", rank: 4, base_price_monthly: 999, visibility_weight: 1.8, high_ticket_priority: true },
+  { code: "signature", name: "Signature", rank: 5, base_price_monthly: 1799, visibility_weight: 2.0, high_ticket_priority: true },
 ];
 
 export const PLAN_SIZE_ACCESS: PlanSizeAccess[] = [
