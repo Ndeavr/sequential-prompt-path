@@ -146,6 +146,7 @@ const PropertyTypeProblemPage = lazy(() => import("@/pages/seo/PropertyTypeProbl
 const SeoPageRenderer = lazy(() => import("@/pages/seo/SeoPageRenderer"));
 const SeoSitemapPage = lazy(() => import("@/pages/seo/SeoSitemapPage"));
 const AdminSeoGenerator = lazy(() => import("@/pages/admin/AdminSeoGenerator"));
+const PageSeoAutopilot = lazy(() => import("@/pages/admin/PageSeoAutopilot"));
 const PropertyGraphPage = lazy(() => import("@/pages/PropertyGraphPage"));
 const AlexChat = lazy(() => import("@/pages/AlexChat"));
 const AuthorityDashboardPage = lazy(() => import("@/pages/AuthorityDashboardPage"));
