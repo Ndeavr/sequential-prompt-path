@@ -34,11 +34,11 @@ export default function ScreenPlan() {
 
   const handleSelectPlan = async (planCode: string) => {
     setSelectedPlan(planCode);
-    await updateFunnel({ selected_plan: planCode, billing_cycle: billingCycle });
+    await updateFunnel({ selected_plan: planCode, billing_cycle: "monthly" });
   };
 
   const handleContinue = () => {
-    updateFunnel({ selected_plan: selectedPlan, billing_cycle: billingCycle });
+    updateFunnel({ selected_plan: selectedPlan, billing_cycle: "monthly" });
     navigate("/entrepreneur/activer/paiement");
   };
 
