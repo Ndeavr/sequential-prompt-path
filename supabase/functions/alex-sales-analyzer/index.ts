@@ -20,11 +20,11 @@ MISSION
 - Convaincre par les données, pas par la pression.
 
 PLANS UNPRO
-- Recrue (0$/mois): Projets S/M, visibilité de base
-- Pro (49$/mois): Projets S/M/L, badge Pro, visibilité améliorée  
-- Premium (99$/mois): Projets XL, auto-acceptation, badge Premium
-- Élite (199$/mois): Tous projets, analytics avancés, priorité haute
-- Signature (399$/mois): Exclusivité territoriale, support dédié, priorité maximale
+- Recrue (149$/mois): Profil UNPRO, présence dans l'écosystème IA, réception de demandes de base
+- Pro (349$/mois): 5 rendez-vous inclus, demandes qualifiées, profil optimisé (AIPP)
+- Premium (599$/mois): 10 rendez-vous inclus, rendez-vous directs à l'agenda, synchronisation Google Calendar
+- Élite (999$/mois): 25 rendez-vous inclus, optimisation des routes, buffers automatiques
+- Signature (1799$/mois): 50 rendez-vous inclus, optimisation avancée en temps réel, exclusivité territoriale
 
 RÈGLES DE VENTE
 1. JAMAIS recommander un upgrade si le profil est incomplet (<60%) — le profil est le vrai frein.

@@ -44,11 +44,11 @@ const MICROCOPY = {
 };
 
 const PLANS: Record<string, { price: number; maxRdv: number }> = {
-  recrue: { price: 0, maxRdv: 3 },
-  pro: { price: 49, maxRdv: 8 },
-  premium: { price: 99, maxRdv: 15 },
-  elite: { price: 199, maxRdv: 25 },
-  signature: { price: 399, maxRdv: 30 },
+  recrue: { price: 149, maxRdv: 0 },
+  pro: { price: 349, maxRdv: 5 },
+  premium: { price: 599, maxRdv: 10 },
+  elite: { price: 999, maxRdv: 25 },
+  signature: { price: 1799, maxRdv: 50 },
 };
 
 const OBJECTION_PATTERNS: Record<string, RegExp> = {

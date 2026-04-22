@@ -102,11 +102,11 @@ export interface UpgradeBreakEven {
 // ── Constants ──────────────────────────────────────────────────────
 
 export const PLAN_PRICES: Record<PlanCode, number> = {
-  recrue: 99,
-  pro: 199,
-  premium: 399,
-  elite: 699,
-  signature: 1499,
+  recrue: 149,
+  pro: 349,
+  premium: 599,
+  elite: 999,
+  signature: 1799,
 };
 
 export const PLAN_LABELS: Record<PlanCode, string> = {
@@ -124,11 +124,11 @@ const SIZE_LABELS: Record<ProjectSizeCode, string> = {
 };
 
 const INCLUDED_APPOINTMENTS: Record<PlanCode, { appointments: number; units: number }> = {
-  recrue: { appointments: 4, units: 4.0 },
-  pro: { appointments: 8, units: 10.0 },
-  premium: { appointments: 15, units: 22.0 },
+  recrue: { appointments: 0, units: 0 },
+  pro: { appointments: 5, units: 5.0 },
+  premium: { appointments: 10, units: 15.0 },
   elite: { appointments: 25, units: 40.0 },
-  signature: { appointments: 40, units: 75.0 },
+  signature: { appointments: 50, units: 75.0 },
 };
 
 const BASE_EXTRA_PRICES: Record<PlanCode, number> = {

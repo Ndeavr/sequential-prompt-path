@@ -27,11 +27,8 @@ const RDV_OPTIONS = [0, 10, 20, 40, 60];
 const PLAN_ICONS: Record<string, React.ElementType> = {
   recrue: Sparkles,
   pro: Zap,
-  pro_acq: Zap,
   premium: Star,
-  premium_acq: Star,
   elite: Crown,
-  elite_acq: Crown,
   signature: Crown,
 };
 
@@ -48,7 +45,7 @@ export default function PagePricingCalculator() {
   // Form state
   const [categorySlug, setCategorySlug] = useState("");
   const [marketSlug, setMarketSlug] = useState("");
-  const [planCode, setPlanCode] = useState("pro_acq");
+  const [planCode, setPlanCode] = useState("pro");
   const [billingPeriod, setBillingPeriod] = useState<"month" | "year">("month");
   const [rdvCount, setRdvCount] = useState(10);
   const [revenueGoal, setRevenueGoal] = useState(10000);

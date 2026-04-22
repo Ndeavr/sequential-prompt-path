@@ -48,10 +48,10 @@ export interface AppointmentMixItem {
 }
 
 const PLAN_THRESHOLDS = [
-  { code: "recrue", label: "Recrue", maxUnits: 6, maxValue: 15000, includedRdv: 3 },
-  { code: "pro_acq", label: "Pro", maxUnits: 14, maxValue: 35000, includedRdv: 5 },
-  { code: "premium_acq", label: "Premium", maxUnits: 25, maxValue: 65000, includedRdv: 10 },
-  { code: "elite_acq", label: "Élite", maxUnits: 40, maxValue: 120000, includedRdv: 25 },
+  { code: "recrue", label: "Recrue", maxUnits: 6, maxValue: 15000, includedRdv: 0 },
+  { code: "pro", label: "Pro", maxUnits: 14, maxValue: 35000, includedRdv: 5 },
+  { code: "premium", label: "Premium", maxUnits: 25, maxValue: 65000, includedRdv: 10 },
+  { code: "elite", label: "Élite", maxUnits: 40, maxValue: 120000, includedRdv: 25 },
   { code: "signature", label: "Signature", maxUnits: 999, maxValue: 999999, includedRdv: 50 },
 ];
 
