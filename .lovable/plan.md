@@ -1,89 +1,188 @@
 
+# Alex V7 Hotfix Plan — Make the Real Opening Work
 
-# Alex V7 — Identity + Voice + Language Lock
+## What is actually broken
 
-## Critical Bugs Found
+The production opening the user sees is the homepage hero, not the standalone `src/features/alex/*` assistant route.
 
-1. **Fake "Alex parle..." state**: `startSpeaking()` sets `mode: "speaking"` immediately when TTS request is sent, not when audio actually plays. The `onStart` callback in `elevenlabsService.speak()` fires right before `audio.play()` but `startSpeaking()` is called even earlier in the voice hook.
+Current homepage path:
+- `src/pages/Home.tsx`
+- `src/components/home/HeroSection.tsx`
+- `src/hooks/useLiveVoice.ts`
+- backend functions:
+  - `supabase/functions/voice-get-signed-url/index.ts`
+  - `supabase/functions/alex-tts/index.ts`
 
-2. **Client/Edge function body mismatch**: `elevenlabsService.ts` sends `{ text, voiceId, modelId, voiceSettings }` but `alex-tts` edge function expects `{ text, voice_session_id, settings }`. The voice settings are silently ignored.
+Current Alex feature shell path:
+- `src/features/alex/*`
+- primarily affects `/alex`, not the current `/index` hero
 
-3. **No verified user name**: `useAlexBootstrap.ts` reads `localStorage` auth token directly for the name — no verification against current auth session. Stale tokens from other users could leak names.
+So the fix needs to hit the real hero boot path first, then align the feature shell so both Alex surfaces behave the same.
 
-4. **Session restore can override language**: `useAlexSessionRestore.ts` restores `activeLanguage` from snapshot before bootstrap locks it to `fr-CA`.
+## Root causes confirmed
 
-5. **No voice ID lock**: Client sends a voice ID to the edge function, but the edge function ignores it and uses its hardcoded `PRIMARY_VOICE_ID`. However, there's no client-side guard preventing a wrong voice from being used if the service is modified.
+1. Homepage hero still owns the first impression and uses a separate voice system.
+2. `HeroSection.tsx` builds greetings from `user_metadata` directly and can speak stale/wrong names.
+3. `HeroSection.tsx` can show speaking-style UI before real audio is confirmed.
+4. `useLiveVoice.ts` still allows English-capable defaults and does not hard-lock the opening to French-only behavior.
+5. The standalone Alex feature store lacks some debug/identity fields required to prove correctness.
+6. Session restore logic in `src/features/alex/hooks/useAlexSessionRestore.ts` is still too heuristic and can contaminate identity.
+7. There is conflicting project memory about Alex voice persona; code must be aligned to the approved female French voice.
 
-## Fixes
+## Implementation plan
 
-### 1. Fix speaking state — only set when audio actually starts
+### 1. Patch the real homepage opening first
+Update `src/components/home/HeroSection.tsx` so the first 3 seconds are deterministic and honest:
+- Replace random short greeting selection with a deterministic builder:
+  - logged-in verified user: `Bonjour [FirstName].`
+  - otherwise: `Bonjour.`
+- Remove time-based greeting variants for startup.
+- Force opening language to `fr-CA`.
+- Keep the premium staged presence, but only show “Alex parle…”-style copy after confirmed first audio.
+- If voice connection fails, keep the text surface alive and show a single retry/unlock path without drifting into English or wrong identity.
+- Reinitialize aggressively before each new start:
+  - clear runtime lock
+  - stop active audio channel
+  - reset local transcript/opening state
+  - start a clean voice attempt
 
-**File: `src/features/alex/state/alexStore.ts`**
-- Add `connecting_voice` to the mode type (if not already present)
-- Add `startConnectingVoice()` action that sets `mode: "connecting_voice"` without setting `hasActivePlayback`
-- Change `startSpeaking()` to only be called when audio playback actually begins
+### 2. Harden the live voice hook used by the hero
+Update `src/hooks/useLiveVoice.ts`:
+- Treat each startup as a fresh session.
+- Add a hard reinitialize path before `startSession()`:
+  - end any old session
+  - clear connection timeout
+  - reset first-audio flags
+  - reset language lock to `fr-CA`
+- Lock opening context to French only.
+- Prevent “speaking” semantics until real first audio/transcript is received.
+- Keep `force` restart behavior, but bypass stale cooldown/ended-session traps cleanly.
+- Fail fast to text mode if signed URL / session start / first audio never arrives.
 
-**File: `src/features/alex/types/alex.types.ts`**
-- Add `"connecting_voice"` to the `AlexMode` union type
+### 3. Lock identity to verified live auth, not cached metadata guesses
+Patch both hero and Alex feature bootstrap to use the same verified identity source:
+- `src/components/home/HeroSection.tsx`
+- `src/features/alex/hooks/useAlexBootstrap.ts`
 
-**File: `src/features/alex/state/alexSelectors.ts`**
-- Add `connecting_voice` label: `{ fr: "Connexion…", en: "Connecting…" }`
+Implementation:
+- Resolve current authenticated user from live session.
+- Query the current profile row matching that user id.
+- Greeting name source priority:
+  1. current auth session + matching current profile
+  2. current auth session metadata only if clearly tied to that same user
+  3. no name
+- Never use previous session, local snapshot, demo/test name, or unrelated metadata.
+- If verification is uncertain, say only `Bonjour.`
 
-### 2. Fix voice hook — real playback state + voice ID lock
+### 4. Lock female voice identity and French opening across both systems
+Patch:
+- `src/hooks/useLiveVoice.ts`
+- `src/features/alex/services/elevenlabsService.ts`
+- `supabase/functions/voice-get-signed-url/index.ts`
+- `supabase/functions/alex-tts/index.ts`
 
-**File: `src/features/alex/hooks/useAlexVoice.ts`**
-- In `speak()` and `speakGreetingNow()`: call `startConnectingVoice()` first, then only call `startSpeaking()` inside the `onStart` callback of `elevenlabsService.speak()`
-- If voice fails, never fallback to browser speech — set `mode: "ready"` and log `BROWSER_VOICE_FALLBACK_BLOCKED`
+Changes:
+- Keep the approved female voice id as the only valid opening voice.
+- Reject any browser/system speech fallback for the opening.
+- Keep French-first opening context in both conversational voice and TTS.
+- Ensure backend function responses expose enough info to debug which agent/voice actually answered.
+- If the configured voice/agent is wrong or unavailable, degrade to text instead of using the wrong identity.
 
-### 3. Fix elevenlabs service — match edge function contract + voice ID lock
+### 5. Make speaking state honest everywhere
+Patch:
+- `src/components/home/HeroSection.tsx`
+- `src/features/alex/state/alexStore.ts`
+- `src/features/alex/hooks/useAlexVoice.ts`
+- `src/features/alex/AlexPanel.tsx`
+- `src/features/alex/AlexAssistant.tsx`
 
-**File: `src/features/alex/services/elevenlabsService.ts`**
-- Change `speak()` body to send `{ text, settings: VOICE_SETTINGS }` matching what the edge function expects
-- Remove `voiceId` and `modelId` from the body (edge function uses hardcoded values)
-- Add `ALEX_PRIMARY_VOICE_ID` constant and log if mismatched
-- Move `onStart?.()` call to fire only after `audio.play()` resolves (not before)
+Changes:
+- Add/normalize explicit states:
+  - `connecting_voice`
+  - optional `audio_ready`
+  - `speaking`
+- Only enter `speaking` after actual playback start / first audio callback.
+- Use honest labels:
+  - `Chargement…`
+  - `Alex en direct`
+  - `Connexion…`
+  - `Écrivez à Alex`
+- Never show “Alex parle…” during request, connect, or pre-playback phases.
 
-### 4. Fix bootstrap — verified user name + forced fr-CA
+### 6. Fix session restore contamination in the Alex feature shell
+Patch `src/features/alex/hooks/useAlexSessionRestore.ts`:
+- stop restoring identity-sensitive fields from cached snapshot
+- stop using session-id substring heuristics for identity validation
+- compare restored context against current live auth user instead
+- preserve only safe non-identity UI state when mismatch occurs
+- never let restore override:
+  - opening language
+  - verified greeting name
+  - locked voice identity
 
-**File: `src/features/alex/hooks/useAlexBootstrap.ts`**
-- Replace `buildGreeting()` localStorage parsing with `getVerifiedGreetingName()` that uses the Supabase client's `getSession()` to get the current auth user
-- Make bootstrap async-safe: inject greeting with "Bonjour." immediately, then if auth resolves with a first name within 500ms, update the greeting text
-- Force `activeLanguage: "fr-CA"` and log `OPENING_LANGUAGE_LOCKED_FR_CA`
-- Log `USER_NAME_VERIFIED` or `USER_NAME_MISMATCH_BLOCKED`
+### 7. Expand debug visibility so failures are obvious
+Patch:
+- `src/features/alex/state/alexStore.ts`
+- `src/features/alex/AlexDebugPanel.tsx`
+- optionally add a small hero-only dev overlay if needed
 
-### 5. Fix session restore — prevent identity/language contamination
+Expose:
+- `mode`
+- `activeLanguage`
+- `verifiedGreetingName`
+- `authUserId`
+- `profileUserId`
+- `restoredUserId`
+- `greetingText`
+- `greetingInjected`
+- `greetingSpoken`
+- `selectedVoiceId`
+- `approvedVoiceId`
+- `voiceLockedValid`
+- `playbackStarted`
+- `voiceAvailable`
+- `usedBrowserFallback`
+- `isSessionRestored`
+- `identityMismatchDetected`
 
-**File: `src/features/alex/hooks/useAlexSessionRestore.ts`**
-- Remove `activeLanguage` from restored fields — bootstrap locks it to `fr-CA`
-- Add auth user ID check: if restored session has messages from a different user context, discard identity fields and log `SESSION_IDENTITY_DISCARDED`
+### 8. Align both Alex surfaces after the homepage fix
+After the hero path is stable, mirror the same locks into:
+- `src/features/alex/hooks/useAlexBootstrap.ts`
+- `src/features/alex/hooks/useAlexVoice.ts`
+- `src/features/alex/AlexPanel.tsx`
+- `src/features/alex/AlexAssistant.tsx`
 
-### 6. Fix AlexOrb — add connecting_voice visual state
+So:
+- home hero Alex
+- `/alex` floating/store-based Alex
 
-**File: `src/features/alex/AlexOrb.tsx`**
-- Add `connecting_voice` to `MODE_STYLES` with a subtle loading animation (pulsing ring, slightly smaller scale)
+both share the same identity, language, and playback truth rules.
 
-### 7. Update debug panel — V7 fields
+## Files to patch
 
-**File: `src/features/alex/AlexDebugPanel.tsx`**
-- Add rows: `verifiedName`, `voiceId`, `voiceLocked`, `playbackStarted`, `connectingVoice`
+### Priority 1 — real production opening
+- `src/components/home/HeroSection.tsx`
+- `src/hooks/useLiveVoice.ts`
+- `supabase/functions/voice-get-signed-url/index.ts`
+- `supabase/functions/alex-tts/index.ts`
 
-### 8. Update mode labels
+### Priority 2 — feature-shell alignment
+- `src/features/alex/hooks/useAlexBootstrap.ts`
+- `src/features/alex/hooks/useAlexVoice.ts`
+- `src/features/alex/state/alexStore.ts`
+- `src/features/alex/AlexAssistant.tsx`
+- `src/features/alex/AlexPanel.tsx`
+- `src/features/alex/hooks/useAlexSessionRestore.ts`
+- `src/features/alex/AlexDebugPanel.tsx`
 
-**File: `src/features/alex/state/alexSelectors.ts`**
-- `connecting_voice`: `{ fr: "Connexion…", en: "Connecting…" }`
-- Keep `speaking` label as `{ fr: "Alex parle…", en: "Alex speaking…" }` — now only shown when audio is truly playing
+## Expected result
 
-## Files Modified
-
-| Action | File |
-|---|---|
-| Modify | `src/features/alex/types/alex.types.ts` — add `connecting_voice` mode |
-| Modify | `src/features/alex/state/alexStore.ts` — add `startConnectingVoice()` action |
-| Modify | `src/features/alex/state/alexSelectors.ts` — add `connecting_voice` label |
-| Modify | `src/features/alex/services/elevenlabsService.ts` — fix body contract, move onStart after play |
-| Modify | `src/features/alex/hooks/useAlexVoice.ts` — use connecting_voice, real playback state |
-| Modify | `src/features/alex/hooks/useAlexBootstrap.ts` — verified auth name, forced fr-CA |
-| Modify | `src/features/alex/hooks/useAlexSessionRestore.ts` — prevent language/identity override |
-| Modify | `src/features/alex/AlexOrb.tsx` — add connecting_voice style |
-| Modify | `src/features/alex/AlexDebugPanel.tsx` — add V7 debug fields |
-
+On `/index`:
+- UI visible immediately
+- French opening only
+- approved female voice only
+- correct verified first name only
+- no stale user name ever spoken
+- no “Alex parle…” until real audio starts
+- no browser male/system fallback
+- clean reinitialize/restart behavior when the first startup path is stuck
