@@ -1,11 +1,11 @@
 /**
- * HeroSection — Premium Alex Opening Choreography
+ * HeroSection — Premium Alex Opening Choreography V7
  * 
- * 4-state staged sequence:
- * State 1 (0ms):     Arrival — orb alive, hero text visible, background alive
- * State 2 (200ms):   Dissolve — hero text fades, live surface emerges
- * State 3 (800ms):   Presence — transcript panel visible, "Alex en direct" label
- * State 4 (2200ms):  Voice — Alex speaks short French greeting, live transcript
+ * FIXES:
+ * - Verified identity from live auth session (no stale user_metadata)
+ * - "Alex parle…" only after real first audio callback
+ * - French-only opening (no English greetings)
+ * - Aggressive reinitialize before each voice start
  */
 import { useState, useCallback, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -14,6 +14,7 @@ import { useLiveVoice } from "@/hooks/useLiveVoice";
 import { useAlexSingleton } from "@/hooks/useAlexSingleton";
 import { alexRuntime } from "@/services/alexRuntimeSingleton";
 import { alexAudioChannel } from "@/services/alexSingleAudioChannel";
+import { supabase } from "@/integrations/supabase/client";
 import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, Camera, FileSearch, Sparkles, AlertTriangle, MessageSquare, ArrowRight } from "lucide-react";
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 import UploadPhotoModal from "@/components/home/UploadPhotoModal";
@@ -21,7 +22,7 @@ import UploadPhotoModal from "@/components/home/UploadPhotoModal";
 const cinematicBg = "/images/hero-bg.gif";
 
 type IntentSlug = "probleme" | "projet" | "avis";
-type StagePhase = "arrival" | "dissolve" | "presence" | "speaking" | "ready";
+type StagePhase = "arrival" | "dissolve" | "presence" | "connecting" | "speaking" | "ready";
 
 const INTENTS = [
   { slug: "probleme" as IntentSlug, label: "Problème", icon: AlertTriangle, cta: "Détecter un problème", ctaIcon: Camera, route: "/describe-project?intent=problem" },
@@ -31,20 +32,49 @@ const INTENTS = [
 
 const COMPONENT_NAME = "HeroSectionCinematicAlex";
 
-const SHORT_GREETINGS = [
-  "Bonjour. Quel est votre projet?",
-  "Bonjour. Je vous écoute.",
-  "Bonjour. Montrez-moi le problème.",
-];
-
-function pickGreeting(): string {
-  return SHORT_GREETINGS[Math.floor(Math.random() * SHORT_GREETINGS.length)];
-}
-
 // Timing constants (ms)
 const T_DISSOLVE = 200;
 const T_PRESENCE = 800;
 const T_VOICE_START = 2200;
+
+/**
+ * V7: Get verified first name from live Supabase auth session.
+ * Never reads stale localStorage or user_metadata from useAuth() directly.
+ */
+async function getVerifiedFirstName(): Promise<string | null> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return null;
+
+    const firstName =
+      session.user.user_metadata?.first_name ||
+      session.user.user_metadata?.full_name?.split(" ")[0];
+
+    if (firstName && typeof firstName === "string" && firstName.trim().length > 0) {
+      console.log("[Hero V7] USER_NAME_VERIFIED:", firstName.trim());
+      return firstName.trim();
+    }
+    return null;
+  } catch {
+    console.log("[Hero V7] USER_NAME_VERIFICATION_FAILED");
+    return null;
+  }
+}
+
+/**
+ * V7: Deterministic French greeting builder.
+ * Never returns English. Never uses time-based variants for opening.
+ */
+function buildFrenchGreeting(firstName: string | null, intent?: IntentSlug): string {
+  const hi = firstName ? `Bonjour ${firstName}.` : "Bonjour.";
+  if (!intent) return `${hi} Quel est votre projet?`;
+  const intentSuffix: Record<IntentSlug, string> = {
+    probleme: "Décrivez-moi votre problème ou envoyez une photo.",
+    projet: "Quel projet avez-vous en tête?",
+    avis: "Vous aimeriez que j'analyse vos soumissions?",
+  };
+  return `${hi} ${intentSuffix[intent]}`;
+}
 
 export default function HeroSection() {
   const { user } = useAuth();
@@ -58,8 +88,10 @@ export default function HeroSection() {
   // ── Staged choreography state ──
   const [phase, setPhase] = useState<StagePhase>("arrival");
   const [liveTranscript, setLiveTranscript] = useState("");
-  const [localGreeting] = useState(pickGreeting);
+  const [verifiedName, setVerifiedName] = useState<string | null>(null);
   const voiceAttemptedRef = useRef(false);
+  // V7: Track whether real first audio has been received
+  const hasReceivedFirstAudioRef = useRef(false);
 
   const { isPrimary, acquireLock, releaseLock, markActive } = useAlexSingleton(COMPONENT_NAME, "primary");
 
@@ -67,7 +99,6 @@ export default function HeroSection() {
     onTranscript: (text) => {
       alexTranscriptRef.current += text;
       setLiveTranscript(text);
-      // Auto-detect photo keywords
       const lower = alexTranscriptRef.current.toLowerCase();
       const photoKw = ["photo", "image", "téléverser", "envoyer une photo"];
       if (photoKw.some((kw) => lower.includes(kw)) && !uploadModalOpen) {
@@ -85,26 +116,39 @@ export default function HeroSection() {
       }
     },
     onConnect: () => {
-      console.log("[Hero] Voice connected");
+      console.log("[Hero V7] Voice connected");
       setVoiceFailed(false);
-      setPhase("speaking");
+      // V7: Do NOT set "speaking" here — wait for first audio
+      setPhase("connecting");
       markActive("gemini-live");
     },
     onFirstAudio: () => {
+      // V7: NOW we can show "speaking" — real audio confirmed
+      hasReceivedFirstAudioRef.current = true;
       setPhase("speaking");
+      console.log("[Hero V7] FIRST_AUDIO_CONFIRMED — speaking phase activated");
     },
     onDisconnect: () => {
-      console.log("[Hero] Voice disconnected");
-      if (phase === "speaking") setPhase("ready");
+      console.log("[Hero V7] Voice disconnected");
+      if (phase === "speaking" || phase === "connecting") setPhase("ready");
+      hasReceivedFirstAudioRef.current = false;
       releaseLock();
     },
     onError: (err) => {
-      console.error("[Hero] Voice error:", err);
+      console.error("[Hero V7] Voice error:", err);
       setVoiceFailed(true);
       setPhase("ready");
+      hasReceivedFirstAudioRef.current = false;
       releaseLock();
     },
   });
+
+  // ── Resolve verified name on mount ──
+  useEffect(() => {
+    getVerifiedFirstName().then((name) => {
+      if (name) setVerifiedName(name);
+    });
+  }, []);
 
   // ── Choreography timer ──
   useEffect(() => {
@@ -143,14 +187,23 @@ export default function HeroSection() {
     };
   }, [isConnecting]);
 
-  // Update phase based on voice state
+  // V7: Update phase based on voice state — ONLY set speaking after first audio
   useEffect(() => {
-    if (isActive && isSpeaking) setPhase("speaking");
-    else if (isActive && !isSpeaking) setPhase("speaking"); // listening within speaking phase
+    if (isActive && isSpeaking && hasReceivedFirstAudioRef.current) {
+      setPhase("speaking");
+    } else if (isActive && !isSpeaking && hasReceivedFirstAudioRef.current) {
+      // Listening phase — keep in speaking-like state
+      setPhase("speaking");
+    }
   }, [isActive, isSpeaking]);
 
+  /**
+   * V7: Aggressive reinitialize + French-only greeting with verified name.
+   */
   const triggerVoiceStart = useCallback(() => {
     if (!isPrimary) return;
+
+    // Aggressive reinitialize
     const rtState = alexRuntime.getState();
     if (rtState.sessionStatus === "ended" || rtState.sessionStatus === "failed") {
       alexRuntime.clearForRestart();
@@ -162,15 +215,23 @@ export default function HeroSection() {
     }
     alexAudioChannel.hardStop();
     setVoiceFailed(false);
+    hasReceivedFirstAudioRef.current = false;
 
-    const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || null;
-    const greeting = firstName ? `Bonjour ${firstName}. Quel est votre projet?` : localGreeting;
+    // V7: French greeting only, verified name only
+    const greeting = buildFrenchGreeting(verifiedName);
+    console.log("[Hero V7] Opening greeting:", greeting);
+    setPhase("connecting");
     start({ initialGreeting: greeting, force: true });
     alexTranscriptRef.current = "";
-  }, [isPrimary, acquireLock, start, user, localGreeting]);
+  }, [isPrimary, acquireLock, start, verifiedName]);
 
+  /**
+   * V7: Intent-specific voice start — French only, verified name only.
+   */
   const startVoice = useCallback((intent?: IntentSlug) => {
     if (!isPrimary) return;
+
+    // Aggressive reinitialize
     const rtState = alexRuntime.getState();
     if (rtState.sessionStatus === "ended" || rtState.sessionStatus === "failed") {
       alexRuntime.clearForRestart();
@@ -179,52 +240,56 @@ export default function HeroSection() {
     if (!locked) return;
     alexAudioChannel.hardStop();
     setVoiceFailed(false);
+    hasReceivedFirstAudioRef.current = false;
 
     const selectedIntent = intent || activeIntent;
-    const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || null;
-    const hour = new Date().getHours();
-    const timeG = hour >= 5 && hour < 12 ? "Bonjour" : hour >= 12 && hour < 18 ? "Bon après-midi" : "Bonsoir";
-    const hi = firstName ? `${timeG} ${firstName}!` : `${timeG}!`;
-    const greetingMap: Record<IntentSlug, string> = {
-      probleme: `${hi} Décrivez-moi votre problème ou envoyez une photo.`,
-      projet: `${hi} Quel projet avez-vous en tête?`,
-      avis: `${hi} Vous aimeriez que j'analyse vos soumissions?`,
-    };
-    start({ initialGreeting: greetingMap[selectedIntent], force: true });
+    // V7: French only — no time-based English greetings
+    const greeting = buildFrenchGreeting(verifiedName, selectedIntent);
+    console.log("[Hero V7] Intent greeting:", greeting);
+    start({ initialGreeting: greeting, force: true });
     alexTranscriptRef.current = "";
     setLiveTranscript("");
-    setPhase("speaking");
-  }, [start, activeIntent, isPrimary, acquireLock, user]);
+    setPhase("connecting");
+  }, [start, activeIntent, isPrimary, acquireLock, verifiedName]);
 
   const stopVoice = useCallback(() => {
     stop();
     releaseLock();
     setPhase("ready");
+    hasReceivedFirstAudioRef.current = false;
   }, [stop, releaseLock]);
 
   const retryVoice = useCallback(() => {
     stop();
     releaseLock();
     setVoiceFailed(false);
+    hasReceivedFirstAudioRef.current = false;
     setTimeout(() => triggerVoiceStart(), 300);
   }, [stop, releaseLock, triggerVoiceStart]);
 
   // ── Derived state ──
-  const orbState = isConnecting && !voiceFailed ? "thinking" : isActive ? (isSpeaking ? "speaking" : "listening") : "idle";
+  // V7: orbState uses hasReceivedFirstAudioRef for honest speaking state
+  const orbState =
+    isConnecting && !voiceFailed ? "thinking"
+    : isActive && isSpeaking && hasReceivedFirstAudioRef.current ? "speaking"
+    : isActive ? "listening"
+    : "idle";
+
   const voiceActive = isActive || (isConnecting && !voiceFailed);
   const current = INTENTS.find((i) => i.slug === activeIntent)!;
 
   // Phase-based visibility
   const showHeroText = phase === "arrival";
   const showLiveSurface = phase !== "arrival";
-  const showPresenceLabel = phase === "presence" || phase === "speaking" || phase === "ready";
+  const showPresenceLabel = phase === "presence" || phase === "connecting" || phase === "speaking" || phase === "ready";
   const showVoiceControls = voiceActive;
 
-  // Status text
+  // V7: Honest status text — no "Alex parle…" until real audio
+  const localGreeting = buildFrenchGreeting(verifiedName);
   const presenceLabel =
     orbState === "speaking" ? "Alex vous parle…"
     : orbState === "listening" ? "Alex vous écoute…"
-    : orbState === "thinking" ? "Connexion…"
+    : orbState === "thinking" || phase === "connecting" ? "Connexion…"
     : voiceFailed ? "Touchez l'orb pour démarrer"
     : phase === "presence" ? "Alex en direct"
     : "Parlez à Alex";
@@ -442,6 +507,11 @@ export default function HeroSection() {
                     </p>
                   ) : phase === "presence" ? (
                     <p className="text-sm text-white/30 italic">Alex prête…</p>
+                  ) : (phase === "connecting") ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-3 w-3 text-white/30 animate-spin" />
+                      <span className="text-xs text-white/30">Connexion…</span>
+                    </div>
                   ) : phase === "speaking" && !liveTranscript ? (
                     <div className="flex items-center gap-2">
                       <motion.div className="flex gap-1">
