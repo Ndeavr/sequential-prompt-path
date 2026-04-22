@@ -16056,6 +16056,87 @@ export type Database = {
           },
         ]
       }
+      contractor_activation_funnel: {
+        Row: {
+          aipp_score: Json | null
+          billing_cycle: string | null
+          business_name: string | null
+          calendar_connected: boolean
+          checklist_state: Json
+          completed_at: string | null
+          created_at: string
+          current_screen: number
+          email: string | null
+          id: string
+          import_status: string
+          imported_data: Json
+          media_uploads: Json
+          mode: string
+          payment_status: string
+          phone: string | null
+          preferences: Json
+          selected_plan: string | null
+          selected_services: Json
+          selected_zones: Json
+          stripe_session_id: string | null
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          aipp_score?: Json | null
+          billing_cycle?: string | null
+          business_name?: string | null
+          calendar_connected?: boolean
+          checklist_state?: Json
+          completed_at?: string | null
+          created_at?: string
+          current_screen?: number
+          email?: string | null
+          id?: string
+          import_status?: string
+          imported_data?: Json
+          media_uploads?: Json
+          mode?: string
+          payment_status?: string
+          phone?: string | null
+          preferences?: Json
+          selected_plan?: string | null
+          selected_services?: Json
+          selected_zones?: Json
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          aipp_score?: Json | null
+          billing_cycle?: string | null
+          business_name?: string | null
+          calendar_connected?: boolean
+          checklist_state?: Json
+          completed_at?: string | null
+          created_at?: string
+          current_screen?: number
+          email?: string | null
+          id?: string
+          import_status?: string
+          imported_data?: Json
+          media_uploads?: Json
+          mode?: string
+          payment_status?: string
+          phone?: string | null
+          preferences?: Json
+          selected_plan?: string | null
+          selected_services?: Json
+          selected_zones?: Json
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       contractor_ai_indexing_snapshots: {
         Row: {
           contractor_id: string

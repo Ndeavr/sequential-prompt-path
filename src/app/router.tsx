@@ -216,6 +216,17 @@ const PageContractorPlanRecommendation = lazy(() => import("@/pages/contractor-f
 const PageContractorCheckout = lazy(() => import("@/pages/contractor-funnel/PageContractorCheckout"));
 const PageContractorActivationSuccess = lazy(() => import("@/pages/contractor-funnel/PageContractorActivationSuccess"));
 const PageContractorDashboardPostActivation = lazy(() => import("@/pages/contractor-funnel/PageContractorDashboardPostActivation"));
+
+// Contractor Activation Funnel V2 (9-screen)
+const ScreenActivationLanding = lazy(() => import("@/pages/entrepreneur/activation/ScreenLanding"));
+const ScreenActivationAccount = lazy(() => import("@/pages/entrepreneur/activation/ScreenAccount"));
+const ScreenActivationImport = lazy(() => import("@/pages/entrepreneur/activation/ScreenImport"));
+const ScreenActivationScore = lazy(() => import("@/pages/entrepreneur/activation/ScreenScore"));
+const ScreenActivationChecklist = lazy(() => import("@/pages/entrepreneur/activation/ScreenChecklist"));
+const ScreenActivationCalendar = lazy(() => import("@/pages/entrepreneur/activation/ScreenCalendar"));
+const ScreenActivationPlan = lazy(() => import("@/pages/entrepreneur/activation/ScreenPlan"));
+const ScreenActivationPayment = lazy(() => import("@/pages/entrepreneur/activation/ScreenPayment"));
+const ScreenActivationSuccess = lazy(() => import("@/pages/entrepreneur/activation/ScreenSuccess"));
 const ContractorAvailabilityPage = lazy(() => import("@/pages/ContractorAvailabilityPage"));
 const PublicBookingPage = lazy(() => import("@/pages/PublicBookingPage"));
 const BookingClientDemoPage = lazy(() => import("@/pages/BookingClientDemoPage"));
@@ -684,6 +695,17 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/checkout" element={<PageContractorCheckout />} />
         <Route path="/entrepreneur/activation" element={<PageContractorActivationSuccess />} />
         <Route path="/entrepreneur/dashboard-post" element={<PageContractorDashboardPostActivation />} />
+
+        {/* Contractor Activation Funnel V2 */}
+        <Route path="/entrepreneur/activer" element={<Suspense fallback={<LazyFallback />}><ScreenActivationLanding /></Suspense>} />
+        <Route path="/entrepreneur/activer/compte" element={<Suspense fallback={<LazyFallback />}><ScreenActivationAccount /></Suspense>} />
+        <Route path="/entrepreneur/activer/analyse" element={<Suspense fallback={<LazyFallback />}><ScreenActivationImport /></Suspense>} />
+        <Route path="/entrepreneur/activer/score" element={<Suspense fallback={<LazyFallback />}><ScreenActivationScore /></Suspense>} />
+        <Route path="/entrepreneur/activer/profil" element={<Suspense fallback={<LazyFallback />}><ScreenActivationChecklist /></Suspense>} />
+        <Route path="/entrepreneur/activer/calendrier" element={<Suspense fallback={<LazyFallback />}><ScreenActivationCalendar /></Suspense>} />
+        <Route path="/entrepreneur/activer/plan" element={<Suspense fallback={<LazyFallback />}><ScreenActivationPlan /></Suspense>} />
+        <Route path="/entrepreneur/activer/paiement" element={<Suspense fallback={<LazyFallback />}><ScreenActivationPayment /></Suspense>} />
+        <Route path="/entrepreneur/activer/succes" element={<Suspense fallback={<LazyFallback />}><ScreenActivationSuccess /></Suspense>} />
 
         {/* Entrepreneur Funnel */}
         <Route path="/entrepreneur" element={<PageEntrepreneurLandingAIPP />} />
