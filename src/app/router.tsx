@@ -146,6 +146,7 @@ const PropertyTypeProblemPage = lazy(() => import("@/pages/seo/PropertyTypeProbl
 const SeoPageRenderer = lazy(() => import("@/pages/seo/SeoPageRenderer"));
 const SeoSitemapPage = lazy(() => import("@/pages/seo/SeoSitemapPage"));
 const AdminSeoGenerator = lazy(() => import("@/pages/admin/AdminSeoGenerator"));
+const PageSeoAutopilot = lazy(() => import("@/pages/admin/PageSeoAutopilot"));
 const PropertyGraphPage = lazy(() => import("@/pages/PropertyGraphPage"));
 const AlexChat = lazy(() => import("@/pages/AlexChat"));
 const AuthorityDashboardPage = lazy(() => import("@/pages/AuthorityDashboardPage"));
@@ -1065,6 +1066,7 @@ export const AppRouter = () => (
         <Route path="/admin/deep-link-analytics" element={<ProtectedRoute requiredRole="admin"><AdminDeepLinkAnalytics /></ProtectedRoute>} />
         <Route path="/admin/ai-growth" element={<ProtectedRoute requiredRole="admin"><AdminAIGrowthInsights /></ProtectedRoute>} />
         <Route path="/admin/seo-generator" element={<ProtectedRoute requiredRole="admin"><AdminSeoGenerator /></ProtectedRoute>} />
+        <Route path="/admin/seo-autopilot" element={<ProtectedRoute requiredRole="admin"><PageSeoAutopilot /></ProtectedRoute>} />
         <Route path="/admin/ai-dashboard" element={<ProtectedRoute requiredRole="admin"><AdminAIGrowthDashboard /></ProtectedRoute>} />
         <Route path="/admin/campaign-lab" element={<ProtectedRoute requiredRole="admin"><AdminCampaignLab /></ProtectedRoute>} />
         <Route path="/admin/autopilot" element={<ProtectedRoute requiredRole="admin"><AdminAutopilotDashboard /></ProtectedRoute>} />
