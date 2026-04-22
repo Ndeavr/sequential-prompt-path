@@ -1,17 +1,20 @@
 /**
  * Screen 5 — Smart Completion Checklist
- * Accordion sections with completion %, time, impact.
+ * Accordion sections with completion %, time, impact + autosave + sticky CTA.
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Check, ChevronDown, Building2, Shield, Wrench, MapPin, Image, Settings } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, Building2, Shield, Wrench, MapPin, Image, Settings, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useActivationFunnel } from "@/hooks/useActivationFunnel";
+import { useHesitationRescue } from "@/hooks/useHesitationRescue";
 import FunnelLayout from "@/components/contractor-funnel/FunnelLayout";
+import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
+import EmptyStateFallback from "@/components/ui/EmptyStateFallback";
 
 interface Section {
   key: string;
@@ -24,8 +27,9 @@ interface Section {
 
 export default function ScreenChecklist() {
   const navigate = useNavigate();
-  const { state, updateFunnel, completionBySection } = useActivationFunnel();
+  const { state, updateFunnel, completionBySection, overallCompletion, saving } = useActivationFunnel();
   const [openSection, setOpenSection] = useState<string | null>("identity");
+  useHesitationRescue({ screenKey: "checklist" });
 
   const sections: Section[] = [
     { key: "identity", title: "Identité d'entreprise", icon: Building2, estimatedMin: 2, impactLabel: "Confiance", completionPercent: completionBySection.identity },
@@ -35,6 +39,8 @@ export default function ScreenChecklist() {
     { key: "media", title: "Logo, photos et vidéos", icon: Image, estimatedMin: 3, impactLabel: "Conversion", completionPercent: completionBySection.media },
     { key: "preferences", title: "Préférences et capacité", icon: Settings, estimatedMin: 2, impactLabel: "Qualité des leads", completionPercent: completionBySection.preferences },
   ];
+
+  const totalMinutes = sections.reduce((sum, s) => sum + (s.completionPercent < 100 ? s.estimatedMin : 0), 0);
 
   const DEMO_SERVICES = [
     "Isolation de toiture", "Décontamination", "Ventilation soffite",
@@ -63,13 +69,43 @@ export default function ScreenChecklist() {
     updateFunnel({ selected_zones: updated });
   };
 
+  const handleContinue = () => navigate("/entrepreneur/activer/calendrier");
+
   return (
     <FunnelLayout currentStep="aipp_builder" showProgress={false}>
-      <div className="max-w-lg mx-auto">
-        <h1 className="text-2xl font-bold text-foreground mb-1">Complétez votre profil</h1>
-        <p className="text-sm text-muted-foreground mb-6">
+      <div className="max-w-lg mx-auto pb-24 sm:pb-0">
+        <div className="flex items-center justify-between mb-1">
+          <h1 className="text-2xl font-bold text-foreground">Complétez votre profil</h1>
+          {saving && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground animate-pulse">
+              <Save className="w-3 h-3" /> Sauvegarde…
+            </span>
+          )}
+          {!saving && overallCompletion > 0 && (
+            <span className="flex items-center gap-1 text-xs text-emerald-500">
+              <Check className="w-3 h-3" /> Sauvegardé
+            </span>
+          )}
+        </div>
+        <p className="text-sm text-muted-foreground mb-2">
           Chaque section améliore votre score et votre visibilité.
         </p>
+
+        {/* Progress + time estimate */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-24 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-500"
+                style={{ width: `${overallCompletion}%` }}
+              />
+            </div>
+            <span className="text-xs font-medium text-foreground">{overallCompletion}%</span>
+          </div>
+          {totalMinutes > 0 && (
+            <span className="text-xs text-muted-foreground">~{totalMinutes} min restantes</span>
+          )}
+        </div>
 
         <div className="space-y-3">
           {sections.map((section) => (
@@ -79,7 +115,6 @@ export default function ScreenChecklist() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              {/* Header */}
               <button
                 className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
                 onClick={() => setOpenSection(openSection === section.key ? null : section.key)}
@@ -110,42 +145,25 @@ export default function ScreenChecklist() {
                 )}
               </button>
 
-              {/* Content */}
               {openSection === section.key && (
                 <div className="px-4 pb-4 pt-1 border-t border-border/30">
                   {section.key === "identity" && (
                     <div className="space-y-3">
                       <div>
                         <Label className="text-xs">Nom d'entreprise</Label>
-                        <Input
-                          value={state.business_name}
-                          onChange={(e) => updateFunnel({ business_name: e.target.value })}
-                          className="mt-1"
-                        />
+                        <Input value={state.business_name} onChange={(e) => updateFunnel({ business_name: e.target.value })} className="mt-1" />
                       </div>
                       <div>
                         <Label className="text-xs">Téléphone</Label>
-                        <Input
-                          value={state.phone}
-                          onChange={(e) => updateFunnel({ phone: e.target.value })}
-                          className="mt-1"
-                        />
+                        <Input value={state.phone} onChange={(e) => updateFunnel({ phone: e.target.value })} className="mt-1" />
                       </div>
                       <div>
                         <Label className="text-xs">Courriel</Label>
-                        <Input
-                          value={state.email}
-                          onChange={(e) => updateFunnel({ email: e.target.value })}
-                          className="mt-1"
-                        />
+                        <Input value={state.email} onChange={(e) => updateFunnel({ email: e.target.value })} className="mt-1" />
                       </div>
                       <div>
                         <Label className="text-xs">Site web</Label>
-                        <Input
-                          value={state.website}
-                          onChange={(e) => updateFunnel({ website: e.target.value })}
-                          className="mt-1"
-                        />
+                        <Input value={state.website} onChange={(e) => updateFunnel({ website: e.target.value })} className="mt-1" />
                       </div>
                     </div>
                   )}
@@ -157,35 +175,41 @@ export default function ScreenChecklist() {
                         <Input
                           placeholder="1234-5678-90"
                           value={(state.imported_data as any)?.rbq_number || ""}
-                          onChange={(e) => updateFunnel({
-                            imported_data: { ...state.imported_data, rbq_number: e.target.value }
-                          })}
+                          onChange={(e) => updateFunnel({ imported_data: { ...state.imported_data, rbq_number: e.target.value } })}
                           className="mt-1"
                         />
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        La vérification RBQ sera effectuée automatiquement.
-                      </p>
+                      <p className="text-xs text-muted-foreground">La vérification RBQ sera effectuée automatiquement.</p>
                     </div>
                   )}
 
                   {section.key === "services" && (
-                    <div className="flex flex-wrap gap-2">
-                      {DEMO_SERVICES.map(service => (
-                        <button
-                          key={service}
-                          onClick={() => toggleService(service)}
-                          className={cn(
-                            "px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
-                            state.selected_services.includes(service)
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-card border-border/50 text-muted-foreground hover:border-primary/40"
-                          )}
-                        >
-                          {service}
-                        </button>
-                      ))}
-                    </div>
+                    <>
+                      {DEMO_SERVICES.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {DEMO_SERVICES.map(service => (
+                            <button
+                              key={service}
+                              onClick={() => toggleService(service)}
+                              className={cn(
+                                "px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
+                                state.selected_services.includes(service)
+                                  ? "bg-primary text-primary-foreground border-primary"
+                                  : "bg-card border-border/50 text-muted-foreground hover:border-primary/40"
+                              )}
+                            >
+                              {service}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <EmptyStateFallback
+                          title="Aucun service détecté"
+                          description="Ajoutez vos services manuellement."
+                          onManualAdd={() => {}}
+                        />
+                      )}
+                    </>
                   )}
 
                   {section.key === "zones" && (
@@ -210,12 +234,8 @@ export default function ScreenChecklist() {
                   {section.key === "media" && (
                     <div className="text-center py-6 border-2 border-dashed border-border/50 rounded-xl">
                       <Image className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">
-                        Glissez vos photos ici ou cliquez pour téléverser
-                      </p>
-                      <p className="text-xs text-muted-foreground/60 mt-1">
-                        Logo, photos de projets, avant/après
-                      </p>
+                      <p className="text-sm text-muted-foreground">Glissez vos photos ici ou cliquez pour téléverser</p>
+                      <p className="text-xs text-muted-foreground/60 mt-1">Logo, photos de projets, avant/après</p>
                     </div>
                   )}
 
@@ -227,9 +247,7 @@ export default function ScreenChecklist() {
                             key={pref}
                             onClick={() => {
                               const current = state.preferences as Record<string, boolean>;
-                              updateFunnel({
-                                preferences: { ...current, [pref]: !current[pref] }
-                              });
+                              updateFunnel({ preferences: { ...current, [pref]: !current[pref] } });
                             }}
                             className={cn(
                               "px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
@@ -250,15 +268,22 @@ export default function ScreenChecklist() {
           ))}
         </div>
 
+        {/* Desktop CTA */}
         <Button
           size="lg"
-          className="w-full h-14 text-base font-semibold rounded-xl mt-6"
-          onClick={() => navigate("/entrepreneur/activer/calendrier")}
+          className="w-full h-14 text-base font-semibold rounded-xl mt-6 hidden sm:flex"
+          onClick={handleContinue}
         >
           Continuer
           <ArrowRight className="w-5 h-5 ml-2" />
         </Button>
       </div>
+
+      <StickyMobileCTA
+        label="Continuer"
+        onClick={handleContinue}
+        icon={<ArrowRight className="w-5 h-5 mr-2" />}
+      />
     </FunnelLayout>
   );
 }
