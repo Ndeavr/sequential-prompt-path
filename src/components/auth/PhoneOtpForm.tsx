@@ -80,6 +80,11 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
     setSending(true);
     try {
       const data = await callTwilioVerify("send-otp", { phone: e164 });
+      if (data.fallback) {
+        toast.error("Le service SMS est temporairement indisponible. Utilisez un autre moyen de connexion.", { duration: 5000 });
+        console.warn("[PhoneOtp] SMS fallback triggered:", data.code);
+        return;
+      }
       if (data.error) {
         toast.error(data.error);
       } else {
