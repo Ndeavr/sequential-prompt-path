@@ -126,12 +126,35 @@ export default function PagePrLoop() {
         : { action: "generate_topic_batch" };
       const res = await supabase.functions.invoke("pr-loop-generate", { body });
       if (res.error) throw res.error;
-      toast({ title: "✅ Génération complétée", description: JSON.stringify(res.data) });
-      await fetchData();
-      await fetchStats();
+
+      if (topicId) {
+        toast({ title: "🚀 Génération lancée en arrière-plan", description: "Les assets seront générés un par un. Rechargez dans 2-3 minutes." });
+        // Poll progress every 15s for up to 3 minutes
+        let polls = 0;
+        const interval = setInterval(async () => {
+          polls++;
+          await fetchData();
+          await fetchStats();
+          if (polls >= 12) {
+            clearInterval(interval);
+            setGenerating(false);
+          }
+          // Check if topic is completed
+          const updated = topics.find(t => t.id === topicId);
+          if (updated?.status === "completed") {
+            clearInterval(interval);
+            setGenerating(false);
+            toast({ title: "✅ Génération complétée!" });
+          }
+        }, 15000);
+      } else {
+        toast({ title: "✅ Batch lancé", description: JSON.stringify(res.data) });
+        await fetchData();
+        await fetchStats();
+        setGenerating(false);
+      }
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
       setGenerating(false);
     }
   };
