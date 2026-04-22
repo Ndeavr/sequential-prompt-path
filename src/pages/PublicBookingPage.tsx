@@ -494,12 +494,12 @@ export default function PublicBookingPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="email">Courriel</Label>
-                      <Input
+                      <EmailInput
                         id="email"
-                        type="email"
                         value={clientEmail}
-                        onChange={(e) => setClientEmail(e.target.value)}
+                        onChange={setClientEmail}
                         placeholder="marie@exemple.com"
+                        showValidation
                       />
                     </div>
 

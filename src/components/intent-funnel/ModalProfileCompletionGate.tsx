@@ -75,7 +75,10 @@ export default function ModalProfileCompletionGate({ open, onClose, onComplete }
                 <input
                   type="tel"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => {
+                    const { formatPhoneDisplay } = require("@/utils/formatPhone");
+                    setPhone(formatPhoneDisplay(e.target.value));
+                  }}
                   placeholder="(514) 555-1234"
                   className="w-full h-11 rounded-xl px-4 bg-muted/50 border border-border/60 text-foreground text-sm
                     focus:outline-none focus:ring-2 focus:ring-primary/40"
