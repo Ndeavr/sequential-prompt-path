@@ -48,7 +48,7 @@ export async function trackFunnelEvent(
   try {
     const { data: { user } } = await supabase.auth.getUser();
 
-    await supabase.from("contractor_funnel_events").insert({
+    await supabase.from("contractor_funnel_events").insert([{
       session_id: getSessionId(),
       user_id: user?.id || null,
       event_type: eventType,
@@ -56,7 +56,7 @@ export async function trackFunnelEvent(
       metadata,
       source: document.referrer ? new URL(document.referrer).hostname : "direct",
       device: getDevice(),
-    });
+    }]);
   } catch (e) {
     console.error("[trackFunnelEvent]", e);
   }
