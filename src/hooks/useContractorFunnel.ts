@@ -1,7 +1,8 @@
 /**
- * UNPRO — useContractorFunnel
+ * UNPRO — useContractorFunnel (Unified)
  * Central hook managing the contractor onboarding funnel state.
- * Persists to sessionStorage + Supabase.
+ * Now delegates to useActivationFunnel for Supabase persistence,
+ * with sessionStorage as fast fallback for pre-auth state.
  */
 import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +12,8 @@ import {
   DEFAULT_FUNNEL_STATE,
   FUNNEL_STEPS,
 } from "@/types/contractorFunnel";
+import { supabase } from "@/integrations/supabase/client";
+import { trackFunnelEvent } from "@/utils/trackFunnelEvent";
 
 const STORAGE_KEY = "unpro_contractor_funnel";
 
@@ -44,7 +47,41 @@ export const useContractorFunnel = () => {
   const [state, setState] = useState<ContractorFunnelState>(loadState);
   const navigate = useNavigate();
 
-  // Auto-save on change
+  // Sync from Supabase activation funnel if user is authenticated
+  useEffect(() => {
+    const syncFromDB = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data } = await supabase
+          .from("contractor_activation_funnel" as any)
+          .select("business_name, phone, email, website, current_screen, selected_plan, payment_status, aipp_score, import_status")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (data) {
+          const d = data as any;
+          setState(prev => {
+          const merged = {
+              ...prev,
+              businessName: d.business_name || prev.businessName,
+              phone: d.phone || prev.phone,
+              website: d.website || prev.website,
+            };
+            saveState(merged);
+            return merged;
+          });
+        }
+      } catch { /* ignore */ }
+    };
+
+    syncFromDB();
+  }, []);
+
+  // Auto-save to sessionStorage on change
   useEffect(() => {
     saveState(state);
   }, [state]);
@@ -55,6 +92,14 @@ export const useContractorFunnel = () => {
 
   const goToStep = useCallback((step: FunnelStep) => {
     setState((prev) => ({ ...prev, currentStep: step }));
+    trackFunnelEvent(
+      step === "checkout" ? "checkout_started" :
+      step === "plan_recommendation" ? "plan_selected" :
+      step === "aipp_builder" ? "aipp_viewed" :
+      step === "activation" ? "activation_viewed" :
+      "landing_viewed",
+      { step }
+    );
     navigate(STEP_ROUTES[step]);
   }, [navigate]);
 

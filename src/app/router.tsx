@@ -216,6 +216,7 @@ const PageContractorPlanRecommendation = lazy(() => import("@/pages/contractor-f
 const PageContractorCheckout = lazy(() => import("@/pages/contractor-funnel/PageContractorCheckout"));
 const PageContractorActivationSuccess = lazy(() => import("@/pages/contractor-funnel/PageContractorActivationSuccess"));
 const PageContractorDashboardPostActivation = lazy(() => import("@/pages/contractor-funnel/PageContractorDashboardPostActivation"));
+const PageContractorPersonalizedLanding = lazy(() => import("@/pages/contractor-funnel/PageContractorPersonalizedLanding"));
 
 // Contractor Activation Funnel V2 (9-screen)
 const ScreenActivationLanding = lazy(() => import("@/pages/entrepreneur/activation/ScreenLanding"));
@@ -695,6 +696,7 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/checkout" element={<PageContractorCheckout />} />
         <Route path="/entrepreneur/activation" element={<PageContractorActivationSuccess />} />
         <Route path="/entrepreneur/dashboard-post" element={<PageContractorDashboardPostActivation />} />
+        <Route path="/contractor/:slug" element={<Suspense fallback={<LazyFallback />}><PageContractorPersonalizedLanding /></Suspense>} />
 
         {/* Contractor Activation Funnel V2 */}
         <Route path="/entrepreneur/activer" element={<Suspense fallback={<LazyFallback />}><ScreenActivationLanding /></Suspense>} />

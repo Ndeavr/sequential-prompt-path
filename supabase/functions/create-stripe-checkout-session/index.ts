@@ -95,7 +95,7 @@ serve(async (req) => {
       customer_email: customerId ? undefined : userEmail || undefined,
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
-      success_url: `${origin}/entrepreneur/onboarding/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/entrepreneur/activer/succes?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/entrepreneur/onboarding/plan`,
       metadata: {
         plan_code,
