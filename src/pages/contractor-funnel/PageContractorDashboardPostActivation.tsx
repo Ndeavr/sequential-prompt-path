@@ -70,11 +70,15 @@ export default function PageContractorDashboardPostActivation() {
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
 
-        const { count: appointmentCount } = await supabase
-          .from("bookings")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .gte("created_at", startOfMonth.toISOString());
+        let appointmentCount = 0;
+        try {
+          const { count } = await supabase
+            .from("bookings" as any)
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .gte("created_at", startOfMonth.toISOString());
+          appointmentCount = count || 0;
+        } catch { /* bookings table may not exist */ }
 
         // Fetch activation funnel for completion data
         const { data: funnelData } = await supabase

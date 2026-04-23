@@ -65,11 +65,10 @@ export const useContractorFunnel = () => {
         if (data) {
           const d = data as any;
           setState(prev => {
-            const merged = {
+          const merged = {
               ...prev,
               businessName: d.business_name || prev.businessName,
               phone: d.phone || prev.phone,
-              email: d.email || prev.email,
               website: d.website || prev.website,
             };
             saveState(merged);
