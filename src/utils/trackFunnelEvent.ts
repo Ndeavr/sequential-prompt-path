@@ -42,7 +42,7 @@ function getDevice(): string {
 
 export async function trackFunnelEvent(
   eventType: FunnelEventType,
-  metadata: Record<string, unknown> = {},
+  metadata: Record<string, string | number | boolean | null> = {},
   step?: string
 ) {
   try {
