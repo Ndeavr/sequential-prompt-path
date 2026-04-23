@@ -696,6 +696,7 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/checkout" element={<PageContractorCheckout />} />
         <Route path="/entrepreneur/activation" element={<PageContractorActivationSuccess />} />
         <Route path="/entrepreneur/dashboard-post" element={<PageContractorDashboardPostActivation />} />
+        <Route path="/contractor/:slug" element={<Suspense fallback={<LazyFallback />}><PageContractorPersonalizedLanding /></Suspense>} />
 
         {/* Contractor Activation Funnel V2 */}
         <Route path="/entrepreneur/activer" element={<Suspense fallback={<LazyFallback />}><ScreenActivationLanding /></Suspense>} />
