@@ -19594,6 +19594,84 @@ export type Database = {
           },
         ]
       }
+      contractor_followup_queue: {
+        Row: {
+          business_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          metadata: Json | null
+          scheduled_at: string
+          sent_at: string | null
+          status: string
+          trigger_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          metadata?: Json | null
+          scheduled_at: string
+          sent_at?: string | null
+          status?: string
+          trigger_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          metadata?: Json | null
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: string
+          trigger_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      contractor_funnel_events: {
+        Row: {
+          created_at: string
+          device: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          session_id: string | null
+          source: string | null
+          step: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          device?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          source?: string | null
+          step?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          device?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          source?: string | null
+          step?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       contractor_generation_targets: {
         Row: {
           city_cluster_id: string
