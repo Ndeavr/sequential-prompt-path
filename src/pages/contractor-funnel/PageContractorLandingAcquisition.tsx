@@ -247,17 +247,17 @@ export default function PageContractorLandingAcquisition() {
         {/* ─── Final CTA ─── */}
         <SectionContainer width="narrow" gradient className="text-center">
           <h2 className="text-2xl sm:text-3xl font-bold font-display text-foreground mb-3">
-            Prêt à transformer votre entreprise?
+            Plus de contrats. Moins de pertes. Grâce à l'IA.
           </h2>
           <p className="text-sm text-muted-foreground mb-6">
-            10 minutes pour un profil complet. Aucun mot de passe requis.
+            Découvrez votre potentiel en moins de 30 secondes. Aucun engagement.
           </p>
           <Button
             size="lg"
             className="h-13 px-10 text-base font-semibold rounded-xl bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-[var(--shadow-glow)]"
             onClick={() => navigate("/entrepreneur/onboarding")}
           >
-            Commencer maintenant
+            Voir mon potentiel gratuit
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </SectionContainer>
