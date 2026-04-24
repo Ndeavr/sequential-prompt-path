@@ -42,9 +42,9 @@ serve(async (req) => {
           fallback: true,
           config: {
             agent_id: null,
-            voice_id: "XB0fDUnXU5powFXDhCwa",
+            voice_id: "UJCi4DDncuo0VJDSIegj",
             language_default: "fr",
-            allow_switch: true,
+            allow_switch: false,
           },
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

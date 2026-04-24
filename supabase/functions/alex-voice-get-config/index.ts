@@ -26,18 +26,18 @@ serve(async (req) => {
       .single();
 
     if (error || !data) {
-      // Fallback defaults
+      // Fallback defaults — locked Alex master voice (FR only)
       return new Response(JSON.stringify({
         provider: "elevenlabs",
-        voiceId: "XB0fDUnXU5powFXDhCwa",
+        voiceId: "UJCi4DDncuo0VJDSIegj",
         locale: "fr-QC",
         toneStyle: "premium_warm",
         speechRate: 1.0,
         accentTarget: "quebec_premium_neutral",
         interruptibility: true,
-        stability: 0.43,
-        similarityBoost: 0.78,
-        styleExaggeration: 0.28,
+        stability: 0.5,
+        similarityBoost: 0.75,
+        styleExaggeration: 0.4,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
