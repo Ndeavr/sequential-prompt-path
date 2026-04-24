@@ -7,13 +7,15 @@
 import { supabase } from "@/integrations/supabase/client";
 import { alexLog } from "../utils/alexDebug";
 
-// V7: Locked approved female voice ID
-export const ALEX_PRIMARY_VOICE_ID = "XB0fDUnXU5powFXDhCwa"; // Charlotte FR — Alex premium female
+// LOCKED: Alex master voice — French only (Quebec)
+export const ALEX_PRIMARY_VOICE_ID = "UJCi4DDncuo0VJDSIegj";
+export const ALEX_LANGUAGE = "fr" as const;
 
 const VOICE_SETTINGS = {
-  stability: 0.43,
-  similarity_boost: 0.78,
-  style: 0.28,
+  stability: 0.5,
+  similarity_boost: 0.75,
+  style: 0.4,
+  use_speaker_boost: true,
   speed: 1.0,
 };
 

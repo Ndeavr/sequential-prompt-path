@@ -600,7 +600,7 @@ export function getAlexVoiceSettings(profile: AlexVoiceProfile = "default") {
 }
 
 export const ALEX_VOICE_CONFIG = {
-  voiceId: "XB0fDUnXU5powFXDhCwa",  // Alex premium female voice — Charlotte (FR + EN)
+  voiceId: "UJCi4DDncuo0VJDSIegj",  // LOCKED: Alex master voice — French only (Quebec)
   modelId: "eleven_multilingual_v2",
   outputFormat: "mp3_44100_128",
   chunkLengthSchedule: [70, 110, 150],

@@ -39,11 +39,11 @@ serve(async (req) => {
       .eq("is_active", true)
       .single();
 
-    // Use DB config, fallback to defaults
-    const voiceId = overrideVoiceId || profile?.voice_id_primary || "XB0fDUnXU5powFXDhCwa";
-    const stability = profile?.stability ?? 0.43;
-    const similarityBoost = profile?.similarity_boost ?? 0.78;
-    const style = profile?.style_exaggeration ?? 0.28;
+    // Use DB config, fallback to locked Alex master voice (FR only)
+    const voiceId = overrideVoiceId || profile?.voice_id_primary || "UJCi4DDncuo0VJDSIegj";
+    const stability = profile?.stability ?? 0.5;
+    const similarityBoost = profile?.similarity_boost ?? 0.75;
+    const style = profile?.style_exaggeration ?? 0.4;
     const speechRate = profile?.speech_rate ?? 1.0;
 
     const response = await fetch(

@@ -39,16 +39,16 @@ export default function HeroSectionEntrepreneurs({ onTrackCta }: Props) {
               Places limitées par ville
             </div>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground leading-tight font-display">
-              Vous faites déjà le travail.
-              <br />
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground leading-[1.05] font-display">
+              Plus de contrats grâce à{" "}
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                UNPRO vous amène les clients.
+                l'intelligence artificielle.
               </span>
             </h1>
 
             <p className="text-base sm:text-lg text-muted-foreground max-w-lg">
-              Rendez-vous qualifiés. Clients sérieux. Pas de leads partagés à 5 ou 6 concurrents.
+              UNPRO aide les entrepreneurs du Québec à obtenir plus de rendez-vous qualifiés,
+              améliorer leur visibilité et convertir davantage.
             </p>
 
             <ul className="space-y-2.5">
@@ -74,7 +74,7 @@ export default function HeroSectionEntrepreneurs({ onTrackCta }: Props) {
                 className="gap-2 font-bold text-base"
                 onClick={() => { onTrackCta("hero_score", "hero"); navigate("/entrepreneur/score"); }}
               >
-                Voir mon score actuel
+                Voir mon potentiel gratuit
                 <ArrowRight className="w-4 h-4" />
               </Button>
               <Button
