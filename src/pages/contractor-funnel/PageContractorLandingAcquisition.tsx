@@ -1,16 +1,19 @@
 /**
  * UNPRO — PageContractorLandingAcquisition
  * Entrepreneur acquisition landing page.
- * Cinematic hero, value props, import demo, dual CTA.
+ * Master message: "Plus de contrats grâce à l'intelligence artificielle".
+ * Alex voice (FR) auto-starts on first user gesture.
  */
+import { useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { ArrowRight, Zap, Shield, TrendingUp, BarChart3, Star, MapPin, FileCheck, Camera, MessageSquare } from "lucide-react";
+import { ArrowRight, Zap, Shield, TrendingUp, BarChart3, Star, MapPin, FileCheck, Camera, MessageSquare, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SectionContainer from "@/components/unpro/SectionContainer";
 import CardGlass from "@/components/unpro/CardGlass";
-import { fadeUp, staggerContainer, scaleIn, revealCard } from "@/lib/motion";
+import { fadeUp, staggerContainer, scaleIn } from "@/lib/motion";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 const FLOATING_CARDS = [
   { icon: FileCheck, label: "RBQ", delay: 0 },
