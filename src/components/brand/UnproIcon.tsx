@@ -1,8 +1,8 @@
 /**
- * UNPRO — Icon-only (House+U premium logo)
- * Uses the official house-U logo image asset.
+ * UNPRO — Icon-only (Quebec fleur-de-lys, premium 3D mark)
+ * Master brand icon used across avatars, auth surfaces, navigation marks.
  */
-import unproLogoHouse from "@/assets/unpro-logo-house.png";
+import unproFleur from "@/assets/unpro-icon-fleur.png";
 
 type UnproIconProps = {
   size?: number;
@@ -13,7 +13,7 @@ type UnproIconProps = {
 export default function UnproIcon({ size = 64, className = "" }: UnproIconProps) {
   return (
     <img
-      src={unproLogoHouse}
+      src={unproFleur}
       alt="UNPRO"
       width={size}
       height={size}

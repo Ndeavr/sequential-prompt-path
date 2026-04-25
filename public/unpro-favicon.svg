@@ -1,6 +1,10 @@
-<svg width="64" height="64" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="8" y="8" width="64" height="64" rx="16" stroke="#9CA3AF" stroke-width="2.5"/>
-  <path d="M28 26V48L40 56L52 48V26" stroke="#E5E7EB" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="66" cy="14" r="3.2" fill="#3B82F6"/>
-  <circle cx="66" cy="14" r="8" fill="#60A5FA" opacity="0.28"/>
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="fleurGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#60A5FA"/>
+      <stop offset="55%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#fleurGrad)" d="M32 4c-2 6-2 11 0 16-4-2-8-1-9 3-1 4 2 7 6 7-3 1-5 3-5 6 0 4 4 6 8 6v6h-4v3h4v3h-2v3h6v-3h-2v-3h4v-3h-4v-6c4 0 8-2 8-6 0-3-2-5-5-6 4 0 7-3 6-7-1-4-5-5-9-3 2-5 2-10 0-16z"/>
 </svg>
