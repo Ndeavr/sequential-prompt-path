@@ -1,234 +1,166 @@
-# UNPRO Copilot Homepage — Mobile-First Premium Rebuild
+# Alex Premium Concierge — ElevenLabs Master Config V2
 
-Transform `/` into a Microsoft Copilot / OpenAI-grade mobile experience: one orb, one question, one recommended pro, one action. Replace the current `Home.tsx` (Hero + 8 sections) with a focused above-fold conversion engine and a tight Alex conversation flow that **never** shows 3 quotes.
+> **Goal**: Transform Alex into a 100M$-grade female premium concierge (ElevenLabs Conversational AI) — auto-starts in French 2.5s after homepage load, runs the V2 voice settings, follows the discovery flow, never asks contact info before login.
 
----
-
-## 1. New `AlexOrbPremium` Component
-
-**File**: `src/components/alex/AlexOrbPremium.tsx`
-
-Pure CSS/Framer Motion orb — no cartoon face, no heavy assets:
-
-- **Core**: radial gradient blue nucleus (#0A66FF → #3FA9FF → #7ED7FF), inner shine
-- **Halo**: soft outer glow with slow breathing (scale 1 → 1.08, opacity 0.4 → 0.9, 3.5s ease)
-- **Glass ring**: outer thin border with backdrop-blur, subtle conic gradient
-- **Particles**: 6 tiny light dots orbiting at low opacity (CSS only, no canvas)
-- **States** (driven by `state` prop):
-  - `idle` → breathing pulse only
-  - `listening` → halo expands +20%, opacity boosted
-  - `speaking` → core intensity +, micro-vibration (rotate ±0.5°)
-  - `thinking` → outer ring slow rotation 8s linear
-- **Sizes**: `sm | md | lg | xl` (64 / 96 / 144 / 192 px)
-- **Below**: `ALEX` label + `Assistant projet maison` subtext (optional via prop)
-
-API: `<AlexOrbPremium state="idle" size="xl" showLabel />`
+**Current state confirmed**:
+- Agent `agent_5901kmg4ra2eee5bbp9r7ew5jcs7` with voice `UJCi4DDncuo0VJDSIegj` is active in `voice_configs` (env=prod)
+- `useLiveVoice` already wires `@elevenlabs/react` `useConversation` to `voice-get-signed-url`
+- `AlexVoiceContext.openAlex()` opens the locked full-screen overlay
+- Copilot homepage (`PageHomeCopilot`) does NOT auto-start Alex — user must tap "Parler à Alex" or send a chip
+- ElevenLabs voice settings (stability/similarity/style/speaker_boost) only live inside `alex-tts` (legacy TTS path), NOT inside the conversational agent overrides
 
 ---
 
-## 2. New Homepage Hero (Above-Fold Mobile-First)
+## 1. Push V2 voice settings + system prompt to the conversational agent
 
-**File**: `src/components/home-copilot/HeroCopilotMobile.tsx`
+**File**: `src/hooks/useLiveVoice.ts` + new `src/features/alex/voice/alexAgentOverrides.ts`
 
-Single screen on mobile, dark background `#050A12` with subtle blue aurora:
+- Build a single `buildAlexAgentOverrides(language)` helper returning:
+  ```ts
+  {
+    agent: {
+      prompt: { prompt: ALEX_SYSTEM_PROMPT_V2 },
+      firstMessage: openingFor(language, firstName),
+      language,
+    },
+    tts: {
+      voiceId: "UJCi4DDncuo0VJDSIegj",
+      stability: 0.56,
+      similarity_boost: 0.84,
+      style: 0.14,
+      use_speaker_boost: true,
+    },
+  }
+  ```
+- `ALEX_SYSTEM_PROMPT_V2` lives in `src/features/alex/voice/alexSystemPromptV2.ts` (canonical text from spec: identity, FR-first, one-question-at-a-time, discovery flow, forbidden phrases, closing lines, pronunciation map UNPRO/RBQ/NEQ).
+- Pass `overrides` into `conversation.startSession({ signedUrl, overrides })` and gate behind a feature flag `alexVoiceV2Enabled` (default true).
+- Memory: write `mem://ai/alex/voice-elevenlabs-v2` documenting voice settings, agent ID, and override contract (and remove the contradicting masculine memory `mem://ai/alex/voice-identity-and-behavior`).
 
-- Top bar: UNPRO logo (left) · burger menu (right)
-- Center: `<AlexOrbPremium size="xl" showLabel />`
-- Headline: **"Quel est votre projet aujourd'hui?"** (large, bold, last word in `text-primary`)
-- Subheadline: *"Alex comprend votre besoin, analyse vos options et recommande le meilleur pro vérifié."*
-- Input box (multiline, glass card): placeholder *"Toiture qui fuit, moisissure, rénovation salle de bain..."* with circular send button
-- Primary CTA (full-width, gradient): `✨ Parler à Alex` → opens voice via `openAlex("home_voice")`
-- Trust line: `🛡 Gratuit • Sans engagement • Réponse rapide`
-- Quick chips (horizontal scroll, glass icons): Trouver un pro · Estimer coût · Vérifier pro · Analyser soumission · Téléverser photos · Je suis entrepreneur
-
-Each chip routes to its corresponding flow OR seeds the Alex conversation with a pre-filled intent.
-
----
-
-## 3. Alex Conversation Flow (Single-Pro Recommendation)
-
-**File**: `src/components/alex-copilot/AlexCopilotConversation.tsx`
-
-Full chat shell triggered when user submits text input or taps a chip. Drop-in mobile sheet:
-
-- Header: back · `<AlexOrbPremium size="sm" />` · "Alex" + "En ligne" green dot · menu
-- Messages: alternating bubbles (Alex left grey, user right blue gradient)
-- On user message → show `Je comprends. J'analyse votre situation...` + premium loader (1.5s)
-- Then render **`CardRecommendedProSingle`** (NOT a 3-pro list):
-  - Image / van photo
-  - Pro name + `XX% compatibilité` + ⭐ rating + reviews count
-  - 5–6 reasons (✅ specialty, recent reviews, sector, availability, price competitive, UNPRO verified)
-- Action buttons (stacked, full-width):
-  - **Prendre rendez-vous** (primary)
-  - **Voir disponibilités**
-  - **Pourquoi lui?** → opens `ModalWhyThisPro`
-  - **Autre option** → reveals `CardRecommendedProSingle` for 2nd best (still one at a time, max 3 reveals)
-
-**Endpoint wiring**: calls existing `api_unified_matching` / `compute-plan-recommendation` edge functions. Falls back to mock pro for first render.
-
-**Hard rule** enforced in the component: it accepts only a **single** `recommendedPro` prop. Alternative pros are loaded on-demand via `requestAlternative()`.
+> **Note**: Overrides MUST be enabled in the ElevenLabs dashboard for this agent (prompt, firstMessage, language, tts.voiceId, voice settings). The plan adds a clear console warning + admin notice if overrides are rejected by the agent.
 
 ---
 
-## 4. Modal "Pourquoi lui?"
+## 2. Auto-start Alex 2.5s after Copilot homepage load
 
-**File**: `src/components/alex-copilot/ModalWhyThisPro.tsx`
+**Files**:
+- `src/pages/PageHomeCopilot.tsx`
+- new `src/hooks/useAlexAutoGreet.ts`
 
-Bottom sheet listing comparative reasons:
-- Meilleure expertise spécifique
-- Plus rapide disponible
-- Plus forte satisfaction clients
-- Distance optimale
-- Prix généralement compétitif
-
-CTA: `Prendre rendez-vous`.
-
----
-
-## 5. Booking Sheet
-
-**File**: `src/components/alex-copilot/SheetBookingMobile.tsx`
-
-Mobile bottom sheet with:
-- Date picker (next 14 days, visual day chips)
-- Time slot chips (morning / afternoon / evening)
-- Name · Phone · Adresse projet · Notes (textarea)
-- Primary CTA: **Confirmer mon rendez-vous**
-- Success state: ✅ `Rendez-vous demandé` + `Le pro confirmera sous peu` + auto-redirect to `/proprietaire/dashboard` after 3s
-
-Wires to existing `bookings` table via `api_unified_booking` (or direct Supabase insert if endpoint not available — to be confirmed in build).
+Behavior:
+- 2.5s after mount, if (a) user has not interacted, (b) no other Alex session is open, (c) the device is not in reduced-motion / low-data mode, call `openAlex("home_copilot_autostart", "fr_first_greet")`.
+- Pull `firstName` from `auth.user.user_metadata.first_name` → injected into agent overrides → ElevenLabs speaks:
+  - With name: *"Bonjour {firstName}. Je suis Alex d'UNPRO. Que souhaitez-vous régler aujourd'hui?"*
+  - Without: *"Bonjour. Je suis Alex d'UNPRO. Comment puis-je vous aider aujourd'hui?"*
+- Cancel auto-greet immediately if user types in the hero textarea, taps a chip, or scrolls past 200px (avoid intrusive playback).
+- Track `alex_autogreet_fired` / `alex_autogreet_skipped` via `trackCopilotEvent`.
 
 ---
 
-## 6. Below-Fold Sections (Light, 3 Blocks Only)
+## 3. Premium voice UX upgrades on the locked overlay
 
-**File**: `src/components/home-copilot/SectionsBelowFold.tsx`
+**File**: `src/components/voice/OverlayAlexVoiceFullScreen.tsx`
 
-Tight, no clutter:
-
-- **A. Pourquoi UNPRO** — 4 icon cards (Pros vérifiés · IA intelligente · Gain de temps · Moins de stress)
-- **B. Avis clients** — horizontal swipe of 4 testimonial cards with avatar + city
-- **C. Vous avez déjà des soumissions?** — glass card with stacked-receipts illustration → CTA `Analyser mes soumissions` (routes to `/soumission/analyse`)
-
-Footer: `🛡 Vos informations sont confidentielles.`
+- Replace static greeting builder with the V2 first-message logic (rebonjour for returning users handled server-side by overrides).
+- Visual states tied to `useLiveVoice` flags:
+  - `idle` (subtle pulse) → `listening` (wider blue halo + glow ring) → `thinking` (rotating contour) → `speaking` (vibration + brightness boost). Wire to existing `AlexOrbPremium` which already supports these states.
+- Live transcript fade: render last user utterance + Alex response with opacity transition (250ms), max 2 visible.
+- Add subtle 1.2s intro chime via existing `audioEngine` only when `prefers-reduced-motion: no-preference`.
 
 ---
 
-## 7. Sticky Bottom CTA
+## 4. Silence + re-engage rules (max 1+1, then stop)
 
-**File**: `src/components/home-copilot/StickyBottomAlexCTA.tsx`
-
-Appears after 400px scroll on mobile only:
-- Glass blur bar
-- Mini orb + `Parler à Alex` button → `openAlex("home_sticky")`
-
----
-
-## 8. New Page Wrapper
-
-**File**: `src/pages/PageHomeCopilot.tsx`
-
-Replaces `Home.tsx` content via the feature flag wrapper. Structure:
-
-```
-<MainLayout transparentHeader darkMode>
-  <Helmet>...</Helmet>
-  <HeroCopilotMobile />              {/* Above fold */}
-  <SectionsBelowFold />              {/* Below */}
-  <StickyBottomAlexCTA />
-  <AlexCopilotConversation />        {/* Sheet, controlled by store */}
-</MainLayout>
-```
-
-**Routing**: update `src/components/home-intent/HomeWithFeatureFlag.tsx` to render `PageHomeCopilot` directly (preserves the `/` and `/index` routes).
+**File**: `src/hooks/useAlexSilenceControl.ts` already exists. Hook into the locked overlay:
+- 1st silence (12s): contextual update *"Je suis là."*
+- 2nd silence (15s): contextual update *"Je reste disponible quand vous serez prêt."*
+- Then **stop** — no further prompts. Resume only on orb tap. (Aligns with `mem://ai/alex/silence-pause-resume-control`.)
+- Forbid the phrases *"Avez-vous toujours besoin de moi?"* / *"Êtes-vous là?"* — already covered, just enforce via the V2 system prompt's "Forbidden Phrases" block.
 
 ---
 
-## 9. Conversation State Store
+## 5. Booking flow — never ask contact manually
 
-**File**: `src/stores/copilotConversationStore.ts`
+Already enforced for the chat sheet. Extend to voice:
+- When the conversational agent reaches booking intent (handled via `client tool call` `request_booking`), the client tool implementation calls `useProfileCompletionGate` → if not logged in, voice says: *"Connectez-vous en quelques secondes. UNPRO remplira vos coordonnées automatiquement."* and the locked overlay surfaces the existing `BookingLoginPromptBlock` action card.
+- Never speak name/phone/address questions. Add to the V2 system prompt explicit "Do NOT ask for contact info; tell the user to log in." rule.
 
-Zustand store coordinating the chat sheet:
-- `isOpen`, `messages[]`, `recommendedPro`, `alternativesShown`, `bookingOpen`
-- Actions: `openConversation(initialText?)`, `sendMessage(text)`, `requestAlternative()`, `openBooking()`, `reset()`
-- Used by both the input box CTA and sticky CTA.
-
----
-
-## 10. Analytics Tracking
-
-**File**: `src/utils/trackCopilotEvent.ts`
-
-Lightweight wrapper writing to `contractor_funnel_events`-style table (reuse existing `trackFunnelEvent` if compatible) for:
-
-- `homepage_loaded`
-- `alex_started`
-- `message_sent`
-- `recommended_pro_shown`
-- `booking_started`
-- `booking_completed`
-- `alternative_option_requested`
-- `quote_upload_clicked`
-
-Each event includes `session_id` (sessionStorage UUID) + `metadata`.
+**Files**:
+- `src/components/voice/OverlayAlexVoiceFullScreen.tsx` — register client tools `request_booking`, `start_login_redirect`, `analyze_quote`, `analyze_image`.
+- `src/components/alex-copilot/SheetBookingMobile.tsx` — already correct; no changes.
 
 ---
 
-## 11. Copy Guardrails (Code-Enforced)
+## 6. Session memory (city / project / urgency / language / last step)
 
-Add a build-time lint rule (or comment header in each new file) forbidding the strings `3 soumissions`, `compare 3 pros`, `marketplace`, `directory` inside `src/components/home-copilot/**` and `src/components/alex-copilot/**`. Uses ESLint `no-restricted-syntax` with regex on JSX text.
-
----
-
-## 12. Design System Tokens
-
-Update `src/index.css` to expose 3 new HSL tokens on the dark background variant (no override of existing tokens):
-
-```
---copilot-bg: 215 70% 5%;        /* #050A12 */
---copilot-blue-1: 220 100% 52%;  /* #0A66FF */
---copilot-blue-2: 207 100% 62%;  /* #3FA9FF */
---copilot-blue-3: 198 100% 75%;  /* #7ED7FF */
-```
-
-All new components consume these via Tailwind arbitrary values or `bg-[hsl(var(--copilot-bg))]`. No hardcoded hex.
+**File**: new `src/features/alex/voice/alexSessionMemory.ts`
+- Persist a small JSON in `sessionStorage` under `unpro:alex:session_memory`.
+- On every `user_transcript` and `agent_response`, run regex extractors: `city` (Quebec city list), `urgency` ("urgent", "ce soir", "demain"), `projectType` (toiture/humidité/plomberie/etc.), `language`.
+- Push memory to ElevenLabs via `sendContextualUpdate` only when a NEW field is captured (avoid spam). Format:
+  *"Contexte mis à jour: ville={Laval}, projet={humidité}, urgence={non}. N'a pas redemandé."*
+- Consumed by `useAlexAutoGreet` on next session: pass to overrides as `agent.prompt` extra system message *"Tu reprends une conversation. Ville: …, Projet: …"*.
 
 ---
 
-## 13. Files Summary
+## 7. Admin tuning panel
 
-| Action | File |
-|---|---|
-| Create | `src/components/alex/AlexOrbPremium.tsx` |
-| Create | `src/components/home-copilot/HeroCopilotMobile.tsx` |
-| Create | `src/components/home-copilot/SectionsBelowFold.tsx` |
-| Create | `src/components/home-copilot/StickyBottomAlexCTA.tsx` |
-| Create | `src/components/alex-copilot/AlexCopilotConversation.tsx` |
-| Create | `src/components/alex-copilot/CardRecommendedProSingle.tsx` |
-| Create | `src/components/alex-copilot/ModalWhyThisPro.tsx` |
-| Create | `src/components/alex-copilot/SheetBookingMobile.tsx` |
-| Create | `src/stores/copilotConversationStore.ts` |
-| Create | `src/utils/trackCopilotEvent.ts` |
-| Create | `src/pages/PageHomeCopilot.tsx` |
-| Modify | `src/components/home-intent/HomeWithFeatureFlag.tsx` (point to new page) |
-| Modify | `src/index.css` (add copilot tokens) |
-
-The legacy `src/pages/Home.tsx` and existing `src/components/home/*` sections remain untouched (still reachable via other routes if needed).
+**File**: `src/pages/admin/AdminVoiceControlPage.tsx` (extend)
+- Add "Voice V2 Settings" card with sliders:
+  - Stability (default 56), Similarity (84), Style (14), Speaker Boost (toggle).
+  - Live "Test phrase" button → calls `test-alex-voice` edge function with current sliders + standard FR test sentence ("Bonjour, je suis Alex d'UNPRO. RBQ valide à Montréal.") to validate pronunciation.
+  - "Save as active" → writes to `voice_configs` (new columns `stability`, `similarity`, `style`, `speaker_boost`).
+- Migration: add 4 columns to `voice_configs` (numeric/boolean, defaults matching V2). `voice-get-signed-url` returns them; `useLiveVoice` injects them into overrides.
 
 ---
 
-## 14. Out of Scope (Phase 2)
+## 8. Forbidden / Closing phrases enforcement (server-side)
 
-- Real-time pro availability graph (uses mock slots first)
-- Voice biometrics
-- Pro-side notification when booking is created (existing edge function reuse only)
+**File**: `supabase/functions/_shared/alex-french-voice.ts` (extend `rewriteAlexToSpokenFrench`)
+- Strip forbidden patterns post-AI: "Veuillez patienter", "Cliquez pour commencer", "Je suis une intelligence artificielle", "Désolé je ne comprends pas", "Remplissez ce formulaire", repeated "Avez-vous toujours besoin de moi".
+- Used by the legacy TTS path (`alex-tts`) and any non-conversational fallback. The conversational agent honors them via the V2 system prompt directly.
 
 ---
 
-## Expected Outcome
+## 9. Memory updates
 
-- **Mobile screen 1**: orb + headline + input + CTA + chips, all visible without scroll
-- **One conversation, one pro, one action** — never a list
-- Sticky CTA always 1 tap away
-- Premium dark Copilot aesthetic
-- Foundation to A/B test against legacy homepage via the existing feature flag wrapper
+- Write `mem://ai/alex/voice-elevenlabs-v2`: agent ID, voice ID, stability/similarity/style values, override contract, auto-greet 2.5s rule, forbidden phrases.
+- Update `mem://index.md`: replace masculine voice entry with the new V2 entry; bump core rule:
+  > Alex voice: ElevenLabs agent `agent_5901kmg4ra2eee5bbp9r7ew5jcs7`, voice Charlotte FR `UJCi4DDncuo0VJDSIegj`, V2 settings (56/84/14, speaker_boost ON). Auto-greets 2.5s after Copilot homepage load. FR first; never start in EN.
+- Delete `mem://ai/alex/voice-persona-male` and `mem://ai/alex/voice-identity-and-behavior` (contradict V2).
+
+---
+
+## 10. Tracking
+
+`trackCopilotEvent` events to add:
+- `alex_autogreet_fired`
+- `alex_autogreet_skipped` (with reason)
+- `alex_voice_first_audio_ms` (latency to first audible word)
+- `alex_voice_silence_prompt_1` / `_2`
+- `alex_voice_booking_login_prompt`
+
+---
+
+## 11. Out of scope (explicitly NOT touched)
+
+- Public landing pages (`unpro.ca` warm theme) — Alex stays opt-in there.
+- Contractor onboarding voice flow — already covered by `mem://features/contractor-onboarding-landing`.
+- Logo/favicon — finalized in earlier message.
+- The 3-quote anti-pattern — already removed in Copilot store.
+
+---
+
+## Deliverables checklist
+
+1. New: `src/features/alex/voice/alexSystemPromptV2.ts`, `alexAgentOverrides.ts`, `alexSessionMemory.ts`
+2. New: `src/hooks/useAlexAutoGreet.ts`
+3. Edited: `src/hooks/useLiveVoice.ts` (overrides + voice settings injection)
+4. Edited: `src/pages/PageHomeCopilot.tsx` (auto-greet hook)
+5. Edited: `src/components/voice/OverlayAlexVoiceFullScreen.tsx` (client tools, transcript fade, intro chime)
+6. Edited: `supabase/functions/_shared/alex-french-voice.ts` (forbidden phrase scrubber)
+7. Edited: `supabase/functions/voice-get-signed-url/index.ts` (return V2 voice settings)
+8. Migration: add `stability`, `similarity`, `style`, `speaker_boost` columns to `voice_configs`
+9. Edited: `src/pages/admin/AdminVoiceControlPage.tsx` (V2 sliders + live test)
+10. Memory: write V2 file, update index, delete obsolete masculine entries
+11. Tracking events wired through `trackCopilotEvent`
+
+Build verified with `tsc --noEmit` and a manual smoke test of `/` (homepage auto-greet) + `/alex` (locked overlay).

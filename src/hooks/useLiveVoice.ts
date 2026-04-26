@@ -6,6 +6,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useConversation } from "@elevenlabs/react";
 import { supabase } from "@/integrations/supabase/client";
 import { AlexLanguageLockSession, type AlexLanguage } from "@/services/alexLanguageLock";
+import { buildAlexAgentOverrides, ALEX_VOICE_DEFAULTS } from "@/features/alex/voice/alexAgentOverrides";
+import { loadAlexMemory, buildMemoryContextHint } from "@/features/alex/voice/alexSessionMemory";
 
 const RECONNECT_COOLDOWN_MS = 5000;
 const CONNECTION_TIMEOUT_MS = 5_000;
@@ -22,6 +24,10 @@ interface UseLiveVoiceCallbacks {
 interface StartOptions {
   initialGreeting?: string;
   force?: boolean;
+  /** First name to inject into the V2 first message. */
+  firstName?: string | null;
+  /** Returning user → "Rebonjour" greeting variant. */
+  isReturning?: boolean;
 }
 
 // V7: French-only default greeting — never English for opening
@@ -270,14 +276,29 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         callbacksRef.current?.onError?.(new Error("Connection timeout — voice unavailable"));
       }, CONNECTION_TIMEOUT_MS);
 
-      await conversation.startSession({ signedUrl });
+      // V8: Build premium V2 overrides — system prompt, first message, voice settings
+      const memory = loadAlexMemory();
+      const contextHint = buildMemoryContextHint(memory);
+      const overrides = buildAlexAgentOverrides({
+        firstName: options?.firstName,
+        isReturning: options?.isReturning ?? Boolean(memory),
+        language: "fr",
+        voiceId: (data?.voiceId as string) ?? ALEX_VOICE_DEFAULTS.voiceId,
+        stability: (data?.stability as number) ?? null,
+        similarity: (data?.similarity as number) ?? null,
+        style: (data?.style as number) ?? null,
+        speakerBoost: (data?.speakerBoost as boolean) ?? null,
+        contextHint,
+      });
 
-      console.log("[ElevenLabs V7] ✅ Session started");
-      // V7: Always inject French persona for opening
-      sendAgentContext(
-        buildSessionContext("fr-CA", options?.initialGreeting),
-        "[ElevenLabs V7] ✅ Alex persona injected (fr-CA)"
-      );
+      console.log("[ElevenLabs V8] Starting session with V2 overrides", {
+        voiceId: overrides.tts.voiceId,
+        firstName: options?.firstName ?? null,
+      });
+
+      await conversation.startSession({ signedUrl, overrides } as any);
+
+      console.log("[ElevenLabs V8] ✅ Session started with V2 overrides");
     } catch (err: unknown) {
       clearConnectionTimeout();
       console.error("[ElevenLabs V7] Failed to start:", err);
