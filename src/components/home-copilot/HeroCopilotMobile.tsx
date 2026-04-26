@@ -5,12 +5,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowUp, Menu, ShieldCheck, Sparkles, Search, Calculator, BadgeCheck, FileText, Camera, HardHat } from "lucide-react";
+import { ArrowUp, ShieldCheck, Sparkles, Search, Calculator, BadgeCheck, FileText, Camera, HardHat } from "lucide-react";
 import AlexOrbPremium from "@/components/alex/AlexOrbPremium";
 import { useCopilotConversationStore } from "@/stores/copilotConversationStore";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
-import logoUnpro from "@/assets/unpro-logo-master-transparent.png";
 
 const CHIPS = [
   { id: "find", label: "Trouver un pro", icon: Search, intent: "Je cherche un pro pour un projet maison." },
@@ -48,16 +47,8 @@ export default function HeroCopilotMobile() {
         <div className="absolute top-0 left-0 w-[320px] h-[320px] rounded-full bg-[hsl(252_100%_60%/0.10)] blur-[100px]" />
       </div>
 
-      {/* Top bar */}
-      <header className="flex items-center justify-between px-5 pt-4">
-        <img src={logoUnpro} alt="UNPRO" className="h-7 w-auto" />
-        <button aria-label="Menu" className="w-10 h-10 -mr-2 flex items-center justify-center text-white/80 hover:text-white">
-          <Menu className="w-6 h-6" />
-        </button>
-      </header>
-
-      {/* Center hero */}
-      <div className="flex-1 flex flex-col items-center justify-start px-5 pt-6 pb-8 text-center">
+      {/* Center hero — global SmartHeader sits above this section */}
+      <div className="flex-1 flex flex-col items-center justify-start px-5 pt-8 pb-8 text-center">
         <motion.div initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }}>
           <AlexOrbPremium size="xl" state="idle" showLabel />
         </motion.div>
