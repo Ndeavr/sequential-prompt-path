@@ -614,7 +614,7 @@ export default function OverlayAlexVoiceFullScreen() {
                 <Sparkles className="w-4 h-4 text-primary animate-spin" />
               )}
               <span className="text-sm text-muted-foreground">
-                {isRecoveringNow ? recovery.phaseLabel : getBootStepLabel(bootStep)}
+                {isRecoveringNow ? recovery.phaseLabel : (slowToken ? "Connexion d'Alex…" : getBootStepLabel(bootStep))}
               </span>
             </div>
           )}
