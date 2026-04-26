@@ -146,6 +146,8 @@ export default function OverlayAlexVoiceFullScreen() {
       hasConnectedRef.current = true;
       bootTimeRef.current = Date.now();
       setBootStep("connected");
+      alexVoiceService.markWsConnected(true);
+      alexVoiceService.setState("connected", "ws_open");
       getStore().resetHeartbeat();
     },
     onDisconnect: () => {
@@ -154,6 +156,7 @@ export default function OverlayAlexVoiceFullScreen() {
       const wasConnected = hasConnectedRef.current;
       hasConnectedRef.current = false;
       firstAudioReceivedRef.current = false;
+      alexVoiceService.markWsConnected(false);
       if (firstAudioTimerRef.current) {
         clearTimeout(firstAudioTimerRef.current);
         firstAudioTimerRef.current = null;
@@ -164,9 +167,9 @@ export default function OverlayAlexVoiceFullScreen() {
       }
       const timeSinceBoot = Date.now() - bootTimeRef.current;
       if (s.isOverlayOpen && wasConnected && timeSinceBoot > 2000) {
-        s.setError("connection_lost", "Connexion perdue. Réessayez ou passez au chat.", true);
+        s.setError("connection_lost", "La voix d'Alex a été interrompue. Je réessaie automatiquement.", true);
       } else if (s.isOverlayOpen && !wasConnected) {
-        s.setError("connection_failed", "Impossible de se connecter. Réessayez.", true);
+        s.setError("connection_failed", "Connexion vocale échouée. Je réessaie automatiquement.", true);
       }
     },
     onError: (error) => {
@@ -185,8 +188,9 @@ export default function OverlayAlexVoiceFullScreen() {
         const msg = rawMessage.includes("moteur vocal") || rawMessage.includes("serveur vocal")
           ? rawMessage
           : rawMessage.includes("not available") || rawMessage.includes("bidiGenerateContent")
-          ? "Le moteur vocal est indisponible pour le moment. Passez au chat ou réessayez."
-          : rawMessage;
+          ? "Le moteur vocal est indisponible. Alex continue par chat."
+          : "La voix d'Alex tarde à démarrer. Je réessaie automatiquement.";
+        alexVoiceService.setError(msg, "voice_error");
         s.setError("voice_error", msg, true);
       }
     },
