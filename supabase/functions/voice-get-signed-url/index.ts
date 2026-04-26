@@ -60,7 +60,7 @@ serve(async (req) => {
     // ─── Get config from DB (single source of truth) ───
     const { data: config } = await supabase
       .from("voice_configs")
-      .select("agent_id, voice_id, language_default, allow_switch")
+      .select("agent_id, voice_id, language_default, allow_switch, stability, similarity, style, speaker_boost")
       .eq("environment", environment)
       .eq("status", "active")
       .single();
