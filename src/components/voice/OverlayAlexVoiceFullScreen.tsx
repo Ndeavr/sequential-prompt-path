@@ -22,11 +22,14 @@ import { executeHardReset } from "@/services/voiceHardResetEngine";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import UnproIcon from "@/components/brand/UnproIcon";
+import { alexVoiceService } from "@/services/alexVoiceService";
+import { useAlexChatFallbackStore } from "@/stores/alexChatFallbackStore";
 
 const STABILIZATION_MS = 4000;
 const HEARTBEAT_INTERVAL_MS = 2000;
-const BOOT_TIMEOUT_MS = 10000;
-const FIRST_AUDIO_TIMEOUT_MS = 5000;
+const BOOT_TIMEOUT_MS = 15000; // Was 10s — bumped to absorb cold start of edge fn
+const FIRST_AUDIO_TIMEOUT_MS = 4000; // Was 5s — fail fast → trigger retry sooner
+const MAX_AUTO_RETRIES = 2; // 1st boot + 2 silent retries = 3 attempts before fallback
 
 // Helper to always get fresh state
 const getStore = () => useAlexVoiceLockedStore.getState();
