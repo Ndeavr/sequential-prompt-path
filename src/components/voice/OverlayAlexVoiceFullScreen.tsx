@@ -24,12 +24,18 @@ import { toast } from "sonner";
 import UnproIcon from "@/components/brand/UnproIcon";
 import { alexVoiceService } from "@/services/alexVoiceService";
 import { useAlexChatFallbackStore } from "@/stores/alexChatFallbackStore";
+import {
+  lockRuntime,
+  unlockRuntime,
+  getActiveSessionId,
+} from "@/services/voiceRuntimeSingleton";
 
 const STABILIZATION_MS = 4000;
-const HEARTBEAT_INTERVAL_MS = 2000;
-const BOOT_TIMEOUT_MS = 15000; // Was 10s — bumped to absorb cold start of edge fn
-const FIRST_AUDIO_TIMEOUT_MS = 4000; // Was 5s — fail fast → trigger retry sooner
-const MAX_AUTO_RETRIES = 2; // 1st boot + 2 silent retries = 3 attempts before fallback
+const HEARTBEAT_INTERVAL_MS = 2500; // Slower → less battery
+const BOOT_TIMEOUT_MS = 15000; // Cold-start absorbing
+const FIRST_AUDIO_TIMEOUT_MS = 3000; // Spec: auto-retry after 3s
+const TOKEN_SLOW_THRESHOLD_MS = 2000; // Spec: show "Connexion d'Alex…" if >2s
+const MAX_AUTO_RETRIES = 2; // 1 boot + 2 silent = 3 attempts → fallback chat
 
 // Helper to always get fresh state
 const getStore = () => useAlexVoiceLockedStore.getState();
