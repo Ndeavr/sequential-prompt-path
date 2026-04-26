@@ -39,12 +39,13 @@ export default function SectionFormV2({ onTrackCta }: Props) {
     setSubmitting(true);
     onTrackCta("form_submit", "form");
     try {
+      // Stash the form so the activation flow can pre-fill it after signup.
+      sessionStorage.setItem("unpro_pending_contractor_intake", JSON.stringify(form));
       await supabase.from("entrepreneur_cta_events").insert({
         visitor_id: crypto.randomUUID(),
         cta_key: "landing_form_submit",
         page_section: "form",
-        metadata: form as unknown as Record<string, string>,
-      } as never);
+      });
       toast.success("Reçu ! On vous contacte rapidement.");
       navigate("/entrepreneur/activer");
     } catch (err) {
