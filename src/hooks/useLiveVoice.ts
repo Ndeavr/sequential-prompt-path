@@ -6,6 +6,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useConversation } from "@elevenlabs/react";
 import { supabase } from "@/integrations/supabase/client";
 import { AlexLanguageLockSession, type AlexLanguage } from "@/services/alexLanguageLock";
+import { buildAlexAgentOverrides, ALEX_VOICE_DEFAULTS } from "@/features/alex/voice/alexAgentOverrides";
+import { loadAlexMemory, buildMemoryContextHint } from "@/features/alex/voice/alexSessionMemory";
 
 const RECONNECT_COOLDOWN_MS = 5000;
 const CONNECTION_TIMEOUT_MS = 5_000;
@@ -22,6 +24,10 @@ interface UseLiveVoiceCallbacks {
 interface StartOptions {
   initialGreeting?: string;
   force?: boolean;
+  /** First name to inject into the V2 first message. */
+  firstName?: string | null;
+  /** Returning user → "Rebonjour" greeting variant. */
+  isReturning?: boolean;
 }
 
 // V7: French-only default greeting — never English for opening
