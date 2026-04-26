@@ -24,12 +24,18 @@ import { toast } from "sonner";
 import UnproIcon from "@/components/brand/UnproIcon";
 import { alexVoiceService } from "@/services/alexVoiceService";
 import { useAlexChatFallbackStore } from "@/stores/alexChatFallbackStore";
+import {
+  lockRuntime,
+  unlockRuntime,
+  getActiveSessionId,
+} from "@/services/voiceRuntimeSingleton";
 
 const STABILIZATION_MS = 4000;
-const HEARTBEAT_INTERVAL_MS = 2000;
-const BOOT_TIMEOUT_MS = 15000; // Was 10s — bumped to absorb cold start of edge fn
-const FIRST_AUDIO_TIMEOUT_MS = 4000; // Was 5s — fail fast → trigger retry sooner
-const MAX_AUTO_RETRIES = 2; // 1st boot + 2 silent retries = 3 attempts before fallback
+const HEARTBEAT_INTERVAL_MS = 2500; // Slower → less battery
+const BOOT_TIMEOUT_MS = 15000; // Cold-start absorbing
+const FIRST_AUDIO_TIMEOUT_MS = 3000; // Spec: auto-retry after 3s
+const TOKEN_SLOW_THRESHOLD_MS = 2000; // Spec: show "Connexion d'Alex…" if >2s
+const MAX_AUTO_RETRIES = 2; // 1 boot + 2 silent = 3 attempts → fallback chat
 
 // Helper to always get fresh state
 const getStore = () => useAlexVoiceLockedStore.getState();
@@ -42,6 +48,9 @@ export default function OverlayAlexVoiceFullScreen() {
   const stabilizationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const firstAudioTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [transcripts, setTranscripts] = useState<Array<{ id: string; role: "user" | "alex"; text: string }>>([]);
+  const [slowToken, setSlowToken] = useState(false);
+  const slowTokenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sessionIdRef = useRef<string>("");
   const entryIdRef = useRef(0);
   const lastAlexIdRef = useRef<string | null>(null);
   const hasConnectedRef = useRef(false);
@@ -52,6 +61,8 @@ export default function OverlayAlexVoiceFullScreen() {
   const autoRetryCountRef = useRef(0);
   const startRef = useRef<typeof start>(null as any);
   const buildGreetingRef = useRef<typeof buildGreeting>(null as any);
+  const transcriptsRef = useRef<typeof transcripts>([]);
+  transcriptsRef.current = transcripts;
   const openChatFallback = useAlexChatFallbackStore((s) => s.open);
 
   // Voice recovery hook
@@ -237,10 +248,80 @@ export default function OverlayAlexVoiceFullScreen() {
     if (bootInitiatedRef.current) return;
     bootInitiatedRef.current = true;
 
+    // ─── Single-session lock ───
+    const newSessionId = crypto.randomUUID();
+    sessionIdRef.current = newSessionId;
+    const existing = getActiveSessionId();
+    if (existing && existing !== newSessionId) {
+      console.warn("[ALEX VOICE] ⚠️ Killing stale session before new boot:", existing);
+      try { window.dispatchEvent(new CustomEvent("alex-voice-force-kill", { detail: { reason: "new_session" } })); } catch {}
+      unlockRuntime();
+    }
+    if (!lockRuntime(newSessionId)) {
+      console.error("[ALEX VOICE] ❌ Could not acquire runtime lock");
+      bootInitiatedRef.current = false;
+      return;
+    }
+    console.log("[ALEX VOICE] 🔒 Session locked:", newSessionId.slice(0, 8));
+
+    // Reset auto-retry counter on a fresh open
+    autoRetryCountRef.current = 0;
+    setSlowToken(false);
+
     let bootTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
+    // Helper: bail directly to chat fallback (no dead-end red error)
+    const bailToChat = (reason: string) => {
+      console.log(`[ALEX VOICE] 🚪 Bail to chat (${reason})`);
+      alexVoiceService.switchToFallbackChat(reason);
+      openChatFallback(
+        reason,
+        transcriptsRef.current.map((t) => ({ role: t.role, text: t.text })),
+      );
+      try { stop(); } catch {}
+      getStore().closeVoiceSession(reason);
+    };
+
+    // Helper: arm the first-audio timer for the current attempt
+    const armFirstAudioTimer = () => {
+      if (firstAudioTimerRef.current) clearTimeout(firstAudioTimerRef.current);
+      firstAudioTimerRef.current = setTimeout(() => {
+        const s = getStore();
+        if (firstAudioReceivedRef.current || !s.isOverlayOpen) return;
+        if (!["stabilizing", "opening_session", "session_ready"].includes(s.machineState)) return;
+
+        if (autoRetryCountRef.current < MAX_AUTO_RETRIES) {
+          autoRetryCountRef.current += 1;
+          const attempt = alexVoiceService.incrementRetry();
+          const backoff = attempt === 1 ? 500 : attempt === 2 ? 1500 : 3000;
+          console.log(`[ALEX VOICE] 🔁 Silent retry ${attempt} in ${backoff}ms (no audio in ${FIRST_AUDIO_TIMEOUT_MS}ms)`);
+          try { stop(); } catch {}
+          setTimeout(() => {
+            if (!getStore().isOverlayOpen) return;
+            hasConnectedRef.current = false;
+            firstAudioReceivedRef.current = false;
+            startRef.current({ initialGreeting: buildGreetingRef.current(), force: true })
+              .then(() => {
+                bootTimeRef.current = Date.now();
+                armFirstAudioTimer();
+              })
+              .catch((e: any) => {
+                console.error("[ALEX VOICE] retry failed:", e);
+                bailToChat("retry_failed");
+              });
+          }, backoff);
+          return;
+        }
+
+        // Out of retries → bail to chat directly (no red dead-end)
+        bailToChat("no_first_audio_final");
+      }, FIRST_AUDIO_TIMEOUT_MS);
+    };
+
     const boot = async () => {
+      const t0 = Date.now();
       try {
+        console.log("[ALEX VOICE] 🚀 Boot start");
         setBootStep("opening");
         hasConnectedRef.current = false;
         firstAudioReceivedRef.current = false;
@@ -250,82 +331,49 @@ export default function OverlayAlexVoiceFullScreen() {
         }
         getStore().transitionTo("opening_session", "boot_start");
 
-        // Unlock audio context only — no local chimes in voice mode
-        // audioEngine.unlock() removed — no chimes needed, avoids click artifacts
-
         setBootStep("stabilizing");
         getStore().transitionTo("stabilizing", "stabilization_start");
 
-        // HARD boot timeout — uses getState() for fresh check
+        // HARD boot timeout — bail to chat instead of red error
         bootTimeoutId = setTimeout(() => {
           const s = getStore();
-          const isStuck = s.isOverlayOpen && 
+          const isStuck = s.isOverlayOpen &&
             ["stabilizing", "opening_session", "requesting_permission"].includes(s.machineState);
           if (isStuck) {
-            console.error("[VoiceOverlay] ⏱️ Boot timeout — forcing error state");
-            s.setError("boot_timeout", "La connexion prend trop de temps. Réessayez ou passez au chat.", true);
+            console.error("[ALEX VOICE] ⏱️ Hard boot timeout — bailing to chat");
+            bailToChat("boot_timeout");
           }
         }, BOOT_TIMEOUT_MS);
 
-        // Connect ElevenLabs — use ref for stable reference
+        // "Connexion d'Alex…" if token is slow (>2s)
+        slowTokenTimerRef.current = setTimeout(() => {
+          if (!firstAudioReceivedRef.current && getStore().isOverlayOpen) {
+            console.log("[ALEX VOICE] 🐢 Token slow (>2s) — showing 'Connexion d'Alex…' label");
+            setSlowToken(true);
+          }
+        }, TOKEN_SLOW_THRESHOLD_MS);
+
+        // Connect ElevenLabs
         setBootStep("connecting");
         const greeting = buildGreetingRef.current();
-        console.log("[VoiceOverlay] Starting ElevenLabs with greeting:", greeting);
+        console.log("[ALEX VOICE] Starting session, greeting:", greeting);
         await startRef.current({ initialGreeting: greeting });
 
-        // After await: check overlay is still open via getState()
+        // After await: check session still owns the runtime + overlay open
         if (!getStore().isOverlayOpen) return;
+        if (getActiveSessionId() !== sessionIdRef.current) {
+          console.warn("[ALEX VOICE] Session no longer owns runtime — aborting boot");
+          return;
+        }
+
+        if (slowTokenTimerRef.current) {
+          clearTimeout(slowTokenTimerRef.current);
+          slowTokenTimerRef.current = null;
+        }
+        console.log(`[ALEX VOICE] ⏱️ Token + connect: ${Date.now() - t0}ms`);
 
         setBootStep("waiting_audio");
-        firstAudioTimerRef.current = setTimeout(() => {
-          const s = getStore();
-          if (firstAudioReceivedRef.current || !s.isOverlayOpen) return;
-          if (!["stabilizing", "opening_session", "session_ready"].includes(s.machineState)) return;
-
-          // Silent auto-retry (up to MAX_AUTO_RETRIES) before showing error
-          if (autoRetryCountRef.current < MAX_AUTO_RETRIES) {
-            autoRetryCountRef.current += 1;
-            const attempt = alexVoiceService.incrementRetry();
-            const backoff = attempt === 1 ? 500 : attempt === 2 ? 1500 : 3000;
-            console.log(`[VoiceOverlay] 🔁 Silent retry ${attempt} in ${backoff}ms`);
-            try { stop(); } catch {}
-            setTimeout(() => {
-              if (!getStore().isOverlayOpen) return;
-              hasConnectedRef.current = false;
-              firstAudioReceivedRef.current = false;
-              startRef.current({ initialGreeting: buildGreetingRef.current(), force: true })
-                .then(() => {
-                  bootTimeRef.current = Date.now();
-                  // Re-arm first audio timer for the new attempt
-                  firstAudioTimerRef.current = setTimeout(() => {
-                    const latest = getStore();
-                    if (firstAudioReceivedRef.current || !latest.isOverlayOpen) return;
-                    latest.setError(
-                      "no_first_audio_final",
-                      "La voix est temporairement indisponible. Alex continue par chat.",
-                      true,
-                    );
-                  }, FIRST_AUDIO_TIMEOUT_MS);
-                })
-                .catch((e: any) => {
-                  console.error("[VoiceOverlay] retry failed:", e);
-                  getStore().setError(
-                    "retry_failed",
-                    "La voix est temporairement indisponible. Alex continue par chat.",
-                    true,
-                  );
-                });
-            }, backoff);
-            return;
-          }
-
-          // Out of retries → trigger fallback chat
-          s.setError(
-            "no_first_audio_final",
-            "La voix est temporairement indisponible. Alex continue par chat.",
-            true,
-          );
-        }, FIRST_AUDIO_TIMEOUT_MS);
+        armFirstAudioTimer();
 
         // Stabilization timer — uses getState() for fresh check
         stabilizationTimerRef.current = setTimeout(() => {
@@ -337,16 +385,21 @@ export default function OverlayAlexVoiceFullScreen() {
 
       } catch (err: any) {
         if (!getStore().isOverlayOpen) return;
-        console.error("[VoiceOverlay] Boot failed:", err);
+        console.error("[ALEX VOICE] Boot failed:", err);
         setBootStep("error");
-        const s = getStore();
         if (err?.name === "NotAllowedError" || err?.message?.includes("Permission")) {
           alexVoiceService.setMicPermission("denied");
-          openChatFallback("permission_denied", transcripts.map(t => ({ role: t.role, text: t.text })));
           toast.error("Micro désactivé", { description: "Vous pouvez continuer par chat.", duration: 3000 });
-          getStore().closeVoiceSession("permission_denied_to_chat");
+          bailToChat("permission_denied");
         } else {
-          s.setError("boot_failed", "La voix d'Alex tarde à démarrer. Je réessaie automatiquement.", true);
+          // Even on boot failure: try one auto-retry, then bail to chat
+          if (autoRetryCountRef.current < MAX_AUTO_RETRIES) {
+            autoRetryCountRef.current += 1;
+            console.log(`[ALEX VOICE] 🔁 Boot error → auto-retry ${autoRetryCountRef.current}`);
+            armFirstAudioTimer();
+          } else {
+            bailToChat("boot_failed");
+          }
         }
       }
     };
@@ -355,42 +408,60 @@ export default function OverlayAlexVoiceFullScreen() {
 
     return () => {
       if (bootTimeoutId) clearTimeout(bootTimeoutId);
+      if (slowTokenTimerRef.current) {
+        clearTimeout(slowTokenTimerRef.current);
+        slowTokenTimerRef.current = null;
+      }
     };
   }, [store.isOverlayOpen]);
 
-  // ─── HEARTBEAT ───
+  // ─── HEARTBEAT (paused when tab hidden — battery saver) ───
   useEffect(() => {
     if (!store.isOverlayOpen) return;
 
-    heartbeatRef.current = setInterval(() => {
+    const tick = () => {
+      // Battery saver: skip heartbeat work when tab not visible
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       const timeSinceBoot = Date.now() - bootTimeRef.current;
       if (timeSinceBoot < 15000) return;
-      
+
       const s = getStore();
       if (!isActive && hasConnectedRef.current && s.isOverlayOpen) {
         s.incrementHeartbeatFailure();
       } else {
         s.resetHeartbeat();
       }
-    }, HEARTBEAT_INTERVAL_MS);
+    };
+
+    heartbeatRef.current = setInterval(tick, HEARTBEAT_INTERVAL_MS);
 
     return () => {
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
     };
   }, [store.isOverlayOpen, isActive]);
 
-  // ─── CLEANUP on overlay close ───
+  // ─── CLEANUP on overlay close — full destroy for clean reopen ───
   useEffect(() => {
     if (!store.isOverlayOpen) {
+      console.log("[ALEX VOICE] 🧹 Overlay closed — full destroy");
       if (stabilizationTimerRef.current) clearTimeout(stabilizationTimerRef.current);
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
       if (firstAudioTimerRef.current) clearTimeout(firstAudioTimerRef.current);
+      if (slowTokenTimerRef.current) clearTimeout(slowTokenTimerRef.current);
       if (isActive) {
         stop();
       }
+      // Release single-session lock so next open boots clean
+      if (sessionIdRef.current) {
+        unlockRuntime();
+        console.log("[ALEX VOICE] 🔓 Runtime unlocked");
+        sessionIdRef.current = "";
+      }
       hasConnectedRef.current = false;
       firstAudioReceivedRef.current = false;
+      autoRetryCountRef.current = 0;
       setTranscripts([]);
+      setSlowToken(false);
       entryIdRef.current = 0;
       lastAlexIdRef.current = null;
       setBootStep("init");
@@ -418,23 +489,34 @@ export default function OverlayAlexVoiceFullScreen() {
     getStore().closeVoiceSession("user_explicit_close");
   }, []);
 
-  // ─── HARD RESET RETRY (replaces old soft retry) ───
+  // ─── HARD RESET RETRY — fully destroys old session ───
   const handleRetry = useCallback(async () => {
-    console.log('[VoiceOverlay] 🔄 HARD RESET initiated');
-    
+    console.log('[ALEX VOICE] 🔄 HARD RESET initiated by user');
+
     // Clear all local timers
     if (firstAudioTimerRef.current) { clearTimeout(firstAudioTimerRef.current); firstAudioTimerRef.current = null; }
     if (stabilizationTimerRef.current) { clearTimeout(stabilizationTimerRef.current); stabilizationTimerRef.current = null; }
     if (heartbeatRef.current) { clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
-    
+    if (slowTokenTimerRef.current) { clearTimeout(slowTokenTimerRef.current); slowTokenTimerRef.current = null; }
+
     // Reset local refs
     hasConnectedRef.current = false;
     firstAudioReceivedRef.current = false;
     bootInitiatedRef.current = false;
+    autoRetryCountRef.current = 0;
     setTranscripts([]);
+    setSlowToken(false);
     entryIdRef.current = 0;
     lastAlexIdRef.current = null;
-    
+
+    // NUCLEAR: kill every voice resource on the page + release runtime lock
+    try {
+      const result = await executeHardReset();
+      console.log('[ALEX VOICE] 💥 Hard reset complete', result);
+    } catch (e) {
+      console.warn('[ALEX VOICE] hard reset error', e);
+    }
+
     await recovery.executeRecovery(
       stop,
       start,
@@ -444,23 +526,27 @@ export default function OverlayAlexVoiceFullScreen() {
         setBootStep("waiting_audio");
         bootTimeRef.current = Date.now();
         toast.success("Alex est reconnectée", { duration: 2000 });
-        
-        // Set first audio timeout for the new session
+
         firstAudioTimerRef.current = setTimeout(() => {
           const latest = getStore();
-          if (!firstAudioReceivedRef.current && latest.isOverlayOpen && 
+          if (!firstAudioReceivedRef.current && latest.isOverlayOpen &&
               ["stabilizing", "opening_session", "session_ready"].includes(latest.machineState)) {
-            latest.setError("no_first_audio", "Alex ne parle pas. Réessayez ou passez au chat.", true);
+            // No red dead-end → bail straight to chat
+            alexVoiceService.switchToFallbackChat("retry_no_audio");
+            openChatFallback("retry_no_audio", transcriptsRef.current.map(t => ({ role: t.role, text: t.text })));
+            getStore().closeVoiceSession("retry_no_audio");
           }
         }, FIRST_AUDIO_TIMEOUT_MS);
       },
       // onFallbackChat
       () => {
         toast.error("Mode chat activé", { description: "La voix n'est pas disponible pour le moment.", duration: 3000 });
+        alexVoiceService.switchToFallbackChat("recovery_failed");
+        openChatFallback("recovery_failed", transcriptsRef.current.map(t => ({ role: t.role, text: t.text })));
         getStore().closeVoiceSession("recovery_fallback_chat");
       },
     );
-  }, [buildGreeting, start, stop, recovery]);
+  }, [buildGreeting, start, stop, recovery, openChatFallback]);
 
   const handleFallbackChat = useCallback(() => {
     alexVoiceService.switchToFallbackChat("user_or_auto");
@@ -479,6 +565,7 @@ export default function OverlayAlexVoiceFullScreen() {
   const statusText =
     isRecoveringNow ? recovery.phaseLabel
     : isError ? (store.errorMessage || "Erreur")
+    : slowToken && isStabilizing ? "Connexion d'Alex…"
     : isStabilizing ? getBootStepLabel(bootStep)
     : state === "listening" || state === "awaiting_user" ? "Alex écoute…"
     : state === "capturing_voice" ? "Vous parlez…"
@@ -527,7 +614,7 @@ export default function OverlayAlexVoiceFullScreen() {
                 <Sparkles className="w-4 h-4 text-primary animate-spin" />
               )}
               <span className="text-sm text-muted-foreground">
-                {isRecoveringNow ? recovery.phaseLabel : getBootStepLabel(bootStep)}
+                {isRecoveringNow ? recovery.phaseLabel : (slowToken ? "Connexion d'Alex…" : getBootStepLabel(bootStep))}
               </span>
             </div>
           )}
