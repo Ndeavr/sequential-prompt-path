@@ -1,17 +1,28 @@
 /**
- * SheetBookingMobile — minimal mobile booking sheet.
- * Stores nothing yet — fires booking_completed analytics + success state.
- * Production wiring to api_unified_booking can be added without changing UI.
+ * SheetBookingMobile — premium gated booking flow.
+ *
+ * RULES (Alex):
+ *  - Never show a manual contact form when logged out → show login prompt block.
+ *  - Once logged in, prefill from `profiles` and ask Alex for ONE missing field at a time.
+ *  - Never re-ask for data we already have.
+ *  - Confirm button enabled only when: user_id + full_name + phone + project_address
+ *    + selected_date + selected_time_slot are all present.
+ *  - Date / slot selections survive login (sessionStorage restore).
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle2, Calendar } from "lucide-react";
+import { CheckCircle2, Calendar, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import type { RecommendedPro } from "@/stores/copilotConversationStore";
+import { useProfileCompletionGate } from "@/hooks/useProfileCompletionGate";
+import BookingLoginPromptBlock, {
+  loadPendingBooking,
+  clearPendingBooking,
+} from "./BookingLoginPromptBlock";
+import MissingFieldPromptAlex from "./MissingFieldPromptAlex";
 
 interface Props {
   open: boolean;
@@ -34,16 +45,32 @@ function nextDays(n: number) {
 }
 
 export default function SheetBookingMobile({ open, pro, onClose }: Props) {
+  const gate = useProfileCompletionGate();
+
   const [date, setDate] = useState<string | null>(null);
   const [slot, setSlot] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
   const [success, setSuccess] = useState(false);
+  const [savingField, setSavingField] = useState(false);
   const days = nextDays(10);
 
-  const canSubmit = !!date && !!slot && name.trim().length > 1 && phone.trim().length >= 7;
+  // Restore pending selection on mount / when sheet opens / after auth.
+  useEffect(() => {
+    if (!open) return;
+    const pending = loadPendingBooking();
+    if (pending) {
+      if (pending.date) setDate(pending.date);
+      if (pending.slot) setSlot(pending.slot);
+      if (pending.notes) setNotes(pending.notes);
+      // Once restored AND user is logged in, clear stash so it doesn't leak.
+      if (gate.isLoggedIn) clearPendingBooking();
+    }
+  }, [open, gate.isLoggedIn]);
+
+  const canSubmit =
+    gate.isComplete && !!date && !!slot && !!gate.profile?.user_id;
+
+  const nextMissing = gate.missingFields[0] ?? null;
 
   function handleSubmit() {
     if (!canSubmit) return;
@@ -51,6 +78,7 @@ export default function SheetBookingMobile({ open, pro, onClose }: Props) {
       proId: pro?.id,
       date,
       slot,
+      userId: gate.profile?.user_id,
     });
     setSuccess(true);
     setTimeout(() => {
@@ -58,11 +86,18 @@ export default function SheetBookingMobile({ open, pro, onClose }: Props) {
       onClose();
       setDate(null);
       setSlot(null);
-      setName("");
-      setPhone("");
-      setAddress("");
       setNotes("");
     }, 2400);
+  }
+
+  async function handleSaveMissing(value: string) {
+    if (!nextMissing) return;
+    setSavingField(true);
+    try {
+      await gate.updateField(nextMissing, value);
+    } finally {
+      setSavingField(false);
+    }
   }
 
   return (
@@ -157,35 +192,46 @@ export default function SheetBookingMobile({ open, pro, onClose }: Props) {
                 </div>
               </div>
 
-              {/* Identity */}
-              <div className="space-y-3">
-                <Input
-                  placeholder="Votre nom"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 h-12 rounded-xl"
+              {/* GATE: not logged in → premium login prompt (NO contact form) */}
+              {!gate.isLoggedIn && (
+                <BookingLoginPromptBlock
+                  draft={{ proId: pro?.id ?? null, date, slot, notes }}
                 />
-                <Input
-                  placeholder="Téléphone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 h-12 rounded-xl"
+              )}
+
+              {/* GATE: logged in but missing data → ask Alex for one field at a time */}
+              {gate.isLoggedIn && nextMissing && (
+                <MissingFieldPromptAlex
+                  field={nextMissing}
+                  saving={savingField}
+                  onSave={handleSaveMissing}
                 />
-                <Input
-                  placeholder="Adresse du projet"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 h-12 rounded-xl"
-                />
-                <Textarea
-                  placeholder="Notes (optionnel)"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={3}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 rounded-xl"
-                />
-              </div>
+              )}
+
+              {/* GATE: logged in + complete → show summary + optional notes + confirm */}
+              {gate.isComplete && (
+                <>
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 space-y-2">
+                    <div className="flex items-center gap-2 text-[12px] uppercase tracking-wide text-white/60 font-semibold">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                      Coordonnées de votre profil
+                    </div>
+                    <div className="text-[13px] text-white/85 space-y-1">
+                      <div>{gate.profile?.full_name}</div>
+                      <div className="text-white/65">{gate.profile?.phone}</div>
+                      <div className="text-white/65">{gate.profile?.project_address}</div>
+                    </div>
+                  </div>
+
+                  <Textarea
+                    placeholder="Notes (optionnel)"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={3}
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/40 rounded-xl"
+                  />
+                </>
+              )}
 
               <Button
                 onClick={handleSubmit}
