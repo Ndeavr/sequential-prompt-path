@@ -49,8 +49,10 @@ export default function OverlayAlexVoiceFullScreen() {
   const bootTimeRef = useRef<number>(0);
   const [bootStep, setBootStep] = useState<string>("init");
   const bootInitiatedRef = useRef(false);
+  const autoRetryCountRef = useRef(0);
   const startRef = useRef<typeof start>(null as any);
   const buildGreetingRef = useRef<typeof buildGreeting>(null as any);
+  const openChatFallback = useAlexChatFallbackStore((s) => s.open);
 
   // Voice recovery hook
   const recovery = useAlexVoiceRecovery();
