@@ -43074,6 +43074,51 @@ export type Database = {
           },
         ]
       }
+      project_files: {
+        Row: {
+          bytes: number
+          created_at: string
+          filename: string | null
+          id: string
+          kind: string
+          metadata: Json
+          mime: string
+          project_id: string | null
+          source: string
+          storage_bucket: string
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          bytes: number
+          created_at?: string
+          filename?: string | null
+          id?: string
+          kind?: string
+          metadata?: Json
+          mime: string
+          project_id?: string | null
+          source?: string
+          storage_bucket?: string
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          bytes?: number
+          created_at?: string
+          filename?: string | null
+          id?: string
+          kind?: string
+          metadata?: Json
+          mime?: string
+          project_id?: string | null
+          source?: string
+          storage_bucket?: string
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       project_handoff: {
         Row: {
           category: string | null
