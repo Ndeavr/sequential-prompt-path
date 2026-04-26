@@ -277,9 +277,52 @@ export default function OverlayAlexVoiceFullScreen() {
         setBootStep("waiting_audio");
         firstAudioTimerRef.current = setTimeout(() => {
           const s = getStore();
-          if (!firstAudioReceivedRef.current && s.isOverlayOpen && ["stabilizing", "opening_session", "session_ready"].includes(s.machineState)) {
-            s.setError("no_first_audio", "Alex ne parle pas. Réessayez ou passez au chat.", true);
+          if (firstAudioReceivedRef.current || !s.isOverlayOpen) return;
+          if (!["stabilizing", "opening_session", "session_ready"].includes(s.machineState)) return;
+
+          // Silent auto-retry (up to MAX_AUTO_RETRIES) before showing error
+          if (autoRetryCountRef.current < MAX_AUTO_RETRIES) {
+            autoRetryCountRef.current += 1;
+            const attempt = alexVoiceService.incrementRetry();
+            const backoff = attempt === 1 ? 500 : attempt === 2 ? 1500 : 3000;
+            console.log(`[VoiceOverlay] 🔁 Silent retry ${attempt} in ${backoff}ms`);
+            try { stop(); } catch {}
+            setTimeout(() => {
+              if (!getStore().isOverlayOpen) return;
+              hasConnectedRef.current = false;
+              firstAudioReceivedRef.current = false;
+              startRef.current({ initialGreeting: buildGreetingRef.current(), force: true })
+                .then(() => {
+                  bootTimeRef.current = Date.now();
+                  // Re-arm first audio timer for the new attempt
+                  firstAudioTimerRef.current = setTimeout(() => {
+                    const latest = getStore();
+                    if (firstAudioReceivedRef.current || !latest.isOverlayOpen) return;
+                    latest.setError(
+                      "no_first_audio_final",
+                      "La voix est temporairement indisponible. Alex continue par chat.",
+                      true,
+                    );
+                  }, FIRST_AUDIO_TIMEOUT_MS);
+                })
+                .catch((e: any) => {
+                  console.error("[VoiceOverlay] retry failed:", e);
+                  getStore().setError(
+                    "retry_failed",
+                    "La voix est temporairement indisponible. Alex continue par chat.",
+                    true,
+                  );
+                });
+            }, backoff);
+            return;
           }
+
+          // Out of retries → trigger fallback chat
+          s.setError(
+            "no_first_audio_final",
+            "La voix est temporairement indisponible. Alex continue par chat.",
+            true,
+          );
         }, FIRST_AUDIO_TIMEOUT_MS);
 
         // Stabilization timer — uses getState() for fresh check
