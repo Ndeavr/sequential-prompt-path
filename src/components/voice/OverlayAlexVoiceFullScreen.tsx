@@ -48,6 +48,9 @@ export default function OverlayAlexVoiceFullScreen() {
   const stabilizationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const firstAudioTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [transcripts, setTranscripts] = useState<Array<{ id: string; role: "user" | "alex"; text: string }>>([]);
+  const [slowToken, setSlowToken] = useState(false);
+  const slowTokenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sessionIdRef = useRef<string>("");
   const entryIdRef = useRef(0);
   const lastAlexIdRef = useRef<string | null>(null);
   const hasConnectedRef = useRef(false);
@@ -58,6 +61,8 @@ export default function OverlayAlexVoiceFullScreen() {
   const autoRetryCountRef = useRef(0);
   const startRef = useRef<typeof start>(null as any);
   const buildGreetingRef = useRef<typeof buildGreeting>(null as any);
+  const transcriptsRef = useRef<typeof transcripts>([]);
+  transcriptsRef.current = transcripts;
   const openChatFallback = useAlexChatFallbackStore((s) => s.open);
 
   // Voice recovery hook
