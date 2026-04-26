@@ -111,10 +111,11 @@ export function mergeAlexMemory(delta: Partial<AlexSessionMemory>): {
   let changed = false;
   const next: AlexSessionMemory = { ...current };
 
+  const nextRecord = next as unknown as Record<string, unknown>;
   for (const [key, value] of Object.entries(delta)) {
     if (value === undefined || value === null) continue;
-    if ((next as Record<string, unknown>)[key] !== value) {
-      (next as Record<string, unknown>)[key] = value;
+    if (nextRecord[key] !== value) {
+      nextRecord[key] = value;
       changed = true;
     }
   }
