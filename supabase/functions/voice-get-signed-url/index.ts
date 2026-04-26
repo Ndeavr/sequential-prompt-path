@@ -136,6 +136,11 @@ serve(async (req) => {
         voiceId: config?.voice_id || null,
         languageDefault: config?.language_default || "fr",
         allowSwitch: config?.allow_switch ?? true,
+        // V2 voice tuning (premium concierge defaults)
+        stability: config?.stability ?? 0.56,
+        similarity: config?.similarity ?? 0.84,
+        style: config?.style ?? 0.14,
+        speakerBoost: config?.speaker_boost ?? true,
         fallbackUsed,
         latencyMs,
       }),
