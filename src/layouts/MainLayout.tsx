@@ -24,7 +24,10 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const { lang } = useLanguage();
   useJourneyTracker();
 
-  const showAlex = pathname !== "/alex";
+  // Hide the floating AlexConcierge on:
+  // - /alex (dedicated voice surface)
+  // - / and /index (PageHomeCopilot mounts its own AlexCopilotConversation)
+  const showAlex = !["/alex", "/", "/index"].includes(pathname);
 
   const showSEOGrid = ["/problemes", "/services", "/villes", "/professionnels"].some(
     prefix => pathname.startsWith(prefix)

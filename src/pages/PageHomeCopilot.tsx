@@ -2,10 +2,14 @@
  * PageHomeCopilot — UNPRO Copilot-style mobile-first homepage.
  *
  * Replaces the legacy Home for the `/` and `/index` routes via HomeWithFeatureFlag.
+ * Wrapped in MainLayout so the SmartHeader (logo + FR/EN + QR + hamburger),
+ * MobileBottomNav and global concierge surfaces remain visible.
+ *
  * RULE: One question. One recommended pro. One action. Never 3 quotes.
  */
 import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
+import MainLayout from "@/layouts/MainLayout";
 import HeroCopilotMobile from "@/components/home-copilot/HeroCopilotMobile";
 import SectionsBelowFold from "@/components/home-copilot/SectionsBelowFold";
 import StickyBottomAlexCTA from "@/components/home-copilot/StickyBottomAlexCTA";
@@ -30,7 +34,7 @@ export default function PageHomeCopilot() {
   };
 
   return (
-    <div className="bg-[hsl(220_50%_4%)] min-h-screen">
+    <MainLayout>
       <Helmet>
         <title>UNPRO — Le Copilot des projets maison | Le bon pro, recommandé par IA</title>
         <meta
@@ -48,10 +52,12 @@ export default function PageHomeCopilot() {
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
       </Helmet>
 
-      <HeroCopilotMobile />
-      <SectionsBelowFold />
-      <StickyBottomAlexCTA />
-      <AlexCopilotConversation />
-    </div>
+      <div className="bg-[hsl(220_50%_4%)]">
+        <HeroCopilotMobile />
+        <SectionsBelowFold />
+        <StickyBottomAlexCTA />
+        <AlexCopilotConversation />
+      </div>
+    </MainLayout>
   );
 }
