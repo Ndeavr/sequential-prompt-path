@@ -830,3 +830,12 @@
   z-index: 2;
   mix-blend-mode: overlay;
 }
+
+/* Copilot homepage utilities */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

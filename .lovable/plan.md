@@ -1,146 +1,234 @@
+# UNPRO Copilot Homepage — Mobile-First Premium Rebuild
 
-
-# Phase 1 Revenue Engine — Audit, Unify, and Fill Gaps
-
-## Current State
-
-The UNPRO codebase already has **90%+ of the requested modules** built across two parallel funnel systems, 200+ edge functions, and extensive admin tooling. This plan focuses on the **missing 10%**: unifying the two funnel paths, adding the CRM follow-up automation, filling analytics gaps, and wiring real data where mock data exists.
+Transform `/` into a Microsoft Copilot / OpenAI-grade mobile experience: one orb, one question, one recommended pro, one action. Replace the current `Home.tsx` (Hero + 8 sections) with a focused above-fold conversion engine and a tight Alex conversation flow that **never** shows 3 quotes.
 
 ---
 
-## What Already Exists (No rebuild needed)
+## 1. New `AlexOrbPremium` Component
 
-| Module | Status | Location |
-|--------|--------|----------|
-| Contractor Landing Page | Built | `PageContractorLandingAcquisition`, `PageContractorVoiceFirstLanding` |
-| Easy Signup | Built | `PageContractorOnboardingStart` (business name, phone, website, RBQ) |
-| Auto Business Import | Built | `PageContractorImportWorkspace`, `onboarding-import` edge fn |
-| AIPP Trust Funnel | Built | `PageContractorAIPPBuilder`, `aipp-real-scan`, `aipp-v2-analyze` |
-| Onboarding Wizard | Built | `ProSetupWizard` (6 steps) + Activation funnel (9 screens) |
-| Plan Recommendation | Built | `PageContractorPlanRecommendation`, `compute-plan-recommendation` |
-| Stripe Checkout | Built | `PageContractorCheckout`, `ScreenPayment`, `create-stripe-checkout-session` |
-| Post-Activation Dashboard | Built | `PageContractorDashboardPostActivation` |
-| Outbound Acquisition | Built | Full pipeline (scrape, enrich, send, track) |
-| Alex Guided Mode | Built | `alex-voice-sales`, `alex-sales-process-turn`, voice onboarding |
-| Personalized Landing | Built | `/pro/:slug` nuclear close, `/contractor/score/:token` |
-| SEO Engine | Built | `seed-seo-pages`, `seo-generator`, prerender |
-| Analytics Events | Partially built | `landing_visits`, `onboarding_entry_events`, auth tracking |
+**File**: `src/components/alex/AlexOrbPremium.tsx`
 
----
+Pure CSS/Framer Motion orb — no cartoon face, no heavy assets:
 
-## What Needs to Be Built / Fixed
+- **Core**: radial gradient blue nucleus (#0A66FF → #3FA9FF → #7ED7FF), inner shine
+- **Halo**: soft outer glow with slow breathing (scale 1 → 1.08, opacity 0.4 → 0.9, 3.5s ease)
+- **Glass ring**: outer thin border with backdrop-blur, subtle conic gradient
+- **Particles**: 6 tiny light dots orbiting at low opacity (CSS only, no canvas)
+- **States** (driven by `state` prop):
+  - `idle` → breathing pulse only
+  - `listening` → halo expands +20%, opacity boosted
+  - `speaking` → core intensity +, micro-vibration (rotate ±0.5°)
+  - `thinking` → outer ring slow rotation 8s linear
+- **Sizes**: `sm | md | lg | xl` (64 / 96 / 144 / 192 px)
+- **Below**: `ALEX` label + `Assistant projet maison` subtext (optional via prop)
 
-### 1. Unify the Two Funnel Paths
-
-**Problem**: Two parallel contractor funnels exist:
-- **Funnel A** (`useContractorFunnel`): sessionStorage-based, 9 steps via `/entrepreneur/*`
-- **Funnel B** (`useActivationFunnel`): Supabase-persisted, 9 screens via activation screens
-
-These must be consolidated into a single canonical path.
-
-**Action**: Deprecate the sessionStorage-only funnel. Make `useActivationFunnel` the single source of truth. Update `useContractorFunnel` to read/write from the same Supabase table, adding missing fields. Update all contractor-funnel pages to use the unified hook.
-
-**Files**: `src/hooks/useContractorFunnel.ts`, all `src/pages/contractor-funnel/*.tsx`
-
-### 2. CRM Follow-Up Automation
-
-**Problem**: No automated follow-up for contractors who drop off without paying.
-
-**Action**:
-- Create `contractor_followup_queue` table (user_id, trigger_type, scheduled_at, sent_at, status)
-- Create `process-contractor-followups` edge function triggered by cron (every 15 min)
-- Rules: 1h after drop-off → "Besoin d'aide?", 24h → "Votre profil vous attend", 3d → "Des contrats vous attendent"
-- Each follow-up sends via `send-transactional-email` with appropriate template
-- Create 3 email templates: `contractor-followup-1h`, `contractor-followup-24h`, `contractor-followup-3d`
-
-**Files**: New migration, new edge function, 3 new email templates
-
-### 3. Funnel Analytics Event Tracking
-
-**Problem**: No unified funnel analytics table tracking every step conversion.
-
-**Action**:
-- Create `contractor_funnel_events` table (session_id, user_id, event_type, step, metadata, created_at)
-- Event types: `landing_viewed`, `signup_started`, `signup_completed`, `import_started`, `import_completed`, `aipp_viewed`, `plan_selected`, `checkout_started`, `payment_completed`, `activation_viewed`
-- Add tracking calls to each funnel screen's mount/action handlers
-- Create a utility `trackFunnelEvent(event, metadata)` used across all screens
-
-**Files**: New migration, new `src/utils/trackFunnelEvent.ts`, modify all 9 activation screens + contractor-funnel pages
-
-### 4. Replace Mock AIPP Data in Funnel
-
-**Problem**: `PageContractorAIPPBuilder` uses `MOCK_SCORE` hardcoded values instead of real AIPP data.
-
-**Action**: Wire the AIPP builder to call `aipp-v2-analyze` or read from `aipp_scores` table using the contractor's imported data. Show real gaps from the scoring engine.
-
-**Files**: `src/pages/contractor-funnel/PageContractorAIPPBuilder.tsx`
-
-### 5. Replace Mock Dashboard Stats
-
-**Problem**: `PageContractorDashboardPostActivation` shows hardcoded stats (Score 87, views "—", RDV 0).
-
-**Action**: Fetch real data from `contractor_scores`, `bookings`, and profile completeness service. Show actual AIPP score, real appointment count, and calculated visibility improvement.
-
-**Files**: `src/pages/contractor-funnel/PageContractorDashboardPostActivation.tsx`
-
-### 6. Dynamic Personalized Landing Enhancement
-
-**Problem**: Existing `/pro/:slug` pages work but don't support the `/contractor/{trade}-{city}` URL pattern described.
-
-**Action**: Add a catch-all route `/contractor/:slug` that parses trade+city from the slug, resolves prospect data from `war_prospects`, and renders a personalized page with business name, city, trade, detected opportunities, and growth potential.
-
-**Files**: New `src/pages/contractor-funnel/PageContractorPersonalizedLanding.tsx`, router update
-
-### 7. Post-Payment Redirect Fix
-
-**Problem**: After Stripe payment, user may land on a generic page instead of the activation dashboard.
-
-**Action**: Ensure `create-stripe-checkout-session` success_url points to `/entrepreneur/activation-success` (or equivalent). Verify the activation success page exists and shows completion tasks.
-
-**Files**: Verify `supabase/functions/create-stripe-checkout-session/index.ts`, `ScreenSuccess.tsx`
+API: `<AlexOrbPremium state="idle" size="xl" showLabel />`
 
 ---
 
-## Implementation Order
+## 2. New Homepage Hero (Above-Fold Mobile-First)
 
-1. **Funnel analytics tracking** — `trackFunnelEvent` utility + table (foundation for measuring everything)
-2. **Unify funnel hooks** — Single source of truth for contractor onboarding state
-3. **CRM follow-up automation** — Table + edge function + email templates
-4. **Wire real AIPP data** — Replace mocks in AIPP builder and dashboard
-5. **Personalized landing route** — Dynamic `/contractor/:slug` pages
-6. **Post-payment flow verification** — Ensure correct redirect chain
+**File**: `src/components/home-copilot/HeroCopilotMobile.tsx`
+
+Single screen on mobile, dark background `#050A12` with subtle blue aurora:
+
+- Top bar: UNPRO logo (left) · burger menu (right)
+- Center: `<AlexOrbPremium size="xl" showLabel />`
+- Headline: **"Quel est votre projet aujourd'hui?"** (large, bold, last word in `text-primary`)
+- Subheadline: *"Alex comprend votre besoin, analyse vos options et recommande le meilleur pro vérifié."*
+- Input box (multiline, glass card): placeholder *"Toiture qui fuit, moisissure, rénovation salle de bain..."* with circular send button
+- Primary CTA (full-width, gradient): `✨ Parler à Alex` → opens voice via `openAlex("home_voice")`
+- Trust line: `🛡 Gratuit • Sans engagement • Réponse rapide`
+- Quick chips (horizontal scroll, glass icons): Trouver un pro · Estimer coût · Vérifier pro · Analyser soumission · Téléverser photos · Je suis entrepreneur
+
+Each chip routes to its corresponding flow OR seeds the Alex conversation with a pre-filled intent.
 
 ---
 
-## Database Changes
+## 3. Alex Conversation Flow (Single-Pro Recommendation)
 
-| Table | Purpose |
-|-------|---------|
-| `contractor_funnel_events` | Unified funnel analytics |
-| `contractor_followup_queue` | CRM follow-up scheduling |
+**File**: `src/components/alex-copilot/AlexCopilotConversation.tsx`
 
-## Files Summary
+Full chat shell triggered when user submits text input or taps a chip. Drop-in mobile sheet:
+
+- Header: back · `<AlexOrbPremium size="sm" />` · "Alex" + "En ligne" green dot · menu
+- Messages: alternating bubbles (Alex left grey, user right blue gradient)
+- On user message → show `Je comprends. J'analyse votre situation...` + premium loader (1.5s)
+- Then render **`CardRecommendedProSingle`** (NOT a 3-pro list):
+  - Image / van photo
+  - Pro name + `XX% compatibilité` + ⭐ rating + reviews count
+  - 5–6 reasons (✅ specialty, recent reviews, sector, availability, price competitive, UNPRO verified)
+- Action buttons (stacked, full-width):
+  - **Prendre rendez-vous** (primary)
+  - **Voir disponibilités**
+  - **Pourquoi lui?** → opens `ModalWhyThisPro`
+  - **Autre option** → reveals `CardRecommendedProSingle` for 2nd best (still one at a time, max 3 reveals)
+
+**Endpoint wiring**: calls existing `api_unified_matching` / `compute-plan-recommendation` edge functions. Falls back to mock pro for first render.
+
+**Hard rule** enforced in the component: it accepts only a **single** `recommendedPro` prop. Alternative pros are loaded on-demand via `requestAlternative()`.
+
+---
+
+## 4. Modal "Pourquoi lui?"
+
+**File**: `src/components/alex-copilot/ModalWhyThisPro.tsx`
+
+Bottom sheet listing comparative reasons:
+- Meilleure expertise spécifique
+- Plus rapide disponible
+- Plus forte satisfaction clients
+- Distance optimale
+- Prix généralement compétitif
+
+CTA: `Prendre rendez-vous`.
+
+---
+
+## 5. Booking Sheet
+
+**File**: `src/components/alex-copilot/SheetBookingMobile.tsx`
+
+Mobile bottom sheet with:
+- Date picker (next 14 days, visual day chips)
+- Time slot chips (morning / afternoon / evening)
+- Name · Phone · Adresse projet · Notes (textarea)
+- Primary CTA: **Confirmer mon rendez-vous**
+- Success state: ✅ `Rendez-vous demandé` + `Le pro confirmera sous peu` + auto-redirect to `/proprietaire/dashboard` after 3s
+
+Wires to existing `bookings` table via `api_unified_booking` (or direct Supabase insert if endpoint not available — to be confirmed in build).
+
+---
+
+## 6. Below-Fold Sections (Light, 3 Blocks Only)
+
+**File**: `src/components/home-copilot/SectionsBelowFold.tsx`
+
+Tight, no clutter:
+
+- **A. Pourquoi UNPRO** — 4 icon cards (Pros vérifiés · IA intelligente · Gain de temps · Moins de stress)
+- **B. Avis clients** — horizontal swipe of 4 testimonial cards with avatar + city
+- **C. Vous avez déjà des soumissions?** — glass card with stacked-receipts illustration → CTA `Analyser mes soumissions` (routes to `/soumission/analyse`)
+
+Footer: `🛡 Vos informations sont confidentielles.`
+
+---
+
+## 7. Sticky Bottom CTA
+
+**File**: `src/components/home-copilot/StickyBottomAlexCTA.tsx`
+
+Appears after 400px scroll on mobile only:
+- Glass blur bar
+- Mini orb + `Parler à Alex` button → `openAlex("home_sticky")`
+
+---
+
+## 8. New Page Wrapper
+
+**File**: `src/pages/PageHomeCopilot.tsx`
+
+Replaces `Home.tsx` content via the feature flag wrapper. Structure:
+
+```
+<MainLayout transparentHeader darkMode>
+  <Helmet>...</Helmet>
+  <HeroCopilotMobile />              {/* Above fold */}
+  <SectionsBelowFold />              {/* Below */}
+  <StickyBottomAlexCTA />
+  <AlexCopilotConversation />        {/* Sheet, controlled by store */}
+</MainLayout>
+```
+
+**Routing**: update `src/components/home-intent/HomeWithFeatureFlag.tsx` to render `PageHomeCopilot` directly (preserves the `/` and `/index` routes).
+
+---
+
+## 9. Conversation State Store
+
+**File**: `src/stores/copilotConversationStore.ts`
+
+Zustand store coordinating the chat sheet:
+- `isOpen`, `messages[]`, `recommendedPro`, `alternativesShown`, `bookingOpen`
+- Actions: `openConversation(initialText?)`, `sendMessage(text)`, `requestAlternative()`, `openBooking()`, `reset()`
+- Used by both the input box CTA and sticky CTA.
+
+---
+
+## 10. Analytics Tracking
+
+**File**: `src/utils/trackCopilotEvent.ts`
+
+Lightweight wrapper writing to `contractor_funnel_events`-style table (reuse existing `trackFunnelEvent` if compatible) for:
+
+- `homepage_loaded`
+- `alex_started`
+- `message_sent`
+- `recommended_pro_shown`
+- `booking_started`
+- `booking_completed`
+- `alternative_option_requested`
+- `quote_upload_clicked`
+
+Each event includes `session_id` (sessionStorage UUID) + `metadata`.
+
+---
+
+## 11. Copy Guardrails (Code-Enforced)
+
+Add a build-time lint rule (or comment header in each new file) forbidding the strings `3 soumissions`, `compare 3 pros`, `marketplace`, `directory` inside `src/components/home-copilot/**` and `src/components/alex-copilot/**`. Uses ESLint `no-restricted-syntax` with regex on JSX text.
+
+---
+
+## 12. Design System Tokens
+
+Update `src/index.css` to expose 3 new HSL tokens on the dark background variant (no override of existing tokens):
+
+```
+--copilot-bg: 215 70% 5%;        /* #050A12 */
+--copilot-blue-1: 220 100% 52%;  /* #0A66FF */
+--copilot-blue-2: 207 100% 62%;  /* #3FA9FF */
+--copilot-blue-3: 198 100% 75%;  /* #7ED7FF */
+```
+
+All new components consume these via Tailwind arbitrary values or `bg-[hsl(var(--copilot-bg))]`. No hardcoded hex.
+
+---
+
+## 13. Files Summary
 
 | Action | File |
-|--------|------|
-| Create | `src/utils/trackFunnelEvent.ts` |
-| Create | `src/pages/contractor-funnel/PageContractorPersonalizedLanding.tsx` |
-| Create | Email templates: `contractor-followup-1h.tsx`, `contractor-followup-24h.tsx`, `contractor-followup-3d.tsx` |
-| Create | `supabase/functions/process-contractor-followups/index.ts` |
-| Migration | `contractor_funnel_events` + `contractor_followup_queue` tables |
-| Modify | `src/hooks/useContractorFunnel.ts` — unify with activation funnel |
-| Modify | `src/pages/contractor-funnel/PageContractorAIPPBuilder.tsx` — wire real data |
-| Modify | `src/pages/contractor-funnel/PageContractorDashboardPostActivation.tsx` — wire real data |
-| Modify | All 9 activation screens — add `trackFunnelEvent` calls |
-| Modify | `src/app/router.tsx` — add `/contractor/:slug` route |
-| Verify | `supabase/functions/create-stripe-checkout-session/index.ts` — success_url |
+|---|---|
+| Create | `src/components/alex/AlexOrbPremium.tsx` |
+| Create | `src/components/home-copilot/HeroCopilotMobile.tsx` |
+| Create | `src/components/home-copilot/SectionsBelowFold.tsx` |
+| Create | `src/components/home-copilot/StickyBottomAlexCTA.tsx` |
+| Create | `src/components/alex-copilot/AlexCopilotConversation.tsx` |
+| Create | `src/components/alex-copilot/CardRecommendedProSingle.tsx` |
+| Create | `src/components/alex-copilot/ModalWhyThisPro.tsx` |
+| Create | `src/components/alex-copilot/SheetBookingMobile.tsx` |
+| Create | `src/stores/copilotConversationStore.ts` |
+| Create | `src/utils/trackCopilotEvent.ts` |
+| Create | `src/pages/PageHomeCopilot.tsx` |
+| Modify | `src/components/home-intent/HomeWithFeatureFlag.tsx` (point to new page) |
+| Modify | `src/index.css` (add copilot tokens) |
+
+The legacy `src/pages/Home.tsx` and existing `src/components/home/*` sections remain untouched (still reachable via other routes if needed).
+
+---
+
+## 14. Out of Scope (Phase 2)
+
+- Real-time pro availability graph (uses mock slots first)
+- Voice biometrics
+- Pro-side notification when booking is created (existing edge function reuse only)
+
+---
 
 ## Expected Outcome
-- Single unified contractor funnel (no parallel state confusion)
-- Every funnel step tracked with conversion analytics
-- Automated CRM follow-up for drop-offs (1h, 24h, 3d)
-- Real AIPP scores replacing all mock data in the funnel
-- Dynamic personalized landing pages for acquisition
-- Correct post-payment activation flow
-- Foundation for measuring all 8 success metrics (reply rate, start rate, completion rate, plan selection, payment, time-to-paid, CAC, MRR)
 
+- **Mobile screen 1**: orb + headline + input + CTA + chips, all visible without scroll
+- **One conversation, one pro, one action** — never a list
+- Sticky CTA always 1 tap away
+- Premium dark Copilot aesthetic
+- Foundation to A/B test against legacy homepage via the existing feature flag wrapper
