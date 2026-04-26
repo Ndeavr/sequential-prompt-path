@@ -82,6 +82,8 @@ export default function OverlayAlexVoiceFullScreen() {
   const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
     onFirstAudio: () => {
       firstAudioReceivedRef.current = true;
+      autoRetryCountRef.current = 0;
+      alexVoiceService.setState("speaking", "first_audio");
       if (firstAudioTimerRef.current) {
         clearTimeout(firstAudioTimerRef.current);
         firstAudioTimerRef.current = null;
