@@ -13,30 +13,24 @@
 import type { AlexLanguage, AlexUserRole } from "../types/alex.types";
 
 // ─── Greetings (first visit) ──────────────────────────────────────
+// Single canonical opening per Alex System Prompt (FR only).
 const GREETINGS_FR = [
-  "Bonjour. Quel projet avance aujourd'hui?",
-  "Bonjour. Décrivez votre besoin — on s'en occupe.",
-  "Bonjour. Comment puis-je vous aider concrètement?",
+  "Bonjour. Je suis Alex d'UNPRO. Quel problème puis-je vous aider à régler aujourd'hui?",
 ] as const;
 
-const GREETINGS_EN = [
-  "Hi. What project are we working on today?",
-  "Hello. Tell me what you need — let's get it done.",
-  "Hi. How can I help you right now?",
-] as const;
+// English fallback message (Alex is FR-only for now).
+const ENGLISH_FALLBACK = "Pour le moment je fonctionne en français. Je termine mes cours d'anglais sous peu.";
+
+const GREETINGS_EN = [ENGLISH_FALLBACK] as const;
 
 // ─── Restored session greetings ───────────────────────────────────
 const RESTORED_FR = [
-  "On reprend là où on était.",
-  "Je me souviens. On continue?",
-  "Rebonjour. Votre projet est toujours là.",
+  "Rebonjour. On continue où on en était?",
 ] as const;
 
-const RESTORED_EN = [
-  "Picking up where we left off.",
-  "I remember. Shall we continue?",
-  "Welcome back. Your project is still here.",
-] as const;
+const RESTORED_EN = [ENGLISH_FALLBACK] as const;
+
+export { ENGLISH_FALLBACK };
 
 // ─── Soft prompts (visual only, no audio) ─────────────────────────
 const SOFT_PROMPTS_FR = [
