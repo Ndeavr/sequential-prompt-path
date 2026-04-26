@@ -58849,7 +58849,11 @@ export type Database = {
           label: string | null
           language_default: string
           notes: string | null
+          similarity: number
+          speaker_boost: boolean
+          stability: number
           status: string
+          style: number
           updated_at: string
           voice_id: string
         }
@@ -58862,7 +58866,11 @@ export type Database = {
           label?: string | null
           language_default?: string
           notes?: string | null
+          similarity?: number
+          speaker_boost?: boolean
+          stability?: number
           status?: string
+          style?: number
           updated_at?: string
           voice_id: string
         }
@@ -58875,7 +58883,11 @@ export type Database = {
           label?: string | null
           language_default?: string
           notes?: string | null
+          similarity?: number
+          speaker_boost?: boolean
+          stability?: number
           status?: string
+          style?: number
           updated_at?: string
           voice_id?: string
         }
