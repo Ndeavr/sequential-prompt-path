@@ -12,7 +12,8 @@
  * If an override is not enabled, ElevenLabs silently ignores it and uses the
  * agent's saved value. We log a warning if we detect a mismatch.
  */
-import { ALEX_SYSTEM_PROMPT_V2, buildAlexFirstMessage } from "./alexSystemPromptV2";
+import { buildAlexFirstMessage } from "./alexSystemPromptV2";
+import { ALEX_CORE_PROMPT } from "./alexCorePrompt";
 
 export type AlexLanguage = "fr" | "en";
 
@@ -46,9 +47,10 @@ export const ALEX_VOICE_DEFAULTS = {
 export function buildAlexAgentOverrides(input: BuildOverridesInput) {
   const language: AlexLanguage = input.language ?? "fr";
 
+  // SLIM core prompt for ElevenLabs (full Hive Mind stays app-side via alex-chat).
   const prompt = input.contextHint
-    ? `${ALEX_SYSTEM_PROMPT_V2}\n\n# CONTEXTE DE SESSION\n${input.contextHint.trim()}`
-    : ALEX_SYSTEM_PROMPT_V2;
+    ? `${ALEX_CORE_PROMPT}\n\n# CONTEXTE\n${input.contextHint.trim()}`
+    : ALEX_CORE_PROMPT;
 
   const firstMessage = buildAlexFirstMessage({
     firstName: input.firstName,
