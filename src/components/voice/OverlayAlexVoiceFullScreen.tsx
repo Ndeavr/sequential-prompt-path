@@ -415,39 +415,53 @@ export default function OverlayAlexVoiceFullScreen() {
     };
   }, [store.isOverlayOpen]);
 
-  // ─── HEARTBEAT ───
+  // ─── HEARTBEAT (paused when tab hidden — battery saver) ───
   useEffect(() => {
     if (!store.isOverlayOpen) return;
 
-    heartbeatRef.current = setInterval(() => {
+    const tick = () => {
+      // Battery saver: skip heartbeat work when tab not visible
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       const timeSinceBoot = Date.now() - bootTimeRef.current;
       if (timeSinceBoot < 15000) return;
-      
+
       const s = getStore();
       if (!isActive && hasConnectedRef.current && s.isOverlayOpen) {
         s.incrementHeartbeatFailure();
       } else {
         s.resetHeartbeat();
       }
-    }, HEARTBEAT_INTERVAL_MS);
+    };
+
+    heartbeatRef.current = setInterval(tick, HEARTBEAT_INTERVAL_MS);
 
     return () => {
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
     };
   }, [store.isOverlayOpen, isActive]);
 
-  // ─── CLEANUP on overlay close ───
+  // ─── CLEANUP on overlay close — full destroy for clean reopen ───
   useEffect(() => {
     if (!store.isOverlayOpen) {
+      console.log("[ALEX VOICE] 🧹 Overlay closed — full destroy");
       if (stabilizationTimerRef.current) clearTimeout(stabilizationTimerRef.current);
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
       if (firstAudioTimerRef.current) clearTimeout(firstAudioTimerRef.current);
+      if (slowTokenTimerRef.current) clearTimeout(slowTokenTimerRef.current);
       if (isActive) {
         stop();
       }
+      // Release single-session lock so next open boots clean
+      if (sessionIdRef.current) {
+        unlockRuntime();
+        console.log("[ALEX VOICE] 🔓 Runtime unlocked");
+        sessionIdRef.current = "";
+      }
       hasConnectedRef.current = false;
       firstAudioReceivedRef.current = false;
+      autoRetryCountRef.current = 0;
       setTranscripts([]);
+      setSlowToken(false);
       entryIdRef.current = 0;
       lastAlexIdRef.current = null;
       setBootStep("init");
