@@ -12,6 +12,8 @@ import { AlexVoiceProvider } from "@/contexts/AlexVoiceContext";
 import { ActiveRoleProvider } from "@/contexts/ActiveRoleContext";
 import { LanguageProvider } from "@/components/ui/LanguageToggle";
 import OverlayAlexVoiceFullScreen from "@/components/voice/OverlayAlexVoiceFullScreen";
+import AlexChatFallbackPanel from "@/components/voice/AlexChatFallbackPanel";
+import AlexVoiceDebugPanel from "@/components/voice/AlexVoiceDebugPanel";
 import type { ReactNode } from "react";
 
 const queryClient = new QueryClient({
@@ -40,6 +42,8 @@ export const Providers = ({ children }: ProvidersProps) => (
                 <Sonner />
                 {children}
                 <OverlayAlexVoiceFullScreen />
+                <AlexChatFallbackPanel />
+                <AlexVoiceDebugPanel />
               </TooltipProvider>
             </AlexVoiceProvider>
           </ActiveRoleProvider>

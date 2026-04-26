@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AlexLanguageLockSession, type AlexLanguage } from "@/services/alexLanguageLock";
 import { buildAlexAgentOverrides, ALEX_VOICE_DEFAULTS } from "@/features/alex/voice/alexAgentOverrides";
 import { loadAlexMemory, buildMemoryContextHint } from "@/features/alex/voice/alexSessionMemory";
+import { alexVoiceService } from "@/services/alexVoiceService";
 
 const RECONNECT_COOLDOWN_MS = 5000;
 const CONNECTION_TIMEOUT_MS = 5_000;
@@ -254,17 +255,39 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
 
     try {
       console.log("[ElevenLabs V7] Requesting microphone...");
+      alexVoiceService.setState("initializing", "start");
       await navigator.mediaDevices.getUserMedia({ audio: true });
       console.log("[ElevenLabs V7] ✅ Microphone granted");
+      alexVoiceService.setMicPermission("granted");
+
+      // Unlock AudioContext (mobile requirement)
+      try {
+        const Ctx = (window.AudioContext || (window as any).webkitAudioContext);
+        if (Ctx) {
+          const ctx = new Ctx();
+          if (ctx.state === "suspended") await ctx.resume();
+          alexVoiceService.setAudioUnlocked(ctx.state === "running");
+        }
+      } catch (e) { console.warn("[ElevenLabs V7] AudioContext resume failed", e); }
 
       console.log("[ElevenLabs V7] Fetching signed URL...");
+      alexVoiceService.startTokenRequest();
       const { data, error } = await supabase.functions.invoke("voice-get-signed-url");
       const signedUrl = data?.signed_url ?? data?.signedUrl;
+
+      // Detect fallback signal from edge function
+      if (data?.fallback === "chat" || (!signedUrl && !error)) {
+        alexVoiceService.setApiKeyConfigured(false);
+        throw new Error(data?.message || "Connexion vocale indisponible. Chat activé.");
+      }
 
       if (error || !signedUrl) {
         throw new Error(error?.message || "Impossible d'obtenir l'URL de connexion");
       }
 
+      alexVoiceService.markTokenReceived();
+      alexVoiceService.setApiKeyConfigured(true);
+      alexVoiceService.setState("connecting", "got_signed_url");
       console.log("[ElevenLabs V7] ✅ Got signed URL");
 
       // 5s connection timeout — NO retry, instant fallback

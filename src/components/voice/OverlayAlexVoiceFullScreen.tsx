@@ -22,11 +22,14 @@ import { executeHardReset } from "@/services/voiceHardResetEngine";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import UnproIcon from "@/components/brand/UnproIcon";
+import { alexVoiceService } from "@/services/alexVoiceService";
+import { useAlexChatFallbackStore } from "@/stores/alexChatFallbackStore";
 
 const STABILIZATION_MS = 4000;
 const HEARTBEAT_INTERVAL_MS = 2000;
-const BOOT_TIMEOUT_MS = 10000;
-const FIRST_AUDIO_TIMEOUT_MS = 5000;
+const BOOT_TIMEOUT_MS = 15000; // Was 10s — bumped to absorb cold start of edge fn
+const FIRST_AUDIO_TIMEOUT_MS = 4000; // Was 5s — fail fast → trigger retry sooner
+const MAX_AUTO_RETRIES = 2; // 1st boot + 2 silent retries = 3 attempts before fallback
 
 // Helper to always get fresh state
 const getStore = () => useAlexVoiceLockedStore.getState();
@@ -46,8 +49,10 @@ export default function OverlayAlexVoiceFullScreen() {
   const bootTimeRef = useRef<number>(0);
   const [bootStep, setBootStep] = useState<string>("init");
   const bootInitiatedRef = useRef(false);
+  const autoRetryCountRef = useRef(0);
   const startRef = useRef<typeof start>(null as any);
   const buildGreetingRef = useRef<typeof buildGreeting>(null as any);
+  const openChatFallback = useAlexChatFallbackStore((s) => s.open);
 
   // Voice recovery hook
   const recovery = useAlexVoiceRecovery();
@@ -77,6 +82,8 @@ export default function OverlayAlexVoiceFullScreen() {
   const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
     onFirstAudio: () => {
       firstAudioReceivedRef.current = true;
+      autoRetryCountRef.current = 0;
+      alexVoiceService.setState("speaking", "first_audio");
       if (firstAudioTimerRef.current) {
         clearTimeout(firstAudioTimerRef.current);
         firstAudioTimerRef.current = null;
@@ -141,6 +148,8 @@ export default function OverlayAlexVoiceFullScreen() {
       hasConnectedRef.current = true;
       bootTimeRef.current = Date.now();
       setBootStep("connected");
+      alexVoiceService.markWsConnected(true);
+      alexVoiceService.setState("connected", "ws_open");
       getStore().resetHeartbeat();
     },
     onDisconnect: () => {
@@ -149,6 +158,7 @@ export default function OverlayAlexVoiceFullScreen() {
       const wasConnected = hasConnectedRef.current;
       hasConnectedRef.current = false;
       firstAudioReceivedRef.current = false;
+      alexVoiceService.markWsConnected(false);
       if (firstAudioTimerRef.current) {
         clearTimeout(firstAudioTimerRef.current);
         firstAudioTimerRef.current = null;
@@ -159,9 +169,9 @@ export default function OverlayAlexVoiceFullScreen() {
       }
       const timeSinceBoot = Date.now() - bootTimeRef.current;
       if (s.isOverlayOpen && wasConnected && timeSinceBoot > 2000) {
-        s.setError("connection_lost", "Connexion perdue. Réessayez ou passez au chat.", true);
+        s.setError("connection_lost", "La voix d'Alex a été interrompue. Je réessaie automatiquement.", true);
       } else if (s.isOverlayOpen && !wasConnected) {
-        s.setError("connection_failed", "Impossible de se connecter. Réessayez.", true);
+        s.setError("connection_failed", "Connexion vocale échouée. Je réessaie automatiquement.", true);
       }
     },
     onError: (error) => {
@@ -180,8 +190,9 @@ export default function OverlayAlexVoiceFullScreen() {
         const msg = rawMessage.includes("moteur vocal") || rawMessage.includes("serveur vocal")
           ? rawMessage
           : rawMessage.includes("not available") || rawMessage.includes("bidiGenerateContent")
-          ? "Le moteur vocal est indisponible pour le moment. Passez au chat ou réessayez."
-          : rawMessage;
+          ? "Le moteur vocal est indisponible. Alex continue par chat."
+          : "La voix d'Alex tarde à démarrer. Je réessaie automatiquement.";
+        alexVoiceService.setError(msg, "voice_error");
         s.setError("voice_error", msg, true);
       }
     },
@@ -268,9 +279,52 @@ export default function OverlayAlexVoiceFullScreen() {
         setBootStep("waiting_audio");
         firstAudioTimerRef.current = setTimeout(() => {
           const s = getStore();
-          if (!firstAudioReceivedRef.current && s.isOverlayOpen && ["stabilizing", "opening_session", "session_ready"].includes(s.machineState)) {
-            s.setError("no_first_audio", "Alex ne parle pas. Réessayez ou passez au chat.", true);
+          if (firstAudioReceivedRef.current || !s.isOverlayOpen) return;
+          if (!["stabilizing", "opening_session", "session_ready"].includes(s.machineState)) return;
+
+          // Silent auto-retry (up to MAX_AUTO_RETRIES) before showing error
+          if (autoRetryCountRef.current < MAX_AUTO_RETRIES) {
+            autoRetryCountRef.current += 1;
+            const attempt = alexVoiceService.incrementRetry();
+            const backoff = attempt === 1 ? 500 : attempt === 2 ? 1500 : 3000;
+            console.log(`[VoiceOverlay] 🔁 Silent retry ${attempt} in ${backoff}ms`);
+            try { stop(); } catch {}
+            setTimeout(() => {
+              if (!getStore().isOverlayOpen) return;
+              hasConnectedRef.current = false;
+              firstAudioReceivedRef.current = false;
+              startRef.current({ initialGreeting: buildGreetingRef.current(), force: true })
+                .then(() => {
+                  bootTimeRef.current = Date.now();
+                  // Re-arm first audio timer for the new attempt
+                  firstAudioTimerRef.current = setTimeout(() => {
+                    const latest = getStore();
+                    if (firstAudioReceivedRef.current || !latest.isOverlayOpen) return;
+                    latest.setError(
+                      "no_first_audio_final",
+                      "La voix est temporairement indisponible. Alex continue par chat.",
+                      true,
+                    );
+                  }, FIRST_AUDIO_TIMEOUT_MS);
+                })
+                .catch((e: any) => {
+                  console.error("[VoiceOverlay] retry failed:", e);
+                  getStore().setError(
+                    "retry_failed",
+                    "La voix est temporairement indisponible. Alex continue par chat.",
+                    true,
+                  );
+                });
+            }, backoff);
+            return;
           }
+
+          // Out of retries → trigger fallback chat
+          s.setError(
+            "no_first_audio_final",
+            "La voix est temporairement indisponible. Alex continue par chat.",
+            true,
+          );
         }, FIRST_AUDIO_TIMEOUT_MS);
 
         // Stabilization timer — uses getState() for fresh check
@@ -287,9 +341,12 @@ export default function OverlayAlexVoiceFullScreen() {
         setBootStep("error");
         const s = getStore();
         if (err?.name === "NotAllowedError" || err?.message?.includes("Permission")) {
-          s.setError("permission_denied", "Autorisez le microphone pour continuer.", false);
+          alexVoiceService.setMicPermission("denied");
+          openChatFallback("permission_denied", transcripts.map(t => ({ role: t.role, text: t.text })));
+          toast.error("Micro désactivé", { description: "Vous pouvez continuer par chat.", duration: 3000 });
+          getStore().closeVoiceSession("permission_denied_to_chat");
         } else {
-          s.setError("boot_failed", err?.message || "Impossible de démarrer la voix. Réessayez.", true);
+          s.setError("boot_failed", "La voix d'Alex tarde à démarrer. Je réessaie automatiquement.", true);
         }
       }
     };
@@ -406,8 +463,10 @@ export default function OverlayAlexVoiceFullScreen() {
   }, [buildGreeting, start, stop, recovery]);
 
   const handleFallbackChat = useCallback(() => {
+    alexVoiceService.switchToFallbackChat("user_or_auto");
+    openChatFallback("voice_unavailable", transcripts.map(t => ({ role: t.role, text: t.text })));
     getStore().closeVoiceSession("fallback_to_chat");
-  }, []);
+  }, [openChatFallback, transcripts]);
 
   if (!store.isOverlayOpen) return null;
 
