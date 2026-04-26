@@ -1,11 +1,26 @@
 /**
- * copilotConversationStore — Zustand store for the Copilot homepage chat sheet.
+ * copilotConversationStore — Alex chat state (homepage Copilot sheet).
  *
- * HARD RULE: Never expose more than one recommended pro at a time.
- * Alternative pros are revealed one-by-one on explicit user request.
+ * Conversion-first conversational engine:
+ *  - alexCopilotEngine drives every Alex response (max 3 questions before value).
+ *  - Real photo upload via alexUploadService (logged in → Supabase Storage + project_files).
+ *  - Quick-reply chips + memory line + guest profile-save prompt.
+ *  - sanitizeAlexText scrubs every Alex bubble before render.
  */
 import { create } from "zustand";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
+import {
+  decideNext,
+  acknowledgePhoto,
+  createEmptySession,
+  MEMORY_LINE_FR,
+  type AlexSession,
+  type QuickReply,
+  type EngineDecision,
+} from "@/services/alexCopilotEngine";
+import { uploadAlexFile, type UploadedFile } from "@/services/alexUploadService";
+import { cleanAlexText } from "@/utils/sanitizeAlexText";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface RecommendedPro {
   id: string;
@@ -27,6 +42,9 @@ export interface ChatMessage {
   text?: string;
   loading?: boolean;
   pro?: RecommendedPro;
+  photo?: UploadedFile;
+  quickReplies?: QuickReply[];
+  showProfilePrompt?: boolean;
   createdAt: number;
 }
 
@@ -39,9 +57,13 @@ interface CopilotState {
   whyOpen: boolean;
   thinking: boolean;
   selectedPro: RecommendedPro | null;
+  session: AlexSession;
   open: (initialText?: string) => void;
   close: () => void;
   sendMessage: (text: string) => Promise<void>;
+  uploadPhoto: (file: File) => Promise<void>;
+  executeQuickReply: (reply: QuickReply) => Promise<void>;
+  dismissProfilePrompt: () => void;
   requestAlternative: () => Promise<void>;
   openBooking: (pro?: RecommendedPro) => void;
   closeBooking: () => void;
@@ -53,52 +75,28 @@ interface CopilotState {
 const MOCK_POOL: RecommendedPro[] = [
   {
     id: "pro-1",
-    name: "Assèchement Pro Laval",
-    imageUrl: "",
-    compatibility: 98,
+    name: "Peintres Élite Montréal",
+    compatibility: 97,
     rating: 4.9,
-    reviewsCount: 128,
-    city: "Laval",
-    specialty: "Humidité / sous-sol",
+    reviewsCount: 142,
+    city: "Montréal",
+    specialty: "Peinture intérieure résidentielle",
     reasons: [
-      "Spécialiste humidité / sous-sol",
+      "Spécialiste peinture intérieure",
       "Excellents avis récents",
-      "Intervient dans votre secteur",
-      "Disponibilité rapide cette semaine",
-      "Prix généralement compétitif",
+      "Bonne disponibilité cette semaine",
       "Vérifié UNPRO",
     ],
   },
   {
     id: "pro-2",
-    name: "Solutions Sous-Sol Québec",
-    compatibility: 94,
+    name: "Atelier Couleur Laval",
+    compatibility: 93,
     rating: 4.8,
-    reviewsCount: 87,
-    city: "Montréal",
-    specialty: "Drain français + assèchement",
-    reasons: [
-      "10 ans d'expérience humidité",
-      "Garantie complète sur travaux",
-      "Bonne disponibilité",
-      "Couvre votre secteur",
-      "Vérifié UNPRO",
-    ],
-  },
-  {
-    id: "pro-3",
-    name: "Habitat Sain Montréal",
-    compatibility: 91,
-    rating: 4.7,
-    reviewsCount: 64,
-    city: "Montréal",
-    specialty: "Moisissure et qualité de l'air",
-    reasons: [
-      "Approche écologique",
-      "Inspection détaillée incluse",
-      "Avis 5 étoiles récents",
-      "Vérifié UNPRO",
-    ],
+    reviewsCount: 88,
+    city: "Laval",
+    specialty: "Peinture complète + plâtre",
+    reasons: ["Préparation soignée", "Garantie travaux", "Vérifié UNPRO"],
   },
 ];
 
@@ -106,6 +104,31 @@ const uid = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2);
+
+async function getIsLoggedIn(): Promise<boolean> {
+  const { data } = await supabase.auth.getUser();
+  return !!data?.user;
+}
+
+function applyDecision(
+  current: AlexSession,
+  decision: EngineDecision,
+): AlexSession {
+  return { ...current, ...decision.sessionPatch };
+}
+
+function buildAlexBubble(decision: EngineDecision): ChatMessage {
+  const base = cleanAlexText(decision.alexText);
+  const text = decision.showMemoryLine ? `${base}\n\n${MEMORY_LINE_FR}` : base;
+  return {
+    id: uid(),
+    role: "alex",
+    text,
+    quickReplies: decision.quickReplies,
+    showProfilePrompt: decision.showProfilePrompt,
+    createdAt: Date.now(),
+  };
+}
 
 export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
   isOpen: false,
@@ -116,12 +139,18 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
   whyOpen: false,
   thinking: false,
   selectedPro: null,
+  session: createEmptySession({ isLoggedIn: false }),
 
   open: (initialText) => {
     set({ isOpen: true });
     trackCopilotEvent("alex_started", { initialText });
+
+    // Refresh login state on open
+    void getIsLoggedIn().then((isLoggedIn) => {
+      set((s) => ({ session: { ...s.session, isLoggedIn } }));
+    });
+
     if (initialText && initialText.trim()) {
-      // fire & forget, non-blocking
       void get().sendMessage(initialText.trim());
     } else if (get().messages.length === 0) {
       set({
@@ -129,7 +158,13 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
           {
             id: uid(),
             role: "alex",
-            text: "Salut! Je suis Alex. Quel est votre projet aujourd'hui?",
+            text: "Salut ! Je suis Alex. Quel est votre projet aujourd'hui ?",
+            quickReplies: [
+              { id: "qr-paint", label: "Peinture", action: { kind: "send", text: "Peinture maison" } },
+              { id: "qr-humid", label: "Humidité", action: { kind: "send", text: "Problème d'humidité" } },
+              { id: "qr-roof", label: "Toiture", action: { kind: "send", text: "Problème de toiture" } },
+              { id: "qr-photo", label: "Ajouter une photo", action: { kind: "open_upload" } },
+            ],
             createdAt: Date.now(),
           },
         ],
@@ -145,86 +180,168 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
     trackCopilotEvent("message_sent", { length: trimmed.length });
 
     set((s) => ({
-      messages: [
-        ...s.messages,
-        { id: uid(), role: "user", text: trimmed, createdAt: Date.now() },
-      ],
+      messages: [...s.messages, { id: uid(), role: "user", text: trimmed, createdAt: Date.now() }],
       thinking: true,
     }));
 
-    // Alex thinking message
-    const thinkingId = uid();
+    // Simulate brief thinking delay for UX
+    await new Promise((r) => setTimeout(r, 600));
+
+    const decision = decideNext(get().session, trimmed);
+    const bubble = buildAlexBubble(decision);
+
+    set((s) => ({
+      thinking: false,
+      session: applyDecision(s.session, decision),
+      messages: [...s.messages, bubble],
+    }));
+
+    if (decision.showProfilePrompt) {
+      trackCopilotEvent("profile_save_prompt_shown");
+    }
+    if (decision.sessionPatch.lastValueShownAt) {
+      trackCopilotEvent("value_summary_shown", { intent: decision.sessionPatch.intent });
+    }
+
+    // If the engine routed to a pro match, surface a recommendation card
+    if (decision.nextBestAction === "match_pro") {
+      await new Promise((r) => setTimeout(r, 700));
+      const pro = get().proPool[0];
+      if (pro) {
+        set((s) => ({
+          currentProIndex: 0,
+          messages: [
+            ...s.messages,
+            {
+              id: uid(),
+              role: "alex",
+              text: "Voici le pro que je recommande pour votre projet :",
+              pro,
+              createdAt: Date.now(),
+            },
+          ],
+        }));
+        trackCopilotEvent("recommended_pro_shown", { proId: pro.id, position: 0 });
+      }
+    }
+  },
+
+  uploadPhoto: async (file: File) => {
+    trackCopilotEvent("photo_upload_started", { size: file.size, type: file.type });
+    set({ thinking: true });
+
+    const result = await uploadAlexFile(file);
+    if (!result.ok || !result.file) {
+      trackCopilotEvent("photo_upload_failed", { error: result.error });
+      set((s) => ({
+        thinking: false,
+        messages: [
+          ...s.messages,
+          {
+            id: uid(),
+            role: "alex",
+            text: result.error || "Impossible d'envoyer la photo. Réessayez.",
+            createdAt: Date.now(),
+          },
+        ],
+      }));
+      return;
+    }
+
+    trackCopilotEvent("photo_upload_succeeded", { isGuest: result.file.isGuest });
+
+    // User bubble with thumbnail
     set((s) => ({
       messages: [
         ...s.messages,
-        {
-          id: thinkingId,
-          role: "alex",
-          text:
-            "Je comprends. J'analyse votre situation selon votre type de problème, votre secteur et la disponibilité locale.",
-          loading: true,
-          createdAt: Date.now(),
-        },
+        { id: uid(), role: "user", photo: result.file, createdAt: Date.now() },
       ],
+      session: { ...s.session, uploadedFiles: [...s.session.uploadedFiles, result.file!] },
     }));
 
-    await new Promise((r) => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 400));
 
-    const idx = 0;
-    const pro = get().proPool[idx];
+    const decision = acknowledgePhoto(get().session);
+    const bubble = buildAlexBubble(decision);
     set((s) => ({
       thinking: false,
-      currentProIndex: idx,
-      messages: s.messages
-        .map((m) => (m.id === thinkingId ? { ...m, loading: false } : m))
-        .concat({
-          id: uid(),
-          role: "alex",
-          text: "Après analyse, je vous recommande:",
-          pro,
-          createdAt: Date.now(),
-        }),
+      session: applyDecision(s.session, decision),
+      messages: [...s.messages, bubble],
     }));
-    trackCopilotEvent("recommended_pro_shown", { proId: pro?.id, position: idx });
   },
+
+  executeQuickReply: async (reply: QuickReply) => {
+    trackCopilotEvent("quick_reply_clicked", { id: reply.id, label: reply.label });
+    const action = reply.action;
+    switch (action.kind) {
+      case "send":
+        await get().sendMessage(action.text);
+        return;
+      case "open_upload": {
+        // Trigger hidden file input rendered by AlexCopilotConversation
+        const input = document.getElementById("alex-file-input") as HTMLInputElement | null;
+        input?.click();
+        return;
+      }
+      case "save_profile":
+        if (typeof window !== "undefined") {
+          window.location.href = "/auth?context=alex_save";
+        }
+        return;
+      case "continue_guest":
+        get().dismissProfilePrompt();
+        return;
+      case "estimate_no_photo":
+        await get().sendMessage("Estime sans photo pour l'instant.");
+        return;
+      case "match_pro":
+        await get().sendMessage("Recommande-moi le bon pro.");
+        return;
+      case "save_project": {
+        const isLoggedIn = await getIsLoggedIn();
+        if (!isLoggedIn) {
+          set((s) => ({ session: { ...s.session, profilePromptShown: false } }));
+          await get().sendMessage("Je veux sauvegarder mon projet.");
+        } else {
+          set((s) => ({
+            session: { ...s.session, projectSaved: true },
+            messages: [
+              ...s.messages,
+              {
+                id: uid(),
+                role: "alex",
+                text: "Projet sauvegardé dans votre dossier. Vous pouvez y revenir à tout moment.",
+                createdAt: Date.now(),
+              },
+            ],
+          }));
+        }
+        return;
+      }
+    }
+  },
+
+  dismissProfilePrompt: () =>
+    set((s) => ({ session: { ...s.session, profilePromptShown: true } })),
 
   requestAlternative: async () => {
     const next = get().currentProIndex + 1;
     if (next >= get().proPool.length) return;
     trackCopilotEvent("alternative_option_requested", { position: next });
+    const pro = get().proPool[next];
     set((s) => ({
-      thinking: true,
+      currentProIndex: next,
       messages: [
         ...s.messages,
-        {
-          id: uid(),
-          role: "user",
-          text: "Une autre option?",
-          createdAt: Date.now(),
-        },
+        { id: uid(), role: "user", text: "Une autre option ?", createdAt: Date.now() },
         {
           id: uid(),
           role: "alex",
-          text: "Voici une autre option pertinente:",
-          loading: true,
+          text: "Voici une autre option pertinente :",
+          pro,
           createdAt: Date.now(),
         },
       ],
-    }));
-    await new Promise((r) => setTimeout(r, 900));
-    const pro = get().proPool[next];
-    set((s) => ({
-      thinking: false,
-      currentProIndex: next,
-      messages: s.messages
-        .slice(0, -1)
-        .concat({
-          id: uid(),
-          role: "alex",
-          text: "Voici une autre option pertinente:",
-          pro,
-          createdAt: Date.now(),
-        }),
     }));
     trackCopilotEvent("recommended_pro_shown", { proId: pro?.id, position: next });
   },
@@ -247,5 +364,6 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
       whyOpen: false,
       selectedPro: null,
       thinking: false,
+      session: createEmptySession({ isLoggedIn: false }),
     }),
 }));
