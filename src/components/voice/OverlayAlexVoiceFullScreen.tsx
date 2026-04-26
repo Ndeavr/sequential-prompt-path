@@ -550,6 +550,7 @@ export default function OverlayAlexVoiceFullScreen() {
   const statusText =
     isRecoveringNow ? recovery.phaseLabel
     : isError ? (store.errorMessage || "Erreur")
+    : slowToken && isStabilizing ? "Connexion d'Alex…"
     : isStabilizing ? getBootStepLabel(bootStep)
     : state === "listening" || state === "awaiting_user" ? "Alex écoute…"
     : state === "capturing_voice" ? "Vous parlez…"
