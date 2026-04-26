@@ -1,5 +1,5 @@
-import Home from "@/pages/Home";
+import PageHomeCopilot from "@/pages/PageHomeCopilot";
 
 export default function HomeWithFeatureFlag() {
-  return <Home />;
+  return <PageHomeCopilot />;
 }
