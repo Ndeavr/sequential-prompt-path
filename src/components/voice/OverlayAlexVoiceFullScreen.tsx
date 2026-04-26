@@ -341,9 +341,12 @@ export default function OverlayAlexVoiceFullScreen() {
         setBootStep("error");
         const s = getStore();
         if (err?.name === "NotAllowedError" || err?.message?.includes("Permission")) {
-          s.setError("permission_denied", "Autorisez le microphone pour continuer.", false);
+          alexVoiceService.setMicPermission("denied");
+          openChatFallback("permission_denied", transcripts.map(t => ({ role: t.role, text: t.text })));
+          toast.error("Micro désactivé", { description: "Vous pouvez continuer par chat.", duration: 3000 });
+          getStore().closeVoiceSession("permission_denied_to_chat");
         } else {
-          s.setError("boot_failed", err?.message || "Impossible de démarrer la voix. Réessayez.", true);
+          s.setError("boot_failed", "La voix d'Alex tarde à démarrer. Je réessaie automatiquement.", true);
         }
       }
     };
@@ -460,8 +463,10 @@ export default function OverlayAlexVoiceFullScreen() {
   }, [buildGreeting, start, stop, recovery]);
 
   const handleFallbackChat = useCallback(() => {
+    alexVoiceService.switchToFallbackChat("user_or_auto");
+    openChatFallback("voice_unavailable", transcripts.map(t => ({ role: t.role, text: t.text })));
     getStore().closeVoiceSession("fallback_to_chat");
-  }, []);
+  }, [openChatFallback, transcripts]);
 
   if (!store.isOverlayOpen) return null;
 
