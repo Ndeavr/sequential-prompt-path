@@ -97,7 +97,7 @@ export default function PageContractorJoinPublic() {
   const [result, setResult] = useState<DemoResult | null>(null);
 
   useEffect(() => {
-    void trackFunnelEvent("join_public_view", { mode });
+    void trackFunnelEvent("landing_viewed", { source: "join_public", mode }, "join_public");
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fake but smooth progress while edge function runs (reads as instant)
@@ -125,7 +125,7 @@ export default function PageContractorJoinPublic() {
     }
     setLoading(true);
     setResult(null);
-    void trackFunnelEvent("join_public_demo_start", { mode, length: v.length });
+    void trackFunnelEvent("import_started", { source: "join_public", mode, length: v.length }, "join_public");
 
     try {
       const payload: Record<string, string> = {};
@@ -143,7 +143,7 @@ export default function PageContractorJoinPublic() {
       // Small delay so the bar finishes visually
       await new Promise((r) => setTimeout(r, 280));
       setResult(data);
-      void trackFunnelEvent("join_public_demo_success", {
+      void trackFunnelEvent("aipp_viewed", { source: "join_public",
         mode,
         score: data.aipp.score,
         plan: data.recommended_plan.code,
@@ -159,7 +159,7 @@ export default function PageContractorJoinPublic() {
 
   const handleClose = async () => {
     if (!result) return;
-    void trackFunnelEvent("join_public_cta_click", {
+    void trackFunnelEvent("plan_selected", { source: "join_public",
       plan: result.recommended_plan.code,
     });
     // Persist demo so the next page can resume
