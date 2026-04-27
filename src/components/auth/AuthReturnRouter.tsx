@@ -144,9 +144,9 @@ function postLoginPathForRole(role: string | null, intentPath?: string | null): 
     case "admin":
       return "/admin";
     case "contractor":
-      // Send fresh contractors directly into the onboarding voice flow,
-      // not the generic dashboard which can show empty/loading states.
-      return "/entrepreneur/onboarding-voice";
+      // Send fresh contractors through the join profile gate which guarantees
+      // role + contractor row exist, then forwards to onboarding.
+      return "/join/profile";
     case "homeowner":
       return "/dashboard";
     case "condo_manager":
