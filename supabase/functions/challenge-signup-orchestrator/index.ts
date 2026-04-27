@@ -26,7 +26,7 @@ async function runAgent(agentKey: string, sb: ReturnType<typeof createClient>): 
     if (agentKey === "signup_hunter") {
       // Load blocklist (competitors / directories / social)
       const { data: blocklist } = await sb.from("challenge_domain_blocklist").select("pattern");
-      const patterns = (blocklist ?? []).map((b: { pattern: string }) => b.pattern.toLowerCase());
+      const patterns = ((blocklist ?? []) as Array<{ pattern: string }>).map((b) => String(b.pattern ?? "").toLowerCase());
 
       const isBlocked = (email: string | null, company: string | null, domain: string | null) => {
         const haystack = `${email ?? ""} ${company ?? ""} ${domain ?? ""}`.toLowerCase();
