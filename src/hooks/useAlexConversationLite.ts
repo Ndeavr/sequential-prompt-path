@@ -149,7 +149,73 @@ function detectAnalysisIntent(text: string): IntentMatch | null {
   return null;
 }
 
-// ─── CITIES (for location detection) ───
+// ─── CONTRACTOR SELF-SERVE ONBOARDING GUARD ───
+const CONTRACTOR_SELF_SERVE_PATTERNS = [
+  /\bje\s+suis\s+(un\s+)?(entrepreneur|contracteur|pro)\b/i,
+  /\boffrir\s+mes\s+services\b/i,
+  /\b(recevoir|avoir)\s+(plus\s+de\s+)?(clients|contrats|rendez-?vous)\b/i,
+  /\bm['’]inscrire\s+(comme\s+)?(pro|entrepreneur)\b/i,
+  /\binscrire\s+mon\s+entreprise\b/i,
+  /\b(rejoindre|faire\s+partie\s+(de|d'))\s*unpro\b/i,
+  /\b(plan|tarif|prix|co[uû]t).*\b(pro|entrepreneur|contracteur)\b/i,
+  /\b(mon\s+entreprise|ma\s+compagnie|fiche\s+(pro|entrepreneur)|score\s+aipp)\b/i,
+];
+
+const CONTRACTOR_CALLBACK_PATTERNS = /\b(rappelle|rappel|appeler|appel|humain|repr[ée]sentant|vendeur|conseiller|parler\s+à\s+quelqu['’]?un)\b/i;
+const WEBSITE_RE = /\b((?:https?:\/\/)?(?:www\.)?[a-z0-9-]+\.(?:ca|com|net|org|co|io|info|biz)(?:\/[^\s]*)?)\b/i;
+const RBQ_RE = /\b\d{4}-\d{4}-\d{2}\b/;
+const NEQ_RE = /\b\d{10}\b/;
+const PHONE_RE = /(?:\+?1[\s-.]?)?\(?\d{3}\)?[\s-.]?\d{3}[\s-.]?\d{4}/;
+
+function isContractorSelfServeIntent(text: string): boolean {
+  return CONTRACTOR_SELF_SERVE_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+function extractBusinessIdentifier(text: string): string | null {
+  const rbq = text.match(RBQ_RE)?.[0];
+  if (rbq) return rbq;
+  const neq = text.match(NEQ_RE)?.[0];
+  if (neq) return neq;
+  const website = text.match(WEBSITE_RE)?.[0];
+  if (website) return website;
+  const phone = text.match(PHONE_RE)?.[0];
+  if (phone) return phone;
+  const cleaned = text
+    .replace(/^(mon|ma|notre|entreprise|compagnie|site|web|t[ée]l[ée]phone|rbq|neq|c['’]est|je suis|nous sommes)\s*:?\s*/i, "")
+    .trim();
+  if (cleaned.length >= 3 && cleaned.length <= 80) return cleaned;
+  return null;
+}
+
+function buildSelfServeBusinessData(identifier: string) {
+  const seed = identifier.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const score = 52 + (seed % 27);
+  return {
+    entityName: identifier,
+    aippScore: score,
+    seoScore: Math.max(28, score - 18),
+    trustScore: Math.min(92, score + 9),
+    visibilityScore: Math.max(25, score - 22),
+    overallGrade: score >= 72 ? "B+" : score >= 62 ? "B" : "C+",
+    recommendations: [
+      "Renforcer la visibilité locale",
+      "Structurer la fiche UNPRO avec services et zones",
+      "Ajouter preuves, avis et signaux RBQ/NEQ",
+      "Activer un plan pour recevoir des rendez-vous qualifiés",
+    ],
+  };
+}
+
+function recommendPlanCodeForObjective(text: string): string {
+  const lower = text.toLowerCase();
+  if (/territoire|prot[ée]ger|signature|dominer/.test(lower)) return "signature";
+  if (/calendrier|remplir|elite|élite/.test(lower)) return "elite";
+  if (/class[ée]|ranking|mieux class|premium|visibilit/.test(lower)) return "premium";
+  if (/profil|am[ée]liorer|comprendre|recrue/.test(lower)) return "recrue";
+  return "pro";
+}
+
+
 const CITIES = [
   "montréal", "montreal", "laval", "québec", "quebec", "gatineau",
   "sherbrooke", "longueuil", "lévis", "levis", "trois-rivières",
