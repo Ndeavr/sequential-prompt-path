@@ -80,6 +80,14 @@ export default function PageHomeAlexConversationalLite() {
     try { return localStorage.getItem("alex-voice-muted") === "true"; } catch { return false; }
   });
 
+  // Voice messages live in a separate state because useAlexConversationLite
+  // doesn't expose setMessages. Declared BEFORE useLiveVoice so the callback
+  // closures don't hit a TDZ ReferenceError when they fire asynchronously.
+  const [voiceMessages, setVoiceMessagesState] = useState<Array<{id: string; role: "alex" | "user"; content: string; timestamp: number; isVoice: boolean}>>([]);
+  const setMessages = useCallback((updater: (prev: any[]) => any[]) => {
+    setVoiceMessagesState(updater);
+  }, []);
+
   const voice = useLiveVoice({
     onConnect: () => {
       setVoiceActive(true);
@@ -94,9 +102,6 @@ export default function PageHomeAlexConversationalLite() {
     onTranscript: (text) => {
       // Alex's spoken response → add as alex bubble
       if (text && text.trim()) {
-        // Use emitSafe-like logic by adding directly to messages via sendMessage won't work here
-        // Instead, we rely on the conversation hook's message state
-        // For now, we inject Alex transcript as a message
         setMessages(prev => {
           const id = `voice-alex-${Date.now()}`;
           if (prev.length > 0 && prev[prev.length - 1].content === text && prev[prev.length - 1].role === "alex") return prev;
@@ -124,15 +129,6 @@ export default function PageHomeAlexConversationalLite() {
       console.error("[Voice]", err);
     },
   });
-
-  // We need direct access to setMessages from the hook - but the hook doesn't expose it.
-  // Instead, we'll manage voice messages in a separate state and merge for display.
-  const [voiceMessages, setVoiceMessagesState] = useState<Array<{id: string; role: "alex" | "user"; content: string; timestamp: number; isVoice: boolean}>>([]);
-  
-  // Override setMessages reference for voice callbacks
-  const setMessages = useCallback((updater: (prev: any[]) => any[]) => {
-    setVoiceMessagesState(updater);
-  }, []);
 
   // Merge conversation messages + voice messages for display
   const allMessages = useMemo(() => {
