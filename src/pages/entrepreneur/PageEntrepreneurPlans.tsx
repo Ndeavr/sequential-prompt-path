@@ -4,11 +4,20 @@
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, X, ArrowRight, Star, Sparkles } from "lucide-react";
+import { CheckCircle2, X, ArrowRight, Star, Sparkles, TrendingDown } from "lucide-react";
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
+
+interface JoinDemo {
+  business_name: string;
+  city: string;
+  score: number;
+  recommended_plan: string;
+  revenue_gap?: { lost_revenue_min: number };
+}
 
 interface PlanDef {
   name: string;
