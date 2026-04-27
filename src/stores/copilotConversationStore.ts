@@ -362,7 +362,8 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
   openWhy: (pro) => set({ whyOpen: true, selectedPro: pro }),
   closeWhy: () => set({ whyOpen: false }),
 
-  reset: () =>
+  reset: () => {
+    resetRouter();
     set({
       messages: [],
       currentProIndex: -1,
@@ -371,5 +372,6 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
       selectedPro: null,
       thinking: false,
       session: createEmptySession({ isLoggedIn: false }),
-    }),
+    });
+  },
 }));
