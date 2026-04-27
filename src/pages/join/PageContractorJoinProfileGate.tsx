@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import UnproIcon from "@/components/brand/UnproIcon";
+import { authDebug } from "@/services/auth/authDebugBus";
 
 export default function PageContractorJoinProfileGate() {
   const navigate = useNavigate();
