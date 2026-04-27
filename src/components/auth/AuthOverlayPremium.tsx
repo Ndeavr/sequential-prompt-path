@@ -128,7 +128,8 @@ export default function AuthOverlayPremium() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-3 sm:p-4"
+          style={{ paddingBottom: keyboardOffset ? keyboardOffset + 12 : undefined }}
           onClick={(e) => { if (e.target === e.currentTarget) closeAuthOverlay(); }}
         >
           {/* Backdrop */}
@@ -148,11 +149,12 @@ export default function AuthOverlayPremium() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="relative z-10 w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl"
+            className="relative z-10 w-full max-w-md overflow-y-auto rounded-2xl"
             style={{
-              background: "hsl(228 30% 11% / 0.95)",
+              background: "hsl(228 30% 11% / 0.97)",
               border: "1px solid hsl(228 20% 20% / 0.6)",
               boxShadow: "var(--shadow-2xl), 0 0 60px -10px hsl(222 100% 65% / 0.12)",
+              maxHeight: keyboardOffset ? `calc(100dvh - ${keyboardOffset + 24}px)` : "90dvh",
             }}
           >
             {/* Close */}
@@ -174,10 +176,12 @@ export default function AuthOverlayPremium() {
                   </div>
                 </div>
                 <h2 className="text-xl font-bold text-foreground font-display">
-                  Trouvez le bon pro. Plus vite.
+                  {contractorContext ? "Connexion à UNPRO" : "Trouvez le bon pro. Plus vite."}
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px] mx-auto">
-                  Connexion rapide et sécurisée. Aucun mot de passe requis.
+                  {contractorContext
+                    ? "Connectez-vous pour créer votre profil entrepreneur."
+                    : "Connexion rapide et sécurisée. Aucun mot de passe requis."}
                 </p>
               </div>
 
