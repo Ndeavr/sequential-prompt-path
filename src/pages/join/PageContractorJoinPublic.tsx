@@ -179,7 +179,7 @@ export default function PageContractorJoinPublic() {
     } catch {
       /* sessionStorage unavailable */
     }
-    navigate("/entrepreneur/plans");
+    navigate("/entrepreneurs/plans");
   };
 
   return (
