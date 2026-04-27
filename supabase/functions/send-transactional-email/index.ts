@@ -74,7 +74,7 @@ Deno.serve(async (req): Promise<Response> => {
   }
 
   const auth = await authenticateRequest(supabaseUrl, supabaseAnonKey, req)
-  if (!auth.ok) return auth.response
+  if (!auth.ok) return auth.response as Response
 
   // Parse request body
   let templateName: string
