@@ -141,6 +141,7 @@ function buildAlexBubble(decision: EngineDecision): ChatMessage {
 
 export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
   isOpen: false,
+  displayMode: "orb_idle",
   messages: [],
   proPool: MOCK_POOL,
   currentProIndex: -1,
@@ -150,8 +151,32 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
   selectedPro: null,
   session: createEmptySession({ isLoggedIn: false }),
 
+  setDisplayMode: (mode) => set({ displayMode: mode }),
+
+  openActionMenu: () => {
+    set({ isOpen: true, displayMode: "action_menu" });
+    trackCopilotEvent("alex_started", { mode: "action_menu" });
+    void getIsLoggedIn().then((isLoggedIn) => {
+      set((s) => ({ session: { ...s.session, isLoggedIn } }));
+    });
+    if (get().messages.length === 0) {
+      set({
+        messages: [
+          {
+            id: uid(),
+            role: "alex",
+            text:
+              "Bonjour. Je peux vous aider à analyser un projet, vérifier un entrepreneur, comparer des soumissions ou démarrer une fiche pro.",
+            createdAt: Date.now(),
+          },
+        ],
+      });
+    }
+  },
+
   open: (initialText) => {
-    set({ isOpen: true });
+    // If user typed text from hero, jump straight into text_chat mode.
+    set({ isOpen: true, displayMode: initialText && initialText.trim() ? "text_chat" : "action_menu" });
     trackCopilotEvent("alex_started", { initialText });
 
     // Refresh login state on open
@@ -167,13 +192,8 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
           {
             id: uid(),
             role: "alex",
-            text: "Salut ! Je suis Alex. Quel est votre projet aujourd'hui ?",
-            quickReplies: [
-              { id: "qr-paint", label: "Peinture", action: { kind: "send", text: "Peinture maison" } },
-              { id: "qr-humid", label: "Humidité", action: { kind: "send", text: "Problème d'humidité" } },
-              { id: "qr-roof", label: "Toiture", action: { kind: "send", text: "Problème de toiture" } },
-              { id: "qr-photo", label: "Ajouter une photo", action: { kind: "open_upload" } },
-            ],
+            text:
+              "Bonjour. Je peux vous aider à analyser un projet, vérifier un entrepreneur, comparer des soumissions ou démarrer une fiche pro.",
             createdAt: Date.now(),
           },
         ],
