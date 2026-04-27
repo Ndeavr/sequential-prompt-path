@@ -50,7 +50,6 @@ export default function PanelAlexEntrepreneurOnboarding({ onComplete, prefilled 
           onChange={e => setContactName(e.target.value)}
           placeholder="Prénom Nom"
           className="bg-background/80 border-border/40"
-          autoFocus
         />
       ),
       valid: contactName.trim().length >= 2,
