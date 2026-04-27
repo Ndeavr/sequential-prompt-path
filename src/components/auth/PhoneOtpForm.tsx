@@ -78,8 +78,15 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
     }
 
     setSending(true);
+    // Hard 3s safety so the button never looks frozen
+    const safety = window.setTimeout(() => {
+      setSending(false);
+      toast.error("Envoi trop long. Réessayez.");
+    }, 3000);
+
     try {
       const data = await callTwilioVerify("send-otp", { phone: e164 });
+      window.clearTimeout(safety);
       if (data.fallback) {
         toast.error("Le service SMS est temporairement indisponible. Utilisez un autre moyen de connexion.", { duration: 5000 });
         console.warn("[PhoneOtp] SMS fallback triggered:", data.code);
@@ -89,13 +96,14 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
         toast.error(data.error);
       } else {
         trackAuthEvent("sms_sent");
-        toast.success("Code envoyé par texto !");
+        toast.success("Code envoyé !");
         setStep("code");
         setCooldown(COOLDOWN_SECONDS);
         setAttempts((a) => a + 1);
         setTimeout(() => codeRefs.current[0]?.focus(), 100);
       }
     } catch {
+      window.clearTimeout(safety);
       toast.error("Erreur réseau. Réessayez.");
     } finally {
       setSending(false);
