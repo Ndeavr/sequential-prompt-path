@@ -265,6 +265,19 @@ export default function AlexCopilotConversation() {
         </SheetContent>
       </Sheet>
 
+      {/* Hidden file input — triggered by composer + button or quick-reply open_upload */}
+      <input
+        id="alex-file-input"
+        type="file"
+        accept="image/*,application/pdf"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) void useCopilotConversationStore.getState().uploadPhoto(file);
+          e.target.value = "";
+        }}
+      />
+
       <ModalWhyThisPro
         open={whyOpen}
         pro={selectedPro}
