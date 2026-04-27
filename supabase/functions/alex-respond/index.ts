@@ -49,8 +49,8 @@ function stripBlocked(text: string, patterns: any[]): string {
 
 function applyPronunciation(text: string, lang: string): string {
   const rules = lang.startsWith("en")
-    ? [[/\bUNPRO\b/gi, "eun pro"], [/\bunpro\b/g, "eun pro"]]
-    : [[/\bUNPRO\b/gi, "1 pro"], [/\bunpro\b/g, "1 pro"]];
+    ? [[/\bUNPRO\b/gi, "un pro"], [/\bunpro\b/g, "un pro"]]
+    : [[/\bUNPRO\b/gi, "un pro"], [/\bunpro\b/g, "un pro"]];
   let r = text;
   for (const [pat, rep] of rules) r = r.replace(pat as RegExp, rep as string);
   return r;
