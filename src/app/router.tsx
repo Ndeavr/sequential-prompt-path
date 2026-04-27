@@ -300,6 +300,7 @@ const PageContractorJoinCheckout = lazy(() => import("@/pages/join/PageContracto
 const PageContractorJoinSuccess = lazy(() => import("@/pages/join/PageContractorJoinSuccess"));
 const PageContractorJoinResume = lazy(() => import("@/pages/join/PageContractorJoinResume"));
 const PageContractorPublicMagicAccess = lazy(() => import("@/pages/join/PageContractorPublicMagicAccess"));
+const PageContractorJoinPublic = lazy(() => import("@/pages/join/PageContractorJoinPublic"));
 const PageAdminAlexDebugHome = lazy(() => import("@/pages/admin/PageAdminAlexDebugHome"));
 const PageAdminAlexSpeechTuning = lazy(() => import("@/pages/admin/AlexSpeechTuning"));
 const AlexVoiceAdmin = lazy(() => import("@/pages/admin/AlexVoiceAdmin"));
@@ -1320,6 +1321,7 @@ export const AppRouter = () => (
          <Route path="/admin/recruitment/logs" element={<UniversalRouteGuard allowedRoles={["admin"]}><PageAdminRecruitmentLogs /></UniversalRouteGuard>} />
 
          {/* Recruitment — Prospect-facing (public) */}
+         <Route path="/join" element={<Suspense fallback={<LazyFallback />}><PageContractorJoinPublic /></Suspense>} />
          <Route path="/join/:token" element={<PageContractorJoinOffer />} />
          <Route path="/join/:token/checkout" element={<PageContractorJoinCheckout />} />
          <Route path="/join/:token/success" element={<PageContractorJoinSuccess />} />
