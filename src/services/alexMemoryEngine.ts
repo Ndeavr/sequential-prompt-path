@@ -47,6 +47,9 @@ export interface AlexSessionMemory {
   // Entrepreneur plan flow
   recommended_plan: string | null;
   plan_checkout_started: boolean;
+  contractor_onboarding_stage: "identify" | "analyzing" | "score_ready" | "objective" | "plan_offer" | "checkout" | "activated" | null;
+  contractor_identifier: string | null;
+  contractor_aipp_score: number | null;
   
   // Conversation state
   last_question_asked: string | null;
