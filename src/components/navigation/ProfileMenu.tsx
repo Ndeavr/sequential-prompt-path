@@ -13,6 +13,7 @@ import { resolveIcon, ChevronDown, ArrowRightLeft, LogOut, Settings, HelpCircle,
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import type { UserRole } from "@/types/navigation";
 import BecomeRoleCTA from "@/components/account/BecomeRoleCTA";
+import { CANONICAL_PLAN_LABELS } from "@/config/pricing";
 
 const roleLabels: Record<UserRole, { fr: string; en: string }> = {
   homeowner: { fr: "Propriétaire", en: "Homeowner" },
@@ -21,11 +22,9 @@ const roleLabels: Record<UserRole, { fr: string; en: string }> = {
   admin: { fr: "Administrateur", en: "Admin" },
 };
 
-const planLabels: Record<string, string> = {
-  starter: "Starter",
-  pro: "Pro",
-  elite: "Élite",
-};
+// Display labels come from the canonical pricing source.
+// NEVER add legacy names here ("Starter", "Essentiel"…) — see legacyPlanGuard.
+const planLabels: Record<string, string> = CANONICAL_PLAN_LABELS;
 
 const ProfileMenu = () => {
   const [open, setOpen] = useState(false);
