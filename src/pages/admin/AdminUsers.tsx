@@ -13,12 +13,14 @@ import { toast } from "sonner";
 import { UserPlus, Trash2, Shield, Loader2 } from "lucide-react";
 
 const ALL_ROLES = ["homeowner", "contractor", "admin"] as const;
+// Plan options sourced from the canonical pricing catalog (no legacy names).
 const PLAN_OPTIONS = [
   { value: "", label: "Aucun plan" },
   { value: "recrue", label: "Recrue" },
-  { value: "starter", label: "Starter" },
   { value: "pro", label: "Pro" },
+  { value: "premium", label: "Premium" },
   { value: "elite", label: "Élite" },
+  { value: "signature", label: "Signature" },
 ];
 
 const AdminUsers = () => {

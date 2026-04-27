@@ -62,8 +62,9 @@ const INTENT_RULES: IntentRule[] = [
   { intent: "contractor_choose_plan", keywords: [
     "choisir un plan", "choisir mon plan", "quel plan", "quel forfait", "forfait",
     "plan entrepreneur", "plan pro", "m'inscrire", "s'inscrire", "inscription",
-    "activer mon plan", "activer mes rendez-vous", "plan premium", "plan essentiel",
-    "abonnement", "souscrire", "passer au pro", "devenir pro", "upgrade",
+    "activer mon plan", "activer mes rendez-vous", "plan premium", "plan recrue",
+    "plan élite", "plan signature", "abonnement", "souscrire", "passer au pro",
+    "devenir pro", "upgrade",
   ], weight: 90 },
   { intent: "contractor_visibility_score", keywords: [
     "mon score", "score aipp", "ma visibilité", "visibilité ia", "mon classement",

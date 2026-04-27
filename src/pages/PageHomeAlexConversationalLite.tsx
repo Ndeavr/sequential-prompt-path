@@ -54,12 +54,19 @@ import CardRevenueProjectionInline from "@/components/alex-conversation/CardReve
 import AlertHallucinationDetected from "@/components/alex-conversation/AlertHallucinationDetected";
 import { MOCK_SLOTS, type MockContractor, type MockSlot } from "@/components/alex-conversation/types";
 import { toast } from "sonner";
+import { useContractorMode } from "@/hooks/useContractorMode";
+import PanelContractorAdvisorAlex from "@/components/PanelContractorAdvisorAlex";
 
 export default function PageHomeAlexConversationalLite() {
   const { user, isAuthenticated } = useAuth();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const firstName = user?.user_metadata?.first_name || user?.user_metadata?.name?.split(" ")[0];
+
+  // Central contractor-mode gate: if the user is a contractor (role or profile),
+  // we lock Alex into the autonomous Advisor surface and skip the homeowner shell.
+  const { isContractorMode, isLoading: modeLoading } = useContractorMode();
+
   const {
     messages, isThinking, sendMessage, initialize, handleFileUpload,
     flowState, updateAuthState,
@@ -382,6 +389,17 @@ export default function PageHomeAlexConversationalLite() {
   const thinkingLabel = voiceActive
     ? (voice.isSpeaking ? "Alex parle..." : "Alex écoute...")
     : undefined;
+
+  // Contractor mode short-circuit: skip homeowner shell, mount Advisor only.
+  if (!modeLoading && isContractorMode) {
+    return (
+      <LayoutAlexCinematicShell>
+        <div className="px-4 pt-6 pb-12">
+          <PanelContractorAdvisorAlex surface="chat" hideOpenChatCta />
+        </div>
+      </LayoutAlexCinematicShell>
+    );
+  }
 
   return (
     <LayoutAlexCinematicShell>
