@@ -224,7 +224,7 @@ export default function AuthOverlayPremium() {
                     }}
                   >
                     <Smartphone className="h-4 w-4" />
-                    Recevoir un code par SMS
+                    Recevoir un code par texto
                   </button>
 
                   {/* Trust microcopy */}
@@ -273,7 +273,7 @@ export default function AuthOverlayPremium() {
                     <Mail className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium text-foreground">Recevoir un lien par courriel</span>
                   </div>
-                  <LoginMagicLinkForm />
+                  <LoginMagicLinkForm ctaLabel="Continuer" />
                   <button
                     onClick={() => setView("main")}
                     className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors"
