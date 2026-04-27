@@ -19,7 +19,7 @@ interface RunResult {
   error?: string;
 }
 
-async function runAgent(agentKey: string, sb: ReturnType<typeof createClient>): Promise<RunResult> {
+async function runAgent(agentKey: string, sb: any): Promise<RunResult> {
   const result: RunResult = { agent: agentKey, processed: 0, details: {} };
 
   try {
@@ -94,15 +94,16 @@ async function runAgent(agentKey: string, sb: ReturnType<typeof createClient>): 
 
     else if (agentKey === "email_sequence") {
       // Find qualified events without sent email
-      const { data: qualified } = await sb
+      const { data: qualifiedData } = await sb
         .from("challenge_signup_events")
         .select("id, outbound_lead_id, metadata, created_at")
         .eq("event_type", "prospect_qualified")
         .order("created_at", { ascending: false })
         .limit(20);
+      const qualified = (qualifiedData ?? []) as Array<{ id: string; outbound_lead_id: string; metadata: any; created_at: string }>;
 
       let queued = 0;
-      for (const ev of qualified || []) {
+      for (const ev of qualified) {
         // Check if email already sent for this lead
         const { count } = await sb
           .from("challenge_signup_events")
@@ -113,11 +114,12 @@ async function runAgent(agentKey: string, sb: ReturnType<typeof createClient>): 
 
         // Trigger personalized email via existing send-transactional-email
         try {
-          const { data: lead } = await sb
+          const { data: leadRow } = await sb
             .from("outbound_leads")
             .select("email, company_name, specialty")
             .eq("id", ev.outbound_lead_id)
             .maybeSingle();
+          const lead = leadRow as { email: string | null; company_name: string | null; specialty: string | null } | null;
           if (!lead?.email) continue;
 
           const idempotencyKey = `challenge-email1-${ev.outbound_lead_id}`;
@@ -161,15 +163,16 @@ async function runAgent(agentKey: string, sb: ReturnType<typeof createClient>): 
 
     else if (agentKey === "signup_conversion") {
       // Detect aipp_viewed > 2h ago without signup → nudge
-      const { data: stale } = await sb
+      const { data: staleData } = await sb
         .from("challenge_signup_events")
         .select("outbound_lead_id, created_at, metadata")
         .eq("event_type", "aipp_viewed")
         .lt("created_at", new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString())
         .limit(20);
+      const stale = (staleData ?? []) as Array<{ outbound_lead_id: string; created_at: string; metadata: any }>;
 
       let nudges = 0;
-      for (const ev of stale || []) {
+      for (const ev of stale) {
         const { count } = await sb
           .from("challenge_signup_events")
           .select("*", { count: "exact", head: true })
@@ -193,13 +196,14 @@ async function runAgent(agentKey: string, sb: ReturnType<typeof createClient>): 
     else if (agentKey === "daily_reporter") {
       // Aggregate funnel for last 24h
       const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const { data: events } = await sb
+      const { data: eventsData } = await sb
         .from("challenge_signup_events")
         .select("event_type")
         .gte("created_at", since);
+      const events = (eventsData ?? []) as Array<{ event_type: string }>;
 
       const counts: Record<string, number> = {};
-      for (const e of events || []) counts[e.event_type] = (counts[e.event_type] ?? 0) + 1;
+      for (const e of events) counts[e.event_type] = (counts[e.event_type] ?? 0) + 1;
 
       const { data: target } = await sb
         .from("challenge_targets")
