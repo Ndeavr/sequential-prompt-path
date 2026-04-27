@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import UnproIcon from "@/components/brand/UnproIcon";
+import { authDebug } from "@/services/auth/authDebugBus";
 
 export default function PageContractorJoinProfileGate() {
   const navigate = useNavigate();
@@ -28,15 +29,26 @@ export default function PageContractorJoinProfileGate() {
     }, 3000);
 
     (async () => {
+      authDebug.set({
+        auth_step: "gate_checking",
+        auth_method: "oauth",
+        prelogin_role: "contractor",
+        intent_path: "/join/profile",
+        last_error: null,
+        last_error_step: null,
+      });
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!alive) return;
 
         if (!session?.user) {
           try { sessionStorage.setItem("unpro_prelogin_role", "contractor"); } catch { /* noop */ }
+          authDebug.set({ auth_step: "redirecting", redirect_target: "/login", session_found: false });
           navigate("/login", { replace: true, state: { from: "/join/profile" } });
           return;
         }
+
+        authDebug.setSession({ id: session.user.id, email: session.user.email });
 
         // Ensure contractor role exists
         const { data: roles } = await supabase
@@ -60,11 +72,16 @@ export default function PageContractorJoinProfileGate() {
           } catch { /* non-fatal */ }
         }
 
+        const finalRoles = roleList.includes("contractor") ? roleList : [...roleList, "contractor"];
+        authDebug.set({ auth_step: "gate_role_ensured", roles: finalRoles });
+
         if (!alive) return;
         setStatus("redirecting");
+        authDebug.set({ auth_step: "redirecting", redirect_target: "/entrepreneur/onboarding-voice" });
         navigate("/entrepreneur/onboarding-voice", { replace: true });
       } catch (e: any) {
         console.error("[JoinProfileGate] error", e);
+        authDebug.error(e, "gate_checking");
         if (!alive) return;
         setStatus("error");
         setError(e?.message || "Erreur d'authentification");

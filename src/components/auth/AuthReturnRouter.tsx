@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { consumeAuthIntent, getDefaultRedirectForRole } from "@/services/auth/authIntentService";
 import { closeAuthOverlay } from "@/hooks/useAuthOverlay";
 import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
+import { authDebug } from "@/services/auth/authDebugBus";
 
 const AUTH_SURFACES = /^\/(login|signup|role|start|auth\/callback)?\/?$/;
 

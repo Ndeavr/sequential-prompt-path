@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { consumeAuthIntent, getDefaultRedirectForRole } from "@/services/auth/authIntentService";
 import { motion } from "framer-motion";
 import UnproIcon from "@/components/brand/UnproIcon";
+import { authDebug } from "@/services/auth/authDebugBus";
 
 type CallbackState = "processing" | "creating_profile" | "redirecting" | "error";
 
@@ -53,6 +54,15 @@ export default function AuthCallbackPage() {
     const intent = consumeAuthIntent();
     const preloginRole = readPreloginRole();
 
+    authDebug.set({
+      auth_step: "callback_processing",
+      auth_method: "oauth",
+      prelogin_role: preloginRole,
+      intent_path: intent?.returnPath ?? null,
+      last_error: null,
+      last_error_step: null,
+    });
+
     try {
       // Wait for auth session to be established
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -65,6 +75,7 @@ export default function AuthCallbackPage() {
         const code = searchParams.get("code");
         
         if (code) {
+          authDebug.set({ auth_step: "exchange_code" });
           const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           if (exchangeError) throw exchangeError;
         } else if (hashParams.get("access_token")) {
@@ -80,9 +91,12 @@ export default function AuthCallbackPage() {
       if (!currentSession?.user) throw new Error("Session invalide");
 
       const user = currentSession.user;
+      authDebug.set({ auth_step: "session_resolved", provider: user.app_metadata?.provider ?? null });
+      authDebug.setSession({ id: user.id, email: user.email });
 
       // Check if profile exists
       setState("creating_profile");
+      authDebug.set({ auth_step: "creating_profile" });
       const { data: profile } = await supabase
         .from("profiles")
         .select("id, onboarding_completed")
@@ -109,10 +123,12 @@ export default function AuthCallbackPage() {
         .eq("user_id", user.id);
 
       let roleList = (roles ?? []).map((r) => r.role as string);
+      authDebug.set({ auth_step: "roles_resolved", roles: roleList });
 
       // Apply pre-login role choice if any (and we don't already have it)
       if (preloginRole && !roleList.includes(preloginRole)) {
         console.log("[AuthCallback] applying prelogin role", preloginRole);
+        authDebug.set({ auth_step: "applying_prelogin_role" });
         const { error: roleErr } = await supabase
           .from("user_roles")
           .upsert(
@@ -121,8 +137,10 @@ export default function AuthCallbackPage() {
           );
         if (roleErr) {
           console.error("[AuthCallback] role upsert failed", roleErr);
+          authDebug.error(roleErr, "applying_prelogin_role");
         } else {
           roleList = [...roleList, preloginRole];
+          authDebug.set({ roles: roleList });
           if (preloginRole === "contractor") {
             try {
               await (supabase.from("contractors") as any).upsert(
@@ -144,11 +162,13 @@ export default function AuthCallbackPage() {
 
       // Honor explicit return path
       if (intent?.returnPath && hasRole && !/^\/(login|signup|auth\/callback)\b/.test(intent.returnPath)) {
+        authDebug.set({ auth_step: "redirecting", redirect_target: intent.returnPath });
         navigate(intent.returnPath, { replace: true });
         return;
       }
 
       if (!hasRole) {
+        authDebug.set({ auth_step: "redirecting", redirect_target: "/onboarding" });
         navigate("/onboarding", { replace: true });
         return;
       }
@@ -162,19 +182,25 @@ export default function AuthCallbackPage() {
 
       // Contractors: jump straight into the voice onboarding flow
       if (primaryRole === "contractor") {
-        navigate(onboardingDone ? "/pro" : "/join/profile", { replace: true });
+        const target = onboardingDone ? "/pro" : "/join/profile";
+        authDebug.set({ auth_step: "redirecting", redirect_target: target });
+        navigate(target, { replace: true });
         return;
       }
 
       if (!onboardingDone) {
+        authDebug.set({ auth_step: "redirecting", redirect_target: "/onboarding" });
         navigate("/onboarding", { replace: true });
         return;
       }
 
-      navigate(getDefaultRedirectForRole(primaryRole), { replace: true });
+      const target = getDefaultRedirectForRole(primaryRole);
+      authDebug.set({ auth_step: "redirecting", redirect_target: target });
+      navigate(target, { replace: true });
 
     } catch (err: any) {
       console.error("Auth callback error:", err);
+      authDebug.error(err, "callback_processing");
       setState("error");
       setError(err?.message || "Erreur d'authentification");
     }

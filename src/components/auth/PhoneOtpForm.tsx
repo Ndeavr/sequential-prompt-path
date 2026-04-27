@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Phone, ArrowLeft, RefreshCw, ShieldCheck, Loader2, CheckCircle2 } from "lucide-react";
 import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
+import { authDebug } from "@/services/auth/authDebugBus";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface PhoneOtpFormProps {
@@ -78,6 +79,13 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
     }
 
     setSending(true);
+    authDebug.set({
+      auth_step: "sms_sending",
+      auth_method: "sms",
+      provider: "phone",
+      last_error: null,
+      last_error_step: null,
+    });
     // Hard 3s safety so the button never looks frozen
     const safety = window.setTimeout(() => {
       setSending(false);
@@ -88,22 +96,26 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       const data = await callTwilioVerify("send-otp", { phone: e164 });
       window.clearTimeout(safety);
       if (data.fallback) {
+        authDebug.error(`SMS fallback: ${data.code ?? "unknown"}`, "sms_sending");
         toast.error("Le service SMS est temporairement indisponible. Utilisez un autre moyen de connexion.", { duration: 5000 });
         console.warn("[PhoneOtp] SMS fallback triggered:", data.code);
         return;
       }
       if (data.error) {
+        authDebug.error(data.error, "sms_sending");
         toast.error(data.error);
       } else {
         trackAuthEvent("sms_sent");
+        authDebug.set({ auth_step: "sms_sent" });
         toast.success("Code envoyé !");
         setStep("code");
         setCooldown(COOLDOWN_SECONDS);
         setAttempts((a) => a + 1);
         setTimeout(() => codeRefs.current[0]?.focus(), 100);
       }
-    } catch {
+    } catch (e) {
       window.clearTimeout(safety);
+      authDebug.error(e, "sms_sending");
       toast.error("Erreur réseau. Réessayez.");
     } finally {
       setSending(false);
@@ -118,6 +130,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
     }
 
     setVerifying(true);
+    authDebug.set({ auth_step: "otp_verifying" });
     try {
       const data = await callTwilioVerify("verify-otp", {
         phone: toE164(phone),
@@ -125,6 +138,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       });
 
       if (data.error) {
+        authDebug.error(data.error, "otp_verifying");
         toast.error(data.error);
         setCode(["", "", "", "", "", ""]);
         codeRefs.current[0]?.focus();
@@ -140,11 +154,13 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       }
 
       trackAuthEvent("sms_success");
+      authDebug.set({ auth_step: "otp_verified" });
       setVerified(true);
 
       // Brief success animation then callback
       setTimeout(() => onSuccess?.(), 800);
-    } catch {
+    } catch (e) {
+      authDebug.error(e, "otp_verifying");
       toast.error("Erreur réseau. Réessayez.");
     } finally {
       setVerifying(false);
