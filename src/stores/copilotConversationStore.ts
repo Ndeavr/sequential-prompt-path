@@ -36,6 +36,12 @@ export interface RecommendedPro {
 
 export type ChatRole = "user" | "alex" | "system";
 
+export type AlexDisplayMode =
+  | "orb_idle"
+  | "action_menu"
+  | "text_chat"
+  | "upload_mode";
+
 export interface ChatMessage {
   id: string;
   role: ChatRole;
@@ -50,6 +56,7 @@ export interface ChatMessage {
 
 interface CopilotState {
   isOpen: boolean;
+  displayMode: AlexDisplayMode;
   messages: ChatMessage[];
   proPool: RecommendedPro[];
   currentProIndex: number;
@@ -59,6 +66,8 @@ interface CopilotState {
   selectedPro: RecommendedPro | null;
   session: AlexSession;
   open: (initialText?: string) => void;
+  openActionMenu: () => void;
+  setDisplayMode: (mode: AlexDisplayMode) => void;
   close: () => void;
   sendMessage: (text: string) => Promise<void>;
   uploadPhoto: (file: File) => Promise<void>;
