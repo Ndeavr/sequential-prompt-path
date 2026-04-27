@@ -49,17 +49,18 @@ async function runAgent(agentKey: string, sb: ReturnType<typeof createClient>): 
         return true;
       };
 
-      const { data: leads } = await sb
+      const { data: leadsData } = await sb
         .from("outbound_leads")
         .select("id, company_name, email, specialty, domain, qualification_status, last_contacted_at")
         .not("email", "is", null)
         .is("last_contacted_at", null)
         .neq("qualification_status", "disqualified_competitor")
         .limit(100);
+      const leads = (leadsData ?? []) as Array<{ id: string; company_name: string | null; email: string | null; specialty: string | null; domain: string | null }>;
 
       let added = 0;
       let rejected = 0;
-      for (const l of leads || []) {
+      for (const l of leads) {
         if (isBlocked(l.email, l.company_name, l.domain) || !isValidProEmail(l.email)) {
           await sb.from("outbound_leads").update({
             qualification_status: "disqualified_competitor",
