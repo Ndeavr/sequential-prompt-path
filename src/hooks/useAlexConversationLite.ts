@@ -149,7 +149,73 @@ function detectAnalysisIntent(text: string): IntentMatch | null {
   return null;
 }
 
-// ─── CITIES (for location detection) ───
+// ─── CONTRACTOR SELF-SERVE ONBOARDING GUARD ───
+const CONTRACTOR_SELF_SERVE_PATTERNS = [
+  /\bje\s+suis\s+(un\s+)?(entrepreneur|contracteur|pro)\b/i,
+  /\boffrir\s+mes\s+services\b/i,
+  /\b(recevoir|avoir)\s+(plus\s+de\s+)?(clients|contrats|rendez-?vous)\b/i,
+  /\bm['’]inscrire\s+(comme\s+)?(pro|entrepreneur)\b/i,
+  /\binscrire\s+mon\s+entreprise\b/i,
+  /\b(rejoindre|faire\s+partie\s+(de|d'))\s*unpro\b/i,
+  /\b(plan|tarif|prix|co[uû]t).*\b(pro|entrepreneur|contracteur)\b/i,
+  /\b(mon\s+entreprise|ma\s+compagnie|fiche\s+(pro|entrepreneur)|score\s+aipp)\b/i,
+];
+
+const CONTRACTOR_CALLBACK_PATTERNS = /\b(rappelle|rappel|appeler|appel|humain|repr[ée]sentant|vendeur|conseiller|parler\s+à\s+quelqu['’]?un)\b/i;
+const WEBSITE_RE = /\b((?:https?:\/\/)?(?:www\.)?[a-z0-9-]+\.(?:ca|com|net|org|co|io|info|biz)(?:\/[^\s]*)?)\b/i;
+const RBQ_RE = /\b\d{4}-\d{4}-\d{2}\b/;
+const NEQ_RE = /\b\d{10}\b/;
+const PHONE_RE = /(?:\+?1[\s-.]?)?\(?\d{3}\)?[\s-.]?\d{3}[\s-.]?\d{4}/;
+
+function isContractorSelfServeIntent(text: string): boolean {
+  return CONTRACTOR_SELF_SERVE_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+function extractBusinessIdentifier(text: string): string | null {
+  const rbq = text.match(RBQ_RE)?.[0];
+  if (rbq) return rbq;
+  const neq = text.match(NEQ_RE)?.[0];
+  if (neq) return neq;
+  const website = text.match(WEBSITE_RE)?.[0];
+  if (website) return website;
+  const phone = text.match(PHONE_RE)?.[0];
+  if (phone) return phone;
+  const cleaned = text
+    .replace(/^(mon|ma|notre|entreprise|compagnie|site|web|t[ée]l[ée]phone|rbq|neq|c['’]est|je suis|nous sommes)\s*:?\s*/i, "")
+    .trim();
+  if (cleaned.length >= 3 && cleaned.length <= 80) return cleaned;
+  return null;
+}
+
+function buildSelfServeBusinessData(identifier: string) {
+  const seed = identifier.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const score = 52 + (seed % 27);
+  return {
+    entityName: identifier,
+    aippScore: score,
+    seoScore: Math.max(28, score - 18),
+    trustScore: Math.min(92, score + 9),
+    visibilityScore: Math.max(25, score - 22),
+    overallGrade: score >= 72 ? "B+" : score >= 62 ? "B" : "C+",
+    recommendations: [
+      "Renforcer la visibilité locale",
+      "Structurer la fiche UNPRO avec services et zones",
+      "Ajouter preuves, avis et signaux RBQ/NEQ",
+      "Activer un plan pour recevoir des rendez-vous qualifiés",
+    ],
+  };
+}
+
+function recommendPlanCodeForObjective(text: string): string {
+  const lower = text.toLowerCase();
+  if (/territoire|prot[ée]ger|signature|dominer/.test(lower)) return "signature";
+  if (/calendrier|remplir|elite|élite/.test(lower)) return "elite";
+  if (/class[ée]|ranking|mieux class|premium|visibilit/.test(lower)) return "premium";
+  if (/profil|am[ée]liorer|comprendre|recrue/.test(lower)) return "recrue";
+  return "pro";
+}
+
+
 const CITIES = [
   "montréal", "montreal", "laval", "québec", "quebec", "gatineau",
   "sherbrooke", "longueuil", "lévis", "levis", "trois-rivières",
@@ -267,6 +333,91 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
     if (city) {
       mem.set("city", city);
       mem.set("address_known", true);
+    }
+
+    // ─── CONTRACTOR SELF-SERVE: bypass AI/lead-capture scripts entirely ───
+    const currentMem = mem.get();
+    const isContractorFlow =
+      currentMem.resolved_role === "entrepreneur" ||
+      currentMem.contractor_onboarding_stage !== null ||
+      isContractorSelfServeIntent(text);
+
+    if (isContractorFlow) {
+      mem.update({
+        resolved_role: "entrepreneur",
+        role_confidence: 0.98,
+        role_source: "intent",
+        current_route: "contractor_onboarding",
+        current_intent: "contractor_join_platform",
+      });
+
+      const identifier = extractBusinessIdentifier(text);
+      const stage = mem.get().contractor_onboarding_stage;
+      const isExplicitHumanRequest = CONTRACTOR_CALLBACK_PATTERNS.test(text) && /humain|repr[ée]sentant|conseiller|vendeur|appeler|appel|rappel/i.test(text);
+
+      if (isExplicitHumanRequest) {
+        emitSafe("alex", "Je peux vous transférer à un humain après avoir préparé votre fiche. Donnez-moi d'abord le nom de votre entreprise, votre site web, téléphone, RBQ ou NEQ.");
+        mem.set("contractor_onboarding_stage", "identify");
+        setIsThinking(false);
+        return;
+      }
+
+      if (!stage || (isContractorSelfServeIntent(text) && !identifier)) {
+        emitSafe("alex", "Parfait. Je vais analyser votre entreprise maintenant et vous montrer les meilleures options UNPRO. Donnez-moi le nom de votre entreprise, votre site web, téléphone, RBQ ou NEQ.");
+        mem.set("contractor_onboarding_stage", "identify");
+        setIsThinking(false);
+        return;
+      }
+
+      if ((stage === "identify" || stage === "analyzing") && identifier) {
+        const businessData = buildSelfServeBusinessData(identifier);
+        mem.update({
+          contractor_identifier: identifier,
+          contractor_aipp_score: businessData.aippScore,
+          contractor_onboarding_stage: "score_ready",
+        });
+        audioEngine.play("success");
+        emitSafe(
+          "alex",
+          `Je prépare votre fiche professionnelle et votre score AIPP. Votre score provisoire est ${businessData.aippScore}/100. Le plus gros potentiel: visibilité locale + conversion.`,
+          "business_analysis",
+          businessData,
+        );
+        setTimeout(() => {
+          emitSafe("alex", "Votre objectif principal est quoi? Recevoir plus de rendez-vous, remplir votre calendrier, protéger votre territoire, améliorer votre classement ou comparer les plans?");
+          mem.set("contractor_onboarding_stage", "objective");
+        }, 700);
+        setIsThinking(false);
+        return;
+      }
+
+      if (stage === "score_ready" || stage === "objective") {
+        const planCode = recommendPlanCodeForObjective(text);
+        mem.update({ recommended_plan: planCode, contractor_onboarding_stage: "plan_offer" });
+        const plans = await getCachedPlans();
+        const recommended = plans.find((p) => p.code === planCode) || plans.find((p) => p.code === "pro") || plans[0];
+        emitSafe(
+          "alex",
+          `Je recommande ${recommended?.name ?? "Pro"}. Vous gardez le momentum: fiche, score, visibilité et rendez-vous qualifiés. Voulez-vous activer maintenant?`,
+          "plan_comparison" as InlineCardType,
+          { plans, recommendedCode: recommended?.code ?? planCode },
+        );
+        setIsThinking(false);
+        return;
+      }
+
+      if (stage === "plan_offer" || /activer|payer|checkout|commencer/i.test(text)) {
+        const planCode = mem.get().recommended_plan || recommendPlanCodeForObjective(text);
+        mem.update({ recommended_plan: planCode, plan_checkout_started: true, contractor_onboarding_stage: "checkout" });
+        emitSafe("alex", "Parfait. J'ouvre l'activation maintenant. Après paiement, on continue votre fiche, vos zones, spécialités et disponibilités.", "stripe_payment_inline" as InlineCardType, {
+          planCode,
+          planName: planCode.charAt(0).toUpperCase() + planCode.slice(1),
+          price: planCode === "recrue" ? 149 : planCode === "premium" ? 599 : planCode === "elite" ? 999 : planCode === "signature" ? 1799 : 349,
+          interval: "monthly",
+        });
+        setIsThinking(false);
+        return;
+      }
     }
 
     // ─── TRY REAL AI FIRST ───

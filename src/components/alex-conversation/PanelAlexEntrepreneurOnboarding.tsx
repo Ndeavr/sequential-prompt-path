@@ -37,7 +37,6 @@ export default function PanelAlexEntrepreneurOnboarding({ onComplete, prefilled 
           onChange={e => setBusinessName(e.target.value)}
           placeholder="Ex: Plomberie Dupont Inc."
           className="bg-background/80 border-border/40"
-          autoFocus
         />
       ),
       valid: businessName.trim().length >= 2,
@@ -51,7 +50,6 @@ export default function PanelAlexEntrepreneurOnboarding({ onComplete, prefilled 
           onChange={e => setContactName(e.target.value)}
           placeholder="Prénom Nom"
           className="bg-background/80 border-border/40"
-          autoFocus
         />
       ),
       valid: contactName.trim().length >= 2,
@@ -66,7 +64,6 @@ export default function PanelAlexEntrepreneurOnboarding({ onComplete, prefilled 
           placeholder="(514) 000-0000"
           type="tel"
           className="bg-background/80 border-border/40"
-          autoFocus
         />
       ),
       valid: phone.trim().length >= 7,

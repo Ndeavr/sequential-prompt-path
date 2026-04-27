@@ -42,10 +42,10 @@ const BANNED_PATTERNS: Array<{
     replacement: "Comment puis-je vous aider ?",
   },
   {
-    pattern: /je vais vous rappeler/i,
+    pattern: /(je|on|nous|quelqu['’]?un).*\b(rappell|rappel|recontact|contactera|contactons|appellera)|laissez vos coordonn[ée]es|laisser vos coordonn[ée]es|formulaire de contact/i,
     condition: () => true,
-    violation: "CALLBACK_PROMISE",
-    replacement: "Je suis disponible ici quand vous êtes prêt.",
+    violation: "CALLBACK_OR_CONTACT_LEAK",
+    replacement: "Parfait. Je vais analyser votre entreprise maintenant et vous montrer les meilleures options UNPRO. Donnez-moi le nom de votre entreprise, votre site web, téléphone, RBQ ou NEQ.",
   },
   {
     pattern: /compris, je note votre besoin/i,

@@ -49,8 +49,8 @@ function stripBlocked(text: string, patterns: any[]): string {
 
 function applyPronunciation(text: string, lang: string): string {
   const rules = lang.startsWith("en")
-    ? [[/\bUNPRO\b/gi, "eun pro"], [/\bunpro\b/g, "eun pro"]]
-    : [[/\bUNPRO\b/gi, "1 pro"], [/\bunpro\b/g, "1 pro"]];
+    ? [[/\bUNPRO\b/gi, "un pro"], [/\bunpro\b/g, "un pro"]]
+    : [[/\bUNPRO\b/gi, "un pro"], [/\bunpro\b/g, "un pro"]];
   let r = text;
   for (const [pat, rep] of rules) r = r.replace(pat as RegExp, rep as string);
   return r;
@@ -94,7 +94,7 @@ serve(async (req) => {
 
     const rulesText = rules.map((r: any) => `- ${r.rule_label}`).join("\n");
 
-    const systemPrompt = `Tu es Alex, assistant IA premium d'UNPRO (prononce "1 pro").
+    const systemPrompt = `Tu es Alex, assistant IA premium d'UNPRO (prononce "un pro").
 Naturel, direct, chaleureux (${settings.warmth_level}/10), orienté action (${settings.directness_level}/10).
 ${roleCtx}
 
