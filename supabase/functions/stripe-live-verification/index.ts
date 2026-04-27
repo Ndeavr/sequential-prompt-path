@@ -38,7 +38,7 @@ serve(async (req) => {
           payouts_enabled: acct.payouts_enabled,
         }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       } catch (e: any) {
-        return new Response(JSON.stringify({ connected: false, error: e.message }), {
+        return new Response(JSON.stringify({ connected: false, error: e instanceof Error ? e.message : String(e) }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
         });
       }

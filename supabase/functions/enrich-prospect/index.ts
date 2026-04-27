@@ -346,7 +346,7 @@ Deno.serve(async (req: Request) => {
         .eq("outreach_status", "pending");
 
       let autoOutreach = false;
-      if ((verifiedCount as any)?.length >= 10 || (results.filter(r => r.email).length > 0)) {
+      if ((verifiedCount as any)?.length >= 10 || (results.filter((r: any) => r.email).length > 0)) {
         // Check total across DB
         const { count } = await supabase
           .from("contractors_prospects")
@@ -368,8 +368,8 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({
         success: true,
         processed: results.length,
-        emailsFound: results.filter(r => r.email).length,
-        failed: results.filter(r => r.error).length,
+        emailsFound: results.filter((r: any) => r.email).length,
+        failed: results.filter((r: any) => r.error).length,
         autoOutreachTriggered: autoOutreach,
         results,
       }), {
@@ -407,7 +407,7 @@ Deno.serve(async (req: Request) => {
       }
 
       // Auto-trigger outreach if 10+ verified emails
-      const withEmails = results.filter(r => r.email);
+      const withEmails = results.filter((r: any) => r.email);
       let autoOutreach = false;
       if (withEmails.length >= 10) {
         autoOutreach = true;
@@ -421,8 +421,8 @@ Deno.serve(async (req: Request) => {
         success: true,
         total: results.length,
         emailsFound: withEmails.length,
-        missedPublicEmailCount: results.filter(r => !r.email).length,
-        smsQueued: results.filter(r => r.smsStatus === "queued").length,
+        missedPublicEmailCount: results.filter((r: any) => !r.email).length,
+        smsQueued: results.filter((r: any) => r.smsStatus === "queued").length,
         autoOutreachTriggered: autoOutreach,
         results,
       }), {

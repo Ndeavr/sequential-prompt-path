@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+serve(async (req): Promise<Response> => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -39,10 +39,10 @@ serve(async (req) => {
       });
 
       // Recalculate score
-      return await recalculateScore(supabase, user_id, role);
+      return (await recalculateScore(supabase, user_id, role)) ?? new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     } else if (action === "recalculate") {
-      return await recalculateScore(supabase, user_id, role);
+      return (await recalculateScore(supabase, user_id, role)) ?? new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     } else if (action === "batch_recalculate") {
       // Recalculate all profiles
@@ -67,7 +67,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), {
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

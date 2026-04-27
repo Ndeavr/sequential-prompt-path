@@ -94,17 +94,18 @@ serve(async (req) => {
         .single();
 
       // Deduct budget
-      await supabase.rpc("deduct_contractor_budget", {
-        _contractor_id: winner.id,
-        _amount: finalPrice,
-      }).catch(() => {
-        // Fallback: direct update
+      try {
+        await supabase.rpc("deduct_contractor_budget", {
+          _contractor_id: winner.id,
+          _amount: finalPrice,
+        });
+      } catch {
         const remaining = winner.contractor_budgets?.[0]?.remaining_budget_cents || 0;
-        return supabase
+        await supabase
           .from("contractor_budgets")
           .update({ remaining_budget_cents: Math.max(0, remaining - finalPrice) })
           .eq("contractor_id", winner.id);
-      });
+      }
 
       // Update opportunity status
       await supabase
@@ -170,7 +171,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), {
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

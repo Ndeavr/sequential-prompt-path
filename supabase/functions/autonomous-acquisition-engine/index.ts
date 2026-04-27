@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
         }
         steps.push({ step: "create_lead", status: "success", data: { id: leadRecord?.id } });
       } catch (e: any) {
-        steps.push({ step: "create_lead", status: "error", error: e.message });
+        steps.push({ step: "create_lead", status: "error", error: e instanceof Error ? e.message : String(e) });
         await logFailure(supabase, taskId, steps);
         return respond({ success: false, steps, error: "Lead creation failed" });
       }
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
         if (error) throw error;
         steps.push({ step: "enrich", status: "success", data: enrichData });
       } catch (e: any) {
-        steps.push({ step: "enrich", status: "error", error: e.message });
+        steps.push({ step: "enrich", status: "error", error: e instanceof Error ? e.message : String(e) });
       }
 
       // STEP 3 — Compute AIPP score
@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
 
         steps.push({ step: "score", status: "success", data: { total: aippScore, visibility, trust, conversion, content } });
       } catch (e: any) {
-        steps.push({ step: "score", status: "error", error: e.message });
+        steps.push({ step: "score", status: "error", error: e instanceof Error ? e.message : String(e) });
       }
 
       // STEP 4 — Generate landing URL (based on lead ID directly)
@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
 
         steps.push({ step: "generate_landing", status: "success", data: { url: landingUrl, revenue_lost: revenueLost } });
       } catch (e: any) {
-        steps.push({ step: "generate_landing", status: "error", error: e.message });
+        steps.push({ step: "generate_landing", status: "error", error: e instanceof Error ? e.message : String(e) });
       }
 
       // STEP 5 — Update lead status
@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
           .eq("id", leadRecord.id);
         steps.push({ step: "update_status", status: "success" });
       } catch (e: any) {
-        steps.push({ step: "update_status", status: "error", error: e.message });
+        steps.push({ step: "update_status", status: "error", error: e instanceof Error ? e.message : String(e) });
       }
 
       // Update task
@@ -236,7 +236,7 @@ Deno.serve(async (req) => {
           });
           results.push({ id, success: true, data });
         } catch (e: any) {
-          results.push({ id, success: false, error: e.message });
+          results.push({ id, success: false, error: e instanceof Error ? e.message : String(e) });
         }
       }
       return respond({ batch_results: results });
@@ -245,7 +245,7 @@ Deno.serve(async (req) => {
     return respond({ error: "Unknown action. Use: run_pipeline, check_status, retry_failed, batch_pipeline" }, 400);
   } catch (e: any) {
     console.error("[AutonomousAcquisition] Error:", e);
-    return respond({ error: e.message }, 500);
+    return respond({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
 });
 

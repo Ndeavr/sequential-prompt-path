@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: claims, error: claimsErr } = await supabase.auth.getClaims(
+    const { data: claims, error: claimsErr } = await (supabase.auth as any).getClaims(
       authHeader.replace("Bearer ", "")
     );
     if (claimsErr) {

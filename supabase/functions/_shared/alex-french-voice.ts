@@ -335,7 +335,7 @@ export function normalizeFrenchNamesForSpeech(text: string): string {
 
 // ── 3b. Abbreviations, Numbers, Symbols ──
 
-const TTS_NORMALIZATIONS: [RegExp, string][] = [
+const TTS_NORMALIZATIONS: [RegExp, string | ((...args: string[]) => string)][] = [
   // ── Time & schedule ──
   [/\b24\/7\b/g, "24 sur 7"],
   [/\b7\/7\b/g, "7 sur 7"],
