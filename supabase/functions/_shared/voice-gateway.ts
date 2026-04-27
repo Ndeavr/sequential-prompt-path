@@ -152,7 +152,7 @@ export class VoiceGateway {
         ...msg.context,
         created_at: this.session.createdAt,
       },
-    }).catch(() => {});
+    } as any).then(() => {}, () => {});
 
     // Deterministic greeting via builder
     const greetingResult = buildAlexGreeting({
@@ -286,7 +286,7 @@ export class VoiceGateway {
           next_best_action: nextBestAction,
           turn: this.session.turnCount,
         },
-      }).catch(() => {});
+      } as any).then(() => {}, () => {});
 
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;

@@ -52,7 +52,7 @@ async function authenticateRequest(supabaseUrl: string, supabaseAnonKey: string,
   return { ok: true, userId: data.user.id }
 }
 
-Deno.serve(async (req) => {
+Deno.serve(async (req): Promise<Response> => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })

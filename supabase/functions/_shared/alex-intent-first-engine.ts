@@ -116,7 +116,7 @@ const SYMPTOM_MAPPINGS: SymptomMapping[] = [
   // Unknown / Can't describe
   {
     patterns: [/sais pas|pas sûr|je sais pas|aucune idée|pas certain/i],
-    service: null,
+    service: "" as unknown as string,
     interpretation: "besoin non identifié",
     confirmation: "Pas de souci. Décrivez ce que vous voyez ou ressentez, et je m'en occupe.",
     urgency: 0.2,
