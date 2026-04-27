@@ -10,7 +10,6 @@
 import { create } from "zustand";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import {
-  decideNext,
   acknowledgePhoto,
   createEmptySession,
   MEMORY_LINE_FR,
@@ -18,6 +17,7 @@ import {
   type QuickReply,
   type EngineDecision,
 } from "@/services/alexCopilotEngine";
+import { routeAlexIntent, resetRouter } from "@/services/alexMasterRouter";
 import { uploadAlexFile, type UploadedFile } from "@/services/alexUploadService";
 import { cleanAlexText } from "@/utils/sanitizeAlexText";
 import { supabase } from "@/integrations/supabase/client";
