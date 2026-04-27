@@ -1036,6 +1036,7 @@ export const AppRouter = () => (
         <Route path="/admin/challenge-tracker" element={<ProtectedRoute requiredRole="admin"><PageChallengeTracker /></ProtectedRoute>} />
         <Route path="/admin/email-templates" element={<ProtectedRoute requiredRole="admin"><PageAdminEmailTemplates /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/omega" element={<ProtectedRoute requiredRole="admin"><PageAdminOmega /></ProtectedRoute>} />
         <Route path="/admin/activation" element={<ProtectedRoute requiredRole="admin"><PageAdminEntrepreneurActivation /></ProtectedRoute>} />
         <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><AdminUsers /></ProtectedRoute>} />
         <Route path="/admin/contractors" element={<ProtectedRoute requiredRole="admin"><AdminContractors /></ProtectedRoute>} />
