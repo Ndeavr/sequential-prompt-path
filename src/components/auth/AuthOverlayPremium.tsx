@@ -38,6 +38,10 @@ function resolveActionLabel(pending: PendingAction | null): string | null {
   return pending.label || ACTION_LABELS[pending.action ?? ""] || "Continuer votre action";
 }
 
+function readPreloginRole(): string | null {
+  try { return sessionStorage.getItem("unpro_prelogin_role"); } catch { return null; }
+}
+
 export default function AuthOverlayPremium() {
   const { isOpen, pendingAction } = useSyncExternalStore(
     subscribeAuthOverlay,
@@ -45,9 +49,17 @@ export default function AuthOverlayPremium() {
   );
 
   const [view, setView] = useState<OverlayView>("main");
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useScrollLock(isOpen);
+
+  // Determine context (contractor vs default) for copy
+  const preloginRole = isOpen ? readPreloginRole() : null;
+  const contractorContext =
+    preloginRole === "contractor" ||
+    preloginRole === "professional" ||
+    /^\/(join|entrepreneur|pro)\b/.test(pendingAction?.returnPath ?? "");
 
   // Reset on open
   useEffect(() => {
@@ -63,6 +75,25 @@ export default function AuthOverlayPremium() {
       });
     }
   }, [isOpen, pendingAction]);
+
+  // Keyboard / visualViewport avoidance — keeps the card and CTA visible on mobile
+  useEffect(() => {
+    if (!isOpen) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setKeyboardOffset(offset);
+    };
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+      setKeyboardOffset(0);
+    };
+  }, [isOpen]);
 
   // Focus trap + Escape
   useEffect(() => {
