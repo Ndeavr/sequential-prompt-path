@@ -1,164 +1,130 @@
-# 🎯 Alex Chat UX — Conversion Engine Fix
 
-## 1. CONTEXT
+# Alex Entrepreneur Onboarding — Closer Mode (no more contact form)
 
-The active mobile chat is `AlexCopilotConversation` driven by `copilotConversationStore`. Today it:
-- Sends the user straight to a pro recommendation after one message (no qualification, no value teaser).
-- Has a **decorative `+` button** in the composer (no upload action wired).
-- Has **no quick-reply buttons** in Alex bubbles.
-- Never tells the user data will be saved, never invites profile creation.
-- Lacks a question-count guardrail and an `alex_session_state` model (intent / project_type / property_type / occupancy / answers_count / uploaded_files / project_saved).
-- Has no painting-domain branch (Intérieur → Complet → Cottage → Habitée → useful summary).
+## Diagnosis
 
-Note: I searched the repo — the literal string `open_upload` is **not** in the source. It's surfacing because Alex (LLM/voice prompt) emits a tool/function name as plain text. Fix = render real upload chips for known intents, and never expose tool tokens in bubbles (sanitizer).
+Three concrete leak points, all confirmed in code:
 
-## 2. OBJECTIVE
+1. **`src/services/alexCopilotEngine.ts`** — the deterministic engine that drives Alex on the homepage chat — has **NO contractor branch**. Intents are limited to `paint | humidity | roof | verify | quote_compare | photo | unknown`. When an entrepreneur says "je suis entrepreneur" or "je veux des contrats", it falls into `nextGenericQuestion` → unknown chips → eventually a generic "ajouter une photo / trouver un pro" summary. That's why Alex acts like a homeowner receptionist.
 
-Turn Alex into a **conversion concierge** that delivers value in ≤ 3 user turns, with a **real upload button**, contextual CTAs, and explicit memory of what's being saved.
+2. **`src/pages/pricing/ContractorPlans.tsx:363`** — does `navigate(\`/contact?subject=${planCode}\`)` for several plan tiers. Pure conversion leak.
 
-## 3. DELIVERABLES
+3. **`src/pages/PageHomeIntentUNPRO.tsx`** and **`src/services/alexConfig.ts`/`alexStateMachine.ts`/`alexResponsePolicyEngine.ts`** already forbid the phrase "on vous rappelle" — but only at the LLM-prompt layer. The deterministic engine bypasses those guards because it has no contractor flow at all.
 
-### A. New / updated files
-- `src/stores/copilotConversationStore.ts` — add `session` state machine + `answersCount`, `uploadFile`, `quickReplies` per message, painting flow, profile-save prompts, sanitizer for tool tokens.
-- `src/components/alex-copilot/AlexCopilotConversation.tsx` — wire the `+` button to a real file picker, render thumbnails, render quick-reply chips, micro/voice icon hidden when voice unavailable.
-- `src/components/alex-copilot/ChatQuickReplies.tsx` *(new)* — 2–4 contextual chips under each Alex bubble.
-- `src/components/alex-copilot/ChatPhotoThumb.tsx` *(new)* — uploaded-photo chip with thumbnail.
-- `src/components/alex-copilot/ProfileSavePrompt.tsx` *(new)* — inline "Créer mon profil / Continuer sans profil" card, shown once after the value-summary turn for guests.
-- `src/services/alexCopilotEngine.ts` *(new)* — pure deterministic engine: `decideNext(session, userText) → { alexText, quickReplies, action }`. Owns the painting flow + 3-question guardrail + profile-save trigger.
-- `src/services/alexUploadService.ts` *(new)* — handles file selection, type/size validation (jpg/png/webp/heic, ≤ 10 MB), Supabase Storage upload to `property-photos`, fallback to in-memory session if guest.
-- `src/utils/sanitizeAlexText.ts` *(new)* — strips forbidden tokens (`open_upload`, `tool:*`, `<function…>`, JSON blobs) before rendering.
+A `contractor_onboarding` branch already partially exists (`alexEntrepreneurGuidanceEngine.ts` + 30+ supabase tables + `aipp-real-scan`, `enrich-business-profile`, `activate-contractor-plan` edge functions). Nothing wires it into the chat.
 
-### B. Database (one migration)
-- New table `public.project_files` (id, user_id, project_id nullable, storage_path, mime, bytes, kind, created_at) + RLS (user owns rows; admins read all).
-- RLS already exists on `property-photos` storage; add policy for authenticated users to insert under `userId/…` if missing.
+## Build
 
-## 4. LOGIC — ALEX SESSION STATE MACHINE
+### 1. Extend the chat engine with a contractor branch
 
-```ts
-interface AlexSession {
-  intent: "paint" | "humidity" | "roof" | "estimate" | "find_pro" | "verify" | "quote_compare" | "unknown";
-  projectType?: string;        // "peinture intérieure complète"
-  propertyType?: string;       // "cottage"
-  occupancyStatus?: string;    // "habitée"
-  surface?: string;
-  city?: string;
-  answersCount: number;        // user turns
-  uploadedFiles: { id; url; name; mime }[];
-  isLoggedIn: boolean;
-  projectSaved: boolean;
-  profilePromptShown: boolean;
-  nextBestAction: "ask" | "summarize" | "ask_photo" | "save_profile" | "match_pro" | "book";
-}
-```
+**Edit `src/services/alexCopilotEngine.ts`**:
 
-**Guardrail** — `decideNext()`:
-- If `answersCount >= 3` AND `nextBestAction === "ask"` → switch to `summarize` (project résumé + complexité + next step + 3 quick replies).
-- Never ask two questions in a row without surfacing value.
-- After the first useful collection turn, append the line: *"Je vais conserver ces informations dans votre dossier projet pour éviter de vous les redemander."*
+- Add intent `"contractor"` to `AlexIntent`.
+- Add new quick-reply actions:
+  - `{ kind: "start_contractor_onboarding" }`
+  - `{ kind: "checkout_plan"; planCode: "recrue" | "pro" | "premium" | "elite" | "signature" }`
+  - `{ kind: "show_all_plans" }`
+- Add `CONTRACTOR_HINTS` mirroring `ENTREPRENEUR_SIGNALS` from `alexEntrepreneurGuidanceEngine.ts` plus: "offrir mes services", "recevoir des clients", "avoir des contrats", "m'inscrire comme pro", "faire partie de unpro", "plan entrepreneur", "combien ça coûte pour les pros", "je suis contracteur", "je suis pro".
+- Promote `detectIntent` so contractor signals beat homeowner intents.
+- Add `AlexSession` fields: `mode: "homeowner" | "contractor_onboarding"`, `contractorStage: "intent_detected" | "identity_collected" | "profile_started" | "enrichment_running" | "aipp_scored" | "objectives_collected" | "plan_recommended" | "checkout_started" | "activated"`, `contractorIdentity?: { businessName?, phone?, website?, rbq?, neq? }`, `aippPreview?: { score: number; topGap: string }`, `objective?: string`, `recommendedPlan?: PlanTier`.
+- Add `nextContractorDecision(session, userText)`:
+  - **Stage `intent_detected`** → message: *"Parfait. On démarre votre fiche UNPRO maintenant. Donnez-moi le nom de votre entreprise, votre site web, votre téléphone ou votre numéro RBQ — je prépare votre score AIPP."* Quick replies: `J'ai un site web` / `J'ai un RBQ` / `J'ai seulement mon téléphone` / `Voir les plans`.
+  - **Stage `identity_collected`** (any one identifier extracted) → message: *"Merci. Je démarre votre fiche entrepreneur maintenant. Je vais analyser votre présence et calculer votre score AIPP."* Sets stage to `enrichment_running`, returns `nextBestAction: "run_contractor_enrichment"`.
+  - **Stage `aipp_scored`** → render the score sentence + objective question with chips: `Recevoir plus de rendez-vous` / `Remplir mon calendrier` / `Mieux classé dans UNPRO` / `Améliorer mon profil` / `Protéger mon territoire` / `Comprendre les plans`.
+  - **Stage `objectives_collected`** → call `recommendPlanFromObjective(objective)` (new helper that maps objective → `PlanTier` using the existing `recommendPlanFromRdv` logic as fallback). Render: *"Pour [objectif], je recommande le plan [Plan] à [prix]$/mois."* Quick replies: `Activer [Plan]` (action `checkout_plan`) / `Voir tous les plans` / `Continuer ma fiche` / `Parler à Alex`.
+- Add identifier extractors: `extractPhone`, `extractWebsite`, `extractRbq` (regex `\b\d{4,5}-\d{4}-\d{2}\b`), `extractNeq` (10 digits), `extractBusinessName` (fallback to first capitalized phrase).
+- Add `forbiddenPhrases` guard exported as `assertNoCallback(text)` that throws in dev if any reply contains `/rappel|callback|on vous rappel|formulaire de contact/i` — safety net.
 
-**Painting branch** (Peinture maison → Intérieur → Complet → Cottage → Habitée):
-After "Habitée" (or equivalent answer detection), Alex emits **exactly**:
-> Parfait. J'ai assez d'information pour créer un premier dossier projet.
-> Projet : peinture intérieure complète d'un cottage habité.
-> Complexité : élevée, surtout à cause des meubles, escaliers, plafonds et protection des surfaces.
-> Prochaine étape recommandée : ajouter une photo d'une pièce principale pour estimer la préparation et orienter vers le bon peintre.
+### 2. Wire the conversation store
 
-Quick replies under that bubble: **Ajouter une photo · Estimer sans photo · Sauvegarder mon projet**.
+**Edit `src/stores/copilotConversationStore.ts`**:
 
-**Profile save trigger** (guests only, fires once, after the first summary):
-> Pour sauvegarder ce projet et éviter de recommencer, créez votre profil gratuit.
-CTAs: **Créer mon profil** (→ `/auth?next=…&context=alex_save`) · **Continuer sans profil**.
+- Init `session.mode = "homeowner"` and `contractorStage` undefined.
+- In `sendMessage`, after `decideNext`, branch on `decision.nextBestAction`:
+  - `"run_contractor_enrichment"` → call new `runContractorEnrichment(session.contractorIdentity)` from `src/services/alexContractorOnboardingService.ts` (new). It invokes the existing `enrich-business-profile` edge function and `aipp-real-scan` in parallel, then patches the session with `aippPreview` and emits a follow-up Alex bubble: the AIPP score sentence + objective chips. Show a transient "Je prépare votre fiche professionnelle et votre score AIPP…" bubble while running.
+  - `"checkout_plan"` → invoke a new edge function `create-contractor-checkout` (Stripe `mode: "subscription"` for monthly plans, `mode: "payment"` for founder lifetime tiers). Open returned URL in a new tab. Update stage to `checkout_started`.
+- New `executeQuickReply` handlers for `start_contractor_onboarding`, `show_all_plans`, `checkout_plan`.
 
-## 5. UPLOAD FLOW (real, working)
+### 3. New service `src/services/alexContractorOnboardingService.ts`
 
-`AlexCopilotConversation` composer:
-- Replace decorative `<Plus>` with a real `<label htmlFor="alex-file-input">` + hidden `<input type="file" accept="image/jpeg,image/png,image/webp,image/heic" capture="environment">`.
-- On change → `alexUploadService.handleFile(file)`:
-  1. Validate (type, ≤ 10 MB).
-  2. If `isLoggedIn` → upload to `property-photos/{userId}/alex/{uuid}.{ext}` via `supabase.storage`, insert row in `project_files`.
-  3. Else → keep `Blob` URL in session memory.
-  4. Push a `user` message with the **thumbnail chip** (ChatPhotoThumb) into the chat.
-  5. Trigger `decideNext({ event: "photo_uploaded" })` → Alex confirms reception + advances to estimate / pro match.
+- `startContractorOnboardingSession(input)` — sets mode, upserts a draft `contractor_profile` row (only if logged in; otherwise stash in session), kicks off enrichment + AIPP, returns next message.
+- `runContractorEnrichment({ businessName, phone, website, rbq, neq })` — invokes `enrich-business-profile` then `aipp-real-scan` (or `aipp-v2-analyze`) and normalizes the response to `{ score: 0-100, topGap: string }`.
+- `recommendPlanFromObjective(objective: string): PlanTier` — deterministic mapping:
+  - "rendez-vous" / "calendrier" → `pro`
+  - "classé" / "visibilité" → `premium`
+  - "profil" / "améliorer" → `recrue`
+  - "territoire" / "protéger" → `signature`
+  - "comprendre" → triggers `show_all_plans` quick reply path
+- `getCheckoutUrl(planCode)` — wraps `supabase.functions.invoke("create-contractor-checkout", { body: { plan_code } })`.
 
-**Forbidden:** never emit "open_upload" / "déposez la photo sans bouton" / raw JSON. Quick reply **Ajouter une photo** triggers the same hidden input via `document.getElementById('alex-file-input').click()`.
+### 4. New edge function `supabase/functions/create-contractor-checkout/index.ts`
 
-## 6. QUICK REPLIES (contextual, 2–4 max)
+- Plans (source of truth, hard-coded):
+  - `recrue`: $149/mo (recurring)
+  - `pro`: $349/mo (recurring)
+  - `premium`: $599/mo (recurring)
+  - `elite`: $999/mo (recurring)
+  - `signature`: $1799/mo (recurring)
+  - `founder_elite_10y`: $19,995 one-time
+  - `founder_signature_10y`: $29,995 one-time
+- Reads existing Stripe price ids from `plan_catalog` table (per `mem://pricing/contractor-plans-dynamic`); falls back to creating a price on the fly only if missing.
+- Handles guest users (no auth header) by passing `customer_email` later — for now, return a sign-in prompt URL for unauthenticated requests so the chat can route to auth then resume.
+- `success_url` → `/entrepreneur/onboarding?step=post_payment&plan={code}`. `cancel_url` → `/?alex=resume`.
+- Standard `corsHeaders`, `apiVersion: "2025-08-27.basil"`, esm.sh import.
 
-`ChatQuickReplies` reads `message.quickReplies: { id, label, action }[]` and renders pill buttons. Mapped per `nextBestAction`:
-- `ask_photo` → Ajouter une photo · Estimer sans photo
-- `summarize` → Voir estimation · Trouver un peintre · Sauvegarder le projet · Ajouter une photo
-- `match_pro` → Voir le pro · Voir d'autres options · Réserver
-- `save_profile` → Créer mon profil · Continuer sans profil
+### 5. Replace the contact-form leak in `ContractorPlans.tsx`
 
-Tap → either dispatches an action (`open_upload`, `save_profile`, `request_alternative`, `book_now`) **or** sends a synthetic user message into the engine. **No tool token ever rendered as text.**
+- Remove `navigate(\`/contact?subject=${planCode}\`)` at line 363.
+- Replace with: open the Alex copilot via `useCopilotConversationStore.getState().open()` and synthesize a contractor message *"Je veux activer le plan {planLabel}."* — Alex will route to `contractor_onboarding` and trigger checkout in-chat.
 
-## 7. MOBILE COMPOSER CLEANUP
+### 6. UI: add visible "Je suis un entrepreneur" entry chip
 
-- Left: 📎 **Ajouter une photo** (real, wired).
-- Center: text input.
-- Right: ➤ Send.
-- 🎤 Mic: shown **only if** `useAlexVoice().isAvailable === true` AND mic permission grantable; otherwise hidden (no greyed teaser, no fake tooltip).
+**Edit `src/components/alex-copilot/AlexCopilotConversation.tsx`** (or the dock that opens the sheet):
 
-## 8. SANITIZER
+- When the chat is empty (greeting bubble), render a top row of role chips: `Propriétaire` / `Entrepreneur` / `Gestionnaire de condo`. Tapping `Entrepreneur` calls `executeQuickReply({ kind: "start_contractor_onboarding" })`.
 
-`sanitizeAlexText(raw)` runs on every Alex bubble before render:
-- Strips lines matching `/^(open_upload|tool:|action:|<function|```json)/i`.
-- Removes embedded `{ "tool": ... }` blocks.
-- Collapses multiple blank lines.
+### 7. Sanitizer hardening
 
-## 9. DATA — Migration
+**Edit `src/utils/sanitizeAlexText.ts`**:
 
-```sql
-create table public.project_files (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  project_id uuid null,
-  storage_bucket text not null default 'property-photos',
-  storage_path text not null,
-  mime text not null,
-  bytes int not null,
-  kind text not null default 'photo',  -- photo | quote | document
-  source text not null default 'alex_chat',
-  created_at timestamptz not null default now()
-);
-alter table public.project_files enable row level security;
-create policy "owners read"  on public.project_files for select using (auth.uid() = user_id);
-create policy "owners write" on public.project_files for insert with check (auth.uid() = user_id);
-create policy "owners update" on public.project_files for update using (auth.uid() = user_id);
-create policy "owners delete" on public.project_files for delete using (auth.uid() = user_id);
-```
-Storage policy on `property-photos` (insert/read for `auth.uid()::text = (storage.foldername(name))[1]`) — add only if missing.
+- Add a regex that strips/replaces any phrase matching `/(on|nous|quelqu'un|un agent|un conseiller)\s+(va|vont|vous)\s+(rappel|recontacter|contacter)/i` and replace with the canonical contractor opener.
+- Add stripping for `open_contact_form`, `openContactForm`, `/contact?` if it ever leaks through.
 
-## 10. ANALYTICS
+### 8. Memory + analytics
 
-Add `trackCopilotEvent` calls: `value_summary_shown`, `photo_upload_started`, `photo_upload_succeeded`, `photo_upload_failed`, `profile_save_prompt_shown`, `profile_save_clicked`, `quick_reply_clicked`.
+- Append to `mem://ai/alex/brain-orchestration`: contractor branch routing rule + forbidden callback phrases.
+- Add new `CopilotEventName`s in `src/utils/trackCopilotEvent.ts`:
+  - `contractor_intent_detected`, `contractor_identity_collected`, `contractor_enrichment_started`, `contractor_aipp_scored`, `contractor_plan_recommended`, `contractor_checkout_started`, `contractor_checkout_completed`.
 
-## 11. CONSTRAINTS
+### 9. Acceptance tests (manual)
 
-- Strict FR-CA copy.
-- Mobile-first; safe-area aware.
-- No regression to existing pro-recommendation card flow — just gated behind the new state machine (only emitted when `nextBestAction === "match_pro"`).
-- No new external dependency.
+1. Send "je suis entrepreneur" → Alex replies with the canonical opener and identity chips. **No** `/contact` redirect, **no** "on vous rappelle".
+2. Send "mon site est exemple.ca" → Alex acknowledges, shows "Je prépare votre fiche…" then renders an AIPP score (mocked if edge function offline) + objective chips.
+3. Tap "Recevoir plus de rendez-vous" → Alex recommends Pro $349 + `Activer Pro` button.
+4. Tap `Activer Pro` → Stripe checkout opens in new tab. Cancel → returns to chat at the plan_recommended stage.
+5. From `/entrepreneur/plans`, click any plan tier currently routing to `/contact` → opens Alex chat in contractor mode at plan_recommended for that tier.
+6. Try to type "je vais vous rappeler" as Alex (dev guard) → throws in dev, sanitized in prod.
 
-## 12. SUCCESS CRITERIA
+## Files touched
 
-✅ Alex never asks > 3 questions before producing a summary + CTA.
-✅ The `+` button opens the OS file picker on mobile, accepts photos, shows a thumbnail in the chat, and persists to `project_files` for logged-in users.
-✅ The painting flow ends with the exact required summary + 3 quick replies.
-✅ "Je vais conserver…" appears the first time Alex collects qualifying info.
-✅ Guests see the profile-save prompt exactly once, after the first summary.
-✅ No occurrence of `open_upload` / raw tool tokens in any rendered bubble.
-✅ Mic icon hidden if voice unavailable.
+**Create**
+- `src/services/alexContractorOnboardingService.ts`
+- `supabase/functions/create-contractor-checkout/index.ts`
 
-## 13. TASKS
+**Edit**
+- `src/services/alexCopilotEngine.ts`
+- `src/stores/copilotConversationStore.ts`
+- `src/components/alex-copilot/AlexCopilotConversation.tsx`
+- `src/components/alex-copilot/ChatQuickReplies.tsx` (only if new action kinds need styling)
+- `src/pages/pricing/ContractorPlans.tsx`
+- `src/utils/sanitizeAlexText.ts`
+- `src/utils/trackCopilotEvent.ts`
+- `.lovable/memory/index.md` + `mem://ai/alex/brain-orchestration`
 
-1. **Migration** — create `project_files` + RLS + (conditional) storage policy on `property-photos`.
-2. **`alexCopilotEngine.ts`** — implement `AlexSession`, intent detection (paint / humidity / roof…), `decideNext`, painting branch, 3-question guardrail, profile-save trigger.
-3. **`alexUploadService.ts`** — file validation, Supabase Storage upload, guest fallback, return `{ url, mime, bytes, path }`.
-4. **`sanitizeAlexText.ts`** — token/JSON stripper + unit-safe.
-5. **`copilotConversationStore.ts`** — embed `session`, replace mock `sendMessage` to call engine; add `uploadPhoto`, `executeQuickReply`, `dismissProfilePrompt`.
-6. **`ChatQuickReplies.tsx`**, **`ChatPhotoThumb.tsx`**, **`ProfileSavePrompt.tsx`** — render layer.
-7. **`AlexCopilotConversation.tsx`** — wire upload input, render quick replies + thumbs + profile prompt, conditional mic.
-8. **Voice availability flag** — extend `useAlexVoice()` (or read existing) to expose `isAvailable` for mic visibility.
-9. **Analytics events** — wire all new `trackCopilotEvent` calls.
-10. **QA pass** — painting flow end-to-end, photo upload (logged in + guest), profile prompt (guest only, once), no tool tokens visible, mic hidden when voice down.
+**Migrations**
+- None required (all tables exist: `contractor_profiles`, `contractor_aipp_scores`, `entrepreneur_goals`, `entrepreneur_plan_recommendations`, `plan_catalog`).
+
+## Out of scope (next prompt)
+
+- Founder availability gating before checkout (already covered by `mem://features/founder-availability-checker` — call it from `create-contractor-checkout` for `founder_*` codes only).
+- Post-payment onboarding wizard (calendar sync, zones, specialties) — exists at `/entrepreneur/onboarding-voice`, just point success_url at it.
