@@ -38,6 +38,10 @@ function resolveActionLabel(pending: PendingAction | null): string | null {
   return pending.label || ACTION_LABELS[pending.action ?? ""] || "Continuer votre action";
 }
 
+function readPreloginRole(): string | null {
+  try { return sessionStorage.getItem("unpro_prelogin_role"); } catch { return null; }
+}
+
 export default function AuthOverlayPremium() {
   const { isOpen, pendingAction } = useSyncExternalStore(
     subscribeAuthOverlay,
@@ -45,9 +49,17 @@ export default function AuthOverlayPremium() {
   );
 
   const [view, setView] = useState<OverlayView>("main");
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useScrollLock(isOpen);
+
+  // Determine context (contractor vs default) for copy
+  const preloginRole = isOpen ? readPreloginRole() : null;
+  const contractorContext =
+    preloginRole === "contractor" ||
+    preloginRole === "professional" ||
+    /^\/(join|entrepreneur|pro)\b/.test(pendingAction?.returnPath ?? "");
 
   // Reset on open
   useEffect(() => {
@@ -63,6 +75,25 @@ export default function AuthOverlayPremium() {
       });
     }
   }, [isOpen, pendingAction]);
+
+  // Keyboard / visualViewport avoidance — keeps the card and CTA visible on mobile
+  useEffect(() => {
+    if (!isOpen) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setKeyboardOffset(offset);
+    };
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+      setKeyboardOffset(0);
+    };
+  }, [isOpen]);
 
   // Focus trap + Escape
   useEffect(() => {
@@ -97,7 +128,8 @@ export default function AuthOverlayPremium() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-3 sm:p-4"
+          style={{ paddingBottom: keyboardOffset ? keyboardOffset + 12 : undefined }}
           onClick={(e) => { if (e.target === e.currentTarget) closeAuthOverlay(); }}
         >
           {/* Backdrop */}
@@ -117,11 +149,12 @@ export default function AuthOverlayPremium() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="relative z-10 w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl"
+            className="relative z-10 w-full max-w-md overflow-y-auto rounded-2xl"
             style={{
-              background: "hsl(228 30% 11% / 0.95)",
+              background: "hsl(228 30% 11% / 0.97)",
               border: "1px solid hsl(228 20% 20% / 0.6)",
               boxShadow: "var(--shadow-2xl), 0 0 60px -10px hsl(222 100% 65% / 0.12)",
+              maxHeight: keyboardOffset ? `calc(100dvh - ${keyboardOffset + 24}px)` : "90dvh",
             }}
           >
             {/* Close */}
@@ -143,10 +176,12 @@ export default function AuthOverlayPremium() {
                   </div>
                 </div>
                 <h2 className="text-xl font-bold text-foreground font-display">
-                  Trouvez le bon pro. Plus vite.
+                  {contractorContext ? "Connexion à UNPRO" : "Trouvez le bon pro. Plus vite."}
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px] mx-auto">
-                  Connexion rapide et sécurisée. Aucun mot de passe requis.
+                  {contractorContext
+                    ? "Connectez-vous pour créer votre profil entrepreneur."
+                    : "Connexion rapide et sécurisée. Aucun mot de passe requis."}
                 </p>
               </div>
 
@@ -189,7 +224,7 @@ export default function AuthOverlayPremium() {
                     }}
                   >
                     <Smartphone className="h-4 w-4" />
-                    Recevoir un code par SMS
+                    Recevoir un code par texto
                   </button>
 
                   {/* Trust microcopy */}
@@ -238,7 +273,7 @@ export default function AuthOverlayPremium() {
                     <Mail className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium text-foreground">Recevoir un lien par courriel</span>
                   </div>
-                  <LoginMagicLinkForm />
+                  <LoginMagicLinkForm ctaLabel="Continuer" />
                   <button
                     onClick={() => setView("main")}
                     className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors"

@@ -162,7 +162,7 @@ export default function AuthCallbackPage() {
 
       // Contractors: jump straight into the voice onboarding flow
       if (primaryRole === "contractor") {
-        navigate(onboardingDone ? "/pro" : "/entrepreneur/onboarding-voice", { replace: true });
+        navigate(onboardingDone ? "/pro" : "/join/profile", { replace: true });
         return;
       }
 

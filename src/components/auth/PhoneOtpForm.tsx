@@ -78,8 +78,15 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
     }
 
     setSending(true);
+    // Hard 3s safety so the button never looks frozen
+    const safety = window.setTimeout(() => {
+      setSending(false);
+      toast.error("Envoi trop long. Réessayez.");
+    }, 3000);
+
     try {
       const data = await callTwilioVerify("send-otp", { phone: e164 });
+      window.clearTimeout(safety);
       if (data.fallback) {
         toast.error("Le service SMS est temporairement indisponible. Utilisez un autre moyen de connexion.", { duration: 5000 });
         console.warn("[PhoneOtp] SMS fallback triggered:", data.code);
@@ -89,13 +96,14 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
         toast.error(data.error);
       } else {
         trackAuthEvent("sms_sent");
-        toast.success("Code envoyé par texto !");
+        toast.success("Code envoyé !");
         setStep("code");
         setCooldown(COOLDOWN_SECONDS);
         setAttempts((a) => a + 1);
         setTimeout(() => codeRefs.current[0]?.focus(), 100);
       }
     } catch {
+      window.clearTimeout(safety);
       toast.error("Erreur réseau. Réessayez.");
     } finally {
       setSending(false);
@@ -196,35 +204,41 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
                 <div
                   className="flex items-center justify-center px-3 rounded-xl text-sm font-medium shrink-0 h-12"
                   style={{
-                    background: "hsl(228 20% 14% / 0.6)",
-                    border: "1px solid hsl(228 18% 18%)",
-                    color: "hsl(220 20% 93%)",
+                    background: "hsl(228 20% 14% / 0.85)",
+                    border: "1px solid hsl(228 18% 22%)",
+                    color: "white",
                   }}
                 >
                   🇨🇦 +1
                 </div>
-                <Input
+                <input
                   type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  enterKeyHint="send"
                   value={formatPhoneDisplay(phone)}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                   placeholder="(514) 555-1234"
-                  className="h-12 rounded-xl text-sm"
+                  className="flex-1 h-12 px-4 rounded-xl text-[16px] outline-none transition-colors"
                   style={{
-                    background: "hsl(228 20% 14% / 0.6)",
-                    border: "1px solid hsl(228 18% 18%)",
-                    color: "hsl(220 20% 93%)",
+                    background: "hsl(228 20% 14% / 0.85)",
+                    border: "1px solid hsl(228 18% 22%)",
+                    color: "white",
+                    caretColor: "hsl(222 100% 75%)",
                   }}
-                  disabled={isDisabled}
                   autoFocus
                 />
               </div>
               <p className="text-xs text-muted-foreground">
                 Recevez un code à 6 chiffres par texto
               </p>
+              <style>{`
+                input[type="tel"]::placeholder { color: hsl(220 14% 55%); opacity: 1; }
+              `}</style>
             </div>
             <Button
               type="button"
-              className="w-full h-12 text-sm font-medium rounded-xl gap-2"
+              className="w-full h-12 text-sm font-semibold rounded-xl gap-2"
               disabled={isDisabled || phone.replace(/\D/g, "").length < 10 || attempts >= MAX_ATTEMPTS}
               onClick={handleSendOtp}
             >

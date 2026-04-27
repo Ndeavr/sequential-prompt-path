@@ -1,33 +1,65 @@
 /**
- * UNPRO — Magic Link Email Form
+ * UNPRO — Magic Link Email Form (premium dark, mobile-first)
+ *
+ * Fixes:
+ *  - Visible white text + light placeholder on dark surfaces
+ *  - Trim + lowercase + validate before submit
+ *  - Active CTA only when email is valid
+ *  - 3s soft timeout — UI never sticks in "Envoi…" forever
+ *  - inputMode/email + autocomplete + autocapitalize off + spellcheck off
  */
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Mail, CheckCircle } from "lucide-react";
+import { Mail, CheckCircle, Loader2 } from "lucide-react";
 
-export default function LoginMagicLinkForm() {
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+interface Props {
+  ctaLabel?: string;
+  successMessage?: string;
+}
+
+export default function LoginMagicLinkForm({
+  ctaLabel = "Recevoir un lien de connexion",
+  successMessage = "Lien envoyé ! Vérifiez votre courriel.",
+}: Props) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [touched, setTouched] = useState(false);
+
+  const cleaned = email.trim().toLowerCase();
+  const isValid = EMAIL_RE.test(cleaned);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!isValid) {
+      setTouched(true);
+      toast.error("Adresse courriel invalide");
+      return;
+    }
     setLoading(true);
+    // Hard 3s safety — never leave the user staring at a spinner
+    const safety = window.setTimeout(() => {
+      setLoading(false);
+      toast.error("Envoi trop long. Réessayez.");
+    }, 3000);
+
     try {
       const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
+        email: cleaned,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
+      window.clearTimeout(safety);
       if (error) throw error;
       setSent(true);
-      toast.success("Lien envoyé ! Vérifiez votre courriel.");
+      toast.success(successMessage);
     } catch (err: any) {
+      window.clearTimeout(safety);
       toast.error(err?.message || "Erreur lors de l'envoi");
     } finally {
       setLoading(false);
@@ -37,13 +69,18 @@ export default function LoginMagicLinkForm() {
   if (sent) {
     return (
       <div className="flex flex-col items-center gap-3 py-4">
-        <CheckCircle className="h-10 w-10 text-success" />
-        <p className="text-sm text-center text-muted-foreground">
-          Un lien de connexion a été envoyé à <strong className="text-foreground">{email}</strong>
+        <CheckCircle className="h-10 w-10" style={{ color: "hsl(142 70% 55%)" }} />
+        <p className="text-sm text-center" style={{ color: "hsl(220 20% 90%)" }}>
+          Lien envoyé à <strong style={{ color: "white" }}>{cleaned}</strong>
+        </p>
+        <p className="text-xs text-center" style={{ color: "hsl(220 14% 60%)" }}>
+          Ouvrez votre boîte courriel pour terminer la connexion.
         </p>
         <button
-          onClick={() => { setSent(false); setEmail(""); }}
-          className="text-xs text-primary hover:underline"
+          type="button"
+          onClick={() => { setSent(false); setEmail(""); setTouched(false); }}
+          className="text-xs underline underline-offset-2"
+          style={{ color: "hsl(222 100% 75%)" }}
         >
           Utiliser un autre courriel
         </button>
@@ -51,24 +88,64 @@ export default function LoginMagicLinkForm() {
     );
   }
 
+  const showError = touched && email.length > 0 && !isValid;
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <Input
-        type="email"
-        placeholder="votre@courriel.com"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        className="h-11 rounded-xl"
-      />
+    <form onSubmit={handleSubmit} className="space-y-3" noValidate>
+      <div>
+        <input
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+          enterKeyHint="send"
+          placeholder="votre@courriel.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          onBlur={() => setTouched(true)}
+          required
+          aria-invalid={showError || undefined}
+          aria-describedby={showError ? "magic-link-error" : undefined}
+          className="w-full h-12 px-4 rounded-xl text-[16px] outline-none transition-colors"
+          style={{
+            background: "hsl(228 20% 14% / 0.85)",
+            border: showError
+              ? "1px solid hsl(0 75% 60% / 0.7)"
+              : "1px solid hsl(228 18% 22%)",
+            color: "white",
+            // @ts-ignore — vendor placeholder color
+            ["--tw-placeholder-opacity" as any]: 1,
+            caretColor: "hsl(222 100% 75%)",
+          }}
+        />
+        {showError && (
+          <p id="magic-link-error" className="mt-1.5 text-xs" style={{ color: "hsl(0 75% 70%)" }}>
+            Entrez une adresse courriel valide
+          </p>
+        )}
+      </div>
       <Button
         type="submit"
-        disabled={loading || !email.trim()}
-        className="w-full h-11 rounded-xl gap-2"
+        disabled={loading || !isValid}
+        className="w-full h-12 rounded-xl gap-2 text-sm font-semibold"
       >
-        <Mail className="h-4 w-4" />
-        {loading ? "Envoi…" : "Recevoir un lien de connexion"}
+        {loading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Envoi…
+          </>
+        ) : (
+          <>
+            <Mail className="h-4 w-4" />
+            {ctaLabel}
+          </>
+        )}
       </Button>
+      <style>{`
+        input[type="email"]::placeholder { color: hsl(220 14% 55%); opacity: 1; }
+      `}</style>
     </form>
   );
 }
