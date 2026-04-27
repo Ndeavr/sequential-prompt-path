@@ -37,7 +37,6 @@ export default function PanelAlexEntrepreneurOnboarding({ onComplete, prefilled 
           onChange={e => setBusinessName(e.target.value)}
           placeholder="Ex: Plomberie Dupont Inc."
           className="bg-background/80 border-border/40"
-          autoFocus
         />
       ),
       valid: businessName.trim().length >= 2,
