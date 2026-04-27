@@ -10,7 +10,6 @@
 import { create } from "zustand";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 import {
-  decideNext,
   acknowledgePhoto,
   createEmptySession,
   MEMORY_LINE_FR,
@@ -18,6 +17,7 @@ import {
   type QuickReply,
   type EngineDecision,
 } from "@/services/alexCopilotEngine";
+import { routeAlexIntent, resetRouter } from "@/services/alexMasterRouter";
 import { uploadAlexFile, type UploadedFile } from "@/services/alexUploadService";
 import { cleanAlexText } from "@/utils/sanitizeAlexText";
 import { supabase } from "@/integrations/supabase/client";
@@ -187,7 +187,13 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
     // Simulate brief thinking delay for UX
     await new Promise((r) => setTimeout(r, 600));
 
-    const decision = decideNext(get().session, trimmed);
+    const session = get().session;
+    const { decision } = routeAlexIntent(
+      trimmed,
+      { isLoggedIn: session.isLoggedIn },
+      { surface: typeof window !== "undefined" ? window.location.pathname : undefined },
+      session,
+    );
     const bubble = buildAlexBubble(decision);
 
     set((s) => ({
@@ -356,7 +362,8 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
   openWhy: (pro) => set({ whyOpen: true, selectedPro: pro }),
   closeWhy: () => set({ whyOpen: false }),
 
-  reset: () =>
+  reset: () => {
+    resetRouter();
     set({
       messages: [],
       currentProIndex: -1,
@@ -365,5 +372,6 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
       selectedPro: null,
       thinking: false,
       session: createEmptySession({ isLoggedIn: false }),
-    }),
+    });
+  },
 }));
