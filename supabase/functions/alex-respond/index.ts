@@ -94,7 +94,7 @@ serve(async (req) => {
 
     const rulesText = rules.map((r: any) => `- ${r.rule_label}`).join("\n");
 
-    const systemPrompt = `Tu es Alex, assistant IA premium d'UNPRO (prononce "1 pro").
+    const systemPrompt = `Tu es Alex, assistant IA premium d'UNPRO (prononce "un pro").
 Naturel, direct, chaleureux (${settings.warmth_level}/10), orienté action (${settings.directness_level}/10).
 ${roleCtx}
 

@@ -212,6 +212,88 @@ Deno.serve(async (req) => {
   }
 });
 
+// ─── Contractor self-serve guard ─────────────────────────────────────
+
+function isContractorSelfServeMessage(text: string): boolean {
+  return [
+    /\bje\s+suis\s+(un\s+)?(entrepreneur|contracteur|pro)\b/i,
+    /\boffrir\s+mes\s+services\b/i,
+    /\b(recevoir|avoir)\s+(plus\s+de\s+)?(clients|contrats|rendez-?vous)\b/i,
+    /\bm['’]inscrire\s+(comme\s+)?(pro|entrepreneur)\b/i,
+    /\binscrire\s+mon\s+entreprise\b/i,
+    /\b(rejoindre|faire\s+partie\s+(de|d'))\s*unpro\b/i,
+    /\b(plan|tarif|prix|co[uû]t).*\b(pro|entrepreneur|contracteur)\b/i,
+    /\b(mon\s+entreprise|ma\s+compagnie|fiche\s+(pro|entrepreneur)|score\s+aipp)\b/i,
+  ].some((pattern) => pattern.test(text));
+}
+
+function extractContractorIdentifier(text: string): string | null {
+  const rbq = text.match(/\b\d{4}-\d{4}-\d{2}\b/)?.[0];
+  if (rbq) return rbq;
+  const neq = text.match(/\b\d{10}\b/)?.[0];
+  if (neq) return neq;
+  const website = text.match(/\b((?:https?:\/\/)?(?:www\.)?[a-z0-9-]+\.(?:ca|com|net|org|co|io|info|biz)(?:\/[^\s]*)?)\b/i)?.[0];
+  if (website) return website;
+  const phone = text.match(/(?:\+?1[\s-.]?)?\(?\d{3}\)?[\s-.]?\d{3}[\s-.]?\d{4}/)?.[0];
+  if (phone) return phone;
+  const cleaned = text
+    .replace(/^(mon|ma|notre|entreprise|compagnie|site|web|t[ée]l[ée]phone|rbq|neq|c['’]est|je suis|nous sommes)\s*:?\s*/i, "")
+    .trim();
+  return cleaned.length >= 3 && cleaned.length <= 80 ? cleaned : null;
+}
+
+function deterministicAippScore(identifier: string): number {
+  const seed = identifier.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return 52 + (seed % 27);
+}
+
+function buildContractorSelfServeTurn(text: string, session: any) {
+  const currentStep = String(session?.current_step || "");
+  const sticky = currentStep.startsWith("contractor_") || session?.role_detected === "contractor";
+  if (!sticky && !isContractorSelfServeMessage(text)) return null;
+
+  const explicitHuman = /\b(humain|repr[ée]sentant|conseiller|vendeur|appeler|appel|rappel)\b/i.test(text);
+  if (explicitHuman) {
+    return {
+      text: "Je peux vous transférer à un humain après avoir préparé votre fiche. Donnez-moi d'abord le nom de votre entreprise, votre site web, téléphone, RBQ ou NEQ.",
+      nextStep: "contractor_identify",
+      readiness: 35,
+      nextAction: "collect_business_identifier",
+      uiActions: [],
+    };
+  }
+
+  const identifier = extractContractorIdentifier(text);
+  if (!identifier || currentStep === "" || currentStep === "responding") {
+    return {
+      text: "Parfait. Je vais analyser votre entreprise maintenant et vous montrer les meilleures options UNPRO. Donnez-moi le nom de votre entreprise, votre site web, téléphone, RBQ ou NEQ.",
+      nextStep: "contractor_identify",
+      readiness: 30,
+      nextAction: "collect_business_identifier",
+      uiActions: [],
+    };
+  }
+
+  if (currentStep === "contractor_identify" || currentStep === "contractor_analyzing") {
+    const score = deterministicAippScore(identifier);
+    return {
+      text: `Je prépare votre fiche professionnelle et votre score AIPP. Votre score provisoire est ${score}/100. Le plus gros potentiel: visibilité locale + conversion. Votre objectif principal est quoi: recevoir plus de rendez-vous, remplir votre calendrier, protéger votre territoire, améliorer votre classement ou comparer les plans?`,
+      nextStep: "contractor_objective",
+      readiness: 70,
+      nextAction: "show_aipp_score",
+      uiActions: [{ type: "show_business_score", target: "alex", score: String(score) }],
+    };
+  }
+
+  return {
+    text: "Je recommande le plan Pro pour démarrer vite: fiche, score, visibilité et rendez-vous qualifiés. Voulez-vous activer maintenant, voir les plans ou continuer votre fiche?",
+    nextStep: "contractor_plan_offer",
+    readiness: 85,
+    nextAction: "recommend_plan",
+    uiActions: [{ type: "show_plan_options", target: "alex" }],
+  };
+}
+
 // ─── Signal extraction ───
 
 interface Signals {
