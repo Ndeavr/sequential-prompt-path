@@ -103,18 +103,46 @@ export default function AuthCallbackPage() {
       }
 
       // Check role
-      const { data: roles } = await supabase
+      let { data: roles } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id);
 
+      let roleList = (roles ?? []).map((r) => r.role as string);
+
+      // Apply pre-login role choice if any (and we don't already have it)
+      if (preloginRole && !roleList.includes(preloginRole)) {
+        console.log("[AuthCallback] applying prelogin role", preloginRole);
+        const { error: roleErr } = await supabase
+          .from("user_roles")
+          .upsert(
+            { user_id: user.id, role: preloginRole as any },
+            { onConflict: "user_id,role" }
+          );
+        if (roleErr) {
+          console.error("[AuthCallback] role upsert failed", roleErr);
+        } else {
+          roleList = [...roleList, preloginRole];
+          if (preloginRole === "contractor") {
+            try {
+              await (supabase.from("contractors") as any).upsert(
+                { user_id: user.id, email: user.email || "" },
+                { onConflict: "user_id" }
+              );
+            } catch (e) {
+              console.warn("[AuthCallback] contractor stub non-fatal error", e);
+            }
+          }
+        }
+        try { sessionStorage.removeItem("unpro_prelogin_role"); } catch { /* noop */ }
+      }
+
       setState("redirecting");
 
-      const hasRole = roles && roles.length > 0;
+      const hasRole = roleList.length > 0;
       const onboardingDone = profile?.onboarding_completed;
 
-      // If we have an explicit return path, honor it (skip onboarding gate
-      // only if the user already has a role; otherwise force onboarding).
+      // Honor explicit return path
       if (intent?.returnPath && hasRole && !/^\/(login|signup|auth\/callback)\b/.test(intent.returnPath)) {
         navigate(intent.returnPath, { replace: true });
         return;
@@ -125,17 +153,23 @@ export default function AuthCallbackPage() {
         return;
       }
 
+      // Determine primary role
+      let primaryRole: string | null = null;
+      if (roleList.includes("admin")) primaryRole = "admin";
+      else if (roleList.includes("contractor")) primaryRole = "contractor";
+      else if (roleList.includes("condo_manager")) primaryRole = "condo_manager";
+      else primaryRole = roleList[0];
+
+      // Contractors: jump straight into the voice onboarding flow
+      if (primaryRole === "contractor") {
+        navigate(onboardingDone ? "/pro" : "/entrepreneur/onboarding-voice", { replace: true });
+        return;
+      }
+
       if (!onboardingDone) {
         navigate("/onboarding", { replace: true });
         return;
       }
-
-      // Determine role for redirect
-      const roleList = roles!.map(r => r.role);
-      let primaryRole: string | null = null;
-      if (roleList.includes("admin")) primaryRole = "admin";
-      else if (roleList.includes("contractor")) primaryRole = "contractor";
-      else primaryRole = roleList[0];
 
       navigate(getDefaultRedirectForRole(primaryRole), { replace: true });
 
