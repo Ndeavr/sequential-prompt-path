@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -179,7 +180,7 @@ export default function PageContractorJoinPublic() {
     } catch {
       /* sessionStorage unavailable */
     }
-    navigate("/entrepreneur/plans");
+    navigate("/entrepreneurs/plans");
   };
 
   return (
@@ -249,17 +250,28 @@ export default function PageContractorJoinPublic() {
 
               <form onSubmit={handleSubmit} className="flex gap-2">
                 <div className="relative flex-1">
-                  <Input
-                    autoFocus
-                    type={mode === "phone" ? "tel" : mode === "website" ? "url" : "text"}
-                    inputMode={mode === "phone" ? "tel" : "text"}
-                    value={value}
-                    onChange={(e) => setValue(e.target.value)}
-                    placeholder={placeholder}
-                    disabled={loading}
-                    className="h-14 text-base bg-white/5 border-white/15 text-white placeholder:text-white/30 focus-visible:ring-blue-400 pl-4 pr-12"
-                  />
-                  <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                  {mode === "phone" ? (
+                    <PhoneInput
+                      autoFocus
+                      value={value}
+                      onChange={setValue}
+                      placeholder={placeholder}
+                      disabled={loading}
+                      className="h-14 text-base bg-white/5 border-white/15 text-white placeholder:text-white/30 focus-visible:ring-blue-400 pl-4 pr-12"
+                    />
+                  ) : (
+                    <Input
+                      autoFocus
+                      type={mode === "website" ? "url" : "text"}
+                      inputMode="text"
+                      value={value}
+                      onChange={(e) => setValue(e.target.value)}
+                      placeholder={placeholder}
+                      disabled={loading}
+                      className="h-14 text-base bg-white/5 border-white/15 text-white placeholder:text-white/30 focus-visible:ring-blue-400 pl-4 pr-12"
+                    />
+                  )}
+                  <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none" />
                 </div>
                 <Button
                   type="submit"

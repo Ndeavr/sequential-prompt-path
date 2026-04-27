@@ -4,11 +4,20 @@
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, X, ArrowRight, Star, Sparkles } from "lucide-react";
+import { CheckCircle2, X, ArrowRight, Star, Sparkles, TrendingDown } from "lucide-react";
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
+
+interface JoinDemo {
+  business_name: string;
+  city: string;
+  score: number;
+  recommended_plan: string;
+  revenue_gap?: { lost_revenue_min: number };
+}
 
 interface PlanDef {
   name: string;
@@ -103,6 +112,14 @@ const PLANS: PlanDef[] = [
 
 export default function PageEntrepreneurPlans() {
   const navigate = useNavigate();
+  const [joinDemo, setJoinDemo] = useState<JoinDemo | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("unpro_join_demo");
+      if (raw) setJoinDemo(JSON.parse(raw));
+    } catch { /* noop */ }
+  }, []);
 
   return (
     <>
@@ -111,9 +128,31 @@ export default function PageEntrepreneurPlans() {
         <meta name="description" content="Choisissez votre plan UNPRO : Recrue (gratuit), Pro, Premium, Élite ou Signature. Rendez-vous qualifiés et visibilité protégée." />
       </Helmet>
 
-      <div className="min-h-screen bg-background py-20">
+      <div className="min-h-screen bg-background py-12 sm:py-20">
         <div className="mx-auto max-w-7xl px-4">
-          <motion.div variants={fadeUp} initial="hidden" animate="visible" className="text-center mb-16">
+          {joinDemo && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mx-auto max-w-3xl mb-8 rounded-2xl border border-primary/30 bg-primary/5 p-4 sm:p-5 flex items-start gap-3"
+            >
+              <TrendingDown className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="text-xs uppercase tracking-wider text-primary/80 mb-1">
+                  Suite de votre analyse · {joinDemo.business_name}
+                </div>
+                <p className="text-sm text-foreground">
+                  Score AIPP <span className="font-bold">{joinDemo.score}/100</span>
+                  {joinDemo.revenue_gap && (
+                    <> · Manque à gagner ~<span className="font-bold">{joinDemo.revenue_gap.lost_revenue_min.toLocaleString("fr-CA")} $/mois</span></>
+                  )}
+                  . Plan recommandé surligné ci-dessous.
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          <motion.div variants={fadeUp} initial="hidden" animate="visible" className="text-center mb-12">
             <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground mb-4">
               Plans et tarifs
             </h1>
