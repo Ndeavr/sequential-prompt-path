@@ -9,19 +9,35 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let resolved = false;
     // Bootstrap: restore persisted session first
     supabase.auth.getSession().then(({ data: { session } }) => {
+      resolved = true;
       setSession(session);
       setLoading(false);
     });
 
+    // Safety timeout: never let loading hang past 5s. If we still don't have
+    // a session resolved, force loading=false so the UI can show the public/
+    // unauthenticated state instead of an infinite "Chargement…" spinner.
+    const safety = setTimeout(() => {
+      if (!resolved) {
+        console.warn("[useAuth] session resolution timeout (5s) — releasing loading state");
+        setLoading(false);
+      }
+    }, 5000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      resolved = true;
       setSession(session);
       setLoading(false);
       queryClient.invalidateQueries({ queryKey: ["user-role"] });
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(safety);
+      subscription.unsubscribe();
+    };
   }, [queryClient]);
 
   const roleQuery = useQuery({
