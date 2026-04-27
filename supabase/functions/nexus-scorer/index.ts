@@ -39,10 +39,10 @@ serve(async (req): Promise<Response> => {
       });
 
       // Recalculate score
-      return await recalculateScore(supabase, user_id, role);
+      return (await recalculateScore(supabase, user_id, role)) ?? new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     } else if (action === "recalculate") {
-      return await recalculateScore(supabase, user_id, role);
+      return (await recalculateScore(supabase, user_id, role)) ?? new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     } else if (action === "batch_recalculate") {
       // Recalculate all profiles

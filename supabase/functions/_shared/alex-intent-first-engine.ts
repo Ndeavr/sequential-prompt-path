@@ -24,7 +24,7 @@ export interface IntentFirstResult {
 
 interface SymptomMapping {
   patterns: RegExp[];
-  service: string;
+  service: string | null;
   interpretation: string;
   confirmation: string;
   urgency: number;
