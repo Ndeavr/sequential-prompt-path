@@ -66,6 +66,36 @@ Deno.serve(async (req) => {
     // 4. Extract signals from CLEANED message
     const signals = extractSignals(processedMessage, ui_context);
 
+    // Contractor self-serve guard: bypass AI brain/callback scripts entirely.
+    const contractorTurn = buildContractorSelfServeTurn(processedMessage, session);
+    if (contractorTurn) {
+      const latencyMs = Date.now() - startTime;
+      await supabase.from("alex_sessions").update({
+        last_intent: "contractor_onboarding",
+        current_step: contractorTurn.nextStep,
+        role_detected: "contractor",
+        updated_at: new Date().toISOString(),
+      }).eq("id", session.id);
+
+      await supabase.from("alex_messages").insert({
+        session_id: session.id,
+        sender: "alex",
+        message: contractorTurn.text,
+        message_type: "text",
+        latency_ms: latencyMs,
+      });
+
+      return new Response(JSON.stringify({
+        alex_response: contractorTurn.text,
+        detected_intent: "contractor_onboarding",
+        booking_readiness_score: contractorTurn.readiness,
+        next_action: contractorTurn.nextAction,
+        ui_actions: contractorTurn.uiActions,
+        primary_match: null,
+        latency_ms: latencyMs,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // 4b. Intent-first resolution for enriched context
     const intentFirst = resolveIntentFirst(processedMessage);
     if (intentFirst.interpretedService && !signals.service) {
