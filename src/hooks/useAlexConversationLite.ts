@@ -335,6 +335,91 @@ export function useAlexConversationLite(userName?: string, isAuthenticated = fal
       mem.set("address_known", true);
     }
 
+    // ─── CONTRACTOR SELF-SERVE: bypass AI/lead-capture scripts entirely ───
+    const currentMem = mem.get();
+    const isContractorFlow =
+      currentMem.resolved_role === "entrepreneur" ||
+      currentMem.contractor_onboarding_stage !== null ||
+      isContractorSelfServeIntent(text);
+
+    if (isContractorFlow) {
+      mem.update({
+        resolved_role: "entrepreneur",
+        role_confidence: 0.98,
+        role_source: "intent",
+        current_route: "contractor_onboarding",
+        current_intent: "contractor_join_platform",
+      });
+
+      const identifier = extractBusinessIdentifier(text);
+      const stage = mem.get().contractor_onboarding_stage;
+      const isExplicitHumanRequest = CONTRACTOR_CALLBACK_PATTERNS.test(text) && /humain|repr[ée]sentant|conseiller|vendeur|appeler|appel|rappel/i.test(text);
+
+      if (isExplicitHumanRequest) {
+        emitSafe("alex", "Je peux vous transférer à un humain après avoir préparé votre fiche. Donnez-moi d'abord le nom de votre entreprise, votre site web, téléphone, RBQ ou NEQ.");
+        mem.set("contractor_onboarding_stage", "identify");
+        setIsThinking(false);
+        return;
+      }
+
+      if (!stage || (isContractorSelfServeIntent(text) && !identifier)) {
+        emitSafe("alex", "Parfait. Je vais analyser votre entreprise maintenant et vous montrer les meilleures options UNPRO. Donnez-moi le nom de votre entreprise, votre site web, téléphone, RBQ ou NEQ.");
+        mem.set("contractor_onboarding_stage", "identify");
+        setIsThinking(false);
+        return;
+      }
+
+      if ((stage === "identify" || stage === "analyzing") && identifier) {
+        const businessData = buildSelfServeBusinessData(identifier);
+        mem.update({
+          contractor_identifier: identifier,
+          contractor_aipp_score: businessData.aippScore,
+          contractor_onboarding_stage: "score_ready",
+        });
+        audioEngine.play("success");
+        emitSafe(
+          "alex",
+          `Je prépare votre fiche professionnelle et votre score AIPP. Votre score provisoire est ${businessData.aippScore}/100. Le plus gros potentiel: visibilité locale + conversion.`,
+          "business_analysis",
+          businessData,
+        );
+        setTimeout(() => {
+          emitSafe("alex", "Votre objectif principal est quoi? Recevoir plus de rendez-vous, remplir votre calendrier, protéger votre territoire, améliorer votre classement ou comparer les plans?");
+          mem.set("contractor_onboarding_stage", "objective");
+        }, 700);
+        setIsThinking(false);
+        return;
+      }
+
+      if (stage === "score_ready" || stage === "objective") {
+        const planCode = recommendPlanCodeForObjective(text);
+        mem.update({ recommended_plan: planCode, contractor_onboarding_stage: "plan_offer" });
+        const plans = await getCachedPlans();
+        const recommended = plans.find((p) => p.code === planCode) || plans.find((p) => p.code === "pro") || plans[0];
+        emitSafe(
+          "alex",
+          `Je recommande ${recommended?.name ?? "Pro"}. Vous gardez le momentum: fiche, score, visibilité et rendez-vous qualifiés. Voulez-vous activer maintenant?`,
+          "plan_comparison" as InlineCardType,
+          { plans, recommendedCode: recommended?.code ?? planCode },
+        );
+        setIsThinking(false);
+        return;
+      }
+
+      if (stage === "plan_offer" || /activer|payer|checkout|commencer/i.test(text)) {
+        const planCode = mem.get().recommended_plan || recommendPlanCodeForObjective(text);
+        mem.update({ recommended_plan: planCode, plan_checkout_started: true, contractor_onboarding_stage: "checkout" });
+        emitSafe("alex", "Parfait. J'ouvre l'activation maintenant. Après paiement, on continue votre fiche, vos zones, spécialités et disponibilités.", "stripe_payment_inline" as InlineCardType, {
+          planCode,
+          planName: planCode.charAt(0).toUpperCase() + planCode.slice(1),
+          price: planCode === "recrue" ? 149 : planCode === "premium" ? 599 : planCode === "elite" ? 999 : planCode === "signature" ? 1799 : 349,
+          interval: "monthly",
+        });
+        setIsThinking(false);
+        return;
+      }
+    }
+
     // ─── TRY REAL AI FIRST ───
     try {
       const { data: aiResponse, error: aiError } = await supabase.functions.invoke("alex-process-turn", {
