@@ -18,12 +18,40 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     handleCallback();
+    // Hard safety timeout: never leave the user stuck > 8s
+    const t = setTimeout(() => {
+      setState((curr) => {
+        if (curr === "redirecting") return curr;
+        console.warn("[AuthCallback] safety timeout reached, falling back to /onboarding");
+        navigate("/onboarding", { replace: true });
+        return curr;
+      });
+    }, 8000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const ROLE_MAP: Record<string, string> = {
+    homeowner: "homeowner", owner: "homeowner",
+    contractor: "contractor", professional: "contractor",
+    condo_manager: "condo_manager", property_manager: "condo_manager",
+    partner: "homeowner", municipality: "homeowner",
+    public_org: "homeowner", enterprise: "homeowner", ambassador: "homeowner",
+  };
+
+  function readPreloginRole(): string | null {
+    try {
+      const raw = sessionStorage.getItem("unpro_prelogin_role");
+      if (raw && ROLE_MAP[raw]) return ROLE_MAP[raw];
+    } catch { /* noop */ }
+    return null;
+  }
 
   async function handleCallback() {
     // Read intent FIRST (before any awaits) so it survives storage races
     // when sessionStorage gets cleared by Supabase auth handshake.
     const intent = consumeAuthIntent();
+    const preloginRole = readPreloginRole();
 
     try {
       // Wait for auth session to be established
