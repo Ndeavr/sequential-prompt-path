@@ -75,7 +75,7 @@ function testGreetingBuilder(): TestResult[] {
     assert(g.spokenGreeting.startsWith("Bonjour Yann."), `Spoken should match display when no preferredSpokenName`);
     results.push({ name: "greeting_morning_with_name", passed: true });
   } catch (e) {
-    results.push({ name: "greeting_morning_with_name", passed: false, error: e.message });
+    results.push({ name: "greeting_morning_with_name", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
    // Afternoon greeting — Quebec French uses "Bonjour" all day
@@ -84,7 +84,7 @@ function testGreetingBuilder(): TestResult[] {
     assert(g.displayGreeting.startsWith("Bonjour Yann."), `Expected 'Bonjour Yann.' for afternoon (QC French), got '${g.displayGreeting}'`);
     results.push({ name: "greeting_afternoon", passed: true });
   } catch (e) {
-    results.push({ name: "greeting_afternoon", passed: false, error: e.message });
+    results.push({ name: "greeting_afternoon", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // Evening greeting
@@ -93,7 +93,7 @@ function testGreetingBuilder(): TestResult[] {
     assert(g.displayGreeting.startsWith("Bonsoir Yann."), `Expected evening greeting, got '${g.displayGreeting}'`);
     results.push({ name: "greeting_evening", passed: true });
   } catch (e) {
-    results.push({ name: "greeting_evening", passed: false, error: e.message });
+    results.push({ name: "greeting_evening", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // Returning user
@@ -102,7 +102,7 @@ function testGreetingBuilder(): TestResult[] {
     assert(g.displayGreeting.startsWith("Rebonjour Yann."), `Expected 'Rebonjour', got '${g.displayGreeting}'`);
     results.push({ name: "greeting_returning_user", passed: true });
   } catch (e) {
-    results.push({ name: "greeting_returning_user", passed: false, error: e.message });
+    results.push({ name: "greeting_returning_user", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // No name
@@ -111,7 +111,7 @@ function testGreetingBuilder(): TestResult[] {
     assert(g.displayGreeting.startsWith("Bonjour."), `Expected 'Bonjour.' without name, got '${g.displayGreeting}'`);
     results.push({ name: "greeting_no_name", passed: true });
   } catch (e) {
-    results.push({ name: "greeting_no_name", passed: false, error: e.message });
+    results.push({ name: "greeting_no_name", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // preferredSpokenName differs from firstName
@@ -121,7 +121,7 @@ function testGreetingBuilder(): TestResult[] {
     assert(g.spokenGreeting.includes("Yann"), `Spoken should use preferredSpokenName 'Yann'`);
     results.push({ name: "greeting_spoken_name_differs", passed: true });
   } catch (e) {
-    results.push({ name: "greeting_spoken_name_differs", passed: false, error: e.message });
+    results.push({ name: "greeting_spoken_name_differs", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // Legacy userName fallback
@@ -130,7 +130,7 @@ function testGreetingBuilder(): TestResult[] {
     assert(g.displayGreeting.includes("Marco"), `Should fallback to userName`);
     results.push({ name: "greeting_legacy_userName", passed: true });
   } catch (e) {
-    results.push({ name: "greeting_legacy_userName", passed: false, error: e.message });
+    results.push({ name: "greeting_legacy_userName", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // Edge: hour exactly 12 — Quebec French uses "Bonjour" until 18h
@@ -139,7 +139,7 @@ function testGreetingBuilder(): TestResult[] {
     assert(g.displayGreeting.startsWith("Bonjour"), `Hour 12 should be Bonjour (QC French)`);
     results.push({ name: "greeting_hour_boundary_12", passed: true });
   } catch (e) {
-    results.push({ name: "greeting_hour_boundary_12", passed: false, error: e.message });
+    results.push({ name: "greeting_hour_boundary_12", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // Edge: hour exactly 18
@@ -148,7 +148,7 @@ function testGreetingBuilder(): TestResult[] {
     assert(g.displayGreeting.startsWith("Bonsoir"), `Hour 18 should be evening`);
     results.push({ name: "greeting_hour_boundary_18", passed: true });
   } catch (e) {
-    results.push({ name: "greeting_hour_boundary_18", passed: false, error: e.message });
+    results.push({ name: "greeting_hour_boundary_18", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   return results;
@@ -180,7 +180,7 @@ function testSpokenFrenchRewrite(): TestResult[] {
       );
       results.push({ name, passed: true, actual: result });
     } catch (e) {
-      results.push({ name, passed: false, error: e.message, expected: expectedSubstring });
+      results.push({ name, passed: false, error: e instanceof Error ? e.message : String(e), expected: expectedSubstring });
     }
   }
 
@@ -208,7 +208,7 @@ function testTtsNormalization(): TestResult[] {
       assert(result.includes(expectedSubstring), `Expected '${expectedSubstring}' in '${result}'`);
       results.push({ name, passed: true, actual: result });
     } catch (e) {
-      results.push({ name, passed: false, error: e.message });
+      results.push({ name, passed: false, error: e instanceof Error ? e.message : String(e) });
     }
   }
 
@@ -233,7 +233,7 @@ function testNameNormalization(): TestResult[] {
       assert(result.includes(expectedSubstring), `Expected '${expectedSubstring}' in '${result}'`);
       results.push({ name, passed: true, actual: result });
     } catch (e) {
-      results.push({ name, passed: false, error: e.message });
+      results.push({ name, passed: false, error: e instanceof Error ? e.message : String(e) });
     }
   }
 
@@ -258,7 +258,7 @@ function testVoiceComposer(): TestResult[] {
     assert(r.sentences.length <= 4, `Max 4 sentences, got ${r.sentences.length}`);
     results.push({ name: "composer_basic", passed: true, actual: r.displayText });
   } catch (e) {
-    results.push({ name: "composer_basic", passed: false, error: e.message });
+    results.push({ name: "composer_basic", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // Spoken name variant
@@ -271,7 +271,7 @@ function testVoiceComposer(): TestResult[] {
     assert(r.spokenText.includes("Yann"), "Spoken should use Yann");
     results.push({ name: "composer_spoken_name", passed: true });
   } catch (e) {
-    results.push({ name: "composer_spoken_name", passed: false, error: e.message });
+    results.push({ name: "composer_spoken_name", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // Max 4 sentences enforcement
@@ -285,7 +285,7 @@ function testVoiceComposer(): TestResult[] {
     assert(r.sentences.length === 4, `Expected 4 sentences, got ${r.sentences.length}`);
     results.push({ name: "composer_max_4_sentences", passed: true });
   } catch (e) {
-    results.push({ name: "composer_max_4_sentences", passed: false, error: e.message });
+    results.push({ name: "composer_max_4_sentences", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   return results;
@@ -303,7 +303,7 @@ function testSpeechStyle(): TestResult[] {
     assert(s.speed >= 0.7 && s.speed <= 1.2, `Speed ${s.speed} out of range`);
     results.push({ name: "style_neutral", passed: true, details: JSON.stringify(s) });
   } catch (e) {
-    results.push({ name: "style_neutral", passed: false, error: e.message });
+    results.push({ name: "style_neutral", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // High stress → higher stability (calmer)
@@ -313,7 +313,7 @@ function testSpeechStyle(): TestResult[] {
     assert(stressed.stability >= baseline.stability, `Stress should increase stability: ${stressed.stability} vs ${baseline.stability}`);
     results.push({ name: "style_stress_calmer", passed: true });
   } catch (e) {
-    results.push({ name: "style_stress_calmer", passed: false, error: e.message });
+    results.push({ name: "style_stress_calmer", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // High urgency → faster speed
@@ -323,7 +323,7 @@ function testSpeechStyle(): TestResult[] {
     assert(urgent.speed >= baseline.speed, `Urgency should increase speed: ${urgent.speed} vs ${baseline.speed}`);
     results.push({ name: "style_urgency_faster", passed: true });
   } catch (e) {
-    results.push({ name: "style_urgency_faster", passed: false, error: e.message });
+    results.push({ name: "style_urgency_faster", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // Contractor → sharper
@@ -332,7 +332,7 @@ function testSpeechStyle(): TestResult[] {
     assert(s.label === "contractor-sharp", `Expected 'contractor-sharp', got '${s.label}'`);
     results.push({ name: "style_contractor_sharp", passed: true });
   } catch (e) {
-    results.push({ name: "style_contractor_sharp", passed: false, error: e.message });
+    results.push({ name: "style_contractor_sharp", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   return results;
@@ -349,7 +349,7 @@ function testTextShaping(): TestResult[] {
     assert(r.includes("OK,"), `Should add comma after OK: '${r}'`);
     results.push({ name: "shaping_ok_comma", passed: true, actual: r });
   } catch (e) {
-    results.push({ name: "shaping_ok_comma", passed: false, error: e.message });
+    results.push({ name: "shaping_ok_comma", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   try {
@@ -358,7 +358,7 @@ function testTextShaping(): TestResult[] {
     assert(r.includes("courant, on"), `Should add pause after 'courant': '${r}'`);
     results.push({ name: "shaping_natural_pause", passed: true, actual: r });
   } catch (e) {
-    results.push({ name: "shaping_natural_pause", passed: false, error: e.message });
+    results.push({ name: "shaping_natural_pause", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   return results;
@@ -374,7 +374,7 @@ function testSplitForSpeech(): TestResult[] {
     assert(segments.length === 3, `Expected 3 segments, got ${segments.length}: ${JSON.stringify(segments)}`);
     results.push({ name: "split_three_sentences", passed: true, details: JSON.stringify(segments) });
   } catch (e) {
-    results.push({ name: "split_three_sentences", passed: false, error: e.message });
+    results.push({ name: "split_three_sentences", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // Long sentence splitting
@@ -385,7 +385,7 @@ function testSplitForSpeech(): TestResult[] {
     assert(segments.every(s => s.length <= 100), `All segments should be ≤100 chars`);
     results.push({ name: "split_long_sentence", passed: true, details: JSON.stringify(segments) });
   } catch (e) {
-    results.push({ name: "split_long_sentence", passed: false, error: e.message });
+    results.push({ name: "split_long_sentence", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   return results;
@@ -408,7 +408,7 @@ function testFullPipeline(): TestResult[] {
     assert(ttsJoined.includes("R B Q"), `TTS should expand RBQ: '${ttsJoined}'`);
     results.push({ name: "pipeline_rewrite_and_normalize", passed: true, actual: r.displayText });
   } catch (e) {
-    results.push({ name: "pipeline_rewrite_and_normalize", passed: false, error: e.message });
+    results.push({ name: "pipeline_rewrite_and_normalize", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // UI action extraction
@@ -420,7 +420,7 @@ function testFullPipeline(): TestResult[] {
     assert(!r.displayText.includes("ui_action"), "Display text should not contain raw tags");
     results.push({ name: "pipeline_ui_action_extraction", passed: true });
   } catch (e) {
-    results.push({ name: "pipeline_ui_action_extraction", passed: false, error: e.message });
+    results.push({ name: "pipeline_ui_action_extraction", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // Next action extraction
@@ -431,7 +431,7 @@ function testFullPipeline(): TestResult[] {
     assert(!r.displayText.includes("next_action"), "Display should not contain next_action tag");
     results.push({ name: "pipeline_next_action", passed: true });
   } catch (e) {
-    results.push({ name: "pipeline_next_action", passed: false, error: e.message });
+    results.push({ name: "pipeline_next_action", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // Transcript parity: displayText should NOT contain TTS-only expansions
@@ -446,7 +446,7 @@ function testFullPipeline(): TestResult[] {
     assert(tts.includes("A I double P"), `TTS should expand AIPP: '${tts}'`);
     results.push({ name: "pipeline_transcript_parity", passed: true });
   } catch (e) {
-    results.push({ name: "pipeline_transcript_parity", passed: false, error: e.message });
+    results.push({ name: "pipeline_transcript_parity", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   return results;
@@ -462,7 +462,7 @@ function testVoiceConfig(): TestResult[] {
     assert(ALEX_VOICE_CONFIG.voiceId === "mVjOqyqTPfwlXPjV5sjX", `Voice ID mismatch: ${ALEX_VOICE_CONFIG.voiceId}`);
     results.push({ name: "config_voice_id_locked", passed: true });
   } catch (e) {
-    results.push({ name: "config_voice_id_locked", passed: false, error: e.message });
+    results.push({ name: "config_voice_id_locked", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // Default profile settings
@@ -473,7 +473,7 @@ function testVoiceConfig(): TestResult[] {
     assert(settings.style === 0.14, `Default style should be 0.14, got ${settings.style}`);
     results.push({ name: "config_default_profile", passed: true });
   } catch (e) {
-    results.push({ name: "config_default_profile", passed: false, error: e.message });
+    results.push({ name: "config_default_profile", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // Profile A
@@ -482,7 +482,7 @@ function testVoiceConfig(): TestResult[] {
     assert(settings.stability === 0.72, `Profile A stability should be 0.72`);
     results.push({ name: "config_profile_a", passed: true });
   } catch (e) {
-    results.push({ name: "config_profile_a", passed: false, error: e.message });
+    results.push({ name: "config_profile_a", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // Profile B
@@ -491,7 +491,7 @@ function testVoiceConfig(): TestResult[] {
     assert(settings.stability === 0.76, `Profile B stability should be 0.76`);
     results.push({ name: "config_profile_b", passed: true });
   } catch (e) {
-    results.push({ name: "config_profile_b", passed: false, error: e.message });
+    results.push({ name: "config_profile_b", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // Chunk schedule
@@ -501,7 +501,7 @@ function testVoiceConfig(): TestResult[] {
     assert(schedule[0] === 70, `First chunk should be 70`);
     results.push({ name: "config_chunk_schedule", passed: true });
   } catch (e) {
-    results.push({ name: "config_chunk_schedule", passed: false, error: e.message });
+    results.push({ name: "config_chunk_schedule", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   return results;
@@ -597,11 +597,11 @@ async function testApiIntegration(): Promise<TestResult[]> {
           });
         }
       } catch (e) {
-        results.push({ name: "api_respond_stream", passed: false, error: e.message });
+        results.push({ name: "api_respond_stream", passed: false, error: e instanceof Error ? e.message : String(e) });
       }
     }
   } catch (e) {
-    results.push({ name: "api_create_session", passed: false, error: e.message });
+    results.push({ name: "api_create_session", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   return results;
@@ -619,7 +619,7 @@ function testConsistencyChecks(): TestResult[] {
     assert(ALEX_VOICE_CONFIG.modelId === "eleven_turbo_v2_5", "Model should be turbo v2.5");
     results.push({ name: "consistency_voice_config", passed: true });
   } catch (e) {
-    results.push({ name: "consistency_voice_config", passed: false, error: e.message });
+    results.push({ name: "consistency_voice_config", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   // Env vars check
@@ -630,7 +630,7 @@ function testConsistencyChecks(): TestResult[] {
     assert(!!lovableKey, "LOVABLE_API_KEY not set");
     results.push({ name: "consistency_env_vars", passed: true });
   } catch (e) {
-    results.push({ name: "consistency_env_vars", passed: false, error: e.message });
+    results.push({ name: "consistency_env_vars", passed: false, error: e instanceof Error ? e.message : String(e) });
   }
 
   return results;
@@ -661,7 +661,7 @@ function testQAPhrases(): TestResult[] {
       assert(!normalized.includes("undefined"), `Should not contain 'undefined'`);
       results.push({ name: `qa_phrase_${phrase.substring(0, 20)}`, passed: true, actual: normalized });
     } catch (e) {
-      results.push({ name: `qa_phrase_${phrase.substring(0, 20)}`, passed: false, error: e.message });
+      results.push({ name: `qa_phrase_${phrase.substring(0, 20)}`, passed: false, error: e instanceof Error ? e.message : String(e) });
     }
   }
 
@@ -682,7 +682,7 @@ function testQAPhrases(): TestResult[] {
       assert(!rewritten.includes("Je suis en mesure"), `Should not contain 'Je suis en mesure'`);
       results.push({ name: `qa_reject_${pattern.substring(0, 20)}`, passed: true, actual: rewritten });
     } catch (e) {
-      results.push({ name: `qa_reject_${pattern.substring(0, 20)}`, passed: false, error: e.message });
+      results.push({ name: `qa_reject_${pattern.substring(0, 20)}`, passed: false, error: e instanceof Error ? e.message : String(e) });
     }
   }
 

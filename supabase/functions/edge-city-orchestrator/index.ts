@@ -505,7 +505,7 @@ Deno.serve(async (req) => {
     }
   } catch (e: any) {
     console.error(`[edge-city-orchestrator] Error in action "${action}":`, e);
-    return json({ ok: false, error: e.message }, 500);
+    return json({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
   }
 });
 
