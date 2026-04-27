@@ -21,6 +21,7 @@ import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
 const navItems = [
+  { to: "/admin/omega", label: "⚡ Omega Cockpit", icon: Sparkles },
   { to: "/admin", label: "Tableau de bord", icon: LayoutDashboard },
   { to: "/admin/users", label: "Utilisateurs", icon: Users },
   { to: "/admin/contractors", label: "Entrepreneurs", icon: Briefcase },
