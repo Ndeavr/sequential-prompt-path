@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { lovable } from "@/integrations/lovable/index";
 import { captureCurrentRouteAsIntent, peekAuthIntent } from "@/services/auth/authIntentService";
 import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
+import { authDebug } from "@/services/auth/authDebugBus";
 
 interface OAuthButtonsProps {
   loading?: boolean;
@@ -20,18 +21,28 @@ export default function OAuthButtons({ loading: externalLoading, className = "" 
   const handleGoogle = async () => {
     setGoogleLoading(true);
     trackAuthEvent("auth_method_selected", { method: "google" });
+    authDebug.set({
+      auth_step: "oauth_initiating",
+      auth_method: "google",
+      provider: "google",
+      last_error: null,
+      last_error_step: null,
+    });
     try {
       if (!peekAuthIntent()) {
         captureCurrentRouteAsIntent("oauth_signin");
       }
 
+      authDebug.set({ auth_step: "oauth_redirecting" });
       const { error } = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: `${window.location.origin}/auth/callback`,
       });
       if (error) {
+        authDebug.error(error, "oauth_redirecting");
         toast.error(error.message || "Erreur de connexion");
       }
     } catch (err: any) {
+      authDebug.error(err, "oauth_initiating");
       toast.error(err?.message || "Erreur de connexion");
     } finally {
       setGoogleLoading(false);

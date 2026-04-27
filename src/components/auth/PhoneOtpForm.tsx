@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Phone, ArrowLeft, RefreshCw, ShieldCheck, Loader2, CheckCircle2 } from "lucide-react";
 import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
+import { authDebug } from "@/services/auth/authDebugBus";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface PhoneOtpFormProps {

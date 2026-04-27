@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Mail, CheckCircle, Loader2 } from "lucide-react";
+import { authDebug } from "@/services/auth/authDebugBus";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -41,6 +42,12 @@ export default function LoginMagicLinkForm({
       return;
     }
     setLoading(true);
+    authDebug.set({
+      auth_step: "magic_link_submitting",
+      auth_method: "magic_link",
+      last_error: null,
+      last_error_step: null,
+    });
     // Hard 3s safety — never leave the user staring at a spinner
     const safety = window.setTimeout(() => {
       setLoading(false);
@@ -56,10 +63,12 @@ export default function LoginMagicLinkForm({
       });
       window.clearTimeout(safety);
       if (error) throw error;
+      authDebug.set({ auth_step: "magic_link_sent" });
       setSent(true);
       toast.success(successMessage);
     } catch (err: any) {
       window.clearTimeout(safety);
+      authDebug.error(err, "magic_link_submitting");
       toast.error(err?.message || "Erreur lors de l'envoi");
     } finally {
       setLoading(false);
