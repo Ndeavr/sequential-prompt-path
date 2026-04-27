@@ -9,7 +9,7 @@ import { useCopilotConversationStore } from "@/stores/copilotConversationStore";
 
 export default function StickyBottomAlexCTA() {
   const [visible, setVisible] = useState(false);
-  const open = useCopilotConversationStore((s) => s.open);
+  const openActionMenu = useCopilotConversationStore((s) => s.openActionMenu);
 
   useEffect(() => {
     const onScroll = () => setVisible(window.scrollY > 400);
@@ -28,7 +28,7 @@ export default function StickyBottomAlexCTA() {
           className="fixed bottom-3 left-3 right-3 z-50 md:hidden"
         >
           <button
-            onClick={() => open()}
+            onClick={() => openActionMenu()}
             className="w-full h-14 rounded-2xl bg-[hsl(220_45%_8%/0.92)] border border-white/15 backdrop-blur-xl text-white flex items-center gap-3 px-3 shadow-[0_12px_30px_-6px_hsl(220_100%_30%/0.55)] active:scale-[0.98] transition"
           >
             <AlexOrbPremium size="sm" state="idle" />
