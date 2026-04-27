@@ -187,7 +187,13 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
     // Simulate brief thinking delay for UX
     await new Promise((r) => setTimeout(r, 600));
 
-    const decision = decideNext(get().session, trimmed);
+    const session = get().session;
+    const { decision } = routeAlexIntent(
+      trimmed,
+      { isLoggedIn: session.isLoggedIn },
+      { surface: typeof window !== "undefined" ? window.location.pathname : undefined },
+      session,
+    );
     const bubble = buildAlexBubble(decision);
 
     set((s) => ({
