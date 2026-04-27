@@ -13,7 +13,13 @@ export type CopilotEventName =
   | "alternative_option_requested"
   | "quote_upload_clicked"
   | "why_pro_opened"
-  | "chip_clicked";
+  | "chip_clicked"
+  | "profile_save_prompt_shown"
+  | "value_summary_shown"
+  | "photo_upload_started"
+  | "photo_upload_failed"
+  | "photo_upload_succeeded"
+  | "quick_reply_clicked";
 
 const SESSION_KEY = "unpro_copilot_session_id";
 
