@@ -390,6 +390,17 @@ export default function PageHomeAlexConversationalLite() {
     ? (voice.isSpeaking ? "Alex parle..." : "Alex écoute...")
     : undefined;
 
+  // Contractor mode short-circuit: skip homeowner shell, mount Advisor only.
+  if (!modeLoading && isContractorMode) {
+    return (
+      <LayoutAlexCinematicShell>
+        <div className="px-4 pt-6 pb-12">
+          <PanelContractorAdvisorAlex surface="chat" hideOpenChatCta />
+        </div>
+      </LayoutAlexCinematicShell>
+    );
+  }
+
   return (
     <LayoutAlexCinematicShell>
 
