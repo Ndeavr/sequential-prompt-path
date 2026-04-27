@@ -201,7 +201,7 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
     }
   },
 
-  close: () => set({ isOpen: false }),
+  close: () => set({ isOpen: false, displayMode: "orb_idle" }),
 
   sendMessage: async (text: string) => {
     const trimmed = text.trim();
