@@ -10,12 +10,18 @@ const corsHeaders = {
 };
 
 const PHASE_INVOCATIONS: Record<string, string[]> = {
-  prospect_discovery: ["sniper-import-targets", "war-prospecting-engine"],
-  enrichment:         ["enrich-prospect"],
-  scoring:            ["aipp-real-scan", "edge-generate-aipp-preview"],
-  campaign_generation:["campaign-generator"],
-  outreach_send:      ["process-outbound-queue"],
-  metrics_optimize:   ["fn-omega-rollup-metrics"],
+  prospect_discovery:    ["sniper-import-targets", "war-prospecting-engine"],
+  enrichment:            ["enrich-prospect", "sniper-enrich-target"],
+  scoring:               ["aipp-real-scan", "edge-generate-aipp-preview"],
+  campaign_generation:   ["campaign-generator", "sniper-generate-assets"],
+  outreach_send:         ["process-outbound-queue", "sniper-queue-send"],
+  reply_handling:        ["edge-classify-reply-intent"],
+  alex_closing:          ["alex-autopilot-evaluate", "alex-reengage-check"],
+  payment_followup:      ["admin-activation-subscribe"],
+  onboarding_activation: ["activate-contractor-plan", "contractor-activation-enrich"],
+  expansion_scan:        ["expansion-detector"],
+  churn_rescue:          ["churn-detector"],
+  metrics_optimize:      ["fn-omega-rollup-metrics", "sniper-update-heat"],
 };
 
 Deno.serve(async (req) => {
