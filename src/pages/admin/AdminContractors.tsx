@@ -32,7 +32,12 @@ const AdminContractors = () => {
 
   return (
     <AdminLayout>
-      <PageHeader title="Entrepreneurs" description="Revue et vérification des profils" />
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <PageHeader title="Entrepreneurs" description="Revue et vérification des profils" />
+        <Button asChild className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold">
+          <Link to="/admin/contractors/create-manual">+ Créer manuellement</Link>
+        </Button>
+      </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">
