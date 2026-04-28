@@ -11,6 +11,12 @@ const PHASES = [
   "scoring",
   "campaign_generation",
   "outreach_send",
+  "reply_handling",
+  "alex_closing",
+  "payment_followup",
+  "onboarding_activation",
+  "expansion_scan",
+  "churn_rescue",
   "metrics_optimize",
 ] as const;
 export type OmegaPhase = (typeof PHASES)[number];
