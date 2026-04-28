@@ -14001,6 +14001,68 @@ export type Database = {
           },
         ]
       }
+      churn_signals: {
+        Row: {
+          contractor_id: string
+          detected_at: string
+          id: string
+          rescue_attempt: Json | null
+          resolved_at: string | null
+          severity: string
+          signal_type: string
+          status: string
+        }
+        Insert: {
+          contractor_id: string
+          detected_at?: string
+          id?: string
+          rescue_attempt?: Json | null
+          resolved_at?: string | null
+          severity?: string
+          signal_type: string
+          status?: string
+        }
+        Update: {
+          contractor_id?: string
+          detected_at?: string
+          id?: string
+          rescue_attempt?: Json | null
+          resolved_at?: string | null
+          severity?: string
+          signal_type?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "churn_signals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "churn_signals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "churn_signals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "churn_signals_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       cities: {
         Row: {
           created_at: string
@@ -30512,6 +30574,71 @@ export type Database = {
         }
         Relationships: []
       }
+      expansion_opportunities: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          current_plan: string
+          id: string
+          pitched_at: string | null
+          recommended_plan: string
+          resolved_at: string | null
+          signal: Json
+          status: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          current_plan: string
+          id?: string
+          pitched_at?: string | null
+          recommended_plan: string
+          resolved_at?: string | null
+          signal?: Json
+          status?: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          current_plan?: string
+          id?: string
+          pitched_at?: string | null
+          recommended_plan?: string
+          resolved_at?: string | null
+          signal?: Json
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expansion_opportunities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expansion_opportunities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_full_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expansion_opportunities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expansion_opportunities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "v_contractor_trust_summary"
+            referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
       experiment_assignments: {
         Row: {
           assigned_at: string
@@ -36676,6 +36803,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      omega_loop_runs: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          errors: Json
+          id: string
+          loop_date: string
+          phase: string
+          started_at: string
+          stats: Json
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          errors?: Json
+          id?: string
+          loop_date?: string
+          phase: string
+          started_at?: string
+          stats?: Json
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          errors?: Json
+          id?: string
+          loop_date?: string
+          phase?: string
+          started_at?: string
+          stats?: Json
+          status?: string
+        }
+        Relationships: []
       }
       onboarding_conversion_events: {
         Row: {

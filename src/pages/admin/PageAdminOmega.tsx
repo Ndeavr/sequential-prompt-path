@@ -22,6 +22,7 @@ import {
   Sparkles, ShieldAlert, RefreshCw, Zap, Bot, Target,
   Radio, Brain, Home as HomeIcon, ListChecks, Info,
 } from "lucide-react";
+import { OmegaLoopSection } from "@/components/admin/omega/OmegaLoopSection";
 
 // ─── Types ────────────────────────────────────────────────────────
 type TrustEntry = { source_table: string; formula: string; raw_count: number; last_updated: string; notes: string | null };
@@ -545,6 +546,11 @@ const PageAdminOmega = () => {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Omega Autonomous Loop — daily conductor + lifecycle engines */}
+      <div className="mt-6">
+        <OmegaLoopSection />
+      </div>
     </div>
   );
 };
