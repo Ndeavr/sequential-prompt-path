@@ -34533,6 +34533,48 @@ export type Database = {
         }
         Relationships: []
       }
+      manual_contractor_activations: {
+        Row: {
+          admin_user_id: string
+          contractor_id: string
+          created_at: string
+          expiry_date: string
+          id: string
+          note: string | null
+          paid_date: string
+          payload_json: Json
+          payment_method: string
+          plan_amount_cents: number
+          plan_code: string
+        }
+        Insert: {
+          admin_user_id: string
+          contractor_id: string
+          created_at?: string
+          expiry_date: string
+          id?: string
+          note?: string | null
+          paid_date?: string
+          payload_json?: Json
+          payment_method?: string
+          plan_amount_cents?: number
+          plan_code: string
+        }
+        Update: {
+          admin_user_id?: string
+          contractor_id?: string
+          created_at?: string
+          expiry_date?: string
+          id?: string
+          note?: string | null
+          paid_date?: string
+          payload_json?: Json
+          payment_method?: string
+          plan_amount_cents?: number
+          plan_code?: string
+        }
+        Relationships: []
+      }
       manual_test_runs: {
         Row: {
           completed_at: string | null
