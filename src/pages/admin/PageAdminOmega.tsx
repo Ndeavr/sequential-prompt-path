@@ -545,6 +545,11 @@ const PageAdminOmega = () => {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Omega Autonomous Loop — daily conductor + lifecycle engines */}
+      <div className="mt-6">
+        <OmegaLoopSection />
+      </div>
     </div>
   );
 };
