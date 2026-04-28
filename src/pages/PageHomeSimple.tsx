@@ -22,7 +22,7 @@ import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 
 export default function PageHomeSimple() {
   useEffect(() => {
-    trackCopilotEvent("homepage_simple_loaded");
+    trackCopilotEvent("homepage_loaded");
   }, []);
 
   const jsonLd = {
