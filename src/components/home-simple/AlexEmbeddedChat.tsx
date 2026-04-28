@@ -1,43 +1,65 @@
 /**
- * AlexEmbeddedChat — Greeting bubble + persistent text input + upload, inline on the page.
- * Wired to the Alex feature via useAlexUIBridge. Stays visible above mobile keyboard.
+ * AlexEmbeddedChat — Conversation thread + persistent input + upload, inline on the page.
+ * Shows the FULL message history (Alex + user), not just the last greeting.
  */
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { motion } from "framer-motion";
-import { Send, Paperclip } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Send, Paperclip, Loader2 } from "lucide-react";
 import { useAlexUIBridge } from "@/features/alex/hooks/useAlexUIBridge";
 import { useAlexStore } from "@/features/alex/state/alexStore";
 
 export default function AlexEmbeddedChat() {
   const { onTextSubmit, onFileUpload } = useAlexUIBridge();
   const messages = useAlexStore((s) => s.messages);
+  const mode = useAlexStore((s) => s.mode);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [value, setValue] = useState("");
+  const [sending, setSending] = useState(false);
 
-  // Keep input visible above mobile keyboard
+  // Keyboard offset for mobile
   useEffect(() => {
     if (typeof window === "undefined" || !window.visualViewport) return;
     const vv = window.visualViewport;
     const handler = () => {
-      // reserve viewport offset so the input stays in view; CSS handles the rest
-      document.documentElement.style.setProperty("--kb-offset", `${Math.max(0, window.innerHeight - vv.height)}px`);
+      document.documentElement.style.setProperty(
+        "--kb-offset",
+        `${Math.max(0, window.innerHeight - vv.height)}px`,
+      );
     };
     vv.addEventListener("resize", handler);
     handler();
     return () => vv.removeEventListener("resize", handler);
   }, []);
 
-  // Show only the latest assistant greeting if there are no messages yet
-  const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
-  const greeting =
-    lastAssistant?.text ??
-    "Bonjour ! Je suis Alex.\nDécrivez votre problème ou votre projet, je vais vous aider étape par étape.";
+  // Auto-scroll on new message
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages.length, mode]);
+
+  const visibleMessages =
+    messages.length > 0
+      ? messages
+      : [
+          {
+            id: "greeting",
+            role: "assistant" as const,
+            text:
+              "Bonjour ! Je suis Alex.\nDécrivez votre problème ou votre projet, je vais vous aider étape par étape.",
+            timestamp: Date.now(),
+          },
+        ];
 
   const submit = async () => {
     const t = value.trim();
-    if (!t) return;
+    if (!t || sending) return;
     setValue("");
-    await onTextSubmit(t);
+    setSending(true);
+    try {
+      await onTextSubmit(t);
+    } finally {
+      setSending(false);
+    }
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -52,24 +74,68 @@ export default function AlexEmbeddedChat() {
     fileInputRef.current?.click();
   };
 
+  const isThinking = mode === "thinking";
+
   return (
     <section className="px-5 pt-2 pb-6 space-y-4">
-      {/* Greeting bubble card */}
+      {/* Conversation thread */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="rounded-3xl bg-card/70 backdrop-blur-xl border border-border/40 shadow-[0_8px_32px_-12px_hsl(var(--primary)/0.15)] p-4 flex gap-3 items-start"
+        className="rounded-3xl bg-card/70 backdrop-blur-xl border border-border/40 shadow-[0_8px_32px_-12px_hsl(var(--primary)/0.15)] p-4"
       >
-        <div className="shrink-0 w-10 h-10 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-primary font-bold">
-          A
+        <div
+          ref={scrollRef}
+          className="space-y-3 max-h-[44vh] overflow-y-auto pr-1"
+        >
+          <AnimatePresence initial={false}>
+            {visibleMessages.map((m) => (
+              <motion.div
+                key={m.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+                className={`flex gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                {m.role === "assistant" && (
+                  <div className="shrink-0 w-9 h-9 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-primary font-bold text-sm">
+                    A
+                  </div>
+                )}
+                <div
+                  className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-line ${
+                    m.role === "user"
+                      ? "bg-primary text-primary-foreground rounded-tr-sm"
+                      : "bg-muted/50 text-foreground rounded-tl-sm"
+                  }`}
+                >
+                  {m.text}
+                </div>
+              </motion.div>
+            ))}
+
+            {isThinking && (
+              <motion.div
+                key="thinking"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex gap-2 justify-start"
+              >
+                <div className="shrink-0 w-9 h-9 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center">
+                  <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                </div>
+                <div className="rounded-2xl px-3.5 py-2.5 bg-muted/50 text-muted-foreground text-sm">
+                  Alex réfléchit…
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-        <p className="text-sm md:text-base text-foreground leading-relaxed whitespace-pre-line">
-          {greeting}
-        </p>
       </motion.div>
 
-      {/* Input card — sticky-ish to stay above keyboard */}
+      {/* Input card */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -87,15 +153,16 @@ export default function AlexEmbeddedChat() {
             onKeyDown={onKeyDown}
             placeholder="Écrivez votre message ici…"
             autoComplete="off"
-            className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground/70 outline-none py-2"
+            disabled={sending}
+            className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground/70 outline-none py-2 disabled:opacity-60"
           />
           <button
             onClick={submit}
-            disabled={!value.trim()}
+            disabled={!value.trim() || sending}
             aria-label="Envoyer"
             className="shrink-0 w-11 h-11 rounded-full bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-30 hover:bg-primary/90 active:scale-95 transition-all shadow-md"
           >
-            <Send className="w-4 h-4" />
+            {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </button>
         </div>
 
