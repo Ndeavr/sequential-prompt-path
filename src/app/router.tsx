@@ -472,6 +472,7 @@ const AdminQuotes = lazy(() => import("@/pages/admin/AdminQuotes"));
 const AdminReviews = lazy(() => import("@/pages/admin/AdminReviews"));
 const AdminDocuments = lazy(() => import("@/pages/admin/AdminDocuments"));
 const AdminContractorDetail = lazy(() => import("@/pages/admin/AdminContractorDetail"));
+const PageAdminCreateContractorManual = lazy(() => import("@/pages/admin/PageAdminCreateContractorManual"));
 const AdminAppointments = lazy(() => import("@/pages/admin/AdminAppointments"));
 const AdminLeads = lazy(() => import("@/pages/admin/AdminLeads"));
 const AdminWarProspecting = lazy(() => import("@/pages/admin/AdminWarProspecting"));
@@ -1042,6 +1043,7 @@ export const AppRouter = () => (
         <Route path="/admin/activation" element={<ProtectedRoute requiredRole="admin"><PageAdminEntrepreneurActivation /></ProtectedRoute>} />
         <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><AdminUsers /></ProtectedRoute>} />
         <Route path="/admin/contractors" element={<ProtectedRoute requiredRole="admin"><AdminContractors /></ProtectedRoute>} />
+        <Route path="/admin/contractors/create-manual" element={<ProtectedRoute requiredRole="admin"><PageAdminCreateContractorManual /></ProtectedRoute>} />
         <Route path="/admin/contractors/:id" element={<ProtectedRoute requiredRole="admin"><AdminContractorDetail /></ProtectedRoute>} />
         <Route path="/admin/quotes" element={<ProtectedRoute requiredRole="admin"><AdminQuotes /></ProtectedRoute>} />
         <Route path="/admin/reviews" element={<ProtectedRoute requiredRole="admin"><AdminReviews /></ProtectedRoute>} />
