@@ -11,6 +11,12 @@ const PHASES = [
   "scoring",
   "campaign_generation",
   "outreach_send",
+  "reply_handling",
+  "alex_closing",
+  "payment_followup",
+  "onboarding_activation",
+  "expansion_scan",
+  "churn_rescue",
   "metrics_optimize",
 ] as const;
 export type OmegaPhase = (typeof PHASES)[number];
@@ -97,6 +103,12 @@ export const PHASE_LABELS: Record<OmegaPhase, string> = {
   scoring: "Score AIPP",
   campaign_generation: "Génération campagnes",
   outreach_send: "Envoi vagues",
+  reply_handling: "Réponses entrantes",
+  alex_closing: "Closing Alex",
+  payment_followup: "Suivi paiements",
+  onboarding_activation: "Activation onboarding",
+  expansion_scan: "Expansion (upsell)",
+  churn_rescue: "Sauvetage churn",
   metrics_optimize: "Métriques nuit",
 };
 
