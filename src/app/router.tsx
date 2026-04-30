@@ -1355,6 +1355,11 @@ export const AppRouter = () => (
          <Route path="/admin/command-center/territories" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageCommandCenterTerritories /></Suspense></UniversalRouteGuard>} />
          <Route path="/admin/seo-index-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSeoIndexHealth /></Suspense></UniversalRouteGuard>} />
 
+          {/* Lead Pipe Empire — SEO + Conversion */}
+          <Route path="/plomb-eau/:ville" element={<Suspense fallback={<LazyFallback />}><LeadPipePagePlombEauCity /></Suspense>} />
+          <Route path="/tuyaux-plomb/:quartier" element={<Suspense fallback={<LazyFallback />}><LeadPipePageTuyauxPlombQuartier /></Suspense>} />
+          <Route path="/admin/lead-empire" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><LeadPipePageAdminEmpire /></Suspense></UniversalRouteGuard>} />
+
           {/* Catch-all: try fallback, then 404 */}
           <Route path="*" element={<FallbackRoutePage />} />
       </Routes>
