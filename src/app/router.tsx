@@ -48,6 +48,11 @@ const PageHomeIntentUNPRO = lazy(() => import("@/pages/PageHomeIntentUNPRO"));
 const PageHomeAlexConversationalLite = lazy(() => import("@/pages/PageHomeAlexConversationalLite"));
 const PageAlexConversationAnimated = lazy(() => import("@/pages/PageAlexConversationAnimated"));
 
+// Lead Pipe Empire
+const LeadPipePagePlombEauCity = lazy(() => import("@/pages/lead-pipe/PagePlombEauCity"));
+const LeadPipePageTuyauxPlombQuartier = lazy(() => import("@/pages/lead-pipe/PageTuyauxPlombQuartier"));
+const LeadPipePageAdminEmpire = lazy(() => import("@/pages/admin/PageLeadEmpireDashboard"));
+
 // Lightweight loading fallback
 const LazyFallback = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -1354,6 +1359,11 @@ export const AppRouter = () => (
          <Route path="/admin/command-center/campaigns" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageCommandCenterCampaigns /></Suspense></UniversalRouteGuard>} />
          <Route path="/admin/command-center/territories" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageCommandCenterTerritories /></Suspense></UniversalRouteGuard>} />
          <Route path="/admin/seo-index-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSeoIndexHealth /></Suspense></UniversalRouteGuard>} />
+
+          {/* Lead Pipe Empire — SEO + Conversion */}
+          <Route path="/plomb-eau/:ville" element={<Suspense fallback={<LazyFallback />}><LeadPipePagePlombEauCity /></Suspense>} />
+          <Route path="/tuyaux-plomb/:quartier" element={<Suspense fallback={<LazyFallback />}><LeadPipePageTuyauxPlombQuartier /></Suspense>} />
+          <Route path="/admin/lead-empire" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><LeadPipePageAdminEmpire /></Suspense></UniversalRouteGuard>} />
 
           {/* Catch-all: try fallback, then 404 */}
           <Route path="*" element={<FallbackRoutePage />} />
