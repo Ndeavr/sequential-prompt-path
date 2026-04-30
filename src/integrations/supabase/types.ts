@@ -34087,6 +34087,177 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_pipe_affiliate_clicks: {
+        Row: {
+          city_slug: string | null
+          created_at: string
+          destination_url: string
+          id: string
+          product_key: string
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          city_slug?: string | null
+          created_at?: string
+          destination_url: string
+          id?: string
+          product_key: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          city_slug?: string | null
+          created_at?: string
+          destination_url?: string
+          id?: string
+          product_key?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      lead_pipe_city_profiles: {
+        Row: {
+          active: boolean
+          avg_build_year: number | null
+          city: string
+          city_slug: string
+          created_at: string
+          faq: Json | null
+          hero_summary: string | null
+          id: string
+          old_zone_count: number | null
+          population: number | null
+          pre_1950_share: number | null
+          pre_1975_share: number | null
+          public_lead_service_estimated: boolean | null
+          recommended_actions: Json | null
+          region: string | null
+          risk_index: number
+          source_notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          avg_build_year?: number | null
+          city: string
+          city_slug: string
+          created_at?: string
+          faq?: Json | null
+          hero_summary?: string | null
+          id?: string
+          old_zone_count?: number | null
+          population?: number | null
+          pre_1950_share?: number | null
+          pre_1975_share?: number | null
+          public_lead_service_estimated?: boolean | null
+          recommended_actions?: Json | null
+          region?: string | null
+          risk_index?: number
+          source_notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          avg_build_year?: number | null
+          city?: string
+          city_slug?: string
+          created_at?: string
+          faq?: Json | null
+          hero_summary?: string | null
+          id?: string
+          old_zone_count?: number | null
+          population?: number | null
+          pre_1950_share?: number | null
+          pre_1975_share?: number | null
+          public_lead_service_estimated?: boolean | null
+          recommended_actions?: Json | null
+          region?: string | null
+          risk_index?: number
+          source_notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lead_pipe_neighborhood_profiles: {
+        Row: {
+          active: boolean
+          avg_build_year: number | null
+          city_slug: string
+          created_at: string
+          id: string
+          neighborhood: string
+          neighborhood_slug: string
+          notes: string | null
+          risk_index: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          avg_build_year?: number | null
+          city_slug: string
+          created_at?: string
+          id?: string
+          neighborhood: string
+          neighborhood_slug: string
+          notes?: string | null
+          risk_index?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          avg_build_year?: number | null
+          city_slug?: string
+          created_at?: string
+          id?: string
+          neighborhood?: string
+          neighborhood_slug?: string
+          notes?: string | null
+          risk_index?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lead_pipe_page_views: {
+        Row: {
+          city_slug: string
+          created_at: string
+          event: string
+          id: string
+          path: string
+          referrer: string | null
+          session_id: string | null
+          slug: string
+          user_id: string | null
+          utm: Json | null
+        }
+        Insert: {
+          city_slug: string
+          created_at?: string
+          event?: string
+          id?: string
+          path: string
+          referrer?: string | null
+          session_id?: string | null
+          slug: string
+          user_id?: string | null
+          utm?: Json | null
+        }
+        Update: {
+          city_slug?: string
+          created_at?: string
+          event?: string
+          id?: string
+          path?: string
+          referrer?: string | null
+          session_id?: string | null
+          slug?: string
+          user_id?: string | null
+          utm?: Json | null
+        }
+        Relationships: []
+      }
       lead_priority_scores: {
         Row: {
           created_at: string
@@ -41653,6 +41824,85 @@ export type Database = {
         }
         Relationships: []
       }
+      plumber_leads: {
+        Row: {
+          category: string
+          city: string | null
+          city_slug: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          property_id: string | null
+          property_lead_score_id: string | null
+          source: string
+          status: string
+          updated_at: string
+          urgency: string
+          user_id: string | null
+        }
+        Insert: {
+          category?: string
+          city?: string | null
+          city_slug?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          property_id?: string | null
+          property_lead_score_id?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          urgency?: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          city?: string | null
+          city_slug?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          property_id?: string | null
+          property_lead_score_id?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          urgency?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plumber_leads_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plumber_leads_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plumber_leads_property_lead_score_id_fkey"
+            columns: ["property_lead_score_id"]
+            isOneToOne: false
+            referencedRelation: "property_lead_scores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolio_properties: {
         Row: {
           added_at: string
@@ -44895,6 +45145,72 @@ export type Database = {
           },
           {
             foreignKeyName: "property_insights_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "v_property_map_markers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_lead_scores: {
+        Row: {
+          city: string | null
+          city_slug: string | null
+          computed_at: string
+          created_at: string
+          factors: Json
+          id: string
+          neighborhood: string | null
+          property_id: string
+          property_type: string | null
+          recommended_actions: Json
+          risk_level: string
+          score: number
+          user_id: string
+          year_built: number | null
+        }
+        Insert: {
+          city?: string | null
+          city_slug?: string | null
+          computed_at?: string
+          created_at?: string
+          factors?: Json
+          id?: string
+          neighborhood?: string | null
+          property_id: string
+          property_type?: string | null
+          recommended_actions?: Json
+          risk_level: string
+          score: number
+          user_id: string
+          year_built?: number | null
+        }
+        Update: {
+          city?: string | null
+          city_slug?: string | null
+          computed_at?: string
+          created_at?: string
+          factors?: Json
+          id?: string
+          neighborhood?: string | null
+          property_id?: string
+          property_type?: string | null
+          recommended_actions?: Json
+          risk_level?: string
+          score?: number
+          user_id?: string
+          year_built?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_lead_scores_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_lead_scores_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "v_property_map_markers"
