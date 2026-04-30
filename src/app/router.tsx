@@ -48,6 +48,11 @@ const PageHomeIntentUNPRO = lazy(() => import("@/pages/PageHomeIntentUNPRO"));
 const PageHomeAlexConversationalLite = lazy(() => import("@/pages/PageHomeAlexConversationalLite"));
 const PageAlexConversationAnimated = lazy(() => import("@/pages/PageAlexConversationAnimated"));
 
+// Lead Pipe Empire
+const LeadPipePagePlombEauCity = lazy(() => import("@/pages/lead-pipe/PagePlombEauCity"));
+const LeadPipePageTuyauxPlombQuartier = lazy(() => import("@/pages/lead-pipe/PageTuyauxPlombQuartier"));
+const LeadPipePageAdminEmpire = lazy(() => import("@/pages/admin/PageLeadEmpireDashboard"));
+
 // Lightweight loading fallback
 const LazyFallback = () => (
   <div className="flex items-center justify-center min-h-screen">
