@@ -40,12 +40,21 @@ interface UserAudioPrefs {
 const PRIORITY: Record<SoundEvent, number> = {
   urgent: 100,
   error: 80,
+  "error-soft": 75,
+  "payment-success": 70,
+  "match-success": 65,
   success: 60,
+  "vault-clack": 55,
   notification: 40,
+  "scan-start": 35,
   outro: 30,
+  "criteria-click": 25,
+  "soft-click": 22,
   intro: 20,
   thinking: 10,
+  "alex-thinking": 10,
   listening: 5,
+  "alex-listening": 5,
 };
 
 // Web Audio API synthesised sounds — no external files needed.
