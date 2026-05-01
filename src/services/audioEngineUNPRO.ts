@@ -316,6 +316,77 @@ class AudioEngineUNPRO {
       }
     });
   }
+
+  // ── UNPRO Vault sound layer ──────────────────────────────
+
+  /** Soft click — single short sine ping, mechanical micro-feedback */
+  private playSoftClick(): Promise<void> {
+    return this.playToneSequence([
+      { freq: 660, duration: 0.04, type: "sine" },
+    ], 0);
+  }
+
+  /** Criteria click — two crisp ticks (criteria locking into place) */
+  private playCriteriaClick(): Promise<void> {
+    return this.playToneSequence([
+      { freq: 880, duration: 0.03, type: "triangle" },
+      { freq: 988, duration: 0.03, type: "triangle" },
+    ], 0.04);
+  }
+
+  /** Vault clack — low square thump + bright sine release */
+  private playVaultClack(): Promise<void> {
+    return this.playToneSequence([
+      { freq: 180, duration: 0.06, type: "square" },
+      { freq: 880, duration: 0.04, type: "sine" },
+    ], 0.02);
+  }
+
+  /** Match success — brighter triad with sparkle */
+  private playMatchSuccess(): Promise<void> {
+    return this.playToneSequence([
+      { freq: 587.33, duration: 0.09, type: "sine" },
+      { freq: 783.99, duration: 0.09, type: "sine" },
+      { freq: 1046.5, duration: 0.16, type: "sine" },
+    ], 0.03);
+  }
+
+  /** Scan start — rising sine sweep ~220ms */
+  private playScanStart(): Promise<void> {
+    if (!this.ctx || !this.gainNode) return Promise.resolve();
+    return new Promise<void>((resolve) => {
+      const ctx = this.ctx!;
+      const osc = ctx.createOscillator();
+      const env = ctx.createGain();
+      osc.type = "sine";
+      const t = ctx.currentTime;
+      osc.frequency.setValueAtTime(400, t);
+      osc.frequency.exponentialRampToValueAtTime(1200, t + 0.22);
+      env.gain.setValueAtTime(0, t);
+      env.gain.linearRampToValueAtTime(1, t + 0.02);
+      env.gain.linearRampToValueAtTime(0, t + 0.22);
+      osc.connect(env);
+      env.connect(this.gainNode!);
+      osc.start(t);
+      osc.stop(t + 0.24);
+      osc.onended = () => resolve();
+      this.currentSource = osc;
+    });
+  }
+
+  /** Payment success — vault clack chained into bright triad */
+  private async playPaymentSuccess(): Promise<void> {
+    await this.playVaultClack();
+    await this.playMatchSuccess();
+  }
+
+  /** Error soft — gentle low triangle, no harshness */
+  private playErrorSoft(): Promise<void> {
+    return this.playToneSequence([
+      { freq: 294, duration: 0.1, type: "triangle" },
+      { freq: 247, duration: 0.14, type: "triangle" },
+    ], 0.05);
+  }
 }
 
 // Singleton
