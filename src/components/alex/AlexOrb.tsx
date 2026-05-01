@@ -20,7 +20,6 @@ export type AlexOrbState =
   | "thinking"
   | "speaking"
   | "asking_question"
-  | "routing"
   | "success"
   | "warning"
   | "error"
@@ -69,7 +68,6 @@ const PALETTE: Record<
   thinking:        { primary: "260 100% 65%", accent: "222 100% 60%", pulseDur: 1.8, haloOpacity: [0.55, 0.95, 0.55], rotateDur: 5,  blobSpeed: 3.5,rim: "260 100% 70%" },
   speaking:        { primary: "210 100% 65%", accent: "200 100% 70%", pulseDur: 0.9, haloOpacity: [0.7,  1.0,  0.7],  rotateDur: 7,  blobSpeed: 4,  rim: "200 100% 70%" },
   asking_question: { primary: "230 100% 65%", accent: "270 100% 70%", pulseDur: 1.6, haloOpacity: [0.65, 1.0,  0.65], rotateDur: 9,  blobSpeed: 5,  rim: "250 100% 70%" },
-  routing:         { primary: "200 100% 60%", accent: "260 100% 70%", pulseDur: 1.4, haloOpacity: [0.6,  1.0,  0.6],  rotateDur: 6,  blobSpeed: 4,  rim: "210 100% 70%" },
   success:         { primary: "150 80% 55%",  accent: "45 100% 60%",  pulseDur: 1.4, haloOpacity: [0.7,  1.0,  0.7],  rotateDur: 10, blobSpeed: 5,  rim: "150 80% 60%" },
   warning:         { primary: "38 100% 60%",  accent: "30 100% 55%",  pulseDur: 1.6, haloOpacity: [0.6,  0.95, 0.6],  rotateDur: 12, blobSpeed: 6,  rim: "38 100% 60%" },
   error:           { primary: "0 90% 60%",    accent: "15 90% 55%",   pulseDur: 1.2, haloOpacity: [0.55, 0.95, 0.55], rotateDur: 9,  blobSpeed: 5,  rim: "0 90% 60%" },
