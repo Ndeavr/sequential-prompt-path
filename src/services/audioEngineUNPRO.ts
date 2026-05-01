@@ -17,7 +17,17 @@ export type SoundEvent =
   | "success"
   | "error"
   | "notification"
-  | "urgent";
+  | "urgent"
+  // ── UNPRO Vault sound system ──
+  | "soft-click"
+  | "criteria-click"
+  | "vault-clack"
+  | "match-success"
+  | "scan-start"
+  | "alex-listening"
+  | "alex-thinking"
+  | "payment-success"
+  | "error-soft";
 
 type EngineState = "idle" | "playing" | "muted";
 
@@ -30,12 +40,21 @@ interface UserAudioPrefs {
 const PRIORITY: Record<SoundEvent, number> = {
   urgent: 100,
   error: 80,
+  "error-soft": 75,
+  "payment-success": 70,
+  "match-success": 65,
   success: 60,
+  "vault-clack": 55,
   notification: 40,
+  "scan-start": 35,
   outro: 30,
+  "criteria-click": 25,
+  "soft-click": 22,
   intro: 20,
   thinking: 10,
+  "alex-thinking": 10,
   listening: 5,
+  "alex-listening": 5,
 };
 
 // Web Audio API synthesised sounds — no external files needed.
@@ -47,7 +66,7 @@ class AudioEngineUNPRO {
   private currentSource: AudioBufferSourceNode | OscillatorNode | null = null;
   private currentEvent: SoundEvent | null = null;
   private state: EngineState = "idle";
-  private prefs: UserAudioPrefs = { enabled: true, volume: 0.35, focusMode: false };
+  private prefs: UserAudioPrefs = { enabled: true, volume: 0.18, focusMode: false };
   private unlocked = false;
   private listeners = new Set<(state: EngineState) => void>();
 
@@ -76,14 +95,23 @@ class AudioEngineUNPRO {
 
     try {
       switch (event) {
-        case "intro":       await this.playIntro(); break;
-        case "outro":       await this.playOutro(); break;
-        case "listening":   await this.playListening(); break;
-        case "thinking":    await this.playThinking(); break;
-        case "success":     await this.playSuccess(); break;
-        case "error":       await this.playError(); break;
-        case "notification": await this.playNotification(); break;
-        case "urgent":      await this.playUrgent(); break;
+        case "intro":            await this.playIntro(); break;
+        case "outro":            await this.playOutro(); break;
+        case "listening":
+        case "alex-listening":   await this.playListening(); break;
+        case "thinking":
+        case "alex-thinking":    await this.playThinking(); break;
+        case "success":          await this.playSuccess(); break;
+        case "error":            await this.playError(); break;
+        case "error-soft":       await this.playErrorSoft(); break;
+        case "notification":     await this.playNotification(); break;
+        case "urgent":           await this.playUrgent(); break;
+        case "soft-click":       await this.playSoftClick(); break;
+        case "criteria-click":   await this.playCriteriaClick(); break;
+        case "vault-clack":      await this.playVaultClack(); break;
+        case "match-success":    await this.playMatchSuccess(); break;
+        case "scan-start":       await this.playScanStart(); break;
+        case "payment-success":  await this.playPaymentSuccess(); break;
       }
     } catch {
       // Silently fail — audio is never blocking
@@ -287,6 +315,77 @@ class AudioEngineUNPRO {
         resolve();
       }
     });
+  }
+
+  // ── UNPRO Vault sound layer ──────────────────────────────
+
+  /** Soft click — single short sine ping, mechanical micro-feedback */
+  private playSoftClick(): Promise<void> {
+    return this.playToneSequence([
+      { freq: 660, duration: 0.04, type: "sine" },
+    ], 0);
+  }
+
+  /** Criteria click — two crisp ticks (criteria locking into place) */
+  private playCriteriaClick(): Promise<void> {
+    return this.playToneSequence([
+      { freq: 880, duration: 0.03, type: "triangle" },
+      { freq: 988, duration: 0.03, type: "triangle" },
+    ], 0.04);
+  }
+
+  /** Vault clack — low square thump + bright sine release */
+  private playVaultClack(): Promise<void> {
+    return this.playToneSequence([
+      { freq: 180, duration: 0.06, type: "square" },
+      { freq: 880, duration: 0.04, type: "sine" },
+    ], 0.02);
+  }
+
+  /** Match success — brighter triad with sparkle */
+  private playMatchSuccess(): Promise<void> {
+    return this.playToneSequence([
+      { freq: 587.33, duration: 0.09, type: "sine" },
+      { freq: 783.99, duration: 0.09, type: "sine" },
+      { freq: 1046.5, duration: 0.16, type: "sine" },
+    ], 0.03);
+  }
+
+  /** Scan start — rising sine sweep ~220ms */
+  private playScanStart(): Promise<void> {
+    if (!this.ctx || !this.gainNode) return Promise.resolve();
+    return new Promise<void>((resolve) => {
+      const ctx = this.ctx!;
+      const osc = ctx.createOscillator();
+      const env = ctx.createGain();
+      osc.type = "sine";
+      const t = ctx.currentTime;
+      osc.frequency.setValueAtTime(400, t);
+      osc.frequency.exponentialRampToValueAtTime(1200, t + 0.22);
+      env.gain.setValueAtTime(0, t);
+      env.gain.linearRampToValueAtTime(1, t + 0.02);
+      env.gain.linearRampToValueAtTime(0, t + 0.22);
+      osc.connect(env);
+      env.connect(this.gainNode!);
+      osc.start(t);
+      osc.stop(t + 0.24);
+      osc.onended = () => resolve();
+      this.currentSource = osc;
+    });
+  }
+
+  /** Payment success — vault clack chained into bright triad */
+  private async playPaymentSuccess(): Promise<void> {
+    await this.playVaultClack();
+    await this.playMatchSuccess();
+  }
+
+  /** Error soft — gentle low triangle, no harshness */
+  private playErrorSoft(): Promise<void> {
+    return this.playToneSequence([
+      { freq: 294, duration: 0.1, type: "triangle" },
+      { freq: 247, duration: 0.14, type: "triangle" },
+    ], 0.05);
   }
 }
 
