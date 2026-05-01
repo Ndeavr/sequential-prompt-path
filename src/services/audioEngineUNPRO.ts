@@ -66,7 +66,7 @@ class AudioEngineUNPRO {
   private currentSource: AudioBufferSourceNode | OscillatorNode | null = null;
   private currentEvent: SoundEvent | null = null;
   private state: EngineState = "idle";
-  private prefs: UserAudioPrefs = { enabled: true, volume: 0.35, focusMode: false };
+  private prefs: UserAudioPrefs = { enabled: true, volume: 0.18, focusMode: false };
   private unlocked = false;
   private listeners = new Set<(state: EngineState) => void>();
 
