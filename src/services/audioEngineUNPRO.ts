@@ -17,7 +17,17 @@ export type SoundEvent =
   | "success"
   | "error"
   | "notification"
-  | "urgent";
+  | "urgent"
+  // ── UNPRO Vault sound system ──
+  | "soft-click"
+  | "criteria-click"
+  | "vault-clack"
+  | "match-success"
+  | "scan-start"
+  | "alex-listening"
+  | "alex-thinking"
+  | "payment-success"
+  | "error-soft";
 
 type EngineState = "idle" | "playing" | "muted";
 
