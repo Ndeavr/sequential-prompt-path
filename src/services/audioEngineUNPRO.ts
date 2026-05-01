@@ -95,14 +95,23 @@ class AudioEngineUNPRO {
 
     try {
       switch (event) {
-        case "intro":       await this.playIntro(); break;
-        case "outro":       await this.playOutro(); break;
-        case "listening":   await this.playListening(); break;
-        case "thinking":    await this.playThinking(); break;
-        case "success":     await this.playSuccess(); break;
-        case "error":       await this.playError(); break;
-        case "notification": await this.playNotification(); break;
-        case "urgent":      await this.playUrgent(); break;
+        case "intro":            await this.playIntro(); break;
+        case "outro":            await this.playOutro(); break;
+        case "listening":
+        case "alex-listening":   await this.playListening(); break;
+        case "thinking":
+        case "alex-thinking":    await this.playThinking(); break;
+        case "success":          await this.playSuccess(); break;
+        case "error":            await this.playError(); break;
+        case "error-soft":       await this.playErrorSoft(); break;
+        case "notification":     await this.playNotification(); break;
+        case "urgent":           await this.playUrgent(); break;
+        case "soft-click":       await this.playSoftClick(); break;
+        case "criteria-click":   await this.playCriteriaClick(); break;
+        case "vault-clack":      await this.playVaultClack(); break;
+        case "match-success":    await this.playMatchSuccess(); break;
+        case "scan-start":       await this.playScanStart(); break;
+        case "payment-success":  await this.playPaymentSuccess(); break;
       }
     } catch {
       // Silently fail — audio is never blocking
