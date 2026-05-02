@@ -22335,10 +22335,14 @@ export type Database = {
       contractor_prospects: {
         Row: {
           activation_status: string
+          address: string | null
+          aipp_score: number | null
           business_name: string
           category_slug: string | null
           city: string | null
+          confidence_score: number | null
           created_at: string
+          discovery_method: string | null
           do_not_contact: boolean
           domain_status: string | null
           email: string | null
@@ -22355,23 +22359,32 @@ export type Database = {
           payment_status: string
           phone: string | null
           postal_code: string | null
+          priority_score: number | null
           province: string | null
           qualification_status: string
+          raw_data: Json | null
           rbq: string | null
           region: string | null
           review_count: number | null
           review_rating: number | null
+          source: string | null
           source_name: string | null
           source_record_id: string | null
+          source_url: string | null
+          trade: string | null
           updated_at: string
           website_url: string | null
         }
         Insert: {
           activation_status?: string
+          address?: string | null
+          aipp_score?: number | null
           business_name: string
           category_slug?: string | null
           city?: string | null
+          confidence_score?: number | null
           created_at?: string
+          discovery_method?: string | null
           do_not_contact?: boolean
           domain_status?: string | null
           email?: string | null
@@ -22388,23 +22401,32 @@ export type Database = {
           payment_status?: string
           phone?: string | null
           postal_code?: string | null
+          priority_score?: number | null
           province?: string | null
           qualification_status?: string
+          raw_data?: Json | null
           rbq?: string | null
           region?: string | null
           review_count?: number | null
           review_rating?: number | null
+          source?: string | null
           source_name?: string | null
           source_record_id?: string | null
+          source_url?: string | null
+          trade?: string | null
           updated_at?: string
           website_url?: string | null
         }
         Update: {
           activation_status?: string
+          address?: string | null
+          aipp_score?: number | null
           business_name?: string
           category_slug?: string | null
           city?: string | null
+          confidence_score?: number | null
           created_at?: string
+          discovery_method?: string | null
           do_not_contact?: boolean
           domain_status?: string | null
           email?: string | null
@@ -22421,14 +22443,19 @@ export type Database = {
           payment_status?: string
           phone?: string | null
           postal_code?: string | null
+          priority_score?: number | null
           province?: string | null
           qualification_status?: string
+          raw_data?: Json | null
           rbq?: string | null
           region?: string | null
           review_count?: number | null
           review_rating?: number | null
+          source?: string | null
           source_name?: string | null
           source_record_id?: string | null
+          source_url?: string | null
+          trade?: string | null
           updated_at?: string
           website_url?: string | null
         }
