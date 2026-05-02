@@ -22163,6 +22163,71 @@ export type Database = {
           },
         ]
       }
+      contractor_profiles_draft: {
+        Row: {
+          business_name: string
+          certifications: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          images: Json | null
+          logo_url: string | null
+          neq_verified: boolean | null
+          profile_status: string
+          prospect_id: string | null
+          rbq_verified: boolean | null
+          reviews: Json | null
+          service_areas: Json | null
+          services: Json | null
+          slug: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_name: string
+          certifications?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: Json | null
+          logo_url?: string | null
+          neq_verified?: boolean | null
+          profile_status?: string
+          prospect_id?: string | null
+          rbq_verified?: boolean | null
+          reviews?: Json | null
+          service_areas?: Json | null
+          services?: Json | null
+          slug?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_name?: string
+          certifications?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: Json | null
+          logo_url?: string | null
+          neq_verified?: boolean | null
+          profile_status?: string
+          prospect_id?: string | null
+          rbq_verified?: boolean | null
+          reviews?: Json | null
+          service_areas?: Json | null
+          services?: Json | null
+          slug?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_profiles_draft_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_prospect_contacts: {
         Row: {
           bounce_status: string | null
@@ -34694,6 +34759,152 @@ export type Database = {
           message?: string
         }
         Relationships: []
+      }
+      live_agent_runs: {
+        Row: {
+          agent_name: string
+          agent_type: string | null
+          created_by: string | null
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          input: Json | null
+          output: Json | null
+          run_status: string
+          started_at: string
+        }
+        Insert: {
+          agent_name: string
+          agent_type?: string | null
+          created_by?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          input?: Json | null
+          output?: Json | null
+          run_status?: string
+          started_at?: string
+        }
+        Update: {
+          agent_name?: string
+          agent_type?: string | null
+          created_by?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          input?: Json | null
+          output?: Json | null
+          run_status?: string
+          started_at?: string
+        }
+        Relationships: []
+      }
+      live_agent_settings: {
+        Row: {
+          created_at: string
+          daily_discovery_limit: number
+          id: string
+          live_mode_enabled: boolean
+          outreach_from_email: string | null
+          outreach_from_name: string | null
+          priority_cities: Json
+          priority_trades: Json
+          require_admin_approval_before_email: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          daily_discovery_limit?: number
+          id?: string
+          live_mode_enabled?: boolean
+          outreach_from_email?: string | null
+          outreach_from_name?: string | null
+          priority_cities?: Json
+          priority_trades?: Json
+          require_admin_approval_before_email?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          daily_discovery_limit?: number
+          id?: string
+          live_mode_enabled?: boolean
+          outreach_from_email?: string | null
+          outreach_from_name?: string | null
+          priority_cities?: Json
+          priority_trades?: Json
+          require_admin_approval_before_email?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      live_outreach_drafts: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          approved_by_admin: boolean
+          body: string | null
+          channel: string
+          clicked_at: string | null
+          created_at: string
+          draft_status: string
+          error_message: string | null
+          id: string
+          opened_at: string | null
+          prospect_id: string | null
+          replied_at: string | null
+          resend_message_id: string | null
+          sent_at: string | null
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_by_admin?: boolean
+          body?: string | null
+          channel?: string
+          clicked_at?: string | null
+          created_at?: string
+          draft_status?: string
+          error_message?: string | null
+          id?: string
+          opened_at?: string | null
+          prospect_id?: string | null
+          replied_at?: string | null
+          resend_message_id?: string | null
+          sent_at?: string | null
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_by_admin?: boolean
+          body?: string | null
+          channel?: string
+          clicked_at?: string | null
+          created_at?: string
+          draft_status?: string
+          error_message?: string | null
+          id?: string
+          opened_at?: string | null
+          prospect_id?: string | null
+          replied_at?: string | null
+          resend_message_id?: string | null
+          sent_at?: string | null
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_outreach_drafts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       login_interstitial_content: {
         Row: {
