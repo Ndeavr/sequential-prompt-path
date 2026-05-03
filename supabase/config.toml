@@ -117,3 +117,15 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.enrich-prospect]
     verify_jwt = false
+  [functions.live-agent-discover]
+    verify_jwt = false
+  [functions.live-agent-enrich]
+    verify_jwt = false
+  [functions.live-agent-score]
+    verify_jwt = false
+  [functions.live-agent-outreach-draft]
+    verify_jwt = false
+  [functions.live-agent-outreach-send]
+    verify_jwt = false
+  [functions.live-agent-go-live]
+    verify_jwt = false

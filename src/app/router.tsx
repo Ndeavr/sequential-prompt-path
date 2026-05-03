@@ -484,6 +484,7 @@ const AdminWarProspecting = lazy(() => import("@/pages/admin/AdminWarProspecting
 const AdminTerritories = lazy(() => import("@/pages/admin/AdminTerritories"));
 const AdminGrowth = lazy(() => import("@/pages/admin/AdminGrowth"));
 const AdminAgents = lazy(() => import("@/pages/admin/AdminAgents"));
+const PageAdminLiveAgents = lazy(() => import("@/pages/admin/PageAdminLiveAgents"));
 const AdminMedia = lazy(() => import("@/pages/admin/AdminMedia"));
 const AdminValidation = lazy(() => import("@/pages/admin/AdminValidation"));
 const AdminAnswerEngine = lazy(() => import("@/pages/admin/AdminAnswerEngine"));
@@ -1059,6 +1060,7 @@ export const AppRouter = () => (
         <Route path="/admin/territories" element={<ProtectedRoute requiredRole="admin"><AdminTerritories /></ProtectedRoute>} />
         <Route path="/admin/growth" element={<ProtectedRoute requiredRole="admin"><AdminGrowth /></ProtectedRoute>} />
         <Route path="/admin/agents" element={<ProtectedRoute requiredRole="admin"><AdminAgents /></ProtectedRoute>} />
+        <Route path="/admin/live-agents" element={<ProtectedRoute requiredRole="admin"><PageAdminLiveAgents /></ProtectedRoute>} />
         <Route path="/admin/media" element={<ProtectedRoute requiredRole="admin"><AdminMedia /></ProtectedRoute>} />
         <Route path="/admin/validation" element={<ProtectedRoute requiredRole="admin"><AdminValidation /></ProtectedRoute>} />
         <Route path="/admin/answer-engine" element={<ProtectedRoute requiredRole="admin"><AdminAnswerEngine /></ProtectedRoute>} />
