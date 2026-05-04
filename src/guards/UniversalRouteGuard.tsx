@@ -26,7 +26,7 @@ interface UniversalRouteGuardProps {
 }
 
 export default function UniversalRouteGuard({ children, allowedRoles, anyAuth }: UniversalRouteGuardProps) {
-  const { isAuthenticated, isLoading, role, user } = useAuth();
+  const { isAuthenticated, isLoading, role, user, hasResolvedRole } = useAuth();
   const location = useLocation();
   const tracked = useRef(false);
 
@@ -71,7 +71,7 @@ export default function UniversalRouteGuard({ children, allowedRoles, anyAuth }:
 
   // ── Recovery access ──
   // Keep SMS diagnostics reachable after login even when role/profile loading is degraded.
-  if (location.pathname === "/admin/sms-debug" && isAuthenticated && !role) {
+  if (location.pathname === "/admin/sms-debug" && isAuthenticated && !role && !hasResolvedRole) {
     console.warn("[UniversalRouteGuard] degraded admin sms-debug access", {
       user: user ? { id: user.id, email: user.email, phone: user.phone } : null,
       redirectTarget: location.pathname + location.search + location.hash,
