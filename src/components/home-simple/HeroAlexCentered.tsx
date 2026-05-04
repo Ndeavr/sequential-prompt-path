@@ -30,12 +30,12 @@ export default function HeroAlexCentered() {
   }, [mode]);
 
   return (
-    <section className="relative px-5 pt-10 pb-6 text-center">
+    <section className="relative isolate px-5 pt-10 pb-6 text-center">
       <motion.h1
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-[clamp(1.9rem,6vw,3rem)] font-display font-bold leading-[1.05] tracking-tight text-foreground"
+        className="relative z-20 text-[clamp(1.9rem,6vw,3rem)] font-display font-bold leading-[1.05] tracking-tight text-foreground"
       >
         Décrivez votre problème<br />ou imaginez votre projet
       </motion.h1>
@@ -44,7 +44,7 @@ export default function HeroAlexCentered() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.12, duration: 0.4 }}
-        className="mt-4 text-base md:text-lg text-muted-foreground max-w-md mx-auto"
+        className="relative z-20 mt-4 text-base md:text-lg text-muted-foreground max-w-md mx-auto"
       >
         Alex vous aide à estimer, comprendre, comparer et trouver le bon pro.
       </motion.p>
