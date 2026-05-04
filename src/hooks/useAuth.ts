@@ -128,6 +128,7 @@ export const useAuth = () => {
     isRoleLoading,
     hasResolvedRole: !session?.user || roleQuery.isFetched || roleTimedOut,
     roleError: roleQuery.error ?? null,
+    roleTimedOut,
     isAuthenticated: !!session?.user,
     role: role as string | null,
     signOut,
