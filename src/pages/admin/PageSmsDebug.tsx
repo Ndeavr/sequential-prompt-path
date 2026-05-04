@@ -81,6 +81,15 @@ export default function PageSmsDebug() {
       supabase.from("otp_codes").select("id,phone,expires_at,attempts,consumed_at,ip,created_at")
         .order("created_at", { ascending: false }).limit(25),
     ]);
+    console.log("[PageSmsDebug] load results", {
+      outbound: { count: oRes.data?.length ?? 0, error: oRes.error },
+      inbound: { count: iRes.data?.length ?? 0, error: iRes.error },
+      failed: { count: fRes.data?.length ?? 0, error: fRes.error },
+      otp: { count: otpRes.data?.length ?? 0, error: otpRes.error },
+    });
+    [oRes.error, iRes.error, fRes.error, otpRes.error].filter(Boolean).forEach((error) => {
+      console.error("[PageSmsDebug] Supabase error", error);
+    });
     setOutbound((oRes.data as SmsRow[]) || []);
     setInbound((iRes.data as SmsRow[]) || []);
     setFailed((fRes.data as SmsRow[]) || []);
