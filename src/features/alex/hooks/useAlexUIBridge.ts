@@ -31,9 +31,12 @@ export function useAlexUIBridge() {
   );
 
   /** User uploaded a file/image */
-  const onFileUpload = useCallback(async () => {
-    await handleUpload();
-  }, [handleUpload]);
+  const onFileUpload = useCallback(
+    async (file?: File, userMessage?: string) => {
+      await handleUpload(file, userMessage);
+    },
+    [handleUpload]
+  );
 
   /** User clicked panel to restore from minimized */
   const onRestore = useCallback(() => {
