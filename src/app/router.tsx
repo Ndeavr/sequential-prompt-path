@@ -646,6 +646,7 @@ export const AppRouter = () => (
     <BannerContinueFlow />
     <AuthReturnRouter />
     <AuthOverlayPremium />
+    <PersistentContractorCallPopup />
     <Suspense fallback={<LazyFallback />}>
       <Routes>
         {/* Redirects for common mismatched entry points */}
