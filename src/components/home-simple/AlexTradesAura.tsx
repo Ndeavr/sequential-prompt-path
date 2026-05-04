@@ -50,36 +50,36 @@ export default function AlexTradesAura() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
+      className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-visible"
     >
       <AnimatePresence mode="sync">
         <motion.div
           key={index}
-          initial={{ opacity: 0, scale: 1.08 }}
-          animate={{ opacity: 0.22, scale: 1 }}
+          initial={{ opacity: 0, scale: 1.06 }}
+          animate={{ opacity: 0.55, scale: 1 }}
           exit={{ opacity: 0, scale: 0.98 }}
-          transition={{ duration: 1.6, ease: "easeInOut" }}
+          transition={{ duration: 1.4, ease: "easeInOut" }}
           className="absolute inset-0 flex items-center justify-center"
         >
           <img
             src={current.src}
             alt=""
             loading="lazy"
-            width={768}
-            height={768}
-            className="w-[110%] max-w-[520px] aspect-square object-cover rounded-full blur-[2px]"
+            width={640}
+            height={640}
+            className="w-full h-full object-cover rounded-full blur-[1px]"
             style={{
               maskImage:
-                "radial-gradient(circle at center, black 30%, transparent 72%)",
+                "radial-gradient(circle at center, black 45%, transparent 85%)",
               WebkitMaskImage:
-                "radial-gradient(circle at center, black 30%, transparent 72%)",
+                "radial-gradient(circle at center, black 45%, transparent 85%)",
             }}
           />
         </motion.div>
       </AnimatePresence>
 
-      {/* Soft dark vignette to keep contrast with orb */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_20%,hsl(var(--background))_75%)]" />
+      {/* Soft transparent vignette — darkens edges without hiding the image */}
+      <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,transparent_40%,rgba(6,11,20,0.75)_85%)]" />
     </div>
   );
 }

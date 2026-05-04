@@ -55,13 +55,17 @@ export default function HeroAlexCentered() {
         transition={{ delay: 0.2, duration: 0.6, type: "spring", stiffness: 120, damping: 18 }}
         className="relative mt-12 mx-auto flex flex-col items-center"
       >
-        <AlexTradesAura />
-        <AlexOrb
-          state={orbState}
-          size="hero"
-          onClick={handleOrb}
-          ariaLabel="Parler à Alex"
-        />
+        <div className="relative w-[320px] h-[320px] flex items-center justify-center">
+          <AlexTradesAura />
+          <div className="relative z-10">
+            <AlexOrb
+              state={orbState}
+              size="hero"
+              onClick={handleOrb}
+              ariaLabel="Parler à Alex"
+            />
+          </div>
+        </div>
 
         <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-card/60 backdrop-blur-md border border-border/40">
           <span className="relative flex w-2 h-2">
