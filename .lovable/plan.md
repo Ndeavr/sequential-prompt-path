@@ -1,47 +1,33 @@
-## Problèmes
-1. **Flicker lors des changements d'image** — `AnimatePresence` démonte/remonte le `<motion.div>` à chaque cycle. Les images ne sont pas préchargées → frame blanche pendant le décodage.
-2. **Texte couvert par les images** — l'aura est positionnée seulement derrière l'orbe (dans son conteneur 420×420), mais son `-inset-32/-40/-48` la fait déborder par-dessus le titre/sous-titre. L'utilisateur veut **garder le texte au-dessus** des images, pas l'inverse.
+## Objectif
 
-## Correctifs
+Remplacer les 8 images de métiers tournant derrière l'orb d'Alex (`src/assets/trades/*.jpg`) par des visuels plus **sombres**, **cinématiques** et fidèles à la **réalité Québec** (saisons, équipement, environnements typiques), dans l'esprit des photos de référence fournies.
 
-### 1. `src/components/home-simple/AlexTradesAura.tsx` — Crossfade sans flicker
-Remplacer `AnimatePresence` (mount/unmount) par **8 calques `<motion.img>` montés en permanence** dont seule l'opacité s'anime. Précharger les 8 images au mount via `new Image()`.
+## Approche
 
-```tsx
-// preload
-useEffect(() => { TRADES.forEach(t => { const i = new Image(); i.src = t.src; }); }, []);
+Régénérer les 8 fichiers via le modèle image Nano Banana Pro (`google/gemini-3-pro-image-preview`) avec un style commun :
+- Photographie réelle, ambiance sombre / low-key, contraste élevé
+- Lumière directionnelle naturelle (matin gris, fin de journée, lampe de travail)
+- Travailleur québécois en action (jamais posé), équipement réaliste
+- Couleurs désaturées avec un point chaud pour rester lisible derrière l'orb
+- Format carré 1024×1024, sans texte ni logo
 
-// render
-{TRADES.map((trade, i) => (
-  <motion.img
-    key={trade.src}
-    src={trade.src}
-    initial={false}
-    animate={{ opacity: i === index ? 0.78 : 0 }}
-    transition={{ duration: 2.6, ease: "easeInOut" }}
-    className="absolute inset-0 ... will-change-[opacity]"
-    style={{ maskImage: MASK, WebkitMaskImage: MASK }}
-    decoding="async"
-    loading="eager"
-  />
-))}
-```
-- Plus de `AnimatePresence`, plus de `mode="sync"`.
-- `will-change: opacity` → compositing GPU stable.
-- Intervalle: 7000ms; transition: 2600ms.
+## Livrables (écrasement direct)
 
-### 2. `src/components/home-simple/HeroAlexCentered.tsx` — Texte au-dessus
-Garantir que titre + sous-titre restent visibles par-dessus l'aura (qui déborde via `-inset-48`):
-- Ajouter `relative z-10` au `<motion.h1>` et au `<motion.p>`.
-- Ajouter `isolate` à la `<section>` pour créer un stacking context propre.
-- Ajouter `relative z-0` au conteneur 420×420 (l'orbe garde son `z-10` interne).
+Chaque image écrasée dans `src/assets/trades/` (mêmes noms → aucun changement d'import) :
 
-Résultat : les images débordent visuellement vers le haut, mais le texte reste lisible (au-dessus).
+1. `renovation.jpg` — chantier intérieur sous-sol, charpente apparente, bois et poussière, lumière lampe de travail jaune
+2. `ceramic.jpg` — pose de céramique salle de bain, mains gantées avec truelle crantée, mortier gris, éclairage rasant
+3. `painting.jpg` — peintre sur escabeau dans pièce vide, ruban bleu, bâche au sol (proche de l'image de référence)
+4. `excavation.jpg` — pelle mécanique creusant fondation maison résidentielle Québec, terre brune, ciel couvert
+5. `notary.jpg` — mains signant acte notarié sur bureau bois sombre, stylo plume, ambiance feutrée (proche image référence)
+6. `plumbing.jpg` — plombier sous évier de cuisine avec lampe frontale, tuyaux en P, clé à molette (proche image référence)
+7. `electrical.jpg` — électricien casque blanc + lunettes jaunes manipulant fils dans panneau électrique (proche image référence)
+8. `carpentry.jpg` — menuisier à la scie à ruban dans atelier, copeaux de bois, chemise carreautée
 
-## Hors scope
-- Pas de changement sur `AlexOrb` ni le bottom-nav (le remplacement de "A" → micro reste à faire séparément si désiré).
-- Pas de changement sur les images, intervalle ou opacité maximale (78%).
+Aucun autre fichier modifié — `AlexTradesAura.tsx` continue d'importer les mêmes chemins, donc le crossfade et l'ordre des labels restent identiques.
 
-## Résultat attendu
-- Transitions fluides, aucun flash blanc/noir entre les métiers.
-- Titre et sous-titre **toujours lisibles** par-dessus l'aura qui déborde.
+## Détails techniques
+
+- Script Python temporaire dans `/tmp/gen_trades.py` qui boucle sur les 8 prompts, appelle `https://ai.gateway.lovable.dev/v1/chat/completions` avec `LOVABLE_API_KEY`, décode le base64 et écrit dans `src/assets/trades/<slug>.jpg`
+- QA visuelle obligatoire : lister les 8 fichiers et inspecter chacun via `code--view` après génération ; régénérer ceux qui ne respectent pas le brief (trop clairs, sujet hors-Québec, texte parasite)
+- Pas de migration DB, pas d'edge function, pas de changement de composant React
