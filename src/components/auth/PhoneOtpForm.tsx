@@ -138,8 +138,15 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       });
 
       if (data.error) {
+        const map: Record<string, string> = {
+          invalid_code: "Code invalide.",
+          expired_or_invalid: "Code expiré. Demandez un nouveau code.",
+          too_many_attempts: "Trop de tentatives. Réessayez plus tard.",
+          invalid_input: "Code à 6 chiffres requis.",
+        };
+        const msg = map[data.error] || "Erreur. Réessayez.";
         authDebug.error(data.error, "otp_verifying");
-        toast.error(data.error);
+        toast.error(msg);
         setCode(["", "", "", "", "", ""]);
         codeRefs.current[0]?.focus();
         return;
