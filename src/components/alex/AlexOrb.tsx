@@ -8,6 +8,7 @@
  */
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type AlexOrbState =
