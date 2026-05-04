@@ -32,7 +32,7 @@ import {
 
 const STABILIZATION_MS = 4000;
 const HEARTBEAT_INTERVAL_MS = 2500; // Slower → less battery
-const BOOT_TIMEOUT_MS = 15000; // Cold-start absorbing
+const BOOT_TIMEOUT_MS = 25000; // Cold-start absorbing (edge function + ElevenLabs handshake)
 const FIRST_AUDIO_TIMEOUT_MS = 3000; // Spec: auto-retry after 3s
 const TOKEN_SLOW_THRESHOLD_MS = 2000; // Spec: show "Connexion d'Alex…" if >2s
 const MAX_AUTO_RETRIES = 2; // 1 boot + 2 silent = 3 attempts → fallback chat
