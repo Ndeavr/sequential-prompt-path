@@ -321,7 +321,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
               </p>
             </div>
 
-            {/* 6-digit code input */}
+            {/* 6-digit code input — first cell carries SMS autofill */}
             <div className="flex justify-center gap-2" onPaste={handleCodePaste}>
               {code.map((digit, i) => (
                 <Input
@@ -329,9 +329,25 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
                   ref={(el) => { codeRefs.current[i] = el; }}
                   type="text"
                   inputMode="numeric"
-                  maxLength={1}
+                  autoComplete={i === 0 ? "one-time-code" : "off"}
+                  name={i === 0 ? "otp" : undefined}
+                  maxLength={i === 0 ? 6 : 1}
                   value={digit}
-                  onChange={(e) => handleCodeChange(i, e.target.value)}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/\D/g, "");
+                    if (v.length > 1) {
+                      // SMS autofill delivered the full code into cell 0
+                      const full = v.slice(0, 6);
+                      const next = ["", "", "", "", "", ""].map((_, idx) => full[idx] || "");
+                      setCode(next);
+                      if (next.every((d) => d) && next.join("").length === 6) {
+                        codeRefs.current[5]?.focus();
+                        setTimeout(() => handleVerifyOtp(), 150);
+                      }
+                      return;
+                    }
+                    handleCodeChange(i, v);
+                  }}
                   onKeyDown={(e) => handleCodeKeyDown(i, e)}
                   className="w-11 h-13 text-center text-lg font-bold rounded-xl"
                   style={{
