@@ -142,17 +142,17 @@ export default function PageSmsDebug() {
             <Phone className="h-4 w-4 text-blue-400" />
             <h2 className="font-medium">Test d'envoi & normalisation</h2>
           </div>
-          <div className="flex gap-2 items-center">
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
             <Input
               placeholder="(514) 555-1234"
               value={testInput}
               onChange={(e) => setTestInput(e.target.value)}
-              className="bg-black/40 border-white/10 max-w-xs"
+              className="bg-black/40 border-white/10 sm:max-w-xs"
             />
             <div className="text-xs text-white/60 font-mono">
               → {e164 ? <span className="text-emerald-400">{e164}</span> : <span className="text-rose-400">invalide</span>}
             </div>
-            <Button onClick={sendTest} disabled={!e164 || sending} size="sm" className="gap-2 ml-auto">
+            <Button onClick={sendTest} disabled={!e164 || sending} size="sm" className="gap-2 sm:ml-auto whitespace-nowrap shrink-0">
               <Send className="h-3 w-3" /> {sending ? "Envoi…" : "Envoyer test"}
             </Button>
           </div>
