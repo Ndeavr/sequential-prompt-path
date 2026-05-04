@@ -76,22 +76,37 @@ serve(async (req) => {
 
     await sb.from("otp_codes").update({ consumed_at: new Date().toISOString() }).eq("id", row.id);
 
-    // Locate or create user by phone
+    // Locate or create user by phone (Supabase stores phone without '+')
+    const phoneDigits = phone.replace(/\D/g, "");
+    const synthEmail = syntheticEmail(phone);
     const { data: list } = await sb.auth.admin.listUsers();
-    let user = list?.users?.find((u) => u.phone === phone);
+    let user = list?.users?.find(
+      (u) =>
+        (u.phone || "").replace(/\D/g, "") === phoneDigits ||
+        u.email === synthEmail,
+    );
     let isNewUser = false;
 
     if (!user) {
-      const email = syntheticEmail(phone);
       const { data: created, error: cErr } = await sb.auth.admin.createUser({
-        phone, phone_confirm: true, email, email_confirm: true,
+        phone, phone_confirm: true, email: synthEmail, email_confirm: true,
       });
       if (cErr || !created?.user) {
-        console.error("createUser", cErr);
-        return json({ error: "account_failed" }, 500);
+        // Recover if email/phone already exists (race or stored-without-plus)
+        const { data: list2 } = await sb.auth.admin.listUsers();
+        user = list2?.users?.find(
+          (u) =>
+            (u.phone || "").replace(/\D/g, "") === phoneDigits ||
+            u.email === synthEmail,
+        );
+        if (!user) {
+          console.error("createUser", cErr);
+          return json({ error: "account_failed" }, 500);
+        }
+      } else {
+        user = created.user;
+        isNewUser = true;
       }
-      user = created.user;
-      isNewUser = true;
     }
 
     // Upsert profile
