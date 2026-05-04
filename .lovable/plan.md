@@ -1,46 +1,39 @@
-## Goal
+## Problème
 
-1. Remove the persistent contractor call pop-up everywhere.
-2. Fix Google OAuth so the user actually lands authenticated.
+Le composant `AlexTradesAura` est bien monté et les 8 images existent dans `src/assets/trades/`, mais elles sont **invisibles** à l'écran pour 3 raisons cumulées :
 
-## 1. Remove pop-up
+1. **Opacité trop faible** : `animate={{ opacity: 0.22 }}` + `blur-[2px]` → presque noir sur fond `#060B14`.
+2. **Vignette destructive** : la couche finale `bg-[radial-gradient(...transparent_20%,hsl(var(--background))_75%)]` recouvre l'image avec la couleur de fond du site sur 80% de la zone, annulant l'effet.
+3. **Positionnement** : `<AlexTradesAura>` est sibling de `<AlexOrb>` dans un conteneur `flex flex-col`. Avec `absolute inset-0`, il s'étale sur toute la colonne (titre + orb + badge + CTA) au lieu d'être centré juste derrière l'orbe → l'image apparaît décalée vers le haut, pas derrière l'orbe.
 
-**`src/app/router.tsx`**
-- Delete import line 10: `import PersistentContractorCallPopup from "@/components/PersistentContractorCallPopup";`
-- Delete the `<PersistentContractorCallPopup />` render at line 649.
+## Correctifs
 
-**`src/components/PersistentContractorCallPopup.tsx`**
-- Delete the file entirely (no other usages).
+### 1. `src/components/home-simple/AlexTradesAura.tsx`
+- Augmenter l'opacité de `0.22` → `0.55` (visible mais subtil derrière l'orbe lumineux).
+- Réduire le blur (`blur-[2px]` → `blur-[1px]`) pour garder la lisibilité du métier.
+- Remplacer la vignette « background-color » par une vignette **transparente** (alpha gradient) qui assombrit doucement les bords sans masquer le centre :
+  - `bg-[radial-gradient(circle_at_center,transparent_35%,rgba(6,11,20,0.85)_80%)]`
+- Ajuster le mask radial pour un fade plus doux : `black 45%, transparent 85%`.
+- Optionnel : ajouter une légère rotation/scale lente pour donner vie.
 
-## 2. Fix Google OAuth
+### 2. `src/components/home-simple/HeroAlexCentered.tsx`
+- Envelopper **uniquement** l'orbe + l'aura dans un wrapper `relative` dimensionné (ex: `w-[320px] h-[320px] mx-auto flex items-center justify-center`).
+- Mettre `<AlexTradesAura />` à l'intérieur de ce wrapper en `absolute inset-0` → l'aura est centrée précisément derrière l'orbe, pas sur toute la section.
+- Garder le badge « Alex · Votre expert IA » et le bouton « Cliquez pour parler à Alex » **hors** de ce wrapper (en-dessous), sans aura derrière.
 
-### Diagnosis
-- Supabase auth logs confirm Google OIDC `/token` returns 200 (login succeeds at the broker).
-- Client console shows repeated `[useAuth] session resolution timeout (5s)` after returning from Google → user remains unauthenticated in the UI.
-- Root cause: `OAuthButtons.tsx` (and `ButtonConnectGoogleCalendar`, `ModalInlineAuth`, `Login.tsx` flow) use `redirect_uri: ${window.location.origin}/auth/callback`. With Lovable Cloud's managed OAuth (`lovable.auth.signInWithOAuth`), the broker returns tokens to the **redirect_uri page** and then calls `supabase.auth.setSession(tokens)` inside the SDK. But our `/auth/callback` page immediately calls `supabase.auth.getSession()` and `exchangeCodeForSession(code)` — this is the legacy Supabase flow, not the Lovable broker flow. The two flows race / conflict and the session is never persisted reliably, so `useAuth` times out.
-- Per Lovable docs, the correct pattern with managed OAuth is `redirect_uri: window.location.origin` (no custom callback page) — the SDK handles token exchange, then we navigate based on app logic.
+### Structure cible
 
-### Fix
+```text
+<motion.div className="relative mt-12 mx-auto flex flex-col items-center">
+  <div className="relative w-[320px] h-[320px] flex items-center justify-center">
+    <AlexTradesAura />            ← absolute inset-0, centré derrière l'orbe
+    <AlexOrb size="hero" ... />   ← z-index naturel au-dessus
+  </div>
+  <div className="mt-8 ...">badge Alex</div>
+  <button>...</button>
+</motion.div>
+```
 
-**`src/components/auth/OAuthButtons.tsx`**
-- Change `redirect_uri: ${window.location.origin}/auth/callback` → `redirect_uri: window.location.origin`.
-- After `signInWithOAuth` returns without `redirected` and without `error`, the session is set. Navigate to `/auth/callback` programmatically using `useNavigate` so the existing post-login routing logic (role assignment, intent consumption) still runs — OR simpler: keep `/auth/callback` reachable but only as a post-auth router, not the OAuth landing page.
+## Résultat attendu
 
-  Cleanest: keep `redirect_uri = window.location.origin`, and after success call `navigate("/auth/callback")` to reuse existing routing logic in `AuthCallbackPage` (which will now find the session immediately via `getSession()` since the SDK already called `setSession`).
-
-**`src/components/auth/GoogleSignInButton.tsx`**
-- Already uses `redirect_uri: window.location.origin` — leave as-is.
-
-**`src/components/auth/ModalInlineAuth.tsx`**
-- Uses `supabase.auth.signInWithOAuth` directly (legacy). Replace with `lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin })` for consistency with managed OAuth.
-
-**`src/pages/AuthCallbackPage.tsx`**
-- Remove the `exchangeCodeForSession(code)` branch — no longer needed because the Lovable SDK handles token exchange before redirect. Keep the `getSession()` + role/profile setup + redirect logic. If session is missing, redirect to `/login` instead of attempting code exchange.
-
-### Verification
-- Click "Continuer avec Google" on `/login` → Google consent → returns to `/` (origin) → SDK sets session → app navigates to `/auth/callback` → role/profile resolved → redirect to intended destination.
-- No more `[useAuth] session resolution timeout` warnings.
-- Pop-up no longer appears on any route.
-
-## Out of scope
-- The unrelated `AlexChatFallbackPanel` `forwardRef` warning and Alex voice boot timeout (separate issues, not requested).
+Une image de métier (rénovation, céramique, peinture, excavation, notaire, plomberie, électricité, menuiserie) apparaît en **fade circulaire** derrière l'orbe Alex, change toutes les ~3.8 s avec une transition douce, reste suffisamment visible pour reconnaître le métier sans concurrencer l'orbe.
