@@ -185,7 +185,7 @@ export default function AlexEmbeddedChat() {
             type="file"
             accept="image/*,.pdf,.doc,.docx"
             className="hidden"
-            onChange={() => onFileUpload()}
+            onChange={handleFileChange}
           />
         </div>
       </motion.div>
