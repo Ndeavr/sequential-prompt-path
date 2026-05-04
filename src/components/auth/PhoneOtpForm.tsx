@@ -54,14 +54,14 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
     return () => clearTimeout(t);
   }, [cooldown]);
 
-  const callTwilioVerify = async (action: string, body: Record<string, string>) => {
+  const callOtp = async (fnName: "send-otp" | "verify-otp", body: Record<string, string>) => {
     const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
     const res = await fetch(
-      `https://${projectId}.supabase.co/functions/v1/twilio-verify`,
+      `https://${projectId}.supabase.co/functions/v1/${fnName}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, ...body }),
+        body: JSON.stringify(body),
       }
     );
     return res.json();
@@ -93,7 +93,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
     }, 3000);
 
     try {
-      const data = await callTwilioVerify("send-otp", { phone: e164 });
+      const data = await callOtp("send-otp", { phone: e164 });
       window.clearTimeout(safety);
       if (data.fallback) {
         authDebug.error(`SMS fallback: ${data.code ?? "unknown"}`, "sms_sending");
@@ -132,7 +132,7 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
     setVerifying(true);
     authDebug.set({ auth_step: "otp_verifying" });
     try {
-      const data = await callTwilioVerify("verify-otp", {
+      const data = await callOtp("verify-otp", {
         phone: toE164(phone),
         code: otp,
       });
