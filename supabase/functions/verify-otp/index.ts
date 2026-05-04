@@ -119,7 +119,7 @@ serve(async (req) => {
     // Mint session via temp password (no admin.createSession in supabase-js)
     const email = user.email || syntheticEmail(phone);
     const tempPass = crypto.randomUUID() + "Aa9!";
-    await sb.auth.admin.updateUser(user.id, { email, email_confirm: true, password: tempPass });
+    await sb.auth.admin.updateUserById(user.id, { email, email_confirm: true, password: tempPass });
 
     const loginClient = createClient(SUPABASE_URL, ANON, {
       auth: { autoRefreshToken: false, persistSession: false },
@@ -129,7 +129,7 @@ serve(async (req) => {
     });
 
     // Burn the temp password immediately
-    await sb.auth.admin.updateUser(user.id, { password: crypto.randomUUID() + "Zz9!" });
+    await sb.auth.admin.updateUserById(user.id, { password: crypto.randomUUID() + "Zz9!" });
 
     if (lErr || !login?.session) {
       console.error("session mint", lErr);
