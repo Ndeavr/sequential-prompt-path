@@ -333,16 +333,16 @@ const AlexOrbBase = ({
 
         {/* Center monogram */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <span
-            className="font-display font-bold text-white"
+          <Mic
+            className="text-white"
             style={{
-              fontSize: px * 0.28,
-              textShadow: `0 2px ${px * 0.08}px hsl(${palette.primary} / 0.85)`,
+              width: px * 0.34,
+              height: px * 0.34,
+              filter: `drop-shadow(0 2px ${px * 0.08}px hsl(${palette.primary} / 0.85))`,
               opacity: state === "sleep" ? 0.55 : 1,
             }}
-          >
-            A
-          </span>
+            strokeWidth={2.2}
+          />
         </div>
 
         {/* Idle twinkle (every 20–40s) */}
