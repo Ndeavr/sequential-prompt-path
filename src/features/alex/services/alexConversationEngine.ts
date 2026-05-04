@@ -38,7 +38,7 @@ const RESPONSES_FR: Record<AlexIntent, string[]> = {
     "Quel jour vous convient le mieux pour le rendez-vous?",
   ],
   unknown: [
-    "Est-ce plus un problème de :\n1. Eau / humidité\n2. Froid / chaleur\n3. Bruit\n4. Odeur\n5. Réparation visible",
+    "Décrivez en une phrase ce qui vous inquiète — je vous oriente.",
   ],
 };
 
