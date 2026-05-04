@@ -35,17 +35,18 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export default function AlexTradesAura() {
-  const sequence = useMemo(() => shuffle(TRADES), []);
-  const [index, setIndex] = useState(0);
+  // Start at a random offset so different visits don't always show the same first trade.
+  const startOffset = useMemo(() => Math.floor(Math.random() * TRADES.length), []);
+  const [index, setIndex] = useState(startOffset);
 
   useEffect(() => {
     const id = setInterval(() => {
-      setIndex((i) => (i + 1) % sequence.length);
-    }, 3800);
+      setIndex((i) => (i + 1) % TRADES.length);
+    }, 6500); // slower rotation — let each trade breathe
     return () => clearInterval(id);
-  }, [sequence.length]);
+  }, []);
 
-  const current = sequence[index];
+  const current = TRADES[index];
 
   return (
     <div
@@ -55,31 +56,31 @@ export default function AlexTradesAura() {
       <AnimatePresence mode="sync">
         <motion.div
           key={index}
-          initial={{ opacity: 0, scale: 1.12 }}
-          animate={{ opacity: 0.72, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.96 }}
-          transition={{ duration: 1.4, ease: "easeInOut" }}
-          className="absolute -inset-10 md:-inset-14 flex items-center justify-center"
+          initial={{ opacity: 0, scale: 1.08 }}
+          animate={{ opacity: 0.78, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.98 }}
+          transition={{ duration: 2.4, ease: "easeInOut" }}
+          className="absolute -inset-32 sm:-inset-40 md:-inset-48 flex items-center justify-center"
         >
           <img
             src={current.src}
             alt=""
             loading="lazy"
-            width={640}
-            height={640}
-            className="w-full h-full max-w-none object-cover rounded-[2rem] blur-[0.5px] saturate-125 contrast-110"
+            width={1024}
+            height={1024}
+            className="w-full h-full max-w-none object-cover rounded-[2.5rem] blur-[0.5px] saturate-125 contrast-110"
             style={{
               maskImage:
-                "radial-gradient(circle at center, black 58%, transparent 92%)",
+                "radial-gradient(ellipse at center, black 55%, transparent 90%)",
               WebkitMaskImage:
-                "radial-gradient(circle at center, black 58%, transparent 92%)",
+                "radial-gradient(ellipse at center, black 55%, transparent 90%)",
             }}
           />
         </motion.div>
       </AnimatePresence>
 
       {/* Soft transparent vignette — darkens edges without hiding the image */}
-      <div className="absolute -inset-10 md:-inset-14 rounded-[2rem] bg-[radial-gradient(circle_at_center,transparent_52%,hsl(var(--background)/0.64)_92%)]" />
+      <div className="pointer-events-none absolute -inset-32 sm:-inset-40 md:-inset-48 rounded-[2.5rem] bg-[radial-gradient(ellipse_at_center,transparent_50%,hsl(var(--background)/0.7)_92%)]" />
     </div>
   );
 }
