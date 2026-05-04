@@ -55,7 +55,7 @@ export default function HeroAlexCentered() {
         transition={{ delay: 0.2, duration: 0.6, type: "spring", stiffness: 120, damping: 18 }}
         className="relative mt-12 mx-auto flex flex-col items-center"
       >
-        <div className="relative w-[320px] h-[320px] flex items-center justify-center">
+        <div className="relative w-[min(92vw,420px)] h-[min(92vw,420px)] flex items-center justify-center overflow-visible">
           <AlexTradesAura />
           <div className="relative z-10">
             <AlexOrb
