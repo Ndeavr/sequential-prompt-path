@@ -355,6 +355,7 @@ const PageContractorAippAudit = lazy(() => import("@/pages/PageContractorAippAud
 const PageInstantAuditFunnel = lazy(() => import("@/pages/PageInstantAuditFunnel"));
 const PageOutreachLanding = lazy(() => import("@/pages/PageOutreachLanding"));
 const PageSniperCommandCenter = lazy(() => import("@/pages/admin/PageSniperCommandCenter"));
+const PageSmsDebug = lazy(() => import("@/pages/admin/PageSmsDebug"));
 const PageCommandCenterLeads = lazy(() => import("@/pages/admin/PageCommandCenterLeads"));
 const PageCommandCenterCampaigns = lazy(() => import("@/pages/admin/PageCommandCenterCampaigns"));
 const PageCommandCenterTerritories = lazy(() => import("@/pages/admin/PageCommandCenterTerritories"));
@@ -1361,7 +1362,8 @@ export const AppRouter = () => (
          <Route path="/admin/command-center/leads" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageCommandCenterLeads /></Suspense></UniversalRouteGuard>} />
          <Route path="/admin/command-center/campaigns" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageCommandCenterCampaigns /></Suspense></UniversalRouteGuard>} />
          <Route path="/admin/command-center/territories" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageCommandCenterTerritories /></Suspense></UniversalRouteGuard>} />
-         <Route path="/admin/seo-index-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSeoIndexHealth /></Suspense></UniversalRouteGuard>} />
+          <Route path="/admin/seo-index-health" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSeoIndexHealth /></Suspense></UniversalRouteGuard>} />
+          <Route path="/admin/sms-debug" element={<UniversalRouteGuard allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><PageSmsDebug /></Suspense></UniversalRouteGuard>} />
 
           {/* Lead Pipe Empire — SEO + Conversion */}
           <Route path="/plomb-eau/:ville" element={<Suspense fallback={<LazyFallback />}><LeadPipePagePlombEauCity /></Suspense>} />

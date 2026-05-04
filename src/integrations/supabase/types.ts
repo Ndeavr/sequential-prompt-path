@@ -37799,6 +37799,60 @@ export type Database = {
           },
         ]
       }
+      otp_codes: {
+        Row: {
+          attempts: number
+          code_hash: string
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          ip: string | null
+          phone: string
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          ip?: string | null
+          phone: string
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip?: string | null
+          phone?: string
+        }
+        Relationships: []
+      }
+      otp_rate_limits: {
+        Row: {
+          count: number
+          key: string
+          scope: string
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          key: string
+          scope: string
+          window_start?: string
+        }
+        Update: {
+          count?: number
+          key?: string
+          scope?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       outbound_ai_personalizations: {
         Row: {
           approved: boolean | null
@@ -43576,6 +43630,7 @@ export type Database = {
           language_pref: string
           last_name: string | null
           onboarding_completed: boolean | null
+          onboarding_status: string | null
           phone: string | null
           postal_code: string | null
           preferred_channel: string
@@ -43607,6 +43662,7 @@ export type Database = {
           language_pref?: string
           last_name?: string | null
           onboarding_completed?: boolean | null
+          onboarding_status?: string | null
           phone?: string | null
           postal_code?: string | null
           preferred_channel?: string
@@ -43638,6 +43694,7 @@ export type Database = {
           language_pref?: string
           last_name?: string | null
           onboarding_completed?: boolean | null
+          onboarding_status?: string | null
           phone?: string | null
           postal_code?: string | null
           preferred_channel?: string
@@ -54660,36 +54717,54 @@ export type Database = {
       sms_messages: {
         Row: {
           created_at: string
+          direction: string | null
           id: string
+          intent: string | null
           message_body: string
+          message_sid: string | null
           phone_number: string
           prospect_id: string
+          provider: string
+          purpose: string | null
           sent_at: string | null
           sequence_id: string | null
           status: string
           step_order: number | null
+          updated_at: string
         }
         Insert: {
           created_at?: string
+          direction?: string | null
           id?: string
+          intent?: string | null
           message_body: string
+          message_sid?: string | null
           phone_number: string
           prospect_id: string
+          provider?: string
+          purpose?: string | null
           sent_at?: string | null
           sequence_id?: string | null
           status?: string
           step_order?: number | null
+          updated_at?: string
         }
         Update: {
           created_at?: string
+          direction?: string | null
           id?: string
+          intent?: string | null
           message_body?: string
+          message_sid?: string | null
           phone_number?: string
           prospect_id?: string
+          provider?: string
+          purpose?: string | null
           sent_at?: string | null
           sequence_id?: string | null
           status?: string
           step_order?: number | null
+          updated_at?: string
         }
         Relationships: [
           {

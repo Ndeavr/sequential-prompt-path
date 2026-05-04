@@ -1,6 +1,14 @@
 project_id = "clmaqdnphbndvmmqvpff"
 
 [functions]
+  [functions.send-otp]
+    verify_jwt = false
+  [functions.verify-otp]
+    verify_jwt = false
+  [functions.twilio-inbound]
+    verify_jwt = false
+  [functions.twilio-status]
+    verify_jwt = false
   [functions.admin-activation-import]
     verify_jwt = false
   [functions.admin-activation-score]
