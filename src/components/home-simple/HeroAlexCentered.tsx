@@ -8,6 +8,7 @@ import { Mic } from "lucide-react";
 import { useAlexVoice as useAlexVoiceOverlay } from "@/contexts/AlexVoiceContext";
 import { useAlexStore } from "@/features/alex/state/alexStore";
 import AlexOrb, { type AlexOrbState } from "@/components/alex/AlexOrb";
+import AlexTradesAura from "./AlexTradesAura";
 
 export default function HeroAlexCentered() {
   const { openAlex } = useAlexVoiceOverlay();
@@ -54,6 +55,7 @@ export default function HeroAlexCentered() {
         transition={{ delay: 0.2, duration: 0.6, type: "spring", stiffness: 120, damping: 18 }}
         className="relative mt-12 mx-auto flex flex-col items-center"
       >
+        <AlexTradesAura />
         <AlexOrb
           state={orbState}
           size="hero"
