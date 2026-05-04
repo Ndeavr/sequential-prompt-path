@@ -70,8 +70,14 @@ export default function AlexEmbeddedChat() {
   };
 
   const triggerUpload = () => {
-    onFileUpload();
     fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await onFileUpload(file);
+    e.target.value = "";
   };
 
   const isThinking = mode === "thinking";
