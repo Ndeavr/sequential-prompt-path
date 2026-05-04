@@ -69,17 +69,70 @@ export function useAlexConversation() {
     [speak]
   );
 
-  const handleUpload = useCallback(async () => {
+  const handleUpload = useCallback(async (file?: File, userMessage?: string) => {
     const state = useAlexStore.getState();
     state.markUserEngaged();
     state.resetNoResponse();
     state.startImageAnalysis();
 
-    const response = acknowledgeUpload(state.activeLanguage);
-    state.injectAssistantMessage(response.text, response.speak);
+    // Acknowledge fast (1 line, no checklist)
+    const ack = acknowledgeUpload(state.activeLanguage);
+    state.injectAssistantMessage(ack.text, false);
 
-    if (response.speak) {
-      await speak(response.text);
+    // Without a file we can't analyze — bail with the ack only.
+    if (!file) {
+      state.finishImageAnalysis();
+      return;
+    }
+
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => {
+          const s = String(r.result || "");
+          resolve(s.includes(",") ? s.split(",")[1] : s);
+        };
+        r.onerror = () => reject(new Error("read_failed"));
+        r.readAsDataURL(file);
+      });
+
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-analyze-image`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            image_base64: base64,
+            mime_type: file.type || "image/jpeg",
+            user_message: userMessage || "",
+          }),
+        }
+      );
+
+      const data = await resp.json();
+      if (!resp.ok || !data.response_text) {
+        const fallback =
+          "Je n'arrive pas à analyser cette image pour l'instant. Décrivez-moi en une phrase ce qui vous inquiète et je vous oriente.";
+        state.injectAssistantMessage(fallback, true);
+        await speak(fallback);
+      } else {
+        state.injectAssistantMessage(data.response_text, true);
+        if (data.intent === "property_risk_assessment") {
+          state.setIntent("homeowner_problem" as AlexIntent);
+        }
+        await speak(data.response_text);
+      }
+    } catch (e) {
+      alexLog("conversation:upload_error", { e: String(e) });
+      const fallback =
+        "Je n'arrive pas à analyser cette image pour l'instant. Décrivez-moi en une phrase ce qui vous inquiète et je vous oriente.";
+      state.injectAssistantMessage(fallback, true);
+      await speak(fallback);
+    } finally {
+      state.finishImageAnalysis();
     }
 
     alexLog("conversation:upload");
