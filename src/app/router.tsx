@@ -7,7 +7,7 @@ import ScrollRestoration from "@/components/ScrollRestoration";
 import BannerContinueFlow from "@/components/flow/BannerContinueFlow";
 import AuthReturnRouter from "@/components/auth/AuthReturnRouter";
 import AuthOverlayPremium from "@/components/auth/AuthOverlayPremium";
-import PersistentContractorCallPopup from "@/components/PersistentContractorCallPopup";
+
 
 // Only eagerly load the home page and critical shared pages
 import HomeWithFeatureFlag from "@/components/home-intent/HomeWithFeatureFlag";
@@ -646,7 +646,6 @@ export const AppRouter = () => (
     <BannerContinueFlow />
     <AuthReturnRouter />
     <AuthOverlayPremium />
-    <PersistentContractorCallPopup />
     <Suspense fallback={<LazyFallback />}>
       <Routes>
         {/* Redirects for common mismatched entry points */}
