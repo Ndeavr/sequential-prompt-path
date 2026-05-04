@@ -55,11 +55,11 @@ export default function AlexTradesAura() {
       <AnimatePresence mode="sync">
         <motion.div
           key={index}
-          initial={{ opacity: 0, scale: 1.06 }}
-          animate={{ opacity: 0.55, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.98 }}
+          initial={{ opacity: 0, scale: 1.12 }}
+          animate={{ opacity: 0.72, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.96 }}
           transition={{ duration: 1.4, ease: "easeInOut" }}
-          className="absolute inset-0 flex items-center justify-center"
+          className="absolute -inset-10 md:-inset-14 flex items-center justify-center"
         >
           <img
             src={current.src}
@@ -67,19 +67,19 @@ export default function AlexTradesAura() {
             loading="lazy"
             width={640}
             height={640}
-            className="w-full h-full object-cover rounded-full blur-[1px]"
+            className="w-full h-full max-w-none object-cover rounded-[2rem] blur-[0.5px] saturate-125 contrast-110"
             style={{
               maskImage:
-                "radial-gradient(circle at center, black 45%, transparent 85%)",
+                "radial-gradient(circle at center, black 58%, transparent 92%)",
               WebkitMaskImage:
-                "radial-gradient(circle at center, black 45%, transparent 85%)",
+                "radial-gradient(circle at center, black 58%, transparent 92%)",
             }}
           />
         </motion.div>
       </AnimatePresence>
 
       {/* Soft transparent vignette — darkens edges without hiding the image */}
-      <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,transparent_40%,rgba(6,11,20,0.75)_85%)]" />
+      <div className="absolute -inset-10 md:-inset-14 rounded-[2rem] bg-[radial-gradient(circle_at_center,transparent_52%,hsl(var(--background)/0.64)_92%)]" />
     </div>
   );
 }
