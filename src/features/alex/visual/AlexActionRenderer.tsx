@@ -32,6 +32,21 @@ export default function AlexActionRenderer() {
             </div>
           );
         }
+        if (a.type === "contractor_intake") {
+          return <ContractorIntakePanel key={a.id} actionId={a.id} />;
+        }
+        if (a.type === "contractor_growth_dashboard") {
+          return <ContractorGrowthDashboard key={a.id} actionId={a.id} />;
+        }
+        if (a.type === "contractor_plan_table") {
+          return <PlanRecommendationTable key={a.id} actionId={a.id} />;
+        }
+        if (a.type === "contractor_growth_path") {
+          return <GrowthPathTable key={a.id} />;
+        }
+        if (a.type === "contractor_checkout") {
+          return <CheckoutPanel key={a.id} actionId={a.id} plan_code={a.payload?.plan_code || "premium"} />;
+        }
         return null;
       })}
     </div>
