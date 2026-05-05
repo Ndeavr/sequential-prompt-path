@@ -196,16 +196,28 @@ export default function OverlayAlexVoiceFullScreen() {
         stabilizationTimerRef.current = null;
       }
       const s = getStore();
-      if (s.isOverlayOpen) {
-        const rawMessage = (error as any)?.message || "Erreur de connexion vocale.";
-        const msg = rawMessage.includes("moteur vocal") || rawMessage.includes("serveur vocal")
-          ? rawMessage
-          : rawMessage.includes("not available") || rawMessage.includes("bidiGenerateContent")
-          ? "Le moteur vocal est indisponible. Alex continue par chat."
-          : "La voix d'Alex tarde à démarrer. Je réessaie automatiquement.";
-        alexVoiceService.setError(msg, "voice_error");
-        s.setError("voice_error", msg, true);
+      if (!s.isOverlayOpen) return;
+
+      // BULLETPROOF: if voice never started successfully, bail to chat — no dead-end red screen.
+      if (!firstAudioReceivedRef.current) {
+        console.warn("[VoiceOverlay] Error before first audio → fallback chat");
+        try { stop(); } catch {}
+        alexVoiceService.switchToFallbackChat("voice_error_pre_audio");
+        openChatFallback(
+          "voice_unavailable",
+          transcriptsRef.current.map((t) => ({ role: t.role, text: t.text })),
+        );
+        s.closeVoiceSession("voice_error_pre_audio");
+        return;
       }
+
+      // Mid-conversation error → recoverable banner (user can still use Réinit/Chat).
+      const rawMessage = (error as any)?.message || "Erreur de connexion vocale.";
+      const msg = rawMessage.includes("moteur vocal") || rawMessage.includes("serveur vocal")
+        ? rawMessage
+        : "La voix d'Alex a été interrompue. Vous pouvez continuer par chat.";
+      alexVoiceService.setError(msg, "voice_error");
+      s.setError("voice_error", msg, true);
     },
   });
 
