@@ -127,15 +127,15 @@ export default function PageOutboundTestCenter() {
       });
       if (!enriched) return;
 
-      // STEP 3 — Score (verify score row created)
+      // STEP 3 — Score (verify score row created in acq_contractor_scores)
       await runStep("score", async () => {
         const { data, error } = await supabase
-          .from("acq_aipp_scores" as any)
-          .select("aipp_score, visibility, trust, content, conversion, availability")
+          .from("acq_contractor_scores" as any)
+          .select("*")
           .eq("contractor_id", enriched.contractor_id)
           .order("created_at", { ascending: false }).limit(1).maybeSingle();
         if (error) throw new Error(error.message);
-        if (!data) throw new Error("score not found in acq_aipp_scores");
+        if (!data) throw new Error("score not found in acq_contractor_scores");
         return data;
       });
 
