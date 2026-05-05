@@ -113,6 +113,19 @@ export function isVisualProjectMessage(text: string): boolean {
   return detectVisualIntent(text);
 }
 
+// ─── Contractor onboarding intent ─────────────────────────────────
+const CONTRACTOR_KEYWORDS = [
+  "entrepreneur", "m'inscrire", "minscrire", "rejoindre unpro",
+  "plus de clients", "plus de contrats", "rendez-vous", "rendez vous",
+  "score aipp", "aipp", "améliorer mon profil", "ameliorer mon profil",
+  "voir mon score", "je suis pro", "je suis un pro", "contracteur",
+];
+
+export function detectContractorIntent(text: string): boolean {
+  const t = text.toLowerCase();
+  return CONTRACTOR_KEYWORDS.some((k) => t.includes(k));
+}
+
 // ─── Engine ───────────────────────────────────────────────────────
 
 export function processUserMessage(
@@ -124,6 +137,16 @@ export function processUserMessage(
   if (looksEnglish(text)) {
     alexLog("conversation:english_fallback");
     return { text: ENGLISH_FALLBACK, speak: true, intent: "unknown" };
+  }
+
+  // Contractor onboarding — switch Alex to advisor mode.
+  if (detectContractorIntent(text)) {
+    alexLog("conversation:contractor_intent");
+    return {
+      text: "Parfait. Je vais bâtir votre profil entrepreneur, analyser votre visibilité actuelle et vous montrer le meilleur plan pour obtenir plus de rendez-vous qualifiés.",
+      speak: true,
+      intent: "contractor_onboarding",
+    };
   }
 
   // Visual project — Alex opens upload zone immediately.
