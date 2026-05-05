@@ -84,14 +84,6 @@ export default function AlexTradesAura() {
       <div className="pointer-events-none absolute -inset-32 sm:-inset-40 md:-inset-48 bg-gradient-to-b from-background via-background/70 to-transparent" style={{ height: "55%" }} />
 
       {/* Soft transparent vignette — darkens edges without hiding the image */}
-              maskImage: MASK,
-              WebkitMaskImage: MASK,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Soft transparent vignette — darkens edges without hiding the image */}
       <div className="pointer-events-none absolute -inset-32 sm:-inset-40 md:-inset-48 rounded-[2.5rem] bg-[radial-gradient(ellipse_at_center,transparent_50%,hsl(var(--background)/0.7)_92%)]" />
     </div>
   );
