@@ -367,25 +367,31 @@ export type Database = {
       }
       acq_coupon_redemptions: {
         Row: {
+          amount_charged: number | null
           contractor_id: string | null
           coupon_id: string
           email: string | null
           id: string
           redeemed_at: string
+          stripe_session_id: string | null
         }
         Insert: {
+          amount_charged?: number | null
           contractor_id?: string | null
           coupon_id: string
           email?: string | null
           id?: string
           redeemed_at?: string
+          stripe_session_id?: string | null
         }
         Update: {
+          amount_charged?: number | null
           contractor_id?: string | null
           coupon_id?: string
           email?: string | null
           id?: string
           redeemed_at?: string
+          stripe_session_id?: string | null
         }
         Relationships: [
           {
@@ -589,6 +595,7 @@ export type Database = {
         Row: {
           activated_at: string | null
           amount_due: number | null
+          amount_paid: number | null
           contractor_id: string
           coupon_code: string | null
           created_at: string
@@ -604,6 +611,7 @@ export type Database = {
         Insert: {
           activated_at?: string | null
           amount_due?: number | null
+          amount_paid?: number | null
           contractor_id: string
           coupon_code?: string | null
           created_at?: string
@@ -619,6 +627,7 @@ export type Database = {
         Update: {
           activated_at?: string | null
           amount_due?: number | null
+          amount_paid?: number | null
           contractor_id?: string
           coupon_code?: string | null
           created_at?: string
