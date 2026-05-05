@@ -392,14 +392,8 @@ export default function OverlayAlexVoiceFullScreen() {
           toast.error("Micro désactivé", { description: "Vous pouvez continuer par chat.", duration: 3000 });
           bailToChat("permission_denied");
         } else {
-          // Even on boot failure: try one auto-retry, then bail to chat
-          if (autoRetryCountRef.current < MAX_AUTO_RETRIES) {
-            autoRetryCountRef.current += 1;
-            console.log(`[ALEX VOICE] 🔁 Boot error → auto-retry ${autoRetryCountRef.current}`);
-            armFirstAudioTimer();
-          } else {
-            bailToChat("boot_failed");
-          }
+          // Boot failure → bail straight to chat (no false retry, no dead-end)
+          bailToChat("boot_failed");
         }
       }
     };
