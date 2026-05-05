@@ -2,15 +2,15 @@
  * UNPRO — TaxCalculatorQuebec
  * Premium glass calculator for TPS (5%) + TVQ (9.975%).
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Copy, RotateCcw, Sparkles, ShieldCheck, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
+import CalculatorKeypad, { formatRaw } from "./CalculatorKeypad";
 
 const TPS_RATE = 0.05;
 const TVQ_RATE = 0.09975;
@@ -29,6 +29,8 @@ const fmt = (n: number) =>
 export default function TaxCalculatorQuebec() {
   const [mode, setMode] = useState<Mode>("before");
   const [raw, setRaw] = useState<string>("");
+  const [, setKeypadOpen] = useState(false);
+  const interactionsRef = useRef(0);
   const { toast } = useToast();
   const { openAlex } = useAlexVoice();
 
@@ -108,30 +110,49 @@ export default function TaxCalculatorQuebec() {
           ))}
         </div>
 
-        {/* Input */}
+        {/* Read-only display */}
         <div className="space-y-2">
           <Label htmlFor="tax-amount" className="text-sm">
             {mode === "before" ? "Montant avant taxes" : "Montant taxes incluses"}
           </Label>
-          <div className="relative">
-            <Input
-              id="tax-amount"
-              type="text"
-              inputMode="decimal"
-              autoComplete="off"
-              placeholder="0,00"
-              value={raw}
-              onChange={(e) => {
-                setRaw(e.target.value);
-                (trackCopilotEvent as any)("tax_calculator_amount_entered", { mode });
-              }}
-              className="h-16 text-3xl font-bold pr-12 rounded-2xl"
-              aria-label="Montant en dollars"
-            />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-2xl text-muted-foreground font-semibold">
-              $
-            </span>
-          </div>
+          <button
+            type="button"
+            id="tax-amount"
+            onClick={() => {
+              setKeypadOpen(true);
+              (trackCopilotEvent as any)("keypad_opened", { mode });
+            }}
+            aria-label="Ouvrir le clavier numérique"
+            className="relative w-full h-16 px-4 pr-12 rounded-2xl border border-border bg-background text-left flex items-center overflow-hidden"
+          >
+            <motion.span
+              key={raw || "empty"}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.12 }}
+              className={`text-3xl font-bold tabular-nums ${raw ? "text-foreground" : "text-muted-foreground/60"}`}
+            >
+              {raw ? formatRaw(raw) : "0,00"}
+            </motion.span>
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-2xl text-muted-foreground font-semibold">$</span>
+          </button>
+          {amount > 0 && (
+            <p className="text-xs text-muted-foreground pl-1">Calcul instantané des taxes au Québec</p>
+          )}
+        </div>
+
+        {/* Custom keypad (always visible on the calculator card) */}
+        <div className="mt-4">
+          <CalculatorKeypad
+            value={raw}
+            onChange={(next) => {
+              setRaw(next);
+              interactionsRef.current += 1;
+              (trackCopilotEvent as any)("tax_calculator_amount_entered", { mode });
+            }}
+            onConfirm={() => setKeypadOpen(false)}
+            onTrack={(ev, payload) => (trackCopilotEvent as any)(ev, payload)}
+          />
         </div>
 
         {/* Results */}
