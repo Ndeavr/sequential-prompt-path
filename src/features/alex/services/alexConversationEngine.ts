@@ -133,8 +133,7 @@ export function processUserMessage(
       text: "Envoyez-moi une photo et je vais analyser l'espace pour vous proposer deux directions visuelles.",
       speak: true,
       intent: "photo_upload",
-      meta: { triggerVisualUpload: true } as any,
-    } as AlexConversationResponse;
+    };
   }
 
   const intent = classifyIntent(text);
