@@ -683,6 +683,7 @@ export const AppRouter = () => (
         <Route path="/manifeste" element={<Suspense fallback={<LazyFallback />}><PageManifesto /></Suspense>} />
         <Route path="/cest-quoi-unpro" element={<Suspense fallback={<LazyFallback />}><PageUnproFAQ25 /></Suspense>} />
         <Route path="/calculateur-taxes-quebec" element={<Suspense fallback={<LazyFallback />}><PageCalculateurTaxesQuebec /></Suspense>} />
+        <Route path="/isroyal/calculateur-taxes" element={<Suspense fallback={<LazyFallback />}><PageIsRoyalCalculateurTaxes /></Suspense>} />
         <Route path="/go" element={<PageAdLandingAipp />} />
         <Route path="/aipp-check" element={<PageAdLandingAipp />} />
         <Route path="/business-import" element={<PageBusinessImport />} />
