@@ -36,6 +36,15 @@ export function useAlexConversation() {
       state.setMode("waiting_for_reply");
       useAlexStore.setState({ lastAssistantQuestionAt: Date.now() });
 
+      // If the message is about a visual project, open the upload zone immediately.
+      if (isVisualProjectMessage(text)) {
+        useAlexVisualStore.getState().pushAction({
+          id: `upload-${Date.now()}`,
+          type: "upload_zone",
+          payload: { userMessageContext: text, title: "Ajouter une photo de l'espace" },
+        });
+      }
+
       if (response.speak) {
         await speak(response.text);
       }
