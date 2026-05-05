@@ -553,6 +553,8 @@ const PageOutboundLandingPages = lazy(() => import("@/pages/admin/outbound/PageO
 const PageOutboundOpsCenter = lazy(() => import("@/pages/admin/outbound/PageOutboundOpsCenter"));
 const PageOutboundVerification = lazy(() => import("@/pages/admin/outbound/PageOutboundVerification"));
 const PageOutboundTests = lazy(() => import("@/pages/admin/outbound/PageOutboundTests"));
+const PageOutboundControlTower = lazy(() => import("@/pages/admin/outbound/PageOutboundControlTower"));
+const PageOutboundTestCenter = lazy(() => import("@/pages/admin/outbound/PageOutboundTestCenter"));
 const PageOutboundAutomations = lazy(() => import("@/pages/admin/outbound/PageOutboundAutomations"));
 const PageOutboundLogs = lazy(() => import("@/pages/admin/outbound/PageOutboundLogs"));
 const PageOutboundSettingsLite = lazy(() => import("@/pages/admin/outbound/PageOutboundSettingsLite"));
@@ -1185,7 +1187,9 @@ export const AppRouter = () => (
         <Route path="/admin/outreach/:id" element={<ProtectedRoute requiredRole="admin"><AdminOutreachCampaignDetail /></ProtectedRoute>} />
         <Route path="/admin/outreach/templates" element={<ProtectedRoute requiredRole="admin"><AdminOutreachTemplates /></ProtectedRoute>} />
         <Route path="/admin/outreach/analytics" element={<ProtectedRoute requiredRole="admin"><AdminOutreachAnalytics /></ProtectedRoute>} />
-        <Route path="/admin/outbound" element={<ProtectedRoute requiredRole="admin"><PageOutboundDashboard /></ProtectedRoute>} />
+        <Route path="/admin/outbound" element={<ProtectedRoute requiredRole="admin"><PageOutboundControlTower /></ProtectedRoute>} />
+        <Route path="/admin/outbound/legacy" element={<ProtectedRoute requiredRole="admin"><PageOutboundDashboard /></ProtectedRoute>} />
+        <Route path="/admin/outbound/test-center" element={<ProtectedRoute requiredRole="admin"><PageOutboundTestCenter /></ProtectedRoute>} />
         <Route path="/admin/outreach-live" element={<ProtectedRoute requiredRole="admin"><PageOutreachLive /></ProtectedRoute>} />
         <Route path="/admin/outbound/campaigns" element={<ProtectedRoute requiredRole="admin"><PageOutboundCampaigns /></ProtectedRoute>} />
         <Route path="/admin/outbound/leads" element={<ProtectedRoute requiredRole="admin"><PageOutboundLeadsQueue /></ProtectedRoute>} />
