@@ -33,7 +33,7 @@ export default function TaxCalculatorQuebec() {
   const { openAlex } = useAlexVoice();
 
   useEffect(() => {
-    trackCopilotEvent("tax_calculator_viewed", {});
+    (trackCopilotEvent as any)("tax_calculator_viewed", {});
   }, []);
 
   const amount = useMemo(() => {
@@ -58,7 +58,7 @@ export default function TaxCalculatorQuebec() {
     try {
       await navigator.clipboard.writeText(text);
       toast({ title: "Calcul copié", description: text });
-      trackCopilotEvent("tax_calculator_result_copied", { mode, amount });
+      (trackCopilotEvent as any)("tax_calculator_result_copied", { mode, amount });
     } catch {
       toast({ title: "Impossible de copier", variant: "destructive" });
     }
@@ -68,12 +68,12 @@ export default function TaxCalculatorQuebec() {
 
   const onModeChange = (m: Mode) => {
     setMode(m);
-    trackCopilotEvent("tax_calculator_mode_changed", { mode: m });
+    (trackCopilotEvent as any)("tax_calculator_mode_changed", { mode: m });
   };
 
   const onCta = () => {
-    trackCopilotEvent("tax_calculator_cta_clicked", { mode, amount });
-    openAlex("general", { intent: "tax_calculator_home_project", amount, mode } as any);
+    (trackCopilotEvent as any)("tax_calculator_cta_clicked", { mode, amount });
+    openAlex("general", JSON.stringify({ intent: "tax_calculator_home_project", amount, mode }));
   };
 
   return (
@@ -123,7 +123,7 @@ export default function TaxCalculatorQuebec() {
               value={raw}
               onChange={(e) => {
                 setRaw(e.target.value);
-                trackCopilotEvent("tax_calculator_amount_entered", { mode });
+                (trackCopilotEvent as any)("tax_calculator_amount_entered", { mode });
               }}
               className="h-16 text-3xl font-bold pr-12 rounded-2xl"
               aria-label="Montant en dollars"
