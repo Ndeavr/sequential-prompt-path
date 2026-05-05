@@ -9,8 +9,10 @@ import {
   processUserMessage,
   acknowledgeUpload,
   handleQuickAction,
+  isVisualProjectMessage,
 } from "../services/alexConversationEngine";
 import { useAlexVoice } from "./useAlexVoice";
+import { useAlexVisualStore } from "../visual/visualStore";
 import { alexLog } from "../utils/alexDebug";
 import type { AlexIntent, STTTranscriptEvent } from "../types/alex.types";
 
