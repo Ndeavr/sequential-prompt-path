@@ -1,21 +1,65 @@
-## Problem
-After tightening the mask + adding a 55% top dark gradient, the trade images are barely visible (only a thin band at the bottom shows). The CTA pill also got partially covered by the bottom nav.
+# Forfait → Alex Fit Check → Onboarding
 
-## Fix — `src/components/home-simple/AlexTradesAura.tsx`
+## Objectif
+Sur la landing entrepreneur, les 3 cartes de plan (Recrue / Pro / Élite) ne sont pas cliquables. Les rendre actionnables et ajouter une étape **"Est-ce le bon plan pour vous?"** où Alex pose 3-4 questions de qualification, confirme (ou recommande mieux), puis envoie vers le checkout existant.
 
-**1. Relax the mask** so the image fills the orb area, not just a sliver:
-- From: `radial-gradient(ellipse 70% 55% at 50% 75%, black 50%, transparent 88%)`
-- To: `radial-gradient(ellipse 95% 80% at 50% 60%, black 65%, transparent 100%)`
+## Flow utilisateur
+```
+Landing /entrepreneurs
+   │  (clic carte plan)
+   ▼
+/entrepreneur/plan?plan=pro&validate=1
+   │  Alex: "Avant de confirmer Pro, 3 questions rapides…"
+   │   1. Combien de RDV par mois visez-vous?
+   │   2. Valeur moyenne d'un contrat?
+   │   3. Combien de villes desservez-vous?
+   │   4. Objectif principal? (présence / RDV / territoire)
+   ▼
+Recommandation Alex
+   • Si choix utilisateur == reco → "Parfait, Pro est bon pour vous"
+   • Si reco supérieure → upsell doux "Élite serait plus rentable, voici pourquoi"
+   • Si reco inférieure → downsell honnête
+   ▼
+Bouton: Confirmer ce plan → phase lead_packs → checkout (existant)
+```
 
-**2. Soften the top gradient** so the title stays readable but the image is visible behind the orb:
-- Reduce height from `55%` to `35%`
-- Use `from-background/95 via-background/50 to-transparent` (lighter mid-stop)
+## Changements
 
-**3. Restore opacity** to `0.72` (between original 0.78 and current 0.65) — readable images, no competition with orb glow.
+### 1. `SectionPlansPreviewV2.tsx`
+- Rendre chaque carte cliquable (`button` wrapper, focus ring premium)
+- `onClick` → `navigate('/entrepreneur/plan?plan=' + p.code + '&validate=1')` + `onTrackCta('plan_card_' + p.code, 'plans')`
+- Ajouter chevron `→` discret à droite, hover scale subtil
+- CTA "Voir tous les forfaits" inchangé
 
-**4. Lighten edge vignette** so corners don't crush the visible action zone:
-- From: `transparent 50%, hsl(var(--background)/0.7) 92%`
-- To: `transparent 65%, hsl(var(--background)/0.55) 100%`
+### 2. `PageContractorPlanOnboarding.tsx`
+- Lire `useSearchParams()` : `plan` + `validate`
+- Ajouter une nouvelle phase `"fit_check"` au type `FlowPhase`
+- Au mount, si `plan` présent → présélectionner `selectedPlanId` (mapper `code` → plan.id depuis catalog), `setPhase("fit_check")`
+- Header sous-titre: "Validation du plan"
 
-## Out of scope
-No changes to images, orb, layout, title, or rotation logic.
+### 3. Nouveau composant `PanelPlanFitCheck.tsx` (`src/components/voice-sales/`)
+- 4 questions séquentielles (une à la fois, style chat-card avec choix rapides)
+  - RDV/mois: <5 / 5-15 / 15-30 / 30+
+  - Valeur moyenne: <2k / 2-5k / 5-10k / 10k+
+  - Villes: 1 / 2-3 / 4+
+  - Objectif: présence / RDV / conversion / territoire
+- Au submit: appel local à `recommendPlan()` (déjà dans `src/services/planRecommendationService.ts`)
+- Affiche **CardFitVerdict**:
+  - Badge "Choix confirmé" / "Recommandation Alex: passez à X" / "Recrue suffit pour vous"
+  - 3 raisons (via `getRecommendationReasons`)
+  - 2 boutons: "Garder [plan choisi]" (primaire) / "Passer à [reco]" (si différent)
+- Au choix → `setSelectedPlanId(finalPlanId); setPhase("lead_packs")` (réutilise pipeline existant)
+
+### 4. Tracking
+Events: `plan_card_clicked`, `fit_check_started`, `fit_check_q{1..4}_answered`, `fit_check_recommendation_shown`, `fit_check_kept_choice`, `fit_check_switched_plan`
+
+## UI/UX
+- Mobile-first, dark cinematic (cohérent avec landing)
+- Une question visible à la fois, transitions framer-motion (fade+slide 8px)
+- Réponses = pills tappables larges (h-12), pas de dropdowns
+- Verdict card = gradient primary/10, icône Sparkles, texte court direct
+- Bouton "Garder mon choix" toujours dispo (no forced upsell)
+
+## Hors scope
+- Pas de changement au checkout, lead packs, founders modal, voix Alex
+- Pas de nouvelle table DB (qualification stockée en state local + tracking events)
