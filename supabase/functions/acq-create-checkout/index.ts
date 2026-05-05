@@ -13,9 +13,24 @@ Deno.serve(async (req) => {
     const { data: plan } = await sb.from("acq_pricing_plans").select("*").eq("plan_code", plan_code).single();
     if (!c || !plan) throw new Error("missing_contractor_or_plan");
 
-    let amountCents = plan.monthly_price * 100;
-    let couponApplied: any = null;
+    // Resolve primary trade for slot enforcement
+    const { data: services } = await sb.from("acq_contractor_services")
+      .select("category").eq("contractor_id", contractor_id).limit(1);
+    const trade = (services?.[0] as any)?.category || "general";
+    const city = c.city || "Laval";
+
+    // Slot check (read-only here; increment happens on webhook success)
+    const { data: slot } = await sb.from("acq_territory_slots")
+      .select("max_slots, used_slots")
+      .ilike("city", city).ilike("trade", trade).maybeSingle();
+    if (slot && slot.used_slots >= slot.max_slots) {
+      return new Response(JSON.stringify({ error: "territory_full", city, trade }),
+        { status: 409, headers: { ...cors, "Content-Type": "application/json" } });
+    }
+
+    let amountCents = Math.round(Number(plan.monthly_price) * 100);
     let description = `Abonnement ${plan.name} — UNPRO`;
+    let isTrialOffer = false;
 
     if (coupon_code) {
       const { data: coupon } = await sb.from("acq_coupons").select("*").eq("code", coupon_code).single();
@@ -23,15 +38,20 @@ Deno.serve(async (req) => {
       if (coupon.redemptions_count >= coupon.max_redemptions) throw new Error("coupon_exhausted");
       if (coupon.discount_type === "dynamic_to_1_dollar") {
         amountCents = (coupon.min_charge_amount || 1) * 100;
-        description = `Activation UNPRO — ${plan.name} (offre $1)`;
+        description = `Activation UNPRO — ${plan.name} (offre 1$)`;
+        isTrialOffer = true;
       }
-      couponApplied = coupon;
     }
 
     const origin = req.headers.get("origin") || "https://unpro.ca";
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: c.email || undefined,
+      customer_creation: "always",
+      payment_intent_data: {
+        setup_future_usage: "off_session",
+        description,
+      },
       line_items: [{
         price_data: {
           currency: "cad",
@@ -43,7 +63,11 @@ Deno.serve(async (req) => {
       success_url: success_url || `${origin}/activation-success?cid=${contractor_id}`,
       cancel_url: cancel_url || `${origin}/activation/${c.slug}`,
       metadata: {
-        contractor_id, plan_code, coupon_code: coupon_code || "",
+        contractor_id, plan_code,
+        coupon_code: coupon_code || "",
+        is_trial_offer: isTrialOffer ? "1" : "0",
+        slot_city: city,
+        slot_trade: trade,
       },
     });
 
@@ -54,6 +78,8 @@ Deno.serve(async (req) => {
       stripe_session_id: session.id,
       coupon_code: coupon_code || null,
       amount_due: Math.round(amountCents / 100),
+      upgrade_plan_code: plan_code,
+      auto_upgrade: true,
     });
 
     return new Response(JSON.stringify({ url: session.url, session_id: session.id, amount: amountCents / 100 }), {
@@ -61,6 +87,6 @@ Deno.serve(async (req) => {
     });
   } catch (e) {
     console.error("[acq-checkout]", e);
-    return new Response(JSON.stringify({ error: String(e?.message ?? e) }), { status: 500, headers: { ...cors, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: String((e as any)?.message ?? e) }), { status: 500, headers: { ...cors, "Content-Type": "application/json" } });
   }
 });

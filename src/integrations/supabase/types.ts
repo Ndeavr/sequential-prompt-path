@@ -456,6 +456,96 @@ export type Database = {
         }
         Relationships: []
       }
+      acq_email_logs: {
+        Row: {
+          clicked_at: string | null
+          contractor_id: string | null
+          created_at: string
+          error: string | null
+          id: string
+          opened_at: string | null
+          provider_message_id: string | null
+          recipient_email: string
+          sent_at: string | null
+          sequence_code: string | null
+          status: string
+          subject: string | null
+        }
+        Insert: {
+          clicked_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          opened_at?: string | null
+          provider_message_id?: string | null
+          recipient_email: string
+          sent_at?: string | null
+          sequence_code?: string | null
+          status?: string
+          subject?: string | null
+        }
+        Update: {
+          clicked_at?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          opened_at?: string | null
+          provider_message_id?: string | null
+          recipient_email?: string
+          sent_at?: string | null
+          sequence_code?: string | null
+          status?: string
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acq_email_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_aipp_public_view"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "acq_email_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_contractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acq_email_sequences: {
+        Row: {
+          active: boolean
+          body_html: string
+          code: string
+          created_at: string
+          day_offset: number
+          id: string
+          subject: string
+        }
+        Insert: {
+          active?: boolean
+          body_html: string
+          code: string
+          created_at?: string
+          day_offset: number
+          id?: string
+          subject: string
+        }
+        Update: {
+          active?: boolean
+          body_html?: string
+          code?: string
+          created_at?: string
+          day_offset?: number
+          id?: string
+          subject?: string
+        }
+        Relationships: []
+      }
       acq_invites: {
         Row: {
           clicked_at: string | null
@@ -591,54 +681,126 @@ export type Database = {
         }
         Relationships: []
       }
+      acq_sms_logs: {
+        Row: {
+          body: string
+          contractor_id: string | null
+          created_at: string
+          error: string | null
+          id: string
+          provider_message_id: string | null
+          recipient_phone: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          body: string
+          contractor_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          provider_message_id?: string | null
+          recipient_phone: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          body?: string
+          contractor_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          provider_message_id?: string | null
+          recipient_phone?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acq_sms_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_aipp_public_view"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "acq_sms_logs_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_contractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       acq_subscriptions: {
         Row: {
           activated_at: string | null
           amount_due: number | null
           amount_paid: number | null
+          auto_upgrade: boolean
           contractor_id: string
           coupon_code: string | null
           created_at: string
           id: string
+          payment_method_on_file: boolean
           plan_code: string
           status: string
           stripe_customer_id: string | null
+          stripe_payment_method_id: string | null
           stripe_session_id: string | null
           stripe_subscription_id: string | null
           trial_ends_at: string | null
           trial_started_at: string | null
+          upgrade_attempted_at: string | null
+          upgrade_failed_reason: string | null
+          upgrade_plan_code: string | null
+          warned_at: string | null
         }
         Insert: {
           activated_at?: string | null
           amount_due?: number | null
           amount_paid?: number | null
+          auto_upgrade?: boolean
           contractor_id: string
           coupon_code?: string | null
           created_at?: string
           id?: string
+          payment_method_on_file?: boolean
           plan_code: string
           status?: string
           stripe_customer_id?: string | null
+          stripe_payment_method_id?: string | null
           stripe_session_id?: string | null
           stripe_subscription_id?: string | null
           trial_ends_at?: string | null
           trial_started_at?: string | null
+          upgrade_attempted_at?: string | null
+          upgrade_failed_reason?: string | null
+          upgrade_plan_code?: string | null
+          warned_at?: string | null
         }
         Update: {
           activated_at?: string | null
           amount_due?: number | null
           amount_paid?: number | null
+          auto_upgrade?: boolean
           contractor_id?: string
           coupon_code?: string | null
           created_at?: string
           id?: string
+          payment_method_on_file?: boolean
           plan_code?: string
           status?: string
           stripe_customer_id?: string | null
+          stripe_payment_method_id?: string | null
           stripe_session_id?: string | null
           stripe_subscription_id?: string | null
           trial_ends_at?: string | null
           trial_started_at?: string | null
+          upgrade_attempted_at?: string | null
+          upgrade_failed_reason?: string | null
+          upgrade_plan_code?: string | null
+          warned_at?: string | null
         }
         Relationships: [
           {
@@ -656,6 +818,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      acq_territory_slots: {
+        Row: {
+          city: string
+          created_at: string
+          id: string
+          max_slots: number
+          trade: string
+          updated_at: string
+          used_slots: number
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          id?: string
+          max_slots?: number
+          trade: string
+          updated_at?: string
+          used_slots?: number
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          id?: string
+          max_slots?: number
+          trade?: string
+          updated_at?: string
+          used_slots?: number
+        }
+        Relationships: []
       }
       activation_steps: {
         Row: {
@@ -62114,6 +62306,10 @@ export type Database = {
       }
     }
     Functions: {
+      acq_increment_slot: {
+        Args: { p_city: string; p_trade: string }
+        Returns: boolean
+      }
       approve_company: {
         Args: { _actor_id: string; _company_id: string }
         Returns: Json
