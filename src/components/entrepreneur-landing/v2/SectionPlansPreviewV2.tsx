@@ -36,13 +36,19 @@ export default function SectionPlansPreviewV2({ onTrackCta }: Props) {
 
         <div className="space-y-3">
           {PLANS.map((p, i) => (
-            <motion.div
+            <motion.button
               key={p.code}
+              type="button"
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.08 }}
-              className={`relative rounded-xl border p-4 backdrop-blur-sm ${
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                onTrackCta(`plan_card_${p.code}`, "plans");
+                navigate(`/entrepreneur/plan?plan=${p.code}&validate=1`);
+              }}
+              className={`relative w-full text-left rounded-xl border p-4 backdrop-blur-sm transition-all hover:border-primary/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
                 p.highlight
                   ? "border-primary/50 bg-gradient-to-br from-primary/10 to-accent/5 shadow-[0_8px_30px_hsl(var(--primary)/0.2)]"
                   : "border-border/50 bg-card/60"
@@ -53,17 +59,20 @@ export default function SectionPlansPreviewV2({ onTrackCta }: Props) {
                   Recommandé
                 </span>
               )}
-              <div className="flex items-baseline justify-between">
+              <div className="flex items-baseline justify-between gap-3">
                 <div>
                   <p className="font-display font-bold text-lg text-foreground">{p.name}</p>
                   <p className="text-xs text-muted-foreground">{p.blurb}</p>
                 </div>
-                <div className="text-right">
-                  <span className="font-display text-2xl font-extrabold text-foreground">{p.price}$</span>
-                  <span className="text-xs text-muted-foreground">/mois</span>
+                <div className="text-right flex items-center gap-2">
+                  <div>
+                    <span className="font-display text-2xl font-extrabold text-foreground">{p.price}$</span>
+                    <span className="text-xs text-muted-foreground">/mois</span>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-muted-foreground/70 shrink-0" />
                 </div>
               </div>
-            </motion.div>
+            </motion.button>
           ))}
         </div>
 
