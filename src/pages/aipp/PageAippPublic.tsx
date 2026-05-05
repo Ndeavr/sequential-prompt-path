@@ -111,22 +111,45 @@ export default function PageAippPublic() {
           </Card>
         )}
 
-        {/* CTA */}
+        {/* $1 Close */}
+        <Card className="border-2 border-primary/40 bg-gradient-to-br from-primary/5 to-transparent">
+          <CardContent className="p-8 text-center space-y-4">
+            <Badge variant="default" className="mx-auto">Offre limitée — aujourd'hui seulement</Badge>
+            <h2 className="text-3xl font-bold">Activez votre profil aujourd'hui pour 1$</h2>
+            {slotsRemaining !== null && slotsRemaining > 0 && (
+              <p className="text-sm font-semibold text-primary">
+                Places disponibles à {c.city}: {slotsRemaining} restante{slotsRemaining > 1 ? "s" : ""}
+              </p>
+            )}
+            {slotsRemaining === 0 && (
+              <p className="text-sm font-semibold text-destructive">Complet dans votre secteur</p>
+            )}
+            <ul className="text-left max-w-md mx-auto space-y-2 text-sm">
+              <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-primary" /> Accès immédiat à votre profil UNPRO</li>
+              <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-primary" /> Positionnement prioritaire dans votre secteur</li>
+              <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-primary" /> Réservation de votre territoire</li>
+            </ul>
+            <Link to={`/activation/${c.slug}`}>
+              <Button size="lg" className="mt-4" disabled={slotsRemaining === 0}>
+                {slotsRemaining === 0 ? "Complet" : "Activer pour 1$"}
+              </Button>
+            </Link>
+            <p className="text-xs text-muted-foreground">
+              Code promo <strong>freetoday</strong> appliqué automatiquement.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Standard CTA */}
         <Card className="bg-primary text-primary-foreground">
           <CardContent className="p-8 text-center space-y-4">
             <TrendingUp className="w-10 h-10 mx-auto" />
-            <h2 className="text-2xl font-bold">Activez votre profil UNPRO</h2>
-            <p className="opacity-90 max-w-md mx-auto">
-              Recevez des rendez-vous qualifiés directement dans votre calendrier. Aucun lead partagé.
-            </p>
+            <h2 className="text-2xl font-bold">Pourquoi UNPRO</h2>
             <ul className="text-left max-w-md mx-auto space-y-2 text-sm">
               <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" /> Rendez-vous exclusifs</li>
               <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" /> Profil AIPP optimisé</li>
-              <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" /> Activation en 1 minute avec le code <strong>freetoday</strong></li>
+              <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" /> Aucun engagement à long terme</li>
             </ul>
-            <Link to={`/activation/${c.slug}`}>
-              <Button size="lg" variant="secondary" className="mt-4">Activer mon profil</Button>
-            </Link>
           </CardContent>
         </Card>
       </div>
