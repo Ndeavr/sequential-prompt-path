@@ -5,6 +5,11 @@ import { useAlexVisualStore } from "./visualStore";
 import UploadZone from "./UploadZone";
 import VisualStyleComparison from "./VisualStyleComparison";
 import BeforeAfterViewer from "./BeforeAfterViewer";
+import ContractorIntakePanel from "../contractor/ContractorIntakePanel";
+import ContractorGrowthDashboard from "../contractor/ContractorGrowthDashboard";
+import PlanRecommendationTable from "../contractor/PlanRecommendationTable";
+import GrowthPathTable from "../contractor/GrowthPathTable";
+import CheckoutPanel from "../contractor/CheckoutPanel";
 
 export default function AlexActionRenderer() {
   const actions = useAlexVisualStore((s) => s.actions);

@@ -17,6 +17,15 @@ export interface VisualStylesResponse {
 /** Card injected as an Alex action — rendered inline in the chat. */
 export interface AlexAction {
   id: string;
-  type: "upload_zone" | "visual_style_comparison" | "before_after" | "recommended_pro";
+  type:
+    | "upload_zone"
+    | "visual_style_comparison"
+    | "before_after"
+    | "recommended_pro"
+    | "contractor_intake"
+    | "contractor_growth_dashboard"
+    | "contractor_plan_table"
+    | "contractor_growth_path"
+    | "contractor_checkout";
   payload?: any;
 }
