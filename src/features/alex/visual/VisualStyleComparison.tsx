@@ -2,13 +2,14 @@
  * VisualStyleComparison — Shows 2 styles side-by-side. User picks one.
  * On selection: stores preference + injects BeforeAfter card.
  */
-import { useState } from "react";
-import { Check, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAlexVisualStore } from "./visualStore";
 import { useAlexStore } from "@/features/alex/state/alexStore";
 import { useAlexVoice } from "@/features/alex/hooks/useAlexVoice";
 import BeforeAfterViewer from "./BeforeAfterViewer";
+import { getUserStyleProfile, recommendStyle } from "./SmartRecommendationEngine";
 import type { VisualStylesResponse, VisualStyleOption } from "./types";
 
 interface Props {
@@ -19,9 +20,22 @@ interface Props {
 export default function VisualStyleComparison({ actionId, data }: Props) {
   const [picked, setPicked] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [recommendedId, setRecommendedId] = useState<string | null>(null);
+  const [reason, setReason] = useState<string | null>(null);
   const pushAction = useAlexVisualStore((s) => s.pushAction);
   const removeAction = useAlexVisualStore((s) => s.removeAction);
   const { speak } = useAlexVoice();
+
+  useEffect(() => {
+    let alive = true;
+    getUserStyleProfile().then((profile) => {
+      if (!alive) return;
+      const rec = recommendStyle(data.styles, profile);
+      setRecommendedId(rec.recommendedId);
+      setReason(rec.reason);
+    });
+    return () => { alive = false; };
+  }, [data.styles]);
 
   const select = async (opt: VisualStyleOption) => {
     if (saving) return;
