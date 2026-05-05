@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Send, Paperclip, Loader2 } from "lucide-react";
 import { useAlexUIBridge } from "@/features/alex/hooks/useAlexUIBridge";
 import { useAlexStore } from "@/features/alex/state/alexStore";
+import AlexActionRenderer from "@/features/alex/visual/AlexActionRenderer";
 
 export default function AlexEmbeddedChat() {
   const { onTextSubmit, onFileUpload } = useAlexUIBridge();
@@ -138,6 +139,9 @@ export default function AlexEmbeddedChat() {
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
+        <div className="mt-3">
+          <AlexActionRenderer />
         </div>
       </motion.div>
 
