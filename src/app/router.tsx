@@ -56,6 +56,7 @@ const LeadPipePageAdminEmpire = lazy(() => import("@/pages/admin/PageLeadEmpireD
 
 // Calculators
 const PageCalculateurTaxesQuebec = lazy(() => import("@/pages/calculators/PageCalculateurTaxesQuebec"));
+const PageIsRoyalCalculateurTaxes = lazy(() => import("@/pages/calculators/PageIsRoyalCalculateurTaxes"));
 
 // Lightweight loading fallback
 const LazyFallback = () => (
