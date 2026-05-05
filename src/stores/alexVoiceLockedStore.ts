@@ -133,12 +133,15 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
       sessionLog: { sessionId, openedAt: now, openReason },
     });
 
-    // Log to DB (fire and forget)
-    supabase.from("voice_session_logs").insert({
-      session_id: sessionId,
-      status: "active",
-      open_reason: openReason,
-    }).then(() => {});
+    // Log to DB (fire and forget). Include user_id when authenticated to satisfy RLS.
+    supabase.auth.getUser().then(({ data }) => {
+      supabase.from("voice_session_logs").insert({
+        session_id: sessionId,
+        user_id: data?.user?.id ?? null,
+        status: "active",
+        open_reason: openReason,
+      }).then(() => {});
+    });
 
     // Log state transition
     logTransition(sessionId, "idle", "requesting_permission", openReason);

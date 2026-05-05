@@ -105,11 +105,13 @@ export function useAlexVoiceRecovery() {
     const recoveryStartMs = Date.now();
     const previousSessionId = useAlexVoiceLockedStore.getState().sessionId;
 
-    // Log attempt to DB
+    // Log attempt to DB (non-blocking, best-effort).
+    // NOTE: voice_recovery_attempts.user_id references profiles(id), not auth.users.id.
+    // We pass null to avoid FK failures and rely on previous_session_id for joining.
     const recoveryId = crypto.randomUUID();
     supabase.from('voice_recovery_attempts' as any).insert({
       id: recoveryId,
-      user_id: user?.id ?? null,
+      user_id: null,
       previous_session_id: previousSessionId,
       recovery_type: 'hard_reset',
       trigger_reason: `attempt_${attemptNum}`,
