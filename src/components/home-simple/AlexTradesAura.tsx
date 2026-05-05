@@ -1,6 +1,8 @@
 /**
  * AlexTradesAura — Faded rotating trade images behind the Alex orb.
- * Smooth crossfade with no flicker (preloaded + permanent layers).
+ * Variants:
+ *  - "orb" (default, legacy): masked aura tightly around the orb.
+ *  - "section": fills the whole hero section as a fullscreen background.
  */
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
@@ -24,19 +26,19 @@ const TRADES = [
   { src: carpentry, label: "Menuiserie" },
 ];
 
-// Reveal only the bottom-center where the action lives; hide top (title zone) entirely.
-const MASK = "radial-gradient(ellipse 95% 80% at 50% 60%, black 65%, transparent 100%)";
-const IMG_CLASS =
-  "w-full h-full max-w-none object-cover rounded-[2.5rem] blur-[0.5px] saturate-125 contrast-110 will-change-[opacity]";
+type Variant = "orb" | "section";
 
-export default function AlexTradesAura() {
+interface Props {
+  variant?: Variant;
+}
+
+export default function AlexTradesAura({ variant = "orb" }: Props) {
   const startOffset = useMemo(
     () => Math.floor(Math.random() * TRADES.length),
     [],
   );
   const [index, setIndex] = useState(startOffset);
 
-  // Preload all trade images so swaps never flash a blank frame.
   useEffect(() => {
     TRADES.forEach((t) => {
       const img = new Image();
@@ -51,8 +53,64 @@ export default function AlexTradesAura() {
     return () => clearInterval(id);
   }, []);
 
-  // Every trade is a permanently mounted layer; only opacity animates.
-  // No mount/unmount → no flicker.
+  if (variant === "section") {
+    // Fullscreen background — image visible edge to edge, orb sits on top.
+    return (
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+      >
+        {TRADES.map((trade, i) => (
+          <motion.img
+            key={trade.src}
+            src={trade.src}
+            alt=""
+            decoding="async"
+            loading="eager"
+            initial={false}
+            animate={{ opacity: i === index ? 0.85 : 0 }}
+            transition={{ duration: 2.2, ease: "easeInOut" }}
+            className="absolute inset-0 w-full h-full object-cover saturate-110 contrast-110"
+          />
+        ))}
+
+        {/* Top readability — protects title + subtext */}
+        <div
+          className="absolute inset-x-0 top-0 h-[42%]"
+          style={{
+            background:
+              "linear-gradient(to bottom, hsl(220 50% 4% / 0.92) 0%, hsl(220 50% 4% / 0.75) 45%, transparent 100%)",
+          }}
+        />
+
+        {/* Center depth — softens behind the orb */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 65% 45% at 50% 55%, hsl(220 50% 4% / 0.55) 0%, transparent 70%)",
+          }}
+        />
+
+        {/* Bottom readability — protects badge + CTA + nav */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-[35%]"
+          style={{
+            background:
+              "linear-gradient(to top, hsl(220 50% 4% / 0.95) 0%, hsl(220 50% 4% / 0.7) 50%, transparent 100%)",
+          }}
+        />
+
+        {/* Edge vignette */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_60%,hsl(220_50%_4%/0.7)_100%)]" />
+      </div>
+    );
+  }
+
+  // Legacy "orb" variant
+  const MASK = "radial-gradient(ellipse 95% 80% at 50% 60%, black 65%, transparent 100%)";
+  const IMG_CLASS =
+    "w-full h-full max-w-none object-cover rounded-[2.5rem] blur-[0.5px] saturate-125 contrast-110 will-change-[opacity]";
   return (
     <div
       aria-hidden="true"
@@ -64,26 +122,20 @@ export default function AlexTradesAura() {
             key={trade.src}
             src={trade.src}
             alt=""
-            width={1024}
-            height={1024}
             decoding="async"
             loading="eager"
             initial={false}
             animate={{ opacity: i === index ? 0.72 : 0 }}
             transition={{ duration: 2.6, ease: "easeInOut" }}
             className={`absolute inset-0 ${IMG_CLASS}`}
-            style={{
-              maskImage: MASK,
-              WebkitMaskImage: MASK,
-            }}
+            style={{ maskImage: MASK, WebkitMaskImage: MASK }}
           />
         ))}
       </div>
-
-      {/* Top-down dark gradient — locks title legibility */}
-      <div className="pointer-events-none absolute -inset-32 sm:-inset-40 md:-inset-48 bg-gradient-to-b from-background/95 via-background/50 to-transparent" style={{ height: "35%" }} />
-
-      {/* Soft transparent vignette — darkens edges without hiding the image */}
+      <div
+        className="pointer-events-none absolute -inset-32 sm:-inset-40 md:-inset-48 bg-gradient-to-b from-background/95 via-background/50 to-transparent"
+        style={{ height: "35%" }}
+      />
       <div className="pointer-events-none absolute -inset-32 sm:-inset-40 md:-inset-48 rounded-[2.5rem] bg-[radial-gradient(ellipse_at_center,transparent_65%,hsl(var(--background)/0.55)_100%)]" />
     </div>
   );
