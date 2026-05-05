@@ -179,10 +179,18 @@ export default function OverlayAlexVoiceFullScreen() {
         stabilizationTimerRef.current = null;
       }
       const timeSinceBoot = Date.now() - bootTimeRef.current;
-      if (s.isOverlayOpen && wasConnected && timeSinceBoot > 2000) {
-        s.setError("connection_lost", "La voix d'Alex a été interrompue. Je réessaie automatiquement.", true);
-      } else if (s.isOverlayOpen && !wasConnected) {
-        s.setError("connection_failed", "Connexion vocale échouée. Je réessaie automatiquement.", true);
+      const hadAudio = (alexVoiceService.getSnapshot().retryCount === 0) && wasConnected && timeSinceBoot > 2000;
+      if (s.isOverlayOpen && hadAudio) {
+        s.setError("connection_lost", "La voix d'Alex a été interrompue. Vous pouvez continuer par chat.", true);
+      } else if (s.isOverlayOpen) {
+        // Never connected (or connected without audio) → bail straight to chat instead of red dead-end.
+        console.warn("[VoiceOverlay] Disconnect before audio → fallback chat");
+        alexVoiceService.switchToFallbackChat("disconnect_pre_audio");
+        openChatFallback(
+          "voice_unavailable",
+          transcriptsRef.current.map((t) => ({ role: t.role, text: t.text })),
+        );
+        s.closeVoiceSession("disconnect_pre_audio");
       }
     },
     onError: (error) => {
