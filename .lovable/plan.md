@@ -1,44 +1,21 @@
-# Hero Trades — Visibility Fix
+## Problem
+After tightening the mask + adding a 55% top dark gradient, the trade images are barely visible (only a thin band at the bottom shows). The CTA pill also got partially covered by the bottom nav.
 
-## Problem (from your screenshots)
-1. Some trade images (notary close-up with pens, painter ladder, electrician) place the **subject directly behind the orb** → the action is hidden.
-2. Bright/busy zones in the **top third** wash out the title and subtitle (`Alex vous aide à estimer…`).
+## Fix — `src/components/home-simple/AlexTradesAura.tsx`
 
-## Fix Strategy
-Two coordinated changes:
+**1. Relax the mask** so the image fills the orb area, not just a sliver:
+- From: `radial-gradient(ellipse 70% 55% at 50% 75%, black 50%, transparent 88%)`
+- To: `radial-gradient(ellipse 95% 80% at 50% 60%, black 65%, transparent 100%)`
 
-### 1. Regenerate all 8 trade images with "safe-zone" composition
-Use Nano Banana Pro (`google/gemini-3-pro-image-preview`) to produce 1024×1024 cinematic images that follow strict composition rules:
+**2. Soften the top gradient** so the title stays readable but the image is visible behind the orb:
+- Reduce height from `55%` to `35%`
+- Use `from-background/95 via-background/50 to-transparent` (lighter mid-stop)
 
-- **Top 40%**: very dark, near-black, low-detail (empty wall, dark ceiling, shadow) → guarantees title legibility
-- **Center 35% (orb zone)**: dark, soft, no critical subject → orb sits cleanly
-- **Bottom + side bands**: where the *action* lives (tools, hands, materials, environment cue), framed left/right or low, never centered
-- Cinematic dark teal/navy palette matching `#060B14` Cinematic Dark theme
-- No text, no logos, no faces front-and-center, no small busy props (pens, papers) competing with title
+**3. Restore opacity** to `0.72` (between original 0.78 and current 0.65) — readable images, no competition with orb glow.
 
-Trades to regenerate (same filenames, drop-in replacement — no import changes needed):
-`renovation, ceramic, painting, excavation, notary, plumbing, electrical, carpentry`
-
-For `notary`: replace the pen close-up with a wide dark office desk shot, action (signature/hand) at bottom-right, top empty.
-
-Pipeline:
-- Script `/tmp/gen_trades.py` calls AI gateway for each trade with a shared "safe-zone" prompt + per-trade subject hint
-- Saves base64 → `src/assets/trades/{name}.jpg` (overwrite)
-- QA: open each generated image, verify top is dark and center is clear; regenerate any that fail
-
-### 2. Tighten `AlexTradesAura.tsx` mask
-Reinforce the safe zones at the CSS layer so even imperfect images stay readable:
-
-- Change radial mask to keep image only in a **smaller central-bottom ellipse**, fading harder near the top
-- Add a top-down dark gradient overlay (`from-background via-background/70 to-transparent`) covering the top ~45% to lock title contrast
-- Slightly reduce max opacity (0.78 → 0.65) so subjects never compete with the orb glow
-
-File: `src/components/home-simple/AlexTradesAura.tsx` (mask + vignette only, no logic change).
-
-## Deliverables
-- 8 regenerated `.jpg` files in `src/assets/trades/`
-- Updated mask/vignette in `AlexTradesAura.tsx`
-- QA pass: visual check of each image + preview screenshot of `/` confirming title and orb are unobstructed
+**4. Lighten edge vignette** so corners don't crush the visible action zone:
+- From: `transparent 50%, hsl(var(--background)/0.7) 92%`
+- To: `transparent 65%, hsl(var(--background)/0.55) 100%`
 
 ## Out of scope
-- No changes to orb, title copy, layout, or rotation logic.
+No changes to images, orb, layout, title, or rotation logic.
