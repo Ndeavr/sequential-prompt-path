@@ -174,6 +174,18 @@ export default function PageContractorPlanOnboarding() {
             )}
           </AnimatePresence>
 
+          {/* Fit check phase */}
+          <AnimatePresence>
+            {phase === "fit_check" && selectedPlan && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-4">
+                <PanelPlanFitCheck
+                  selectedPlanCode={selectedPlan.code}
+                  onConfirm={handleFitCheckConfirm}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Lead packs phase */}
           <AnimatePresence>
             {phase === "lead_packs" && (
