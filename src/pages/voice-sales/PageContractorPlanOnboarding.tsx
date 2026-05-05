@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,8 +12,9 @@ import CardPlanFounders from "@/components/voice-sales/CardPlanFounders";
 import ModalHeyButWaitUpgrade from "@/components/voice-sales/ModalHeyButWaitUpgrade";
 import PanelLeadPackSelector from "@/components/voice-sales/PanelLeadPackSelector";
 import PanelInlineCheckout from "@/components/voice-sales/PanelInlineCheckout";
+import PanelPlanFitCheck from "@/components/voice-sales/PanelPlanFitCheck";
 
-type FlowPhase = "chat" | "plans" | "founders_upsell" | "lead_packs" | "checkout";
+type FlowPhase = "chat" | "plans" | "fit_check" | "founders_upsell" | "lead_packs" | "checkout";
 
 export default function PageContractorPlanOnboarding() {
   const { openAlex } = useAlexVoice();
