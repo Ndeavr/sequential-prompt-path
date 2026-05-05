@@ -69,7 +69,7 @@ export default function AlexTradesAura() {
             decoding="async"
             loading="eager"
             initial={false}
-            animate={{ opacity: i === index ? 0.6 : 0 }}
+            animate={{ opacity: i === index ? 0.72 : 0 }}
             transition={{ duration: 2.6, ease: "easeInOut" }}
             className={`absolute inset-0 ${IMG_CLASS}`}
             style={{
@@ -79,6 +79,12 @@ export default function AlexTradesAura() {
           />
         ))}
       </div>
+
+      {/* Top-down dark gradient — locks title legibility */}
+      <div className="pointer-events-none absolute -inset-32 sm:-inset-40 md:-inset-48 bg-gradient-to-b from-background/95 via-background/50 to-transparent" style={{ height: "35%" }} />
+
+      {/* Soft transparent vignette — darkens edges without hiding the image */}
+      <div className="pointer-events-none absolute -inset-32 sm:-inset-40 md:-inset-48 rounded-[2.5rem] bg-[radial-gradient(ellipse_at_center,transparent_65%,hsl(var(--background)/0.55)_100%)]" />
 
       {/* Top-down dark gradient — locks title legibility */}
       <div className="pointer-events-none absolute -inset-32 sm:-inset-40 md:-inset-48 bg-gradient-to-b from-background via-background/70 to-transparent" style={{ height: "55%" }} />
