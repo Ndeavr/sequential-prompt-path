@@ -30,13 +30,21 @@ export default function PageAippPublic() {
         supabase.from("acq_contractor_media").select("*").eq("contractor_id", page.contractor_id).order("sort_order"),
       ]);
 
+      let slot: any = null;
+      if (c?.city) {
+        const trade = (services?.[0] as any)?.category || "general";
+        const { data: s } = await supabase.from("acq_territory_slots")
+          .select("*").ilike("city", c.city).ilike("trade", trade).maybeSingle();
+        slot = s;
+      }
+
       // Increment view count
       await supabase
         .from("acq_aipp_pages")
         .update({ view_count: (await supabase.from("acq_aipp_pages").select("view_count").eq("contractor_id", page.contractor_id).single()).data?.view_count ?? 0 } as any)
         .eq("contractor_id", page.contractor_id);
 
-      setData({ contractor: c, score, services: services || [], media: media || [] });
+      setData({ contractor: c, score, services: services || [], media: media || [], slot });
       setLoading(false);
     })();
   }, [slug, token]);
