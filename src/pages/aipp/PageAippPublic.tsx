@@ -52,9 +52,10 @@ export default function PageAippPublic() {
   if (loading) return <div className="min-h-screen flex items-center justify-center">Chargement…</div>;
   if (!data?.contractor) return <div className="min-h-screen flex items-center justify-center">Page introuvable</div>;
 
-  const { contractor: c, score, services, media } = data;
+  const { contractor: c, score, services, media, slot } = data;
   const aippScore = score?.aipp_score ?? 0;
   const logo = media.find((m: any) => m.media_type === "logo")?.url;
+  const slotsRemaining = slot ? Math.max(0, slot.max_slots - slot.used_slots) : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
