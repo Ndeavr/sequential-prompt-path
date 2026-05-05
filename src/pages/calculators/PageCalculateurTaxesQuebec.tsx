@@ -10,7 +10,7 @@ import SeoFaqSection from "@/seo/components/SeoFaqSection";
 import { injectJsonLd } from "@/lib/seoSchema";
 import TaxCalculatorQuebec from "@/components/calculators/TaxCalculatorQuebec";
 
-const FAQS = [
+const FAQS: { question: string; answer: string; topics: string[] }[] = ([
   {
     question: "Quel est le taux de taxes au Québec?",
     answer: "Au Québec, la TPS (taxe fédérale) est de 5 % et la TVQ (taxe provinciale) est de 9,975 %. Le taux combiné est de 14,975 %.",
