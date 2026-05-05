@@ -24,7 +24,8 @@ const TRADES = [
   { src: carpentry, label: "Menuiserie" },
 ];
 
-const MASK = "radial-gradient(ellipse at center, black 55%, transparent 90%)";
+// Reveal only the bottom-center where the action lives; hide top (title zone) entirely.
+const MASK = "radial-gradient(ellipse 70% 55% at 50% 75%, black 50%, transparent 88%)";
 const IMG_CLASS =
   "w-full h-full max-w-none object-cover rounded-[2.5rem] blur-[0.5px] saturate-125 contrast-110 will-change-[opacity]";
 
@@ -68,7 +69,7 @@ export default function AlexTradesAura() {
             decoding="async"
             loading="eager"
             initial={false}
-            animate={{ opacity: i === index ? 0.78 : 0 }}
+            animate={{ opacity: i === index ? 0.6 : 0 }}
             transition={{ duration: 2.6, ease: "easeInOut" }}
             className={`absolute inset-0 ${IMG_CLASS}`}
             style={{
@@ -78,6 +79,9 @@ export default function AlexTradesAura() {
           />
         ))}
       </div>
+
+      {/* Top-down dark gradient — locks title legibility */}
+      <div className="pointer-events-none absolute -inset-32 sm:-inset-40 md:-inset-48 bg-gradient-to-b from-background via-background/70 to-transparent" style={{ height: "55%" }} />
 
       {/* Soft transparent vignette — darkens edges without hiding the image */}
       <div className="pointer-events-none absolute -inset-32 sm:-inset-40 md:-inset-48 rounded-[2.5rem] bg-[radial-gradient(ellipse_at_center,transparent_50%,hsl(var(--background)/0.7)_92%)]" />
