@@ -25,7 +25,7 @@ const TRADES = [
 ];
 
 // Reveal only the bottom-center where the action lives; hide top (title zone) entirely.
-const MASK = "radial-gradient(ellipse 70% 55% at 50% 75%, black 50%, transparent 88%)";
+const MASK = "radial-gradient(ellipse 95% 80% at 50% 60%, black 65%, transparent 100%)";
 const IMG_CLASS =
   "w-full h-full max-w-none object-cover rounded-[2.5rem] blur-[0.5px] saturate-125 contrast-110 will-change-[opacity]";
 
