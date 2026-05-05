@@ -115,7 +115,7 @@ export default function PageContractorPlanOnboarding() {
           <div>
             <h1 className="text-sm font-bold">Alex — Conseiller UNPRO</h1>
             <p className="text-xs text-muted-foreground">
-              {phase === "chat" ? "Qualification en cours…" : phase === "plans" ? "Choix du plan" : phase === "checkout" ? "Paiement" : "Configuration"}
+              {phase === "chat" ? "Qualification en cours…" : phase === "plans" ? "Choix du plan" : phase === "fit_check" ? "Validation du plan" : phase === "checkout" ? "Paiement" : "Configuration"}
             </p>
           </div>
           {phase === "chat" && (
