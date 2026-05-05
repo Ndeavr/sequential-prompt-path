@@ -1,130 +1,113 @@
-# Alex Contractor Advisor + AIPP Plan Engine
+## UNPRO Contractor Acquisition + AIPP Onboarding — Production Build
 
-## Stratégie : réutiliser, ne pas dupliquer
-
-L'infrastructure backend nécessaire existe déjà. Pas besoin de recréer des migrations ni de nouvelles edge functions critiques.
-
-| Besoin du prompt | Existe déjà |
-|---|---|
-| `api_import_contractor_profile` | `extract-business-card`, `aipp-real-scan`, `contractor-activation-enrich` |
-| `api_calculate_aipp_score` | `aipp-v2-analyze`, `aipp-run-audit`, `compute-contractor-score` |
-| `api_recommend_contractor_plan` | `compute-plan-recommendation` |
-| `api_create_contractor_checkout` | `create-contractor-checkout` (Stripe live, plans Recrue→Signature) |
-| `api_activate_contractor_profile` | `activate-contractor-plan` |
-| Tables `contractors`, AIPP reports | déjà présentes (mémoire pricing-engine + activation flow) |
-
-Le travail est donc : **un layer Alex front-end** qui orchestre ces APIs en flow conversationnel, plus une nouvelle edge function de routage légère.
+End-to-end revenue workflow: admin imports a contractor → system enriches + scores → public AIPP page → email invite → $1 activation via `freetoday` coupon → Stripe checkout → live subscription. Seeded with **Isolation Solution Royal** (isroyal.ca, RBQ 5834-9101-01).
 
 ---
 
-## 1. Détection intention entrepreneur
+### 1. Database (single migration)
 
-Étendre `alexConversationEngine.ts` :
-- Ajouter `detectContractorIntent(text)` (mots-clés : entrepreneur, m'inscrire, rendez-vous, score, rejoindre UNPRO, plus de clients, AIPP).
-- Quand détecté : `intent = "contractor_onboarding"`, réponse fixe :
-  > "Parfait. Je vais bâtir votre profil entrepreneur, analyser votre visibilité actuelle et vous montrer le meilleur plan pour obtenir plus de rendez-vous qualifiés."
-- Pousser immédiatement un nouveau type d'action `contractor_intake` dans `useAlexVisualStore`.
+New tables (UUID PK, timestamps, RLS enabled, indexes on FKs + slugs/tokens):
+- `contractors` — company profile + slug + status
+- `contractor_media` — logo/image/video with sort_order
+- `contractor_services` — service + category + city + is_primary
+- `contractor_scores` — AIPP 0–100, 5 sub-scores, strengths/weaknesses/recos jsonb, lost_revenue_estimate_monthly, score_summary
+- `contractor_objectives` — current → target with priority/status
+- `contractor_aipp_pages` — public_token + page_slug + view tracking
+- `contractor_invites` — invite_token + sent/opened/clicked timestamps
+- `pricing_plans` — seeded: recrue 0, pro 349, premium 599 (popular), elite 999, signature 1799
+- `coupons` — includes `min_charge_amount int default 1` and `discount_type` accepting `dynamic_to_1_dollar`. Seeded: `freetoday` (1 max redemption)
+- `coupon_redemptions` — enforced via trigger checking `redemptions_count < max_redemptions`
+- `subscriptions` — adds `trial_started_at`, `trial_ends_at`, status `trial_active`
+- `payment_events` — Stripe webhook log
 
-## 2. Nouveaux types d'actions inline (visualStore)
+**RLS**: admins (via `has_role`) full access; public `SELECT` on `contractor_aipp_pages` + joined contractor/media/services/scores via SECURITY INVOKER view `aipp_public_view` exposing only safe fields (no email/phone/internal status).
 
-Ajouter à `src/features/alex/visual/types.ts` :
-```ts
-type AlexAction.type =
-  | "contractor_intake"           // mini form: phone | website | RBQ | business card
-  | "contractor_profile_card"     // affiche profil importé + AIPP
-  | "contractor_growth_dashboard" // Situation / Objectifs / Plan
-  | "contractor_checkout"         // CheckoutPanel
-```
+---
 
-Mettre à jour `AlexActionRenderer.tsx` pour router vers les nouveaux composants.
+### 2. Edge Functions
 
-## 3. Composants à créer (`src/features/alex/contractor/`)
+| Function | Purpose |
+|---|---|
+| `enrich-contractor` | Firecrawl `isroyal.ca` → extract title/desc/logo/images/services. Creates contractor + media + services + score + objectives + AIPP page + invite + ISR canonical overrides (RBQ 5834-9101-01, 7 services, 6 cities). |
+| `generate-aipp-score` | Deterministic scoring from real signals (website present, RBQ valid, services count, media count, cities). ISR target range 78–86. Returns full breakdown + lost_revenue estimate. Marks unknown signals "Données à confirmer". |
+| `send-contractor-invite` | If Resend connector available → send FR email with `{{aipp_page_url}}` + `freetoday` code. Otherwise stores rendered email and admin sees "Copier l'email" button. |
+| `validate-coupon` | Server-side: exists, active, not expired, redemptions left. Returns `{ valid, discount_type, charge_amount: 1 }`. |
+| `create-checkout-session` | **Always** creates real Stripe session. With `freetoday`: line item "Activation UNPRO" at $1 CAD. Without: full plan price subscription. Increments coupon on success via webhook. |
+| `stripe-webhook` | On `checkout.session.completed` → create subscription `status=trial_active`, set `trial_started_at`, insert coupon_redemption, log payment_event. |
 
-- **ContractorIntakePanel.tsx** — 4 entrées (téléphone, site web, RBQ, carte d'affaires via `<UploadZone>` réutilisé). Une seule suffit. Bouton "Analyser".
-- **BusinessCardUploadZone.tsx** — wrapper de `UploadZone` qui appelle `extract-business-card`.
-- **ContractorProfileCard.tsx** — logo, nom, téléphone, RBQ, note Google, services, villes. Inconnu → badge "À vérifier".
-- **AippScoreCard.tsx** — score circulaire, tier, forces/faiblesses/quick wins.
-- **ContractorGrowthDashboard.tsx** — 3 sections (Situation actuelle / Objectifs éditables / Plan recommandé dynamique).
-- **GrowthPathTable.tsx** — étapes Compléter profil / Connecter calendrier / Activer plan, impact AIPP, statut.
-- **PlanRecommendationTable.tsx** — 5 plans avec colonne mise en surbrillance + raison.
-- **CheckoutPanel.tsx** — wrapper qui invoque `create-contractor-checkout` (existant) et redirige vers Stripe.
+All functions use `https://esm.sh/@supabase/supabase-js@2.49.1` (per project rule), CORS, Zod validation, JWT verify on admin functions.
 
-Tous mobile-first, dark theme cohérent.
+---
 
-## 4. Orchestration conversationnelle
+### 3. Frontend Routes
 
-Dans `useAlexConversation.ts`, ajouter `handleContractorFlow(input)` :
+- **`/admin/acquisition`** — Admin dashboard
+  - Add contractor form (website, email, optional name)
+  - Big primary button: **"Créer ISR maintenant"** (prefilled isroyal.ca / info@isroyal.ca)
+  - Table: contractor, score, email, page link, invite status, payment status
+  - Per-row: "Envoyer l'invitation" / "Copier l'email" / "Voir page"
+- **`/aipp/:slug`** — Public premium AIPP page (token-validated)
+  - Hero "Votre profil AIPP UNPRO est prêt"
+  - Logo, media gallery, video section
+  - Big circular AIPP score + 5-axis breakdown
+  - Forces / Opportunités manquées / Objectifs / Services / Villes
+  - Lost revenue card (monthly $)
+  - Recommended plan + coupon input + CTA "Activer mon profil"
+  - Trust line: "Activation symbolique de 1$ pour sécuriser votre place."
+- **`/activation/:slug`** — 5-step flow: confirm → plan → coupon → payment → confirmation
+  - Coupon UI: "Offre spéciale aujourd'hui : activation pour 1$" + "1 seule activation disponible avec ce code"
+  - If used → button disabled + "Offre déjà utilisée"
+- **`/activation-success`** — "Votre profil est maintenant actif."
+- **`/admin/payments`** — subscriptions, redemptions, active vs pending
 
-```text
-intent contractor_onboarding détecté
-  → push action "contractor_intake"
-user soumet (phone | website | rbq | card)
-  → invoke extract-business-card OU aipp-real-scan
-  → push "contractor_profile_card" + "contractor_growth_dashboard" (section Situation seulement)
-  → Alex parle: "Voici votre situation actuelle. Combien de rendez-vous voulez-vous par mois?"
-user remplit objectifs (max 4 questions: rdv, métiers, villes, dispo)
-  → invoke compute-plan-recommendation
-  → mettre à jour dashboard avec sections Plan recommandé + GrowthPathTable
-  → Alex parle phrase de conversion ("Votre meilleur prochain mouvement est le plan Premium…")
-user clique "Activer mon profil"
-  → invoke create-contractor-checkout → window.location = url
-retour Stripe success
-  → invoke activate-contractor-plan
-  → Alex parle: "Votre profil est activé…"
-```
+---
 
-## 5. Nouvelle edge function (légère) : `alex-contractor-import`
+### 4. Design System
 
-Routeur unique côté serveur pour simplifier le client. Reçoit `{ phone? website? rbq? business_card_base64? }` et :
-1. Si carte → délègue à `extract-business-card`.
-2. Sinon → délègue à `aipp-real-scan` (website/phone) puis enrich.
-3. Calcule/retourne le score AIPP via `aipp-v2-analyze`.
-4. Retourne le profil unifié + `aipp_report` au format attendu par le prompt.
+Premium dark+light, glassmorphism, blue aura gradient, large score visuals (animated SVG ring), mobile-first. FR-CA Quebec copy throughout. No fake reviews — placeholder = "Données à confirmer".
 
-Cela évite 3 round-trips depuis le client et garde la logique de fallback côté serveur.
+---
 
-## 6. Garde-fous (règles critiques)
+### 5. Seed Action
 
-- Aucun avis/RBQ inventé. Si `extract-business-card` ou `aipp-real-scan` ne retourne pas un champ → afficher "À vérifier" (jamais "0" ou valeur fictive).
-- Plan recommandé toujours dérivé de `compute-plan-recommendation` (jamais hardcodé côté client).
-- Phrase de conversion adaptée selon `recommended_plan`.
-- Mémoire respectée : prix Recrue=149, Pro=349, Premium=599, Élite=999, Signature=1799 ; PK Stripe live déjà configurée.
-- Français par défaut, fallback EN unique déjà géré.
+Migration includes seed for `pricing_plans` + `freetoday` coupon. ISR contractor is **not** auto-seeded in SQL — created via "Créer ISR maintenant" button calling `enrich-contractor` (so the full enrichment pipeline runs end-to-end and is verifiable).
 
-## 7. Fichiers touchés
+---
 
-**Créés**
-- `src/features/alex/contractor/ContractorIntakePanel.tsx`
-- `src/features/alex/contractor/BusinessCardUploadZone.tsx`
-- `src/features/alex/contractor/ContractorProfileCard.tsx`
-- `src/features/alex/contractor/AippScoreCard.tsx`
-- `src/features/alex/contractor/ContractorGrowthDashboard.tsx`
-- `src/features/alex/contractor/GrowthPathTable.tsx`
-- `src/features/alex/contractor/PlanRecommendationTable.tsx`
-- `src/features/alex/contractor/CheckoutPanel.tsx`
-- `src/features/alex/contractor/contractorStore.ts` (state Zustand : profil, AIPP, objectifs, plan)
-- `supabase/functions/alex-contractor-import/index.ts`
+### 6. Required Setup (will request after approval)
 
-**Modifiés**
-- `src/features/alex/visual/types.ts` (+ 4 types d'action)
-- `src/features/alex/visual/AlexActionRenderer.tsx` (routage nouveaux types)
-- `src/features/alex/services/alexConversationEngine.ts` (`detectContractorIntent`, réponse FR)
-- `src/features/alex/hooks/useAlexConversation.ts` (`handleContractorFlow`, sous-routes intake → AIPP → plan → checkout)
+- **Stripe** — call `payments--enable_stripe_payments` (project doesn't have native Stripe yet for this flow). Confirms `STRIPE_SECRET_KEY` available to edge functions.
+- **Resend** (optional) — connect via `standard_connectors--connect` for live email send. If declined, admin uses "Copier l'email" fallback (no blocker).
+- **Firecrawl** — already referenced in project memory for AIPP scans; reuse existing connection.
 
-## 8. FASTEST WIN (Phase 1 livrée d'abord)
+---
 
-1. ContractorIntakePanel + BusinessCardUploadZone (entrée).
-2. `alex-contractor-import` edge function (backend unifié).
-3. AippScoreCard + ContractorProfileCard (situation visible).
-4. PlanRecommendationTable (recommandation).
-5. CheckoutPanel branché sur `create-contractor-checkout` (revenu).
+### 7. Files (high-level)
 
-GrowthPathTable + dashboard interactif complet en Phase 2 (même conversation).
+**Migration**: `supabase/migrations/<ts>_contractor_acquisition.sql` (12 tables + RLS + view + seed)
 
-## Critères de succès
+**Edge functions**: `enrich-contractor/`, `generate-aipp-score/`, `send-contractor-invite/`, `validate-coupon/`, `create-checkout-session/`, `stripe-webhook/`
 
-- Un entrepreneur dit "je veux des rendez-vous" → flow démarre en < 2 s.
-- Carte d'affaires uploadée → profil + score AIPP visible en < 10 s.
-- Plan recommandé affiché avec raison claire.
-- Checkout Stripe ouvre et active le profil au retour.
-- Aucune donnée inventée. Mobile-first. FR par défaut.
+**Pages**: `src/pages/admin/PageAcquisition.tsx`, `PageAdminPayments.tsx`, `src/pages/aipp/PageAippPublic.tsx`, `src/pages/activation/PageActivation.tsx`, `PageActivationSuccess.tsx`
+
+**Components**: `AippScoreRing`, `AippScoreBreakdown`, `ContractorMediaGallery`, `LostRevenueCard`, `PlanRecommendationCard`, `CouponInput`, `ActivationStepper`, `AdminContractorTable`, `IsrQuickAction`
+
+**Routes**: register in `App.tsx` / route registry
+
+---
+
+### 8. Success Criteria (validated post-build)
+
+1. `/admin/acquisition` → "Créer ISR maintenant" → contractor + media + score + page + invite created
+2. `/aipp/isolation-solution-royal` renders premium page with realistic score
+3. Invite email sent to info@isroyal.ca (or copied)
+4. `/activation/isolation-solution-royal` with code `freetoday` → real Stripe checkout at $1
+5. After success: subscription `trial_active`, redemption logged, coupon disabled (1/1)
+6. Second use of `freetoday` → blocked server-side
+7. Repeatable for any new contractor
+
+---
+
+### Confirmation needed before implementation
+
+Approving this plan will trigger: Stripe enablement prompt, Resend connector prompt (skippable), then full build in one pass.
