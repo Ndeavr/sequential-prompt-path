@@ -24,7 +24,8 @@ const TRADES = [
   { src: carpentry, label: "Menuiserie" },
 ];
 
-const MASK = "radial-gradient(ellipse at center, black 55%, transparent 90%)";
+// Reveal only the bottom-center where the action lives; hide top (title zone) entirely.
+const MASK = "radial-gradient(ellipse 70% 55% at 50% 75%, black 50%, transparent 88%)";
 const IMG_CLASS =
   "w-full h-full max-w-none object-cover rounded-[2.5rem] blur-[0.5px] saturate-125 contrast-110 will-change-[opacity]";
 
