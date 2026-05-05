@@ -90,10 +90,7 @@ export default function PanelPlanFitCheck({ selectedPlanCode, onConfirm }: Props
     const step = STEPS[stepIdx];
     const next = { ...answers, [step.key]: val };
     setAnswers(next);
-    trackFunnelEvent({
-      event_type: "plan_selected",
-      metadata: { fit_check_step: step.key, value: val },
-    } as any).catch(() => {});
+    trackFunnelEvent("plan_selected", { fit_check_step: step.key, value: String(val) }).catch(() => {});
 
     if (stepIdx + 1 >= STEPS.length) {
       setDone(true);
@@ -146,10 +143,7 @@ export default function PanelPlanFitCheck({ selectedPlanCode, onConfirm }: Props
               size="lg"
               className="w-full h-12 gap-2"
               onClick={() => {
-                trackFunnelEvent({
-                  event_type: "plan_selected",
-                  metadata: { fit_check: "switched", from: selectedPlanCode, to: recommended },
-                } as any).catch(() => {});
+                trackFunnelEvent("plan_selected", { fit_check: "switched", from: selectedPlanCode, to: recommended }).catch(() => {});
                 onConfirm(recommended);
               }}
             >
@@ -162,10 +156,7 @@ export default function PanelPlanFitCheck({ selectedPlanCode, onConfirm }: Props
             variant={sameAsChoice ? "default" : "outline"}
             className="w-full h-12 gap-2"
             onClick={() => {
-              trackFunnelEvent({
-                event_type: "plan_selected",
-                metadata: { fit_check: "kept", plan: selectedPlanCode },
-              } as any).catch(() => {});
+              trackFunnelEvent("plan_selected", { fit_check: "kept", plan: selectedPlanCode }).catch(() => {});
               onConfirm(selectedPlanCode as RecommendedPlan);
             }}
           >
