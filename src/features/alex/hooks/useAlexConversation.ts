@@ -10,6 +10,7 @@ import {
   acknowledgeUpload,
   handleQuickAction,
   isVisualProjectMessage,
+  detectContractorIntent,
 } from "../services/alexConversationEngine";
 import { useAlexVoice } from "./useAlexVoice";
 import { useAlexVisualStore } from "../visual/visualStore";
@@ -36,8 +37,15 @@ export function useAlexConversation() {
       state.setMode("waiting_for_reply");
       useAlexStore.setState({ lastAssistantQuestionAt: Date.now() });
 
-      // If the message is about a visual project, open the upload zone immediately.
-      if (isVisualProjectMessage(text)) {
+      // Contractor onboarding — push intake panel.
+      if (detectContractorIntent(text)) {
+        useAlexVisualStore.getState().pushAction({
+          id: `contractor-intake-${Date.now()}`,
+          type: "contractor_intake",
+          payload: {},
+        });
+      } else if (isVisualProjectMessage(text)) {
+        // Visual project — open upload zone immediately.
         useAlexVisualStore.getState().pushAction({
           id: `upload-${Date.now()}`,
           type: "upload_zone",
