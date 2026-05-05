@@ -34,9 +34,37 @@ export default function PageContractorPlanOnboarding() {
   const selectedPlan = plans?.find((p: any) => p.id === selectedPlanId);
   const selectedPack = leadPacks?.find((p: any) => p.id === selectedPackId);
 
+  const [searchParams] = useSearchParams();
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, phase]);
+
+  // Preselect plan from URL (?plan=pro&validate=1) → jump to fit_check
+  useEffect(() => {
+    if (!plans || selectedPlanId) return;
+    const code = searchParams.get("plan");
+    const validate = searchParams.get("validate");
+    if (!code) return;
+    const found = plans.find((p: any) => p.code === code);
+    if (!found) return;
+    setSelectedPlanId(found.id);
+    if (validate === "1") setPhase("fit_check");
+    else setPhase("lead_packs");
+  }, [plans, searchParams, selectedPlanId]);
+
+  const handleFitCheckConfirm = (finalCode: string) => {
+    const finalPlan = plans?.find((p: any) => p.code === finalCode);
+    if (finalPlan) {
+      setSelectedPlanId(finalPlan.id);
+      if (finalPlan.code === "elite" || finalPlan.code === "signature") {
+        setShowFoundersModal(true);
+      } else {
+        setSelectedVariant("regular");
+        setPhase("lead_packs");
+      }
+    }
+  };
 
   const handleSend = useCallback(() => {
     if (!input.trim() || isStreaming) return;
