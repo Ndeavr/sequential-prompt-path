@@ -319,9 +319,13 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         firstName: options?.firstName ?? null,
       });
 
-      await conversation.startSession({ signedUrl, overrides } as any);
+      await conversation.startSession({
+        signedUrl,
+        connectionType: "websocket",
+        overrides,
+      } as any);
 
-      console.log("[ElevenLabs V8] ✅ Session started with V2 overrides");
+      console.log("[ElevenLabs V8] ✅ Session started with V2 overrides (websocket)");
     } catch (err: unknown) {
       clearConnectionTimeout();
       console.error("[ElevenLabs V7] Failed to start:", err);
