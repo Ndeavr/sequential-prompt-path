@@ -59143,6 +59143,48 @@ export type Database = {
           },
         ]
       }
+      user_visual_preferences: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          generated_preview_url: string | null
+          id: string
+          preference_type: string | null
+          project_type: string | null
+          property_id: string | null
+          rejected_style: string | null
+          selected_style: string | null
+          source_image_url: string | null
+          user_id: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          generated_preview_url?: string | null
+          id?: string
+          preference_type?: string | null
+          project_type?: string | null
+          property_id?: string | null
+          rejected_style?: string | null
+          selected_style?: string | null
+          source_image_url?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          generated_preview_url?: string | null
+          id?: string
+          preference_type?: string | null
+          project_type?: string | null
+          property_id?: string | null
+          rejected_style?: string | null
+          selected_style?: string | null
+          source_image_url?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_voice_profiles: {
         Row: {
           created_at: string
