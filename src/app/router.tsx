@@ -54,6 +54,9 @@ const LeadPipePagePlombEauCity = lazy(() => import("@/pages/lead-pipe/PagePlombE
 const LeadPipePageTuyauxPlombQuartier = lazy(() => import("@/pages/lead-pipe/PageTuyauxPlombQuartier"));
 const LeadPipePageAdminEmpire = lazy(() => import("@/pages/admin/PageLeadEmpireDashboard"));
 
+// Calculators
+const PageCalculateurTaxesQuebec = lazy(() => import("@/pages/calculators/PageCalculateurTaxesQuebec"));
+
 // Lightweight loading fallback
 const LazyFallback = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -678,6 +681,7 @@ export const AppRouter = () => (
         <Route path="/impact" element={<Suspense fallback={<LazyFallback />}><PageImpactCounter /></Suspense>} />
         <Route path="/manifeste" element={<Suspense fallback={<LazyFallback />}><PageManifesto /></Suspense>} />
         <Route path="/cest-quoi-unpro" element={<Suspense fallback={<LazyFallback />}><PageUnproFAQ25 /></Suspense>} />
+        <Route path="/calculateur-taxes-quebec" element={<Suspense fallback={<LazyFallback />}><PageCalculateurTaxesQuebec /></Suspense>} />
         <Route path="/go" element={<PageAdLandingAipp />} />
         <Route path="/aipp-check" element={<PageAdLandingAipp />} />
         <Route path="/business-import" element={<PageBusinessImport />} />
