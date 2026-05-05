@@ -39,7 +39,7 @@ const FAQS: { question: string; answer: string; topics: string[] }[] = ([
     question: "Est-ce qu'UNPRO peut m'aider à comparer une soumission?",
     answer: "Oui. Alex, l'assistante UNPRO, peut analyser vos soumissions, vérifier le calcul des taxes, repérer les anomalies et vous recommander un entrepreneur compatible.",
   },
-];
+] as const).map((f) => ({ ...f, topics: [] as string[] }));
 
 export default function PageCalculateurTaxesQuebec() {
   useEffect(() => {
