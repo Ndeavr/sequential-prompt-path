@@ -89,6 +89,9 @@ const PageActivationStart = lazy(() => import("@/pages/checkout/PageActivationSt
 const PageCheckoutNativeScrollable = lazy(() => import("@/pages/checkout/PageCheckoutNativeScrollable"));
 const LandingContractorAIActivation = lazy(() => import("@/pages/acquisition/LandingContractorAIActivation"));
 const PageAdminPipelineProspects = lazy(() => import("@/pages/admin/acquisition/PageAdminPipelineProspects"));
+const PageAdminAcquisition = lazy(() => import("@/pages/admin/acquisition/PageAdminAcquisition"));
+const PageAippPublic = lazy(() => import("@/pages/aipp/PageAippPublic"));
+const PageAcqActivation = lazy(() => import("@/pages/acquisition/PageAcqActivation"));
 const Search = lazy(() => import("@/pages/Search"));
 const ContractorProfile = lazy(() => import("@/pages/ContractorProfile"));
 const Login = lazy(() => import("@/pages/Login"));
