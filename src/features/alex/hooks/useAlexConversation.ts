@@ -9,8 +9,10 @@ import {
   processUserMessage,
   acknowledgeUpload,
   handleQuickAction,
+  isVisualProjectMessage,
 } from "../services/alexConversationEngine";
 import { useAlexVoice } from "./useAlexVoice";
+import { useAlexVisualStore } from "../visual/visualStore";
 import { alexLog } from "../utils/alexDebug";
 import type { AlexIntent, STTTranscriptEvent } from "../types/alex.types";
 
@@ -33,6 +35,15 @@ export function useAlexConversation() {
       if (response.intent) state.setIntent(response.intent);
       state.setMode("waiting_for_reply");
       useAlexStore.setState({ lastAssistantQuestionAt: Date.now() });
+
+      // If the message is about a visual project, open the upload zone immediately.
+      if (isVisualProjectMessage(text)) {
+        useAlexVisualStore.getState().pushAction({
+          id: `upload-${Date.now()}`,
+          type: "upload_zone",
+          payload: { userMessageContext: text, title: "Ajouter une photo de l'espace" },
+        });
+      }
 
       if (response.speak) {
         await speak(response.text);
@@ -96,34 +107,70 @@ export function useAlexConversation() {
         r.readAsDataURL(file);
       });
 
-      const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-analyze-image`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({
-            image_base64: base64,
-            mime_type: file.type || "image/jpeg",
-            user_message: userMessage || "",
-          }),
-        }
-      );
+      // Visual project flow → propose 2 styles with previews.
+      const isVisual =
+        (userMessage && isVisualProjectMessage(userMessage)) ||
+        state.currentIntent === "photo_upload";
 
-      const data = await resp.json();
-      if (!resp.ok || !data.response_text) {
-        const fallback =
-          "Je n'arrive pas à analyser cette image pour l'instant. Décrivez-moi en une phrase ce qui vous inquiète et je vous oriente.";
-        state.injectAssistantMessage(fallback, true);
-        await speak(fallback);
-      } else {
-        state.injectAssistantMessage(data.response_text, true);
-        if (data.intent === "property_risk_assessment") {
-          state.setIntent("homeowner_problem" as AlexIntent);
+      if (isVisual) {
+        const resp = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-visual-styles`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({
+              image_base64: base64,
+              mime_type: file.type || "image/jpeg",
+            }),
+          }
+        );
+        const data = await resp.json();
+        if (!resp.ok || !data.styles?.length) {
+          const fb = "Je n'arrive pas à générer les aperçus pour le moment. Décrivez-moi le résultat souhaité et je vous oriente.";
+          state.injectAssistantMessage(fb, true);
+          await speak(fb);
+        } else {
+          const intro = data.intro_text || "Voici deux directions possibles. Laquelle vous attire le plus?";
+          state.injectAssistantMessage(intro, true);
+          useAlexVisualStore.getState().pushAction({
+            id: `styles-${Date.now()}`,
+            type: "visual_style_comparison",
+            payload: data,
+          });
+          await speak(intro);
         }
-        await speak(data.response_text);
+      } else {
+        const resp = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-analyze-image`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({
+              image_base64: base64,
+              mime_type: file.type || "image/jpeg",
+              user_message: userMessage || "",
+            }),
+          }
+        );
+        const data = await resp.json();
+        if (!resp.ok || !data.response_text) {
+          const fallback =
+            "Je n'arrive pas à analyser cette image pour l'instant. Décrivez-moi en une phrase ce qui vous inquiète et je vous oriente.";
+          state.injectAssistantMessage(fallback, true);
+          await speak(fallback);
+        } else {
+          state.injectAssistantMessage(data.response_text, true);
+          if (data.intent === "property_risk_assessment") {
+            state.setIntent("homeowner_problem" as AlexIntent);
+          }
+          await speak(data.response_text);
+        }
       }
     } catch (e) {
       alexLog("conversation:upload_error", { e: String(e) });

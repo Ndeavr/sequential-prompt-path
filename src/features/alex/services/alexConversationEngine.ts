@@ -94,6 +94,25 @@ function findDomainQuestion(text: string): string | null {
   return null;
 }
 
+// ─── Visual project keywords ──────────────────────────────────────
+const VISUAL_KEYWORDS = [
+  "peinture", "peindre", "toiture", "toit", "façade", "facade",
+  "cuisine", "salle de bain", "terrasse", "aménagement", "amenagement",
+  "extérieur", "exterieur", "isolation", "infiltration", "moisissure",
+  "fissure", "rénovation", "renovation", "moderniser", "modernisation",
+  "avant après", "avant/après", "look", "style", "design", "couleur",
+  "revêtement", "revetement", "patio", "balcon",
+];
+
+function detectVisualIntent(text: string): boolean {
+  const lower = text.toLowerCase();
+  return VISUAL_KEYWORDS.some((k) => lower.includes(k));
+}
+
+export function isVisualProjectMessage(text: string): boolean {
+  return detectVisualIntent(text);
+}
+
 // ─── Engine ───────────────────────────────────────────────────────
 
 export function processUserMessage(
@@ -105,6 +124,16 @@ export function processUserMessage(
   if (looksEnglish(text)) {
     alexLog("conversation:english_fallback");
     return { text: ENGLISH_FALLBACK, speak: true, intent: "unknown" };
+  }
+
+  // Visual project — Alex opens upload zone immediately.
+  if (detectVisualIntent(text)) {
+    alexLog("conversation:visual_intent");
+    return {
+      text: "Envoyez-moi une photo et je vais analyser l'espace pour vous proposer deux directions visuelles.",
+      speak: true,
+      intent: "photo_upload",
+    };
   }
 
   const intent = classifyIntent(text);
