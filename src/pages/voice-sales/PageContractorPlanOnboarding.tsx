@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,8 +12,9 @@ import CardPlanFounders from "@/components/voice-sales/CardPlanFounders";
 import ModalHeyButWaitUpgrade from "@/components/voice-sales/ModalHeyButWaitUpgrade";
 import PanelLeadPackSelector from "@/components/voice-sales/PanelLeadPackSelector";
 import PanelInlineCheckout from "@/components/voice-sales/PanelInlineCheckout";
+import PanelPlanFitCheck from "@/components/voice-sales/PanelPlanFitCheck";
 
-type FlowPhase = "chat" | "plans" | "founders_upsell" | "lead_packs" | "checkout";
+type FlowPhase = "chat" | "plans" | "fit_check" | "founders_upsell" | "lead_packs" | "checkout";
 
 export default function PageContractorPlanOnboarding() {
   const { openAlex } = useAlexVoice();
@@ -32,9 +34,37 @@ export default function PageContractorPlanOnboarding() {
   const selectedPlan = plans?.find((p: any) => p.id === selectedPlanId);
   const selectedPack = leadPacks?.find((p: any) => p.id === selectedPackId);
 
+  const [searchParams] = useSearchParams();
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, phase]);
+
+  // Preselect plan from URL (?plan=pro&validate=1) → jump to fit_check
+  useEffect(() => {
+    if (!plans || selectedPlanId) return;
+    const code = searchParams.get("plan");
+    const validate = searchParams.get("validate");
+    if (!code) return;
+    const found = plans.find((p: any) => p.code === code);
+    if (!found) return;
+    setSelectedPlanId(found.id);
+    if (validate === "1") setPhase("fit_check");
+    else setPhase("lead_packs");
+  }, [plans, searchParams, selectedPlanId]);
+
+  const handleFitCheckConfirm = (finalCode: string) => {
+    const finalPlan = plans?.find((p: any) => p.code === finalCode);
+    if (finalPlan) {
+      setSelectedPlanId(finalPlan.id);
+      if (finalPlan.code === "elite" || finalPlan.code === "signature") {
+        setShowFoundersModal(true);
+      } else {
+        setSelectedVariant("regular");
+        setPhase("lead_packs");
+      }
+    }
+  };
 
   const handleSend = useCallback(() => {
     if (!input.trim() || isStreaming) return;
@@ -85,7 +115,7 @@ export default function PageContractorPlanOnboarding() {
           <div>
             <h1 className="text-sm font-bold">Alex — Conseiller UNPRO</h1>
             <p className="text-xs text-muted-foreground">
-              {phase === "chat" ? "Qualification en cours…" : phase === "plans" ? "Choix du plan" : phase === "checkout" ? "Paiement" : "Configuration"}
+              {phase === "chat" ? "Qualification en cours…" : phase === "plans" ? "Choix du plan" : phase === "fit_check" ? "Validation du plan" : phase === "checkout" ? "Paiement" : "Configuration"}
             </p>
           </div>
           {phase === "chat" && (
@@ -140,6 +170,18 @@ export default function PageContractorPlanOnboarding() {
                     onSelect={handleSelectPlan}
                   />
                 ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Fit check phase */}
+          <AnimatePresence>
+            {phase === "fit_check" && selectedPlan && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-4">
+                <PanelPlanFitCheck
+                  selectedPlanCode={selectedPlan.code}
+                  onConfirm={handleFitCheckConfirm}
+                />
               </motion.div>
             )}
           </AnimatePresence>
