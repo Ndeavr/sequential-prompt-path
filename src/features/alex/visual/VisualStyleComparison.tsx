@@ -79,18 +79,32 @@ export default function VisualStyleComparison({ actionId, data }: Props) {
   return (
     <div className="space-y-3">
       <p className="text-sm text-foreground">{data.intro_text}</p>
+      {recommendedId && reason && (
+        <div className="flex items-start gap-2 rounded-xl bg-primary/10 border border-primary/30 px-3 py-2 text-xs text-foreground animate-fade-in">
+          <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+          <span><strong>Alex recommande</strong> — {reason}</span>
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {data.styles.map((opt) => {
           const isPicked = picked === opt.id;
+          const isRecommended = recommendedId === opt.id;
           return (
             <button
               key={opt.id}
               disabled={saving}
               onClick={() => select(opt)}
-              className={`group text-left rounded-2xl overflow-hidden border-2 transition-all ${
-                isPicked ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"
+              className={`group relative text-left rounded-2xl overflow-hidden border-2 transition-all ${
+                isPicked ? "border-primary ring-2 ring-primary/30"
+                  : isRecommended ? "border-primary/60 shadow-[0_0_24px_-4px_hsl(var(--primary)/0.4)]"
+                  : "border-border hover:border-primary/50"
               }`}
             >
+              {isRecommended && !isPicked && (
+                <span className="absolute top-2 left-2 z-10 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary text-primary-foreground flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" /> Recommandé
+                </span>
+              )}
               <div className="relative aspect-[4/3] bg-muted">
                 {opt.after_image_url ? (
                   <img src={opt.after_image_url} alt={opt.label} className="w-full h-full object-cover" />
