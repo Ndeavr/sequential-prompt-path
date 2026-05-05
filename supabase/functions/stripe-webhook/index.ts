@@ -76,11 +76,34 @@ Deno.serve(async (req) => {
         // ACQ flow: acquisition pipeline (acq_subscriptions / acq_contractors)
         if (contractorId && planCode && !planId) {
           const couponCode = session.metadata?.coupon_code || null;
+          const isTrialOffer = session.metadata?.is_trial_offer === "1";
+          const slotCity = session.metadata?.slot_city || null;
+          const slotTrade = session.metadata?.slot_trade || null;
+
+          // Retrieve payment method from PaymentIntent (saved via setup_future_usage)
+          let paymentMethodId: string | null = null;
+          let customerId: string | null = (session.customer as string) || null;
+          try {
+            if (session.payment_intent) {
+              const pi = await stripe.paymentIntents.retrieve(session.payment_intent as string);
+              paymentMethodId = (pi.payment_method as string) || null;
+              if (!customerId && pi.customer) customerId = pi.customer as string;
+            }
+          } catch (e) { console.warn("[acq] pi retrieve failed", e); }
+
+          const trialStart = new Date();
+          const trialEnd = new Date(trialStart.getTime() + 7 * 24 * 3600 * 1000);
+
           await supabase
             .from("acq_subscriptions")
             .update({
-              status: "trial_active",
+              status: isTrialOffer ? "trial_active" : "active",
               stripe_session_id: session.id,
+              stripe_customer_id: customerId,
+              stripe_payment_method_id: paymentMethodId,
+              payment_method_on_file: !!paymentMethodId,
+              trial_started_at: isTrialOffer ? trialStart.toISOString() : null,
+              trial_ends_at: isTrialOffer ? trialEnd.toISOString() : null,
               activated_at: new Date().toISOString(),
               amount_paid: (session.amount_total || 0) / 100,
             })
@@ -90,6 +113,16 @@ Deno.serve(async (req) => {
             .from("acq_contractors")
             .update({ status: "active" })
             .eq("id", contractorId);
+
+          // Increment territory slot
+          if (slotCity && slotTrade) {
+            await supabase.rpc("acq_increment_slot", { p_city: slotCity, p_trade: slotTrade });
+          }
+
+          // Trigger day_0 follow-up
+          await supabase.functions.invoke("acq-followup-send", {
+            body: { contractor_id: contractorId, sequence_code: "day_0" }
+          }).catch(() => {});
 
           if (couponCode) {
             const { data: coupon } = await supabase
