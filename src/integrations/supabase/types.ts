@@ -44,6 +44,610 @@ export type Database = {
         }
         Relationships: []
       }
+      acq_aipp_pages: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          id: string
+          last_viewed_at: string | null
+          page_slug: string
+          page_status: string
+          public_token: string
+          view_count: number
+          viewed_at: string | null
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          id?: string
+          last_viewed_at?: string | null
+          page_slug: string
+          page_status?: string
+          public_token: string
+          view_count?: number
+          viewed_at?: string | null
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          last_viewed_at?: string | null
+          page_slug?: string
+          page_status?: string
+          public_token?: string
+          view_count?: number
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acq_aipp_pages_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_aipp_public_view"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "acq_aipp_pages_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_contractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acq_contractor_media: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          id: string
+          media_type: string
+          sort_order: number
+          source_url: string | null
+          title: string | null
+          url: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          id?: string
+          media_type: string
+          sort_order?: number
+          source_url?: string | null
+          title?: string | null
+          url: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          media_type?: string
+          sort_order?: number
+          source_url?: string | null
+          title?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acq_contractor_media_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_aipp_public_view"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "acq_contractor_media_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_contractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acq_contractor_objectives: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          current_state: string | null
+          id: string
+          objective_type: string | null
+          priority: number
+          recommended_action: string | null
+          status: string
+          target_state: string | null
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          current_state?: string | null
+          id?: string
+          objective_type?: string | null
+          priority?: number
+          recommended_action?: string | null
+          status?: string
+          target_state?: string | null
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          current_state?: string | null
+          id?: string
+          objective_type?: string | null
+          priority?: number
+          recommended_action?: string | null
+          status?: string
+          target_state?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acq_contractor_objectives_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_aipp_public_view"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "acq_contractor_objectives_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_contractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acq_contractor_scores: {
+        Row: {
+          aipp_score: number
+          availability_score: number
+          content_score: number
+          contractor_id: string
+          conversion_score: number
+          created_at: string
+          id: string
+          lost_revenue_estimate_monthly: number | null
+          recommendations: Json
+          score_summary: string | null
+          strengths: Json
+          trust_score: number
+          updated_at: string
+          visibility_score: number
+          weaknesses: Json
+        }
+        Insert: {
+          aipp_score: number
+          availability_score?: number
+          content_score?: number
+          contractor_id: string
+          conversion_score?: number
+          created_at?: string
+          id?: string
+          lost_revenue_estimate_monthly?: number | null
+          recommendations?: Json
+          score_summary?: string | null
+          strengths?: Json
+          trust_score?: number
+          updated_at?: string
+          visibility_score?: number
+          weaknesses?: Json
+        }
+        Update: {
+          aipp_score?: number
+          availability_score?: number
+          content_score?: number
+          contractor_id?: string
+          conversion_score?: number
+          created_at?: string
+          id?: string
+          lost_revenue_estimate_monthly?: number | null
+          recommendations?: Json
+          score_summary?: string | null
+          strengths?: Json
+          trust_score?: number
+          updated_at?: string
+          visibility_score?: number
+          weaknesses?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acq_contractor_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_aipp_public_view"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "acq_contractor_scores_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_contractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acq_contractor_services: {
+        Row: {
+          category: string | null
+          city: string | null
+          contractor_id: string
+          created_at: string
+          id: string
+          is_primary: boolean
+          service_name: string
+        }
+        Insert: {
+          category?: string | null
+          city?: string | null
+          contractor_id: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          service_name: string
+        }
+        Update: {
+          category?: string | null
+          city?: string | null
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          service_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acq_contractor_services_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_aipp_public_view"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "acq_contractor_services_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_contractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acq_contractors: {
+        Row: {
+          city: string | null
+          company_name: string
+          created_at: string
+          description: string | null
+          email: string | null
+          id: string
+          logo_url: string | null
+          neq_number: string | null
+          phone: string | null
+          province: string | null
+          rbq_number: string | null
+          slug: string
+          source: string
+          status: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          city?: string | null
+          company_name: string
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          neq_number?: string | null
+          phone?: string | null
+          province?: string | null
+          rbq_number?: string | null
+          slug: string
+          source?: string
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          city?: string | null
+          company_name?: string
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          neq_number?: string | null
+          phone?: string | null
+          province?: string | null
+          rbq_number?: string | null
+          slug?: string
+          source?: string
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      acq_coupon_redemptions: {
+        Row: {
+          contractor_id: string | null
+          coupon_id: string
+          email: string | null
+          id: string
+          redeemed_at: string
+        }
+        Insert: {
+          contractor_id?: string | null
+          coupon_id: string
+          email?: string | null
+          id?: string
+          redeemed_at?: string
+        }
+        Update: {
+          contractor_id?: string | null
+          coupon_id?: string
+          email?: string | null
+          id?: string
+          redeemed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acq_coupon_redemptions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_aipp_public_view"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "acq_coupon_redemptions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acq_coupon_redemptions_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "acq_coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acq_coupons: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          max_redemptions: number
+          min_charge_amount: number
+          redemptions_count: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          discount_type: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          max_redemptions?: number
+          min_charge_amount?: number
+          redemptions_count?: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          max_redemptions?: number
+          min_charge_amount?: number
+          redemptions_count?: number
+        }
+        Relationships: []
+      }
+      acq_invites: {
+        Row: {
+          clicked_at: string | null
+          contractor_id: string
+          created_at: string
+          email: string
+          id: string
+          invite_token: string
+          opened_at: string | null
+          rendered_body: string | null
+          rendered_subject: string | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          clicked_at?: string | null
+          contractor_id: string
+          created_at?: string
+          email: string
+          id?: string
+          invite_token: string
+          opened_at?: string | null
+          rendered_body?: string | null
+          rendered_subject?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          clicked_at?: string | null
+          contractor_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          invite_token?: string
+          opened_at?: string | null
+          rendered_body?: string | null
+          rendered_subject?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acq_invites_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_aipp_public_view"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "acq_invites_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_contractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acq_payment_events: {
+        Row: {
+          contractor_id: string | null
+          created_at: string
+          event_type: string | null
+          id: string
+          payload: Json | null
+          stripe_event_id: string | null
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          stripe_event_id?: string | null
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          stripe_event_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acq_payment_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_aipp_public_view"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "acq_payment_events_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_contractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acq_pricing_plans: {
+        Row: {
+          active: boolean
+          appointments_included: number
+          created_at: string
+          description: string | null
+          id: string
+          is_popular: boolean
+          monthly_price: number
+          name: string
+          plan_code: string
+        }
+        Insert: {
+          active?: boolean
+          appointments_included: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_popular?: boolean
+          monthly_price: number
+          name: string
+          plan_code: string
+        }
+        Update: {
+          active?: boolean
+          appointments_included?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_popular?: boolean
+          monthly_price?: number
+          name?: string
+          plan_code?: string
+        }
+        Relationships: []
+      }
+      acq_subscriptions: {
+        Row: {
+          activated_at: string | null
+          amount_due: number | null
+          contractor_id: string
+          coupon_code: string | null
+          created_at: string
+          id: string
+          plan_code: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_session_id: string | null
+          stripe_subscription_id: string | null
+          trial_ends_at: string | null
+          trial_started_at: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          amount_due?: number | null
+          contractor_id: string
+          coupon_code?: string | null
+          created_at?: string
+          id?: string
+          plan_code: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_session_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
+          trial_started_at?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          amount_due?: number | null
+          contractor_id?: string
+          coupon_code?: string | null
+          created_at?: string
+          id?: string
+          plan_code?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_session_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
+          trial_started_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acq_subscriptions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_aipp_public_view"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "acq_subscriptions_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "acq_contractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activation_steps: {
         Row: {
           contractor_id: string
@@ -60813,6 +61417,24 @@ export type Database = {
       }
     }
     Views: {
+      acq_aipp_public_view: {
+        Row: {
+          city: string | null
+          company_name: string | null
+          contractor_id: string | null
+          description: string | null
+          logo_url: string | null
+          neq_number: string | null
+          page_slug: string | null
+          province: string | null
+          public_token: string | null
+          rbq_number: string | null
+          slug: string | null
+          view_count: number | null
+          website: string | null
+        }
+        Relationships: []
+      }
       ccai_answer_matrix: {
         Row: {
           answer_code: string | null
