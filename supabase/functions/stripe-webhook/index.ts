@@ -68,9 +68,59 @@ Deno.serve(async (req) => {
         const session = event.data.object as Stripe.Checkout.Session;
         const contractorId = session.metadata?.contractor_id;
         const planId = session.metadata?.plan_id;
+        const planCode = session.metadata?.plan_code;
         const billingInterval = session.metadata?.billing_interval || "month";
         const redemptionId = session.metadata?.redemption_id;
         const promoCode = session.metadata?.promo_code;
+
+        // ACQ flow: acquisition pipeline (acq_subscriptions / acq_contractors)
+        if (contractorId && planCode && !planId) {
+          const couponCode = session.metadata?.coupon_code || null;
+          await supabase
+            .from("acq_subscriptions")
+            .update({
+              status: "trial_active",
+              stripe_session_id: session.id,
+              activated_at: new Date().toISOString(),
+              amount_paid: (session.amount_total || 0) / 100,
+            })
+            .eq("stripe_session_id", session.id);
+
+          await supabase
+            .from("acq_contractors")
+            .update({ status: "active" })
+            .eq("id", contractorId);
+
+          if (couponCode) {
+            const { data: coupon } = await supabase
+              .from("acq_coupons")
+              .select("id, redemptions_count")
+              .eq("code", couponCode)
+              .maybeSingle();
+            if (coupon) {
+              await supabase.from("acq_coupon_redemptions").insert({
+                contractor_id: contractorId,
+                coupon_id: coupon.id,
+                code: couponCode,
+                stripe_session_id: session.id,
+                amount_charged: (session.amount_total || 0) / 100,
+              });
+              await supabase
+                .from("acq_coupons")
+                .update({ redemptions_count: (coupon.redemptions_count || 0) + 1 })
+                .eq("id", coupon.id);
+            }
+          }
+
+          await supabase.from("acq_payment_events").insert({
+            contractor_id: contractorId,
+            event_type: "checkout.session.completed",
+            stripe_event_id: event.id,
+            payload: session as any,
+          });
+          break;
+        }
+
         if (!contractorId || !planId) break;
 
         const subscription = session.subscription
