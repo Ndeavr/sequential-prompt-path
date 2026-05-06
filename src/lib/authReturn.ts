@@ -131,6 +131,7 @@ function roleDefault(role: string | null): string {
     case "admin": return "/admin";
     case "contractor": return "/pro";
     case "condo_manager": return "/condo";
+    case "partner": return "/partenaire/dashboard";
     case "homeowner": return "/dashboard";
     default: return "/dashboard";
   }
