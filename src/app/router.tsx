@@ -125,6 +125,7 @@ const PartnerLogin = lazy(() => import("@/pages/partner/PartnerLogin"));
 const PartnerGuard = lazy(() => import("@/pages/partner/PartnerGuard"));
 const PartnerDashboard = lazy(() => import("@/pages/partner/PartnerDashboard"));
 const PartnerNouveauEntrepreneur = lazy(() => import("@/pages/partner/PartnerNouveauEntrepreneur"));
+const PartnerCrm = lazy(() => import("@/pages/partner/PartnerCrm"));
 const AdminPartenaires = lazy(() => import("@/pages/admin/AdminPartenaires"));
 const DescribeProjectPage = lazy(() => import("@/pages/DescribeProjectPage"));
 const CompareQuotesPage = lazy(() => import("@/pages/CompareQuotesPage"));
