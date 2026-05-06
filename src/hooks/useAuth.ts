@@ -3,6 +3,8 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/stores/authSessionStore";
 
+const ensuredProfiles = new Set<string>();
+
 export const useAuth = () => {
   const queryClient = useQueryClient();
   const { session, loading } = useAuthSession();
