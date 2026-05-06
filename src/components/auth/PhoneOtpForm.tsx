@@ -55,16 +55,12 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
   }, [cooldown]);
 
   const callOtp = async (fnName: "send-otp" | "verify-otp", body: Record<string, string>) => {
-    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-    const res = await fetch(
-      `https://${projectId}.supabase.co/functions/v1/${fnName}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      }
-    );
-    return res.json();
+    const { data, error } = await supabase.functions.invoke(fnName, { body });
+    if (error) {
+      console.error(`[PhoneOtp] ${fnName} invoke error`, error);
+      return { error: error.message || "network_error" } as any;
+    }
+    return data;
   };
 
   const handleSendOtp = async () => {
