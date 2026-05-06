@@ -11,6 +11,7 @@ import { AlexOrb } from "./AlexOrb";
 import { AlexPanel } from "./AlexPanel";
 import { AlexSpotlightLayer } from "./AlexSpotlightLayer";
 import { AlexDebugPanel } from "./AlexDebugPanel";
+import AlexErrorBoundary from "./AlexErrorBoundary";
 
 export function AlexAssistant() {
   const mode = useAlexStore((s) => s.mode);
@@ -47,7 +48,7 @@ export function AlexAssistant() {
   };
 
   return (
-    <>
+    <AlexErrorBoundary>
       <AlexSpotlightLayer />
 
       <div className="fixed bottom-4 right-4 z-[100] flex w-[min(calc(100vw-2rem),28rem)] flex-col items-end gap-3 sm:bottom-6 sm:right-6">
@@ -66,7 +67,6 @@ export function AlexAssistant() {
           )}
         </AnimatePresence>
 
-        {/* Minimized label */}
         {isMinimized && (
           <motion.div
             initial={{ opacity: 0, x: 8 }}
@@ -78,7 +78,6 @@ export function AlexAssistant() {
           </motion.div>
         )}
 
-        {/* V6: Single CTA when audio unlock needed — no duplicate prompts */}
         {!isMinimized && (audioUnlockRequired || shouldSpeakGreetingOnUnlock) && mode === "ready" && (
           <motion.button
             type="button"
@@ -95,6 +94,6 @@ export function AlexAssistant() {
       </div>
 
       <AlexDebugPanel />
-    </>
+    </AlexErrorBoundary>
   );
 }

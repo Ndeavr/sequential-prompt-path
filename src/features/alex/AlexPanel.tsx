@@ -12,16 +12,20 @@ import { AlexInput } from "./AlexInput";
 import { AlexQuickActions } from "./AlexQuickActions";
 import { AlexUploadDropzone } from "./AlexUploadDropzone";
 import { useAlexUIBridge } from "./hooks/useAlexUIBridge";
+import { useAlexVoice } from "./hooks/useAlexVoice";
 import { getMinimizeCta, getFallbackText } from "./utils/alexCopy";
 
 export function AlexPanel() {
   const mode = useAlexStore((s) => s.mode);
   const lang = useAlexStore((s) => s.activeLanguage);
   const softPromptText = useAlexStore((s) => s.softPromptText);
+  const recoveryNotice = useAlexStore((s) => s.recoveryNotice);
+  const voiceUnavailableReason = useAlexStore((s) => s.voiceUnavailableReason);
   const modeLabel = useAlexStore(selectModeLabel);
   const isMinimized = mode === "minimized";
 
   const { onTextSubmit, onQuickAction, onFileUpload, onMinimize, onDismissSoftPrompt } = useAlexUIBridge();
+  const { recoverAlex } = useAlexVoice();
 
   if (isMinimized) return null;
 
@@ -47,10 +51,16 @@ export function AlexPanel() {
         </button>
       </div>
 
-      {/* Voice fallback notice — only for permanent fallback, not audio unlock */}
-      {mode === "fallback_text" && (
-        <div className="px-4 py-2 text-[11px] text-warning/80 bg-warning/5 border-b border-warning/10">
-          {getFallbackText(lang)}
+      {/* Voice fallback notice */}
+      {(mode === "fallback_text" || voiceUnavailableReason) && (
+        <div className="px-4 py-2 text-[11px] text-warning-foreground bg-warning/10 border-b border-warning/20 flex items-center justify-between gap-2">
+          <span className="flex-1">{recoveryNotice || getFallbackText(lang)}</span>
+          <button
+            onClick={() => recoverAlex()}
+            className="text-[11px] font-medium text-primary hover:underline shrink-0"
+          >
+            {lang === "fr-CA" ? "Relancer Alex" : "Restart Alex"}
+          </button>
         </div>
       )}
 

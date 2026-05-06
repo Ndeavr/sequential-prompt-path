@@ -1,7 +1,9 @@
 /**
  * Alex 100M — ElevenLabs TTS Service
- * V7: Fixed edge function contract. onStart fires after audio.play() resolves.
- * Voice ID locked to approved female Charlotte FR.
+ * V8: Hard timeout + AbortController + fallback JSON detected as failure.
+ * - Never resolves silently when no audio actually played
+ * - Aborts in-flight request after TTS_TIMEOUT_MS
+ * - Logs structured events for observability
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +12,8 @@ import { alexLog } from "../utils/alexDebug";
 // LOCKED: Alex master voice — French only (Quebec)
 export const ALEX_PRIMARY_VOICE_ID = "UJCi4DDncuo0VJDSIegj";
 export const ALEX_LANGUAGE = "fr" as const;
+
+export const TTS_TIMEOUT_MS = 8000;
 
 const VOICE_SETTINGS = {
   stability: 0.5,
@@ -21,11 +25,20 @@ const VOICE_SETTINGS = {
 
 let currentAudio: HTMLAudioElement | null = null;
 let currentObjectUrl: string | null = null;
+let currentAbort: AbortController | null = null;
 let initialized = false;
+
+export class TTSUnavailableError extends Error {
+  code: "TTS_FALLBACK" | "TTS_TIMEOUT" | "TTS_ABORT" | "TTS_ERROR";
+  constructor(code: TTSUnavailableError["code"], message: string) {
+    super(message);
+    this.code = code;
+  }
+}
 
 function cleanup() {
   if (currentAudio) {
-    currentAudio.pause();
+    try { currentAudio.pause(); } catch {}
     currentAudio.onended = null;
     currentAudio.onerror = null;
     currentAudio.src = "";
@@ -34,6 +47,13 @@ function cleanup() {
   if (currentObjectUrl) {
     URL.revokeObjectURL(currentObjectUrl);
     currentObjectUrl = null;
+  }
+}
+
+function abortInFlight() {
+  if (currentAbort) {
+    try { currentAbort.abort(); } catch {}
+    currentAbort = null;
   }
 }
 
@@ -53,32 +73,49 @@ export const elevenlabsService = {
     onEnd?: () => void,
   ): Promise<void> {
     cleanup();
-    alexLog("tts:speak:request", { text: text.slice(0, 80) });
+    abortInFlight();
+
+    const abort = new AbortController();
+    currentAbort = abort;
+    const startedAt = Date.now();
+
+    alexLog("[ALEX_TTS_START]", { text: text.slice(0, 80) });
+
+    // Hard timeout: abort request if it takes too long
+    const timeoutId = window.setTimeout(() => {
+      alexLog("[ALEX_TTS_TIMEOUT]", { ms: TTS_TIMEOUT_MS });
+      try { abort.abort(); } catch {}
+    }, TTS_TIMEOUT_MS);
 
     try {
-      // V7: Match edge function contract — send { text, settings }
       const { data, error } = await supabase.functions.invoke("alex-tts", {
-        body: {
-          text,
-          settings: VOICE_SETTINGS,
-        },
+        body: { text, settings: VOICE_SETTINGS },
       });
 
-      if (error) throw error;
+      window.clearTimeout(timeoutId);
+      if (abort.signal.aborted) {
+        throw new TTSUnavailableError("TTS_TIMEOUT", "TTS request aborted (timeout)");
+      }
+
+      if (error) {
+        alexLog("[ALEX_TTS_ERROR]", { error: error.message });
+        throw new TTSUnavailableError("TTS_ERROR", error.message || "tts_error");
+      }
+
+      // Edge fallback signal — NOT a success
+      if (data && typeof data === "object" && (data.fallback === true || data.error === "tts_unavailable")) {
+        alexLog("[ALEX_TTS_FALLBACK]", data);
+        throw new TTSUnavailableError("TTS_FALLBACK", data.message || "tts_unavailable");
+      }
 
       let audioUrl: string;
-
       if (data instanceof Blob) {
         currentObjectUrl = URL.createObjectURL(data);
         audioUrl = currentObjectUrl;
       } else if (data?.audioContent) {
         audioUrl = `data:audio/mpeg;base64,${data.audioContent}`;
-      } else if (data?.error || data?.fallback) {
-        alexLog("tts:unavailable_soft_fallback", data);
-        onEnd?.();
-        return;
       } else {
-        throw new Error("Unexpected TTS response format");
+        throw new TTSUnavailableError("TTS_ERROR", "Unexpected TTS response format");
       }
 
       const audio = new Audio(audioUrl);
@@ -87,39 +124,52 @@ export const elevenlabsService = {
       return new Promise<void>((resolve, reject) => {
         audio.onended = () => {
           cleanup();
+          currentAbort = null;
+          alexLog("[ALEX_TTS_SUCCESS]", { ms: Date.now() - startedAt });
           onEnd?.();
           resolve();
         };
-        audio.onerror = (e) => {
+        audio.onerror = () => {
           cleanup();
+          currentAbort = null;
           onEnd?.();
-          reject(e);
+          reject(new TTSUnavailableError("TTS_ERROR", "audio_error"));
         };
 
-        // V7: onStart fires AFTER audio.play() resolves — real playback confirmation
         audio.play().then(() => {
           alexLog("tts:audio_play_resolved");
           onStart?.();
         }).catch((e) => {
           cleanup();
+          currentAbort = null;
           onEnd?.();
-          reject(e);
+          reject(new TTSUnavailableError("TTS_ERROR", e?.message || "play_failed"));
         });
       });
     } catch (err) {
-      alexLog("tts:speak:error", err);
+      window.clearTimeout(timeoutId);
       cleanup();
+      currentAbort = null;
+      if (err instanceof TTSUnavailableError) {
+        if (err.code === "TTS_TIMEOUT") alexLog("[ALEX_TTS_TIMEOUT]");
+        else if (err.code === "TTS_FALLBACK") alexLog("[ALEX_TTS_FALLBACK]");
+        else alexLog("[ALEX_TTS_ERROR]", err.message);
+      } else {
+        alexLog("[ALEX_TTS_ERROR]", String(err));
+      }
       onEnd?.();
       throw err;
     }
   },
 
   stop(): void {
+    abortInFlight();
     cleanup();
-    alexLog("tts:stop");
+    alexLog("[ALEX_TTS_ABORT]");
   },
 
   destroy(): void {
+    abortInFlight();
     cleanup();
     initialized = false;
     alexLog("tts:destroy");
