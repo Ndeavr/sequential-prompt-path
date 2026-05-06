@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuthSession } from "@/stores/authSessionStore";
+import { forceClearAuthSession, useAuthSession } from "@/stores/authSessionStore";
 
 const ensuredProfiles = new Set<string>();
 
@@ -90,7 +90,8 @@ export const useAuth = () => {
     // "Should have a queue. This is likely a bug in React."
     queryClient.removeQueries({ queryKey: ["user-role"], exact: false });
     ensuredProfiles.clear();
-    await supabase.auth.signOut();
+    forceClearAuthSession();
+    await supabase.auth.signOut({ scope: "local" });
   }, [queryClient]);
 
   return {

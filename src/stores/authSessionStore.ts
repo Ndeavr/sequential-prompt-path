@@ -73,6 +73,11 @@ export function useAuthSession() {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
+export function forceClearAuthSession() {
+  bootstrap();
+  setState({ session: null, loading: false, initialized: true });
+}
+
 export function getAuthSnapshot() {
   bootstrap();
   return state;
