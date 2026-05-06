@@ -18,7 +18,7 @@ export default function GoogleSignInButton({ disabled, className }: GoogleSignIn
     setLoading(true);
     try {
       const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: `${window.location.origin}/auth/callback`,
       });
       if (error) toast.error(error.message || "Erreur de connexion");
     } catch (err: any) {
