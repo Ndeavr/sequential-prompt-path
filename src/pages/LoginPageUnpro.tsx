@@ -16,28 +16,22 @@ import { Smartphone, Mail, Lock, CheckCircle2 } from "lucide-react";
 
 export default function LoginPageUnpro() {
   const [mode, setMode] = useState<"main" | "phone" | "email">("main");
-  const { isAuthenticated, role, isLoading, isRoleLoading } = useAuth() as any;
+  const { isAuthenticated, role, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    if (isLoading || isRoleLoading) return;
-    if (!isAuthenticated) return;
-    const searchParams = new URLSearchParams(location.search);
-    const redirectParam = searchParams.get("redirect");
-    const intent = consumeAuthIntent();
-    const navCtx = consumeNavigationContext();
-    const from = (location.state as any)?.from;
-    const resumePath = getResumePath(role);
-    const target =
-      redirectParam ||
-      intent?.returnPath ||
-      navCtx?.intendedDestination ||
-      from ||
-      resumePath ||
-      getDefaultRedirectForRole(role);
-    navigate(target, { replace: true });
-  }, [isAuthenticated, isLoading, isRoleLoading, role, navigate, location]);
+    if (!isLoading && isAuthenticated) {
+      const searchParams = new URLSearchParams(location.search);
+      const redirectParam = searchParams.get("redirect");
+      const intent = consumeAuthIntent();
+      const navCtx = consumeNavigationContext();
+      const from = (location.state as any)?.from;
+      const resumePath = getResumePath(role);
+      const target = redirectParam || intent?.returnPath || navCtx?.intendedDestination || from || resumePath || "/";
+      navigate(target, { replace: true });
+    }
+  }, [isAuthenticated, isLoading, role, navigate, location]);
 
   if (isLoading) {
     return (

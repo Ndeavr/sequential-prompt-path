@@ -16,21 +16,15 @@ export default function GoogleSignInButton({ disabled, className }: GoogleSignIn
 
   const handleGoogle = async () => {
     setLoading(true);
-    const watchdog = window.setTimeout(() => setLoading(false), 8000);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
+      const { error } = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
       });
-      if (result?.redirected) return; // browser navigating — keep loader
-      if (result?.error) {
-        toast.error(result.error.message || "Erreur de connexion");
-        setLoading(false);
-      }
+      if (error) toast.error(error.message || "Erreur de connexion");
     } catch (err: any) {
       toast.error(err?.message || "Erreur de connexion");
-      setLoading(false);
     } finally {
-      window.clearTimeout(watchdog);
+      setLoading(false);
     }
   };
 

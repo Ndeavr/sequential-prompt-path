@@ -55,12 +55,16 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
   }, [cooldown]);
 
   const callOtp = async (fnName: "send-otp" | "verify-otp", body: Record<string, string>) => {
-    const { data, error } = await supabase.functions.invoke(fnName, { body });
-    if (error) {
-      console.error(`[PhoneOtp] ${fnName} invoke error`, error);
-      return { error: error.message || "network_error" } as any;
-    }
-    return data;
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    const res = await fetch(
+      `https://${projectId}.supabase.co/functions/v1/${fnName}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }
+    );
+    return res.json();
   };
 
   const handleSendOtp = async () => {
@@ -82,11 +86,11 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       last_error: null,
       last_error_step: null,
     });
-    // Hard 8s safety so the button never looks frozen (Twilio Verify can take 4-5s)
+    // Hard 3s safety so the button never looks frozen
     const safety = window.setTimeout(() => {
       setSending(false);
       toast.error("Envoi trop long. Réessayez.");
-    }, 8000);
+    }, 3000);
 
     try {
       const data = await callOtp("send-otp", { phone: e164 });

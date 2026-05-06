@@ -4,7 +4,7 @@ const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   try {
-    const { contractor_id, base_url, draft_only } = await req.json();
+    const { contractor_id, base_url } = await req.json();
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     const { data: c } = await sb.from("acq_contractors").select("*").eq("id", contractor_id).single();
@@ -41,7 +41,7 @@ UNPRO`;
 
     let sent = false;
     const resendKey = Deno.env.get("RESEND_API_KEY");
-    if (resendKey && !draft_only) {
+    if (resendKey) {
       try {
         const r = await fetch("https://api.resend.com/emails", {
           method: "POST",
@@ -61,10 +61,10 @@ UNPRO`;
       rendered_subject: subject,
       rendered_body: body,
       sent_at: sent ? new Date().toISOString() : null,
-      status: sent ? "sent" : (draft_only ? "draft" : "pending"),
+      status: sent ? "sent" : "pending",
     }).eq("id", invite.id);
 
-    return new Response(JSON.stringify({ success: true, sent, draft: !sent, subject, body, url: aippUrl }), {
+    return new Response(JSON.stringify({ success: true, sent, subject, body, url: aippUrl }), {
       headers: { ...cors, "Content-Type": "application/json" },
     });
   } catch (e) {

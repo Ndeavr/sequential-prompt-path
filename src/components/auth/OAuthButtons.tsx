@@ -28,36 +28,24 @@ export default function OAuthButtons({ loading: externalLoading, className = "" 
       last_error: null,
       last_error_step: null,
     });
-
-    // Safety net: if nothing happens within 8s (e.g. in-app WebView preview
-    // that can't full-page redirect), unstick the button.
-    const watchdog = window.setTimeout(() => setGoogleLoading(false), 8000);
-
     try {
       if (!peekAuthIntent()) {
         captureCurrentRouteAsIntent("oauth_signin");
       }
 
       authDebug.set({ auth_step: "oauth_redirecting" });
-      const result = await lovable.auth.signInWithOAuth("google", {
+      const { error } = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
       });
-
-      if (result?.redirected) {
-        // Browser is navigating away — keep the loader, don't clear it.
-        return;
-      }
-      if (result?.error) {
-        authDebug.error(result.error, "oauth_redirecting");
-        toast.error(result.error.message || "Erreur de connexion");
-        setGoogleLoading(false);
+      if (error) {
+        authDebug.error(error, "oauth_redirecting");
+        toast.error(error.message || "Erreur de connexion");
       }
     } catch (err: any) {
       authDebug.error(err, "oauth_initiating");
       toast.error(err?.message || "Erreur de connexion");
-      setGoogleLoading(false);
     } finally {
-      window.clearTimeout(watchdog);
+      setGoogleLoading(false);
     }
   };
 
