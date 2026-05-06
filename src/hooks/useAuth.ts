@@ -27,6 +27,8 @@ export const useAuth = () => {
 
   useEffect(() => {
     if (!session?.user?.id) return;
+    if (ensuredProfiles.has(session.user.id)) return;
+    ensuredProfiles.add(session.user.id);
 
     let cancelled = false;
     const ensureProfile = async () => {
@@ -36,9 +38,8 @@ export const useAuth = () => {
         .eq("user_id", session.user.id)
         .maybeSingle();
 
-      console.log("[useAuth] profile fetch result", { profile, error: fetchError });
       if (cancelled || profile || fetchError) {
-        if (fetchError) console.error("[useAuth] Supabase profile fetch error", fetchError);
+        if (fetchError) console.error("[useAuth] profile fetch error", fetchError);
         return;
       }
 
@@ -48,8 +49,7 @@ export const useAuth = () => {
         phone: session.user.phone ?? null,
         full_name: session.user.user_metadata?.full_name ?? null,
       } as any);
-      console.log("[useAuth] profile auto-create result", { error: insertError });
-      if (insertError) console.error("[useAuth] Supabase profile auto-create error", insertError);
+      if (insertError) console.error("[useAuth] profile auto-create error", insertError);
     };
 
     ensureProfile();
