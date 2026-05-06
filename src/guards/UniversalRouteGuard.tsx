@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { hasRouteAccess, resolveDestinationForRole } from "@/config/routeRegistry";
 import { saveNavigationContext, trackNavigation } from "@/services/navigation/journeyService";
 import { getDefaultRedirectForRole, saveAuthIntent } from "@/services/auth/authIntentService";
+import { saveReturnPath } from "@/lib/authReturn";
 import RouteTransitionLoader from "@/components/navigation/RouteTransitionLoader";
 import { useEffect, useRef } from "react";
 
@@ -50,6 +51,7 @@ export default function UniversalRouteGuard({ children, allowedRoles, anyAuth }:
       action: "access_protected",
       roleHint: allowedRoles?.[0],
     });
+    saveReturnPath(fullPath, allowedRoles?.[0] === "admin" ? "admin" : "protected_route");
     saveNavigationContext({
       currentPath: location.pathname,
       previousPath: null,

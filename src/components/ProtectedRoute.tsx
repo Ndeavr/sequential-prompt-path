@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { getDefaultRedirectForRole, saveAuthIntent } from "@/services/auth/authIntentService";
+import { saveReturnPath } from "@/lib/authReturn";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -64,11 +65,9 @@ const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps
   }
 
   if (!isAuthenticated) {
-    saveAuthIntent({
-      returnPath: location.pathname + location.search + location.hash,
-      action: "access_protected",
-      roleHint: requiredRole,
-    });
+    const fullPath = location.pathname + location.search + location.hash;
+    saveAuthIntent({ returnPath: fullPath, action: "access_protected", roleHint: requiredRole });
+    saveReturnPath(fullPath, requiredRole === "admin" ? "admin" : "protected_route");
     return <Navigate to="/login" replace />;
   }
 
