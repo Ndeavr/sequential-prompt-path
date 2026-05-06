@@ -20,8 +20,12 @@ import { template as noResponseFollowup } from './no-response-followup.tsx'
 import { template as incompleteCheckoutFollowup } from './incomplete-checkout-followup.tsx'
 import { template as prospectOutreach } from './prospect-outreach.tsx'
 import { template as manualLiveTest } from './manual-live-test.tsx'
+import { template as formUserConfirmation } from './form-user-confirmation.tsx'
+import { template as formAdminNotification } from './form-admin-notification.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
+  'form-user-confirmation': formUserConfirmation,
+  'form-admin-notification': formAdminNotification,
   'contact-comment': contactComment,
   'booking-confirmation': bookingConfirmation,
   'booking-confirmation-contractor': bookingConfirmationContractor,

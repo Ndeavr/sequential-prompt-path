@@ -1,6 +1,10 @@
 project_id = "clmaqdnphbndvmmqvpff"
 
 [functions]
+  [functions.process-form-submission]
+    verify_jwt = false
+  [functions.retry-failed-forms]
+    verify_jwt = false
   [functions.send-otp]
     verify_jwt = false
   [functions.verify-otp]

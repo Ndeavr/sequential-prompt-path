@@ -31911,6 +31911,160 @@ export type Database = {
           },
         ]
       }
+      form_email_logs: {
+        Row: {
+          attempt: number
+          created_at: string
+          email_type: string
+          id: string
+          provider: string | null
+          recipient: string
+          response: Json | null
+          status: string
+          submission_id: string
+        }
+        Insert: {
+          attempt?: number
+          created_at?: string
+          email_type: string
+          id?: string
+          provider?: string | null
+          recipient: string
+          response?: Json | null
+          status: string
+          submission_id: string
+        }
+        Update: {
+          attempt?: number
+          created_at?: string
+          email_type?: string
+          id?: string
+          provider?: string | null
+          recipient?: string
+          response?: Json | null
+          status?: string
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_email_logs_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "form_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          submission_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          submission_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_events_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "form_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_submissions: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string | null
+          email_admin_sent: boolean
+          email_user_sent: boolean
+          first_name: string | null
+          form_type: string
+          id: string
+          ip_address: string | null
+          last_error: string | null
+          last_name: string | null
+          next_retry_at: string | null
+          payload: Json
+          phone: string | null
+          reference_code: string | null
+          retry_count: number
+          source_page: string | null
+          status: string
+          updated_at: string
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          email_admin_sent?: boolean
+          email_user_sent?: boolean
+          first_name?: string | null
+          form_type: string
+          id?: string
+          ip_address?: string | null
+          last_error?: string | null
+          last_name?: string | null
+          next_retry_at?: string | null
+          payload?: Json
+          phone?: string | null
+          reference_code?: string | null
+          retry_count?: number
+          source_page?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          email_admin_sent?: boolean
+          email_user_sent?: boolean
+          first_name?: string | null
+          form_type?: string
+          id?: string
+          ip_address?: string | null
+          last_error?: string | null
+          last_name?: string | null
+          next_retry_at?: string | null
+          payload?: Json
+          phone?: string | null
+          reference_code?: string | null
+          retry_count?: number
+          source_page?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: []
+      }
       founder_invite_access_logs: {
         Row: {
           created_at: string

@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
 import SeoHead from "@/seo/components/SeoHead";
+import { useFormSubmit } from "@/lib/forms/useFormSubmit";
+import { FormSuccess } from "@/components/forms/FormSuccess";
+import { FormErrorRetry } from "@/components/forms/FormErrorRetry";
 import {
   CheckCircle2, Sparkles, Users, Cpu, Headphones, ShieldCheck,
   TrendingUp, MapPin, Infinity as InfinityIcon, Mail, Phone, Globe, AlertTriangle,
@@ -32,28 +33,22 @@ const VALUE = [
 ];
 
 export default function PagePartenairesCertifies() {
-  const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
   const [form, setForm] = useState({
     salutation: "", first_name: "", last_name: "",
     phone: "", email: "", message: "",
   });
-
   const update = (k: keyof typeof form, v: string) => setForm(s => ({ ...s, [k]: v }));
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.first_name || !form.last_name || !form.phone || !form.email) {
-      toast.error("Veuillez remplir tous les champs requis.");
-      return;
-    }
-    setLoading(true);
-    const { error } = await supabase.from("partner_applications").insert(form);
-    setLoading(false);
-    if (error) { toast.error("Erreur. Réessayez."); return; }
-    setDone(true);
-    toast.success("Candidature reçue. Nous vous contactons sous peu.");
-  };
+  const { submit, retry, error, result, isSubmitting, isSuccess, isError } = useFormSubmit({
+    formType: 'partner_application',
+    validate: (d) => {
+      if (!d.first_name || !d.last_name || !d.phone || !d.email) return 'Veuillez remplir tous les champs requis.';
+      if (!/^\S+@\S+\.\S+$/.test(String(d.email))) return 'Courriel invalide.';
+      return null;
+    },
+  });
+
+  const onSubmit = (e: React.FormEvent) => { e.preventDefault(); submit(form); };
 
   return (
     <>
@@ -256,12 +251,12 @@ export default function PagePartenairesCertifies() {
             <p className="text-sm text-white/60">Plus qu'une plateforme. Une infrastructure IA pour les entrepreneurs du Québec.</p>
           </div>
 
-          {done ? (
-            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-8 text-center">
-              <CheckCircle2 className="w-12 h-12 text-amber-400 mx-auto mb-3" />
-              <h3 className="text-xl font-semibold text-white mb-2">Candidature reçue !</h3>
-              <p className="text-sm text-white/70">Notre équipe vous contacte sous peu pour valider votre profil.</p>
-            </div>
+          {isSuccess ? (
+            <FormSuccess
+              referenceCode={result?.reference_code}
+              title="Candidature reçue !"
+              message="Notre équipe vous contacte sous peu pour valider votre profil."
+            />
           ) : (
             <form onSubmit={onSubmit} className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 md:p-8 space-y-4">
               <div>
@@ -305,8 +300,10 @@ export default function PagePartenairesCertifies() {
                 <Textarea id="message" rows={4} value={form.message} onChange={e => update("message", e.target.value)} className="bg-white/5 border-white/10 text-white" placeholder="Votre rôle, votre réseau, vos objectifs..." />
               </div>
 
-              <Button type="submit" disabled={loading} size="lg" className="w-full bg-amber-500 hover:bg-amber-400 text-[#060B14] font-semibold">
-                {loading ? "Envoi..." : "Soumettre ma candidature"}
+              {isError && <FormErrorRetry message={error || undefined} onRetry={retry} isRetrying={isSubmitting} />}
+
+              <Button type="submit" disabled={isSubmitting} size="lg" className="w-full bg-amber-500 hover:bg-amber-400 text-[#060B14] font-semibold">
+                {isSubmitting ? "Envoi..." : "Soumettre ma candidature"}
               </Button>
             </form>
           )}
