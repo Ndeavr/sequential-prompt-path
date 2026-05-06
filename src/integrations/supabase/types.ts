@@ -42416,6 +42416,220 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_commissions: {
+        Row: {
+          amount: number
+          commission_period: string | null
+          commission_rate: number | null
+          contractor_id: string | null
+          earned_at: string
+          id: string
+          paid_at: string | null
+          partner_id: string
+          payout_status: string
+          referral_id: string | null
+        }
+        Insert: {
+          amount?: number
+          commission_period?: string | null
+          commission_rate?: number | null
+          contractor_id?: string | null
+          earned_at?: string
+          id?: string
+          paid_at?: string | null
+          partner_id: string
+          payout_status?: string
+          referral_id?: string | null
+        }
+        Update: {
+          amount?: number
+          commission_period?: string | null
+          commission_rate?: number | null
+          contractor_id?: string | null
+          earned_at?: string
+          id?: string
+          paid_at?: string | null
+          partner_id?: string
+          payout_status?: string
+          referral_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_commissions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_commissions_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "partner_referrals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          partner_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          partner_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          partner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_events_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_referrals: {
+        Row: {
+          activated_at: string | null
+          business_name: string | null
+          city: string | null
+          contact_name: string | null
+          contractor_id: string | null
+          created_at: string
+          email: string | null
+          id: string
+          monthly_revenue: number
+          notes: string | null
+          partner_id: string
+          phone: string | null
+          plan: string | null
+          rbq: string | null
+          status: string
+          trade: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          business_name?: string | null
+          city?: string | null
+          contact_name?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          monthly_revenue?: number
+          notes?: string | null
+          partner_id: string
+          phone?: string | null
+          plan?: string | null
+          rbq?: string | null
+          status?: string
+          trade?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          business_name?: string | null
+          city?: string | null
+          contact_name?: string | null
+          contractor_id?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          monthly_revenue?: number
+          notes?: string | null
+          partner_id?: string
+          phone?: string | null
+          plan?: string | null
+          rbq?: string | null
+          status?: string
+          trade?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_referrals_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partners: {
+        Row: {
+          annual_new_contractors_target: number
+          approved_at: string | null
+          commission_rate_first_24_months: number
+          commission_rate_lifetime: number
+          company: string | null
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          partner_status: string
+          partner_tier: string
+          phone: string | null
+          referral_code: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          annual_new_contractors_target?: number
+          approved_at?: string | null
+          commission_rate_first_24_months?: number
+          commission_rate_lifetime?: number
+          company?: string | null
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          partner_status?: string
+          partner_tier?: string
+          phone?: string | null
+          referral_code?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          annual_new_contractors_target?: number
+          approved_at?: string | null
+          commission_rate_first_24_months?: number
+          commission_rate_lifetime?: number
+          company?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          partner_status?: string
+          partner_tier?: string
+          phone?: string | null
+          referral_code?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       paywall_events: {
         Row: {
           converted: boolean | null
