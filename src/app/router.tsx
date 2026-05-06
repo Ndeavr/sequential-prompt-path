@@ -933,7 +933,8 @@ export const AppRouter = () => (
         <Route path="/nos-standards" element={<FallbackRoutePage />} />
         <Route path="/pourquoi-pas-3-soumissions" element={<FallbackRoutePage />} />
         <Route path="/a-propos" element={<FallbackRoutePage />} />
-        <Route path="/partenaires" element={<FallbackRoutePage />} />
+        <Route path="/partenaires" element={<PagePartenairesCertifies />} />
+        <Route path="/partenaires-certifies" element={<PagePartenairesCertifies />} />
         <Route path="/contact" element={<FallbackRoutePage />} />
         <Route path="/conditions" element={<FallbackRoutePage />} />
         <Route path="/confidentialite" element={<FallbackRoutePage />} />
