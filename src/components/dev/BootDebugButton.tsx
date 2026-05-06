@@ -2,12 +2,11 @@
  * BootDebugButton — DEV-only floating button to inspect __UNPRO_DEBUG.
  */
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
 import { useAuthSession } from "@/stores/authSessionStore";
 
 export default function BootDebugButton() {
   const [open, setOpen] = useState(false);
-  const location = useLocation();
+  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
   const { session, loading, initialized } = useAuthSession();
 
   if (!import.meta.env.DEV) return null;
