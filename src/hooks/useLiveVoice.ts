@@ -11,7 +11,7 @@ import { loadAlexMemory, buildMemoryContextHint } from "@/features/alex/voice/al
 import { alexVoiceService } from "@/services/alexVoiceService";
 
 const RECONNECT_COOLDOWN_MS = 5000;
-const CONNECTION_TIMEOUT_MS = 12_000;
+const CONNECTION_TIMEOUT_MS = 8_000;
 
 interface UseLiveVoiceCallbacks {
   onTranscript?: (text: string) => void;
@@ -217,12 +217,28 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     const handleCleanup = () => {
       if (conversation.status === "connected") {
         console.log("[ElevenLabs V7] Received alex-voice-cleanup — stopping");
-        conversation.endSession();
+        try { conversation.endSession(); } catch {}
       }
+      setIsActive(false);
+      setIsConnecting(false);
+      clearConnectionTimeout();
+    };
+    const handleForceKill = (e: Event) => {
+      const reason = (e as CustomEvent)?.detail?.reason ?? "force_kill";
+      console.warn("[ElevenLabs V7] alex-voice-force-kill:", reason);
+      intentionallyStopped.current = true;
+      try { conversation.endSession(); } catch {}
+      setIsActive(false);
+      setIsConnecting(false);
+      clearConnectionTimeout();
     };
     window.addEventListener("alex-voice-cleanup", handleCleanup);
-    return () => window.removeEventListener("alex-voice-cleanup", handleCleanup);
-  }, [conversation]);
+    window.addEventListener("alex-voice-force-kill", handleForceKill);
+    return () => {
+      window.removeEventListener("alex-voice-cleanup", handleCleanup);
+      window.removeEventListener("alex-voice-force-kill", handleForceKill);
+    };
+  }, [conversation, clearConnectionTimeout]);
 
   const start = useCallback(async (options?: StartOptions) => {
     // V7: If force=true, allow restart even if active/connecting
