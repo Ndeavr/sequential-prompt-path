@@ -22,23 +22,24 @@ const ActiveRoleCtx = createContext<ActiveRoleContextValue>({
 });
 
 export function ActiveRoleProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated, role: dbRole } = useAuth();
+  const { isAuthenticated, role: dbRole, roles: dbRoles } = useAuth() as any;
+  const allRoles: string[] = Array.isArray(dbRoles) ? dbRoles : (dbRole ? [dbRole] : []);
 
   const availableRoles = useMemo<UserRole[]>(() => {
     if (!isAuthenticated) return [];
     const roles: UserRole[] = [];
-    if (dbRole === "admin") roles.push("admin");
-    if (dbRole === "contractor") roles.push("contractor");
+    if (allRoles.includes("admin")) roles.push("admin");
+    if (allRoles.includes("contractor")) roles.push("contractor");
     roles.push("homeowner");
     if (!roles.includes("partner")) roles.push("partner");
     return [...new Set(roles)];
-  }, [isAuthenticated, dbRole]);
+  }, [isAuthenticated, allRoles.join(",")]);
 
   const defaultRole = useMemo<UserRole>(() => {
-    if (dbRole === "admin") return "admin";
-    if (dbRole === "contractor") return "contractor";
+    if (allRoles.includes("admin")) return "admin";
+    if (allRoles.includes("contractor")) return "contractor";
     return "homeowner";
-  }, [dbRole]);
+  }, [allRoles.join(",")]);
 
   const [overrideRole, setOverrideRole] = useState<UserRole | null>(() => {
     try {
@@ -48,6 +49,19 @@ export function ActiveRoleProvider({ children }: { children: ReactNode }) {
       return null;
     }
   });
+
+  // If user is admin but override is a lower role, clear it so admin functions reappear.
+  useEffect(() => {
+    if (isAuthenticated && allRoles.includes("admin") && overrideRole && overrideRole !== "admin") {
+      // Only clear if user never explicitly chose to switch this session.
+      // Heuristic: if overrideRole is "homeowner" and admin available, prefer admin on fresh load.
+      // Keep override only if it matches an actually-held role other than homeowner default.
+      if (overrideRole === "homeowner") {
+        setOverrideRole(null);
+        try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
+      }
+    }
+  }, [isAuthenticated, allRoles.join(","), overrideRole]);
 
   const activeRole: UserRole | "guest" = !isAuthenticated
     ? "guest"
