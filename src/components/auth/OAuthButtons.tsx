@@ -35,7 +35,7 @@ export default function OAuthButtons({ loading: externalLoading, className = "" 
 
       authDebug.set({ auth_step: "oauth_redirecting" });
       const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: `${window.location.origin}/auth/callback`,
       });
       if (error) {
         authDebug.error(error, "oauth_redirecting");

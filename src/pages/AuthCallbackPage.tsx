@@ -18,16 +18,27 @@ export default function AuthCallbackPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Detect provider error in URL early
+    const search = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const errParam = search.get("error") || hash.get("error");
+    const errDesc = search.get("error_description") || hash.get("error_description");
+    if (errParam) {
+      setState("error");
+      setError(errDesc || errParam);
+      return;
+    }
+
     handleCallback();
-    // Hard safety timeout: never leave the user stuck > 8s
+    // Hard safety timeout: never leave the user stuck > 5s
     const t = setTimeout(() => {
       setState((curr) => {
         if (curr === "redirecting") return curr;
-        console.warn("[AuthCallback] safety timeout reached, falling back to /onboarding");
-        navigate("/onboarding", { replace: true });
+        console.warn("[AuthCallback] safety timeout reached, falling back to /login");
+        navigate("/login", { replace: true });
         return curr;
       });
-    }, 8000);
+    }, 5000);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
