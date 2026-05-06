@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { openAuthOverlay } from "@/hooks/useAuthOverlay";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -15,18 +16,19 @@ interface AuthGuardProps {
 export default function AuthGuard({ children, actionLabel }: AuthGuardProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
+  const timedOut = useLoadingTimeout(isLoading, 6000, "auth_guard");
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if ((!isLoading || timedOut) && !isAuthenticated) {
       openAuthOverlay({
         label: actionLabel ?? "Accéder à cette section",
         returnPath: location.pathname + location.search + location.hash,
         action: "access_protected",
       });
     }
-  }, [isAuthenticated, isLoading, location, actionLabel]);
+  }, [isAuthenticated, isLoading, timedOut, location, actionLabel]);
 
-  if (isLoading) {
+  if (isLoading && !timedOut) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="animate-pulse text-muted-foreground text-sm">Chargement…</div>

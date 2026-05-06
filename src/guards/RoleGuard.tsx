@@ -4,6 +4,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { getDefaultRedirectForRole } from "@/services/auth/authIntentService";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 
 interface RoleGuardProps {
   children: React.ReactNode;
@@ -12,8 +13,9 @@ interface RoleGuardProps {
 
 export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   const { isAuthenticated, isLoading, role } = useAuth();
+  const timedOut = useLoadingTimeout(isLoading, 6000, "role_guard");
 
-  if (isLoading) {
+  if (isLoading && !timedOut) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="animate-pulse text-muted-foreground text-sm">Chargement…</div>
