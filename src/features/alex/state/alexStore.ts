@@ -383,4 +383,55 @@ export const useAlexStore = create<AlexState & AlexActions>()((set) => ({
       ],
     }));
   },
+
+  // ─── V8 Recovery actions ───
+  markTTSActivity: () => set({ lastTTSActivityAt: now() }),
+
+  markVoiceUnavailable: (reason, message) =>
+    set((s) => ({
+      voiceUnavailableReason: reason,
+      recoveryNotice: message ?? s.recoveryNotice ?? "La voix d'Alex est temporairement indisponible. Je continue ici.",
+      mode: s.mode === "speaking" || s.mode === "connecting_voice" ? "ready" : s.mode,
+      hasActivePlayback: false,
+      hasActiveTTSRequest: false,
+      isAutoplayAllowed: false,
+      audioUnlockRequired: false,
+      shouldSpeakGreetingOnUnlock: false,
+    })),
+
+  recordVoiceFailure: () =>
+    set((s) => {
+      const cutoff = now() - 120_000;
+      const recent = s.voiceErrorTimestamps.filter((t) => t > cutoff);
+      recent.push(now());
+      let voiceDisabledUntil = s.voiceDisabledUntil;
+      if (recent.length >= 3) {
+        voiceDisabledUntil = now() + 600_000;
+      }
+      return { voiceErrorTimestamps: recent, voiceDisabledUntil };
+    }),
+
+  setChatOnlyUntil: (timestamp, reason) =>
+    set({ voiceDisabledUntil: timestamp, voiceUnavailableReason: reason }),
+
+  clearRecoveryNotice: () => set({ recoveryNotice: null }),
+
+  hardReset: (reason) => {
+    alexLog("[ALEX_HARD_RESET]", { reason });
+    set({
+      mode: "ready",
+      hasActivePlayback: false,
+      hasActiveTTSRequest: false,
+      hasActiveSTTSession: false,
+      isMicOpen: false,
+      isUserSpeaking: false,
+      isBackgroundNoise: false,
+      hasLowConfidenceAudio: false,
+      softPromptText: null,
+      ttsRetryCount: 0,
+      lastTTSActivityAt: null,
+    });
+  },
+}));
+
 }));
