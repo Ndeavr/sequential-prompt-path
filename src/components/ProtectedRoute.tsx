@@ -30,18 +30,19 @@ const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps
 
     let cancelled = false;
     setAdminFallback("checking");
-    supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin" as any)
-      .maybeSingle()
-      .then(({ data }) => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "admin" as any)
+          .maybeSingle();
         if (!cancelled) setAdminFallback(data?.role === "admin" ? "allowed" : "denied");
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) setAdminFallback("denied");
-      });
+      }
+    })();
 
     return () => { cancelled = true; };
   }, [requiredRole, isAuthenticated, user?.id, isAdmin, Array.isArray(roles) ? roles.join(",") : "", roleTimedOut, roleError]);
