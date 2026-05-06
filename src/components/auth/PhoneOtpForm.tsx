@@ -82,11 +82,11 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       last_error: null,
       last_error_step: null,
     });
-    // Hard 3s safety so the button never looks frozen
+    // Hard 8s safety so the button never looks frozen (Twilio Verify can take 4-5s)
     const safety = window.setTimeout(() => {
       setSending(false);
       toast.error("Envoi trop long. Réessayez.");
-    }, 3000);
+    }, 8000);
 
     try {
       const data = await callOtp("send-otp", { phone: e164 });
