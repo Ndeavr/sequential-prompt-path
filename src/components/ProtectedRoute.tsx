@@ -16,12 +16,12 @@ const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps
   const [adminFallback, setAdminFallback] = useState<"idle" | "checking" | "allowed" | "denied">("idle");
 
   useEffect(() => {
-    if (requiredRole !== "admin" || !isAuthenticated || !user?.id) {
+    if (requiredRole !== "admin") {
       setAdminFallback("idle");
       return;
     }
 
-    if (isAdmin || (Array.isArray(roles) && roles.includes("admin"))) {
+    if (isAuthenticated && (isAdmin || (Array.isArray(roles) && roles.includes("admin")))) {
       setAdminFallback("allowed");
       return;
     }
@@ -30,10 +30,16 @@ const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps
     setAdminFallback("checking");
     (async () => {
       try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = user?.id ?? sessionData.session?.user?.id;
+        if (!userId) {
+          if (!cancelled) setAdminFallback("denied");
+          return;
+        }
         const { data } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
           .eq("role", "admin" as any)
           .maybeSingle();
         if (!cancelled) setAdminFallback(data?.role === "admin" ? "allowed" : "denied");
