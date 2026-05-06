@@ -62877,7 +62877,7 @@ export type Database = {
         | "website_scan"
         | "google_scan"
         | "verification_scan"
-      app_role: "homeowner" | "contractor" | "admin"
+      app_role: "homeowner" | "contractor" | "admin" | "partner"
       appointment_status:
         | "requested"
         | "under_review"
@@ -63113,7 +63113,7 @@ export const Constants = {
         "google_scan",
         "verification_scan",
       ],
-      app_role: ["homeowner", "contractor", "admin"],
+      app_role: ["homeowner", "contractor", "admin", "partner"],
       appointment_status: [
         "requested",
         "under_review",
