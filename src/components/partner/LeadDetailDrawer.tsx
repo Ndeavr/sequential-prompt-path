@@ -49,6 +49,7 @@ export function LeadDetailDrawer({ leadId, open, onOpenChange }: { leadId: strin
           <SheetTitle className="text-white flex flex-wrap items-center gap-2">
             {lead.business_name || "Prospect"}
             <ConsentBadge lead={lead} />
+            <LeadOriginBadge origin={lead.lead_origin} />
           </SheetTitle>
         </SheetHeader>
 
