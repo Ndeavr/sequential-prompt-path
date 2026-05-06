@@ -169,7 +169,19 @@ export default function AuthCallbackPage() {
       setState("redirecting");
 
       const hasRole = roleList.length > 0;
+      const isAdmin = roleList.includes("admin");
       const onboardingDone = profile?.onboarding_completed;
+
+      // Admin always wins — go straight to intent or /admin, ignore onboarding.
+      if (isAdmin) {
+        const target =
+          intent?.returnPath && !/^\/(login|signup|auth\/callback)\b/.test(intent.returnPath)
+            ? intent.returnPath
+            : "/admin";
+        authDebug.set({ auth_step: "redirecting", redirect_target: target });
+        navigate(target, { replace: true });
+        return;
+      }
 
       // Honor explicit return path
       if (intent?.returnPath && hasRole && !/^\/(login|signup|auth\/callback)\b/.test(intent.returnPath)) {
@@ -184,10 +196,9 @@ export default function AuthCallbackPage() {
         return;
       }
 
-      // Determine primary role
+      // Determine primary role (admin already handled above)
       let primaryRole: string | null = null;
-      if (roleList.includes("admin")) primaryRole = "admin";
-      else if (roleList.includes("contractor")) primaryRole = "contractor";
+      if (roleList.includes("contractor")) primaryRole = "contractor";
       else if (roleList.includes("condo_manager")) primaryRole = "condo_manager";
       else primaryRole = roleList[0];
 

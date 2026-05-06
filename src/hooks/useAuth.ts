@@ -71,16 +71,20 @@ export const useAuth = () => {
         console.error("[useAuth] Supabase role fetch error", error);
         throw error;
       }
-      if (!data || data.length === 0) return null;
-      const roles = data.map((r) => r.role);
-      if (roles.includes("admin")) return "admin";
-      if (roles.includes("contractor")) return "contractor";
-      return roles[0];
+      if (!data || data.length === 0) return { primary: null as string | null, all: [] as string[] };
+      const all = data.map((r) => r.role as string);
+      let primary: string;
+      if (all.includes("admin")) primary = "admin";
+      else if (all.includes("contractor")) primary = "contractor";
+      else if (all.includes("condo_manager")) primary = "condo_manager";
+      else primary = all[0];
+      return { primary, all };
     },
     enabled: !!session?.user?.id,
   });
 
-  const role = roleQuery.data ?? null;
+  const role = roleQuery.data?.primary ?? null;
+  const roles = roleQuery.data?.all ?? [];
   const isRoleLoading = !!session?.user?.id && !roleQuery.isFetched && !roleTimedOut;
   const isAuthLoading = loading || isRoleLoading;
 
@@ -104,6 +108,8 @@ export const useAuth = () => {
     roleTimedOut,
     isAuthenticated: !!session?.user,
     role: role as string | null,
+    roles,
+    isAdmin: roles.includes("admin"),
     signOut,
   };
 };

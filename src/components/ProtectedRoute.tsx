@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading, role } = useAuth();
+  const { isAuthenticated, isLoading, isRoleLoading, role, roles, isAdmin } = useAuth() as any;
   const location = useLocation();
 
   if (isLoading) {
@@ -21,7 +21,6 @@ const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps
   }
 
   if (!isAuthenticated) {
-    // Preserve intent before redirecting to login
     saveAuthIntent({
       returnPath: location.pathname + location.search + location.hash,
       action: "access_protected",
@@ -30,8 +29,21 @@ const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps
     return <Navigate to="/login" replace />;
   }
 
-  // If anyRole is set, skip role check. Admins can access any route.
-  if (!anyRole && requiredRole && role !== requiredRole && role !== "admin") {
+  // Admin bypasses every requiredRole. Check the full role list, not just primary.
+  if (isAdmin || (Array.isArray(roles) && roles.includes("admin"))) {
+    return <>{children}</>;
+  }
+
+  // Don't bounce while the role query is still resolving — prevents loops.
+  if (isRoleLoading || role === undefined) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-muted-foreground">Chargement…</p>
+      </div>
+    );
+  }
+
+  if (!anyRole && requiredRole && role !== requiredRole) {
     return <Navigate to={getDefaultRedirectForRole(role)} replace />;
   }
 

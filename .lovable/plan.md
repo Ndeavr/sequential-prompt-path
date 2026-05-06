@@ -1,35 +1,82 @@
+Constat vérifié
 
-## Problème
+- Le compte `yturcotte@gmail.com` a bien le rôle `admin` en base, en plus de `contractor` et `homeowner`.
+- La fonction serveur `has_role(user, admin)` retourne `true` pour ce compte.
+- Donc le problème n’est pas un manque de permission backend. C’est un problème de routage/état côté app après connexion.
 
-OAuth Google reste bloqué sur "Connexion…" dans le preview mobile Lovable. Cause racine : le WebView du preview ne peut pas faire un OAuth full-page, le broker ouvre alors une fenêtre séparée et la callback ne revient jamais. **Ceci est une limitation connue du preview Lovable, pas du code.** Sur `unpro.ca` (URL publiée) le flow fonctionne — voir les `auth-logs` qui confirment un login Google réussi à 21:07 UTC pour `yturcotte@gmail.com`.
+Problème probable
 
-## Ce qu'on corrige (minimal, zero régression)
+Il y a plusieurs propriétaires de redirection après login :
 
-### 1. `src/components/auth/OAuthButtons.tsx` + `GoogleSignInButton.tsx`
-- Retirer `/auth/callback` du `redirect_uri`. Utiliser `window.location.origin` seul, comme la doc Lovable le recommande. Le broker (`/~oauth/callback`) gère lui-même la redirection finale.
-- Détecter `result.redirected === true` et **laisser** le bouton en état "Connexion…" (la page va naviguer). Ne PAS faire `setGoogleLoading(false)` dans ce cas.
-- Si `result.error` ou exception → `setGoogleLoading(false)` immédiatement + toast.
-- Ajouter un timeout de garde (8 s) qui reset le loader si rien ne s'est passé (cas WebView preview).
+1. `AuthReturnRouter` consomme l’intention de retour vers `/admin/outbound/test-center`.
+2. `LoginPageUnpro` consomme aussi l’intention et peut rediriger ailleurs si l’autre l’a déjà prise.
+3. `ProtectedRoute` peut rediriger vers `/onboarding` si le rôle admin n’est pas encore résolu au moment exact du rendu.
+4. Le rôle actif stocké en session peut rester sur `homeowner`, ce qui cache les fonctions/admin menus même quand le rôle admin existe.
 
-### 2. Pas de changement à
-- `src/integrations/lovable/index.ts` (auto-généré, interdit)
-- `src/hooks/useAuth.ts` (signOut déjà corrigé précédemment)
-- `src/stores/authSessionStore.ts`
-- Configuration Supabase / providers
+Plan de hotfix isolé
 
-### 3. Communication utilisateur
-Afficher un petit hint sous le bouton **uniquement** si l'app détecte qu'on tourne dans un WebView Lovable (`navigator.userAgent` contient `lovable` ou `wv`) :
-> "Pour tester la connexion Google, ouvre `unpro.ca` dans Safari/Chrome."
+1. Corriger uniquement le flux post-login
 
-## Hors scope
-- SMS OTP : à diagnostiquer séparément si toujours cassé après ce fix (les `auth-logs` ne montrent pas d'échec SMS récent).
-- Refonte du flux auth.
-- Toucher au broker Lovable.
+Fichier : `src/pages/LoginPageUnpro.tsx`
 
-## Vérification
-1. Sur `https://unpro.ca` → clic Google → redirection → retour → session active.
-2. Sur preview Lovable → clic Google → bouton revient à l'état initial après 8 s + hint visible.
-3. `auth_step` debug badge passe `oauth_initiating → oauth_redirecting` puis disparaît à la callback.
+- Ne plus consommer l’intention auth si `AuthReturnRouter` l’a déjà prise.
+- Attendre que le rôle soit résolu avant de rediriger un utilisateur déjà connecté.
+- Remplacer le fallback actuel `/` par `getDefaultRedirectForRole(role)`.
+- Résultat attendu : un admin connecté ne retombe plus sur `/`, `/onboarding` ou un écran propriétaire par défaut.
 
-## Pourquoi c'est court
-Tu as raison sur les tokens : on ne touche QUE les 2 fichiers de boutons OAuth. Pas de cascade.
+2. Prioriser admin dans le callback OAuth
+
+Fichier : `src/pages/AuthCallbackPage.tsx`
+
+- Dès que `roleList` contient `admin`, rediriger vers :
+  - l’intention sauvegardée si elle existe, ex. `/admin/outbound/test-center`
+  - sinon `/admin`
+- Ne jamais soumettre un admin à la logique `onboarding_completed`.
+- Résultat attendu : admin = accès admin immédiat, même si le profil/onboarding est incomplet ou lent à charger.
+
+3. Bloquer la boucle dans les routes protégées admin
+
+Fichier : `src/components/ProtectedRoute.tsx`
+
+- Pour `requiredRole="admin"`, ne pas rediriger vers `/onboarding` quand le rôle est encore `null` ou en résolution.
+- Garder un écran de vérification de rôle tant que l’app n’a pas une réponse claire.
+- Rediriger seulement si un rôle non-admin est réellement confirmé.
+- Résultat attendu : plus de boucle login → onboarding → login pour `/admin/outbound/test-center`.
+
+4. Restaurer les fonctions admin dans la navigation
+
+Fichiers :
+- `src/hooks/useAuth.ts`
+- `src/contexts/ActiveRoleContext.tsx`
+
+Changement minimal :
+
+- Exposer la liste complète des rôles depuis `useAuth`, pas seulement le rôle primaire.
+- Priorité conservée : `admin > contractor > condo_manager > homeowner`.
+- Si l’utilisateur a `admin`, le rôle actif par défaut redevient `admin` au login, même si une ancienne session avait stocké `homeowner`.
+- Résultat attendu : les menus/fonctions admin réapparaissent pour `yturcotte@gmail.com`.
+
+Ce que je ne touche pas dans ce hotfix
+
+- Pas de changement à Google OAuth.
+- Pas de changement au logout.
+- Pas de changement à `PageOutboundTestCenter.tsx`.
+- Pas de changement aux fonctions outbound.
+- Pas de migration base de données, car le rôle admin existe déjà et les politiques RLS sont correctes.
+
+Vérification après changement
+
+Checklist courte :
+
+1. Se connecter avec Google comme `yturcotte@gmail.com`.
+2. Ouvrir directement `/admin/outbound/test-center`.
+3. Confirmer que la page Test Center s’affiche.
+4. Confirmer que les boutons/actions admin restent visibles.
+5. Rafraîchir la page sur `/admin/outbound/test-center`.
+6. Confirmer qu’il n’y a pas de redirection vers `/login`, `/onboarding`, `/dashboard` ou `/pro`.
+7. Déconnexion puis reconnexion : même résultat.
+
+Rollback/failsafe
+
+- Les changements sont limités aux fichiers auth/routing ci-dessus.
+- Si une régression apparaît, on revient uniquement sur ce hotfix via l’historique, sans toucher au reste du produit.
