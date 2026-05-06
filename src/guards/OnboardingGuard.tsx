@@ -4,6 +4,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 
 interface OnboardingGuardProps {
   children: React.ReactNode;
@@ -12,8 +13,10 @@ interface OnboardingGuardProps {
 export default function OnboardingGuard({ children }: OnboardingGuardProps) {
   const { isAuthenticated, isLoading: authLoading, role } = useAuth();
   const { data: profile, isLoading: profileLoading } = useProfile();
+  const stillLoading = authLoading || profileLoading;
+  const timedOut = useLoadingTimeout(stillLoading, 6000, "onboarding_guard");
 
-  if (authLoading || profileLoading) {
+  if (stillLoading && !timedOut) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="animate-pulse text-muted-foreground text-sm">Chargement…</div>
@@ -25,6 +28,9 @@ export default function OnboardingGuard({ children }: OnboardingGuardProps) {
 
   // Admin bypasses onboarding
   if (role === "admin") return <>{children}</>;
+
+  // Timed out → let through in limited mode rather than freezing
+  if (timedOut) return <>{children}</>;
 
   // No role yet → onboarding
   if (!role) return <Navigate to="/onboarding" replace />;

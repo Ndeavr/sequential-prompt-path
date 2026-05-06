@@ -3,6 +3,7 @@ import { AppRouter } from "./router";
 import AppErrorBoundary from "@/components/errors/AppErrorBoundary";
 import AlexRouterDebugHUD from "@/components/alex-copilot/AlexRouterDebugHUD";
 import AuthDebugHud from "@/components/auth/AuthDebugHud";
+import BootDebugButton from "@/components/dev/BootDebugButton";
 
 const App = () => (
   <AppErrorBoundary>
@@ -10,6 +11,7 @@ const App = () => (
       <AppRouter />
       <AlexRouterDebugHUD />
       <AuthDebugHud />
+      <BootDebugButton />
     </Providers>
   </AppErrorBoundary>
 );

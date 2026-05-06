@@ -9,9 +9,11 @@ import { AlexLanguageLockSession, type AlexLanguage } from "@/services/alexLangu
 import { buildAlexAgentOverrides, ALEX_VOICE_DEFAULTS } from "@/features/alex/voice/alexAgentOverrides";
 import { loadAlexMemory, buildMemoryContextHint } from "@/features/alex/voice/alexSessionMemory";
 import { alexVoiceService } from "@/services/alexVoiceService";
+import { logBoot, withTimeout } from "@/lib/bootDebug";
 
 const RECONNECT_COOLDOWN_MS = 5000;
 const CONNECTION_TIMEOUT_MS = 8_000;
+const TOKEN_TIMEOUT_MS = 6_000;
 
 interface UseLiveVoiceCallbacks {
   onTranscript?: (text: string) => void;
@@ -288,18 +290,37 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
 
       console.log("[ElevenLabs V7] Fetching signed URL...");
       alexVoiceService.startTokenRequest();
-      const { data, error } = await supabase.functions.invoke("voice-get-signed-url");
+      logBoot("VOICE_TOKEN_START");
+      let data: any = null;
+      let error: any = null;
+      try {
+        const result = await withTimeout(
+          supabase.functions.invoke("voice-get-signed-url"),
+          TOKEN_TIMEOUT_MS,
+          "voice_signed_url",
+        );
+        data = (result as any)?.data ?? null;
+        error = (result as any)?.error ?? null;
+      } catch (e) {
+        logBoot("VOICE_TOKEN_TIMEOUT", { ms: TOKEN_TIMEOUT_MS });
+        alexVoiceService.setError("Connexion vocale lente. Mode chat activé.", "token_timeout");
+        throw new Error("voice_token_timeout");
+      }
       const signedUrl = data?.signed_url ?? data?.signedUrl;
 
       // Detect fallback signal from edge function
       if (data?.fallback === "chat" || (!signedUrl && !error)) {
         alexVoiceService.setApiKeyConfigured(false);
+        logBoot("VOICE_TOKEN_FALLBACK", { reason: data?.message });
         throw new Error(data?.message || "Connexion vocale indisponible. Chat activé.");
       }
 
       if (error || !signedUrl) {
+        logBoot("VOICE_TOKEN_ERROR", { error: error?.message });
         throw new Error(error?.message || "Impossible d'obtenir l'URL de connexion");
       }
+
+      logBoot("VOICE_TOKEN_OK");
 
       alexVoiceService.markTokenReceived();
       alexVoiceService.setApiKeyConfigured(true);

@@ -5,6 +5,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 
 interface PropertyGuardProps {
   children: React.ReactNode;
@@ -26,13 +27,19 @@ export default function PropertyGuard({ children }: PropertyGuardProps) {
     enabled: !!user?.id && role === "homeowner",
   });
 
-  if (authLoading || isLoading) {
+  const stillLoading = authLoading || isLoading;
+  const timedOut = useLoadingTimeout(stillLoading, 6000, "property_guard");
+
+  if (stillLoading && !timedOut) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="animate-pulse text-muted-foreground text-sm">Chargement…</div>
       </div>
     );
   }
+
+  // Timed out → let through; better than freezing
+  if (timedOut) return <>{children}</>;
 
   // Non-homeowners pass through
   if (role !== "homeowner") return <>{children}</>;

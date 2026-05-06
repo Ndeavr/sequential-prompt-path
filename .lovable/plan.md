@@ -1,219 +1,60 @@
-Plan de correction prioritaire pour rendre Alex impossible à bloquer.
+# Diagnostic + déblocage global app & Alex
 
-Constat principal
+## Problème observé
+- `/onboarding` reste sur "Chargement…" indéfiniment.
+- Alex Voice reste sur "Connexion d'Alex…" (token signé jamais résolu après >2s, aucune coupure).
+- Aucun timeout, aucun fallback, aucune trace pour identifier l'étape qui bloque.
 
-Le problème est très probablement une combinaison de deux blocages :
+## Causes identifiées par l'inspection du code
+1. **`useOnboardingSession`** (`src/hooks/useOnboardingSession.ts`) — `setLoading(false)` n'est appelé que dans le `await`. Si la requête Supabase hang (RLS, réseau, edge), `loading` reste `true` pour toujours → `OnboardingFlow` bloqué.
+2. **`useProfile`** (`src/hooks/useProfile.ts`) — pas de timeout, pas de retry borné. `OnboardingGuard` attend `profileLoading` sans plafond.
+3. **`useAuth`** — `roleQuery` n'a pas de timeout ; le watchdog `roleTimedOut` est à 4s mais `isAuthLoading = loading || isRoleLoading` peut rester actif si `useAuthSession.loading` retombe alors que la query reste en flight.
+4. **Alex Voice** — `useLiveVoice` n'a un timeout que **après** réception du signed URL (5s sur la connexion WS). L'appel `supabase.functions.invoke("voice-get-signed-url")` lui-même n'a **aucun timeout**. Les logs montrent "🐢 Token slow (>2s)" sans suite — l'edge réponse n'arrive jamais et rien ne tue l'attente.
+5. Alex est lancé depuis n'importe quelle route ; il n'a aucun mode "guest_limited" et dépend implicitement de l'état app via overlays/store.
 
-1. Le TTS classique reçoit un fallback JSON `{ fallback: true }`, mais le flux actuel le traite comme une fin “réussie” dans certains chemins. Résultat : `autoplay_success` peut être loggé même si aucune voix n’a joué.
-2. L’overlay vocal plein écran bloque volontairement la fermeture pendant la stabilisation. Or les chemins `boot_timeout`, `permission_denied`, `no_first_audio_final`, `voice_error_pre_audio` appellent `closeVoiceSession(reason)` avec des raisons qui ne sont pas autorisées pendant cette fenêtre. Résultat possible : fallback chat ouvert, mais overlay/loader vocal reste verrouillé par-dessus.
+## Plan d'action — 3 couches
 
-Objectif de l’implémentation
+### Couche 1 — Boot tracer global (read-only, instrumentation)
+- Nouveau fichier `src/lib/bootDebug.ts` exposant `window.__UNPRO_DEBUG` + helper `logBoot(step, data?)`.
+- Instrumenter les points clés :
+  - `src/main.tsx` → `APP_MOUNT`
+  - `src/integrations/supabase/client.ts` (au load) → `SUPABASE_CLIENT_READY`
+  - `src/stores/authSessionStore.ts` → `AUTH_SESSION_START`, `AUTH_SESSION_OK|NULL|TIMEOUT`
+  - `src/hooks/useAuth.ts` → `ROLE_FETCH_START/OK/ERROR/TIMEOUT`
+  - `src/hooks/useProfile.ts` → `PROFILE_FETCH_START/OK/ERROR/TIMEOUT`
+  - `src/hooks/useOnboardingSession.ts` → `ONBOARDING_LOAD_START/OK/EMPTY/ERROR/TIMEOUT`
+  - `src/hooks/useLiveVoice.ts` → `VOICE_TOKEN_START/OK/TIMEOUT`, `VOICE_WS_CONNECTED/TIMEOUT`
+- Bouton flottant temporaire `src/components/dev/BootDebugButton.tsx` (dev only, en bas-droite, `import.meta.env.DEV`) qui affiche un panneau JSON : derniers steps, route, auth, profile, alex state.
 
-Alex ne doit jamais rester en spinner ou en “connecting voice”. À chaque échec voix, elle doit :
+### Couche 2 — Timeouts durs partout (le vrai fix)
+- **`useOnboardingSession`** : wrap `await supabase…` avec `Promise.race([query, timeout(5000)])`. En timeout : `setLoading(false)`, garder `DEFAULT_SESSION`, log `ONBOARDING_LOAD_TIMEOUT`. Évite d'écraser une session existante en BDD.
+- **`useProfile`** : ajouter `staleTime`/`gcTime` raisonnables, `retry: 1`, et wrapper la `queryFn` avec timeout 5s. En échec → retourner `null`, ne pas throw.
+- **`OnboardingGuard` / `AuthGuard` / `RoleGuard` / `PropertyGuard`** : tous gagnent un `useEffect` qui force `loadingTimedOut=true` après 6s. Si timed out → continuer en mode invité (laisser passer ou rediriger vers route publique selon le guard) au lieu d'afficher "Chargement…" éternel.
+- **`useAuth`** : si `useAuthSession.loading` est `false` (le store a déjà son propre fallback 3s), borner `isRoleLoading` à 4s max (déjà présent via `roleTimedOut`) et garantir que `isAuthLoading = false` après 6s même si la query plante.
+- **`useLiveVoice` (start)** : encadrer `supabase.functions.invoke("voice-get-signed-url")` par `Promise.race` avec timeout 6s. En timeout → `alexVoiceService.setError("token_timeout")`, déclencher `switchAlexToChatFallback("voice_token_timeout", "Connexion vocale lente. Je continue par message.")`. Aucun spinner > 6s.
+- **Étiquette UI Alex** : à 6s sans token, l'overlay affiche "Mode chat activé" + bouton "Réessayer la voix" (réutilise `recoverAlex()`).
 
-- arrêter toutes les requêtes/audio/micro/timers,
-- resetter les états de loading,
-- afficher le mode chat immédiatement,
-- laisser l’utilisateur fermer, relancer ou continuer sans refresh.
+### Couche 3 — Découplage Alex / app
+- Alex (overlay verrouillé) ne lit que `useAuthSession` (déjà découplé). Vérifier qu'aucun chemin dans `OverlayAlexVoiceFullScreen` ne dépend de `useProfile` ou `useOnboardingSession` ; sinon basculer vers lecture optionnelle (`?? null`) et un `contextMode: "guest_limited"` dans le store Alex.
+- `AlexProvider` ne doit pas attendre ni bloquer le rendu enfant : déjà OK, mais on ajoute un `try/catch` dans chaque hook pour qu'une exception ne casse pas la racine.
 
-Étapes de build
+## Fichiers touchés
+- + `src/lib/bootDebug.ts`
+- + `src/components/dev/BootDebugButton.tsx` (monté dans `src/app/App.tsx` si DEV)
+- ~ `src/main.tsx`, `src/app/App.tsx`
+- ~ `src/stores/authSessionStore.ts`
+- ~ `src/hooks/useAuth.ts`, `src/hooks/useProfile.ts`, `src/hooks/useOnboardingSession.ts`
+- ~ `src/hooks/useLiveVoice.ts`
+- ~ `src/guards/AuthGuard.tsx`, `OnboardingGuard.tsx`, `RoleGuard.tsx`, `PropertyGuard.tsx`
+- ~ `src/components/voice/OverlayAlexVoiceFullScreen.tsx` (étiquette + CTA fallback à 6s)
 
-1. Ajouter une couche centrale de récupération Alex
+## Hors périmètre
+- Aucune modif design, Stripe, flows métier, Alex personality, ElevenLabs SDK.
+- Pas de migration BDD.
 
-Créer un module dédié, par exemple `src/features/alex/services/alexHardRecovery.ts`, avec :
-
-- `TTS_TIMEOUT_MS = 8000`
-- `TTS_SLOW_MS = 6000`
-- `ALEX_FROZEN_MS = 10000`
-- `MAX_TTS_RETRIES = 1`
-- `VOICE_ERROR_WINDOW_MS = 120000`
-- `VOICE_DISABLED_MS = 600000`
-
-Fonctions exposées :
-
-- `hardResetAlexSession(reason)`
-- `switchAlexToChatFallback(reason, message?)`
-- `recordVoiceFailure(reason)`
-- `isVoiceTemporarilyDisabled()`
-- `clearAlexRecoveryTimers()`
-
-Cette couche appellera :
-
-- arrêt audio ElevenLabs TTS,
-- arrêt STT,
-- reset Zustand Alex,
-- fermeture ou fallback de l’overlay vocal,
-- dispatch `alex-voice-force-kill` et `alex-voice-cleanup`,
-- reset des flags `hasActiveTTSRequest`, `hasActivePlayback`, `hasActiveSTTSession`, `isMicOpen`, `isUserSpeaking`, `audioUnlockRequired`, etc.
-
-2. Étendre le store Alex pour supporter le recovery complet
-
-Dans `src/features/alex/state/alexStore.ts` :
-
-- ajouter `lastTTSActivityAt`, `voiceErrorTimestamps`, `voiceDisabledUntil`, `voiceUnavailableReason`, `recoveryNotice`, `ttsRetryCount`.
-- ajouter actions :
-  - `markTTSActivity()`
-  - `markVoiceUnavailable(reason)`
-  - `hardReset(reason)`
-  - `setChatOnlyUntil(timestamp, reason)`
-  - `clearRecoveryNotice()`
-
-Le reset devra forcer :
-
-```ts
-mode = "fallback_text" ou "ready"
-hasActivePlayback = false
-hasActiveTTSRequest = false
-hasActiveSTTSession = false
-isMicOpen = false
-isUserSpeaking = false
-isBackgroundNoise = false
-hasLowConfidenceAudio = false
-softPromptText = null
-ttsRetryCount = 0
-```
-
-3. Rendre `elevenlabsService.speak()` cancellable et impossible à figer
-
-Dans `src/features/alex/services/elevenlabsService.ts` :
-
-- ajouter un `AbortController` global par requête TTS.
-- remplacer `supabase.functions.invoke("alex-tts")` si nécessaire par un `fetch()` direct vers la fonction pour supporter un vrai abort et récupérer proprement JSON/audio.
-- imposer un hard timeout de 8 secondes.
-- logger :
-  - `[ALEX_TTS_START]`
-  - `[ALEX_TTS_SUCCESS]`
-  - `[ALEX_TTS_TIMEOUT]`
-  - `[ALEX_TTS_ABORT]`
-  - `[ALEX_TTS_FALLBACK]`
-  - `[ALEX_HARD_RESET]`
-- si la réponse contient `{ fallback: true }`, ne pas résoudre comme succès audio. Retourner un résultat typé `fallback` ou lancer une erreur contrôlée `TTS_FALLBACK`.
-- dans tous les chemins `catch` et `finally`, garantir `cleanup()` et reset des flags loading.
-
-4. Corriger `useAlexVoice` et `useAlexBootstrap`
-
-Dans `src/features/alex/hooks/useAlexVoice.ts` :
-
-- entourer chaque `speak()` avec timeout + fallback.
-- en cas d’erreur TTS :
-  - ne pas retry en boucle,
-  - appeler `markVoiceUnavailable`,
-  - injecter une seule fois : “La voix d’Alex est temporairement indisponible. Je continue ici.”,
-  - passer en `fallback_text` ou `ready`,
-  - laisser l’input chat actif.
-- exposer `recoverAlex()` pour le bouton “Relancer Alex”.
-
-Dans `src/features/alex/hooks/useAlexBootstrap.ts` :
-
-- corriger le faux `boot:v7:autoplay_success` quand le TTS retourne fallback.
-- si l’autoplay échoue ou timeout, ne pas laisser `shouldSpeakGreetingOnUnlock` bloquer en boucle.
-- afficher la valeur texte immédiatement et garder la voix désactivée temporairement si 3 erreurs en 2 minutes.
-
-5. Ajouter un watchdog anti-freeze global
-
-Créer un hook `useAlexRecoveryWatchdog()` monté dans `AlexProvider`.
-
-Toutes les 3 secondes :
-
-- si `hasActiveTTSRequest` ou `mode === "connecting_voice"` depuis plus de 10 secondes :
-  - log `ALEX FROZEN — AUTO RECOVERY`,
-  - `hardResetAlexSession("tts_watchdog_frozen")`,
-  - fallback chat.
-- si `mode === "thinking"` ou `analyzing_image` trop longtemps après erreur réseau, revenir à l’input.
-- si `document.visibilitychange` revient à visible sur mobile/Android et qu’un état audio est actif mais cassé : stop audio + reset + chat fallback.
-
-6. Corriger le verrou de l’overlay vocal plein écran
-
-Dans `src/stores/alexVoiceLockedStore.ts` :
-
-- ajouter `forceCloseVoiceSession(reason)` qui bypass la fenêtre de stabilisation.
-- ou autoriser explicitement les raisons fallback critiques :
-  - `boot_timeout`
-  - `permission_denied`
-  - `boot_failed`
-  - `disconnect_pre_audio`
-  - `voice_error_pre_audio`
-  - `no_first_audio_final`
-  - `retry_no_audio`
-  - `recovery_fallback_chat`
-  - `fallback_to_chat`
-
-Dans `OverlayAlexVoiceFullScreen.tsx` :
-
-- remplacer les fermetures fallback par `forceCloseVoiceSession`.
-- garantir que `bailToChat()` efface tous les timers, stoppe `useLiveVoice`, unlock runtime et ferme l’overlay avant/après ouverture du chat.
-- après 6 secondes de boot lent, afficher :
-  “Connexion vocale lente… Je continue par message pendant la reconnexion.”
-  puis activer le bouton chat et retirer le spinner bloquant.
-
-7. Renforcer `useLiveVoice`
-
-Dans `src/hooks/useLiveVoice.ts` :
-
-- ajouter un AbortController logique pour la demande `voice-get-signed-url` si possible.
-- garantir qu’un timeout de connexion appelle toujours `setIsConnecting(false)` et `onError` une seule fois.
-- éviter double `onError` + `onDisconnect` après un stop intentionnel.
-- ajouter écoute `alex-voice-force-kill` pour terminer la session SDK, reset local et clear timeout.
-- si micro refusé : fallback chat immédiat, pas d’écran bloqué.
-
-8. Ajouter un `AlexErrorBoundary`
-
-Créer `src/features/alex/AlexErrorBoundary.tsx` et entourer :
-
-- `AlexAssistant` / `AlexPanel`,
-- `OverlayAlexVoiceFullScreen`,
-- `AlexChatFallbackPanel`.
-
-En cas d’erreur React dans Alex seulement :
-
-- ne pas déclencher la page blanche globale,
-- afficher une carte compacte :
-  - “Alex a été réinitialisée.”
-  - bouton “Relancer Alex”
-  - bouton “Continuer par chat”
-  - bouton “Fermer”
-
-9. Ajouter les contrôles UX visibles
-
-Dans `AlexPanel.tsx` :
-
-- afficher un bandeau premium quand voix indisponible :
-  “La voix d’Alex est temporairement indisponible. Je continue ici.”
-- ajouter bouton “Relancer Alex” si `voiceUnavailableReason` ou `voiceDisabledUntil` actif.
-- ajouter bouton “Fermer”/minimiser toujours accessible.
-- garder `AlexInput` actif en permanence.
-
-Dans `AlexMessageList.tsx` :
-
-- le loader `thinking` ne doit jamais apparaître indéfiniment.
-- si recovery notice actif, afficher un message système plutôt qu’un spinner.
-
-10. Corriger la fonction backend `alex-tts`
-
-Dans `supabase/functions/alex-tts/index.ts` :
-
-- utiliser l’import Deno standard du projet : `https://esm.sh/@supabase/supabase-js@2.49.1`.
-- ajouter timeout autour du fetch ElevenLabs.
-- en cas d’erreur ou de timeout, retourner `200` avec `{ fallback: true, error: "tts_unavailable" }` plutôt qu’un 500/503.
-- ne jamais bloquer sur les logs database.
-
-11. Vérification ciblée
-
-Après implémentation, vérifier les scénarios :
-
-- ElevenLabs TTS indisponible : aucun spinner, chat disponible.
-- `alex-tts` retourne `{ fallback: true }` : pas de faux succès audio.
-- timeout TTS > 8s : abort + fallback.
-- overlay vocal ouvert puis aucun audio : fermeture forcée + chat.
-- permission micro refusée : chat immédiat.
-- retour Android foreground : reset audio propre.
-- 3 erreurs voix en 2 minutes : mode chat-only 10 minutes.
-- bouton “Relancer Alex” : hard reset puis réinitialisation propre.
-
-Résultat attendu
-
-Alex restera utilisable même si toute la couche vocale échoue. Plus de page blanche, plus de spinner infini, plus de session lockée, plus de refresh obligatoire.
-
-<lov-actions>
-<lov-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</lov-link>
-</lov-actions>
+## Critère de succès
+- `window.__UNPRO_DEBUG.bootSteps` montre exactement où ça bloque.
+- Aucun écran "Chargement…" ne dure > 6 s.
+- Alex bascule en chat automatiquement si le signed URL ne revient pas en 6 s.
+- `/onboarding` rend toujours l'UI (mode invité si données absentes).
+- App utilisable même si Supabase auth/profil/edge échoue.
