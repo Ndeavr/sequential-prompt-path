@@ -945,6 +945,10 @@ export const AppRouter = () => (
         <Route path="/partenaire/login" element={<PartnerLogin />} />
         <Route path="/partenaire/dashboard" element={<PartnerGuard><PartnerDashboard /></PartnerGuard>} />
         <Route path="/partenaire/nouveau-entrepreneur" element={<PartnerGuard><PartnerNouveauEntrepreneur /></PartnerGuard>} />
+        <Route path="/partenaire/crm" element={<PartnerGuard><PartnerCrm /></PartnerGuard>} />
+        <Route path="/partenaire/leads" element={<PartnerGuard><PartnerCrm /></PartnerGuard>} />
+        <Route path="/partenaire/pipeline" element={<PartnerGuard><PartnerCrm /></PartnerGuard>} />
+        <Route path="/partenaire/rappels" element={<PartnerGuard><PartnerCrm /></PartnerGuard>} />
         <Route path="/admin/partenaires" element={<ProtectedRoute requiredRole="admin"><AdminPartenaires /></ProtectedRoute>} />
         <Route path="/contact" element={<FallbackRoutePage />} />
         <Route path="/conditions" element={<FallbackRoutePage />} />
