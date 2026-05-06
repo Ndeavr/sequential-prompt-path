@@ -14,8 +14,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const SENDER_DOMAIN = 'mail.unpro.ca'
-const FROM_ADDRESS = 'UNPRO <alex@mail.unpro.ca>'
+const SENDER_DOMAIN = 'notify.unpro.ca'
+const FROM_ADDRESS = 'UNPRO <alex@notify.unpro.ca>'
 const ADMIN_EMAIL = Deno.env.get('FORMS_ADMIN_EMAIL') || 'dde@unpro.ca'
 
 const FORM_LABELS: Record<string, string> = {
