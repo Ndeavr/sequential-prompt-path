@@ -108,6 +108,8 @@ export const useAuth = () => {
     roleTimedOut,
     isAuthenticated: !!session?.user,
     role: role as string | null,
+    roles,
+    isAdmin: roles.includes("admin"),
     signOut,
   };
 };
