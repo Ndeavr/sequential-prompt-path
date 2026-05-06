@@ -8,6 +8,7 @@
 import { useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
+import { logBoot } from "@/lib/bootDebug";
 
 type State = {
   session: Session | null;
@@ -34,11 +35,14 @@ function bootstrap() {
   if (bootstrapped) return;
   bootstrapped = true;
 
+  logBoot("AUTH_SESSION_START");
+
   // Single listener for the entire app lifetime.
   supabase.auth.onAuthStateChange((event, session) => {
     if (typeof console !== "undefined") {
       console.log("[authStore]", event, session?.user?.id ?? null);
     }
+    logBoot("AUTH_STATE_CHANGE", { event, uid: session?.user?.id ?? null });
     setState({ session, loading: false, initialized: true });
   });
 
@@ -46,16 +50,21 @@ function bootstrap() {
   supabase.auth.getSession()
     .then(({ data, error }) => {
       if (error) console.warn("[authStore] getSession error", error);
+      logBoot(data?.session ? "AUTH_SESSION_OK" : "AUTH_SESSION_NULL");
       setState({ session: data?.session ?? null, loading: false, initialized: true });
     })
     .catch((e) => {
       console.warn("[authStore] getSession threw", e);
+      logBoot("AUTH_SESSION_ERROR", { error: String(e) });
       setState({ loading: false, initialized: true });
     });
 
   // Hard safety: 3s max in loading state.
   setTimeout(() => {
-    if (state.loading) setState({ loading: false, initialized: true });
+    if (state.loading) {
+      logBoot("AUTH_SESSION_TIMEOUT", { ms: 3000 });
+      setState({ loading: false, initialized: true });
+    }
   }, 3000);
 }
 
