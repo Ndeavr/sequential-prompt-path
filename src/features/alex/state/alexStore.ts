@@ -76,6 +76,14 @@ export interface AlexState {
   softPromptText: string | null;
 
   debugLog: AlexDebugEntry[];
+
+  // V8 — Recovery state
+  lastTTSActivityAt: number | null;
+  voiceErrorTimestamps: number[];
+  voiceDisabledUntil: number | null;
+  voiceUnavailableReason: string | null;
+  recoveryNotice: string | null;
+  ttsRetryCount: number;
 }
 
 // ─── Actions ──────────────────────────────────────────────────────
@@ -127,6 +135,14 @@ export interface AlexActions {
   setAudioUnlocked: (v: boolean) => void;
 
   logDebug: (tag: string, payload?: unknown) => void;
+
+  // V8 — Recovery actions
+  markTTSActivity: () => void;
+  markVoiceUnavailable: (reason: string, message?: string) => void;
+  recordVoiceFailure: () => void;
+  setChatOnlyUntil: (timestamp: number, reason: string) => void;
+  clearRecoveryNotice: () => void;
+  hardReset: (reason: string) => void;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────
@@ -205,6 +221,13 @@ export const useAlexStore = create<AlexState & AlexActions>()((set) => ({
   softPromptText: null,
 
   debugLog: [],
+
+  lastTTSActivityAt: null,
+  voiceErrorTimestamps: [],
+  voiceDisabledUntil: null,
+  voiceUnavailableReason: null,
+  recoveryNotice: null,
+  ttsRetryCount: 0,
 
   // ─── Actions ──────────────────────────────────────────────────
 
