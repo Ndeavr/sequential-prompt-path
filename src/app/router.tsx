@@ -120,6 +120,7 @@ const PageAdminEmailTemplates = lazy(() => import("@/pages/admin/PageAdminEmailT
 const PageAdminHandoffAnalytics = lazy(() => import("@/pages/admin/PageAdminHandoffAnalytics"));
 const ProfessionalsPage = lazy(() => import("@/pages/ProfessionalsPage"));
 const PartnersPage = lazy(() => import("@/pages/PartnersPage"));
+const PagePartenairesCertifies = lazy(() => import("@/pages/PagePartenairesCertifies"));
 const DescribeProjectPage = lazy(() => import("@/pages/DescribeProjectPage"));
 const CompareQuotesPage = lazy(() => import("@/pages/CompareQuotesPage"));
 const ContractorOnboardingPage = lazy(() => import("@/pages/ContractorOnboardingPage"));
