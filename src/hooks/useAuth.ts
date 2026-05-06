@@ -76,6 +76,7 @@ export const useAuth = () => {
       let primary: string;
       if (all.includes("admin")) primary = "admin";
       else if (all.includes("contractor")) primary = "contractor";
+      else if (all.includes("partner")) primary = "partner";
       else if (all.includes("condo_manager")) primary = "condo_manager";
       else primary = all[0];
       return { primary, all };
