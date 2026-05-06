@@ -11,6 +11,7 @@ import { AlexOrb } from "./AlexOrb";
 import { AlexPanel } from "./AlexPanel";
 import { AlexSpotlightLayer } from "./AlexSpotlightLayer";
 import { AlexDebugPanel } from "./AlexDebugPanel";
+import AlexErrorBoundary from "./AlexErrorBoundary";
 
 export function AlexAssistant() {
   const mode = useAlexStore((s) => s.mode);
