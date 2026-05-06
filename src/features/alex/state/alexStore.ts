@@ -434,4 +434,3 @@ export const useAlexStore = create<AlexState & AlexActions>()((set) => ({
   },
 }));
 
-}));
