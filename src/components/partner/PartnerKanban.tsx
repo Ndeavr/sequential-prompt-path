@@ -1,5 +1,6 @@
 import { LEAD_STATUS_PIPELINE } from "@/lib/leadConsent";
 import { ConsentBadge } from "./ConsentBadge";
+import { LeadOriginBadge } from "./LeadOriginBadge";
 
 export function PartnerKanban({ leads, onOpen }: { leads: any[]; onOpen: (id: string) => void }) {
   const grouped: Record<string, any[]> = {};
