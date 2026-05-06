@@ -149,9 +149,27 @@ export const useAlexVoiceLockedStore = create<AlexVoiceLockedState>((set, get) =
 
   closeVoiceSession: (closeReason: string) => {
     const state = get();
-    
-    // GUARD: Cannot close during stabilization unless fatal
-    if (state.isInStabilization() && closeReason !== "error_fatal" && closeReason !== "user_explicit_close") {
+
+    // Reasons that ALWAYS bypass stabilization (fatal/fallback/explicit)
+    const FORCE_CLOSE_REASONS = new Set([
+      "error_fatal",
+      "user_explicit_close",
+      "boot_timeout",
+      "boot_failed",
+      "permission_denied",
+      "disconnect_pre_audio",
+      "voice_error_pre_audio",
+      "no_first_audio_final",
+      "retry_no_audio",
+      "retry_failed",
+      "recovery_fallback_chat",
+      "fallback_to_chat",
+      "tts_watchdog_frozen",
+      "visibility_resume",
+    ]);
+
+    // GUARD: Cannot close during stabilization unless force-allowed
+    if (state.isInStabilization() && !FORCE_CLOSE_REASONS.has(closeReason)) {
       console.warn("[VoiceLockedStore] Close blocked during stabilization. Reason:", closeReason);
       return;
     }
