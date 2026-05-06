@@ -11,7 +11,7 @@ import { loadAlexMemory, buildMemoryContextHint } from "@/features/alex/voice/al
 import { alexVoiceService } from "@/services/alexVoiceService";
 
 const RECONNECT_COOLDOWN_MS = 5000;
-const CONNECTION_TIMEOUT_MS = 12_000;
+const CONNECTION_TIMEOUT_MS = 8_000;
 
 interface UseLiveVoiceCallbacks {
   onTranscript?: (text: string) => void;
