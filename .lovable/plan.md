@@ -1,162 +1,219 @@
-# UNPRO Form Reliability System
+Plan de correction prioritaire pour rendre Alex impossible à bloquer.
 
-Centralized orchestrator so every form (Partenaire, Condo, Contact, Onboarding, Callback Alex, Devis, Newsletter, etc.) is **saved → emailed → confirmed → retried → monitored**, with zero lost leads.
+Constat principal
 
----
+Le problème est très probablement une combinaison de deux blocages :
 
-## 1. Database (migration)
+1. Le TTS classique reçoit un fallback JSON `{ fallback: true }`, mais le flux actuel le traite comme une fin “réussie” dans certains chemins. Résultat : `autoplay_success` peut être loggé même si aucune voix n’a joué.
+2. L’overlay vocal plein écran bloque volontairement la fermeture pendant la stabilisation. Or les chemins `boot_timeout`, `permission_denied`, `no_first_audio_final`, `voice_error_pre_audio` appellent `closeVoiceSession(reason)` avec des raisons qui ne sont pas autorisées pendant cette fenêtre. Résultat possible : fallback chat ouvert, mais overlay/loader vocal reste verrouillé par-dessus.
 
-### `form_submissions`
-`id, form_type, status (received|processing|sent|failed|retrying), first_name, last_name, email, phone, company, payload jsonb, source_page, utm_source, utm_medium, utm_campaign, ip_address, user_agent, reference_code (short human-readable), email_user_sent bool, email_admin_sent bool, retry_count int, last_error text, created_at, updated_at`
+Objectif de l’implémentation
 
-### `form_email_logs`
-`id, submission_id FK, email_type (user_confirmation|admin_notification), recipient, provider (lovable_email|resend), status (sent|failed|bounced), response jsonb, attempt int, created_at`
+Alex ne doit jamais rester en spinner ou en “connecting voice”. À chaque échec voix, elle doit :
 
-### `form_events`
-`id, submission_id FK, event_type (submitted|saved|email_queued|email_sent|email_failed|retry|admin_alerted|viewed_admin), metadata jsonb, created_at`
+- arrêter toutes les requêtes/audio/micro/timers,
+- resetter les états de loading,
+- afficher le mode chat immédiatement,
+- laisser l’utilisateur fermer, relancer ou continuer sans refresh.
 
-### RLS
-- `form_submissions` / `form_email_logs` / `form_events`: **INSERT public** (anonymous forms), **SELECT/UPDATE admin only** via `has_role(auth.uid(),'admin')`.
-- Edge functions write via service role.
+Étapes de build
 
-### Trigger
-- `before insert` on `form_submissions` → generate `reference_code` (e.g. `UNP-PART-7K2X9`).
-- `after insert` → `pg_net` call to `process-form-submission` edge function (async, non-blocking).
+1. Ajouter une couche centrale de récupération Alex
 
----
+Créer un module dédié, par exemple `src/features/alex/services/alexHardRecovery.ts`, avec :
 
-## 2. Frontend orchestrator — `src/lib/forms/`
+- `TTS_TIMEOUT_MS = 8000`
+- `TTS_SLOW_MS = 6000`
+- `ALEX_FROZEN_MS = 10000`
+- `MAX_TTS_RETRIES = 1`
+- `VOICE_ERROR_WINDOW_MS = 120000`
+- `VOICE_DISABLED_MS = 600000`
 
+Fonctions exposées :
+
+- `hardResetAlexSession(reason)`
+- `switchAlexToChatFallback(reason, message?)`
+- `recordVoiceFailure(reason)`
+- `isVoiceTemporarilyDisabled()`
+- `clearAlexRecoveryTimers()`
+
+Cette couche appellera :
+
+- arrêt audio ElevenLabs TTS,
+- arrêt STT,
+- reset Zustand Alex,
+- fermeture ou fallback de l’overlay vocal,
+- dispatch `alex-voice-force-kill` et `alex-voice-cleanup`,
+- reset des flags `hasActiveTTSRequest`, `hasActivePlayback`, `hasActiveSTTSession`, `isMicOpen`, `isUserSpeaking`, `audioUnlockRequired`, etc.
+
+2. Étendre le store Alex pour supporter le recovery complet
+
+Dans `src/features/alex/state/alexStore.ts` :
+
+- ajouter `lastTTSActivityAt`, `voiceErrorTimestamps`, `voiceDisabledUntil`, `voiceUnavailableReason`, `recoveryNotice`, `ttsRetryCount`.
+- ajouter actions :
+  - `markTTSActivity()`
+  - `markVoiceUnavailable(reason)`
+  - `hardReset(reason)`
+  - `setChatOnlyUntil(timestamp, reason)`
+  - `clearRecoveryNotice()`
+
+Le reset devra forcer :
+
+```ts
+mode = "fallback_text" ou "ready"
+hasActivePlayback = false
+hasActiveTTSRequest = false
+hasActiveSTTSession = false
+isMicOpen = false
+isUserSpeaking = false
+isBackgroundNoise = false
+hasLowConfidenceAudio = false
+softPromptText = null
+ttsRetryCount = 0
 ```
-src/lib/forms/
-  types.ts              // FormType union, FormPayload, SubmitResult
-  submitForm.ts         // single entrypoint used everywhere
-  useFormSubmit.ts      // React hook (loading, error, success, retry, ref code)
-  validation.ts         // shared zod schemas per form_type
-  utm.ts                // capture + persist UTM/source
-```
 
-### `submitForm(formType, data)` flow
-1. Zod validate → throw `ValidationError` (no network).
-2. Insert into `form_submissions` with status `received` + UTM + `source_page` + `user_agent` (IP filled by edge).
-3. Returns `{ id, reference_code }` immediately → UI can confirm even if email is still in-flight.
-4. Fire-and-forget call to edge `process-form-submission` (DB trigger is the safety net if this fails).
+3. Rendre `elevenlabsService.speak()` cancellable et impossible à figer
 
-### `useFormSubmit`
-- `submit(data)` — debounced, disables button, prevents double submit, sets `isSubmitting`.
-- `state: idle | submitting | success | error`.
-- Returns `referenceCode`, `retry()`, `error`.
+Dans `src/features/alex/services/elevenlabsService.ts` :
 
----
+- ajouter un `AbortController` global par requête TTS.
+- remplacer `supabase.functions.invoke("alex-tts")` si nécessaire par un `fetch()` direct vers la fonction pour supporter un vrai abort et récupérer proprement JSON/audio.
+- imposer un hard timeout de 8 secondes.
+- logger :
+  - `[ALEX_TTS_START]`
+  - `[ALEX_TTS_SUCCESS]`
+  - `[ALEX_TTS_TIMEOUT]`
+  - `[ALEX_TTS_ABORT]`
+  - `[ALEX_TTS_FALLBACK]`
+  - `[ALEX_HARD_RESET]`
+- si la réponse contient `{ fallback: true }`, ne pas résoudre comme succès audio. Retourner un résultat typé `fallback` ou lancer une erreur contrôlée `TTS_FALLBACK`.
+- dans tous les chemins `catch` et `finally`, garantir `cleanup()` et reset des flags loading.
 
-## 3. Edge functions — `supabase/functions/`
+4. Corriger `useAlexVoice` et `useAlexBootstrap`
 
-### `process-form-submission`
-- Triggered by DB trigger AND direct invoke (idempotent on `submission_id`).
-- Loads submission, picks template by `form_type`.
-- Sends **user confirmation** + **admin notification** via Lovable Emails (uses existing `send-transactional-email` infra, with Resend fallback if user already has it).
-- Writes `form_email_logs` rows per attempt.
-- On failure → updates `status=failed`, `last_error`, increments `retry_count`, schedules retry.
+Dans `src/features/alex/hooks/useAlexVoice.ts` :
 
-### `retry-failed-forms` (cron, every 5 min)
-- Picks `status='failed' AND retry_count < 5`.
-- Exponential backoff (5m, 15m, 1h, 6h, 24h).
-- After 5 attempts → `status='dead'` + admin alert email.
+- entourer chaque `speak()` avec timeout + fallback.
+- en cas d’erreur TTS :
+  - ne pas retry en boucle,
+  - appeler `markVoiceUnavailable`,
+  - injecter une seule fois : “La voix d’Alex est temporairement indisponible. Je continue ici.”,
+  - passer en `fallback_text` ou `ready`,
+  - laisser l’input chat actif.
+- exposer `recoverAlex()` pour le bouton “Relancer Alex”.
 
-### Email templates (transactional, react-email)
-- `form-user-confirmation` — generic, branded, shows reference code, form type, "we'll contact you shortly".
-- `form-admin-notification` — full payload table, link to `/admin/forms-monitoring/:id`.
-- `form-system-alert` — sent to admin when retries exhaust or queue stalls.
+Dans `src/features/alex/hooks/useAlexBootstrap.ts` :
 
----
+- corriger le faux `boot:v7:autoplay_success` quand le TTS retourne fallback.
+- si l’autoplay échoue ou timeout, ne pas laisser `shouldSpeakGreetingOnUnlock` bloquer en boucle.
+- afficher la valeur texte immédiatement et garder la voix désactivée temporairement si 3 erreurs en 2 minutes.
 
-## 4. Form migration
+5. Ajouter un watchdog anti-freeze global
 
-Migrate every existing form to `useFormSubmit`:
+Créer un hook `useAlexRecoveryWatchdog()` monté dans `AlexProvider`.
 
-| Form | Current location | New `form_type` |
-|---|---|---|
-| Partenaires Certifiés | `PagePartenairesCertifies.tsx` | `partner_application` |
-| Condo accès prioritaire | existing condo page | `condo_priority_access` |
-| Contact | contact page | `contact` |
-| Entrepreneur onboarding | onboarding flow | `contractor_onboarding` |
-| Alex callback | Alex chat | `alex_callback` |
-| Upload devis | quote upload | `quote_upload` |
-| Analyse projet | project analysis | `project_analysis` |
-| Devenir entrepreneur | recruitment | `contractor_signup` |
-| Newsletter | footer/landing | `newsletter` |
+Toutes les 3 secondes :
 
-Existing `partner_applications` table stays (data preserved); a small adapter writes to **both** during transition, then we cut over reads in admin to `form_submissions` filtered by `form_type='partner_application'`.
+- si `hasActiveTTSRequest` ou `mode === "connecting_voice"` depuis plus de 10 secondes :
+  - log `ALEX FROZEN — AUTO RECOVERY`,
+  - `hardResetAlexSession("tts_watchdog_frozen")`,
+  - fallback chat.
+- si `mode === "thinking"` ou `analyzing_image` trop longtemps après erreur réseau, revenir à l’input.
+- si `document.visibilitychange` revient à visible sur mobile/Android et qu’un état audio est actif mais cassé : stop audio + reset + chat fallback.
 
----
+6. Corriger le verrou de l’overlay vocal plein écran
 
-## 5. Confirmation UI — `src/components/forms/FormSuccess.tsx`
+Dans `src/stores/alexVoiceLockedStore.ts` :
 
-- Animated checkmark (framer-motion), glassmorphism card.
-- "Demande envoyée • Référence **UNP-PART-7K2X9**".
-- Status pill: "Email envoyé" / "Email en cours" (polls submission status once after 3s).
-- Retry button if email failed after 30s.
-- Reusable across every form.
+- ajouter `forceCloseVoiceSession(reason)` qui bypass la fenêtre de stabilisation.
+- ou autoriser explicitement les raisons fallback critiques :
+  - `boot_timeout`
+  - `permission_denied`
+  - `boot_failed`
+  - `disconnect_pre_audio`
+  - `voice_error_pre_audio`
+  - `no_first_audio_final`
+  - `retry_no_audio`
+  - `recovery_fallback_chat`
+  - `fallback_to_chat`
 
-Anti-bug guards built-in: button disabled during submit, debounce 800ms, idempotency key = `crypto.randomUUID()` stored in form state, page-leave warning while submitting.
+Dans `OverlayAlexVoiceFullScreen.tsx` :
 
----
+- remplacer les fermetures fallback par `forceCloseVoiceSession`.
+- garantir que `bailToChat()` efface tous les timers, stoppe `useLiveVoice`, unlock runtime et ferme l’overlay avant/après ouverture du chat.
+- après 6 secondes de boot lent, afficher :
+  “Connexion vocale lente… Je continue par message pendant la reconnexion.”
+  puis activer le bouton chat et retirer le spinner bloquant.
 
-## 6. Admin monitoring — `/admin/forms-monitoring`
+7. Renforcer `useLiveVoice`
 
-Route guarded by admin role. Pages:
+Dans `src/hooks/useLiveVoice.ts` :
 
-- **Overview** — KPIs: submissions today, failed emails, retry queue size, avg response time, conversion by form_type, top UTM sources.
-- **Submissions table** — filters (form_type, status, date, UTM), search by email/reference, mobile-friendly card view < md.
-- **Submission detail drawer** — full payload, timeline of `form_events`, `form_email_logs`, **Resend email** button, **Mark resolved**, **Export JSON**.
-- **CSV export** — current filtered set.
-- **Alerts panel** — failed > threshold, queue stalled, dead submissions.
+- ajouter un AbortController logique pour la demande `voice-get-signed-url` si possible.
+- garantir qu’un timeout de connexion appelle toujours `setIsConnecting(false)` et `onError` une seule fois.
+- éviter double `onError` + `onDisconnect` après un stop intentionnel.
+- ajouter écoute `alex-voice-force-kill` pour terminer la session SDK, reset local et clear timeout.
+- si micro refusé : fallback chat immédiat, pas d’écran bloqué.
 
----
+8. Ajouter un `AlexErrorBoundary`
 
-## 7. Email provider
+Créer `src/features/alex/AlexErrorBoundary.tsx` et entourer :
 
-- **Default:** Lovable Emails (already configured on the project) via the existing `send-transactional-email` pattern.
-- **Fallback:** If Lovable Email returns failure, the retry job tries again on next cycle. (Resend can be added later as a true secondary provider — proposed but not built in v1 unless you confirm; needs Resend connector + domain.)
-- Anti-duplicate: idempotency key = `submission_id:email_type` checked against `form_email_logs`.
+- `AlexAssistant` / `AlexPanel`,
+- `OverlayAlexVoiceFullScreen`,
+- `AlexChatFallbackPanel`.
 
-> **Decision needed:** v1 = Lovable Emails only with retry, OR add Resend now as secondary. Default plan = Lovable only (simpler, no extra setup). Tell me if you want Resend added.
+En cas d’erreur React dans Alex seulement :
 
----
+- ne pas déclencher la page blanche globale,
+- afficher une carte compacte :
+  - “Alex a été réinitialisée.”
+  - bouton “Relancer Alex”
+  - bouton “Continuer par chat”
+  - bouton “Fermer”
 
-## 8. Files created / edited
+9. Ajouter les contrôles UX visibles
 
-**New**
-- `supabase/migrations/<ts>_form_system.sql`
-- `src/lib/forms/{types,submitForm,useFormSubmit,validation,utm}.ts`
-- `src/components/forms/FormSuccess.tsx`
-- `src/components/forms/FormErrorRetry.tsx`
-- `supabase/functions/process-form-submission/index.ts`
-- `supabase/functions/retry-failed-forms/index.ts`
-- `supabase/functions/_shared/transactional-email-templates/form-user-confirmation.tsx`
-- `supabase/functions/_shared/transactional-email-templates/form-admin-notification.tsx`
-- `supabase/functions/_shared/transactional-email-templates/form-system-alert.tsx`
-- `src/pages/admin/FormsMonitoringPage.tsx` + subcomponents
-- Route entries in `src/app/router.tsx`
+Dans `AlexPanel.tsx` :
 
-**Edited (form migrations)**
-- `src/pages/PagePartenairesCertifies.tsx`
-- existing Contact / Condo / Onboarding / Callback / Quote upload / Newsletter components (one-by-one to use `useFormSubmit`)
+- afficher un bandeau premium quand voix indisponible :
+  “La voix d’Alex est temporairement indisponible. Je continue ici.”
+- ajouter bouton “Relancer Alex” si `voiceUnavailableReason` ou `voiceDisabledUntil` actif.
+- ajouter bouton “Fermer”/minimiser toujours accessible.
+- garder `AlexInput` actif en permanence.
 
----
+Dans `AlexMessageList.tsx` :
 
-## 9. Success criteria
+- le loader `thinking` ne doit jamais apparaître indéfiniment.
+- si recovery notice actif, afficher un message système plutôt qu’un spinner.
 
-- Every submission appears in `form_submissions` within 200ms of click, even if email fails.
-- User sees confirmation + reference code within 1s.
-- Failed emails auto-retry up to 5x with backoff.
-- Admin sees live dashboard with filter, resend, export.
-- Zero double-submits, zero lost leads, zero silent failures.
+10. Corriger la fonction backend `alex-tts`
 
----
+Dans `supabase/functions/alex-tts/index.ts` :
 
-## Open questions before build
+- utiliser l’import Deno standard du projet : `https://esm.sh/@supabase/supabase-js@2.49.1`.
+- ajouter timeout autour du fetch ElevenLabs.
+- en cas d’erreur ou de timeout, retourner `200` avec `{ fallback: true, error: "tts_unavailable" }` plutôt qu’un 500/503.
+- ne jamais bloquer sur les logs database.
 
-1. **Resend as secondary provider now, or Lovable Emails only for v1?** (default: Lovable only)
-2. **Admin notification recipient email** — same as before (`partenaires@unpro.ca` / your admin email)? Confirm address.
-3. Migrate `partner_applications` table data into `form_submissions` now, or keep dual-write for 1 release?
+11. Vérification ciblée
+
+Après implémentation, vérifier les scénarios :
+
+- ElevenLabs TTS indisponible : aucun spinner, chat disponible.
+- `alex-tts` retourne `{ fallback: true }` : pas de faux succès audio.
+- timeout TTS > 8s : abort + fallback.
+- overlay vocal ouvert puis aucun audio : fermeture forcée + chat.
+- permission micro refusée : chat immédiat.
+- retour Android foreground : reset audio propre.
+- 3 erreurs voix en 2 minutes : mode chat-only 10 minutes.
+- bouton “Relancer Alex” : hard reset puis réinitialisation propre.
+
+Résultat attendu
+
+Alex restera utilisable même si toute la couche vocale échoue. Plus de page blanche, plus de spinner infini, plus de session lockée, plus de refresh obligatoire.
+
+<lov-actions>
+<lov-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</lov-link>
+</lov-actions>
