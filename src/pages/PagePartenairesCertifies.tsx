@@ -251,12 +251,12 @@ export default function PagePartenairesCertifies() {
             <p className="text-sm text-white/60">Plus qu'une plateforme. Une infrastructure IA pour les entrepreneurs du Québec.</p>
           </div>
 
-          {done ? (
-            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-8 text-center">
-              <CheckCircle2 className="w-12 h-12 text-amber-400 mx-auto mb-3" />
-              <h3 className="text-xl font-semibold text-white mb-2">Candidature reçue !</h3>
-              <p className="text-sm text-white/70">Notre équipe vous contacte sous peu pour valider votre profil.</p>
-            </div>
+          {isSuccess ? (
+            <FormSuccess
+              referenceCode={result?.reference_code}
+              title="Candidature reçue !"
+              message="Notre équipe vous contacte sous peu pour valider votre profil."
+            />
           ) : (
             <form onSubmit={onSubmit} className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 md:p-8 space-y-4">
               <div>
@@ -300,8 +300,10 @@ export default function PagePartenairesCertifies() {
                 <Textarea id="message" rows={4} value={form.message} onChange={e => update("message", e.target.value)} className="bg-white/5 border-white/10 text-white" placeholder="Votre rôle, votre réseau, vos objectifs..." />
               </div>
 
-              <Button type="submit" disabled={loading} size="lg" className="w-full bg-amber-500 hover:bg-amber-400 text-[#060B14] font-semibold">
-                {loading ? "Envoi..." : "Soumettre ma candidature"}
+              {isError && <FormErrorRetry message={error || undefined} onRetry={retry} isRetrying={isSubmitting} />}
+
+              <Button type="submit" disabled={isSubmitting} size="lg" className="w-full bg-amber-500 hover:bg-amber-400 text-[#060B14] font-semibold">
+                {isSubmitting ? "Envoi..." : "Soumettre ma candidature"}
               </Button>
             </form>
           )}
