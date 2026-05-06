@@ -57,14 +57,14 @@ export function logBootError(step: string, err: any): void {
   logBoot(step, { error: String(err) });
 }
 
-/** Promise.race helper with a configurable timeout. */
+/** Promise.race helper with a configurable timeout. Accepts thenables. */
 export function withTimeout<T>(
-  p: Promise<T>,
+  p: PromiseLike<T>,
   ms: number,
   tag: string,
 ): Promise<T> {
   return Promise.race([
-    p,
+    Promise.resolve(p),
     new Promise<T>((_, reject) =>
       setTimeout(() => reject(new Error(`timeout:${tag}:${ms}ms`)), ms),
     ),
