@@ -144,12 +144,14 @@ serve(async (req) => {
         }).catch(() => {});
       }
 
+      // Return 200 with fallback signal so client doesn't crash; client falls back silently.
       return new Response(JSON.stringify({
         error: "tts_unavailable",
         message: "Aucun service vocal disponible",
         fallback_attempted: fallbackUsed,
+        fallback: true,
       }), {
-        status: 503,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
