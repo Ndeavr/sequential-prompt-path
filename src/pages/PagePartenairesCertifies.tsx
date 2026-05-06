@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
 import SeoHead from "@/seo/components/SeoHead";
+import { useFormSubmit } from "@/lib/forms/useFormSubmit";
+import { FormSuccess } from "@/components/forms/FormSuccess";
+import { FormErrorRetry } from "@/components/forms/FormErrorRetry";
 import {
   CheckCircle2, Sparkles, Users, Cpu, Headphones, ShieldCheck,
   TrendingUp, MapPin, Infinity as InfinityIcon, Mail, Phone, Globe, AlertTriangle,
