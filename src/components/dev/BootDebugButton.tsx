@@ -26,7 +26,7 @@ export default function BootDebugButton() {
       {open && (
         <div className="fixed bottom-14 right-3 z-[99998] w-[320px] max-h-[60vh] overflow-auto rounded-lg bg-black/90 text-white text-[11px] font-mono p-3 shadow-2xl border border-white/10">
           <div className="mb-2 font-bold">UNPRO Boot Debug</div>
-          <div>route: {location.pathname}</div>
+          <div>route: {pathname}</div>
           <div>auth: loading={String(loading)} init={String(initialized)} uid={session?.user?.id?.slice(0, 8) ?? "—"}</div>
           <div>last: {dbg?.lastStep ?? "—"}</div>
           <div>elapsed: {dbg ? Date.now() - dbg.startedAt : 0}ms</div>
