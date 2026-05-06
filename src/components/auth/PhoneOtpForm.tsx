@@ -160,8 +160,8 @@ export default function PhoneOtpForm({ onSuccess, loading: externalLoading, clas
       authDebug.set({ auth_step: "otp_verified" });
       setVerified(true);
 
-      // Brief success animation then callback
-      setTimeout(() => onSuccess?.(), 800);
+      // Brief success animation then callback (≤500ms per AuthReturnManager spec)
+      setTimeout(() => onSuccess?.(), 400);
     } catch (e) {
       authDebug.error(e, "otp_verifying");
       toast.error("Erreur réseau. Réessayez.");
