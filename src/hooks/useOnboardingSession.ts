@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { logBoot, withTimeout } from "@/lib/bootDebug";
 
 export interface OnboardingSessionData {
   id?: string;
@@ -39,32 +40,49 @@ export const useOnboardingSession = () => {
   // Load existing session on mount
   useEffect(() => {
     if (!user?.id) { setLoading(false); return; }
+    let cancelled = false;
+    logBoot("ONBOARDING_LOAD_START", { uid: user.id });
     (async () => {
-      const { data, error } = await supabase
-        .from("contractor_onboarding_sessions")
-        .select("*")
-        .eq("user_id", user.id)
-        .is("completed_at", null)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (data && !error) {
-        setSession({
-          id: data.id,
-          current_step: data.current_step,
-          business_name: data.business_name || "",
-          import_form: (data.import_form as Record<string, any>) || {},
-          business_data: (data.business_data as Record<string, any>) || {},
-          audit_sections: (data.audit_sections as any[]) || [],
-          aipp_score: data.aipp_score,
-          objective: (data.selected_plan as any)?.objective || "",
-          selected_plan: data.selected_plan,
-          completed_at: data.completed_at,
-        });
-        setSessionId(data.id);
+      try {
+        const result = await withTimeout(
+          supabase
+            .from("contractor_onboarding_sessions")
+            .select("*")
+            .eq("user_id", user.id)
+            .is("completed_at", null)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          5000,
+          "onboarding_session",
+        );
+        if (cancelled) return;
+        const { data, error } = result as any;
+        if (data && !error) {
+          setSession({
+            id: data.id,
+            current_step: data.current_step,
+            business_name: data.business_name || "",
+            import_form: (data.import_form as Record<string, any>) || {},
+            business_data: (data.business_data as Record<string, any>) || {},
+            audit_sections: (data.audit_sections as any[]) || [],
+            aipp_score: data.aipp_score,
+            objective: (data.selected_plan as any)?.objective || "",
+            selected_plan: data.selected_plan,
+            completed_at: data.completed_at,
+          });
+          setSessionId(data.id);
+          logBoot("ONBOARDING_LOAD_OK", { sessionId: data.id });
+        } else {
+          logBoot(error ? "ONBOARDING_LOAD_ERROR" : "ONBOARDING_LOAD_EMPTY", { error: error?.message });
+        }
+      } catch (e) {
+        logBoot("ONBOARDING_LOAD_TIMEOUT", { error: String(e) });
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setLoading(false);
     })();
+    return () => { cancelled = true; };
   }, [user?.id]);
 
   const saveSession = useCallback(async (updates: Partial<OnboardingSessionData>) => {
