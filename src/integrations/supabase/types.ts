@@ -35035,6 +35035,57 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_consent_logs: {
+        Row: {
+          changed_by: string | null
+          consent_method: string | null
+          created_at: string
+          id: string
+          lead_id: string
+          new_status: string
+          partner_id: string
+          previous_status: string | null
+          proof: string | null
+        }
+        Insert: {
+          changed_by?: string | null
+          consent_method?: string | null
+          created_at?: string
+          id?: string
+          lead_id: string
+          new_status: string
+          partner_id: string
+          previous_status?: string | null
+          proof?: string | null
+        }
+        Update: {
+          changed_by?: string | null
+          consent_method?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string
+          new_status?: string
+          partner_id?: string
+          previous_status?: string | null
+          proof?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_consent_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "partner_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_consent_logs_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_deduplication_index: {
         Row: {
           confidence: number | null
@@ -42502,6 +42553,155 @@ export type Database = {
           },
         ]
       }
+      partner_lead_activities: {
+        Row: {
+          activity_type: string
+          body: string | null
+          created_at: string
+          direction: string | null
+          id: string
+          lead_id: string
+          metadata: Json | null
+          outcome: string | null
+          partner_id: string
+          subject: string | null
+        }
+        Insert: {
+          activity_type: string
+          body?: string | null
+          created_at?: string
+          direction?: string | null
+          id?: string
+          lead_id: string
+          metadata?: Json | null
+          outcome?: string | null
+          partner_id: string
+          subject?: string | null
+        }
+        Update: {
+          activity_type?: string
+          body?: string | null
+          created_at?: string
+          direction?: string | null
+          id?: string
+          lead_id?: string
+          metadata?: Json | null
+          outcome?: string | null
+          partner_id?: string
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_lead_activities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "partner_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_lead_activities_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_leads: {
+        Row: {
+          business_name: string | null
+          city: string | null
+          consent_given_at: string | null
+          consent_method: string | null
+          consent_proof: string | null
+          consent_scope: string | null
+          consent_source: string | null
+          consent_status: string
+          contact_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          lead_status: string
+          next_follow_up_at: string | null
+          notes: string | null
+          opt_out_at: string | null
+          opt_out_reason: string | null
+          partner_id: string
+          phone: string | null
+          potential_score: number | null
+          priority: string
+          rbq: string | null
+          source: string | null
+          trade: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          business_name?: string | null
+          city?: string | null
+          consent_given_at?: string | null
+          consent_method?: string | null
+          consent_proof?: string | null
+          consent_scope?: string | null
+          consent_source?: string | null
+          consent_status?: string
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          lead_status?: string
+          next_follow_up_at?: string | null
+          notes?: string | null
+          opt_out_at?: string | null
+          opt_out_reason?: string | null
+          partner_id: string
+          phone?: string | null
+          potential_score?: number | null
+          priority?: string
+          rbq?: string | null
+          source?: string | null
+          trade?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          business_name?: string | null
+          city?: string | null
+          consent_given_at?: string | null
+          consent_method?: string | null
+          consent_proof?: string | null
+          consent_scope?: string | null
+          consent_source?: string | null
+          consent_status?: string
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          lead_status?: string
+          next_follow_up_at?: string | null
+          notes?: string | null
+          opt_out_at?: string | null
+          opt_out_reason?: string | null
+          partner_id?: string
+          phone?: string | null
+          potential_score?: number | null
+          priority?: string
+          rbq?: string | null
+          source?: string | null
+          trade?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_leads_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_referrals: {
         Row: {
           activated_at: string | null
@@ -42573,6 +42773,63 @@ export type Database = {
           },
         ]
       }
+      partner_tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_at: string | null
+          id: string
+          lead_id: string | null
+          partner_id: string
+          priority: string
+          status: string
+          task_type: string
+          title: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          lead_id?: string | null
+          partner_id: string
+          priority?: string
+          status?: string
+          task_type?: string
+          title: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          lead_id?: string | null
+          partner_id?: string
+          priority?: string
+          status?: string
+          task_type?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_tasks_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "partner_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_tasks_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partners: {
         Row: {
           annual_new_contractors_target: number
@@ -42587,6 +42844,7 @@ export type Database = {
           last_name: string | null
           partner_status: string
           partner_tier: string
+          partner_type: string | null
           phone: string | null
           referral_code: string | null
           updated_at: string
@@ -42605,6 +42863,7 @@ export type Database = {
           last_name?: string | null
           partner_status?: string
           partner_tier?: string
+          partner_type?: string | null
           phone?: string | null
           referral_code?: string | null
           updated_at?: string
@@ -42623,6 +42882,7 @@ export type Database = {
           last_name?: string | null
           partner_status?: string
           partner_tier?: string
+          partner_type?: string | null
           phone?: string | null
           referral_code?: string | null
           updated_at?: string
@@ -62792,6 +63052,7 @@ export type Database = {
         Returns: Json
       }
       current_contractor_id: { Args: never; Returns: string }
+      current_partner_id: { Args: { _user_id: string }; Returns: string }
       current_profile_id: { Args: never; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }

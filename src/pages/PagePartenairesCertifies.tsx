@@ -54,7 +54,7 @@ export default function PagePartenairesCertifies() {
     <>
       <SeoHead
         title="Programme Partenaire Certifié — UNPRO | Revenus récurrents IA"
-        description="Devenez Partenaire Certifié UNPRO. 30% de commissions récurrentes pendant 24 mois + 10% résiduel à vie sur les abonnements entrepreneurs au Québec."
+        description="Devenez Partenaire Certifié UNPRO. 20% de commissions récurrentes pendant 24 mois + 5% résiduel à vie sur les abonnements entrepreneurs au Québec."
         canonical="https://unpro.ca/partenaires"
       />
 
@@ -93,14 +93,14 @@ export default function PagePartenairesCertifies() {
           </div>
           <div className="grid md:grid-cols-2 gap-5">
             <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/10 to-transparent p-8">
-              <div className="text-5xl md:text-6xl font-bold text-amber-400 mb-2">30%</div>
+              <div className="text-5xl md:text-6xl font-bold text-amber-400 mb-2">20%</div>
               <div className="text-sm font-semibold uppercase tracking-wide text-white/90 mb-3">de commissions récurrentes</div>
               <p className="text-sm text-white/60">Pendant 24 mois sur les abonnements entrepreneurs admissibles.</p>
             </div>
             <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/10 to-transparent p-8">
-              <div className="text-5xl md:text-6xl font-bold text-amber-400 mb-2">10%</div>
+              <div className="text-5xl md:text-6xl font-bold text-amber-400 mb-2">5%</div>
               <div className="text-sm font-semibold uppercase tracking-wide text-white/90 mb-3">résiduel à vie</div>
-              <p className="text-sm text-white/60">Tant que les conditions du programme sont respectées.</p>
+              <p className="text-sm text-white/60">Tant que vous maintenez minimum 10 nouveaux entrepreneurs actifs par année.</p>
             </div>
           </div>
 
@@ -237,9 +237,9 @@ export default function PagePartenairesCertifies() {
           <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-transparent p-8 text-center">
             <h3 className="text-xs font-semibold uppercase tracking-widest text-amber-400 mb-4">Exemple simple</h3>
             <p className="text-white/80 mb-4">10 entrepreneurs Premium à 599 $/mois :</p>
-            <div className="text-4xl md:text-5xl font-bold text-amber-400 mb-2">~1 797 $/mois</div>
-            <p className="text-sm text-white/60 mb-3">à 30 % pendant 24 mois</p>
-            <p className="text-sm text-white/70">↓ puis 10 % résiduel à long terme</p>
+            <div className="text-4xl md:text-5xl font-bold text-amber-400 mb-2">~1 198 $/mois</div>
+            <p className="text-sm text-white/60 mb-3">à 20 % pendant 24 mois</p>
+            <p className="text-sm text-white/70">↓ puis 5 % résiduel à long terme</p>
             <p className="mt-5 text-xs uppercase tracking-wider font-semibold text-white">Et ce, sans plafond de croissance.</p>
           </div>
         </section>
