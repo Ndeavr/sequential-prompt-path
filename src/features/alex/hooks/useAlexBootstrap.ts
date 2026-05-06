@@ -161,18 +161,18 @@ export function useAlexBootstrap() {
       try {
         // V7: connecting_voice first, not speaking
         state.startConnectingVoice();
+        useAlexStore.getState().markTTSActivity();
         useAlexStore.setState({ hasAttemptedInitialAutoplay: true });
         alexLog("boot:v7:GREETING_AUDIO_CONNECTING");
 
         await withTimeout(
           elevenlabsService.speak(
             greetingText,
-            // onStart — real audio playback confirmed
             () => {
               useAlexStore.getState().startSpeaking();
+              useAlexStore.getState().markTTSActivity();
               alexLog("boot:v7:GREETING_AUDIO_STARTED");
             },
-            // onEnd
             () => useAlexStore.getState().stopSpeaking()
           ),
           VOICE_AUTOPLAY_TIMEOUT_MS
@@ -188,17 +188,22 @@ export function useAlexBootstrap() {
         });
         alexLog("boot:v7:autoplay_success");
       } catch (error) {
-        elevenlabsService.stop();
+        try { elevenlabsService.stop(); } catch {}
         useAlexStore.getState().stopSpeaking();
+        useAlexStore.getState().recordVoiceFailure();
+        useAlexStore.getState().markVoiceUnavailable(
+          "boot_autoplay_failed",
+          "La voix d'Alex est temporairement indisponible. Je continue ici.",
+        );
         useAlexStore.setState({
           isAutoplayAllowed: false,
           isGreetingSpoken: false,
+          // Only allow re-attempt if it wasn't a hard fallback signal
           audioUnlockRequired: true,
-          shouldSpeakGreetingOnUnlock: true,
+          shouldSpeakGreetingOnUnlock: false,
           mode: "ready",
         });
-        alexLog("boot:v7:autoplay_blocked_fallback", error);
-        alexLog("boot:BROWSER_VOICE_FALLBACK_BLOCKED");
+        alexLog("boot:v7:autoplay_blocked_fallback", String(error));
       }
     }, VOICE_ATTEMPT_DELAY_MS);
   }, []);
