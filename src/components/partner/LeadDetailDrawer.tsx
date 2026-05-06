@@ -8,6 +8,7 @@ import { Phone, Mail, MessageSquare, Calendar, FileText, ShieldCheck, Ban, Archi
 import { usePartnerLead, useLeadActivities, useUpdateLead, useLogActivity } from "@/hooks/usePartnerCrm";
 import { hasValidConsent, LEAD_STATUS_PIPELINE } from "@/lib/leadConsent";
 import { ConsentBadge } from "./ConsentBadge";
+import { LeadOriginBadge } from "./LeadOriginBadge";
 import { RecordConsentModal } from "./RecordConsentModal";
 import { ReminderModal } from "./ReminderModal";
 import { toast } from "sonner";
