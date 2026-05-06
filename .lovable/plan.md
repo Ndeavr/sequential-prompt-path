@@ -1,55 +1,63 @@
-Je vais rendre Alex Voice “bullet proof” en corrigeant le point faible actuel : le backend retourne bien une URL vocale, mais la session WebSocket/SDK reste bloquée sans premier audio puis tombe en erreur. Le résultat attendu sera : Alex tente la voix proprement, ne reste jamais bloqué sur un écran rouge, et bascule automatiquement vers le chat utilisable si la voix ne démarre pas.
 
-Plan d’intervention
+# Plan — Auth bullet-proof (OAuth Google, courriel, SMS)
 
-1. Remplacer la stratégie de connexion vocale par une stratégie plus fiable
-- Modifier `useLiveVoice` pour demander d’abord un token WebRTC via la fonction backend existante `alex-conversation-token`.
-- Démarrer ElevenLabs avec `conversationToken` + `connectionType: "webrtc"`, recommandé par le SDK pour la fiabilité mobile.
-- Garder `voice-get-signed-url` en fallback WebSocket si le token WebRTC n’est pas disponible.
-- Passer explicitement `connectionType: "websocket"` quand une signed URL est utilisée, pour éviter un démarrage ambigu du SDK.
+## Diagnostic (ce que les logs révèlent)
 
-2. Ajouter des timeouts réellement “failsafe”
-- Encapsuler `conversation.startSession()` dans un timeout contrôlé.
-- Si la connexion ou le premier audio dépasse le délai, arrêter la session en cours, nettoyer les ressources et basculer vers une autre tentative ou le chat.
-- Empêcher les promesses bloquées du SDK de laisser l’overlay dans un état “Alex démarre…” indéfini.
+Les logs Supabase et console montrent que **l'auth fonctionne côté serveur** mais que la couche client est cassée :
 
-3. Corriger les retries automatiques
-- Corriger le bloc actuel où un échec de boot arme seulement le timer audio sans relancer vraiment `start()`.
-- Chaque retry devra : arrêter la session, libérer le verrou runtime, recréer un démarrage propre, puis relancer Alex.
-- Après le nombre maximal de tentatives, ouvrir directement `Alex — Mode chat`.
+1. **Google OAuth** : login OK côté Supabase (`/token` 200, login_method=oidc), mais ensuite `useAuth` part dans une boucle de timeouts (8s × ~25 fois) → l'utilisateur reste figé sur "Chargement…" puis est libéré sans rôle.
+2. **Magic link "Gmail"** : le courriel **est envoyé** (auth-email-hook → Resend ID `24531b1b…`), mais quand l'utilisateur clique, le callback retombe sur `/verify` avec **`403 One-time token not found`**. Cause : la nouvelle session OAuth a invalidé le token magic-link entre-temps, et `AuthCallbackPage` ne distingue pas les deux flux.
+3. **SMS** : `send-otp` ne reçoit aucun appel récent (juste boot/shutdown). Le bouton "Envoi…" reste pris dans son safety 3s parce que l'appel `fetch(.../send-otp)` ne propage pas l'erreur (pas d'`apikey` ni de gestion de réponse non-200).
+4. **Lenteur globale** :
+   - `supabase.auth.getSession()` met >5s (timeout warning fired) → `localStorage` bloqué par le multi-tab/iframe preview.
+   - `useAuth` setTimeout de 8s sur le rôle **n'est jamais clearé** quand la query réussit → flood de warnings.
+   - 6 listeners `onAuthStateChange` sont créés (le hook `useAuth` est monté 6 fois en parallèle dans l'arbre — Providers, Layouts, Guards, Pages…). Chaque listener réémet, multipliant les renders.
 
-4. Rendre le bouton “Réinitialiser Alex” réellement nucléaire
-- Ajuster le recovery pour relancer avec `force: true`.
-- Libérer le verrou runtime avant le redémarrage.
-- Nettoyer les timers, l’état `isConnecting`, `isActive`, les erreurs et les refs avant toute nouvelle tentative.
-- Si la reconnexion ne produit aucun audio rapidement, basculer automatiquement au chat sans demander une autre action.
+## Corrections (atomiques, pas de re-architecture)
 
-5. Rendre les logs non bloquants et corriger les erreurs backend visibles
-- Corriger l’insert `voice_session_logs` : il échoue actuellement en 403 parce que `user_id` n’est pas fourni pour un utilisateur authentifié. Je vais inclure `user_id: auth.uid()` quand disponible.
-- Corriger `voice_recovery_attempts` : il échoue car la table référence `profiles(id)` alors que le code envoie l’id auth. Je vais soit résoudre le bon `profiles.id`, soit ne pas envoyer `user_id` si le profil n’existe pas, pour que la récupération ne casse jamais.
-- Les erreurs de logging resteront silencieuses côté UX : aucun log ne doit empêcher Alex de démarrer.
+### 1. `src/hooks/useAuth.ts` — singleton + cleanup correct
+- Extraire la résolution de session dans un **store global** (Zustand léger, comme `alexVoiceLockedStore`) afin qu'**un seul listener `onAuthStateChange`** existe pour toute l'app, peu importe combien de composants appellent `useAuth()`.
+- Clear le timer `roleTimedOut` dès que `roleQuery.isFetched === true`.
+- Remplacer `getSession()` (qui touche localStorage et peut bloquer) par `onAuthStateChange` + `INITIAL_SESSION` event (Supabase 2.99 émet l'init via le listener).
+- Réduire les timeouts : session 3s, rôle 4s. Logs en `info` pas `warn`.
 
-6. Améliorer le fallback chat
-- Si la voix est indisponible, ouvrir automatiquement le chat avec un message utile.
-- Conserver les éventuels transcripts déjà capturés.
-- Ne plus afficher un écran d’erreur bloquant quand la meilleure expérience est de continuer en chat.
+### 2. `src/pages/AuthCallbackPage.tsx` — robustesse
+- Détecter explicitement le type de retour : `?code=` (PKCE), `#access_token=` (implicit), `?error=` (provider error), `?type=recovery|magiclink` (Supabase verify).
+- Si `error` ou `error_description` présent dans l'URL → afficher le message au lieu d'aller en boucle.
+- Réduire safety timeout à 5s (au lieu de 8s) et router vers `/login` plutôt que `/onboarding` en cas de panne.
+- Ne plus appeler `getSession()` deux fois ; lire la session via le listener déjà en place.
 
-7. Backend associé
-- Mettre à jour `alex-conversation-token` pour suivre le même pattern robuste que `voice-get-signed-url` : ne pas retourner un 500 non géré pour les pannes vocales récupérables; retourner un JSON structuré avec fallback chat.
-- Ajouter les champs utiles au retour : `conversationToken`, `token`, `signedUrl`, `agentId`, et infos de fallback.
-- Garder l’API key protégée côté backend uniquement.
+### 3. `src/components/auth/PhoneOtpForm.tsx` — appel edge correct
+- Remplacer le `fetch` brut vers `/functions/v1/send-otp` par `supabase.functions.invoke("send-otp", { body })` qui injecte automatiquement `apikey` + `Authorization` (sinon CORS / 401 silencieux).
+- Vérifier `res.error` avant d'utiliser `data` ; remonter le message Twilio à l'utilisateur (ex. "Numéro non vérifié en sandbox Twilio").
+- Idem pour `verify-otp`.
+- Augmenter le safety à 8s (Twilio Verify peut prendre 4-5s légitimement) au lieu de 3s qui faisait toujours afficher "Envoi trop long".
 
-Fichiers prévus
-- `src/hooks/useLiveVoice.ts`
-- `src/components/voice/OverlayAlexVoiceFullScreen.tsx`
-- `src/hooks/useAlexVoiceRecovery.ts`
-- `src/stores/alexVoiceLockedStore.ts`
-- `supabase/functions/alex-conversation-token/index.ts`
+### 4. `supabase/functions/send-otp/index.ts` & `verify-otp/index.ts`
+- Vérifier que les CORS headers acceptent `apikey, content-type, authorization` (déjà fait normalement, à confirmer).
+- Logger explicitement les erreurs Twilio (compte SID manquant, numéro non vérifié, etc.) au lieu de retourner `{ fallback: true }` opaque.
 
-Critères de succès
-- Sur mobile, Alex ne reste plus bloqué sur “La voix d’Alex tarde à démarrer”.
-- Si la voix démarre : salutation audible et état actif.
-- Si la voix échoue : passage automatique au chat en quelques secondes.
-- “Réinitialiser Alex” tue vraiment l’ancienne session et repart proprement.
-- Les erreurs de logs RLS/FK ne cassent plus la récupération vocale.
-- Aucun changement de design global, de pricing ou de structure de page.
+### 5. `src/components/auth/OAuthButtons.tsx` & `LoginMagicLinkForm.tsx`
+- OAuth : passer `redirect_uri: ${window.location.origin}/auth/callback` (et non `window.location.origin` brut) pour que le callback unique gère le flux ; sinon Lovable renvoie sur `/` et `AuthReturnRouter` doit deviner.
+- Magic link : ajouter `shouldCreateUser: true` explicite et message clair "vérifiez aussi vos courriels indésirables".
+
+### 6. Petit nettoyage de bruit
+- Désactiver le `console.warn` répétitif de `useAuth` une fois qu'on a un singleton.
+- Ajouter dans `/admin/outbound/test-center` (déjà existant) une mini-section "Auth health" qui ping `getSession`, `send-otp` (dry-run), et auth-email-hook pour vérifier la chaîne en un clic.
+
+## Hors scope (ce qu'on ne touche pas)
+
+- Les credentials OAuth Google (managés par Lovable Cloud — fonctionnent, login Yanick OK à 23:31).
+- La config Twilio / Resend (clés OK, hooks émettent).
+- `src/integrations/lovable/index.ts` (auto-généré).
+
+## Ordre d'exécution
+
+1. Singleton `useAuth` + cleanup timer.
+2. `AuthCallbackPage` robuste.
+3. `PhoneOtpForm` → `functions.invoke`.
+4. Edge functions logs explicites.
+5. Boutons OAuth + magic link redirect_uri unifié.
+6. Mini "Auth health" dans `/admin/outbound/test-center`.
+
+Après ces 6 patches, OAuth Google, magic link courriel et SMS Twilio fonctionnent sans timeout, et l'overlay d'auth se termine en <2s au lieu de 8-15s.
