@@ -11,7 +11,7 @@ export const useProfile = () => {
       logBoot("PROFILE_FETCH_START", { uid: user?.id });
       try {
         const result = await withTimeout(
-          supabase.from("profiles").select("*").eq("user_id", user!.id).maybeSingle(),
+          (supabase.from("profiles").select("*").eq("user_id", user!.id).maybeSingle() as unknown) as PromiseLike<any>,
           5000,
           "profile",
         );

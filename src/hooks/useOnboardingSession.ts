@@ -45,14 +45,14 @@ export const useOnboardingSession = () => {
     (async () => {
       try {
         const result = await withTimeout(
-          supabase
+          (supabase
             .from("contractor_onboarding_sessions")
             .select("*")
             .eq("user_id", user.id)
             .is("completed_at", null)
             .order("created_at", { ascending: false })
             .limit(1)
-            .maybeSingle(),
+            .maybeSingle() as unknown) as PromiseLike<any>,
           5000,
           "onboarding_session",
         );
