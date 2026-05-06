@@ -42974,6 +42974,7 @@ export type Database = {
           application_reviewed_by: string | null
           application_submitted_at: string | null
           approved_at: string | null
+          city: string | null
           commission_rate_first_24_months: number
           commission_rate_lifetime: number
           company: string | null
@@ -42999,6 +43000,7 @@ export type Database = {
           application_reviewed_by?: string | null
           application_submitted_at?: string | null
           approved_at?: string | null
+          city?: string | null
           commission_rate_first_24_months?: number
           commission_rate_lifetime?: number
           company?: string | null
@@ -43024,6 +43026,7 @@ export type Database = {
           application_reviewed_by?: string | null
           application_submitted_at?: string | null
           approved_at?: string | null
+          city?: string | null
           commission_rate_first_24_months?: number
           commission_rate_lifetime?: number
           company?: string | null
