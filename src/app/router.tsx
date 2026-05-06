@@ -126,7 +126,10 @@ const PartnerGuard = lazy(() => import("@/pages/partner/PartnerGuard"));
 const PartnerDashboard = lazy(() => import("@/pages/partner/PartnerDashboard"));
 const PartnerNouveauEntrepreneur = lazy(() => import("@/pages/partner/PartnerNouveauEntrepreneur"));
 const PartnerCrm = lazy(() => import("@/pages/partner/PartnerCrm"));
+const PartnerDevenirPartenaire = lazy(() => import("@/pages/partner/PartnerDevenirPartenaire"));
+const PartnerEnAttente = lazy(() => import("@/pages/partner/PartnerEnAttente"));
 const AdminPartenaires = lazy(() => import("@/pages/admin/AdminPartenaires"));
+const AdminPartnerApplications = lazy(() => import("@/pages/admin/AdminPartnerApplications"));
 const DescribeProjectPage = lazy(() => import("@/pages/DescribeProjectPage"));
 const CompareQuotesPage = lazy(() => import("@/pages/CompareQuotesPage"));
 const ContractorOnboardingPage = lazy(() => import("@/pages/ContractorOnboardingPage"));
@@ -943,13 +946,16 @@ export const AppRouter = () => (
         <Route path="/partenaires-certifies" element={<PagePartenairesCertifies />} />
         <Route path="/partenaire" element={<PagePartenairesCertifies />} />
         <Route path="/partenaire/login" element={<PartnerLogin />} />
+        <Route path="/partenaire/devenir-partenaire" element={<PartnerDevenirPartenaire />} />
+        <Route path="/partenaire/en-attente" element={<PartnerEnAttente />} />
         <Route path="/partenaire/dashboard" element={<PartnerGuard><PartnerDashboard /></PartnerGuard>} />
-        <Route path="/partenaire/nouveau-entrepreneur" element={<PartnerGuard><PartnerNouveauEntrepreneur /></PartnerGuard>} />
-        <Route path="/partenaire/crm" element={<PartnerGuard><PartnerCrm /></PartnerGuard>} />
-        <Route path="/partenaire/leads" element={<PartnerGuard><PartnerCrm /></PartnerGuard>} />
-        <Route path="/partenaire/pipeline" element={<PartnerGuard><PartnerCrm /></PartnerGuard>} />
-        <Route path="/partenaire/rappels" element={<PartnerGuard><PartnerCrm /></PartnerGuard>} />
+        <Route path="/partenaire/nouveau-entrepreneur" element={<PartnerGuard feature="onboarding"><PartnerNouveauEntrepreneur /></PartnerGuard>} />
+        <Route path="/partenaire/crm" element={<PartnerGuard feature="crm"><PartnerCrm /></PartnerGuard>} />
+        <Route path="/partenaire/leads" element={<PartnerGuard feature="leads"><PartnerCrm /></PartnerGuard>} />
+        <Route path="/partenaire/pipeline" element={<PartnerGuard feature="pipeline"><PartnerCrm /></PartnerGuard>} />
+        <Route path="/partenaire/rappels" element={<PartnerGuard feature="reminders"><PartnerCrm /></PartnerGuard>} />
         <Route path="/admin/partenaires" element={<ProtectedRoute requiredRole="admin"><AdminPartenaires /></ProtectedRoute>} />
+        <Route path="/admin/partner-applications" element={<ProtectedRoute requiredRole="admin"><AdminPartnerApplications /></ProtectedRoute>} />
         <Route path="/contact" element={<FallbackRoutePage />} />
         <Route path="/conditions" element={<FallbackRoutePage />} />
         <Route path="/confidentialite" element={<FallbackRoutePage />} />

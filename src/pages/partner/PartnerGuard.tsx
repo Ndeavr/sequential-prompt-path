@@ -1,38 +1,61 @@
 /**
  * UNPRO — Partner Guard
- * Requires authenticated user with role 'partner' (or admin), AND approved partner row.
- * On unauthenticated access, redirects to /partenaire/login with returnTo.
+ * Requires authenticated user, accepted terms, AND approved application.
+ * Optionally enforces a feature permission.
  */
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { saveReturnPath } from "@/lib/authReturn";
+import { partnerCan, type PartnerFeature } from "@/lib/partnerPermissions";
 
-export default function PartnerGuard({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading, role, isAdmin, user } = useAuth();
+interface PartnerRow {
+  id: string;
+  partner_status: string;
+  partner_application_status: string;
+  partner_type: string;
+}
+
+export default function PartnerGuard({
+  children,
+  feature,
+}: {
+  children: React.ReactNode;
+  feature?: PartnerFeature;
+}) {
+  const { isAuthenticated, isLoading, isAdmin, user } = useAuth();
   const loc = useLocation();
-  const [partnerStatus, setPartnerStatus] = useState<"loading" | "approved" | "pending" | "none">("loading");
+  const [state, setState] = useState<"loading" | "ok" | "pending" | "rejected" | "suspended" | "none" | "forbidden">("loading");
+  const [partner, setPartner] = useState<PartnerRow | null>(null);
 
   useEffect(() => {
     let cancel = false;
     (async () => {
-      if (!user?.id) { setPartnerStatus("none"); return; }
+      if (!user?.id) { setState("none"); return; }
       const { data } = await supabase
         .from("partners" as any)
-        .select("partner_status")
+        .select("id, partner_status, partner_application_status, partner_type")
         .eq("user_id", user.id)
         .maybeSingle();
       if (cancel) return;
-      const s = (data as any)?.partner_status;
-      if (s === "approved") setPartnerStatus("approved");
-      else if (s) setPartnerStatus("pending");
-      else setPartnerStatus("none");
+      const p = data as any as PartnerRow | null;
+      setPartner(p);
+      if (!p) { setState("none"); return; }
+      const s = p.partner_application_status;
+      if (s === "approved" && p.partner_status !== "suspended") {
+        if (feature && !partnerCan(p.partner_type, feature)) { setState("forbidden"); return; }
+        setState("ok");
+      } else if (s === "rejected") setState("rejected");
+      else if (s === "suspended" || p.partner_status === "suspended") setState("suspended");
+      else setState("pending");
     })();
     return () => { cancel = true; };
-  }, [user?.id]);
+  }, [user?.id, feature]);
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-[#060B14] text-white/60">Chargement…</div>;
+  if (isLoading || state === "loading") {
+    return <div className="min-h-screen flex items-center justify-center bg-[#060B14] text-white/60">Chargement…</div>;
+  }
 
   if (!isAuthenticated) {
     const path = loc.pathname + loc.search;
@@ -42,19 +65,20 @@ export default function PartnerGuard({ children }: { children: React.ReactNode }
 
   if (isAdmin) return <>{children}</>;
 
-  if (role !== "partner" && partnerStatus !== "approved") {
-    if (partnerStatus === "loading") return <div className="min-h-screen flex items-center justify-center bg-[#060B14] text-white/60">Vérification…</div>;
-    if (partnerStatus === "pending") {
-      return (
-        <div className="min-h-screen bg-[#060B14] text-white flex items-center justify-center p-6">
-          <div className="max-w-md text-center space-y-3">
-            <h1 className="text-2xl font-semibold">Approbation en cours</h1>
-            <p className="text-white/60">Votre demande de Partenaire Certifié est en attente d'approbation par un administrateur.</p>
-          </div>
+  if (state === "none") return <Navigate to="/partenaire/devenir-partenaire" replace />;
+  if (state === "pending" || state === "rejected" || state === "suspended") {
+    return <Navigate to="/partenaire/en-attente" replace />;
+  }
+  if (state === "forbidden") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#060B14] text-white p-6">
+        <div className="max-w-md text-center space-y-3">
+          <h1 className="text-2xl font-semibold">Accès non inclus</h1>
+          <p className="text-white/60">Cette fonctionnalité n'est pas incluse dans votre niveau partenaire actuel ({partner?.partner_type}).</p>
+          <a href="/partenaire/dashboard" className="inline-block mt-2 text-amber-400 hover:underline">Retour au tableau de bord</a>
         </div>
-      );
-    }
-    return <Navigate to="/partenaires-certifies" replace />;
+      </div>
+    );
   }
 
   return <>{children}</>;

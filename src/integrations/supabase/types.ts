@@ -42467,6 +42467,44 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          metadata: Json
+          partner_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          partner_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          partner_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_audit_logs_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_commissions: {
         Row: {
           amount: number
@@ -42607,8 +42645,47 @@ export type Database = {
           },
         ]
       }
+      partner_lead_assignment_logs: {
+        Row: {
+          assigned_by: string | null
+          created_at: string
+          id: string
+          lead_id: string | null
+          new_partner_id: string | null
+          previous_partner_id: string | null
+          reason: string | null
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          new_partner_id?: string | null
+          previous_partner_id?: string | null
+          reason?: string | null
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          new_partner_id?: string | null
+          previous_partner_id?: string | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_lead_assignment_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "partner_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_leads: {
         Row: {
+          assigned_by: string | null
           business_name: string | null
           city: string | null
           consent_given_at: string | null
@@ -42619,8 +42696,10 @@ export type Database = {
           consent_status: string
           contact_name: string | null
           created_at: string
+          created_by: string | null
           email: string | null
           id: string
+          lead_origin: string
           lead_status: string
           next_follow_up_at: string | null
           notes: string | null
@@ -42634,9 +42713,11 @@ export type Database = {
           source: string | null
           trade: string | null
           updated_at: string
+          visibility_scope: string
           website: string | null
         }
         Insert: {
+          assigned_by?: string | null
           business_name?: string | null
           city?: string | null
           consent_given_at?: string | null
@@ -42647,8 +42728,10 @@ export type Database = {
           consent_status?: string
           contact_name?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           id?: string
+          lead_origin?: string
           lead_status?: string
           next_follow_up_at?: string | null
           notes?: string | null
@@ -42662,9 +42745,11 @@ export type Database = {
           source?: string | null
           trade?: string | null
           updated_at?: string
+          visibility_scope?: string
           website?: string | null
         }
         Update: {
+          assigned_by?: string | null
           business_name?: string | null
           city?: string | null
           consent_given_at?: string | null
@@ -42675,8 +42760,10 @@ export type Database = {
           consent_status?: string
           contact_name?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           id?: string
+          lead_origin?: string
           lead_status?: string
           next_follow_up_at?: string | null
           notes?: string | null
@@ -42690,6 +42777,7 @@ export type Database = {
           source?: string | null
           trade?: string | null
           updated_at?: string
+          visibility_scope?: string
           website?: string | null
         }
         Relationships: [
@@ -42830,9 +42918,61 @@ export type Database = {
           },
         ]
       }
+      partner_terms_acceptance: {
+        Row: {
+          accepted: boolean
+          accepted_at: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          partner_id: string | null
+          role: string
+          terms_version: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          accepted?: boolean
+          accepted_at?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          partner_id?: string | null
+          role: string
+          terms_version: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          accepted?: boolean
+          accepted_at?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          partner_id?: string | null
+          role?: string
+          terms_version?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_terms_acceptance_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partners: {
         Row: {
+          admin_notes: string | null
           annual_new_contractors_target: number
+          application_data: Json | null
+          application_reviewed_at: string | null
+          application_reviewed_by: string | null
+          application_submitted_at: string | null
           approved_at: string | null
           commission_rate_first_24_months: number
           commission_rate_lifetime: number
@@ -42842,6 +42982,7 @@ export type Database = {
           first_name: string | null
           id: string
           last_name: string | null
+          partner_application_status: string
           partner_status: string
           partner_tier: string
           partner_type: string | null
@@ -42851,7 +42992,12 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          admin_notes?: string | null
           annual_new_contractors_target?: number
+          application_data?: Json | null
+          application_reviewed_at?: string | null
+          application_reviewed_by?: string | null
+          application_submitted_at?: string | null
           approved_at?: string | null
           commission_rate_first_24_months?: number
           commission_rate_lifetime?: number
@@ -42861,6 +43007,7 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          partner_application_status?: string
           partner_status?: string
           partner_tier?: string
           partner_type?: string | null
@@ -42870,7 +43017,12 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          admin_notes?: string | null
           annual_new_contractors_target?: number
+          application_data?: Json | null
+          application_reviewed_at?: string | null
+          application_reviewed_by?: string | null
+          application_submitted_at?: string | null
           approved_at?: string | null
           commission_rate_first_24_months?: number
           commission_rate_lifetime?: number
@@ -42880,6 +43032,7 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          partner_application_status?: string
           partner_status?: string
           partner_tier?: string
           partner_type?: string | null
