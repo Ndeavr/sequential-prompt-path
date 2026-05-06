@@ -73,6 +73,10 @@ export const elevenlabsService = {
         audioUrl = currentObjectUrl;
       } else if (data?.audioContent) {
         audioUrl = `data:audio/mpeg;base64,${data.audioContent}`;
+      } else if (data?.error || data?.fallback) {
+        alexLog("tts:unavailable_soft_fallback", data);
+        onEnd?.();
+        return;
       } else {
         throw new Error("Unexpected TTS response format");
       }
