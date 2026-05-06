@@ -33,28 +33,22 @@ const VALUE = [
 ];
 
 export default function PagePartenairesCertifies() {
-  const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
   const [form, setForm] = useState({
     salutation: "", first_name: "", last_name: "",
     phone: "", email: "", message: "",
   });
-
   const update = (k: keyof typeof form, v: string) => setForm(s => ({ ...s, [k]: v }));
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.first_name || !form.last_name || !form.phone || !form.email) {
-      toast.error("Veuillez remplir tous les champs requis.");
-      return;
-    }
-    setLoading(true);
-    const { error } = await supabase.from("partner_applications").insert(form);
-    setLoading(false);
-    if (error) { toast.error("Erreur. Réessayez."); return; }
-    setDone(true);
-    toast.success("Candidature reçue. Nous vous contactons sous peu.");
-  };
+  const { submit, retry, error, result, isSubmitting, isSuccess, isError } = useFormSubmit({
+    formType: 'partner_application',
+    validate: (d) => {
+      if (!d.first_name || !d.last_name || !d.phone || !d.email) return 'Veuillez remplir tous les champs requis.';
+      if (!/^\S+@\S+\.\S+$/.test(String(d.email))) return 'Courriel invalide.';
+      return null;
+    },
+  });
+
+  const onSubmit = (e: React.FormEvent) => { e.preventDefault(); submit(form); };
 
   return (
     <>
