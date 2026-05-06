@@ -121,6 +121,11 @@ const PageAdminHandoffAnalytics = lazy(() => import("@/pages/admin/PageAdminHand
 const ProfessionalsPage = lazy(() => import("@/pages/ProfessionalsPage"));
 const PartnersPage = lazy(() => import("@/pages/PartnersPage"));
 const PagePartenairesCertifies = lazy(() => import("@/pages/PagePartenairesCertifies"));
+const PartnerLogin = lazy(() => import("@/pages/partner/PartnerLogin"));
+const PartnerGuard = lazy(() => import("@/pages/partner/PartnerGuard"));
+const PartnerDashboard = lazy(() => import("@/pages/partner/PartnerDashboard"));
+const PartnerNouveauEntrepreneur = lazy(() => import("@/pages/partner/PartnerNouveauEntrepreneur"));
+const AdminPartenaires = lazy(() => import("@/pages/admin/AdminPartenaires"));
 const DescribeProjectPage = lazy(() => import("@/pages/DescribeProjectPage"));
 const CompareQuotesPage = lazy(() => import("@/pages/CompareQuotesPage"));
 const ContractorOnboardingPage = lazy(() => import("@/pages/ContractorOnboardingPage"));
@@ -935,6 +940,11 @@ export const AppRouter = () => (
         <Route path="/a-propos" element={<FallbackRoutePage />} />
         <Route path="/partenaires" element={<PagePartenairesCertifies />} />
         <Route path="/partenaires-certifies" element={<PagePartenairesCertifies />} />
+        <Route path="/partenaire" element={<PagePartenairesCertifies />} />
+        <Route path="/partenaire/login" element={<PartnerLogin />} />
+        <Route path="/partenaire/dashboard" element={<PartnerGuard><PartnerDashboard /></PartnerGuard>} />
+        <Route path="/partenaire/nouveau-entrepreneur" element={<PartnerGuard><PartnerNouveauEntrepreneur /></PartnerGuard>} />
+        <Route path="/admin/partenaires" element={<ProtectedRoute requiredRole="admin"><AdminPartenaires /></ProtectedRoute>} />
         <Route path="/contact" element={<FallbackRoutePage />} />
         <Route path="/conditions" element={<FallbackRoutePage />} />
         <Route path="/confidentialite" element={<FallbackRoutePage />} />
