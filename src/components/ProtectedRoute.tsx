@@ -26,8 +26,6 @@ const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps
       return;
     }
 
-    if (!roleTimedOut && !roleError) return;
-
     let cancelled = false;
     setAdminFallback("checking");
     (async () => {
@@ -47,7 +45,11 @@ const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps
     return () => { cancelled = true; };
   }, [requiredRole, isAuthenticated, user?.id, isAdmin, Array.isArray(roles) ? roles.join(",") : "", roleTimedOut, roleError]);
 
-  if (isLoading) {
+  if (requiredRole === "admin" && adminFallback === "allowed") {
+    return <>{children}</>;
+  }
+
+  if (isLoading && !(requiredRole === "admin" && adminFallback === "denied")) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <p className="text-muted-foreground">Chargement…</p>
