@@ -12,6 +12,7 @@ export interface Partner {
   company: string | null;
   partner_status: string;
   partner_tier: string;
+  partner_type: string;
   referral_code: string | null;
   annual_new_contractors_target: number;
   commission_rate_first_24_months: number;

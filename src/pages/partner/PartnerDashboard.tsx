@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePartner } from "./usePartner";
 import { Button } from "@/components/ui/button";
-import { Plus, Wrench, Wallet, TrendingUp, Users, Target } from "lucide-react";
+import { Plus, Wrench, Wallet, TrendingUp, Users, Target, LayoutGrid } from "lucide-react";
 
 interface Referral {
   id: string;
@@ -96,7 +96,8 @@ export default function PartnerDashboard() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Link to="/partenaire/nouveau-entrepreneur"><Button className="bg-amber-500 text-black hover:bg-amber-400"><Plus className="h-4 w-4 mr-1" /> Ajouter un entrepreneur</Button></Link>
+          <Link to="/partenaire/crm"><Button className="bg-amber-500 text-black hover:bg-amber-400"><LayoutGrid className="h-4 w-4 mr-1" /> CRM Pipeline</Button></Link>
+          <Link to="/partenaire/nouveau-entrepreneur"><Button variant="outline" className="border-white/20 text-white hover:bg-white/5"><Plus className="h-4 w-4 mr-1" /> Ajouter un entrepreneur</Button></Link>
           <Link to="/partenaire/commissions"><Button variant="outline" className="border-white/20 text-white hover:bg-white/5"><Wallet className="h-4 w-4 mr-1" /> Commissions</Button></Link>
           <Link to="/partenaire/outils"><Button variant="outline" className="border-white/20 text-white hover:bg-white/5"><Wrench className="h-4 w-4 mr-1" /> Outils</Button></Link>
         </div>
