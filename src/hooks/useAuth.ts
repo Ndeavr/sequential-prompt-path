@@ -85,8 +85,12 @@ export const useAuth = () => {
   const isAuthLoading = loading || isRoleLoading;
 
   const signOut = useCallback(async () => {
+    // Targeted removal — do NOT call queryClient.clear() here.
+    // clear() unmounts every observer mid-render and triggers
+    // "Should have a queue. This is likely a bug in React."
+    queryClient.removeQueries({ queryKey: ["user-role"], exact: false });
+    ensuredProfiles.clear();
     await supabase.auth.signOut();
-    queryClient.clear();
   }, [queryClient]);
 
   return {
