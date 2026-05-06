@@ -203,8 +203,15 @@ export default function OnboardingFlow() {
   if (sessionLoading) {
     return (
       <OnboardingShell currentStep={0} totalSteps={TOTAL_STEPS} showProgress={false}>
-        <div className="dark min-h-screen flex items-center justify-center">
+        <div className="dark min-h-screen flex flex-col items-center justify-center gap-3 p-6 text-center">
           <div className="animate-pulse text-muted-foreground text-sm">Chargement…</div>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="text-xs underline text-muted-foreground hover:text-foreground"
+          >
+            Continuer en mode limité
+          </button>
         </div>
       </OnboardingShell>
     );
