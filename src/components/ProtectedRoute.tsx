@@ -1,6 +1,9 @@
 import { Navigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { getDefaultRedirectForRole, saveAuthIntent } from "@/services/auth/authIntentService";
+import { saveReturnPath } from "@/lib/authReturn";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -9,10 +12,51 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading, role } = useAuth();
+  const { isAuthenticated, isLoading, isRoleLoading, role, roles, isAdmin, roleTimedOut, roleError, user } = useAuth() as any;
   const location = useLocation();
+  const [adminFallback, setAdminFallback] = useState<"idle" | "checking" | "allowed" | "denied">("idle");
 
-  if (isLoading) {
+  useEffect(() => {
+    if (requiredRole !== "admin") {
+      setAdminFallback("idle");
+      return;
+    }
+
+    if (isAuthenticated && (isAdmin || (Array.isArray(roles) && roles.includes("admin")))) {
+      setAdminFallback("allowed");
+      return;
+    }
+
+    let cancelled = false;
+    setAdminFallback("checking");
+    (async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = user?.id ?? sessionData.session?.user?.id;
+        if (!userId) {
+          if (!cancelled) setAdminFallback("denied");
+          return;
+        }
+        const { data } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .eq("role", "admin" as any)
+          .maybeSingle();
+        if (!cancelled) setAdminFallback(data?.role === "admin" ? "allowed" : "denied");
+      } catch {
+        if (!cancelled) setAdminFallback("denied");
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [requiredRole, isAuthenticated, user?.id, isAdmin, Array.isArray(roles) ? roles.join(",") : "", roleTimedOut, roleError]);
+
+  if (requiredRole === "admin" && adminFallback === "allowed") {
+    return <>{children}</>;
+  }
+
+  if (isLoading && !(requiredRole === "admin" && adminFallback === "denied")) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <p className="text-muted-foreground">Chargement…</p>
@@ -21,17 +65,28 @@ const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps
   }
 
   if (!isAuthenticated) {
-    // Preserve intent before redirecting to login
-    saveAuthIntent({
-      returnPath: location.pathname + location.search + location.hash,
-      action: "access_protected",
-      roleHint: requiredRole,
-    });
+    const fullPath = location.pathname + location.search + location.hash;
+    saveAuthIntent({ returnPath: fullPath, action: "access_protected", roleHint: requiredRole });
+    saveReturnPath(fullPath, requiredRole === "admin" ? "admin" : "protected_route");
     return <Navigate to="/login" replace />;
   }
 
-  // If anyRole is set, skip role check. Admins can access any route.
-  if (!anyRole && requiredRole && role !== requiredRole && role !== "admin") {
+  // Admin bypasses every requiredRole. Check the full role list, not just primary.
+  if (isAdmin || (Array.isArray(roles) && roles.includes("admin")) || adminFallback === "allowed") {
+    return <>{children}</>;
+  }
+
+  // Don't bounce while the role query is still resolving — prevents loops.
+  // Admin routes must not redirect on role timeout; validate once directly instead.
+  if (isRoleLoading || role === undefined || (requiredRole === "admin" && adminFallback !== "denied" && (roleTimedOut || roleError || adminFallback === "checking"))) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-muted-foreground">Chargement…</p>
+      </div>
+    );
+  }
+
+  if (!anyRole && requiredRole && role !== requiredRole) {
     return <Navigate to={getDefaultRedirectForRole(role)} replace />;
   }
 

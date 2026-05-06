@@ -1,54 +1,50 @@
 /**
  * UNPRO — Login Page (Unified)
  * Google OAuth + SMS Code (primary) · Magic Link (secondary)
+ * Post-login routing centralized via useAuthReturn (AuthReturnManager).
  */
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { consumeAuthIntent, getDefaultRedirectForRole } from "@/services/auth/authIntentService";
-import { consumeNavigationContext, getResumePath } from "@/services/navigation/journeyService";
-import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
+import { useState } from "react";
+import { useAuthReturn } from "@/hooks/useAuthReturn";
 import AuthCardUnpro from "@/components/auth/AuthCardUnpro";
 import OAuthButtons from "@/components/auth/OAuthButtons";
 import PhoneOtpForm from "@/components/auth/PhoneOtpForm";
 import LoginMagicLinkForm from "@/components/auth/LoginMagicLinkForm";
-import { Smartphone, Mail, Lock, CheckCircle2 } from "lucide-react";
+import { trackAuthEvent } from "@/services/auth/trackAuthEvent";
+import { Smartphone, Mail, Lock, CheckCircle2, ArrowRight } from "lucide-react";
 
 export default function LoginPageUnpro() {
   const [mode, setMode] = useState<"main" | "phone" | "email">("main");
-  const { isAuthenticated, role, isLoading } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      const searchParams = new URLSearchParams(location.search);
-      const redirectParam = searchParams.get("redirect");
-      const intent = consumeAuthIntent();
-      const navCtx = consumeNavigationContext();
-      const from = (location.state as any)?.from;
-      const resumePath = getResumePath(role);
-      const target = redirectParam || intent?.returnPath || navCtx?.intendedDestination || from || resumePath || "/";
-      navigate(target, { replace: true });
-    }
-  }, [isAuthenticated, isLoading, role, navigate, location]);
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-muted-foreground text-sm">Chargement…</p>
-      </div>
-    );
-  }
+  const { destination, goNow, showFallback, redirected } = useAuthReturn({ auto: true, delayMs: 350 });
 
   return (
     <AuthCardUnpro title="Trouvez le bon pro. Plus vite." subtitle="Connexion rapide et sécurisée">
-      {mode === "main" && (
-        <div className="space-y-3">
-          {/* Google */}
-          <OAuthButtons />
+      {redirected && (
+        <div className="flex flex-col items-center justify-center py-6 gap-3">
+          <CheckCircle2 className="h-10 w-10 text-green-400" />
+          <p className="text-sm text-muted-foreground">Redirection en cours…</p>
+        </div>
+      )}
 
-          {/* SMS */}
+      {!redirected && showFallback && (
+        <div className="space-y-3 py-2">
+          <div className="flex items-center justify-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-green-400" />
+            <p className="text-sm font-medium text-foreground">Connexion réussie</p>
+          </div>
+          <button
+            type="button"
+            onClick={goNow}
+            className="w-full h-12 flex items-center justify-center gap-2 rounded-xl text-sm font-semibold bg-primary text-primary-foreground active:scale-[0.98] transition-transform"
+          >
+            Continuer <ArrowRight className="h-4 w-4" />
+          </button>
+          <p className="text-[11px] text-center text-muted-foreground">Destination : {destination}</p>
+        </div>
+      )}
+
+      {!redirected && !showFallback && mode === "main" && (
+        <div className="space-y-3">
+          <OAuthButtons />
           <button
             type="button"
             onClick={() => {
@@ -67,7 +63,6 @@ export default function LoginPageUnpro() {
             Recevoir un code par SMS
           </button>
 
-          {/* Trust microcopy */}
           <div className="flex items-center justify-center gap-4 pt-2">
             {["Connexion rapide", "Aucun mot de passe", "Accès sécurisé"].map((t) => (
               <span key={t} className="flex items-center gap-1 text-[11px] text-muted-foreground">
@@ -77,7 +72,6 @@ export default function LoginPageUnpro() {
             ))}
           </div>
 
-          {/* Secondary */}
           <div className="pt-2 text-center">
             <button
               type="button"
@@ -93,16 +87,16 @@ export default function LoginPageUnpro() {
         </div>
       )}
 
-      {mode === "phone" && (
+      {!redirected && !showFallback && mode === "phone" && (
         <div className="space-y-2">
-          <PhoneOtpForm onSuccess={() => {}} />
+          <PhoneOtpForm onSuccess={goNow} />
           <button onClick={() => setMode("main")} className="w-full text-xs text-muted-foreground hover:text-foreground">
             ← Retour
           </button>
         </div>
       )}
 
-      {mode === "email" && (
+      {!redirected && !showFallback && mode === "email" && (
         <div className="space-y-2">
           <div className="flex items-center gap-2 mb-1">
             <Mail className="h-4 w-4 text-muted-foreground" />
@@ -115,7 +109,6 @@ export default function LoginPageUnpro() {
         </div>
       )}
 
-      {/* Security footer */}
       <div className="flex items-center justify-center gap-1.5 pt-4">
         <Lock className="h-3 w-3 text-muted-foreground" />
         <span className="text-xs text-muted-foreground">

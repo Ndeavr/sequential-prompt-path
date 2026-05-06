@@ -48,16 +48,17 @@ export default function LoginMagicLinkForm({
       last_error: null,
       last_error_step: null,
     });
-    // Hard 3s safety — never leave the user staring at a spinner
+    // Hard 8s safety — never leave the user staring at a spinner
     const safety = window.setTimeout(() => {
       setLoading(false);
       toast.error("Envoi trop long. Réessayez.");
-    }, 3000);
+    }, 8000);
 
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email: cleaned,
         options: {
+          shouldCreateUser: true,
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
