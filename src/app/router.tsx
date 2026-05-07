@@ -1089,6 +1089,7 @@ export const AppRouter = () => (
         <Route path="/admin/handoff-analytics" element={<ProtectedRoute requiredRole="admin"><PageAdminHandoffAnalytics /></ProtectedRoute>} />
         <Route path="/admin/emails" element={<ProtectedRoute requiredRole="admin"><PageAdminEmailLogs /></ProtectedRoute>} />
         <Route path="/admin/campaign-center" element={<ProtectedRoute requiredRole="admin"><PageCampaignCenter /></ProtectedRoute>} />
+        <Route path="/admin/campaign-logs" element={<ProtectedRoute requiredRole="admin"><PageCampaignLogs /></ProtectedRoute>} />
         <Route path="/admin/manual-test-send" element={<ProtectedRoute requiredRole="admin"><PageAdminManualTestSend /></ProtectedRoute>} />
         <Route path="/admin/challenge-tracker" element={<ProtectedRoute requiredRole="admin"><PageChallengeTracker /></ProtectedRoute>} />
         <Route path="/admin/email-templates" element={<ProtectedRoute requiredRole="admin"><PageAdminEmailTemplates /></ProtectedRoute>} />
