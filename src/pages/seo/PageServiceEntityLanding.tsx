@@ -121,7 +121,7 @@ export default function PageServiceEntityLanding() {
   const handleBooking = () => {
     const contractorTypes = (entity.contractor_types_json as string[]) ?? [];
     const specialty = contractorTypes[0] ?? "renovation";
-    navigate(`/search?specialty=${encodeURIComponent(specialty)}&city=${encodeURIComponent(cityName)}`);
+    navigate(`/alex`);
   };
 
   return (

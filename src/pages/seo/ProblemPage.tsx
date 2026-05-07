@@ -341,7 +341,7 @@ const ProblemPage = () => {
                 {" "}vérifié.
               </p>
               <Button asChild size="sm">
-                <Link to={`/search?specialty=${encodeURIComponent(contractorTypes[0] ?? "")}`}>
+                <Link to={`/alex`}>
                   Trouver un professionnel <ArrowRight className="h-3.5 w-3.5 ml-2" />
                 </Link>
               </Button>

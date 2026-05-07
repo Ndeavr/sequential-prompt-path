@@ -198,7 +198,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               {!appointments?.length ? (
-                <EmptyState message="Aucun rendez-vous planifié." action={<Button asChild variant="outline" size="sm" className="rounded-xl"><Link to="/search">Trouver un pro</Link></Button>} />
+                <EmptyState message="Aucun rendez-vous planifié." action={<Button asChild variant="outline" size="sm" className="rounded-xl"><Link to="/alex">Trouver un pro</Link></Button>} />
               ) : (
                 <ul className="space-y-1.5">
                   {appointments.slice(0, 4).map((a) => (
@@ -230,7 +230,7 @@ const Dashboard = () => {
               <Star className="h-4 w-4 text-amber-500" /> Entrepreneurs recommandés
             </CardTitle>
             <Button asChild size="sm" variant="ghost" className="text-primary h-8 text-xs">
-              <Link to="/search">Explorer <ArrowRight className="h-3 w-3 ml-1" /></Link>
+              <Link to="/alex">Explorer <ArrowRight className="h-3 w-3 ml-1" /></Link>
             </Button>
           </CardHeader>
           <CardContent>
@@ -271,7 +271,7 @@ const Dashboard = () => {
       {/* ─── Quick Actions ─── */}
       <motion.div custom={9} variants={fadeUp} initial="hidden" animate="show">
         <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline" size="sm" className="rounded-xl"><Link to="/search">Trouver un entrepreneur</Link></Button>
+          <Button asChild variant="outline" size="sm" className="rounded-xl"><Link to="/alex">Trouver un entrepreneur</Link></Button>
           <Button asChild variant="outline" size="sm" className="rounded-xl"><Link to="/dashboard/home-score">Voir mon score</Link></Button>
           <Button asChild variant="outline" size="sm" className="rounded-xl"><Link to="/describe-project">Décrire un projet</Link></Button>
         </div>

@@ -254,7 +254,7 @@ const QuoteDetail = () => {
             </Link>
           </Button>
           <Button asChild variant="outline" className="rounded-xl gap-1">
-            <Link to="/search">
+            <Link to="/alex">
               <Search className="h-4 w-4" /> Voir les entrepreneurs
             </Link>
           </Button>

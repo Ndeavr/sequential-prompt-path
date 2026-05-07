@@ -107,7 +107,7 @@ export default function ProblemesMaisonPage() {
         />
 
         <RelatedLinksSection links={[
-          { to: "/search", label: "Trouver un entrepreneur" },
+          { to: "/alex", label: "Trouver un entrepreneur" },
           { to: "/villes-desservies", label: "Villes desservies" },
           { to: "/entretien-preventif", label: "Entretien préventif" },
           { to: "/blog", label: "Blog" },

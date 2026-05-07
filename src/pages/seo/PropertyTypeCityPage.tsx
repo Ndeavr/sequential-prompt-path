@@ -140,7 +140,7 @@ const PropertyTypeCityPage = () => {
               UNPRO vérifie chaque entrepreneur. Rendez-vous exclusifs, jamais de leads partagés.
             </p>
             <Button asChild size="lg" className="gap-2">
-              <Link to={`/search?specialty=${pt.contractorBoosts[0]}&city=${cityData.name}`}>
+              <Link to={`/alex`}>
                 Trouver un entrepreneur
                 <ArrowRight className="h-4 w-4" />
               </Link>
@@ -168,7 +168,7 @@ const PropertyTypeCityPage = () => {
         <GrowthCtaBlock />
       </section>
       <ContractorLandingCta />
-      <SeoCta searchUrl={`/search?city=${cityData.name}`} cityName={cityData.name} />
+      <SeoCta searchUrl={`/alex`} cityName={cityData.name} />
     </MainLayout>
   );
 };

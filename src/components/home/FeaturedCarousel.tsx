@@ -132,7 +132,7 @@ const FeaturedCarousel = () => {
             <h2 className="font-display text-title text-foreground">Vérifiés, certifiés, recommandés</h2>
           </div>
           <button
-            onClick={() => navigate("/search")}
+            onClick={() => navigate("/alex")}
             className="hidden sm:flex items-center gap-1.5 text-meta font-semibold text-primary hover:gap-2.5 transition-all"
           >
             Voir tous <ArrowRight className="h-3.5 w-3.5" />

@@ -62,7 +62,7 @@ const megaMenus: Record<string, MegaMenuConfig> = {
         items: [
           { to: "/verifier-entrepreneur", label: "Vérifier une entreprise", labelEn: "Verify a Company", icon: ShieldCheck },
           { to: "/compare-quotes", label: "Comparer mes soumissions", labelEn: "Compare My Quotes", icon: Scale },
-          { to: "/search", label: "Trouver un entrepreneur", labelEn: "Find a Contractor", icon: Search },
+          { to: "/alex", label: "Trouver un entrepreneur", labelEn: "Find a Contractor", icon: Search },
           { to: "/dashboard/appointments", label: "Réserver un appel", labelEn: "Book a Call", icon: Phone },
         ],
       },

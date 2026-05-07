@@ -160,7 +160,7 @@ const CityPage = () => {
           <CardContent className="pt-6 text-center">
             <h2 className="text-xl font-semibold text-foreground mb-2">Trouvez un professionnel à {city.name}</h2>
             <p className="text-muted-foreground mb-4">Comparez les meilleurs professionnels vérifiés de votre région.</p>
-            <Link to="/search" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors">
+            <Link to="/alex" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors">
               <Wrench className="w-4 h-4" /> Rechercher
             </Link>
           </CardContent>
