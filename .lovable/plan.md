@@ -1,62 +1,89 @@
+# Accès privé `/cyndia` — Keypad 4 chiffres + Dashboard appels
 
-## Problem
+## 1. Flow utilisateur
 
-The premium AI-first hero we've been polishing (`HeroSectionAlexFirst.tsx`) is not rendered anywhere users land. The actual `/` and `/index` routes render `PageHomeSimple` → `HeroAlexCentered` + `AlexTradesAura`, whose stacked dark overlays paint as a fully black screen on the user's mobile viewport.
-
-```text
-Router:
-  /         ─┐
-  /index    ─┴─►  HomeWithFeatureFlag  ──►  PageHomeSimple   (legacy, currently shown)
-                                                  └─ HeroAlexCentered + dark trades aura
-
-Orphaned (never mounted on a route):
-  src/pages/Home.tsx  ──►  HeroSectionAlexFirst   (the premium AI-first design)
+```
+unpro.ca/cyndia
+  ├─ 1ère visite: keypad → entrer code → confirmer (2x) → code créé
+  ├─ Visites suivantes: keypad → entrer code → unlock
+  └─ Unlock → magic link partenaire → /partenaire/dashboard
+                                       └─ Section "Mes 30 prochains appels"
+                                          ├─ Liste 30 prospects (statut = todo)
+                                          ├─ Boutons statut par appel
+                                          └─ Bouton "Générer plus" (si tous statués)
 ```
 
-## Fix
+## 2. Backend
 
-Make `/` and `/index` render the AI-first hero, and remove the legacy black-screen hero from the user-visible path.
+### Table `private_access_slugs`
+| col | type |
+|---|---|
+| slug | text PK (`cyndia`) |
+| code_hash | text (bcrypt du PIN) |
+| partner_user_id | uuid (compte partenaire à connecter) |
+| created_at, last_unlock_at | timestamptz |
+| unlock_count | int |
 
-### Step 1 — Point the homepage at the new hero
+RLS: aucune lecture client. Tout passe par edge functions service-role.
 
-Edit `src/components/home-intent/HomeWithFeatureFlag.tsx`:
+### Table `partner_call_assignments`
+| col | type |
+|---|---|
+| id | uuid |
+| partner_id | uuid → partners.id |
+| lead_id | uuid → entrepreneur_leads.id |
+| status | text (`todo`, `called`, `no_answer`, `interested`, `not_interested`, `callback`) |
+| notes | text |
+| called_at | timestamptz |
+| created_at | timestamptz |
 
-- Replace `import PageHomeSimple from "@/pages/PageHomeSimple"` with `import Home from "@/pages/Home"`.
-- Render `<Home />`.
+RLS: partner peut lire/update ses propres assignments.
 
-This single change swaps both `/` and `/index` to the polished hero (`HeroSectionAlexFirst`) without touching the router or risking other routes.
+### Edge functions
+- `private-access-init` — POST `{slug, code, confirm}` : si slug n'a pas de code_hash, le crée; sinon erreur. Crée le partner si n'existe pas (Cyndia, type=`recruiter`, status=`approved`).
+- `private-access-unlock` — POST `{slug, code}` : vérifie hash, retourne `{magic_link}` via `supabase.auth.admin.generateLink({type:'magiclink', email: partner.email})`.
+- `partner-calls-generate` — POST : pioche N=30 leads dans `entrepreneur_leads` (ou `outbound_leads`) non encore assignés à ce partner et insère des rows `todo`. Refuse si appels `todo` restants > 0.
 
-### Step 2 — Keep the page single-screen and conversion-first
+## 3. Frontend
 
-`Home.tsx` currently renders only `<HeroSectionAlexFirst />` inside `MainLayout`. That matches the AI-first goal (orb + input + chips + trust strip on one screen). No additional sections.
+### `src/pages/private/PagePrivateKeypad.tsx` (route `/cyndia` et `/private/:slug`)
+- Composant `Keypad4` (clavier numérique premium dark, gros chiffres, vibration sur tap mobile).
+- 2 états: `unlock` ou `setup` (détecté via call init `check`).
+- Si setup: 2 saisies consécutives, doivent matcher.
+- Sur succès unlock: `window.location.href = magic_link` → Supabase termine le login → redirige `/partenaire/dashboard`.
 
-Verify:
-- `MainLayout` already hides the floating Alex bubble on `/` and `/index` (line 31 of `MainLayout.tsx`) — no double orb.
-- `cinematicBgPoster = /images/hero-bg.webp` and the mp4/webm exist in `public/images/` (confirmed).
-- Bottom mobile nav (`MobileBottomNav`) sits above the hero — the hero already has `pb-24` to clear it.
+### `src/pages/partner/PartnerDashboard.tsx` — ajouter section
+- `PartnerCallQueue` component:
+  - Fetch `partner_call_assignments` join `entrepreneur_leads` where status='todo' limit 30, ordered.
+  - Carte par appel: nom entreprise, ville, téléphone (cliquable `tel:`), site web.
+  - Boutons rapides: Appelé / Pas de réponse / Intéressé / Pas intéressé / Rappeler.
+  - Compteur "X / 30 traités".
+  - Bouton "Générer 30 nouveaux" actif **seulement quand 0 todo restants**, sinon désactivé avec tooltip "Termine ta liste d'abord".
 
-### Step 3 — Retire the legacy "simple" home from the live path
+### Routes `src/app/router.tsx`
+- Ajouter `<Route path="/cyndia" element={<PagePrivateKeypad slug="cyndia" />} />`
+- (Optionnel) `/private/:slug` générique.
 
-- Leave `PageHomeSimple.tsx` and `src/components/home-simple/*` on disk (they may be reused for A/B), but they are no longer mounted on any route.
-- Add a one-line comment in `HomeWithFeatureFlag.tsx` noting that `PageHomeSimple` is preserved for future flag-based testing.
+## 4. Sécurité
+- Code PIN hashé bcrypt côté edge function (never stored cleartext).
+- Rate limit: 5 tentatives / 15 min / IP via `private_access_attempts` table.
+- Magic link à usage unique généré à chaque unlock (Supabase admin API).
+- Slug `cyndia` codé en dur côté init pour ne créer qu'un partenaire connu (pas de création arbitraire).
 
-### Step 4 — Sanity checks (no code change)
+## 5. Détails techniques
+- Partner Cyndia auto-créé: email `cyndia@unpro.ca` (à confirmer), `partner_type='recruiter'`, `partner_application_status='approved'`, `partner_status='approved'`.
+- `entrepreneur_leads` n'a pas de status — c'est `partner_call_assignments` qui porte le statut.
+- Source des leads pour "générer": `entrepreneur_leads` non déjà assignés à Cyndia, ordre `created_at DESC`.
 
-After the swap:
-- Confirm `/` paints H1 ("Décrivez votre problème. Alex s'occupe du reste.") at first frame instead of black.
-- Confirm tapping the orb opens `AlexAssistantSheet`.
-- Confirm the chip row + trust strip are visible on a 384px viewport without horizontal scroll.
+## 6. Tâches
+1. Migration: `private_access_slugs`, `partner_call_assignments`, `private_access_attempts` + RLS + indexes.
+2. Edge functions: `private-access-init`, `private-access-unlock`, `partner-calls-generate`.
+3. Composant `Keypad4` + page `PagePrivateKeypad`.
+4. Composant `PartnerCallQueue` intégré dans `PartnerDashboard`.
+5. Route `/cyndia` ajoutée dans `router.tsx`.
+6. Seed initial: créer partner Cyndia (via edge function au premier setup).
 
-## Files touched
-
-- `src/components/home-intent/HomeWithFeatureFlag.tsx` — swap `PageHomeSimple` → `Home`.
-
-That's the entire change. One file, two lines.
-
-## Why not also delete the legacy code
-
-We keep `PageHomeSimple` and `home-simple/*` because:
-- They're already imported lazily; not on the live path means zero runtime cost.
-- If you want to A/B test, we can re-enable them behind a feature flag without restoring deleted files.
-
-If you'd rather we delete them now, say the word and I'll remove the directory + the orphaned `Home.tsx` wrapper consolidation in the same pass.
+## Questions avant build
+- Email de Cyndia pour le compte partenaire ? (default: `cyndia@unpro.ca`)
+- Source des appels: `entrepreneur_leads` (existant, 9 colonnes) ou tu préfères `outbound_leads` ?
+- Statuts d'appel souhaités exacts ?

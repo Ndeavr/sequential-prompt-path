@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePartner } from "./usePartner";
 import { Button } from "@/components/ui/button";
 import { Plus, Wrench, Wallet, TrendingUp, Users, Target, LayoutGrid } from "lucide-react";
+import PartnerCallQueue from "@/components/partner/PartnerCallQueue";
 
 interface Referral {
   id: string;
@@ -77,6 +78,9 @@ export default function PartnerDashboard() {
       </header>
 
       <main className="px-4 sm:px-6 py-6 space-y-6 max-w-6xl mx-auto">
+        {/* Call queue first — primary daily action */}
+        <PartnerCallQueue partnerId={partner.id} />
+
         {/* KPI cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <KpiCard icon={<Wallet className="h-4 w-4" />} label="Revenus ce mois" value={`${earnedMonth.toFixed(0)} $`} />
