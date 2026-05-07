@@ -13,6 +13,7 @@ import AuthOverlayPremium from "@/components/auth/AuthOverlayPremium";
 import HomeWithFeatureFlag from "@/components/home-intent/HomeWithFeatureFlag";
 import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
+import PageEmergencyReset from "@/pages/PageEmergencyReset";
 
 // Impact Counter
 const PageImpactCounter = lazy(() => import("@/pages/PageImpactCounter"));
@@ -672,6 +673,7 @@ export const AppRouter = () => (
       <Routes>
         {/* Redirects for common mismatched entry points */}
         <Route path="/index" element={<HomeWithFeatureFlag />} />
+        <Route path="/emergency-reset" element={<PageEmergencyReset />} />
         <Route path="/entrepreneur/aipp-analysis" element={<PageAIPPAnalysisLoading />} />
 
         {/* Email-to-Booking Conversion (public, unauthenticated) */}

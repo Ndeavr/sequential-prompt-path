@@ -67,6 +67,15 @@ export default function FormRoleSelection({ onSelect, loading }: FormRoleSelecti
           </motion.button>
         ))}
       </div>
+
+      <div className="text-center pt-2">
+        <a
+          href="/"
+          className="text-xs text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+        >
+          ← Retour à l'accueil
+        </a>
+      </div>
     </div>
   );
 }
