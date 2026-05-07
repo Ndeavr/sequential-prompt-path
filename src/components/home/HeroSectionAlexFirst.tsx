@@ -13,6 +13,7 @@ import {
   Calculator, ShieldAlert, FileText, AlertTriangle, HelpCircle, UserCheck,
 } from "lucide-react";
 import { listIntents, HERO_CHIP_INTENTS, type AlexIntent, type AlexIntentId } from "@/services/alexIntentRouter";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 const CHIP_ICONS: Record<AlexIntentId, typeof Calculator> = {
   project_estimate:   Calculator,
@@ -47,6 +48,13 @@ export default function HeroSectionAlexFirst() {
   const [input, setInput] = useState("");
   const [mountVideo, setMountVideo] = useState(false);
   const interactedRef = useRef(false);
+  const { openAlex: openVoice } = useAlexVoice();
+
+  const startVoice = useCallback(() => {
+    interactedRef.current = true;
+    const hint = input.trim() || undefined;
+    openVoice("homepage_hero", hint);
+  }, [input, openVoice]);
 
   // Defer heavy bg video until idle — poster (WebP, ~106KB) carries LCP
   useEffect(() => {
@@ -173,8 +181,8 @@ export default function HeroSectionAlexFirst() {
           {/* ── Alex Orb (96px, breathing) ── */}
           <button
             type="button"
-            onClick={() => openAlex()}
-            aria-label="Parler à Alex"
+            onClick={startVoice}
+            aria-label="Démarrer la conversation vocale avec Alex"
             data-testid="alex-orb-button"
             className="relative flex items-center justify-center group focus:outline-none"
             style={{ width: 150, height: 150 }}
@@ -250,8 +258,8 @@ export default function HeroSectionAlexFirst() {
               />
               <button
                 type="button"
-                onClick={() => openAlex()}
-                aria-label="Parler à Alex au micro"
+                onClick={startVoice}
+                aria-label="Démarrer la conversation vocale avec Alex"
                 className="h-10 w-10 flex items-center justify-center rounded-full text-white transition-all active:scale-95"
                 style={{
                   background:

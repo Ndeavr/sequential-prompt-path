@@ -1,73 +1,38 @@
-A — PROMPT LOVABLE FINAL
+# Lancer Alex en VOIX depuis la page d'accueil
 
-1. CONTEXT
-Build the `/cyndia` private keypad flow so the first-use PIN setup and every later unlock sends Cyndia directly into her approved partner dashboard, not onboarding, not login, not a generic role dashboard.
+## Problème
+Sur `/` (composant `HeroSectionAlexFirst`), cliquer sur l'orbe bleue ou le bouton micro ouvre `AlexAssistantSheet` — l'interface CHAT texte. L'utilisateur attend que ces deux contrôles démarrent immédiatement la **session vocale** Alex (overlay plein écran verrouillé déjà existant).
 
-2. OBJECTIVE
-Implement a deterministic post-PIN redirect:
-`/cyndia` → PIN setup/unlock → authenticated partner session → `/partenaire/dashboard` → Cyndia call queue.
+## Cible
+- **Orbe principale (150px)** → ouvre la session vocale Alex (full-screen locked overlay).
+- **Bouton micro** dans la barre d'input → idem, ouvre la voix.
+- **Champ texte + Entrée** + **chips** (Rénover ma cuisine, etc.) → continuent d'ouvrir le chat texte (`AlexAssistantSheet`) avec preset, comme aujourd'hui.
+- **Bouton caméra** → inchangé (upload photo).
 
-3. USERS
-- Cyndia: private partner/recruiter.
-- Admin: validates that Cyndia lands directly on the partner dashboard.
+## Changements
 
-4. DELIVERABLES
-- Update private access backend function redirect logic.
-- Update frontend keypad flow to preserve the intended return path before sending the magic link.
-- Update auth return routing so partner/private-slug sign-ins are never redirected to homeowner onboarding/dashboard.
-- Ensure Cyndia partner record has approved status and correct partner access.
-- Keep `/partenaire/dashboard` protected by PartnerGuard.
+### `src/components/home/HeroSectionAlexFirst.tsx`
+1. Importer `useAlexVoice` depuis `@/contexts/AlexVoiceContext`.
+2. Récupérer `openAlex` du contexte (renommer en `openVoice` localement pour clarté).
+3. Nouveau handler `startVoice()`:
+   - Appelle `openVoice("homepage_hero", input.trim() || undefined)` pour transmettre tout texte déjà saisi comme `contextHint`.
+   - Le `AlexVoiceContext.openAlex` gère déjà cleanup audio + ouverture de l'overlay vocal verrouillé via `useAlexVoiceLockedStore`.
+4. Brancher:
+   - `<button onClick={() => openAlex()}>` de l'orbe (ligne 176) → `startVoice()`.
+   - `<button onClick={() => openAlex()}>` du micro dans la barre (ligne 253) → `startVoice()`.
+5. Conserver:
+   - `onSubmit` du formulaire texte → ouvre `AlexAssistantSheet` (chat) avec le texte.
+   - `onChipClick` → ouvre `AlexAssistantSheet` (chat) avec preset.
+   - Upload photo modal inchangé.
+6. Mettre à jour `aria-label` du micro: "Démarrer la conversation vocale avec Alex".
 
-5. LOGIC
-- On `/cyndia`, after 4-digit code confirmation/setup, call `private-access` unlock.
-- `private-access` returns a magic link with explicit redirect target `/partenaire/dashboard` on the current app origin.
-- Before navigation, store auth intent `/partenaire/dashboard` client-side as a safety net.
-- When the auth session is created, AuthReturnRouter must honor `/partenaire/dashboard` even if the route is not a standard auth surface.
-- If user role lookup returns no role, but the partner row exists and is approved, route to `/partenaire/dashboard` instead of `/onboarding`.
-- Keep partner access based on the `partners` table approval, not localStorage.
+## Notes techniques
+- Le composant overlay vocal verrouillé est déjà mondialement monté (via `AlexVoiceProvider`) — aucun nouveau composant à créer.
+- La règle Core "Alex Voice Persona Female" + "Voice Connection Stability" reste respectée: on ne touche pas à la config ElevenLabs ni au signed URL.
+- Aucune modif backend ou edge function nécessaire.
 
-6. DATA
-- No new table required.
-- Verify existing `partners` row for `cyndia@unpro.ca` is approved.
-- Ensure existing private access slug points to `cyndia@unpro.ca`.
-- If required, update the edge function to upsert a partner role only if the `user_roles` enum supports `partner`; otherwise rely on `partners` approval and PartnerGuard.
-
-7. UI/UX
-- Keep keypad premium and mobile-first.
-- After unlock, show a short “Ouverture du tableau de bord…” state before redirect.
-- Do not expose technical auth details to Cyndia.
-- Do not send Cyndia to onboarding.
-
-8. COMPONENTS
-- Refactor `PagePrivateKeypad.tsx` redirect state and intent preservation.
-- Keep `PartnerDashboard.tsx` as destination.
-- Keep `PartnerCallQueue.tsx` displayed first on the dashboard.
-
-9. ACTIONS
-- Update `private-access` redirect URL construction.
-- Update `PagePrivateKeypad.tsx` unlock handling.
-- Update `AuthReturnRouter.tsx` partner/private access routing.
-- Optionally update `AuthCallbackPage.tsx` if magic links pass through `/auth/callback` in the current environment.
-- Test `/cyndia` first-use flow and repeat unlock flow.
-
-10. CONSTRAINTS
-- Do not weaken PartnerGuard.
-- Do not use localStorage/sessionStorage as proof of partner status; use it only for return path intent.
-- Do not manually edit generated Supabase client/types files.
-- Do not add generic login screens.
-- Keep French-first copy.
-- Keep roles out of profiles.
-
-11. SUCCESS
-- Cyndia enters PIN twice on first use.
-- Cyndia lands directly on `/partenaire/dashboard`.
-- The dashboard shows “Mes 30 prochains appels”.
-- “Générer 30 appels” works when there is no active todo list.
-- Cyndia never sees homeowner onboarding after private PIN login.
-
-12. TASKS
-- Patch private access magic-link redirect.
-- Patch keypad unlock loading and intent persistence.
-- Patch AuthReturnRouter partner routing safety net.
-- Verify PartnerGuard accepts the Cyndia approved partner row.
-- Validate route on mobile viewport.
+## Critères de succès
+- Tap sur l'orbe sur `/` → l'overlay vocal plein écran s'ouvre, Charlotte (FR) parle.
+- Tap sur le micro de la barre → idem.
+- Taper du texte + Entrée → ouvre toujours le chat texte (comportement précédent).
+- Les chips ouvrent toujours le chat texte avec preset.
