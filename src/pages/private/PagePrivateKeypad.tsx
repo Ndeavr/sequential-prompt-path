@@ -100,13 +100,16 @@ export default function PagePrivateKeypad({ slug: slugProp }: Props) {
 
   async function unlock(code: string) {
     const { data, error } = await supabase.functions.invoke("private-access", {
-      body: { action: "unlock", slug, code },
+      body: { action: "unlock", slug, code, origin: window.location.origin },
     });
     if (error) {
       setError("Code invalide");
       setPin(""); setConfirmPin(""); setStage("enter");
       return;
     }
+    // Persist return path so AuthReturnRouter routes to the partner dashboard
+    try { saveAuthIntent({ returnPath: "/partenaire/dashboard", action: "private_unlock", roleHint: "partner" }); } catch { /* noop */ }
+    setNotice("Ouverture de votre tableau de bord…");
     const link = (data as any)?.magic_link;
     if (link) window.location.href = link;
   }
