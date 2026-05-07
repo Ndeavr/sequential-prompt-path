@@ -1,7 +1,7 @@
-// PageHomeCopilot is preserved for future reuse.
-// Active homepage = PageHomeSimple (Alex-first embedded chat).
-import PageHomeSimple from "@/pages/PageHomeSimple";
+// Active homepage = Home (HeroSectionAlexFirst — AI-first premium hero).
+// PageHomeSimple is preserved on disk for future flag-based A/B testing.
+import Home from "@/pages/Home";
 
 export default function HomeWithFeatureFlag() {
-  return <PageHomeSimple />;
+  return <Home />;
 }
