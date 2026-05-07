@@ -34,7 +34,6 @@ export default defineConfig(({ mode }: { mode: string }) => ({
           if (id.includes("@supabase")) return "supabase";
           if (id.includes("@tanstack")) return "tanstack";
           if (id.includes("@radix-ui")) return "radix";
-          if (id.includes("recharts") || id.includes("d3-")) return "charts";
           if (id.includes("@elevenlabs") || id.includes("elevenlabs")) return "elevenlabs";
         },
       },
