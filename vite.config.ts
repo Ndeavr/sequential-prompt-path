@@ -21,4 +21,18 @@ export default defineConfig(({ mode }: { mode: string }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    minify: "esbuild" as const,
+    cssMinify: true,
+    target: "es2020",
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom", "react-router-dom"],
+          motion: ["framer-motion"],
+          supabase: ["@supabase/supabase-js"],
+        },
+      },
+    },
+  },
 }));

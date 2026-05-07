@@ -1,74 +1,111 @@
-ns issues found
+# Mobile PageSpeed Fixes for unpro.ca
 
-Concrete bottlenecks observed in this codebase (not theory):
+Focus: make the mobile homepage's LCP detectable by Lighthouse (currently NO_LCP because the React hero mounts after JS), then trim images, render-blocking work, and main-thread time. SEO/A11y/Best Practices markup stays untouched.
 
-1. **`useProfile` is timing out at 5s on every cold load** — console shows repeated `PROFILE_FETCH_TIMEOUT`. The DB query itself runs in ~1ms (verified with `EXPLAIN ANALYZE`), so the request is hanging client-side. Root cause: `withTimeout` wraps `supabase.from(...).maybeSingle()` (a `PostgrestBuilder` thenable). Any guard that awaits `useProfile` blocks render for 5s. `OnboardingGuard` does exactly that — `profileLoading` keeps the whole app on the "Chargement…" screen.
+## 1. Fix NO_LCP (highest leverage)
 
-2. **Global `Providers` mounts 3 heavy Alex/voice panels on every route** (`OverlayAlexVoiceFullScreen` = 843 lines, `AlexChatFallbackPanel`, `AlexVoiceDebugPanel`). They are imported eagerly so every page — including the homepage — pays for them in the initial JS bundle.
+Lighthouse loads the raw HTML response, so it only sees `<div id="root"></div>` today. We make the hero `<h1>` exist in `index.html` itself and let React hydrate over it.
 
-3. **`PageHomeSimple` wraps the homepage in `AlexProvider`** which boots the full Alex chat/voice machinery before any pixel is shown. The homepage hero/orb does not need Alex initialized to render.
+**`index.html`** — inject a static LCP block inside `#root` that mirrors the homepage hero copy and gradient. React will replace it on mount; Lighthouse measures it as LCP.
 
-4. **Sequential auth waterfall in `useAuth`**: profile auto-create runs an extra `select` then `insert` on every session change. The `user-role` query waits for session, then guards wait for both session+role+profile in series.
+```html
+<div id="root">
+  <main class="lcp-shell">
+    <h1 class="lcp-title">
+      Quel est votre projet <span class="lcp-accent">aujourd'hui&nbsp;?</span>
+    </h1>
+    <p class="lcp-sub">Touchez l'orb d'Alex pour démarrer. Voix, photo, soumission ou texte — vous choisissez.</p>
+  </main>
+</div>
+```
 
-5. **Guards render full-screen "Chargement…" placeholders** instead of letting the layout/header paint. `AuthGuard`, `OnboardingGuard`, `RoleGuard`, `UniversalRouteGuard`, `LazyFallback` all return a centered spinner that replaces the entire viewport — this is what makes navigation feel frozen.
+Inline the small CSS for `.lcp-shell/.lcp-title/.lcp-sub` directly in `<head>` (under 1 KB) so the text paints with first HTML byte. No webfont dependency — system stack until React hydrates.
 
-6. **`router.tsx` is 1421 lines of lazy imports** (good) but the eager imports at top (`HomeWithFeatureFlag`, `Home`, `ProtectedRoute`, `UniversalRouteGuard`, `BannerContinueFlow`, `AuthReturnRouter`, `AuthOverlayPremium`) pull in their transitive deps synchronously.
+Add preload for the OG / hero asset already used:
 
-## Fix plan (in priority order)
+```html
+<link rel="preload" as="image" href="/unpro-logo-master.png" fetchpriority="high">
+```
 
-### P0 — Unblock the render (biggest win)
+(There is no real hero `<img>` today — the orb is a CSS/SVG component. We do **not** invent a new hero image; the static `<h1>` becomes the LCP element, which is what Lighthouse needs.)
 
-- **`src/hooks/useProfile.ts`**: drop the `withTimeout` wrapper that's currently failing. Use plain `await supabase.from('profiles').select(...).maybeSingle()`, set `staleTime: 5 * 60_000`, `gcTime: 30 * 60_000`. Keep error path returning `null` so guards never block on it.
-- **`src/guards/OnboardingGuard.tsx`**: stop blocking on `profileLoading`. Only block on `authLoading`. If profile is still loading, render children optimistically (the page's own data hooks will skeleton appropriately). Only redirect to `/onboarding` once profile has actually resolved AND `onboarding_completed === false`.
-- **`src/hooks/useAuth.ts`**: move the "ensure profile exists" insert into a fire-and-forget background effect (already async, but currently runs a `select` first that races with `useProfile`). Switch to a single `upsert` with `onConflict: 'user_id', ignoreDuplicates: true` so it never blocks and never double-fetches.
-- **All guard fallbacks** (`AuthGuard`, `OnboardingGuard`, `RoleGuard`, `UniversalRouteGuard`, `LazyFallback`): replace the full-screen "Chargement…" with a transparent skeleton that keeps `MainLayout` header visible. New shared component `src/components/loaders/RouteSkeleton.tsx` rendering header bar + content skeleton blocks.
+**`src/components/home-copilot/HeroCopilotMobile.tsx`** — remove the `motion.h1` initial-opacity-0 wrapper on the title. Render the `<h1>` immediately (no `initial={{opacity:0}}`) so when React hydrates, the LCP element stays painted continuously. Keep motion only on secondary elements (orb, CTA, chips).
 
-### P1 — Cut the initial bundle
+**`src/main.tsx`** — before `createRoot(...).render(...)`, no-op (the static markup is simply replaced on first render — acceptable since copy matches).
 
-- **`src/app/providers.tsx`**: lazy-import `OverlayAlexVoiceFullScreen`, `AlexChatFallbackPanel`, `AlexVoiceDebugPanel` and wrap them in `<Suspense fallback={null}>`. They only need to mount after first paint — wrap in a `requestIdleCallback` mount gate so they don't compete with LCP.
-- **`src/pages/PageHomeSimple.tsx`**: defer `AlexProvider` mount. Render `HeroAlexCentered` + `IntentChipsGrid` + `TrustPromiseCards` immediately; lazy-mount `AlexEmbeddedChat` (and its `AlexProvider`) after first paint via `requestIdleCallback` or `useEffect` + `Suspense`.
-- **`src/app/router.tsx`**: convert remaining eager page imports (`Home`, `HomeWithFeatureFlag`, `FallbackRoutePage`) to lazy. Keep only `MainLayout` eager.
+## 2. Image optimization
 
-### P2 — Skeletons instead of spinners
+- Audit `<img>` site-wide via `rg "<img"` and add `width`, `height`, `loading="lazy"` (except the hero/logo above the fold which stays `loading="eager"` + `fetchpriority="high"`).
+- Convert the few PNGs in `/public` (`unpro-logo-master.png`, `icon-192.png`, `icon-512.png`, favicons) to WebP siblings; keep PNG fallback via `<picture>` only where used in JSX. Reference WebP by default.
 
-- Reuse the existing `SkeletonArticleCard` pattern. Add:
-  - `src/components/loaders/SkeletonList.tsx` (cards/lists)
-  - `src/components/loaders/SkeletonDashboard.tsx` (KPI tiles)
-  - `src/components/loaders/RouteSkeleton.tsx` (header + body)
-- Replace `<div className="animate-pulse">Chargement…</div>` in: `AuthGuard`, `OnboardingGuard`, `RoleGuard`, `UniversalRouteGuard`, `LazyFallback`, and the partner pages.
+## 3. Render-blocking resources
 
-### P3 — Parallelize data fetching
+- `index.html` already preconnects fonts but does not load a stylesheet — good. Remove the unused `preconnect` to `fonts.gstatic.com` if no webfont `<link rel="stylesheet">` is emitted (verify; if Tailwind injects one via JS, leave preconnect).
+- Defer the lovable-tagger / dev-only code paths (already dev-only via `mode === "development"`; confirm no prod leakage).
+- Move any analytics/tracking init into `requestIdleCallback` (see #6).
 
-- Audit hooks that chain `await` on supabase queries inside `queryFn`. Convert to `Promise.all([...])`. Top offenders to inspect: `usePartnerCrm`, `useContractorDashboardData`, `useLeads`, `useProfile`+`useAuth` interaction.
-- For paired queries (e.g. profile + role), use `useQueries` so they fire in parallel instead of one-after-the-other.
+## 4. Minify CSS/JS
 
-### P4 — Image/asset hygiene
+**`vite.config.ts`** — explicitly set:
 
-- Add `loading="lazy"` and `decoding="async"` to `<img>` tags missing it (run `rg "<img " src` and patch).
-- Verify hero images use `fetchpriority="high"` only on LCP image.
+```ts
+build: {
+  minify: 'esbuild',
+  cssMinify: true,
+  target: 'es2020',
+  rollupOptions: {
+    output: {
+      manualChunks: {
+        react: ['react', 'react-dom', 'react-router-dom'],
+        motion: ['framer-motion'],
+        supabase: ['@supabase/supabase-js'],
+      },
+    },
+  },
+},
+```
 
-## Files to create/edit
+Splits framer-motion (large) and supabase out of the main entry chunk so the homepage doesn't pay for them upfront.
 
-Create:
-- `src/components/loaders/RouteSkeleton.tsx`
-- `src/components/loaders/SkeletonList.tsx`
-- `src/components/loaders/SkeletonDashboard.tsx`
+## 5. Reduce unused CSS/JS
 
-Edit:
-- `src/hooks/useProfile.ts` (remove withTimeout, raise staleTime)
-- `src/hooks/useAuth.ts` (upsert profile, no pre-select)
-- `src/guards/OnboardingGuard.tsx` (don't block on profile)
-- `src/guards/AuthGuard.tsx`, `src/guards/RoleGuard.tsx`, `src/guards/UniversalRouteGuard.tsx` (skeleton instead of spinner)
-- `src/app/router.tsx` (lazy Home, skeleton fallback)
-- `src/app/providers.tsx` (lazy + idle-mount Alex panels)
-- `src/pages/PageHomeSimple.tsx` (defer AlexProvider/embedded chat)
+- Confirm `tailwind.config` `content` globs cover `./src/**/*.{ts,tsx}` and `./index.html` (it does — verify).
+- `lucide-react` icons: already tree-shakable per-named-import (codebase already uses named imports). No change.
+- Audit `framer-motion` usage on the homepage hero: replace the 5 `motion.*` wrappers in `HeroCopilotMobile.tsx` with plain elements + a tiny CSS `@keyframes fade-up` utility. This removes the framer-motion dependency from the critical chunk for `/`.
 
-## Success criteria
+## 6. Reduce main-thread work
 
-- Homepage paints header + hero in <200ms after JS executes (no waiting on auth).
-- No more `PROFILE_FETCH_TIMEOUT` in console.
-- Navigation between routes shows the layout instantly with a body skeleton, never a blank/spinner page.
-- Initial JS bundle drops by removing eager Alex voice panels.
-- Auth resolves in background; protected pages render skeleton during resolution rather than freezing.
+- `src/app/providers.tsx` already lazy-loads Alex panels via `requestIdleCallback`. Extend the same pattern to:
+  - `AlexRouterDebugHUD`, `AuthDebugHud`, `BootDebugButton` in `src/app/App.tsx` — wrap in `lazy()` + idle mount, and gate behind `import.meta.env.DEV` only.
+  - `useJourneyTracker()` inside `MainLayout` — defer subscription with `requestIdleCallback`.
+  - `trackCopilotEvent("homepage_loaded")` in `PageHomeCopilot` — wrap in idle callback.
+- `AlexCopilotConversation` in `PageHomeCopilot` — convert to `React.lazy` + `<Suspense fallback={null}>` so it doesn't block first paint.
 
-Approve and I'll implement P0+P1+P2 in the next pass (highest-impact, ~7 files), then P3/P4 as a follow-up.
+## 7. Cache lifetimes
+
+Lovable's static hosting handles immutable hashed assets (`/assets/*-[hash].js|css`) with long cache automatically. The 8 KiB finding is for `/favicon-*.png` and `/icon-*.png`. We can't edit hosting headers from the repo, but we can:
+- Add `<link rel="preload">` only for assets actually used above the fold (already in #1).
+- Document this as a hosting-level note (no code change needed; will be addressed when Lovable serves with default 1-year cache for `/public` assets — which it already does for hashed files).
+
+No-op in code; called out for transparency.
+
+## What stays untouched
+
+- All `<meta>`, JSON-LD, `aria-*`, semantic tags (SEO 100, BP 100, A11y 93 preserved).
+- Alex behavior, voice config, routing.
+- No new images invented; LCP becomes the static `<h1>`.
+
+## Files to edit
+
+- `index.html` — static LCP shell + inline CSS + preload
+- `src/components/home-copilot/HeroCopilotMobile.tsx` — remove initial-opacity on `<h1>`, swap motion for CSS where above the fold
+- `src/app/App.tsx` — lazy-mount dev huds
+- `src/layouts/MainLayout.tsx` — defer journey tracker
+- `src/pages/PageHomeCopilot.tsx` — lazy-load `AlexCopilotConversation`, idle-defer tracking
+- `vite.config.ts` — explicit minify + manualChunks
+
+## Expected impact
+
+- LCP detected → Performance score jumps from "no score" to a real number (typically 60-80 baseline).
+- Main-thread JS for `/` drops via framer-motion chunking + lazy panels.
+- Image savings via WebP conversion on the 4 PNGs.
