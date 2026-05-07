@@ -1,8 +1,9 @@
 /**
  * UNPRO — Instant Audit Intake Funnel
+ * Hard 10s watchdog forces reveal even if backend stalls.
  */
 import { useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuditIntakeFunnel } from "@/hooks/useAuditIntakeFunnel";
 import { AuditLandingScreen } from "@/components/audit-funnel/AuditLandingScreen";
 import { AuditIntakeForm } from "@/components/audit-funnel/AuditIntakeForm";
@@ -16,15 +17,31 @@ export default function PageInstantAuditFunnel() {
   const [searchParams] = useSearchParams();
   const outreachTargetId = searchParams.get("target") || undefined;
   const funnel = useAuditIntakeFunnel(outreachTargetId);
+  const navigate = useNavigate();
   const pollRef = useRef<ReturnType<typeof setInterval>>();
+  const watchdogRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Poll during running state
+  // Poll while audit is running and we have an auditId
   useEffect(() => {
     if (funnel.vm.step === "running" && funnel.vm.auditId) {
       pollRef.current = setInterval(() => funnel.pollAuditStatus(), 3000);
       return () => clearInterval(pollRef.current);
     }
   }, [funnel.vm.step, funnel.vm.auditId]);
+
+  // Hard 10s watchdog — guarantees a reveal transition
+  useEffect(() => {
+    if (funnel.vm.step !== "running") {
+      if (watchdogRef.current) clearTimeout(watchdogRef.current);
+      return;
+    }
+    watchdogRef.current = setTimeout(() => {
+      funnel.forceReveal("hard_deadline_10s");
+    }, funnel.HARD_DEADLINE_MS);
+    return () => {
+      if (watchdogRef.current) clearTimeout(watchdogRef.current);
+    };
+  }, [funnel.vm.step, funnel.vm.startedAt]);
 
   return (
     <div className="min-h-screen bg-[#060B14] text-foreground">
@@ -43,7 +60,16 @@ export default function PageInstantAuditFunnel() {
             <AuditIntakeForm onSubmit={funnel.startAudit} />
           )}
           {funnel.vm.step === "running" && (
-            <AuditProgressScreen businessName={funnel.vm.intake?.businessName} />
+            <AuditProgressScreen
+              businessName={funnel.vm.intake?.businessName}
+              hasContractor={!!funnel.vm.contractorId}
+              hasAudit={!!funnel.vm.auditId}
+              degraded={!!funnel.vm.degraded}
+              pollAttempts={funnel.vm.pollAttempts ?? 0}
+              onContinueAnyway={() => funnel.forceReveal("user_continue")}
+              onRetry={funnel.retryAudit}
+              onHome={() => navigate("/")}
+            />
           )}
           {funnel.vm.step === "reveal" && (
             <AuditRevealScreen
@@ -51,7 +77,9 @@ export default function PageInstantAuditFunnel() {
               auditId={funnel.vm.auditId}
               score={funnel.vm.auditScore}
               confidence={funnel.vm.confidenceLevel}
+              degraded={!!funnel.vm.degraded}
               onContinue={() => funnel.setStep("recommendation")}
+              onRetry={funnel.retryAudit}
             />
           )}
           {(funnel.vm.step === "recommendation" || funnel.vm.step === "checkout") && (
