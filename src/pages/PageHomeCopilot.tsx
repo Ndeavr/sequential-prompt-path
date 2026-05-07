@@ -1,24 +1,25 @@
 /**
  * PageHomeCopilot — UNPRO Copilot-style mobile-first homepage.
- *
- * Replaces the legacy Home for the `/` and `/index` routes via HomeWithFeatureFlag.
- * Wrapped in MainLayout so the SmartHeader (logo + FR/EN + QR + hamburger),
- * MobileBottomNav and global concierge surfaces remain visible.
- *
- * RULE: One question. One recommended pro. One action. Never 3 quotes.
+ * AlexCopilotConversation is lazy-loaded after first paint to keep LCP fast.
  */
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import MainLayout from "@/layouts/MainLayout";
 import HeroCopilotMobile from "@/components/home-copilot/HeroCopilotMobile";
 import SectionsBelowFold from "@/components/home-copilot/SectionsBelowFold";
 import StickyBottomAlexCTA from "@/components/home-copilot/StickyBottomAlexCTA";
-import AlexCopilotConversation from "@/components/alex-copilot/AlexCopilotConversation";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
+
+const AlexCopilotConversation = lazy(() => import("@/components/alex-copilot/AlexCopilotConversation"));
 
 export default function PageHomeCopilot() {
   useEffect(() => {
-    trackCopilotEvent("homepage_loaded");
+    const ric = (window as any).requestIdleCallback ?? ((cb: any) => setTimeout(cb, 800));
+    const id = ric(() => trackCopilotEvent("homepage_loaded"));
+    return () => {
+      const cic = (window as any).cancelIdleCallback ?? clearTimeout;
+      cic(id);
+    };
   }, []);
 
   const jsonLd = {
@@ -56,7 +57,9 @@ export default function PageHomeCopilot() {
         <HeroCopilotMobile />
         <SectionsBelowFold />
         <StickyBottomAlexCTA />
-        <AlexCopilotConversation />
+        <Suspense fallback={null}>
+          <AlexCopilotConversation />
+        </Suspense>
       </div>
     </MainLayout>
   );
