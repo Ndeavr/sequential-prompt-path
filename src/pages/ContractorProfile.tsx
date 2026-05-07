@@ -214,7 +214,7 @@ const ContractorProfile = () => {
             Ce profil n'existe pas ou n'est pas encore publié sur UNPRO.
           </p>
           <Button asChild variant="outline" className="rounded-xl">
-            <Link to="/search">Retour à la recherche</Link>
+            <Link to="/alex">Retour à la recherche</Link>
           </Button>
         </div>
       </MainLayout>
@@ -329,7 +329,7 @@ const ContractorProfile = () => {
             <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, hsl(222 47% 11% / 0.15) 0%, hsl(222 47% 11% / 0.65) 100%)" }} />
             <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-3 flex items-center gap-2">
               <Button asChild variant="ghost" size="icon" className="rounded-full h-9 w-9 bg-card/20 backdrop-blur-md border border-card/10 text-primary-foreground hover:bg-card/30">
-                <Link to="/search"><ArrowLeft className="h-4 w-4" /></Link>
+                <Link to="/alex"><ArrowLeft className="h-4 w-4" /></Link>
               </Button>
             </div>
             {aippValidated && tier && (
@@ -1174,7 +1174,7 @@ const ContractorProfile = () => {
                         <Link to={`/dashboard/book/${id}`}><CalendarPlus className="h-3.5 w-3.5" /> Prendre rendez-vous</Link>
                       </Button>
                       <Button asChild variant="outline" size="sm" className="rounded-xl gap-1.5">
-                        <Link to="/search"><Users className="h-3.5 w-3.5" /> Comparer</Link>
+                        <Link to="/alex"><Users className="h-3.5 w-3.5" /> Comparer</Link>
                       </Button>
                       <Button variant="ghost" size="sm" className="rounded-xl gap-1.5" onClick={() => alexVoice.openAlex("general")}>
                         <MessageSquare className="h-3.5 w-3.5" /> Parler à Alex
@@ -1183,7 +1183,7 @@ const ContractorProfile = () => {
                   ) : (
                     <>
                       <Button asChild size="sm" className="rounded-xl gap-1.5">
-                        <Link to={isAuthenticated ? "/search" : `/signup?redirect=/contractors/${id}`}>
+                        <Link to={isAuthenticated ? "/alex" : `/signup?redirect=/contractors/${id}`}>
                           {isAuthenticated ? "Comparer" : "Créer un compte"} <ArrowRight className="h-3.5 w-3.5" />
                         </Link>
                       </Button>

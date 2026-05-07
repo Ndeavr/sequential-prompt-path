@@ -417,7 +417,7 @@ export default function HomeownersPage() {
                     className="mt-2 text-xs text-primary hover:text-primary font-semibold"
                     asChild
                   >
-                    <Link to="/search">Voir les entrepreneurs <ArrowRight className="h-3 w-3 ml-1" /></Link>
+                    <Link to="/alex">Voir les entrepreneurs <ArrowRight className="h-3 w-3 ml-1" /></Link>
                   </Button>
                 </motion.div>
               ))}

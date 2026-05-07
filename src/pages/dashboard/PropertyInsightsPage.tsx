@@ -133,7 +133,7 @@ const PropertyInsightsPage = () => {
                     <p className="text-sm font-medium">{o.title}</p>
                     <p className="text-xs text-muted-foreground mt-1">Type d'entrepreneur : {o.contractorCategory}</p>
                     <Button asChild variant="link" size="sm" className="px-0 mt-1">
-                      <Link to={`/search?specialty=${encodeURIComponent(o.contractorCategory!)}`}>
+                      <Link to={`/alex`}>
                         <Search className="h-3 w-3 mr-1" /> Trouver un entrepreneur
                       </Link>
                     </Button>
@@ -148,7 +148,7 @@ const PropertyInsightsPage = () => {
       {/* CTAs */}
       <div className="flex flex-wrap gap-3">
         <Button asChild variant="outline"><Link to="/dashboard/quotes/upload">Analyser une soumission</Link></Button>
-        <Button asChild variant="outline"><Link to="/search">Trouver un entrepreneur</Link></Button>
+        <Button asChild variant="outline"><Link to="/alex">Trouver un entrepreneur</Link></Button>
       </div>
     </DashboardLayout>
   );

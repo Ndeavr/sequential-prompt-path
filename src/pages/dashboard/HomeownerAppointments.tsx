@@ -46,14 +46,14 @@ const HomeownerAppointments = () => {
         description="Vos demandes de rendez-vous"
         action={
           <Button asChild variant="outline">
-            <Link to="/search"><Search className="h-4 w-4 mr-1" /> Trouver un entrepreneur</Link>
+            <Link to="/alex"><Search className="h-4 w-4 mr-1" /> Trouver un entrepreneur</Link>
           </Button>
         }
       />
       {isLoading ? <LoadingState /> : !appointments?.length ? (
         <EmptyState
           message="Aucun rendez-vous."
-          action={<Button asChild><Link to="/search">Trouver un entrepreneur</Link></Button>}
+          action={<Button asChild><Link to="/alex">Trouver un entrepreneur</Link></Button>}
         />
       ) : (
         <div className="space-y-4">

@@ -229,7 +229,7 @@ export default function EnergyPage() {
               </p>
               <div className="flex flex-wrap gap-3">
                 <Button asChild size="lg">
-                  <Link to="/search">
+                  <Link to="/alex">
                     Trouver un entrepreneur <ArrowRight className="h-4 w-4 ml-1" />
                   </Link>
                 </Button>
@@ -383,7 +383,7 @@ export default function EnergyPage() {
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <Button asChild size="lg">
-                <Link to="/search">
+                <Link to="/alex">
                   Trouver un entrepreneur <ChevronRight className="h-4 w-4 ml-1" />
                 </Link>
               </Button>

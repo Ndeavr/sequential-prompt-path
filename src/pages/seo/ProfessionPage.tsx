@@ -29,7 +29,7 @@ const ProfessionPage = () => {
     return (
       <div className="max-w-4xl mx-auto px-4 py-24 text-center">
         <h1 className="text-2xl font-bold text-foreground">Profession non trouvée</h1>
-        <Link to="/search" className="text-primary underline mt-4 inline-block">Rechercher un professionnel</Link>
+        <Link to="/alex" className="text-primary underline mt-4 inline-block">Rechercher un professionnel</Link>
       </div>
     );
   }
@@ -62,7 +62,7 @@ const ProfessionPage = () => {
         <nav className="text-sm text-muted-foreground mb-6">
           <Link to="/" className="hover:text-primary">Accueil</Link>
           <span className="mx-2">/</span>
-          <Link to="/search" className="hover:text-primary">Professionnels</Link>
+          <Link to="/alex" className="hover:text-primary">Professionnels</Link>
           <span className="mx-2">/</span>
           <span className="text-foreground">{profession.name_fr}</span>
         </nav>
@@ -132,7 +132,7 @@ const ProfessionPage = () => {
           <CardContent className="pt-6 text-center">
             <h2 className="text-xl font-semibold text-foreground mb-2">Trouvez un {profession.name_fr.toLowerCase()} vérifié</h2>
             <p className="text-muted-foreground mb-4">Comparez les profils et obtenez des soumissions gratuites.</p>
-            <Link to="/search" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors">
+            <Link to="/alex" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors">
               <Star className="w-4 h-4" /> Voir les professionnels
             </Link>
           </CardContent>

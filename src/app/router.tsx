@@ -705,7 +705,7 @@ export const AppRouter = () => (
         <Route path="/scanner" element={<PageBusinessCardScannerHub />} />
         <Route path="/leads" element={<PageContractorLeads />} />
         <Route path="/profile-completion" element={<PageBusinessImport />} />
-        <Route path="/search" element={<Search />} />
+        <Route path="/search" element={<ProtectedRoute requiredRole="admin"><Search /></ProtectedRoute>} />
         <Route path="/diagnostic-photo" element={<Suspense fallback={<LazyFallback />}><ProVisualSearchPage /></Suspense>} />
         <Route path="/contractors/:id" element={<ContractorProfile />} />
         <Route path="/entrepreneur/:slug" element={<Suspense fallback={<LazyFallback />}><ContractorSeoPage /></Suspense>} />

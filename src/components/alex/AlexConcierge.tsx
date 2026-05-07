@@ -54,7 +54,7 @@ const getContextSuggestions = (pathname: string, isAuthenticated: boolean): Cont
         { label: "Processus d'inscription", message: "Comment m'inscrire comme entrepreneur sur UNPRO?" },
       ];
     }
-    if (pathname === "/search") {
+    if (pathname === "/alex") {
       return [
         { label: "Aide pour ma recherche", message: "Je ne sais pas quel type d'entrepreneur chercher. Peux-tu m'aider?" },
         { label: "Comprendre les vérifications", message: "Comment UNPRO vérifie les entrepreneurs?" },

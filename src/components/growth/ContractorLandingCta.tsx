@@ -37,7 +37,7 @@ const ContractorLandingCta = () => (
         <Link to="/signup">Activer mon profil</Link>
       </Button>
       <Button asChild variant="outline">
-        <Link to="/search">Voir la plateforme</Link>
+        <Link to="/alex">Voir la plateforme</Link>
       </Button>
     </div>
   </section>

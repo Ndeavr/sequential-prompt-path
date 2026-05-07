@@ -66,7 +66,7 @@ export default function ContractorSeoPage() {
         <div className="max-w-2xl mx-auto px-4 py-20 text-center">
           <h1 className="text-2xl font-bold mb-4">Entrepreneur non trouvé</h1>
           <p className="text-muted-foreground mb-6">Ce profil n'est pas disponible.</p>
-          <Link to="/search"><Button>Rechercher un entrepreneur</Button></Link>
+          <Link to="/alex"><Button>Rechercher un entrepreneur</Button></Link>
         </div>
       </MainLayout>
     );

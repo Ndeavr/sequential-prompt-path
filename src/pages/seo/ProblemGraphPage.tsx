@@ -273,7 +273,7 @@ export default function ProblemGraphPage() {
                 <h3 className="text-sm font-bold text-foreground">Trouver un entrepreneur</h3>
                 <p className="text-xs text-muted-foreground">Recherchez parmi nos entrepreneurs vérifiés.</p>
                 <Button asChild size="sm" variant="outline">
-                  <Link to="/search">Rechercher <ArrowRight className="h-3 w-3 ml-1" /></Link>
+                  <Link to="/alex">Rechercher <ArrowRight className="h-3 w-3 ml-1" /></Link>
                 </Button>
               </CardContent>
             </Card>

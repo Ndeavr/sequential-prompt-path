@@ -207,7 +207,7 @@ const TransformationDetailPage = () => {
               </Card>
             </Link>
 
-            <Link to="/search" className="block">
+            <Link to="/alex" className="block">
               <Card className="border-border/40 hover:shadow-md transition-all group cursor-pointer">
                 <CardContent className="p-4 flex items-center gap-4">
                   <div className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0"

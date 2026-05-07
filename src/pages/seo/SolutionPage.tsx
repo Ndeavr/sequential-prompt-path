@@ -147,7 +147,7 @@ const SolutionPage = () => {
           <CardContent className="pt-6 text-center">
             <h2 className="text-xl font-semibold text-foreground mb-2">Besoin d'aide ?</h2>
             <p className="text-muted-foreground mb-4">Trouvez un professionnel vérifié pour cette solution.</p>
-            <Link to="/search" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors">
+            <Link to="/alex" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors">
               <Wrench className="w-4 h-4" /> Trouver un professionnel
             </Link>
           </CardContent>

@@ -27,7 +27,7 @@ export default function DecrireMonProjetPage() {
         />
 
         <RelatedLinksSection links={[
-          { to: "/search", label: "Trouver un entrepreneur" },
+          { to: "/alex", label: "Trouver un entrepreneur" },
           { to: "/parler-a-alex", label: "Parler à Alex" },
           { to: "/problemes-maison", label: "Problèmes maison" },
         ]} />

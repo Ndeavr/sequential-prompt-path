@@ -74,7 +74,7 @@ const GuidePage = () => {
         ))}
 
         {/* CTA */}
-        <SeoCta searchUrl="/search" />
+        <SeoCta searchUrl="/alex" />
 
         {/* FAQ */}
         <SeoFaqSection faqs={faqItems} />

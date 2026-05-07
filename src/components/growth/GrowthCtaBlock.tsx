@@ -25,9 +25,9 @@ const GrowthCtaBlock = ({ showAlex = false, cityName }: GrowthCtaBlockProps) => 
     },
     {
       icon: Search,
-      title: "Trouver un entrepreneur",
-      description: `Entrepreneurs vérifiés${location}`,
-      to: `/search${cityName ? `?city=${cityName}` : ""}`,
+      title: "Parler à Alex",
+      description: `Trouvez le bon pro avec Alex${location}`,
+      to: `/alex`,
     },
     {
       icon: Home,
