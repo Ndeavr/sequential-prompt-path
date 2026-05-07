@@ -125,7 +125,7 @@ export default function HeroSectionAlexFirst() {
         {/* Soft aura around orb */}
         <div className="absolute inset-0 z-[2] pointer-events-none">
           <div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[640px] h-[460px] animate-pulse-slow"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[640px] h-[460px] animate-pulse"
             style={{
               background:
                 "radial-gradient(ellipse, hsl(222 100% 60% / 0.18) 0%, transparent 70%)",
@@ -161,7 +161,7 @@ export default function HeroSectionAlexFirst() {
             {/* outer breathing ring */}
             <span
               aria-hidden
-              className="absolute inset-0 rounded-full animate-pulse-slow"
+              className="absolute inset-0 rounded-full animate-pulse"
               style={{
                 background:
                   "radial-gradient(circle, hsl(222 100% 60% / 0.22) 0%, transparent 70%)",
