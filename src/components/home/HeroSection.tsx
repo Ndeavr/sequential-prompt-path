@@ -308,7 +308,21 @@ export default function HeroSection() {
           animate={{ scale: [1, 1.04, 1] }}
           transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
         >
-          <img src={cinematicBg} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} />
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster={cinematicBgPoster}
+            aria-hidden="true"
+            width={1920}
+            height={1080}
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src={cinematicBgWebm} type="video/webm" />
+            <source src={cinematicBgMp4} type="video/mp4" />
+          </video>
         </motion.div>
 
         {/* ── Deep cinematic overlay ── */}
