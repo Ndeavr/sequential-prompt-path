@@ -5,6 +5,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { getDefaultRedirectForRole } from "@/services/auth/authIntentService";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
+import RouteSkeleton from "@/components/loaders/RouteSkeleton";
 
 interface RoleGuardProps {
   children: React.ReactNode;

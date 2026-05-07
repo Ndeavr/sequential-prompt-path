@@ -7,6 +7,7 @@ import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { openAuthOverlay } from "@/hooks/useAuthOverlay";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
+import RouteSkeleton from "@/components/loaders/RouteSkeleton";
 
 interface AuthGuardProps {
   children: React.ReactNode;
