@@ -8,9 +8,10 @@
  * - Dark premium theme preserved (blue aura, glassmorphism)
  */
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Mic, Camera, ShieldCheck, Sparkles, MapPin,
-  Calculator, ShieldAlert, FileText, AlertTriangle, HelpCircle, UserCheck,
+  Calculator, ShieldAlert, FileText, AlertTriangle, HelpCircle, UserCheck, Briefcase,
 } from "lucide-react";
 import { listIntents, HERO_CHIP_INTENTS, type AlexIntent, type AlexIntentId } from "@/services/alexIntentRouter";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
