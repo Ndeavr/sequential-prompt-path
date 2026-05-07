@@ -22,7 +22,7 @@ export const headerNavByRole: Record<UserRole | "guest", NavItem[]> = {
     { to: "/dashboard", label: "Accueil", labelEn: "Home", icon: "Home" },
     { to: "/dashboard/properties", label: "Mes propriétés", labelEn: "My Properties", icon: "Building2" },
     { to: "/dashboard/projects/new", label: "Mes projets", labelEn: "My Projects", icon: "FolderOpen" },
-    { to: "/search", label: "Entrepreneurs", labelEn: "Contractors", icon: "Briefcase" },
+    { to: "/dashboard/projects/new", label: "Nouveau projet", labelEn: "New Project", icon: "Briefcase" },
     { to: "/alex", label: "Alex", labelEn: "Alex", icon: "Sparkles" },
   ],
   contractor: [
@@ -66,8 +66,7 @@ export const subNavConfig: Record<string, NavItem[]> = {
     { to: "/dashboard/appointments", label: "Rendez-vous", labelEn: "Appointments", icon: "CalendarDays" },
   ],
   "/search": [
-    { to: "/search", label: "Trouver un entrepreneur", labelEn: "Find a Contractor", icon: "Search" },
-    { to: "/compare-quotes", label: "Comparer", labelEn: "Compare", icon: "Scale" },
+    { to: "/search", label: "Recherche entrepreneurs (admin)", labelEn: "Contractor Search (admin)", icon: "Search" },
   ],
   // Contractor sections
   "/pro/profile": [
@@ -201,7 +200,7 @@ export const mobileTabsByRole: Record<UserRole | "guest", NavItem[]> = {
   ],
   homeowner: [
     { to: "/dashboard", label: "Accueil", labelEn: "Home", icon: "Home" },
-    { to: "/search", label: "Pro", labelEn: "Pro", icon: "Search" },
+    { to: "/alex", label: "Pro", labelEn: "Pro", icon: "Search" },
     { to: "/alex", label: "Alex", icon: "Sparkles" },
     { to: "/compare-quotes", label: "Soumissions", labelEn: "Quotes", icon: "Scale" },
     { to: "/dashboard/account", label: "Compte", labelEn: "Account", icon: "User" },
@@ -236,7 +235,7 @@ export const mobileTabsByRole: Record<UserRole | "guest", NavItem[]> = {
 export const quickActionsByRole: Record<UserRole | "guest", NavItem[]> = {
   guest: [],
   homeowner: [
-    { to: "/search", label: "Trouver le bon pro", labelEn: "Find the right pro", icon: "Search" },
+    { to: "/alex", label: "Parler à Alex", labelEn: "Talk to Alex", icon: "Sparkles" },
     { to: "/compare-quotes", label: "Comparer soumissions", labelEn: "Compare quotes", icon: "Scale" },
   ],
   contractor: [
@@ -249,6 +248,7 @@ export const quickActionsByRole: Record<UserRole | "guest", NavItem[]> = {
   ],
   admin: [
     { to: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
+    { to: "/search", label: "Recherche entrepreneurs", labelEn: "Contractor Search", icon: "Search" },
   ],
 };
 
@@ -290,7 +290,6 @@ export function getDrawerSections(role: UserRole | "guest"): DrawerSection[] {
     label: "Outils",
     labelEn: "Tools",
     items: [
-      { to: "/search", label: "Vérifier un entrepreneur", labelEn: "Verify a contractor", icon: "ShieldCheck" },
       { to: "/alex", label: "Support Alex", labelEn: "Alex Support", icon: "Sparkles" },
     ],
   };
@@ -322,7 +321,7 @@ export function getDrawerItems(ctx: NavigationContext): NavItem[] {
       { to: "/dashboard/quotes", label: "Mes soumissions", labelEn: "My Quotes", icon: "FileText" },
       { to: "/compare-quotes", label: "Analyser mes soumissions", labelEn: "Analyze My Quotes", icon: "Scale" },
       { to: "/design", label: "UNPRO Design", icon: "Palette" },
-      { to: "/search", label: "Trouver un entrepreneur", labelEn: "Find a Contractor", icon: "Search" },
+      { to: "/alex", label: "Parler à Alex", labelEn: "Talk to Alex", icon: "Sparkles" },
     ];
   }
 
@@ -358,7 +357,7 @@ export function getDrawerItems(ctx: NavigationContext): NavItem[] {
     { to: "/condo", label: "Condo / Immeubles", labelEn: "Condos", icon: "Building" },
     { to: "/design", label: "UNPRO Design", icon: "Palette" },
     { to: "/compare-quotes", label: "Analyser des soumissions", labelEn: "Analyze Quotes", icon: "Scale" },
-    { to: "/search", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", icon: "ShieldCheck" },
+    { to: "/alex", label: "Parler à Alex", labelEn: "Talk to Alex", icon: "Sparkles" },
     { to: "/score-maison", label: "Score Maison", labelEn: "Home Score", icon: "BarChart3" },
     { to: "/aipp-score", label: "Score AIPP", icon: "Star" },
     { to: "/pricing", label: "Tarifs", labelEn: "Pricing", icon: "CreditCard" },
@@ -410,7 +409,7 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
         items: [
           { to: "/proprietaires", label: "Passeport Maison", icon: "FileText" },
           { to: "/compare-quotes", label: "Analyser des soumissions", labelEn: "Analyze Quotes", icon: "Scale" },
-          { to: "/search", label: "Vérifier un entrepreneur", labelEn: "Verify a Contractor", icon: "ShieldCheck" },
+          { to: "/alex", label: "Parler à Alex", labelEn: "Talk to Alex", icon: "Sparkles" },
           { to: "/decrire-projet", label: "Décrire mon projet", labelEn: "Describe My Project", icon: "PenLine" },
           { to: "/alex", label: "Parler à Alex", labelEn: "Talk to Alex", icon: "Sparkles" },
         ],
@@ -437,7 +436,7 @@ export function getFooterSections(role: UserRole | "guest"): FooterSection[] {
         items: [
           { to: "/dashboard/properties", label: "Mes propriétés", labelEn: "My Properties", icon: "Building2" },
           { to: "/compare-quotes", label: "Analyser mes soumissions", labelEn: "Analyze My Quotes", icon: "Scale" },
-          { to: "/search", label: "Trouver un entrepreneur", labelEn: "Find a Contractor", icon: "Search" },
+          { to: "/alex", label: "Parler à Alex", labelEn: "Talk to Alex", icon: "Sparkles" },
           { to: "/decrire-projet", label: "Décrire mon projet", labelEn: "Describe My Project", icon: "PenLine" },
           { to: "/alex", label: "Parler à Alex", labelEn: "Talk to Alex", icon: "Sparkles" },
         ],
