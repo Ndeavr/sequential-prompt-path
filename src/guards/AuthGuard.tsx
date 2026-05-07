@@ -29,20 +29,11 @@ export default function AuthGuard({ children, actionLabel }: AuthGuardProps) {
   }, [isAuthenticated, isLoading, timedOut, location, actionLabel]);
 
   if (isLoading && !timedOut) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground text-sm">Chargement…</div>
-      </div>
-    );
+    return <RouteSkeleton />;
   }
 
   if (!isAuthenticated) {
-    // Render nothing — overlay handles the auth UX
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-muted-foreground text-sm">Connexion requise</div>
-      </div>
-    );
+    return <RouteSkeleton label="Connexion requise" />;
   }
 
   return <>{children}</>;

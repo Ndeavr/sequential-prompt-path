@@ -16,11 +16,7 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   const timedOut = useLoadingTimeout(isLoading, 6000, "role_guard");
 
   if (isLoading && !timedOut) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground text-sm">Chargement…</div>
-      </div>
-    );
+    return <RouteSkeleton />;
   }
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
