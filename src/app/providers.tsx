@@ -2,6 +2,7 @@
  * UNPRO — Global Providers
  */
 
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
@@ -11,11 +12,15 @@ import { HelmetProvider } from "react-helmet-async";
 import { AlexVoiceProvider } from "@/contexts/AlexVoiceContext";
 import { ActiveRoleProvider } from "@/contexts/ActiveRoleContext";
 import { LanguageProvider } from "@/components/ui/LanguageToggle";
-import OverlayAlexVoiceFullScreen from "@/components/voice/OverlayAlexVoiceFullScreen";
-import AlexChatFallbackPanel from "@/components/voice/AlexChatFallbackPanel";
-import AlexVoiceDebugPanel from "@/components/voice/AlexVoiceDebugPanel";
 import OverlayHydrationGuard from "@/components/system/OverlayHydrationGuard";
+import DeferredAfterInteractive from "@/components/system/DeferredAfterInteractive";
 import type { ReactNode } from "react";
+
+// Defer heavy voice/chat overlays — they only need to mount after the user
+// becomes interactive. Keeps homepage initial bundle and TBT low.
+const OverlayAlexVoiceFullScreen = lazy(() => import("@/components/voice/OverlayAlexVoiceFullScreen"));
+const AlexChatFallbackPanel = lazy(() => import("@/components/voice/AlexChatFallbackPanel"));
+const AlexVoiceDebugPanel = lazy(() => import("@/components/voice/AlexVoiceDebugPanel"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,9 +48,13 @@ export const Providers = ({ children }: ProvidersProps) => (
                 <Sonner />
                 {children}
                 <OverlayHydrationGuard />
-                <OverlayAlexVoiceFullScreen />
-                <AlexChatFallbackPanel />
-                <AlexVoiceDebugPanel />
+                <DeferredAfterInteractive>
+                  <Suspense fallback={null}>
+                    <OverlayAlexVoiceFullScreen />
+                    <AlexChatFallbackPanel />
+                    <AlexVoiceDebugPanel />
+                  </Suspense>
+                </DeferredAfterInteractive>
               </TooltipProvider>
             </AlexVoiceProvider>
           </ActiveRoleProvider>
