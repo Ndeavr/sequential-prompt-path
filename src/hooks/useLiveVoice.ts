@@ -12,8 +12,10 @@ import { alexVoiceService } from "@/services/alexVoiceService";
 import { logBoot, withTimeout } from "@/lib/bootDebug";
 
 const RECONNECT_COOLDOWN_MS = 5000;
-const CONNECTION_TIMEOUT_MS = 8_000;
-const TOKEN_TIMEOUT_MS = 6_000;
+const CONNECTION_TIMEOUT_MS = 12_000;
+const TOKEN_TIMEOUT_MS = 12_000;
+const MAX_TOKEN_RETRIES = 2; // total attempts = 1 + 2 = 3 before surfacing error
+const RETRY_BACKOFF_MS = 1500;
 
 interface UseLiveVoiceCallbacks {
   onTranscript?: (text: string) => void;
@@ -31,6 +33,8 @@ interface StartOptions {
   firstName?: string | null;
   /** Returning user → "Rebonjour" greeting variant. */
   isReturning?: boolean;
+  /** Surface mode — drives voice tuning + first message + persona addendum. */
+  mode?: import("@/config/alexVoiceConfig").AlexVoiceMode;
 }
 
 // V7: French-only default greeting — never English for opening
