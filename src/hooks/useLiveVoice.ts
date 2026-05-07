@@ -12,8 +12,10 @@ import { alexVoiceService } from "@/services/alexVoiceService";
 import { logBoot, withTimeout } from "@/lib/bootDebug";
 
 const RECONNECT_COOLDOWN_MS = 5000;
-const CONNECTION_TIMEOUT_MS = 8_000;
-const TOKEN_TIMEOUT_MS = 6_000;
+const CONNECTION_TIMEOUT_MS = 12_000;
+const TOKEN_TIMEOUT_MS = 12_000;
+const MAX_TOKEN_RETRIES = 2; // total attempts = 1 + 2 = 3 before surfacing error
+const RETRY_BACKOFF_MS = 1500;
 
 interface UseLiveVoiceCallbacks {
   onTranscript?: (text: string) => void;
@@ -31,6 +33,8 @@ interface StartOptions {
   firstName?: string | null;
   /** Returning user → "Rebonjour" greeting variant. */
   isReturning?: boolean;
+  /** Surface mode — drives voice tuning + first message + persona addendum. */
+  mode?: import("@/config/alexVoiceConfig").AlexVoiceMode;
 }
 
 // V7: French-only default greeting — never English for opening
@@ -112,6 +116,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const languageSessionRef = useRef(new AlexLanguageLockSession());
   const activeLanguageRef = useRef<AlexLanguage>("fr-CA");
   const connectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lockedVoiceIdRef = useRef<string | null>(null);
+  const bootInProgressRef = useRef(false);
 
   const clearConnectionTimeout = useCallback(() => {
     if (connectionTimeoutRef.current) {
@@ -159,10 +165,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       languageSessionRef.current.reset();
       activeLanguageRef.current = "fr-CA";
 
+      // Removed instant-disconnect hard fail — let recovery/retry handle it.
       if (sessionDuration > 0 && sessionDuration < 2000 && !intentionallyStopped.current) {
-        console.error("[ElevenLabs V7] ⚠️ Instant disconnect — likely config issue");
-        callbacksRef.current?.onError?.(new Error("Session disconnected immediately"));
-        return;
+        console.warn("[ElevenLabs V8] Short session — will allow retry");
       }
 
       if (!intentionallyStopped.current) {
@@ -243,14 +248,16 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   }, [conversation, clearConnectionTimeout]);
 
   const start = useCallback(async (options?: StartOptions) => {
-    // V7: If force=true, allow restart even if active/connecting
     const forced = options?.force;
 
+    if (bootInProgressRef.current && !forced) {
+      console.warn("[ElevenLabs V8] Boot already in progress — ignoring");
+      return;
+    }
     if (!forced && (isActive || isConnecting)) return;
 
-    // V7: Aggressive reinitialize — end any existing session first
     if (forced && (isActive || isConnecting)) {
-      console.log("[ElevenLabs V7] Force restart — ending existing session");
+      console.log("[ElevenLabs V8] Force restart — ending existing session");
       try { conversation.endSession(); } catch {}
       setIsActive(false);
       setIsConnecting(false);
@@ -258,11 +265,11 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
 
     const timeSinceLastDisconnect = Date.now() - lastDisconnectAtRef.current;
     if (!forced && lastDisconnectAtRef.current > 0 && timeSinceLastDisconnect < RECONNECT_COOLDOWN_MS) {
-      console.warn(`[ElevenLabs V7] Reconnect blocked — cooldown`);
+      console.warn(`[ElevenLabs V8] Reconnect blocked — cooldown`);
       return;
     }
 
-    // V7: Full state reset for clean session
+    bootInProgressRef.current = true;
     intentionallyStopped.current = false;
     hasDeliveredFirstAudioRef.current = false;
     connectedAtRef.current = 0;
@@ -271,14 +278,12 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     clearConnectionTimeout();
     setIsConnecting(true);
 
+    // ─── Mic + audio unlock (only once across retries) ────────────────────────
     try {
-      console.log("[ElevenLabs V7] Requesting microphone...");
+      console.log("[ElevenLabs V8] Requesting microphone...");
       alexVoiceService.setState("initializing", "start");
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      console.log("[ElevenLabs V7] ✅ Microphone granted");
       alexVoiceService.setMicPermission("granted");
-
-      // Unlock AudioContext (mobile requirement)
       try {
         const Ctx = (window.AudioContext || (window as any).webkitAudioContext);
         if (Ctx) {
@@ -286,90 +291,118 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           if (ctx.state === "suspended") await ctx.resume();
           alexVoiceService.setAudioUnlocked(ctx.state === "running");
         }
-      } catch (e) { console.warn("[ElevenLabs V7] AudioContext resume failed", e); }
-
-      console.log("[ElevenLabs V7] Fetching signed URL...");
-      alexVoiceService.startTokenRequest();
-      logBoot("VOICE_TOKEN_START");
-      let data: any = null;
-      let error: any = null;
-      try {
-        const result = await withTimeout(
-          supabase.functions.invoke("voice-get-signed-url"),
-          TOKEN_TIMEOUT_MS,
-          "voice_signed_url",
-        );
-        data = (result as any)?.data ?? null;
-        error = (result as any)?.error ?? null;
-      } catch (e) {
-        logBoot("VOICE_TOKEN_TIMEOUT", { ms: TOKEN_TIMEOUT_MS });
-        alexVoiceService.setError("Connexion vocale lente. Mode chat activé.", "token_timeout");
-        throw new Error("voice_token_timeout");
-      }
-      const signedUrl = data?.signed_url ?? data?.signedUrl;
-
-      // Detect fallback signal from edge function
-      if (data?.fallback === "chat" || (!signedUrl && !error)) {
-        alexVoiceService.setApiKeyConfigured(false);
-        logBoot("VOICE_TOKEN_FALLBACK", { reason: data?.message });
-        throw new Error(data?.message || "Connexion vocale indisponible. Chat activé.");
-      }
-
-      if (error || !signedUrl) {
-        logBoot("VOICE_TOKEN_ERROR", { error: error?.message });
-        throw new Error(error?.message || "Impossible d'obtenir l'URL de connexion");
-      }
-
-      logBoot("VOICE_TOKEN_OK");
-
-      alexVoiceService.markTokenReceived();
-      alexVoiceService.setApiKeyConfigured(true);
-      alexVoiceService.setState("connecting", "got_signed_url");
-      console.log("[ElevenLabs V7] ✅ Got signed URL");
-
-      // 5s connection timeout — NO retry, instant fallback
-      connectionTimeoutRef.current = setTimeout(() => {
-        console.error(`[ElevenLabs V7] ⏱️ Connection timeout after ${CONNECTION_TIMEOUT_MS}ms — giving up`);
-        setIsConnecting(false);
-        setIsActive(false);
-        try { conversation.endSession(); } catch {}
-        callbacksRef.current?.onError?.(new Error("Connection timeout — voice unavailable"));
-      }, CONNECTION_TIMEOUT_MS);
-
-      // V8: Build premium V2 overrides — system prompt, first message, voice settings
-      const memory = loadAlexMemory();
-      const contextHint = buildMemoryContextHint(memory);
-      const overrides = buildAlexAgentOverrides({
-        firstName: options?.firstName,
-        isReturning: options?.isReturning ?? Boolean(memory),
-        language: "fr",
-        voiceId: (data?.voiceId as string) ?? ALEX_VOICE_DEFAULTS.voiceId,
-        stability: (data?.stability as number) ?? null,
-        similarity: (data?.similarity as number) ?? null,
-        style: (data?.style as number) ?? null,
-        speakerBoost: (data?.speakerBoost as boolean) ?? null,
-        contextHint,
-      });
-
-      console.log("[ElevenLabs V8] Starting session with V2 overrides", {
-        voiceId: overrides.tts.voiceId,
-        firstName: options?.firstName ?? null,
-      });
-
-      await conversation.startSession({
-        signedUrl,
-        connectionType: "websocket",
-        overrides,
-      } as any);
-
-      console.log("[ElevenLabs V8] ✅ Session started with V2 overrides (websocket)");
-    } catch (err: unknown) {
-      clearConnectionTimeout();
-      console.error("[ElevenLabs V7] Failed to start:", err);
+      } catch (e) { console.warn("[ElevenLabs V8] AudioContext resume failed", e); }
+    } catch (micErr) {
+      bootInProgressRef.current = false;
       setIsConnecting(false);
-      callbacksRef.current?.onError?.(err);
+      callbacksRef.current?.onError?.(micErr);
+      return;
     }
-  }, [isActive, isConnecting, conversation, sendAgentContext, clearConnectionTimeout]);
+
+    // ─── Retry chain: silent → ws reinit → fail ───────────────────────────────
+    let lastError: unknown = null;
+    for (let attempt = 0; attempt <= MAX_TOKEN_RETRIES; attempt++) {
+      try {
+        if (attempt > 0) {
+          console.log(`[ElevenLabs V8] Retry attempt ${attempt}/${MAX_TOKEN_RETRIES}`);
+          await new Promise((r) => setTimeout(r, RETRY_BACKOFF_MS));
+          try { conversation.endSession(); } catch {}
+        }
+
+        alexVoiceService.startTokenRequest();
+        logBoot("VOICE_TOKEN_START", { attempt });
+
+        let data: any = null;
+        let error: any = null;
+        try {
+          const result = await withTimeout(
+            supabase.functions.invoke("voice-get-signed-url"),
+            TOKEN_TIMEOUT_MS,
+            "voice_signed_url",
+          );
+          data = (result as any)?.data ?? null;
+          error = (result as any)?.error ?? null;
+        } catch (e) {
+          logBoot("VOICE_TOKEN_TIMEOUT", { ms: TOKEN_TIMEOUT_MS, attempt });
+          throw new Error("voice_token_timeout");
+        }
+
+        const signedUrl = data?.signed_url ?? data?.signedUrl;
+
+        if (data?.fallback === "chat" || (!signedUrl && !error)) {
+          alexVoiceService.setApiKeyConfigured(false);
+          logBoot("VOICE_TOKEN_FALLBACK", { reason: data?.message });
+          throw new Error(data?.message || "voice_unavailable");
+        }
+        if (error || !signedUrl) {
+          logBoot("VOICE_TOKEN_ERROR", { error: error?.message });
+          throw new Error(error?.message || "voice_token_missing");
+        }
+
+        logBoot("VOICE_TOKEN_OK", { attempt });
+        alexVoiceService.markTokenReceived();
+        alexVoiceService.setApiKeyConfigured(true);
+        alexVoiceService.setState("connecting", "got_signed_url");
+
+        connectionTimeoutRef.current = setTimeout(() => {
+          console.error(`[ElevenLabs V8] ⏱️ Connection timeout ${CONNECTION_TIMEOUT_MS}ms`);
+          setIsConnecting(false);
+          setIsActive(false);
+          try { conversation.endSession(); } catch {}
+          callbacksRef.current?.onError?.(new Error("Connection timeout — voice unavailable"));
+        }, CONNECTION_TIMEOUT_MS);
+
+        // Persist voice id across reconnects → identical voice intro→outro
+        const memory = loadAlexMemory();
+        const contextHint = buildMemoryContextHint(memory);
+        const resolvedVoiceId =
+          lockedVoiceIdRef.current
+          ?? (data?.voiceId as string)
+          ?? ALEX_VOICE_DEFAULTS.voiceId;
+        lockedVoiceIdRef.current = resolvedVoiceId;
+
+        const overrides = buildAlexAgentOverrides({
+          firstName: options?.firstName,
+          isReturning: options?.isReturning ?? Boolean(memory),
+          language: "fr",
+          mode: options?.mode ?? "general",
+          voiceId: resolvedVoiceId,
+          stability: (data?.stability as number) ?? null,
+          similarity: (data?.similarity as number) ?? null,
+          style: (data?.style as number) ?? null,
+          speakerBoost: (data?.speakerBoost as boolean) ?? null,
+          contextHint,
+        });
+
+        console.log("[ElevenLabs V8] Starting session", {
+          voiceId: overrides.tts.voiceId,
+          mode: options?.mode ?? "general",
+          attempt,
+        });
+
+        await conversation.startSession({
+          signedUrl,
+          connectionType: "websocket",
+          overrides,
+        } as any);
+
+        console.log("[ElevenLabs V8] ✅ Session started");
+        bootInProgressRef.current = false;
+        return; // success
+      } catch (err) {
+        lastError = err;
+        clearConnectionTimeout();
+        console.warn(`[ElevenLabs V8] Attempt ${attempt} failed:`, err);
+      }
+    }
+
+    // All retries exhausted → surface error to caller
+    bootInProgressRef.current = false;
+    setIsConnecting(false);
+    alexVoiceService.setError("Connexion vocale lente. Mode chat activé.", "retry_exhausted");
+    console.error("[ElevenLabs V8] Failed after retries:", lastError);
+    callbacksRef.current?.onError?.(lastError ?? new Error("voice_unavailable"));
+  }, [isActive, isConnecting, conversation, clearConnectionTimeout]);
 
   const stop = useCallback(() => {
     clearConnectionTimeout();

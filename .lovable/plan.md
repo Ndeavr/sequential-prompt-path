@@ -1,116 +1,88 @@
-# Plan — Chip bleue « Je suis un entrepreneur » + Flow de conversion Alex contractor
+# Alex Voice — Diagnostic + Rebuild Plan
 
-## Partie 1 — Chip bleue sur la home (livraison immédiate)
+## Root causes identified (from logs + code audit)
 
-### 1. `src/components/home/HeroSectionAlexFirst.tsx`
-Au-dessus de la barre de chips existante, ajouter **une chip bleue mise en avant** (style premium, glow bleu, icône maillet/briefcase) :
+1. **Token timeout too aggressive (6s)** in `useLiveVoice.ts` → on cold-start, edge function `voice-get-signed-url` + ElevenLabs handshake exceeds 6s and triggers fallback chat. Logs confirm: `VOICE_TOKEN_TIMEOUT { ms: 6000 }` followed immediately by `Connexion vocale lente. Mode chat activé`.
+2. **Voice consistency**: intro voice differs from rest because ElevenLabs only honors `tts.voiceId` + voice settings overrides if they are explicitly enabled in the agent dashboard. When disabled, intro uses agent's saved voice and the rest can drift if the session reconnects with a different config.
+3. **No retry chain** before fallback (spec asks for: silent retry → ws reinit → session rebuild → only then fallback). Current code does single attempt → fallback.
+4. **Auto-start race**: `OverlayHydrationGuard` watchdog fires `closeVoiceSession` during boot (`hydration_watchdog` warning in logs) then immediately re-opens, killing nascent session.
+5. **No central voice config**: defaults live in `alexAgentOverrides.ts`, edge function reads `voice_configs` table, hooks read `voice-get-config` — three sources of truth, drift possible between intro and reconnect.
+6. **Entrepreneur mode**: no per-context voice tuning — same neutral settings for homeowner and contractor flows.
+7. **No realtime diagnostics** beyond admin-only `AlexVoiceDebugPanel`. No `?alexdebug=true` query trigger, no per-session log table.
 
-- Label : « Je suis un entrepreneur »
-- Style : fond `linear-gradient(135deg, hsl(222 100% 58%), hsl(232 100% 42%))`, texte blanc, halo bleu, légèrement plus grande que les chips grises, full-width centrée sur mobile
-- Icône : `Briefcase` (lucide-react)
-- onClick : `navigate("/contractor-ai-growth")`
-- Ajouter `useNavigate` de react-router-dom
+## What we will build
 
-Placement : juste sous la barre d'input, AVANT la rangée de chips grises. Visible immédiatement sans scroll.
+### 1. Single source of truth — `src/config/alexVoiceConfig.ts`
+- One file exporting `ALEX_VOICE_CONFIG` (voice_id, model_id, voice_settings) + `getVoiceConfigFor(mode)` returning per-mode tuning:
+  - `homeowner`: stability 0.56, similarity 0.84, style 0.14, speed 1.00
+  - `contractor` / `entrepreneur`: stability 0.42, similarity 0.82, style 0.32, speed 1.10 (more energetic)
+  - Voice id locked to `UJCi4DDncuo0VJDSIegj` (Charlotte FR) as today
+- All clients (overrides builder, edge function response merge, recovery) read from here.
+- Replace `ALEX_VOICE_DEFAULTS` in `alexAgentOverrides.ts` with import from this file.
 
-## Partie 2 — Flow Alex Contractor Conversion `/contractor-ai-growth`
+### 2. Fix premature fallback (`useLiveVoice.ts`)
+- Raise `TOKEN_TIMEOUT_MS` from 6s → 12s.
+- Add retry chain inside `start()`:
+  - Attempt 1: silent retry on token failure (1.5s backoff).
+  - Attempt 2: rebuild ElevenLabs session (`endSession()` then re-`startSession`).
+  - Attempt 3: only then surface error to caller (`onError`) and let overlay decide fallback.
+- Remove the immediate "instant disconnect" hard fail at line 162; treat as retry-eligible.
+- Persist `currentVoiceId` ref; if reconnect occurs, force-reuse same `voiceId` (no re-fetch from edge).
 
-### Stratégie de réutilisation
-Plusieurs briques existent déjà (`PageContractorVoiceFirstLanding`, `PageContractorPlanOnboarding`, `PageContractorCheckout`, `useVoiceSales`, `AlexVoiceContext`, `useLiveVoice`, score reveal engine, `EmbeddedStripeCheckout` via Payment Element). On ne reconstruit PAS ces moteurs — on les orchestre dans une nouvelle expérience chat-first cinématique.
+### 3. Auto-start reliability
+- Move auto-start trigger out of `OverlayHydrationGuard` watchdog path — guard must NOT call `closeVoiceSession` during `stabilizing` or `opening_session` states (already partly done; tighten to never close until `first_audio_frame` or 25s real timeout).
+- New hook `useAlexAutoStart(mode)` mounted at page level (Hero, contractor landing) that:
+  - Waits for first user gesture OR 800ms after page idle.
+  - Pre-warms audio context, mic permission, signed URL request in parallel.
+  - Calls `openAlex(feature, hint)` only once per route.
 
-### Route + page
-- Ajouter `/contractor-ai-growth` dans `src/app/router.tsx` → `PageContractorAIGrowth` (lazy)
-- Page racine : `src/pages/contractor-growth/PageContractorAIGrowth.tsx`
-- Composant principal : `src/components/contractor-growth/ContractorGrowthExperience.tsx` (state machine 10 étapes)
+### 4. Entrepreneur mode personality
+- `buildAlexAgentOverrides({ mode: "contractor" })` injects:
+  - Higher-energy first message ("Bonjour. Je suis Alex d'UNPRO. Voyons comment faire évoluer votre entreprise.")
+  - Speed 1.10, style 0.32, stability 0.42.
+  - System prompt section appended: "Tu es conseillère stratégique de croissance. Énergie confiante, optimiste, premium. Pas vendeuse, pas robotique."
+- `useLiveVoice.start({ mode })` plumbs mode through to overrides builder.
 
-### Composants à créer
-Sous `src/components/contractor-growth/` :
-- `ContractorGrowthExperience.tsx` — orchestrateur state machine
-- `StepHeroPainSelection.tsx` — orb + 8 cartes de douleurs (chips premium dark)
-- `StepAlexConversation.tsx` — chat full-screen, démarre voix Alex automatiquement (réutilise `useAlexVoice` / `useLiveVoice`)
-- `DynamicQuestionCards.tsx` — max 5 questions adaptatives (estimates/sem, métier, région autocomplete, frustration, ambition)
-- `StepLiveAnalysis.tsx` — orb cinématique + 6 textes rotatifs sur 4-8s (Framer Motion)
-- `StepScoreReveal.tsx` — réutilise `useScoreRevealEngine` ; affiche AI Visibility 42/100, Conversion 78/100, Missed Revenue $/an, Territory Competition
-- `StepPlanRecommendation.tsx` — 1 seul plan (carte glass) calculé via `usePlanCatalog` + `useAppointmentPricing`
-- `StepObjectionHandling.tsx` — bulles Alex pré-objections
-- `StepEmbeddedCheckout.tsx` — Stripe Payment Element inline (réutilise pattern `PageContractorCheckout` + edge `create-checkout`)
-- `StepActivationSequence.tsx` — checklist animée 7 lignes (✔ creating profile, ✔ AIPP, ✔ territory, ...)
-- `StepSuccessState.tsx` — Profile Activated + 3 CTA (Dashboard, Compléter AIPP, Importer données)
+### 5. Diagnostics
+- New page-level component `AlexVoiceDiagnosticsPanel` shown when URL contains `?alexdebug=true` (any user, no auth gate). Fields: mic, audio context, websocket, EL connection, transcript status, voice_id, model_id, playback state, buffer health, reconnect count, startup duration ms, latency, fallback triggers, active session id.
+- New table `alex_voice_logs` (migration): id, session_id, user_id, page, voice_id, model_id, startup_status, websocket_status, error_message, fallback_triggered, reconnect_attempts, latency_ms, created_at. RLS: insert open, select admin-only.
+- New edge function `alex-voice-log` writing to that table; called from `useLiveVoice` at key lifecycle events.
 
-### State machine
-Hook `useContractorGrowthFlow` (`src/hooks/useContractorGrowthFlow.ts`) :
-```
-hero → conversation → questions(1..5) → analyzing → score 
-  → plan → objections → checkout → activating → success
-```
-Persister la progression dans `sessionStorage` pour reprise.
+### 6. UI polish — kill ugly fallback banner
+- Replace red error banner in overlay with subtle pulse label near orb: "Connexion…", "Reconnexion…", "Optimisation audio…". Only show "Mode chat" toggle after retry chain truly exhausted (≥3 failures).
 
-### Backend
+### 7. Stream / mobile hardening
+- In `useLiveVoice`, guard against duplicate `startSession` calls with a `bootInProgressRef` lock.
+- On Android: ensure AudioContext resume happens inside the user-gesture handler (already present in `useGlobalAudioUnlock` — verify it runs before any voice page mount and reuse the singleton ctx instead of creating a new one in `start()`).
 
-**Migration SQL** :
-```sql
-create table public.contractor_activation_events (
-  id uuid primary key default gen_random_uuid(),
-  contractor_id uuid references public.contractors(id),
-  user_id uuid references auth.users(id),
-  company_name text,
-  email text,
-  phone text,
-  selected_plan text,
-  territory text,
-  trade text,
-  monthly_value numeric,
-  stripe_customer_id text,
-  stripe_session_id text,
-  payment_status text default 'pending',
-  activation_status text default 'pending',
-  created_at timestamptz default now(),
-  activated_at timestamptz
-);
-alter table public.contractor_activation_events enable row level security;
-create policy "owner reads own activation" on public.contractor_activation_events
-  for select using (auth.uid() = user_id);
-create policy "service writes" on public.contractor_activation_events
-  for insert with check (true);
--- Realtime
-alter publication supabase_realtime add table public.contractor_activation_events;
-```
+### 8. Centralized services (light refactor, no big rewrite)
+Create thin wrappers re-exporting existing logic so future work has clean entry points:
+- `AlexVoiceEngine` → wraps `useLiveVoice`
+- `AlexVoiceSessionManager` → wraps `alexVoiceLockedStore`
+- `AlexVoiceDiagnostics` → new
+- `AlexVoiceRecoveryManager` → wraps `useAlexVoiceRecovery` + new retry chain
+- `AlexVoiceConfig` → the new config module from step 1
 
-**Edge functions** :
-- `contractor-growth-checkout` — crée Stripe Checkout Session (Payment Element, plan dynamique, mode subscription), insère `contractor_activation_events` avec `payment_status='pending'`
-- `contractor-growth-activate` — appelée après confirmation Stripe : crée/active row `contractors`, AIPP profile, attache territoire ; met à jour `activation_status='activated'`
-- `contractor-growth-notify-admin` — envoie email admin (via `send-transactional-email` existant) + insère notification in-app + broadcast realtime
+## Files touched
 
-Tous avec `verify_jwt = false` (checkout côté guest possible) + ajout `supabase/config.toml`.
+- create `src/config/alexVoiceConfig.ts`
+- create `src/hooks/useAlexAutoStart.ts`
+- create `src/components/voice/AlexVoiceDiagnosticsPanel.tsx`
+- create `supabase/functions/alex-voice-log/index.ts`
+- migration: `alex_voice_logs` table + RLS
+- edit `src/features/alex/voice/alexAgentOverrides.ts` (read from new config, accept `mode`)
+- edit `src/hooks/useLiveVoice.ts` (retry chain, longer timeout, reuse voice id, mode plumbing, no instant-disconnect fail)
+- edit `src/components/voice/OverlayAlexVoiceFullScreen.tsx` (subtle pulse states, kill big error banner, plumb mode)
+- edit `src/components/system/OverlayHydrationGuard.tsx` (don't close during boot states)
+- edit `src/pages/contractor-growth/PageContractorAIGrowth.tsx` (pass `mode: "contractor"`)
+- mount `AlexVoiceDiagnosticsPanel` once in `src/app/providers.tsx` behind `?alexdebug=true`
 
-### Voix Alex
-- Verrouillée FR, voice id `UJCi4DDncuo0VJDSIegj` (per memory: contractor master message)
-- Auto-start à l'entrée de l'étape `conversation` via `openVoice("contractor_growth", contextHint)`
-- Phase context envoyée à l'agent ElevenLabs via `sendContextualUpdate` à chaque transition
+## Out of scope
+- ElevenLabs dashboard config (overrides toggles must be enabled there by you — I'll surface a warning in diagnostics if voice_id override is silently ignored).
+- Rebuilding the locked-store machine (it works; only the watchdog timing is adjusted).
 
-### UX / Performance
-- Mobile-first, dark premium #060B14, glassmorphism, halos bleus
-- Framer Motion pour orb breathing, reveals, transitions
-- Lazy load des étapes lourdes (analysis, checkout)
-- Tous les états : loading / thinking / success / failed payment / retry / timeout / network / abandoned / returning
-
-### Analytics
-- Tracker chaque transition via `trackFunnelEvent` (déjà existant) avec funnel = `contractor_growth`
-- Hot leads exposés dans `/admin/sales-command-center` existant
-
-## Critères de succès
-- Chip bleue visible sur `/` sans scroll, navigue vers `/contractor-ai-growth`
-- Un entrepreneur peut : landing → choisir douleur → parler à Alex (voix) → 5 questions max → analyse cinématique → score → plan recommandé → checkout Stripe inline → activation animée → success — tout dans la même expérience, sans redirection externe
-- Admin reçoit notification email + in-app + realtime sur paiement réussi
-- Profil contractor + AIPP créés automatiquement
-- Aucune régression sur les routes `/entrepreneur/*` existantes
-
-## Tâches (ordre d'exécution)
-1. Ajouter chip bleue `HeroSectionAlexFirst.tsx`
-2. Migration `contractor_activation_events` + RLS + realtime
-3. Edge functions `contractor-growth-checkout` / `-activate` / `-notify-admin` + `config.toml`
-4. Hook `useContractorGrowthFlow`
-5. Composants `ContractorGrowthExperience` + 10 steps
-6. Page + route `/contractor-ai-growth`
-7. Branchement voix Alex contractor (UJCi4DDncuo0VJDSIegj, FR)
-8. Test E2E mobile + desktop, états d'erreur, retry paiement
+## Success checks
+- Reload `/contractor-ai-growth` 5×: voice starts every time within 2.5s, no fallback banner.
+- Same `voice_id` logged in `alex_voice_logs` for intro and subsequent turns of one session.
+- `?alexdebug=true` shows live state.
+- Token slow (>2s) shows "Connexion d'Alex…" pulse, NOT the fallback box.

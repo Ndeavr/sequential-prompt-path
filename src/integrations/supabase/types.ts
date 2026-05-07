@@ -7924,6 +7924,60 @@ export type Database = {
           },
         ]
       }
+      alex_voice_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          fallback_triggered: boolean | null
+          id: string
+          latency_ms: number | null
+          metadata: Json | null
+          mode: string | null
+          model_id: string | null
+          page: string | null
+          reconnect_attempts: number | null
+          session_id: string | null
+          startup_status: string | null
+          user_id: string | null
+          voice_id: string | null
+          websocket_status: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          fallback_triggered?: boolean | null
+          id?: string
+          latency_ms?: number | null
+          metadata?: Json | null
+          mode?: string | null
+          model_id?: string | null
+          page?: string | null
+          reconnect_attempts?: number | null
+          session_id?: string | null
+          startup_status?: string | null
+          user_id?: string | null
+          voice_id?: string | null
+          websocket_status?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          fallback_triggered?: boolean | null
+          id?: string
+          latency_ms?: number | null
+          metadata?: Json | null
+          mode?: string | null
+          model_id?: string | null
+          page?: string | null
+          reconnect_attempts?: number | null
+          session_id?: string | null
+          startup_status?: string | null
+          user_id?: string | null
+          voice_id?: string | null
+          websocket_status?: string | null
+        }
+        Relationships: []
+      }
       alex_voice_output_filters: {
         Row: {
           action_type: string | null
