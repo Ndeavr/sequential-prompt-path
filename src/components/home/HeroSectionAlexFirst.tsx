@@ -48,6 +48,13 @@ export default function HeroSectionAlexFirst() {
   const [input, setInput] = useState("");
   const [mountVideo, setMountVideo] = useState(false);
   const interactedRef = useRef(false);
+  const { openAlex: openVoice } = useAlexVoice();
+
+  const startVoice = useCallback(() => {
+    interactedRef.current = true;
+    const hint = input.trim() || undefined;
+    openVoice("homepage_hero", hint);
+  }, [input, openVoice]);
 
   // Defer heavy bg video until idle — poster (WebP, ~106KB) carries LCP
   useEffect(() => {
