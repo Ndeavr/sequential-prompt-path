@@ -181,8 +181,8 @@ export default function HeroSectionAlexFirst() {
           {/* ── Alex Orb (96px, breathing) ── */}
           <button
             type="button"
-            onClick={() => openAlex()}
-            aria-label="Parler à Alex"
+            onClick={startVoice}
+            aria-label="Démarrer la conversation vocale avec Alex"
             data-testid="alex-orb-button"
             className="relative flex items-center justify-center group focus:outline-none"
             style={{ width: 150, height: 150 }}
