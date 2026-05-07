@@ -105,6 +105,15 @@ export default function AuthCallbackPage() {
       authDebug.set({ auth_step: "session_resolved", provider: user.app_metadata?.provider ?? null });
       authDebug.setSession({ id: user.id, email: user.email });
 
+      // Honor explicit ?next= override (e.g. private slug magic link → /partenaire/dashboard)
+      const nextParam = new URLSearchParams(window.location.search).get("next");
+      if (nextParam && /^\/[^/]/.test(nextParam) && !/^\/(login|signup|auth\/callback)\b/.test(nextParam)) {
+        setState("redirecting");
+        authDebug.set({ auth_step: "redirecting", redirect_target: nextParam });
+        navigate(nextParam, { replace: true });
+        return;
+      }
+
       // Check if profile exists
       setState("creating_profile");
       authDebug.set({ auth_step: "creating_profile" });

@@ -206,6 +206,18 @@ export default function AuthReturnRouter() {
       else if (roleList.includes("condo_manager")) primaryRole = "condo_manager";
       else primaryRole = roleList[0] ?? null;
 
+      // 3b) Partner safety net — approved partner row routes straight to dashboard
+      let isApprovedPartner = false;
+      try {
+        const { data: pr } = await supabase
+          .from("partners" as any)
+          .select("partner_status, partner_application_status")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        const p = pr as any;
+        isApprovedPartner = !!p && p.partner_application_status === "approved" && p.partner_status !== "suspended";
+      } catch { /* noop */ }
+
       // 4) /auth/callback handles its own routing
       if (here === "/auth/callback") return;
 
@@ -213,6 +225,13 @@ export default function AuthReturnRouter() {
       if (intent?.returnPath && !/^\/(login|signup|auth\/callback)\b/.test(intent.returnPath)) {
         console.log("[AuthReturnRouter] -> intent path", intent.returnPath);
         navigate(intent.returnPath, { replace: true });
+        return;
+      }
+
+      // 5b) Approved partner without intent → partner dashboard
+      if (isApprovedPartner) {
+        console.log("[AuthReturnRouter] -> /partenaire/dashboard (approved partner)");
+        navigate("/partenaire/dashboard", { replace: true });
         return;
       }
 

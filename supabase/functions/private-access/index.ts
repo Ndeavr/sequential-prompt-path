@@ -103,10 +103,16 @@ Deno.serve(async (req) => {
       await admin.from("private_access_attempts").insert({ slug, ip, success: ok });
       if (!ok) return new Response(JSON.stringify({ error: "invalid" }), { status: 401, headers: corsHeaders });
 
+      // Use the caller's origin so the magic link returns to the same app/domain
+      // (unpro.ca, lovable.app preview, or sandbox). Fallback only if missing.
+      const callerOrigin = (body.origin && /^https?:\/\//.test(String(body.origin)))
+        ? String(body.origin).replace(/\/$/, "")
+        : (req.headers.get("origin") || req.headers.get("referer") || "https://unpro.ca");
+      const redirectTo = `${callerOrigin}/auth/callback?next=${encodeURIComponent("/partenaire/dashboard")}`;
       const { data: link, error: le } = await admin.auth.admin.generateLink({
         type: "magiclink",
         email: row.partner_email,
-        options: { redirectTo: `${new URL(req.url).origin.replace("supabase.co", "lovable.app")}/partenaire/dashboard` },
+        options: { redirectTo },
       });
       if (le) throw le;
 
