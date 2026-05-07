@@ -16,6 +16,7 @@ import { saveNavigationContext, trackNavigation } from "@/services/navigation/jo
 import { getDefaultRedirectForRole, saveAuthIntent } from "@/services/auth/authIntentService";
 import { saveReturnPath } from "@/lib/authReturn";
 import RouteTransitionLoader from "@/components/navigation/RouteTransitionLoader";
+import RouteSkeleton from "@/components/loaders/RouteSkeleton";
 import { useEffect, useRef } from "react";
 
 interface UniversalRouteGuardProps {
@@ -40,7 +41,7 @@ export default function UniversalRouteGuard({ children, allowedRoles, anyAuth }:
   }, [isLoading, location.pathname]);
 
   if (isLoading) {
-    return <RouteTransitionLoader />;
+    return <RouteSkeleton />;
   }
 
   // ── Auth check ──

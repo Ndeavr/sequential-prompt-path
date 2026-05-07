@@ -32,30 +32,21 @@ export const useAuth = () => {
     if (ensuredProfiles.has(session.user.id)) return;
     ensuredProfiles.add(session.user.id);
 
-    let cancelled = false;
-    const ensureProfile = async () => {
-      const { data: profile, error: fetchError } = await supabase
-        .from("profiles")
-        .select("id,user_id")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-
-      if (cancelled || profile || fetchError) {
-        if (fetchError) console.error("[useAuth] profile fetch error", fetchError);
-        return;
-      }
-
-      const { error: insertError } = await supabase.from("profiles").insert({
-        user_id: session.user.id,
-        email: session.user.email ?? null,
-        phone: session.user.phone ?? null,
-        full_name: session.user.user_metadata?.full_name ?? null,
-      } as any);
-      if (insertError) console.error("[useAuth] profile auto-create error", insertError);
-    };
-
-    ensureProfile();
-    return () => { cancelled = true; };
+    // Fire-and-forget upsert; never blocks render or races useProfile.
+    supabase
+      .from("profiles")
+      .upsert(
+        {
+          user_id: session.user.id,
+          email: session.user.email ?? null,
+          phone: session.user.phone ?? null,
+          full_name: session.user.user_metadata?.full_name ?? null,
+        } as any,
+        { onConflict: "user_id", ignoreDuplicates: true },
+      )
+      .then(({ error }) => {
+        if (error) console.warn("[useAuth] profile upsert", error.message);
+      });
   }, [session?.user?.id]);
 
   const roleQuery = useQuery({
