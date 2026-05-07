@@ -14347,6 +14347,128 @@ export type Database = {
         }
         Relationships: []
       }
+      campaign_contacts: {
+        Row: {
+          book_url_clicked: boolean
+          company_name: string
+          created_at: string
+          current_day: string
+          day_0_email_opened_at: string | null
+          day_0_email_sent_at: string | null
+          day_0_sms_delivered_at: string | null
+          day_0_sms_sent_at: string | null
+          day_2_email_opened_at: string | null
+          day_2_email_sent_at: string | null
+          day_2_sms_sent_at: string | null
+          day_5_email_sent_at: string | null
+          day_5_sms_sent_at: string | null
+          email: string | null
+          failure_count: number
+          id: string
+          link_clicked_at: string | null
+          link_clicked_url: string | null
+          lost_revenue_monthly: number | null
+          notes: string | null
+          opted_out: boolean
+          opted_out_at: string | null
+          phone: string | null
+          prospect_id: string | null
+          reply_channel: string | null
+          reply_preview: string | null
+          reply_received_at: string | null
+          scheduled_next_at: string | null
+          score: number | null
+          score_page_clicked: boolean
+          segment: string
+          sequence_completed_at: string | null
+          sequence_started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          book_url_clicked?: boolean
+          company_name: string
+          created_at?: string
+          current_day?: string
+          day_0_email_opened_at?: string | null
+          day_0_email_sent_at?: string | null
+          day_0_sms_delivered_at?: string | null
+          day_0_sms_sent_at?: string | null
+          day_2_email_opened_at?: string | null
+          day_2_email_sent_at?: string | null
+          day_2_sms_sent_at?: string | null
+          day_5_email_sent_at?: string | null
+          day_5_sms_sent_at?: string | null
+          email?: string | null
+          failure_count?: number
+          id?: string
+          link_clicked_at?: string | null
+          link_clicked_url?: string | null
+          lost_revenue_monthly?: number | null
+          notes?: string | null
+          opted_out?: boolean
+          opted_out_at?: string | null
+          phone?: string | null
+          prospect_id?: string | null
+          reply_channel?: string | null
+          reply_preview?: string | null
+          reply_received_at?: string | null
+          scheduled_next_at?: string | null
+          score?: number | null
+          score_page_clicked?: boolean
+          segment: string
+          sequence_completed_at?: string | null
+          sequence_started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          book_url_clicked?: boolean
+          company_name?: string
+          created_at?: string
+          current_day?: string
+          day_0_email_opened_at?: string | null
+          day_0_email_sent_at?: string | null
+          day_0_sms_delivered_at?: string | null
+          day_0_sms_sent_at?: string | null
+          day_2_email_opened_at?: string | null
+          day_2_email_sent_at?: string | null
+          day_2_sms_sent_at?: string | null
+          day_5_email_sent_at?: string | null
+          day_5_sms_sent_at?: string | null
+          email?: string | null
+          failure_count?: number
+          id?: string
+          link_clicked_at?: string | null
+          link_clicked_url?: string | null
+          lost_revenue_monthly?: number | null
+          notes?: string | null
+          opted_out?: boolean
+          opted_out_at?: string | null
+          phone?: string | null
+          prospect_id?: string | null
+          reply_channel?: string | null
+          reply_preview?: string | null
+          reply_received_at?: string | null
+          scheduled_next_at?: string | null
+          score?: number | null
+          score_page_clicked?: boolean
+          segment?: string
+          sequence_completed_at?: string | null
+          sequence_started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_contacts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_generations: {
         Row: {
           auto_campaign_id: string
@@ -14381,6 +14503,148 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      campaign_hot_leads: {
+        Row: {
+          assigned_to: string | null
+          campaign_contact_id: string | null
+          company_name: string
+          created_at: string
+          email: string | null
+          id: string
+          notes: string | null
+          phone: string | null
+          replied_at: string
+          reply_channel: string | null
+          reply_text: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          campaign_contact_id?: string | null
+          company_name: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          replied_at?: string
+          reply_channel?: string | null
+          reply_text?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          campaign_contact_id?: string | null
+          company_name?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          replied_at?: string
+          reply_channel?: string | null
+          reply_text?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_hot_leads_campaign_contact_id_fkey"
+            columns: ["campaign_contact_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_send_log: {
+        Row: {
+          campaign_contact_id: string | null
+          channel: string
+          company_name: string | null
+          day: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          provider_id: string | null
+          sent_at: string
+          status: string
+        }
+        Insert: {
+          campaign_contact_id?: string | null
+          channel: string
+          company_name?: string | null
+          day: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          provider_id?: string | null
+          sent_at?: string
+          status: string
+        }
+        Update: {
+          campaign_contact_id?: string | null
+          channel?: string
+          company_name?: string | null
+          day?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          provider_id?: string | null
+          sent_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_send_log_campaign_contact_id_fkey"
+            columns: ["campaign_contact_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_settings: {
+        Row: {
+          daily_email_cap: number
+          daily_sms_cap: number
+          id: number
+          max_failures_before_stop: number
+          paused_globally: boolean
+          send_on_sunday: boolean
+          send_window_end: string
+          send_window_start: string
+          slack_webhook_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          daily_email_cap?: number
+          daily_sms_cap?: number
+          id?: number
+          max_failures_before_stop?: number
+          paused_globally?: boolean
+          send_on_sunday?: boolean
+          send_window_end?: string
+          send_window_start?: string
+          slack_webhook_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          daily_email_cap?: number
+          daily_sms_cap?: number
+          id?: number
+          max_failures_before_stop?: number
+          paused_globally?: boolean
+          send_on_sunday?: boolean
+          send_window_end?: string
+          send_window_start?: string
+          slack_webhook_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       campaign_templates_ai: {
         Row: {
@@ -23261,6 +23525,7 @@ export type Database = {
           activation_status: string
           address: string | null
           aipp_score: number | null
+          avg_job_value_cad: number | null
           business_name: string
           category_slug: string | null
           city: string | null
@@ -23288,6 +23553,8 @@ export type Database = {
           qualification_status: string
           raw_data: Json | null
           rbq: string | null
+          rbq_license: string | null
+          rbq_verified: boolean | null
           region: string | null
           review_count: number | null
           review_rating: number | null
@@ -23296,6 +23563,7 @@ export type Database = {
           source_record_id: string | null
           source_url: string | null
           trade: string | null
+          trade_category: Database["public"]["Enums"]["exterior_trade"] | null
           updated_at: string
           website_url: string | null
         }
@@ -23303,6 +23571,7 @@ export type Database = {
           activation_status?: string
           address?: string | null
           aipp_score?: number | null
+          avg_job_value_cad?: number | null
           business_name: string
           category_slug?: string | null
           city?: string | null
@@ -23330,6 +23599,8 @@ export type Database = {
           qualification_status?: string
           raw_data?: Json | null
           rbq?: string | null
+          rbq_license?: string | null
+          rbq_verified?: boolean | null
           region?: string | null
           review_count?: number | null
           review_rating?: number | null
@@ -23338,6 +23609,7 @@ export type Database = {
           source_record_id?: string | null
           source_url?: string | null
           trade?: string | null
+          trade_category?: Database["public"]["Enums"]["exterior_trade"] | null
           updated_at?: string
           website_url?: string | null
         }
@@ -23345,6 +23617,7 @@ export type Database = {
           activation_status?: string
           address?: string | null
           aipp_score?: number | null
+          avg_job_value_cad?: number | null
           business_name?: string
           category_slug?: string | null
           city?: string | null
@@ -23372,6 +23645,8 @@ export type Database = {
           qualification_status?: string
           raw_data?: Json | null
           rbq?: string | null
+          rbq_license?: string | null
+          rbq_verified?: boolean | null
           region?: string | null
           review_count?: number | null
           review_rating?: number | null
@@ -23380,6 +23655,7 @@ export type Database = {
           source_record_id?: string | null
           source_url?: string | null
           trade?: string | null
+          trade_category?: Database["public"]["Enums"]["exterior_trade"] | null
           updated_at?: string
           website_url?: string | null
         }
@@ -63683,6 +63959,17 @@ export type Database = {
         | "possible_duplicate"
         | "ambiguous_shared_identity"
         | "suspicious_low_confidence"
+      exterior_trade:
+        | "roofing"
+        | "pavers"
+        | "asphalt"
+        | "landscaping"
+        | "snow_removal"
+        | "fences"
+        | "decks"
+        | "foundation"
+        | "gutters"
+        | "exterior_painting"
       identity_coherence:
         | "strong"
         | "moderate"
@@ -63921,6 +64208,18 @@ export const Constants = {
         "possible_duplicate",
         "ambiguous_shared_identity",
         "suspicious_low_confidence",
+      ],
+      exterior_trade: [
+        "roofing",
+        "pavers",
+        "asphalt",
+        "landscaping",
+        "snow_removal",
+        "fences",
+        "decks",
+        "foundation",
+        "gutters",
+        "exterior_painting",
       ],
       identity_coherence: [
         "strong",
