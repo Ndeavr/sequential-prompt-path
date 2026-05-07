@@ -40,6 +40,14 @@ const MAX_AUTO_RETRIES = 2; // 1 boot + 2 silent = 3 attempts → fallback chat
 // Helper to always get fresh state
 const getStore = () => useAlexVoiceLockedStore.getState();
 
+function deriveMode(feature: string | undefined): "homeowner" | "contractor" | "condo_manager" | "general" {
+  const f = (feature || "").toLowerCase();
+  if (f.includes("contractor") || f.includes("entrepreneur") || f.includes("pro_")) return "contractor";
+  if (f.includes("condo") || f.includes("manager")) return "condo_manager";
+  if (f.includes("homeowner") || f.includes("owner")) return "homeowner";
+  return "general";
+}
+
 export default function OverlayAlexVoiceFullScreen() {
   const store = useAlexVoiceLockedStore();
   const { user } = useAuth();
@@ -320,7 +328,7 @@ export default function OverlayAlexVoiceFullScreen() {
             if (!getStore().isOverlayOpen) return;
             hasConnectedRef.current = false;
             firstAudioReceivedRef.current = false;
-            startRef.current({ initialGreeting: buildGreetingRef.current(), force: true })
+            startRef.current({ initialGreeting: buildGreetingRef.current(), force: true, mode: deriveMode(getStore().feature) })
               .then(() => {
                 bootTimeRef.current = Date.now();
                 armFirstAudioTimer();
@@ -377,7 +385,7 @@ export default function OverlayAlexVoiceFullScreen() {
         setBootStep("connecting");
         const greeting = buildGreetingRef.current();
         console.log("[ALEX VOICE] Starting session, greeting:", greeting);
-        await startRef.current({ initialGreeting: greeting });
+        await startRef.current({ initialGreeting: greeting, mode: deriveMode(getStore().feature) });
 
         // After await: check session still owns the runtime + overlay open
         if (!getStore().isOverlayOpen) return;
