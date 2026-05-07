@@ -9,6 +9,7 @@
  */
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Mic, Camera, ArrowUp, ShieldCheck, Sparkles, Bot, MapPin } from "lucide-react";
+import { listIntents, HERO_CHIP_INTENTS, type AlexIntent } from "@/services/alexIntentRouter";
 
 const AlexAssistantSheet = lazy(() => import("@/components/alex/AlexAssistantSheet"));
 const UploadPhotoModal = lazy(() => import("@/components/home/UploadPhotoModal"));
@@ -17,14 +18,7 @@ const cinematicBgPoster = "/images/hero-bg.webp";
 const cinematicBgMp4 = "/images/hero-bg.mp4";
 const cinematicBgWebm = "/images/hero-bg.webm";
 
-const CHIPS: Array<{ label: string; preset: string }> = [
-  { label: "Estimer un projet",        preset: "J'aimerais estimer un projet." },
-  { label: "Vérifier un entrepreneur", preset: "Je veux vérifier un entrepreneur." },
-  { label: "Comparer 3 soumissions",   preset: "J'ai des soumissions à comparer." },
-  { label: "Problème urgent",          preset: "J'ai un problème urgent à la maison." },
-  { label: "Téléverser une photo",     preset: "" },
-  { label: "Je ne sais pas",           preset: "Je ne sais pas par où commencer." },
-];
+const CHIPS: AlexIntent[] = listIntents(HERO_CHIP_INTENTS);
 
 const TRUST = [
   { icon: ShieldCheck, label: "Entrepreneurs vérifiés" },
@@ -57,8 +51,8 @@ export default function HeroSectionAlexFirst() {
     setTextSheetOpen(true);
   }, []);
 
-  const onChipClick = useCallback((chip: { label: string; preset: string }) => {
-    if (chip.label === "Téléverser une photo") {
+  const onChipClick = useCallback((chip: AlexIntent) => {
+    if (chip.id === "upload_photo") {
       setUploadModalOpen(true);
       return;
     }
@@ -255,7 +249,7 @@ export default function HeroSectionAlexFirst() {
           <div className="flex flex-wrap justify-center gap-2 max-w-lg">
             {CHIPS.map((chip) => (
               <button
-                key={chip.label}
+                key={chip.id}
                 type="button"
                 onClick={() => onChipClick(chip)}
                 className="text-xs sm:text-[13px] font-medium px-3.5 py-2 rounded-full text-white/70 hover:text-white transition-all hover:scale-[1.02] active:scale-95"
