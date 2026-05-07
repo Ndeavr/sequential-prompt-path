@@ -21,6 +21,7 @@ import type { ReactNode } from "react";
 const OverlayAlexVoiceFullScreen = lazy(() => import("@/components/voice/OverlayAlexVoiceFullScreen"));
 const AlexChatFallbackPanel = lazy(() => import("@/components/voice/AlexChatFallbackPanel"));
 const AlexVoiceDebugPanel = lazy(() => import("@/components/voice/AlexVoiceDebugPanel"));
+const AlexVoiceDiagnosticsPanel = lazy(() => import("@/components/voice/AlexVoiceDiagnosticsPanel"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -53,6 +54,7 @@ export const Providers = ({ children }: ProvidersProps) => (
                     <OverlayAlexVoiceFullScreen />
                     <AlexChatFallbackPanel />
                     <AlexVoiceDebugPanel />
+                    <AlexVoiceDiagnosticsPanel />
                   </Suspense>
                 </DeferredAfterInteractive>
               </TooltipProvider>
