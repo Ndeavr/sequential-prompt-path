@@ -8,8 +8,21 @@
  * - Dark premium theme preserved (blue aura, glassmorphism)
  */
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { Mic, Camera, ArrowUp, ShieldCheck, Sparkles, Bot, MapPin } from "lucide-react";
-import { listIntents, HERO_CHIP_INTENTS, type AlexIntent } from "@/services/alexIntentRouter";
+import {
+  Mic, Camera, ShieldCheck, Sparkles, MapPin,
+  Calculator, ShieldAlert, FileText, AlertTriangle, HelpCircle, UserCheck,
+} from "lucide-react";
+import { listIntents, HERO_CHIP_INTENTS, type AlexIntent, type AlexIntentId } from "@/services/alexIntentRouter";
+
+const CHIP_ICONS: Record<AlexIntentId, typeof Calculator> = {
+  project_estimate:   Calculator,
+  verify_contractor:  ShieldAlert,
+  quote_compare:      FileText,
+  urgent_problem:     AlertTriangle,
+  upload_photo:       Camera,
+  unsure:             HelpCircle,
+  talk_to_alex:       Mic,
+};
 
 const AlexAssistantSheet = lazy(() => import("@/components/alex/AlexAssistantSheet"));
 const UploadPhotoModal = lazy(() => import("@/components/home/UploadPhotoModal"));
