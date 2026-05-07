@@ -22,7 +22,7 @@ export default defineConfig(({ mode }: { mode: string }) => ({
     },
   },
   build: {
-    minify: "esbuild",
+    minify: "esbuild" as const,
     cssMinify: true,
     target: "es2020",
     rollupOptions: {
