@@ -19,7 +19,9 @@ import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, Camera, FileSearch, S
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 import UploadPhotoModal from "@/components/home/UploadPhotoModal";
 
-const cinematicBg = "/images/hero-bg.gif";
+const cinematicBgPoster = "/images/hero-bg.webp";
+const cinematicBgMp4 = "/images/hero-bg.mp4";
+const cinematicBgWebm = "/images/hero-bg.webm";
 
 type IntentSlug = "probleme" | "projet" | "avis";
 type StagePhase = "arrival" | "dissolve" | "presence" | "connecting" | "speaking" | "ready";
