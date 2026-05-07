@@ -42505,6 +42505,47 @@ export type Database = {
           },
         ]
       }
+      partner_call_assignments: {
+        Row: {
+          called_at: string | null
+          created_at: string
+          id: string
+          lead_id: string
+          notes: string | null
+          partner_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          called_at?: string | null
+          created_at?: string
+          id?: string
+          lead_id: string
+          notes?: string | null
+          partner_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          called_at?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string
+          notes?: string | null
+          partner_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_call_assignments_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "entrepreneur_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_commissions: {
         Row: {
           amount: number
@@ -44801,6 +44842,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      private_access_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          ip: string | null
+          slug: string
+          success: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip?: string | null
+          slug: string
+          success: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip?: string | null
+          slug?: string
+          success?: boolean
+        }
+        Relationships: []
+      }
+      private_access_slugs: {
+        Row: {
+          code_hash: string | null
+          created_at: string
+          last_unlock_at: string | null
+          partner_email: string
+          partner_user_id: string | null
+          slug: string
+          unlock_count: number
+        }
+        Insert: {
+          code_hash?: string | null
+          created_at?: string
+          last_unlock_at?: string | null
+          partner_email: string
+          partner_user_id?: string | null
+          slug: string
+          unlock_count?: number
+        }
+        Update: {
+          code_hash?: string | null
+          created_at?: string
+          last_unlock_at?: string | null
+          partner_email?: string
+          partner_user_id?: string | null
+          slug?: string
+          unlock_count?: number
+        }
+        Relationships: []
       }
       pro_landing_views: {
         Row: {
