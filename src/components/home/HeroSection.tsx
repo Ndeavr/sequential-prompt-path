@@ -19,7 +19,9 @@ import { Mic, Volume2, Loader2, Keyboard, Square, VolumeX, Camera, FileSearch, S
 import AlexAssistantSheet from "@/components/alex/AlexAssistantSheet";
 import UploadPhotoModal from "@/components/home/UploadPhotoModal";
 
-const cinematicBg = "/images/hero-bg.gif";
+const cinematicBgPoster = "/images/hero-bg.webp";
+const cinematicBgMp4 = "/images/hero-bg.mp4";
+const cinematicBgWebm = "/images/hero-bg.webm";
 
 type IntentSlug = "probleme" | "projet" | "avis";
 type StagePhase = "arrival" | "dissolve" | "presence" | "connecting" | "speaking" | "ready";
@@ -306,7 +308,21 @@ export default function HeroSection() {
           animate={{ scale: [1, 1.04, 1] }}
           transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
         >
-          <img src={cinematicBg} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} />
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster={cinematicBgPoster}
+            aria-hidden="true"
+            width={1920}
+            height={1080}
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src={cinematicBgWebm} type="video/webm" />
+            <source src={cinematicBgMp4} type="video/mp4" />
+          </video>
         </motion.div>
 
         {/* ── Deep cinematic overlay ── */}
