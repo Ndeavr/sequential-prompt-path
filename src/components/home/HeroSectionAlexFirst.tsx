@@ -258,8 +258,8 @@ export default function HeroSectionAlexFirst() {
               />
               <button
                 type="button"
-                onClick={() => openAlex()}
-                aria-label="Parler à Alex au micro"
+                onClick={startVoice}
+                aria-label="Démarrer la conversation vocale avec Alex"
                 className="h-10 w-10 flex items-center justify-center rounded-full text-white transition-all active:scale-95"
                 style={{
                   background:
