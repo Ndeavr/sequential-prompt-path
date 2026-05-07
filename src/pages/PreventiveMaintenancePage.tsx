@@ -502,7 +502,7 @@ export default function PreventiveMaintenancePage() {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <Link to="/search">Trouver un professionnel</Link>
+                <Link to="/alex">Trouver un professionnel</Link>
               </Button>
             </div>
           </motion.div>

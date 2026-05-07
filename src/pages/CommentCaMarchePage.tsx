@@ -126,7 +126,7 @@ export default function CommentCaMarchePage() {
           <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4">Liens utiles</h3>
           <div className="flex flex-wrap gap-3">
             {[
-              { to: "/search", label: "Trouver un entrepreneur fiable" },
+              { to: "/alex", label: "Trouver un entrepreneur fiable" },
               { to: "/emergency", label: "Service urgent maison" },
               { to: "/verifier-entrepreneur", label: "Vérifier un entrepreneur" },
             ].map(link => (

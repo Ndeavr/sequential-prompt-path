@@ -92,7 +92,7 @@ export const QR_INTENTS: QrIntent[] = [
     ctaEn: "Search",
     icon: "Search",
     roleTarget: "homeowner",
-    destinationPath: "/search",
+    destinationPath: "/alex",
     gradient: "from-blue-500/15 via-primary/5 to-transparent",
     copyVariants: [
       "Plus simple qu'une chasse aux soumissions.",

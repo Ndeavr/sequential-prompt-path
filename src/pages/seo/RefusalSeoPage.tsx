@@ -148,7 +148,7 @@ const RefusalSeoPage = () => {
         {/* CTA */}
         <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           <SeoCta
-            searchUrl="/search"
+            searchUrl="/alex"
             cityName={page.city_name || undefined}
           />
         </motion.div>

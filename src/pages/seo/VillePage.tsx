@@ -220,7 +220,7 @@ const VillePage = () => {
         )}
 
         {/* CTA */}
-        <SeoCta searchUrl={`/search?city=${encodeURIComponent(city.name)}`} cityName={city.name} />
+        <SeoCta searchUrl={`/alex`} cityName={city.name} />
       </div>
     </div>
   );

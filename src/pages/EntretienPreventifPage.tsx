@@ -79,7 +79,7 @@ export default function EntretienPreventifPage() {
         <CTASection
           title="Besoin d'un professionnel pour l'entretien?"
           description="Un entrepreneur vérifié peut effectuer l'inspection et l'entretien de votre maison."
-          primaryCta={{ label: "Trouver un entrepreneur", to: "/search" }}
+          primaryCta={{ label: "Trouver un entrepreneur", to: "/alex" }}
           secondaryCta={{ label: "Parler à Alex", to: "/parler-a-alex" }}
           variant="accent"
         />

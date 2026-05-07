@@ -117,7 +117,7 @@ const PropertyTypeProblemPage = () => {
                 {data.contractorCategory.replace(/_/g, " ")}
               </p>
               <Button asChild size="sm" variant="outline" className="gap-1 mt-1">
-                <Link to={`/search?specialty=${data.contractorCategory}&city=${cityData.name}`}>
+                <Link to={`/alex`}>
                   Trouver <ArrowRight className="h-3 w-3" />
                 </Link>
               </Button>
@@ -226,7 +226,7 @@ const PropertyTypeProblemPage = () => {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="gap-2">
-                <Link to={`/search?specialty=${data.contractorCategory}&city=${cityData.name}`}>
+                <Link to={`/alex`}>
                   <Camera className="h-4 w-4" /> Trouver un entrepreneur
                 </Link>
               </Button>
@@ -260,7 +260,7 @@ const PropertyTypeProblemPage = () => {
         <GrowthCtaBlock />
       </section>
       <ContractorLandingCta />
-      <SeoCta searchUrl={`/search?specialty=${data.contractorCategory}&city=${cityData.name}`} cityName={cityData.name} />
+      <SeoCta searchUrl={`/alex`} cityName={cityData.name} />
     </MainLayout>
   );
 };
