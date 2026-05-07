@@ -35,6 +35,7 @@ const PageSMSPipeline = lazy(() => import("@/pages/admin/outbound/PageSMSPipelin
 
 // Contractor Voice-First Landing
 const PageContractorVoiceFirstLanding = lazy(() => import("@/pages/contractor-landing/PageContractorVoiceFirstLanding"));
+const PageContractorAIGrowth = lazy(() => import("@/pages/contractor-growth/PageContractorAIGrowth"));
 
 // Nuclear Close — Personalized prospect landing
 const PageProLandingNuclearClose = lazy(() => import("@/pages/pro-landing/PageProLandingNuclearClose"));
