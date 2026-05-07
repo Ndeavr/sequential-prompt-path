@@ -9,7 +9,8 @@ import SmartFooter from "@/components/navigation/SmartFooter";
 import FooterSEOGrid from "@/components/navigation/FooterSEOGrid";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import SeoStructuredDataInjector from "@/seo/components/SeoStructuredDataInjector";
-import AlexConcierge from "@/components/alex/AlexConcierge";
+import { lazy, Suspense } from "react";
+const AlexCompanionOrb = lazy(() => import("@/components/alex/AlexCompanionOrb"));
 import CommandPalette from "@/components/navigation/CommandPalette";
 import BannerResumeJourney from "@/components/navigation/BannerResumeJourney";
 import { useLanguage } from "@/components/ui/LanguageToggle";
@@ -56,7 +57,11 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       {showSEOGrid && <FooterSEOGrid />}
       <SmartFooter />
       <MobileBottomNav />
-      {showAlex && <AlexConcierge />}
+      {showAlex && (
+        <Suspense fallback={null}>
+          <AlexCompanionOrb />
+        </Suspense>
+      )}
       <CommandPalette lang={lang} />
       <SeoStructuredDataInjector />
     </div>
