@@ -286,8 +286,28 @@ export default function HeroSectionAlexFirst() {
             </div>
           </form>
 
+          {/* ── Entrepreneur CTA — chip bleue mise en avant ── */}
+          <button
+            type="button"
+            onClick={() => navigate("/contractor-ai-growth")}
+            data-testid="entrepreneur-cta-chip"
+            aria-label="Je suis un entrepreneur — découvrir UNPRO"
+            className="group inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm sm:text-[15px] font-semibold text-white transition-all hover:scale-[1.03] active:scale-95"
+            style={{
+              background: "linear-gradient(135deg, hsl(222 100% 58%), hsl(232 100% 42%))",
+              border: "1px solid hsl(222 100% 72% / 0.5)",
+              boxShadow:
+                "0 8px 28px hsl(222 100% 55% / 0.45), 0 0 60px -10px hsl(222 100% 65% / 0.5), inset 0 1px 1px hsl(0 0% 100% / 0.2)",
+            }}
+          >
+            <Briefcase className="h-4 w-4" strokeWidth={2} />
+            <span>Je suis un entrepreneur</span>
+            <span className="text-white/70 group-hover:translate-x-0.5 transition-transform">→</span>
+          </button>
+
           {/* ── Chip pills ── */}
           <div className="flex flex-wrap justify-center gap-2 max-w-lg">
+
             {CHIPS.map((chip) => {
               const Icon = CHIP_ICONS[chip.id] ?? Sparkles;
               return (
