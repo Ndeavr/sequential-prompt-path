@@ -128,6 +128,7 @@ const PartnerDashboard = lazy(() => import("@/pages/partner/PartnerDashboard"));
 const PartnerNouveauEntrepreneur = lazy(() => import("@/pages/partner/PartnerNouveauEntrepreneur"));
 const PartnerCrm = lazy(() => import("@/pages/partner/PartnerCrm"));
 const PartnerDevenirPartenaire = lazy(() => import("@/pages/partner/PartnerDevenirPartenaire"));
+const PagePrivateKeypad = lazy(() => import("@/pages/private/PagePrivateKeypad"));
 const PartnerEnAttente = lazy(() => import("@/pages/partner/PartnerEnAttente"));
 const AdminPartenaires = lazy(() => import("@/pages/admin/AdminPartenaires"));
 const AdminPartnerApplications = lazy(() => import("@/pages/admin/AdminPartnerApplications"));
@@ -948,6 +949,8 @@ export const AppRouter = () => (
         <Route path="/partenaires-certifies" element={<PagePartenairesCertifies />} />
         <Route path="/partenaire" element={<PagePartenairesCertifies />} />
         <Route path="/partenaire/login" element={<PartnerLogin />} />
+        <Route path="/cyndia" element={<PagePrivateKeypad slug="cyndia" />} />
+        <Route path="/private/:slug" element={<PagePrivateKeypad />} />
         <Route path="/partenaire/devenir-partenaire" element={<PartnerDevenirPartenaire />} />
         <Route path="/partenaire/en-attente" element={<PartnerEnAttente />} />
         <Route path="/partenaire/dashboard" element={<PartnerGuard><PartnerDashboard /></PartnerGuard>} />
