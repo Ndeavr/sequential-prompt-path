@@ -35,6 +35,7 @@ const PageSMSPipeline = lazy(() => import("@/pages/admin/outbound/PageSMSPipelin
 
 // Contractor Voice-First Landing
 const PageContractorVoiceFirstLanding = lazy(() => import("@/pages/contractor-landing/PageContractorVoiceFirstLanding"));
+const PageContractorAIGrowth = lazy(() => import("@/pages/contractor-growth/PageContractorAIGrowth"));
 
 // Nuclear Close — Personalized prospect landing
 const PageProLandingNuclearClose = lazy(() => import("@/pages/pro-landing/PageProLandingNuclearClose"));
@@ -692,6 +693,7 @@ export const AppRouter = () => (
         <Route path="/intent" element={<Suspense fallback={<LazyFallback />}><HomeIntentRouterDynamic /></Suspense>} />
         <Route path="/homeowner" element={<Suspense fallback={<LazyFallback />}><HomeHomeownerAdaptive /></Suspense>} />
         <Route path="/contractor" element={<Suspense fallback={<LazyFallback />}><HomeContractorAdaptive /></Suspense>} />
+        <Route path="/contractor-ai-growth" element={<Suspense fallback={<LazyFallback />}><PageContractorAIGrowth /></Suspense>} />
         <Route path="/condo-home" element={<Suspense fallback={<LazyFallback />}><HomeCondoAdaptive /></Suspense>} />
         <Route path="/professional" element={<Suspense fallback={<LazyFallback />}><HomeProfessionalAdaptive /></Suspense>} />
         <Route path="/impact" element={<Suspense fallback={<LazyFallback />}><PageImpactCounter /></Suspense>} />
