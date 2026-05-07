@@ -7,7 +7,6 @@ import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { openAuthOverlay } from "@/hooks/useAuthOverlay";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
-import RouteSkeleton from "@/components/loaders/RouteSkeleton";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -30,11 +29,20 @@ export default function AuthGuard({ children, actionLabel }: AuthGuardProps) {
   }, [isAuthenticated, isLoading, timedOut, location, actionLabel]);
 
   if (isLoading && !timedOut) {
-    return <RouteSkeleton />;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="animate-pulse text-muted-foreground text-sm">Chargement…</div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
-    return <RouteSkeleton label="Connexion requise" />;
+    // Render nothing — overlay handles the auth UX
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-muted-foreground text-sm">Connexion requise</div>
+      </div>
+    );
   }
 
   return <>{children}</>;

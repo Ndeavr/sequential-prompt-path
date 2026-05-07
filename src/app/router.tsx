@@ -58,9 +58,12 @@ const LeadPipePageAdminEmpire = lazy(() => import("@/pages/admin/PageLeadEmpireD
 const PageCalculateurTaxesQuebec = lazy(() => import("@/pages/calculators/PageCalculateurTaxesQuebec"));
 const PageIsRoyalCalculateurTaxes = lazy(() => import("@/pages/calculators/PageIsRoyalCalculateurTaxes"));
 
-// Lightweight loading fallback — scoped skeleton, keeps layout perceived as instant.
-import RouteSkeleton from "@/components/loaders/RouteSkeleton";
-const LazyFallback = () => <RouteSkeleton />;
+// Lightweight loading fallback
+const LazyFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-pulse text-muted-foreground text-sm">Chargement…</div>
+  </div>
+);
 
 // ─── Lazy loaded pages ───
 const PlaceholderPage = lazy(() => import("@/pages/PlaceholderPage"));

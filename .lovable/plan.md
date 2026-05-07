@@ -1,111 +1,177 @@
-# Mobile PageSpeed Fixes for unpro.ca
+# Plan — Accès CRM Partenaire (Inscription, Termes, Approbation, Lead Isolation)
 
-Focus: make the mobile homepage's LCP detectable by Lighthouse (currently NO_LCP because the React hero mounts after JS), then trim images, render-blocking work, and main-thread time. SEO/A11y/Best Practices markup stays untouched.
+## 1. Migrations Supabase
 
-## 1. Fix NO_LCP (highest leverage)
+### 1.1 Rôles partenaire
+Étendre `partners.partner_type` valeurs autorisées:
+- `affiliate`, `ambassador`, `certified_partner`, `territory_partner`, `partner_admin`
 
-Lighthouse loads the raw HTML response, so it only sees `<div id="root"></div>` today. We make the hero `<h1>` exist in `index.html` itself and let React hydrate over it.
-
-**`index.html`** — inject a static LCP block inside `#root` that mirrors the homepage hero copy and gradient. React will replace it on mount; Lighthouse measures it as LCP.
-
-```html
-<div id="root">
-  <main class="lcp-shell">
-    <h1 class="lcp-title">
-      Quel est votre projet <span class="lcp-accent">aujourd'hui&nbsp;?</span>
-    </h1>
-    <p class="lcp-sub">Touchez l'orb d'Alex pour démarrer. Voix, photo, soumission ou texte — vous choisissez.</p>
-  </main>
-</div>
+### 1.2 Statut application
+```sql
+ALTER TABLE partners
+  ADD COLUMN partner_application_status text NOT NULL DEFAULT 'pending'
+  CHECK (partner_application_status IN ('pending','under_review','approved','rejected','suspended')),
+  ADD COLUMN application_submitted_at timestamptz,
+  ADD COLUMN application_reviewed_at timestamptz,
+  ADD COLUMN application_reviewed_by uuid REFERENCES auth.users(id),
+  ADD COLUMN admin_notes text,
+  ADD COLUMN application_data jsonb DEFAULT '{}'::jsonb;
 ```
+Backfill: `partner_status = 'approved'` → `partner_application_status = 'approved'`.
 
-Inline the small CSS for `.lcp-shell/.lcp-title/.lcp-sub` directly in `<head>` (under 1 KB) so the text paints with first HTML byte. No webfont dependency — system stack until React hydrates.
-
-Add preload for the OG / hero asset already used:
-
-```html
-<link rel="preload" as="image" href="/unpro-logo-master.png" fetchpriority="high">
+### 1.3 Acceptation des termes
+```sql
+CREATE TABLE partner_terms_acceptance (
+  id uuid PK default gen_random_uuid(),
+  partner_id uuid REFERENCES partners(id) ON DELETE CASCADE,
+  user_id uuid REFERENCES auth.users(id),
+  role text NOT NULL,
+  terms_version text NOT NULL,
+  accepted boolean DEFAULT false,
+  accepted_at timestamptz DEFAULT now(),
+  ip_address text,
+  user_agent text,
+  created_at timestamptz DEFAULT now()
+);
 ```
+RLS: SELECT own (partner_id in current partner). INSERT own. No UPDATE/DELETE (immutable).
 
-(There is no real hero `<img>` today — the orb is a CSS/SVG component. We do **not** invent a new hero image; the static `<h1>` becomes the LCP element, which is what Lighthouse needs.)
+### 1.4 Audit logs partenaire
+```sql
+CREATE TABLE partner_audit_logs (
+  id uuid PK default gen_random_uuid(),
+  partner_id uuid REFERENCES partners(id),
+  user_id uuid REFERENCES auth.users(id),
+  action text NOT NULL,
+  metadata jsonb DEFAULT '{}',
+  ip_address text,
+  created_at timestamptz DEFAULT now()
+);
+```
+RLS: SELECT own + admin. INSERT via security-definer function only.
 
-**`src/components/home-copilot/HeroCopilotMobile.tsx`** — remove the `motion.h1` initial-opacity-0 wrapper on the title. Render the `<h1>` immediately (no `initial={{opacity:0}}`) so when React hydrates, the LCP element stays painted continuously. Keep motion only on secondary elements (orb, CTA, chips).
+### 1.5 Lead isolation (`partner_leads`)
+```sql
+ALTER TABLE partner_leads
+  ADD COLUMN created_by uuid REFERENCES auth.users(id),
+  ADD COLUMN assigned_by uuid REFERENCES auth.users(id),
+  ADD COLUMN lead_origin text DEFAULT 'partner_added'
+    CHECK (lead_origin IN ('partner_added','admin_assigned','partner_generated','imported_with_permission')),
+  ADD COLUMN visibility_scope text DEFAULT 'assigned_partner_only';
+```
+Remplacer policy SELECT existante:
+```sql
+DROP POLICY IF EXISTS "..." ON partner_leads;
+CREATE POLICY "leads_partner_scoped_select" ON partner_leads FOR SELECT TO authenticated
+USING (
+  has_role(auth.uid(),'admin')
+  OR partner_id = current_partner_id(auth.uid())
+  OR created_by = auth.uid()
+);
+```
+INSERT/UPDATE: forcer `partner_id = current_partner_id(auth.uid())`.
+Trigger BEFORE INSERT: si `created_by` NULL → `auth.uid()`.
 
-**`src/main.tsx`** — before `createRoot(...).render(...)`, no-op (the static markup is simply replaced on first render — acceptable since copy matches).
+### 1.6 Logs assignation
+```sql
+CREATE TABLE partner_lead_assignment_logs (
+  id uuid PK default gen_random_uuid(),
+  lead_id uuid REFERENCES partner_leads(id) ON DELETE CASCADE,
+  previous_partner_id uuid,
+  new_partner_id uuid,
+  assigned_by uuid REFERENCES auth.users(id),
+  reason text,
+  created_at timestamptz DEFAULT now()
+);
+```
+RLS: admin only.
 
-## 2. Image optimization
+## 2. Pages
 
-- Audit `<img>` site-wide via `rg "<img"` and add `width`, `height`, `loading="lazy"` (except the hero/logo above the fold which stays `loading="eager"` + `fetchpriority="high"`).
-- Convert the few PNGs in `/public` (`unpro-logo-master.png`, `icon-192.png`, `icon-512.png`, favicons) to WebP siblings; keep PNG fallback via `<picture>` only where used in JSX. Reference WebP by default.
+### 2.1 `/partenaire/devenir-partenaire` (publique)
+Wizard 3 étapes premium dark:
+- **Step 1** Cartes comparatives (Affilié / Ambassadeur / Certifié) avec accès, commissions, exigences
+- **Step 2** Formulaire: prénom, nom, téléphone, courriel, ville, entreprise, expérience vente, taille réseau, objectifs, motivation
+- **Step 3** Termes spécifiques au rôle (composant `<PartnerTermsByRole role="..."/>` versionné `v1.0`) + checkbox bloquante. Bouton "Soumettre" disabled tant que pas coché.
 
-## 3. Render-blocking resources
+Submit → edge `submit-partner-application`:
+1. Crée user (signup magic link) si pas connecté
+2. Insert `partners` (`partner_type=role`, `partner_application_status='pending'`)
+3. Insert `partner_terms_acceptance` avec IP/UA via header `x-forwarded-for`
+4. Insert `partner_audit_logs` action='application_submitted'
+5. Notif admin (email + ligne dans `/admin/partner-applications`)
 
-- `index.html` already preconnects fonts but does not load a stylesheet — good. Remove the unused `preconnect` to `fonts.gstatic.com` if no webfont `<link rel="stylesheet">` is emitted (verify; if Tailwind injects one via JS, leave preconnect).
-- Defer the lovable-tagger / dev-only code paths (already dev-only via `mode === "development"`; confirm no prod leakage).
-- Move any analytics/tracking init into `requestIdleCallback` (see #6).
+### 2.2 `/partenaire/en-attente`
+Affiche statut, date soumission, étapes, bouton "Contacter admin" (mailto). Rafraîchit toutes les 30s.
 
-## 4. Minify CSS/JS
+### 2.3 `/admin/partner-applications`
+Tableau: nom, courriel, rôle demandé, ville, statut, date, version termes acceptée, IP. Actions: Approuver / Refuser / Suspendre / Changer rôle / Notes. Drawer détail avec `application_data`, historique audit, terms acceptance.
 
-**`vite.config.ts`** — explicitly set:
+Approve → `partner_application_status='approved'`, `partner_status='approved'`, INSERT `user_roles(role='partner')`, audit log.
 
+## 3. Guards
+
+### 3.1 Refactor `PartnerGuard` (`src/pages/partner/PartnerGuard.tsx`)
+Fetch `partner_application_status` en plus de `partner_status`. Logique:
+- Pas authentifié → `/partenaire/login`
+- Admin → bypass
+- `partner_application_status !== 'approved'` → redirect `/partenaire/en-attente`
+- Approved → check rôle pour autorisation route
+
+### 3.2 Permission par rôle (nouveau `src/lib/partnerPermissions.ts`)
 ```ts
-build: {
-  minify: 'esbuild',
-  cssMinify: true,
-  target: 'es2020',
-  rollupOptions: {
-    output: {
-      manualChunks: {
-        react: ['react', 'react-dom', 'react-router-dom'],
-        motion: ['framer-motion'],
-        supabase: ['@supabase/supabase-js'],
-      },
-    },
-  },
-},
+export const PARTNER_PERMISSIONS = {
+  affiliate: { crm: false, leads: false, pipeline: false, links: true },
+  ambassador: { crm: true, leads: true, pipeline: true, bulkExport: false, automation: false },
+  certified_partner: { crm: true, leads: true, pipeline: true, bulkExport: true, automation: true, onboarding: true },
+  territory_partner: { /* same as certified + territory */ },
+  partner_admin: { /* all */ },
+};
+export function canAccess(partner, feature) { ... }
 ```
+Wrapper `<RequirePartnerPermission feature="crm">` autour de `/partenaire/crm`, `/partenaire/leads`, `/partenaire/pipeline`.
 
-Splits framer-motion (large) and supabase out of the main entry chunk so the homepage doesn't pay for them upfront.
+## 4. UI partenaire (CRM existant)
 
-## 5. Reduce unused CSS/JS
+### 4.1 Lead badges
+Dans `LeadDetailDrawer` + `PartnerKanban` cards, ajouter badge selon `lead_origin`:
+- `partner_added` → "Ajouté par vous"
+- `admin_assigned` → "Attribué par UNPRO"
+- `partner_generated` → "Généré par votre lien"
 
-- Confirm `tailwind.config` `content` globs cover `./src/**/*.{ts,tsx}` and `./index.html` (it does — verify).
-- `lucide-react` icons: already tree-shakable per-named-import (codebase already uses named imports). No change.
-- Audit `framer-motion` usage on the homepage hero: replace the 5 `motion.*` wrappers in `HeroCopilotMobile.tsx` with plain elements + a tiny CSS `@keyframes fade-up` utility. This removes the framer-motion dependency from the critical chunk for `/`.
+### 4.2 Header CRM
+Bandeau permanent: rôle actuel, statut approbation, version termes acceptés, lien "Voir mes permissions".
 
-## 6. Reduce main-thread work
+## 5. Edge functions
+- `submit-partner-application` — création + termes + audit
+- `approve-partner-application` (admin) — flip status + role insert + audit + email
+- `reject-partner-application`, `suspend-partner-application`
+- `assign-lead-to-partner` (admin) — UPDATE partner_leads + insert assignment log + audit
+- `log-partner-action` — utilitaire appelé par hooks (export, message envoyé, accès CRM)
 
-- `src/app/providers.tsx` already lazy-loads Alex panels via `requestIdleCallback`. Extend the same pattern to:
-  - `AlexRouterDebugHUD`, `AuthDebugHud`, `BootDebugButton` in `src/app/App.tsx` — wrap in `lazy()` + idle mount, and gate behind `import.meta.env.DEV` only.
-  - `useJourneyTracker()` inside `MainLayout` — defer subscription with `requestIdleCallback`.
-  - `trackCopilotEvent("homepage_loaded")` in `PageHomeCopilot` — wrap in idle callback.
-- `AlexCopilotConversation` in `PageHomeCopilot` — convert to `React.lazy` + `<Suspense fallback={null}>` so it doesn't block first paint.
+Toutes incluent `corsHeaders`, validation Zod, JWT verify in-code, service role pour audit.
 
-## 7. Cache lifetimes
+## 6. Termes (contenu fr-CA)
+Composant `PartnerTermsByRole` rend MD/JSX versionné `v1.0`:
+- Affilié: anti-spam, pas de pub trompeuse, pas de faux leads, commissions sujettes à validation
+- Ambassadeur: + usage pro CRM, permission obligatoire avant message, anti-spam légal QC, interdiction revente listes, interdiction extraction massive, historique enregistré
+- Certifié: + qualité minimum, activité annuelle (10 entrepreneurs/an), protection image UNPRO, exclusivités territoire, confidentialité, conformité
 
-Lovable's static hosting handles immutable hashed assets (`/assets/*-[hash].js|css`) with long cache automatically. The 8 KiB finding is for `/favicon-*.png` and `/icon-*.png`. We can't edit hosting headers from the repo, but we can:
-- Add `<link rel="preload">` only for assets actually used above the fold (already in #1).
-- Document this as a hosting-level note (no code change needed; will be addressed when Lovable serves with default 1-year cache for `/public` assets — which it already does for hashed files).
+## 7. Audit logging triggers
+Hook `usePartnerCrm` log côté client via `log-partner-action`:
+- `crm_accessed`, `lead_exported`, `message_sent`, `consent_changed`, `lead_assigned`
 
-No-op in code; called out for transparency.
+## 8. Critères de succès
+- Aucun accès `/partenaire/crm` sans `partner_application_status='approved'` ET termes signés
+- Admin peut approuver/refuser/suspendre depuis `/admin/partner-applications`
+- Affiliés voient liens uniquement, pas le CRM
+- Ambassadors/Certifiés voient seulement leurs propres leads + leads assignés (RLS testé)
+- Logs audit immuables présents pour chaque action sensible
+- Page `/partenaire/en-attente` premium affichée pendant l'attente
 
-## What stays untouched
-
-- All `<meta>`, JSON-LD, `aria-*`, semantic tags (SEO 100, BP 100, A11y 93 preserved).
-- Alex behavior, voice config, routing.
-- No new images invented; LCP becomes the static `<h1>`.
-
-## Files to edit
-
-- `index.html` — static LCP shell + inline CSS + preload
-- `src/components/home-copilot/HeroCopilotMobile.tsx` — remove initial-opacity on `<h1>`, swap motion for CSS where above the fold
-- `src/app/App.tsx` — lazy-mount dev huds
-- `src/layouts/MainLayout.tsx` — defer journey tracker
-- `src/pages/PageHomeCopilot.tsx` — lazy-load `AlexCopilotConversation`, idle-defer tracking
-- `vite.config.ts` — explicit minify + manualChunks
-
-## Expected impact
-
-- LCP detected → Performance score jumps from "no score" to a real number (typically 60-80 baseline).
-- Main-thread JS for `/` drops via framer-motion chunking + lazy panels.
-- Image savings via WebP conversion on the 4 PNGs.
+## 9. Détails techniques
+- `current_partner_id(uid)` SECURITY DEFINER déjà existant (sinon créer)
+- `terms_version` constante TS `PARTNER_TERMS_VERSION = "2026.05.v1"`
+- Pas de DELETE sur audit/terms (RLS deny + révoquer privilege)
+- IP captée via header dans edge function, pas côté client
+- Migration backfill: tous les `partners` existants approuvés gardent l'accès

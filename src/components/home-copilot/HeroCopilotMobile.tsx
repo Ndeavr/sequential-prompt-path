@@ -80,12 +80,17 @@ export default function HeroCopilotMobile() {
           <AlexOrbPremium size="xl" state="idle" showLabel />
         </motion.button>
 
-        <h1 className="mt-6 text-[28px] sm:text-[34px] font-bold leading-[1.15] tracking-tight max-w-md">
+        <motion.h1
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.5 }}
+          className="mt-6 text-[28px] sm:text-[34px] font-bold leading-[1.15] tracking-tight max-w-md"
+        >
           Quel est votre projet{" "}
           <span className="bg-gradient-to-r from-[hsl(207_100%_70%)] to-[hsl(198_100%_78%)] bg-clip-text text-transparent">
             aujourd'hui?
           </span>
-        </h1>
+        </motion.h1>
 
         <motion.p
           initial={{ opacity: 0, y: 8 }}

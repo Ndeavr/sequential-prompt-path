@@ -5,7 +5,6 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { getDefaultRedirectForRole } from "@/services/auth/authIntentService";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
-import RouteSkeleton from "@/components/loaders/RouteSkeleton";
 
 interface RoleGuardProps {
   children: React.ReactNode;
@@ -17,7 +16,11 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   const timedOut = useLoadingTimeout(isLoading, 6000, "role_guard");
 
   if (isLoading && !timedOut) {
-    return <RouteSkeleton />;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="animate-pulse text-muted-foreground text-sm">Chargement…</div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;

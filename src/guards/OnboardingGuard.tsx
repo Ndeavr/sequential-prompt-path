@@ -1,12 +1,10 @@
 /**
- * UNPRO — Onboarding Guard: Forces incomplete users to /onboarding.
- * Non-blocking on profile load: renders children optimistically while
- * profile is still resolving so navigation never freezes.
+ * UNPRO — Onboarding Guard: Forces incomplete users to /onboarding
  */
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
-import RouteSkeleton from "@/components/loaders/RouteSkeleton";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 
 interface OnboardingGuardProps {
   children: React.ReactNode;
@@ -14,20 +12,33 @@ interface OnboardingGuardProps {
 
 export default function OnboardingGuard({ children }: OnboardingGuardProps) {
   const { isAuthenticated, isLoading: authLoading, role } = useAuth();
-  const { data: profile, isLoading: profileLoading, isFetched: profileFetched } = useProfile();
+  const { data: profile, isLoading: profileLoading } = useProfile();
+  const stillLoading = authLoading || profileLoading;
+  const timedOut = useLoadingTimeout(stillLoading, 6000, "onboarding_guard");
 
-  if (authLoading) return <RouteSkeleton />;
+  if (stillLoading && !timedOut) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="animate-pulse text-muted-foreground text-sm">Chargement…</div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+
+  // Admin bypasses onboarding
   if (role === "admin") return <>{children}</>;
 
-  // Only redirect once profile resolved AND incomplete.
-  if (profileFetched && profile && !profile.onboarding_completed) {
-    return <Navigate to="/onboarding" replace />;
-  }
-  if (profileFetched && !profile && !role) {
+  // Timed out → let through in limited mode rather than freezing
+  if (timedOut) return <>{children}</>;
+
+  // No role yet → onboarding
+  if (!role) return <Navigate to="/onboarding" replace />;
+
+  // Profile not completed → onboarding
+  if (profile && !profile.onboarding_completed) {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // While profile loads, render children — pages handle their own skeletons.
   return <>{children}</>;
 }
