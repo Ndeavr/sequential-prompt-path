@@ -21,4 +21,23 @@ export default defineConfig(({ mode }: { mode: string }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    target: "es2020",
+    cssCodeSplit: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("react-router")) return "react-router";
+          if (id.includes("react-dom") || id.includes("/react/")) return "react-vendor";
+          if (id.includes("framer-motion")) return "framer";
+          if (id.includes("@supabase")) return "supabase";
+          if (id.includes("@tanstack")) return "tanstack";
+          if (id.includes("@radix-ui")) return "radix";
+          if (id.includes("recharts") || id.includes("d3-")) return "charts";
+          if (id.includes("@elevenlabs") || id.includes("elevenlabs")) return "elevenlabs";
+        },
+      },
+    },
+  },
 }));
