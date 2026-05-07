@@ -116,6 +116,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const languageSessionRef = useRef(new AlexLanguageLockSession());
   const activeLanguageRef = useRef<AlexLanguage>("fr-CA");
   const connectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lockedVoiceIdRef = useRef<string | null>(null);
+  const bootInProgressRef = useRef(false);
 
   const clearConnectionTimeout = useCallback(() => {
     if (connectionTimeoutRef.current) {
