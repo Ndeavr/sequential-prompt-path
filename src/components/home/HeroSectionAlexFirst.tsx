@@ -13,6 +13,7 @@ import {
   Calculator, ShieldAlert, FileText, AlertTriangle, HelpCircle, UserCheck,
 } from "lucide-react";
 import { listIntents, HERO_CHIP_INTENTS, type AlexIntent, type AlexIntentId } from "@/services/alexIntentRouter";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 const CHIP_ICONS: Record<AlexIntentId, typeof Calculator> = {
   project_estimate:   Calculator,
