@@ -165,10 +165,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       languageSessionRef.current.reset();
       activeLanguageRef.current = "fr-CA";
 
+      // Removed instant-disconnect hard fail — let recovery/retry handle it.
       if (sessionDuration > 0 && sessionDuration < 2000 && !intentionallyStopped.current) {
-        console.error("[ElevenLabs V7] ⚠️ Instant disconnect — likely config issue");
-        callbacksRef.current?.onError?.(new Error("Session disconnected immediately"));
-        return;
+        console.warn("[ElevenLabs V8] Short session — will allow retry");
       }
 
       if (!intentionallyStopped.current) {
