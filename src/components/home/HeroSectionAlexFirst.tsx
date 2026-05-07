@@ -8,8 +8,21 @@
  * - Dark premium theme preserved (blue aura, glassmorphism)
  */
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { Mic, Camera, ArrowUp, ShieldCheck, Sparkles, Bot, MapPin } from "lucide-react";
-import { listIntents, HERO_CHIP_INTENTS, type AlexIntent } from "@/services/alexIntentRouter";
+import {
+  Mic, Camera, ShieldCheck, Sparkles, MapPin,
+  Calculator, ShieldAlert, FileText, AlertTriangle, HelpCircle, UserCheck,
+} from "lucide-react";
+import { listIntents, HERO_CHIP_INTENTS, type AlexIntent, type AlexIntentId } from "@/services/alexIntentRouter";
+
+const CHIP_ICONS: Record<AlexIntentId, typeof Calculator> = {
+  project_estimate:   Calculator,
+  verify_contractor:  ShieldAlert,
+  quote_compare:      FileText,
+  urgent_problem:     AlertTriangle,
+  upload_photo:       Camera,
+  unsure:             HelpCircle,
+  talk_to_alex:       Mic,
+};
 
 const AlexAssistantSheet = lazy(() => import("@/components/alex/AlexAssistantSheet"));
 const UploadPhotoModal = lazy(() => import("@/components/home/UploadPhotoModal"));
@@ -21,10 +34,10 @@ const cinematicBgWebm = "/images/hero-bg.webm";
 const CHIPS: AlexIntent[] = listIntents(HERO_CHIP_INTENTS);
 
 const TRUST = [
-  { icon: ShieldCheck, label: "Entrepreneurs vérifiés" },
-  { icon: Bot,         label: "Analyse IA" },
-  { icon: Sparkles,    label: "Pas de leads partagés" },
-  { icon: MapPin,      label: "Service québécois" },
+  { icon: ShieldCheck, label: "Entrepreneurs vérifiés", color: "text-emerald-400/80" },
+  { icon: UserCheck,   label: "Pas de leads partagés", color: "text-amber-400/80" },
+  { icon: Sparkles,    label: "Analyse IA impartiale",  color: "text-violet-400/80" },
+  { icon: MapPin,      label: "Service québécois",      color: "text-sky-400/80" },
 ];
 
 export default function HeroSectionAlexFirst() {
@@ -128,10 +141,24 @@ export default function HeroSectionAlexFirst() {
         </div>
 
         {/* ── Content column ── */}
-        <div className="relative z-10 flex flex-col items-center text-center w-full max-w-xl mx-auto px-5 pt-10 pb-24 gap-7 sm:gap-9">
+        <div className="relative z-10 flex flex-col items-center text-center w-full max-w-xl mx-auto px-5 pt-8 pb-24 gap-6 sm:gap-8">
+          {/* AI label chip */}
+          <div
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-medium tracking-wide"
+            style={{
+              background: "rgba(80,140,255,0.08)",
+              border: "1px solid rgba(120,170,255,0.22)",
+              color: "hsl(210 100% 78%)",
+              backdropFilter: "blur(10px)",
+            }}
+          >
+            <Sparkles className="h-3 w-3" />
+            <span>ALEX · VOTRE EXPERT IA</span>
+          </div>
+
           {/* H1 — instant LCP, no animation */}
           <header className="flex flex-col items-center gap-3">
-            <h1 className="font-display font-bold text-white leading-[1.05] tracking-tight text-[32px] sm:text-[44px] md:text-[52px]">
+            <h1 className="font-display font-bold text-white leading-[1.05] tracking-tight text-[34px] sm:text-[46px] md:text-[54px]">
               Décrivez votre problème.
               <br />
               <span className="bg-gradient-to-r from-[hsl(222,100%,72%)] via-[hsl(195,100%,62%)] to-[hsl(252,100%,74%)] bg-clip-text text-transparent">
@@ -150,38 +177,36 @@ export default function HeroSectionAlexFirst() {
             aria-label="Parler à Alex"
             data-testid="alex-orb-button"
             className="relative flex items-center justify-center group focus:outline-none"
-            style={{ width: 130, height: 130 }}
+            style={{ width: 150, height: 150 }}
           >
-            {/* outer breathing ring */}
             <span
               aria-hidden
               className="absolute inset-0 rounded-full animate-pulse"
               style={{
                 background:
-                  "radial-gradient(circle, hsl(222 100% 60% / 0.22) 0%, transparent 70%)",
+                  "radial-gradient(circle, hsl(222 100% 60% / 0.28) 0%, transparent 70%)",
               }}
             />
             <span
               aria-hidden
               className="absolute rounded-full"
               style={{
-                width: 116,
-                height: 116,
-                border: "1.5px solid hsl(222 100% 65% / 0.22)",
-                boxShadow: "0 0 40px hsl(222 100% 65% / 0.15)",
+                width: 132,
+                height: 132,
+                border: "1.5px solid hsl(222 100% 65% / 0.28)",
+                boxShadow: "0 0 50px hsl(222 100% 65% / 0.2)",
               }}
             />
-            {/* main orb */}
             <span
               className="relative rounded-full flex items-center justify-center overflow-hidden transition-transform duration-200 group-hover:scale-105 group-active:scale-95"
               style={{
-                width: 96,
-                height: 96,
+                width: 110,
+                height: 110,
                 background:
-                  "linear-gradient(135deg, hsl(222 100% 45% / 0.92), hsl(222 100% 25% / 0.95))",
-                border: "2px solid hsl(222 100% 70% / 0.32)",
+                  "linear-gradient(135deg, hsl(222 100% 50% / 0.95), hsl(232 100% 28% / 0.96))",
+                border: "2px solid hsl(222 100% 72% / 0.36)",
                 boxShadow:
-                  "0 0 60px -10px hsl(222 100% 65% / 0.55), 0 0 100px -20px hsl(222 100% 55% / 0.35), inset 0 1px 1px hsl(0 0% 100% / 0.12)",
+                  "0 0 70px -10px hsl(222 100% 65% / 0.6), 0 0 120px -20px hsl(252 100% 60% / 0.4), inset 0 1px 1px hsl(0 0% 100% / 0.14)",
               }}
             >
               <span
@@ -189,19 +214,28 @@ export default function HeroSectionAlexFirst() {
                 className="absolute inset-0 rounded-full"
                 style={{
                   background:
-                    "radial-gradient(circle at 38% 32%, hsl(222 100% 78% / 0.4), transparent 60%)",
+                    "radial-gradient(circle at 38% 30%, hsl(210 100% 82% / 0.45), transparent 60%)",
                 }}
               />
-              <Mic className="h-9 w-9 text-white/90 relative z-10" strokeWidth={1.6} />
+              <Mic className="h-10 w-10 text-white relative z-10" strokeWidth={1.5} />
             </span>
           </button>
+
+          {/* AI live status */}
+          <div className="flex items-center gap-2 -mt-2 text-xs sm:text-[13px] text-white/60">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-70" />
+              <span className="relative rounded-full h-2 w-2 bg-emerald-400" />
+            </span>
+            <span>Alex est prêt à vous aider</span>
+          </div>
 
           {/* ── Input bar ── */}
           <form onSubmit={onSubmit} className="w-full max-w-lg">
             <div
-              className="flex items-center gap-1 rounded-full pl-5 pr-1.5 py-1.5 backdrop-blur-xl"
+              className="flex items-center gap-2 rounded-full pl-5 pr-2 py-2 backdrop-blur-xl"
               style={{
-                background: "rgba(255,255,255,0.06)",
+                background: "rgba(255,255,255,0.05)",
                 border: "1px solid rgba(255,255,255,0.12)",
                 boxShadow: "0 8px 32px hsl(222 100% 30% / 0.25)",
               }}
@@ -212,13 +246,18 @@ export default function HeroSectionAlexFirst() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Décrivez votre projet…"
                 aria-label="Décrivez votre projet"
-                className="flex-1 bg-transparent text-sm sm:text-base text-white placeholder:text-white/35 focus:outline-none py-2.5"
+                className="flex-1 bg-transparent text-sm sm:text-base text-white placeholder:text-white/40 focus:outline-none py-2"
               />
               <button
                 type="button"
                 onClick={() => openAlex()}
                 aria-label="Parler à Alex au micro"
-                className="h-10 w-10 flex items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                className="h-10 w-10 flex items-center justify-center rounded-full text-white transition-all active:scale-95"
+                style={{
+                  background:
+                    "linear-gradient(135deg, hsl(222 100% 58%), hsl(232 100% 42%))",
+                  boxShadow: "0 4px 18px hsl(222 100% 55% / 0.45)",
+                }}
               >
                 <Mic className="h-4 w-4" />
               </button>
@@ -226,50 +265,46 @@ export default function HeroSectionAlexFirst() {
                 type="button"
                 onClick={() => setUploadModalOpen(true)}
                 aria-label="Téléverser une photo"
-                className="h-10 w-10 flex items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                <Camera className="h-4 w-4" />
-              </button>
-              <button
-                type="submit"
-                aria-label="Envoyer à Alex"
-                className="h-10 w-10 flex items-center justify-center rounded-full text-white transition-all active:scale-95"
+                className="h-10 w-10 flex items-center justify-center rounded-full text-white/75 hover:text-white transition-colors"
                 style={{
-                  background:
-                    "linear-gradient(135deg, hsl(222 100% 55%), hsl(222 100% 42%))",
-                  boxShadow: "0 4px 16px hsl(222 100% 55% / 0.4)",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.12)",
                 }}
               >
-                <ArrowUp className="h-4 w-4" />
+                <Camera className="h-4 w-4" />
               </button>
             </div>
           </form>
 
           {/* ── Chip pills ── */}
           <div className="flex flex-wrap justify-center gap-2 max-w-lg">
-            {CHIPS.map((chip) => (
-              <button
-                key={chip.id}
-                type="button"
-                onClick={() => onChipClick(chip)}
-                className="text-xs sm:text-[13px] font-medium px-3.5 py-2 rounded-full text-white/70 hover:text-white transition-all hover:scale-[1.02] active:scale-95"
-                style={{
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  backdropFilter: "blur(12px)",
-                }}
-              >
-                {chip.label}
-              </button>
-            ))}
+            {CHIPS.map((chip) => {
+              const Icon = CHIP_ICONS[chip.id] ?? Sparkles;
+              return (
+                <button
+                  key={chip.id}
+                  type="button"
+                  onClick={() => onChipClick(chip)}
+                  className="inline-flex items-center gap-1.5 text-xs sm:text-[13px] font-medium px-3.5 py-2 rounded-full text-white/75 hover:text-white transition-all hover:scale-[1.02] active:scale-95"
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    backdropFilter: "blur(12px)",
+                  }}
+                >
+                  <Icon className="h-3.5 w-3.5 text-white/55" strokeWidth={1.8} />
+                  <span>{chip.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* ── Trust strip ── */}
-          <ul className="grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-center gap-x-5 gap-y-2 text-[11px] sm:text-xs text-white/45 mt-2">
-            {TRUST.map(({ icon: Icon, label }) => (
-              <li key={label} className="flex items-center gap-1.5">
-                <Icon className="h-3.5 w-3.5 text-white/55" strokeWidth={1.8} />
-                <span>{label}</span>
+          <ul className="grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-center gap-x-6 gap-y-3 text-[11px] sm:text-xs text-white/55 mt-2">
+            {TRUST.map(({ icon: Icon, label, color }) => (
+              <li key={label} className="flex items-center gap-2">
+                <Icon className={`h-4 w-4 ${color}`} strokeWidth={1.8} />
+                <span className="leading-tight">{label}</span>
               </li>
             ))}
           </ul>
