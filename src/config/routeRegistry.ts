@@ -22,7 +22,7 @@ export interface RouteEntry {
 export const ROUTE_REGISTRY: RouteEntry[] = [
   // ─── Public ───
   { path: "/", allowedRoles: "public", journeyType: "public", requiresAuth: false, fallbackRoute: "/", mismatchStrategy: "home" },
-  { path: "/search", allowedRoles: "public", journeyType: "public", requiresAuth: false, fallbackRoute: "/", mismatchStrategy: "home" },
+  { path: "/search", allowedRoles: ["admin"], journeyType: "admin", requiresAuth: true, fallbackRoute: "/", mismatchStrategy: "home" },
   { path: "/login", allowedRoles: "public", journeyType: "auth", requiresAuth: false, fallbackRoute: "/", mismatchStrategy: "home" },
   { path: "/signup", allowedRoles: "public", journeyType: "auth", requiresAuth: false, fallbackRoute: "/", mismatchStrategy: "home" },
   { path: "/onboarding", allowedRoles: "public", journeyType: "auth", requiresAuth: false, fallbackRoute: "/", mismatchStrategy: "home" },
