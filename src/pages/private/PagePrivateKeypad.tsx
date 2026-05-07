@@ -18,16 +18,38 @@ export default function PagePrivateKeypad({ slug: slugProp }: Props) {
   const [confirmPin, setConfirmPin] = useState("");
   const [stage, setStage] = useState<"enter" | "confirm">("enter");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    let alive = true;
+    if (!slug) {
+      setInitialized(false);
+      setError("Accès privé introuvable.");
+      return;
+    }
     (async () => {
-      const { data, error } = await supabase.functions.invoke("private-access", {
-        body: { action: "check", slug },
-      });
-      if (error) { setError("Slug invalide"); return; }
-      setInitialized(!!(data as any)?.initialized);
+      try {
+        const result = await Promise.race([
+          supabase.functions.invoke("private-access", { body: { action: "check", slug } }),
+          new Promise<{ data: null; error: Error }>((resolve) =>
+            window.setTimeout(() => resolve({ data: null, error: new Error("timeout") }), 3500)
+          ),
+        ]);
+        if (!alive) return;
+        if (result.error) {
+          setNotice("Connexion lente. Tu peux continuer avec ton code.");
+          setInitialized(false);
+          return;
+        }
+        setInitialized(!!(result.data as any)?.initialized);
+      } catch {
+        if (!alive) return;
+        setNotice("Connexion lente. Tu peux continuer avec ton code.");
+        setInitialized(false);
+      }
     })();
+    return () => { alive = false; };
   }, [slug]);
 
   const currentValue = stage === "enter" ? pin : confirmPin;
@@ -61,7 +83,7 @@ export default function PagePrivateKeypad({ slug: slugProp }: Props) {
         const { error } = await supabase.functions.invoke("private-access", {
           body: { action: "setup", slug, code },
         });
-        if (error) throw error;
+        if (error && !String((error as any)?.message || "").includes("already_initialized")) throw error;
         setInitialized(true);
         // immediately unlock with same code
         await unlock(code);
@@ -90,42 +112,43 @@ export default function PagePrivateKeypad({ slug: slugProp }: Props) {
   }
 
   const title = useMemo(() => {
-    if (initialized === null) return "Chargement…";
+    if (initialized === null) return "Accès privé";
     if (initialized === false && stage === "enter") return "Crée ton code";
     if (initialized === false && stage === "confirm") return "Confirme ton code";
     return "Entre ton code";
   }, [initialized, stage]);
 
   return (
-    <div className="min-h-screen bg-[#060B14] text-white flex flex-col items-center justify-center px-6 py-10">
-      <div className="text-amber-400 text-xs tracking-[0.3em] uppercase mb-2">UNPRO · Accès privé</div>
+    <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center px-6 py-10">
+      <div className="text-warning text-xs tracking-[0.3em] uppercase mb-2">UNPRO · Accès privé</div>
       <h1 className="text-2xl font-semibold mb-1">{title}</h1>
-      <p className="text-white/50 text-sm mb-8">/{slug}</p>
+      <p className="text-muted-foreground text-sm mb-8">/{slug || "privé"}</p>
 
       <div className="flex gap-3 mb-8">
         {[0,1,2,3].map((i) => (
-          <div key={i} className={`w-4 h-4 rounded-full border ${currentValue.length > i ? "bg-amber-400 border-amber-400" : "border-white/30"}`} />
+          <div key={i} className={`w-4 h-4 rounded-full border ${currentValue.length > i ? "bg-warning border-warning" : "border-border"}`} />
         ))}
       </div>
 
-      {error && <div className="text-red-400 text-sm mb-4">{error}</div>}
+      {notice && !error && <div className="text-muted-foreground text-xs mb-4 text-center max-w-[280px]">{notice}</div>}
+      {error && <div className="text-destructive text-sm mb-4 text-center max-w-[280px]">{error}</div>}
 
       <div className="grid grid-cols-3 gap-3 w-full max-w-[280px]">
         {["1","2","3","4","5","6","7","8","9"].map((d) => (
           <button key={d} onClick={() => tap(d)} disabled={busy}
-            className="h-16 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 text-2xl font-light transition">
+            className="h-16 rounded-2xl bg-card hover:bg-muted active:bg-muted/80 border border-border text-2xl font-light transition disabled:opacity-50">
             {d}
           </button>
         ))}
         <div />
         <button onClick={() => tap("0")} disabled={busy}
-          className="h-16 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 text-2xl font-light">0</button>
-        <button onClick={back} disabled={busy} className="h-16 rounded-2xl text-white/60 hover:text-white text-sm">
+          className="h-16 rounded-2xl bg-card hover:bg-muted active:bg-muted/80 border border-border text-2xl font-light disabled:opacity-50">0</button>
+        <button onClick={back} disabled={busy} className="h-16 rounded-2xl text-muted-foreground hover:text-foreground text-sm disabled:opacity-50">
           ⌫
         </button>
       </div>
 
-      {busy && <div className="mt-6 text-white/50 text-sm">…</div>}
+      {busy && <div className="mt-6 text-muted-foreground text-sm">…</div>}
     </div>
   );
 }
