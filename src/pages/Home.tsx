@@ -1,15 +1,18 @@
+import { lazy, Suspense } from "react";
 import { Helmet } from "react-helmet-async";
 import MainLayout from "@/layouts/MainLayout";
 import HeroSection from "@/components/home/HeroSection";
-import SectionNoMoreQuotes from "@/components/home/SectionNoMoreQuotes";
-import SectionAlexConversationAd from "@/components/home/SectionAlexConversationAd";
-import SectionPasseportCards from "@/components/home/SectionPasseportCards";
-import SectionHowItWorks from "@/components/home/SectionHowItWorks";
-import SectionEntrepreneurCTA from "@/components/home/SectionEntrepreneurCTA";
-import SectionTrustProof from "@/components/home/SectionTrustProof";
-import SectionManifestoCTA from "@/components/home/SectionManifestoCTA";
-import SectionHomeCounterImpactIA from "@/components/impact-counter/SectionHomeCounterImpactIA";
-import BarStickyCounterRealtime from "@/components/impact-counter/BarStickyCounterRealtime";
+
+// Below-the-fold — code-split for performance
+const SectionNoMoreQuotes = lazy(() => import("@/components/home/SectionNoMoreQuotes"));
+const SectionAlexConversationAd = lazy(() => import("@/components/home/SectionAlexConversationAd"));
+const SectionPasseportCards = lazy(() => import("@/components/home/SectionPasseportCards"));
+const SectionHowItWorks = lazy(() => import("@/components/home/SectionHowItWorks"));
+const SectionEntrepreneurCTA = lazy(() => import("@/components/home/SectionEntrepreneurCTA"));
+const SectionTrustProof = lazy(() => import("@/components/home/SectionTrustProof"));
+const SectionManifestoCTA = lazy(() => import("@/components/home/SectionManifestoCTA"));
+const SectionHomeCounterImpactIA = lazy(() => import("@/components/impact-counter/SectionHomeCounterImpactIA"));
+const BarStickyCounterRealtime = lazy(() => import("@/components/impact-counter/BarStickyCounterRealtime"));
 
 const Home = () => {
   const jsonLd = {
@@ -46,17 +49,19 @@ const Home = () => {
         <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
       </Helmet>
 
-      <BarStickyCounterRealtime />
+      <Suspense fallback={null}><BarStickyCounterRealtime /></Suspense>
       <div className="flex flex-col">
         <HeroSection />
-        <SectionAlexConversationAd />
-        <SectionNoMoreQuotes />
-        <SectionManifestoCTA />
-        <SectionPasseportCards />
-        <SectionHowItWorks />
-        <SectionEntrepreneurCTA />
-        <SectionHomeCounterImpactIA />
-        <SectionTrustProof />
+        <Suspense fallback={null}>
+          <SectionAlexConversationAd />
+          <SectionNoMoreQuotes />
+          <SectionManifestoCTA />
+          <SectionPasseportCards />
+          <SectionHowItWorks />
+          <SectionEntrepreneurCTA />
+          <SectionHomeCounterImpactIA />
+          <SectionTrustProof />
+        </Suspense>
       </div>
     </MainLayout>
   );
