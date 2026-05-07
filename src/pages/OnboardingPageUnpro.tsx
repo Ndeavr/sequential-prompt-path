@@ -216,7 +216,15 @@ export default function OnboardingPageUnpro() {
   if (authLoading || profileLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground text-sm">Chargement…</div>
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-pulse text-muted-foreground text-sm">Chargement…</div>
+          <a
+            href="/"
+            className="text-xs text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+          >
+            ← Retour à l'accueil
+          </a>
+        </div>
       </div>
     );
   }
