@@ -43,6 +43,7 @@ const TRUST = [
 ];
 
 export default function HeroSectionAlexFirst() {
+  const navigate = useNavigate();
   const [textSheetOpen, setTextSheetOpen] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [initialChip, setInitialChip] = useState<string | undefined>();
