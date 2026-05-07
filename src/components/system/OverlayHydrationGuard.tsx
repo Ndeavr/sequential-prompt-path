@@ -15,7 +15,11 @@ function clearStuckOverlays(reason: string) {
   try {
     const v = useAlexVoiceLockedStore.getState();
     const state = (v as any).machineState;
-    const isLive = ["session_ready", "listening", "capturing_voice", "processing_stt", "processing_response", "speaking", "awaiting_user"].includes(state);
+    // Include boot/transient states so the watchdog never kills a session that is still warming up.
+    const isLive = [
+      "stabilizing", "opening_session", "session_ready", "listening",
+      "capturing_voice", "processing_stt", "processing_response", "speaking", "awaiting_user",
+    ].includes(state);
     if (v.isOverlayOpen && !isLive) {
       v.closeVoiceSession?.(reason);
     }
