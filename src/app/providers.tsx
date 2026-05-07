@@ -14,6 +14,7 @@ import { LanguageProvider } from "@/components/ui/LanguageToggle";
 import OverlayAlexVoiceFullScreen from "@/components/voice/OverlayAlexVoiceFullScreen";
 import AlexChatFallbackPanel from "@/components/voice/AlexChatFallbackPanel";
 import AlexVoiceDebugPanel from "@/components/voice/AlexVoiceDebugPanel";
+import OverlayHydrationGuard from "@/components/system/OverlayHydrationGuard";
 import type { ReactNode } from "react";
 
 const queryClient = new QueryClient({
@@ -41,6 +42,7 @@ export const Providers = ({ children }: ProvidersProps) => (
                 <Toaster />
                 <Sonner />
                 {children}
+                <OverlayHydrationGuard />
                 <OverlayAlexVoiceFullScreen />
                 <AlexChatFallbackPanel />
                 <AlexVoiceDebugPanel />
