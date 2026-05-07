@@ -88,6 +88,9 @@ export type FunnelViewModel = {
   selectedPlan: RecommendedPlan | null;
   goal: PlanGoal | null;
   isFounderMode: boolean;
+  degraded?: boolean;
+  pollAttempts?: number;
+  startedAt?: number | null;
 };
 
 // ─── Sniper Engine ───

@@ -1,80 +1,111 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, Loader2, Globe, Search, Shield, BarChart3, FileText } from "lucide-react";
+import { CheckCircle2, Loader2, Search, Sparkles, BarChart3, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-interface Props { businessName?: string; }
+interface Props {
+  businessName?: string;
+  hasContractor: boolean;
+  hasAudit: boolean;
+  degraded: boolean;
+  pollAttempts: number;
+  onContinueAnyway: () => void;
+  onRetry: () => void;
+  onHome: () => void;
+}
 
-const STEPS = [
-  { label: "Identification de l'entreprise", icon: Search, delay: 0 },
-  { label: "Analyse du site web", icon: Globe, delay: 3000 },
-  { label: "Vérification de la présence Google", icon: Search, delay: 6000 },
-  { label: "Validation des signaux de confiance", icon: Shield, delay: 9000 },
-  { label: "Calcul du score", icon: BarChart3, delay: 12000 },
-  { label: "Préparation du plan recommandé", icon: FileText, delay: 15000 },
-];
-
-export function AuditProgressScreen({ businessName }: Props) {
-  const [activeStep, setActiveStep] = useState(0);
-  const [progress, setProgress] = useState(5);
-
+export function AuditProgressScreen({
+  businessName,
+  hasContractor,
+  hasAudit,
+  degraded,
+  pollAttempts,
+  onContinueAnyway,
+  onRetry,
+  onHome,
+}: Props) {
+  const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
-    const timers = STEPS.map((step, i) =>
-      setTimeout(() => {
-        setActiveStep(i);
-        setProgress(Math.min(10 + (i + 1) * 15, 90));
-      }, step.delay)
-    );
-    return () => timers.forEach(clearTimeout);
+    const t = setInterval(() => setElapsed((e) => e + 1), 1000);
+    return () => clearInterval(t);
   }, []);
+
+  const steps = [
+    { label: "Profil créé", icon: Search, done: hasContractor, active: !hasContractor },
+    { label: "Audit lancé", icon: Sparkles, done: hasAudit || degraded, active: hasContractor && !hasAudit && !degraded },
+    {
+      label: pollAttempts > 0 ? `Analyse en cours (${pollAttempts}/5)` : "Analyse en cours",
+      icon: BarChart3,
+      done: false,
+      active: hasAudit,
+    },
+  ];
+
+  const showEscape = elapsed >= 4;
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-20 pb-16 text-center">
       <h2 className="font-display text-2xl font-bold mb-2">Analyse en cours…</h2>
-      {businessName && <p className="text-primary font-medium mb-6">{businessName}</p>}
+      {businessName && <p className="text-primary font-medium mb-4">{businessName}</p>}
       <p className="text-sm text-muted-foreground mb-8">
         Nous validons vos signaux publics pour produire un score réel, jamais inventé.
       </p>
 
-      {/* Progress bar */}
-      <div className="w-full h-2 rounded-full bg-border/20 mb-10 overflow-hidden">
-        <motion.div
-          className="h-full bg-gradient-to-r from-primary to-primary/60 rounded-full"
-          animate={{ width: `${progress}%` }}
-          transition={{ duration: 1, ease: "easeOut" }}
-        />
-      </div>
+      {degraded && (
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 text-xs text-amber-300">
+          <AlertTriangle className="w-3 h-3" /> Certaines données sont indisponibles — on continue.
+        </div>
+      )}
 
-      {/* Steps checklist */}
-      <div className="space-y-3 text-left">
-        {STEPS.map((step, i) => {
-          const StepIcon = step.icon;
-          const done = i < activeStep;
-          const active = i === activeStep;
+      <div className="space-y-3 text-left mb-8">
+        {steps.map((step, i) => {
+          const Icon = step.icon;
           return (
             <motion.div
               key={step.label}
               initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: i <= activeStep ? 1 : 0.3, x: 0 }}
-              transition={{ delay: i * 0.1 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.08 }}
               className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors ${
-                active ? "bg-primary/10 border border-primary/20" : done ? "bg-card/20" : ""
+                step.active ? "bg-primary/10 border border-primary/20" : step.done ? "bg-card/20" : "opacity-60"
               }`}
             >
-              {done ? (
+              {step.done ? (
                 <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
-              ) : active ? (
+              ) : step.active ? (
                 <Loader2 className="w-4 h-4 text-primary shrink-0 animate-spin" />
               ) : (
-                <StepIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
               )}
-              <span className={done ? "text-green-300" : active ? "text-primary" : "text-muted-foreground"}>
+              <span className={step.done ? "text-green-300" : step.active ? "text-primary" : "text-muted-foreground"}>
                 {step.label}
               </span>
-              {done && <span className="ml-auto text-xs text-green-400">✓</span>}
             </motion.div>
           );
         })}
       </div>
+
+      <p className="text-xs text-muted-foreground mb-4">{elapsed}s écoulées · résultat garanti en moins de 10 s</p>
+
+      {showEscape && (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col gap-2"
+        >
+          <Button onClick={onContinueAnyway} variant="default" size="lg">
+            Continuer quand même
+          </Button>
+          <div className="flex gap-2">
+            <Button onClick={onRetry} variant="outline" className="flex-1" size="sm">
+              Recommencer
+            </Button>
+            <Button onClick={onHome} variant="ghost" className="flex-1" size="sm">
+              Retour à l'accueil
+            </Button>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
