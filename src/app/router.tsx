@@ -880,76 +880,76 @@ export const AppRouter = () => (
         <Route path="/solutions/:slug" element={<SolutionPage />} />
         <Route path="/city/:slug" element={<CityPage />} />
 
-        {/* ─── Fallback-enabled public pages (navigation links) ─── */}
-        <Route path="/proprietaires/passeport-maison" element={<FallbackRoutePage />} />
-        <Route path="/proprietaires/score-maison" element={<FallbackRoutePage />} />
-        <Route path="/outils-ia" element={<FallbackRoutePage />} />
-        <Route path="/services/isolation-grenier" element={<FallbackRoutePage />} />
-        <Route path="/services/toiture" element={<FallbackRoutePage />} />
-        <Route path="/services/fondation" element={<FallbackRoutePage />} />
-        <Route path="/services/fenetres" element={<FallbackRoutePage />} />
-        <Route path="/services/chauffage" element={<FallbackRoutePage />} />
-        <Route path="/entrepreneurs/creer-mon-profil" element={<FallbackRoutePage />} />
-        <Route path="/entrepreneurs/pages-ia" element={<FallbackRoutePage />} />
-        <Route path="/entrepreneurs/score-aipp" element={<FallbackRoutePage />} />
-        <Route path="/entrepreneurs/profil-public" element={<FallbackRoutePage />} />
-        <Route path="/entrepreneurs/matching" element={<FallbackRoutePage />} />
-        <Route path="/entrepreneurs/badges" element={<FallbackRoutePage />} />
-        <Route path="/entrepreneurs/demo" element={<FallbackRoutePage />} />
-        <Route path="/entrepreneurs/ambassadeur" element={<FallbackRoutePage />} />
-        <Route path="/ambassadeurs" element={<FallbackRoutePage />} />
-        <Route path="/aide" element={<FallbackRoutePage />} />
-        <Route path="/professionnels" element={<FallbackRoutePage />} />
-        <Route path="/villes" element={<FallbackRoutePage />} />
-        <Route path="/guides" element={<FallbackRoutePage />} />
+        {/* ─── Public navigation pages (wired to real pages) ─── */}
+        <Route path="/proprietaires/passeport-maison" element={<PropertyGraphPage />} />
+        <Route path="/proprietaires/score-maison" element={<ProtectedRoute requiredRole="homeowner"><HomeScorePage /></ProtectedRoute>} />
+        <Route path="/outils-ia" element={<AnswerEnginePage />} />
+        <Route path="/services/isolation-grenier" element={<ProblemesMaisonPage />} />
+        <Route path="/services/toiture" element={<ProblemesMaisonPage />} />
+        <Route path="/services/fondation" element={<ProblemesMaisonPage />} />
+        <Route path="/services/fenetres" element={<ProblemesMaisonPage />} />
+        <Route path="/services/chauffage" element={<ProblemesMaisonPage />} />
+        <Route path="/entrepreneurs/creer-mon-profil" element={<ContractorOnboardingPage />} />
+        <Route path="/entrepreneurs/pages-ia" element={<PageEntrepreneurLandingAIPP />} />
+        <Route path="/entrepreneurs/score-aipp" element={<AIPPScorePage />} />
+        <Route path="/entrepreneurs/profil-public" element={<ProtectedRoute requiredRole="contractor"><ProProfile /></ProtectedRoute>} />
+        <Route path="/entrepreneurs/matching" element={<ProtectedRoute requiredRole="contractor"><ProMatchedLeads /></ProtectedRoute>} />
+        <Route path="/entrepreneurs/badges" element={<AuthorityDashboardPage />} />
+        <Route path="/entrepreneurs/demo" element={<BookingClientDemoPage />} />
+        <Route path="/entrepreneurs/ambassadeur" element={<StaticContentPage slug="ambassadeurs" />} />
+        <Route path="/ambassadeurs" element={<StaticContentPage slug="ambassadeurs" />} />
+        <Route path="/aide" element={<StaticContentPage slug="aide" />} />
+        <Route path="/professionnels" element={<ProfessionnelsPage2 />} />
+        <Route path="/villes" element={<VillesDesserviesPage />} />
+        {/* /guides handled below by PageGuidesHomeProblems */}
         {/* New V3 Navigation routes */}
         <Route path="/trouver" element={<Search />} />
         <Route path="/verifier" element={<VerifyLandingPage />} />
         <Route path="/planifier" element={<DescribeProjectPage />} />
-        <Route path="/score-aipp" element={<FallbackRoutePage />} />
-        <Route path="/plans-prix" element={<FallbackRoutePage />} />
-        <Route path="/favoris" element={<FallbackRoutePage />} />
-        <Route path="/historique" element={<FallbackRoutePage />} />
-        <Route path="/estimations-ai" element={<FallbackRoutePage />} />
-        <Route path="/classement" element={<FallbackRoutePage />} />
-        <Route path="/facturation" element={<FallbackRoutePage />} />
-        <Route path="/analytics" element={<FallbackRoutePage />} />
-        <Route path="/settings-systeme" element={<FallbackRoutePage />} />
-        <Route path="/notifications" element={<FallbackRoutePage />} />
-        <Route path="/opportunites" element={<FallbackRoutePage />} />
-        <Route path="/messages" element={<FallbackRoutePage />} />
-        <Route path="/compte" element={<FallbackRoutePage />} />
-        <Route path="/connexion-interstice" element={<FallbackRoutePage />} />
-        <Route path="/mes-projets" element={<FallbackRoutePage />} />
-        <Route path="/mes-rendez-vous" element={<FallbackRoutePage />} />
-        <Route path="/immeubles" element={<FallbackRoutePage />} />
-        <Route path="/interventions" element={<FallbackRoutePage />} />
-        <Route path="/documents" element={<FallbackRoutePage />} />
-        <Route path="/loi-16" element={<FallbackRoutePage />} />
-        <Route path="/fonds-prevoyance" element={<FallbackRoutePage />} />
-        <Route path="/rapports" element={<FallbackRoutePage />} />
-        <Route path="/registre" element={<FallbackRoutePage />} />
-        <Route path="/photos-projets" element={<FallbackRoutePage />} />
-        <Route path="/avis-clients" element={<FallbackRoutePage />} />
-        <Route path="/certifications" element={<FallbackRoutePage />} />
-        <Route path="/profil-ai" element={<FallbackRoutePage />} />
-        <Route path="/alertes" element={<FallbackRoutePage />} />
+        <Route path="/score-aipp" element={<AIPPScorePage />} />
+        <Route path="/plans-prix" element={<PricingPage />} />
+        <Route path="/favoris" element={<ProtectedRoute requiredRole="homeowner"><MyPlacementsPage /></ProtectedRoute>} />
+        <Route path="/historique" element={<ProtectedRoute requiredRole="homeowner"><HomeownerAppointments /></ProtectedRoute>} />
+        <Route path="/estimations-ai" element={<AnswerEnginePage />} />
+        <Route path="/classement" element={<AuthorityDashboardPage />} />
+        <Route path="/facturation" element={<ProtectedRoute requiredRole="contractor"><ProBilling /></ProtectedRoute>} />
+        <Route path="/analytics" element={<ProtectedRoute requiredRole="contractor"><ProAuthorityScore /></ProtectedRoute>} />
+        <Route path="/settings-systeme" element={<ProtectedRoute requiredRole="homeowner"><AccountPage /></ProtectedRoute>} />
+        <Route path="/notifications" element={<ProtectedRoute requiredRole="homeowner"><NotificationsPage /></ProtectedRoute>} />
+        <Route path="/opportunites" element={<ProtectedRoute requiredRole="contractor"><ProIncomingProjects /></ProtectedRoute>} />
+        <Route path="/messages" element={<ProtectedRoute requiredRole="homeowner"><MessageCenterPage /></ProtectedRoute>} />
+        <Route path="/compte" element={<ProtectedRoute requiredRole="homeowner"><AccountPage /></ProtectedRoute>} />
+        <Route path="/connexion-interstice" element={<LoginPageUnpro />} />
+        <Route path="/mes-projets" element={<ProtectedRoute requiredRole="homeowner"><DashboardHome /></ProtectedRoute>} />
+        <Route path="/mes-rendez-vous" element={<ProtectedRoute requiredRole="homeowner"><HomeownerAppointments /></ProtectedRoute>} />
+        <Route path="/immeubles" element={<ProtectedRoute requiredRole="homeowner"><CondoBuildingPage /></ProtectedRoute>} />
+        <Route path="/interventions" element={<ProtectedRoute requiredRole="homeowner"><CondoMaintenancePage /></ProtectedRoute>} />
+        <Route path="/documents" element={<ProtectedRoute requiredRole="homeowner"><CondoDocumentsPage /></ProtectedRoute>} />
+        <Route path="/loi-16" element={<CondoLoi16Page />} />
+        <Route path="/fonds-prevoyance" element={<CondoFondsPage />} />
+        <Route path="/rapports" element={<ProtectedRoute requiredRole="homeowner"><CondoReportsPage /></ProtectedRoute>} />
+        <Route path="/registre" element={<ProtectedRoute requiredRole="homeowner"><CondoUnitsPage /></ProtectedRoute>} />
+        <Route path="/photos-projets" element={<DiscoveryFeedPage />} />
+        <Route path="/avis-clients" element={<PageReviewsVerified />} />
+        <Route path="/certifications" element={<StaticContentPage slug="nos-standards" />} />
+        <Route path="/profil-ai" element={<ProtectedRoute requiredRole="homeowner"><DNAProfilePage /></ProtectedRoute>} />
+        <Route path="/alertes" element={<ProtectedRoute requiredRole="homeowner"><NotificationsPage /></ProtectedRoute>} />
         <Route path="/blog" element={<BlogIndexPage />} />
         <Route path="/blog/:slug" element={<BlogArticlePage />} />
         <Route path="/blog/category/:category" element={<BlogIndexPage />} />
         <Route path="/blog/city/:city" element={<BlogIndexPage />} />
-        <Route path="/conseils-renovation" element={<FallbackRoutePage />} />
-        <Route path="/faq" element={<FallbackRoutePage />} />
+        <Route path="/conseils-renovation" element={<BlogPage2 />} />
+        <Route path="/faq" element={<PageUnproFAQ25 />} />
         <Route path="/comment-ca-marche" element={<CommentCaMarchePage />} />
         <Route path="/comment-fonctionne-ia" element={<PageHowUnproWorksAI />} />
         <Route path="/roadmap" element={<PageRoadmapFeatures />} />
         <Route path="/couverture" element={<PageCityServiceCoverage />} />
         <Route path="/guides" element={<PageGuidesHomeProblems />} />
         <Route path="/avis-verifies" element={<PageReviewsVerified />} />
-        <Route path="/verification" element={<FallbackRoutePage />} />
-        <Route path="/nos-standards" element={<FallbackRoutePage />} />
-        <Route path="/pourquoi-pas-3-soumissions" element={<FallbackRoutePage />} />
-        <Route path="/a-propos" element={<FallbackRoutePage />} />
+        <Route path="/verification" element={<StaticContentPage slug="verification" />} />
+        <Route path="/nos-standards" element={<StaticContentPage slug="nos-standards" />} />
+        <Route path="/pourquoi-pas-3-soumissions" element={<StaticContentPage slug="pourquoi-pas-3-soumissions" />} />
+        <Route path="/a-propos" element={<StaticContentPage slug="a-propos" />} />
         <Route path="/partenaires" element={<PagePartenairesCertifies />} />
         <Route path="/partenaires-certifies" element={<PagePartenairesCertifies />} />
         <Route path="/partenaire" element={<PagePartenairesCertifies />} />
@@ -966,12 +966,12 @@ export const AppRouter = () => (
         <Route path="/partenaire/rappels" element={<PartnerGuard feature="reminders"><PartnerCrm /></PartnerGuard>} />
         <Route path="/admin/partenaires" element={<ProtectedRoute requiredRole="admin"><AdminPartenaires /></ProtectedRoute>} />
         <Route path="/admin/partner-applications" element={<ProtectedRoute requiredRole="admin"><AdminPartnerApplications /></ProtectedRoute>} />
-        <Route path="/contact" element={<FallbackRoutePage />} />
-        <Route path="/conditions" element={<FallbackRoutePage />} />
-        <Route path="/confidentialite" element={<FallbackRoutePage />} />
-        <Route path="/cookies" element={<FallbackRoutePage />} />
+        <Route path="/contact" element={<StaticContentPage slug="contact" />} />
+        <Route path="/conditions" element={<StaticContentPage slug="conditions" />} />
+        <Route path="/confidentialite" element={<StaticContentPage slug="confidentialite" />} />
+        <Route path="/cookies" element={<StaticContentPage slug="cookies" />} />
         <Route path="/sitemap" element={<SeoSitemapPage />} />
-        <Route path="/accessibilite" element={<FallbackRoutePage />} />
+        <Route path="/accessibilite" element={<StaticContentPage slug="accessibilite" />} />
 
         {/* Entrepreneur Onboarding Flow */}
         <Route path="/entrepreneur/onboarding/import" element={<PageOnboardingImport />} />
