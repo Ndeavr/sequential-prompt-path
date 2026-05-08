@@ -16,7 +16,9 @@ import { saveNavigationContext, trackNavigation } from "@/services/navigation/jo
 import { getDefaultRedirectForRole, saveAuthIntent } from "@/services/auth/authIntentService";
 import { saveReturnPath } from "@/lib/authReturn";
 import RouteTransitionLoader from "@/components/navigation/RouteTransitionLoader";
-import { useEffect, useRef } from "react";
+import AdminAccessDenied from "@/components/admin/AdminAccessDenied";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useRef, useState } from "react";
 
 interface UniversalRouteGuardProps {
   children: React.ReactNode;
