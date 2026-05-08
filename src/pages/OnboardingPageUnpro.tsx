@@ -59,26 +59,35 @@ export default function OnboardingPageUnpro() {
   }, [authLoading, profileLoading, profile, existingRole, navigate]);
 
   const handleRoleSelect = useCallback(async (r: string) => {
+    console.info("[onboarding] role selected", { role: r, hasUser: !!user?.id });
+    try { sessionStorage.setItem("unpro:pendingRole", r); } catch {}
+
+    // Optimistic UI: advance immediately so the user gets instant feedback,
+    // even if the network call below is slow or fails.
+    setSelectedRole(r);
+    setStep(1);
+
     if (!user?.id) {
-      toast.error("Veuillez vous connecter pour continuer.");
-      navigate("/login", { state: { from: "/onboarding" } });
+      navigate(`/login?intent=onboarding&role=${encodeURIComponent(r)}`, {
+        state: { from: "/onboarding", role: r },
+      });
       return;
     }
+
+    // Fire-and-forget upsert (idempotent thanks to ON CONFLICT)
     setSaving(true);
     try {
-      // Insert role
-      await supabase.from("user_roles").upsert(
+      const { error } = await supabase.from("user_roles").upsert(
         { user_id: user.id, role: r as any },
         { onConflict: "user_id,role" }
       );
-      setSelectedRole(r);
-      setStep(1);
+      if (error) console.warn("[onboarding] role upsert error", error);
     } catch (err: any) {
-      toast.error("Erreur lors de la sélection du rôle");
+      console.warn("[onboarding] role upsert exception", err);
     } finally {
       setSaving(false);
     }
-  }, [user?.id]);
+  }, [user?.id, navigate]);
 
   const handleIdentitySave = useCallback(async (data: { first_name: string; last_name: string; email: string; phone: string }) => {
     if (!user?.id) return;
