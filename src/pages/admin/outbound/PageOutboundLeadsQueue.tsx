@@ -37,6 +37,7 @@ export default function PageOutboundLeadsQueue() {
   const [contacts, setContacts] = useState<any[]>([]);
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filterCity, setFilterCity] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -46,17 +47,39 @@ export default function PageOutboundLeadsQueue() {
 
   async function load() {
     setLoading(true);
-    const [l, co, ct, ca] = await Promise.all([
-      supabase.from("outbound_leads").select("*").order("total_priority_score", { ascending: false }),
-      supabase.from("outbound_companies").select("id, company_name, city, specialty, google_rating, rbq_number"),
-      supabase.from("outbound_contacts").select("id, full_name, email, role_title"),
-      supabase.from("outbound_campaigns").select("id, campaign_name, city, specialty"),
-    ]);
-    setLeads(l.data || []);
-    setCompanies(co.data || []);
-    setContacts(ct.data || []);
-    setCampaigns(ca.data || []);
-    setLoading(false);
+    setLoadError(null);
+    // Safety timeout — never leave the spinner forever
+    const timeout = setTimeout(() => {
+      setLoading(false);
+      setLoadError("Le chargement prend trop de temps. Réessayez.");
+    }, 12000);
+    try {
+      const results = await Promise.allSettled([
+        supabase.from("outbound_leads").select("*").order("total_priority_score", { ascending: false }).limit(500),
+        supabase.from("outbound_companies").select("id, company_name, city, specialty, google_rating, rbq_number").limit(2000),
+        supabase.from("outbound_contacts").select("id, full_name, email, role_title").limit(2000),
+        supabase.from("outbound_campaigns").select("id, campaign_name, city, specialty").limit(500),
+      ]);
+      const [l, co, ct, ca] = results;
+      const errors: string[] = [];
+      if (l.status === "fulfilled") {
+        if (l.value.error) errors.push(`leads: ${l.value.error.message}`);
+        setLeads(l.value.data || []);
+      } else errors.push(`leads: ${String(l.reason)}`);
+      if (co.status === "fulfilled") setCompanies(co.value.data || []);
+      if (ct.status === "fulfilled") setContacts(ct.value.data || []);
+      if (ca.status === "fulfilled") setCampaigns(ca.value.data || []);
+      if (errors.length) {
+        console.error("[LeadsQueue] load errors:", errors);
+        setLoadError(errors.join(" · "));
+      }
+    } catch (e: any) {
+      console.error("[LeadsQueue] fatal:", e);
+      setLoadError(e?.message || "Erreur de chargement");
+    } finally {
+      clearTimeout(timeout);
+      setLoading(false);
+    }
   }
 
   const cities = useMemo(() => [...new Set(companies.map(c => c.city).filter(Boolean))], [companies]);
@@ -142,6 +165,11 @@ export default function PageOutboundLeadsQueue() {
         <CardContent className="p-0">
           {loading ? (
             <p className="text-center py-12 text-muted-foreground">Chargement…</p>
+          ) : loadError ? (
+            <div className="text-center py-12 space-y-3">
+              <p className="text-sm text-red-400 px-4">{loadError}</p>
+              <Button size="sm" variant="outline" onClick={load}>Réessayer</Button>
+            </div>
           ) : filtered.length === 0 ? (
             <p className="text-center py-12 text-muted-foreground">Aucun lead trouvé</p>
           ) : (

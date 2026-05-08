@@ -2,8 +2,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-api-version",
 };
+
+async function withTimeout<T>(p: Promise<T>, ms: number, label = "op"): Promise<T | null> {
+  return await Promise.race([
+    p.catch((e) => { console.error(`[enrich] ${label} error`, e); return null as any; }),
+    new Promise<null>((resolve) => setTimeout(() => { console.warn(`[enrich] ${label} timeout ${ms}ms`); resolve(null); }, ms)),
+  ]);
+}
 
 const ISR_OVERRIDES = {
   match: (web?: string, em?: string) =>
@@ -45,7 +53,9 @@ function token(): string {
 
 async function firecrawlScrape(url: string) {
   const key = Deno.env.get("FIRECRAWL_API_KEY");
-  if (!key) return null;
+  if (!key) { console.log("[enrich] firecrawl key missing — skip scrape"); return null; }
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 9000);
   try {
     const r = await fetch("https://api.firecrawl.dev/v2/scrape", {
       method: "POST",
@@ -55,11 +65,15 @@ async function firecrawlScrape(url: string) {
         formats: ["markdown", "links", "branding"],
         onlyMainContent: true,
       }),
+      signal: ctrl.signal,
     });
-    if (!r.ok) return null;
+    if (!r.ok) { console.warn("[enrich] firecrawl status", r.status); return null; }
     return await r.json();
-  } catch {
+  } catch (e) {
+    console.warn("[enrich] firecrawl error/timeout", String((e as any)?.message ?? e));
     return null;
+  } finally {
+    clearTimeout(t);
   }
 }
 
@@ -81,8 +95,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Scrape (best-effort)
-    const scrape = website ? await firecrawlScrape(website) : null;
+    // Scrape (best-effort, hard 10s ceiling)
+    console.log("[enrich] step=scrape", { website });
+    const scrape = website ? await withTimeout(firecrawlScrape(website), 10000, "firecrawl") : null;
     const meta = scrape?.metadata ?? scrape?.data?.metadata ?? {};
     const branding = scrape?.branding ?? scrape?.data?.branding ?? {};
     const links: string[] = scrape?.links ?? scrape?.data?.links ?? [];
@@ -112,7 +127,8 @@ Deno.serve(async (req) => {
 
     payload.slug = payload.slug || slugify(payload.company_name) || `c-${token().slice(0, 8)}`;
 
-    // Upsert by slug
+    // Upsert contractor (critical, must succeed)
+    console.log("[enrich] step=upsert_contractor", { slug: payload.slug });
     const { data: existing } = await sb
       .from("acq_contractors")
       .select("id")
@@ -122,57 +138,20 @@ Deno.serve(async (req) => {
     let contractorId: string;
     if (existing?.id) {
       contractorId = existing.id;
-      await sb.from("acq_contractors").update(payload).eq("id", contractorId);
+      const { error: updErr } = await sb.from("acq_contractors").update(payload).eq("id", contractorId);
+      if (updErr) console.warn("[enrich] update warn", updErr.message);
     } else {
       const { data: ins, error } = await sb
         .from("acq_contractors")
         .insert(payload)
         .select("id")
         .single();
-      if (error) throw error;
+      if (error) throw new Error(`contractor_insert: ${error.message}`);
       contractorId = ins.id;
     }
 
-    // Reset & insert services + cities
-    await sb.from("acq_contractor_services").delete().eq("contractor_id", contractorId);
-    const svcRows = services.flatMap((s) =>
-      cities.length
-        ? cities.map((city) => ({ ...s, contractor_id: contractorId, city }))
-        : [{ ...s, contractor_id: contractorId }],
-    );
-    if (svcRows.length) await sb.from("acq_contractor_services").insert(svcRows);
-
-    // Media: logo + extracted images
-    await sb.from("acq_contractor_media").delete().eq("contractor_id", contractorId);
-    const mediaRows: any[] = [];
-    if (payload.logo_url) {
-      mediaRows.push({ contractor_id: contractorId, media_type: "logo", url: payload.logo_url, sort_order: 0 });
-    }
-    const imageLinks = links.filter((l) => /\.(jpg|jpeg|png|webp)$/i.test(l)).slice(0, 8);
-    imageLinks.forEach((url, i) =>
-      mediaRows.push({ contractor_id: contractorId, media_type: "image", url, sort_order: i + 1 }),
-    );
-    const videoLinks = links.filter((l) => /\.(mp4|webm)$/i.test(l) || l.includes("youtube.com/watch")).slice(0, 3);
-    videoLinks.forEach((url, i) =>
-      mediaRows.push({ contractor_id: contractorId, media_type: "video", url, sort_order: 100 + i }),
-    );
-    if (mediaRows.length) await sb.from("acq_contractor_media").insert(mediaRows);
-
-    // Generate score
-    const scoreResp = await fetch(
-      `${Deno.env.get("SUPABASE_URL")}/functions/v1/acq-generate-score`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-        },
-        body: JSON.stringify({ contractor_id: contractorId }),
-      },
-    );
-    const scoreJson = await scoreResp.json().catch(() => null);
-
-    // AIPP page
+    // AIPP page (critical for redirect)
+    console.log("[enrich] step=aipp_page");
     const { data: existingPage } = await sb
       .from("acq_aipp_pages")
       .select("id, page_slug, public_token")
@@ -190,26 +169,75 @@ Deno.serve(async (req) => {
         })
         .select("id, page_slug, public_token")
         .single();
-      if (pgErr) throw pgErr;
+      if (pgErr) throw new Error(`aipp_page_insert: ${pgErr.message}`);
       page = pg;
     }
 
-    // Invite (idempotent by email)
-    if (email || payload.email) {
-      const targetEmail = email || payload.email;
-      const { data: inv } = await sb
-        .from("acq_invites")
-        .select("id")
-        .eq("contractor_id", contractorId)
-        .eq("email", targetEmail)
-        .maybeSingle();
-      if (!inv) {
-        await sb.from("acq_invites").insert({
-          contractor_id: contractorId,
-          email: targetEmail,
-          invite_token: token(),
-        });
+    // Background work (non-blocking): services, media, score, invite
+    const background = (async () => {
+      try {
+        console.log("[enrich:bg] step=services");
+        await sb.from("acq_contractor_services").delete().eq("contractor_id", contractorId);
+        const svcRows = services.flatMap((s) =>
+          cities.length
+            ? cities.map((city) => ({ ...s, contractor_id: contractorId, city }))
+            : [{ ...s, contractor_id: contractorId }],
+        );
+        if (svcRows.length) await sb.from("acq_contractor_services").insert(svcRows);
+
+        console.log("[enrich:bg] step=media");
+        await sb.from("acq_contractor_media").delete().eq("contractor_id", contractorId);
+        const mediaRows: any[] = [];
+        if (payload.logo_url) {
+          mediaRows.push({ contractor_id: contractorId, media_type: "logo", url: payload.logo_url, sort_order: 0 });
+        }
+        const imageLinks = links.filter((l) => /\.(jpg|jpeg|png|webp)$/i.test(l)).slice(0, 8);
+        imageLinks.forEach((url, i) => mediaRows.push({ contractor_id: contractorId, media_type: "image", url, sort_order: i + 1 }));
+        const videoLinks = links.filter((l) => /\.(mp4|webm)$/i.test(l) || l.includes("youtube.com/watch")).slice(0, 3);
+        videoLinks.forEach((url, i) => mediaRows.push({ contractor_id: contractorId, media_type: "video", url, sort_order: 100 + i }));
+        if (mediaRows.length) await sb.from("acq_contractor_media").insert(mediaRows);
+
+        console.log("[enrich:bg] step=score");
+        await withTimeout(
+          fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/acq-generate-score`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+            },
+            body: JSON.stringify({ contractor_id: contractorId }),
+          }).then((r) => r.text()),
+          15000,
+          "score",
+        );
+
+        if (email || payload.email) {
+          console.log("[enrich:bg] step=invite");
+          const targetEmail = email || payload.email;
+          const { data: inv } = await sb
+            .from("acq_invites")
+            .select("id")
+            .eq("contractor_id", contractorId)
+            .eq("email", targetEmail)
+            .maybeSingle();
+          if (!inv) {
+            await sb.from("acq_invites").insert({
+              contractor_id: contractorId,
+              email: targetEmail,
+              invite_token: token(),
+            });
+          }
+        }
+        console.log("[enrich:bg] done");
+      } catch (bgErr) {
+        console.error("[enrich:bg] error", bgErr);
       }
+    })();
+
+    // @ts-ignore — EdgeRuntime is provided by Supabase
+    if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) {
+      // @ts-ignore
+      EdgeRuntime.waitUntil(background);
     }
 
     return new Response(
@@ -218,12 +246,13 @@ Deno.serve(async (req) => {
         contractor_id: contractorId,
         slug: payload.slug,
         page_slug: page.page_slug,
-        score: scoreJson?.aipp_score ?? null,
+        score: null,
+        background_processing: true,
       }),
       { headers: { ...cors, "Content-Type": "application/json" } },
     );
-  } catch (e) {
-    console.error("[acq-enrich]", e);
+  } catch (e: any) {
+    console.error("[acq-enrich] fatal", e);
     return new Response(JSON.stringify({ error: String(e?.message ?? e) }), {
       status: 500, headers: { ...cors, "Content-Type": "application/json" },
     });

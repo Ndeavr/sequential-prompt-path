@@ -114,12 +114,15 @@ export default function PageOutboundTestCenter() {
         const { data, error } = await supabase.functions.invoke("acq-enrich-contractor", {
           body: { website: website || null, email, company_name: businessName },
         });
-        if (error) throw new Error(error.message);
-        if (data?.error) throw new Error(data.error);
-        if (!data?.contractor_id) throw new Error("no contractor_id returned");
+        if (error) {
+          // Try to read function-side error message if any
+          const detail = (error as any)?.context?.body || (error as any)?.message || String(error);
+          throw new Error(`Edge function: ${detail}`);
+        }
+        if (data?.error) throw new Error(`Server: ${data.error}`);
+        if (!data?.contractor_id) throw new Error("Aucun contractor_id retourné par la fonction");
         setContractorId(data.contractor_id);
         setPageSlug(data.page_slug);
-        // Update prospect status
         await supabase.from("contractor_prospects").update({
           enrichment_status: "enriched",
         }).eq("id", imported.prospect_id);
