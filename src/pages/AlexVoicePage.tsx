@@ -487,35 +487,33 @@ export default function AlexVoicePage() {
         </div>
 
         {/* ─── Bottom controls ─── */}
-        <div className="px-4 pb-6 pt-2 space-y-3 border-t border-border/20">
-          {/* Text input */}
-          <AnimatePresence>
-            {showText && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="flex gap-2"
-              >
-                <Input
-                  value={textInput}
-                  onChange={(e) => setTextInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleTextSend()}
-                  placeholder="Écrire à Alex…"
-                  className="flex-1 rounded-full bg-muted/50"
-                  disabled={state === "thinking"}
-                />
-                <Button
-                  size="icon"
-                  onClick={handleTextSend}
-                  disabled={!textInput.trim() || state === "thinking"}
-                  className="rounded-full"
-                >
-                  <Send className="w-4 h-4" />
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <div
+          className="px-4 pt-2 space-y-3 border-t border-border/20"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1.5rem)" }}
+        >
+          {/* Text input — always visible: chat is the extension of Alex's voice */}
+          <div className="flex gap-2">
+            <Input
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleTextSend()}
+              placeholder="Écrire à Alex…"
+              className="flex-1 rounded-full bg-muted/50"
+              disabled={state === "thinking"}
+              autoComplete="off"
+              enterKeyHint="send"
+            />
+            <Button
+              size="icon"
+              onClick={handleTextSend}
+              disabled={!textInput.trim() || state === "thinking"}
+              className="rounded-full"
+              aria-label="Envoyer"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+
 
           {/* Action row */}
           <div className="flex items-center justify-center gap-4">
