@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { getDefaultRedirectForRole, saveAuthIntent } from "@/services/auth/authIntentService";
 import { saveReturnPath } from "@/lib/authReturn";
+import AdminAccessDenied from "@/components/admin/AdminAccessDenied";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,55 +12,113 @@ interface ProtectedRouteProps {
   anyRole?: boolean;
 }
 
+type AdminCheck =
+  | { status: "idle" }
+  | { status: "checking" }
+  | { status: "allowed" }
+  | { status: "denied"; reason: "no_role" | "load_error"; detail?: string };
+
 const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading, isRoleLoading, role, roles, isAdmin, roleTimedOut, roleError, user } = useAuth() as any;
+  const { isAuthenticated, isLoading, role, roles, isAdmin, user } =
+    useAuth() as any;
   const location = useLocation();
-  const [adminFallback, setAdminFallback] = useState<"idle" | "checking" | "allowed" | "denied">("idle");
+  const [adminCheck, setAdminCheck] = useState<AdminCheck>({ status: "idle" });
+
+  const isAdminRoute = requiredRole === "admin";
+  const knownAdmin =
+    isAuthenticated && (isAdmin || (Array.isArray(roles) && roles.includes("admin")));
 
   useEffect(() => {
-    if (requiredRole !== "admin") {
-      setAdminFallback("idle");
+    if (!isAdminRoute) {
+      setAdminCheck({ status: "idle" });
       return;
     }
-
-    if (isAuthenticated && (isAdmin || (Array.isArray(roles) && roles.includes("admin")))) {
-      setAdminFallback("allowed");
+    if (knownAdmin) {
+      setAdminCheck({ status: "allowed" });
+      return;
+    }
+    // No session yet → wait for auth, don't query
+    if (!isAuthenticated) {
+      setAdminCheck({ status: "idle" });
       return;
     }
 
     let cancelled = false;
-    setAdminFallback("checking");
-    (async () => {
+    setAdminCheck({ status: "checking" });
+
+    const check = async () => {
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         const userId = user?.id ?? sessionData.session?.user?.id;
         if (!userId) {
-          if (!cancelled) setAdminFallback("denied");
+          if (!cancelled) setAdminCheck({ status: "denied", reason: "no_role" });
           return;
         }
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", userId)
-          .eq("role", "admin" as any)
-          .maybeSingle();
-        if (!cancelled) setAdminFallback(data?.role === "admin" ? "allowed" : "denied");
-      } catch {
-        if (!cancelled) setAdminFallback("denied");
+          .eq("user_id", userId);
+        if (cancelled) return;
+        if (error) {
+          setAdminCheck({ status: "denied", reason: "load_error", detail: error.message });
+          return;
+        }
+        const isAdminRow = (data ?? []).some((r: any) => r.role === "admin");
+        setAdminCheck(
+          isAdminRow ? { status: "allowed" } : { status: "denied", reason: "no_role" },
+        );
+      } catch (e: any) {
+        if (!cancelled) setAdminCheck({ status: "denied", reason: "load_error", detail: String(e?.message ?? e) });
       }
-    })();
+    };
 
-    return () => { cancelled = true; };
-  }, [requiredRole, isAuthenticated, user?.id, isAdmin, Array.isArray(roles) ? roles.join(",") : "", roleTimedOut, roleError]);
+    check();
+    // Hard safety: never stay in "checking" forever
+    const t = setTimeout(() => {
+      if (!cancelled)
+        setAdminCheck((prev) =>
+          prev.status === "checking" ? { status: "denied", reason: "load_error", detail: "timeout" } : prev,
+        );
+    }, 6000);
 
-  if (requiredRole === "admin" && adminFallback === "allowed") {
-    return <>{children}</>;
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [isAdminRoute, knownAdmin, isAuthenticated, user?.id]);
+
+  // ── ADMIN PATH ─────────────────────────────────────────────
+  if (isAdminRoute) {
+    // Auth not resolved yet
+    if (isLoading && !isAuthenticated) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <p className="text-muted-foreground text-sm">Chargement…</p>
+        </div>
+      );
+    }
+    if (!isAuthenticated) {
+      const fullPath = location.pathname + location.search + location.hash;
+      saveAuthIntent({ returnPath: fullPath, action: "access_protected", roleHint: "admin" });
+      saveReturnPath(fullPath, "admin");
+      return <Navigate to="/login" replace />;
+    }
+    if (knownAdmin || adminCheck.status === "allowed") return <>{children}</>;
+    if (adminCheck.status === "checking" || adminCheck.status === "idle") {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <p className="text-muted-foreground text-sm">Validation de l'accès administrateur…</p>
+        </div>
+      );
+    }
+    return <AdminAccessDenied reason={adminCheck.reason} detail={adminCheck.detail} />;
   }
 
-  if (isLoading && !(requiredRole === "admin" && adminFallback === "denied")) {
+  // ── NON-ADMIN PATH ─────────────────────────────────────────
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-muted-foreground">Chargement…</p>
+        <p className="text-muted-foreground text-sm">Chargement…</p>
       </div>
     );
   }
@@ -67,23 +126,13 @@ const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps
   if (!isAuthenticated) {
     const fullPath = location.pathname + location.search + location.hash;
     saveAuthIntent({ returnPath: fullPath, action: "access_protected", roleHint: requiredRole });
-    saveReturnPath(fullPath, requiredRole === "admin" ? "admin" : "protected_route");
+    saveReturnPath(fullPath, "protected_route");
     return <Navigate to="/login" replace />;
   }
 
-  // Admin bypasses every requiredRole. Check the full role list, not just primary.
-  if (isAdmin || (Array.isArray(roles) && roles.includes("admin")) || adminFallback === "allowed") {
+  // Admin bypasses every requiredRole.
+  if (isAdmin || (Array.isArray(roles) && roles.includes("admin"))) {
     return <>{children}</>;
-  }
-
-  // Don't bounce while the role query is still resolving — prevents loops.
-  // Admin routes must not redirect on role timeout; validate once directly instead.
-  if (isRoleLoading || role === undefined || (requiredRole === "admin" && adminFallback !== "denied" && (roleTimedOut || roleError || adminFallback === "checking"))) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-muted-foreground">Chargement…</p>
-      </div>
-    );
   }
 
   if (!anyRole && requiredRole && role !== requiredRole) {
