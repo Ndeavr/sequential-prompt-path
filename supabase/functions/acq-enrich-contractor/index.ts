@@ -2,8 +2,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-api-version",
 };
+
+async function withTimeout<T>(p: Promise<T>, ms: number, label = "op"): Promise<T | null> {
+  return await Promise.race([
+    p.catch((e) => { console.error(`[enrich] ${label} error`, e); return null as any; }),
+    new Promise<null>((resolve) => setTimeout(() => { console.warn(`[enrich] ${label} timeout ${ms}ms`); resolve(null); }, ms)),
+  ]);
+}
 
 const ISR_OVERRIDES = {
   match: (web?: string, em?: string) =>
