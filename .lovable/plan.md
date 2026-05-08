@@ -1,38 +1,68 @@
-## Problem
+1. CONTEXTE
+UNPRO.CA/admin redirige vers /login quand aucune session n’est présente. Après connexion, l’utilisateur voit parfois “Page non disponible”, ce qui indique un échec de reconnaissance du rôle admin ou une route admin protégée qui tombe dans le fallback. Le backend Lovable Cloud est sain; le problème est côté routage/auth client publié.
 
-The "Launch Campaign" button fails with `Failed to send a request to the Edge Function`. The `campaign-launch` edge function logs show:
+2. OBJECTIVE
+Fixer /admin pour qu’un compte admin connecté charge toujours le cockpit admin publié, sans boucle “Chargement…”, sans fallback “Page non disponible”, et avec un état de diagnostic clair si l’accès admin échoue.
 
-```
-TypeError: supabase.auth.getClaims is not a function
-```
+3. USERS
+- Admin UNPRO
+- Fondateur/opérateur qui doit diagnostiquer scraper, outbound, logs et retrys
 
-`getClaims()` does not exist on `@supabase/supabase-js@2.49.1`. The function crashes before any work happens, returning a non-2xx the client surfaces as a generic FunctionsFetchError.
+4. DELIVERABLES
+- Corriger la protection admin dans `ProtectedRoute` pour gérer proprement production, timeout et fallback direct sur `user_roles`.
+- Corriger les routes admin encore protégées par `UniversalRouteGuard` pour utiliser le même garde admin fiable ou ajouter le même fallback admin.
+- Ajouter un écran d’accès refusé admin utile au lieu d’un fallback générique quand l’utilisateur connecté n’a pas le rôle admin.
+- Garder le redirect vers `/login` uniquement quand aucune session n’existe.
+- Valider `/admin` et `/admin/outbound/logs` en preview/published path.
 
-## Fix
+5. LOGIC
+- Si non connecté: sauvegarder l’intention `/admin`, rediriger vers `/login`.
+- Si connecté: vérifier les rôles via `useAuth`.
+- Si `useAuth` tarde ou échoue: lancer une vérification directe de `user_roles` avec `supabase.auth.getSession()`.
+- Si rôle admin trouvé: afficher l’admin immédiatement.
+- Si rôle admin absent: afficher un écran “Accès administrateur requis” avec retour accueil/déconnexion, jamais “Page non disponible”.
+- Si erreur réseau temporaire: afficher un état de retry/diagnostic au lieu de rester bloqué.
 
-Replace the broken auth check in `supabase/functions/campaign-launch/index.ts` with the standard pattern used elsewhere in the project: build a second Supabase client bound to the caller's JWT, call `auth.getUser()`, then `has_role(user.id, 'admin')`.
+6. DATA
+- Lire seulement `user_roles` côté client pour l’utilisateur courant.
+- Ne pas modifier le schéma si les politiques actuelles permettent déjà à un utilisateur de lire ses propres rôles.
+- Ne pas exposer les rôles d’autres utilisateurs.
 
-Pseudocode:
-```ts
-const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  global: { headers: { Authorization: auth } }
-});
-const { data: { user } } = await userClient.auth.getUser();
-if (!user) return 401;
-const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
-if (!isAdmin) return 403;
-```
+7. UI/UX
+- État de chargement court et explicite: “Validation de l’accès administrateur…”.
+- État refusé premium, clair, actionnable.
+- Aucune page morte.
+- Mobile-first pour l’accès admin depuis téléphone.
 
-Also:
-- Ensure error responses include `Content-Type: application/json` consistently (a few branches omit it).
-- Add a small log line on entry + on each branch result for diagnostics in `/admin/campaign-logs`.
+8. COMPONENTS
+- Refactor `ProtectedRoute` pour un helper admin stable.
+- Option: créer `AdminAccessDenied` réutilisable.
+- Mettre à jour les routes admin qui utilisent `UniversalRouteGuard allowedRoles={["admin"]}` ou aligner `UniversalRouteGuard` sur la logique admin robuste.
 
-## Verification
+9. ACTIONS
+- Implement fallback admin fiable.
+- Normalize access denial.
+- Preserve return path through login.
+- Verify `/admin`, `/admin/outbound/logs`, `/admin/sms-debug`.
+- Publish/update frontend après changement.
 
-1. Redeploy `campaign-launch`.
-2. From `/admin/campaign-center`, press "Launch Campaign" — should return `{ inserted, skipped }` and rows appear in `campaign_contacts`.
-3. Confirm no more `getClaims` errors in edge function logs.
+10. CONSTRAINTS
+- Ne pas modifier `src/integrations/supabase/client.ts` ni `types.ts`.
+- Ne pas changer OAuth/CORS/redirect URI si le problème est uniquement client.
+- Ne pas rendre l’admin public.
+- Ne pas stocker le statut admin dans localStorage/sessionStorage.
+- Garder la validation serveur via `user_roles`.
 
-## Files
+11. SUCCESS
+- `https://unpro.ca/admin` charge le dashboard admin après connexion.
+- Un admin ne tombe plus sur “Page non disponible”.
+- Les pages `/admin/...` critiques partagent le même comportement fiable.
+- Un non-admin connecté voit un refus clair, pas une boucle ni une route fallback.
+- Les logs navigateur ne montrent pas d’erreur bloquante de routage/admin.
 
-- `supabase/functions/campaign-launch/index.ts` — fix auth verification.
+12. TASKS
+- Refactor `ProtectedRoute` pour stabiliser `adminFallback` et éviter l’état infini.
+- Refactor `UniversalRouteGuard` pour reconnaître les rôles admin via liste complète/fallback direct, ou remplacer ses routes admin par `ProtectedRoute`.
+- Ajouter/brancher un composant `AdminAccessDenied`.
+- Tester les routes admin principales.
+- Demander un publish/update frontend final.
