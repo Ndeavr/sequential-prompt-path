@@ -9,24 +9,28 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  const jsonHeaders = { ...corsHeaders, "Content-Type": "application/json" };
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // Verify admin
   const auth = req.headers.get("Authorization");
   if (!auth?.startsWith("Bearer ")) {
-    return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: jsonHeaders });
   }
-  const token = auth.slice(7);
-  const { data: claims } = await supabase.auth.getClaims(token);
-  if (!claims?.claims?.sub) {
-    return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  const userClient = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: auth } } },
+  );
+  const { data: { user } } = await userClient.auth.getUser();
+  if (!user) {
+    return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: jsonHeaders });
   }
-  const { data: hasRole } = await supabase.rpc("has_role", { _user_id: claims.claims.sub, _role: "admin" });
+  const { data: hasRole } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
   if (!hasRole) {
-    return new Response(JSON.stringify({ error: "forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: "forbidden" }), { status: 403, headers: jsonHeaders });
   }
 
   const { action, segment, prospect_ids, campaign_contact_id } = await req.json();
