@@ -102,7 +102,10 @@ export default function UniversalRouteGuard({ children, allowedRoles, anyAuth }:
     }
     if (knownAdmin || adminCheck.status === "allowed") return <>{children}</>;
     if (adminCheck.status === "checking" || adminCheck.status === "idle") return <RouteTransitionLoader />;
-    return <AdminAccessDenied reason={adminCheck.reason} detail={adminCheck.detail} />;
+    if (adminCheck.status === "denied") {
+      return <AdminAccessDenied reason={adminCheck.reason} detail={adminCheck.detail} />;
+    }
+    return <RouteTransitionLoader />;
   }
 
   if (isLoading) {
