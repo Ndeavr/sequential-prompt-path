@@ -37,6 +37,16 @@ interface FormRoleSelectionProps {
 }
 
 export default function FormRoleSelection({ onSelect, loading }: FormRoleSelectionProps) {
+  const [picked, setPicked] = useState<string | null>(null);
+
+  const handleClick = (key: string) => {
+    if (loading || picked) return;
+    setPicked(key);
+    try { sessionStorage.setItem("unpro:pendingRole", key); } catch {}
+    // Defer to next tick so the visual state paints before navigation/awaits
+    setTimeout(() => onSelect(key), 0);
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -47,25 +57,35 @@ export default function FormRoleSelection({ onSelect, loading }: FormRoleSelecti
       </div>
 
       <div className="grid gap-3">
-        {ROLES.map((role, i) => (
-          <motion.button
-            key={role.key}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08 }}
-            onClick={() => !loading && onSelect(role.key)}
-            disabled={loading}
-            className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:shadow-[var(--shadow-glow)] transition-all text-left group disabled:opacity-50"
-          >
-            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-              <role.icon className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="font-semibold text-foreground text-sm">{role.label}</p>
-              <p className="text-xs text-muted-foreground">{role.description}</p>
-            </div>
-          </motion.button>
-        ))}
+        {ROLES.map((role) => {
+          const isPicked = picked === role.key;
+          return (
+            <button
+              key={role.key}
+              type="button"
+              onClick={() => handleClick(role.key)}
+              disabled={loading || !!picked}
+              aria-busy={isPicked}
+              className={`flex items-center gap-4 p-4 rounded-xl border bg-card transition-all text-left group disabled:cursor-not-allowed ${
+                isPicked
+                  ? "border-primary shadow-[var(--shadow-glow)] ring-2 ring-primary/30"
+                  : "border-border hover:border-primary/40 hover:shadow-[var(--shadow-glow)]"
+              } ${picked && !isPicked ? "opacity-40" : ""}`}
+            >
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                {isPicked ? (
+                  <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                ) : (
+                  <role.icon className="h-5 w-5 text-primary" />
+                )}
+              </div>
+              <div>
+                <p className="font-semibold text-foreground text-sm">{role.label}</p>
+                <p className="text-xs text-muted-foreground">{role.description}</p>
+              </div>
+            </button>
+          );
+        })}
       </div>
 
       <div className="text-center pt-2">
