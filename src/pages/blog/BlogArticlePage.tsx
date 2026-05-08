@@ -15,25 +15,32 @@ import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import LikeShareButtons from "@/components/shared/LikeShareButtons";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import BlockArticleParagraphReadable from "@/components/articles/BlockArticleParagraphReadable";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
+import { RefreshCw } from "lucide-react";
 
 export default function BlogArticlePage() {
   const { slug } = useParams<{ slug: string }>();
   const { openAlex } = useAlexVoice();
   useEngagementTracking();
 
-  const { data: article, isLoading } = useQuery({
+  const { data: article, isLoading, isError, refetch } = useQuery({
     queryKey: ["blog-article", slug],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("blog_articles")
         .select("*")
         .eq("slug", slug)
         .eq("status", "published")
         .maybeSingle();
+      if (error) throw error;
       return data as any;
     },
     enabled: !!slug,
+    retry: 0,
+    staleTime: 5 * 60 * 1000,
   });
+
+  const stuck = useLoadingTimeout(isLoading, 4000, "blog_article");
 
   // Related articles
   const { data: related } = useQuery({
