@@ -21,6 +21,7 @@ const PageImpactCounter = lazy(() => import("@/pages/PageImpactCounter"));
 
 // Extraction Engine
 const PageAdminExtractionQueue = lazy(() => import("@/pages/admin/PageAdminExtractionQueue"));
+const PageFacebookExtractionEngine = lazy(() => import("@/pages/admin/PageFacebookExtractionEngine"));
 const PageAdminCoverageCityDomain = lazy(() => import("@/pages/admin/PageAdminCoverageCityDomain"));
 
 // QA Simulation
@@ -1277,6 +1278,7 @@ export const AppRouter = () => (
         <Route path="/admin/share-images/history" element={<ProtectedRoute requiredRole="admin"><PageShareImageHistory /></ProtectedRoute>} />
         <Route path="/admin/share-images/preview" element={<ProtectedRoute requiredRole="admin"><PageShareImagePreview /></ProtectedRoute>} />
         <Route path="/admin/extraction" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminExtractionQueue /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/facebook-extraction" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageFacebookExtractionEngine /></Suspense></ProtectedRoute>} />
         <Route path="/admin/extraction/coverage" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminCoverageCityDomain /></Suspense></ProtectedRoute>} />
         <Route path="/admin/outbound/approvals" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminOutboundApprovals /></Suspense></ProtectedRoute>} />
         <Route path="/admin/prospect-execution" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminProspectExecutionDashboard /></Suspense></ProtectedRoute>} />
