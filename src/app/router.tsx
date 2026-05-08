@@ -1002,23 +1002,23 @@ export const AppRouter = () => (
         <Route path="/entretien-preventif" element={<EntretienPreventifPage />} />
         <Route path="/blog2" element={<BlogPage2 />} />
 
-        {/* ─── Fallback condo pages ─── */}
-        <Route path="/condo/passeport" element={<FallbackRoutePage />} />
-        <Route path="/condo/documents" element={<FallbackRoutePage />} />
-        <Route path="/condo/dashboard" element={<FallbackRoutePage />} />
-        <Route path="/condo/dossier" element={<FallbackRoutePage />} />
-        <Route path="/condo/travaux" element={<FallbackRoutePage />} />
-        <Route path="/condo/historique" element={<FallbackRoutePage />} />
-        <Route path="/condo/inviter" element={<FallbackRoutePage />} />
+        {/* ─── Condo pages (wired) ─── */}
+        <Route path="/condo/passeport" element={<CoproprietePage />} />
+        <Route path="/condo/documents" element={<CondoDocumentsPage />} />
+        <Route path="/condo/dashboard" element={<CondoDashboardPage />} />
+        <Route path="/condo/dossier" element={<CondoBuildingPage />} />
+        <Route path="/condo/travaux" element={<CondoMaintenancePage />} />
+        <Route path="/condo/historique" element={<CondoReportsPage />} />
+        <Route path="/condo/inviter" element={<CondoUnitsPage />} />
         <Route path="/condo/loi-16" element={<CondoLoi16Page />} />
-        <Route path="/condo/inspection" element={<FallbackRoutePage />} />
-        <Route path="/condo/guides" element={<FallbackRoutePage />} />
+        <Route path="/condo/inspection" element={<CondoIncidentsPage />} />
+        <Route path="/condo/guides" element={<PageGuidesHomeProblems />} />
 
-        {/* ─── Fallback pro pages ─── */}
-        <Route path="/pro/stats" element={<FallbackRoutePage />} />
-        <Route path="/pro/visibility" element={<FallbackRoutePage />} />
-        <Route path="/pro/recommendations" element={<FallbackRoutePage />} />
-        <Route path="/dashboard/maintenance" element={<FallbackRoutePage />} />
+        {/* ─── Pro extra pages (wired) ─── */}
+        <Route path="/pro/stats" element={<ProtectedRoute requiredRole="contractor"><ProAuthorityScore /></ProtectedRoute>} />
+        <Route path="/pro/visibility" element={<ProtectedRoute requiredRole="contractor"><ProAIPPScore /></ProtectedRoute>} />
+        <Route path="/pro/recommendations" element={<ProtectedRoute requiredRole="contractor"><ProMatchedLeads /></ProtectedRoute>} />
+        <Route path="/dashboard/maintenance" element={<ProtectedRoute requiredRole="homeowner"><PreventiveMaintenancePage /></ProtectedRoute>} />
 
         {/* Homeowner Dashboard */}
         <Route path="/dashboard" element={<ProtectedRoute requiredRole="homeowner"><DashboardHome /></ProtectedRoute>} />
