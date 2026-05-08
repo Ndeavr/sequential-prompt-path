@@ -9,9 +9,27 @@ Deno.serve(async (req) => {
 
     const { data: c } = await sb.from("acq_contractors").select("*").eq("id", contractor_id).single();
     const { data: page } = await sb.from("acq_aipp_pages").select("page_slug, public_token").eq("contractor_id", contractor_id).single();
-    const { data: invite } = await sb.from("acq_invites").select("*").eq("contractor_id", contractor_id).maybeSingle();
+    let { data: invite } = await sb.from("acq_invites").select("*").eq("contractor_id", contractor_id).maybeSingle();
 
-    if (!c || !page || !invite) throw new Error("missing_data");
+    if (!c) throw new Error("missing_contractor");
+    if (!page) throw new Error("missing_landing_page");
+
+    // Auto-create invite row if missing (needed for draft mode in test center)
+    if (!invite) {
+      const email = c.email || `prospect+${contractor_id}@unpro.ca`;
+      const { data: created, error: insErr } = await sb
+        .from("acq_invites")
+        .insert({
+          contractor_id,
+          email,
+          invite_token: crypto.randomUUID().replace(/-/g, ""),
+          status: "draft",
+        })
+        .select("*")
+        .single();
+      if (insErr) throw new Error(`invite_create_failed: ${insErr.message}`);
+      invite = created;
+    }
 
     const origin = base_url || "https://unpro.ca";
     const aippUrl = `${origin}/aipp/${page.page_slug}?t=${page.public_token}`;
