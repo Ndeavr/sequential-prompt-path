@@ -14,6 +14,7 @@ import HomeWithFeatureFlag from "@/components/home-intent/HomeWithFeatureFlag";
 import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
 import PageEmergencyReset from "@/pages/PageEmergencyReset";
+import StaticContentPage from "@/pages/static/StaticContentPage";
 
 // Impact Counter
 const PageImpactCounter = lazy(() => import("@/pages/PageImpactCounter"));
