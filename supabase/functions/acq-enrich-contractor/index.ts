@@ -53,7 +53,9 @@ function token(): string {
 
 async function firecrawlScrape(url: string) {
   const key = Deno.env.get("FIRECRAWL_API_KEY");
-  if (!key) return null;
+  if (!key) { console.log("[enrich] firecrawl key missing — skip scrape"); return null; }
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 9000);
   try {
     const r = await fetch("https://api.firecrawl.dev/v2/scrape", {
       method: "POST",
@@ -63,11 +65,15 @@ async function firecrawlScrape(url: string) {
         formats: ["markdown", "links", "branding"],
         onlyMainContent: true,
       }),
+      signal: ctrl.signal,
     });
-    if (!r.ok) return null;
+    if (!r.ok) { console.warn("[enrich] firecrawl status", r.status); return null; }
     return await r.json();
-  } catch {
+  } catch (e) {
+    console.warn("[enrich] firecrawl error/timeout", String((e as any)?.message ?? e));
     return null;
+  } finally {
+    clearTimeout(t);
   }
 }
 
