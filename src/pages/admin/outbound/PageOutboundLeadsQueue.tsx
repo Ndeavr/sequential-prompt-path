@@ -165,6 +165,11 @@ export default function PageOutboundLeadsQueue() {
         <CardContent className="p-0">
           {loading ? (
             <p className="text-center py-12 text-muted-foreground">Chargement…</p>
+          ) : loadError ? (
+            <div className="text-center py-12 space-y-3">
+              <p className="text-sm text-red-400 px-4">{loadError}</p>
+              <Button size="sm" variant="outline" onClick={load}>Réessayer</Button>
+            </div>
           ) : filtered.length === 0 ? (
             <p className="text-center py-12 text-muted-foreground">Aucun lead trouvé</p>
           ) : (
