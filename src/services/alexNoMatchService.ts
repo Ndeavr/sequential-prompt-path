@@ -71,18 +71,16 @@ export class AlexNoMatchService {
     return resp.json();
   }
 
-  getNoMatchCopy(reason: string): string {
-    const copies: Record<string, string> = {
-      no_available_contractor: "Aucun professionnel disponible pour le moment dans votre secteur.",
-      zone_not_covered: "Cette zone n'est pas encore couverte par notre réseau.",
-      cluster_saturated: "Nos professionnels dans ce secteur sont actuellement tous occupés.",
-      specialty_unavailable: "Cette spécialité n'est pas encore disponible dans votre région.",
-    };
-    return copies[reason] || "Aucun professionnel trouvé pour le moment.";
+  getNoMatchCopy(_reason?: string): string {
+    return "Votre demande a été enregistrée en priorité. Un conseiller UNPRO vous contactera sous peu.";
   }
 
-  getAlexVoiceResponse(service: string, city: string): string {
-    return `Malheureusement, je n'ai pas encore trouvé de professionnel en ${service} disponible à ${city} en ce moment. Je peux continuer à chercher pour vous et vous prévenir dès qu'un bon match apparaît. Ça vous va?`;
+  getAlexVoiceResponse(_service: string, _city: string): string {
+    return [
+      "Je préfère être transparent avec vous : nous n'avons pas encore de partenaire vérifié disponible actuellement pour ce type d'intervention dans votre secteur.",
+      "Votre demande vient d'être enregistrée en priorité avec les détails du problème.",
+      "Un conseiller UNPRO analysera personnellement votre situation et communiquera avec vous sous peu afin de vous orienter vers la meilleure solution disponible.",
+    ].join(" ");
   }
 }
 
