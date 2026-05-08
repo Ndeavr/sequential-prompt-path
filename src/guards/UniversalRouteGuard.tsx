@@ -29,17 +29,81 @@ interface UniversalRouteGuardProps {
 }
 
 export default function UniversalRouteGuard({ children, allowedRoles, anyAuth }: UniversalRouteGuardProps) {
-  const { isAuthenticated, isLoading, role, user, roleError, roleTimedOut } = useAuth();
+  const { isAuthenticated, isLoading, role, roles, isAdmin, user, roleError, roleTimedOut } = useAuth() as any;
   const location = useLocation();
   const tracked = useRef(false);
 
-  // Track navigation
+  const isAdminGate = !!allowedRoles && allowedRoles.length === 1 && allowedRoles[0] === "admin";
+  const knownAdmin = isAuthenticated && (isAdmin || (Array.isArray(roles) && roles.includes("admin")));
+  const [adminCheck, setAdminCheck] = useState<
+    | { status: "idle" | "checking" | "allowed" }
+    | { status: "denied"; reason: "no_role" | "load_error"; detail?: string }
+  >({ status: "idle" });
+
   useEffect(() => {
     if (!tracked.current && !isLoading) {
       trackNavigation(document.referrer || "/", location.pathname, "guard");
       tracked.current = true;
     }
   }, [isLoading, location.pathname]);
+
+  useEffect(() => {
+    if (!isAdminGate) return;
+    if (knownAdmin) {
+      setAdminCheck({ status: "allowed" });
+      return;
+    }
+    if (!isAuthenticated) {
+      setAdminCheck({ status: "idle" });
+      return;
+    }
+    let cancelled = false;
+    setAdminCheck({ status: "checking" });
+    (async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = user?.id ?? sessionData.session?.user?.id;
+        if (!userId) {
+          if (!cancelled) setAdminCheck({ status: "denied", reason: "no_role" });
+          return;
+        }
+        const { data, error } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId);
+        if (cancelled) return;
+        if (error) {
+          setAdminCheck({ status: "denied", reason: "load_error", detail: error.message });
+          return;
+        }
+        const ok = (data ?? []).some((r: any) => r.role === "admin");
+        setAdminCheck(ok ? { status: "allowed" } : { status: "denied", reason: "no_role" });
+      } catch (e: any) {
+        if (!cancelled) setAdminCheck({ status: "denied", reason: "load_error", detail: String(e?.message ?? e) });
+      }
+    })();
+    const t = setTimeout(() => {
+      if (!cancelled)
+        setAdminCheck((p) =>
+          p.status === "checking" ? { status: "denied", reason: "load_error", detail: "timeout" } : p,
+        );
+    }, 6000);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [isAdminGate, knownAdmin, isAuthenticated, user?.id]);
+
+  // ── Admin gate fast path
+  if (isAdminGate) {
+    if (isLoading && !isAuthenticated) return <RouteTransitionLoader />;
+    if (!isAuthenticated) {
+      const fullPath = location.pathname + location.search + location.hash;
+      saveAuthIntent({ returnPath: fullPath, action: "access_protected", roleHint: "admin" });
+      saveReturnPath(fullPath, "admin");
+      return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    }
+    if (knownAdmin || adminCheck.status === "allowed") return <>{children}</>;
+    if (adminCheck.status === "checking" || adminCheck.status === "idle") return <RouteTransitionLoader />;
+    return <AdminAccessDenied reason={adminCheck.reason} detail={adminCheck.detail} />;
+  }
 
   if (isLoading) {
     return <RouteTransitionLoader />;
@@ -71,15 +135,10 @@ export default function UniversalRouteGuard({ children, allowedRoles, anyAuth }:
   if (anyAuth) return <>{children}</>;
 
   // ── Admin bypass ──
-  if (role === "admin") return <>{children}</>;
+  if (role === "admin" || (Array.isArray(roles) && roles.includes("admin"))) return <>{children}</>;
 
   // ── Recovery access ──
-  // Keep SMS diagnostics reachable after login even when role/profile loading is degraded.
   if (location.pathname === "/admin/sms-debug" && isAuthenticated && !role && (roleError || roleTimedOut)) {
-    console.warn("[UniversalRouteGuard] degraded admin sms-debug access", {
-      user: user ? { id: user.id, email: user.email, phone: user.phone } : null,
-      redirectTarget: location.pathname + location.search + location.hash,
-    });
     return <>{children}</>;
   }
 
