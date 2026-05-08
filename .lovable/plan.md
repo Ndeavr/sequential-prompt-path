@@ -1,77 +1,56 @@
-## Objectif
-Rendre le site rapide, débloquer les boutons de rôle, transformer le chat en extension naturelle d'Alex, et garantir que les nouvelles pages chargent — **sans toucher à la logique métier ni aux moteurs déjà en place**.
+# Plan — Réparer la création de leads (queue + enrichissement)
 
-## Principe directeur
-Aucune suppression. Aucune réécriture profonde. Uniquement des correctifs ciblés en surface (UI, guards, lazy loading, état) et des garde-fous.
+Deux problèmes distincts identifiés à partir de tes captures :
 
----
+## Problème 1 — `/admin/outbound/leads-queue` reste bloqué sur « Chargement… »
 
-## 1. Boutons de rôle qui ne réagissent pas (`/onboarding`)
+**Cause** : `PageOutboundLeadsQueue.tsx` lance 4 requêtes Supabase en `Promise.all`, sans `try/catch`. Si **une seule** échoue (RLS, table indisponible, requête lente), la promesse rejette et `setLoading(false)` n'est **jamais appelé** → spinner permanent.
 
-**Cause identifiée**: `OnboardingPageUnpro.tsx` exige `user.id` avant d'accepter un clic. Si l'utilisateur n'est pas authentifié → silent fail ou toast + redirect vers `/login` qui ne déclenche rien visible sur mobile (toast caché derrière clavier/chat).
+Vérifié : `outbound_leads` contient bien 60 lignes avec une policy admin. Donc soit l'utilisateur n'est pas reconnu comme admin (la requête revient vide mais autre requête échoue), soit une autre table renvoie une erreur silencieuse.
 
-**Correctifs**:
-- `FormRoleSelection`: stocker le rôle choisi en `sessionStorage` immédiatement (feedback visuel instantané, état "selected").
-- `OnboardingPageUnpro.handleRoleSelect`: si non connecté → naviguer **directement** vers `/login?intent=onboarding&role=X` au lieu d'afficher uniquement un toast.
-- Ajouter `disabled`/`loading` visuels sur la carte cliquée.
-- Au retour de login, lire `sessionStorage.pendingRole` et reprendre l'étape 1.
+**Correctifs** dans `src/pages/admin/outbound/PageOutboundLeadsQueue.tsx` :
+1. Envelopper `load()` dans un `try/catch/finally` qui force toujours `setLoading(false)`.
+2. Utiliser `Promise.allSettled` au lieu de `Promise.all` pour ne pas bloquer la page si une table secondaire échoue.
+3. Logger les erreurs réelles avec `console.error` + toast pour diagnostic.
+4. Ajouter un état d'erreur visible (carte rouge avec « Réessayer ») pour ne plus avoir de page muette.
+5. Ajouter un timeout de sécurité (8s) qui bascule sur l'écran d'erreur si les requêtes traînent.
 
-## 2. Chat Alex caché derrière l'overlay vocal
+## Problème 2 — Étape « 2. Enrichissement » : *Failed to send a request to the Edge Function* (15021 ms)
 
-**Cause**: la barre d'onglets (Accueil / Pro / Alex / Soumissions / Compte) recouvre le bas du sheet de chat; le champ de saisie n'est plus accessible. Sur `/alex/voice`, le chat affiche les messages mais sans champ de saisie visible — le clavier mobile réduit le viewport.
+**Cause** : la fonction `acq-enrich-contractor` :
+- Appelle Firecrawl en `fetch` **sans timeout** → si le site cible est lent/HS, le fetch peut excéder la limite réseau du navigateur (15 s) avant que la fonction ne réponde, ce qui produit l'erreur côté client `supabase.functions.invoke`.
+- N'inclut **pas** `x-supabase-api-version` ni `apikey` complets dans `Access-Control-Allow-Headers`, ce qui peut faire échouer le preflight de la nouvelle version du client supabase-js.
+- Continue ensuite avec des `insert` sur `acq_contractors`, `acq_contractor_services`, `acq_contractor_media`, `acq_aipp_pages`, `acq_invites` **sans gérer les erreurs RLS/contraintes** → un échec silencieux remonte un message peu utile.
 
-**Correctifs (UI uniquement)**:
-- Ajouter `padding-bottom: calc(env(safe-area-inset-bottom) + 88px)` sur le conteneur du chat.
-- Utiliser `visualViewport` pour repositionner le composer au-dessus du clavier (déjà documenté dans `mem://features/conversational-lite-homepage` — l'appliquer aussi à `/alex/voice`).
-- Garantir un `<AlexInput>` toujours présent (fallback texte) sous l'orbe vocal, même en mode voix → "le chat = extension de la voix d'Alex".
-- Z-index: composer au-dessus de la `BottomNav`, ou masquer la `BottomNav` quand le chat est ouvert plein écran.
+**Correctifs** dans `supabase/functions/acq-enrich-contractor/index.ts` :
+1. Ajouter un wrapper `withTimeout(promise, ms)` autour du `fetch` Firecrawl (10 s max), retourne `null` si timeout au lieu de planter.
+2. Élargir `Access-Control-Allow-Headers` :
+   `authorization, x-client-info, apikey, content-type, x-supabase-api-version`.
+3. Utiliser `EdgeRuntime.waitUntil` (background task) pour les étapes lourdes (score, page, invite) → renvoie `contractor_id` au client en < 5 s, le reste s'exécute en arrière-plan.
+4. Capturer chaque insert/update et renvoyer un payload `{ success, contractor_id, warnings: [...] }` détaillé au lieu d'un 500 monolithique.
+5. Logger explicitement chaque étape (`console.log("[enrich] step=...")`) pour pouvoir tracer dans les Edge Logs.
 
-## 3. Site très lent + nouvelles pages qui ne chargent pas
+**Correctif côté client** dans `src/pages/admin/outbound/PageOutboundTestCenter.tsx` :
+- Augmenter la tolérance d'attente : afficher un état « En cours… » + ne marquer en erreur qu'après ~30 s.
+- Afficher le message d'erreur exact retourné par la fonction (pas seulement le message générique du SDK).
 
-**Causes probables** (déjà partiellement diagnostiquées dans la mémoire de session précédente):
-- 186 scripts / 1.9MB initial; `@elevenlabs/react` chargé partout.
-- `BlogArticlePage` corrigé, mais d'autres pages héritent du même pattern de `useQuery` sans timeout/erreur visible.
-- `useAlexHomeAutostart` peut se déclencher hors `/`.
+## Fichiers touchés
 
-**Correctifs ciblés (non destructifs)**:
-- Vérifier que TOUTES les routes de `router.tsx` utilisent `lazy()` + `<Suspense fallback={<LazyFallback/>}>` — auditer et compléter là où il manque (ex: `Home`, `FallbackRoutePage` actuellement importés en dur).
-- Convertir `@elevenlabs/react` en `import()` dynamique côté `useAlexConversation` et `useAlexVoiceInput` (déclenché uniquement à `openAlex()`).
-- Ajouter un `useLoadingTimeout(4000)` standard à toutes les pages affichant "Chargement…" → fallback CTA "Réessayer / Retour".
-- Confirmer que le preload `hero-bg.webp` est bien retiré (déjà fait).
-- Ajouter un composant global `<GlobalLoadTimeoutBanner>` (8s) qui propose "Recharger" si l'app reste figée.
+```
+src/pages/admin/outbound/PageOutboundLeadsQueue.tsx        (réparation chargement)
+src/pages/admin/outbound/PageOutboundTestCenter.tsx        (meilleur diagnostic)
+supabase/functions/acq-enrich-contractor/index.ts          (timeout, CORS, background)
+```
 
-## 4. Garde-fous anti-régression
+## Garanties anti-régression
 
-- **Ne pas toucher** à: `src/integrations/supabase/*`, edge functions, schéma DB, moteurs de matching/prediction/booking, `alexRuntimeSingleton`, prompts Alex.
-- Tous les changements en frontend uniquement (pages, composants, hooks UI, CSS).
-- Aucune migration SQL.
-- Logger chaque correctif dans `system_events` pour observabilité.
+- Aucune modification de schéma DB, aucune RLS modifiée.
+- Le pipeline existant (`execute-prospect-pipeline`, `acq-generate-score`, `acq-send-invite`) **n'est pas touché**.
+- Les composants visuels et la navigation restent identiques.
+- Le contrat de retour de `acq-enrich-contractor` (`contractor_id`, `slug`, `page_slug`, `score`) reste inchangé pour ne pas casser le Test Center.
 
----
+## Critères de succès
 
-## Détails techniques
-
-### Fichiers modifiés
-1. `src/pages/OnboardingPageUnpro.tsx` — handler de rôle non-bloquant
-2. `src/components/onboarding/FormRoleSelection.tsx` — état visuel + sessionStorage
-3. `src/components/layout/BottomNav.tsx` (à confirmer) — masquer en mode chat plein écran
-4. `src/pages/AlexVoicePage.tsx` — afficher composer texte permanent + visualViewport
-5. `src/styles/alex-overlays.css` — safe-area + z-index
-6. `src/app/router.tsx` — `lazy()` manquants
-7. `src/hooks/useAlexConversation.ts` + `useAlexVoiceInput.ts` — dynamic import ElevenLabs
-8. `src/hooks/useAlexHomeAutostart.ts` — restreindre aux surfaces produit
-9. `src/components/system/GlobalLoadTimeoutBanner.tsx` — nouveau, monté dans `Providers`
-10. `src/app/providers.tsx` — monter le banner
-
-### Hors scope (refusé explicitement)
-- Refonte des moteurs Alex / orchestration
-- Modification de la DB ou des RLS
-- Suppression de pages, routes, ou composants existants
-- Changement de la voix Alex / agent ID
-
-### Critères de succès
-- `/onboarding`: clic sur rôle → réaction visuelle <100ms, navigation cohérente
-- `/alex/voice`: champ texte toujours visible et utilisable, même clavier ouvert
-- FCP < 4s sur mobile 4G simulé
-- Toute page qui charge >4s affiche un CTA de récupération
-- Aucune route existante ne 404 ou ne reste figée sur "Téléchargement"
+- `/admin/outbound/leads-queue` affiche les 60 leads existants en < 3 s ou montre une erreur claire.
+- L'étape « 2. Enrichissement » du Test Center termine en < 10 s ou retourne un message d'erreur explicite.
+- Les Edge Logs montrent des traces `[enrich] step=...` exploitables pour la suite.
