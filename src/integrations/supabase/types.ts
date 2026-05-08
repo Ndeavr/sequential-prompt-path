@@ -32167,6 +32167,281 @@ export type Database = {
           },
         ]
       }
+      facebook_extracted_comments: {
+        Row: {
+          availability_text: string | null
+          campaign_id: string | null
+          city: string | null
+          commenter_name: string | null
+          commenter_profile_url: string | null
+          company_name: string | null
+          confidence_score: number | null
+          created_at: string
+          email: string | null
+          extraction_source: string | null
+          id: string
+          phone: string | null
+          raw_comment: string | null
+          screenshot_url: string | null
+          status: string
+          trade_category: string | null
+        }
+        Insert: {
+          availability_text?: string | null
+          campaign_id?: string | null
+          city?: string | null
+          commenter_name?: string | null
+          commenter_profile_url?: string | null
+          company_name?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          email?: string | null
+          extraction_source?: string | null
+          id?: string
+          phone?: string | null
+          raw_comment?: string | null
+          screenshot_url?: string | null
+          status?: string
+          trade_category?: string | null
+        }
+        Update: {
+          availability_text?: string | null
+          campaign_id?: string | null
+          city?: string | null
+          commenter_name?: string | null
+          commenter_profile_url?: string | null
+          company_name?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          email?: string | null
+          extraction_source?: string | null
+          id?: string
+          phone?: string | null
+          raw_comment?: string | null
+          screenshot_url?: string | null
+          status?: string
+          trade_category?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facebook_extracted_comments_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "facebook_extraction_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      facebook_extraction_campaigns: {
+        Row: {
+          city: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          notes: string | null
+          source_url: string | null
+          trade_category: string | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          source_url?: string | null
+          trade_category?: string | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          source_url?: string | null
+          trade_category?: string | null
+        }
+        Relationships: []
+      }
+      fb_contractor_lead_enrichment_logs: {
+        Row: {
+          confidence: number | null
+          contractor_lead_id: string | null
+          created_at: string
+          id: string
+          provider: string | null
+          query: string | null
+          result_json: Json | null
+          status: string | null
+        }
+        Insert: {
+          confidence?: number | null
+          contractor_lead_id?: string | null
+          created_at?: string
+          id?: string
+          provider?: string | null
+          query?: string | null
+          result_json?: Json | null
+          status?: string | null
+        }
+        Update: {
+          confidence?: number | null
+          contractor_lead_id?: string | null
+          created_at?: string
+          id?: string
+          provider?: string | null
+          query?: string | null
+          result_json?: Json | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fb_contractor_lead_enrichment_logs_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "fb_contractor_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fb_contractor_leads: {
+        Row: {
+          address: string | null
+          aipp_score: number | null
+          assigned_to: string | null
+          city: string | null
+          company_name: string | null
+          contact_name: string | null
+          created_at: string
+          duplicate_key: string | null
+          email: string | null
+          enrichment_confidence: number | null
+          facebook_url: string | null
+          google_business_url: string | null
+          google_rating: number | null
+          google_review_count: number | null
+          id: string
+          legal_name: string | null
+          neq_number: string | null
+          owner_names: string[] | null
+          phone: string | null
+          rbq_number: string | null
+          source: string
+          source_comment_id: string | null
+          status: string
+          trade_category: string | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          address?: string | null
+          aipp_score?: number | null
+          assigned_to?: string | null
+          city?: string | null
+          company_name?: string | null
+          contact_name?: string | null
+          created_at?: string
+          duplicate_key?: string | null
+          email?: string | null
+          enrichment_confidence?: number | null
+          facebook_url?: string | null
+          google_business_url?: string | null
+          google_rating?: number | null
+          google_review_count?: number | null
+          id?: string
+          legal_name?: string | null
+          neq_number?: string | null
+          owner_names?: string[] | null
+          phone?: string | null
+          rbq_number?: string | null
+          source?: string
+          source_comment_id?: string | null
+          status?: string
+          trade_category?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          address?: string | null
+          aipp_score?: number | null
+          assigned_to?: string | null
+          city?: string | null
+          company_name?: string | null
+          contact_name?: string | null
+          created_at?: string
+          duplicate_key?: string | null
+          email?: string | null
+          enrichment_confidence?: number | null
+          facebook_url?: string | null
+          google_business_url?: string | null
+          google_rating?: number | null
+          google_review_count?: number | null
+          id?: string
+          legal_name?: string | null
+          neq_number?: string | null
+          owner_names?: string[] | null
+          phone?: string | null
+          rbq_number?: string | null
+          source?: string
+          source_comment_id?: string | null
+          status?: string
+          trade_category?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fb_contractor_leads_source_comment_id_fkey"
+            columns: ["source_comment_id"]
+            isOneToOne: false
+            referencedRelation: "facebook_extracted_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fb_contractor_outreach_messages: {
+        Row: {
+          body: string | null
+          channel: string | null
+          contractor_lead_id: string | null
+          created_at: string
+          id: string
+          status: string
+          subject: string | null
+          tone: string | null
+        }
+        Insert: {
+          body?: string | null
+          channel?: string | null
+          contractor_lead_id?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          subject?: string | null
+          tone?: string | null
+        }
+        Update: {
+          body?: string | null
+          channel?: string | null
+          contractor_lead_id?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          subject?: string | null
+          tone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fb_contractor_outreach_messages_contractor_lead_id_fkey"
+            columns: ["contractor_lead_id"]
+            isOneToOne: false
+            referencedRelation: "fb_contractor_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       field_validations: {
         Row: {
           admin_note: string | null
