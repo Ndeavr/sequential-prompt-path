@@ -87,7 +87,7 @@ export default function UniversalRouteGuard({ children, allowedRoles, anyAuth }:
         setAdminCheck((p) =>
           p.status === "checking" ? { status: "denied", reason: "load_error", detail: "timeout" } : p,
         );
-    }, 6000);
+    }, 3500);
     return () => { cancelled = true; clearTimeout(t); };
   }, [isAdminGate, knownAdmin, isAuthenticated, user?.id]);
 

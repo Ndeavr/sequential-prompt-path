@@ -15,25 +15,32 @@ import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import LikeShareButtons from "@/components/shared/LikeShareButtons";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import BlockArticleParagraphReadable from "@/components/articles/BlockArticleParagraphReadable";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
+import { RefreshCw } from "lucide-react";
 
 export default function BlogArticlePage() {
   const { slug } = useParams<{ slug: string }>();
   const { openAlex } = useAlexVoice();
   useEngagementTracking();
 
-  const { data: article, isLoading } = useQuery({
+  const { data: article, isLoading, isError, refetch } = useQuery({
     queryKey: ["blog-article", slug],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("blog_articles")
         .select("*")
         .eq("slug", slug)
         .eq("status", "published")
         .maybeSingle();
+      if (error) throw error;
       return data as any;
     },
     enabled: !!slug,
+    retry: 0,
+    staleTime: 5 * 60 * 1000,
   });
+
+  const stuck = useLoadingTimeout(isLoading, 4000, "blog_article");
 
   // Related articles
   const { data: related } = useQuery({
@@ -76,20 +83,41 @@ export default function BlogArticlePage() {
     })),
   } : null;
 
-  if (isLoading) {
+  if (isLoading && !stuck) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Chargement...</div>
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="animate-pulse text-muted-foreground text-sm">Chargement de l'article…</div>
       </div>
     );
   }
 
-  if (!article) {
+  if (isError || (isLoading && stuck) || (!isLoading && !article)) {
+    const isTimeout = isLoading && stuck;
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold text-foreground">Article introuvable</h1>
-          <Link to="/blog" className="text-primary hover:underline">Retour au blog</Link>
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="text-center space-y-5 max-w-md">
+          <h1 className="text-2xl font-bold text-foreground">
+            {isTimeout ? "Connexion lente détectée" : "Article introuvable"}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {isTimeout
+              ? "Le chargement prend plus de temps que prévu. Vérifiez votre connexion ou réessayez."
+              : "Cet article n'est pas disponible pour le moment."}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={() => refetch()}
+              className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-lg font-medium hover:bg-primary/90 transition"
+            >
+              <RefreshCw className="h-4 w-4" /> Réessayer
+            </button>
+            <Link
+              to="/blog"
+              className="inline-flex items-center justify-center gap-2 border border-border px-5 py-2.5 rounded-lg font-medium hover:bg-accent transition text-foreground"
+            >
+              Retour au blog
+            </Link>
+          </div>
         </div>
       </div>
     );

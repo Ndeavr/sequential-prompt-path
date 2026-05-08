@@ -79,7 +79,7 @@ const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps
         setAdminCheck((prev) =>
           prev.status === "checking" ? { status: "denied", reason: "load_error", detail: "timeout" } : prev,
         );
-    }, 6000);
+    }, 3500);
 
     return () => {
       cancelled = true;
