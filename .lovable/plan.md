@@ -1,88 +1,39 @@
-## Diagnostic
+## Problem
 
-The screenshot (`unpro.ca/onboarding`) shows a generic "Cette fonctionnalité arrive bientôt" page. Investigation reveals:
+On `/admin/*`, users with the `admin` role (confirmed in DB for `yturcotte@gmail.com`) hit `AdminAccessDenied` with `detail: "timeout"`.
 
-- **74 routes** in `src/app/router.tsx` are wired to `<FallbackRoutePage />` (the "coming soon" placeholder).
-- The current code wires `/onboarding` correctly to `OnboardingPageUnpro`, but production (`unpro.ca`) is running an **older deploy** where it was a fallback. Publishing alone fixes `/onboarding`.
-- The other 74 fallback routes are dead end-user URLs (homepage links, footer, dashboard nav, condo, pro, services). Most have a real page already built in `src/pages/` (158 page files exist) — they were simply never wired.
+## Root cause
 
-## Goal
+`src/guards/UniversalRouteGuard.tsx` runs its **own** `supabase.from("user_roles").select(...)` in addition to the one already running inside `useAuth` (TanStack Query). Two issues compound:
 
-Make every public route render real content. Zero "Cette fonctionnalité arrive bientôt" page in production.
+1. **Race**: the guard fires before `useAuth.roleQuery` resolves. `knownAdmin` is `false` initially, so the guard kicks off a parallel query.
+2. **Tight timeout**: the guard force-denies after **3.5 s** (`setAdminCheck → load_error/timeout`), while `useAuth` itself only marks `roleTimedOut` at 4 s. On a slow network or cold Supabase connection, the guard denies before either query returns, even though the user *is* admin.
 
-## Plan
+There is no need for a second query — `useAuth` already exposes `isAdmin`, `roles`, `hasResolvedRole`, `roleError`, `roleTimedOut`.
 
-### Phase 1 — Audit & Map (no code changes)
+## Fix (single file: `src/guards/UniversalRouteGuard.tsx`)
 
-For each of the 74 fallback URLs, classify:
+Replace the admin-gate block with logic that consumes `useAuth` only:
 
-| Bucket | Action |
-|---|---|
-| **A. Has a real page built** | Swap `<FallbackRoutePage />` → real component import |
-| **B. Aliases an existing flow** | Redirect to the canonical URL (e.g. `/score-aipp` → `/entrepreneurs/score-aipp` once built) |
-| **C. Truly not built** | Replace with a minimal real page (hero + CTA to Alex + relevant content), not a generic placeholder |
-
-Likely mappings (high confidence, to confirm by file inspection):
-
-```text
-/proprietaires/passeport-maison    → PropertyGraphPage / passport flow
-/proprietaires/score-maison        → useHomeScore page
-/outils-ia                         → AnswerEnginePage or new index
-/services/toiture|fondation|...    → CityServicePage with slug
-/entrepreneurs/creer-mon-profil    → ContractorOnboardingPage
-/entrepreneurs/score-aipp          → AIPPScorePage / PageAuditAIPPv2
-/entrepreneurs/profil-public       → ContractorProfile
-/entrepreneurs/matching            → MatchingResultsPage
-/entrepreneurs/badges              → AuthorityDashboardPage
-/entrepreneurs/demo                → BookingClientDemoPage
-/aide /faq                         → PageUnproFAQ25
-/professionnels                    → ProfessionnelsPage2
-/villes                            → PageCityServiceCoverage
-/guides                            → PageGuidesHomeProblems (already wired twice — fix duplicate)
-/plans-prix                        → PricingPage
-/favoris /historique /alertes      → DashboardLayout sub-pages
-/messages                          → existing messaging feature
-/condo/*                           → CoproprietePage variants
-/pro/stats /pro/visibility         → contractor dashboard sub-pages
-/conseils-renovation               → BlogPage2 filtered
-/a-propos /contact /conditions     → simple static content pages (build minimal real)
-```
-
-### Phase 2 — Wire (single PR per cluster)
-
-Cluster edits to keep diffs small and reversible:
-
-1. **Homeowner cluster** — `/proprietaires/*`, `/favoris`, `/historique`, `/mes-projets`, `/mes-rendez-vous`
-2. **Contractor cluster** — `/entrepreneurs/*`, `/pro/*`
-3. **Condo cluster** — `/condo/*`, `/loi-16`, `/fonds-prevoyance`, `/immeubles`, `/interventions`
-4. **Services cluster** — `/services/*` → use `CityServicePage` with service slug param
-5. **Discovery / SEO cluster** — `/professionnels`, `/villes`, `/guides`, `/conseils-renovation`, `/aide`, `/faq`
-6. **Account cluster** — `/compte`, `/notifications`, `/messages`, `/facturation`, `/analytics`, `/settings-systeme`
-7. **Static content cluster** — `/a-propos`, `/contact`, `/conditions`, `/confidentialite`, `/cookies`, `/accessibilite`, `/nos-standards`, `/pourquoi-pas-3-soumissions`, `/verification` (build 1 reusable `StaticContentPage` + 9 markdown blocks, themed dark/warm per memory rules)
-
-### Phase 3 — Verify
-
-- Build passes, lazy chunks split correctly.
-- Browser sweep: visit every wired URL in preview at 384px viewport, confirm no fallback, no white screen, no console error.
-- `FallbackRoutePage` reduced to 1 use (the `*` catch-all → keep it as the actual 404, with a "Retour" CTA).
-- Publish to push fix live (this alone unblocks `/onboarding` on `unpro.ca`).
+- Drop the local `adminCheck` state, the duplicate `supabase.from("user_roles")` effect, and the 3.5 s timer.
+- For `isAdminGate`:
+  - If not authenticated → save intent and `Navigate` to `/login` (unchanged).
+  - If `isAdmin` → render children.
+  - If `!hasResolvedRole` (still loading and not timed out) → `RouteTransitionLoader`.
+  - If resolved and not admin → `AdminAccessDenied` with `reason: "no_role"`.
+  - If `roleError` or `roleTimedOut` and not admin → `AdminAccessDenied` with `reason: "load_error"` and `detail` from error message or `"timeout"`.
+- Add a manual "Réessayer" path: `AdminAccessDenied`'s retry button currently reloads — keep that behavior; additionally invalidate `["user-role"]` so a fresh fetch happens without full reload (optional polish).
+- Optionally bump `useAuth`'s role timeout from 4 s → 8 s to reduce false negatives on cold starts.
 
 ## Anti-regression
 
-- Do not touch `OnboardingPageUnpro`, `UniversalRouteGuard`, role buttons, Alex chat, or edge functions — already stabilized in prior turns.
-- Do not delete `FallbackRoutePage` (still used as final 404).
-- Keep all existing route-level guards (`UniversalRouteGuard`, `OnboardingGuard`, `PartnerGuard`).
-- One file edited per cluster (`src/app/router.tsx`) plus any new minimal pages added under `src/pages/static/`.
-- Preserve dark theme on `/app.unpro.ca` routes, warm theme on public `unpro.ca` routes (per memory).
+- Do not touch `useAuth`'s role query shape.
+- Do not change non-admin branches of the guard.
+- Keep `AdminAccessDenied` props/contract identical (`reason`, `detail`).
+- Keep auth-intent + return-path saving for unauthenticated users.
 
-## Success
+## Verify
 
-- 0 routes returning `FallbackRoutePage` except `*`.
-- Every URL in the navigation, footer, and dashboards renders production-quality content.
-- `/onboarding` on `unpro.ca` shows the real onboarding flow after publish.
-
-## Open question
-
-Do you want me to:
-- **(A)** Execute all 7 clusters in this loop (≈74 route swaps + ~9 new static pages, large diff), or
-- **(B)** Start with clusters 1–3 (Homeowner + Contractor + Condo — highest revenue impact) and queue the rest?
+1. Hard reload `/admin` while signed in as `yturcotte@gmail.com` → should land on the admin dashboard, not the denied screen.
+2. Sign in as a non-admin → should see `AdminAccessDenied` with `reason=no_role` (not `load_error`).
+3. Sign out and visit `/admin` → redirects to `/login`, then back to `/admin` after login.
