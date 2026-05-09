@@ -1,118 +1,59 @@
-# Growth Architecture — Implementation Plan
+## Contexte
 
-Aligns the codebase to the May 2026 SEO/AEO blueprint. We already have most building blocks (`seo_pages` table, `sitemap-xml` edge function, ~28 SEO page templates, schema helpers in `src/lib/seoSchema.ts`). The plan focuses on what's **missing** vs the blueprint, not rebuilding what works.
+Le playbook (P0–P5) décrit un MVP linéaire: setup → scrape RBQ → outreach email/SMS → funnel IA → Stripe → go-live. Le projet UNPRO est très en avance sur ce playbook: pipeline outbound complet, sniper engine, AIPP scoring, Stripe natif, onboarding entrepreneur, Alex voice, SEO programmatique. **Re-construire P0–P5 littéralement détruirait des modules supérieurs.** Ce plan extrait uniquement les **gaps réels** entre le playbook et l'existant, et les comble.
 
----
+## Audit rapide playbook → existant
 
-## Phase 1 — Architecture First (this PR)
+| Playbook | État actuel | Gap |
+|---|---|---|
+| P0 Setup, schéma `contractors`, `plans` | Sch. existant beaucoup plus riche (contractor_onboarding_sessions, activation_funnel, AIPP, NEQ) | ❌ Aucun. Plans playbook (Starter/Pro/Enterprise à 0/89/249) **contredisent** memory officielle (Recrue 149 → Signature 1799). Garder pricing actuel. |
+| P1 Scrape RBQ + Google Places enrichment | `outbound-autonomous-pipeline`, `data-extraction-engine`, `city-activity-matrix` couvrent scraping + Firecrawl. Pas de scraper RBQ dédié. | ⚠️ Ajouter source RBQ dans le pipeline existant (pas un nouveau system). |
+| P2 Outreach email/SMS séquences | `sniper-outreach-engine` (5 edge fns), `outbound-email-scheduling`, `outbound-sms-fallback`, séquences 3 emails + SMS, dédupe, safety. | ✅ Déjà fait, supérieur au playbook. |
+| P3 Funnel IA inscription 4 étapes | `contractor-onboarding-landing`, `useContractorFunnel`, `useOnboardingSession`, AIPP score → recommandation plan. | ⚠️ Vérifier que la recommandation IA de plan affiche bien le bon plan + ROI estimé sur l'écran de sélection. |
+| P4 Stripe Checkout + Webhooks + Portal | `checkout-architecture` (Payment Element natif), `combined-billing-logic`, `voice-sales-checkout`. PK live fixée. | ⚠️ Vérifier webhook `checkout.session.completed` → activation contractor + email bienvenue Resend. Ajouter `customer-portal` edge function si absente. |
+| P5 Go live, monitoring, 404, sitemap | `seo-index-domination`, sitemap, `/admin/operations`, email-health. Pas de Sentry. | ⚠️ Page 404 FR, email bienvenue Resend templaté, checklist launch. |
 
-Goal: make the structure crawlable & citation-ready before scaling content.
+## Plan d'exécution (3 phases priorisées revenue-first)
 
-### 1.1 Canonical URL routes (blueprint formula)
-Add four canonical route families to `src/config/routesConfig.ts` + `src/app/App.tsx`:
+### Phase A — Fermer la boucle paiement (revenue critical)
+Objectif: zéro friction de plan-recommandation → checkout → activation.
 
-```
-/solution/:service                           → service hub
-/solution/:service/:city                     → service × city (core money page)
-/solution/:service/:city/:neighborhood       → depth (Phase 3 ready)
-/contractor/:slug/:city                      → contractor profile
-/contractor/:slug/:city/reviews
-/contractor/:slug/:city/projects
-/guide/:topic                                → guide page (HowTo schema)
-/guide/:topic/:city                          → localized guide
-/project/:slug                               → before/after project
-/en/...                                      → English mirrors
-```
+1. **Audit `stripe-webhook` edge function**: confirmer handlers pour `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`. Si manquant, ajouter activation contractor + `subscription_status='active'`.
+2. **Email bienvenue Resend**: template fr-CA HTML envoyé sur `checkout.session.completed`, avec récap plan, lien dashboard, support@unpro.ca. Brand identity enforcement (UNPRO logo only).
+3. **`create-portal-session` edge function**: si absente, ajouter pour que l'entrepreneur gère sa subscription. Bouton "Gérer mon abonnement" dans dashboard contractor.
+4. **Validation plan recommandation**: vérifier que `useGoalToPlanEngine` + écran plan-recommendation affichent recommandation IA + ROI estimé + 3 plans avec recommandé highlighté (Recrue/Pro/Premium/Élite/Signature, **pas** Starter/Pro/Enterprise du playbook).
 
-Existing `/services/:service/:city`, `/probleme/...`, `/s/:slug` pages stay live; we add **301 redirects** in `vite.config` + an edge `_redirects` style rewrite so legacy URLs canonicalize to the new `/solution/...` shape (handled in `src/seo/services/canonicalManager.ts`).
+### Phase B — Source RBQ dans le pipeline outbound existant
+Objectif: enrichir le sniper avec licence RBQ comme signal de confiance + nouvelle source d'import.
 
-### 1.2 Sitemap index (multi-sitemap)
-Refactor `supabase/functions/sitemap-xml` → split into:
-- `sitemap_index.xml` (index of below)
-- `sitemap-core.xml`
-- `sitemap-solutions-fr.xml` / `sitemap-solutions-en.xml`
-- `sitemap-contractors.xml`
-- `sitemap-guides.xml`
-- `sitemap-projects.xml`
-- `sitemap-neighborhoods.xml` (empty until Phase 3)
+1. **Ajouter `source='rbq'`** dans `outbound_prospects` (déjà extensible via colonne source).
+2. **Edge function `scrape-rbq-leads`**: appel registre public RBQ par ville/catégorie, mapping vers les 30 services UNPRO, upsert dans `outbound_prospects` via le pipeline existant (passe par approval gate, dédupe, safety controls — **ne pas court-circuiter**).
+3. **UI admin**: ajouter onglet "Import RBQ" dans `/admin/outbound/...` (navigation existante 6 clusters), formulaire ville+services, lance scraping, affiche résultats.
+4. **Mapping RBQ catégories → services UNPRO** dans `src/data/` avec test Vitest.
 
-Each sub-sitemap capped at 50k URLs; priority + changefreq per blueprint table. Add webhook trigger on `contractors` insert + `seo_pages` insert that pings `https://www.google.com/ping?sitemap=...`.
+### Phase C — Production hardening
+1. **Page 404 FR** (`src/pages/NotFound.tsx`): message warm theme, CTA retour accueil, suggestions Alex.
+2. **Sentry**: optionnel, ajouter `@sentry/react` avec `VITE_SENTRY_DSN` env var, capture erreurs React + edge function failures via context Provider.
+3. **`LAUNCH_CHECKLIST.md`** racine projet: items du playbook P5 + items spécifiques UNPRO (AIPP scoring live, Alex voice agent ID prod, Stripe live mode, sitemap submitted).
+4. **Vérifier `public/robots.txt` et sitemap_index.xml** pointent bien vers prod (déjà fait via `seo-index-domination`).
 
-### 1.3 Bilingual hreflang
-Extend `SeoHead.tsx` to always emit `<link rel="alternate" hreflang="fr-CA">`, `hreflang="en-CA">`, `hreflang="x-default">` pairs. Add `getEnglishCounterpart(path)` helper in `canonicalManager.ts`.
+## Hors scope (volontairement)
 
-### 1.4 Schema stack (4 types, stacked)
-Audit each template and ensure stacking:
-- LocalBusiness + HomeAndConstructionBusiness on every `/contractor/...`
-- FAQPage on every `/solution/:service/:city`
-- BreadcrumbList sitewide (via new `<BreadcrumbSchema/>` in `MainLayout`)
-- HowTo on every `/guide/:topic`
+- Recréer schéma `contractors`/`plans` du playbook — détruirait l'existant.
+- Plans tarifaires Starter/Pro/Enterprise du playbook — contredit la memory officielle (Recrue 149 → Signature 1799).
+- Construire un nouveau outreach engine — `sniper-outreach-engine` existe et est supérieur.
+- Rebuild onboarding 4 étapes from scratch — `contractor-onboarding-landing` existe.
+- Ajouter Twilio (déjà connecté).
+- Tables `contractor_leads`, `outreach_events` séparées — utiliser `outbound_prospects` existante.
 
-Add `src/seo/components/SchemaStack.tsx` that takes a `pageType` and renders the right combo.
+## Détails techniques
 
-### 1.5 AEO page template
-Create `src/seo/components/AeoServicePageTemplate.tsx` enforcing:
-- H1, then H2 = exact question, answered in first 2 sentences
-- Price anchor table (currency, range)
-- City + neighborhood + postal prefix in first 100 words
-- 5–8 FAQ block (FAQPage JSON-LD)
-- 3+ contextual internal links
-- Before/after gallery slot with structured alt text
+- Toutes les edge functions Deno: `https://esm.sh/@supabase/supabase-js@2.49.1` (memory constraint).
+- Resend via connector gateway (déjà connecté).
+- Stripe Payment Element natif (pas Stripe Checkout hosted) — memory `checkout-architecture`.
+- Pricing: Recrue=149, Pro=349, Premium=599, Élite=999, Signature=1799 (memory officielle).
+- Tous textes UI fr-CA.
 
-Wire `SolutionFrPage.tsx` + new `/solution/:service/:city` route to use it.
+## Recommandation d'ordre
 
----
-
-## Phase 2 — Content Core (separate PR)
-
-- Generate 30 services × 10 cities = 300 rows in `seo_pages` via a one-off script (`scripts/seed-solution-pages.ts`)
-- Publish 10 guides with HowTo schema (extend `src/seo/data/guides.ts`)
-- Add price tables to `src/seo/data/services.ts`
-- Activate review collection on contractor pages
-
-## Phase 3 — Geographic Expansion
-- Expand to 40 cities × 30 services (~1,200 pages)
-- Activate `sitemap-neighborhoods.xml` for Montreal + Laval
-- Project portfolio template
-
-## Phase 4 — Authority & AEO Dominance
-- Annual guide refresh job (cron edge function, January)
-- RénoClimat subsidy tracker page
-- Authority backlink outreach tracker in `/admin/seo-health`
-
----
-
-## Technical scope (Phase 1 only — what I will edit)
-
-**New files**
-- `src/seo/components/SchemaStack.tsx`
-- `src/seo/components/AeoServicePageTemplate.tsx`
-- `src/pages/seo/SolutionServicePage.tsx` (`/solution/:service`)
-- `src/pages/seo/SolutionServiceCityPage.tsx` (`/solution/:service/:city`)
-- `src/pages/seo/ContractorCityPage.tsx` (`/contractor/:slug/:city`)
-- `src/pages/seo/ProjectPage.tsx` (`/project/:slug`)
-- `supabase/functions/sitemap-index/index.ts`
-- `supabase/functions/sitemap-solutions/index.ts`
-- `supabase/functions/sitemap-contractors/index.ts`
-- `supabase/functions/sitemap-guides/index.ts`
-- `supabase/functions/sitemap-projects/index.ts`
-
-**Edited**
-- `src/config/routesConfig.ts` — new ROUTES constants
-- `src/app/App.tsx` — register new routes
-- `src/seo/components/SeoHead.tsx` — hreflang pairs
-- `src/seo/services/canonicalManager.ts` — `/solution/...` formula + EN counterpart
-- `supabase/functions/sitemap-xml/index.ts` — convert to index that delegates
-- `public/robots.txt` — point to `sitemap_index.xml`
-
-**No DB migration in Phase 1** — `seo_pages` already supports this. Phase 2 adds `seo_pages.lang` if not present and a `seo_projects` table.
-
----
-
-## Out of scope
-- No business/auth changes
-- No Alex/voice changes
-- No content authoring (Phase 2)
-- No contractor onboarding changes — only their public URL shape
-
-Confirm and I'll execute Phase 1.
+Commencer par **Phase A** (revenue critical, ~1 sprint), valider qu'un paiement de bout en bout fonctionne, puis Phase B (acquisition), puis Phase C (hardening). Si vous voulez attaquer une phase précise plutôt que les 3, dites-le après approbation.
