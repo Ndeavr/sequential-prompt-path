@@ -101,6 +101,7 @@ const AdminProspectImport = () => {
   const [rows, setRows] = useState<Record<string, string>[]>([]);
   const [fileName, setFileName] = useState("");
   const [importing, setImporting] = useState(false);
+  const [sourceMode, setSourceMode] = useState<"csv_import" | "rbq">("csv_import");
   const [result, setResult] = useState<{ imported: number; failed: number; errors: string[] } | null>(null);
 
   const handleFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
