@@ -145,20 +145,30 @@ const AdminProspectImport = () => {
         usedSlugs.add(slug);
 
         const domain = extractDomain(m.website);
+        const isRbq = sourceMode === "rbq";
+        const mappedCategory = isRbq && m.category ? mapRbqCategory(m.category) : (m.category || null);
+        const rbqNotes = isRbq
+          ? [m.rbq_number ? `RBQ:${m.rbq_number}` : null, m.neq_number ? `NEQ:${m.neq_number}` : null, m.address ? `ADDR:${m.address}` : null].filter(Boolean).join(" | ")
+          : null;
 
         const { error } = await supabase.from("contractors_prospects").upsert({
           business_name: m.business_name,
+          legal_name: m.legal_name || m.business_name,
           city: m.city || "Laval",
-          category: m.category || null,
+          region: m.region || null,
+          category: mappedCategory,
+          subcategory: m.subcategory || (isRbq ? m.category : null),
           website: m.website || null,
           domain,
           email: m.email || null,
           phone: m.phone || null,
-          source: m.source || "csv_import",
+          source: isRbq ? "rbq" : (m.source || "csv_import"),
+          source_detail: isRbq && m.rbq_number ? `rbq:${m.rbq_number}` : null,
           service_area: m.service_area || null,
           priority_tier: m.priority_tier || "B",
           landing_slug: slug,
           status: "new",
+          notes: rbqNotes,
         }, { onConflict: "landing_slug" });
 
         if (error) { errors.push(`${m.business_name}: ${error.message}`); } else { imported++; }
