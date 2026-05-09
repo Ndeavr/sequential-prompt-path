@@ -87,8 +87,8 @@ export default function PagePricingCalculator() {
       setAvgTicket(Math.round((cat.average_contract_value_min + cat.average_contract_value_max) / 2));
       // Auto-set min plan
       const floorPlan = cat.base_plan_floor || "recrue";
-      const normalizedFloorPlan = floorPlan === "pro" ? "pro_acq" : floorPlan === "premium" ? "premium_acq" : floorPlan === "elite" ? "elite_acq" : floorPlan;
-      const planOrder = ["recrue", "pro_acq", "premium_acq", "elite_acq", "signature"];
+      const normalizedFloorPlan = floorPlan;
+      const planOrder = ["recrue", "pro", "premium", "elite", "signature"];
       if (planOrder.indexOf(planCode) < planOrder.indexOf(normalizedFloorPlan)) {
         setPlanCode(normalizedFloorPlan);
       }

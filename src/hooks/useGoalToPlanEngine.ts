@@ -248,7 +248,7 @@ export function useGoalToPlanEngine() {
       suggestedAddonPackage,
       planMatchConfidence: conf,
       territoryStatus: "disponible",
-      exclusivityPossible: plan.code === "signature" || plan.code === "elite_acq",
+      exclusivityPossible: plan.code === "signature" || plan.code === "elite",
       capacityStatus,
     };
   }, [inputs]);

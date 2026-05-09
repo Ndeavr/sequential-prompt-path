@@ -83,9 +83,8 @@ const PageEntrepreneurPricing = () => {
               return (
                 <motion.div
                   key={plan.code}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={false}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.08 }}
                   className={cn(
                     "bg-card rounded-2xl p-6 border transition-all relative",
                     plan.highlighted

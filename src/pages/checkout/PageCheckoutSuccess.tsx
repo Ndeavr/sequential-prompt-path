@@ -90,7 +90,7 @@ export default function PageCheckoutSuccess() {
   }, [session?.user?.id, planCode]);
 
   const PLAN_NAMES: Record<string, string> = {
-    recrue: "Recrue", pro_acq: "Pro", premium_acq: "Premium", elite_acq: "Élite", signature: "Signature",
+    recrue: "Recrue", pro: "Pro", premium: "Premium", elite: "Élite", signature: "Signature",
   };
 
   return (

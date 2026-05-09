@@ -569,7 +569,7 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
                     💡 La plupart des entrepreneurs sérieux démarrent directement au plan{" "}
                     <button
                       onClick={() => {
-                        document.querySelector('[data-plan="premium_acq"]')
+                        document.querySelector('[data-plan="premium"]')
                           ?.scrollIntoView({ behavior: "smooth", block: "center" });
                         setShowEntryPlan(false);
                       }}
@@ -610,7 +610,7 @@ export default function ContractorPlans({ preSelectedPlan }: { preSelectedPlan?:
         open={rdvModalOpen}
         onOpenChange={setRdvModalOpen}
         onChoosePlan={() => {
-          const recommended = document.querySelector('[data-plan="premium_acq"]');
+          const recommended = document.querySelector('[data-plan="premium"]');
           recommended?.scrollIntoView({ behavior: "smooth", block: "center" });
         }}
       />
