@@ -299,7 +299,7 @@ export default function ContractorQuestionnairePage() {
               )}
 
               {step === 3 && (() => {
-                const planCode = "pro_acq"; // TODO: get from subscription
+                const planCode = "pro"; // TODO: get from subscription
                 const limits = SERVICE_LIMITS[planCode] || SERVICE_LIMITS.recrue;
                 return (
                   <>
