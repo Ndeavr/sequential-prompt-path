@@ -866,6 +866,16 @@ export const AppRouter = () => (
         <Route path="/guides/:topic" element={<GuidePage />} />
         <Route path="/renovation/:projectSlug/:citySlug" element={<RenovationLocationPage />} />
 
+        {/* Blueprint canonical routes — May 2026 */}
+        <Route path="/solution/:service/:city" element={<Suspense fallback={<LazyFallback />}>{(() => { const P = lazy(() => import("@/pages/seo/SolutionServiceCityPage")); return <P />; })()}</Suspense>} />
+        <Route path="/solution/:service/:city/:neighborhood" element={<Suspense fallback={<LazyFallback />}>{(() => { const P = lazy(() => import("@/pages/seo/SolutionServiceCityPage")); return <P />; })()}</Suspense>} />
+        <Route path="/contractor/:slug/:city" element={<Suspense fallback={<LazyFallback />}>{(() => { const P = lazy(() => import("@/pages/seo/ContractorCityPage")); return <P />; })()}</Suspense>} />
+        <Route path="/contractor/:slug/:city/reviews" element={<Suspense fallback={<LazyFallback />}>{(() => { const P = lazy(() => import("@/pages/seo/ContractorCityPage")); return <P />; })()}</Suspense>} />
+        <Route path="/contractor/:slug/:city/projects" element={<Suspense fallback={<LazyFallback />}>{(() => { const P = lazy(() => import("@/pages/seo/ContractorCityPage")); return <P />; })()}</Suspense>} />
+        <Route path="/guide/:topic" element={<GuidePage />} />
+        <Route path="/guide/:topic/:city" element={<GuidePage />} />
+        <Route path="/project/:slug" element={<Suspense fallback={<LazyFallback />}>{(() => { const P = lazy(() => import("@/pages/seo/ProjectPage")); return <P />; })()}</Suspense>} />
+
         {/* Property Type SEO Pages */}
         <Route path="/types-de-propriete/:type" element={<PropertyTypeHubPage />} />
         <Route path="/:city/:type/:problem" element={<PropertyTypeProblemPage />} />
