@@ -42,11 +42,17 @@ const FIELD_MAP: Record<string, string> = {
   entreprise: "business_name",
   company: "business_name",
   name: "business_name",
+  legal_name: "legal_name",
+  raison_sociale: "legal_name",
   city: "city",
   ville: "city",
+  region: "region",
+  région: "region",
   category: "category",
   catégorie: "category",
   categorie: "category",
+  sous_categorie: "subcategory",
+  subcategory: "subcategory",
   website: "website",
   site: "website",
   site_web: "website",
@@ -62,7 +68,34 @@ const FIELD_MAP: Record<string, string> = {
   priority: "priority_tier",
   service_area: "service_area",
   zone: "service_area",
+  // RBQ-specific
+  rbq: "rbq_number",
+  rbq_number: "rbq_number",
+  numero_licence: "rbq_number",
+  "numéro_licence": "rbq_number",
+  neq: "neq_number",
+  neq_number: "neq_number",
+  address: "address",
+  adresse: "address",
 };
+
+// Map RBQ license category strings → UNPRO service categories.
+function mapRbqCategory(raw: string): string {
+  const c = (raw ?? "").toLowerCase();
+  if (/toiture|couvreur/.test(c)) return "toiture";
+  if (/plomb/.test(c)) return "plomberie";
+  if (/électric|electric/.test(c)) return "electricite";
+  if (/chauffage|ventilation|climatisation|cvac|cvc/.test(c)) return "cvac";
+  if (/maçon|macon|brique|pierre/.test(c)) return "maconnerie";
+  if (/excavation|fondation/.test(c)) return "excavation";
+  if (/peinture|peintre/.test(c)) return "peinture";
+  if (/menuis|charpente/.test(c)) return "menuiserie";
+  if (/revêtement|revetement|parement/.test(c)) return "revetement-exterieur";
+  if (/asphalte|pavage/.test(c)) return "pavage";
+  if (/paysag/.test(c)) return "paysagement";
+  if (/general|générale|generale/.test(c)) return "entrepreneur-general";
+  return raw || "autre";
+}
 
 const AdminProspectImport = () => {
   const [rows, setRows] = useState<Record<string, string>[]>([]);
