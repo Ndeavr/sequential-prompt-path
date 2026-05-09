@@ -1,117 +1,118 @@
-# Admin Cockpit Redesign
+# Growth Architecture — Implementation Plan
 
-## Problem
-
-- `AdminDashboard` shows a flat grid of 8 stat cards + 4 generic "recent" lists. No priority, no actions, no "what should I do now?".
-- `AdminLayout` sidebar dumps **35+ flat links** + a 7-group Outbound mega-menu. No hierarchy, no grouping, no search. Visually chaotic.
-- Nothing tells the admin: *what's broken, what needs approval, what made money today, what to do next*.
-
-## Goal
-
-Transform `/admin` into a **premium operator cockpit** ordered by decision urgency, and clean up the sidebar into grouped, collapsible sections.
+Aligns the codebase to the May 2026 SEO/AEO blueprint. We already have most building blocks (`seo_pages` table, `sitemap-xml` edge function, ~28 SEO page templates, schema helpers in `src/lib/seoSchema.ts`). The plan focuses on what's **missing** vs the blueprint, not rebuilding what works.
 
 ---
 
-## 1. New `/admin` dashboard — order of importance
+## Phase 1 — Architecture First (this PR)
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│  HERO — "Bonjour, X. Voici l'état d'UNPRO aujourd'hui."│
-│  Live system pulse · Date · Quick search                │
-└─────────────────────────────────────────────────────────┘
+Goal: make the structure crawlable & citation-ready before scaling content.
 
-[1] ALERTS STRIP            ← red/amber, dismissible
-    Critical blockers · failed jobs · expiring trials
+### 1.1 Canonical URL routes (blueprint formula)
+Add four canonical route families to `src/config/routesConfig.ts` + `src/app/App.tsx`:
 
-[2] À FAIRE MAINTENANT      ← actionable to-do queue
-    • N entrepreneurs à vérifier   → /admin/verification
-    • N soumissions à valider      → /admin/quotes
-    • N prospects à approuver      → /admin/outbound/leads
-    • N alertes ouvertes           → /admin/alerts
-    Each = card with count, ETA, primary CTA button
-
-[3] KPI STRIP (today / 7d / 30d toggle)
-    Revenus · Conversions · Nouveaux pros · MRR
-    Audits payés · AIPP moyens · Taux closing
-    (reuse KpiStrip component pattern)
-
-[4] PIPELINE SNAPSHOT
-    Funnel: Cibles → Engagés → Audits → Checkouts → Convertis
-    Mini sparklines per stage
-
-[5] FAIT AUJOURD'HUI       ← positive reinforcement
-    Recent wins: signups, payments, contractors verified,
-    campaigns sent. Auto-refreshing feed.
-
-[6] PROCHAINES ÉTAPES      ← AI-suggested next moves
-    From automation_blockers + revenue_signals.
-    e.g. "Lancer la campagne Montréal-Plomberie",
-         "Réviser 3 audits AIPP en attente"
-
-[7] MODULE HEALTH GRID     ← collapsible
-    Outbound · Alex · Stripe · Email · Edge functions
-    Status dot + last_run + open issues count
+```
+/solution/:service                           → service hub
+/solution/:service/:city                     → service × city (core money page)
+/solution/:service/:city/:neighborhood       → depth (Phase 3 ready)
+/contractor/:slug/:city                      → contractor profile
+/contractor/:slug/:city/reviews
+/contractor/:slug/:city/projects
+/guide/:topic                                → guide page (HowTo schema)
+/guide/:topic/:city                          → localized guide
+/project/:slug                               → before/after project
+/en/...                                      → English mirrors
 ```
 
-Every section is **interactive**: clickable, shows a drawer or routes to the dedicated page.
+Existing `/services/:service/:city`, `/probleme/...`, `/s/:slug` pages stay live; we add **301 redirects** in `vite.config` + an edge `_redirects` style rewrite so legacy URLs canonicalize to the new `/solution/...` shape (handled in `src/seo/services/canonicalManager.ts`).
 
-## 2. Sidebar restructure
+### 1.2 Sitemap index (multi-sitemap)
+Refactor `supabase/functions/sitemap-xml` → split into:
+- `sitemap_index.xml` (index of below)
+- `sitemap-core.xml`
+- `sitemap-solutions-fr.xml` / `sitemap-solutions-en.xml`
+- `sitemap-contractors.xml`
+- `sitemap-guides.xml`
+- `sitemap-projects.xml`
+- `sitemap-neighborhoods.xml` (empty until Phase 3)
 
-Group the 35+ links into **7 collapsible sections**, each with an icon header:
+Each sub-sitemap capped at 50k URLs; priority + changefreq per blueprint table. Add webhook trigger on `contractors` insert + `seo_pages` insert that pings `https://www.google.com/ping?sitemap=...`.
 
-```text
-⚡ COCKPIT          Tableau de bord · Omega · Operations Hub
-👥 PEOPLE           Utilisateurs · Entrepreneurs · Vérifications · Validation
-💰 REVENUE          Leads · Rendez-vous · Soumissions · Coupons · Pricing
-📡 OUTBOUND         (existing OutboundNavGroup, kept as-is)
-🧠 INTELLIGENCE     Agents · Optimisation · Predictive Leads · Answer · Home Graph
-📈 GROWTH           Croissance · Growth Engine · Demand Grid · Campaign Lab · SEO
-🛠️ OPS              Alertes · Documents · Médias · Automation · UNPRO OS · Settings
-```
+### 1.3 Bilingual hreflang
+Extend `SeoHead.tsx` to always emit `<link rel="alternate" hreflang="fr-CA">`, `hreflang="en-CA">`, `hreflang="x-default">` pairs. Add `getEnglishCounterpart(path)` helper in `canonicalManager.ts`.
 
-- Each group: collapsible (controlled, defaults open if active route inside).
-- Add a sticky **search input** at top of nav to filter links by label.
-- Active route stays highlighted, parent group auto-expands.
+### 1.4 Schema stack (4 types, stacked)
+Audit each template and ensure stacking:
+- LocalBusiness + HomeAndConstructionBusiness on every `/contractor/...`
+- FAQPage on every `/solution/:service/:city`
+- BreadcrumbList sitewide (via new `<BreadcrumbSchema/>` in `MainLayout`)
+- HowTo on every `/guide/:topic`
 
-## 3. Files to change / create
+Add `src/seo/components/SchemaStack.tsx` that takes a `pageType` and renders the right combo.
 
-**Edit**
-- `src/pages/admin/AdminDashboard.tsx` — full redesign per layout above.
-- `src/layouts/AdminLayout.tsx` — replace flat `navItems` with grouped `adminNavGroups` + search, reuse the existing `OutboundNavGroup` pattern.
+### 1.5 AEO page template
+Create `src/seo/components/AeoServicePageTemplate.tsx` enforcing:
+- H1, then H2 = exact question, answered in first 2 sentences
+- Price anchor table (currency, range)
+- City + neighborhood + postal prefix in first 100 words
+- 5–8 FAQ block (FAQPage JSON-LD)
+- 3+ contextual internal links
+- Before/after gallery slot with structured alt text
 
-**Create (small focused components)**
-- `src/components/admin/cockpit/CockpitHero.tsx`
-- `src/components/admin/cockpit/AlertsStrip.tsx`
-- `src/components/admin/cockpit/TodoQueue.tsx`
-- `src/components/admin/cockpit/KpiStripAdmin.tsx`
-- `src/components/admin/cockpit/PipelineSnapshot.tsx`
-- `src/components/admin/cockpit/RecentWinsFeed.tsx`
-- `src/components/admin/cockpit/NextStepsPanel.tsx`
-- `src/components/admin/cockpit/ModuleHealthGrid.tsx`
-- `src/components/admin/nav/AdminNavGroup.tsx` (collapsible group primitive)
-- `src/components/admin/nav/AdminNavSearch.tsx`
+Wire `SolutionFrPage.tsx` + new `/solution/:service/:city` route to use it.
 
-**Data sources** (reuse existing hooks; no new tables)
-- `useAdminStats`, `useAdminRecentActivity` (already used)
-- `useAutomationCommandCenter` / `automationCommandCenterService` for blockers + recent actions
-- `useGrowthMetrics` for KPIs
-- `useEmailHealthCenter` / module status hooks for ModuleHealthGrid
+---
 
-## 4. Visual style
+## Phase 2 — Content Core (separate PR)
 
-- Cinematic Dark `#060B14`, semantic tokens only, glassmorphism cards (`bg-card/30 backdrop-blur-sm border-border/20 rounded-2xl`).
-- Subtle entry animations (framer-motion stagger, no per-card `opacity:0` traps).
-- Mobile: sections stack; KPI strip horizontally scrolls (already pattern in `KpiStrip`).
+- Generate 30 services × 10 cities = 300 rows in `seo_pages` via a one-off script (`scripts/seed-solution-pages.ts`)
+- Publish 10 guides with HowTo schema (extend `src/seo/data/guides.ts`)
+- Add price tables to `src/seo/data/services.ts`
+- Activate review collection on contractor pages
 
-## 5. Out of scope
+## Phase 3 — Geographic Expansion
+- Expand to 40 cities × 30 services (~1,200 pages)
+- Activate `sitemap-neighborhoods.xml` for Montreal + Laval
+- Project portfolio template
 
-- No DB schema changes.
-- No business-logic changes — UI/presentation only.
-- Outbound mega-menu stays internally identical, just rehomed under the OUTBOUND group.
+## Phase 4 — Authority & AEO Dominance
+- Annual guide refresh job (cron edge function, January)
+- RénoClimat subsidy tracker page
+- Authority backlink outreach tracker in `/admin/seo-health`
 
-## Done when
+---
 
-- Landing on `/admin` immediately shows: alerts → to-do → KPIs → pipeline → wins → next steps → health.
-- Every card is clickable and routes to the right operational page.
-- Sidebar shows ≤7 expandable groups + a search; active route auto-expands its group.
-- No regressions on mobile (≤384px) or existing admin sub-pages.
+## Technical scope (Phase 1 only — what I will edit)
+
+**New files**
+- `src/seo/components/SchemaStack.tsx`
+- `src/seo/components/AeoServicePageTemplate.tsx`
+- `src/pages/seo/SolutionServicePage.tsx` (`/solution/:service`)
+- `src/pages/seo/SolutionServiceCityPage.tsx` (`/solution/:service/:city`)
+- `src/pages/seo/ContractorCityPage.tsx` (`/contractor/:slug/:city`)
+- `src/pages/seo/ProjectPage.tsx` (`/project/:slug`)
+- `supabase/functions/sitemap-index/index.ts`
+- `supabase/functions/sitemap-solutions/index.ts`
+- `supabase/functions/sitemap-contractors/index.ts`
+- `supabase/functions/sitemap-guides/index.ts`
+- `supabase/functions/sitemap-projects/index.ts`
+
+**Edited**
+- `src/config/routesConfig.ts` — new ROUTES constants
+- `src/app/App.tsx` — register new routes
+- `src/seo/components/SeoHead.tsx` — hreflang pairs
+- `src/seo/services/canonicalManager.ts` — `/solution/...` formula + EN counterpart
+- `supabase/functions/sitemap-xml/index.ts` — convert to index that delegates
+- `public/robots.txt` — point to `sitemap_index.xml`
+
+**No DB migration in Phase 1** — `seo_pages` already supports this. Phase 2 adds `seo_pages.lang` if not present and a `seo_projects` table.
+
+---
+
+## Out of scope
+- No business/auth changes
+- No Alex/voice changes
+- No content authoring (Phase 2)
+- No contractor onboarding changes — only their public URL shape
+
+Confirm and I'll execute Phase 1.

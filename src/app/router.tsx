@@ -388,6 +388,10 @@ const PageCommandCenterTerritories = lazy(() => import("@/pages/admin/PageComman
 
 // SEO Index Domination
 const ContractorSeoPage = lazy(() => import("@/pages/seo/ContractorSeoPage"));
+const SolutionServiceCityPage = lazy(() => import("@/pages/seo/SolutionServiceCityPage"));
+const SolutionServicePage = lazy(() => import("@/pages/seo/SolutionServicePage"));
+const ContractorCityPage = lazy(() => import("@/pages/seo/ContractorCityPage"));
+const ProjectPage = lazy(() => import("@/pages/seo/ProjectPage"));
 const PageSeoIndexHealth = lazy(() => import("@/pages/admin/PageSeoIndexHealth"));
 
 // Entrepreneur Onboarding Flow
@@ -865,6 +869,16 @@ export const AppRouter = () => (
         <Route path="/rue/:ville/:rue" element={<RuePage />} />
         <Route path="/guides/:topic" element={<GuidePage />} />
         <Route path="/renovation/:projectSlug/:citySlug" element={<RenovationLocationPage />} />
+
+        {/* Blueprint canonical routes — May 2026 */}
+        <Route path="/solution/:service/:city" element={<Suspense fallback={<LazyFallback />}><SolutionServiceCityPage /></Suspense>} />
+        <Route path="/solution/:service/:city/:neighborhood" element={<Suspense fallback={<LazyFallback />}><SolutionServiceCityPage /></Suspense>} />
+        <Route path="/contractor/:slug/:city" element={<Suspense fallback={<LazyFallback />}><ContractorCityPage /></Suspense>} />
+        <Route path="/contractor/:slug/:city/reviews" element={<Suspense fallback={<LazyFallback />}><ContractorCityPage /></Suspense>} />
+        <Route path="/contractor/:slug/:city/projects" element={<Suspense fallback={<LazyFallback />}><ContractorCityPage /></Suspense>} />
+        <Route path="/guide/:topic" element={<GuidePage />} />
+        <Route path="/guide/:topic/:city" element={<GuidePage />} />
+        <Route path="/project/:slug" element={<Suspense fallback={<LazyFallback />}><ProjectPage /></Suspense>} />
 
         {/* Property Type SEO Pages */}
         <Route path="/types-de-propriete/:type" element={<PropertyTypeHubPage />} />
