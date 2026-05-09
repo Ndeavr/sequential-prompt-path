@@ -64,7 +64,7 @@ const PREFILL = {
   warranty: "Garantie 1 an sur main-d'œuvre.",
   avg_lead_time: "2 à 5 jours",
   free_quote: true,
-  plan_code: "pro_acq",
+  plan_code: "pro",
 };
 
 type Toggles = {
