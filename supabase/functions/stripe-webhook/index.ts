@@ -212,6 +212,31 @@ Deno.serve(async (req) => {
             .eq("status", "reserved");
         }
 
+        // Welcome email (fr-CA) — fire-and-forget
+        try {
+          const { data: contractor } = await supabase
+            .from("contractors")
+            .select("business_name, owner_name, email")
+            .eq("id", contractorId)
+            .maybeSingle();
+          const recipient = (contractor as any)?.email || session.customer_email || session.customer_details?.email;
+          if (recipient) {
+            await supabase.functions.invoke("send-transactional-email", {
+              body: {
+                templateName: "entrepreneur-welcome",
+                recipientEmail: recipient,
+                idempotencyKey: `welcome-${contractorId}-${session.id}`,
+                templateData: {
+                  businessName: (contractor as any)?.business_name || null,
+                  ownerName: (contractor as any)?.owner_name || null,
+                },
+              },
+            });
+          }
+        } catch (e) {
+          console.warn("[stripe-webhook] welcome email failed", e);
+        }
+
         break;
       }
 
