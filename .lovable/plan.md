@@ -1,87 +1,117 @@
-# Fix: Plan selection → Payment completion
+# Admin Cockpit Redesign
 
-## Symptoms observed
+## Problem
 
-1. `/entrepreneur/pricing?recommended=premium` renders 4 dark blue cards with **no visible content** (title, price, features, CTA all missing). Skeleton state has finished — `plan_catalog` returns 5 active rows with prices and features.
-2. DB plan codes are `recrue, pro_acq, premium_acq, elite_acq, signature` — violates the canonical rule (`mem://index.md` Core: "Pricing… No _acq slugs"). Downstream:
-   - `PLAN_ICONS` map in `PageCheckoutStripe` keys on `pro/premium/elite`, so the checkout shows fallback ⚡ for every paid plan.
-   - `selected_plan_name` becomes "Pro_acq" / "Premium_acq" in `checkout_sessions` (zero-total branch).
-   - `PageCheckoutSuccess`, `useGoalToPlanEngine`, `ContractorQuestionnairePage`, `PagePricingCalculator`, `ContractorPlans`, `PageAdminCreateContractorManual` all hardcode `_acq` codes.
-3. Possible auth race: `/checkout` requires a logged-in session; if user lands on pricing while signed out, "Commencer" → `/checkout?plan=…` shows a toast + redirect loop instead of an inline login.
+- `AdminDashboard` shows a flat grid of 8 stat cards + 4 generic "recent" lists. No priority, no actions, no "what should I do now?".
+- `AdminLayout` sidebar dumps **35+ flat links** + a 7-group Outbound mega-menu. No hierarchy, no grouping, no search. Visually chaotic.
+- Nothing tells the admin: *what's broken, what needs approval, what made money today, what to do next*.
 
-## Root cause for empty cards (most likely)
+## Goal
 
-`PageEntrepreneurPricing` renders `motion.div` with `initial={{ opacity: 0 }}` and animates per-card with `transition={{ delay: i * 0.08 }}`. Cards are visible (border) but inner `<h3>`, price, features, and Button render `text-foreground` / `text-muted-foreground`. In the dark page bg the content should still appear — so the empty state means either:
-- The card container has `opacity-0` stuck (framer-motion did not advance), OR
-- `plan.features` came back as `null` and `plan.name` is fine but child components (price, button) are clipped by another stacking layer.
+Transform `/admin` into a **premium operator cockpit** ordered by decision urgency, and clean up the sidebar into grouped, collapsible sections.
 
-We will:
-- Add a defensive guard (`paidPlans.length === 0` → friendly fallback).
-- Remove the per-card opacity animation OR set `whileInView` so cards never get stuck at `opacity:0` if framer fails to mount.
-- Log `usePlanCatalog` errors visibly (toast) and console.
+---
 
-## Plan
+## 1. New `/admin` dashboard — order of importance
 
-### 1. Database — canonicalize plan codes (migration)
+```text
+┌─────────────────────────────────────────────────────────┐
+│  HERO — "Bonjour, X. Voici l'état d'UNPRO aujourd'hui."│
+│  Live system pulse · Date · Quick search                │
+└─────────────────────────────────────────────────────────┘
 
-Rename codes in `plan_catalog`:
-- `pro_acq` → `pro`
-- `premium_acq` → `premium`
-- `elite_acq` → `elite`
+[1] ALERTS STRIP            ← red/amber, dismissible
+    Critical blockers · failed jobs · expiring trials
 
-Update all rows in dependent tables that store plan slugs (audit first):
-`contractors.subscription_plan`, `contractor_subscriptions.plan_id`, `checkout_sessions.selected_plan_code`, `promo_codes.eligible_plan_codes` (jsonb array).
+[2] À FAIRE MAINTENANT      ← actionable to-do queue
+    • N entrepreneurs à vérifier   → /admin/verification
+    • N soumissions à valider      → /admin/quotes
+    • N prospects à approuver      → /admin/outbound/leads
+    • N alertes ouvertes           → /admin/alerts
+    Each = card with count, ETA, primary CTA button
 
-Single migration, idempotent (`UPDATE … WHERE code = 'pro_acq'`), wrapped in a transaction.
+[3] KPI STRIP (today / 7d / 30d toggle)
+    Revenus · Conversions · Nouveaux pros · MRR
+    Audits payés · AIPP moyens · Taux closing
+    (reuse KpiStrip component pattern)
 
-### 2. Frontend — replace `_acq` references
+[4] PIPELINE SNAPSHOT
+    Funnel: Cibles → Engagés → Audits → Checkouts → Convertis
+    Mini sparklines per stage
 
-Update these files to use canonical slugs only:
-- `src/hooks/useGoalToPlanEngine.ts`
-- `src/pages/ContractorQuestionnairePage.tsx`
-- `src/pages/admin/PageAdminCreateContractorManual.tsx`
-- `src/pages/entrepreneur/PagePricingCalculator.tsx`
-- `src/pages/pricing/ContractorPlans.tsx`
-- `src/pages/checkout/PageCheckoutSuccess.tsx`
+[5] FAIT AUJOURD'HUI       ← positive reinforcement
+    Recent wins: signups, payments, contractors verified,
+    campaigns sent. Auto-refreshing feed.
 
-### 3. Fix empty cards in `PageEntrepreneurPricing`
+[6] PROCHAINES ÉTAPES      ← AI-suggested next moves
+    From automation_blockers + revenue_signals.
+    e.g. "Lancer la campagne Montréal-Plomberie",
+         "Réviser 3 audits AIPP en attente"
 
-- Remove `initial={{ opacity: 0 }}` on per-card `motion.div` (or change to `whileInView` with `viewport={{ once: true }}` and a 0-delay animate fallback).
-- Add empty-state UI when `paidPlans.length === 0` after load.
-- Surface query errors with a `toast.error` + retry button.
-- Honor `?recommended=premium` query param: highlight the matching plan visually (ring + "Recommandé pour vous" badge) regardless of DB `highlighted` flag.
+[7] MODULE HEALTH GRID     ← collapsible
+    Outbound · Alex · Stripe · Email · Edge functions
+    Status dot + last_run + open issues count
+```
 
-### 4. Harden checkout entry
+Every section is **interactive**: clickable, shows a drawer or routes to the dedicated page.
 
-In `PageCheckoutStripe`:
-- Replace `PLAN_ICONS` lookup with the canonical slugs (already aligned after step 1) and add a default that doesn't depend on slug.
-- Use `plan.name` (not capitalized `planId`) for `selected_plan_name` server-side.
-- If `session` missing on mount, render an inline auth CTA instead of toasting on click. Preserve `?plan=…` via `redirect` param.
+## 2. Sidebar restructure
 
-### 5. Edge function `create-checkout-session`
+Group the 35+ links into **7 collapsible sections**, each with an icon header:
 
-- Use `planRow.name` for `selected_plan_name` instead of `planId.charAt(0).toUpperCase() + planId.slice(1)`.
-- Already pulls `priceId` from `plan_catalog` — no change needed.
+```text
+⚡ COCKPIT          Tableau de bord · Omega · Operations Hub
+👥 PEOPLE           Utilisateurs · Entrepreneurs · Vérifications · Validation
+💰 REVENUE          Leads · Rendez-vous · Soumissions · Coupons · Pricing
+📡 OUTBOUND         (existing OutboundNavGroup, kept as-is)
+🧠 INTELLIGENCE     Agents · Optimisation · Predictive Leads · Answer · Home Graph
+📈 GROWTH           Croissance · Growth Engine · Demand Grid · Campaign Lab · SEO
+🛠️ OPS              Alertes · Documents · Médias · Automation · UNPRO OS · Settings
+```
 
-### 6. End-to-end verification (browser)
+- Each group: collapsible (controlled, defaults open if active route inside).
+- Add a sticky **search input** at top of nav to filter links by label.
+- Active route stays highlighted, parent group auto-expands.
 
-1. Logged-in contractor → `/entrepreneur/pricing` → see 4 paid cards with names/prices/features/CTA.
-2. Toggle Annuel/Mensuel → price updates.
-3. Click "Commencer" on Premium → `/checkout?plan=premium` → plan summary shows "Premium" + ⭐ icon.
-4. Apply 100% promo → "Activer gratuitement" → `/checkout/success?plan=premium&free=true`, contractor row updated.
-5. Real Stripe path (test) → click "Payer" → redirected to Stripe Checkout URL.
-6. Logged-out user → "Commencer" → inline login overlay → returns to checkout after auth.
+## 3. Files to change / create
 
-## Files to change
+**Edit**
+- `src/pages/admin/AdminDashboard.tsx` — full redesign per layout above.
+- `src/layouts/AdminLayout.tsx` — replace flat `navItems` with grouped `adminNavGroups` + search, reuse the existing `OutboundNavGroup` pattern.
 
-- `supabase/migrations/<new>.sql` (rename plan codes + cascade)
-- `src/pages/entrepreneur/PageEntrepreneurPricing.tsx` (motion fix, error/empty state, recommended highlight)
-- `src/pages/checkout/PageCheckoutStripe.tsx` (icon fallback, inline auth, `plan.name`)
-- `supabase/functions/create-checkout-session/index.ts` (use `planRow.name`)
-- 6 files listed in step 2 (drop `_acq`)
+**Create (small focused components)**
+- `src/components/admin/cockpit/CockpitHero.tsx`
+- `src/components/admin/cockpit/AlertsStrip.tsx`
+- `src/components/admin/cockpit/TodoQueue.tsx`
+- `src/components/admin/cockpit/KpiStripAdmin.tsx`
+- `src/components/admin/cockpit/PipelineSnapshot.tsx`
+- `src/components/admin/cockpit/RecentWinsFeed.tsx`
+- `src/components/admin/cockpit/NextStepsPanel.tsx`
+- `src/components/admin/cockpit/ModuleHealthGrid.tsx`
+- `src/components/admin/nav/AdminNavGroup.tsx` (collapsible group primitive)
+- `src/components/admin/nav/AdminNavSearch.tsx`
 
-## Anti-regression
+**Data sources** (reuse existing hooks; no new tables)
+- `useAdminStats`, `useAdminRecentActivity` (already used)
+- `useAutomationCommandCenter` / `automationCommandCenterService` for blockers + recent actions
+- `useGrowthMetrics` for KPIs
+- `useEmailHealthCenter` / module status hooks for ModuleHealthGrid
 
-- `mem://index.md` Core rule already forbids `_acq`; migration enforces it.
-- Keep `usePlanCatalog`, `getStripePriceId`, promo flow, zero-total flow untouched in shape.
-- No edits to `src/integrations/supabase/client.ts` or `types.ts`.
+## 4. Visual style
+
+- Cinematic Dark `#060B14`, semantic tokens only, glassmorphism cards (`bg-card/30 backdrop-blur-sm border-border/20 rounded-2xl`).
+- Subtle entry animations (framer-motion stagger, no per-card `opacity:0` traps).
+- Mobile: sections stack; KPI strip horizontally scrolls (already pattern in `KpiStrip`).
+
+## 5. Out of scope
+
+- No DB schema changes.
+- No business-logic changes — UI/presentation only.
+- Outbound mega-menu stays internally identical, just rehomed under the OUTBOUND group.
+
+## Done when
+
+- Landing on `/admin` immediately shows: alerts → to-do → KPIs → pipeline → wins → next steps → health.
+- Every card is clickable and routes to the right operational page.
+- Sidebar shows ≤7 expandable groups + a search; active route auto-expands its group.
+- No regressions on mobile (≤384px) or existing admin sub-pages.
