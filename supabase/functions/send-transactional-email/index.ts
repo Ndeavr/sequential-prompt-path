@@ -79,7 +79,7 @@ Deno.serve(async (req): Promise<Response> => {
     )
   }
 
-  const auth = await authenticateRequest(supabaseUrl, supabaseAnonKey, req)
+  const auth = await authenticateRequest(supabaseUrl, supabaseAnonKey, supabaseServiceKey, req)
   if (!auth.ok) return auth.response as Response
 
   // Parse request body
