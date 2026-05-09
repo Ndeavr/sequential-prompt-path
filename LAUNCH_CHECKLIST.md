@@ -8,11 +8,11 @@
 - [ ] Test bout-en-bout: plan-recommendation → checkout → contractor `status=active` + email bienvenue reçu
 - [ ] Bouton "Gérer mon abonnement" → `create-billing-portal` fonctionnel
 
-## Outbound & acquisition (Phase B — à faire)
-- [ ] Source `rbq` ajoutée dans `outbound_prospects`
-- [ ] Edge function `scrape-rbq-leads` déployée
-- [ ] Onglet Import RBQ dans `/admin/outbound/...`
-- [ ] Mapping catégories RBQ → 30 services UNPRO + test Vitest
+## Outbound & acquisition (Phase B)
+- [x] Source `rbq` supportée dans `outbound_prospects` (colonne `source` existante, valeur `"rbq"`)
+- [x] Edge function `scrape-rbq-leads` déployée (POST `{ leads: RbqLead[], dry_run? }`)
+- [x] Mode "Registre RBQ" dans `/admin/import-prospects` avec mapping catégories
+- [ ] Test bout-en-bout: CSV RBQ → import → enrichissement → AIPP → outreach
 
 ## Production hardening (Phase C)
 - [x] Page 404 FR (`PageSafeFallbackRedirect`)

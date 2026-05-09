@@ -42,11 +42,17 @@ const FIELD_MAP: Record<string, string> = {
   entreprise: "business_name",
   company: "business_name",
   name: "business_name",
+  legal_name: "legal_name",
+  raison_sociale: "legal_name",
   city: "city",
   ville: "city",
+  region: "region",
+  région: "region",
   category: "category",
   catégorie: "category",
   categorie: "category",
+  sous_categorie: "subcategory",
+  subcategory: "subcategory",
   website: "website",
   site: "website",
   site_web: "website",
@@ -62,12 +68,40 @@ const FIELD_MAP: Record<string, string> = {
   priority: "priority_tier",
   service_area: "service_area",
   zone: "service_area",
+  // RBQ-specific
+  rbq: "rbq_number",
+  rbq_number: "rbq_number",
+  numero_licence: "rbq_number",
+  "numéro_licence": "rbq_number",
+  neq: "neq_number",
+  neq_number: "neq_number",
+  address: "address",
+  adresse: "address",
 };
+
+// Map RBQ license category strings → UNPRO service categories.
+function mapRbqCategory(raw: string): string {
+  const c = (raw ?? "").toLowerCase();
+  if (/toiture|couvreur/.test(c)) return "toiture";
+  if (/plomb/.test(c)) return "plomberie";
+  if (/électric|electric/.test(c)) return "electricite";
+  if (/chauffage|ventilation|climatisation|cvac|cvc/.test(c)) return "cvac";
+  if (/maçon|macon|brique|pierre/.test(c)) return "maconnerie";
+  if (/excavation|fondation/.test(c)) return "excavation";
+  if (/peinture|peintre/.test(c)) return "peinture";
+  if (/menuis|charpente/.test(c)) return "menuiserie";
+  if (/revêtement|revetement|parement/.test(c)) return "revetement-exterieur";
+  if (/asphalte|pavage/.test(c)) return "pavage";
+  if (/paysag/.test(c)) return "paysagement";
+  if (/general|générale|generale/.test(c)) return "entrepreneur-general";
+  return raw || "autre";
+}
 
 const AdminProspectImport = () => {
   const [rows, setRows] = useState<Record<string, string>[]>([]);
   const [fileName, setFileName] = useState("");
   const [importing, setImporting] = useState(false);
+  const [sourceMode, setSourceMode] = useState<"csv_import" | "rbq">("csv_import");
   const [result, setResult] = useState<{ imported: number; failed: number; errors: string[] } | null>(null);
 
   const handleFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,20 +145,30 @@ const AdminProspectImport = () => {
         usedSlugs.add(slug);
 
         const domain = extractDomain(m.website);
+        const isRbq = sourceMode === "rbq";
+        const mappedCategory = isRbq && m.category ? mapRbqCategory(m.category) : (m.category || null);
+        const rbqNotes = isRbq
+          ? [m.rbq_number ? `RBQ:${m.rbq_number}` : null, m.neq_number ? `NEQ:${m.neq_number}` : null, m.address ? `ADDR:${m.address}` : null].filter(Boolean).join(" | ")
+          : null;
 
         const { error } = await supabase.from("contractors_prospects").upsert({
           business_name: m.business_name,
+          legal_name: m.legal_name || m.business_name,
           city: m.city || "Laval",
-          category: m.category || null,
+          region: m.region || null,
+          category: mappedCategory,
+          subcategory: m.subcategory || (isRbq ? m.category : null),
           website: m.website || null,
           domain,
           email: m.email || null,
           phone: m.phone || null,
-          source: m.source || "csv_import",
+          source: isRbq ? "rbq" : (m.source || "csv_import"),
+          source_detail: isRbq && m.rbq_number ? `rbq:${m.rbq_number}` : null,
           service_area: m.service_area || null,
           priority_tier: m.priority_tier || "B",
           landing_slug: slug,
           status: "new",
+          notes: rbqNotes,
         }, { onConflict: "landing_slug" });
 
         if (error) { errors.push(`${m.business_name}: ${error.message}`); } else { imported++; }
@@ -141,6 +185,32 @@ const AdminProspectImport = () => {
   return (
     <AdminLayout>
       <PageHeader title="Importer des prospects" description="Upload CSV pour alimenter le pipeline d'acquisition" />
+
+      {/* Source mode */}
+      <Card className="mb-6">
+        <CardContent className="p-6 flex flex-wrap items-center gap-3">
+          <span className="text-sm font-medium">Source:</span>
+          <Button
+            size="sm"
+            variant={sourceMode === "csv_import" ? "default" : "outline"}
+            onClick={() => setSourceMode("csv_import")}
+          >
+            CSV générique
+          </Button>
+          <Button
+            size="sm"
+            variant={sourceMode === "rbq" ? "default" : "outline"}
+            onClick={() => setSourceMode("rbq")}
+          >
+            Registre RBQ
+          </Button>
+          {sourceMode === "rbq" && (
+            <span className="text-xs text-muted-foreground ml-2">
+              Mappe automatiquement catégories RBQ → services UNPRO. Colonnes attendues: business_name, rbq, neq, category, city, region, phone, email, website, address.
+            </span>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Upload */}
       <Card className="mb-6">
