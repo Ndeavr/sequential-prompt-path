@@ -25,7 +25,7 @@ export async function initObservability(): Promise<void> {
 
   try {
     // Dynamic import — only loaded if dep exists.
-    const Sentry: any = await import(/* @vite-ignore */ "@sentry/react").catch(() => null);
+    const Sentry: any = await (new Function("return import('@sentry/react')")()).catch(() => null);
     if (!Sentry) {
       console.warn("[obs] VITE_SENTRY_DSN set but @sentry/react not installed — skipping init.");
       return;
