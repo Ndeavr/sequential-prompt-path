@@ -16,9 +16,11 @@
 
 ## Production hardening (Phase C)
 - [x] Page 404 FR (`PageSafeFallbackRedirect`)
-- [ ] Sentry (optionnel) — `VITE_SENTRY_DSN`
-- [x] Sitemap & robots.txt (via `seo-index-domination`)
-- [ ] Sitemap soumis à Google Search Console
+- [x] Observability hook (`src/lib/observability.ts`) — active si `VITE_SENTRY_DSN` défini + `@sentry/react` installé
+- [x] `robots.txt` configuré (Disallow zones privées, Sitemap déclaré)
+- [x] Sitemap dynamique via edge functions `sitemap-xml` / `seo-index-domination`
+- [ ] Sitemap soumis à Google Search Console (`https://unpro.ca/sitemap.xml`)
+- [ ] `VITE_SENTRY_DSN` configuré en prod (optionnel) + `bun add @sentry/react` si activé
 
 ## Email & deliverability
 - [x] Templates Resend: `entrepreneur-welcome`, `payment-success`, `payment-failed`
