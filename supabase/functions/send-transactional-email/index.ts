@@ -25,7 +25,7 @@ function generateToken(): string {
     .join('')
 }
 
-async function authenticateRequest(supabaseUrl: string, supabaseAnonKey: string, req: Request) {
+async function authenticateRequest(supabaseUrl: string, supabaseAnonKey: string, supabaseServiceKey: string, req: Request) {
   const authHeader = req.headers.get('Authorization')
 
   if (!authHeader?.startsWith('Bearer ')) {
@@ -35,10 +35,16 @@ async function authenticateRequest(supabaseUrl: string, supabaseAnonKey: string,
     }) }
   }
 
+  const token = authHeader.replace('Bearer ', '')
+
+  // Server-to-server bypass: allow service-role key (used by webhooks / edge functions)
+  if (token === supabaseServiceKey) {
+    return { ok: true, userId: 'service-role' }
+  }
+
   const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
     global: { headers: { Authorization: authHeader } },
   })
-  const token = authHeader.replace('Bearer ', '')
   const { data, error } = await supabaseAuth.auth.getUser(token)
 
   if (error || !data?.user) {
@@ -73,7 +79,7 @@ Deno.serve(async (req): Promise<Response> => {
     )
   }
 
-  const auth = await authenticateRequest(supabaseUrl, supabaseAnonKey, req)
+  const auth = await authenticateRequest(supabaseUrl, supabaseAnonKey, supabaseServiceKey, req)
   if (!auth.ok) return auth.response as Response
 
   // Parse request body
