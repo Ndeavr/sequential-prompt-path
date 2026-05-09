@@ -1,39 +1,87 @@
-## Problem
+# Fix: Plan selection → Payment completion
 
-On `/admin/*`, users with the `admin` role (confirmed in DB for `yturcotte@gmail.com`) hit `AdminAccessDenied` with `detail: "timeout"`.
+## Symptoms observed
 
-## Root cause
+1. `/entrepreneur/pricing?recommended=premium` renders 4 dark blue cards with **no visible content** (title, price, features, CTA all missing). Skeleton state has finished — `plan_catalog` returns 5 active rows with prices and features.
+2. DB plan codes are `recrue, pro_acq, premium_acq, elite_acq, signature` — violates the canonical rule (`mem://index.md` Core: "Pricing… No _acq slugs"). Downstream:
+   - `PLAN_ICONS` map in `PageCheckoutStripe` keys on `pro/premium/elite`, so the checkout shows fallback ⚡ for every paid plan.
+   - `selected_plan_name` becomes "Pro_acq" / "Premium_acq" in `checkout_sessions` (zero-total branch).
+   - `PageCheckoutSuccess`, `useGoalToPlanEngine`, `ContractorQuestionnairePage`, `PagePricingCalculator`, `ContractorPlans`, `PageAdminCreateContractorManual` all hardcode `_acq` codes.
+3. Possible auth race: `/checkout` requires a logged-in session; if user lands on pricing while signed out, "Commencer" → `/checkout?plan=…` shows a toast + redirect loop instead of an inline login.
 
-`src/guards/UniversalRouteGuard.tsx` runs its **own** `supabase.from("user_roles").select(...)` in addition to the one already running inside `useAuth` (TanStack Query). Two issues compound:
+## Root cause for empty cards (most likely)
 
-1. **Race**: the guard fires before `useAuth.roleQuery` resolves. `knownAdmin` is `false` initially, so the guard kicks off a parallel query.
-2. **Tight timeout**: the guard force-denies after **3.5 s** (`setAdminCheck → load_error/timeout`), while `useAuth` itself only marks `roleTimedOut` at 4 s. On a slow network or cold Supabase connection, the guard denies before either query returns, even though the user *is* admin.
+`PageEntrepreneurPricing` renders `motion.div` with `initial={{ opacity: 0 }}` and animates per-card with `transition={{ delay: i * 0.08 }}`. Cards are visible (border) but inner `<h3>`, price, features, and Button render `text-foreground` / `text-muted-foreground`. In the dark page bg the content should still appear — so the empty state means either:
+- The card container has `opacity-0` stuck (framer-motion did not advance), OR
+- `plan.features` came back as `null` and `plan.name` is fine but child components (price, button) are clipped by another stacking layer.
 
-There is no need for a second query — `useAuth` already exposes `isAdmin`, `roles`, `hasResolvedRole`, `roleError`, `roleTimedOut`.
+We will:
+- Add a defensive guard (`paidPlans.length === 0` → friendly fallback).
+- Remove the per-card opacity animation OR set `whileInView` so cards never get stuck at `opacity:0` if framer fails to mount.
+- Log `usePlanCatalog` errors visibly (toast) and console.
 
-## Fix (single file: `src/guards/UniversalRouteGuard.tsx`)
+## Plan
 
-Replace the admin-gate block with logic that consumes `useAuth` only:
+### 1. Database — canonicalize plan codes (migration)
 
-- Drop the local `adminCheck` state, the duplicate `supabase.from("user_roles")` effect, and the 3.5 s timer.
-- For `isAdminGate`:
-  - If not authenticated → save intent and `Navigate` to `/login` (unchanged).
-  - If `isAdmin` → render children.
-  - If `!hasResolvedRole` (still loading and not timed out) → `RouteTransitionLoader`.
-  - If resolved and not admin → `AdminAccessDenied` with `reason: "no_role"`.
-  - If `roleError` or `roleTimedOut` and not admin → `AdminAccessDenied` with `reason: "load_error"` and `detail` from error message or `"timeout"`.
-- Add a manual "Réessayer" path: `AdminAccessDenied`'s retry button currently reloads — keep that behavior; additionally invalidate `["user-role"]` so a fresh fetch happens without full reload (optional polish).
-- Optionally bump `useAuth`'s role timeout from 4 s → 8 s to reduce false negatives on cold starts.
+Rename codes in `plan_catalog`:
+- `pro_acq` → `pro`
+- `premium_acq` → `premium`
+- `elite_acq` → `elite`
+
+Update all rows in dependent tables that store plan slugs (audit first):
+`contractors.subscription_plan`, `contractor_subscriptions.plan_id`, `checkout_sessions.selected_plan_code`, `promo_codes.eligible_plan_codes` (jsonb array).
+
+Single migration, idempotent (`UPDATE … WHERE code = 'pro_acq'`), wrapped in a transaction.
+
+### 2. Frontend — replace `_acq` references
+
+Update these files to use canonical slugs only:
+- `src/hooks/useGoalToPlanEngine.ts`
+- `src/pages/ContractorQuestionnairePage.tsx`
+- `src/pages/admin/PageAdminCreateContractorManual.tsx`
+- `src/pages/entrepreneur/PagePricingCalculator.tsx`
+- `src/pages/pricing/ContractorPlans.tsx`
+- `src/pages/checkout/PageCheckoutSuccess.tsx`
+
+### 3. Fix empty cards in `PageEntrepreneurPricing`
+
+- Remove `initial={{ opacity: 0 }}` on per-card `motion.div` (or change to `whileInView` with `viewport={{ once: true }}` and a 0-delay animate fallback).
+- Add empty-state UI when `paidPlans.length === 0` after load.
+- Surface query errors with a `toast.error` + retry button.
+- Honor `?recommended=premium` query param: highlight the matching plan visually (ring + "Recommandé pour vous" badge) regardless of DB `highlighted` flag.
+
+### 4. Harden checkout entry
+
+In `PageCheckoutStripe`:
+- Replace `PLAN_ICONS` lookup with the canonical slugs (already aligned after step 1) and add a default that doesn't depend on slug.
+- Use `plan.name` (not capitalized `planId`) for `selected_plan_name` server-side.
+- If `session` missing on mount, render an inline auth CTA instead of toasting on click. Preserve `?plan=…` via `redirect` param.
+
+### 5. Edge function `create-checkout-session`
+
+- Use `planRow.name` for `selected_plan_name` instead of `planId.charAt(0).toUpperCase() + planId.slice(1)`.
+- Already pulls `priceId` from `plan_catalog` — no change needed.
+
+### 6. End-to-end verification (browser)
+
+1. Logged-in contractor → `/entrepreneur/pricing` → see 4 paid cards with names/prices/features/CTA.
+2. Toggle Annuel/Mensuel → price updates.
+3. Click "Commencer" on Premium → `/checkout?plan=premium` → plan summary shows "Premium" + ⭐ icon.
+4. Apply 100% promo → "Activer gratuitement" → `/checkout/success?plan=premium&free=true`, contractor row updated.
+5. Real Stripe path (test) → click "Payer" → redirected to Stripe Checkout URL.
+6. Logged-out user → "Commencer" → inline login overlay → returns to checkout after auth.
+
+## Files to change
+
+- `supabase/migrations/<new>.sql` (rename plan codes + cascade)
+- `src/pages/entrepreneur/PageEntrepreneurPricing.tsx` (motion fix, error/empty state, recommended highlight)
+- `src/pages/checkout/PageCheckoutStripe.tsx` (icon fallback, inline auth, `plan.name`)
+- `supabase/functions/create-checkout-session/index.ts` (use `planRow.name`)
+- 6 files listed in step 2 (drop `_acq`)
 
 ## Anti-regression
 
-- Do not touch `useAuth`'s role query shape.
-- Do not change non-admin branches of the guard.
-- Keep `AdminAccessDenied` props/contract identical (`reason`, `detail`).
-- Keep auth-intent + return-path saving for unauthenticated users.
-
-## Verify
-
-1. Hard reload `/admin` while signed in as `yturcotte@gmail.com` → should land on the admin dashboard, not the denied screen.
-2. Sign in as a non-admin → should see `AdminAccessDenied` with `reason=no_role` (not `load_error`).
-3. Sign out and visit `/admin` → redirects to `/login`, then back to `/admin` after login.
+- `mem://index.md` Core rule already forbids `_acq`; migration enforces it.
+- Keep `usePlanCatalog`, `getStripePriceId`, promo flow, zero-total flow untouched in shape.
+- No edits to `src/integrations/supabase/client.ts` or `types.ts`.
