@@ -1,81 +1,100 @@
 /**
- * UNPRO — Admin Layout (Programmatic Navigation)
+ * UNPRO — Admin Layout (Grouped Navigation + Search)
  */
-
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   LayoutDashboard, Users, Briefcase, FileText, Star, FolderOpen,
   CalendarDays, TrendingUp, LogOut, MapPin, BarChart3, Sparkles,
   Brain, Palette, Menu, X, ShieldCheck, Shield, Bell, SearchCheck,
   Bot, Network, Camera, Wand2, Zap, Tag, Rocket, Grid3X3,
   ChevronDown, ChevronRight, Mail, Send, Activity, Settings,
-  MessageSquare, TestTube, ScrollText, Inbox, Heart, DollarSign,
-  Smartphone, Ban, LayoutList, Server, Cpu, Target, ImageIcon,
+  ScrollText, Inbox, Heart, DollarSign, Smartphone, Ban, LayoutList,
+  Server, Cpu, Target, ImageIcon, TestTube, Search,
 } from "lucide-react";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import BannerSystemEnvironmentStatus from "@/components/admin/system/BannerSystemEnvironmentStatus";
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
-const navItems = [
-  { to: "/admin/omega", label: "⚡ Omega Cockpit", icon: Sparkles },
-  { to: "/admin", label: "Tableau de bord", icon: LayoutDashboard },
-  { to: "/admin/users", label: "Utilisateurs", icon: Users },
-  { to: "/admin/contractors", label: "Entrepreneurs", icon: Briefcase },
-  { to: "/admin/territories", label: "Territoires", icon: MapPin },
-  { to: "/admin/leads", label: "Leads", icon: TrendingUp },
-  { to: "/admin/appointments", label: "Rendez-vous", icon: CalendarDays },
-  { to: "/admin/quotes", label: "Soumissions", icon: FileText },
-  { to: "/admin/reviews", label: "Avis", icon: Star },
-  { to: "/admin/documents", label: "Documents", icon: FolderOpen },
-  { to: "/admin/growth", label: "Croissance", icon: BarChart3 },
-  { to: "/admin/agents", label: "Agents IA", icon: Brain },
-  { to: "/admin/media", label: "Média IA", icon: Palette },
-  { to: "/admin/validation", label: "Validation", icon: ShieldCheck },
-  { to: "/admin/verification", label: "Vérifications", icon: SearchCheck },
-  { to: "/admin/alerts", label: "Alertes", icon: Bell },
-  { to: "/admin/verified-contractors", label: "Entrepreneurs vérifiés", icon: Shield },
-  { to: "/admin/automation", label: "Automatisation", icon: Bot },
-  { to: "/admin/home-graph", label: "Problem Graph", icon: Network },
-  { to: "/admin/growth-engine", label: "Growth Engine", icon: TrendingUp },
-  { to: "/admin/screenshot-analytics", label: "Screenshot Intel", icon: Camera },
-  { to: "/admin/optimization", label: "Optimisation IA", icon: Wand2 },
-  { to: "/admin/predictive-leads", label: "Predictive Leads", icon: Brain },
-  { to: "/admin/dynamic-pricing-market", label: "Prix Dynamique", icon: TrendingUp },
-  { to: "/admin/predictive-market-board", label: "Centre Prédictif", icon: Zap },
-  { to: "/admin/zone-value", label: "Zones & Exclusivité", icon: MapPin },
-  { to: "/admin/coupons", label: "Coupons", icon: Tag },
-  { to: "/admin/prospection-engine", label: "Prospection Engine", icon: Rocket },
-  { to: "/admin/city-activity-matrix", label: "Matrice Ville×Activité", icon: Grid3X3 },
-  { to: "/admin/services-secondaires", label: "Services Quotidiens", icon: Zap },
-  { to: "/admin/uos", label: "UNPRO OS", icon: Sparkles },
-];
+interface NavLeaf { to: string; label: string; icon: LucideIcon }
+interface NavGroup { key: string; label: string; icon: LucideIcon; items: NavLeaf[] }
 
-interface OutboundSubGroup {
-  label: string;
-  items: { to: string; label: string; icon: LucideIcon }[];
-}
-
-const outboundGroups: OutboundSubGroup[] = [
+const navGroups: NavGroup[] = [
   {
-    label: "City-First",
+    key: "cockpit", label: "Cockpit", icon: Sparkles,
+    items: [
+      { to: "/admin", label: "Tableau de bord", icon: LayoutDashboard },
+      { to: "/admin/omega", label: "Omega Cockpit", icon: Sparkles },
+      { to: "/admin/operations", label: "Operations Hub", icon: Activity },
+      { to: "/admin/alerts", label: "Alertes", icon: Bell },
+    ],
+  },
+  {
+    key: "people", label: "People", icon: Users,
+    items: [
+      { to: "/admin/users", label: "Utilisateurs", icon: Users },
+      { to: "/admin/contractors", label: "Entrepreneurs", icon: Briefcase },
+      { to: "/admin/verification", label: "Vérifications", icon: SearchCheck },
+      { to: "/admin/validation", label: "Validation", icon: ShieldCheck },
+      { to: "/admin/verified-contractors", label: "Entrepreneurs vérifiés", icon: Shield },
+    ],
+  },
+  {
+    key: "revenue", label: "Revenue", icon: DollarSign,
+    items: [
+      { to: "/admin/leads", label: "Leads", icon: TrendingUp },
+      { to: "/admin/appointments", label: "Rendez-vous", icon: CalendarDays },
+      { to: "/admin/quotes", label: "Soumissions", icon: FileText },
+      { to: "/admin/reviews", label: "Avis", icon: Star },
+      { to: "/admin/coupons", label: "Coupons", icon: Tag },
+      { to: "/admin/pricing", label: "Pricing", icon: DollarSign },
+    ],
+  },
+  {
+    key: "intelligence", label: "Intelligence", icon: Brain,
+    items: [
+      { to: "/admin/agents", label: "Agents IA", icon: Brain },
+      { to: "/admin/optimization", label: "Optimisation IA", icon: Wand2 },
+      { to: "/admin/predictive-leads", label: "Predictive Leads", icon: Brain },
+      { to: "/admin/predictive-market-board", label: "Centre Prédictif", icon: Zap },
+      { to: "/admin/home-graph", label: "Problem Graph", icon: Network },
+      { to: "/admin/answer", label: "Answer Engine", icon: Cpu },
+    ],
+  },
+  {
+    key: "growth", label: "Growth", icon: TrendingUp,
+    items: [
+      { to: "/admin/growth", label: "Croissance", icon: BarChart3 },
+      { to: "/admin/growth-engine", label: "Growth Engine", icon: TrendingUp },
+      { to: "/admin/dynamic-pricing-market", label: "Prix Dynamique", icon: TrendingUp },
+      { to: "/admin/zone-value", label: "Zones & Exclusivité", icon: MapPin },
+      { to: "/admin/territories", label: "Territoires", icon: MapPin },
+      { to: "/admin/city-activity-matrix", label: "Matrice Ville×Activité", icon: Grid3X3 },
+      { to: "/admin/services-secondaires", label: "Services Quotidiens", icon: Zap },
+      { to: "/admin/screenshot-analytics", label: "Screenshot Intel", icon: Camera },
+      { to: "/admin/local-seo", label: "Local SEO", icon: SearchCheck },
+    ],
+  },
+  {
+    key: "outbound-city", label: "Outbound · City-First", icon: MapPin,
     items: [
       { to: "/admin/outbound/cities", label: "Villes cibles", icon: MapPin },
       { to: "/admin/outbound/diagnostics", label: "Diagnostics", icon: Activity },
     ],
   },
   {
-    label: "Autopilot",
+    key: "outbound-auto", label: "Outbound · Autopilot", icon: Rocket,
     items: [
       { to: "/admin/outbound/targets", label: "Marchés Cibles", icon: Target },
       { to: "/admin/outbound/autopilot/runs", label: "Autopilot Runs", icon: Rocket },
     ],
   },
   {
-    label: "Core",
+    key: "outbound-core", label: "Outbound · Core", icon: Send,
     items: [
       { to: "/admin/outbound", label: "Dashboard", icon: LayoutDashboard },
       { to: "/admin/outbound/campaigns", label: "Campagnes", icon: Rocket },
@@ -85,7 +104,7 @@ const outboundGroups: OutboundSubGroup[] = [
     ],
   },
   {
-    label: "Pipeline & Ops",
+    key: "outbound-ops", label: "Outbound · Pipeline & Ops", icon: Activity,
     items: [
       { to: "/admin/outbound/ops", label: "Centre Ops", icon: Activity },
       { to: "/admin/outbound/verification", label: "Vérification", icon: ShieldCheck },
@@ -95,7 +114,7 @@ const outboundGroups: OutboundSubGroup[] = [
     ],
   },
   {
-    label: "Email Engine",
+    key: "outbound-email", label: "Outbound · Email", icon: Mail,
     items: [
       { to: "/admin/outbound/sequences", label: "Séquences", icon: Mail },
       { to: "/admin/outbound/sequences-elite", label: "Séquences AIPP", icon: Send },
@@ -106,7 +125,7 @@ const outboundGroups: OutboundSubGroup[] = [
     ],
   },
   {
-    label: "Intelligence",
+    key: "outbound-intel", label: "Outbound · Intelligence", icon: Cpu,
     items: [
       { to: "/admin/outbound/ai-rewrite", label: "Personnalisation IA", icon: Cpu },
       { to: "/admin/outbound/revenue", label: "Revenue Loss", icon: DollarSign },
@@ -119,93 +138,95 @@ const outboundGroups: OutboundSubGroup[] = [
       { to: "/admin/outbound/settings-lite", label: "Settings (legacy)", icon: LayoutList },
     ],
   },
+  {
+    key: "ops", label: "Ops", icon: Settings,
+    items: [
+      { to: "/admin/automation", label: "Automatisation", icon: Bot },
+      { to: "/admin/documents", label: "Documents", icon: FolderOpen },
+      { to: "/admin/media", label: "Média IA", icon: Palette },
+      { to: "/admin/prospection-engine", label: "Prospection Engine", icon: Rocket },
+      { to: "/admin/uos", label: "UNPRO OS", icon: Sparkles },
+    ],
+  },
 ];
 
-const NavLinkItem = ({ to, label, icon: Icon, pathname, onNavigate, indent = false }: {
-  to: string; label: string; icon: LucideIcon; pathname: string; onNavigate?: () => void; indent?: boolean;
-}) => {
-  const active = pathname === to || (to !== "/admin" && to !== "/admin/outbound" && pathname.startsWith(to));
+const NavLink = ({ to, label, icon: Icon, pathname, onNavigate }: NavLeaf & { pathname: string; onNavigate?: () => void }) => {
+  const active = pathname === to || (to !== "/admin" && to !== "/admin/outbound" && pathname.startsWith(to + "/"));
   return (
     <Link
       to={to}
       onClick={onNavigate}
-      className={`flex items-center gap-3 rounded-xl px-3 py-2 text-meta font-medium transition-all duration-200 ${
-        indent ? "pl-7 text-[13px]" : ""
-      } ${
+      className={`flex items-center gap-3 rounded-lg px-3 py-2 pl-7 text-[13px] font-medium transition ${
         active
-          ? "bg-primary text-primary-foreground shadow-soft"
+          ? "bg-primary text-primary-foreground"
           : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
       }`}
     >
-      <Icon className="h-4 w-4 shrink-0" />
+      <Icon className="h-3.5 w-3.5 shrink-0" />
       {label}
     </Link>
   );
 };
 
-const OutboundNavGroup = ({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) => {
-  const isOnOutbound = pathname.startsWith("/admin/outbound");
-  const [open, setOpen] = useState(isOnOutbound);
+const NavGroupItem = ({ group, pathname, onNavigate, forceOpen }: {
+  group: NavGroup; pathname: string; onNavigate?: () => void; forceOpen?: boolean;
+}) => {
+  const isOnGroup = group.items.some(i => pathname === i.to || (i.to !== "/admin" && pathname.startsWith(i.to + "/")));
+  const [open, setOpen] = useState(isOnGroup);
+  const expanded = forceOpen || open;
 
   return (
-    <div className="mt-2">
+    <div>
       <button
-        onClick={() => setOpen((v) => !v)}
-        className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-meta font-semibold transition-all duration-200 ${
-          isOnOutbound && !open
-            ? "bg-primary/10 text-primary"
-            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+        onClick={() => setOpen(v => !v)}
+        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-semibold transition ${
+          isOnGroup ? "text-primary" : "text-foreground/80 hover:bg-muted/40"
         }`}
       >
-        <Send className="h-4 w-4 shrink-0" />
-        <span className="flex-1 text-left">Outbound</span>
-        {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        <group.icon className="h-4 w-4 shrink-0" />
+        <span className="flex-1 text-left">{group.label}</span>
+        {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
       </button>
-
-      {open && (
-        <div className="mt-1 space-y-2">
-          {outboundGroups.map((group) => (
-            <div key={group.label}>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 px-3 py-1 pl-7">
-                {group.label}
-              </p>
-              <div className="space-y-0.5">
-                {group.items.map((item) => (
-                  <NavLinkItem key={item.to} {...item} pathname={pathname} onNavigate={onNavigate} indent />
-                ))}
-              </div>
-            </div>
-          ))}
+      {expanded && (
+        <div className="mt-0.5 space-y-0.5">
+          {group.items.map(item => <NavLink key={item.to} {...item} pathname={pathname} onNavigate={onNavigate} />)}
         </div>
       )}
     </div>
   );
 };
 
-const NavLinks = ({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) => (
-  <>
-    {navItems.map(({ to, label, icon: Icon }) => {
-      const active = pathname === to || (to !== "/admin" && pathname.startsWith(to + "/"));
-      const exactActive = pathname === to;
-      return (
-        <Link
-          key={to}
-          to={to}
-          onClick={onNavigate}
-          className={`flex items-center gap-3 rounded-xl px-3 py-2 text-meta font-medium transition-all duration-200 ${
-            active || exactActive
-              ? "bg-primary text-primary-foreground shadow-soft"
-              : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-          }`}
-        >
-          <Icon className="h-4 w-4" />
-          {label}
-        </Link>
-      );
-    })}
-    <OutboundNavGroup pathname={pathname} onNavigate={onNavigate} />
-  </>
-);
+const Nav = ({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) => {
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+
+  const filtered = useMemo(() => {
+    if (!q) return navGroups;
+    return navGroups
+      .map(g => ({ ...g, items: g.items.filter(i => i.label.toLowerCase().includes(q)) }))
+      .filter(g => g.items.length > 0);
+  }, [q]);
+
+  return (
+    <div className="space-y-2">
+      <div className="relative px-1 mb-2 sticky top-0 bg-card/80 backdrop-blur-sm pt-1 pb-2 z-10">
+        <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+        <Input
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Rechercher…"
+          className="h-8 pl-8 text-xs rounded-lg bg-muted/30 border-border/40"
+        />
+      </div>
+      {filtered.map(group => (
+        <NavGroupItem key={group.key} group={group} pathname={pathname} onNavigate={onNavigate} forceOpen={!!q} />
+      ))}
+      {filtered.length === 0 && (
+        <p className="text-xs text-muted-foreground px-3 py-4 text-center">Aucun résultat.</p>
+      )}
+    </div>
+  );
+};
 
 const AdminLayout = ({ children }: { children: ReactNode }) => {
   const { pathname } = useLocation();
@@ -214,22 +235,22 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
 
   return (
     <div className="min-h-screen flex bg-background">
-      <aside className="hidden md:flex w-60 flex-col border-r border-border/30 bg-card/40 p-4 sticky top-0 h-screen overflow-hidden">
+      <aside className="hidden md:flex w-64 flex-col border-r border-border/30 bg-card/40 p-3 sticky top-0 h-screen">
         <Link to="/" className="flex items-center gap-2 px-3 mb-1 mt-2">
           <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
             <Sparkles className="h-3 w-3 text-primary-foreground" />
           </div>
           <span className="text-sm font-bold text-foreground">UNPRO</span>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground ml-1">Admin</span>
         </Link>
-        <span className="text-caption text-muted-foreground px-3 mb-6">Administration</span>
 
-        <nav className="flex-1 min-h-0 space-y-0.5 overflow-y-auto">
-          <NavLinks pathname={pathname} />
+        <nav className="flex-1 min-h-0 overflow-y-auto mt-3 pr-1">
+          <Nav pathname={pathname} />
         </nav>
 
         <div className="border-t border-border/30 pt-3 mt-3 space-y-2">
-          <p className="text-caption text-muted-foreground px-3 truncate">{user?.email}</p>
-          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 rounded-xl text-meta h-9" onClick={signOut}>
+          <p className="text-[11px] text-muted-foreground px-3 truncate">{user?.email}</p>
+          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 rounded-lg text-xs h-8" onClick={signOut}>
             <LogOut className="h-3.5 w-3.5" /> Déconnexion
           </Button>
         </div>
@@ -242,9 +263,9 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
             <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
               <Sparkles className="h-3 w-3 text-primary-foreground" />
             </div>
-            <span className="text-meta font-bold text-foreground">UNPRO Admin</span>
+            <span className="text-sm font-bold text-foreground">UNPRO Admin</span>
           </Link>
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setMobileMenuOpen((v) => !v)}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setMobileMenuOpen(v => !v)}>
             {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </Button>
         </header>
@@ -252,11 +273,11 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
         {mobileMenuOpen && (
           <>
             <div className="md:hidden fixed inset-0 bg-black/50 z-30 top-[45px]" onClick={() => setMobileMenuOpen(false)} />
-            <div className="md:hidden fixed top-[45px] left-0 right-0 bottom-0 z-40 bg-card border-b border-border/30 overflow-y-auto p-4 space-y-1">
-              <NavLinks pathname={pathname} onNavigate={() => setMobileMenuOpen(false)} />
+            <div className="md:hidden fixed top-[45px] left-0 right-0 bottom-0 z-40 bg-card border-b border-border/30 overflow-y-auto p-3">
+              <Nav pathname={pathname} onNavigate={() => setMobileMenuOpen(false)} />
               <div className="border-t border-border/30 pt-3 mt-3 space-y-2">
-                <p className="text-caption text-muted-foreground px-3 truncate">{user?.email}</p>
-                <Button variant="ghost" size="sm" className="w-full justify-start gap-2 rounded-xl text-meta h-9" onClick={signOut}>
+                <p className="text-[11px] text-muted-foreground px-3 truncate">{user?.email}</p>
+                <Button variant="ghost" size="sm" className="w-full justify-start gap-2 rounded-lg text-xs h-8" onClick={signOut}>
                   <LogOut className="h-3.5 w-3.5" /> Déconnexion
                 </Button>
               </div>
