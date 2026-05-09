@@ -186,6 +186,32 @@ const AdminProspectImport = () => {
     <AdminLayout>
       <PageHeader title="Importer des prospects" description="Upload CSV pour alimenter le pipeline d'acquisition" />
 
+      {/* Source mode */}
+      <Card className="mb-6">
+        <CardContent className="p-6 flex flex-wrap items-center gap-3">
+          <span className="text-sm font-medium">Source:</span>
+          <Button
+            size="sm"
+            variant={sourceMode === "csv_import" ? "default" : "outline"}
+            onClick={() => setSourceMode("csv_import")}
+          >
+            CSV générique
+          </Button>
+          <Button
+            size="sm"
+            variant={sourceMode === "rbq" ? "default" : "outline"}
+            onClick={() => setSourceMode("rbq")}
+          >
+            Registre RBQ
+          </Button>
+          {sourceMode === "rbq" && (
+            <span className="text-xs text-muted-foreground ml-2">
+              Mappe automatiquement catégories RBQ → services UNPRO. Colonnes attendues: business_name, rbq, neq, category, city, region, phone, email, website, address.
+            </span>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Upload */}
       <Card className="mb-6">
         <CardContent className="p-6">
