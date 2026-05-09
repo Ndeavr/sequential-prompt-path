@@ -35,7 +35,7 @@ const CATEGORIES = [
 
 const PLANS = [
   { code: "recrue", label: "Recrue", price: 0 },
-  { code: "pro_acq", label: "Pro", price: 34900 },
+  { code: "pro", label: "Pro", price: 34900 },
   { code: "premium", label: "Premium", price: 59900 },
   { code: "elite", label: "Élite", price: 99900 },
   { code: "signature", label: "Signature", price: 179900 },
