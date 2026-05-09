@@ -345,7 +345,7 @@ export default function ContractorQuestionnairePage() {
               })()}
 
               {step === 4 && (() => {
-                const planCode = "pro_acq"; // TODO: get from subscription
+                const planCode = "pro"; // TODO: get from subscription
                 const maxCities = (CITY_LIMITS[planCode] || 3) - 1; // -1 for primary
                 return (
                   <>
