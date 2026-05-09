@@ -17,8 +17,7 @@ import { getDefaultRedirectForRole, saveAuthIntent } from "@/services/auth/authI
 import { saveReturnPath } from "@/lib/authReturn";
 import RouteTransitionLoader from "@/components/navigation/RouteTransitionLoader";
 import AdminAccessDenied from "@/components/admin/AdminAccessDenied";
-import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 interface UniversalRouteGuardProps {
   children: React.ReactNode;
@@ -29,16 +28,11 @@ interface UniversalRouteGuardProps {
 }
 
 export default function UniversalRouteGuard({ children, allowedRoles, anyAuth }: UniversalRouteGuardProps) {
-  const { isAuthenticated, isLoading, role, roles, isAdmin, user, roleError, roleTimedOut } = useAuth() as any;
+  const { isAuthenticated, isLoading, role, roles, isAdmin, hasResolvedRole, roleError, roleTimedOut } = useAuth() as any;
   const location = useLocation();
   const tracked = useRef(false);
 
   const isAdminGate = !!allowedRoles && allowedRoles.length === 1 && allowedRoles[0] === "admin";
-  const knownAdmin = isAuthenticated && (isAdmin || (Array.isArray(roles) && roles.includes("admin")));
-  const [adminCheck, setAdminCheck] = useState<
-    | { status: "idle" | "checking" | "allowed" }
-    | { status: "denied"; reason: "no_role" | "load_error"; detail?: string }
-  >({ status: "idle" });
 
   useEffect(() => {
     if (!tracked.current && !isLoading) {
@@ -47,51 +41,7 @@ export default function UniversalRouteGuard({ children, allowedRoles, anyAuth }:
     }
   }, [isLoading, location.pathname]);
 
-  useEffect(() => {
-    if (!isAdminGate) return;
-    if (knownAdmin) {
-      setAdminCheck({ status: "allowed" });
-      return;
-    }
-    if (!isAuthenticated) {
-      setAdminCheck({ status: "idle" });
-      return;
-    }
-    let cancelled = false;
-    setAdminCheck({ status: "checking" });
-    (async () => {
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const userId = user?.id ?? sessionData.session?.user?.id;
-        if (!userId) {
-          if (!cancelled) setAdminCheck({ status: "denied", reason: "no_role" });
-          return;
-        }
-        const { data, error } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", userId);
-        if (cancelled) return;
-        if (error) {
-          setAdminCheck({ status: "denied", reason: "load_error", detail: error.message });
-          return;
-        }
-        const ok = (data ?? []).some((r: any) => r.role === "admin");
-        setAdminCheck(ok ? { status: "allowed" } : { status: "denied", reason: "no_role" });
-      } catch (e: any) {
-        if (!cancelled) setAdminCheck({ status: "denied", reason: "load_error", detail: String(e?.message ?? e) });
-      }
-    })();
-    const t = setTimeout(() => {
-      if (!cancelled)
-        setAdminCheck((p) =>
-          p.status === "checking" ? { status: "denied", reason: "load_error", detail: "timeout" } : p,
-        );
-    }, 3500);
-    return () => { cancelled = true; clearTimeout(t); };
-  }, [isAdminGate, knownAdmin, isAuthenticated, user?.id]);
-
-  // ── Admin gate fast path
+  // ── Admin gate (relies on useAuth role data only) ──
   if (isAdminGate) {
     if (isLoading && !isAuthenticated) return <RouteTransitionLoader />;
     if (!isAuthenticated) {
@@ -100,12 +50,15 @@ export default function UniversalRouteGuard({ children, allowedRoles, anyAuth }:
       saveReturnPath(fullPath, "admin");
       return <Navigate to="/login" state={{ from: location.pathname }} replace />;
     }
-    if (knownAdmin || adminCheck.status === "allowed") return <>{children}</>;
-    if (adminCheck.status === "checking" || adminCheck.status === "idle") return <RouteTransitionLoader />;
-    if (adminCheck.status === "denied") {
-      return <AdminAccessDenied reason={adminCheck.reason} detail={adminCheck.detail} />;
+    if (isAdmin) return <>{children}</>;
+    if (!hasResolvedRole) return <RouteTransitionLoader />;
+    if (roleError) {
+      return <AdminAccessDenied reason="load_error" detail={String((roleError as any)?.message ?? roleError)} />;
     }
-    return <RouteTransitionLoader />;
+    if (roleTimedOut) {
+      return <AdminAccessDenied reason="load_error" detail="timeout" />;
+    }
+    return <AdminAccessDenied reason="no_role" />;
   }
 
   if (isLoading) {
