@@ -23,7 +23,7 @@ export const useAuth = () => {
   useEffect(() => {
     setRoleTimedOut(false);
     if (!session?.user?.id) return;
-    const t = setTimeout(() => setRoleTimedOut(true), 4000);
+    const t = setTimeout(() => setRoleTimedOut(true), 8000);
     return () => clearTimeout(t);
   }, [session?.user?.id]);
 
