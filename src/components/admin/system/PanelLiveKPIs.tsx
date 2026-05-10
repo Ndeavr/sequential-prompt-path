@@ -122,6 +122,12 @@ export default function PanelLiveKPIs() {
         </div>
       </div>
 
+      {health && health.mailboxActive && !health.dkimValid && (
+        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+          SMTP connecté — DKIM à corriger avant volume production.
+        </div>
+      )}
+
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
         {kpis.map((k) => (
           <div key={k.label} className="rounded-md bg-background/10 border border-current/10 px-2 py-1.5">
