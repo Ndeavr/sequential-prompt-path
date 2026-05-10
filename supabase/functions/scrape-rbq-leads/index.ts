@@ -42,6 +42,30 @@ function mapRbqCategory(raw: string | undefined): { category: string; subcategor
   return { category: "autre", subcategory: raw ?? "" };
 }
 
+// --- Inline mojibake repair (mirrors src/lib/textNormalization.ts) ---
+const MOJIBAKE_PAIRS: Array<[string, string]> = [
+  ["â€™","\u2019"],["â€˜","\u2018"],["â€œ","\u201C"],["â€\u009d","\u201D"],
+  ["â€\"","—"],["â€\"","–"],["â€¢","•"],["â€¦","…"],["â‚¬","€"],
+  ["Â\u00a0"," "],["Â ", " "],
+  ["Ã©","é"],["Ã¨","è"],["Ãª","ê"],["Ã«","ë"],
+  ["Ã ","à"],["Ã¢","â"],["Ã¤","ä"],["Ã§","ç"],
+  ["Ã®","î"],["Ã¯","ï"],["Ã´","ô"],["Ã¶","ö"],
+  ["Ã¹","ù"],["Ã»","û"],["Ã¼","ü"],["Ã±","ñ"],
+  ["Ã€","À"],["Ã‰","É"],["Ã‡","Ç"],["Ã”","Ô"],["Ã™","Ù"],["Ãœ","Ü"],
+];
+const PROTECTED_RE = /^([\s+()\-.\d]{7,}|[^\s@]+@[^\s@]+\.[^\s@]+|(https?:\/\/|www\.)[^\s]+|[a-z0-9-]+(\.[a-z0-9-]+)+(\/.*)?|\d{4}-\d{4}-\d{2}|\d{10})$/i;
+function clean(input: string | null | undefined): string | null {
+  if (input == null) return null;
+  let s = String(input);
+  if (PROTECTED_RE.test(s.trim())) return s.trim();
+  if (s.includes("Ã") || s.includes("Â") || s.includes("â€")) {
+    for (const [bad, good] of MOJIBAKE_PAIRS) {
+      if (s.includes(bad)) s = s.split(bad).join(good);
+    }
+  }
+  return s.normalize("NFC").replace(/[\u200B-\u200D\uFEFF]/g, "").replace(/\u00a0/g, " ").replace(/[ \t]+/g, " ").trim();
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -71,7 +95,19 @@ Deno.serve(async (req) => {
     const summary = { received: leads.length, inserted: 0, duplicates: 0, errors: 0 };
     const inserted: string[] = [];
 
-    for (const raw of leads) {
+    for (const incoming of leads) {
+      const raw: RbqLead = {
+        ...incoming,
+        business_name: clean(incoming.business_name) ?? "",
+        legal_name: clean(incoming.legal_name) ?? undefined,
+        city: clean(incoming.city) ?? undefined,
+        region: clean(incoming.region) ?? undefined,
+        category: clean(incoming.category) ?? undefined,
+        subcategory: clean(incoming.subcategory) ?? undefined,
+        address: clean(incoming.address) ?? undefined,
+        // phone/email/website/rbq/neq pass through untouched
+      };
+
       if (!raw.business_name || raw.business_name.trim().length < 2) {
         summary.errors++;
         continue;

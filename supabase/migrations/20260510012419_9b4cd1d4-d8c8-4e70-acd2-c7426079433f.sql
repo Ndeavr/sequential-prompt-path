@@ -1,0 +1,1 @@
+ALTER FUNCTION public.repair_mojibake_text(text) SET search_path = public, pg_temp;

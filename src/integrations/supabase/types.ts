@@ -23541,6 +23541,7 @@ export type Database = {
           id: string
           language_guess: string | null
           legal_name: string | null
+          needs_review: boolean
           neq: string | null
           onboarding_status: string
           outreach_status: string
@@ -23587,6 +23588,7 @@ export type Database = {
           id?: string
           language_guess?: string | null
           legal_name?: string | null
+          needs_review?: boolean
           neq?: string | null
           onboarding_status?: string
           outreach_status?: string
@@ -23633,6 +23635,7 @@ export type Database = {
           id?: string
           language_guess?: string | null
           legal_name?: string | null
+          needs_review?: boolean
           neq?: string | null
           onboarding_status?: string
           outreach_status?: string
@@ -26716,6 +26719,7 @@ export type Database = {
           local_score: number | null
           loom_script: string | null
           loom_status: string | null
+          needs_review: boolean
           notes: string | null
           outreach_status: string
           paid_intent_confidence: number | null
@@ -26779,6 +26783,7 @@ export type Database = {
           local_score?: number | null
           loom_script?: string | null
           loom_status?: string | null
+          needs_review?: boolean
           notes?: string | null
           outreach_status?: string
           paid_intent_confidence?: number | null
@@ -26842,6 +26847,7 @@ export type Database = {
           local_score?: number | null
           loom_script?: string | null
           loom_status?: string | null
+          needs_review?: boolean
           notes?: string | null
           outreach_status?: string
           paid_intent_confidence?: number | null
@@ -64100,6 +64106,7 @@ export type Database = {
         Args: { _actor_id?: string; _notes?: string; _prospect_id: string }
         Returns: undefined
       }
+      repair_mojibake_text: { Args: { input: string }; Returns: string }
       reserve_promo_code_redemption: {
         Args: {
           p_code: string
