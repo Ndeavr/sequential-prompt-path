@@ -209,6 +209,7 @@ export default function PageContractorPlanOnboarding() {
                   variant={selectedVariant}
                   sessionId={sessionId}
                   planId={selectedPlan.id}
+                  planCode={selectedPlan.code}
                   leadPackId={selectedPackId}
                 />
               </motion.div>
