@@ -40773,6 +40773,7 @@ export type Database = {
           connection_type: string | null
           created_at: string | null
           daily_limit: number | null
+          dkim_selector: string | null
           domain: string | null
           health_score: number | null
           hourly_send_limit: number | null
@@ -40801,6 +40802,7 @@ export type Database = {
           connection_type?: string | null
           created_at?: string | null
           daily_limit?: number | null
+          dkim_selector?: string | null
           domain?: string | null
           health_score?: number | null
           hourly_send_limit?: number | null
@@ -40829,6 +40831,7 @@ export type Database = {
           connection_type?: string | null
           created_at?: string | null
           daily_limit?: number | null
+          dkim_selector?: string | null
           domain?: string | null
           health_score?: number | null
           hourly_send_limit?: number | null

@@ -1,0 +1,1 @@
+ALTER TABLE public.outbound_mailboxes ADD COLUMN IF NOT EXISTS dkim_selector text;
