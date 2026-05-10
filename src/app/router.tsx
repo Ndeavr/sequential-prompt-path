@@ -405,6 +405,11 @@ const PageOnboardingSuccess = lazy(() => import("@/pages/entrepreneur/PageOnboar
 const BlogIndexPage = lazy(() => import("@/pages/blog/BlogIndexPage"));
 const BlogArticlePage = lazy(() => import("@/pages/blog/BlogArticlePage"));
 
+// Journal — Authority content infrastructure
+const JournalIndexPage = lazy(() => import("@/pages/journal/JournalIndexPage"));
+const JournalArticlePage = lazy(() => import("@/pages/journal/JournalArticlePage"));
+const AdminJournalPage = lazy(() => import("@/pages/admin/AdminJournalPage"));
+
 // Condos
 const CondoHomePage = lazy(() => import("@/pages/condos/CondoHomePage"));
 const PageLandingCondoTeaser = lazy(() => import("@/pages/condos/PageLandingCondoTeaser"));
