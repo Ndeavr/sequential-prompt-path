@@ -13,6 +13,7 @@ import ModalHeyButWaitUpgrade from "@/components/voice-sales/ModalHeyButWaitUpgr
 import PanelLeadPackSelector from "@/components/voice-sales/PanelLeadPackSelector";
 import PanelInlineCheckout from "@/components/voice-sales/PanelInlineCheckout";
 import PanelPlanFitCheck from "@/components/voice-sales/PanelPlanFitCheck";
+import { supabase } from "@/integrations/supabase/client";
 
 type FlowPhase = "chat" | "plans" | "fit_check" | "founders_upsell" | "lead_packs" | "checkout";
 
@@ -21,6 +22,27 @@ export default function PageContractorPlanOnboarding() {
   const { data: plans } = usePlanCatalog();
   const { data: leadPacks } = useLeadPacks();
   const { messages, isStreaming, sendMessage } = useVoiceSalesChat();
+  const [firstName, setFirstName] = useState<string | null>(null);
+
+  // Always-present Alex opener so the screen is never blank.
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (!active) return;
+      const meta = (data.user?.user_metadata ?? {}) as Record<string, any>;
+      const fn = meta.first_name || meta.firstName || (meta.full_name?.split(" ")[0] ?? null);
+      setFirstName(fn ?? null);
+    });
+    return () => { active = false; };
+  }, []);
+
+  const greeting = firstName
+    ? `Bonjour ${firstName}. Je vais vous aider à activer votre profil entrepreneur UNPRO. En quelques étapes, on confirme votre entreprise, votre territoire, puis le bon plan.`
+    : "Bonjour. Je vais vous aider à activer votre profil entrepreneur UNPRO. En quelques étapes, on confirme votre entreprise, votre territoire, puis le bon plan.";
+
+  const displayMessages = messages.length === 0
+    ? [{ role: "assistant" as const, content: greeting }]
+    : messages;
 
   const [input, setInput] = useState("");
   const [phase, setPhase] = useState<FlowPhase>("chat");
@@ -128,7 +150,7 @@ export default function PageContractorPlanOnboarding() {
         {/* Content */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
           {/* Chat messages */}
-          {messages.map((msg, i) => (
+          {displayMessages.map((msg, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 8 }}
@@ -209,6 +231,7 @@ export default function PageContractorPlanOnboarding() {
                   variant={selectedVariant}
                   sessionId={sessionId}
                   planId={selectedPlan.id}
+                  planCode={selectedPlan.code}
                   leadPackId={selectedPackId}
                 />
               </motion.div>
@@ -244,8 +267,8 @@ export default function PageContractorPlanOnboarding() {
             open={showFoundersModal}
             onClose={handleFoundersDecline}
             planName={selectedPlan.name}
-            foundersPrice={Math.round(selectedPlan.monthly_price * 0.8)}
-            regularPrice={selectedPlan.monthly_price}
+            foundersPrice={Math.round(((selectedPlan.monthly_price ?? 0) / 100) * 0.8)}
+            regularPrice={Math.round((selectedPlan.monthly_price ?? 0) / 100)}
             onAccept={handleFoundersAccept}
           />
         )}

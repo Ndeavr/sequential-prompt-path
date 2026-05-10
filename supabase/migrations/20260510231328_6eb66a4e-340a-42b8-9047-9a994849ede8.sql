@@ -1,0 +1,3 @@
+UPDATE public.plan_catalog SET code = 'pro' WHERE code = 'pro_acq' AND NOT EXISTS (SELECT 1 FROM public.plan_catalog WHERE code = 'pro');
+UPDATE public.plan_catalog SET code = 'premium' WHERE code = 'premium_acq' AND NOT EXISTS (SELECT 1 FROM public.plan_catalog WHERE code = 'premium');
+UPDATE public.plan_catalog SET code = 'elite' WHERE code = 'elite_acq' AND NOT EXISTS (SELECT 1 FROM public.plan_catalog WHERE code = 'elite');
