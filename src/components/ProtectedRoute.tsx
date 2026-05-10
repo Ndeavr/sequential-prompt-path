@@ -1,10 +1,10 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { getDefaultRedirectForRole, saveAuthIntent } from "@/services/auth/authIntentService";
 import { saveReturnPath } from "@/lib/authReturn";
 import AdminAccessDenied from "@/components/admin/AdminAccessDenied";
+import { validateAdmin, ADMIN_EMAILS, isAdminCached } from "@/lib/adminGuard";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -25,8 +25,13 @@ const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps
   const [adminCheck, setAdminCheck] = useState<AdminCheck>({ status: "idle" });
 
   const isAdminRoute = requiredRole === "admin";
+  const userEmail = user?.email?.toLowerCase().trim() ?? null;
   const knownAdmin =
-    isAuthenticated && (isAdmin || (Array.isArray(roles) && roles.includes("admin")));
+    isAuthenticated &&
+    (isAdmin ||
+      (Array.isArray(roles) && roles.includes("admin")) ||
+      (!!userEmail && ADMIN_EMAILS.includes(userEmail)) ||
+      (!!user?.id && isAdminCached(user.id)));
 
   useEffect(() => {
     if (!isAdminRoute) {
@@ -37,8 +42,7 @@ const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps
       setAdminCheck({ status: "allowed" });
       return;
     }
-    // No session yet → wait for auth, don't query
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user?.id) {
       setAdminCheck({ status: "idle" });
       return;
     }
@@ -46,46 +50,20 @@ const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps
     let cancelled = false;
     setAdminCheck({ status: "checking" });
 
-    const check = async () => {
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const userId = user?.id ?? sessionData.session?.user?.id;
-        if (!userId) {
-          if (!cancelled) setAdminCheck({ status: "denied", reason: "no_role" });
-          return;
-        }
-        const { data, error } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", userId);
-        if (cancelled) return;
-        if (error) {
-          setAdminCheck({ status: "denied", reason: "load_error", detail: error.message });
-          return;
-        }
-        const isAdminRow = (data ?? []).some((r: any) => r.role === "admin");
-        setAdminCheck(
-          isAdminRow ? { status: "allowed" } : { status: "denied", reason: "no_role" },
-        );
-      } catch (e: any) {
-        if (!cancelled) setAdminCheck({ status: "denied", reason: "load_error", detail: String(e?.message ?? e) });
+    (async () => {
+      const result = await validateAdmin(user.id, user.email ?? null);
+      if (cancelled) return;
+      if (result.allowed) {
+        setAdminCheck({ status: "allowed" });
+      } else {
+        const r = result as Extract<typeof result, { allowed: false }>;
+        setAdminCheck({ status: "denied", reason: r.reason, detail: r.detail });
       }
-    };
+    })();
 
-    check();
-    // Hard safety: never stay in "checking" forever
-    const t = setTimeout(() => {
-      if (!cancelled)
-        setAdminCheck((prev) =>
-          prev.status === "checking" ? { status: "denied", reason: "load_error", detail: "timeout" } : prev,
-        );
-    }, 3500);
+    return () => { cancelled = true; };
+  }, [isAdminRoute, knownAdmin, isAuthenticated, user?.id, user?.email]);
 
-    return () => {
-      cancelled = true;
-      clearTimeout(t);
-    };
-  }, [isAdminRoute, knownAdmin, isAuthenticated, user?.id]);
 
   // ── ADMIN PATH ─────────────────────────────────────────────
   if (isAdminRoute) {
