@@ -3,7 +3,7 @@ import { useToggleSystemMode } from "@/hooks/useSystemEnvironment";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { useEmailDomainHealth } from "@/hooks/useEmailProductionControl";
+import { useOutboundHealth } from "@/hooks/useOutboundHealth";
 import { CheckCircle2, AlertCircle, Loader2, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -15,13 +15,15 @@ export default function ModalConfirmGoLive({ onClose }: Props) {
   const [confirmText, setConfirmText] = useState("");
   const [notes, setNotes] = useState("");
   const toggle = useToggleSystemMode();
-  const { data: domainHealth } = useEmailDomainHealth();
+  const { data: health } = useOutboundHealth();
   const { toast } = useToast();
 
   const checks = [
-    { label: "Domaine email configuré", ok: !!domainHealth },
-    { label: "Réputation domaine ≥ acceptable", ok: domainHealth?.status !== "critical" },
-    { label: "Authentification admin vérifiée", ok: true },
+    { label: "SPF valide", ok: !!health?.spfValid },
+    { label: "DKIM valide", ok: !!health?.dkimValid },
+    { label: "MX valide", ok: !!health?.mxValid },
+    { label: "Mailbox vérifiée par test d'envoi (24 h)", ok: !!health?.mailboxActive },
+    { label: "Provider détecté", ok: !!health?.provider },
   ];
   const allOk = checks.every((c) => c.ok);
   const canSubmit = allOk && confirmText.trim().toUpperCase() === "ACTIVER LIVE";
