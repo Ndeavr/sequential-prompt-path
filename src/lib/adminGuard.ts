@@ -96,19 +96,7 @@ export async function validateAdmin(
     }
   }
 
-  // 4. profiles.role fallback (best-effort).
-  try {
-    const { data, error } = await withTimeout(
-      supabase.from("profiles").select("role").eq("user_id", userId).maybeSingle(),
-      6000,
-    );
-    if (!error && (data as any)?.role === "admin") {
-      setAdminCached(userId, email);
-      return { allowed: true, source: "profiles" };
-    }
-  } catch (e: any) {
-    lastError = lastError ?? String(e?.message ?? e);
-  }
+  // 4. (No profiles.role fallback — roles are only stored in user_roles.)
 
   if (lastError) {
     return { allowed: false, reason: "load_error", detail: lastError };
