@@ -24,7 +24,7 @@ export default function CardPlanRegular({ plan, recommended, onSelect }: Props) 
         </div>
 
         <div className="flex items-baseline gap-1">
-          <span className="text-3xl font-bold">{plan.monthly_price}$</span>
+          <span className="text-3xl font-bold">{Math.round((plan.monthly_price ?? 0) / 100)} $</span>
           <span className="text-sm text-muted-foreground">/mois</span>
         </div>
 
