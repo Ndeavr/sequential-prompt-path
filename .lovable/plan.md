@@ -1,91 +1,119 @@
-## Constat (état réel du backend)
+# UNPRO Go-Live Critical Fix Plan
 
-- 4 mailboxes existent dont 3 `active` (`alex@go.unpro.ca`, `partenariats@go.unpro.ca`, `alex@mail.unpro.ca`) + 1 en `warmup` (`yan@go.unpro.ca`). Provider présent (`smtp` / `lovable_email`).
-- `email_domain_health` n'a **pas** de colonne MX, et le KPI "Domaine email configuré" se base seulement sur `!!domainHealth` (présence de la ligne) → faux positif.
-- `PanelLiveKPIs` lit `sending.activeMailboxes` (correct) mais affiche `Provider · —` quand le hook ne trouve pas de mailbox active dans son select courant, et `Statut domaine` lit `domain.status` qui est `pending` par défaut → tout reste rouge.
-- Aucune validation réelle (SMTP auth, OAuth, test send). `mailbox_status` est purement déclaratif.
-- Aucun moteur de health check planifié pour l'outbound.
+Minimal, surgical changes. No redesign. No homepage touch. No Alex voice changes.
 
-Le problème n'est donc pas "0 mailbox" en base — c'est qu'on ne **vérifie** ni n'**affiche** la vérité opérationnelle.
+## Part 1 — Admin Session Stability (FIX 1)
 
-## Plan
+### Problem
+`/admin` shows "Validation administrateur impossible — timeout" for `yturcotte@gmail.com`. Root cause in `ProtectedRoute.tsx`: a 3.5s `setTimeout` flips the admin check to `denied/load_error` before the `user_roles` query resolves on slow connections. There is no retry, no cache, no email fallback.
 
-### 1. Migration BDD
+### Changes
+1. **`src/lib/adminGuard.ts`** (new, ~60 lines)
+   - `ADMIN_EMAILS = ["yturcotte@gmail.com"]` allowlist fallback.
+   - `isAdminCached(userId)` / `setAdminCached(userId)` — `localStorage` key `unpro_admin_validated_v1` with 24h TTL, scoped per user_id.
+   - `validateAdmin(userId, email)` — sequence:
+     1. Cache hit → return `allowed`.
+     2. Email in `ADMIN_EMAILS` → set cache, return `allowed`.
+     3. Query `user_roles` with retry (3 attempts, 1s/2s/4s backoff, 8s per attempt).
+     4. If any attempt finds `role='admin'` → cache + allow.
+     5. Final fallback: query `profiles.role` (read-only check, doesn't change schema).
+     6. Only deny after all retries exhausted AND email not in allowlist.
 
-Ajouter à `outbound_mailboxes` :
-- `connection_type` text (`smtp` | `oauth_google` | `oauth_microsoft` | `api_resend` | `api_lovable`)
-- `auth_status` text (`pending` | `connected` | `failed`) default `pending`
-- `last_auth_check_at`, `last_test_send_at`, `last_test_latency_ms`, `last_test_error` text
-- `verified_at` timestamptz
-- Élargir `mailbox_status` à : `pending | dns_only | smtp_connected | verified | active | suspended | failed`
+2. **`src/components/ProtectedRoute.tsx`** — replace the admin branch:
+   - Remove the 3.5s hard timeout.
+   - Use `validateAdmin()` instead of one-shot Supabase query.
+   - While checking, show loader (do NOT redirect, do NOT logout).
+   - On `denied`, render `AdminAccessDenied` (existing) — no navigation.
+   - Save current path so reconnect returns to same `/admin/*` page (already partially done via `saveReturnPath`; verify).
 
-Ajouter à `email_domain_health` :
-- `mx_status` text default `unknown`, `mx_records` jsonb, `blacklist_status` text default `unknown`, `bounce_ratio_24h` numeric default 0
+3. **`src/hooks/useAuth.ts`** — keep as-is, but ensure `roleTimedOut` (8s) does NOT flip `isAuthenticated` to false. Verify session is never cleared on role timeout.
 
-Nouvelle table `outbound_health_checks` :
-- `id, mailbox_id (nullable), check_type (smtp_auth|oauth|test_send|dns|blacklist|bounce), status (passed|failed|warning), latency_ms, response_payload jsonb, error_message, created_at`
-- RLS admin only.
+### Result
+- Admin stays logged in across long ops.
+- `yturcotte@gmail.com` always passes via email fallback even if `user_roles` is slow/empty.
+- 24h local cache → instant admin entry on subsequent visits.
 
-Nouvelle table `outbound_test_sends` :
-- `id, mailbox_id, recipient, subject, status, latency_ms, provider_response jsonb, error_message, created_at`
-- RLS admin only.
+---
 
-### 2. Edge function `check-outbound-health`
+## Part 2 — Outbound Automation Pipeline (FIX 2, 4)
 
-- Itère sur chaque mailbox active.
-- Selon `connection_type` :
-  - `smtp` : tente connexion + `AUTH LOGIN` (lib SMTP Deno).
-  - `oauth_google` / `oauth_microsoft` : appel `userinfo` avec token stocké.
-  - `api_resend` : `GET /domains` via clé API.
-  - `api_lovable` : ping `send-transactional-email` en mode dry-run.
-- Vérif DNS (SPF/DKIM/DMARC/MX) via `Deno.resolveDns`.
-- Calcule `bounce_ratio_24h` depuis `outbound_sent_messages`.
-- Met à jour `outbound_mailboxes.auth_status`, `mailbox_status`, `last_auth_check_at` et `email_domain_health.mx_status` + `overall_score`.
-- Insère lignes dans `outbound_health_checks`.
-- Retourne :
-  ```json
-  { "domainConfigured", "spfValid", "dkimValid", "mxValid", "dmarcValid",
-    "mailboxes":[{id,email,provider,status,authStatus,lastTestAt,latencyMs}],
-    "mailboxActive", "provider", "lastSync", "sendingHealthy" }
-  ```
+### Schema (migration)
+Reuse existing `outbound_prospects`, `outreach_messages`, `contractor_enriched_profiles` where possible. Add only what's missing:
 
-### 3. Edge function `send-outbound-test-email`
+- **`automation_jobs`** (new): `id, type text, status text default 'pending', started_at, completed_at, error_message, created_by uuid, metadata jsonb, created_at`. RLS: admin-only.
+- **`contractor_leads`** (new if not present — check first; likely overlap with `outbound_prospects`. If overlap, add missing columns to `outbound_prospects` instead: `aipp_score int, recommended_plan text, profile_id uuid, last_contacted_at timestamptz`).
 
-- Body : `{ mailboxId, recipient }`. Envoie un mail réel via le provider de la mailbox, mesure latence, stocke dans `outbound_test_sends`, met à jour `last_test_*` + bascule `mailbox_status` → `verified` si succès.
+### Edge function: `acquisition-pipeline-runner` (new)
+Single orchestrator invoked by the admin button. Body: `{ source, limit, dry_run }`.
+Steps per lead:
+1. **scrape** — call existing `scrape-rbq-leads` / `scrape-google-leads` functions OR accept a manual list.
+2. **enrich** — call existing `autonomous-acquisition-engine` (already present per `useAutonomousAcquisition.ts`) with `action: 'run_pipeline'`.
+3. **score** — reuse existing AIPP scoring edge function. On failure, store fallback score with `score_label = 'estimé'`.
+4. **draft profile** — insert into `contractor_profiles` with `status='draft', source='outbound', imported_logo_url, imported_images, aipp_score, recommended_plan`.
+5. **outreach gate** — only enqueue email/SMS if:
+   - `outbound_prospects.approval_status = 'approved'`
+   - `email_domain_health.spf_valid AND dkim_valid AND mx_valid` (read from `useOutboundHealth`)
+   - `outbound_mailboxes.auth_status = 'connected'`
+   Otherwise mark `outreach_messages.status = 'blocked_infra'`.
+6. **generate join link** — `/join/contractor?lead_id={uuid}` stored in lead row.
+7. Log every step into `automation_jobs.metadata.steps[]`.
 
-### 4. Cron pg_cron toutes les 5 min
+### Frontend
+**`src/pages/admin/AdminAcquisitionLauncher.tsx`** (new) accessible from existing admin nav:
+- Button: **"Lancer acquisition automatique"** → invokes `acquisition-pipeline-runner`.
+- Realtime panel reading `automation_jobs` + `outbound_prospects`:
+  - Active jobs, leads scraped, profiles drafted, emails sent, SMS sent, contractors joined, Stripe payments, activated, errors.
+- Emergency actions: Retry admin validation · Restart pipeline · Pause/Resume outbound (toggle row in `outbound_settings`) · Test one contractor flow · Send one test email (uses existing `send-outbound-test-email`).
 
-- `select net.http_post(... /functions/v1/check-outbound-health ...)`
-- Job `outbound-health-check-5min` créé via `supabase--insert` (jamais migration, contient l'anon key).
+### Contractor join flow `/join/contractor?lead_id=...`
+- Page loads lead, fetches `aipp_score` and recommended plan.
+- Reuses existing `ContractorOnboardingLanding` (per memory) + Alex voice autostart (existing).
+- After Alex collects goal + confirms profile, calls existing Stripe checkout flow (existing `voice-sales-checkout` per memory).
+- Stripe webhook (existing) flips `contractor_profiles.status` to `active` and links `profile_id` back on the lead.
 
-### 5. Hooks et UI
+---
 
-- Nouveau hook `useOutboundHealth()` qui appelle `check-outbound-health` (refresh 60 s) et expose `{ domainConfigured, spfValid, dkimValid, mxValid, mailboxes, activeCount, provider, lastSync, sendingHealthy }`.
-- Refonte `PanelLiveKPIs` :
-  - "Domaine email configuré" = vrai **uniquement** si `spfValid && dkimValid && mxValid`.
-  - "Mailbox active" = vrai uniquement si au moins 1 mailbox `auth_status='connected'` ET `last_test_send_at` < 24 h avec succès.
-  - Affiche provider auto-détecté lisible (Gmail / Google Workspace / Outlook / Resend / SMTP).
-- Nouvelle carte `CardOutboundHealth` (3 états) :
-  - 🟢 Vert : domaine OK + ≥ 1 mailbox `verified` + dernier test < 1 h.
-  - 🟡 Jaune : mailbox connectée mais jamais testée OU bounce_ratio > 5 %.
-  - 🔴 Rouge : aucune mailbox connectée OU DNS invalide.
-- Bouton "Tester l'envoi" → modal pour saisir destinataire, appelle `send-outbound-test-email`, affiche latence + réponse provider + met à jour `last_sync_at` UI.
+## Part 3 — Mailbox Status (FIX 3)
 
-### 6. Pre-flight checklist
+In `PanelLiveKPIs.tsx` and `ModalConfirmGoLive.tsx`:
+- DKIM failure → show **yellow** banner: *"SMTP connecté — DKIM à corriger avant volume production."*
+- Do NOT block the admin dashboard.
+- Test send button stays enabled if `auth_status='connected'` AND mailbox is on a verified SMTP host.
+- Mass send (pipeline outreach step) stays blocked until SPF+DKIM+MX all pass (already enforced server-side in step 5 above).
 
-Refactor `ModalConfirmGoLive` pour utiliser `useOutboundHealth()` :
-- Domaine configuré ← `spfValid && dkimValid && mxValid`
-- Mailbox active ← `mailboxActive === true` (vrai test send réussi récemment)
-- Plus aucun `!!domainHealth` mock.
+---
 
-### Détails techniques
+## Part 4 — Out of Scope
+- No homepage / public site changes.
+- No Alex voice config changes.
+- No design system changes.
+- No new tables beyond `automation_jobs` (and lead column additions if needed).
+- Existing edge functions reused — only `acquisition-pipeline-runner` is new.
 
-- Aucune fausse donnée : si `check-outbound-health` n'a jamais tourné → tous les KPI restent en attente (`pending`) avec CTA "Lancer la vérification".
-- Auto-détection provider : règle simple sur `domain` + `connection_type` (`gmail.com` → Gmail, `outlook.com`/`hotmail.com` → Outlook, sinon Workspace/Custom selon MX).
-- Toutes les fonctions edge utilisent `import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'` et `verify_jwt = false` avec validation admin via `service_role`.
-- RLS strict admin sur toutes les nouvelles tables.
+---
 
-### Hors scope
+## Technical Details
 
-- Refonte du dashboard outbound complet (uniquement les KPI/checklist + nouvelle carte santé + bouton test).
-- Nouvelle UI de configuration OAuth (les credentials existants sont supposés en place).
+### Files created
+- `src/lib/adminGuard.ts`
+- `src/pages/admin/AdminAcquisitionLauncher.tsx`
+- `supabase/functions/acquisition-pipeline-runner/index.ts`
+- 1 migration: `automation_jobs` + column additions to `outbound_prospects` (only if missing)
+
+### Files edited
+- `src/components/ProtectedRoute.tsx` — admin branch only
+- `src/components/admin/system/PanelLiveKPIs.tsx` — DKIM yellow state
+- `src/components/admin/system/ModalConfirmGoLive.tsx` — non-blocking DKIM
+- Admin route registration to add `/admin/acquisition` (single route entry)
+
+### Cache key
+`localStorage["unpro_admin_validated_v1"] = { user_id, email, ts }` — 24h TTL.
+
+### Retry policy (admin validate)
+3 attempts, exponential backoff 1s/2s/4s, 8s per query. Total max ~30s but UI stays in "Validating…" without ever rendering the denied screen unless every attempt explicitly returns "no admin row".
+
+### Success criteria match
+1. `/admin` never locks out → no hard timeout, email fallback, cache.
+2. `yturcotte@gmail.com` admin → guaranteed via `ADMIN_EMAILS`.
+3. "Lancer acquisition automatique" button exists and triggers pipeline.
+4–10. Pipeline orchestrator handles full chain: scrape → enrich → score → draft → outreach (gated) → join link → Alex → Stripe → activation.
