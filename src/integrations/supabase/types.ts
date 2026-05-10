@@ -35090,6 +35090,302 @@ export type Database = {
           },
         ]
       }
+      journal_article_citations: {
+        Row: {
+          article_id: string
+          citation_type: string
+          id: string
+          order_index: number
+          quote: string
+          source: string | null
+          source_url: string | null
+        }
+        Insert: {
+          article_id: string
+          citation_type?: string
+          id?: string
+          order_index?: number
+          quote: string
+          source?: string | null
+          source_url?: string | null
+        }
+        Update: {
+          article_id?: string
+          citation_type?: string
+          id?: string
+          order_index?: number
+          quote?: string
+          source?: string | null
+          source_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_article_citations_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "journal_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_article_entities: {
+        Row: {
+          article_id: string
+          entity_id: string
+          relevance_weight: number
+        }
+        Insert: {
+          article_id: string
+          entity_id: string
+          relevance_weight?: number
+        }
+        Update: {
+          article_id?: string
+          entity_id?: string
+          relevance_weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_article_entities_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "journal_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_article_entities_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_article_faqs: {
+        Row: {
+          answer: string
+          article_id: string
+          id: string
+          order_index: number
+          question: string
+        }
+        Insert: {
+          answer: string
+          article_id: string
+          id?: string
+          order_index?: number
+          question: string
+        }
+        Update: {
+          answer?: string
+          article_id?: string
+          id?: string
+          order_index?: number
+          question?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_article_faqs_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "journal_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_article_sections: {
+        Row: {
+          anchor_id: string
+          article_id: string
+          body_md: string
+          heading: string
+          id: string
+          level: number
+          order_index: number
+        }
+        Insert: {
+          anchor_id: string
+          article_id: string
+          body_md?: string
+          heading: string
+          id?: string
+          level?: number
+          order_index?: number
+        }
+        Update: {
+          anchor_id?: string
+          article_id?: string
+          body_md?: string
+          heading?: string
+          id?: string
+          level?: number
+          order_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_article_sections_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "journal_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_articles: {
+        Row: {
+          aeo_score: number | null
+          ai_optimized_score: number | null
+          body_html: string | null
+          body_md: string
+          created_at: string
+          dek: string | null
+          h1: string | null
+          hero_image_url: string | null
+          id: string
+          key_takeaways: Json
+          published_at: string | null
+          quotable_statements: Json
+          reading_time_minutes: number | null
+          serie_id: string | null
+          slug: string
+          status: string
+          summary_long: string | null
+          summary_short: string | null
+          tier: string
+          title: string
+          updated_at: string
+          word_count: number | null
+        }
+        Insert: {
+          aeo_score?: number | null
+          ai_optimized_score?: number | null
+          body_html?: string | null
+          body_md?: string
+          created_at?: string
+          dek?: string | null
+          h1?: string | null
+          hero_image_url?: string | null
+          id?: string
+          key_takeaways?: Json
+          published_at?: string | null
+          quotable_statements?: Json
+          reading_time_minutes?: number | null
+          serie_id?: string | null
+          slug: string
+          status?: string
+          summary_long?: string | null
+          summary_short?: string | null
+          tier?: string
+          title: string
+          updated_at?: string
+          word_count?: number | null
+        }
+        Update: {
+          aeo_score?: number | null
+          ai_optimized_score?: number | null
+          body_html?: string | null
+          body_md?: string
+          created_at?: string
+          dek?: string | null
+          h1?: string | null
+          hero_image_url?: string | null
+          id?: string
+          key_takeaways?: Json
+          published_at?: string | null
+          quotable_statements?: Json
+          reading_time_minutes?: number | null
+          serie_id?: string | null
+          slug?: string
+          status?: string
+          summary_long?: string | null
+          summary_short?: string | null
+          tier?: string
+          title?: string
+          updated_at?: string
+          word_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_articles_serie_id_fkey"
+            columns: ["serie_id"]
+            isOneToOne: false
+            referencedRelation: "journal_series"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_entities: {
+        Row: {
+          aliases: Json
+          category: string
+          created_at: string
+          id: string
+          long_definition: string | null
+          name: string
+          related_entity_ids: Json
+          short_definition: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          aliases?: Json
+          category: string
+          created_at?: string
+          id?: string
+          long_definition?: string | null
+          name: string
+          related_entity_ids?: Json
+          short_definition?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          aliases?: Json
+          category?: string
+          created_at?: string
+          id?: string
+          long_definition?: string | null
+          name?: string
+          related_entity_ids?: Json
+          short_definition?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      journal_series: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          order_index: number
+          slug: string
+          theme_color: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_index?: number
+          slug: string
+          theme_color?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_index?: number
+          slug?: string
+          theme_color?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       jve_calculator_sessions: {
         Row: {
           city_id: string | null
