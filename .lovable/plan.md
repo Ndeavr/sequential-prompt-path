@@ -1,77 +1,91 @@
-## Diagnostic
+## Constat (état réel du backend)
 
-Scan immédiat des tables clés (`contractor_prospects`, `contractors`) → **0 ligne mojibake**. Les caractères cassés (`TÃ©lÃ©phone`, `MontrÃ©al`, `Ã contacter`) provenaient du CSV collé (Windows-1252 lu en UTF-8), pas de la base. Mais aucun garde-fou n'existe pour les **prochains imports** (CSV RBQ, scrapers, exports). On installe la couche défensive globale.
+- 4 mailboxes existent dont 3 `active` (`alex@go.unpro.ca`, `partenariats@go.unpro.ca`, `alex@mail.unpro.ca`) + 1 en `warmup` (`yan@go.unpro.ca`). Provider présent (`smtp` / `lovable_email`).
+- `email_domain_health` n'a **pas** de colonne MX, et le KPI "Domaine email configuré" se base seulement sur `!!domainHealth` (présence de la ligne) → faux positif.
+- `PanelLiveKPIs` lit `sending.activeMailboxes` (correct) mais affiche `Provider · —` quand le hook ne trouve pas de mailbox active dans son select courant, et `Statut domaine` lit `domain.status` qui est `pending` par défaut → tout reste rouge.
+- Aucune validation réelle (SMTP auth, OAuth, test send). `mailbox_status` est purement déclaratif.
+- Aucun moteur de health check planifié pour l'outbound.
 
-## Livrables
+Le problème n'est donc pas "0 mailbox" en base — c'est qu'on ne **vérifie** ni n'**affiche** la vérité opérationnelle.
 
-### 1. Utilitaire partagé `src/lib/textNormalization.ts`
+## Plan
 
-Trois fonctions pures, zéro dépendance, testées :
+### 1. Migration BDD
 
-- `repairMojibake(input)` — détecte et corrige les patterns Latin-1↔UTF-8 doubles (`Ã©→é`, `Ã¨→è`, `Ã ` (avec espace) `→à`, `Ã€→À`, `Ã‡→Ç`, `Ã"→Ô`, `â€"→–`, `â€™→'`, `Â `→`espace insécable`, etc.). Table de mapping exhaustive ~60 entrées.
-- `normalizeText(input, opts?)` — Unicode NFC, trim, normalise apostrophes typographiques (`'` `'` → `'`), tirets (`–` `—`), guillemets, supprime caractères de contrôle invisibles (zero-width, BOM).
-- `sanitizeImportedText(input)` — pipeline `repairMojibake → normalizeText`, retourne `{ value, repaired: boolean, confidence: 'high'|'low' }`. Si confidence basse → `repaired=false` et préserve l'original.
+Ajouter à `outbound_mailboxes` :
+- `connection_type` text (`smtp` | `oauth_google` | `oauth_microsoft` | `api_resend` | `api_lovable`)
+- `auth_status` text (`pending` | `connected` | `failed`) default `pending`
+- `last_auth_check_at`, `last_test_send_at`, `last_test_latency_ms`, `last_test_error` text
+- `verified_at` timestamptz
+- Élargir `mailbox_status` à : `pending | dns_only | smtp_connected | verified | active | suspended | failed`
 
-Garde-fou : **ne touche jamais** aux champs `phone`, `email`, `website_url`, `rbq`, `neq`, `postal_code` (regex de détection : si la chaîne matche un pattern téléphone/email/URL/RBQ, retourne telle quelle).
+Ajouter à `email_domain_health` :
+- `mx_status` text default `unknown`, `mx_records` jsonb, `blacklist_status` text default `unknown`, `bounce_ratio_24h` numeric default 0
 
-### 2. Pipeline d'import durci
+Nouvelle table `outbound_health_checks` :
+- `id, mailbox_id (nullable), check_type (smtp_auth|oauth|test_send|dns|blacklist|bounce), status (passed|failed|warning), latency_ms, response_payload jsonb, error_message, created_at`
+- RLS admin only.
 
-- `src/pages/admin/AdminProspectImport.tsx` : passe **chaque cellule texte** (Entreprise, Secteur, Région, Statut, Notes, Adresse, Ville) via `sanitizeImportedText` avant l'`upsert`. Les colonnes phone/email/url/rbq sont ignorées par la sanitisation.
-- Bonus : **détection auto de l'encodage CSV** côté navigateur. Si le fichier contient un BOM UTF-8 → lu en UTF-8. Sinon, on tente UTF-8 strict ; si erreur ou si > 5 % de séquences invalides → fallback `windows-1252` via `TextDecoder('windows-1252')`. Élimine la cause racine.
-- `supabase/functions/scrape-rbq-leads/index.ts` : applique `sanitizeImportedText` côté serveur sur tous les champs texte avant insert.
+Nouvelle table `outbound_test_sends` :
+- `id, mailbox_id, recipient, subject, status, latency_ms, provider_response jsonb, error_message, created_at`
+- RLS admin only.
 
-### 3. Migration de réparation one-shot
+### 2. Edge function `check-outbound-health`
 
-Fonction Postgres `public.repair_mojibake_text(text)` (immutable, SQL pur) qui applique les ~60 substitutions principales via `replace()` chaînés. Puis :
+- Itère sur chaque mailbox active.
+- Selon `connection_type` :
+  - `smtp` : tente connexion + `AUTH LOGIN` (lib SMTP Deno).
+  - `oauth_google` / `oauth_microsoft` : appel `userinfo` avec token stocké.
+  - `api_resend` : `GET /domains` via clé API.
+  - `api_lovable` : ping `send-transactional-email` en mode dry-run.
+- Vérif DNS (SPF/DKIM/DMARC/MX) via `Deno.resolveDns`.
+- Calcule `bounce_ratio_24h` depuis `outbound_sent_messages`.
+- Met à jour `outbound_mailboxes.auth_status`, `mailbox_status`, `last_auth_check_at` et `email_domain_health.mx_status` + `overall_score`.
+- Insère lignes dans `outbound_health_checks`.
+- Retourne :
+  ```json
+  { "domainConfigured", "spfValid", "dkimValid", "mxValid", "dmarcValid",
+    "mailboxes":[{id,email,provider,status,authStatus,lastTestAt,latencyMs}],
+    "mailboxActive", "provider", "lastSync", "sendingHealthy" }
+  ```
 
-```sql
-UPDATE contractor_prospects
-SET business_name = repair_mojibake_text(business_name),
-    city          = repair_mojibake_text(city),
-    region        = repair_mojibake_text(region),
-    address       = repair_mojibake_text(address),
-    -- jamais : phone, email, website_url, rbq, neq, postal_code
-    needs_review  = (business_name ~ 'Ã' OR city ~ 'Ã' OR region ~ 'Ã')
-WHERE business_name ~ 'Ã' OR city ~ 'Ã' OR region ~ 'Ã' OR address ~ 'Ã';
-```
+### 3. Edge function `send-outbound-test-email`
 
-Idem pour `contractors` (champs : `business_name`, `city`, `region`, `description`).
+- Body : `{ mailboxId, recipient }`. Envoie un mail réel via le provider de la mailbox, mesure latence, stocke dans `outbound_test_sends`, met à jour `last_test_*` + bascule `mailbox_status` → `verified` si succès.
 
-Ajout d'une colonne `needs_review boolean default false` sur `contractor_prospects` pour flagger les rangées où la réparation n'a pas pu garantir un résultat propre (présence résiduelle de `Ã` après repair).
+### 4. Cron pg_cron toutes les 5 min
 
-Aujourd'hui le scan donne **0 ligne** → la migration tournera sans rien changer. Elle reste utile pour les prochains imports.
+- `select net.http_post(... /functions/v1/check-outbound-health ...)`
+- Job `outbound-health-check-5min` créé via `supabase--insert` (jamais migration, contient l'anon key).
 
-### 4. Vue admin "rangées suspectes"
+### 5. Hooks et UI
 
-Petit panneau dans `/admin/prospects/import` (en bas de la page existante) :
+- Nouveau hook `useOutboundHealth()` qui appelle `check-outbound-health` (refresh 60 s) et expose `{ domainConfigured, spfValid, dkimValid, mxValid, mailboxes, activeCount, provider, lastSync, sendingHealthy }`.
+- Refonte `PanelLiveKPIs` :
+  - "Domaine email configuré" = vrai **uniquement** si `spfValid && dkimValid && mxValid`.
+  - "Mailbox active" = vrai uniquement si au moins 1 mailbox `auth_status='connected'` ET `last_test_send_at` < 24 h avec succès.
+  - Affiche provider auto-détecté lisible (Gmail / Google Workspace / Outlook / Resend / SMTP).
+- Nouvelle carte `CardOutboundHealth` (3 états) :
+  - 🟢 Vert : domaine OK + ≥ 1 mailbox `verified` + dernier test < 1 h.
+  - 🟡 Jaune : mailbox connectée mais jamais testée OU bounce_ratio > 5 %.
+  - 🔴 Rouge : aucune mailbox connectée OU DNS invalide.
+- Bouton "Tester l'envoi" → modal pour saisir destinataire, appelle `send-outbound-test-email`, affiche latence + réponse provider + met à jour `last_sync_at` UI.
 
-```
-Rangées flaggées pour révision manuelle : N
-[ Lister ]  [ Réessayer la réparation ]
-```
+### 6. Pre-flight checklist
 
-Liste les rows `WHERE needs_review = true`, permet d'éditer inline le `business_name`/`city`/`notes`. Pas de nouveau page, pas de refonte UI.
+Refactor `ModalConfirmGoLive` pour utiliser `useOutboundHealth()` :
+- Domaine configuré ← `spfValid && dkimValid && mxValid`
+- Mailbox active ← `mailboxActive === true` (vrai test send réussi récemment)
+- Plus aucun `!!domainHealth` mock.
 
-### 5. Tests unitaires
+### Détails techniques
 
-`src/lib/__tests__/textNormalization.test.ts` couvre :
-- Tous les exemples du brief (TÃ©lÃ©phone, MontrÃ©al, Ã contacter, BÃ©ton, PavÃ©, franÃ§ais, ExtÃ©rieures, DÃ©neigement, expÃ©rience, â, Ã )
-- Préservation des accents valides (é è ê ë à â ç î ï ô ù û ü)
-- Préservation intacte de phones (`514-503-9606`), emails (`info@x.ca`), URLs (`excavationsicard.ca`), RBQ (`5836-5529-01`)
-- Idempotence (`repair(repair(x)) === repair(x)`)
-- Chaînes déjà propres → inchangées
+- Aucune fausse donnée : si `check-outbound-health` n'a jamais tourné → tous les KPI restent en attente (`pending`) avec CTA "Lancer la vérification".
+- Auto-détection provider : règle simple sur `domain` + `connection_type` (`gmail.com` → Gmail, `outlook.com`/`hotmail.com` → Outlook, sinon Workspace/Custom selon MX).
+- Toutes les fonctions edge utilisent `import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'` et `verify_jwt = false` avec validation admin via `service_role`.
+- RLS strict admin sur toutes les nouvelles tables.
 
-## Hors scope
+### Hors scope
 
-- Aucune refonte UI, aucun changement business
-- PDF/email rendering : déjà UTF-8 (templates Resend + fonts PDF actuelles le supportent) — pas de changement
-- Aucune modification de logique Alex / scoring / matching
-- Pas de nouvelle dépendance npm
-
-## Vérification
-
-1. `bun run test` → tous les cas du brief passent
-2. Importer un CSV Windows-1252 contenant "MontrÃ©al" → DB contient "Montréal"
-3. Importer un CSV UTF-8 propre → aucun changement
-4. Re-scan : `SELECT count(*) FROM contractor_prospects WHERE business_name ~ 'Ã'` → 0
-5. Aucune régression sur phones/emails/URLs/RBQ (test unitaire)
+- Refonte du dashboard outbound complet (uniquement les KPI/checklist + nouvelle carte santé + bouton test).
+- Nouvelle UI de configuration OAuth (les credentials existants sont supposés en place).

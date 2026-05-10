@@ -28958,6 +28958,8 @@ export type Database = {
       }
       email_domain_health: {
         Row: {
+          blacklist_status: string | null
+          bounce_ratio_24h: number | null
           created_at: string
           dkim_status: string
           dmarc_policy: string | null
@@ -28965,12 +28967,17 @@ export type Database = {
           domain: string
           id: string
           last_checked: string
+          last_health_check_at: string | null
+          mx_records: Json | null
+          mx_status: string | null
           overall_score: number
           spf_status: string
           status: string
           updated_at: string
         }
         Insert: {
+          blacklist_status?: string | null
+          bounce_ratio_24h?: number | null
           created_at?: string
           dkim_status?: string
           dmarc_policy?: string | null
@@ -28978,12 +28985,17 @@ export type Database = {
           domain: string
           id?: string
           last_checked?: string
+          last_health_check_at?: string | null
+          mx_records?: Json | null
+          mx_status?: string | null
           overall_score?: number
           spf_status?: string
           status?: string
           updated_at?: string
         }
         Update: {
+          blacklist_status?: string | null
+          bounce_ratio_24h?: number | null
           created_at?: string
           dkim_status?: string
           dmarc_policy?: string | null
@@ -28991,6 +29003,9 @@ export type Database = {
           domain?: string
           id?: string
           last_checked?: string
+          last_health_check_at?: string | null
+          mx_records?: Json | null
+          mx_status?: string | null
           overall_score?: number
           spf_status?: string
           status?: string
@@ -40322,6 +40337,47 @@ export type Database = {
         }
         Relationships: []
       }
+      outbound_health_checks: {
+        Row: {
+          check_type: string
+          created_at: string
+          error_message: string | null
+          id: string
+          latency_ms: number | null
+          mailbox_id: string | null
+          response_payload: Json | null
+          status: string
+        }
+        Insert: {
+          check_type: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          mailbox_id?: string | null
+          response_payload?: Json | null
+          status: string
+        }
+        Update: {
+          check_type?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          mailbox_id?: string | null
+          response_payload?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_health_checks_mailbox_id_fkey"
+            columns: ["mailbox_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_mailboxes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outbound_landing_pages: {
         Row: {
           aipp_summary: string | null
@@ -40677,14 +40733,21 @@ export type Database = {
       }
       outbound_mailboxes: {
         Row: {
+          auth_status: string | null
+          connection_type: string | null
           created_at: string | null
           daily_limit: number | null
           domain: string | null
           health_score: number | null
           hourly_send_limit: number | null
           id: string
+          last_auth_check_at: string | null
+          last_test_error: string | null
+          last_test_latency_ms: number | null
+          last_test_send_at: string | null
           mailbox_status: string | null
           provider: string | null
+          provider_label: string | null
           reply_to_email: string | null
           sender_email: string
           sender_name: string
@@ -40693,18 +40756,26 @@ export type Database = {
           signature_html: string | null
           tracking_domain: string | null
           updated_at: string | null
+          verified_at: string | null
           warmup_enabled: boolean | null
           warmup_status: string | null
         }
         Insert: {
+          auth_status?: string | null
+          connection_type?: string | null
           created_at?: string | null
           daily_limit?: number | null
           domain?: string | null
           health_score?: number | null
           hourly_send_limit?: number | null
           id?: string
+          last_auth_check_at?: string | null
+          last_test_error?: string | null
+          last_test_latency_ms?: number | null
+          last_test_send_at?: string | null
           mailbox_status?: string | null
           provider?: string | null
+          provider_label?: string | null
           reply_to_email?: string | null
           sender_email: string
           sender_name: string
@@ -40713,18 +40784,26 @@ export type Database = {
           signature_html?: string | null
           tracking_domain?: string | null
           updated_at?: string | null
+          verified_at?: string | null
           warmup_enabled?: boolean | null
           warmup_status?: string | null
         }
         Update: {
+          auth_status?: string | null
+          connection_type?: string | null
           created_at?: string | null
           daily_limit?: number | null
           domain?: string | null
           health_score?: number | null
           hourly_send_limit?: number | null
           id?: string
+          last_auth_check_at?: string | null
+          last_test_error?: string | null
+          last_test_latency_ms?: number | null
+          last_test_send_at?: string | null
           mailbox_status?: string | null
           provider?: string | null
+          provider_label?: string | null
           reply_to_email?: string | null
           sender_email?: string
           sender_name?: string
@@ -40733,6 +40812,7 @@ export type Database = {
           signature_html?: string | null
           tracking_domain?: string | null
           updated_at?: string | null
+          verified_at?: string | null
           warmup_enabled?: boolean | null
           warmup_status?: string | null
         }
@@ -41577,6 +41657,50 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "outbound_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_test_sends: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          latency_ms: number | null
+          mailbox_id: string | null
+          provider_response: Json | null
+          recipient: string
+          status: string
+          subject: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          mailbox_id?: string | null
+          provider_response?: Json | null
+          recipient: string
+          status: string
+          subject?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          mailbox_id?: string | null
+          provider_response?: Json | null
+          recipient?: string
+          status?: string
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_test_sends_mailbox_id_fkey"
+            columns: ["mailbox_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_mailboxes"
             referencedColumns: ["id"]
           },
         ]
