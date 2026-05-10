@@ -150,7 +150,7 @@ export default function PageContractorPlanOnboarding() {
         {/* Content */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
           {/* Chat messages */}
-          {messages.map((msg, i) => (
+          {displayMessages.map((msg, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 8 }}
