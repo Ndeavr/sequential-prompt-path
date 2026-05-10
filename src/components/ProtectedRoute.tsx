@@ -1,10 +1,10 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { getDefaultRedirectForRole, saveAuthIntent } from "@/services/auth/authIntentService";
 import { saveReturnPath } from "@/lib/authReturn";
 import AdminAccessDenied from "@/components/admin/AdminAccessDenied";
+import { validateAdmin, ADMIN_EMAILS, isAdminCached } from "@/lib/adminGuard";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
