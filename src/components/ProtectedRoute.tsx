@@ -56,7 +56,8 @@ const ProtectedRoute = ({ children, requiredRole, anyRole }: ProtectedRouteProps
       if (result.allowed) {
         setAdminCheck({ status: "allowed" });
       } else {
-        setAdminCheck({ status: "denied", reason: result.reason, detail: result.detail });
+        const r = result as Extract<typeof result, { allowed: false }>;
+        setAdminCheck({ status: "denied", reason: r.reason, detail: r.detail });
       }
     })();
 
