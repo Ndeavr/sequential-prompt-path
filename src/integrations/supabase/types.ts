@@ -28958,11 +28958,20 @@ export type Database = {
       }
       email_domain_health: {
         Row: {
+          alignment_status: Json | null
           blacklist_status: string | null
           bounce_ratio_24h: number | null
           created_at: string
+          dkim_last_success_at: string | null
+          dkim_propagation_started_at: string | null
+          dkim_reason: string | null
+          dkim_record: string | null
+          dkim_selector: string | null
+          dkim_selectors_tried: Json | null
           dkim_status: string
           dmarc_policy: string | null
+          dmarc_reason: string | null
+          dmarc_record: string | null
           dmarc_status: string
           domain: string
           id: string
@@ -28971,16 +28980,28 @@ export type Database = {
           mx_records: Json | null
           mx_status: string | null
           overall_score: number
+          spf_reason: string | null
+          spf_record: string | null
           spf_status: string
           status: string
+          suggested_dkim_record: string | null
           updated_at: string
         }
         Insert: {
+          alignment_status?: Json | null
           blacklist_status?: string | null
           bounce_ratio_24h?: number | null
           created_at?: string
+          dkim_last_success_at?: string | null
+          dkim_propagation_started_at?: string | null
+          dkim_reason?: string | null
+          dkim_record?: string | null
+          dkim_selector?: string | null
+          dkim_selectors_tried?: Json | null
           dkim_status?: string
           dmarc_policy?: string | null
+          dmarc_reason?: string | null
+          dmarc_record?: string | null
           dmarc_status?: string
           domain: string
           id?: string
@@ -28989,16 +29010,28 @@ export type Database = {
           mx_records?: Json | null
           mx_status?: string | null
           overall_score?: number
+          spf_reason?: string | null
+          spf_record?: string | null
           spf_status?: string
           status?: string
+          suggested_dkim_record?: string | null
           updated_at?: string
         }
         Update: {
+          alignment_status?: Json | null
           blacklist_status?: string | null
           bounce_ratio_24h?: number | null
           created_at?: string
+          dkim_last_success_at?: string | null
+          dkim_propagation_started_at?: string | null
+          dkim_reason?: string | null
+          dkim_record?: string | null
+          dkim_selector?: string | null
+          dkim_selectors_tried?: Json | null
           dkim_status?: string
           dmarc_policy?: string | null
+          dmarc_reason?: string | null
+          dmarc_record?: string | null
           dmarc_status?: string
           domain?: string
           id?: string
@@ -29007,8 +29040,11 @@ export type Database = {
           mx_records?: Json | null
           mx_status?: string | null
           overall_score?: number
+          spf_reason?: string | null
+          spf_record?: string | null
           spf_status?: string
           status?: string
+          suggested_dkim_record?: string | null
           updated_at?: string
         }
         Relationships: []
