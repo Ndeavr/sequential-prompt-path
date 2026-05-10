@@ -7,6 +7,50 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, CheckCircle, AlertCircle, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
+import { cleanText } from "@/lib/textNormalization";
+
+// Fields that must NEVER be touched by text normalization (encoding-sensitive
+// identifiers like phones, emails, URLs, RBQ/NEQ, postal codes).
+const PROTECTED_FIELDS = new Set([
+  "phone", "email", "website", "domain", "rbq_number", "neq_number",
+  "landing_slug", "google_maps_url",
+]);
+
+function sanitizeRow<T extends Record<string, any>>(row: T): T {
+  const out: Record<string, any> = {};
+  for (const [k, v] of Object.entries(row)) {
+    if (typeof v === "string" && !PROTECTED_FIELDS.has(k)) {
+      out[k] = cleanText(v);
+    } else {
+      out[k] = v;
+    }
+  }
+  return out as T;
+}
+
+/**
+ * Read a CSV file with encoding auto-detection. Tries strict UTF-8 first; if
+ * the result contains the U+FFFD replacement character (typical when a
+ * Windows-1252 file is decoded as UTF-8), falls back to windows-1252.
+ */
+async function readCsvWithEncodingDetect(file: File): Promise<string> {
+  const buf = await file.arrayBuffer();
+  // Strip BOM if present
+  const bytes = new Uint8Array(buf);
+  const hasBom = bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf;
+  const sliced = hasBom ? bytes.slice(3) : bytes;
+
+  try {
+    const utf8 = new TextDecoder("utf-8", { fatal: false }).decode(sliced);
+    if (!utf8.includes("\uFFFD")) return utf8;
+  } catch { /* fall through */ }
+
+  try {
+    return new TextDecoder("windows-1252").decode(sliced);
+  } catch {
+    return new TextDecoder("utf-8").decode(sliced);
+  }
+}
 
 function slugify(text: string): string {
   return text
@@ -109,13 +153,12 @@ const AdminProspectImport = () => {
     if (!file) return;
     setFileName(file.name);
     setResult(null);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const text = ev.target?.result as string;
-      const parsed = parseCsv(text);
-      setRows(parsed);
-    };
-    reader.readAsText(file);
+    readCsvWithEncodingDetect(file)
+      .then((text) => {
+        const parsed = parseCsv(text).map((r) => sanitizeRow(r));
+        setRows(parsed);
+      })
+      .catch((err) => toast.error(`Lecture CSV: ${err?.message ?? err}`));
   }, []);
 
   const mapRow = (raw: Record<string, string>) => {
