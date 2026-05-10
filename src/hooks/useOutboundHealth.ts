@@ -15,6 +15,26 @@ export interface OutboundMailboxHealth {
   sentToday: number;
 }
 
+export interface DkimDiagnostic {
+  valid: boolean;
+  selector: string | null;
+  selectorsTried: { selector: string; found: boolean; error?: string }[];
+  reason: string;
+  reasonLabel: string;
+  record: string | null;
+  publicKeyLength: number;
+}
+
+export interface DomainDiagnostic {
+  domain: string;
+  spf: { valid: boolean; record: string | null; reason: string };
+  dmarc: { valid: boolean; record: string | null; reason: string };
+  dkim: DkimDiagnostic;
+  mx: { valid: boolean; records: string[] };
+  alignment: { from_dkim_aligned: boolean; spf_aligned: boolean; return_path_domain: string; smtp_hostname: string };
+  suggestedDkim: string | null;
+}
+
 export interface OutboundHealth {
   domainConfigured: boolean;
   spfValid: boolean;
@@ -26,6 +46,8 @@ export interface OutboundHealth {
   provider: string | null;
   lastSync: string;
   sendingHealthy: boolean;
+  domains?: DomainDiagnostic[];
+  preflightBlockers?: string[];
 }
 
 export function useOutboundHealth(opts?: { autoRun?: boolean }) {

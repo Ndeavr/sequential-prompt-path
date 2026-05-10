@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import PanelDkimDiagnostics from "./PanelDkimDiagnostics";
 
 function StatusPill({ ok, label }: { ok: boolean; label: string }) {
   return (
@@ -148,6 +149,15 @@ export default function PanelLiveKPIs() {
           ))}
         </div>
       )}
+
+      {health?.preflightBlockers && health.preflightBlockers.length > 0 && (
+        <div className="rounded-md border border-destructive/40 bg-destructive/5 px-2 py-1.5 text-xs text-destructive flex items-center gap-2">
+          <AlertTriangle className="h-3 w-3" />
+          Envoi production bloqué · {health.preflightBlockers.join(" · ")}
+        </div>
+      )}
+
+      <PanelDkimDiagnostics domains={health?.domains} />
     </div>
   );
 }

@@ -18,9 +18,12 @@ export default function ModalConfirmGoLive({ onClose }: Props) {
   const { data: health } = useOutboundHealth();
   const { toast } = useToast();
 
+  const dkimDomain = health?.domains?.find((d) => !d.dkim.valid);
+  const dkimReason = dkimDomain?.dkim.reasonLabel ?? null;
   const checks = [
     { label: "SPF valide", ok: !!health?.spfValid },
-    { label: "DKIM valide", ok: !!health?.dkimValid },
+    { label: dkimReason ? `DKIM · ${dkimReason}` : "DKIM valide", ok: !!health?.dkimValid },
+    { label: "DMARC valide", ok: !!health?.dmarcValid },
     { label: "MX valide", ok: !!health?.mxValid },
     { label: "Mailbox vérifiée par test d'envoi (24 h)", ok: !!health?.mailboxActive },
     { label: "Provider détecté", ok: !!health?.provider },
