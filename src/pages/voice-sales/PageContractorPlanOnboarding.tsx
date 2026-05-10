@@ -13,6 +13,7 @@ import ModalHeyButWaitUpgrade from "@/components/voice-sales/ModalHeyButWaitUpgr
 import PanelLeadPackSelector from "@/components/voice-sales/PanelLeadPackSelector";
 import PanelInlineCheckout from "@/components/voice-sales/PanelInlineCheckout";
 import PanelPlanFitCheck from "@/components/voice-sales/PanelPlanFitCheck";
+import { supabase } from "@/integrations/supabase/client";
 
 type FlowPhase = "chat" | "plans" | "fit_check" | "founders_upsell" | "lead_packs" | "checkout";
 
