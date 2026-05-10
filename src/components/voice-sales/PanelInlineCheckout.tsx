@@ -7,20 +7,30 @@ import { toast } from "sonner";
 
 interface Props {
   planName: string;
+  /** Plan price in CENTS as stored in plan_catalog.monthly_price */
   planPrice: number;
+  /** Optional add-on price in CENTS as stored in lead_packs.pack_price */
   leadPackPrice?: number;
   variant: "regular" | "founders";
   sessionId: string | null;
   planId: string;
+  /** Canonical plan code used for routing to the native checkout (e.g. "premium"). */
+  planCode: string;
   leadPackId: string | null;
 }
 
+const fmt = (dollars: number) =>
+  dollars.toLocaleString("fr-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 export default function PanelInlineCheckout({
-  planName, planPrice, leadPackPrice, variant, sessionId, planId, leadPackId,
+  planName, planPrice, leadPackPrice, variant, sessionId, planId, planCode, leadPackId,
 }: Props) {
   const [loading, setLoading] = useState(false);
 
-  const subtotal = planPrice + (leadPackPrice ?? 0);
+  // Convert cents → dollars at the boundary. UI math runs in dollars.
+  const planPriceD = (planPrice ?? 0) / 100;
+  const packPriceD = (leadPackPrice ?? 0) / 100;
+  const subtotal = planPriceD + packPriceD;
   const tps = Math.round(subtotal * 0.05 * 100) / 100;
   const tvq = Math.round(subtotal * 0.09975 * 100) / 100;
   const total = Math.round((subtotal + tps + tvq) * 100) / 100;
@@ -28,32 +38,31 @@ export default function PanelInlineCheckout({
   const handleCheckout = async () => {
     setLoading(true);
     try {
-      // Create checkout record
+      // Create checkout record (amounts in cents for DB consistency)
       await supabase.from("contractor_checkouts").insert({
         contractor_plan_session_id: sessionId,
         pricing_plan_id: planId,
         selected_variant: variant,
         lead_pack_id: leadPackId,
         payment_status: "pending",
-        amount_subtotal: subtotal,
-        amount_tax: tps + tvq,
-        amount_total: total,
+        amount_subtotal: Math.round(subtotal * 100),
+        amount_tax: Math.round((tps + tvq) * 100),
+        amount_total: Math.round(total * 100),
       });
 
-      // Log event
       if (sessionId) {
         await supabase.from("contractor_plan_events").insert({
           contractor_plan_session_id: sessionId,
           event_type: "checkout_started",
-          event_payload_json: { planId, variant, leadPackId, total },
+          event_payload_json: { planId, planCode, variant, leadPackId, total },
         });
       }
 
-      // Navigate to Stripe checkout
-      window.location.href = `/checkout/native/${planName.toLowerCase()}`;
+      // Navigate to native Stripe checkout using the canonical plan CODE
+      window.location.href = `/checkout/native/${planCode}`;
     } catch (e) {
-      toast.error("Erreur lors du checkout. Réessayez.");
-    } finally {
+      console.error("[PanelInlineCheckout] checkout error", e);
+      toast.error("Le paiement n'a pas pu être lancé. Réessayez ou contactez UNPRO.");
       setLoading(false);
     }
   };
@@ -69,28 +78,28 @@ export default function PanelInlineCheckout({
         <div className="space-y-1.5 text-sm">
           <div className="flex justify-between">
             <span>Plan {planName} {variant === "founders" ? "(Fondateurs)" : ""}</span>
-            <span className="font-medium">{planPrice}$</span>
+            <span className="font-medium">{fmt(planPriceD)} $</span>
           </div>
-          {leadPackPrice != null && leadPackPrice > 0 && (
+          {packPriceD > 0 && (
             <div className="flex justify-between">
               <span>Pack leads supplémentaires</span>
-              <span className="font-medium">{leadPackPrice}$</span>
+              <span className="font-medium">{fmt(packPriceD)} $</span>
             </div>
           )}
           <div className="border-t pt-1.5 flex justify-between text-xs text-muted-foreground">
-            <span>TPS (5%)</span><span>{tps.toFixed(2)}$</span>
+            <span>TPS (5%)</span><span>{fmt(tps)} $</span>
           </div>
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>TVQ (9.975%)</span><span>{tvq.toFixed(2)}$</span>
+            <span>TVQ (9,975%)</span><span>{fmt(tvq)} $</span>
           </div>
           <div className="border-t pt-1.5 flex justify-between font-bold text-base">
-            <span>Total</span><span>{total.toFixed(2)}$</span>
+            <span>Total</span><span>{fmt(total)} $</span>
           </div>
         </div>
 
         <Button onClick={handleCheckout} disabled={loading} className="w-full h-12 text-base font-semibold">
           {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
-          Payer {total.toFixed(2)}$ maintenant
+          Payer {fmt(total)} $ maintenant
         </Button>
 
         <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
