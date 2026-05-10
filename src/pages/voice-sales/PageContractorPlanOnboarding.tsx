@@ -245,8 +245,8 @@ export default function PageContractorPlanOnboarding() {
             open={showFoundersModal}
             onClose={handleFoundersDecline}
             planName={selectedPlan.name}
-            foundersPrice={Math.round(selectedPlan.monthly_price * 0.8)}
-            regularPrice={selectedPlan.monthly_price}
+            foundersPrice={Math.round(((selectedPlan.monthly_price ?? 0) / 100) * 0.8)}
+            regularPrice={Math.round((selectedPlan.monthly_price ?? 0) / 100)}
             onAccept={handleFoundersAccept}
           />
         )}
