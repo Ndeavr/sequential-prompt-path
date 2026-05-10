@@ -1,78 +1,137 @@
-## Objectif
+## UNPRO Intelligence Journal — Authority Content Infrastructure
 
-Verrouiller le Go-Live outbound: aucun envoi production tant que SPF + DKIM + DMARC ne sont pas tous valides, avec diagnostics granulaires copy-paste dans l'UI. À exécuter quand les crédits sont rechargés.
+A premium long-form publication layer designed to be quoted by journalists, ingested by NotebookLM, retrieved by Perplexity/ChatGPT/Gemini, and trusted by investors. Not a blog. Not SEO spam. An infrastructure thesis published as living documents.
 
-## Contexte (déjà en place)
+---
 
-- `check-outbound-health` edge fonction: lookups SPF/DKIM multi-selector/DMARC + alignement
-- `email_domain_health` colonnes diagnostiques (`dkim_selector`, `dkim_reason`, `suggested_dkim_record`, `alignment_status`)
-- `PanelDkimDiagnostics.tsx` créé (affichage + copie record)
-- `PanelLiveKPIs.tsx` montre déjà bandeau jaune si DKIM échoue
-- `ModalConfirmGoLive.tsx` affiche pré-flight blockers
+### 1. New route & namespace
 
-## Ce qui reste à faire
+- `/journal` — Index (cinematic dark hero, manifesto, featured thesis, taxonomy)
+- `/journal/:slug` — Long-form reader (2,500–6,000 words)
+- `/journal/serie/:serieSlug` — Series hub (e.g. *Property Intelligence Thesis*)
+- `/journal/entite/:entitySlug` — Entity pages (Home Passport, Property Memory, AI Operating System…) — semantic graph nodes
 
-### 1. Hard gate côté serveur (le plus critique)
+Kept separate from `/blog` (existing SEO content) and `/articles` (compressed feed). Journal = flagship authority tier.
 
-Bloquer l'envoi production directement dans les edge functions d'envoi (pas seulement l'UI).
+---
 
-- `supabase/functions/send-outbound-email/index.ts` (ou équivalent dispatcher): avant chaque envoi non-test, requêter `email_domain_health` du domaine actif. Si `spf_valid && dkim_valid && dmarc_valid && mx_valid` ≠ true → retourner 412 `preflight_failed` avec `{ blockers: [...] }`.
-- Test sends (`send-outbound-test-email`) restent autorisés si SMTP `auth_status='connected'`, même si DKIM échoue.
-- Logger les blocages dans `automation_jobs` ou `outbound_send_log` avec `status='blocked_preflight'`.
+### 2. Database (one migration)
 
-### 2. Recheck automatique 60s après update DNS
+Tables (all RLS, public read for `status='published'`, admin write):
 
-- Hook `useOutboundHealth`: ajouter un mode `pollingMs?: number`. Quand l'admin clique "J'ai ajouté le record", déclencher polling 60s pendant max 10 min.
-- Bouton explicite "Revérifier le DNS" sur `PanelDkimDiagnostics` qui force `check-outbound-health` avec `?nocache=1`.
+- `journal_articles` — slug, title, dek, h1, body_md, body_html, summary_short, summary_long, key_takeaways[], quotable_statements[], reading_time_minutes, word_count, status (draft|review|published|archived), tier (flagship|thesis|report|essay), serie_id, hero_image_url, published_at, updated_at, ai_optimized_score, aeo_score
+- `journal_series` — slug, title, description, order_index, theme_color
+- `journal_entities` — slug, name, category (concept|product|infrastructure|stakeholder|geography), short_definition, long_definition, aliases[], related_entity_ids[]
+- `journal_article_entities` — many-to-many w/ relevance_weight (1–10) for entity density graph
+- `journal_article_faqs` — question, answer, order_index (powers FAQPage JSON-LD)
+- `journal_article_citations` — quote, source, source_url, citation_type (stat|quote|source)
+- `journal_article_sections` — anchor_id, heading, level, body_md (enables semantic chunking + ToC + AI ingestion endpoints)
+- `journal_internal_links` — from_article_id → to_article_id|to_entity_id, anchor_text (auto-generated semantic graph)
 
-### 3. Diagnostics granulaires complets
+---
 
-Compléter `PanelDkimDiagnostics` avec sections séparées:
+### 3. AI-readability endpoints (edge functions)
 
-- **SPF**: record détecté, `includes` présents, `~all` vs `-all`, statut (valide / trop d'inclusions >10 / softfail).
-- **DKIM**: déjà OK, vérifier propagation_age affiché en clair ("propagé depuis 2h").
-- **DMARC**: policy détectée (none/quarantine/reject), rua/ruf, alignement avec From/Return-Path.
-- **Alignement**: tableau 4 lignes (Return-Path, From, DKIM domain, SMTP hostname) avec ✓/✗.
+Built specifically for NotebookLM, Perplexity, ChatGPT browsing, Gemini Deep Research:
 
-### 4. Fix Panel copy-paste (par enregistrement)
+- `GET /functions/v1/journal-export-corpus` → returns full corpus as plain Markdown w/ entity headers (one-shot NotebookLM ingestion)
+- `GET /functions/v1/journal-article/:slug.md` → clean Markdown view
+- `GET /functions/v1/journal-article/:slug.json` → structured JSON (sections, entities, citations, FAQ, takeaways)
+- `GET /functions/v1/journal-entities.json` → entity graph with relations
+- `GET /functions/v1/journal-sitemap.xml` → priority 1.0 with `<lastmod>`
+- `/llms.txt` and `/llms-full.txt` at root — official AI ingestion convention pointing to corpus
 
-Bloc unique "Records DNS à ajouter" listant uniquement ceux manquants/invalides:
-- Type | Host | Value | TTL
-- Bouton "Copier" par ligne + "Tout copier"
-- Lien direct vers la console DNS du registrar si détectable (Cloudflare, GoDaddy, OVH).
+---
 
-### 5. Pre-flight blocker UI dans `ModalConfirmGoLive`
+### 4. AI Content Engine (admin)
 
-Renforcer: si un blocker actif → bouton "Activer la production" désactivé, message "Corriger ces 2 records avant de lancer", liste des actions exactes.
+`/admin/journal` cockpit (admin-only via `adminGuard`):
 
-### 6. Statuts mailbox unifiés
+- **DraftStudio** — Brief form (topic, angle, target entities, target word count, tier) → calls `journal-generate-draft` edge function (Gemini 2.5 Pro w/ extended reasoning) → returns structured article with: dek, sections, key_takeaways, quotable_statements, FAQ, suggested entities, suggested citations
+- **EntityLinker** — auto-detects entity mentions in body, proposes links, builds `journal_article_entities`
+- **SemanticTagger** — extracts topics, geo, stakeholders → tags rows
+- **AIReadabilityScore** — heuristic + LLM scoring on: heading hierarchy, entity density, quotable density, citation count, terminology consistency
+- **PublishGate** — requires score ≥ 80, ≥ 5 entities, ≥ 3 quotable_statements, ≥ 5 FAQ, ≥ 3 citations before allowing publish
+- **PressKit generator** — outputs PDF + plain-text quote sheet per article (for journalists)
 
-Vérifier que `outbound_mailboxes.auth_status` est correctement reflété:
-- `pending`, `connected`, `verified`, `dns_only`, `error`
-- Le dashboard doit afficher chaque statut avec couleur dédiée + dernière sync.
+Generation prompt enforces: Apple/Stripe/a16z voice, no buzzwords, layered reasoning, infrastructure framing, entity reinforcement (Home Passport, Property Memory, AI Operating System, Property Intelligence, Trust Infrastructure, Semi-Autonomous Organization, AI Orchestration).
 
-## Fichiers à modifier (liste finale)
+---
 
-1. `supabase/functions/check-outbound-health/index.ts` — ajouter SPF includes count, DMARC policy parsing, propagation_age en secondes
-2. `supabase/functions/send-outbound-email/index.ts` (et dispatcher autopilot) — hard gate pré-flight
-3. `src/hooks/useOutboundHealth.ts` — mode polling + interfaces SPF/DMARC enrichies
-4. `src/components/admin/system/PanelDkimDiagnostics.tsx` — split en 4 sections (SPF/DKIM/DMARC/Alignement)
-5. `src/components/admin/system/PanelLiveKPIs.tsx` — bandeau rouge si pré-flight bloque, jaune si DKIM seul
-6. `src/components/admin/system/ModalConfirmGoLive.tsx` — bouton désactivé tant que blocker actif
-7. Migration: ajouter `spf_includes_count`, `dmarc_policy`, `dmarc_rua`, `propagation_age_seconds` à `email_domain_health`
+### 5. Reader UX (cinematic premium)
 
-## Hors scope
+`/journal/:slug` page composition (mobile-first, fr-CA):
 
-- Pas de rebuild homepage, Alex, design system.
-- Pas de nouveau provider mail.
-- Réutilise toute l'infra Lovable Cloud existante.
+- **HeroJournalArticle** — full-bleed dark, dek, reading time, series badge, author "UNPRO Research"
+- **JournalTableOfContents** — sticky on desktop, drawer on mobile, anchored to `journal_article_sections`
+- **JournalKeyTakeaways** — card grid above-fold (3–5 bullets, screenshot-friendly for press)
+- **JournalQuotableBlock** — large pull quotes w/ one-tap copy (press-optimized)
+- **JournalEntityChip** — inline entity links → `/journal/entite/:slug`
+- **JournalCitationFootnote** — numbered, hover preview
+- **JournalSectionDivider** — Roman numeral chapters (Apple whitepaper feel)
+- **JournalRelatedThesis** — graph-driven recommendations (same series + shared entities)
+- **JournalPressKitBar** — "Copier les citations" / "Télécharger le press kit" / "Citer cet article"
+- **JournalAIReadyBadge** — discreet "Optimized for AI retrieval" footer mark
 
-## Critère de succès
+Typography: serif display headings (existing `font-display`), generous spacing, 75ch max line width. Subtle scroll-driven motion via existing framer-motion. Reuses `landing-warm` for public reading surface.
 
-- Impossible d'envoyer en prod si un seul des 3 (SPF/DKIM/DMARC) échoue (vérifié via `curl_edge_functions`).
-- Admin voit exactement quel record copier-coller, où, et le statut se met à jour seul après ajout DNS.
-- Test sends restent possibles pour QA pendant la correction DNS.
+---
 
-## Exécution
+### 6. SEO / AEO injection
 
-À déclencher quand les crédits sont rechargés. Aucune action requise maintenant.
+Per-article in `<head>`:
+
+- Article + BreadcrumbList JSON-LD (extend existing `SectionArticleStructuredData`)
+- FAQPage JSON-LD from `journal_article_faqs`
+- DefinedTerm JSON-LD per entity mention
+- ClaimReview-ready structure for quotable_statements
+- `og:type=article`, `article:published_time`, `article:author`
+- Canonical, hreflang `fr-CA`
+- `<link rel="alternate" type="text/markdown" href=".../slug.md">` for AI crawlers
+
+Sitemap entry priority 1.0. Internal linking: each article must link ≥ 3 other journal articles + ≥ 5 entity pages (enforced at publish gate).
+
+---
+
+### 7. Seeded launch corpus (5 flagship pieces)
+
+Auto-generated via DraftStudio, human-reviewed, published at launch:
+
+1. *La fin du marché des soumissions : pourquoi l'infrastructure remplace la mise en relation*
+2. *Home Passport : la mémoire manquante de la propriété résidentielle*
+3. *L'organisation semi-autonome : comment l'IA exécute le réel*
+4. *Property Intelligence : du bâtiment statique au jumeau prédictif*
+5. *Trust Infrastructure : pourquoi la confiance devient le moteur économique des services à domicile*
+
+Each: 3,500–5,000 words, 8–12 sections, 6+ entities, 5+ quotables, 5+ citations.
+
+---
+
+### 8. Out of scope (this build)
+
+- No Alex changes
+- No homepage rebuild
+- No changes to existing `/blog` or `/articles`
+- No press CRM (only press kit export)
+
+---
+
+### Success criteria
+
+- 5 flagship articles live at `/journal`
+- Full corpus retrievable via `/llms-full.txt` and `*.md` endpoints
+- NotebookLM ingests corpus and answers UNPRO thesis questions accurately
+- Each article passes publish gate (entities, quotables, FAQ, citations)
+- Admin can generate, score, link, and publish a new flagship in < 30 min
+- Lighthouse SEO ≥ 95, valid Article + FAQPage schema
+
+---
+
+### Technical notes
+
+- Stack: Vite/React/TS, Tailwind, shadcn, Supabase, Lovable AI Gateway (`google/gemini-2.5-pro` for drafting w/ `reasoning.effort: high`, `gemini-3-flash-preview` for scoring/tagging)
+- Reuses: `BlockArticleParagraphReadable`, `SectionArticleFAQSEO`, `SectionArticleStructuredData`, `landing-warm` theme, `adminGuard`
+- New components live under `src/components/journal/`
+- Edge functions under `supabase/functions/journal-*`
+
+Execution deferred until credits refill. Plan saved to `.lovable/plan.md` on approval.

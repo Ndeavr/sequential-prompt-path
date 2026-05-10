@@ -405,6 +405,11 @@ const PageOnboardingSuccess = lazy(() => import("@/pages/entrepreneur/PageOnboar
 const BlogIndexPage = lazy(() => import("@/pages/blog/BlogIndexPage"));
 const BlogArticlePage = lazy(() => import("@/pages/blog/BlogArticlePage"));
 
+// Journal — Authority content infrastructure
+const JournalIndexPage = lazy(() => import("@/pages/journal/JournalIndexPage"));
+const JournalArticlePage = lazy(() => import("@/pages/journal/JournalArticlePage"));
+const AdminJournalPage = lazy(() => import("@/pages/admin/AdminJournalPage"));
+
 // Condos
 const CondoHomePage = lazy(() => import("@/pages/condos/CondoHomePage"));
 const PageLandingCondoTeaser = lazy(() => import("@/pages/condos/PageLandingCondoTeaser"));
@@ -954,6 +959,9 @@ export const AppRouter = () => (
         <Route path="/blog/category/:category" element={<BlogIndexPage />} />
         <Route path="/blog/city/:city" element={<BlogIndexPage />} />
         <Route path="/conseils-renovation" element={<BlogPage2 />} />
+        <Route path="/journal" element={<JournalIndexPage />} />
+        <Route path="/journal/:slug" element={<JournalArticlePage />} />
+        <Route path="/admin/journal" element={<ProtectedRoute requiredRole="admin"><AdminJournalPage /></ProtectedRoute>} />
         <Route path="/faq" element={<PageUnproFAQ25 />} />
         <Route path="/comment-ca-marche" element={<CommentCaMarchePage />} />
         <Route path="/comment-fonctionne-ia" element={<PageHowUnproWorksAI />} />
