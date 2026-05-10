@@ -21,6 +21,27 @@ export default function PageContractorPlanOnboarding() {
   const { data: plans } = usePlanCatalog();
   const { data: leadPacks } = useLeadPacks();
   const { messages, isStreaming, sendMessage } = useVoiceSalesChat();
+  const [firstName, setFirstName] = useState<string | null>(null);
+
+  // Always-present Alex opener so the screen is never blank.
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (!active) return;
+      const meta = (data.user?.user_metadata ?? {}) as Record<string, any>;
+      const fn = meta.first_name || meta.firstName || (meta.full_name?.split(" ")[0] ?? null);
+      setFirstName(fn ?? null);
+    });
+    return () => { active = false; };
+  }, []);
+
+  const greeting = firstName
+    ? `Bonjour ${firstName}. Je vais vous aider à activer votre profil entrepreneur UNPRO. En quelques étapes, on confirme votre entreprise, votre territoire, puis le bon plan.`
+    : "Bonjour. Je vais vous aider à activer votre profil entrepreneur UNPRO. En quelques étapes, on confirme votre entreprise, votre territoire, puis le bon plan.";
+
+  const displayMessages = messages.length === 0
+    ? [{ role: "assistant" as const, content: greeting }]
+    : messages;
 
   const [input, setInput] = useState("");
   const [phase, setPhase] = useState<FlowPhase>("chat");
