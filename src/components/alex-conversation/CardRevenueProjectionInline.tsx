@@ -36,7 +36,7 @@ export default function CardRevenueProjectionInline({ plan, avgContractValue = 5
         </div>
         <div className="text-center">
           <DollarSign className="w-4 h-4 mx-auto mb-1 text-emerald-400" />
-          <p className="text-lg font-bold text-emerald-400">{(monthlyRevenue / 1000).toFixed(0)}k$</p>
+          <p className="text-lg font-bold text-emerald-400">{formatPrice(monthlyRevenue)}</p>
           <p className="text-[10px] text-muted-foreground">Revenu/mois</p>
         </div>
         <div className="text-center">
