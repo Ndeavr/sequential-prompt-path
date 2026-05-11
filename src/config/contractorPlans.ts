@@ -168,5 +168,6 @@ export const PLAN_PRICE_MAP: Record<ContractorPlanSlug, number> = {
   signature: 1799,
 };
 
-/** Format dollars to display string */
-export const formatPrice = (dollars: number): string => `${dollars} $`;
+/** Format dollars to display string (fr-CA, e.g. "1 300 $"). */
+import { formatPrice as fmt } from "@/lib/formatPrice";
+export const formatPrice = (dollars: number): string => fmt(dollars);
