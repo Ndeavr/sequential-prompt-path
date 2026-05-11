@@ -2,8 +2,8 @@
  * UNPRO — Adaptive Logo + Wordmark Component
  * Master fleur-de-lys lockup. Variants: icon-only | standard | maximized
  */
-import unproMaster from "@/assets/unpro-logo-master-transparent.png";
-import unproFleur from "@/assets/unpro-icon-fleur.png";
+import unproMaster from "@/assets/unpro-logo-master-transparent.webp";
+import unproFleur from "@/assets/unpro-icon-fleur.webp";
 
 type LogoVariant = "icon-only" | "standard" | "maximized";
 

@@ -3,7 +3,7 @@
  */
 import { motion, AnimatePresence } from "framer-motion";
 import { Camera, Check, Calendar, Star, Shield, MapPin, Clock, Bot, Volume2, VolumeX } from "lucide-react";
-import iceDamImage from "@/assets/ice-dam-roof.jpg";
+import iceDamImage from "@/assets/ice-dam-roof.webp";
 import { SCENARIO, BOOKING_SLOTS } from "./data";
 
 import type { Variants } from "framer-motion";

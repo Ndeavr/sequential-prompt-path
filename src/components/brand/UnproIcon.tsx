@@ -2,7 +2,7 @@
  * UNPRO — Icon-only (Quebec fleur-de-lys, premium 3D mark)
  * Master brand icon used across avatars, auth surfaces, navigation marks.
  */
-import unproFleur from "@/assets/unpro-icon-fleur.png";
+import unproFleur from "@/assets/unpro-icon-fleur.webp";
 
 type UnproIconProps = {
   size?: number;
