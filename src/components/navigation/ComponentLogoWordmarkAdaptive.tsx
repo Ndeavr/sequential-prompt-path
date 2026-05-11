@@ -29,6 +29,10 @@ export default function ComponentLogoWordmarkAdaptive({
       <img
         src={config.useWordmark ? unproMaster : unproFleur}
         alt="UNPRO"
+        width={config.useWordmark ? 1891 : 314}
+        height={config.useWordmark ? 832 : 356}
+        decoding="async"
+        fetchPriority="high"
         className={`${config.img} object-contain`}
         draggable={false}
       />
