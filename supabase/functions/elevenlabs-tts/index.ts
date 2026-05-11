@@ -28,8 +28,9 @@ serve(async (req) => {
       });
     }
 
-    // Apply DB pronunciation rules before TTS
-    let processedText = text;
+    // 1) Hard brand lock — guarantees UNPRO is never sent raw to TTS.
+    const langKey = (locale || "fr-CA").startsWith("en") ? "en" : "fr";
+    let processedText = applyBrandPhoneticLock(text, langKey);
     try {
       const sb = createClient(
         Deno.env.get("SUPABASE_URL")!,
