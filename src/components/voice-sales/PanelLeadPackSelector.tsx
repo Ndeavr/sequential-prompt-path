@@ -1,48 +1,72 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Minus, Package } from "lucide-react";
-import { useLeadPacks } from "@/hooks/useVoiceSales";
+import AppointmentUpsellCard from "@/components/goals/AppointmentUpsellCard";
+import type { PackTier } from "@/lib/appointmentPricing";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   selectedPackId: string | null;
   onSelect: (packId: string | null) => void;
+  /** Optional context to make pricing intelligent. */
+  tradeSlug?: string;
+  citySlug?: string;
 }
 
-export default function PanelLeadPackSelector({ selectedPackId, onSelect }: Props) {
-  const { data: packs } = useLeadPacks();
+/**
+ * Lead-pack selector. Replaces the legacy DB-driven flat list with the
+ * dynamic, industry-aware appointment pricing engine. The selected `id`
+ * is encoded as the tier size so downstream consumers (checkout) can
+ * reconstruct the pack without an extra DB roundtrip.
+ */
+export default function PanelLeadPackSelector({
+  selectedPackId,
+  onSelect,
+  tradeSlug: tradeProp,
+  citySlug: cityProp,
+}: Props) {
+  const [trade, setTrade] = useState<string>(tradeProp ?? "default");
+  const [city, setCity] = useState<string>(cityProp ?? "");
+
+  // Best-effort: pull contractor's industry/city from current session.
+  useEffect(() => {
+    if (tradeProp && cityProp) return;
+    let active = true;
+    (async () => {
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        const uid = auth.user?.id;
+        if (!uid) return;
+        const { data } = await supabase
+          .from("contractors")
+          .select("primary_category, city")
+          .eq("user_id", uid)
+          .maybeSingle();
+        if (!active || !data) return;
+        if (!tradeProp && data.primary_category) {
+          setTrade(String(data.primary_category).toLowerCase().replace(/\s+/g, "-"));
+        }
+        if (!cityProp && data.city) {
+          setCity(String(data.city).toLowerCase().replace(/\s+/g, "-"));
+        }
+      } catch {
+        /* silent */
+      }
+    })();
+    return () => { active = false; };
+  }, [tradeProp, cityProp]);
+
+  const selectedTier: PackTier | null = (() => {
+    if (!selectedPackId) return null;
+    const size = parseInt(selectedPackId, 10);
+    if (!Number.isFinite(size)) return null;
+    return { size } as PackTier; // size match is enough for AppointmentUpsellCard
+  })();
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
-          <Package className="w-4 h-4 text-primary" />
-          Leads supplémentaires à la carte
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {(packs ?? []).map((pack: any) => (
-          <button
-            key={pack.id}
-            onClick={() => onSelect(selectedPackId === pack.id ? null : pack.id)}
-            className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left ${
-              selectedPackId === pack.id
-                ? "border-primary bg-primary/5 ring-1 ring-primary"
-                : "border-border hover:border-primary/30"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <Badge variant="outline" className="text-xs font-bold">{pack.pack_quantity}</Badge>
-              <span className="text-sm font-medium">{pack.pack_name}</span>
-            </div>
-            <span className="text-sm font-bold">{pack.pack_price}$</span>
-          </button>
-        ))}
-        <p className="text-xs text-muted-foreground text-center pt-1">
-          Ajoutés à votre plan mensuel
-        </p>
-      </CardContent>
-    </Card>
+    <AppointmentUpsellCard
+      tradeSlug={trade}
+      citySlug={city}
+      selectedPack={selectedTier}
+      onSelectPack={(pack) => onSelect(pack ? String(pack.size) : null)}
+    />
   );
 }
