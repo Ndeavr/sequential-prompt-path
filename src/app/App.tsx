@@ -5,13 +5,15 @@ import AlexRouterDebugHUD from "@/components/alex-copilot/AlexRouterDebugHUD";
 import AuthDebugHud from "@/components/auth/AuthDebugHud";
 import BootDebugButton from "@/components/dev/BootDebugButton";
 
+const isDev = import.meta.env.DEV;
+
 const App = () => (
   <AppErrorBoundary>
     <Providers>
       <AppRouter />
-      <AlexRouterDebugHUD />
-      <AuthDebugHud />
-      <BootDebugButton />
+      {isDev && <AlexRouterDebugHUD />}
+      {isDev && <AuthDebugHud />}
+      {isDev && <BootDebugButton />}
     </Providers>
   </AppErrorBoundary>
 );
