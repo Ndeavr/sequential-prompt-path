@@ -38,7 +38,7 @@ const CONTRACTOR: AlexVoiceTuning = {
   style: 0.32,
   use_speaker_boost: true,
   speed: 1.10,
-  firstMessage: "Bonjour. Je suis Alex d'UNPRO. Voyons ensemble comment faire évoluer votre entreprise.",
+  firstMessage: "Bonjour. Je suis Alex d'Un Pro. Voyons ensemble comment faire évoluer votre entreprise.",
   promptAddendum:
     "Tu es conseillère stratégique de croissance pour entrepreneurs. Énergie confiante, optimiste, premium. Rythme légèrement plus rapide. Jamais vendeuse, jamais robotique. Pose une seule question à la fois et avance vite vers la valeur.",
 };
