@@ -37,7 +37,7 @@ export default function PanelLeadPackSelector({
         if (!uid) return;
         const { data } = await supabase
           .from("contractors")
-          .select("primary_category, city")
+          .select("specialty, city")
           .eq("user_id", uid)
           .maybeSingle();
         if (!active || !data) return;
