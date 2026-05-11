@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.0";
 import { ALEX_VOICE_CONFIG, getAlexVoiceSettings, type AlexVoiceProfile } from "../_shared/alex-french-voice.ts";
+import { applyBrandPhoneticLock } from "../_shared/brand-phonetic-lock.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
