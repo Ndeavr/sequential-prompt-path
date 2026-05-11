@@ -29,7 +29,7 @@ const HOMEOWNER: AlexVoiceTuning = {
   style: 0.14,
   use_speaker_boost: true,
   speed: 1.0,
-  firstMessage: "Bonjour. Je suis Alex d'UNPRO. Quel problème puis-je vous aider à régler aujourd'hui?",
+  firstMessage: "Bonjour. Je suis Alex d'Un Pro. Quel problème puis-je vous aider à régler aujourd'hui?",
 };
 
 const CONTRACTOR: AlexVoiceTuning = {
@@ -38,14 +38,14 @@ const CONTRACTOR: AlexVoiceTuning = {
   style: 0.32,
   use_speaker_boost: true,
   speed: 1.10,
-  firstMessage: "Bonjour. Je suis Alex d'UNPRO. Voyons ensemble comment faire évoluer votre entreprise.",
+  firstMessage: "Bonjour. Je suis Alex d'Un Pro. Voyons ensemble comment faire évoluer votre entreprise.",
   promptAddendum:
     "Tu es conseillère stratégique de croissance pour entrepreneurs. Énergie confiante, optimiste, premium. Rythme légèrement plus rapide. Jamais vendeuse, jamais robotique. Pose une seule question à la fois et avance vite vers la valeur.",
 };
 
 const CONDO: AlexVoiceTuning = {
   ...HOMEOWNER,
-  firstMessage: "Bonjour. Je suis Alex d'UNPRO. Décrivez la situation dans votre immeuble.",
+  firstMessage: "Bonjour. Je suis Alex d'Un Pro. Décrivez la situation dans votre immeuble.",
 };
 
 export function getVoiceConfigFor(mode: AlexVoiceMode = "general"): AlexVoiceTuning {

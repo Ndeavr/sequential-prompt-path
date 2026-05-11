@@ -4,6 +4,7 @@
  */
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { applyBrandPhoneticLock } from "../_shared/brand-phonetic-lock.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -48,12 +49,8 @@ function stripBlocked(text: string, patterns: any[]): string {
 }
 
 function applyPronunciation(text: string, lang: string): string {
-  const rules = lang.startsWith("en")
-    ? [[/\bUNPRO\b/gi, "un pro"], [/\bunpro\b/g, "un pro"]]
-    : [[/\bUNPRO\b/gi, "un pro"], [/\bunpro\b/g, "un pro"]];
-  let r = text;
-  for (const [pat, rep] of rules) r = r.replace(pat as RegExp, rep as string);
-  return r;
+  // Hard brand lock — guarantees UNPRO is spoken correctly (FR: "Un Pro", EN: "Heun Pro").
+  return applyBrandPhoneticLock(text, lang);
 }
 
 serve(async (req) => {
