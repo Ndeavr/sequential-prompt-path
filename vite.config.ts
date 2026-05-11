@@ -35,6 +35,15 @@ export default defineConfig(({ mode }: { mode: string }) => ({
           if (id.includes("@tanstack")) return "tanstack";
           if (id.includes("@radix-ui")) return "radix";
           if (id.includes("@elevenlabs") || id.includes("elevenlabs")) return "elevenlabs";
+          if (id.includes("recharts") || id.includes("d3-")) return "charts";
+          if (id.includes("leaflet")) return "leaflet";
+          if (id.includes("embla-carousel")) return "embla";
+          if (id.includes("@google/genai")) return "genai";
+          if (id.includes("qrcode")) return "qrcode";
+          if (id.includes("lucide-react")) return "icons";
+          if (id.includes("@stripe")) return "stripe";
+          if (id.includes("react-markdown") || id.includes("remark") || id.includes("micromark")) return "markdown";
+          if (id.includes("date-fns")) return "date-fns";
         },
       },
     },
