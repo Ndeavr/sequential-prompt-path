@@ -12,6 +12,7 @@ import SeoStructuredDataInjector from "@/seo/components/SeoStructuredDataInjecto
 import { lazy, Suspense } from "react";
 const AlexCompanionOrb = lazy(() => import("@/components/alex/AlexCompanionOrb"));
 import CommandPalette from "@/components/navigation/CommandPalette";
+import DeferredAfterInteractive from "@/components/system/DeferredAfterInteractive";
 import BannerResumeJourney from "@/components/navigation/BannerResumeJourney";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { useJourneyTracker } from "@/hooks/useJourneyTracker";
