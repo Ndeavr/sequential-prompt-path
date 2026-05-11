@@ -6,6 +6,7 @@ import { Check, Zap, Crown, Star, Gem } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PlanDefinition } from "@/services/alexPlanTruthEngine";
 import { projectRevenue } from "@/services/alexPlanTruthEngine";
+import { formatPrice } from "@/lib/formatPrice";
 
 interface Props {
   plans: PlanDefinition[];
