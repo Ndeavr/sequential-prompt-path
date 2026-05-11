@@ -48,10 +48,8 @@ function stripBlocked(text: string, patterns: any[]): string {
   return r.replace(/\s{2,}/g, " ").trim();
 }
 
-import { applyBrandPhoneticLock } from "../_shared/brand-phonetic-lock.ts";
-
 function applyPronunciation(text: string, lang: string): string {
-  // Hard brand lock first — guarantees UNPRO is spoken correctly.
+  // Hard brand lock — guarantees UNPRO is spoken correctly (FR: "Un Pro", EN: "Heun Pro").
   return applyBrandPhoneticLock(text, lang);
 }
 
