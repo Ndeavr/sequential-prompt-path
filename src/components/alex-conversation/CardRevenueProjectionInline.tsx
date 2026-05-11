@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { TrendingUp, DollarSign, Target } from "lucide-react";
 import type { PlanDefinition } from "@/services/alexPlanTruthEngine";
 import { projectRevenue } from "@/services/alexPlanTruthEngine";
+import { formatPrice } from "@/lib/formatPrice";
 
 interface Props {
   plan: PlanDefinition;
@@ -35,7 +36,7 @@ export default function CardRevenueProjectionInline({ plan, avgContractValue = 5
         </div>
         <div className="text-center">
           <DollarSign className="w-4 h-4 mx-auto mb-1 text-emerald-400" />
-          <p className="text-lg font-bold text-emerald-400">{(monthlyRevenue / 1000).toFixed(0)}k$</p>
+          <p className="text-lg font-bold text-emerald-400">{formatPrice(monthlyRevenue)}</p>
           <p className="text-[10px] text-muted-foreground">Revenu/mois</p>
         </div>
         <div className="text-center">
@@ -46,7 +47,7 @@ export default function CardRevenueProjectionInline({ plan, avgContractValue = 5
       </div>
 
       <p className="text-xs text-muted-foreground mt-3 text-center">
-        Basé sur {plan.appointmentsIncluded} RDV exclusifs · Valeur moy. {(avgContractValue / 1000).toFixed(0)}k$ · Taux closing {(closeRate * 100).toFixed(0)}%
+        Basé sur {plan.appointmentsIncluded} RDV exclusifs · Valeur moy. {formatPrice(avgContractValue)} · Taux closing {(closeRate * 100).toFixed(0)}%
       </p>
     </motion.div>
   );

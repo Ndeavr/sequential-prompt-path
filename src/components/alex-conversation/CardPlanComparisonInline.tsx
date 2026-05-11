@@ -6,6 +6,7 @@ import { Check, Zap, Crown, Star, Gem } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PlanDefinition } from "@/services/alexPlanTruthEngine";
 import { projectRevenue } from "@/services/alexPlanTruthEngine";
+import { formatPrice } from "@/lib/formatPrice";
 
 interface Props {
   plans: PlanDefinition[];
@@ -75,7 +76,7 @@ export default function CardPlanComparisonInline({ plans, onSelectPlan, recommen
                 <div className="text-right shrink-0">
                   <p className="text-xs text-muted-foreground">Revenu estimé</p>
                   <p className="text-lg font-bold text-emerald-400">
-                    {(monthlyRevenue / 1000).toFixed(0)}k$
+                    {formatPrice(monthlyRevenue)}
                     <span className="text-xs font-normal">/mois</span>
                   </p>
                   <p className="text-xs text-emerald-400/70">ROI {roi}%</p>

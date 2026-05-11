@@ -1,7 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
 import { Check, Star } from "lucide-react";
+import { formatPrice } from "@/lib/formatPrice";
 
 interface Props {
   plan: any;
@@ -23,16 +24,19 @@ export default function CardPlanRegular({ plan, recommended, onSelect }: Props) 
           {plan.tagline && <p className="text-xs text-muted-foreground">{plan.tagline}</p>}
         </div>
 
+        {plan.appointments_range_min && (
+          <div className="space-y-0.5">
+            <p className="text-2xl font-black text-foreground leading-none">
+              {plan.appointments_range_min}{plan.appointments_range_max && plan.appointments_range_max !== plan.appointments_range_min ? `–${plan.appointments_range_max}` : ""}
+            </p>
+            <p className="text-xs font-medium text-muted-foreground">rendez-vous qualifiés inclus / mois</p>
+          </div>
+        )}
+
         <div className="flex items-baseline gap-1">
-          <span className="text-3xl font-bold">{Math.round((plan.monthly_price ?? 0) / 100)} $</span>
+          <span className="text-xl font-bold">{formatPrice((plan.monthly_price ?? 0) / 100)}</span>
           <span className="text-sm text-muted-foreground">/mois</span>
         </div>
-
-        {plan.appointments_range_min && (
-          <Badge variant="outline" className="text-xs">
-            {plan.appointments_range_min}–{plan.appointments_range_max} rendez-vous/mois
-          </Badge>
-        )}
 
         {plan.short_pitch && (
           <p className="text-sm text-muted-foreground">{plan.short_pitch}</p>

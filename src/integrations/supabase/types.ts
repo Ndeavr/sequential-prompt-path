@@ -34566,6 +34566,51 @@ export type Database = {
         }
         Relationships: []
       }
+      industry_pricing_profiles: {
+        Row: {
+          avg_close_rate: number
+          avg_contract_value_cents: number
+          base_rdv_price_cents: number
+          created_at: string
+          estimated_margin_percent: number
+          id: string
+          industry_name: string
+          industry_slug: string
+          max_rdv_price_cents: number
+          min_rdv_price_cents: number
+          seasonality_factor: number
+          updated_at: string
+        }
+        Insert: {
+          avg_close_rate?: number
+          avg_contract_value_cents: number
+          base_rdv_price_cents: number
+          created_at?: string
+          estimated_margin_percent?: number
+          id?: string
+          industry_name: string
+          industry_slug: string
+          max_rdv_price_cents?: number
+          min_rdv_price_cents?: number
+          seasonality_factor?: number
+          updated_at?: string
+        }
+        Update: {
+          avg_close_rate?: number
+          avg_contract_value_cents?: number
+          base_rdv_price_cents?: number
+          created_at?: string
+          estimated_margin_percent?: number
+          id?: string
+          industry_name?: string
+          industry_slug?: string
+          max_rdv_price_cents?: number
+          min_rdv_price_cents?: number
+          seasonality_factor?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ingestion_job_items: {
         Row: {
           created_at: string
@@ -60625,6 +60670,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      territory_clusters: {
+        Row: {
+          average_income: number | null
+          city_slugs: string[] | null
+          cluster_name: string
+          cluster_slug: string
+          competition_score: number | null
+          created_at: string
+          demand_score: number | null
+          housing_density: number | null
+          id: string
+          population: number | null
+          territory_multiplier: number
+          updated_at: string
+        }
+        Insert: {
+          average_income?: number | null
+          city_slugs?: string[] | null
+          cluster_name: string
+          cluster_slug: string
+          competition_score?: number | null
+          created_at?: string
+          demand_score?: number | null
+          housing_density?: number | null
+          id?: string
+          population?: number | null
+          territory_multiplier?: number
+          updated_at?: string
+        }
+        Update: {
+          average_income?: number | null
+          city_slugs?: string[] | null
+          cluster_name?: string
+          cluster_slug?: string
+          competition_score?: number | null
+          created_at?: string
+          demand_score?: number | null
+          housing_density?: number | null
+          id?: string
+          population?: number | null
+          territory_multiplier?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       territory_generation_logs: {
         Row: {

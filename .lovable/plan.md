@@ -1,137 +1,126 @@
-## UNPRO Intelligence Journal — Authority Content Infrastructure
+## Objectif
 
-A premium long-form publication layer designed to be quoted by journalists, ingested by NotebookLM, retrieved by Perplexity/ChatGPT/Gemini, and trusted by investors. Not a blog. Not SEO spam. An infrastructure thesis published as living documents.
+Remplacer le pricing RDV générique (`130 $/RDV`, `1.3k$`) par un moteur dynamique crédible basé sur l'industrie, la région et la valeur réelle des contrats — et corriger le format monétaire partout (`1 300 $` au lieu de `1.3k$`).
 
----
+## 1. Format monétaire global (correctif immédiat)
 
-### 1. New route & namespace
+Créer `src/lib/formatPrice.ts` :
+- `formatPrice(dollars)` → `Intl.NumberFormat('fr-CA', { style:'currency', currency:'CAD', maximumFractionDigits:0 })` rendu en `1 300 $` (espace insécable, pas de `k`).
+- `formatPriceCents(cents)` wrapper.
+- `formatPricePerRdv(dollars)` → `≈ 130 $ / rendez-vous qualifié`.
 
-- `/journal` — Index (cinematic dark hero, manifesto, featured thesis, taxonomy)
-- `/journal/:slug` — Long-form reader (2,500–6,000 words)
-- `/journal/serie/:serieSlug` — Series hub (e.g. *Property Intelligence Thesis*)
-- `/journal/entite/:entitySlug` — Entity pages (Home Passport, Property Memory, AI Operating System…) — semantic graph nodes
+Remplacer toutes les occurrences `k$` / `toFixed` :
+- `src/lib/appointmentPricing.ts` (ligne 78-80)
+- `src/config/contractorPlans.ts` `formatPrice`
+- `src/components/voice-sales/PanelLeadPackSelector.tsx`, `CardPlanRegular.tsx`, `CardPlanFounders.tsx`
+- `PageContractorPlanOnboarding.tsx`, `PanelPlanFitCheck.tsx`
+- `pages/checkout/PageCheckoutStripe.tsx`
 
-Kept separate from `/blog` (existing SEO content) and `/articles` (compressed feed). Journal = flagship authority tier.
+Garde-fou test : ajouter un test simple bloquant `k$` dans les fichiers UI clés.
 
----
+## 2. Moteur de prix intelligent
 
-### 2. Database (one migration)
+### Tables Supabase
 
-Tables (all RLS, public read for `status='published'`, admin write):
+`industry_pricing_profiles` :
+```
+industry_slug, industry_name, avg_contract_value_cents,
+estimated_margin_percent, avg_close_rate, base_rdv_price_cents,
+min_rdv_price_cents, max_rdv_price_cents, seasonality_factor
+```
 
-- `journal_articles` — slug, title, dek, h1, body_md, body_html, summary_short, summary_long, key_takeaways[], quotable_statements[], reading_time_minutes, word_count, status (draft|review|published|archived), tier (flagship|thesis|report|essay), serie_id, hero_image_url, published_at, updated_at, ai_optimized_score, aeo_score
-- `journal_series` — slug, title, description, order_index, theme_color
-- `journal_entities` — slug, name, category (concept|product|infrastructure|stakeholder|geography), short_definition, long_definition, aliases[], related_entity_ids[]
-- `journal_article_entities` — many-to-many w/ relevance_weight (1–10) for entity density graph
-- `journal_article_faqs` — question, answer, order_index (powers FAQPage JSON-LD)
-- `journal_article_citations` — quote, source, source_url, citation_type (stat|quote|source)
-- `journal_article_sections` — anchor_id, heading, level, body_md (enables semantic chunking + ToC + AI ingestion endpoints)
-- `journal_internal_links` — from_article_id → to_article_id|to_entity_id, anchor_text (auto-generated semantic graph)
+`territory_clusters` :
+```
+cluster_slug, cluster_name, population, competition_score,
+demand_score, average_income, housing_density, territory_multiplier
+```
 
----
+Seed initial :
+- Industries : isolation (4 200 $, base 145), toiture (12 000, 320), pavage (8 500, 240), paysagement (3 500, 110), électricien (900, 55), peinture (4 500, 90), plomberie (8 500, 150), excavation (15 000, 380), lavage de vitres (450, 35), rénovation (15 000, 350), chauffage (9 500, 180).
+- Territoires : montreal-centre (1.35), laval (1.15), rive-sud (1.10), rive-nord (1.08), quebec-ville (1.05), regions-eloignees (0.82), default (1.00).
 
-### 3. AI-readability endpoints (edge functions)
+RLS : lecture publique (read-only), écriture admin via `has_role('admin')`.
 
-Built specifically for NotebookLM, Perplexity, ChatGPT browsing, Gemini Deep Research:
+### Service `src/services/appointmentPriceEngine.ts`
 
-- `GET /functions/v1/journal-export-corpus` → returns full corpus as plain Markdown w/ entity headers (one-shot NotebookLM ingestion)
-- `GET /functions/v1/journal-article/:slug.md` → clean Markdown view
-- `GET /functions/v1/journal-article/:slug.json` → structured JSON (sections, entities, citations, FAQ, takeaways)
-- `GET /functions/v1/journal-entities.json` → entity graph with relations
-- `GET /functions/v1/journal-sitemap.xml` → priority 1.0 with `<lastmod>`
-- `/llms.txt` and `/llms-full.txt` at root — official AI ingestion convention pointing to corpus
+```ts
+computeRdvPrice({ industrySlug, citySlug, season? }): {
+  unitPrice, avgContractValue, avgCloseRate,
+  industryName, territoryName, multiplier, breakdown[]
+}
+```
 
----
+Formule :
+```
+base = industry.base_rdv_price
+unit = clamp(
+  base * territory.multiplier * seasonalityMultiplier,
+  industry.min_rdv_price, industry.max_rdv_price
+)
+```
 
-### 4. AI Content Engine (admin)
+Hook `useAppointmentPriceEngine(industrySlug, citySlug)` avec cache React Query + fallback sur `default` si la combo n'existe pas.
 
-`/admin/journal` cockpit (admin-only via `adminGuard`):
+### Packs + rabais volume
 
-- **DraftStudio** — Brief form (topic, angle, target entities, target word count, tier) → calls `journal-generate-draft` edge function (Gemini 2.5 Pro w/ extended reasoning) → returns structured article with: dek, sections, key_takeaways, quotable_statements, FAQ, suggested entities, suggested citations
-- **EntityLinker** — auto-detects entity mentions in body, proposes links, builds `journal_article_entities`
-- **SemanticTagger** — extracts topics, geo, stakeholders → tags rows
-- **AIReadabilityScore** — heuristic + LLM scoring on: heading hierarchy, entity density, quotable density, citation count, terminology consistency
-- **PublishGate** — requires score ≥ 80, ≥ 5 entities, ≥ 3 quotable_statements, ≥ 5 FAQ, ≥ 3 citations before allowing publish
-- **PressKit generator** — outputs PDF + plain-text quote sheet per article (for journalists)
+Conserver tailles 5 / 10 / 25 / 50 avec rabais 0 / -10 / -18 / -25 %.
+`computePackTiers(unitPrice)` retourne `{ size, unitPrice, total, savingsPercent }` calculés dynamiquement par industrie/cluster.
 
-Generation prompt enforces: Apple/Stripe/a16z voice, no buzzwords, layered reasoning, infrastructure framing, entity reinforcement (Home Passport, Property Memory, AI Operating System, Property Intelligence, Trust Infrastructure, Semi-Autonomous Organization, AI Orchestration).
+## 3. UI/UX premium
 
----
+`PanelLeadPackSelector` (et équivalents add-on dans `CardPlanRegular`) :
+- Header : `Besoin de plus de rendez-vous qualifiés ?`
+- Chaque tier : `10 rendez-vous` gros, `≈ 130 $ / rendez-vous qualifié -10%` en sous-ligne, total à droite formaté `1 300 $`.
+- Footer crédibilité : `Calculé selon votre industrie (Toiture), votre région (Montréal) et la valeur moyenne des contrats (≈ 12 000 $).`
+- Estimateur ROI sous chaque pack sélectionné :
+  ```
+  10 rendez-vous · ≈ 4 contrats signés · ≈ 16 800 $ de revenus potentiels
+  ```
+  (`appointments * avgCloseRate * avgContractValue`).
 
-### 5. Reader UX (cinematic premium)
+Animation reveal (300-600 ms staggered) avant affichage du prix :
+- `Analyse du marché local…`
+- `Calcul du potentiel de revenus…`
+- `Optimisation du coût d'acquisition…`
+Puis fade-in du prix. Composant `PriceRevealStepper` réutilisable, désactivable (prefers-reduced-motion).
 
-`/journal/:slug` page composition (mobile-first, fr-CA):
+## 4. Plans (texte UX)
 
-- **HeroJournalArticle** — full-bleed dark, dek, reading time, series badge, author "UNPRO Research"
-- **JournalTableOfContents** — sticky on desktop, drawer on mobile, anchored to `journal_article_sections`
-- **JournalKeyTakeaways** — card grid above-fold (3–5 bullets, screenshot-friendly for press)
-- **JournalQuotableBlock** — large pull quotes w/ one-tap copy (press-optimized)
-- **JournalEntityChip** — inline entity links → `/journal/entite/:slug`
-- **JournalCitationFootnote** — numbered, hover preview
-- **JournalSectionDivider** — Roman numeral chapters (Apple whitepaper feel)
-- **JournalRelatedThesis** — graph-driven recommendations (same series + shared entities)
-- **JournalPressKitBar** — "Copier les citations" / "Télécharger le press kit" / "Citer cet article"
-- **JournalAIReadyBadge** — discreet "Optimized for AI retrieval" footer mark
+Reformuler les 5 cartes plans (`CardPlanRegular`) avec les copies fournies :
+- `X rendez-vous qualifiés inclus / mois` mis en avant (typo plus grosse que le prix mensuel).
+- Add-ons par plan avec tarifs dynamiques (Recrue +3/+5, Pro +5/+10, Premium +10/+20, Élite +15/+30, Signature +25/+50).
+- Bannir « opportunités » / « leads ».
+- Micro-copy : `Vous contrôlez votre capacité mensuelle.` + `1 contrat peut rentabiliser plusieurs mois du forfait.`
 
-Typography: serif display headings (existing `font-display`), generous spacing, 75ch max line width. Subtle scroll-driven motion via existing framer-motion. Reuses `landing-warm` for public reading surface.
+## 5. Out of scope
 
----
+- Modifications Stripe / checkout flow (uniquement display + payload `extraAppointments`).
+- Vraies données concurrentielles temps réel (utiliser seeds initiaux).
+- Refonte du dashboard admin pricing (juste afficher les nouvelles tables en lecture).
 
-### 6. SEO / AEO injection
+## 6. Détails techniques
 
-Per-article in `<head>`:
+Fichiers créés :
+- `src/lib/formatPrice.ts`
+- `src/services/appointmentPriceEngine.ts`
+- `src/hooks/useAppointmentPriceEngine.ts`
+- `src/components/voice-sales/PriceRevealStepper.tsx`
+- migration Supabase (2 tables + seeds + RLS).
 
-- Article + BreadcrumbList JSON-LD (extend existing `SectionArticleStructuredData`)
-- FAQPage JSON-LD from `journal_article_faqs`
-- DefinedTerm JSON-LD per entity mention
-- ClaimReview-ready structure for quotable_statements
-- `og:type=article`, `article:published_time`, `article:author`
-- Canonical, hreflang `fr-CA`
-- `<link rel="alternate" type="text/markdown" href=".../slug.md">` for AI crawlers
+Fichiers modifiés :
+- `src/lib/appointmentPricing.ts` (utilise le nouveau engine + format)
+- `src/config/contractorPlans.ts` (formatPrice canonique)
+- `src/components/voice-sales/PanelLeadPackSelector.tsx`
+- `src/components/voice-sales/CardPlanRegular.tsx`
+- `src/components/voice-sales/CardPlanFounders.tsx`
+- `src/pages/voice-sales/PageContractorPlanOnboarding.tsx`
+- éventuels écrans checkout qui affichent encore `k$`.
 
-Sitemap entry priority 1.0. Internal linking: each article must link ≥ 3 other journal articles + ≥ 5 entity pages (enforced at publish gate).
+Critères de succès :
+- Aucun `k$` visible dans l'app.
+- Couvreur à Montréal voit `≈ 432 $ / rendez-vous qualifié`, électricien en région éloignée voit `≈ 45 $`.
+- ROI affiché sous chaque pack.
+- Animation reveal présente avant le prix.
+- Tous les copies « rendez-vous qualifiés inclus / mois » respectées.
 
----
-
-### 7. Seeded launch corpus (5 flagship pieces)
-
-Auto-generated via DraftStudio, human-reviewed, published at launch:
-
-1. *La fin du marché des soumissions : pourquoi l'infrastructure remplace la mise en relation*
-2. *Home Passport : la mémoire manquante de la propriété résidentielle*
-3. *L'organisation semi-autonome : comment l'IA exécute le réel*
-4. *Property Intelligence : du bâtiment statique au jumeau prédictif*
-5. *Trust Infrastructure : pourquoi la confiance devient le moteur économique des services à domicile*
-
-Each: 3,500–5,000 words, 8–12 sections, 6+ entities, 5+ quotables, 5+ citations.
-
----
-
-### 8. Out of scope (this build)
-
-- No Alex changes
-- No homepage rebuild
-- No changes to existing `/blog` or `/articles`
-- No press CRM (only press kit export)
-
----
-
-### Success criteria
-
-- 5 flagship articles live at `/journal`
-- Full corpus retrievable via `/llms-full.txt` and `*.md` endpoints
-- NotebookLM ingests corpus and answers UNPRO thesis questions accurately
-- Each article passes publish gate (entities, quotables, FAQ, citations)
-- Admin can generate, score, link, and publish a new flagship in < 30 min
-- Lighthouse SEO ≥ 95, valid Article + FAQPage schema
-
----
-
-### Technical notes
-
-- Stack: Vite/React/TS, Tailwind, shadcn, Supabase, Lovable AI Gateway (`google/gemini-2.5-pro` for drafting w/ `reasoning.effort: high`, `gemini-3-flash-preview` for scoring/tagging)
-- Reuses: `BlockArticleParagraphReadable`, `SectionArticleFAQSEO`, `SectionArticleStructuredData`, `landing-warm` theme, `adminGuard`
-- New components live under `src/components/journal/`
-- Edge functions under `supabase/functions/journal-*`
-
-Execution deferred until credits refill. Plan saved to `.lovable/plan.md` on approval.
+Prêt à implémenter sur approbation.

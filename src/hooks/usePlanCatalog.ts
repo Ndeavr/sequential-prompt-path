@@ -83,9 +83,9 @@ export function usePlanByCode(code: string | null | undefined) {
   return { plan, plans, ...rest };
 }
 
-/** Format cents to display string */
-export const formatPlanPrice = (cents: number): string =>
-  `${(cents / 100).toFixed(0)} $`;
+/** Format cents to display string (fr-CA, e.g. "1 300 $"). */
+import { formatPriceCents } from "@/lib/formatPrice";
+export const formatPlanPrice = (cents: number): string => formatPriceCents(cents);
 
 /** Yearly savings percentage compared to 12× monthly */
 export const getYearlySavingsPercent = (plan: CatalogPlan): number => {
@@ -96,7 +96,7 @@ export const getYearlySavingsPercent = (plan: CatalogPlan): number => {
 
 /** Monthly equivalent when billed yearly */
 export const getMonthlyEquivalent = (plan: CatalogPlan): string =>
-  `${((plan.yearlyPrice / 12) / 100).toFixed(0)} $`;
+  formatPriceCents(plan.yearlyPrice / 12);
 
 /** Get the correct Stripe price ID for a plan + interval */
 export const getStripePriceId = (
