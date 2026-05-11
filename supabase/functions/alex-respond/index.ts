@@ -47,13 +47,11 @@ function stripBlocked(text: string, patterns: any[]): string {
   return r.replace(/\s{2,}/g, " ").trim();
 }
 
+import { applyBrandPhoneticLock } from "../_shared/brand-phonetic-lock.ts";
+
 function applyPronunciation(text: string, lang: string): string {
-  const rules = lang.startsWith("en")
-    ? [[/\bUNPRO\b/gi, "un pro"], [/\bunpro\b/g, "un pro"]]
-    : [[/\bUNPRO\b/gi, "un pro"], [/\bunpro\b/g, "un pro"]];
-  let r = text;
-  for (const [pat, rep] of rules) r = r.replace(pat as RegExp, rep as string);
-  return r;
+  // Hard brand lock first — guarantees UNPRO is spoken correctly.
+  return applyBrandPhoneticLock(text, lang);
 }
 
 serve(async (req) => {
