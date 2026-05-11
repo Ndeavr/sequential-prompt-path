@@ -45,7 +45,7 @@ const CONTRACTOR: AlexVoiceTuning = {
 
 const CONDO: AlexVoiceTuning = {
   ...HOMEOWNER,
-  firstMessage: "Bonjour. Je suis Alex d'UNPRO. Décrivez la situation dans votre immeuble.",
+  firstMessage: "Bonjour. Je suis Alex d'Un Pro. Décrivez la situation dans votre immeuble.",
 };
 
 export function getVoiceConfigFor(mode: AlexVoiceMode = "general"): AlexVoiceTuning {
