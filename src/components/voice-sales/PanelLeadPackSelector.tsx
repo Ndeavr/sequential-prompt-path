@@ -41,8 +41,8 @@ export default function PanelLeadPackSelector({
           .eq("user_id", uid)
           .maybeSingle();
         if (!active || !data) return;
-        if (!tradeProp && data.primary_category) {
-          setTrade(String(data.primary_category).toLowerCase().replace(/\s+/g, "-"));
+        if (!tradeProp && data.specialty) {
+          setTrade(String(data.specialty).toLowerCase().replace(/\s+/g, "-"));
         }
         if (!cityProp && data.city) {
           setCity(String(data.city).toLowerCase().replace(/\s+/g, "-"));
