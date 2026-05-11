@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 // ─── Hardcoded fallbacks (NEVER rely solely on DB) ────────────────
 const FALLBACK_SPEECH: Record<string, string> = {
   fr: "Un Pro",
-  en: "Hun Pro",
+  en: "Heun Pro",
 };
 
 // ─── Anti-letter-spelling patterns ────────────────────────────────
