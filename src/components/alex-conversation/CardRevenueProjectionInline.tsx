@@ -47,7 +47,7 @@ export default function CardRevenueProjectionInline({ plan, avgContractValue = 5
       </div>
 
       <p className="text-xs text-muted-foreground mt-3 text-center">
-        Basé sur {plan.appointmentsIncluded} RDV exclusifs · Valeur moy. {(avgContractValue / 1000).toFixed(0)}k$ · Taux closing {(closeRate * 100).toFixed(0)}%
+        Basé sur {plan.appointmentsIncluded} RDV exclusifs · Valeur moy. {formatPrice(avgContractValue)} · Taux closing {(closeRate * 100).toFixed(0)}%
       </p>
     </motion.div>
   );
