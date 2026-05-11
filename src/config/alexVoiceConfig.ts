@@ -29,7 +29,7 @@ const HOMEOWNER: AlexVoiceTuning = {
   style: 0.14,
   use_speaker_boost: true,
   speed: 1.0,
-  firstMessage: "Bonjour. Je suis Alex d'UNPRO. Quel problème puis-je vous aider à régler aujourd'hui?",
+  firstMessage: "Bonjour. Je suis Alex d'Un Pro. Quel problème puis-je vous aider à régler aujourd'hui?",
 };
 
 const CONTRACTOR: AlexVoiceTuning = {
