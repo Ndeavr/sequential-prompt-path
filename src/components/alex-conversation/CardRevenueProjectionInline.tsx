@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { TrendingUp, DollarSign, Target } from "lucide-react";
 import type { PlanDefinition } from "@/services/alexPlanTruthEngine";
 import { projectRevenue } from "@/services/alexPlanTruthEngine";
+import { formatPrice } from "@/lib/formatPrice";
 
 interface Props {
   plan: PlanDefinition;
