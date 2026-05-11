@@ -58,11 +58,15 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       <SmartFooter />
       <MobileBottomNav />
       {showAlex && (
-        <Suspense fallback={null}>
-          <AlexCompanionOrb />
-        </Suspense>
+        <DeferredAfterInteractive timeoutMs={2000}>
+          <Suspense fallback={null}>
+            <AlexCompanionOrb />
+          </Suspense>
+        </DeferredAfterInteractive>
       )}
-      <CommandPalette lang={lang} />
+      <DeferredAfterInteractive timeoutMs={2500}>
+        <CommandPalette lang={lang} />
+      </DeferredAfterInteractive>
       <SeoStructuredDataInjector />
     </div>
   );
