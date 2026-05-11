@@ -9,11 +9,11 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShieldCheck, Star, MapPin, Clock, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { usePublicContractorSearch } from "@/hooks/usePublicContractors";
-import carouselToiture from "@/assets/carousel-toiture.webp";
-import carouselPlomberie from "@/assets/carousel-plomberie.webp";
-import carouselRenovation from "@/assets/carousel-renovation.webp";
-import carouselElectricien from "@/assets/carousel-electricien.webp";
-import carouselEbeniste from "@/assets/carousel-ebeniste.webp";
+import carouselToiture from "@/assets/carousel-toiture.jpg";
+import carouselPlomberie from "@/assets/carousel-plomberie.jpg";
+import carouselRenovation from "@/assets/carousel-renovation.jpg";
+import carouselElectricien from "@/assets/carousel-electricien.jpg";
+import carouselEbeniste from "@/assets/carousel-ebeniste.jpg";
 
 const FALLBACK_IMAGES: Record<string, string> = {
   "1": carouselToiture,

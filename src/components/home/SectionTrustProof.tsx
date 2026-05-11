@@ -7,7 +7,7 @@ import {
   Star, ArrowRight, CheckCircle2, Shield, Heart, Brain, FileText, Zap,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import avatarsGroup from "@/assets/avatars-group.webp";
+import avatarsGroup from "@/assets/avatars-group.jpg";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },

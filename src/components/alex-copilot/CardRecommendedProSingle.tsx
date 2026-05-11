@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Star, ShieldCheck, Calendar, Clock, HelpCircle, ArrowLeftRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { RecommendedPro } from "@/stores/copilotConversationStore";
-import heroVan from "@/assets/hero-toiture.webp";
+import heroVan from "@/assets/hero-toiture.jpg";
 
 interface Props {
   pro: RecommendedPro;

@@ -2,8 +2,8 @@
  * UNPRO — Primary Logo (Quebec fleur-de-lys + UNPRO wordmark)
  * Renders the master PNG lockup. `showWordmark={false}` falls back to the icon-only fleur.
  */
-import unproMaster from "@/assets/unpro-logo-master-transparent.webp";
-import unproFleur from "@/assets/unpro-icon-fleur.webp";
+import unproMaster from "@/assets/unpro-logo-master-transparent.png";
+import unproFleur from "@/assets/unpro-icon-fleur.png";
 
 type UnproLogoProps = {
   size?: number;

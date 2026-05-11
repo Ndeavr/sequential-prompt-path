@@ -12,7 +12,6 @@ import SeoStructuredDataInjector from "@/seo/components/SeoStructuredDataInjecto
 import { lazy, Suspense } from "react";
 const AlexCompanionOrb = lazy(() => import("@/components/alex/AlexCompanionOrb"));
 import CommandPalette from "@/components/navigation/CommandPalette";
-import DeferredAfterInteractive from "@/components/system/DeferredAfterInteractive";
 import BannerResumeJourney from "@/components/navigation/BannerResumeJourney";
 import { useLanguage } from "@/components/ui/LanguageToggle";
 import { useJourneyTracker } from "@/hooks/useJourneyTracker";
@@ -59,15 +58,11 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       <SmartFooter />
       <MobileBottomNav />
       {showAlex && (
-        <DeferredAfterInteractive timeoutMs={2000}>
-          <Suspense fallback={null}>
-            <AlexCompanionOrb />
-          </Suspense>
-        </DeferredAfterInteractive>
+        <Suspense fallback={null}>
+          <AlexCompanionOrb />
+        </Suspense>
       )}
-      <DeferredAfterInteractive timeoutMs={2500}>
-        <CommandPalette lang={lang} />
-      </DeferredAfterInteractive>
+      <CommandPalette lang={lang} />
       <SeoStructuredDataInjector />
     </div>
   );

@@ -40,7 +40,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { motion } from "framer-motion";
 import { useState, useCallback } from "react";
-import heroHouse from "@/assets/hero-house.webp";
+import heroHouse from "@/assets/hero-house.jpg";
 import WhyThisContractorIsRecommended from "@/components/contractor/WhyThisContractorIsRecommended";
 
 /* ── Demo / fallback contractor data for carousel "Voir profil" ── */

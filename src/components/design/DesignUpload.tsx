@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button";
 import { ROOM_TYPES } from "./data";
 import LikeShareButtons from "@/components/shared/LikeShareButtons";
 
-import before1 from "@/assets/design-before-1.webp";
-import after1 from "@/assets/design-after-1.webp";
-import before2 from "@/assets/design-before-2.webp";
-import after2 from "@/assets/design-after-2.webp";
-import before3 from "@/assets/design-before-3.webp";
-import after3 from "@/assets/design-after-3.webp";
+import before1 from "@/assets/design-before-1.jpg";
+import after1 from "@/assets/design-after-1.jpg";
+import before2 from "@/assets/design-before-2.jpg";
+import after2 from "@/assets/design-after-2.jpg";
+import before3 from "@/assets/design-before-3.jpg";
+import after3 from "@/assets/design-after-3.jpg";
 
 const SHOWCASES = [
   { before: before1, after: after1, label: "Cuisine", room: "kitchen" },

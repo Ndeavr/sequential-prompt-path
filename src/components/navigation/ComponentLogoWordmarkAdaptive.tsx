@@ -2,8 +2,8 @@
  * UNPRO — Adaptive Logo + Wordmark Component
  * Master fleur-de-lys lockup. Variants: icon-only | standard | maximized
  */
-import unproMaster from "@/assets/unpro-logo-master-transparent.webp";
-import unproFleur from "@/assets/unpro-icon-fleur.webp";
+import unproMaster from "@/assets/unpro-logo-master-transparent.png";
+import unproFleur from "@/assets/unpro-icon-fleur.png";
 
 type LogoVariant = "icon-only" | "standard" | "maximized";
 
@@ -29,10 +29,6 @@ export default function ComponentLogoWordmarkAdaptive({
       <img
         src={config.useWordmark ? unproMaster : unproFleur}
         alt="UNPRO"
-        width={config.useWordmark ? 1891 : 314}
-        height={config.useWordmark ? 832 : 356}
-        decoding="async"
-        fetchPriority="high"
         className={`${config.img} object-contain`}
         draggable={false}
       />
