@@ -162,12 +162,12 @@ export function buildAlexFirstMessage(opts: {
 
   if (lang === "en") {
     if (opts.isReturning && name) return `Welcome back ${name}. How can I help you today?`;
-    if (name) return `Hello ${name}. I'm Alex from UNPRO. How can I help you today?`;
-    return `Hello. I'm Alex from UNPRO. How can I help you today?`;
+    if (name) return `Hello ${name}. I'm Alex from Heun Pro. How can I help you today?`;
+    return `Hello. I'm Alex from Heun Pro. How can I help you today?`;
   }
 
   // French (default)
   if (opts.isReturning && name) return `Rebonjour ${name}. On reprend où on s'est arrêté ?`;
-  if (name) return `Bonjour ${name}. Je suis Alex d'UNPRO. Comment puis-je vous aider aujourd'hui ?`;
-  return `Bonjour. Je suis Alex d'UNPRO. Comment puis-je vous aider aujourd'hui ?`;
+  if (name) return `Bonjour ${name}. Je suis Alex d'Un Pro. Comment puis-je vous aider aujourd'hui ?`;
+  return `Bonjour. Je suis Alex d'Un Pro. Comment puis-je vous aider aujourd'hui ?`;
 }
