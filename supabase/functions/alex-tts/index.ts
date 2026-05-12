@@ -15,8 +15,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PRIMARY_VOICE_ID = "XB0fDUnXU5powFXDhCwa";  // Charlotte — Alex premium female
-const FALLBACK_VOICE_ID = "XB0fDUnXU5powFXDhCwa";
+// LOCKED voice — single source aligned with src/config/alexVoiceConfig.ts
+const PRIMARY_VOICE_ID = "or4EV8aZq78KWcXw48wd";
+const FALLBACK_VOICE_ID = "or4EV8aZq78KWcXw48wd";
+const ALLOWED_VOICE_IDS = new Set<string>([
+  "or4EV8aZq78KWcXw48wd", // Alex concierge (locked)
+  "XB0fDUnXU5powFXDhCwa", // Charlotte (legacy female fallback)
+]);
 const MODEL_ID = "eleven_multilingual_v2";
 
 const FALLBACK_TRIGGER_ERRORS = [
@@ -84,7 +89,7 @@ serve(async (req) => {
       });
     }
 
-    const { text, voice_session_id, settings } = await req.json();
+    const { text, voice_session_id, settings, voice_id } = await req.json();
     if (!text || typeof text !== "string" || text.trim().length === 0) {
       return new Response(JSON.stringify({ error: "text required" }), {
         status: 400,
@@ -98,12 +103,16 @@ serve(async (req) => {
     );
 
     const voiceSettings = settings || {};
-    let activeVoiceId = PRIMARY_VOICE_ID;
+    const requestedVoiceId =
+      typeof voice_id === "string" && ALLOWED_VOICE_IDS.has(voice_id)
+        ? voice_id
+        : PRIMARY_VOICE_ID;
+    let activeVoiceId = requestedVoiceId;
     let fallbackUsed = false;
     let fallbackReason: string | null = null;
 
-    // Try primary
-    let result = await callElevenLabs(ELEVENLABS_API_KEY, PRIMARY_VOICE_ID, text, voiceSettings);
+    // Try primary (or whitelisted requested voice)
+    let result = await callElevenLabs(ELEVENLABS_API_KEY, requestedVoiceId, text, voiceSettings);
 
     if (!result.ok && shouldFallback(result.errorBody || "")) {
       // Log primary failure

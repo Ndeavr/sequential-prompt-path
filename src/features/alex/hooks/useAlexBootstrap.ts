@@ -157,6 +157,20 @@ export function useAlexBootstrap() {
 
       const greetingText = state.pendingGreetingText || "Bonjour.";
 
+      // If audio not unlocked yet (mobile autoplay policy), don't try and don't
+      // mark voice unavailable. Wait for a user gesture (overlay shows CTA).
+      if (!state.isAudioUnlocked) {
+        useAlexStore.setState({
+          pendingGreetingText: greetingText,
+          shouldSpeakGreetingOnUnlock: true,
+          audioUnlockRequired: true,
+          hasAttemptedInitialAutoplay: true,
+          mode: "ready",
+        });
+        alexLog("boot:awaiting_user_unlock");
+        return;
+      }
+
       // Single autoplay attempt with connecting_voice state
       try {
         // V7: connecting_voice first, not speaking
@@ -190,20 +204,39 @@ export function useAlexBootstrap() {
       } catch (error) {
         try { elevenlabsService.stop(); } catch {}
         useAlexStore.getState().stopSpeaking();
-        useAlexStore.getState().recordVoiceFailure();
-        useAlexStore.getState().markVoiceUnavailable(
-          "boot_autoplay_failed",
-          "La voix d'Alex est temporairement indisponible. Je continue ici.",
-        );
-        useAlexStore.setState({
-          isAutoplayAllowed: false,
-          isGreetingSpoken: false,
-          // Only allow re-attempt if it wasn't a hard fallback signal
-          audioUnlockRequired: true,
-          shouldSpeakGreetingOnUnlock: false,
-          mode: "ready",
-        });
-        alexLog("boot:v7:autoplay_blocked_fallback", String(error));
+
+        // Distinguish real TTS unavailability (server fallback signal) from
+        // browser autoplay block / transient timeout. Only the former should
+        // mark voice as unavailable; the latter just waits for a user tap.
+        const code = (error as any)?.code as string | undefined;
+        const isHardFallback = code === "TTS_FALLBACK";
+
+        if (isHardFallback) {
+          useAlexStore.getState().recordVoiceFailure();
+          useAlexStore.getState().markVoiceUnavailable(
+            "boot_autoplay_failed",
+            "La voix d'Alex est temporairement indisponible. Je continue ici.",
+          );
+          useAlexStore.setState({
+            isAutoplayAllowed: false,
+            isGreetingSpoken: false,
+            audioUnlockRequired: true,
+            shouldSpeakGreetingOnUnlock: false,
+            mode: "ready",
+          });
+          alexLog("boot:v7:autoplay_blocked_fallback", String(error));
+        } else {
+          // Autoplay blocked / transient — keep voice available, await tap.
+          useAlexStore.setState({
+            isAutoplayAllowed: false,
+            isGreetingSpoken: false,
+            audioUnlockRequired: true,
+            shouldSpeakGreetingOnUnlock: true,
+            pendingGreetingText: greetingText,
+            mode: "ready",
+          });
+          alexLog("boot:v7:awaiting_user_unlock_after_block", String(error));
+        }
       }
     }, VOICE_ATTEMPT_DELAY_MS);
   }, []);

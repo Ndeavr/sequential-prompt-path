@@ -1,80 +1,59 @@
-# Activation Live — 3 correctifs critiques
+# Objectif
+Alex doit ouvrir la conversation **en voix**. Aujourd'hui, sur mobile (et au premier chargement), l'overlay s'ouvre directement en "Mode chat — La voix d'Alex est temporairement indisponible".
 
-## 1. Score AIPP réel (actuellement 0/100)
+# Diagnostic
 
-**Cause**: dans `supabase/functions/activation-pipeline-start/index.ts`, la fonction `score5()` cherche des clés (`has_https`, `has_h1`, `phone`, `address`, `logo_url`, `services_count`…) qui n'existent pas dans `signals`. La fonction `aipp-real-scan` retourne en réalité : `has_ssl`, `has_logo`, `has_reviews`, `phones_found[]`, `emails_found[]`, `description`, `title`, `social_links{}`, `links_count`, `has_jsonld`… → tous les buckets = 0.
+1. **Cause #1 — Autoplay bloqué traité comme une panne définitive.**
+   `useAlexBootstrap.ts` (ligne ~168) appelle `elevenlabsService.speak(greeting)` ~immédiatement après le boot, **sans geste utilisateur**. Sur mobile, `audio.play()` est rejeté par le navigateur → `TTS_ERROR play_failed` → `markVoiceUnavailable("boot_autoplay_failed", "La voix d'Alex est temporairement indisponible…")`. L'UI bascule en chat avant même que l'utilisateur touche l'écran.
 
-**Correctif**: réécrire `score5()` pour mapper les vraies clés produites par `aipp-real-scan`. Exemple :
-- web (20): `has_ssl`, `title`/`description` non vides, `has_logo`, `links_count > 5`, `has_jsonld`
-- google (20): `phones_found.length`, `emails_found.length`, `address`/`city` détectés
-- trust (20): `rbq_number`, `neq`, `has_reviews`, `years_in_business`
-- ai_visibility (25): `has_jsonld`, `has_faq`, services détectés, `has_about`
-- conversion (15): CTA détecté, téléphone cliquable, `mobile_friendly`
+2. **Cause #2 — Voix verrouillée non utilisée par l'edge function.**
+   La mémoire produit verrouille `or4EV8aZq78KWcXw48wd` (source unique : `src/config/alexVoiceConfig.ts`).
+   Mais `supabase/functions/alex-tts/index.ts` est encore codé en dur sur Charlotte (`XB0fDUnXU5powFXDhCwa`) et ignore tout `voice_id` envoyé par le client. Donc même quand la voix démarre, ce n'est pas la bonne.
 
-Vérifié sur `isroyal.ca` : signaux SSL+logo+reviews+phones+emails+description présents → score doit remonter à ~50–65.
+3. **Cause #3 — Aucun "tap pour activer la voix".**
+   Quand l'autoplay échoue, on devrait demander un geste, pas tomber en chat. Le flag `audioUnlockRequired` existe (`useAlexVoice.unlockAudio` + `speakGreetingNow`) mais l'overlay n'affiche pas de CTA d'unlock — il montre directement le panneau de fallback chat.
 
-## 2. « Vérifier maintenant » non fonctionnel
+# Plan d'implémentation
 
-**Cause**: `TagInput` exige un clic dans le menu déroulant. L'utilisateur tape "isolation"/"Terrebonne" mais aucun chip n'est créé → `categoryTags=[]` → bouton désactivé/inactif.
+### 1. Bootstrap : ne plus marquer la voix indisponible quand c'est juste l'autoplay
+Fichier : `src/features/alex/hooks/useAlexBootstrap.ts`
+- Avant d'appeler `speak(greeting)`, vérifier `isAudioUnlocked`.
+- Si **pas** unlocké → ne **pas** tenter `speak`. Mettre l'état :
+  ```
+  audioUnlockRequired: true
+  shouldSpeakGreetingOnUnlock: true
+  pendingGreetingText: greetingText
+  mode: "ready"
+  ```
+  et logger `boot:awaiting_user_unlock`. **Ne pas** appeler `markVoiceUnavailable`.
+- Si unlocké et que `speak` échoue avec `TTS_FALLBACK` (vrai signal serveur d'indisponibilité) → garder le comportement actuel (`markVoiceUnavailable`).
+- Pour les autres erreurs (`TTS_ERROR play_failed`, `TTS_TIMEOUT`) → repasser à `audioUnlockRequired: true` + `shouldSpeakGreetingOnUnlock: true`, sans marquer indisponible. Compteur de retry max 1 avant vrai fallback.
 
-**Correctif** dans `src/components/founder-plans/TagInput.tsx` :
-- Touche **Enter** (et virgule) → sélectionne automatiquement la 1ʳᵉ suggestion filtrée
-- Touche **Tab** → idem
-- Si aucune suggestion mais texte tapé → fallback en chip libre (slug = slugify(query))
-- Au blur, si une seule suggestion correspond exactement → l'ajouter automatiquement
+### 2. Overlay voix : afficher un CTA "Activer la voix" au lieu du fallback chat
+Fichier : composant overlay full-screen (`OverlayAlexVoiceFullScreen` / `AlexChatFallbackPanel`).
+- Tant que `isVoiceAvailable === true && audioUnlockRequired === true` → afficher l'orbe + un gros bouton "Touchez pour parler à Alex".
+- Au tap → appeler `useAlexVoice.unlockAudio()` (qui resume l'AudioContext puis appelle `speakGreetingNow`).
+- Le panneau "Mode chat" ne s'affiche **que** si `isVoiceAvailable === false` (vraie panne TTS).
 
-Pas de changement au RPC `check_territory_availability`.
+### 3. Edge function : utiliser la voix verrouillée
+Fichier : `supabase/functions/alex-tts/index.ts`
+- Remplacer `PRIMARY_VOICE_ID = "XB0fDUnXU5powFXDhCwa"` par `or4EV8aZq78KWcXw48wd` (voix concierge verrouillée).
+- Accepter optionnellement `voice_id` dans le body et l'utiliser si présent (validé contre une whitelist d'IDs UNPRO).
+- Conserver les voice_settings (`stability 0.48`, `similarity_boost 0.78`, `style 0.28`, `use_speaker_boost true`, `speed 1.05`) en valeurs par défaut, alignées sur `alexVoiceConfig.ts`.
+- Garder le header `X-Alex-Voice-Id` pour observabilité.
 
-## 3. « Activer mon profil — 1 $ » / « Réserver » → vrai paiement Stripe
+### 4. Service client : envoyer la voix verrouillée + bons settings
+Fichier : `src/features/alex/services/elevenlabsService.ts`
+- Importer la config depuis `src/config/alexVoiceConfig.ts` (source unique) et envoyer `voice_id` + `settings` dans le body de `supabase.functions.invoke("alex-tts", …)`.
+- Supprimer la constante `ALEX_PRIMARY_VOICE_ID` codée en dur (ou la faire pointer vers la config).
 
-**Cause**: 
-- Bouton sur `/contractor/analysis` navigue vers `/fondateur/plans?from=...` au lieu d'ouvrir un checkout.
-- Bouton « Réserver maintenant » sur la landing fondateur scroll vers `#plans` au lieu d'ouvrir le checkout.
+### 5. Vérification
+- Tester `alex-tts` via curl edge → header doit retourner `X-Alex-Voice-Id: or4EV8aZq78KWcXw48wd`.
+- Sur preview mobile (384×709) : à l'ouverture, l'orbe doit apparaître avec "Touchez pour parler à Alex" — au tap, la voix démarre avec le greeting "Bonjour. Je suis Alex d'UNPRO. Quel problème puis-je vous aider à régler aujourd'hui ?".
+- Sur desktop : si autoplay autorisé, la voix démarre seule. Sinon même CTA.
+- Confirmer dans la console : plus de log `boot:v7:autoplay_blocked_fallback` au premier chargement.
 
-**Correctif**:
-
-a) Nouvel edge function `activation-create-checkout` :
-- Entrée : `{ run_id }`
-- Charge le `activation_pipeline_runs.recommended_plan` + extraction (domain, business_name, email)
-- Crée une Stripe Checkout Session **mode=payment**, ligne unique price_data 100 ¢ CAD « Activation Fondateur UNPRO — {plan} »
-- `customer_email` = email extrait (sinon laisse Stripe collecter)
-- Métadonnées : `run_id`, `plan`, `domain`, `aipp_score`
-- `success_url`: `/contractor/activated?session={CHECKOUT_SESSION_ID}&run={run_id}`
-- `cancel_url`: `/contractor/analysis?run={run_id}`
-- Aucune auth requise (guest checkout) — service role pour lire le run.
-
-b) Edge function `activation-confirm` (appelée sur la page `/contractor/activated`) :
-- Vérifie `stripe.checkout.sessions.retrieve(session_id).payment_status === 'paid'`
-- Met à jour `activation_pipeline_runs.pipeline_status='activated'` + crée/active le profil entrepreneur (`contractors` row, `is_founder=true`, `founder_plan=plan`)
-- Insère un event `system_events` (`type='contractor_activated'`)
-
-c) Page `src/pages/contractor/PageContractorActivated.tsx` (nouvelle) :
-- Loader → appelle `activation-confirm` → confirmation visuelle + CTA « Compléter mon profil » vers `/pro/onboarding?run=...`
-
-d) Wiring UI :
-- `PageContractorAnalysisLive.tsx` : remplacer `navigate('/fondateur/plans?...')` par `supabase.functions.invoke('activation-create-checkout', { body: { run_id }})` puis `window.location.href = data.url` (nouvelle session Stripe).
-- `SectionFinalCTAFounder.tsx` : « Réserver maintenant » → si `?from=<runId>` présent dans l'URL, lance le même checkout ; sinon scroll plans (comportement actuel pour le parcours non-pipeline).
-
-## 4. Routes & Database
-
-- Ajouter route `/contractor/activated` dans `src/app/router.tsx`.
-- Migration : ajouter colonnes à `activation_pipeline_runs` si absentes : `stripe_session_id text`, `activated_at timestamptz`, `contractor_id uuid`. Status `'activated'` autorisé.
-
-## 5. Validation live
-
-1. `isroyal.ca` → score ≥ 40, plan recommandé.
-2. Vérifier maintenant avec « isolation » + Enter, « Terrebonne » + Enter → résultats.
-3. Bouton « Activer mon profil — 1 $ » → ouvre Stripe Checkout réel à 1,00 $ CAD.
-4. Paiement test → redirection `/contractor/activated` → run.status=`activated`, contractor créé.
-
-## Files touched
-
-- `supabase/functions/activation-pipeline-start/index.ts` (réécriture `score5`)
-- `supabase/functions/activation-create-checkout/index.ts` (nouveau)
-- `supabase/functions/activation-confirm/index.ts` (nouveau)
-- `supabase/migrations/<ts>_activation_checkout.sql`
-- `src/components/founder-plans/TagInput.tsx` (Enter/Tab/blur)
-- `src/components/founder-plans/SectionFinalCTAFounder.tsx` (run-aware CTA)
-- `src/pages/contractor/PageContractorAnalysisLive.tsx` (CTA → checkout)
-- `src/pages/contractor/PageContractorActivated.tsx` (nouveau)
-- `src/app/router.tsx` (route)
+# Ce qui n'est PAS modifié
+- Pas de changement aux flux orchestrator, matching, booking.
+- Pas de modification du prompt Alex ni de la logique conversationnelle.
+- Pas de touche au store global, juste à `useAlexBootstrap` et à l'overlay.

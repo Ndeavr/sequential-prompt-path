@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAlexChatFallbackStore } from "@/stores/alexChatFallbackStore";
 import { useAlex } from "@/hooks/useAlex";
 import UnproIcon from "@/components/brand/UnproIcon";
+import { Mic } from "lucide-react";
+import { useAlexVoiceLockedStore } from "@/stores/alexVoiceLockedStore";
 
 export default function AlexChatFallbackPanel() {
   const { isOpen, reason, seedTurns, close } = useAlexChatFallbackStore();
@@ -70,9 +72,27 @@ export default function AlexChatFallbackPanel() {
               </p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={close} aria-label="Fermer le chat">
-            <X className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                close();
+                useAlexVoiceLockedStore.getState().openVoiceSession(
+                  "fallback_retry_voice",
+                  "user_retry_voice",
+                );
+              }}
+              aria-label="Réessayer la voix"
+              className="gap-1.5 text-primary"
+            >
+              <Mic className="w-4 h-4" />
+              <span className="text-xs font-medium">Activer la voix</span>
+            </Button>
+            <Button variant="ghost" size="icon" onClick={close} aria-label="Fermer le chat">
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
 
         {/* Messages */}
