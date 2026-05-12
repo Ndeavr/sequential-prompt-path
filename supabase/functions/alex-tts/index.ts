@@ -15,8 +15,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PRIMARY_VOICE_ID = "XB0fDUnXU5powFXDhCwa";  // Charlotte — Alex premium female
-const FALLBACK_VOICE_ID = "XB0fDUnXU5powFXDhCwa";
+// LOCKED voice — single source aligned with src/config/alexVoiceConfig.ts
+const PRIMARY_VOICE_ID = "or4EV8aZq78KWcXw48wd";
+const FALLBACK_VOICE_ID = "or4EV8aZq78KWcXw48wd";
+const ALLOWED_VOICE_IDS = new Set<string>([
+  "or4EV8aZq78KWcXw48wd", // Alex concierge (locked)
+  "XB0fDUnXU5powFXDhCwa", // Charlotte (legacy female fallback)
+]);
 const MODEL_ID = "eleven_multilingual_v2";
 
 const FALLBACK_TRIGGER_ERRORS = [
