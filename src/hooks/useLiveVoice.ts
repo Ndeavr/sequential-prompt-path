@@ -6,8 +6,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useConversation } from "@elevenlabs/react";
 import { supabase } from "@/integrations/supabase/client";
 import { AlexLanguageLockSession, type AlexLanguage } from "@/services/alexLanguageLock";
-import { buildAlexAgentOverrides, ALEX_VOICE_DEFAULTS } from "@/features/alex/voice/alexAgentOverrides";
-import { loadAlexMemory, buildMemoryContextHint } from "@/features/alex/voice/alexSessionMemory";
+import { ALEX_VOICE_DEFAULTS } from "@/features/alex/voice/alexAgentOverrides";
+import { loadAlexMemory } from "@/features/alex/voice/alexSessionMemory";
 import { alexVoiceService } from "@/services/alexVoiceService";
 import { logBoot, withTimeout } from "@/lib/bootDebug";
 
@@ -352,38 +352,27 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           callbacksRef.current?.onError?.(new Error("Connection timeout — voice unavailable"));
         }, CONNECTION_TIMEOUT_MS);
 
-        // Persist voice id across reconnects → identical voice intro→outro
+        // Per memory `voice-connection-stability`: do NOT send client-side overrides
+        // unless required. ElevenLabs ignores overrides if not enabled in the agent
+        // dashboard, and including them can cause silent first-audio failures.
+        // Persist voice id only for diagnostics.
         const memory = loadAlexMemory();
-        const contextHint = buildMemoryContextHint(memory);
         const resolvedVoiceId =
           lockedVoiceIdRef.current
           ?? (data?.voiceId as string)
           ?? ALEX_VOICE_DEFAULTS.voiceId;
         lockedVoiceIdRef.current = resolvedVoiceId;
 
-        const overrides = buildAlexAgentOverrides({
-          firstName: options?.firstName,
-          isReturning: options?.isReturning ?? Boolean(memory),
-          language: "fr",
-          mode: options?.mode ?? "general",
-          voiceId: resolvedVoiceId,
-          stability: (data?.stability as number) ?? null,
-          similarity: (data?.similarity as number) ?? null,
-          style: (data?.style as number) ?? null,
-          speakerBoost: (data?.speakerBoost as boolean) ?? null,
-          contextHint,
-        });
-
         console.log("[ElevenLabs V8] Starting session", {
-          voiceId: overrides.tts.voiceId,
+          voiceId: resolvedVoiceId,
           mode: options?.mode ?? "general",
           attempt,
+          hasMemory: Boolean(memory),
         });
 
         await conversation.startSession({
           signedUrl,
           connectionType: "websocket",
-          overrides,
         } as any);
 
         console.log("[ElevenLabs V8] ✅ Session started");
