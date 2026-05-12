@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAlexChatFallbackStore } from "@/stores/alexChatFallbackStore";
 import { useAlex } from "@/hooks/useAlex";
 import UnproIcon from "@/components/brand/UnproIcon";
+import { Mic } from "lucide-react";
+import { useAlexVoiceLockedStore } from "@/stores/alexVoiceLockedStore";
 
 export default function AlexChatFallbackPanel() {
   const { isOpen, reason, seedTurns, close } = useAlexChatFallbackStore();
