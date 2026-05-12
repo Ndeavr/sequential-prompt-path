@@ -33,7 +33,7 @@ import {
 const STABILIZATION_MS = 4000;
 const HEARTBEAT_INTERVAL_MS = 2500; // Slower → less battery
 const BOOT_TIMEOUT_MS = 25000; // Cold-start absorbing (edge function + ElevenLabs handshake)
-const FIRST_AUDIO_TIMEOUT_MS = 3000; // Spec: auto-retry after 3s
+const FIRST_AUDIO_TIMEOUT_MS = 6500; // Plus tolérant cold-start mobile avant retry
 const TOKEN_SLOW_THRESHOLD_MS = 2000; // Spec: show "Connexion d'Alex…" if >2s
 const MAX_AUTO_RETRIES = 2; // 1 boot + 2 silent = 3 attempts → fallback chat
 
@@ -80,21 +80,21 @@ export default function OverlayAlexVoiceFullScreen() {
     || user?.user_metadata?.full_name?.split(" ")[0]
     || null;
 
-  // Build greeting — personality-driven
+  // Build greeting — personality-driven, energetic premium concierge
   const buildGreeting = useCallback(() => {
     const hour = new Date().getHours();
     const time = hour >= 5 && hour < 18 ? "Bonjour" : "Bonsoir";
     const name = firstName ? ` ${firstName}` : "";
-    
+
     // Use contextHint from store for contextual greeting
     const hint = getStore().contextHint;
     if (hint) {
-      return `${time}${name}. Je vois que vous regardez ${hint}. On avance ensemble.`;
+      return `${time}${name}. Parfait, on regarde votre demande — ${hint}. Dites-m'en un peu plus en quelques mots.`;
     }
     if (firstName) {
-      return `${time} ${firstName}. Quel projet avance aujourd'hui?`;
+      return `${time} ${firstName}. Heureuse de vous retrouver — quel projet avance aujourd'hui?`;
     }
-    return `${time}. Décrivez votre besoin.`;
+    return `${time}. Je suis Alex d'UNPRO. Quel problème puis-je vous aider à régler aujourd'hui?`;
   }, [firstName]);
 
   // ElevenLabs voice
@@ -295,6 +295,14 @@ export default function OverlayAlexVoiceFullScreen() {
     // Reset auto-retry counter on a fresh open
     autoRetryCountRef.current = 0;
     setSlowToken(false);
+
+    // Seed the pill/contextHint as a visible user transcript so user sees their intent
+    const initialHint = getStore().contextHint;
+    if (initialHint && transcriptsRef.current.length === 0) {
+      const seedId = `user-seed-${++entryIdRef.current}`;
+      setTranscripts([{ role: "user", text: initialHint, id: seedId }]);
+      getStore().addTranscript("user", initialHint);
+    }
 
     let bootTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
