@@ -849,6 +849,78 @@ export type Database = {
         }
         Relationships: []
       }
+      activation_pipeline_runs: {
+        Row: {
+          activated_at: string | null
+          aipp_breakdown: Json
+          aipp_score: number | null
+          contractor_id: string | null
+          created_at: string
+          current_step: string
+          domain: string | null
+          error_log: Json
+          extraction: Json
+          id: string
+          input_kind: string
+          input_value: string
+          partial_confidence: boolean
+          pipeline_status: string
+          recommendation: Json
+          recommended_plan: string | null
+          screenshot_url: string | null
+          signals: Json
+          stripe_payment_intent_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          aipp_breakdown?: Json
+          aipp_score?: number | null
+          contractor_id?: string | null
+          created_at?: string
+          current_step?: string
+          domain?: string | null
+          error_log?: Json
+          extraction?: Json
+          id?: string
+          input_kind?: string
+          input_value: string
+          partial_confidence?: boolean
+          pipeline_status?: string
+          recommendation?: Json
+          recommended_plan?: string | null
+          screenshot_url?: string | null
+          signals?: Json
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          aipp_breakdown?: Json
+          aipp_score?: number | null
+          contractor_id?: string | null
+          created_at?: string
+          current_step?: string
+          domain?: string | null
+          error_log?: Json
+          extraction?: Json
+          id?: string
+          input_kind?: string
+          input_value?: string
+          partial_confidence?: boolean
+          pipeline_status?: string
+          recommendation?: Json
+          recommended_plan?: string | null
+          screenshot_url?: string | null
+          signals?: Json
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       activation_steps: {
         Row: {
           contractor_id: string
