@@ -84,7 +84,17 @@ const TTS_OUTPUT_FIXES: [RegExp, string][] = [
   [/\bRBQ\b/g, "R.B.Q."],
   [/\bCMMTQ\b/g, "C.M.M.T.Q."],
   [/\bCMEQ\b/g, "C.M.E.Q."],
-  [/\bUNPRO\b/g, "UnPRO"],
+  // Brand pronunciation — UNPRO is ONE spoken word "Euhnpro" (/œ̃pʁo/), never spelled.
+  // Catch every common mis-spelling/mis-spacing variant before TTS.
+  [/\bU\s*\.?\s*N\s*\.?\s*[-\s]?\s*PRO\b/gi, "Euhnpro"],
+  [/\bUn[-\s]Pro\b/gi, "Euhnpro"],
+  [/\bUne Pro\b/gi, "Euhnpro"],
+  [/\bYou[-\s]?En[-\s]?Pro\b/gi, "Euhnpro"],
+  [/\bYoonpro\b/gi, "Euhnpro"],
+  [/\bUnnpro\b/gi, "Euhnpro"],
+  [/\bUnPRO\b/g, "Euhnpro"],
+  [/\bUNPRO\b/g, "Euhnpro"],
+  [/\bUnpro\b/g, "Euhnpro"],
   // Number readability
   [/\b24\/7\b/g, "24 sur 7"],
 ];
