@@ -296,6 +296,14 @@ export default function OverlayAlexVoiceFullScreen() {
     autoRetryCountRef.current = 0;
     setSlowToken(false);
 
+    // Seed the pill/contextHint as a visible user transcript so user sees their intent
+    const initialHint = getStore().contextHint;
+    if (initialHint && transcriptsRef.current.length === 0) {
+      const seedId = `user-seed-${++entryIdRef.current}`;
+      setTranscripts([{ role: "user", text: initialHint, id: seedId }]);
+      getStore().addTranscript("user", initialHint);
+    }
+
     let bootTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
     // Helper: bail directly to chat fallback (no dead-end red error)
