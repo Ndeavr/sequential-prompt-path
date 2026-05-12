@@ -33182,6 +33182,51 @@ export type Database = {
           },
         ]
       }
+      google_project_audit_logs: {
+        Row: {
+          created_at: string
+          detected_key_name: string | null
+          feature: string | null
+          file_path: string | null
+          id: string
+          masked_key: string | null
+          payload: Json | null
+          recommendation: string | null
+          risk_level: string | null
+          source: string | null
+          status: string | null
+          usage_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          detected_key_name?: string | null
+          feature?: string | null
+          file_path?: string | null
+          id?: string
+          masked_key?: string | null
+          payload?: Json | null
+          recommendation?: string | null
+          risk_level?: string | null
+          source?: string | null
+          status?: string | null
+          usage_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          detected_key_name?: string | null
+          feature?: string | null
+          file_path?: string | null
+          id?: string
+          masked_key?: string | null
+          payload?: Json | null
+          recommendation?: string | null
+          risk_level?: string | null
+          source?: string | null
+          status?: string | null
+          usage_type?: string | null
+        }
+        Relationships: []
+      }
       grant_programs: {
         Row: {
           applicable_property_types: string[] | null
