@@ -90,20 +90,42 @@ export default function OnboardingPageUnpro() {
   }, [user?.id, navigate]);
 
   const handleIdentitySave = useCallback(async (data: { first_name: string; last_name: string; email: string; phone: string }) => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      toast.error("Session expirée. Reconnectez-vous.");
+      return;
+    }
     setSaving(true);
     try {
-      await supabase.from("profiles").update({
+      const updates: Record<string, any> = {
         first_name: data.first_name,
         last_name: data.last_name,
-        full_name: `${data.first_name} ${data.last_name}`,
-        email: data.email || undefined,
-        phone: data.phone || undefined,
-      }).eq("user_id", user.id);
-      await refetchProfile();
+        full_name: `${data.first_name} ${data.last_name}`.trim(),
+      };
+      if (data.email) updates.email = data.email;
+      if (data.phone) updates.phone = data.phone;
+
+      // Upsert so a missing profile row never silently blocks onboarding.
+      const upsertPromise = (supabase.from("profiles") as any)
+        .upsert({ user_id: user.id, ...updates }, { onConflict: "user_id" })
+        .select()
+        .maybeSingle();
+
+      const { error } = (await Promise.race([
+        upsertPromise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000)),
+      ])) as any;
+
+      if (error) {
+        console.error("[onboarding] identity upsert error", error);
+        toast.error(error.message || "Erreur lors de l'enregistrement");
+        return;
+      }
+      // Fire-and-forget refetch — never block the UI on it.
+      refetchProfile().catch(() => {});
       setStep(2);
-    } catch (err) {
-      toast.error("Erreur lors de l'enregistrement");
+    } catch (err: any) {
+      console.error("[onboarding] identity save exception", err);
+      toast.error(err?.message === "timeout" ? "Connexion lente. Réessayez." : "Erreur lors de l'enregistrement");
     } finally {
       setSaving(false);
     }
