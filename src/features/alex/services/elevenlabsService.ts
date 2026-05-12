@@ -91,7 +91,7 @@ export const elevenlabsService = {
 
     try {
       const { data, error } = await supabase.functions.invoke("alex-tts", {
-        body: { text, settings: VOICE_SETTINGS },
+        body: { text, settings: VOICE_SETTINGS, voice_id: ALEX_PRIMARY_VOICE_ID },
       });
 
       window.clearTimeout(timeoutId);
