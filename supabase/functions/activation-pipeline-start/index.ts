@@ -53,40 +53,63 @@ function score5(signals: Record<string, unknown>): {
   total: number;
   buckets: Record<string, number>;
 } {
-  // Lightweight deterministic 5-bucket scoring (Web/20, Google/20, Trust/20, AI/25, Conv/15)
-  const get = (k: string) => Number(signals?.[k] ?? 0);
-  const has = (k: string) => Boolean(signals?.[k]);
+  // Deterministic 5-bucket scoring mapped to the real keys produced by aipp-real-scan.
+  const s = signals ?? {};
+  const len = (k: string) => Array.isArray(s[k]) ? (s[k] as unknown[]).length : 0;
+  const str = (k: string) => typeof s[k] === "string" ? (s[k] as string).trim() : "";
+  const num = (k: string) => Number(s[k] ?? 0);
+  const has = (k: string) => Boolean(s[k]);
 
+  // WEB (20) — site fundamentals
   const web = Math.min(
     20,
-    (has("has_https") ? 4 : 0) +
-      (has("has_meta_description") ? 4 : 0) +
-      (has("has_h1") ? 4 : 0) +
-      (has("logo_url") ? 4 : 0) +
-      (get("internal_links_count") > 5 ? 4 : 0),
+    (has("has_ssl") ? 4 : 0) +
+      (str("title").length > 0 ? 4 : 0) +
+      (str("description").length > 30 ? 4 : 0) +
+      (has("has_logo") ? 4 : 0) +
+      (num("links_count") > 5 ? 4 : 0),
   );
+
+  // GOOGLE (20) — local presence / NAP
   const google = Math.min(
     20,
-    (has("phone") ? 5 : 0) + (has("address") ? 5 : 0) +
-      (has("city") ? 5 : 0) + (has("hours") ? 5 : 0),
+    (len("phones_found") > 0 ? 6 : 0) +
+      (len("emails_found") > 0 ? 4 : 0) +
+      (has("address") || str("address").length > 0 ? 5 : 0) +
+      (has("city") || has("hours") || has("google_place_id") ? 5 : 0),
   );
+
+  // TRUST (20) — RBQ / NEQ / reviews / years
   const trust = Math.min(
     20,
-    (has("rbq") ? 6 : 0) + (has("neq") ? 4 : 0) +
-      (has("review_count") && get("review_count") > 0 ? 6 : 0) +
-      (has("years_in_business") ? 4 : 0),
+    (has("rbq_number") || has("rbq") ? 6 : 0) +
+      (has("neq") ? 4 : 0) +
+      (has("has_reviews") || num("review_count") > 0 ? 6 : 0) +
+      (has("years_in_business") || has("year_founded") ? 4 : 0),
   );
+
+  // AI visibility (25) — structured data / depth
+  const social = s["social_links"];
+  const socialCount = social && typeof social === "object"
+    ? Object.values(social as Record<string, unknown>).filter(Boolean).length
+    : 0;
   const ai = Math.min(
     25,
-    (has("has_jsonld") ? 8 : 0) + (has("has_faq") ? 6 : 0) +
-      (has("services_count") && get("services_count") >= 3 ? 6 : 0) +
-      (has("has_about") ? 5 : 0),
+    (has("has_jsonld") ? 8 : 0) +
+      (has("has_faq") ? 5 : 0) +
+      (len("services") >= 3 || num("services_count") >= 3 ? 6 : 0) +
+      (has("has_about") ? 3 : 0) +
+      (socialCount >= 2 ? 3 : 0),
   );
+
+  // CONVERSION (15) — CTA / phone CTA / mobile
   const conv = Math.min(
     15,
-    (has("has_cta") ? 5 : 0) + (has("has_phone_cta") ? 5 : 0) +
-      (has("mobile_friendly") ? 5 : 0),
+    (has("has_cta") || has("has_contact_form") ? 5 : 0) +
+      (has("has_phone_cta") || len("phones_found") > 0 ? 5 : 0) +
+      (has("mobile_friendly") || has("is_responsive") ? 5 : 0),
   );
+
   return {
     total: web + google + trust + ai + conv,
     buckets: { web, google, trust, ai_visibility: ai, conversion: conv },
