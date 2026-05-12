@@ -89,7 +89,7 @@ serve(async (req) => {
       });
     }
 
-    const { text, voice_session_id, settings } = await req.json();
+    const { text, voice_session_id, settings, voice_id } = await req.json();
     if (!text || typeof text !== "string" || text.trim().length === 0) {
       return new Response(JSON.stringify({ error: "text required" }), {
         status: 400,
@@ -103,12 +103,16 @@ serve(async (req) => {
     );
 
     const voiceSettings = settings || {};
-    let activeVoiceId = PRIMARY_VOICE_ID;
+    const requestedVoiceId =
+      typeof voice_id === "string" && ALLOWED_VOICE_IDS.has(voice_id)
+        ? voice_id
+        : PRIMARY_VOICE_ID;
+    let activeVoiceId = requestedVoiceId;
     let fallbackUsed = false;
     let fallbackReason: string | null = null;
 
-    // Try primary
-    let result = await callElevenLabs(ELEVENLABS_API_KEY, PRIMARY_VOICE_ID, text, voiceSettings);
+    // Try primary (or whitelisted requested voice)
+    let result = await callElevenLabs(ELEVENLABS_API_KEY, requestedVoiceId, text, voiceSettings);
 
     if (!result.ok && shouldFallback(result.errorBody || "")) {
       // Log primary failure
