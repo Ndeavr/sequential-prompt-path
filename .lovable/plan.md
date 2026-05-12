@@ -1,59 +1,36 @@
-# Objectif
-Alex doit ouvrir la conversation **en voix**. Aujourd'hui, sur mobile (et au premier chargement), l'overlay s'ouvre directement en "Mode chat — La voix d'Alex est temporairement indisponible".
+## Fix critical security findings
 
-# Diagnostic
+The latest scan flags **7 error-level vulnerabilities** exposing PII to anonymous or all-authenticated users. Plan: one consolidated migration that locks down each table/bucket to the legitimate owner or admins.
 
-1. **Cause #1 — Autoplay bloqué traité comme une panne définitive.**
-   `useAlexBootstrap.ts` (ligne ~168) appelle `elevenlabsService.speak(greeting)` ~immédiatement après le boot, **sans geste utilisateur**. Sur mobile, `audio.play()` est rejeté par le navigateur → `TTS_ERROR play_failed` → `markVoiceUnavailable("boot_autoplay_failed", "La voix d'Alex est temporairement indisponible…")`. L'UI bascule en chat avant même que l'utilisateur touche l'écran.
+### Findings to fix
 
-2. **Cause #2 — Voix verrouillée non utilisée par l'edge function.**
-   La mémoire produit verrouille `or4EV8aZq78KWcXw48wd` (source unique : `src/config/alexVoiceConfig.ts`).
-   Mais `supabase/functions/alex-tts/index.ts` est encore codé en dur sur Charlotte (`XB0fDUnXU5powFXDhCwa`) et ignore tout `voice_id` envoyé par le client. Donc même quand la voix démarre, ce n'est pas la bonne.
+| # | Resource | Current risk | Fix |
+|---|----------|--------------|-----|
+| 1 | `public.contractor_import_sessions` | Public SELECT exposes email, phone, RBQ, NEQ, business name | Replace open SELECT with `initiated_by_user_id = auth.uid() OR has_role(auth.uid(),'admin')` |
+| 2 | `public.audit_intake_sessions` | Public SELECT exposes prospect email, phone, RBQ, website | Restrict SELECT to admin; allow row owner via `session_token` header match (server-side function) |
+| 3 | `public.condo_waitlist_leads` | Public SELECT exposes name/email/phone | Restrict SELECT to admins only (writes stay public via existing INSERT policy) |
+| 4 | `public.alex_homeowner_recovery_queue` | Public SELECT exposes recovery PII (phone NOT NULL) | Restrict SELECT to admins only |
+| 5 | `public.contractor_import_followups` | Open ALL policy for anon+authenticated | Drop open policy; add owner-scoped policies via join to `contractor_import_sessions.initiated_by_user_id` + admin override |
+| 6 | `public.profile_missing_fields` | Authenticated ALL `true` lets anyone read/modify others' gaps | Scope to contractor owner via join to `contractors.user_id` + admin override |
+| 7 | Storage bucket `business-assets` | SELECT only checks bucket_id, not folder ownership | Add `(auth.uid())::text = (storage.foldername(name))[1]` to SELECT policy (matches contractor-documents pattern) |
 
-3. **Cause #3 — Aucun "tap pour activer la voix".**
-   Quand l'autoplay échoue, on devrait demander un geste, pas tomber en chat. Le flag `audioUnlockRequired` existe (`useAlexVoice.unlockAudio` + `speakGreetingNow`) mais l'overlay n'affiche pas de CTA d'unlock — il montre directement le panneau de fallback chat.
+### Out of scope (reserved schema)
 
-# Plan d'implémentation
+- `realtime.messages` finding — project rules forbid modifying the `realtime` schema. Will flag this for the user to address via Lovable Cloud subscription scoping in app code separately.
 
-### 1. Bootstrap : ne plus marquer la voix indisponible quand c'est juste l'autoplay
-Fichier : `src/features/alex/hooks/useAlexBootstrap.ts`
-- Avant d'appeler `speak(greeting)`, vérifier `isAudioUnlocked`.
-- Si **pas** unlocké → ne **pas** tenter `speak`. Mettre l'état :
-  ```
-  audioUnlockRequired: true
-  shouldSpeakGreetingOnUnlock: true
-  pendingGreetingText: greetingText
-  mode: "ready"
-  ```
-  et logger `boot:awaiting_user_unlock`. **Ne pas** appeler `markVoiceUnavailable`.
-- Si unlocké et que `speak` échoue avec `TTS_FALLBACK` (vrai signal serveur d'indisponibilité) → garder le comportement actuel (`markVoiceUnavailable`).
-- Pour les autres erreurs (`TTS_ERROR play_failed`, `TTS_TIMEOUT`) → repasser à `audioUnlockRequired: true` + `shouldSpeakGreetingOnUnlock: true`, sans marquer indisponible. Compteur de retry max 1 avant vrai fallback.
+### Implementation
 
-### 2. Overlay voix : afficher un CTA "Activer la voix" au lieu du fallback chat
-Fichier : composant overlay full-screen (`OverlayAlexVoiceFullScreen` / `AlexChatFallbackPanel`).
-- Tant que `isVoiceAvailable === true && audioUnlockRequired === true` → afficher l'orbe + un gros bouton "Touchez pour parler à Alex".
-- Au tap → appeler `useAlexVoice.unlockAudio()` (qui resume l'AudioContext puis appelle `speakGreetingNow`).
-- Le panneau "Mode chat" ne s'affiche **que** si `isVoiceAvailable === false` (vraie panne TTS).
+Single migration that, per table:
+1. `DROP POLICY` on existing permissive policy
+2. `CREATE POLICY` scoped via `auth.uid()` + `has_role(auth.uid(),'admin')`
+3. Keep existing INSERT/UPDATE policies untouched unless they are the same offending one
+4. Storage: drop and recreate the SELECT policy on `storage.objects` for `business-assets`
 
-### 3. Edge function : utiliser la voix verrouillée
-Fichier : `supabase/functions/alex-tts/index.ts`
-- Remplacer `PRIMARY_VOICE_ID = "XB0fDUnXU5powFXDhCwa"` par `or4EV8aZq78KWcXw48wd` (voix concierge verrouillée).
-- Accepter optionnellement `voice_id` dans le body et l'utiliser si présent (validé contre une whitelist d'IDs UNPRO).
-- Conserver les voice_settings (`stability 0.48`, `similarity_boost 0.78`, `style 0.28`, `use_speaker_boost true`, `speed 1.05`) en valeurs par défaut, alignées sur `alexVoiceConfig.ts`.
-- Garder le header `X-Alex-Voice-Id` pour observabilité.
+After approval and migration run, mark the 7 findings as fixed via `manage_security_finding`, then update `mem://security/access-control-standards` if needed.
 
-### 4. Service client : envoyer la voix verrouillée + bons settings
-Fichier : `src/features/alex/services/elevenlabsService.ts`
-- Importer la config depuis `src/config/alexVoiceConfig.ts` (source unique) et envoyer `voice_id` + `settings` dans le body de `supabase.functions.invoke("alex-tts", …)`.
-- Supprimer la constante `ALEX_PRIMARY_VOICE_ID` codée en dur (ou la faire pointer vers la config).
+### Verification
 
-### 5. Vérification
-- Tester `alex-tts` via curl edge → header doit retourner `X-Alex-Voice-Id: or4EV8aZq78KWcXw48wd`.
-- Sur preview mobile (384×709) : à l'ouverture, l'orbe doit apparaître avec "Touchez pour parler à Alex" — au tap, la voix démarre avec le greeting "Bonjour. Je suis Alex d'UNPRO. Quel problème puis-je vous aider à régler aujourd'hui ?".
-- Sur desktop : si autoplay autorisé, la voix démarre seule. Sinon même CTA.
-- Confirmer dans la console : plus de log `boot:v7:autoplay_blocked_fallback` au premier chargement.
+- Re-run `security--run_security_scan` to confirm error count drops to 0
+- Spot-check each table with anon + authenticated session to confirm no rows leak
 
-# Ce qui n'est PAS modifié
-- Pas de changement aux flux orchestrator, matching, booking.
-- Pas de modification du prompt Alex ni de la logique conversationnelle.
-- Pas de touche au store global, juste à `useAlexBootstrap` et à l'overlay.
+Confirm and I'll execute the migration.
