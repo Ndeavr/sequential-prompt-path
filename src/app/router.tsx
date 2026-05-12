@@ -61,6 +61,9 @@ const LeadPipePagePlombEauCity = lazy(() => import("@/pages/lead-pipe/PagePlombE
 const LeadPipePageTuyauxPlombQuartier = lazy(() => import("@/pages/lead-pipe/PageTuyauxPlombQuartier"));
 const LeadPipePageAdminEmpire = lazy(() => import("@/pages/admin/PageLeadEmpireDashboard"));
 
+// Google Project Audit (admin diagnostic)
+const PageGoogleProjectUsageAudit = lazy(() => import("@/pages/admin/PageGoogleProjectUsageAudit"));
+
 // Calculators
 const PageCalculateurTaxesQuebec = lazy(() => import("@/pages/calculators/PageCalculateurTaxesQuebec"));
 const PageIsRoyalCalculateurTaxes = lazy(() => import("@/pages/calculators/PageIsRoyalCalculateurTaxes"));
@@ -1125,6 +1128,7 @@ export const AppRouter = () => (
         <Route path="/admin/challenge-tracker" element={<ProtectedRoute requiredRole="admin"><PageChallengeTracker /></ProtectedRoute>} />
         <Route path="/admin/email-templates" element={<ProtectedRoute requiredRole="admin"><PageAdminEmailTemplates /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/google-project-audit" element={<ProtectedRoute requiredRole="admin"><PageGoogleProjectUsageAudit /></ProtectedRoute>} />
         <Route path="/admin/omega" element={<ProtectedRoute requiredRole="admin"><PageAdminOmega /></ProtectedRoute>} />
         <Route path="/admin/activation" element={<ProtectedRoute requiredRole="admin"><PageAdminEntrepreneurActivation /></ProtectedRoute>} />
         <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><AdminUsers /></ProtectedRoute>} />
