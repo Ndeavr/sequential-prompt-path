@@ -269,14 +269,7 @@ export default function PageContractorAnalysisLive() {
       {ready && plan && (
         <div className="fixed bottom-0 inset-x-0 border-t border-white/10 bg-[#060B14]/95 backdrop-blur p-4">
           <div className="max-w-2xl mx-auto">
-            <button
-              onClick={() =>
-                navigate(`/fondateur/plans?from=${runId}&plan=${plan}`)}
-              className="w-full rounded-2xl bg-amber-400 text-[#060B14] py-4 text-base font-semibold flex items-center justify-center gap-2 active:scale-[0.99] transition"
-            >
-              Activer mon profil — {formatPrice(1)} aujourd'hui
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            <CheckoutButton runId={runId!} />
             <p className="mt-2 text-center text-[11px] text-white/40">
               Fondateur UNPRO — accès privilégié activé
             </p>
