@@ -8,19 +8,21 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { alexLog } from "../utils/alexDebug";
+import { ALEX_VOICE_BASE, getVoiceConfigFor } from "@/config/alexVoiceConfig";
 
-// LOCKED: Alex master voice — French only (Quebec)
-export const ALEX_PRIMARY_VOICE_ID = "UJCi4DDncuo0VJDSIegj";
+// LOCKED: Alex master voice — single source of truth (alexVoiceConfig).
+export const ALEX_PRIMARY_VOICE_ID = ALEX_VOICE_BASE.voiceId;
 export const ALEX_LANGUAGE = "fr" as const;
 
 export const TTS_TIMEOUT_MS = 8000;
 
+const HOMEOWNER_TUNING = getVoiceConfigFor("homeowner");
 const VOICE_SETTINGS = {
-  stability: 0.5,
-  similarity_boost: 0.75,
-  style: 0.4,
-  use_speaker_boost: true,
-  speed: 1.0,
+  stability: HOMEOWNER_TUNING.stability,
+  similarity_boost: HOMEOWNER_TUNING.similarity_boost,
+  style: HOMEOWNER_TUNING.style,
+  use_speaker_boost: HOMEOWNER_TUNING.use_speaker_boost,
+  speed: HOMEOWNER_TUNING.speed,
 };
 
 let currentAudio: HTMLAudioElement | null = null;
