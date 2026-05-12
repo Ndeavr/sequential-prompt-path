@@ -37,6 +37,9 @@ const PageSMSPipeline = lazy(() => import("@/pages/admin/outbound/PageSMSPipelin
 
 // Contractor Voice-First Landing
 const PageContractorVoiceFirstLanding = lazy(() => import("@/pages/contractor-landing/PageContractorVoiceFirstLanding"));
+// Live Activation Pipeline (isroyal.ca)
+const PageContractorJoinLive = lazy(() => import("@/pages/contractor/PageContractorJoinLive"));
+const PageContractorAnalysisLive = lazy(() => import("@/pages/contractor/PageContractorAnalysisLive"));
 const PageContractorAIGrowth = lazy(() => import("@/pages/contractor-growth/PageContractorAIGrowth"));
 
 // Nuclear Close — Personalized prospect landing
@@ -734,6 +737,10 @@ export const AppRouter = () => (
 
         {/* Contractor AI Activation */}
         <Route path="/activation-ia" element={<LandingContractorAIActivation />} />
+
+        {/* Live Activation Pipeline */}
+        <Route path="/contractor/join" element={<Suspense fallback={<LazyFallback />}><PageContractorJoinLive /></Suspense>} />
+        <Route path="/contractor/analysis" element={<Suspense fallback={<LazyFallback />}><PageContractorAnalysisLive /></Suspense>} />
 
         {/* Contractor Onboarding AIPP Funnel */}
         <Route path="/entrepreneur/join" element={<PageContractorLandingAcquisition />} />
