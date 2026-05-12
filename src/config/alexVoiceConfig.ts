@@ -8,8 +8,9 @@
 export type AlexVoiceMode = "homeowner" | "contractor" | "condo_manager" | "general";
 
 export const ALEX_VOICE_BASE = {
-  voiceId: "UJCi4DDncuo0VJDSIegj", // Charlotte FR — locked
+  voiceId: "or4EV8aZq78KWcXw48wd", // Alex premium concierge — locked
   modelId: "eleven_multilingual_v2",
+  outputFormat: "mp3_44100_128",
 } as const;
 
 export interface AlexVoiceTuning {
@@ -23,21 +24,22 @@ export interface AlexVoiceTuning {
   promptAddendum?: string;
 }
 
-const HOMEOWNER: AlexVoiceTuning = {
-  stability: 0.68,
-  similarity_boost: 0.84,
-  style: 0.22,
+// Production tuning — premium concierge, slightly faster than human, emotionally adaptive.
+const BASE_TUNING = {
+  stability: 0.48,
+  similarity_boost: 0.78,
+  style: 0.28,
   use_speaker_boost: true,
   speed: 1.05,
+} as const;
+
+const HOMEOWNER: AlexVoiceTuning = {
+  ...BASE_TUNING,
   firstMessage: "Bonjour. Je suis Alex d'Un Pro. Quel problème puis-je vous aider à régler aujourd'hui?",
 };
 
 const CONTRACTOR: AlexVoiceTuning = {
-  stability: 0.65,
-  similarity_boost: 0.82,
-  style: 0.26,
-  use_speaker_boost: true,
-  speed: 1.06,
+  ...BASE_TUNING,
   firstMessage: "Bonjour. Je suis Alex d'Un Pro. Voyons ensemble comment faire évoluer votre entreprise.",
   promptAddendum:
     "Tu es conseillère stratégique calme et posée pour entrepreneurs. Confiance professionnelle, chaleur subtile. Jamais excitée, jamais bubbly, jamais théâtrale. Pose une seule question à la fois et avance vers la valeur.",
