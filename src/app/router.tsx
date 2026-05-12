@@ -40,6 +40,7 @@ const PageContractorVoiceFirstLanding = lazy(() => import("@/pages/contractor-la
 // Live Activation Pipeline (isroyal.ca)
 const PageContractorJoinLive = lazy(() => import("@/pages/contractor/PageContractorJoinLive"));
 const PageContractorAnalysisLive = lazy(() => import("@/pages/contractor/PageContractorAnalysisLive"));
+const PageContractorActivated = lazy(() => import("@/pages/contractor/PageContractorActivated"));
 const PageContractorAIGrowth = lazy(() => import("@/pages/contractor-growth/PageContractorAIGrowth"));
 
 // Nuclear Close — Personalized prospect landing
