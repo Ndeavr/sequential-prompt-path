@@ -745,6 +745,7 @@ export const AppRouter = () => (
         {/* Live Activation Pipeline */}
         <Route path="/contractor/join" element={<Suspense fallback={<LazyFallback />}><PageContractorJoinLive /></Suspense>} />
         <Route path="/contractor/analysis" element={<Suspense fallback={<LazyFallback />}><PageContractorAnalysisLive /></Suspense>} />
+        <Route path="/contractor/activated" element={<Suspense fallback={<LazyFallback />}><PageContractorActivated /></Suspense>} />
 
         {/* Contractor Onboarding AIPP Funnel */}
         <Route path="/entrepreneur/join" element={<PageContractorLandingAcquisition />} />
