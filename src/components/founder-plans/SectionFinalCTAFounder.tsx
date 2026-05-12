@@ -76,8 +76,9 @@ export default function SectionFinalCTAFounder({ elite, signature }: Props) {
           transition={{ delay: 0.2 }}
           className="flex flex-col gap-3"
         >
-          <Button variant="premium" size="xl" onClick={scrollToPlans} className="w-full">
-            <Crown className="h-4 w-4" /> Réserver maintenant
+          <Button variant="premium" size="xl" onClick={handleReserve} disabled={busy} className="w-full">
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
+            {busy ? "Redirection…" : "Réserver maintenant"}
           </Button>
           <Button variant="outline" size="lg" asChild className="w-full">
             <a href="/alex">
