@@ -1,195 +1,80 @@
-# UNPRO Live Activation Pipeline — isroyal.ca
+# Activation Live — 3 correctifs critiques
 
-End-to-end production pipeline that takes a domain at `/contractor/join`, extracts real data, scores it, recommends a plan, auto-applies the FOUNDER-1 promo to bring total to $1, runs live Stripe checkout, and activates the contractor profile. No mocks. Reuses existing UNPRO infrastructure where it exists; only adds what is missing.
+## 1. Score AIPP réel (actuellement 0/100)
 
-## What already exists (reused, not rebuilt)
+**Cause**: dans `supabase/functions/activation-pipeline-start/index.ts`, la fonction `score5()` cherche des clés (`has_https`, `has_h1`, `phone`, `address`, `logo_url`, `services_count`…) qui n'existent pas dans `signals`. La fonction `aipp-real-scan` retourne en réalité : `has_ssl`, `has_logo`, `has_reviews`, `phones_found[]`, `emails_found[]`, `description`, `title`, `social_links{}`, `links_count`, `has_jsonld`… → tous les buckets = 0.
 
-- Firecrawl edge functions for scraping/enrichment (AIPP real-scan engine)
-- AIPP Real Scoring Engine (37-signal, 5-bucket deterministic)
-- Contractor activation funnel (`contractor_activation_funnel`, 9 screens, routes under `/entrepreneur/activer/...`)
-- Native Stripe checkout (Payment Element, fr-CA, edge-calculated taxes)
-- Coupon Management System (internal + Stripe sync)
-- Founder availability checker (slot scarcity)
-- Alex voice (Charlotte FR, Concierge Décisif)
-- Admin Operations Hub (`/admin/operations`)
-- Outbound + Sniper command centers
+**Correctif**: réécrire `score5()` pour mapper les vraies clés produites par `aipp-real-scan`. Exemple :
+- web (20): `has_ssl`, `title`/`description` non vides, `has_logo`, `links_count > 5`, `has_jsonld`
+- google (20): `phones_found.length`, `emails_found.length`, `address`/`city` détectés
+- trust (20): `rbq_number`, `neq`, `has_reviews`, `years_in_business`
+- ai_visibility (25): `has_jsonld`, `has_faq`, services détectés, `has_about`
+- conversion (15): CTA détecté, téléphone cliquable, `mobile_friendly`
 
-## What is missing (this plan builds it)
+Vérifié sur `isroyal.ca` : signaux SSL+logo+reviews+phones+emails+description présents → score doit remonter à ~50–65.
 
-A thin **live activation orchestration layer** on top of the above, plus a single-input contractor entry point and a unified live analysis page.
+## 2. « Vérifier maintenant » non fonctionnel
 
----
+**Cause**: `TagInput` exige un clic dans le menu déroulant. L'utilisateur tape "isolation"/"Terrebonne" mais aucun chip n'est créé → `categoryTags=[]` → bouton désactivé/inactif.
 
-## Phase 1 — Entry point + domain normalization
+**Correctif** dans `src/components/founder-plans/TagInput.tsx` :
+- Touche **Enter** (et virgule) → sélectionne automatiquement la 1ʳᵉ suggestion filtrée
+- Touche **Tab** → idem
+- Si aucune suggestion mais texte tapé → fallback en chip libre (slug = slugify(query))
+- Au blur, si une seule suggestion correspond exactement → l'ajouter automatiquement
 
-**Route:** `/contractor/join` (already partially exists as `/entrepreneur/join`). Add a hardened single-input variant.
+Pas de changement au RPC `check_territory_availability`.
 
-- New page `src/pages/contractor/JoinLive.tsx` mounted at `/contractor/join`.
-- Single field: domain / website / RBQ / NEQ / phone / business name (reuses `detectInputKind` from `src/config/contractorOnboarding.ts`).
-- On submit:
-  - Normalize domain (strip `https://`, `www.`, trailing slash, lowercase).
-  - Create `contractor_onboarding_sessions` row.
-  - Navigate to `/contractor/analysis?session=<id>` immediately (no extra click).
-  - Kick off extraction via `invoke('activation-pipeline-start', { session_id, domain })`.
+## 3. « Activer mon profil — 1 $ » / « Réserver » → vrai paiement Stripe
 
-## Phase 2 — Extraction Engine (real, resumable, failsafe)
+**Cause**: 
+- Bouton sur `/contractor/analysis` navigue vers `/fondateur/plans?from=...` au lieu d'ouvrir un checkout.
+- Bouton « Réserver maintenant » sur la landing fondateur scroll vers `#plans` au lieu d'ouvrir le checkout.
 
-**New edge function:** `supabase/functions/activation-pipeline-start/index.ts`
+**Correctif**:
 
-Orchestrates 17 extraction modules in parallel batches. Wraps each in `try/catch`; failure of any single module marks `partial_confidence=true` but never aborts the pipeline. Writes raw outputs to `contractor_imports.raw_json` and structured fields to `contractor_assets` / `contractor_signals`.
+a) Nouvel edge function `activation-create-checkout` :
+- Entrée : `{ run_id }`
+- Charge le `activation_pipeline_runs.recommended_plan` + extraction (domain, business_name, email)
+- Crée une Stripe Checkout Session **mode=payment**, ligne unique price_data 100 ¢ CAD « Activation Fondateur UNPRO — {plan} »
+- `customer_email` = email extrait (sinon laisse Stripe collecter)
+- Métadonnées : `run_id`, `plan`, `domain`, `aipp_score`
+- `success_url`: `/contractor/activated?session={CHECKOUT_SESSION_ID}&run={run_id}`
+- `cancel_url`: `/contractor/analysis?run={run_id}`
+- Aucune auth requise (guest checkout) — service role pour lire le run.
 
-Modules (reusing existing Firecrawl wrappers where present):
-1. Website scrape (Firecrawl `scrape` markdown+html+links)
-2. Metadata + JSON-LD parse
-3. Logo detect (Firecrawl `branding` format)
-4. Phone / email / address regex
-5. Service + city extraction (LLM via Lovable AI Gateway, gemini-2.5-flash)
-6. CTA + trust signals
-7. Page speed (PSI API if key present, else heuristic)
-8. SEO (h1/h2/meta/schema)
-9. Mobile heuristics (viewport, tap targets)
-10. Screenshot (Firecrawl `screenshot`)
-11. Social links
-12. Review extractor (GMB if available, else page parse)
-13. RBQ / NEQ lookup if detected
-14. Indexing check (`site:` heuristic)
-15. Internal linking graph (from `links` format)
-16. AI visibility (FAQ, schema quality)
-17. Conversion friction signals
+b) Edge function `activation-confirm` (appelée sur la page `/contractor/activated`) :
+- Vérifie `stripe.checkout.sessions.retrieve(session_id).payment_status === 'paid'`
+- Met à jour `activation_pipeline_runs.pipeline_status='activated'` + crée/active le profil entrepreneur (`contractors` row, `is_founder=true`, `founder_plan=plan`)
+- Insère un event `system_events` (`type='contractor_activated'`)
 
-Realtime: enable on `contractor_imports`, `contractor_analysis` so the analysis page streams progress.
+c) Page `src/pages/contractor/PageContractorActivated.tsx` (nouvelle) :
+- Loader → appelle `activation-confirm` → confirmation visuelle + CTA « Compléter mon profil » vers `/pro/onboarding?run=...`
 
-## Phase 3 — AIPP scoring
+d) Wiring UI :
+- `PageContractorAnalysisLive.tsx` : remplacer `navigate('/fondateur/plans?...')` par `supabase.functions.invoke('activation-create-checkout', { body: { run_id }})` puis `window.location.href = data.url` (nouvelle session Stripe).
+- `SectionFinalCTAFounder.tsx` : « Réserver maintenant » → si `?from=<runId>` présent dans l'URL, lance le même checkout ; sinon scroll plans (comportement actuel pour le parcours non-pipeline).
 
-**Edge function:** `supabase/functions/activation-pipeline-score/index.ts`
+## 4. Routes & Database
 
-Calls existing AIPP Real Scoring Engine on the extracted data. Writes to `contractor_analysis` with all 5 buckets + `final_aipp_score`, `monthly_revenue_estimation`, `missed_revenue_estimation`, `generated_summary` (Gemini 2.5 Flash, fr-CA).
+- Ajouter route `/contractor/activated` dans `src/app/router.tsx`.
+- Migration : ajouter colonnes à `activation_pipeline_runs` si absentes : `stripe_session_id text`, `activated_at timestamptz`, `contractor_id uuid`. Status `'activated'` autorisé.
 
-## Phase 4 — Plan recommendation
+## 5. Validation live
 
-**Edge function:** `supabase/functions/activation-pipeline-recommend/index.ts`
+1. `isroyal.ca` → score ≥ 40, plan recommandé.
+2. Vérifier maintenant avec « isolation » + Enter, « Terrebonne » + Enter → résultats.
+3. Bouton « Activer mon profil — 1 $ » → ouvre Stripe Checkout réel à 1,00 $ CAD.
+4. Paiement test → redirection `/contractor/activated` → run.status=`activated`, contractor créé.
 
-Reuses existing `compute-plan-recommendation` logic. Inputs: maturity, reviews, capacity, city competition (from `useDemandGrid`). Output → `contractor_plan_suggestions`.
+## Files touched
 
-## Phase 5 — Live analysis page
-
-**Route:** `/contractor/analysis` — `src/pages/contractor/AnalysisLive.tsx`
-
-Premium dark UI (existing `landing-warm` is for public pages — this is the cinematic dark `#060B14` per project rules).
-
-Sections, all driven by realtime subscriptions on the session's three tables:
-1. Live extraction feed (per-module status, shimmer)
-2. Website screenshot panel
-3. AIPP score orb (uses existing `useScoreRevealEngine`)
-4. Weakness cards (top 3 from `contractor_analysis`)
-5. Revenue opportunity panel (missed_revenue_estimation in `formatPrice` — `3 000 $` not `3k$`)
-6. Plan recommendation card (existing `CardPlanComparisonInline`)
-7. Sticky CTA: **"Activer mon profil — 1 $ aujourd'hui"**
-
-## Phase 6 — Founder promo auto-apply ($1 checkout)
-
-**Edge function:** `supabase/functions/activation-pipeline-checkout/index.ts`
-
-- Reads `founder_slots` via existing availability checker.
-- If slots remain, auto-applies `FOUNDER-1` coupon (creates it in Stripe via existing Coupon Management if not present).
-- Builds Payment Intent with `price_data` injection (existing combined-billing-logic) so total renders as **1,00 $** in Payment Element.
-- UI badge: "Fondateur UNPRO — accès privilégié activé". No manual coupon field.
-- Returns `client_secret` using resilient extraction (per existing checkout-reliability memory).
-
-## Phase 7 — Activation on payment success
-
-**Edge function:** `supabase/functions/activation-pipeline-activate/index.ts` (called from Stripe webhook + client confirmation as fallback)
-
-On `payment_intent.succeeded`:
-1. Create/upgrade `contractors` row from extracted data (respect contractor identity resolution — never overwrite human-validated fields).
-2. Generate slug, bio, hero, FAQ, schema (Gemini 2.5 Flash, fr-CA).
-3. Publish `/pro/:slug` (already routed).
-4. Mark `contractor_onboarding_sessions.activated=true`.
-5. Insert `system_events` row (`alex_handoff`, `activation`).
-6. Trigger Alex auto-start handoff to `/contractor/welcome` with the existing Charlotte voice script (calm premium concierge, not enthusiastic — per the recent voice hotfix memory).
-7. Send admin notification (existing outbound email infra).
-
-## Phase 8 — Admin Live Activation Center
-
-**Route:** `/admin/activation-live` — new tab inside existing `/admin/operations` shell.
-
-Realtime panels:
-- Imports running / failed / partial
-- Stripe events feed
-- Activations today
-- AIPP score distribution
-- Per-step retry buttons (`activation-pipeline-retry-step` edge fn)
-- Raw logs drawer
-
-## Database migrations
-
-```sql
-create table public.contractor_onboarding_sessions (...);
-create table public.contractor_imports (...);
--- contractor_analysis: extend if exists, else create
--- contractor_plan_suggestions: extend if exists, else create
-create table public.contractor_assets (...);
-create table public.contractor_signals (...);
--- RLS: owner-only writes via service role, public read on activated profile only
--- Realtime: alter publication supabase_realtime add table ...
-```
-
-All policies follow existing UNPRO patterns (SECURITY INVOKER for public views, `has_role(auth.uid(),'admin')`).
-
-## Failsafe rules (enforced in every edge function)
-
-- Every external call wrapped, errors logged to `system_events`, pipeline continues.
-- Partial failure → `partial_confidence=true` flag surfaced as small badge in UI, never blocks CTA.
-- Every step idempotent + resumable via `session_id`.
-- `Pipeline must NEVER stop completely`.
-
-## UI / formatting rules (project memory)
-
-- Cinematic dark `#060B14` for `/contractor/*` (app surface, not public landing).
-- All money via `src/lib/formatPrice.ts` → `1 599,00 $`, never `1.6k$`.
-- "Rendez-vous qualifiés" wording — never "leads" / "opportunités".
-- Mobile-first, edge-to-edge, 60fps.
-- Alex voice = Charlotte, calm premium concierge (no cartoon energy).
-
-## Files to create
-
-```
-src/pages/contractor/JoinLive.tsx
-src/pages/contractor/AnalysisLive.tsx
-src/pages/contractor/WelcomeLive.tsx
-src/pages/admin/ActivationLiveCenter.tsx
-src/services/extractionEngine.ts          (client orchestration helpers)
-src/services/aippEngine.ts                (client wrapper)
-src/services/planRecommendationEngine.ts  (client wrapper)
-src/services/stripeLiveCheckout.ts        (client wrapper)
-src/hooks/useActivationPipeline.ts        (realtime session state)
-supabase/functions/activation-pipeline-start/index.ts
-supabase/functions/activation-pipeline-score/index.ts
-supabase/functions/activation-pipeline-recommend/index.ts
-supabase/functions/activation-pipeline-checkout/index.ts
-supabase/functions/activation-pipeline-activate/index.ts
-supabase/functions/activation-pipeline-retry-step/index.ts
-supabase/migrations/<ts>_activation_pipeline.sql
-```
-
-## Files to touch
-
-- `src/app/App.tsx` — add 4 routes
-- `src/config/routesConfig.ts`
-- Admin sidebar → add "Activation Live"
-
-## Out of scope
-
-- Rebuilding AIPP scoring (reuse)
-- Rebuilding Stripe checkout component (reuse)
-- Voice persona changes (reuse Charlotte)
-- Outbound / sniper changes
-- Mobile perf optimization (separate plan)
-
-## Success criteria
-
-Submitting `isroyal.ca` at `/contractor/join` results in: live extraction streamed within 2 s, AIPP score rendered, plan recommended, FOUNDER-1 auto-applied, Stripe Payment Element shows **1,00 $**, payment succeeds, `/pro/isroyal` is publicly reachable, Alex greets the contractor, and the activation appears in `/admin/activation-live` — all without a single mock value.
-
-## End-to-end live test
-
-After build, run pipeline against `https://isroyal.ca` and capture: session id, extraction completion %, AIPP score, recommended plan, Stripe payment intent id, activated slug, Alex handoff event id. Report in chat.
+- `supabase/functions/activation-pipeline-start/index.ts` (réécriture `score5`)
+- `supabase/functions/activation-create-checkout/index.ts` (nouveau)
+- `supabase/functions/activation-confirm/index.ts` (nouveau)
+- `supabase/migrations/<ts>_activation_checkout.sql`
+- `src/components/founder-plans/TagInput.tsx` (Enter/Tab/blur)
+- `src/components/founder-plans/SectionFinalCTAFounder.tsx` (run-aware CTA)
+- `src/pages/contractor/PageContractorAnalysisLive.tsx` (CTA → checkout)
+- `src/pages/contractor/PageContractorActivated.tsx` (nouveau)
+- `src/app/router.tsx` (route)
