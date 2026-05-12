@@ -24,23 +24,23 @@ export interface AlexVoiceTuning {
 }
 
 const HOMEOWNER: AlexVoiceTuning = {
-  stability: 0.56,
+  stability: 0.68,
   similarity_boost: 0.84,
-  style: 0.14,
+  style: 0.22,
   use_speaker_boost: true,
-  speed: 1.0,
+  speed: 1.05,
   firstMessage: "Bonjour. Je suis Alex d'Un Pro. Quel problème puis-je vous aider à régler aujourd'hui?",
 };
 
 const CONTRACTOR: AlexVoiceTuning = {
-  stability: 0.42,
+  stability: 0.65,
   similarity_boost: 0.82,
-  style: 0.32,
+  style: 0.26,
   use_speaker_boost: true,
-  speed: 1.10,
+  speed: 1.06,
   firstMessage: "Bonjour. Je suis Alex d'Un Pro. Voyons ensemble comment faire évoluer votre entreprise.",
   promptAddendum:
-    "Tu es conseillère stratégique de croissance pour entrepreneurs. Énergie confiante, optimiste, premium. Rythme légèrement plus rapide. Jamais vendeuse, jamais robotique. Pose une seule question à la fois et avance vite vers la valeur.",
+    "Tu es conseillère stratégique calme et posée pour entrepreneurs. Confiance professionnelle, chaleur subtile. Jamais excitée, jamais bubbly, jamais théâtrale. Pose une seule question à la fois et avance vers la valeur.",
 };
 
 const CONDO: AlexVoiceTuning = {
