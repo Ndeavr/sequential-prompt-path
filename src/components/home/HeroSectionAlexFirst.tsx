@@ -79,8 +79,10 @@ export default function HeroSectionAlexFirst() {
       setUploadModalOpen(true);
       return;
     }
-    openAlex(chip.preset);
-  }, [openAlex]);
+    interactedRef.current = true;
+    // Pills now open Alex voice + text overlay together with the preset as context
+    openVoice(`homepage_intent_${chip.id}`, chip.preset || chip.label);
+  }, [openVoice]);
 
   const onSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
