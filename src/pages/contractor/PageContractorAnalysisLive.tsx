@@ -59,14 +59,33 @@ export default function PageContractorAnalysisLive() {
     if (!runId) return;
 
     let active = true;
-    supabase
-      .from("activation_pipeline_runs")
-      .select("*")
-      .eq("id", runId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (active && data) setRun(data as unknown as RunRow);
-      });
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+    const fetchRun = async () => {
+      const { data, error } = await supabase
+        .from("activation_pipeline_runs")
+        .select("*")
+        .eq("id", runId)
+        .maybeSingle();
+      if (!active) return;
+      if (error) {
+        console.warn("[analysis-live] fetch error", error);
+        return;
+      }
+      if (data) {
+        setRun(data as unknown as RunRow);
+        const status = (data as { pipeline_status?: string }).pipeline_status;
+        if ((status === "ready" || status === "failed") && pollTimer) {
+          clearInterval(pollTimer);
+          pollTimer = null;
+        }
+      }
+    };
+
+    // Immediate fetch + polling fallback (every 2s) so the UI always catches up
+    // even if the realtime channel drops the update.
+    fetchRun();
+    pollTimer = setInterval(fetchRun, 2000);
 
     const channel = supabase
       .channel(`activation_run_${runId}`)
@@ -84,6 +103,7 @@ export default function PageContractorAnalysisLive() {
 
     return () => {
       active = false;
+      if (pollTimer) clearInterval(pollTimer);
       supabase.removeChannel(channel);
     };
   }, [runId]);
