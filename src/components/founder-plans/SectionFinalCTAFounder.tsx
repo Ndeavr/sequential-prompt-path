@@ -1,9 +1,11 @@
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Crown, MessageCircle } from "lucide-react";
+import { Crown, MessageCircle, Loader2 } from "lucide-react";
 import type { FounderPlan } from "@/hooks/useFounderPlans";
 import CounterLiveSpots from "./CounterLiveSpots";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   elite?: FounderPlan;
@@ -12,8 +14,29 @@ interface Props {
 
 export default function SectionFinalCTAFounder({ elite, signature }: Props) {
   const totalRemaining = (elite?.spots_remaining ?? 30) + (signature?.spots_remaining ?? 30);
+  const [busy, setBusy] = useState(false);
 
-  const scrollToPlans = () => {
+  const handleReserve = async () => {
+    const params = new URLSearchParams(window.location.search);
+    const runId = params.get("from") ?? params.get("run");
+    if (runId) {
+      setBusy(true);
+      try {
+        const { data, error } = await supabase.functions.invoke(
+          "activation-create-checkout",
+          { body: { run_id: runId } },
+        );
+        if (error) throw error;
+        const url = (data as { url?: string })?.url;
+        if (url) {
+          window.location.href = url;
+          return;
+        }
+      } catch (e) {
+        console.warn("[founder-final-cta] checkout failed", e);
+      }
+      setBusy(false);
+    }
     document.getElementById("plans")?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -53,8 +76,9 @@ export default function SectionFinalCTAFounder({ elite, signature }: Props) {
           transition={{ delay: 0.2 }}
           className="flex flex-col gap-3"
         >
-          <Button variant="premium" size="xl" onClick={scrollToPlans} className="w-full">
-            <Crown className="h-4 w-4" /> Réserver maintenant
+          <Button variant="premium" size="xl" onClick={handleReserve} disabled={busy} className="w-full">
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
+            {busy ? "Redirection…" : "Réserver maintenant"}
           </Button>
           <Button variant="outline" size="lg" asChild className="w-full">
             <a href="/alex">

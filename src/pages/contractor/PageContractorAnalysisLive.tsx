@@ -269,14 +269,7 @@ export default function PageContractorAnalysisLive() {
       {ready && plan && (
         <div className="fixed bottom-0 inset-x-0 border-t border-white/10 bg-[#060B14]/95 backdrop-blur p-4">
           <div className="max-w-2xl mx-auto">
-            <button
-              onClick={() =>
-                navigate(`/fondateur/plans?from=${runId}&plan=${plan}`)}
-              className="w-full rounded-2xl bg-amber-400 text-[#060B14] py-4 text-base font-semibold flex items-center justify-center gap-2 active:scale-[0.99] transition"
-            >
-              Activer mon profil — {formatPrice(1)} aujourd'hui
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            <CheckoutButton runId={runId!} />
             <p className="mt-2 text-center text-[11px] text-white/40">
               Fondateur UNPRO — accès privilégié activé
             </p>
@@ -284,5 +277,41 @@ export default function PageContractorAnalysisLive() {
         </div>
       )}
     </main>
+  );
+}
+
+function CheckoutButton({ runId }: { runId: string }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const handle = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "activation-create-checkout",
+        { body: { run_id: runId } },
+      );
+      if (error) throw error;
+      const url = (data as { url?: string })?.url;
+      if (!url) throw new Error("Lien de paiement manquant.");
+      window.location.href = url;
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Erreur de paiement.");
+      setBusy(false);
+    }
+  };
+  return (
+    <>
+      <button
+        onClick={handle}
+        disabled={busy}
+        className="w-full rounded-2xl bg-amber-400 text-[#060B14] py-4 text-base font-semibold flex items-center justify-center gap-2 active:scale-[0.99] transition disabled:opacity-60"
+      >
+        {busy
+          ? <><Loader2 className="w-4 h-4 animate-spin" />Redirection vers le paiement…</>
+          : <>Activer mon profil — 1,00 $ aujourd'hui <ArrowRight className="w-4 h-4" /></>}
+      </button>
+      {err && <p className="mt-2 text-center text-xs text-red-400">{err}</p>}
+    </>
   );
 }

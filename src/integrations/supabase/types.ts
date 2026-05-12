@@ -870,6 +870,7 @@ export type Database = {
           screenshot_url: string | null
           signals: Json
           stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
           updated_at: string
           user_id: string | null
         }
@@ -893,6 +894,7 @@ export type Database = {
           screenshot_url?: string | null
           signals?: Json
           stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -916,6 +918,7 @@ export type Database = {
           screenshot_url?: string | null
           signals?: Json
           stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
