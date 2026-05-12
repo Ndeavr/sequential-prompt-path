@@ -54,6 +54,35 @@ export default function TagInput({ tags, onTagsChange, suggestions, onSearch, pl
 
   const filtered = suggestions.filter((s) => !tags.some((t) => t.slug === s.slug));
 
+  const slugify = (q: string) =>
+    q.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+  const commitFromQuery = () => {
+    const q = query.trim();
+    if (!q) return;
+    if (filtered.length > 0) {
+      addTag(filtered[0]);
+      return;
+    }
+    const slug = slugify(q);
+    if (!slug || tags.some((t) => t.slug === slug)) return;
+    onTagsChange([...tags, { slug, label: q }]);
+    setQuery("");
+    setOpen(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
+      if (query.trim()) {
+        e.preventDefault();
+        commitFromQuery();
+      }
+    } else if (e.key === "Backspace" && !query && tags.length > 0) {
+      removeTag(tags[tags.length - 1].slug);
+    }
+  };
+
   return (
     <div ref={containerRef} className="relative">
       <div className="flex flex-wrap items-center gap-1.5 min-h-[42px] rounded-md border border-input bg-background px-3 py-1.5 focus-within:ring-2 focus-within:ring-ring">
@@ -70,6 +99,8 @@ export default function TagInput({ tags, onTagsChange, suggestions, onSearch, pl
             ref={inputRef}
             value={query}
             onChange={(e) => handleInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={() => { setTimeout(() => commitFromQuery(), 150); }}
             onFocus={() => { if (query.length > 0) setOpen(true); }}
             placeholder={tags.length === 0 ? placeholder : "Ajouter..."}
             className="flex-1 min-w-[120px] bg-transparent outline-none text-sm placeholder:text-muted-foreground"
