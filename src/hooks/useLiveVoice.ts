@@ -7,7 +7,7 @@ import { useConversation } from "@elevenlabs/react";
 import { supabase } from "@/integrations/supabase/client";
 import { AlexLanguageLockSession, type AlexLanguage } from "@/services/alexLanguageLock";
 import { ALEX_VOICE_DEFAULTS } from "@/features/alex/voice/alexAgentOverrides";
-import { loadAlexMemory, buildMemoryContextHint } from "@/features/alex/voice/alexSessionMemory";
+import { loadAlexMemory } from "@/features/alex/voice/alexSessionMemory";
 import { alexVoiceService } from "@/services/alexVoiceService";
 import { logBoot, withTimeout } from "@/lib/bootDebug";
 
