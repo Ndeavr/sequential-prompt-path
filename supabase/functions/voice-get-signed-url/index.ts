@@ -17,9 +17,22 @@ const corsHeaders = {
 };
 
 // In-process cache (per worker instance) — 60s TTL on active config.
+// Only cache rows that have a real voice_id, otherwise we lock in null forever.
 const CACHE_TTL_MS = 60_000;
 let cachedConfig: any = null;
 let cachedAt = 0;
+
+async function fetchConversationToken(apiKey: string, agentId: string): Promise<string | null> {
+  try {
+    const r = await fetch(
+      `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${agentId}`,
+      { headers: { "xi-api-key": apiKey } },
+    );
+    if (!r.ok) return null;
+    const j = await r.json().catch(() => null);
+    return j?.token ?? null;
+  } catch { return null; }
+}
 
 interface VoiceConfigRow {
   agent_id: string | null;
@@ -70,7 +83,7 @@ async function loadConfig(environment: string): Promise<VoiceConfigRow | null> {
       .eq("environment", environment)
       .eq("status", "active")
       .single();
-    if (data) {
+    if (data && data.voice_id) {
       cachedConfig = data;
       cachedAt = now;
     }
@@ -101,20 +114,13 @@ serve(async (req) => {
   const body = await req.json().catch(() => ({}));
   const environment = body?.environment || "prod";
 
-  // ─── HOT PATH: Use cached config if available ───
-  let config = (Date.now() - cachedAt < CACHE_TTL_MS) ? cachedConfig : null;
-  let configAgentId = config?.agent_id || Deno.env.get("ELEVENLABS_AGENT_ID");
-
-  if (!config && !configAgentId) {
-    // No cache, no env var — must wait on DB.
+  // ─── HOT PATH: Use cached config if available (only when we already have a voice_id) ───
+  let config = (Date.now() - cachedAt < CACHE_TTL_MS && cachedConfig?.voice_id) ? cachedConfig : null;
+  if (!config) {
+    // Always wait on DB if we don't have a usable cached row.
     config = await loadConfig(environment);
-    configAgentId = config?.agent_id || Deno.env.get("ELEVENLABS_AGENT_ID");
-  } else {
-    // Refresh cache async in background (non-blocking).
-    if (Date.now() - cachedAt >= CACHE_TTL_MS) {
-      loadConfig(environment).catch(() => {});
-    }
   }
+  let configAgentId = config?.agent_id || Deno.env.get("ELEVENLABS_AGENT_ID");
 
   if (!configAgentId) {
     return new Response(
@@ -182,10 +188,14 @@ serve(async (req) => {
 
   const data = await response.json();
 
+  // Fetch a WebRTC conversation token in parallel-friendly fashion (non-fatal if it fails).
+  const conversationToken = await fetchConversationToken(ELEVENLABS_API_KEY, resolvedAgentId);
+
   return new Response(
     JSON.stringify({
       signed_url: data.signed_url,
       signedUrl: data.signed_url,
+      conversationToken,
       agentId: resolvedAgentId,
       voiceId: config?.voice_id || null,
       languageDefault: config?.language_default || "fr",

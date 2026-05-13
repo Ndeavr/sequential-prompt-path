@@ -1,95 +1,65 @@
-A — PROMPT LOVABLE FINAL
+## Diagnosis
 
-1. CONTEXT
-UNPRO doit présenter Alex comme une expérience voice-first fiable. Les captures montrent trois problèmes immédiats : Alex tombe en mode chat, le CTA “Je suis un entrepreneur” est trop haut, et les pills ouvrent seulement le chat texte au lieu d’ouvrir une expérience voix + texte.
+Voice opens, fails to deliver first audio in 6.5s, then bails to chat fallback. From inspection:
 
-2. OBJECTIVE
-Implémenter un correctif ciblé qui :
-- Stabilise le démarrage vocal Alex sans fallback prématuré.
-- Augmente l’enthousiasme/persona d’Alex de 15% dans le contexte envoyé au moteur vocal.
-- Descend visuellement “Je suis un entrepreneur” sur mobile.
-- Fait ouvrir Alex Voice + transcript texte lorsqu’un utilisateur presse une pill comme “Problème urgent”.
+- `voice-get-signed-url` returns a WSS signed URL successfully (verified live), but `voiceId` comes back `null` and `fallbackUsed: true` — the DB row exists but is being read as null in the hot path, and the env `ELEVENLABS_AGENT_ID` doesn't match the active agent.
+- `useLiveVoice.start()` calls `conversation.startSession({ signedUrl, connectionType: "websocket" })` and never sends any greeting override. If the ElevenLabs agent has no configured first message, the WS connects but never produces audio → 6.5s timer expires → fallback chat opens with the "Activer la voix" prompt.
+- Tapping "Activer la voix" reopens the overlay, repeats the same path, and falls back again — so it looks like nothing happens.
 
-3. USERS
-- Propriétaire mobile sur unpro.ca
-- Entrepreneur qui arrive depuis la homepage
-- Utilisateur urgent qui clique une pill et veut parler immédiatement
+Mobile latency + WebSocket connection type also makes the cold start fragile compared to WebRTC, which is the ElevenLabs-recommended path.
 
-4. DELIVERABLES
-- Patch `HeroSectionAlexFirst` pour déplacer le CTA entrepreneur plus bas et déclencher Alex voix + texte depuis les pills.
-- Patch `useLiveVoice` pour rendre le boot plus robuste : token avec payload, timeout plus réaliste, WebRTC token prioritaire si disponible, WebSocket fallback conservé.
-- Patch `voice-get-signed-url` pour retourner aussi un `conversationToken` utilisable en WebRTC, tout en conservant `signedUrl`.
-- Patch `OverlayAlexVoiceFullScreen` pour éviter le fallback chat trop agressif avant le premier audio et transmettre le contexte de la pill dans le greeting.
+## Goal
 
-5. LOGIC
-- Au clic d’une pill non-photo :
-  - Stocker le preset dans le transcript texte.
-  - Ouvrir le locked voice overlay.
-  - Passer le preset comme `contextHint` pour que le premier échange d’Alex parte directement sur le sujet.
-  - Garder le transcript texte visible dans l’overlay voix.
-- Pour “Téléverser une photo”, conserver le comportement photo.
-- Pour “Je suis un entrepreneur”, conserver la navigation entrepreneur, mais descendre le bouton après les pills sur mobile.
+Voice starts on first try, on mobile, every time, when the user taps a pill or "Activer la voix". No more silent fallback.
 
-6. DATA
-- Aucun changement de table requis.
-- Aucun secret exposé.
-- Edge function existante `voice-get-signed-url` mise à jour pour retourner deux credentials : `conversationToken` + `signedUrl`.
-- Logs existants `voice_runtime_logs` conservés.
+## Plan
 
-7. UI/UX
-- Mobile-first.
-- CTA entrepreneur repositionné sous les pills avec marge plus naturelle.
-- Pills deviennent de vrais déclencheurs conversationnels : action immédiate, pas de sheet texte isolée.
-- Overlay voix conserve transcript texte pour confirmer ce que l’utilisateur a sélectionné.
-- Fallback chat reste disponible, mais ne s’active plus trop tôt pendant le cold start.
+### 1. Edge function: serve a WebRTC conversation token (preferred) + keep signed URL as fallback
 
-8. COMPONENTS
-- `HeroSectionAlexFirst`
-  - Créer `openAlexFromIntent(chip)`.
-  - Pour les pills, appeler `openVoice("homepage_intent_<id>", chip.preset)` et ouvrir la surface texte/transcript.
-  - Déplacer le bloc entrepreneur après le groupe de pills sur mobile avec espacement contrôlé.
-- `OverlayAlexVoiceFullScreen`
-  - Injecter `contextHint` comme premier transcript utilisateur local si présent.
-  - Construire un greeting plus énergique : confiance + urgence douce + une seule question.
-  - Détendre le watchdog premier audio.
-- `useLiveVoice`
-  - Appeler `voice-get-signed-url` avec `{ environment: "prod" }`.
-  - Utiliser `conversationToken` + `connectionType: "webrtc"` si disponible.
-  - Basculer automatiquement sur `signedUrl` + `websocket` si WebRTC échoue.
-  - Augmenter timeout premier boot pour éviter fallback prématuré sur mobile.
-- `voice-get-signed-url`
-  - Ajouter appel ElevenLabs conversation token.
-  - Retourner `conversationToken` sans casser `signedUrl`.
+Update `supabase/functions/voice-get-signed-url/index.ts`:
 
-9. ACTIONS
-- Refactor `onChipClick` pour ouvrir Alex voice overlay.
-- Preserve `upload_photo` modal.
-- Preserve contractor navigation.
-- Optimize voice credential acquisition.
-- Improve enthusiasm by updating session context lines:
-  - “Énergie: concierge premium + assurance + 15% plus vivante.”
-  - “Ton: chaleureux, décidé, légèrement plus enthousiaste, jamais théâtral.”
-- Validate with console/network signals after implementation.
+- Add a parallel call to ElevenLabs `/v1/convai/conversation/token?agent_id=...` and return both `conversationToken` and `signedUrl`.
+- Always read voice_configs reliably:
+  - Drop the in-process cache when it returns no `voice_id` (current bug — null cached forever).
+  - Fall back to env only when DB explicitly returns no row.
+- Return `{ conversationToken, signedUrl, agentId, voiceId, … }`. Keep `fallback: "chat"` only when API key missing.
 
-10. CONSTRAINTS
-- Ne pas réintroduire les overrides ElevenLabs côté client.
-- Ne pas modifier `src/integrations/supabase/client.ts` ni `types.ts`.
-- Ne pas exposer `ELEVENLABS_API_KEY` côté client.
-- Ne pas transformer UNPRO en “3 soumissions”.
-- Garder Alex en français par défaut.
-- Garder fallback chat disponible, mais seulement après vrais échecs.
+### 2. `useLiveVoice.ts`: prefer WebRTC, fallback to WebSocket, no client overrides
 
-11. SUCCESS
-Terminé quand :
-- Cliquer “Problème urgent” ouvre Alex Voice avec transcript texte visible.
-- Alex reçoit le contexte “J’ai un problème urgent à la maison.”.
-- Le CTA “Je suis un entrepreneur” apparaît plus bas et ne compresse plus les pills.
-- La voix tente WebRTC puis WebSocket avant fallback.
-- Le fallback chat n’apparaît plus immédiatement sur cold start normal.
+- If `data.conversationToken` is present, call:
+  ```ts
+  await conversation.startSession({
+    conversationToken: data.conversationToken,
+    connectionType: "webrtc",
+  });
+  ```
+- Else fall back to `{ signedUrl, connectionType: "websocket" }`.
+- Keep zero client-side overrides (per `voice-connection-stability` memory).
+- Reset `lastDisconnectAtRef` when the user explicitly retries (so "Activer la voix" is never blocked by cooldown).
 
-12. TASKS
-- Implement voice credential resilience.
-- Implement pill-to-voice+text behavior.
-- Move entrepreneur CTA down.
-- Tune Alex enthusiasm by 15% in voice session context.
-- Verify by checking relevant files and runtime signals.
+### 3. ElevenLabs agent: guarantee a first message
+
+Voice never speaks if the agent has no first message AND no override is sent. Two fixes, in order of safety:
+
+- Add a server-side first message in the ElevenLabs agent dashboard for `agent_5901kmg4ra2eee5bbp9r7ew5jcs7` (manual one-time step — instructions surfaced to the user).
+- As a runtime safety net, after `conversation.startSession` succeeds and once `onConnect` fires, if no audio arrives in 2.5s, send `conversation.sendUserMessage` with the contextHint or a neutral nudge so the agent is forced to respond. This guarantees first audio even if the agent's first message field is empty.
+
+### 4. Overlay: tighten the retry path
+
+`OverlayAlexVoiceFullScreen.tsx`:
+
+- When the boot effect runs because of `openVoiceSession("fallback_retry_voice", ...)`, force `connectionType: "webrtc"` on the first attempt and skip the cooldown guard.
+- Bump `FIRST_AUDIO_TIMEOUT_MS` to 9000ms only on WebSocket fallback (WebRTC stays at 6500ms).
+- Keep enthusiasm-boosted greeting from previous step.
+
+### 5. Verification
+
+- Curl `voice-get-signed-url` and confirm both `conversationToken` and `signedUrl` are returned with a non-null `voiceId`.
+- Open `/index` on the mobile preview, tap the pill "J'ai un problème urgent à la maison" → overlay should connect and Alex should greet within ~2s.
+- Tap "Activer la voix" from the fallback panel → voice overlay reopens and starts cleanly.
+
+## Out of scope
+
+- No UI redesign of the fallback panel.
+- No changes to authentication, RLS, or other modules.
+- No changes to `src/integrations/supabase/{client,types}.ts`.

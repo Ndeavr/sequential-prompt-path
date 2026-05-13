@@ -269,6 +269,10 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       console.warn(`[ElevenLabs V8] Reconnect blocked — cooldown`);
       return;
     }
+    if (forced) {
+      // User-initiated retry — clear cooldown so it never blocks a manual restart.
+      lastDisconnectAtRef.current = 0;
+    }
 
     bootInProgressRef.current = true;
     intentionallyStopped.current = false;
@@ -369,12 +373,23 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           mode: options?.mode ?? "general",
           attempt,
           hasMemory: Boolean(memory),
+          hasWebRtcToken: Boolean(data?.conversationToken),
         });
 
-        await conversation.startSession({
-          signedUrl,
-          connectionType: "websocket",
-        } as any);
+        // Prefer WebRTC (lower latency, more reliable cold-start on mobile).
+        // Fall back to WebSocket if no token returned.
+        const conversationToken = data?.conversationToken as string | undefined;
+        if (conversationToken) {
+          await conversation.startSession({
+            conversationToken,
+            connectionType: "webrtc",
+          } as any);
+        } else {
+          await conversation.startSession({
+            signedUrl,
+            connectionType: "websocket",
+          } as any);
+        }
 
         console.log("[ElevenLabs V8] ✅ Session started");
         bootInProgressRef.current = false;
