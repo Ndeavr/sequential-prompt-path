@@ -17,9 +17,22 @@ const corsHeaders = {
 };
 
 // In-process cache (per worker instance) — 60s TTL on active config.
+// Only cache rows that have a real voice_id, otherwise we lock in null forever.
 const CACHE_TTL_MS = 60_000;
 let cachedConfig: any = null;
 let cachedAt = 0;
+
+async function fetchConversationToken(apiKey: string, agentId: string): Promise<string | null> {
+  try {
+    const r = await fetch(
+      `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${agentId}`,
+      { headers: { "xi-api-key": apiKey } },
+    );
+    if (!r.ok) return null;
+    const j = await r.json().catch(() => null);
+    return j?.token ?? null;
+  } catch { return null; }
+}
 
 interface VoiceConfigRow {
   agent_id: string | null;
