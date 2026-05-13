@@ -1,65 +1,103 @@
-## Diagnosis
+# UNPRO — Pages Profil Entreprise SSR (`/entrepreneur/:slug`)
 
-Voice opens, fails to deliver first audio in 6.5s, then bails to chat fallback. From inspection:
+Adapter le brief Next.js au stack réel (Vite + React + edge prerender Deno) sans casser l'architecture existante. Une page = une référence canonique pour les LLM et Google.
 
-- `voice-get-signed-url` returns a WSS signed URL successfully (verified live), but `voiceId` comes back `null` and `fallbackUsed: true` — the DB row exists but is being read as null in the hot path, and the env `ELEVENLABS_AGENT_ID` doesn't match the active agent.
-- `useLiveVoice.start()` calls `conversation.startSession({ signedUrl, connectionType: "websocket" })` and never sends any greeting override. If the ElevenLabs agent has no configured first message, the WS connects but never produces audio → 6.5s timer expires → fallback chat opens with the "Activer la voix" prompt.
-- Tapping "Activer la voix" reopens the overlay, repeats the same path, and falls back again — so it looks like nothing happens.
+## 1. Architecture SSR (sans Next.js)
 
-Mobile latency + WebSocket connection type also makes the cold start fragile compared to WebRTC, which is the ElevenLabs-recommended path.
+```
+Bot/Crawler ──► Cloudflare/Vercel UA detect
+              └► api.unpro.ca/prerender?url=/entrepreneur/:slug
+                 └► Deno edge: fetch DB ► render full HTML + JSON-LD
+                                          (zero JS dépendance above-the-fold)
 
-## Goal
+Humain ──────► unpro.ca/entrepreneur/:slug (SPA hydratée, même contenu)
+```
 
-Voice starts on first try, on mobile, every time, when the user taps a pill or "Activer la voix". No more silent fallback.
+- Réutilise la fonction edge **`prerender`** déjà déployée. On ajoute un handler `entrepreneur/:slug` qui rend le HTML complet côté serveur (template string typé, pas de React SSR).
+- Côté SPA : composant `EntrepreneurProfilePage` qui rend le même contenu (même DOM structure pour parité crawler/humain) avec `react-helmet-async`.
+- UA detect existant dans `prerender` (Googlebot, GPTBot, ClaudeBot, PerplexityBot, etc.) — on étend la liste si besoin.
 
-## Plan
+## 2. Route & registry
 
-### 1. Edge function: serve a WebRTC conversation token (preferred) + keep signed URL as fallback
+- Route React : `/entrepreneur/:slug` (déjà réservée). Ajouter dans `src/app/router.tsx`.
+- Lookup DB par `contractor_public_pages.slug` → join `contractors` + `contractor_aipp_scores` (current) + `contractor_media` + `reviews`.
+- 404 propre si slug introuvable ou `is_published = false`.
 
-Update `supabase/functions/voice-get-signed-url/index.ts`:
+## 3. Sections de la page (ordre exact du brief)
 
-- Add a parallel call to ElevenLabs `/v1/convai/conversation/token?agent_id=...` and return both `conversationToken` and `signedUrl`.
-- Always read voice_configs reliably:
-  - Drop the in-process cache when it returns no `voice_id` (current bug — null cached forever).
-  - Fall back to env only when DB explicitly returns no row.
-- Return `{ conversationToken, signedUrl, agentId, voiceId, … }`. Keep `fallback: "chat"` only when API key missing.
+1. **`<head>`** — `<title>` + meta description uniques, `lang="fr-CA"`, canonical `https://unpro.ca/entrepreneur/:slug`, OG tags complets, Twitter card.
+2. **JSON-LD** — 2 blocs :
+   - `LocalBusiness` / `HomeAndConstructionBusiness` (nom, adresse, ville QC, téléphone, aggregateRating, areaServed, serviceType, license RBQ).
+   - `Review` × max 3 (auteur, ratingValue, datePublished, reviewBody).
+   - Bonus : `BreadcrumbList` (Accueil › Entrepreneurs › Ville › Nom).
+3. **Hero** — H1 (nom), H2 (spécialité), ville · RBQ · étoiles, CTA `Obtenir une soumission` + `Voir les projets`, badge `Vérifié` si applicable.
+4. **À propos** — bio FR (2-3 paragraphes), année fondation, taille équipe, chips spécialités, mini-carte zone (image statique).
+5. **Galerie projets** — 3-6 cartes (photo, type, ville, année), liens `/entrepreneur/:slug/projets/:id` (route stub).
+6. **Avis** — score agrégé proéminent, 5 reviews max (étoiles, prénom + initiale, date, corps).
+7. **Widget AIPP** ⭐ — score réel depuis `contractor_aipp_scores` (current). Affichage proud : score global + 5 sous-scores (Web/20, Google/20, Trust/20, AI/25, Conv/15). Tooltip "C'est quoi AIPP?" + lien explicatif.
+8. **Footer CTA** — phone click-to-call (`tel:`), formulaire minimal (nom, courriel, description, date préférée) → insert dans `leads` table, lien retour vers liste entrepreneurs.
 
-### 2. `useLiveVoice.ts`: prefer WebRTC, fallback to WebSocket, no client overrides
+## 4. Données
 
-- If `data.conversationToken` is present, call:
-  ```ts
-  await conversation.startSession({
-    conversationToken: data.conversationToken,
-    connectionType: "webrtc",
-  });
-  ```
-- Else fall back to `{ signedUrl, connectionType: "websocket" }`.
-- Keep zero client-side overrides (per `voice-connection-stability` memory).
-- Reset `lastDisconnectAtRef` when the user explicitly retries (so "Activer la voix" is never blocked by cooldown).
+Sources existantes :
+- `contractors` (business_name, city, license_rbq, phone, bio, specialty_tags, founded_year, team_size, verified, slug)
+- `contractor_public_pages` (slug, is_published, hero copy)
+- `contractor_aipp_scores` (is_current, scores 5 axes)
+- `contractor_media` (photos projets, is_approved)
+- `reviews` (rating, reviewer_name, body, created_at)
+- `leads` (insert depuis form)
 
-### 3. ElevenLabs agent: guarantee a first message
+Aucune migration nécessaire si ces colonnes existent. Sinon, migration ciblée pour `founded_year`, `team_size` si manquantes.
 
-Voice never speaks if the agent has no first message AND no override is sent. Two fixes, in order of safety:
+## 5. Seeds (3 profils FR réalistes)
 
-- Add a server-side first message in the ElevenLabs agent dashboard for `agent_5901kmg4ra2eee5bbp9r7ew5jcs7` (manual one-time step — instructions surfaced to the user).
-- As a runtime safety net, after `conversation.startSession` succeeds and once `onConnect` fires, if no audio arrives in 2.5s, send `conversation.sendUserMessage` with the contextHint or a neutral nudge so the agent is forced to respond. This guarantees first audio even if the agent's first message field is empty.
+Migration dédiée insérant :
+- `construction-gagnon` — Montréal, cuisine + salle de bain, 4.8★, 12 reviews, vérifié
+- `toitures-beaupre` — Québec, toiture, 4.5★, 7 reviews, non vérifié
+- `renovations-lafortune` — Laval, général, 4.2★, 3 reviews, vérifié
 
-### 4. Overlay: tighten the retry path
+Bios, projets et reviews écrits en français québécois réaliste (pas de lorem). Scores AIPP cohérents avec les profils.
 
-`OverlayAlexVoiceFullScreen.tsx`:
+## 6. Critères d'acceptation
 
-- When the boot effect runs because of `openVoiceSession("fallback_retry_voice", ...)`, force `connectionType: "webrtc"` on the first attempt and skip the cooldown guard.
-- Bump `FIRST_AUDIO_TIMEOUT_MS` to 9000ms only on WebSocket fallback (WebRTC stays at 6500ms).
-- Keep enthusiasm-boosted greeting from previous step.
+- [ ] `curl -A "Googlebot" https://unpro.ca/entrepreneur/construction-gagnon` retourne HTML complet avec contenu visible (view-source test).
+- [ ] JSON-LD valide sur validator.schema.org (LocalBusiness + Reviews + Breadcrumb).
+- [ ] `<title>` et `<meta description>` uniques + keyword-rich par entreprise.
+- [ ] Widget AIPP affiche les 5 sous-scores réels depuis DB.
+- [ ] Mobile-first, Lighthouse perf > 90 (HTML statique côté bot, hydratation différée côté humain).
+- [ ] `lang="fr-CA"` partout, copy 100% français.
+- [ ] OG tags par entreprise (image hero contractor si dispo, sinon fallback brand).
+- [ ] Form contact insère dans `leads` avec validation Zod côté edge.
 
-### 5. Verification
+## 7. Hors scope (à ne pas faire)
 
-- Curl `voice-get-signed-url` and confirm both `conversationToken` and `signedUrl` are returned with a non-null `voiceId`.
-- Open `/index` on the mobile preview, tap the pill "J'ai un problème urgent à la maison" → overlay should connect and Alex should greet within ~2s.
-- Tap "Activer la voix" from the fallback panel → voice overlay reopens and starts cleanly.
+- Pas de migration vers Next.js.
+- Pas de SPA-only rendering pour ces pages (parité bot/humain obligatoire).
+- Pas de lorem ipsum.
+- Pas de masquage du score AIPP — toujours proéminent.
+- Pas de stub `/projets/:id` complet (juste route placeholder).
 
-## Out of scope
+## 8. Détails techniques
 
-- No UI redesign of the fallback panel.
-- No changes to authentication, RLS, or other modules.
-- No changes to `src/integrations/supabase/{client,types}.ts`.
+**Fichiers créés/modifiés** :
+- `supabase/functions/prerender/index.ts` — ajouter handler `entrepreneur/:slug` (fetch DB, build HTML string avec JSON-LD inline).
+- `src/pages/entrepreneur/EntrepreneurProfilePage.tsx` — composant SPA mirror.
+- `src/components/entrepreneur/AippScoreWidget.tsx` — widget réutilisable.
+- `src/components/entrepreneur/ContactStrip.tsx` — form CTA.
+- `src/hooks/useContractorPublicProfile.ts` — fetch unifié (peut réutiliser `useContractorFullProfile`).
+- `src/app/router.tsx` — ajout route `/entrepreneur/:slug`.
+- `supabase/migrations/<timestamp>_seed_3_entrepreneurs.sql` — seeds réalistes.
+
+**Performance** :
+- Edge prerender met en cache CDN (Cloudflare) avec `Cache-Control: public, max-age=300, s-maxage=3600`.
+- Hydration SPA différée (`suspense` + lazy).
+- Images via `cdn.unpro.ca` avec `loading="lazy"` sauf hero.
+
+**Sécurité** :
+- Form contact : validation Zod (longueur, email), rate limit IP-based dans edge.
+- RLS : `contractor_public_pages` lisible par `anon` quand `is_published = true` uniquement (vérifier policy existante).
+
+**Phase 2** (hors scope MVP) :
+- Pages `/entrepreneur/:slug/projets/:id`
+- Sitemap.xml automatique pour tous les slugs publiés
+- A/B test des hero CTA via existing optimization engine
