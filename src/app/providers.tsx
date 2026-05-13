@@ -49,14 +49,25 @@ export const Providers = ({ children }: ProvidersProps) => (
                 <Sonner />
                 {children}
                 <OverlayHydrationGuard />
-                <DeferredAfterInteractive>
+                {/* Each overlay deferred independently to spread network/CPU cost */}
+                <DeferredAfterInteractive timeoutMs={2500}>
                   <Suspense fallback={null}>
                     <OverlayAlexVoiceFullScreen />
-                    <AlexChatFallbackPanel />
-                    <AlexVoiceDebugPanel />
-                    <AlexVoiceDiagnosticsPanel />
                   </Suspense>
                 </DeferredAfterInteractive>
+                <DeferredAfterInteractive timeoutMs={4000}>
+                  <Suspense fallback={null}>
+                    <AlexChatFallbackPanel />
+                  </Suspense>
+                </DeferredAfterInteractive>
+                {import.meta.env.DEV && (
+                  <DeferredAfterInteractive timeoutMs={6000}>
+                    <Suspense fallback={null}>
+                      <AlexVoiceDebugPanel />
+                      <AlexVoiceDiagnosticsPanel />
+                    </Suspense>
+                  </DeferredAfterInteractive>
+                )}
               </TooltipProvider>
             </AlexVoiceProvider>
           </ActiveRoleProvider>

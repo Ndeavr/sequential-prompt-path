@@ -57,8 +57,8 @@ const SmartFooter = () => {
                 {lang === "en" && col.titleEn ? col.titleEn : col.title}
               </h4>
               <ul className="space-y-2.5">
-                {col.items.map((item) => (
-                  <li key={item.to}>
+                {col.items.map((item, idx) => (
+                  <li key={`${col.title}-${item.to}-${idx}`}>
                     <Link
                       to={item.to}
                       className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"

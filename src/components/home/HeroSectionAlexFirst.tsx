@@ -141,10 +141,10 @@ export default function HeroSectionAlexFirst() {
           }}
         />
 
-        {/* Soft aura around orb */}
+        {/* Soft aura around orb — static, no animation (mobile GPU) */}
         <div className="absolute inset-0 z-[2] pointer-events-none">
           <div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[640px] h-[460px] animate-pulse"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[640px] h-[460px]"
             style={{
               background:
                 "radial-gradient(ellipse, hsl(222 100% 60% / 0.18) 0%, transparent 70%)",
@@ -193,7 +193,7 @@ export default function HeroSectionAlexFirst() {
           >
             <span
               aria-hidden
-              className="absolute inset-0 rounded-full animate-pulse"
+              className="absolute inset-0 rounded-full motion-safe:sm:animate-pulse"
               style={{
                 background:
                   "radial-gradient(circle, hsl(222 100% 60% / 0.28) 0%, transparent 70%)",
