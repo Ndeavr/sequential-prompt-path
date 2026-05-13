@@ -175,6 +175,22 @@ export default function OverlayAlexVoiceFullScreen() {
       alexVoiceService.markWsConnected(true);
       alexVoiceService.setState("connected", "ws_open");
       getStore().resetHeartbeat();
+
+      // Safety nudge: if the agent has no configured first message, force it to greet.
+      if (nudgeTimerRef.current) clearTimeout(nudgeTimerRef.current);
+      nudgeTimerRef.current = setTimeout(() => {
+        if (firstAudioReceivedRef.current || !getStore().isOverlayOpen) return;
+        try {
+          const hint = getStore().contextHint;
+          const seed = hint
+            ? `Bonjour Alex. ${hint}`
+            : "Bonjour Alex.";
+          console.log("[VoiceOverlay] 👋 No first audio in 2.5s — sending nudge:", seed);
+          (conversation as any)?.sendUserMessage?.(seed);
+        } catch (e) {
+          console.warn("[VoiceOverlay] nudge failed:", e);
+        }
+      }, 2500);
     },
     onDisconnect: () => {
       const s = getStore();
