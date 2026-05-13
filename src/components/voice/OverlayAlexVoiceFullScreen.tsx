@@ -98,7 +98,8 @@ export default function OverlayAlexVoiceFullScreen() {
   }, [firstName]);
 
   // ElevenLabs voice
-  const { start, stop, isActive, isConnecting, isSpeaking } = useLiveVoice({
+  const nudgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { start, stop, isActive, isConnecting, isSpeaking, conversation } = useLiveVoice({
     onFirstAudio: () => {
       firstAudioReceivedRef.current = true;
       autoRetryCountRef.current = 0;
