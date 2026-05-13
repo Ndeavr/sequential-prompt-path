@@ -269,6 +269,10 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       console.warn(`[ElevenLabs V8] Reconnect blocked — cooldown`);
       return;
     }
+    if (forced) {
+      // User-initiated retry — clear cooldown so it never blocks a manual restart.
+      lastDisconnectAtRef.current = 0;
+    }
 
     bootInProgressRef.current = true;
     intentionallyStopped.current = false;
