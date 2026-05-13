@@ -108,6 +108,10 @@ export default function OverlayAlexVoiceFullScreen() {
         clearTimeout(firstAudioTimerRef.current);
         firstAudioTimerRef.current = null;
       }
+      if (nudgeTimerRef.current) {
+        clearTimeout(nudgeTimerRef.current);
+        nudgeTimerRef.current = null;
+      }
 
       setBootStep("live");
 
