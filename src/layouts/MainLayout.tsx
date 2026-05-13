@@ -1,20 +1,29 @@
 /**
  * UNPRO — Main Layout (Dark Sharp System)
+ * Above-the-fold = static shell. All non-critical UI is deferred until
+ * after first user interaction or idle to keep mobile TBT low.
  */
 
 import type { ReactNode } from "react";
+import { lazy, Suspense } from "react";
 import { useLocation } from "react-router-dom";
 import SmartHeader from "@/components/navigation/SmartHeader";
 import SmartFooter from "@/components/navigation/SmartFooter";
 import FooterSEOGrid from "@/components/navigation/FooterSEOGrid";
-import MobileBottomNav from "@/components/navigation/MobileBottomNav";
-import SeoStructuredDataInjector from "@/seo/components/SeoStructuredDataInjector";
-import { lazy, Suspense } from "react";
-const AlexCompanionOrb = lazy(() => import("@/components/alex/AlexCompanionOrb"));
-import CommandPalette from "@/components/navigation/CommandPalette";
-import BannerResumeJourney from "@/components/navigation/BannerResumeJourney";
 import { useLanguage } from "@/components/ui/LanguageToggle";
-import { useJourneyTracker } from "@/hooks/useJourneyTracker";
+import DeferredAfterInteractive from "@/components/system/DeferredAfterInteractive";
+
+const AlexCompanionOrb = lazy(() => import("@/components/alex/AlexCompanionOrb"));
+const MobileBottomNav = lazy(() => import("@/components/navigation/MobileBottomNav"));
+const CommandPalette = lazy(() => import("@/components/navigation/CommandPalette"));
+const SeoStructuredDataInjector = lazy(() => import("@/seo/components/SeoStructuredDataInjector"));
+
+// Journey tracker runs only after interaction so it never blocks first paint.
+function DeferredJourneyTracker() {
+  const { useJourneyTracker } = require("@/hooks/useJourneyTracker") as typeof import("@/hooks/useJourneyTracker");
+  useJourneyTracker();
+  return null;
+}
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -23,20 +32,14 @@ interface MainLayoutProps {
 const MainLayout = ({ children }: MainLayoutProps) => {
   const { pathname } = useLocation();
   const { lang } = useLanguage();
-  useJourneyTracker();
 
-  // Hide the floating AlexConcierge on:
-  // - /alex (dedicated voice surface)
-  // - / and /index (PageHomeCopilot mounts its own AlexCopilotConversation)
   const showAlex = !["/alex", "/", "/index"].includes(pathname);
-
   const showSEOGrid = ["/problemes", "/services", "/villes", "/professionnels"].some(
-    prefix => pathname.startsWith(prefix)
+    (prefix) => pathname.startsWith(prefix)
   );
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-x-hidden">
-      {/* ── Dark cinematic background ── */}
       <div className="fixed inset-0 -z-10 noise-overlay leather-texture">
         <div
           className="absolute inset-0"
@@ -52,18 +55,20 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       </div>
 
       <SmartHeader />
-      {/* BannerResumeJourney disabled — distracting on home page */}
       <main className="flex-1 pb-20 lg:pb-0 relative z-0">{children}</main>
       {showSEOGrid && <FooterSEOGrid />}
       <SmartFooter />
-      <MobileBottomNav />
-      {showAlex && (
+
+      {/* All deferred — never blocks first paint */}
+      <DeferredAfterInteractive>
         <Suspense fallback={null}>
-          <AlexCompanionOrb />
+          <MobileBottomNav />
+          {showAlex && <AlexCompanionOrb />}
+          <CommandPalette lang={lang} />
+          <SeoStructuredDataInjector />
+          <DeferredJourneyTracker />
         </Suspense>
-      )}
-      <CommandPalette lang={lang} />
-      <SeoStructuredDataInjector />
+      </DeferredAfterInteractive>
     </div>
   );
 };

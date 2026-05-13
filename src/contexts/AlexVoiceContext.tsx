@@ -8,9 +8,19 @@
  * EXCEPT if the locked overlay is already active.
  */
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import { alexAudioChannel } from "@/services/alexSingleAudioChannel";
 import { useAlexVoiceLockedStore } from "@/stores/alexVoiceLockedStore";
-import { audioEngine } from "@/services/audioEngineUNPRO";
+
+// Heavy audio modules are dynamically imported on first user interaction
+// to keep them out of the main entry chunk (was ~80 KB of audio code).
+async function killAllAudioSources() {
+  const [{ alexAudioChannel }, { audioEngine }] = await Promise.all([
+    import("@/services/alexSingleAudioChannel"),
+    import("@/services/audioEngineUNPRO"),
+  ]);
+  alexAudioChannel.hardStop();
+  audioEngine.unlock();
+  return { alexAudioChannel };
+}
 
 interface AlexVoiceContextType {
   isOpen: boolean;
@@ -35,37 +45,27 @@ export function AlexVoiceProvider({ children }: { children: ReactNode }) {
 
   const openAlex = useCallback((feat = "general", contextHint?: string) => {
     const lockedStore = useAlexVoiceLockedStore.getState();
-    
-    // If locked overlay is already open, don't interfere
+
     if (lockedStore.isOverlayOpen) {
       console.warn("[AlexVoiceContext] Locked voice session active — ignoring openAlex");
       return;
     }
 
-    // Kill ALL audio and voice sources before opening
-    alexAudioChannel.hardStop();
-    audioEngine.unlock();
-    
-    // Open the locked full-screen voice overlay (single instance)
+    // Open the overlay synchronously (UX), then lazy-kill any other audio.
     lockedStore.openVoiceSession(feat, "user_openAlex", contextHint);
-    
     setFeature(feat);
-    // Do NOT set isOpen=true — only the locked overlay renders voice UI now
+    void killAllAudioSources().catch(() => {});
   }, []);
 
   const closeAlex = useCallback(() => {
     const lockedStore = useAlexVoiceLockedStore.getState();
-    
-    // Close locked overlay if open
     if (lockedStore.isOverlayOpen) {
       lockedStore.closeVoiceSession("user_closeAlex");
     }
-
-    // Kill ALL audio and voice sources
-    alexAudioChannel.hardStop();
     window.dispatchEvent(new CustomEvent("alex-voice-cleanup"));
     setIsOpen(false);
     setVoiceActive(false);
+    void killAllAudioSources().catch(() => {});
   }, []);
 
   return (
