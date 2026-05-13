@@ -83,7 +83,7 @@ async function loadConfig(environment: string): Promise<VoiceConfigRow | null> {
       .eq("environment", environment)
       .eq("status", "active")
       .single();
-    if (data) {
+    if (data && data.voice_id) {
       cachedConfig = data;
       cachedAt = now;
     }
