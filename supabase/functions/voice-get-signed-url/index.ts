@@ -188,10 +188,14 @@ serve(async (req) => {
 
   const data = await response.json();
 
+  // Fetch a WebRTC conversation token in parallel-friendly fashion (non-fatal if it fails).
+  const conversationToken = await fetchConversationToken(ELEVENLABS_API_KEY, resolvedAgentId);
+
   return new Response(
     JSON.stringify({
       signed_url: data.signed_url,
       signedUrl: data.signed_url,
+      conversationToken,
       agentId: resolvedAgentId,
       voiceId: config?.voice_id || null,
       languageDefault: config?.language_default || "fr",
