@@ -114,20 +114,13 @@ serve(async (req) => {
   const body = await req.json().catch(() => ({}));
   const environment = body?.environment || "prod";
 
-  // ─── HOT PATH: Use cached config if available ───
-  let config = (Date.now() - cachedAt < CACHE_TTL_MS) ? cachedConfig : null;
-  let configAgentId = config?.agent_id || Deno.env.get("ELEVENLABS_AGENT_ID");
-
-  if (!config && !configAgentId) {
-    // No cache, no env var — must wait on DB.
+  // ─── HOT PATH: Use cached config if available (only when we already have a voice_id) ───
+  let config = (Date.now() - cachedAt < CACHE_TTL_MS && cachedConfig?.voice_id) ? cachedConfig : null;
+  if (!config) {
+    // Always wait on DB if we don't have a usable cached row.
     config = await loadConfig(environment);
-    configAgentId = config?.agent_id || Deno.env.get("ELEVENLABS_AGENT_ID");
-  } else {
-    // Refresh cache async in background (non-blocking).
-    if (Date.now() - cachedAt >= CACHE_TTL_MS) {
-      loadConfig(environment).catch(() => {});
-    }
   }
+  let configAgentId = config?.agent_id || Deno.env.get("ELEVENLABS_AGENT_ID");
 
   if (!configAgentId) {
     return new Response(
