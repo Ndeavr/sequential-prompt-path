@@ -18,9 +18,10 @@ const MobileBottomNav = lazy(() => import("@/components/navigation/MobileBottomN
 const CommandPalette = lazy(() => import("@/components/navigation/CommandPalette"));
 const SeoStructuredDataInjector = lazy(() => import("@/seo/components/SeoStructuredDataInjector"));
 
+import { useJourneyTracker } from "@/hooks/useJourneyTracker";
+
 // Journey tracker runs only after interaction so it never blocks first paint.
 function DeferredJourneyTracker() {
-  const { useJourneyTracker } = require("@/hooks/useJourneyTracker") as typeof import("@/hooks/useJourneyTracker");
   useJourneyTracker();
   return null;
 }
