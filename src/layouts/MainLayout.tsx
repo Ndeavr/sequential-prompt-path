@@ -39,20 +39,26 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     (prefix) => pathname.startsWith(prefix)
   );
 
-  // Warm public theme — applied to marketing/public surfaces.
-  // Admin, dashboards, /alex immersive and contractor cockpit stay dark.
-  const warmRoutes: Array<string | RegExp> = [
-    "/", "/index",
-    "/proprietaires", "/entrepreneurs", "/condo",
-    "/comment-ca-marche", "/pricing", "/plans",
-    "/login", "/signup", "/role",
-    "/account", "/journal",
-    /^\/pros?\//, /^\/analyse\//, /^\/onboarding\//,
-    /^\/quote/, "/compare-quotes", "/success",
+  // Warm by default for ALL public surfaces.
+  // Dark stays only on admin, dashboards, contractor cockpit, /alex immersive,
+  // entrepreneur dashboard/processing terminals, and partner cockpit.
+  const darkRoutes: Array<string | RegExp> = [
+    /^\/admin(\/|$)/,
+    /^\/dashboard(\/|$)/,
+    /^\/pro(\/|$)/,             // contractor cockpit (pro dashboard pages)
+    /^\/partner(\/|$)/,
+    /^\/contractor(\/|$)/,      // contractor live flows
+    /^\/entrepreneur\/dashboard/,
+    /^\/entrepreneur\/import-processing/,
+    /^\/entrepreneur\/leads/,
+    /^\/onboarding\/contractor/,
+    /^\/diagnostic-photo/,
+    "/alex",                    // immersive Alex copilot
   ];
-  const isWarm = warmRoutes.some((r) =>
+  const isDark = darkRoutes.some((r) =>
     typeof r === "string" ? pathname === r || pathname.startsWith(r + "/") : r.test(pathname)
   );
+  const isWarm = !isDark;
 
   return (
     <div className={`min-h-screen flex flex-col relative overflow-x-hidden ${isWarm ? "landing-warm" : ""}`}>
