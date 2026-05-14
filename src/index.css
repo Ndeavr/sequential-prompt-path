@@ -885,9 +885,16 @@
 
 /* Warm variant of the mobile bottom nav */
 .landing-warm-bottom-nav {
-  background: hsl(0 0% 100% / 0.92) !important;
-  border: 1px solid hsl(30 15% 88%) !important;
+  background: hsl(0 0% 100% / 0.95) !important;
+  border: 1px solid hsl(30 15% 86%) !important;
   backdrop-filter: blur(20px) saturate(1.4);
   box-shadow: 0 -2px 16px -4px hsl(218 52% 12% / 0.08),
-              0 8px 24px -10px hsl(218 52% 12% / 0.10) !important;
+              0 8px 24px -10px hsl(218 52% 12% / 0.12) !important;
+}
+.landing-warm-bottom-nav a {
+  color: hsl(218 30% 28%);
+}
+.landing-warm-bottom-nav a.text-primary,
+.landing-warm-bottom-nav a .text-primary {
+  color: hsl(165 42% 24%) !important;
 }
