@@ -73,7 +73,7 @@ export default function HeroOrbMockup() {
 
       {/* Sticky orb island — stays visible while transcript grows */}
       <div
-        className={`relative z-10 mt-8 flex flex-col items-center ${
+        className={`relative z-10 mt-4 flex flex-col items-center ${
           active ? "sticky top-0 pt-3 pb-2 backdrop-blur-md" : ""
         }`}
         style={
@@ -85,15 +85,17 @@ export default function HeroOrbMockup() {
             : undefined
         }
       >
-        <AlexFloatingOrb
-          state={orbState}
-          expression={speaking ? "confident" : active ? "focused" : "neutral"}
-          size="mobile"
-          onClick={handleStart}
-        />
+        <div className="mx-auto" style={{ maxWidth: 220 }}>
+          <AlexFloatingOrb
+            state={orbState}
+            expression={speaking ? "confident" : active ? "focused" : "neutral"}
+            size="mobile"
+            onClick={handleStart}
+          />
+        </div>
 
-        <div className="mt-5 flex items-center gap-3">
-          <span className="text-white text-xl font-bold tracking-[0.35em]">
+        <div className="mt-3 flex items-center gap-3">
+          <span className="text-white text-lg font-bold tracking-[0.35em]">
             ALEX
           </span>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30">
@@ -111,7 +113,7 @@ export default function HeroOrbMockup() {
           <AlexConversationArrow
             direction="down"
             label="Touchez pour parler"
-            className="mt-3"
+            className="mt-2"
           />
         )}
       </div>
