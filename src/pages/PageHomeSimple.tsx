@@ -53,7 +53,7 @@ export default function PageHomeSimple() {
           <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         </Helmet>
 
-        <HeroOrbMockup />
+        <HeroConciergeWarm />
       </MainLayout>
     </AlexProvider>
   );
