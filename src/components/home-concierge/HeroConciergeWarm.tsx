@@ -4,12 +4,14 @@
  * The microphone IS the CTA. Alex orb only comes alive during interaction.
  * Voice/text plumbing is delegated to AlexHomepageConversation (hideComposer)
  * with a custom warm composer rendered here.
+ *
+ * Note: top header + bottom nav are provided by MainLayout. Do NOT render
+ * additional headers or tab bars here — that creates duplicate menus.
  */
 import { useRef, useState } from "react";
-import { Menu, Bell, Send, ImageIcon } from "lucide-react";
+import { Send, ImageIcon, ShieldCheck, Lock, MapPin, Sparkles } from "lucide-react";
 import AlexMicOrb, { type MicOrbState } from "./AlexMicOrb";
 import TrustRow from "./TrustRow";
-import MobileTabBar from "./MobileTabBar";
 import AlexHomepageConversation, {
   type AlexHomepageConversationHandle,
 } from "../home-orb/AlexHomepageConversation";
@@ -17,11 +19,18 @@ import AlexHomepageConversation, {
 const GREETING =
   "Bonjour. Je suis Alex d'UNPRO. Quel problème puis-je vous aider à régler aujourd'hui?";
 
+const TRUST_PILLS = [
+  { icon: ShieldCheck, label: "RBQ vérifié" },
+  { icon: Lock, label: "Pas de soumissions partagées" },
+  { icon: MapPin, label: "Québec seulement" },
+  { icon: Sparkles, label: "IA + humain" },
+];
+
 export default function HeroConciergeWarm() {
   const convoRef = useRef<AlexHomepageConversationHandle>(null);
   const [active, setActive] = useState(false);
   const [speaking, setSpeaking] = useState(false);
-  const [thinking, setThinking] = useState(false);
+  const [thinking] = useState(false);
   const [input, setInput] = useState("");
 
   const orbState: MicOrbState = speaking
@@ -60,21 +69,8 @@ export default function HeroConciergeWarm() {
         }}
       />
 
-      {/* Header */}
-      <header className="relative z-10 flex items-center justify-between px-5 pt-5 max-w-2xl mx-auto">
-        <button aria-label="Menu" className="p-1.5 -ml-1.5 text-[#0F1B2D]/70 hover:text-[#0F1B2D]">
-          <Menu className="w-5 h-5" />
-        </button>
-        <div className="flex items-center gap-1.5">
-          <span className="font-bold tracking-wide text-[#0F1B2D]">UNPRO</span>
-        </div>
-        <button aria-label="Notifications" className="p-1.5 -mr-1.5 text-[#0F1B2D]/70 hover:text-[#0F1B2D]">
-          <Bell className="w-5 h-5" />
-        </button>
-      </header>
-
-      {/* Hero */}
-      <div className="relative z-10 px-5 pt-6 pb-10 max-w-md mx-auto text-center">
+      {/* Hero — top/bottom chrome supplied by MainLayout */}
+      <div className="relative z-10 px-5 pt-6 pb-32 lg:pb-16 max-w-md mx-auto text-center">
         {/* Gold pill */}
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#C9A24A]/40 bg-[#C9A24A]/10 text-[#8a6e22] text-[11px] font-medium">
           <span className="text-[#C9A24A]">✦</span>
@@ -86,8 +82,8 @@ export default function HeroConciergeWarm() {
           className="mt-4 text-[#0F1B2D] font-serif"
           style={{
             fontFamily: "'Instrument Serif', 'Cormorant Garamond', Georgia, serif",
-            fontSize: "clamp(2.2rem, 9vw, 3rem)",
-            lineHeight: 1.05,
+            fontSize: "clamp(1.9rem, 8vw, 2.75rem)",
+            lineHeight: 1.08,
             letterSpacing: "-0.01em",
           }}
         >
@@ -98,40 +94,55 @@ export default function HeroConciergeWarm() {
         </p>
 
         {/* Mic orb */}
-        <div className="mt-7 flex flex-col items-center">
+        <div className="mt-8 flex flex-col items-center">
           <AlexMicOrb state={orbState} onClick={start} />
           {!active && (
-            <p className="mt-2 text-[#0F1B2D]/50 text-xs uppercase tracking-[0.2em]">
-              Appuyez et parlez
+            <p className="mt-3 text-[#0F1B2D]/55 text-[13px] leading-snug max-w-[18rem]">
+              Décrivez le problème. Alex s'occupe du reste.
             </p>
           )}
         </div>
 
+        {/* Trust pills */}
+        {!active && (
+          <ul className="mt-5 flex flex-wrap justify-center gap-1.5">
+            {TRUST_PILLS.map(({ icon: Icon, label }) => (
+              <li
+                key={label}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white border border-[#0F1B2D]/10 text-[11px] text-[#0F1B2D]/75"
+              >
+                <Icon className="w-3 h-3 text-[#0E5E4E]" strokeWidth={2} />
+                {label}
+              </li>
+            ))}
+          </ul>
+        )}
+
         {/* Composer */}
-        <form onSubmit={submit} className="mt-6 flex items-center gap-2">
-          <div className="flex-1 flex items-center gap-2 h-12 rounded-full bg-white border border-[#0F1B2D]/10 px-4 shadow-[0_1px_0_rgba(15,27,45,0.04)] focus-within:border-[#0E5E4E]/40">
+        <form onSubmit={submit} className="mt-5 flex items-center gap-2">
+          <div className="flex-1 min-w-0 flex items-center gap-2 h-12 rounded-full bg-white border border-[#0F1B2D]/10 pl-4 pr-2 focus-within:border-[#0E5E4E]/40">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onFocus={start}
               placeholder="Décrivez votre projet, votre problème ou votre urgence…"
-              className="flex-1 bg-transparent outline-none text-sm text-[#0F1B2D] placeholder:text-[#0F1B2D]/40"
+              className="flex-1 min-w-0 bg-transparent outline-none text-sm text-[#0F1B2D] placeholder:text-[#0F1B2D]/40"
             />
             <button
               type="button"
               aria-label="Joindre une photo"
-              className="text-[#0F1B2D]/50 hover:text-[#0F1B2D]"
+              className="shrink-0 p-1.5 text-[#0F1B2D]/50 hover:text-[#0F1B2D]"
             >
-              <ImageIcon className="w-5 h-5" />
+              <ImageIcon className="w-5 h-5" strokeWidth={2} />
             </button>
           </div>
           <button
             type="submit"
             aria-label="Envoyer"
-            className="shrink-0 w-12 h-12 rounded-full inline-flex items-center justify-center bg-[#0E5E4E] text-white shadow-md disabled:opacity-40"
+            className="shrink-0 w-12 h-12 rounded-full inline-flex items-center justify-center bg-[#0E5E4E] text-white shadow-sm disabled:opacity-40"
             disabled={!input.trim() && !active}
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-4 h-4" strokeWidth={2} />
           </button>
         </form>
 
@@ -145,12 +156,11 @@ export default function HeroConciergeWarm() {
             onActivityChange={setActive}
             onAssistantSpeakingChange={(s) => {
               setSpeaking(s);
-              if (s) setThinking(false);
             }}
           />
         </div>
 
-        {/* Trust signals */}
+        {/* Detailed trust signals */}
         {!active && <TrustRow />}
 
         {/* Contractor CTA */}
@@ -165,9 +175,6 @@ export default function HeroConciergeWarm() {
           Trouvez le bon pro. Ou devenez le pro recommandé.
         </p>
       </div>
-
-      <div className="h-20 md:hidden" aria-hidden />
-      <MobileTabBar />
     </section>
   );
 }
