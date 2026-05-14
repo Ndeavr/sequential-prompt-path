@@ -6,12 +6,16 @@
  * Voice live-mode (continuous mic) intentionally falls back to text input on
  * the homepage — the goal is "conversation that never leaves the page".
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { Mic, Send } from "lucide-react";
 import AlexInlineTranscript, {
   type AlexInlineMessage,
 } from "./AlexInlineTranscript";
 import { useAlexVoice as useAlexTTS } from "@/features/alex/hooks/useAlexVoice";
+
+export type AlexHomepageConversationHandle = {
+  start: () => void;
+};
 
 interface Props {
   /** Spoken when the user first interacts. Display version stays as-is. */
