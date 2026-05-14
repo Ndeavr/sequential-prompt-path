@@ -1,82 +1,33 @@
 /**
- * HeroOrbMockup — Premium glossy 3D Alex orb hero matching the dark mockup.
+ * HeroOrbMockup — Premium homepage hero where Alex lives INLINE.
  *
- * Pure CSS sphere (no 3D libs). Mobile-first.
- * - Glossy black sphere with deep blue rim glow
- * - House icon at top inner
- * - Two pill-shaped LED eyes
- * - "ALEX" label + green ONLINE badge
- * - Live waveform synced to AlexVoiceContext state
- * - Floating mic button
- * - Transcript bubble below the orb
- * - 4 trust pills (AI-POWERED / SECURE / SMART / HUMAN+AI)
+ * No overlay, no route navigation. The orb, transcript, mic and text input
+ * all stay on the homepage. As the conversation grows the transcript
+ * expands inline; the orb section sticks to the top so Alex stays visible.
  */
-import { useEffect, useState } from "react";
-import { Mic, Cpu, ShieldCheck, Sparkles, Users } from "lucide-react";
-import { useAlexVoice } from "@/contexts/AlexVoiceContext";
-import { useAlexVoiceLockedStore } from "@/stores/alexVoiceLockedStore";
+import { useRef, useState } from "react";
+import { Cpu, ShieldCheck, Sparkles, Users } from "lucide-react";
 import AlexFloatingOrb, { type AlexOrbState } from "./AlexFloatingOrb";
-
-type OrbState = AlexOrbState;
-
-function useOrbState(): OrbState {
-  const isOpen = useAlexVoiceLockedStore((s) => s.isOverlayOpen);
-  return isOpen ? "speaking" : "idle";
-}
-
-function Waveform({ active }: { active: boolean }) {
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    if (!active) return;
-    let raf = 0;
-    const loop = () => {
-      setTick((t) => t + 1);
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, [active]);
-
-  const bars = 36;
-  return (
-    <svg
-      viewBox={`0 0 ${bars * 6} 40`}
-      className="w-full h-10"
-      preserveAspectRatio="none"
-      aria-hidden
-    >
-      {Array.from({ length: bars }).map((_, i) => {
-        const seed = (Math.sin(i * 1.3 + tick * 0.15) + 1) / 2;
-        const fall = 1 - Math.abs(i - bars / 2) / (bars / 2);
-        const h = active ? 4 + seed * 30 * (0.4 + fall * 0.6) : 3 + (Math.sin(i) + 1) * 2;
-        return (
-          <rect
-            key={i}
-            x={i * 6 + 1}
-            y={20 - h / 2}
-            width="2.5"
-            height={h}
-            rx="1.25"
-            fill="hsl(212 100% 60%)"
-            opacity={active ? 0.9 : 0.55}
-          />
-        );
-      })}
-    </svg>
-  );
-}
-
-// Inline orb removed — see AlexFloatingOrb component.
+import AlexHomepageConversation, {
+  type AlexHomepageConversationHandle,
+} from "./AlexHomepageConversation";
+import AlexConversationArrow from "./AlexConversationArrow";
 
 export default function HeroOrbMockup() {
-  const { openAlex } = useAlexVoice();
-  const state = useOrbState();
-  const active = state !== "idle";
+  const convoRef = useRef<AlexHomepageConversationHandle>(null);
+  const [active, setActive] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
 
-  const handleStart = () => openAlex("home_hero", "user_tapped_orb");
+  const orbState: AlexOrbState = speaking
+    ? "speaking"
+    : active
+    ? "listening"
+    : "idle";
 
-  const greeting = "Bonjour. Je suis Alex d'UNPRO.";
-  const subline = "Quel problème puis-je vous aider à régler aujourd'hui?";
+  const handleStart = () => convoRef.current?.start();
+
+  const greeting =
+    "Bonjour. Je suis Alex d'UNPRO. Quel problème puis-je vous aider à régler aujourd'hui?";
 
   return (
     <section
@@ -88,7 +39,7 @@ export default function HeroOrbMockup() {
       }}
       aria-label="Alex — copilote IA UNPRO"
     >
-      {/* Subtle grid */}
+      {/* Subtle dot grid */}
       <div
         className="absolute inset-0 opacity-[0.06] pointer-events-none"
         style={{
@@ -102,7 +53,16 @@ export default function HeroOrbMockup() {
       {/* Top brand row */}
       <div className="relative z-10 flex items-center justify-between px-5 pt-5 max-w-2xl mx-auto">
         <div className="flex items-center gap-2 text-white">
-          <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="hsl(212 100% 60%)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <svg
+            viewBox="0 0 24 24"
+            className="w-6 h-6"
+            fill="none"
+            stroke="hsl(212 100% 60%)"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
             <path d="M3 11 12 3l9 8" />
             <path d="M5 10v10h14V10" />
           </svg>
@@ -111,32 +71,55 @@ export default function HeroOrbMockup() {
         <span className="text-white/60 text-xs">Québec · IA</span>
       </div>
 
-      {/* Orb */}
-      <div className="relative z-10 mt-10 flex flex-col items-center">
+      {/* Sticky orb island — stays visible while transcript grows */}
+      <div
+        className={`relative z-10 mt-8 flex flex-col items-center ${
+          active ? "sticky top-0 pt-3 pb-2 backdrop-blur-md" : ""
+        }`}
+        style={
+          active
+            ? {
+                background:
+                  "linear-gradient(180deg, hsl(222 70% 4% / 0.85), hsl(222 70% 4% / 0))",
+              }
+            : undefined
+        }
+      >
         <AlexFloatingOrb
-          state={state}
-          expression={state === "speaking" ? "confident" : state === "thinking" ? "focused" : "neutral"}
+          state={orbState}
+          expression={speaking ? "confident" : active ? "focused" : "neutral"}
           size="mobile"
           onClick={handleStart}
         />
 
-        {/* ALEX label + ONLINE badge */}
-        <div className="mt-6 flex items-center gap-3">
-          <span className="text-white text-xl font-bold tracking-[0.35em]">ALEX</span>
+        <div className="mt-5 flex items-center gap-3">
+          <span className="text-white text-xl font-bold tracking-[0.35em]">
+            ALEX
+          </span>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30">
             <span className="relative flex w-1.5 h-1.5">
               <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-70 animate-ping" />
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
             </span>
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">Online</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">
+              {speaking ? "Parle" : active ? "Écoute" : "Online"}
+            </span>
           </span>
         </div>
+
+        {!active && (
+          <AlexConversationArrow
+            direction="down"
+            label="Touchez pour parler"
+            className="mt-3"
+          />
+        )}
       </div>
 
-      {/* Transcript bubble */}
-      <div className="relative z-10 mt-8 px-5 max-w-md mx-auto">
+      {/* Inline conversation — replaces the old transcript bubble */}
+      <div className="relative z-10 mt-6 px-5 max-w-md mx-auto">
         <div
-          className="relative rounded-3xl border border-white/10 px-5 py-5 text-left backdrop-blur-md"
+          className="relative rounded-3xl border border-white/10 px-4 py-4 text-left backdrop-blur-md"
           style={{
             background:
               "linear-gradient(180deg, hsl(220 50% 10% / 0.85), hsl(222 60% 6% / 0.85))",
@@ -144,34 +127,35 @@ export default function HeroOrbMockup() {
               "0 30px 60px -20px hsl(212 100% 30% / 0.4), inset 0 0 0 1px hsl(212 100% 60% / 0.06)",
           }}
         >
-          {/* Floating mic button */}
-          <button
-            onClick={handleStart}
-            aria-label="Activer le micro"
-            className="absolute -top-5 right-4 w-12 h-12 rounded-full flex items-center justify-center border border-blue-400/40 bg-[hsl(220_60%_8%)] text-blue-300 hover:text-white transition"
-            style={{
-              boxShadow:
-                "0 0 0 4px hsl(212 100% 50% / 0.18), 0 12px 30px -10px hsl(212 100% 50% / 0.6)",
-            }}
-          >
-            <Mic className="w-5 h-5" />
-          </button>
+          {!active && (
+            <div className="px-1 pb-2">
+              <p className="text-blue-300 font-semibold text-base">
+                {greeting.split(".")[0]}.
+              </p>
+              <p className="text-white/80 text-sm mt-1.5 leading-snug">
+                {greeting.split(". ").slice(1).join(". ")}
+              </p>
+            </div>
+          )}
 
-          <p className="text-blue-300 font-semibold text-base">{greeting}</p>
-          <p className="text-white/80 text-base mt-1.5 leading-snug">{subline}</p>
-
-          <div className="mt-4">
-            <Waveform active={active} />
-          </div>
+          <AlexHomepageConversation
+            ref={convoRef}
+            greeting={greeting}
+            onActivityChange={setActive}
+            onAssistantSpeakingChange={setSpeaking}
+          />
         </div>
 
-        <p className="mt-4 text-white/55 text-xs">
-          Touchez l'orb ou le micro pour commencer. Alex répond à la voix et au texte.
-        </p>
+        {!active && (
+          <p className="mt-3 text-white/55 text-xs">
+            Touchez l'orb, le micro ou écrivez ci-dessus. Tout reste ici, sur
+            cette page.
+          </p>
+        )}
       </div>
 
-      {/* Primary CTAs */}
-      <div className="relative z-10 mt-8 px-5 max-w-md mx-auto flex flex-col gap-3 pb-8">
+      {/* CTAs */}
+      <div className="relative z-10 mt-7 px-5 max-w-md mx-auto flex flex-col gap-3 pb-8">
         <button
           onClick={handleStart}
           className="w-full h-14 rounded-2xl font-semibold text-white text-base transition active:scale-[0.98]"
@@ -226,23 +210,13 @@ export default function HeroOrbMockup() {
             <div className="mx-auto mb-2 w-10 h-10 rounded-xl flex items-center justify-center border border-blue-400/25 bg-blue-500/5">
               <Icon className="w-5 h-5 text-blue-300" />
             </div>
-            <div className="text-[10px] font-bold tracking-widest text-blue-300">{title}</div>
+            <div className="text-[10px] font-bold tracking-widest text-blue-300">
+              {title}
+            </div>
             <p className="text-white/60 text-xs mt-1 leading-snug">{body}</p>
           </div>
         ))}
       </div>
-
-      {/* Local keyframes */}
-      <style>{`
-        @keyframes orb-breathe {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.025); }
-        }
-        @keyframes orb-pulse {
-          0% { box-shadow: 0 0 0 0 hsl(212 100% 60% / 0.6), 0 0 60px hsl(212 100% 55% / 0.6); }
-          100% { box-shadow: 0 0 0 30px hsl(212 100% 60% / 0), 0 0 80px hsl(212 100% 55% / 0); }
-        }
-      `}</style>
     </section>
   );
 }
