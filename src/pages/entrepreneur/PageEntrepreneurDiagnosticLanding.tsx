@@ -153,6 +153,12 @@ export default function PageEntrepreneurDiagnosticLanding() {
   }));
 
   const { sessionId, patch } = useContractorIntakeSession(mode);
+  const { setActiveRole } = useActiveRole();
+
+  // Site-wide contractor mode: triggered immediately on landing.
+  useEffect(() => {
+    setActiveRole("contractor");
+  }, [setActiveRole]);
 
   // Persist mode changes
   useEffect(() => {
