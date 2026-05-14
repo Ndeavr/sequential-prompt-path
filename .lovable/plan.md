@@ -1,72 +1,69 @@
-# Contrast & Menu Cleanup — Entrepreneur + Onboarding
+# Fix orb size, voice consistency, and UNPRO pronunciation
 
-## Problems visible in screenshots
+## Diagnosis
 
-1. **Top bar (warm pages)** — Header still uses dark `#0F1B2D` chrome (UNPRO logo block + FR/EN toggle + hamburger) which clashes with the cream background and wraps awkwardly on mobile.
-2. **Mobile drawer/menu** — Opens with dark navy background but text is barely readable (low-contrast slate text on dark). The page underneath is warm; the drawer should match.
-3. **Bottom tab bar** — On warm pages, labels and icons are too low-contrast; the floating Alex orb sits over content (e.g. "assurances, références" text clipped behind it).
-4. **Entrepreneur landing (`/pro`, `PageEntrepreneursLanding`)** — Built fully dark (`from-slate-900`, white text, blue gradients). With warm theme inverted via CSS variables it becomes broken: white text on cream, duplicate CTA buttons stacked, hardcoded blue `bg-[#...]` not theme-aware.
-5. **Contractor onboarding (`/onboarding/contractor`)** — Currently in `darkRoutes`. User wants it adjusted (likely keep dark but verify contrast) — confirm direction.
-6. **Entrepreneur dashboard lite** — Uses `bg-background` so flips to cream automatically; needs verification.
+The previous round already shipped most of what was asked:
+- `AlexFloatingOrb.tsx` is a layered 3D orb (rim, base glow, face, house icon). Confirmed in preview screenshot.
+- `prepareAlexSpeechText()` exists with FR ("Un Pro") and EN ("Hun Pro") rules and passing tests.
+- `alexVoiceConfig.ts` is locked at stability 0.48 / similarity 0.78 / style 0.38 / boost on.
+- `elevenlabsService.speak()` sends one TTS request per call (no per-sentence chunking).
 
-## Scope
+What is still wrong (verified in preview + code):
 
-Frontend/CSS only. No business logic, no Supabase, no Alex changes.
+1. **Orb is too large on mobile** — fills ~90% of viewport width, no mouth visible, eyes slightly clipped against the rim. Reads as "giant circle" instead of "small premium orb floating above a base".
+2. **Voice consistency on the homepage is NOT controlled by `elevenlabsService`.** The homepage uses the ElevenLabs Conversational AI agent (real-time WebRTC). Voice settings in `alexVoiceConfig` only reach the agent through `buildAlexAgentOverrides`, and overrides are silently ignored unless the agent dashboard has each override enabled. The "speed drops after sentence 1" behavior is the agent dashboard preset overriding our values.
+3. **UNPRO pronunciation in the live agent** is only fixed for the first message (`firstMessage: "...d'Un Pro..."`). When the agent generates new sentences mid-conversation it will say "U-N-P-R-O" because the system prompt does not forbid it.
 
-## Plan
+## Changes
 
-### 1. SmartHeader — make warm-aware
-- File: `src/components/navigation/SmartHeader.tsx` (read first)
-- Detect warm context (same `.landing-warm` query as `MobileBottomNav`) OR accept it via CSS by switching all hardcoded `bg-[#0F1B2D]`, `text-white` to semantic tokens (`bg-background/90`, `text-foreground`, `border-border`).
-- Mobile: reduce header height, ensure FR/EN pill + avatar + hamburger fit in 384px width without overlap.
+### 1. Orb sizing + face polish (`src/components/home-orb/AlexFloatingOrb.tsx`)
+- Drop `mobile` size from 260 → **200px**, `desktop` 340 → **300px**.
+- Re-center face: eyes `cy={58}`, mouth always rendered (default `M42 72 Q50 75 58 72`) so the orb never looks "blank".
+- Add a faint inner ring at 48% radius for depth, and a darker bottom contact shadow so the orb visibly floats above the base disc.
+- Increase base disc opacity contrast vs orb (base width = orb × 0.85, blur 14px).
 
-### 2. Mobile drawer (hamburger sheet)
-- Locate the Sheet/drawer component used by SmartHeader (`MobileMenuSheet` or similar).
-- Replace dark hardcoded surface with `bg-background text-foreground` so it follows warm/dark per route.
-- Section headers (`MON ESPACE`, `DÉCOUVREZ`) use `text-muted-foreground`; links use `text-foreground hover:text-primary`.
+### 2. Hero layout (`src/components/home-orb/HeroOrbMockup.tsx`)
+- Wrap orb in `max-w-[220px]` container so it never visually dominates.
+- Reduce top padding `mt-8 → mt-4` on mobile to lift the orb above the fold.
+- Move "ALEX · ONLINE" pill closer to the orb (`mt-3` instead of `mt-5`).
 
-### 3. MobileBottomNav — warm variant polish
-- File: `src/components/navigation/MobileBottomNav.tsx` + `.landing-warm-bottom-nav` in `index.css`.
-- Increase label contrast on warm: active = navy `text-primary`, inactive = `text-foreground/70` (not muted-foreground which is too light on cream).
-- Add `pb-28` safe gutter to entrepreneur landing sections so floating Alex orb never clips content.
+### 3. Voice consistency — force overrides + dashboard alignment
+- In `buildAlexAgentOverrides`, also pass `tts.speed: 1.05` and `tts.model_id: "eleven_multilingual_v2"` so a single payload describes the full voice. Today `speed` and `model_id` are absent from the override, so the agent falls back to its dashboard preset on subsequent turns.
+- Add an explicit prompt clause to `ALEX_CORE_PROMPT` (or via `promptAddendum`):  
+  `"Garde un débit constant et énergique du début à la fin. Ne ralentis pas après la première phrase."`
+- Document in `docs/architecture.md` (1 short note) the 3 toggles that MUST be ON in the ElevenLabs agent dashboard for these fixes to apply: Overrides → Voice (voice_id, stability, similarity, style, speed, speaker_boost), Overrides → First message, Overrides → Prompt. Without this, no client code change can stop the slowdown.
 
-### 4. Entrepreneur landing pages (warm conversion)
-- Files: `src/components/entrepreneur-landing/v2/*.tsx` (HeroV2, SectionPainV2, SectionSolutionV2, SectionSocialProofV2, SectionHowItWorksV2, SectionPlansPreviewV2, SectionScarcityV2, SectionFormV2, StickyMobileCTAV2).
-- Replace hardcoded `from-slate-900`, `bg-black`, `text-white`, `text-slate-300/400`, `bg-blue-600`, `bg-[#...]` with semantic tokens (`bg-background`, `text-foreground`, `text-muted-foreground`, `bg-primary text-primary-foreground`, `border-border`).
-- HeroV2: navy headline on cream, muted-green accent for keywords, single primary CTA `Recevoir mes rendez-vous` + secondary outline `Voir les forfaits`. Remove the duplicated third button visible in screenshot 3.
-- StickyMobileCTAV2: warm white/cream surface with subtle `border-border` and navy CTA; ensure z-index sits above content but below bottom nav (or hide when bottom nav visible to avoid stacking).
+### 4. UNPRO pronunciation in the live agent
+- Extend `ALEX_CORE_PROMPT` with a hard pronunciation rule:  
+  ```
+  PRONONCIATION OBLIGATOIRE
+  - "UNPRO" se prononce TOUJOURS "Un Pro" en français et "Hun Pro" en anglais.
+  - Ne jamais épeler U-N-P-R-O. Ne jamais dire "you en pro" ou "une pro".
+  - À l'écrit garde la marque "UNPRO". À l'oral utilise la prononciation ci-dessus.
+  ```
+- Keep `firstMessage` using the pre-converted "Un Pro" form (already in place).
+- For any TTS path that is NOT the conversational agent (`elevenlabsService.speak`), `prepareAlexSpeechText` already rewrites the string before sending — keep as-is.
 
-### 5. Onboarding routes — confirm direction
-- `/onboarding/contractor` is currently dark. Two options:
-  - **A.** Keep dark (cinematic cockpit feel) — only verify contrast of inputs/labels.
-  - **B.** Switch to warm to match the rest of the public funnel.
-- Homeowner onboarding (`/onboarding/homeowner*`) is already warm by default — sweep its components for hardcoded dark styles.
+### 5. Tests
+- Existing `prepareAlexSpeechText.test.ts` already covers FR/EN cases. No new tests needed for that.
+- Add a tiny render smoke test for `AlexFloatingOrb` (mounts at default size, has eyes + mouth + house icon nodes).
 
-### 6. Entrepreneur dashboard lite
-- `PageEntrepreneurDashboardLite.tsx` uses `bg-background` → flips warm. Since it's a logged-in cockpit, add it to `darkRoutes` (`/entrepreneur/dashboard-lite`) OR keep warm and verify `PanelContractorAdvisorAlex` contrast. Recommend: **keep warm** for consistency with the rest of `/entrepreneur/*` public surfaces (only `dashboard`, `import-processing`, `leads` stay dark per current config).
-
-## Files to edit
-
-- `src/components/navigation/SmartHeader.tsx`
-- Mobile menu sheet (TBD after read)
-- `src/components/navigation/MobileBottomNav.tsx`
-- `src/index.css` (refine `.landing-warm-bottom-nav` contrast)
-- `src/components/entrepreneur-landing/v2/HeroV2.tsx`
-- `src/components/entrepreneur-landing/v2/SectionPainV2.tsx`
-- `src/components/entrepreneur-landing/v2/SectionSolutionV2.tsx`
-- `src/components/entrepreneur-landing/v2/SectionSocialProofV2.tsx`
-- `src/components/entrepreneur-landing/v2/SectionHowItWorksV2.tsx`
-- `src/components/entrepreneur-landing/v2/SectionPlansPreviewV2.tsx`
-- `src/components/entrepreneur-landing/v2/SectionScarcityV2.tsx`
-- `src/components/entrepreneur-landing/v2/SectionFormV2.tsx`
-- `src/components/entrepreneur-landing/v2/StickyMobileCTAV2.tsx`
-- Targeted homeowner onboarding components (after read)
+## Files touched
+- `src/components/home-orb/AlexFloatingOrb.tsx` (size + face)
+- `src/components/home-orb/HeroOrbMockup.tsx` (layout)
+- `src/features/alex/voice/alexAgentOverrides.ts` (add `speed`, `model_id`)
+- `src/features/alex/voice/alexCorePrompt.ts` (pronunciation + tempo clauses)
+- `docs/architecture.md` (one paragraph: required agent-dashboard toggles)
+- `src/components/home-orb/__tests__/AlexFloatingOrb.test.tsx` (new, smoke)
 
 ## Out of scope
-- Admin (`/admin/*`) stays dark — untouched.
-- Contractor cockpit dashboards (`/pro/*`, `/entrepreneur/dashboard|leads|import-processing`) stay dark — untouched.
-- Alex voice/orb logic, Stripe, Supabase, RLS — untouched.
+- No DB / edge function / Stripe / auth changes.
+- No new routes. Conversation stays inline on `/index`.
+- No rebuild of `elevenlabsService` chunking — it already sends one request per turn.
 
-## Question before I implement
+## Required user action after deploy
+Open the ElevenLabs agent dashboard and confirm:
+1. Security → Overrides → enable Voice, First Message, Prompt.
+2. Voice settings preset matches `stability 0.48 / similarity 0.78 / style 0.38 / speaker_boost on / speed 1.05`.
 
-Onboarding direction: keep `/onboarding/contractor` **dark cockpit** (current) or convert to **warm** to match the public funnel? I'll default to **keep dark + contrast pass** unless you say otherwise.
+Without step 1, the agent ignores our settings and the slowdown returns.

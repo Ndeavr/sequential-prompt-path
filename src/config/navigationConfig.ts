@@ -193,10 +193,10 @@ export function getStateActions(ctx: NavigationContext): NavItem[] {
 export const mobileTabsByRole: Record<UserRole | "guest", NavItem[]> = {
   guest: [
     { to: "/", label: "Accueil", labelEn: "Home", icon: "Home" },
-    { to: "/entrepreneurs", label: "Pros", labelEn: "Pros", icon: "Briefcase" },
+    { to: "/entrepreneurs", label: "Explorer", labelEn: "Explore", icon: "Compass" },
     { to: "/alex", label: "Alex", icon: "Sparkles" },
-    { to: "/compare-quotes", label: "Soumissions", labelEn: "Quotes", icon: "Scale" },
-    { to: "/login", label: "Compte", labelEn: "Account", icon: "User" },
+    { to: "/pricing", label: "Tarifs", labelEn: "Pricing", icon: "CreditCard" },
+    { to: "/login", label: "Connexion", labelEn: "Sign In", icon: "LogIn" },
   ],
   homeowner: [
     { to: "/dashboard", label: "Accueil", labelEn: "Home", icon: "Home" },

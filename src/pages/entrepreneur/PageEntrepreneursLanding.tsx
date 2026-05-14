@@ -33,7 +33,7 @@ const PageEntrepreneursLanding = () => {
         />
       </Helmet>
 
-      <div className="min-h-screen bg-background pb-40 lg:pb-0">
+      <div className="min-h-screen bg-background pb-24 lg:pb-0">
         <HeroV2 onTrackCta={trackCta} />
         <SectionPainV2 />
         <SectionSolutionV2 />

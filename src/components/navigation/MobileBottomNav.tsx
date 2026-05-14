@@ -31,27 +31,17 @@ const MobileBottomNav = () => {
   const leftTabs = regularTabs.slice(0, 2);
   const rightTabs = regularTabs.slice(2, 4);
 
-  // Detect warm theme by walking up from this nav. The wrapper sets `.landing-warm`.
-  const isWarm = typeof document !== "undefined" && !!document.querySelector(".landing-warm");
-
   return (
     <nav
-      className={`lg:hidden fixed bottom-2 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-40 rounded-2xl safe-area-bottom ${
-        isWarm ? "landing-warm-bottom-nav" : ""
-      }`}
+      className="lg:hidden fixed bottom-2 left-2 right-2 z-40 rounded-2xl safe-area-bottom"
       aria-label="Mobile navigation"
-      style={
-        isWarm
-          ? undefined
-          : {
-              background: "hsl(220 40% 6% / 0.78)",
-              backdropFilter: "blur(20px) saturate(1.5)",
-              WebkitBackdropFilter: "blur(20px) saturate(1.5)",
-              border: "1px solid hsl(0 0% 100% / 0.06)",
-              boxShadow:
-                "0 -4px 24px -4px hsl(222 100% 55% / 0.08), 0 8px 32px -8px hsl(228 40% 2% / 0.6)",
-            }
-      }
+      style={{
+        background: "hsl(220 40% 6% / 0.78)",
+        backdropFilter: "blur(20px) saturate(1.5)",
+        WebkitBackdropFilter: "blur(20px) saturate(1.5)",
+        border: "1px solid hsl(0 0% 100% / 0.06)",
+        boxShadow: "0 -4px 24px -4px hsl(222 100% 55% / 0.08), 0 8px 32px -8px hsl(228 40% 2% / 0.6)",
+      }}
     >
       <div className="flex items-center justify-around h-14 px-1">
         {leftTabs.map((tab) => {

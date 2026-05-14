@@ -15,7 +15,6 @@ import { useAlexVoice as useAlexTTS } from "@/features/alex/hooks/useAlexVoice";
 
 export type AlexHomepageConversationHandle = {
   start: () => void;
-  send: (text: string) => void;
 };
 
 interface Props {
@@ -24,10 +23,6 @@ interface Props {
   /** Forwarded to the orb so it can switch state. */
   onActivityChange?: (active: boolean) => void;
   onAssistantSpeakingChange?: (speaking: boolean) => void;
-  /** Visual style. "dark" = original navy hero, "warm" = cream concierge. */
-  variant?: "dark" | "warm";
-  /** Hide the built-in composer (orb + input) — caller renders its own. */
-  hideComposer?: boolean;
 }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
@@ -86,7 +81,7 @@ async function callAlexChat(messages: AlexInlineMessage[]): Promise<string> {
 }
 
 export default forwardRef<AlexHomepageConversationHandle, Props>(function AlexHomepageConversation(
-  { greeting, onActivityChange, onAssistantSpeakingChange, variant = "dark", hideComposer = false },
+  { greeting, onActivityChange, onAssistantSpeakingChange },
   ref,
 ) {
   const [messages, setMessages] = useState<AlexInlineMessage[]>([]);
@@ -172,80 +167,51 @@ export default forwardRef<AlexHomepageConversationHandle, Props>(function AlexHo
     [messages, speakAndTrack],
   );
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      start: () => {
-        void greet();
-      },
-      send: (text: string) => {
-        if (!hasGreeted) void greet();
-        void sendUser(text);
-      },
-    }),
-    [greet, sendUser, hasGreeted],
-  );
+  useImperativeHandle(ref, () => ({ start: () => greet() }), [greet]);
 
   return (
     <div className="w-full">
-      <AlexInlineTranscript messages={messages} isThinking={isThinking} variant={variant} />
+      <AlexInlineTranscript messages={messages} isThinking={isThinking} />
 
-      {hideComposer ? null : (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!hasGreeted) greet();
-            sendUser(input);
+      {/* Inline composer */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!hasGreeted) greet();
+          sendUser(input);
+        }}
+        className="mt-3 flex items-center gap-2"
+      >
+        <button
+          type="button"
+          onClick={() => greet()}
+          aria-label="Activer Alex"
+          className="shrink-0 w-11 h-11 rounded-full inline-flex items-center justify-center border border-blue-400/40 bg-[hsl(220_60%_8%)] text-blue-300 hover:text-white transition"
+          style={{
+            boxShadow:
+              "0 0 0 4px hsl(212 100% 50% / 0.18), 0 12px 30px -10px hsl(212 100% 50% / 0.5)",
           }}
-          className="mt-3 flex items-center gap-2"
         >
-          <button
-            type="button"
-            onClick={() => greet()}
-            aria-label="Activer Alex"
-            className={
-              variant === "warm"
-                ? "shrink-0 w-11 h-11 rounded-full inline-flex items-center justify-center bg-[#0E5E4E] text-white shadow-md"
-                : "shrink-0 w-11 h-11 rounded-full inline-flex items-center justify-center border border-blue-400/40 bg-[hsl(220_60%_8%)] text-blue-300 hover:text-white transition"
-            }
-            style={
-              variant === "warm"
-                ? undefined
-                : {
-                    boxShadow:
-                      "0 0 0 4px hsl(212 100% 50% / 0.18), 0 12px 30px -10px hsl(212 100% 50% / 0.5)",
-                  }
-            }
-          >
-            <Mic className="w-5 h-5" />
-          </button>
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onFocus={() => {
-              if (!hasGreeted) greet();
-            }}
-            placeholder="Décrivez votre projet, votre problème ou votre urgence…"
-            className={
-              variant === "warm"
-                ? "flex-1 h-11 rounded-full border border-[#0F1B2D]/10 bg-white px-4 text-sm text-[#0F1B2D] placeholder:text-[#0F1B2D]/40 outline-none focus:border-[#0E5E4E]/40"
-                : "flex-1 h-11 rounded-full border border-white/10 bg-white/[0.05] px-4 text-sm text-white placeholder:text-white/40 outline-none focus:border-blue-400/50"
-            }
-          />
-          <button
-            type="submit"
-            disabled={!input.trim()}
-            aria-label="Envoyer"
-            className={
-              variant === "warm"
-                ? "shrink-0 w-11 h-11 rounded-full inline-flex items-center justify-center bg-[#0E5E4E] text-white disabled:opacity-40"
-                : "shrink-0 w-11 h-11 rounded-full inline-flex items-center justify-center bg-blue-500 text-white disabled:opacity-40"
-            }
-          >
-            <Send className="w-4 h-4" />
-          </button>
-        </form>
-      )}
+          <Mic className="w-5 h-5" />
+        </button>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onFocus={() => {
+            if (!hasGreeted) greet();
+          }}
+          placeholder="Décrivez votre situation à Alex…"
+          className="flex-1 h-11 rounded-full border border-white/10 bg-white/[0.05] px-4 text-sm text-white placeholder:text-white/40 outline-none focus:border-blue-400/50"
+        />
+        <button
+          type="submit"
+          disabled={!input.trim()}
+          aria-label="Envoyer"
+          className="shrink-0 w-11 h-11 rounded-full inline-flex items-center justify-center bg-blue-500 text-white disabled:opacity-40"
+        >
+          <Send className="w-4 h-4" />
+        </button>
+      </form>
     </div>
   );
 
