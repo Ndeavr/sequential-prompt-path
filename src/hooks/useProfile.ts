@@ -12,7 +12,7 @@ export const useProfile = () => {
       try {
         const result = await withTimeout(
           (supabase.from("profiles").select("*").eq("user_id", user!.id).maybeSingle() as unknown) as PromiseLike<any>,
-          5000,
+          2500,
           "profile",
         );
         const { data, error } = result as any;
