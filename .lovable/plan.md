@@ -1,104 +1,88 @@
-# UNPRO_GLOBAL_GO_LIVE_CSS_CLEANUP
+# Convert all public pages to warm cream/navy/green theme
 
-Goal: make every page feel like the same premium product (cream/navy/muted green), without rebuilding flows, breaking Supabase/Stripe/auth/Alex/admin/contractor onboarding, or duplicating components.
+## Already done
+- `.landing-warm` token layer in `src/index.css`
+- `MainLayout` applies `landing-warm` to a route allow-list
+- `MobileBottomNav` warm variant
+- Homepage hero `HeroConciergeWarm`
 
-## 1. Design tokens (single source of truth)
+## What this plan covers
+Apply the warm theme **consistently** to every public-facing page that already routes through `MainLayout`, fix pages that bypass tokens with hardcoded dark backgrounds, and leave admin / contractor cockpit / `/alex` immersive / dashboard untouched (stay dark).
 
-Edit `src/index.css` + `tailwind.config.ts` to add a **warm UNPRO theme layer** alongside the existing dark theme:
+## 1. Expand `warmRoutes` in `MainLayout.tsx`
+Add missing public surfaces detected in repo:
+- `/audit-aipp`, `/aipp`, `/diagnostic` public landings
+- `/journal/*` article pages
+- `/recruitment/*` apply pages (cream)
+- `/join/*` resume page
+- `/compare-quotes`, `/quote-analyzer*`
+- `/condo` public marketing (keep `/condo/dashboard` dark)
+- `/lead-empire` public city pages (`/plomb-eau/:ville`, `/tuyaux-plomb/:quartier`)
+- `/analyse/:slug` outreach landings
+- 404 / error pages
 
-- `--unpro-cream: 44 33% 97%` (#F7F6F0)
-- `--unpro-navy: 218 52% 12%` (#0F1B2D)
-- `--unpro-green: 165 42% 24%` (#0E5E4E)
-- `--unpro-blue: 222 100% 55%` (existing UNPRO blue)
-- `--unpro-gold: 42 55% 54%` (#C9A24A) for trust pills only
-- `--unpro-border: 30 15% 88%` warm gray
-- `--unpro-card: 0 0% 100%` + `--unpro-card-elevated`
-- Radius scale: `--radius-card: 24px`, `--radius-pill: 999px`
-- Soft shadows: `--shadow-soft`, `--shadow-card-warm`
-- Typography pair: keep existing serif (Instrument Serif/Cormorant) for H1/H2, Inter/Manrope for UI
+Keep dark: `/admin/*`, `/dashboard/*`, `/alex` immersive, `/diagnostic-photo`, `/pro/*` cockpit, `/entrepreneur/dashboard*`, `/entrepreneur/import-processing` (terminal), `/onboarding/contractor` voice flow if it relies on dark cinematic.
 
-Add a `.theme-warm` class wrapper that maps `--background`, `--foreground`, `--card`, `--primary`, `--accent`, `--border` to the warm tokens. Public-facing routes opt in by setting `theme-warm` on `<main>`. Dark routes (admin, dashboards, Alex immersive `/alex`) stay on the existing cinematic dark theme.
+## 2. Remove hardcoded backgrounds in pages
+Pages currently override with `bg-background` on a dark assumption or inline gradients. Replace with neutral wrappers so `landing-warm` tokens take over:
+- `PageAuditAIPPv2.tsx` — `bg-background` is fine (tokens swap), verify hero inner colors
+- `PageContractorJoinResume.tsx` — uses amber/dark card; restyle with semantic tokens
+- `pages/entrepreneur/PageEntrepreneurDashboardLite.tsx` — keep dark (cockpit)
+- `pages/entrepreneur/PageEntrepreneurImportProcessing.tsx` — keep dark (terminal)
+- Sweep `src/pages/**` for `style={{ background: ... #0... }}`, `bg-[#...]`, `from-slate-900`, `bg-black`, `text-white` literals on public routes and replace with `bg-background`, `text-foreground`, `text-muted-foreground`, `border-border`.
 
-## 2. Route → theme mapping
+## 3. Shared primitives audit (token-only changes)
+Verify these render correctly on cream:
+- `Button` variants (default/secondary/outline/ghost) — already token-based
+- `Input`, `Textarea`, `Card`, `Dialog`, `Sheet`, `Tabs`, `Badge`, `Alert`
+- `CardGlass` — add a `warm` variant: white surface, `border-border`, `shadow-[0_2px_24px_rgba(15,27,45,0.06)]`
+- `BannerNoMatchPrimary` and other alert banners — already use `bg-muted/60`, OK
 
-Decide centrally in `MainLayout` based on `pathname`:
+## 4. Hero/landing section components
+Components used across public pages with hardcoded dark gradients to neutralize:
+- `home-orb/*` legacy (only used on `/alex`, leave dark)
+- `aipp-v2/HeroSectionAuditAIVisibility` — swap to tokens
+- `recruitment/CTAStickyApply` — already token-based, OK
+- `condo-paywall/PanelCheckoutCondoInline` — uses `glass-card`, swap to `CardGlass warm` on public condo
+- Any `journal/*` article hero
 
-- **Warm**: `/`, `/index`, `/pro`, `/pros/:slug`, `/entrepreneur/*`, `/onboarding/*`, `/quote*`, `/account`, `/login`, `/signup`, `/role`, `/pricing`, `/plans`, `/success`, `/payment*`, `/condo` public, `/journal`, `/analyse/:slug`, error/empty pages.
-- **Dark (unchanged)**: `/admin/*`, `/dashboard/*`, `/alex` immersive, `/diagnostic-photo`, internal cockpits.
+## 5. Page-by-page touch list
+- `/login`, `/signup`, `/role`, `/account` — wrap in `theme-warm`, restyle auth cards as white surface, navy CTA, green primary action
+- `/pricing`, `/plans` — cream bg, white plan cards, gold accent for featured
+- `/success`, `/payment*` — cream confirmation, green check, navy heading
+- `/onboarding/*` (homeowner) — cream
+- `/quote/*`, `/compare-quotes` — cream, white step cards
+- `/pros/:slug` — cream profile, navy name, green CTA, gold badges
+- `/journal`, `/journal/:slug` — cream editorial, serif headings already
+- `/analyse/:slug` — cream personalized landing
+- `/condo` public marketing — cream
+- 404 / catch-all — cream
 
-No flow logic changes — only a `data-theme` attribute + class.
+## 6. Acceptance
+At 384px viewport on every public route:
+- background = `#F7F6F0`
+- headings navy `#0F1B2D`
+- body text muted navy
+- primary CTA muted green `#0E5E4E`
+- single header (MainLayout), single bottom nav, content not clipped
+- no `bg-black` / `text-white` / dark gradients leaking through
+- admin + cockpit + `/alex` immersive remain dark
+- no console errors
 
-## 3. Navigation cleanup
+## Out of scope
+Supabase, edge functions, RLS, Stripe, Alex prompts, voice config, business logic, new pages/flows. Pure CSS/token + className changes.
 
-Confirmed today: `MainLayout` already renders `SmartHeader` + `MobileBottomNav`. Audit and remove duplicates from page-level components:
-
-- Sweep `rg "SmartHeader|MobileBottomNav|BottomBarMobileUniversal"` and delete any redundant mounts inside pages.
-- `MobileBottomNav`: switch container from dark glass to **theme-aware** (warm variant: white/cream glass, subtle border, soft shadow). Constrain to `max-w-[92%]` centered, keep safe-area padding.
-- Tabs locked to: **Accueil / Pros / Alex / Soumissions / Compte** (update `mobileTabsByRole` for `guest` + `homeowner`; contractor/admin keep their own tab sets).
-- Add `pb-24 lg:pb-0` to `<main>` in `MainLayout` so content never hides behind the bar (already partially present — verify everywhere).
-- Hide any public QR/debug widgets behind `useIsAdmin()` guard.
-
-## 4. Shared primitive polish
-
-Update existing primitives so every page inherits the system — no new components:
-
-- `src/components/ui/button.tsx`: ensure `default`, `secondary`, `ghost`, `outline` variants read from semantic tokens (already do). Add a `warm` variant override via CSS when inside `.theme-warm`.
-- `src/components/ui/input.tsx`, `textarea.tsx`, `card.tsx`, `dialog.tsx`, `sheet.tsx`, `tabs.tsx`, `badge.tsx`: verify each uses `bg-card`, `text-foreground`, `border-border`. No hardcoded `bg-white`/`text-black`/`#xxx`.
-- `CardGlass`: add `variant="warm"` that swaps to white/cream surface with `--shadow-card-warm`.
-- Empty/loading/error: standardize on existing `Skeleton`, `EmptyState` (create one shared `<EmptyState />` in `src/components/ui/` if missing — check first, do not duplicate).
-
-## 5. Copy consistency sweep
-
-Global find/replace (case-insensitive, only in JSX/TS strings, not in test fixtures):
-
-- `APPUYEZ ET PARLEZ` → remove.
-- `Parlez naturellement à Alex` → `Décrivez le problème. Alex s'occupe du reste.`
-- Generic "assistant IA" / "chatbot" wording → "Alex".
-- Homepage hero copy already correct — propagate the same tagline to `/pro`, `/onboarding/contractor`, `/pros/:slug` hero.
-- Input placeholders → `Décrivez votre projet, votre problème ou votre urgence…`
-
-## 6. Alex inline behavior
-
-- Audit all surfaces that today navigate to `/alex` from a public page. Where the surface already has space, mount `AlexHomepageConversation` inline (variant warm) instead. `/alex` route stays for the immersive experience.
-- Keep voice/agent config untouched (`alexVoiceConfig.ts`, `prepareAlexSpeechText.ts`, `alexPronunciationNormalizer.ts`). Pronunciation rules already correct (UNPRO → "Un Pro" / "Hun Pro", never spelled).
-
-## 7. Page-by-page polish (presentation only)
-
-For each route below: apply `theme-warm`, remove duplicate header/nav, verify CTAs are wired, fix clipped text, add bottom padding. **No business logic edits.**
-
-| Route | Action |
-|---|---|
-| `/` | Already done — verify regression |
-| `/pro`, `/pros/:slug` | Warm theme, hero copy aligned, trust pills, inline Alex mic |
-| `/onboarding/contractor` | Warm theme, remove inner nav, keep voice flow |
-| `/quote-analyzer*` | Warm cards, standardize empty/loading |
-| `/account`, `/login`, `/signup`, `/role` | Warm theme, single brand bar |
-| `/pricing`, `/plans`, `/success`, `/payment*` | Warm cards, verify Stripe Payment Element styling still readable |
-| `/condo` public | Warm theme |
-| `/admin/*`, dashboards | **Untouched** (dark allowed, denser OK) |
-
-## 8. Regression checklist (manual via preview after build)
-
-Homepage · login · role switch · Alex mic start · text input send · contractor onboarding step 1–3 · AIPP scan · Stripe checkout open · `/pros/:slug` render · `/admin` still dark · mobile bottom nav not hiding content · FR/EN toggle · console clean · no clipped text at 384px.
-
-## 9. Out of scope
-
-- No DB migrations, no edge functions, no RLS, no pricing logic, no Alex prompts, no agent IDs.
-- No new pages, no flow rewrites.
-- No removal of admin debug tools — only hide them from non-admin sessions.
-
-## 10. Files expected to change
-
-- `src/index.css` (add warm tokens + `.theme-warm` mapping)
-- `tailwind.config.ts` (extend colors with warm tokens)
-- `src/layouts/MainLayout.tsx` (route-based theme class, ensure `pb-24` on main)
-- `src/components/navigation/MobileBottomNav.tsx` (theme-aware styling, tab labels)
-- `src/config/navigationConfig.ts` (tab list per role)
+## Files expected to change
+- `src/layouts/MainLayout.tsx` (warmRoutes)
 - `src/components/unpro/CardGlass.tsx` (warm variant)
-- `src/components/ui/{button,input,card,dialog,sheet,badge}.tsx` (token audit only if hardcoded colors found)
-- Page files under `src/pages/**` — only theme class + duplicate-nav removal + copy strings
-- No edits to: `src/integrations/supabase/*`, `supabase/**`, `src/config/alexVoiceConfig.ts`, `src/features/alex/voice/**`, Stripe code, RLS, edge functions
-
-## 11. Acceptance
-
-Every public route at 384px shows: cream background, navy text, muted-green accents, single header, single bottom nav, no debug UI, content scrolls above nav, Alex inline where present, copy matches the approved strings, no console errors, dark admin still works.
+- `src/components/aipp-v2/HeroSectionAuditAIVisibility.tsx`
+- `src/pages/join/PageContractorJoinResume.tsx`
+- `src/pages/Login.tsx`, `Signup.tsx`, `Role.tsx`, `Account.tsx`
+- `src/pages/Pricing.tsx`, `Plans.tsx`, `Success.tsx`, `Payment*.tsx`
+- `src/pages/journal/*`
+- `src/pages/condo/*` (public only)
+- `src/pages/pros/PublicContractorPage.tsx`
+- `src/pages/quote/*`, `CompareQuotes.tsx`
+- `src/pages/onboarding/Homeowner*.tsx`
+- `src/pages/NotFound.tsx`
+- Targeted token sweeps in `src/components/**` referenced by above pages
