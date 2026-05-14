@@ -48,7 +48,7 @@ export default function PageHomeSimple() {
             content="Pas de leads partagés. Pas de magasinage. Une seule recommandation, un rendez-vous rapide."
           />
           <meta property="og:type" content="website" />
-          <meta name="theme-color" content="#02060d" />
+          <meta name="theme-color" content="#F7F6F0" />
           <link rel="canonical" href="https://unpro.ca" />
           <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         </Helmet>
