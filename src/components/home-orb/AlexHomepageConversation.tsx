@@ -167,7 +167,8 @@ export default forwardRef<AlexHomepageConversationHandle, Props>(function AlexHo
     [messages, speakAndTrack],
   );
 
-  // Public handlers exposed via render-prop pattern below.
+  useImperativeHandle(ref, () => ({ start: () => greet() }), [greet]);
+
   return (
     <div className="w-full">
       <AlexInlineTranscript messages={messages} isThinking={isThinking} />
