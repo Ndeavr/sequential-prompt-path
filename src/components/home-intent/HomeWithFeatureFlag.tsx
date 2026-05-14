@@ -1,7 +1,7 @@
-// Active homepage = Home (HeroSectionAlexFirst — AI-first premium hero).
-// PageHomeSimple is preserved on disk for future flag-based A/B testing.
-import Home from "@/pages/Home";
+// Active homepage = PageHomeSimple (premium Alex Orb hero matching mockup).
+// Legacy Home preserved on disk for future flag-based A/B testing.
+import PageHomeSimple from "@/pages/PageHomeSimple";
 
 export default function HomeWithFeatureFlag() {
-  return <Home />;
+  return <PageHomeSimple />;
 }
