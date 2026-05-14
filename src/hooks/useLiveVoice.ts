@@ -317,19 +317,54 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         alexVoiceService.startTokenRequest();
         logBoot("VOICE_TOKEN_START", { attempt });
 
+        // Direct fetch — bypass supabase.functions.invoke which can hang at the
+        // SDK level when the auth session is in a stale/refreshing state
+        // (observed after PROFILE_FETCH_TIMEOUT). Function is public-friendly.
         let data: any = null;
         let error: any = null;
         try {
-          const result = await withTimeout(
-            supabase.functions.invoke("voice-get-signed-url"),
-            TOKEN_TIMEOUT_MS,
-            "voice_signed_url",
-          );
-          data = (result as any)?.data ?? null;
-          error = (result as any)?.error ?? null;
-        } catch (e) {
-          logBoot("VOICE_TOKEN_TIMEOUT", { ms: TOKEN_TIMEOUT_MS, attempt });
-          throw new Error("voice_token_timeout");
+          const SUPABASE_URL = (import.meta as any).env?.VITE_SUPABASE_URL as string;
+          const SUPABASE_ANON = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), TOKEN_TIMEOUT_MS);
+          let session: any = null;
+          try {
+            const s = await Promise.race([
+              supabase.auth.getSession(),
+              new Promise((resolve) => setTimeout(() => resolve({ data: { session: null } }), 800)),
+            ]);
+            session = (s as any)?.data?.session ?? null;
+          } catch {}
+          const authToken = session?.access_token ?? SUPABASE_ANON;
+          try {
+            const resp = await fetch(`${SUPABASE_URL}/functions/v1/voice-get-signed-url`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "apikey": SUPABASE_ANON,
+                "Authorization": `Bearer ${authToken}`,
+              },
+              body: "{}",
+              signal: ctrl.signal,
+            });
+            clearTimeout(timer);
+            if (!resp.ok) {
+              error = { message: `http_${resp.status}` };
+            } else {
+              data = await resp.json().catch(() => null);
+            }
+          } catch (fetchErr: any) {
+            clearTimeout(timer);
+            if (fetchErr?.name === "AbortError") {
+              logBoot("VOICE_TOKEN_TIMEOUT", { ms: TOKEN_TIMEOUT_MS, attempt });
+              throw new Error("voice_token_timeout");
+            }
+            throw fetchErr;
+          }
+        } catch (e: any) {
+          if (e?.message === "voice_token_timeout") throw e;
+          logBoot("VOICE_TOKEN_ERROR", { error: e?.message });
+          throw new Error(e?.message || "voice_token_failed");
         }
 
         const signedUrl = data?.signed_url ?? data?.signedUrl;
