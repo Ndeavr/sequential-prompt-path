@@ -85,7 +85,7 @@ async function callAlexChat(messages: AlexInlineMessage[]): Promise<string> {
 }
 
 export default forwardRef<AlexHomepageConversationHandle, Props>(function AlexHomepageConversation(
-  { greeting, onActivityChange, onAssistantSpeakingChange },
+  { greeting, onActivityChange, onAssistantSpeakingChange, variant = "dark", hideComposer = false },
   ref,
 ) {
   const [messages, setMessages] = useState<AlexInlineMessage[]>([]);
