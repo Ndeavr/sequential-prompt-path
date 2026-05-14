@@ -1,9 +1,9 @@
 /**
  * HeroOrbMockup — Premium homepage hero where Alex lives INLINE.
  *
- * No overlay, no route navigation. The orb, transcript, mic and text input
- * all stay on the homepage. As the conversation grows the transcript
- * expands inline; the orb section sticks to the top so Alex stays visible.
+ * Adapts to contractor mode: when `activeRole === "contractor"` the greeting,
+ * CTAs and quick actions all switch to the entrepreneur narrative — without
+ * leaving the homepage.
  */
 import { useRef, useState } from "react";
 import { Cpu, ShieldCheck, Sparkles, Users } from "lucide-react";
@@ -12,11 +12,15 @@ import AlexHomepageConversation, {
   type AlexHomepageConversationHandle,
 } from "./AlexHomepageConversation";
 import AlexConversationArrow from "./AlexConversationArrow";
+import { useActiveRole } from "@/contexts/ActiveRoleContext";
+import ContractorModeBadge from "@/components/layout/ContractorModeBadge";
 
 export default function HeroOrbMockup() {
   const convoRef = useRef<AlexHomepageConversationHandle>(null);
   const [active, setActive] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const { activeRole } = useActiveRole();
+  const isContractor = activeRole === "contractor";
 
   const orbState: AlexOrbState = speaking
     ? "speaking"
@@ -26,8 +30,32 @@ export default function HeroOrbMockup() {
 
   const handleStart = () => convoRef.current?.start();
 
-  const greeting =
-    "Bonjour. Je suis Alex d'UNPRO. Quel problème puis-je vous aider à régler aujourd'hui?";
+  const greeting = isContractor
+    ? "Bonjour. Je suis Alex d'UNPRO. Voyons ensemble comment faire évoluer votre entreprise."
+    : "Bonjour. Je suis Alex d'UNPRO. Quel problème puis-je vous aider à régler aujourd'hui?";
+
+  const primaryCtaLabel = isContractor ? "Voir mon potentiel gratuit" : "Parler à Alex";
+  const primaryCtaHref = isContractor ? "/entrepreneur" : undefined;
+  const secondaryHref = isContractor ? "/leads" : "/entrepreneur";
+  const secondaryLabel = isContractor ? "Mes leads" : "Je suis entrepreneur";
+  const tagline = isContractor
+    ? "Recevez des rendez-vous qualifiés. Votre profil IA travaille 24/7."
+    : "Trouvez le bon pro. Ou devenez le pro recommandé.";
+
+  const quickActions = isContractor
+    ? [
+        { label: "Voir mon AIPP", href: "/entrepreneur" },
+        { label: "Mes rendez-vous", href: "/contractor/calendar" },
+        { label: "Activer mon profil", href: "/entrepreneur/checkout" },
+        { label: "Mon plan recommandé", href: "/entrepreneur" },
+      ]
+    : [
+        { label: "Problème maison", href: "/problemes" },
+        { label: "Analyse soumission", href: "/quote-analyzer" },
+        { label: "Vérifier un pro", href: "/verifier-pro" },
+        { label: "Rejoindre UNPRO", href: "/entrepreneur" },
+        { label: "Gestion condo", href: "/condo" },
+      ];
 
   return (
     <section
@@ -68,7 +96,10 @@ export default function HeroOrbMockup() {
           </svg>
           <span className="font-bold tracking-wide">UNPRO</span>
         </div>
-        <span className="text-white/60 text-xs">Québec · IA</span>
+        <div className="flex items-center gap-2">
+          <ContractorModeBadge />
+          {!isContractor && <span className="text-white/60 text-xs">Québec · IA</span>}
+        </div>
       </div>
 
       {/* Sticky orb island — stays visible while transcript grows */}
@@ -158,38 +189,45 @@ export default function HeroOrbMockup() {
 
       {/* CTAs */}
       <div className="relative z-10 mt-7 px-5 max-w-md mx-auto flex flex-col gap-3 pb-8">
-        <button
-          onClick={handleStart}
-          className="w-full h-14 rounded-2xl font-semibold text-white text-base transition active:scale-[0.98]"
-          style={{
-            background:
-              "linear-gradient(180deg, hsl(212 100% 55%), hsl(220 100% 42%))",
-            boxShadow:
-              "0 14px 30px -8px hsl(212 100% 50% / 0.55), inset 0 1px 0 hsl(0 0% 100% / 0.25)",
-          }}
-        >
-          Parler à Alex
-        </button>
+        {primaryCtaHref ? (
+          <a
+            href={primaryCtaHref}
+            className="w-full h-14 rounded-2xl font-semibold text-white text-base inline-flex items-center justify-center transition active:scale-[0.98]"
+            style={{
+              background:
+                "linear-gradient(180deg, hsl(212 100% 55%), hsl(220 100% 42%))",
+              boxShadow:
+                "0 14px 30px -8px hsl(212 100% 50% / 0.55), inset 0 1px 0 hsl(0 0% 100% / 0.25)",
+            }}
+          >
+            {primaryCtaLabel}
+          </a>
+        ) : (
+          <button
+            onClick={handleStart}
+            className="w-full h-14 rounded-2xl font-semibold text-white text-base transition active:scale-[0.98]"
+            style={{
+              background:
+                "linear-gradient(180deg, hsl(212 100% 55%), hsl(220 100% 42%))",
+              boxShadow:
+                "0 14px 30px -8px hsl(212 100% 50% / 0.55), inset 0 1px 0 hsl(0 0% 100% / 0.25)",
+            }}
+          >
+            {primaryCtaLabel}
+          </button>
+        )}
         <a
-          href="/entrepreneur"
+          href={secondaryHref}
           className="w-full h-14 rounded-2xl font-semibold text-white/90 text-base inline-flex items-center justify-center border border-white/15 bg-white/[0.03] hover:bg-white/[0.07] transition"
         >
-          Je suis entrepreneur
+          {secondaryLabel}
         </a>
-        <p className="text-white/55 text-sm mt-1">
-          Trouvez le bon pro. Ou devenez le pro recommandé.
-        </p>
+        <p className="text-white/55 text-sm mt-1">{tagline}</p>
       </div>
 
       {/* Quick actions */}
       <div className="relative z-10 px-5 max-w-2xl mx-auto pb-8 grid grid-cols-2 gap-3">
-        {[
-          { label: "Problème maison", href: "/problemes" },
-          { label: "Analyse soumission", href: "/quote-analyzer" },
-          { label: "Vérifier un pro", href: "/verifier-pro" },
-          { label: "Rejoindre UNPRO", href: "/entrepreneur" },
-          { label: "Gestion condo", href: "/condo" },
-        ].map((q) => (
+        {quickActions.map((q) => (
           <a
             key={q.label}
             href={q.href}
