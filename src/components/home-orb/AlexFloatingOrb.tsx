@@ -48,8 +48,6 @@ function palette(state: AlexOrbState) {
       return { rim: "180 100% 60%", core: "190 100% 50%", base: "195 100% 55%" };
     case "error":
       return { rim: "35 100% 60%", core: "30 100% 50%", base: "35 100% 55%" };
-    case "concerned":
-      return { rim: "40 90% 60%", core: "215 80% 55%", base: "215 80% 55%" };
     default:
       return { rim: "212 100% 62%", core: "212 100% 50%", base: "212 100% 55%" };
   }
