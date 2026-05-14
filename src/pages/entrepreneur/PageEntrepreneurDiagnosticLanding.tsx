@@ -36,6 +36,7 @@ import AlexFloatingOrb from "@/components/home-orb/AlexFloatingOrb";
 import { CONTRACTOR_PLANS, type ContractorPlanSlug } from "@/config/contractorPlans";
 import { recommendPlan, getPlanLabel, getRecommendationReasons } from "@/services/planRecommendationService";
 import { useContractorIntakeSession, type IntakeMode } from "@/hooks/useContractorIntakeSession";
+import { useActiveRole } from "@/contexts/ActiveRoleContext";
 import { cn } from "@/lib/utils";
 
 // ───────────────────────────── intake state ─────────────────────────────
