@@ -1,80 +1,69 @@
+# Fix orb size, voice consistency, and UNPRO pronunciation
 
-# Homepage Alex — inline conversation, premium orb, voice fixes
+## Diagnosis
 
-The homepage currently calls `openAlex()` which opens `OverlayAlexVoiceFullScreen` (a route-level fullscreen takeover). It also still uses a flat CSS sphere via `AlexFloatingOrb` inside `HeroOrbMockup`. Voice slows down after sentence 1 and pronounces "UNPRO" letter-by-letter. This plan fixes all three in one pass.
+The previous round already shipped most of what was asked:
+- `AlexFloatingOrb.tsx` is a layered 3D orb (rim, base glow, face, house icon). Confirmed in preview screenshot.
+- `prepareAlexSpeechText()` exists with FR ("Un Pro") and EN ("Hun Pro") rules and passing tests.
+- `alexVoiceConfig.ts` is locked at stability 0.48 / similarity 0.78 / style 0.38 / boost on.
+- `elevenlabsService.speak()` sends one TTS request per call (no per-sentence chunking).
 
-## 1. Stay on the homepage — no overlay, no navigation
+What is still wrong (verified in preview + code):
 
-**File: `src/components/home-orb/HeroOrbMockup.tsx`**
-- Remove `useAlexVoice().openAlex` usage. Replace orb / mic / "Parler à Alex" handlers with a new local controller `useHomeAlexInline()` that starts a voice + chat session directly inside the hero (no overlay, no route push).
-- Add a new inline transcript region rendered conditionally below the orb (mobile) or in a right column (desktop ≥ md).
-- Make the orb section `sticky top-0` once `isConversationActive` is true so the orb stays visible as transcript grows.
+1. **Orb is too large on mobile** — fills ~90% of viewport width, no mouth visible, eyes slightly clipped against the rim. Reads as "giant circle" instead of "small premium orb floating above a base".
+2. **Voice consistency on the homepage is NOT controlled by `elevenlabsService`.** The homepage uses the ElevenLabs Conversational AI agent (real-time WebRTC). Voice settings in `alexVoiceConfig` only reach the agent through `buildAlexAgentOverrides`, and overrides are silently ignored unless the agent dashboard has each override enabled. The "speed drops after sentence 1" behavior is the agent dashboard preset overriding our values.
+3. **UNPRO pronunciation in the live agent** is only fixed for the first message (`firstMessage: "...d'Un Pro..."`). When the agent generates new sentences mid-conversation it will say "U-N-P-R-O" because the system prompt does not forbid it.
 
-**New components:**
-- `src/components/home-orb/AlexHomepageConversation.tsx` — the orchestrator: owns conversation state (messages, isListening, isSpeaking), wires mic + text input, renders `AlexInlineTranscript`. Reuses existing `useAlexVoice` hook from `src/features/alex/hooks/useAlexVoice.ts` for TTS and existing `elevenlabsService` for playback. No new edge functions.
-- `src/components/home-orb/AlexInlineTranscript.tsx` — vertical list of message bubbles (user right, Alex left), markdown rendering, auto-scroll to bottom, expanding height. Includes inline text input + send button at the bottom.
-- `src/components/home-orb/AlexConversationArrow.tsx` — small SVG arrow with a soft electric-blue pulse animation. Used at: mic→orb, orb→transcript, orb→quick actions. Hidden once user has sent a message.
+## Changes
 
-**Layout rules:**
-- Mobile (current viewport): orb stays at top, transcript card expands inline below greeting bubble; quick actions remain underneath; page scrolls naturally.
-- Desktop (≥ md): switch hero to a 3-column grid `[left content] [center orb] [right transcript panel]`. Transcript panel is empty until conversation starts, then expands.
+### 1. Orb sizing + face polish (`src/components/home-orb/AlexFloatingOrb.tsx`)
+- Drop `mobile` size from 260 → **200px**, `desktop` 340 → **300px**.
+- Re-center face: eyes `cy={58}`, mouth always rendered (default `M42 72 Q50 75 58 72`) so the orb never looks "blank".
+- Add a faint inner ring at 48% radius for depth, and a darker bottom contact shadow so the orb visibly floats above the base disc.
+- Increase base disc opacity contrast vs orb (base width = orb × 0.85, blur 14px).
 
-**Do NOT touch:**
-- `OverlayAlexVoiceFullScreen.tsx` (kept for other entry points like contractor pages — only the homepage stops using it).
-- Route table, contractor onboarding, Stripe, `/entrepreneur` link.
+### 2. Hero layout (`src/components/home-orb/HeroOrbMockup.tsx`)
+- Wrap orb in `max-w-[220px]` container so it never visually dominates.
+- Reduce top padding `mt-8 → mt-4` on mobile to lift the orb above the fold.
+- Move "ALEX · ONLINE" pill closer to the orb (`mt-3` instead of `mt-5`).
 
-## 2. Premium floating 3D orb (replace flat circle)
+### 3. Voice consistency — force overrides + dashboard alignment
+- In `buildAlexAgentOverrides`, also pass `tts.speed: 1.05` and `tts.model_id: "eleven_multilingual_v2"` so a single payload describes the full voice. Today `speed` and `model_id` are absent from the override, so the agent falls back to its dashboard preset on subsequent turns.
+- Add an explicit prompt clause to `ALEX_CORE_PROMPT` (or via `promptAddendum`):  
+  `"Garde un débit constant et énergique du début à la fin. Ne ralentis pas après la première phrase."`
+- Document in `docs/architecture.md` (1 short note) the 3 toggles that MUST be ON in the ElevenLabs agent dashboard for these fixes to apply: Overrides → Voice (voice_id, stability, similarity, style, speed, speaker_boost), Overrides → First message, Overrides → Prompt. Without this, no client code change can stop the slowdown.
 
-**File: `src/components/home-orb/AlexFloatingOrb.tsx`** — full rewrite.
-- Glossy black sphere (260px mobile, 320–380px desktop) using layered radial gradients: deep black core, blue rim light at 60–80% radius, white specular highlight top-left at 20%, soft inner shadow bottom-right.
-- Floats above a separate base element (elliptical blue glow disc with blur + opacity) — orb has its own `transform: translateY(-12px)` float animation; base stays planted.
-- Drop shadow under orb (dark, soft, offset down).
-- Face mask: two pill LED eyes + small mouth arc, all rendered with SVG inside the sphere, slightly inset to read as on the curved surface (not flat).
-- UNPRO house icon at forehead (existing SVG path), inset slightly with subtle shadow.
-- States (`idle | listening | thinking | speaking`) only modulate rim color intensity, eye animation, and base glow pulse — never resize or flatten the sphere.
+### 4. UNPRO pronunciation in the live agent
+- Extend `ALEX_CORE_PROMPT` with a hard pronunciation rule:  
+  ```
+  PRONONCIATION OBLIGATOIRE
+  - "UNPRO" se prononce TOUJOURS "Un Pro" en français et "Hun Pro" en anglais.
+  - Ne jamais épeler U-N-P-R-O. Ne jamais dire "you en pro" ou "une pro".
+  - À l'écrit garde la marque "UNPRO". À l'oral utilise la prononciation ci-dessus.
+  ```
+- Keep `firstMessage` using the pre-converted "Un Pro" form (already in place).
+- For any TTS path that is NOT the conversational agent (`elevenlabsService.speak`), `prepareAlexSpeechText` already rewrites the string before sending — keep as-is.
 
-## 3. Voice consistency + UNPRO pronunciation
-
-**File: `src/config/alexVoiceConfig.ts`**
-- Update `BASE_TUNING` to `{ stability: 0.48, similarity_boost: 0.78, style: 0.38, use_speaker_boost: true, speed: 1.05 }` (style bumped 0.28 → 0.38 per spec).
-- Confirm all modes (homeowner / contractor / condo) inherit identical tuning so no mid-response profile switching can occur.
-
-**New file: `src/lib/prepareAlexSpeechText.ts`**
-```ts
-export function prepareAlexSpeechText(text: string, language: 'fr'|'en' = 'fr'): string
-```
-Rules:
-- `fr`: replace `d'UNPRO` / `d’UNPRO` → `d'Un Pro`; `de UNPRO` → `d'Un Pro`; standalone `UNPRO` (word boundaries, case-insensitive) → `Un Pro`.
-- `en`: standalone `UNPRO` → `Hun Pro`.
-- Preserves surrounding punctuation. Never mutates display text.
-
-**File: `src/features/alex/services/elevenlabsService.ts`**
-- In `speak()`, run `text` through `prepareAlexSpeechText(text, currentLang)` before sending to the `alex-tts` edge function. Determine `currentLang` from `useAlexStore.getState().activeLanguage` (defaults to `fr`).
-- Ensure single-request streaming: do not split text into per-sentence requests. Keep one POST per `speak()` call so ElevenLabs maintains prosody/speed across sentences (this also fixes "slows down after sentence 1").
-- Remove any per-sentence fallback path if present.
-
-**Test cases (added as a vitest in `src/lib/__tests__/prepareAlexSpeechText.test.ts`):**
-- `"Bonjour. Je suis Alex d'UNPRO."` (fr) → `"Bonjour. Je suis Alex d'Un Pro."`
-- `"UNPRO vous aide à trouver un pro."` (fr) → `"Un Pro vous aide à trouver un pro."`
-- `"Welcome to UNPRO."` (en) → `"Welcome to Hun Pro."`
-
-## 4. Verification
-
-- Visual: load `/` on mobile viewport — confirm orb is 3D, floats above base, and tapping orb does NOT navigate or open the fullscreen overlay; transcript expands inline.
-- Voice: tap orb, listen to greeting — sentence 2 must match sentence 1 in speed/tone; "UNPRO" sounds as "Un Pro" (fr).
-- No regressions: `/entrepreneur`, contractor onboarding, Stripe checkout, `/pros/[slug]` untouched.
-- `bun run vitest src/lib/__tests__/prepareAlexSpeechText.test.ts` passes.
+### 5. Tests
+- Existing `prepareAlexSpeechText.test.ts` already covers FR/EN cases. No new tests needed for that.
+- Add a tiny render smoke test for `AlexFloatingOrb` (mounts at default size, has eyes + mouth + house icon nodes).
 
 ## Files touched
+- `src/components/home-orb/AlexFloatingOrb.tsx` (size + face)
+- `src/components/home-orb/HeroOrbMockup.tsx` (layout)
+- `src/features/alex/voice/alexAgentOverrides.ts` (add `speed`, `model_id`)
+- `src/features/alex/voice/alexCorePrompt.ts` (pronunciation + tempo clauses)
+- `docs/architecture.md` (one paragraph: required agent-dashboard toggles)
+- `src/components/home-orb/__tests__/AlexFloatingOrb.test.tsx` (new, smoke)
 
-- edit `src/components/home-orb/HeroOrbMockup.tsx`
-- edit `src/components/home-orb/AlexFloatingOrb.tsx` (rewrite as true 3D orb)
-- edit `src/config/alexVoiceConfig.ts` (style 0.28 → 0.38)
-- edit `src/features/alex/services/elevenlabsService.ts` (single-request + pronunciation pre-process)
-- create `src/components/home-orb/AlexHomepageConversation.tsx`
-- create `src/components/home-orb/AlexInlineTranscript.tsx`
-- create `src/components/home-orb/AlexConversationArrow.tsx`
-- create `src/lib/prepareAlexSpeechText.ts`
-- create `src/lib/__tests__/prepareAlexSpeechText.test.ts`
+## Out of scope
+- No DB / edge function / Stripe / auth changes.
+- No new routes. Conversation stays inline on `/index`.
+- No rebuild of `elevenlabsService` chunking — it already sends one request per turn.
 
-No DB migrations, no edge function changes, no route changes.
+## Required user action after deploy
+Open the ElevenLabs agent dashboard and confirm:
+1. Security → Overrides → enable Voice, First Message, Prompt.
+2. Voice settings preset matches `stability 0.48 / similarity 0.78 / style 0.38 / speaker_boost on / speed 1.05`.
+
+Without step 1, the agent ignores our settings and the slowdown returns.
