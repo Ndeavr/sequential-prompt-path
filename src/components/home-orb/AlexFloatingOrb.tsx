@@ -145,7 +145,7 @@ export default function AlexFloatingOrb({
 
           {/* Eyes */}
           <g fill={`hsl(${rim})`} filter="url(#alex-glow)">
-            <ellipse cx={38} cy={55} rx={eyes.rx} ry={eyes.ry}>
+            <ellipse cx={40} cy={58} rx={eyes.rx} ry={eyes.ry}>
               {state === "listening" && (
                 <animate attributeName="ry" values={`${eyes.ry};${eyes.ry * 0.4};${eyes.ry}`} dur="2.2s" repeatCount="indefinite" />
               )}
@@ -153,7 +153,7 @@ export default function AlexFloatingOrb({
                 <animate attributeName="opacity" values="1;0.5;1" dur="1.2s" repeatCount="indefinite" />
               )}
             </ellipse>
-            <ellipse cx={62} cy={55} rx={eyes.rx} ry={eyes.ry}>
+            <ellipse cx={60} cy={58} rx={eyes.rx} ry={eyes.ry}>
               {state === "listening" && (
                 <animate attributeName="ry" values={`${eyes.ry};${eyes.ry * 0.4};${eyes.ry}`} dur="2.2s" repeatCount="indefinite" />
               )}
@@ -163,17 +163,17 @@ export default function AlexFloatingOrb({
             </ellipse>
           </g>
 
-          {/* Mouth */}
+          {/* Mouth — always rendered so the orb never looks blank */}
           <path
             d={
               state === "speaking"
-                ? "M40 70 Q50 78 60 70"
+                ? "M42 71 Q50 76 58 71"
                 : expression === "happy"
-                ? "M40 70 Q50 76 60 70"
-                : "M42 71 L58 71"
+                ? "M42 71 Q50 75 58 71"
+                : "M43 72 Q50 74 57 72"
             }
             stroke={`hsl(${rim} / 0.9)`}
-            strokeWidth="1.8"
+            strokeWidth="1.6"
             strokeLinecap="round"
             fill="none"
             filter="url(#alex-glow)"
@@ -181,7 +181,7 @@ export default function AlexFloatingOrb({
             {state === "speaking" && (
               <animate
                 attributeName="d"
-                values="M40 70 Q50 75 60 70;M40 70 Q50 80 60 70;M40 70 Q50 73 60 70"
+                values="M42 71 Q50 75 58 71;M42 71 Q50 80 58 71;M42 71 Q50 73 58 71"
                 dur="0.45s"
                 repeatCount="indefinite"
               />
