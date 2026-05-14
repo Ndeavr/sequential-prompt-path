@@ -15,6 +15,7 @@ import { useAlexVoice as useAlexTTS } from "@/features/alex/hooks/useAlexVoice";
 
 export type AlexHomepageConversationHandle = {
   start: () => void;
+  send: (text: string) => void;
 };
 
 interface Props {
