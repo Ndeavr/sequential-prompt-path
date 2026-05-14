@@ -55,7 +55,7 @@ export default function AlexFloatingOrb({
   onClick,
   className,
 }: AlexFloatingOrbProps) {
-  const px = typeof size === "number" ? size : size === "desktop" ? 340 : 260;
+  const px = typeof size === "number" ? size : size === "desktop" ? 300 : 200;
   const rim = rimColorFor(state);
   const active = state !== "idle";
 
