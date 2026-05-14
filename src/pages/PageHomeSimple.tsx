@@ -13,7 +13,7 @@ import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import MainLayout from "@/layouts/MainLayout";
 import { AlexProvider } from "@/features/alex";
-import HeroOrbMockup from "@/components/home-orb/HeroOrbMockup";
+import HeroConciergeWarm from "@/components/home-concierge/HeroConciergeWarm";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 
 export default function PageHomeSimple() {
