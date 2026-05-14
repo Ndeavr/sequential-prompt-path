@@ -13,11 +13,7 @@ import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import MainLayout from "@/layouts/MainLayout";
 import { AlexProvider } from "@/features/alex";
-import HeroAlexCentered from "@/components/home-simple/HeroAlexCentered";
-import AlexEmbeddedChat from "@/components/home-simple/AlexEmbeddedChat";
-import IntentChipsGrid from "@/components/home-simple/IntentChipsGrid";
-import TrustPromiseCards from "@/components/home-simple/TrustPromiseCards";
-import TrustFooterStrip from "@/components/home-simple/TrustFooterStrip";
+import HeroOrbMockup from "@/components/home-orb/HeroOrbMockup";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 
 export default function PageHomeSimple() {
@@ -41,29 +37,23 @@ export default function PageHomeSimple() {
     <AlexProvider>
       <MainLayout>
         <Helmet>
-          <title>UNPRO — Décrivez votre projet à Alex | Le bon pro recommandé par IA</title>
+          <title>UNPRO — Parlez à Alex | Le bon pro recommandé par IA au Québec</title>
           <meta
             name="description"
-            content="Décrivez votre problème ou imaginez votre projet. Alex, l'IA d'UNPRO, vous aide à estimer, comprendre, comparer et trouver le bon professionnel québécois."
+            content="Décrivez votre problème à Alex. L'IA d'UNPRO trouve le bon professionnel québécois et planifie le rendez-vous. Pas de magasinage, une seule recommandation."
           />
-          <meta property="og:title" content="UNPRO — Décrivez votre projet à Alex" />
+          <meta property="og:title" content="UNPRO — Parlez à Alex" />
           <meta
             property="og:description"
             content="Pas de leads partagés. Pas de magasinage. Une seule recommandation, un rendez-vous rapide."
           />
           <meta property="og:type" content="website" />
-          <meta name="theme-color" content="#060B14" />
+          <meta name="theme-color" content="#02060d" />
           <link rel="canonical" href="https://unpro.ca" />
           <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         </Helmet>
 
-        <div className="max-w-3xl mx-auto pb-12">
-          <HeroAlexCentered />
-          <AlexEmbeddedChat />
-          <IntentChipsGrid />
-          <TrustPromiseCards />
-          <TrustFooterStrip />
-        </div>
+        <HeroOrbMockup />
       </MainLayout>
     </AlexProvider>
   );
