@@ -15,12 +15,12 @@ import { useEffect, useState } from "react";
 import { Mic, Cpu, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 import { useAlexVoiceLockedStore } from "@/stores/alexVoiceLockedStore";
+import AlexFloatingOrb, { type AlexOrbState } from "./AlexFloatingOrb";
 
-type OrbState = "idle" | "listening" | "thinking" | "speaking";
+type OrbState = AlexOrbState;
 
 function useOrbState(): OrbState {
   const isOpen = useAlexVoiceLockedStore((s) => s.isOverlayOpen);
-  // Without coupling deeper, derive a coarse state. Overlay handles the rest.
   return isOpen ? "speaking" : "idle";
 }
 
