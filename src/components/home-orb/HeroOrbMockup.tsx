@@ -113,7 +113,12 @@ export default function HeroOrbMockup() {
 
       {/* Orb */}
       <div className="relative z-10 mt-10 flex flex-col items-center">
-        <Orb state={state} onClick={handleStart} />
+        <AlexFloatingOrb
+          state={state}
+          expression={state === "speaking" ? "confident" : state === "thinking" ? "focused" : "neutral"}
+          size="mobile"
+          onClick={handleStart}
+        />
 
         {/* ALEX label + ONLINE badge */}
         <div className="mt-6 flex items-center gap-3">
