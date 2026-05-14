@@ -1,90 +1,104 @@
-## Pivot homepage to "Conversational Concierge" (warm + alive)
+# UNPRO_GLOBAL_GO_LIVE_CSS_CLEANUP
 
-Move `/` from the dark sci-fi orb hero to a clean warm Apple/Stripe-style intake where the **microphone is the CTA**, with a subtle living AI presence that only "wakes up" on interaction.
+Goal: make every page feel like the same premium product (cream/navy/muted green), without rebuilding flows, breaking Supabase/Stripe/auth/Alex/admin/contractor onboarding, or duplicating components.
 
-### 1. Theme — warm light hero (mobile-first)
+## 1. Design tokens (single source of truth)
 
-- Reuse the existing `landing-warm` token system (`#F7F6F0`, ink `#0F1B2D`, accent emerald `#0E5E4E`, gold `#C9A24A`) instead of `#060B14`.
-- New wrapper component `HeroConciergeWarm.tsx` rendered by `PageHomeSimple` (replaces `HeroOrbMockup` on `/` only — dark orb stays available for other entry points).
-- Layout, top to bottom:
-  1. Slim header: ☰ · `UNPRO` wordmark · 🔔 (uses existing nav primitives, no new routes).
-  2. Gold pill badge: `✦ #1 au Québec pour trouver le bon pro`.
-  3. H1 serif (Instrument Serif / existing display font): **"Décrivez votre problème."**
-  4. Sub: **"Alex trouve le bon pro. Un seul. Pas 3 soumissions."**
-  5. **Mic CTA** (the hero element — see §2).
-  6. Input row: text field `Décrivez votre projet, votre problème ou votre urgence…` + photo upload icon (reuses `AlexHomepageConversation` text path).
-  7. Three trust rows (replacing fake metrics — see §4).
-  8. Sticky bottom tab bar on mobile only: Accueil · Projets · Profil (visual only, links to existing routes).
+Edit `src/index.css` + `tailwind.config.ts` to add a **warm UNPRO theme layer** alongside the existing dark theme:
 
-### 2. Mic-as-CTA + subtle living orb
+- `--unpro-cream: 44 33% 97%` (#F7F6F0)
+- `--unpro-navy: 218 52% 12%` (#0F1B2D)
+- `--unpro-green: 165 42% 24%` (#0E5E4E)
+- `--unpro-blue: 222 100% 55%` (existing UNPRO blue)
+- `--unpro-gold: 42 55% 54%` (#C9A24A) for trust pills only
+- `--unpro-border: 30 15% 88%` warm gray
+- `--unpro-card: 0 0% 100%` + `--unpro-card-elevated`
+- Radius scale: `--radius-card: 24px`, `--radius-pill: 999px`
+- Soft shadows: `--shadow-soft`, `--shadow-card-warm`
+- Typography pair: keep existing serif (Instrument Serif/Cormorant) for H1/H2, Inter/Manrope for UI
 
-New `AlexMicOrb.tsx` (replaces giant `AlexFloatingOrb` on `/`):
+Add a `.theme-warm` class wrapper that maps `--background`, `--foreground`, `--card`, `--primary`, `--accent`, `--border` to the warm tokens. Public-facing routes opt in by setting `theme-warm` on `<main>`. Dark routes (admin, dashboards, Alex immersive `/alex`) stay on the existing cinematic dark theme.
 
-- **Idle**: 88px emerald disc with white mic icon, soft drop shadow, 2 concentric warm gold rings at 8% opacity doing a slow 3s breathing pulse. Looks like a premium hardware button, not an AI.
-- **Hover/focus**: rings tighten, subtle scale 1.02.
-- **Listening**: rings expand outward continuously, opacity reactive to mic input volume (use existing `getInputVolume()` from `useConversation`), subtle blue tint added to outermost ring.
-- **Thinking**: rings freeze, mic icon swaps to a 3-dot pulse.
-- **Speaking**: rings pulse in sync with `getOutputVolume()`, emerald glow intensifies.
-- No face, no house icon, no "ALEX · ONLINE" chip in idle. The orb appears alive **only during interaction** — that's the dopamine moment.
+## 2. Route → theme mapping
 
-Single component, state driven by props from `AlexHomepageConversation`. Stays inline — no route push, no overlay.
+Decide centrally in `MainLayout` based on `pathname`:
 
-### 3. Live transcript directly under the input
+- **Warm**: `/`, `/index`, `/pro`, `/pros/:slug`, `/entrepreneur/*`, `/onboarding/*`, `/quote*`, `/account`, `/login`, `/signup`, `/role`, `/pricing`, `/plans`, `/success`, `/payment*`, `/condo` public, `/journal`, `/analyse/:slug`, error/empty pages.
+- **Dark (unchanged)**: `/admin/*`, `/dashboard/*`, `/alex` immersive, `/diagnostic-photo`, internal cockpits.
 
-Reuse `AlexInlineTranscript.tsx` but render it *below* the input (not below the orb) and only mount once the first message exists. First Alex line streams in word-by-word as TTS plays:
+No flow logic changes — only a `data-theme` attribute + class.
 
-> "Bonjour. Je suis Alex d'UNPRO. Quel problème puis-je vous aider à régler aujourd'hui?"
+## 3. Navigation cleanup
 
-Use a simple `useEffect` interval to reveal characters in sync with audio start (no new SDK). This makes the page feel magical on first load.
+Confirmed today: `MainLayout` already renders `SmartHeader` + `MobileBottomNav`. Audit and remove duplicates from page-level components:
 
-### 4. Replace fake metrics with believable trust row
+- Sweep `rg "SmartHeader|MobileBottomNav|BottomBarMobileUniversal"` and delete any redundant mounts inside pages.
+- `MobileBottomNav`: switch container from dark glass to **theme-aware** (warm variant: white/cream glass, subtle border, soft shadow). Constrain to `max-w-[92%]` centered, keep safe-area padding.
+- Tabs locked to: **Accueil / Pros / Alex / Soumissions / Compte** (update `mobileTabsByRole` for `guest` + `homeowner`; contractor/admin keep their own tab sets).
+- Add `pb-24 lg:pb-0` to `<main>` in `MainLayout` so content never hides behind the bar (already partially present — verify everywhere).
+- Hide any public QR/debug widgets behind `useIsAdmin()` guard.
 
-Three stacked rows with check/shield icons (no numbers fabricated):
+## 4. Shared primitive polish
 
-- 🛡 **RBQ vérifié** — Chaque pro validé manuellement
-- ⚖ **Une seule recommandation** — Pas de soumissions partagées
-- ⚡ **Réponse rapide** — Rendez-vous planifié directement
+Update existing primitives so every page inherits the system — no new components:
 
-(Hardcoded copy in component; no DB/edge changes.)
+- `src/components/ui/button.tsx`: ensure `default`, `secondary`, `ghost`, `outline` variants read from semantic tokens (already do). Add a `warm` variant override via CSS when inside `.theme-warm`.
+- `src/components/ui/input.tsx`, `textarea.tsx`, `card.tsx`, `dialog.tsx`, `sheet.tsx`, `tabs.tsx`, `badge.tsx`: verify each uses `bg-card`, `text-foreground`, `border-border`. No hardcoded `bg-white`/`text-black`/`#xxx`.
+- `CardGlass`: add `variant="warm"` that swaps to white/cream surface with `--shadow-card-warm`.
+- Empty/loading/error: standardize on existing `Skeleton`, `EmptyState` (create one shared `<EmptyState />` in `src/components/ui/` if missing — check first, do not duplicate).
 
-### 5. Copy changes
+## 5. Copy consistency sweep
 
-- H1: `Décrivez votre problème.`
-- Sub: `Alex trouve le bon pro. Un seul. Pas 3 soumissions.`
-- Mic helper (under orb, only when idle): `Appuyez et parlez`
-- Alex first message: unchanged (already memory-locked).
+Global find/replace (case-insensitive, only in JSX/TS strings, not in test fixtures):
 
-### 6. Files
+- `APPUYEZ ET PARLEZ` → remove.
+- `Parlez naturellement à Alex` → `Décrivez le problème. Alex s'occupe du reste.`
+- Generic "assistant IA" / "chatbot" wording → "Alex".
+- Homepage hero copy already correct — propagate the same tagline to `/pro`, `/onboarding/contractor`, `/pros/:slug` hero.
+- Input placeholders → `Décrivez votre projet, votre problème ou votre urgence…`
 
-**Create**
-- `src/components/home-concierge/HeroConciergeWarm.tsx` — full warm hero
-- `src/components/home-concierge/AlexMicOrb.tsx` — reactive mic orb
-- `src/components/home-concierge/TrustRow.tsx` — 3-row trust block
-- `src/components/home-concierge/MobileTabBar.tsx` — visual bottom nav
+## 6. Alex inline behavior
 
-**Edit**
-- `src/pages/PageHomeSimple.tsx` — render `HeroConciergeWarm` instead of `HeroOrbMockup`, swap `theme-color` meta to `#F7F6F0`
-- `src/components/home-orb/AlexHomepageConversation.tsx` — accept a `renderOrb` slot prop so the warm hero can inject `AlexMicOrb` while keeping all conversation/voice plumbing intact
+- Audit all surfaces that today navigate to `/alex` from a public page. Where the surface already has space, mount `AlexHomepageConversation` inline (variant warm) instead. `/alex` route stays for the immersive experience.
+- Keep voice/agent config untouched (`alexVoiceConfig.ts`, `prepareAlexSpeechText.ts`, `alexPronunciationNormalizer.ts`). Pronunciation rules already correct (UNPRO → "Un Pro" / "Hun Pro", never spelled).
 
-**Untouched**
-- `AlexFloatingOrb`, `HeroOrbMockup` (kept for other surfaces / quick rollback)
-- `alexVoiceConfig`, `alexAgentOverrides`, `alexCorePrompt`, `prepareAlexSpeechText` (voice + pronunciation already locked)
-- All Stripe, auth, contractor onboarding, `/pros/[slug]`, admin
-- DB, edge functions, RLS
+## 7. Page-by-page polish (presentation only)
 
-### 7. Restore checkpoint
+For each route below: apply `theme-warm`, remove duplicate header/nav, verify CTAs are wired, fix clipped text, add bottom padding. **No business logic edits.**
 
-Before changes: `UNPRO_PRE_CONCIERGE_WARM_HOMEPAGE`.
+| Route | Action |
+|---|---|
+| `/` | Already done — verify regression |
+| `/pro`, `/pros/:slug` | Warm theme, hero copy aligned, trust pills, inline Alex mic |
+| `/onboarding/contractor` | Warm theme, remove inner nav, keep voice flow |
+| `/quote-analyzer*` | Warm cards, standardize empty/loading |
+| `/account`, `/login`, `/signup`, `/role` | Warm theme, single brand bar |
+| `/pricing`, `/plans`, `/success`, `/payment*` | Warm cards, verify Stripe Payment Element styling still readable |
+| `/condo` public | Warm theme |
+| `/admin/*`, dashboards | **Untouched** (dark allowed, denser OK) |
 
-### 8. Acceptance
+## 8. Regression checklist (manual via preview after build)
 
-- `/` on mobile (384px) shows warm cream hero, serif H1, single emerald mic, no dark surface.
-- Tapping the mic starts the existing ElevenLabs session inline; orb rings react to volume; transcript streams under input.
-- No navigation, no overlay opens.
-- Lighthouse contrast passes on warm tokens.
-- No console errors; existing voice/text/upload flows unchanged.
-- Dark `HeroOrbMockup` still importable and usable elsewhere.
+Homepage · login · role switch · Alex mic start · text input send · contractor onboarding step 1–3 · AIPP scan · Stripe checkout open · `/pros/:slug` render · `/admin` still dark · mobile bottom nav not hiding content · FR/EN toggle · console clean · no clipped text at 384px.
 
-### Out of scope
+## 9. Out of scope
 
-Backend, schema, agents, pricing, SEO routes, contractor flows, condo flows. Pure presentation refactor on `/`.
+- No DB migrations, no edge functions, no RLS, no pricing logic, no Alex prompts, no agent IDs.
+- No new pages, no flow rewrites.
+- No removal of admin debug tools — only hide them from non-admin sessions.
+
+## 10. Files expected to change
+
+- `src/index.css` (add warm tokens + `.theme-warm` mapping)
+- `tailwind.config.ts` (extend colors with warm tokens)
+- `src/layouts/MainLayout.tsx` (route-based theme class, ensure `pb-24` on main)
+- `src/components/navigation/MobileBottomNav.tsx` (theme-aware styling, tab labels)
+- `src/config/navigationConfig.ts` (tab list per role)
+- `src/components/unpro/CardGlass.tsx` (warm variant)
+- `src/components/ui/{button,input,card,dialog,sheet,badge}.tsx` (token audit only if hardcoded colors found)
+- Page files under `src/pages/**` — only theme class + duplicate-nav removal + copy strings
+- No edits to: `src/integrations/supabase/*`, `supabase/**`, `src/config/alexVoiceConfig.ts`, `src/features/alex/voice/**`, Stripe code, RLS, edge functions
+
+## 11. Acceptance
+
+Every public route at 384px shows: cream background, navy text, muted-green accents, single header, single bottom nav, no debug UI, content scrolls above nav, Alex inline where present, copy matches the approved strings, no console errors, dark admin still works.
