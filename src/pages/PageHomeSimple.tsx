@@ -13,7 +13,7 @@ import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import MainLayout from "@/layouts/MainLayout";
 import { AlexProvider } from "@/features/alex";
-import HeroOrbMockup from "@/components/home-orb/HeroOrbMockup";
+import HeroConciergeWarm from "@/components/home-concierge/HeroConciergeWarm";
 import { trackCopilotEvent } from "@/utils/trackCopilotEvent";
 
 export default function PageHomeSimple() {
@@ -48,12 +48,12 @@ export default function PageHomeSimple() {
             content="Pas de leads partagés. Pas de magasinage. Une seule recommandation, un rendez-vous rapide."
           />
           <meta property="og:type" content="website" />
-          <meta name="theme-color" content="#02060d" />
+          <meta name="theme-color" content="#F7F6F0" />
           <link rel="canonical" href="https://unpro.ca" />
           <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         </Helmet>
 
-        <HeroOrbMockup />
+        <HeroConciergeWarm />
       </MainLayout>
     </AlexProvider>
   );
