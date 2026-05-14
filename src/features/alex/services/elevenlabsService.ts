@@ -9,6 +9,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { alexLog } from "../utils/alexDebug";
 import { ALEX_VOICE_BASE, getVoiceConfigFor } from "@/config/alexVoiceConfig";
+import { prepareAlexSpeechText, type AlexSpeechLang } from "@/lib/prepareAlexSpeechText";
 
 // LOCKED: Alex master voice — single source of truth (alexVoiceConfig).
 export const ALEX_PRIMARY_VOICE_ID = ALEX_VOICE_BASE.voiceId;
@@ -81,7 +82,17 @@ export const elevenlabsService = {
     currentAbort = abort;
     const startedAt = Date.now();
 
-    alexLog("[ALEX_TTS_START]", { text: text.slice(0, 80) });
+    // Detect language for pronunciation pre-process. Default to French.
+    let lang: AlexSpeechLang = "fr";
+    try {
+      // Lazy import to avoid circular dep with alexStore.
+      const { useAlexStore } = await import("../state/alexStore");
+      const active = useAlexStore.getState().activeLanguage;
+      lang = active && active.toLowerCase().startsWith("en") ? "en" : "fr";
+    } catch {}
+    const ttsText = prepareAlexSpeechText(text, lang);
+
+    alexLog("[ALEX_TTS_START]", { text: ttsText.slice(0, 80), lang });
 
     // Hard timeout: abort request if it takes too long
     const timeoutId = window.setTimeout(() => {
@@ -91,7 +102,7 @@ export const elevenlabsService = {
 
     try {
       const { data, error } = await supabase.functions.invoke("alex-tts", {
-        body: { text, settings: VOICE_SETTINGS, voice_id: ALEX_PRIMARY_VOICE_ID },
+        body: { text: ttsText, settings: VOICE_SETTINGS, voice_id: ALEX_PRIMARY_VOICE_ID },
       });
 
       window.clearTimeout(timeoutId);
