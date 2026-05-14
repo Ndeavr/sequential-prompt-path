@@ -21596,6 +21596,72 @@ export type Database = {
           },
         ]
       }
+      contractor_intake_sessions: {
+        Row: {
+          ai_summary: string | null
+          aipp_score: number | null
+          anon_session_id: string | null
+          answers: Json
+          company_name: string | null
+          completion_percentage: number
+          created_at: string
+          detected_region: string | null
+          detected_trade: string | null
+          id: string
+          mode: string
+          phone: string | null
+          projected_revenue_high: number | null
+          projected_revenue_low: number | null
+          rbq: string | null
+          recommended_plan: string | null
+          updated_at: string
+          user_id: string | null
+          website: string | null
+        }
+        Insert: {
+          ai_summary?: string | null
+          aipp_score?: number | null
+          anon_session_id?: string | null
+          answers?: Json
+          company_name?: string | null
+          completion_percentage?: number
+          created_at?: string
+          detected_region?: string | null
+          detected_trade?: string | null
+          id?: string
+          mode?: string
+          phone?: string | null
+          projected_revenue_high?: number | null
+          projected_revenue_low?: number | null
+          rbq?: string | null
+          recommended_plan?: string | null
+          updated_at?: string
+          user_id?: string | null
+          website?: string | null
+        }
+        Update: {
+          ai_summary?: string | null
+          aipp_score?: number | null
+          anon_session_id?: string | null
+          answers?: Json
+          company_name?: string | null
+          completion_percentage?: number
+          created_at?: string
+          detected_region?: string | null
+          detected_trade?: string | null
+          id?: string
+          mode?: string
+          phone?: string | null
+          projected_revenue_high?: number | null
+          projected_revenue_low?: number | null
+          rbq?: string | null
+          recommended_plan?: string | null
+          updated_at?: string
+          user_id?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       contractor_leads: {
         Row: {
           activation_status: string
