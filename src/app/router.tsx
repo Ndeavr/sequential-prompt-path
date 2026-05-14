@@ -776,7 +776,8 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/activer/succes" element={<Suspense fallback={<LazyFallback />}><ScreenActivationSuccess /></Suspense>} />
 
         {/* Entrepreneur Funnel */}
-        <Route path="/entrepreneur" element={<PageEntrepreneurLandingAIPP />} />
+        <Route path="/entrepreneur" element={<Suspense fallback={<LazyFallback />}><PageEntrepreneurDiagnosticLanding /></Suspense>} />
+        <Route path="/entrepreneur/aipp-import" element={<PageEntrepreneurLandingAIPP />} />
         <Route path="/entrepreneurs" element={<PageEntrepreneursLanding />} />
         <Route path="/entrepreneur/analysis/loading" element={<PageAIPPAnalysisLoading />} />
         <Route path="/entrepreneur/score" element={<PageEntrepreneurScoreResult />} />
