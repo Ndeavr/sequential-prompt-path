@@ -80,11 +80,10 @@ async function callAlexChat(messages: AlexInlineMessage[]): Promise<string> {
   return full.trim() || "Désolée, je n'ai pas saisi. Pouvez-vous reformuler?";
 }
 
-export default function AlexHomepageConversation({
-  greeting,
-  onActivityChange,
-  onAssistantSpeakingChange,
-}: Props) {
+export default forwardRef<AlexHomepageConversationHandle, Props>(function AlexHomepageConversation(
+  { greeting, onActivityChange, onAssistantSpeakingChange },
+  ref,
+) {
   const [messages, setMessages] = useState<AlexInlineMessage[]>([]);
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
