@@ -9,6 +9,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { alexLog } from "../utils/alexDebug";
 import { ALEX_VOICE_BASE, getVoiceConfigFor } from "@/config/alexVoiceConfig";
+import { prepareAlexSpeechText, type AlexSpeechLang } from "@/lib/prepareAlexSpeechText";
 
 // LOCKED: Alex master voice — single source of truth (alexVoiceConfig).
 export const ALEX_PRIMARY_VOICE_ID = ALEX_VOICE_BASE.voiceId;
