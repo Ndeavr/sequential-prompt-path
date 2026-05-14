@@ -23,6 +23,10 @@ interface Props {
   /** Forwarded to the orb so it can switch state. */
   onActivityChange?: (active: boolean) => void;
   onAssistantSpeakingChange?: (speaking: boolean) => void;
+  /** Visual style. "dark" = original navy hero, "warm" = cream concierge. */
+  variant?: "dark" | "warm";
+  /** Hide the built-in composer (orb + input) — caller renders its own. */
+  hideComposer?: boolean;
 }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
