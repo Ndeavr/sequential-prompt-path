@@ -1,116 +1,80 @@
 
-# UNPRO — Refonte Orb + Hero + Audit Flow Entrepreneur
+# Homepage Alex — inline conversation, premium orb, voice fixes
 
-Livraison big bang en un seul build, sans casser l'existant. Aucune nouvelle table : on réutilise `contractors`, `contractor_aipp_scores`, `contractor_pages` (`/pros/[slug]`), `subscriptions`, `payments`, le checkout Stripe Payment Element existant et `useVoiceSales`.
+The homepage currently calls `openAlex()` which opens `OverlayAlexVoiceFullScreen` (a route-level fullscreen takeover). It also still uses a flat CSS sphere via `AlexFloatingOrb` inside `HeroOrbMockup`. Voice slows down after sentence 1 and pronounces "UNPRO" letter-by-letter. This plan fixes all three in one pass.
 
-## Phase 0 — Fix bloquant (5 min)
+## 1. Stay on the homepage — no overlay, no navigation
 
-**Bug** : `[UNPRO_BOOT] PROFILE_FETCH_TIMEOUT 5000ms` après chaque `SIGNED_IN`. La home reste suspendue 5 s, Alex ne démarre pas, et c'est probablement la cause réelle de "voix ne démarre pas".
+**File: `src/components/home-orb/HeroOrbMockup.tsx`**
+- Remove `useAlexVoice().openAlex` usage. Replace orb / mic / "Parler à Alex" handlers with a new local controller `useHomeAlexInline()` that starts a voice + chat session directly inside the hero (no overlay, no route push).
+- Add a new inline transcript region rendered conditionally below the orb (mobile) or in a right column (desktop ≥ md).
+- Make the orb section `sticky top-0` once `isConversationActive` is true so the orb stays visible as transcript grows.
 
-Cause attendue : la query `profiles` dans `useAuth`/providers attend une ligne qui n'existe pas (ou RLS bloque) sans fallback.
+**New components:**
+- `src/components/home-orb/AlexHomepageConversation.tsx` — the orchestrator: owns conversation state (messages, isListening, isSpeaking), wires mic + text input, renders `AlexInlineTranscript`. Reuses existing `useAlexVoice` hook from `src/features/alex/hooks/useAlexVoice.ts` for TTS and existing `elevenlabsService` for playback. No new edge functions.
+- `src/components/home-orb/AlexInlineTranscript.tsx` — vertical list of message bubbles (user right, Alex left), markdown rendering, auto-scroll to bottom, expanding height. Includes inline text input + send button at the bottom.
+- `src/components/home-orb/AlexConversationArrow.tsx` — small SVG arrow with a soft electric-blue pulse animation. Used at: mic→orb, orb→transcript, orb→quick actions. Hidden once user has sent a message.
 
-Action :
-- Lire `src/app/providers.tsx`, `src/hooks/useAuth.ts`, `src/contexts/AlexVoiceContext.tsx`.
-- Réduire le timeout à 2 s, ne plus bloquer le boot : si timeout/erreur → continuer avec `profile = null`, logger une fois, ne pas re-tenter en boucle.
-- Vérifier qu'un trigger crée bien une ligne `profiles` à la création d'un `auth.users` (sinon ajouter trigger `handle_new_user`).
+**Layout rules:**
+- Mobile (current viewport): orb stays at top, transcript card expands inline below greeting bubble; quick actions remain underneath; page scrolls naturally.
+- Desktop (≥ md): switch hero to a 3-column grid `[left content] [center orb] [right transcript panel]`. Transcript panel is empty until conversation starts, then expands.
 
-## Phase 1 — Refonte visuelle homepage (mockup)
+**Do NOT touch:**
+- `OverlayAlexVoiceFullScreen.tsx` (kept for other entry points like contractor pages — only the homepage stops using it).
+- Route table, contractor onboarding, Stripe, `/entrepreneur` link.
 
-Cible : `src/pages/PageHomeSimple.tsx` (route `/`). Garder structure SEO/Helmet existante.
+## 2. Premium floating 3D orb (replace flat circle)
 
-Nouveaux composants dans `src/components/home-orb/` :
-- `HeroOrbSection.tsx` — sphère 3D bleu néon, smiley waveform, badge "● ONLINE" vert, sous-titre "ALEX".
-- `OrbSphere.tsx` — sphère CSS pure (radial-gradients + box-shadows + animations) avec :
-  - icône maison bleue en haut intérieur,
-  - 2 yeux pilule bleu lumineux,
-  - reflet supérieur subtil,
-  - halo bleu pulsant en dessous (plateau réfléchissant),
-  - animation `breathe` (scale 1 → 1.02), `pulse-glow` boucle 3s.
-- `WaveformLive.tsx` — 40 barres SVG animées via `requestAnimationFrame`, amplitude liée à `isSpeaking`/`isListening` du `AlexVoiceContext`.
-- `AlexTranscriptBubble.tsx` — bulle sous l'orb qui affiche en temps réel le texte d'Alex (transcription user + réponses agent) en streaming. Source : events `useLiveVoice` / `useAlexConversation` existants.
-- `OrbStateBadge.tsx` — micro-indicateur listening | thinking | speaking | paused | completed.
-- `QuickActionsRow.tsx` — 5 cards arrondies 2xl : Problème maison, Analyse soumission, Vérifier un pro, Rejoindre UNPRO, Gestion condo. Liens vers routes existantes.
-- `HomeFeatureStrip.tsx` — 4 mini-cards pied de hero : AI-POWERED, SECURE BY DESIGN, SMART AUTOMATION, HUMAN + AI (icônes Lucide bleues, style mockup).
+**File: `src/components/home-orb/AlexFloatingOrb.tsx`** — full rewrite.
+- Glossy black sphere (260px mobile, 320–380px desktop) using layered radial gradients: deep black core, blue rim light at 60–80% radius, white specular highlight top-left at 20%, soft inner shadow bottom-right.
+- Floats above a separate base element (elliptical blue glow disc with blur + opacity) — orb has its own `transform: translateY(-12px)` float animation; base stays planted.
+- Drop shadow under orb (dark, soft, offset down).
+- Face mask: two pill LED eyes + small mouth arc, all rendered with SVG inside the sphere, slightly inset to read as on the curved surface (not flat).
+- UNPRO house icon at forehead (existing SVG path), inset slightly with subtle shadow.
+- States (`idle | listening | thinking | speaking`) only modulate rim color intensity, eye animation, and base glow pulse — never resize or flatten the sphere.
 
-CTAs hero :
-- Primaire "Parler à Alex" → ouvre overlay voix (existant `openAlex("intent_conversation")`).
-- Secondaire "Je suis entrepreneur" → `/entrepreneur` (landing pro existant).
-- Sous-texte : "Trouvez le bon pro. Ou devenez le pro recommandé."
+## 3. Voice consistency + UNPRO pronunciation
 
-Tokens dark dans `src/index.css` (sans toucher `landing-warm`) :
-- `--orb-base: 222 90% 8%`, `--orb-glow: 217 100% 60%`, `--orb-rim: 217 100% 75%`.
-- `--hero-bg: 222 47% 4%` (proche `#060B14`), `--hero-grain` overlay 3% noise.
-- Garder light mode existant intact (toggle plus tard).
+**File: `src/config/alexVoiceConfig.ts`**
+- Update `BASE_TUNING` to `{ stability: 0.48, similarity_boost: 0.78, style: 0.38, use_speaker_boost: true, speed: 1.05 }` (style bumped 0.28 → 0.38 per spec).
+- Confirm all modes (homeowner / contractor / condo) inherit identical tuning so no mid-response profile switching can occur.
 
-Mobile-first : orb 240 px sur mobile (centré, marge top 64 px), 320 px ≥ md. Chat bubble pleine largeur en dessous. Quick actions scroll-snap horizontal sur mobile.
-
-## Phase 2 — Audit + fix flow entrepreneur (sans nouvelles tables)
-
-Mapping de l'existant à valider/réparer :
-
-| Étape brief | Module existant | Action |
-|---|---|---|
-| Onboarding pro | `useContractorFunnel`, `contractorStore`, `/entrepreneur`, `useContractorMode` | Vérifier que les 9 questions du brief existent ; sinon ajouter celles qui manquent dans le store (objectif actuel, panier moyen, services rentables) |
-| AIPP score | `contractor_aipp_scores`, `useAIPPv2Audit`, `useContractorAippAudit`, `aipp-real-scoring-engine` | Vérifier appel + affichage forces/faiblesses/recos. Ajouter mode "analysis pending" si pas de site. |
-| Plan reco | `useContractorPlan`, `useFounderPlans`, `CONTRACTOR_PLANS` | Vérifier reco automatique selon capacité/territoire/ticket. Ajouter phrase "Selon votre situation actuelle, le plan le plus logique est X parce que…" |
-| Stripe | `pricing/checkout-architecture` (Payment Element natif fr-CA) | Aucun nouveau checkout. Vérifier flow Recrue gratuit (skip Stripe → activation directe) |
-| Page pro | `/pros/[slug]`, `useContractorPublicPage` | Vérifier passage `status: draft → active` après paiement |
-| Notif admin | `/admin/operations` | Vérifier event `contractor_activated` loggé (sinon l'ajouter au callback success) |
-| Succès | `useAlexSalesSession` | Écran final "Boom. Votre profil UNPRO est live." + checklist (calendrier, photos, services) |
-
-Livrable : un seul rapport `.lovable/audit-entrepreneur-flow.md` avec ✅/❌ par étape + fixes minimaux appliqués. Aucune nouvelle table.
-
-## Phase 3 — Backup & rollback (conforme demande)
-
-- Tag de version Lovable nommé `UNPRO_PRE_ALEX_ORB_TRANSFORMATION_2026-05-14` au début (commit avant toute modif).
-- Script `scripts/backup-critical-tables.ts` exécutable depuis `/admin/operations` qui exporte en CSV vers Storage bucket `backups/` les tables : `profiles`, `contractors`, `contractor_aipp_scores`, `contractor_pages`, `subscriptions`, `payments`, `bookings`, `reviews`, `documents`. Edge function `backup-critical-tables` avec service role.
-- Fichier `.lovable/migration-log-2026-05-14.md` : tables modifiées (aucune en Phase 1, à confirmer en Phase 2), edge functions touchées, routes modifiées, vars utilisées.
-- Bouton admin "Restaurer la version stable précédente" dans `/admin/operations` qui ouvre l'historique Lovable (le rollback DB n'est pas couvert par Lovable — affichage d'un avertissement clair + lien vers les CSV de backup).
-
-## Phase 4 — Vérifications avant publish
-
-Liste manuelle (cochée par l'utilisateur après build) :
-- [ ] `/` charge en < 3 s mobile, orb visible, "Parler à Alex" cliquable
-- [ ] Login fonctionne, plus de `PROFILE_FETCH_TIMEOUT`
-- [ ] Alex voix démarre en < 2 s (signed URL websocket, voice ID `or4EV8aZq78KWcXw48wd`)
-- [ ] Onboarding entrepreneur complet `/entrepreneur` → AIPP → plan → Stripe sandbox → `/pros/[slug]` `active`
-- [ ] Stripe Payment Element s'affiche fr-CA
-- [ ] iPhone Safari + Android Chrome (responsive 384 px et 414 px)
-- [ ] Retour après login redirige correctement
-- [ ] `/pros/[slug]` SSR (Googlebot via prerender) toujours OK
-
-Si l'un échoue → STOP, on n'écrase pas la prod.
-
-## Détails techniques
-
+**New file: `src/lib/prepareAlexSpeechText.ts`**
+```ts
+export function prepareAlexSpeechText(text: string, language: 'fr'|'en' = 'fr'): string
 ```
-Files créés
-- src/components/home-orb/HeroOrbSection.tsx
-- src/components/home-orb/OrbSphere.tsx
-- src/components/home-orb/WaveformLive.tsx
-- src/components/home-orb/AlexTranscriptBubble.tsx
-- src/components/home-orb/OrbStateBadge.tsx
-- src/components/home-orb/QuickActionsRow.tsx
-- src/components/home-orb/HomeFeatureStrip.tsx
-- supabase/functions/backup-critical-tables/index.ts
-- scripts/backup-critical-tables.ts (admin trigger)
-- .lovable/migration-log-2026-05-14.md
-- .lovable/audit-entrepreneur-flow.md
+Rules:
+- `fr`: replace `d'UNPRO` / `d’UNPRO` → `d'Un Pro`; `de UNPRO` → `d'Un Pro`; standalone `UNPRO` (word boundaries, case-insensitive) → `Un Pro`.
+- `en`: standalone `UNPRO` → `Hun Pro`.
+- Preserves surrounding punctuation. Never mutates display text.
 
-Files modifiés
-- src/pages/PageHomeSimple.tsx          (swap hero pour HeroOrbSection)
-- src/app/providers.tsx                 (timeout profile non bloquant)
-- src/hooks/useAuth.ts                  (fallback profile null sans retry)
-- src/index.css                         (tokens orb/hero, dark uniquement)
-- src/pages/admin/PageOperations.tsx    (bouton backup + bouton rollback)
+**File: `src/features/alex/services/elevenlabsService.ts`**
+- In `speak()`, run `text` through `prepareAlexSpeechText(text, currentLang)` before sending to the `alex-tts` edge function. Determine `currentLang` from `useAlexStore.getState().activeLanguage` (defaults to `fr`).
+- Ensure single-request streaming: do not split text into per-sentence requests. Keep one POST per `speak()` call so ElevenLabs maintains prosody/speed across sentences (this also fixes "slows down after sentence 1").
+- Remove any per-sentence fallback path if present.
 
-Fichiers NON modifiés (réutilisés tels quels)
-- useLiveVoice, AlexVoiceContext, alexVoiceConfig.ts
-- contractorPlans, pricing/checkout-architecture
-- contractor_aipp_scores, contractor_pages, /pros/[slug]
-- toutes les edge functions Stripe et voice existantes
-```
+**Test cases (added as a vitest in `src/lib/__tests__/prepareAlexSpeechText.test.ts`):**
+- `"Bonjour. Je suis Alex d'UNPRO."` (fr) → `"Bonjour. Je suis Alex d'Un Pro."`
+- `"UNPRO vous aide à trouver un pro."` (fr) → `"Un Pro vous aide à trouver un pro."`
+- `"Welcome to UNPRO."` (en) → `"Welcome to Hun Pro."`
 
-Risques :
-- Phase 2 peut révéler des trous dans le flow existant. Si trop d'écarts, on remonte les fixes en commits séparés et on documente dans audit-entrepreneur-flow.md plutôt que de tout corriger en silence.
-- Le rollback DB reste manuel via les CSV (Lovable ne restaure que le code). Ce point est documenté dans le bouton admin.
+## 4. Verification
+
+- Visual: load `/` on mobile viewport — confirm orb is 3D, floats above base, and tapping orb does NOT navigate or open the fullscreen overlay; transcript expands inline.
+- Voice: tap orb, listen to greeting — sentence 2 must match sentence 1 in speed/tone; "UNPRO" sounds as "Un Pro" (fr).
+- No regressions: `/entrepreneur`, contractor onboarding, Stripe checkout, `/pros/[slug]` untouched.
+- `bun run vitest src/lib/__tests__/prepareAlexSpeechText.test.ts` passes.
+
+## Files touched
+
+- edit `src/components/home-orb/HeroOrbMockup.tsx`
+- edit `src/components/home-orb/AlexFloatingOrb.tsx` (rewrite as true 3D orb)
+- edit `src/config/alexVoiceConfig.ts` (style 0.28 → 0.38)
+- edit `src/features/alex/services/elevenlabsService.ts` (single-request + pronunciation pre-process)
+- create `src/components/home-orb/AlexHomepageConversation.tsx`
+- create `src/components/home-orb/AlexInlineTranscript.tsx`
+- create `src/components/home-orb/AlexConversationArrow.tsx`
+- create `src/lib/prepareAlexSpeechText.ts`
+- create `src/lib/__tests__/prepareAlexSpeechText.test.ts`
+
+No DB migrations, no edge function changes, no route changes.
