@@ -188,7 +188,7 @@ export default forwardRef<AlexHomepageConversationHandle, Props>(function AlexHo
 
   return (
     <div className="w-full">
-      <AlexInlineTranscript messages={messages} isThinking={isThinking} />
+      <AlexInlineTranscript messages={messages} isThinking={isThinking} variant={variant} />
 
       {hideComposer ? null : (
         <form
