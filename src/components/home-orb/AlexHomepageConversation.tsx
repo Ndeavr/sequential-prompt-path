@@ -213,11 +213,7 @@ export default forwardRef<AlexHomepageConversationHandle, Props>(function AlexHo
       </form>
     </div>
   );
-}
 
-/** Imperative helper — call from outside (e.g. orb onClick) to start. */
-export function useHomeAlexInline() {
-  // Currently the component handles its own greet/send. This hook is kept
-  // for future extension (e.g. exposing imperative start from the orb tap).
-  return {};
-}
+  // (unreachable placeholder removed below — useImperativeHandle declared above return)
+});
+
