@@ -472,6 +472,7 @@ const MyPlacementsPage = lazy(() => import("@/pages/dashboard/MyPlacementsPage")
 
 // Entrepreneur Funnel
 const PageEntrepreneurLandingAIPP = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurLandingAIPP"));
+const PageEntrepreneurDiagnosticLanding = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurDiagnosticLanding"));
 const PageEntrepreneursLanding = lazy(() => import("@/pages/entrepreneur/PageEntrepreneursLanding"));
 const PageEntrepreneurScoreResult = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurScoreResult"));
 const PageEntrepreneurPricing = lazy(() => import("@/pages/entrepreneur/PageEntrepreneurPricing"));
@@ -775,7 +776,8 @@ export const AppRouter = () => (
         <Route path="/entrepreneur/activer/succes" element={<Suspense fallback={<LazyFallback />}><ScreenActivationSuccess /></Suspense>} />
 
         {/* Entrepreneur Funnel */}
-        <Route path="/entrepreneur" element={<PageEntrepreneurLandingAIPP />} />
+        <Route path="/entrepreneur" element={<Suspense fallback={<LazyFallback />}><PageEntrepreneurDiagnosticLanding /></Suspense>} />
+        <Route path="/entrepreneur/aipp-import" element={<PageEntrepreneurLandingAIPP />} />
         <Route path="/entrepreneurs" element={<PageEntrepreneursLanding />} />
         <Route path="/entrepreneur/analysis/loading" element={<PageAIPPAnalysisLoading />} />
         <Route path="/entrepreneur/score" element={<PageEntrepreneurScoreResult />} />
