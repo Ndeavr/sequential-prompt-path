@@ -71,10 +71,12 @@ export function buildAlexAgentOverrides(input: BuildOverridesInput) {
     },
     tts: {
       voiceId,
+      modelId: ALEX_VOICE_BASE.modelId,
       stability,
       similarity_boost,
       style,
       use_speaker_boost,
+      speed: tuning.speed,
     },
   };
 }
