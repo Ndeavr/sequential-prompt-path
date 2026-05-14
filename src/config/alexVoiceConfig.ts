@@ -28,7 +28,7 @@ export interface AlexVoiceTuning {
 const BASE_TUNING = {
   stability: 0.48,
   similarity_boost: 0.78,
-  style: 0.28,
+  style: 0.38,
   use_speaker_boost: true,
   speed: 1.05,
 } as const;
