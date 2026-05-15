@@ -64,7 +64,11 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       <DeferredAfterInteractive>
         <Suspense fallback={null}>
           <MobileBottomNav />
-          {showAlex && <AlexCompanionOrb />}
+          {showAlex && (
+            <div className="hidden md:block">
+              <AlexCompanionOrb />
+            </div>
+          )}
           <CommandPalette lang={lang} />
           <SeoStructuredDataInjector />
           <DeferredJourneyTracker />

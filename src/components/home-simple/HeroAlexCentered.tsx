@@ -4,7 +4,7 @@
  */
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Mic } from "lucide-react";
+
 import { useAlexVoice as useAlexVoiceOverlay } from "@/contexts/AlexVoiceContext";
 import { useAlexStore } from "@/features/alex/state/alexStore";
 import AlexOrb, { type AlexOrbState } from "@/components/alex/AlexOrb";
@@ -73,7 +73,7 @@ export default function HeroAlexCentered() {
         />
       </motion.div>
 
-      {/* Bottom: Badge + CTA */}
+      {/* Bottom: Presence badge only — orb is the unique CTA */}
       <div className="relative z-20 flex flex-col items-center pb-24 px-5">
         <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/15">
           <span className="relative flex w-2 h-2">
@@ -83,14 +83,6 @@ export default function HeroAlexCentered() {
           <span className="text-sm font-medium text-white">Alex</span>
           <span className="text-sm text-white/70">· Votre expert IA</span>
         </div>
-
-        <button
-          onClick={handleOrb}
-          className="mt-3 inline-flex items-center gap-2 text-sm text-white/80 hover:text-white transition-colors"
-        >
-          <Mic className="w-4 h-4" />
-          Cliquez pour parler à Alex
-        </button>
       </div>
     </section>
   );

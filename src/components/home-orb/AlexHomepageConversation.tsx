@@ -16,7 +16,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Mic, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import AlexInlineTranscript, {
   type AlexInlineMessage,
 } from "./AlexInlineTranscript";
@@ -212,18 +212,6 @@ export default forwardRef<AlexHomepageConversationHandle, Props>(
           }}
           className="mt-3 flex items-center gap-2"
         >
-          <button
-            type="button"
-            onClick={() => greet()}
-            aria-label="Activer Alex"
-            className="shrink-0 w-11 h-11 rounded-full inline-flex items-center justify-center border border-blue-400/40 bg-[hsl(220_60%_8%)] text-blue-300 hover:text-white transition"
-            style={{
-              boxShadow:
-                "0 0 0 4px hsl(212 100% 50% / 0.18), 0 12px 30px -10px hsl(212 100% 50% / 0.5)",
-            }}
-          >
-            <Mic className="w-5 h-5" />
-          </button>
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
