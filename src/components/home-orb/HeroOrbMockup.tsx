@@ -170,15 +170,6 @@ export default function HeroOrbMockup() {
               "0 30px 60px -20px hsl(212 100% 30% / 0.4), inset 0 0 0 1px hsl(212 100% 60% / 0.06)",
           }}
         >
-          {isIdle && (
-            <div className="px-1 pb-1">
-              <p className="text-blue-300 font-semibold text-base">Bonjour.</p>
-              <p className="text-white/75 text-sm mt-1.5 leading-snug">
-                Touchez Alex pour commencer.
-              </p>
-            </div>
-          )}
-
           <AlexHomepageConversation
             ref={convoRef}
             greeting={greeting}
