@@ -389,8 +389,7 @@ function AlexModePanel({ onSwitchToForm }: { onSwitchToForm: () => void }) {
           </Button>
         </div>
         <p className="text-xs text-white/40 pt-2">
-          Alex utilise le micro de votre appareil. Vous pouvez parler en français
-          québécois — réponses ≤ 1-2 phrases.
+          Parlez naturellement. Alex vous guide étape par étape.
         </p>
       </div>
     </div>
