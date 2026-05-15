@@ -1,70 +1,71 @@
-# UNPRO Brand Ecosystem Engine
+# Phase 2 — Brand Logo Extraction + Monochrome Pipeline
 
-This is a very large system (DB + extraction pipelines + AI classifier + monochrome logo generator + premium UI + admin dashboard + SEO pages). Trying to ship it all in one pass would produce shallow, unstable work. I propose to build it in 4 phases, each shippable on its own.
+Goal: every brand in `brands` automatically gets a color logo + a premium monochrome variant, cached on the `brand-assets` storage bucket and surfaced through `LogoMonochromeRenderer` with zero manual upload.
 
-## Phase 1 — Foundation (DB + Brand Library + Premium UI)
+## What ships
 
-**Goal:** Have a real brand catalog and premium UI components rendered on contractor profiles, even before auto-detection runs.
+### 1. Storage bucket
+- Create `brand-assets` bucket (public read), folder layout:
+  - `logos/color/{slug}.svg|png`
+  - `logos/mono/{slug}.svg|png`
+- RLS: public SELECT, service-role write only.
 
-**DB migrations** (Supabase, RLS-ready):
-- `brands` (id, name, slug, category, subcategory, country, premium_score, trust_score, market_position, logo_svg_url, logo_png_url, logo_grey_svg_url, logo_grey_png_url, website, description)
-- `brand_aliases` (brand_id, alias, locale)
-- `brand_categories` (slug, label_fr, label_en, tier)
-- `brand_logos` (brand_id, variant: color/grey/white/black, format, url, source)
-- `contractor_brand_profiles` (contractor_id, brand_id, confidence_score, source_type, source_reference, is_primary_ecosystem, detected_at)
-- `brand_detection_logs` (contractor_id, source_type, raw_text, brands_found, status)
-- `brand_scores` (contractor_id, ecosystem_quality, premium_score, commercial_score, technical_score, luxury_score, budget_tier)
-- `brand_relationships` (brand_id, related_brand_id, relation_type)
-- `brand_assets_cache` (url, content_hash, storage_path, fetched_at)
-- Storage bucket `brand-assets` (public read)
+### 2. Edge function — `brand-fetch-logo`
+Input: `{ brand_id }` or `{ slug }`.
+Pipeline:
+1. Load brand row (name, slug, website, existing logos).
+2. Skip if `logo_svg_url` or `logo_png_url` already set AND `force !== true`.
+3. Try sources in order, stop on first success:
+   - **Brandfetch** `https://api.brandfetch.io/v2/brands/{domain}` (uses `BRANDFETCH_API_KEY` if present) → pick best SVG, fallback PNG.
+   - **Clearbit Logo** `https://logo.clearbit.com/{domain}?size=512&format=png` (no key, free).
+   - **Google favicon** `https://www.google.com/s2/favicons?domain={domain}&sz=256` (last-resort PNG).
+4. Download bytes → upload to `brand-assets/logos/color/{slug}.{ext}`.
+5. Call internal `brand-generate-monochrome` with the color asset.
+6. Update `brands` row: `logo_svg_url`, `logo_png_url`, `logo_grey_svg_url`, `logo_grey_png_url`, `logo_source`, `logo_fetched_at`.
+7. Insert row in `brand_logos` (history of variants + provenance).
+8. Log to `brand_detection_logs` (source=`logo_fetch`, status, latency).
 
-**Seed data:** ~60 known QC/CA construction brands (SOPREMA, GAF, BP, Maibec, Rockwool, Owens Corning, Hilti, Makita, Festool, DeWalt, Milwaukee, Bosch, CAT, Kubota, John Deere, Velux, Pella, TimberTech, Trex, Kohler, Moen, Delta, Mitsubishi, Lennox, Carrier, Daikin, Generac, Schluter, Mapei, etc.) with category + premium tier.
+### 3. Edge function — `brand-generate-monochrome`
+Input: `{ brand_id, source_url, mime }`.
+- **SVG path**: parse with regex/`deno-dom`, strip `fill=`/`stroke=` color attrs, replace inline style colors, inject `fill="currentColor"` on root + paths. Save as `logos/mono/{slug}.svg`.
+- **PNG path**: use `imagescript` (Deno) → load → for each pixel, compute luminance, threshold at 0.55 → output white-on-transparent (mono mask). Save as `logos/mono/{slug}.png`.
+- Returns public URLs of mono variants.
 
-**UI components** (`src/features/brandEngine/components/`):
-- `LogoMonochromeRenderer.tsx` — SVG with CSS filter for grey/white/black + color on hover
-- `BrandPill.tsx`
-- `BrandCloud.tsx` — animated marquee
-- `BrandCarousel.tsx`
-- `ContractorEcosystemCard.tsx`
-- `BrandTrustMeter.tsx`
-- `BrandCategoryGrid.tsx`
-- `BrandDNAVisualizer.tsx`
+### 4. Edge function — `brand-backfill-logos`
+Admin trigger. Iterates `brands` where `logo_svg_url IS NULL AND logo_png_url IS NULL`, fans out to `brand-fetch-logo` with concurrency 5, rate-limited (250ms). Returns `{ processed, succeeded, failed }`.
 
-**Hook:** `useContractorBrands(contractorId)`
+### 5. DB migration
+- `brands`: add `logo_source text`, `logo_fetched_at timestamptz`, `logo_attempts int default 0`, `logo_last_error text`.
+- `brand_logos` already exists from Phase 1 — add index on `(brand_id, variant)`.
+- Storage bucket + RLS policies.
+- Trigger on `brands` INSERT: enqueue async fetch via `pg_net` POST to `brand-fetch-logo` (fire-and-forget, no blocking).
 
-**Integration:** Add a "Marques & Écosystèmes de confiance" section to the existing contractor public profile page.
+### 6. Admin UI — `/admin/brand-intelligence/logos` (minimal)
+- Table of brands with: logo preview (mono + color hover), source, fetched_at, status, "Refetch" button.
+- Top action: **Backfill missing** (calls `brand-backfill-logos`).
+- Filter: missing only / failed only / all.
+- Lives at `src/pages/admin/AdminBrandLogos.tsx`, registered in admin router.
 
-## Phase 2 — Logo Extraction + Monochrome Pipeline
+### 7. Wiring
+- `LogoMonochromeRenderer` already consumes `logo_grey_svg_url` / `logo_grey_png_url` → no change needed; logos appear automatically once cached.
+- `useContractorBrands` unchanged.
 
-- Edge function `brand-fetch-logo`: tries Brandfetch API (needs `BRANDFETCH_API_KEY`), falls back to Clearbit Logo API (`https://logo.clearbit.com/{domain}`), caches into `brand-assets` bucket, writes `brand_logos` rows.
-- Edge function `brand-generate-monochrome`: takes SVG → strips fills, applies `currentColor`; for PNG, uses canvas-based luminance threshold to produce grey/white/black PNGs; uploads to bucket.
-- Admin button "Refresh logos" on each brand row.
+## Out of scope (deferred to Phase 3)
+- AI brand detection from text/website/photo (`brand-detect-from-*`).
+- Public `/marques/:slug` SEO pages.
+- Contractor-side "claim brand certification" flow.
+- Brandfetch webhook for logo updates.
 
-## Phase 3 — Detection Engine
+## Secrets
+- Optional: `BRANDFETCH_API_KEY` — if absent, function falls back to Clearbit + Google favicon (still works).
 
-- Edge function `brand-detect-from-text` (Lovable AI Gemini 2.5 Flash) — input: text/OCR; output: brand_ids + confidence. Used by website scrape, OCR, Alex transcript, reviews.
-- Edge function `brand-detect-from-website` — uses Firecrawl scrape (markdown + links + images), pipes to text detector, also matches `brand_aliases` regex.
-- Edge function `brand-detect-from-image` — Gemini 2.5 Pro vision on uploaded photos/invoices.
-- Edge function `brand-classify-contractor` — aggregates `contractor_brand_profiles` → writes `brand_scores` (ecosystem quality, premium, commercial, technical, luxury, budget tier).
-- Hook into existing contractor onboarding (after website enrichment) to trigger `brand-detect-from-website` then `brand-classify-contractor`.
+## Success criteria
+- Run `brand-backfill-logos` once → ≥80% of the 60 seeded brands have both color + mono assets cached on `brand-assets`.
+- `ContractorEcosystemSection` and `BrandCloud` render real logos in monochrome with color-on-hover, no broken images.
+- New brand inserted → logo appears within ~5s without manual action.
 
-## Phase 4 — Admin Dashboard + SEO Pages
+## Phase order after this
+- Phase 3: detection engine (text/website/image → `contractor_brand_profiles`).
+- Phase 4: SEO pages + admin intelligence dashboard.
 
-- `/admin/brand-intelligence`: detected brands, missing logos, failed extractions, ecosystem rankings, heatmap by city.
-- SEO routes: `/marques/:slug`, `/marques/:slug/:ville`, `/entrepreneurs/:specialty/marque/:brand` — server-rendered via existing SEO programmatic engine, with structured data.
-
-## Recommendation
-
-Approve **Phase 1 only** for this turn. It delivers immediate visible value (premium brand sections on contractor profiles, monochrome logo system, full DB foundation), and unblocks every subsequent phase without committing to the heavier extraction/AI work yet.
-
-After Phase 1 ships and you've reviewed the visual result, I'll proceed phase-by-phase.
-
-## Out of scope for this plan
-- Replacing existing AIPP scoring — brand scores will feed into it later via a separate plan.
-- Public homeowner-facing brand filters (Phase 4+).
-- Stripe/billing changes.
-
-## Key technical notes
-- Monochrome SVG strategy: replace `fill="..."` with `fill="currentColor"` server-side; component uses `text-foreground/60` then `group-hover:text-foreground` for color transitions. PNG fallback uses CSS `filter: grayscale(1) brightness(...)`.
-- All logo URLs go through Supabase Storage (`brand-assets` bucket) for CDN + cache.
-- RLS: `brands` and `brand_logos` public read; `contractor_brand_profiles` readable for verified contractors' public view; admin write only via security-definer functions.
+Approve to ship Phase 2.
