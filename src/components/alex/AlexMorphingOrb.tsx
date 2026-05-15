@@ -216,6 +216,8 @@ const ALEX_ORB_CSS = `
     transparent 70%);
   opacity: calc(0.7 * var(--orb-glow));
   mix-blend-mode: screen;
+  -webkit-mask: radial-gradient(circle, black 50%, transparent 70%);
+          mask: radial-gradient(circle, black 50%, transparent 70%);
 }
 
 .alex-orb__nebula {
