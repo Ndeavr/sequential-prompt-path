@@ -10,23 +10,35 @@ import { Cpu, ShieldCheck, Sparkles, Users } from "lucide-react";
 import AlexFloatingOrb, { type AlexOrbState } from "./AlexFloatingOrb";
 import AlexHomepageConversation, {
   type AlexHomepageConversationHandle,
+  type AlexState,
 } from "./AlexHomepageConversation";
-import AlexConversationArrow from "./AlexConversationArrow";
 import { useActiveRole } from "@/contexts/ActiveRoleContext";
 import ContractorModeBadge from "@/components/layout/ContractorModeBadge";
 
 export default function HeroOrbMockup() {
   const convoRef = useRef<AlexHomepageConversationHandle>(null);
-  const [active, setActive] = useState(false);
-  const [speaking, setSpeaking] = useState(false);
+  const [alexState, setAlexState] = useState<AlexState>("idle");
   const { activeRole } = useActiveRole();
   const isContractor = activeRole === "contractor";
 
-  const orbState: AlexOrbState = speaking
-    ? "speaking"
-    : active
-    ? "listening"
-    : "idle";
+  const isIdle = alexState === "idle";
+  const orbState: AlexOrbState =
+    alexState === "speaking"
+      ? "speaking"
+      : alexState === "listening" || alexState === "thinking"
+      ? "listening"
+      : "idle";
+
+  const badgeLabel =
+    alexState === "speaking"
+      ? "Parle"
+      : alexState === "listening"
+      ? "Écoute"
+      : alexState === "thinking"
+      ? "Réfléchit"
+      : alexState === "error"
+      ? "Pause"
+      : "Online";
 
   const handleStart = () => convoRef.current?.start();
 
