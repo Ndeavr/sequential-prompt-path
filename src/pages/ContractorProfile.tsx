@@ -809,6 +809,11 @@ const ContractorProfile = () => {
             </motion.div>
           )}
 
+          {/* ═══ 8b. BRAND ECOSYSTEM ═══ */}
+          {contractorId && (
+            <ContractorEcosystemSection contractorId={contractorId} />
+          )}
+
           {/* ═══ 9. AIPP SCORE ═══ */}
           {aippValidated && effectiveAippBreakdown && (
             <motion.div variants={fadeUp}>
