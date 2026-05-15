@@ -4,7 +4,7 @@
  */
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Mic } from "lucide-react";
+
 import { useAlexVoice as useAlexVoiceOverlay } from "@/contexts/AlexVoiceContext";
 import { useAlexStore } from "@/features/alex/state/alexStore";
 import AlexOrb, { type AlexOrbState } from "@/components/alex/AlexOrb";
