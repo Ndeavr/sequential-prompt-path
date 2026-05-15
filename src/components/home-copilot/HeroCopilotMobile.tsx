@@ -98,7 +98,7 @@ export default function HeroCopilotMobile() {
           transition={{ delay: 0.2, duration: 0.5 }}
           className="mt-3 text-[14px] text-white/70 max-w-sm leading-relaxed"
         >
-          Touchez l'orb d'Alex pour démarrer. Voix, photo, soumission ou texte — vous choisissez.
+          Décrivez votre situation. Alex s'occupe du reste.
         </motion.p>
 
         {/* Primary CTA — Parler à Alex (voice-first, no keyboard) */}
