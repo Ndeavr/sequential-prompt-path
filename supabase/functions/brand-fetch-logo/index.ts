@@ -184,20 +184,28 @@ async function processOne(brand: any, force: boolean) {
   const { error } = await supabase.from("brands").update(update).eq("id", brand.id);
   if (error) throw new Error(`brand update: ${error.message}`);
 
-  // History
-  await supabase.from("brand_logos").insert({
-    brand_id: brand.id,
-    variant: fetched.ext === "svg" ? "color_svg" : "color_png",
-    url: colorUrl,
-    source: fetched.source,
-  });
-  if (monoSvgUrl) {
-    await supabase.from("brand_logos").insert({
+  // History (idempotent on (brand_id, variant, format))
+  await supabase.from("brand_logos").upsert(
+    {
       brand_id: brand.id,
-      variant: "mono_svg",
-      url: monoSvgUrl,
-      source: `derived:${fetched.source}`,
-    });
+      variant: "color",
+      format: fetched.ext,
+      url: colorUrl,
+      source: fetched.source,
+    },
+    { onConflict: "brand_id,variant,format" },
+  );
+  if (monoSvgUrl) {
+    await supabase.from("brand_logos").upsert(
+      {
+        brand_id: brand.id,
+        variant: "grey",
+        format: "svg",
+        url: monoSvgUrl,
+        source: `derived:${fetched.source}`,
+      },
+      { onConflict: "brand_id,variant,format" },
+    );
   }
 
   return {
