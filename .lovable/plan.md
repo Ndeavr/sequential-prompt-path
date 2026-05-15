@@ -1,71 +1,60 @@
-# Phase 2 — Brand Logo Extraction + Monochrome Pipeline
+# Fix Alex Orb + Live Speech Text — Plan
 
-Goal: every brand in `brands` automatically gets a color logo + a premium monochrome variant, cached on the `brand-assets` storage bucket and surfaced through `LogoMonochromeRenderer` with zero manual upload.
+UI/voice-only fix on the homepage hero. No backend, no schema, no Alex brain logic changes.
 
-## What ships
+## Scope
+- `src/components/home-orb/HeroOrbMockup.tsx`
+- `src/components/home-orb/AlexHomepageConversation.tsx`
+- `src/components/home-orb/AlexInlineTranscript.tsx`
+- (delete usage of) `AlexConversationArrow`
 
-### 1. Storage bucket
-- Create `brand-assets` bucket (public read), folder layout:
-  - `logos/color/{slug}.svg|png`
-  - `logos/mono/{slug}.svg|png`
-- RLS: public SELECT, service-role write only.
+## Changes
 
-### 2. Edge function — `brand-fetch-logo`
-Input: `{ brand_id }` or `{ slug }`.
-Pipeline:
-1. Load brand row (name, slug, website, existing logos).
-2. Skip if `logo_svg_url` or `logo_png_url` already set AND `force !== true`.
-3. Try sources in order, stop on first success:
-   - **Brandfetch** `https://api.brandfetch.io/v2/brands/{domain}` (uses `BRANDFETCH_API_KEY` if present) → pick best SVG, fallback PNG.
-   - **Clearbit Logo** `https://logo.clearbit.com/{domain}?size=512&format=png` (no key, free).
-   - **Google favicon** `https://www.google.com/s2/favicons?domain={domain}&sz=256` (last-resort PNG).
-4. Download bytes → upload to `brand-assets/logos/color/{slug}.{ext}`.
-5. Call internal `brand-generate-monochrome` with the color asset.
-6. Update `brands` row: `logo_svg_url`, `logo_png_url`, `logo_grey_svg_url`, `logo_grey_png_url`, `logo_source`, `logo_fetched_at`.
-7. Insert row in `brand_logos` (history of variants + provenance).
-8. Log to `brand_detection_logs` (source=`logo_fetch`, status, latency).
+### 1. HeroOrbMockup.tsx
+- Remove `<AlexConversationArrow … label="Parlez à Alex" />` block entirely.
+- Remove the duplicate idle paragraph that splits the greeting into two `<p>` tags (lines 163–172).
+- Remove the "Alex analyse votre situation en direct." line under the card (lines 182–186).
+- Replace the idle card content with a single, minimal idle block rendered ONLY when `alexState === 'idle'`:
+  - Line 1: `Bonjour.`
+  - Line 2: `Touchez Alex pour commencer.`
+- Pass an `alexState` prop derived from active/speaking/thinking down to `AlexHomepageConversation` so the transcript area knows what to show.
+- Keep ALEX label + online badge. Online badge label: `Online` / `Écoute` / `Réfléchit` / `Parle`.
+- Remove the secondary "Parler à Alex" button when not in contractor mode (orb is the CTA). Keep the contractor primary CTA as-is.
 
-### 3. Edge function — `brand-generate-monochrome`
-Input: `{ brand_id, source_url, mime }`.
-- **SVG path**: parse with regex/`deno-dom`, strip `fill=`/`stroke=` color attrs, replace inline style colors, inject `fill="currentColor"` on root + paths. Save as `logos/mono/{slug}.svg`.
-- **PNG path**: use `imagescript` (Deno) → load → for each pixel, compute luminance, threshold at 0.55 → output white-on-transparent (mono mask). Save as `logos/mono/{slug}.png`.
-- Returns public URLs of mono variants.
+### 2. AlexHomepageConversation.tsx — state machine + progressive reveal
+- Introduce an internal state: `idle | listening | thinking | speaking | error`. Expose via `onStateChange` callback (replaces `onActivityChange` + `onAssistantSpeakingChange`).
+- Idle render: nothing in the transcript area (parent renders idle copy).
+- Listening render: caption `Je vous écoute…`
+- Thinking render: caption `Analyse en cours…`
+- Speaking render: progressive transcript — split current assistant utterance into sentences and reveal one at a time, synced with TTS by speaking each sentence sequentially via the existing `speak(text)` call. Each `await speak(sentence)` resolves when audio of that chunk ends, so the next sentence appears right as the next chunk starts.
+- After speech ends, collapse the live transcript back to a 1-line summary (last sentence) UNLESS conversation history is open (future flag — for now just collapse to last line after 1.2s).
+- Greeting flow on orb tap:
+  1. `unlockAudio()`
+  2. set state `speaking`
+  3. for each sentence in greeting → push to live transcript → `await speak(sentence)`
+  4. set state `idle` (or `listening` if mic is wired) when done
+- No more pre-pushing the full greeting message to the bubble list before speaking.
+- Apply `prepareAlexSpeechText` (already imported elsewhere) so "UNPRO" → "Un Pro" in TTS only; display keeps "UNPRO".
 
-### 4. Edge function — `brand-backfill-logos`
-Admin trigger. Iterates `brands` where `logo_svg_url IS NULL AND logo_png_url IS NULL`, fans out to `brand-fetch-logo` with concurrency 5, rate-limited (250ms). Returns `{ processed, succeeded, failed }`.
+### 3. AlexInlineTranscript.tsx
+- Add a `liveCaption?: string` and `liveSpoken?: string[]` mode for the speaking state (single ephemeral assistant block that grows sentence-by-sentence with a fade-in per line).
+- Keep the existing message-list rendering for past turns (after collapse).
+- Idle state returns `null` (parent owns idle copy).
 
-### 5. DB migration
-- `brands`: add `logo_source text`, `logo_fetched_at timestamptz`, `logo_attempts int default 0`, `logo_last_error text`.
-- `brand_logos` already exists from Phase 1 — add index on `(brand_id, variant)`.
-- Storage bucket + RLS policies.
-- Trigger on `brands` INSERT: enqueue async fetch via `pg_net` POST to `brand-fetch-logo` (fire-and-forget, no blocking).
+### 4. Orb states
+`AlexFloatingOrb` already supports `idle | listening | speaking`. Add a thin mapping for `thinking` → reuse `listening` visual with reduced glow + `expression="focused"`. No new asset work.
 
-### 6. Admin UI — `/admin/brand-intelligence/logos` (minimal)
-- Table of brands with: logo preview (mono + color hover), source, fetched_at, status, "Refetch" button.
-- Top action: **Backfill missing** (calls `brand-backfill-logos`).
-- Filter: missing only / failed only / all.
-- Lives at `src/pages/admin/AdminBrandLogos.tsx`, registered in admin router.
+## Technical notes (sync without word timestamps)
+The ElevenLabs `speak()` call awaits until the audio finishes. Splitting the greeting on sentence boundaries (`. `, `?`, `!`) and calling `speak()` per sentence gives natural per-sentence sync: reveal sentence N → await speak(N) → reveal sentence N+1. No new TTS events needed.
 
-### 7. Wiring
-- `LogoMonochromeRenderer` already consumes `logo_grey_svg_url` / `logo_grey_png_url` → no change needed; logos appear automatically once cached.
-- `useContractorBrands` unchanged.
+## Out of scope
+- Wiring continuous mic / live STT (kept as text input, as today).
+- Any change to `alex-chat` edge function or pricing/booking logic.
+- Conversation history drawer (left as future toggle — we just collapse).
 
-## Out of scope (deferred to Phase 3)
-- AI brand detection from text/website/photo (`brand-detect-from-*`).
-- Public `/marques/:slug` SEO pages.
-- Contractor-side "claim brand certification" flow.
-- Brandfetch webhook for logo updates.
-
-## Secrets
-- Optional: `BRANDFETCH_API_KEY` — if absent, function falls back to Clearbit + Google favicon (still works).
-
-## Success criteria
-- Run `brand-backfill-logos` once → ≥80% of the 60 seeded brands have both color + mono assets cached on `brand-assets`.
-- `ContractorEcosystemSection` and `BrandCloud` render real logos in monochrome with color-on-hover, no broken images.
-- New brand inserted → logo appears within ~5s without manual action.
-
-## Phase order after this
-- Phase 3: detection engine (text/website/image → `contractor_brand_profiles`).
-- Phase 4: SEO pages + admin intelligence dashboard.
-
-Approve to ship Phase 2.
+## Success
+- Orb tap is the only CTA; no arrow, no "Parlez à Alex", no duplicate intro text.
+- Idle shows only `Bonjour.` + `Touchez Alex pour commencer.`
+- Greeting text appears sentence-by-sentence as Alex speaks each.
+- Listening / Thinking / Error captions match the spec.
+- "UNPRO" is pronounced "Un Pro" in FR.
