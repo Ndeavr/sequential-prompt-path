@@ -181,8 +181,7 @@ export default function HeroOrbMockup() {
 
         {!active && (
           <p className="mt-3 text-white/55 text-xs">
-            Touchez l'orb, le micro ou écrivez ci-dessus. Tout reste ici, sur
-            cette page.
+            Alex analyse votre situation en direct.
           </p>
         )}
       </div>
