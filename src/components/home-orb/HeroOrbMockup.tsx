@@ -7,7 +7,7 @@
  */
 import { useRef, useState } from "react";
 import { Cpu, ShieldCheck, Sparkles, Users } from "lucide-react";
-import AlexFloatingOrb, { type AlexOrbState } from "./AlexFloatingOrb";
+import AlexMorphingOrb, { type AlexOrbStateV2 } from "@/components/alex/AlexMorphingOrb";
 import AlexHomepageConversation, {
   type AlexHomepageConversationHandle,
   type AlexState,
