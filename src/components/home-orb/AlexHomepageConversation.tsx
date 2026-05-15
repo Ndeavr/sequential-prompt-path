@@ -16,7 +16,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Mic, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import AlexInlineTranscript, {
   type AlexInlineMessage,
 } from "./AlexInlineTranscript";
