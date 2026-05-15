@@ -252,64 +252,64 @@ export default function PageEntrepreneurDiagnosticLanding() {
         </div>
 
         <div className="relative z-10 max-w-5xl mx-auto px-5 pb-32 pt-10 lg:pt-16">
-          <Hero mode={mode} onModeChange={setMode} />
+          <Hero />
 
-          {mode === "alex" ? (
-            <AlexModePanel onSwitchToForm={() => setMode("form")} />
-          ) : (
-            <>
-              {showInstantScan && step >= 0 && (
-                <InstantScanCard
-                  website={form.website}
-                  phone={form.phone}
-                  companyName={form.company_name}
-                />
-              )}
+          <AlexNarrator
+            step={step}
+            orbState={orbState}
+            setOrbState={setOrbState}
+          />
 
-              <div className="mt-10">
-                <ProgressBar step={step} />
-
-                <AnimatePresence mode="wait">
-                  {step === 0 && (
-                    <StepCard key="step0">
-                      <Step0Identification form={form} update={update} />
-                    </StepCard>
-                  )}
-                  {step === 1 && (
-                    <StepCard key="step1">
-                      <Step1Situation form={form} update={update} />
-                    </StepCard>
-                  )}
-                  {step === 2 && (
-                    <motion.div
-                      key="step2"
-                      initial={{ opacity: 0, y: 24 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.45 }}
-                      className="mt-8 space-y-6"
-                    >
-                      <AippRevealSection aipp={aipp} revealed={revealed} />
-                      <RevenueProjectionCard form={form} projection={projection} />
-                      <PlanRecommendationCard
-                        plan={plan}
-                        slug={planSlug}
-                        score={aipp.score}
-                        onActivate={startCheckout}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {step < 2 && (
-                  <div className="mt-6 flex justify-end">
-                    <Button onClick={goNext} size="lg" className="gap-2">
-                      {step === 0 ? "Continuer" : "Voir mon score AIPP"} <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </>
+          {showInstantScan && step >= 0 && (
+            <InstantScanCard
+              website={form.website}
+              phone={form.phone}
+              companyName={form.company_name}
+            />
           )}
+
+          <div className="mt-8">
+            <ProgressBar step={step} />
+
+            <AnimatePresence mode="wait">
+              {step === 0 && (
+                <StepCard key="step0">
+                  <Step0Identification form={form} update={update} />
+                </StepCard>
+              )}
+              {step === 1 && (
+                <StepCard key="step1">
+                  <Step1Situation form={form} update={update} />
+                </StepCard>
+              )}
+              {step === 2 && (
+                <motion.div
+                  key="step2"
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45 }}
+                  className="mt-8 space-y-6"
+                >
+                  <AippRevealSection aipp={aipp} revealed={revealed} />
+                  <RevenueProjectionCard form={form} projection={projection} />
+                  <PlanRecommendationCard
+                    plan={plan}
+                    slug={planSlug}
+                    score={aipp.score}
+                    onActivate={startCheckout}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {step < 2 && (
+              <div className="mt-6 flex justify-end">
+                <Button onClick={goNext} size="lg" className="gap-2">
+                  {step === 0 ? "Continuer" : "Voir mon score AIPP"} <ArrowRight className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+          </div>
 
           <TrustStrip />
         </div>
