@@ -15102,6 +15102,90 @@ export type Database = {
         }
         Relationships: []
       }
+      capacity_recommendations: {
+        Row: {
+          city_slug: string
+          computed_at: string
+          id: string
+          justification: string | null
+          monthly_value_cents: number
+          remaining_slots: number
+          slot_class: string
+          status: string
+          trade_slug: string
+        }
+        Insert: {
+          city_slug: string
+          computed_at?: string
+          id?: string
+          justification?: string | null
+          monthly_value_cents?: number
+          remaining_slots?: number
+          slot_class: string
+          status: string
+          trade_slug: string
+        }
+        Update: {
+          city_slug?: string
+          computed_at?: string
+          id?: string
+          justification?: string | null
+          monthly_value_cents?: number
+          remaining_slots?: number
+          slot_class?: string
+          status?: string
+          trade_slug?: string
+        }
+        Relationships: []
+      }
+      capacity_snapshots: {
+        Row: {
+          active_pros: number
+          band: string
+          base_cap: number
+          city_slug: string
+          cpc_tier: string | null
+          created_at: string
+          factors: Json
+          final_cap: number
+          gap: number
+          id: string
+          saturation_score: number
+          snapshot_date: string
+          trade_slug: string
+        }
+        Insert: {
+          active_pros?: number
+          band?: string
+          base_cap?: number
+          city_slug: string
+          cpc_tier?: string | null
+          created_at?: string
+          factors?: Json
+          final_cap?: number
+          gap?: number
+          id?: string
+          saturation_score?: number
+          snapshot_date?: string
+          trade_slug: string
+        }
+        Update: {
+          active_pros?: number
+          band?: string
+          base_cap?: number
+          city_slug?: string
+          cpc_tier?: string | null
+          created_at?: string
+          factors?: Json
+          final_cap?: number
+          gap?: number
+          id?: string
+          saturation_score?: number
+          snapshot_date?: string
+          trade_slug?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -31840,6 +31924,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      exclusivity_rules: {
+        Row: {
+          conditions: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          min_gap_score: number
+          min_saturation: number
+          required_cpc_tiers: string[]
+          slot_class: string
+          updated_at: string
+        }
+        Insert: {
+          conditions?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          min_gap_score?: number
+          min_saturation?: number
+          required_cpc_tiers?: string[]
+          slot_class: string
+          updated_at?: string
+        }
+        Update: {
+          conditions?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          min_gap_score?: number
+          min_saturation?: number
+          required_cpc_tiers?: string[]
+          slot_class?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       execution_agent_tasks: {
         Row: {
@@ -61595,6 +61715,78 @@ export type Database = {
         }
         Relationships: []
       }
+      trade_capacity_rules: {
+        Row: {
+          created_at: string
+          family: string
+          id: string
+          inhabitants_per_pro: number
+          is_active: boolean
+          max_cap_per_city: number
+          min_cap_per_city: number
+          seasonality: Json
+          trade_slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          family: string
+          id?: string
+          inhabitants_per_pro?: number
+          is_active?: boolean
+          max_cap_per_city?: number
+          min_cap_per_city?: number
+          seasonality?: Json
+          trade_slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          family?: string
+          id?: string
+          inhabitants_per_pro?: number
+          is_active?: boolean
+          max_cap_per_city?: number
+          min_cap_per_city?: number
+          seasonality?: Json
+          trade_slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      trade_cpc_benchmarks: {
+        Row: {
+          city_slug: string
+          cpc_cad: number
+          created_at: string
+          id: string
+          refreshed_at: string
+          source: string
+          tier: string
+          trade_slug: string
+        }
+        Insert: {
+          city_slug: string
+          cpc_cad?: number
+          created_at?: string
+          id?: string
+          refreshed_at?: string
+          source?: string
+          tier: string
+          trade_slug: string
+        }
+        Update: {
+          city_slug?: string
+          cpc_cad?: number
+          created_at?: string
+          id?: string
+          refreshed_at?: string
+          source?: string
+          tier?: string
+          trade_slug?: string
+        }
+        Relationships: []
+      }
       ui_block_registry: {
         Row: {
           block_key: string
@@ -64456,6 +64648,25 @@ export type Database = {
         }
         Relationships: []
       }
+      v_capacity_live: {
+        Row: {
+          active_pros: number | null
+          band: string | null
+          base_cap: number | null
+          city_name: string | null
+          city_slug: string | null
+          cpc_band: string | null
+          cpc_cad: number | null
+          cpc_tier: string | null
+          final_cap: number | null
+          gap: number | null
+          population: number | null
+          saturation_score: number | null
+          snapshot_date: string | null
+          trade_slug: string | null
+        }
+        Relationships: []
+      }
       v_contractor_full_public: {
         Row: {
           aipp_score: number | null
@@ -64541,6 +64752,23 @@ export type Database = {
           verified_credentials_count: number | null
           visibility_score: number | null
           years_experience: number | null
+        }
+        Relationships: []
+      }
+      v_exclusivity_eligible: {
+        Row: {
+          active_pros: number | null
+          city_name: string | null
+          city_slug: string | null
+          cpc_band: string | null
+          final_cap: number | null
+          justification: string | null
+          monthly_value_cents: number | null
+          remaining_slots: number | null
+          saturation_score: number | null
+          slot_class: string | null
+          status: string | null
+          trade_slug: string | null
         }
         Relationships: []
       }
