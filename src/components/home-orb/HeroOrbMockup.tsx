@@ -132,18 +132,12 @@ export default function HeroOrbMockup() {
             : undefined
         }
       >
-        <div className="mx-auto" style={{ maxWidth: 220 }}>
-          <AlexFloatingOrb
+        <div className="mx-auto flex justify-center" style={{ maxWidth: 220 }}>
+          <AlexMorphingOrb
             state={orbState}
-            expression={
-              alexState === "speaking"
-                ? "confident"
-                : alexState === "listening" || alexState === "thinking"
-                ? "focused"
-                : "neutral"
-            }
-            size="mobile"
+            size="lg"
             onClick={handleStart}
+            ariaLabel="Alex"
           />
         </div>
 
