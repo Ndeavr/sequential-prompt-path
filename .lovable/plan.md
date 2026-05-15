@@ -1,78 +1,70 @@
-# Site-Wide Contractor Mode (Alex-Triggered)
+# UNPRO Brand Ecosystem Engine
 
-## Goal
-When Alex auto-starts on `/entrepreneur`, the entire site instantly switches into **Contractor Mode**: voice persona, hero, navigation, bottom nav, quick actions, and copy all adapt — and stay that way across pages until the user manually exits.
+This is a very large system (DB + extraction pipelines + AI classifier + monochrome logo generator + premium UI + admin dashboard + SEO pages). Trying to ship it all in one pass would produce shallow, unstable work. I propose to build it in 4 phases, each shippable on its own.
 
-## Trigger
-- Auto: any visit to `/entrepreneur` (or `/pro`, `/je-suis-entrepreneur`, `/pro-landing`) sets mode = `contractor` immediately on mount, before Alex starts.
-- Alex voice config also flips to `getVoiceConfigFor("contractor")` at the same instant — first message becomes *"Bonjour. Je suis Alex d'Un Pro. Voyons ensemble comment faire évoluer votre entreprise."*
+## Phase 1 — Foundation (DB + Brand Library + Premium UI)
 
-## Persistence
-- `localStorage["unpro_active_mode"] = "contractor"` (survives reload, cross-page, cross-tab).
-- If user is authenticated → also patch `contractor_intake_sessions.mode = 'alex'` and write `persistent_user_memory` flag `is_contractor = true`.
-- Exit: explicit "Je ne suis pas entrepreneur" link in footer + auto-clear if user navigates to `/role` and picks Homeowner.
+**Goal:** Have a real brand catalog and premium UI components rendered on contractor profiles, even before auto-detection runs.
 
-## Surfaces that adapt
+**DB migrations** (Supabase, RLS-ready):
+- `brands` (id, name, slug, category, subcategory, country, premium_score, trust_score, market_position, logo_svg_url, logo_png_url, logo_grey_svg_url, logo_grey_png_url, website, description)
+- `brand_aliases` (brand_id, alias, locale)
+- `brand_categories` (slug, label_fr, label_en, tier)
+- `brand_logos` (brand_id, variant: color/grey/white/black, format, url, source)
+- `contractor_brand_profiles` (contractor_id, brand_id, confidence_score, source_type, source_reference, is_primary_ecosystem, detected_at)
+- `brand_detection_logs` (contractor_id, source_type, raw_text, brands_found, status)
+- `brand_scores` (contractor_id, ecosystem_quality, premium_score, commercial_score, technical_score, luxury_score, budget_tier)
+- `brand_relationships` (brand_id, related_brand_id, relation_type)
+- `brand_assets_cache` (url, content_hash, storage_path, fetched_at)
+- Storage bucket `brand-assets` (public read)
 
-### 1. Hero / Homepage (`/`, `/index`)
-- Headline → "Plus de contrats grâce à l'IA"
-- Sub → "Recevez des rendez-vous qualifiés. Votre profil IA travaille 24/7."
-- Primary CTA → "Voir mon potentiel gratuit" → `/entrepreneur`
-- Secondary CTA → "Parler à Alex" (voice)
-- Hide homeowner quick actions (Problème maison / Analyse soumission / Vérifier un pro)
+**Seed data:** ~60 known QC/CA construction brands (SOPREMA, GAF, BP, Maibec, Rockwool, Owens Corning, Hilti, Makita, Festool, DeWalt, Milwaukee, Bosch, CAT, Kubota, John Deere, Velux, Pella, TimberTech, Trex, Kohler, Moen, Delta, Mitsubishi, Lennox, Carrier, Daikin, Generac, Schluter, Mapei, etc.) with category + premium tier.
 
-### 2. Quick actions under orb
-Replace homeowner grid with:
-- Voir mon AIPP
-- Mes rendez-vous
-- Activer mon profil
-- Mon plan recommandé
+**UI components** (`src/features/brandEngine/components/`):
+- `LogoMonochromeRenderer.tsx` — SVG with CSS filter for grey/white/black + color on hover
+- `BrandPill.tsx`
+- `BrandCloud.tsx` — animated marquee
+- `BrandCarousel.tsx`
+- `ContractorEcosystemCard.tsx`
+- `BrandTrustMeter.tsx`
+- `BrandCategoryGrid.tsx`
+- `BrandDNAVisualizer.tsx`
 
-### 3. Bottom nav (`MobileBottomNav` / `AlexBottomSheetLauncherUNPRO`)
-Contractor tabs:
-- Accueil → `/entrepreneur`
-- Leads → `/leads`
-- Alex (orb center)
-- AIPP → `/entrepreneur/aipp-import`
-- Compte → `/account`
+**Hook:** `useContractorBrands(contractorId)`
 
-### 4. Top nav / header
-- Swap "Trouver un pro" / "Soumissions" links for "Tableau de bord" / "Leads" / "Mon plan"
-- Persistent slim badge: `● Mode Pro` (clickable to exit)
+**Integration:** Add a "Marques & Écosystèmes de confiance" section to the existing contractor public profile page.
 
-### 5. Voice config
-- `AlexVoiceContext` reads `useActiveMode()` → on `contractor`, force `getVoiceConfigFor("contractor")` for `firstMessage`, prompt addendum, voice tuning. No greeting fallback.
+## Phase 2 — Logo Extraction + Monochrome Pipeline
 
-## Architecture
+- Edge function `brand-fetch-logo`: tries Brandfetch API (needs `BRANDFETCH_API_KEY`), falls back to Clearbit Logo API (`https://logo.clearbit.com/{domain}`), caches into `brand-assets` bucket, writes `brand_logos` rows.
+- Edge function `brand-generate-monochrome`: takes SVG → strips fills, applies `currentColor`; for PNG, uses canvas-based luminance threshold to produce grey/white/black PNGs; uploads to bucket.
+- Admin button "Refresh logos" on each brand row.
 
-### New
-- `src/contexts/ActiveModeContext.tsx` — provides `mode: "homeowner" | "contractor" | "condo_manager"`, `setMode()`, `clearMode()`. Reads/writes localStorage. Listens to `storage` event for cross-tab sync.
-- `src/hooks/useActiveMode.ts` — convenience hook.
-- `src/components/layout/ContractorModeBadge.tsx` — slim "● Mode Pro · Quitter" pill in header.
-- `src/components/home-orb/HeroOrbMockup.tsx` — branch headline/subtext/CTAs/quick actions on `mode === "contractor"`.
+## Phase 3 — Detection Engine
 
-### Modified
-- `PageEntrepreneurDiagnosticLanding.tsx` — `useEffect(() => setMode("contractor"), [])` on mount.
-- `AlexVoiceContext.tsx` (or wherever `firstMessage` is resolved) — pass `mode` to `getVoiceConfigFor()`.
-- `App.tsx` / `providers.tsx` — wrap tree in `<ActiveModeProvider>`.
-- Bottom nav + top nav components — branch tab list on `mode`.
-- Existing `/pro`, `/je-suis-entrepreneur`, `/pro-landing` route components — also call `setMode("contractor")` on mount (consistency with screenshot 2 which shows the entrepreneur CTA).
+- Edge function `brand-detect-from-text` (Lovable AI Gemini 2.5 Flash) — input: text/OCR; output: brand_ids + confidence. Used by website scrape, OCR, Alex transcript, reviews.
+- Edge function `brand-detect-from-website` — uses Firecrawl scrape (markdown + links + images), pipes to text detector, also matches `brand_aliases` regex.
+- Edge function `brand-detect-from-image` — Gemini 2.5 Pro vision on uploaded photos/invoices.
+- Edge function `brand-classify-contractor` — aggregates `contractor_brand_profiles` → writes `brand_scores` (ecosystem quality, premium, commercial, technical, luxury, budget tier).
+- Hook into existing contractor onboarding (after website enrichment) to trigger `brand-detect-from-website` then `brand-classify-contractor`.
 
-### DB (no schema changes needed)
-- Reuse `contractor_intake_sessions.mode` (already exists, set to `'alex'`).
-- Optional: write `persistent_user_memory.facts.is_contractor = true` if the table/hook exists for authed users — non-blocking patch.
+## Phase 4 — Admin Dashboard + SEO Pages
 
-## Out of scope
-- No new edge functions, no Stripe changes, no auth changes.
-- No condo_manager mode in this pass.
-- No redesign of contractor dashboards — only the adaptation layer + nav/hero/quick-actions branching.
+- `/admin/brand-intelligence`: detected brands, missing logos, failed extractions, ecosystem rankings, heatmap by city.
+- SEO routes: `/marques/:slug`, `/marques/:slug/:ville`, `/entrepreneurs/:specialty/marque/:brand` — server-rendered via existing SEO programmatic engine, with structured data.
 
-## Success
-- Land on `/entrepreneur` → Alex auto-starts with contractor greeting in <1s.
-- Navigate to `/` → still see contractor hero, contractor bottom nav, "● Mode Pro" badge.
-- Reload anywhere → mode persists.
-- Click "Quitter mode pro" → instant revert to homeowner UI everywhere.
+## Recommendation
 
-## Files
-**Create:** `src/contexts/ActiveModeContext.tsx`, `src/hooks/useActiveMode.ts`, `src/components/layout/ContractorModeBadge.tsx`
-**Edit:** `src/app/providers.tsx`, `src/components/home-orb/HeroOrbMockup.tsx`, `src/contexts/AlexVoiceContext.tsx`, `src/pages/entrepreneur/PageEntrepreneurDiagnosticLanding.tsx`, contractor landing pages (`/pro`, `/pro-landing`, `/je-suis-entrepreneur`), bottom nav + top nav components.
+Approve **Phase 1 only** for this turn. It delivers immediate visible value (premium brand sections on contractor profiles, monochrome logo system, full DB foundation), and unblocks every subsequent phase without committing to the heavier extraction/AI work yet.
+
+After Phase 1 ships and you've reviewed the visual result, I'll proceed phase-by-phase.
+
+## Out of scope for this plan
+- Replacing existing AIPP scoring — brand scores will feed into it later via a separate plan.
+- Public homeowner-facing brand filters (Phase 4+).
+- Stripe/billing changes.
+
+## Key technical notes
+- Monochrome SVG strategy: replace `fill="..."` with `fill="currentColor"` server-side; component uses `text-foreground/60` then `group-hover:text-foreground` for color transitions. PNG fallback uses CSS `filter: grayscale(1) brightness(...)`.
+- All logo URLs go through Supabase Storage (`brand-assets` bucket) for CDN + cache.
+- RLS: `brands` and `brand_logos` public read; `contractor_brand_profiles` readable for verified contractors' public view; admin write only via security-definer functions.
