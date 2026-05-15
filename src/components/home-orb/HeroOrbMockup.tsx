@@ -187,9 +187,9 @@ export default function HeroOrbMockup() {
         </div>
       </div>
 
-      {/* CTAs */}
+      {/* CTAs — orb is the primary CTA on homeowner mode; contractor still gets a button */}
       <div className="relative z-10 mt-7 px-5 max-w-md mx-auto flex flex-col gap-3 pb-8">
-        {primaryCtaHref ? (
+        {primaryCtaHref && (
           <a
             href={primaryCtaHref}
             className="w-full h-14 rounded-2xl font-semibold text-white text-base inline-flex items-center justify-center transition active:scale-[0.98]"
@@ -202,19 +202,6 @@ export default function HeroOrbMockup() {
           >
             {primaryCtaLabel}
           </a>
-        ) : (
-          <button
-            onClick={handleStart}
-            className="w-full h-14 rounded-2xl font-semibold text-white text-base transition active:scale-[0.98]"
-            style={{
-              background:
-                "linear-gradient(180deg, hsl(212 100% 55%), hsl(220 100% 42%))",
-              boxShadow:
-                "0 14px 30px -8px hsl(212 100% 50% / 0.55), inset 0 1px 0 hsl(0 0% 100% / 0.25)",
-            }}
-          >
-            {primaryCtaLabel}
-          </button>
         )}
         <a
           href={secondaryHref}
