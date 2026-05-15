@@ -22,11 +22,15 @@ export default function HeroOrbMockup() {
   const isContractor = activeRole === "contractor";
 
   const isIdle = alexState === "idle";
-  const orbState: AlexOrbState =
+  const orbState: AlexOrbStateV2 =
     alexState === "speaking"
       ? "speaking"
-      : alexState === "listening" || alexState === "thinking"
+      : alexState === "listening"
       ? "listening"
+      : alexState === "thinking"
+      ? "thinking"
+      : alexState === "error"
+      ? "error"
       : "idle";
 
   const badgeLabel =
