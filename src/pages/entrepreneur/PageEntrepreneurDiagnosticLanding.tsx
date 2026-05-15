@@ -36,7 +36,7 @@ import AlexMorphingOrb, { type AlexOrbStateV2 } from "@/components/alex/AlexMorp
 import { elevenlabsService } from "@/features/alex/services/elevenlabsService";
 import { CONTRACTOR_PLANS, type ContractorPlanSlug } from "@/config/contractorPlans";
 import { recommendPlan, getPlanLabel, getRecommendationReasons } from "@/services/planRecommendationService";
-import { useContractorIntakeSession, type IntakeMode } from "@/hooks/useContractorIntakeSession";
+import { useContractorIntakeSession } from "@/hooks/useContractorIntakeSession";
 import { useActiveRole } from "@/contexts/ActiveRoleContext";
 import { cn } from "@/lib/utils";
 
