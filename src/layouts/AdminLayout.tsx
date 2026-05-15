@@ -72,6 +72,7 @@ const navGroups: NavGroup[] = [
       { to: "/admin/growth-engine", label: "Growth Engine", icon: TrendingUp },
       { to: "/admin/dynamic-pricing-market", label: "Prix Dynamique", icon: TrendingUp },
       { to: "/admin/zone-value", label: "Zones & Exclusivité", icon: MapPin },
+      { to: "/admin/capacity-framework", label: "Capacity Framework", icon: Grid3X3 },
       { to: "/admin/territories", label: "Territoires", icon: MapPin },
       { to: "/admin/city-activity-matrix", label: "Matrice Ville×Activité", icon: Grid3X3 },
       { to: "/admin/services-secondaires", label: "Services Quotidiens", icon: Zap },
