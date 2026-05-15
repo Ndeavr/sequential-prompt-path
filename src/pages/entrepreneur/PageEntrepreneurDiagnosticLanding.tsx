@@ -329,7 +329,7 @@ export default function PageEntrepreneurDiagnosticLanding() {
 
 // ───────────────────────────── sub-components ───────────────────────────
 
-function Hero({ mode, onModeChange }: { mode: IntakeMode; onModeChange: (m: IntakeMode) => void }) {
+function Hero() {
   return (
     <header className="text-center space-y-5">
       <Badge variant="outline" className="border-primary/30 text-primary bg-primary/10">
@@ -345,48 +345,60 @@ function Hero({ mode, onModeChange }: { mode: IntakeMode; onModeChange: (m: Inta
         de 3 minutes, obtenez votre score AIPP, votre potentiel de rendez-vous et le plan
         recommandé pour dominer votre territoire.
       </p>
-
-      <div className="inline-flex p-1 rounded-full bg-white/5 border border-white/10 mt-4">
-        {(["alex", "form"] as IntakeMode[]).map((m) => (
-          <button
-            key={m}
-            onClick={() => onModeChange(m)}
-            className={cn(
-              "px-4 py-2 rounded-full text-sm font-medium transition",
-              mode === m ? "bg-primary text-primary-foreground" : "text-white/60 hover:text-white",
-            )}
-          >
-            {m === "alex" ? "Mode Alex (vocal)" : "Mode rapide"}
-          </button>
-        ))}
-      </div>
     </header>
   );
 }
 
-function AlexModePanel({ onSwitchToForm }: { onSwitchToForm: () => void }) {
+const ALEX_STEP_SCRIPT: Record<0 | 1 | 2, string> = {
+  0: "Bonjour. Je suis Alex d'UNPRO. Pour commencer, donnez-moi le nom de votre entreprise, votre site web et votre téléphone. Je m'occupe du reste.",
+  1: "Parfait. Maintenant, ajustez les curseurs : projets par mois, valeur moyenne d'un contrat, taux de fermeture. Sautez ce que vous voulez.",
+  2: "Voici votre score AIPP, votre potentiel de revenus, et le plan recommandé pour dominer votre territoire.",
+};
+
+function AlexNarrator({
+  step,
+  orbState,
+  setOrbState,
+}: {
+  step: 0 | 1 | 2;
+  orbState: AlexOrbStateV2;
+  setOrbState: (s: AlexOrbStateV2) => void;
+}) {
+  const text = ALEX_STEP_SCRIPT[step];
+
+  const speakNow = useMemo(
+    () => async (t: string) => {
+      try {
+        setOrbState("speaking");
+        await elevenlabsService.speak(
+          t,
+          () => setOrbState("speaking"),
+          () => setOrbState("idle"),
+        );
+      } catch {
+        setOrbState("idle");
+      }
+    },
+    [setOrbState],
+  );
+
+  // Speak each step's narration on entry (user gesture already happened on landing).
+  useEffect(() => {
+    void speakNow(text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
   return (
-    <div className="mt-12 flex flex-col items-center text-center">
-      <AlexFloatingOrb state="idle" expression="confident" size="mobile" />
-      <div className="mt-8 max-w-md mx-auto space-y-4">
-        <p className="text-lg text-white/80 leading-relaxed">
-          « Bonjour. Je suis Alex d'UNPRO. Je vais analyser votre entreprise et voir combien
-          de contrats vous pourriez décrocher de plus avec UNPRO. »
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-          <Link to="/?source=entrepreneur-alex">
-            <Button size="lg" className="gap-2 w-full sm:w-auto">
-              Démarrer la conversation <ArrowRight className="w-4 h-4" />
-            </Button>
-          </Link>
-          <Button size="lg" variant="outline" onClick={onSwitchToForm} className="border-white/20 text-white/80 hover:bg-white/5">
-            Préférer le mode rapide
-          </Button>
-        </div>
-        <p className="text-xs text-white/40 pt-2">
-          Parlez naturellement. Alex vous guide étape par étape.
-        </p>
-      </div>
+    <div className="mt-10 flex flex-col items-center text-center">
+      <AlexMorphingOrb
+        state={orbState}
+        size="lg"
+        onClick={() => void speakNow(text)}
+        ariaLabel="Alex — touchez pour réécouter"
+      />
+      <p className="mt-6 max-w-xl text-base sm:text-lg text-white/85 leading-relaxed">
+        « {text} »
+      </p>
     </div>
   );
 }
