@@ -50,10 +50,6 @@ export default function HeroOrbMockup() {
     ? "Bonjour. Je suis Alex d'UNPRO. Voyons ensemble comment faire évoluer votre entreprise."
     : "Bonjour. Je suis Alex d'UNPRO. Quel problème puis-je vous aider à régler aujourd'hui?";
 
-  const primaryCtaLabel = isContractor ? "Voir mon potentiel gratuit" : "Parler à Alex";
-  const primaryCtaHref = isContractor ? "/entrepreneur" : undefined;
-  const secondaryHref = isContractor ? "/leads" : "/entrepreneur";
-  const secondaryLabel = isContractor ? "Mes leads" : "Je suis entrepreneur";
   const tagline = isContractor
     ? "Recevez des rendez-vous qualifiés. Votre profil IA travaille 24/7."
     : "Trouvez le bon pro. Ou devenez le pro recommandé.";
