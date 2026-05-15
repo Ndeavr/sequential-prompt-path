@@ -143,7 +143,7 @@ export default function HeroOrbMockup() {
         {!active && (
           <AlexConversationArrow
             direction="down"
-            label="Touchez pour parler"
+            label="Parlez à Alex"
             className="mt-2"
           />
         )}
