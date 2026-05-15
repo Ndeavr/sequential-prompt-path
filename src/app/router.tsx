@@ -1310,6 +1310,7 @@ export const AppRouter = () => (
         <Route path="/admin/alex-response-audit" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAlexResponseAudit /></Suspense></ProtectedRoute>} />
         <Route path="/admin/sms-images" element={<ProtectedRoute requiredRole="admin"><PageAdminSMSImageTemplates /></ProtectedRoute>} />
         <Route path="/admin/brand" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminBrandSettings /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/brand-intelligence/logos" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminBrandLogos /></Suspense></ProtectedRoute>} />
         <Route path="/admin/share-images" element={<ProtectedRoute requiredRole="admin"><PageShareImageDashboard /></ProtectedRoute>} />
         <Route path="/admin/share-images/generate" element={<ProtectedRoute requiredRole="admin"><PageShareImageGenerate /></ProtectedRoute>} />
         <Route path="/admin/share-images/templates" element={<ProtectedRoute requiredRole="admin"><PageShareImageTemplates /></ProtectedRoute>} />
