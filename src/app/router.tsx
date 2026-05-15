@@ -617,6 +617,7 @@ const PageAdminDominanceControl = lazy(() => import("@/pages/admin/PageAdminDomi
 const PageAlexVoiceDebugAdmin = lazy(() => import("@/pages/admin/PageAlexVoiceDebugAdmin"));
 const PageAdminSMSImageTemplates = lazy(() => import("@/pages/admin/sms-images/PageAdminSMSImageTemplates"));
 const PageAdminBrandSettings = lazy(() => import("@/pages/admin/PageAdminBrandSettings"));
+const PageAdminBrandLogos = lazy(() => import("@/pages/admin/PageAdminBrandLogos"));
 const PageShareImageDashboard = lazy(() => import("@/pages/admin/share-images/PageShareImageDashboard"));
 const PageShareImageGenerate = lazy(() => import("@/pages/admin/share-images/PageShareImageGenerate"));
 const PageShareImageTemplates = lazy(() => import("@/pages/admin/share-images/PageShareImageTemplates"));
