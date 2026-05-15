@@ -141,11 +141,9 @@ function pickRecommendedPlan(s: FormState, score: number): ContractorPlanSlug {
 export default function PageEntrepreneurDiagnosticLanding() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const [mode, setMode] = useState<IntakeMode>(
-    (params.get("mode") as IntakeMode) === "form" ? "form" : "alex",
-  );
   const [step, setStep] = useState<0 | 1 | 2>(0);
   const [revealed, setRevealed] = useState(false);
+  const [orbState, setOrbState] = useState<AlexOrbStateV2>("idle");
   const [form, setForm] = useState<FormState>(() => ({
     ...DEFAULT_STATE,
     company_name: params.get("company") ?? "",
@@ -153,7 +151,7 @@ export default function PageEntrepreneurDiagnosticLanding() {
     phone: params.get("phone") ?? "",
   }));
 
-  const { sessionId, patch } = useContractorIntakeSession(mode);
+  const { sessionId, patch } = useContractorIntakeSession("form");
   const { setActiveRole } = useActiveRole();
 
   // Site-wide contractor mode: triggered immediately on landing.
@@ -161,10 +159,6 @@ export default function PageEntrepreneurDiagnosticLanding() {
     setActiveRole("contractor");
   }, [setActiveRole]);
 
-  // Persist mode changes
-  useEffect(() => {
-    if (sessionId) void patch({ mode });
-  }, [mode, sessionId, patch]);
 
   // Deep-link prefilled enough? Skip identification step.
   useEffect(() => {
