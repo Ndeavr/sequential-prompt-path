@@ -117,10 +117,10 @@ export default function HeroOrbMockup() {
       {/* Sticky orb island — stays visible while transcript grows */}
       <div
         className={`relative z-10 mt-4 flex flex-col items-center ${
-          active ? "sticky top-0 pt-3 pb-2 backdrop-blur-md" : ""
+          !isIdle ? "sticky top-0 pt-3 pb-2 backdrop-blur-md" : ""
         }`}
         style={
-          active
+          !isIdle
             ? {
                 background:
                   "linear-gradient(180deg, hsl(222 70% 4% / 0.85), hsl(222 70% 4% / 0))",
@@ -131,7 +131,13 @@ export default function HeroOrbMockup() {
         <div className="mx-auto" style={{ maxWidth: 220 }}>
           <AlexFloatingOrb
             state={orbState}
-            expression={speaking ? "confident" : active ? "focused" : "neutral"}
+            expression={
+              alexState === "speaking"
+                ? "confident"
+                : alexState === "listening" || alexState === "thinking"
+                ? "focused"
+                : "neutral"
+            }
             size="mobile"
             onClick={handleStart}
           />
@@ -147,21 +153,13 @@ export default function HeroOrbMockup() {
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
             </span>
             <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">
-              {speaking ? "Parle" : active ? "Écoute" : "Online"}
+              {badgeLabel}
             </span>
           </span>
         </div>
-
-        {!active && (
-          <AlexConversationArrow
-            direction="down"
-            label="Parlez à Alex"
-            className="mt-2"
-          />
-        )}
       </div>
 
-      {/* Inline conversation — replaces the old transcript bubble */}
+      {/* Inline conversation — orb is the CTA; transcript appears only when Alex speaks */}
       <div className="relative z-10 mt-6 px-5 max-w-md mx-auto">
         <div
           className="relative rounded-3xl border border-white/10 px-4 py-4 text-left backdrop-blur-md"
@@ -172,13 +170,11 @@ export default function HeroOrbMockup() {
               "0 30px 60px -20px hsl(212 100% 30% / 0.4), inset 0 0 0 1px hsl(212 100% 60% / 0.06)",
           }}
         >
-          {!active && (
-            <div className="px-1 pb-2">
-              <p className="text-blue-300 font-semibold text-base">
-                {greeting.split(".")[0]}.
-              </p>
-              <p className="text-white/80 text-sm mt-1.5 leading-snug">
-                {greeting.split(". ").slice(1).join(". ")}
+          {isIdle && (
+            <div className="px-1 pb-1">
+              <p className="text-blue-300 font-semibold text-base">Bonjour.</p>
+              <p className="text-white/75 text-sm mt-1.5 leading-snug">
+                Touchez Alex pour commencer.
               </p>
             </div>
           )}
@@ -186,16 +182,9 @@ export default function HeroOrbMockup() {
           <AlexHomepageConversation
             ref={convoRef}
             greeting={greeting}
-            onActivityChange={setActive}
-            onAssistantSpeakingChange={setSpeaking}
+            onStateChange={setAlexState}
           />
         </div>
-
-        {!active && (
-          <p className="mt-3 text-white/55 text-xs">
-            Alex analyse votre situation en direct.
-          </p>
-        )}
       </div>
 
       {/* CTAs */}
