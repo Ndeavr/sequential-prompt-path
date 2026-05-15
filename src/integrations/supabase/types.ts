@@ -13948,9 +13948,13 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          logo_attempts: number
+          logo_fetched_at: string | null
           logo_grey_png_url: string | null
           logo_grey_svg_url: string | null
+          logo_last_error: string | null
           logo_png_url: string | null
+          logo_source: string | null
           logo_svg_url: string | null
           market_position: string | null
           metadata: Json
@@ -13969,9 +13973,13 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          logo_attempts?: number
+          logo_fetched_at?: string | null
           logo_grey_png_url?: string | null
           logo_grey_svg_url?: string | null
+          logo_last_error?: string | null
           logo_png_url?: string | null
+          logo_source?: string | null
           logo_svg_url?: string | null
           market_position?: string | null
           metadata?: Json
@@ -13990,9 +13998,13 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          logo_attempts?: number
+          logo_fetched_at?: string | null
           logo_grey_png_url?: string | null
           logo_grey_svg_url?: string | null
+          logo_last_error?: string | null
           logo_png_url?: string | null
+          logo_source?: string | null
           logo_svg_url?: string | null
           market_position?: string | null
           metadata?: Json
