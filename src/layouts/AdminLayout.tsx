@@ -132,6 +132,7 @@ const navGroups: NavGroup[] = [
       { to: "/admin/outbound/sms-fallback", label: "SMS Fallback", icon: Smartphone },
       { to: "/admin/sms-images", label: "Images SMS", icon: ImageIcon },
       { to: "/admin/brand", label: "Brand Engine", icon: Shield },
+      { to: "/admin/brand-intelligence/logos", label: "Brand Logos", icon: ImageIcon },
       { to: "/admin/outbound/analytics", label: "Analytics", icon: BarChart3 },
       { to: "/admin/outbound/suppressions", label: "Suppressions", icon: Ban },
       { to: "/admin/outbound/settings", label: "Settings", icon: Settings },
