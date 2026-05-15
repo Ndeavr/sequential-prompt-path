@@ -171,7 +171,12 @@ export default function HeroSectionAlexFirst() {
           {/* H1 — instant LCP, no animation */}
           <header className="flex flex-col items-center gap-3">
             <h1 className="font-display font-bold text-white leading-[1.05] tracking-tight text-[34px] sm:text-[46px] md:text-[54px]">
-              Décrivez votre problème.
+              Décrivez votre{" "}
+              <TypewriterCycle
+                words={["problème", "projet", "besoin", "urgence", "rénovation"]}
+                className="inline-block"
+              />
+              .
               <br />
               <span className="bg-gradient-to-r from-[hsl(222,100%,72%)] via-[hsl(195,100%,62%)] to-[hsl(252,100%,74%)] bg-clip-text text-transparent">
                 Alex s'occupe du reste.
