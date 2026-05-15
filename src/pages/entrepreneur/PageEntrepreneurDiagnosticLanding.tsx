@@ -32,10 +32,11 @@ import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import AlexFloatingOrb from "@/components/home-orb/AlexFloatingOrb";
+import AlexMorphingOrb, { type AlexOrbStateV2 } from "@/components/alex/AlexMorphingOrb";
+import { elevenlabsService } from "@/features/alex/services/elevenlabsService";
 import { CONTRACTOR_PLANS, type ContractorPlanSlug } from "@/config/contractorPlans";
 import { recommendPlan, getPlanLabel, getRecommendationReasons } from "@/services/planRecommendationService";
-import { useContractorIntakeSession, type IntakeMode } from "@/hooks/useContractorIntakeSession";
+import { useContractorIntakeSession } from "@/hooks/useContractorIntakeSession";
 import { useActiveRole } from "@/contexts/ActiveRoleContext";
 import { cn } from "@/lib/utils";
 
@@ -140,11 +141,9 @@ function pickRecommendedPlan(s: FormState, score: number): ContractorPlanSlug {
 export default function PageEntrepreneurDiagnosticLanding() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const [mode, setMode] = useState<IntakeMode>(
-    (params.get("mode") as IntakeMode) === "form" ? "form" : "alex",
-  );
   const [step, setStep] = useState<0 | 1 | 2>(0);
   const [revealed, setRevealed] = useState(false);
+  const [orbState, setOrbState] = useState<AlexOrbStateV2>("idle");
   const [form, setForm] = useState<FormState>(() => ({
     ...DEFAULT_STATE,
     company_name: params.get("company") ?? "",
@@ -152,7 +151,7 @@ export default function PageEntrepreneurDiagnosticLanding() {
     phone: params.get("phone") ?? "",
   }));
 
-  const { sessionId, patch } = useContractorIntakeSession(mode);
+  const { sessionId, patch } = useContractorIntakeSession("form");
   const { setActiveRole } = useActiveRole();
 
   // Site-wide contractor mode: triggered immediately on landing.
@@ -160,10 +159,6 @@ export default function PageEntrepreneurDiagnosticLanding() {
     setActiveRole("contractor");
   }, [setActiveRole]);
 
-  // Persist mode changes
-  useEffect(() => {
-    if (sessionId) void patch({ mode });
-  }, [mode, sessionId, patch]);
 
   // Deep-link prefilled enough? Skip identification step.
   useEffect(() => {
@@ -257,64 +252,64 @@ export default function PageEntrepreneurDiagnosticLanding() {
         </div>
 
         <div className="relative z-10 max-w-5xl mx-auto px-5 pb-32 pt-10 lg:pt-16">
-          <Hero mode={mode} onModeChange={setMode} />
+          <Hero />
 
-          {mode === "alex" ? (
-            <AlexModePanel onSwitchToForm={() => setMode("form")} />
-          ) : (
-            <>
-              {showInstantScan && step >= 0 && (
-                <InstantScanCard
-                  website={form.website}
-                  phone={form.phone}
-                  companyName={form.company_name}
-                />
-              )}
+          <AlexNarrator
+            step={step}
+            orbState={orbState}
+            setOrbState={setOrbState}
+          />
 
-              <div className="mt-10">
-                <ProgressBar step={step} />
-
-                <AnimatePresence mode="wait">
-                  {step === 0 && (
-                    <StepCard key="step0">
-                      <Step0Identification form={form} update={update} />
-                    </StepCard>
-                  )}
-                  {step === 1 && (
-                    <StepCard key="step1">
-                      <Step1Situation form={form} update={update} />
-                    </StepCard>
-                  )}
-                  {step === 2 && (
-                    <motion.div
-                      key="step2"
-                      initial={{ opacity: 0, y: 24 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.45 }}
-                      className="mt-8 space-y-6"
-                    >
-                      <AippRevealSection aipp={aipp} revealed={revealed} />
-                      <RevenueProjectionCard form={form} projection={projection} />
-                      <PlanRecommendationCard
-                        plan={plan}
-                        slug={planSlug}
-                        score={aipp.score}
-                        onActivate={startCheckout}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {step < 2 && (
-                  <div className="mt-6 flex justify-end">
-                    <Button onClick={goNext} size="lg" className="gap-2">
-                      {step === 0 ? "Continuer" : "Voir mon score AIPP"} <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </>
+          {showInstantScan && step >= 0 && (
+            <InstantScanCard
+              website={form.website}
+              phone={form.phone}
+              companyName={form.company_name}
+            />
           )}
+
+          <div className="mt-8">
+            <ProgressBar step={step} />
+
+            <AnimatePresence mode="wait">
+              {step === 0 && (
+                <StepCard key="step0">
+                  <Step0Identification form={form} update={update} />
+                </StepCard>
+              )}
+              {step === 1 && (
+                <StepCard key="step1">
+                  <Step1Situation form={form} update={update} />
+                </StepCard>
+              )}
+              {step === 2 && (
+                <motion.div
+                  key="step2"
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45 }}
+                  className="mt-8 space-y-6"
+                >
+                  <AippRevealSection aipp={aipp} revealed={revealed} />
+                  <RevenueProjectionCard form={form} projection={projection} />
+                  <PlanRecommendationCard
+                    plan={plan}
+                    slug={planSlug}
+                    score={aipp.score}
+                    onActivate={startCheckout}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {step < 2 && (
+              <div className="mt-6 flex justify-end">
+                <Button onClick={goNext} size="lg" className="gap-2">
+                  {step === 0 ? "Continuer" : "Voir mon score AIPP"} <ArrowRight className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+          </div>
 
           <TrustStrip />
         </div>
@@ -334,7 +329,7 @@ export default function PageEntrepreneurDiagnosticLanding() {
 
 // ───────────────────────────── sub-components ───────────────────────────
 
-function Hero({ mode, onModeChange }: { mode: IntakeMode; onModeChange: (m: IntakeMode) => void }) {
+function Hero() {
   return (
     <header className="text-center space-y-5">
       <Badge variant="outline" className="border-primary/30 text-primary bg-primary/10">
@@ -350,48 +345,60 @@ function Hero({ mode, onModeChange }: { mode: IntakeMode; onModeChange: (m: Inta
         de 3 minutes, obtenez votre score AIPP, votre potentiel de rendez-vous et le plan
         recommandé pour dominer votre territoire.
       </p>
-
-      <div className="inline-flex p-1 rounded-full bg-white/5 border border-white/10 mt-4">
-        {(["alex", "form"] as IntakeMode[]).map((m) => (
-          <button
-            key={m}
-            onClick={() => onModeChange(m)}
-            className={cn(
-              "px-4 py-2 rounded-full text-sm font-medium transition",
-              mode === m ? "bg-primary text-primary-foreground" : "text-white/60 hover:text-white",
-            )}
-          >
-            {m === "alex" ? "Mode Alex (vocal)" : "Mode rapide"}
-          </button>
-        ))}
-      </div>
     </header>
   );
 }
 
-function AlexModePanel({ onSwitchToForm }: { onSwitchToForm: () => void }) {
+const ALEX_STEP_SCRIPT: Record<0 | 1 | 2, string> = {
+  0: "Bonjour. Je suis Alex d'UNPRO. Pour commencer, donnez-moi le nom de votre entreprise, votre site web et votre téléphone. Je m'occupe du reste.",
+  1: "Parfait. Maintenant, ajustez les curseurs : projets par mois, valeur moyenne d'un contrat, taux de fermeture. Sautez ce que vous voulez.",
+  2: "Voici votre score AIPP, votre potentiel de revenus, et le plan recommandé pour dominer votre territoire.",
+};
+
+function AlexNarrator({
+  step,
+  orbState,
+  setOrbState,
+}: {
+  step: 0 | 1 | 2;
+  orbState: AlexOrbStateV2;
+  setOrbState: (s: AlexOrbStateV2) => void;
+}) {
+  const text = ALEX_STEP_SCRIPT[step];
+
+  const speakNow = useMemo(
+    () => async (t: string) => {
+      try {
+        setOrbState("speaking");
+        await elevenlabsService.speak(
+          t,
+          () => setOrbState("speaking"),
+          () => setOrbState("idle"),
+        );
+      } catch {
+        setOrbState("idle");
+      }
+    },
+    [setOrbState],
+  );
+
+  // Speak each step's narration on entry (user gesture already happened on landing).
+  useEffect(() => {
+    void speakNow(text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
   return (
-    <div className="mt-12 flex flex-col items-center text-center">
-      <AlexFloatingOrb state="idle" expression="confident" size="mobile" />
-      <div className="mt-8 max-w-md mx-auto space-y-4">
-        <p className="text-lg text-white/80 leading-relaxed">
-          « Bonjour. Je suis Alex d'UNPRO. Je vais analyser votre entreprise et voir combien
-          de contrats vous pourriez décrocher de plus avec UNPRO. »
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-          <Link to="/?source=entrepreneur-alex">
-            <Button size="lg" className="gap-2 w-full sm:w-auto">
-              Démarrer la conversation <ArrowRight className="w-4 h-4" />
-            </Button>
-          </Link>
-          <Button size="lg" variant="outline" onClick={onSwitchToForm} className="border-white/20 text-white/80 hover:bg-white/5">
-            Préférer le mode rapide
-          </Button>
-        </div>
-        <p className="text-xs text-white/40 pt-2">
-          Parlez naturellement. Alex vous guide étape par étape.
-        </p>
-      </div>
+    <div className="mt-10 flex flex-col items-center text-center">
+      <AlexMorphingOrb
+        state={orbState}
+        size="lg"
+        onClick={() => void speakNow(text)}
+        ariaLabel="Alex — touchez pour réécouter"
+      />
+      <p className="mt-6 max-w-xl text-base sm:text-lg text-white/85 leading-relaxed">
+        « {text} »
+      </p>
     </div>
   );
 }
