@@ -13543,6 +13543,44 @@ export type Database = {
         }
         Relationships: []
       }
+      brand_aliases: {
+        Row: {
+          alias: string
+          alias_normalized: string
+          brand_id: string
+          created_at: string
+          id: string
+          is_primary: boolean | null
+          locale: string | null
+        }
+        Insert: {
+          alias: string
+          alias_normalized: string
+          brand_id: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          locale?: string | null
+        }
+        Update: {
+          alias?: string
+          alias_normalized?: string
+          brand_id?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          locale?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_aliases_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brand_assets: {
         Row: {
           asset_type: string
@@ -13584,6 +13622,146 @@ export type Database = {
           width?: number | null
         }
         Relationships: []
+      }
+      brand_assets_cache: {
+        Row: {
+          content_hash: string | null
+          content_type: string | null
+          expires_at: string | null
+          fetched_at: string
+          file_size: number | null
+          id: string
+          source_url: string
+          storage_path: string
+        }
+        Insert: {
+          content_hash?: string | null
+          content_type?: string | null
+          expires_at?: string | null
+          fetched_at?: string
+          file_size?: number | null
+          id?: string
+          source_url: string
+          storage_path: string
+        }
+        Update: {
+          content_hash?: string | null
+          content_type?: string | null
+          expires_at?: string | null
+          fetched_at?: string
+          file_size?: number | null
+          id?: string
+          source_url?: string
+          storage_path?: string
+        }
+        Relationships: []
+      }
+      brand_categories: {
+        Row: {
+          created_at: string
+          display_order: number
+          label_en: string
+          label_fr: string
+          slug: string
+          tier: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          label_en: string
+          label_fr: string
+          slug: string
+          tier?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          label_en?: string
+          label_fr?: string
+          slug?: string
+          tier?: string
+        }
+        Relationships: []
+      }
+      brand_detection_logs: {
+        Row: {
+          brands_found: Json
+          contractor_id: string | null
+          created_at: string
+          error: string | null
+          id: string
+          raw_text: string | null
+          source_reference: string | null
+          source_type: string
+          status: string
+        }
+        Insert: {
+          brands_found?: Json
+          contractor_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          raw_text?: string | null
+          source_reference?: string | null
+          source_type: string
+          status?: string
+        }
+        Update: {
+          brands_found?: Json
+          contractor_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          raw_text?: string | null
+          source_reference?: string | null
+          source_type?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      brand_logos: {
+        Row: {
+          brand_id: string
+          created_at: string
+          format: string
+          height: number | null
+          id: string
+          source: string | null
+          url: string
+          variant: string
+          width: number | null
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          format: string
+          height?: number | null
+          id?: string
+          source?: string | null
+          url: string
+          variant: string
+          width?: number | null
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          format?: string
+          height?: number | null
+          id?: string
+          source?: string | null
+          url?: string
+          variant?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_logos_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       brand_logs: {
         Row: {
@@ -13639,6 +13817,48 @@ export type Database = {
           },
         ]
       }
+      brand_relationships: {
+        Row: {
+          brand_id: string
+          created_at: string
+          id: string
+          related_brand_id: string
+          relation_type: string
+          strength: number | null
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          id?: string
+          related_brand_id: string
+          relation_type: string
+          strength?: number | null
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          id?: string
+          related_brand_id?: string
+          relation_type?: string
+          strength?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_relationships_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_relationships_related_brand_id_fkey"
+            columns: ["related_brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brand_rules: {
         Row: {
           blocked_patterns: string[] | null
@@ -13677,6 +13897,122 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      brand_scores: {
+        Row: {
+          brand_count: number
+          budget_tier: string
+          commercial_score: number
+          computed_at: string
+          contractor_id: string
+          ecosystem_quality: number
+          luxury_score: number
+          metadata: Json
+          premium_score: number
+          primary_ecosystem: string | null
+          technical_score: number
+        }
+        Insert: {
+          brand_count?: number
+          budget_tier?: string
+          commercial_score?: number
+          computed_at?: string
+          contractor_id: string
+          ecosystem_quality?: number
+          luxury_score?: number
+          metadata?: Json
+          premium_score?: number
+          primary_ecosystem?: string | null
+          technical_score?: number
+        }
+        Update: {
+          brand_count?: number
+          budget_tier?: string
+          commercial_score?: number
+          computed_at?: string
+          contractor_id?: string
+          ecosystem_quality?: number
+          luxury_score?: number
+          metadata?: Json
+          premium_score?: number
+          primary_ecosystem?: string | null
+          technical_score?: number
+        }
+        Relationships: []
+      }
+      brands: {
+        Row: {
+          category: string | null
+          country: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          logo_grey_png_url: string | null
+          logo_grey_svg_url: string | null
+          logo_png_url: string | null
+          logo_svg_url: string | null
+          market_position: string | null
+          metadata: Json
+          name: string
+          premium_score: number
+          slug: string
+          subcategory: string | null
+          trust_score: number
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          category?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          logo_grey_png_url?: string | null
+          logo_grey_svg_url?: string | null
+          logo_png_url?: string | null
+          logo_svg_url?: string | null
+          market_position?: string | null
+          metadata?: Json
+          name: string
+          premium_score?: number
+          slug: string
+          subcategory?: string | null
+          trust_score?: number
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          category?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          logo_grey_png_url?: string | null
+          logo_grey_svg_url?: string | null
+          logo_png_url?: string | null
+          logo_svg_url?: string | null
+          market_position?: string | null
+          metadata?: Json
+          name?: string
+          premium_score?: number
+          slug?: string
+          subcategory?: string | null
+          trust_score?: number
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brands_category_fkey"
+            columns: ["category"]
+            isOneToOne: false
+            referencedRelation: "brand_categories"
+            referencedColumns: ["slug"]
+          },
+        ]
       }
       broken_link_events: {
         Row: {
@@ -18463,6 +18799,53 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "v_contractor_trust_summary"
             referencedColumns: ["contractor_id"]
+          },
+        ]
+      }
+      contractor_brand_profiles: {
+        Row: {
+          brand_id: string
+          confidence_score: number
+          contractor_id: string
+          detected_at: string
+          id: string
+          is_certified: boolean
+          is_primary_ecosystem: boolean
+          metadata: Json
+          source_reference: string | null
+          source_type: string
+        }
+        Insert: {
+          brand_id: string
+          confidence_score?: number
+          contractor_id: string
+          detected_at?: string
+          id?: string
+          is_certified?: boolean
+          is_primary_ecosystem?: boolean
+          metadata?: Json
+          source_reference?: string | null
+          source_type: string
+        }
+        Update: {
+          brand_id?: string
+          confidence_score?: number
+          contractor_id?: string
+          detected_at?: string
+          id?: string
+          is_certified?: boolean
+          is_primary_ecosystem?: boolean
+          metadata?: Json
+          source_reference?: string | null
+          source_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_brand_profiles_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
           },
         ]
       }
