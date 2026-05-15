@@ -1,76 +1,69 @@
-## AlexMorphingOrb — Premium Living AI Orb
+## AlexMorphingOrb v2 — Living AI Presence
 
-Replace the current flat/static Alex orb with a reusable, state-aware morphing orb that feels alive (Copilot-energy, original to UNPRO).
+Upgrade the existing `AlexMorphingOrb` so it reads as a translucent, breathing intelligence — not a button, bubble, icon, or gradient dot.
 
-### 1. New component
-`src/components/alex/AlexMorphingOrb.tsx`
+### Diagnosis of current orb
+- Hard outer ring + sphere look = reads as "button"
+- Single rotating rim = mechanical
+- Two plasma blobs only = limited motion vocabulary
+- No depth parallax, no chromatic aberration, no nebula
+- High opacity = looks solid, not translucent
 
-Props:
-```ts
-type Props = {
-  state?: "idle" | "listening" | "thinking" | "speaking" | "error";
-  size?: "sm" | "md" | "lg";  // 48 / 96 / 160 px
-  onClick?: () => void;
-  className?: string;
-  ariaLabel?: string;
-}
-```
+### Visual upgrade — layered presence (still no canvas/WebGL)
 
-Layered structure (no canvas, mobile-perf safe):
 ```text
-<button>
-  ├─ aura halo        (radial-gradient + blur, breathes)
-  ├─ outer rim        (conic-gradient rotating slowly)
-  ├─ glass sphere     (radial-gradient blue→cyan→violet, inset highlight)
-  ├─ plasma blob A    (mix-blend-screen, morphs border-radius)
-  ├─ plasma blob B    (mix-blend-screen, counter-rotates)
-  ├─ inner light      (top-left specular highlight)
-  └─ ripple layer     (on click → animate scale+fade)
-</button>
+button (no border, no bg, no focus ring chrome)
+├─ atmosphere    SVG turbulence + feGaussianBlur, 30% larger than orb
+├─ nebula        radial cloud (cyan/violet) drifting + counter-rotating
+├─ aura halo     soft radial bloom, breathing
+├─ caustics ring conic-gradient shimmer, very low opacity, slow drift
+├─ core sphere   translucent (75% alpha) radial — deep blue interior
+├─ plasma A      morphing blob, blur 14px, mix-blend-screen
+├─ plasma B      counter-morph, hue-shifted violet
+├─ plasma C      small darting blob (adds life), random offset
+├─ chromatic     thin red/cyan offset rings (mix-blend-screen) for AI feel
+├─ specular      soft top-left highlight, drifts slightly with breath
+├─ inner stars   3-4 tiny white dots flickering (translucent depth)
+└─ ripple        on tap only
 ```
 
-Tech:
-- Tailwind + Framer Motion
-- CSS variables driven by `state`: `--orb-glow`, `--orb-speed`, `--orb-scale`, `--orb-hue-shift`
-- Morphing via animated `border-radius` (e.g. `60% 40% 55% 45% / 50% 60% 40% 50%`) on plasma blobs
-- Keyframes in `src/styles/alex-orb.css` (breath, swirl, rim-rotate, ripple)
-- `prefers-reduced-motion`: disable morph + rim rotation, keep static gradient + soft glow
+### Key changes from v1
+1. **Remove button chrome** — strip rounded button background; the orb IS the surface. Keep accessible `<button>` but no visible borders/rings/focus chrome (use ring on focus-visible only, offset far out).
+2. **Lower opacity everywhere** — sphere alpha 0.7, plasma 0.55, no hard inset shadow ring → feels translucent, not glossy plastic.
+3. **SVG turbulence atmosphere** — small inline SVG `<filter feTurbulence baseFrequency="0.012" + feDisplacementMap>` applied to the nebula layer for organic, never-repeating distortion. Cheap on mobile (one filter, animated `seed`).
+4. **3 plasma blobs + drift** — independent timings (7s / 9s / 5s), independent translate paths so silhouette never settles.
+5. **Chromatic aberration** — two thin offset rings at +1px / -1px in red and cyan, 8% opacity, mix-blend-screen → subtle "AI hologram" feel.
+6. **Inner stars / particles** — 3 absolutely-positioned 2px dots with staggered opacity keyframes, gives sense of depth inside the sphere.
+7. **Breath-coupled scale on multiple layers** — halo, sphere, and specular breathe at slightly different phases for parallax.
+8. **State-driven SVG turbulence frequency** — listening = higher frequency (more agitated), thinking = slower drift, speaking = vertical pulse on plasma A only.
+9. **No outer hard rim** — replace conic ring with a *masked caustics shimmer* (very low alpha) so the silhouette feels gaseous, not bordered.
+10. **Idle micro-drift** — whole orb translates ±2px on a 9s loop so it never feels pinned.
 
-### 2. State visuals
-| State | Behavior |
-|---|---|
-| idle | Slow breath (4s), soft halo, gentle morph |
-| listening | +8% scale, brighter rim, faster rotating gradient (2s), cyan boost |
-| thinking | Inner swirl shimmer, slower breath (5s), violet shift |
-| speaking | Rhythmic morph 0.6s loop, mouth-like vertical pulse on inner blob |
-| error | Desaturated blue/gray, halo dimmed, no rotation |
+### State map (refined)
+| State | Atmosphere | Plasma | Halo | Extras |
+|---|---|---|---|---|
+| idle | slow drift, freq 0.010 | gentle morph 7s | breath 4.5s | stars flicker 6s |
+| listening | freq 0.020, agitated | morph 3s, +6% scale | brighter, breath 1.6s | chromatic +50% |
+| thinking | freq 0.008, slow swirl | rotate slowly | violet hue shift | extra inner shimmer ring |
+| speaking | freq 0.014 | vertical pulse 0.6s on A | breath 0.7s | mouth-shaped bottom blob deformation |
+| error | freq 0.005, desaturated | frozen | dim, no breath | grayscale 60% |
 
-### 3. Replace current usages
-Swap the flat orb in:
-- `src/components/home-orb/HeroOrbMockup.tsx` → use `size="lg"` centered
-- `src/components/alex/AlexCompanionOrb.tsx` → use `size="sm"` floating bottom-right (keep `bottom-20` on mobile so it sits above MobileBottomNav)
-- `src/features/alex/AlexOrb.tsx` → re-export wrapper mapping `useAlexStore.mode` → orb `state` (booting/connecting → idle, speaking → speaking, listening → listening, thinking/waiting → thinking, error → error)
-
-Tap behavior unchanged: starts Alex on the same page (no route change). Live transcript already handled by `AlexInlineTranscript` — no change here.
-
-### 4. Mobile placement
-- Companion orb: `fixed bottom-24 right-4` (clears `MobileBottomNav` ~80px) on `<md`, `bottom-5 right-5` on `≥md`
-- Hero orb: centered, size `lg` (160px) with extended halo (240px)
-
-### 5. Constraints
-- No canvas / WebGL
-- Only HSL semantic tokens (`--primary`, `--accent`) + a few orb-specific vars in `index.css`
-- No new deps (framer-motion already in project)
-- Keep `AlexCompanionOrb` lazy-loaded path intact
-
-### 6. Tasks
-1. Add orb keyframes + CSS vars to `src/styles/alex-orb.css` (imported from `index.css`)
-2. Build `AlexMorphingOrb.tsx` with layered divs + Framer Motion ripple
-3. Refactor `AlexOrb.tsx` to render `AlexMorphingOrb` mapped from store mode
-4. Update `AlexCompanionOrb.tsx` to use new orb (sm) + mobile-safe positioning
-5. Update `HeroOrbMockup.tsx` to use new orb (lg)
-6. Add reduced-motion fallback
-7. Verify on 384px viewport (current preview) — orb visible above bottom nav, no layout shift
+### Reusable component
+- File: `src/components/alex/AlexMorphingOrb.tsx` (replace v1, same exports — `AlexOrbStateV2`, `AlexOrbSize`, default export)
+- No prop API change → all 3 callsites (HeroOrbMockup, AlexCompanionOrb, features/alex/AlexOrb) keep working
+- Inline `<style>` block + inline `<svg>` filter — zero new files, zero new deps
+- `prefers-reduced-motion`: kill SVG animation + plasma morph; keep static gradient + soft halo
+- `will-change: transform, opacity` only on animated layers (mobile perf)
+- Pointer-events: only on the button itself; all visual layers `pointer-events-none`
 
 ### Out of scope
-- Voice pipeline, transcript logic, Alex brain, routing — untouched.
+- Voice pipeline, transcript, store wiring (already correct)
+- Companion orb position, hero layout
+- Sound effects (forbidden by Sonic Identity memory)
+
+### Tasks
+1. Rewrite `AlexMorphingOrb.tsx` with layered structure above + inline SVG turbulence filter
+2. Strip all button-like chrome (background, border, ring) from the root
+3. Add 3rd plasma blob, chromatic offset rings, inner stars, idle micro-drift
+4. State-conditional turbulence baseFrequency + plasma timings
+5. Verify on 384px mobile preview — orb reads as living presence at sm/md/lg
