@@ -1,130 +1,76 @@
-## UNPRO — Contractor Capacity Framework (CCF)
+## AlexMorphingOrb — Premium Living AI Orb
 
-A single source of truth for "how many pros UNPRO can support per Trade × City/Cluster", how scarce each slot is, what it's worth, and who unlocks exclusivity. Built on top of existing tables (`cluster_domain_capacity`, `market_capacity`, `territory_assignments`, `jve_trades`, `cities_quebec_clusters`, `signature_territory_locks`) — no duplication, only the missing connective tissue.
+Replace the current flat/static Alex orb with a reusable, state-aware morphing orb that feels alive (Copilot-energy, original to UNPRO).
 
-### Why it matters
-- Pricing power: scarcity → premium plans (Élite/Signature) sell themselves
-- AI ranking: Alex recommends the trade × zone with real openings
-- Conversion: "2 places restantes à Laval — Plomberie" closes faster than open marketplaces
-- Defensibility: locked territories = recurring MRR moat
+### 1. New component
+`src/components/alex/AlexMorphingOrb.tsx`
 
----
-
-## 1. Capacity model
-
-`recommended_caps_per_trade_city` = function of:
-```text
-base_cap = round( population / inhabitants_per_pro[trade] )
-× competitiveness_factor (Google Ads CPC tier)
-× seasonality_factor (QC climate, current month)
-× cluster_density_factor (urban / suburban / rural)
-× demand_signal_factor (intents, searches, leads last 90d)
-clamped to [min_cap, max_cap] per trade
+Props:
+```ts
+type Props = {
+  state?: "idle" | "listening" | "thinking" | "speaking" | "error";
+  size?: "sm" | "md" | "lg";  // 48 / 96 / 160 px
+  onClick?: () => void;
+  className?: string;
+  ariaLabel?: string;
+}
 ```
 
-Tier table per trade (stored in `trade_capacity_rules`):
-| Trade family | Inhab/pro | Min/city | Max/city |
-|---|---|---|---|
-| Plomberie, Électricité, CVAC | 8 000 | 2 | 25 |
-| Toiture, Fenêtres, Revêtement | 12 000 | 2 | 18 |
-| Rénovation, Cuisine, SdB | 6 000 | 3 | 30 |
-| Paysagement, Déneigement | 5 000 | 3 | 35 |
-| Spécialités (gicleurs, ascenseurs) | 40 000 | 1 | 5 |
-
-Major-city seed examples (final_cap, all trades summed):
-- Montréal ~1.78M → ~620 slots
-- Laval ~440k → ~180 slots
-- Québec ~550k → ~210 slots
-- Gatineau ~290k → ~120 slots
-- Sherbrooke ~170k → ~85 slots
-
-## 2. Google Ads competitiveness
-
-Tier S/A/B/C/D from `cpc_cad`:
-- S ≥ $25 (urgences, sinistres) → cap × 0.8, premium price × 1.6
-- A $15–25 (plomberie, élec) → × 0.9, × 1.3
-- B $7–15 (toiture, CVAC) → × 1.0, × 1.15
-- C $3–7 (rénovation, paysagement) → × 1.1, × 1.0
-- D < $3 (entretien) → × 1.2, × 0.85
-
-## 3. Saturation Score (0–100)
+Layered structure (no canvas, mobile-perf safe):
 ```text
-saturation = 100 × (active_pros / final_cap)
-+ bonus for (avg_aipp_score > 75) and (response_rate > 80%)
-- penalty for (open complaints, low conversion)
+<button>
+  ├─ aura halo        (radial-gradient + blur, breathes)
+  ├─ outer rim        (conic-gradient rotating slowly)
+  ├─ glass sphere     (radial-gradient blue→cyan→violet, inset highlight)
+  ├─ plasma blob A    (mix-blend-screen, morphs border-radius)
+  ├─ plasma blob B    (mix-blend-screen, counter-rotates)
+  ├─ inner light      (top-left specular highlight)
+  └─ ripple layer     (on click → animate scale+fade)
+</button>
 ```
-Bands: Vert 0–50 (open), Jaune 51–80 (limited), Rouge 81–100 (locked / waitlist).
 
-## 4. Exclusivity engine
-- Trade × City × Slot Class (`signature`, `elite`, `premium`, `pro`, `recrue`) — already in `territory_assignments`
-- New rule: `signature` slot only unlocks when `saturation ≥ 70` AND `cpc_tier ∈ {S, A}` AND `gap_score ≥ 40`
-- Locked zones surface in Alex sales flow as "1 place Signature disponible — Laval Plomberie"
-- Auto-expiry & renewal grace via `signature_territory_locks`
+Tech:
+- Tailwind + Framer Motion
+- CSS variables driven by `state`: `--orb-glow`, `--orb-speed`, `--orb-scale`, `--orb-hue-shift`
+- Morphing via animated `border-radius` (e.g. `60% 40% 55% 45% / 50% 60% 40% 50%`) on plasma blobs
+- Keyframes in `src/styles/alex-orb.css` (breath, swirl, rim-rotate, ripple)
+- `prefers-reduced-motion`: disable morph + rim rotation, keep static gradient + soft glow
 
-## 5. Database (delta only)
+### 2. State visuals
+| State | Behavior |
+|---|---|
+| idle | Slow breath (4s), soft halo, gentle morph |
+| listening | +8% scale, brighter rim, faster rotating gradient (2s), cyan boost |
+| thinking | Inner swirl shimmer, slower breath (5s), violet shift |
+| speaking | Rhythmic morph 0.6s loop, mouth-like vertical pulse on inner blob |
+| error | Desaturated blue/gray, halo dimmed, no rotation |
 
-Existing reused: `cluster_domain_capacity`, `market_capacity`, `cluster_plan_capacity`, `cluster_pricing_multipliers`, `territory_assignments`, `jve_trades`, `jve_trade_city_factors`, `cities_quebec_clusters`, `signature_territory_locks`.
+### 3. Replace current usages
+Swap the flat orb in:
+- `src/components/home-orb/HeroOrbMockup.tsx` → use `size="lg"` centered
+- `src/components/alex/AlexCompanionOrb.tsx` → use `size="sm"` floating bottom-right (keep `bottom-20` on mobile so it sits above MobileBottomNav)
+- `src/features/alex/AlexOrb.tsx` → re-export wrapper mapping `useAlexStore.mode` → orb `state` (booting/connecting → idle, speaking → speaking, listening → listening, thinking/waiting → thinking, error → error)
 
-New tables:
-- `trade_capacity_rules` — inhab_per_pro, min/max cap, seasonality JSON, family
-- `trade_cpc_benchmarks` — trade × city, cpc_cad, tier (S/A/B/C/D), source, refreshed_at
-- `capacity_snapshots` — daily snapshot per (trade, city): final_cap, active_pros, saturation, gap, tier
-- `exclusivity_rules` — slot_class × conditions JSON, auto-eligibility flags
-- `capacity_recommendations` — Alex-facing: trade, city, slot_class, status (open/limited/locked), justification
+Tap behavior unchanged: starts Alex on the same page (no route change). Live transcript already handled by `AlexInlineTranscript` — no change here.
 
-New views:
-- `v_capacity_live` — joins snapshots + assignments + cpc tier
-- `v_exclusivity_eligible` — zones meeting Signature/Élite criteria
+### 4. Mobile placement
+- Companion orb: `fixed bottom-24 right-4` (clears `MobileBottomNav` ~80px) on `<md`, `bottom-5 right-5` on `≥md`
+- Hero orb: centered, size `lg` (160px) with extended halo (240px)
 
-## 6. Engine services (TS, no edge function unless cron)
-- `src/services/capacity/capacityEngine.ts` — `computeFinalCap()`, `computeSaturation()`, `computeBands()`
-- `src/services/capacity/exclusivityEngine.ts` — `evaluateExclusivity(trade, city)`
-- `src/services/capacity/cpcTierService.ts` — tier mapping + factor lookup
-- `src/services/capacity/capacitySnapshotter.ts` — invoked daily by edge function `capacity-snapshot-cron`
-- Edge function `capacity-snapshot-cron` — nightly write to `capacity_snapshots` + `capacity_recommendations`
+### 5. Constraints
+- No canvas / WebGL
+- Only HSL semantic tokens (`--primary`, `--accent`) + a few orb-specific vars in `index.css`
+- No new deps (framer-motion already in project)
+- Keep `AlexCompanionOrb` lazy-loaded path intact
 
-## 7. Admin cockpit
-Route `/admin/capacity-framework`:
-- `PageAdminCapacityFramework` with tabs: Overview · Trades · Cities · Exclusivity · CPC Tiers
-- `PanelCapacityHeatmap` (trade × city, color-coded saturation)
-- `PanelMajorCities` (Montréal, Laval, Québec, Gatineau, Sherbrooke deep-dive)
-- `PanelExclusivityPipeline` (zones eligible for Signature upsell)
-- `PanelCpcBenchmarks` (editable CPC tiers)
-- `TableCapacityRecommendations` (Alex-ready feed)
-- `DrawerZoneDeepDive` (per trade × city: cap, active, saturation, slots, MRR, waitlist)
+### 6. Tasks
+1. Add orb keyframes + CSS vars to `src/styles/alex-orb.css` (imported from `index.css`)
+2. Build `AlexMorphingOrb.tsx` with layered divs + Framer Motion ripple
+3. Refactor `AlexOrb.tsx` to render `AlexMorphingOrb` mapped from store mode
+4. Update `AlexCompanionOrb.tsx` to use new orb (sm) + mobile-safe positioning
+5. Update `HeroOrbMockup.tsx` to use new orb (lg)
+6. Add reduced-motion fallback
+7. Verify on 384px viewport (current preview) — orb visible above bottom nav, no layout shift
 
-## 8. Alex / sales integration
-- `alexCapacityAdvisor.ts` — `getZoneStatus(trade, city)` returns one human line: "Plomberie Laval — 2 places Élite restantes (saturation 78%)"
-- Plan recommendation engine reads `capacity_recommendations` to push Élite/Signature when scarcity bands are red/jaune
-- Public `/territoire/:trade/:ville` page reads `v_capacity_live` for the public scarcity badge
-
-## 9. Phasing
-**Phase 1 (this build):**
-1. Migration: 5 new tables + 2 views + RLS (admin write, public read on aggregates)
-2. Seed `trade_capacity_rules` for ~40 QC trade families
-3. Seed `trade_cpc_benchmarks` for top 30 cities × top 20 trades (deterministic defaults)
-4. Engine services (capacity, exclusivity, cpc tier)
-5. Edge function `capacity-snapshot-cron` + first manual run
-6. Admin cockpit `/admin/capacity-framework` (Overview + Trades + Cities tabs)
-
-**Phase 2 (deferred):**
-- Live CPC refresh via Google Ads / Semrush sync
-- Public scarcity widget on `/territoire/...`
-- Auto-upsell in Alex pricing flow
-- Waitlist auto-promotion when slot frees
-
-## 10. Constraints / guardrails
-- No business logic duplication: reuse `territoryService`, `zoneValueScoring`, `appointmentPricingService`
-- All public copy outcome-oriented (UX rule): never "saturation 81%" → "Bientôt complet"
-- French-first labels (fr-CA), admin can stay technical
-- RLS: admin-only write; pros see only their assigned zones
-- All caps configurable per trade — no hard-coded magic numbers in components
-
-## 11. Success criteria
-- Every (trade × city) in QC has a `final_cap`, `saturation`, `band`, `slot_status`
-- 5 major cities show real numbers in admin cockpit on day one
-- Alex can answer "y a-t-il de la place pour un plombier à Laval?" with real data
-- At least 50 zones flagged Signature-eligible to feed sales pipeline
-- Snapshotter runs nightly and writes deltas without locking tables
-
-Ready to build Phase 1 on approval.
+### Out of scope
+- Voice pipeline, transcript logic, Alex brain, routing — untouched.

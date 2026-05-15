@@ -7,7 +7,7 @@
  */
 import { useRef, useState } from "react";
 import { Cpu, ShieldCheck, Sparkles, Users } from "lucide-react";
-import AlexFloatingOrb, { type AlexOrbState } from "./AlexFloatingOrb";
+import AlexMorphingOrb, { type AlexOrbStateV2 } from "@/components/alex/AlexMorphingOrb";
 import AlexHomepageConversation, {
   type AlexHomepageConversationHandle,
   type AlexState,
@@ -22,11 +22,15 @@ export default function HeroOrbMockup() {
   const isContractor = activeRole === "contractor";
 
   const isIdle = alexState === "idle";
-  const orbState: AlexOrbState =
+  const orbState: AlexOrbStateV2 =
     alexState === "speaking"
       ? "speaking"
-      : alexState === "listening" || alexState === "thinking"
+      : alexState === "listening"
       ? "listening"
+      : alexState === "thinking"
+      ? "thinking"
+      : alexState === "error"
+      ? "error"
       : "idle";
 
   const badgeLabel =
@@ -128,18 +132,12 @@ export default function HeroOrbMockup() {
             : undefined
         }
       >
-        <div className="mx-auto" style={{ maxWidth: 220 }}>
-          <AlexFloatingOrb
+        <div className="mx-auto flex justify-center" style={{ maxWidth: 220 }}>
+          <AlexMorphingOrb
             state={orbState}
-            expression={
-              alexState === "speaking"
-                ? "confident"
-                : alexState === "listening" || alexState === "thinking"
-                ? "focused"
-                : "neutral"
-            }
-            size="mobile"
+            size="lg"
             onClick={handleStart}
+            ariaLabel="Alex"
           />
         </div>
 
