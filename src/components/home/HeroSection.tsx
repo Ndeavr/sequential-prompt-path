@@ -292,7 +292,7 @@ export default function HeroSection() {
     orbState === "speaking" ? "Alex vous parle…"
     : orbState === "listening" ? "Alex vous écoute…"
     : orbState === "thinking" || phase === "connecting" ? "Connexion…"
-    : voiceFailed ? "Touchez l'orb pour démarrer"
+    : voiceFailed ? "Réessayer"
     : phase === "presence" ? "Alex en direct"
     : "Parlez à Alex";
 
