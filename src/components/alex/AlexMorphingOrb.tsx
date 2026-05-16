@@ -11,7 +11,7 @@
  * No canvas. Mobile-perf safe. Reduced-motion aware.
  */
 import { motion } from "framer-motion";
-import { useCallback, useId, useState, type CSSProperties } from "react";
+import { useCallback, useState, type CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 import useAlexGestures, { type GestureDirection } from "@/hooks/useAlexGestures";
 import AlexGestureMenu from "@/components/alex/AlexGestureMenu";
@@ -87,7 +87,7 @@ export default function AlexMorphingOrb({
   const [recognisedDir, setRecognisedDir] = useState<GestureDirection>(null);
   const px = SIZE_PX[size];
   const t = STATE_TUNING[state];
-  const filterId = useId().replace(/:/g, "");
+  
 
   const tapHandler = onTap ?? onClick;
 
@@ -160,42 +160,14 @@ export default function AlexMorphingOrb({
     >
       <style>{ALEX_ORB_CSS}</style>
 
-      {/* Inline SVG turbulence filter */}
-      <svg
-        className="alex-orb__svg-defs"
-        aria-hidden
-        width="0"
-        height="0"
-        style={{ position: "absolute" }}
-      >
-        <defs>
-          <filter id={`orb-turb-${filterId}`} x="-30%" y="-30%" width="160%" height="160%">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency={t.turbulence}
-              numOctaves="2"
-              seed="3"
-              result="noise"
-            >
-              <animate
-                attributeName="baseFrequency"
-                dur={`${t.drift * 2}s`}
-                values={`${t.turbulence};${t.turbulence * 1.6};${t.turbulence}`}
-                repeatCount="indefinite"
-              />
-            </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale={size === "sm" ? 8 : 18} />
-            <feGaussianBlur stdDeviation="2" />
-          </filter>
-        </defs>
-      </svg>
+      {/* SVG displacement filter intentionally removed: it produced a
+          rectangular bounding box visible as a square around the orb. */}
 
       {/* Drift wrapper — whole orb breathes positionally */}
       <span aria-hidden className="alex-orb__drift">
-        <span
-          className="alex-orb__atmosphere"
-          style={{ filter: `url(#orb-turb-${filterId})` }}
-        />
+        {/* NOTE: no SVG displacement filter here — its rectangular filter
+            region was producing a visible square halo around the orb. */}
+        <span aria-hidden className="alex-orb__atmosphere" />
         <span aria-hidden className="alex-orb__nebula" />
         <span aria-hidden className="alex-orb__halo" />
         <span aria-hidden className="alex-orb__caustics" />

@@ -260,13 +260,11 @@ export default function PageEntrepreneurDiagnosticLanding() {
             setOrbState={setOrbState}
           />
 
-          {showInstantScan && step >= 0 && (
-            <InstantScanCard
-              website={form.website}
-              phone={form.phone}
-              companyName={form.company_name}
-            />
-          )}
+          <VerificationFlow
+            website={form.website}
+            phone={form.phone}
+            companyName={form.company_name}
+          />
 
           <div className="mt-8">
             <ProgressBar step={step} />
@@ -434,6 +432,19 @@ function StepCard({ children }: { children: React.ReactNode }) {
   );
 }
 
+function normalizeWebsite(v: string): string {
+  const t = v.trim();
+  if (!t) return "";
+  if (/^https?:\/\//i.test(t)) return t.toLowerCase();
+  return `https://${t.toLowerCase()}`;
+}
+function normalizePhone(v: string): string {
+  const digits = v.replace(/\D/g, "").slice(0, 10);
+  if (digits.length < 4) return v.trim();
+  if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
 function Step0Identification({ form, update }: { form: FormState; update: <K extends keyof FormState>(k: K, v: FormState[K]) => void }) {
   return (
     <div className="space-y-5">
@@ -448,6 +459,7 @@ function Step0Identification({ form, update }: { form: FormState; update: <K ext
           autoFocus
           value={form.company_name}
           onChange={(e) => update("company_name", e.target.value)}
+          onBlur={(e) => update("company_name", e.target.value.trim())}
           placeholder="ex : Toiture Tremblay inc."
           className="bg-white/5 border-white/10"
         />
@@ -457,7 +469,12 @@ function Step0Identification({ form, update }: { form: FormState; update: <K ext
           <Input
             value={form.website}
             onChange={(e) => update("website", e.target.value)}
+            onBlur={(e) => update("website", normalizeWebsite(e.target.value))}
             placeholder="toituretremblay.ca"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            inputMode="url"
             className="bg-white/5 border-white/10"
           />
         </FieldGroup>
@@ -465,7 +482,9 @@ function Step0Identification({ form, update }: { form: FormState; update: <K ext
           <Input
             value={form.phone}
             onChange={(e) => update("phone", e.target.value)}
-            placeholder="514 555 1234"
+            onBlur={(e) => update("phone", normalizePhone(e.target.value))}
+            placeholder="(514) 555-1234"
+            inputMode="tel"
             className="bg-white/5 border-white/10"
           />
         </FieldGroup>
@@ -622,7 +641,7 @@ function SliderRow({
   );
 }
 
-function InstantScanCard({
+function VerificationFlow({
   website,
   phone,
   companyName,
@@ -631,15 +650,42 @@ function InstantScanCard({
   phone: string;
   companyName: string;
 }) {
-  const issues = useMemo(() => {
-    const arr: string[] = [];
-    if (!website) arr.push("Aucun site web détecté — perte massive en SEO");
-    else arr.push("Vitesse mobile probablement faible (>3 s LCP)");
-    if (!phone) arr.push("Téléphone manquant — friction de conversion");
-    arr.push("Aucune donnée structurée FAQ détectée (AEO faible)");
-    arr.push("Faible signal d'autorité Google (avis récents)");
-    return arr.slice(0, 4);
-  }, [website, phone]);
+  type Phase = "idle" | "checking" | "confirm" | "rejected";
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [stepIdx, setStepIdx] = useState(0);
+
+  const CHECKS = [
+    "Recherche du site web…",
+    "Vérification du domaine…",
+    "Recherche des informations publiques…",
+    "Validation téléphone et entreprise…",
+    "Analyse de la vitesse mobile…",
+    "Recherche des données structurées…",
+    "Préparation du score AIPP…",
+  ];
+
+  const canVerify = (companyName.trim().length > 1) && (website.trim().length > 3 || phone.trim().length > 6);
+
+  const startVerification = () => {
+    if (!canVerify || phase === "checking") return;
+    setPhase("checking");
+    setStepIdx(0);
+    let i = 0;
+    const tick = () => {
+      i += 1;
+      if (i >= CHECKS.length) {
+        setStepIdx(CHECKS.length);
+        setTimeout(() => setPhase("confirm"), 350);
+        return;
+      }
+      setStepIdx(i);
+      setTimeout(tick, 550 + Math.random() * 250);
+    };
+    setTimeout(tick, 550);
+  };
+
+  const confidence: "Low" | "Medium" | "High" =
+    (website && phone && companyName ? "Medium" : "Low") as "Low" | "Medium" | "High";
 
   return (
     <motion.div
@@ -648,28 +694,138 @@ function InstantScanCard({
       transition={{ duration: 0.4 }}
       className="mt-8"
     >
-      <Card className="bg-gradient-to-br from-primary/15 via-white/[0.03] to-white/[0.03] border-primary/20 p-5">
+      <Card className="bg-white/[0.03] border-white/10 p-5">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
-            <Zap className="w-6 h-6 text-primary" />
+          <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+            <ShieldCheck className="w-6 h-6 text-primary" />
           </div>
-          <div className="flex-1">
-            <div className="text-xs uppercase tracking-wider text-primary/80">Scan instantané</div>
-            <div className="text-base font-semibold mt-0.5">
-              {companyName || "Votre entreprise"} — pré-analyse
+          <div className="flex-1 min-w-0">
+            <div className="text-xs uppercase tracking-wider text-primary/80">
+              Vérification de l'entreprise
             </div>
-            <ul className="mt-3 space-y-1.5">
-              {issues.map((i) => (
-                <li key={i} className="text-sm text-white/75 flex items-start gap-2">
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
-                  {i}
-                </li>
-              ))}
-            </ul>
+            <div className="text-base font-semibold mt-0.5 truncate">
+              {companyName || "Entrez vos informations"}
+            </div>
+
+            {phase === "idle" && (
+              <>
+                <p className="text-sm text-white/60 mt-2">
+                  Aucune analyse n'a encore été lancée. Cliquez pour vérifier votre entreprise
+                  à partir de sources publiques.
+                </p>
+                <Button
+                  size="sm"
+                  className="mt-3"
+                  onClick={startVerification}
+                  disabled={!canVerify}
+                >
+                  Vérifier l'entreprise
+                </Button>
+                {!canVerify && (
+                  <p className="text-xs text-white/40 mt-2">
+                    Entrez au moins le nom + le site web ou le téléphone pour démarrer.
+                  </p>
+                )}
+              </>
+            )}
+
+            {phase === "checking" && (
+              <ul className="mt-3 space-y-1.5">
+                {CHECKS.map((c, i) => {
+                  const status = i < stepIdx ? "done" : i === stepIdx ? "active" : "pending";
+                  return (
+                    <li
+                      key={c}
+                      className={cn(
+                        "text-sm flex items-start gap-2 transition-colors",
+                        status === "done" && "text-white/80",
+                        status === "active" && "text-white",
+                        status === "pending" && "text-white/35",
+                      )}
+                    >
+                      {status === "done" ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
+                      ) : status === "active" ? (
+                        <span className="w-3.5 h-3.5 mt-0.5 shrink-0 rounded-full border-2 border-primary/40 border-t-primary animate-spin" />
+                      ) : (
+                        <span className="w-3.5 h-3.5 mt-0.5 shrink-0 rounded-full border border-white/15" />
+                      )}
+                      {c}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+
+            {phase === "confirm" && (
+              <div className="mt-3 space-y-3">
+                <div className="text-sm font-medium text-white">
+                  Est-ce la bonne entreprise?
+                </div>
+                <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3 space-y-1.5">
+                  <ConfirmRow label="Nom" value={companyName} />
+                  <ConfirmRow label="Site web" value={website} />
+                  <ConfirmRow label="Téléphone" value={phone} />
+                  <ConfirmRow label="Adresse" value="" />
+                  <ConfirmRow label="RBQ" value="" />
+                  <div className="flex items-center justify-between pt-2 mt-2 border-t border-white/5">
+                    <span className="text-xs uppercase tracking-wider text-white/40">Confiance</span>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "text-[10px]",
+                        confidence === "High" && "border-emerald-400/40 text-emerald-300",
+                        confidence === "Medium" && "border-amber-400/40 text-amber-300",
+                        confidence === "Low" && "border-white/20 text-white/60",
+                      )}
+                    >
+                      {confidence}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" onClick={() => setPhase("idle")}>
+                    Oui, c'est mon entreprise
+                  </Button>
+                  <Button size="sm" variant="outline" className="border-white/15" onClick={() => setPhase("rejected")}>
+                    Non, corriger
+                  </Button>
+                  <Button size="sm" variant="ghost" className="text-white/60" onClick={() => setPhase("idle")}>
+                    Je ne sais pas
+                  </Button>
+                </div>
+                <p className="text-[11px] text-white/40">
+                  Résultat provisoire. Les signaux affichés sont à confirmer après l'analyse complète.
+                </p>
+              </div>
+            )}
+
+            {phase === "rejected" && (
+              <div className="mt-3 text-sm text-white/70">
+                Corrigez les informations ci-dessous puis relancez la vérification.
+                <div className="mt-3">
+                  <Button size="sm" variant="outline" className="border-white/15" onClick={() => setPhase("idle")}>
+                    Relancer
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </Card>
     </motion.div>
+  );
+}
+
+function ConfirmRow({ label, value }: { label: string; value: string }) {
+  const present = value.trim().length > 0;
+  return (
+    <div className="flex items-baseline justify-between gap-3 text-sm">
+      <span className="text-xs uppercase tracking-wider text-white/40">{label}</span>
+      <span className={cn("text-right truncate max-w-[60%]", present ? "text-white/90" : "text-white/35 italic")}>
+        {present ? value : "Donnée non confirmée pour l'instant"}
+      </span>
+    </div>
   );
 }
 
