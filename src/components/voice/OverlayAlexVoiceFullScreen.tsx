@@ -691,9 +691,9 @@ export default function OverlayAlexVoiceFullScreen() {
             </div>
           </div>
 
-          {/* Voice Orb */}
+          {/* Voice Orb — same AlexMorphingOrb used on the homepage */}
           <div className="flex flex-col items-center py-6">
-            <LockedVoiceOrb state={state} isSpeaking={isSpeaking} />
+            <AlexMorphingOrb state={deriveOrbStateV2(state, isSpeaking)} size="lg" ariaLabel="Alex" />
           </div>
 
           {/* Error banner */}
