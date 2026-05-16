@@ -1136,6 +1136,7 @@ export const AppRouter = () => (
         <Route path="/admin/challenge-tracker" element={<ProtectedRoute requiredRole="admin"><PageChallengeTracker /></ProtectedRoute>} />
         <Route path="/admin/email-templates" element={<ProtectedRoute requiredRole="admin"><PageAdminEmailTemplates /></ProtectedRoute>} />
         <Route path="/admin/aeo" element={<ProtectedRoute requiredRole="admin"><PageAdminAeoCockpit /></ProtectedRoute>} />
+        <Route path="/admin/alex/voice-lab" element={<ProtectedRoute requiredRole="admin"><PageVoiceLab /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
         <Route path="/admin/google-project-audit" element={<ProtectedRoute requiredRole="admin"><PageGoogleProjectUsageAudit /></ProtectedRoute>} />
         <Route path="/admin/omega" element={<ProtectedRoute requiredRole="admin"><PageAdminOmega /></ProtectedRoute>} />
