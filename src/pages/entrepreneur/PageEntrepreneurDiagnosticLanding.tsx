@@ -260,13 +260,11 @@ export default function PageEntrepreneurDiagnosticLanding() {
             setOrbState={setOrbState}
           />
 
-          {showInstantScan && step >= 0 && (
-            <InstantScanCard
-              website={form.website}
-              phone={form.phone}
-              companyName={form.company_name}
-            />
-          )}
+          <VerificationFlow
+            website={form.website}
+            phone={form.phone}
+            companyName={form.company_name}
+          />
 
           <div className="mt-8">
             <ProgressBar step={step} />
