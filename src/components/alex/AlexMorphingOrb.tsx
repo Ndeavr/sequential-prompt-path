@@ -160,35 +160,8 @@ export default function AlexMorphingOrb({
     >
       <style>{ALEX_ORB_CSS}</style>
 
-      {/* Inline SVG turbulence filter */}
-      <svg
-        className="alex-orb__svg-defs"
-        aria-hidden
-        width="0"
-        height="0"
-        style={{ position: "absolute" }}
-      >
-        <defs>
-          <filter id={`orb-turb-${filterId}`} x="-30%" y="-30%" width="160%" height="160%">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency={t.turbulence}
-              numOctaves="2"
-              seed="3"
-              result="noise"
-            >
-              <animate
-                attributeName="baseFrequency"
-                dur={`${t.drift * 2}s`}
-                values={`${t.turbulence};${t.turbulence * 1.6};${t.turbulence}`}
-                repeatCount="indefinite"
-              />
-            </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale={size === "sm" ? 8 : 18} />
-            <feGaussianBlur stdDeviation="2" />
-          </filter>
-        </defs>
-      </svg>
+      {/* SVG displacement filter intentionally removed: it produced a
+          rectangular bounding box visible as a square around the orb. */}
 
       {/* Drift wrapper — whole orb breathes positionally */}
       <span aria-hidden className="alex-orb__drift">
