@@ -347,6 +347,7 @@ const PageAdminAlexDebugHome = lazy(() => import("@/pages/admin/PageAdminAlexDeb
 const PageAdminAlexSpeechTuning = lazy(() => import("@/pages/admin/AlexSpeechTuning"));
 const AlexVoiceAdmin = lazy(() => import("@/pages/admin/AlexVoiceAdmin"));
 const PageAdminAlexVoice = lazy(() => import("@/pages/admin/alex/PageAdminAlexVoice"));
+const PageVoiceHealth = lazy(() => import("@/pages/admin/PageVoiceHealth"));
 const PageAdminAlexContext = lazy(() => import("@/pages/admin/alex/PageAdminAlexContext"));
 const PageAdminAlexAnalytics = lazy(() => import("@/pages/admin/alex/PageAdminAlexAnalytics"));
 
@@ -1247,6 +1248,8 @@ export const AppRouter = () => (
         <Route path="/admin/alex/context" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexContext /></ProtectedRoute>} />
         <Route path="/admin/alex/analytics" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexAnalytics /></ProtectedRoute>} />
         <Route path="/admin/alex/fallbacks" element={<ProtectedRoute requiredRole="admin"><PageAdminAlexVoice /></ProtectedRoute>} />
+        <Route path="/admin/voice-health" element={<ProtectedRoute requiredRole="admin"><PageVoiceHealth /></ProtectedRoute>} />
+        <Route path="/admin/system-health/alex-voice" element={<ProtectedRoute requiredRole="admin"><PageVoiceHealth /></ProtectedRoute>} />
         <Route path="/admin/no-match-monitoring" element={<ProtectedRoute requiredRole="admin"><PageAdminNoMatchMonitoring /></ProtectedRoute>} />
         <Route path="/admin/sales-analytics" element={<ProtectedRoute requiredRole="admin"><AdminSalesAnalyticsPage /></ProtectedRoute>} />
         <Route path="/entrepreneur/sales" element={<EntrepreneurVoiceSalesPage />} />

@@ -1,3 +1,6 @@
+// PROTECTED FILE — ALEX VOICE CORE
+// Do not modify unless task explicitly says VOICE.
+// Any change requires voice_smoke_test passing before deploy.
 /**
  * alexVoiceConfig — Single source of truth for Alex voice settings.
  *
@@ -9,6 +12,13 @@ export type AlexVoiceMode = "homeowner" | "contractor" | "condo_manager" | "gene
 
 export const ALEX_VOICE_BASE = {
   voiceId: "YxrwjAKoUKULGd0g8K9Y", // Sophia — premium concierge (active)
+  modelId: "eleven_multilingual_v2",
+  outputFormat: "mp3_44100_128",
+} as const;
+
+/** Backup voice used by fallback logic if the primary voice fails. */
+export const ALEX_VOICE_BACKUP = {
+  voiceId: "XB0fDUnXU5powFXDhCwa", // Charlotte — premium female fallback
   modelId: "eleven_multilingual_v2",
   outputFormat: "mp3_44100_128",
 } as const;
