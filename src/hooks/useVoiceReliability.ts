@@ -125,7 +125,19 @@ export function useVoiceReliability(options: VoiceReliabilityOptions = {}) {
     setLastError(null);
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const { isInCooldown, recordDeny, clearDeny } = await import("@/lib/permissionManager");
+      if (isInCooldown("mic")) {
+        throw new DOMException("Mic in cooldown", "NotAllowedError");
+      }
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        clearDeny("mic");
+      } catch (e) {
+        const n = (e as any)?.name;
+        if (n === "NotAllowedError" || n === "PermissionDeniedError") recordDeny("mic");
+        throw e;
+      }
       setPermissionDenied(false);
 
       // Create session
