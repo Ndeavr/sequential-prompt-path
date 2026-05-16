@@ -192,10 +192,9 @@ export default function AlexMorphingOrb({
 
       {/* Drift wrapper — whole orb breathes positionally */}
       <span aria-hidden className="alex-orb__drift">
-        <span
-          className="alex-orb__atmosphere"
-          style={{ filter: `url(#orb-turb-${filterId})` }}
-        />
+        {/* NOTE: no SVG displacement filter here — its rectangular filter
+            region was producing a visible square halo around the orb. */}
+        <span aria-hidden className="alex-orb__atmosphere" />
         <span aria-hidden className="alex-orb__nebula" />
         <span aria-hidden className="alex-orb__halo" />
         <span aria-hidden className="alex-orb__caustics" />
