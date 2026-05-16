@@ -87,7 +87,7 @@ export default function AlexMorphingOrb({
   const [recognisedDir, setRecognisedDir] = useState<GestureDirection>(null);
   const px = SIZE_PX[size];
   const t = STATE_TUNING[state];
-  const filterId = useId().replace(/:/g, "");
+  
 
   const tapHandler = onTap ?? onClick;
 
