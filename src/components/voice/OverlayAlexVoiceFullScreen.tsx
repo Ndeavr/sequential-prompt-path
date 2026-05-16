@@ -553,6 +553,7 @@ export default function OverlayAlexVoiceFullScreen() {
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
       if (firstAudioTimerRef.current) clearTimeout(firstAudioTimerRef.current);
       if (slowTokenTimerRef.current) clearTimeout(slowTokenTimerRef.current);
+      elevenlabsService.stop();
       if (isActive) {
         stop();
       }
