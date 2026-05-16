@@ -91,7 +91,7 @@ export default function PageVoiceHealth() {
     refreshHealth();
     refreshMic();
     refreshPings();
-  }, [refreshHealth, refreshMic]);
+  }, [refreshHealth, refreshMic, refreshPings]);
 
   const runSmoke = useCallback(async () => {
     setSmokeLoading(true);
