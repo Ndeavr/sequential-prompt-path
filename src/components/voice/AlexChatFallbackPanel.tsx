@@ -67,8 +67,8 @@ export default function AlexChatFallbackPanel() {
               <p className="text-sm font-semibold text-foreground">Alex — Mode chat</p>
               <p className="text-xs text-muted-foreground">
                 {reason === "permission_denied"
-                  ? "Micro désactivé. On continue par chat."
-                  : "La voix d'Alex est temporairement indisponible."}
+                  ? "Micro désactivé. Je continue ici avec vous."
+                  : "Je continue ici avec vous."}
               </p>
             </div>
           </div>
@@ -102,7 +102,7 @@ export default function AlexChatFallbackPanel() {
               <MessageSquare className="w-4 h-4" />
               <span className="font-medium">Alex</span>
             </div>
-            La voix d'Alex est temporairement indisponible. Je continue ici. Décrivez votre besoin en quelques mots.
+            Je continue ici avec vous. Décrivez votre besoin en quelques mots.
           </div>
 
           {allMessages.map((m, i) => (
