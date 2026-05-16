@@ -175,14 +175,26 @@ export function useAlexAudioCapture(
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       audioCtxRef.current = new AudioCtx({ sampleRate: 16000 });
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          sampleRate: 16000,
-        },
-      });
+      const { isInCooldown, recordDeny, clearDeny } = await import("@/lib/permissionManager");
+      if (isInCooldown("mic")) {
+        throw new DOMException("Mic in cooldown", "NotAllowedError");
+      }
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            sampleRate: 16000,
+          },
+        });
+        clearDeny("mic");
+      } catch (e) {
+        const n = (e as any)?.name;
+        if (n === "NotAllowedError" || n === "PermissionDeniedError") recordDeny("mic");
+        throw e;
+      }
       streamRef.current = stream;
 
       const source = audioCtxRef.current.createMediaStreamSource(stream);
