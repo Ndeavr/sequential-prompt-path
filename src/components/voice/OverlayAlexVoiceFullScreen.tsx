@@ -318,12 +318,13 @@ export default function OverlayAlexVoiceFullScreen() {
     autoRetryCountRef.current = 0;
     setSlowToken(false);
 
-    // Seed the pill/contextHint as a visible user transcript so user sees their intent
-    const initialHint = getStore().contextHint;
-    if (initialHint && transcriptsRef.current.length === 0) {
-      const seedId = `user-seed-${++entryIdRef.current}`;
-      setTranscripts([{ role: "user", text: initialHint, id: seedId }]);
-      getStore().addTranscript("user", initialHint);
+    // Instant perception: show Alex greeting bubble immediately so the user sees
+    // a conversation before audio arrives. It will be overwritten by streamed
+    // Alex transcript once first audio frames flow in.
+    if (transcriptsRef.current.length === 0) {
+      const greetingId = `alex-preview-${++entryIdRef.current}`;
+      lastAlexIdRef.current = greetingId;
+      setTranscripts([{ role: "alex", text: buildGreetingRef.current(), id: greetingId }]);
     }
 
     let bootTimeoutId: ReturnType<typeof setTimeout> | null = null;
