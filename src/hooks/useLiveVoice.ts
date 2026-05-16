@@ -14,7 +14,7 @@ import { logBoot, withTimeout } from "@/lib/bootDebug";
 const RECONNECT_COOLDOWN_MS = 5000;
 const CONNECTION_TIMEOUT_MS = 12_000;
 const TOKEN_TIMEOUT_MS = 12_000;
-const MAX_TOKEN_RETRIES = 2; // total attempts = 1 + 2 = 3 before surfacing error
+const MAX_TOKEN_RETRIES = 0; // Strictly event-driven — no silent reconnects.
 const RETRY_BACKOFF_MS = 1500;
 
 interface UseLiveVoiceCallbacks {

@@ -1,112 +1,81 @@
-# Alex UX & Permission System Refactor
+## Goal
 
-## 1. Kill internal wording in greeting
+Make Alex strictly **event-driven**. Voice starts only on explicit user action, greets exactly once per browser session, and never silently retries.
 
-**File:** `src/components/voice/OverlayAlexVoiceFullScreen.tsx` (line ~104)
+## Root causes found
 
-Current greeting builder injects the route label (`"Accueil UNPRO"`, `"Entrepreneur UNPRO"`) as `${hint}`. Result spoken to users: *"Bonsoir Yanick. Parfait, on regarde votre demande — Accueil UNPRO. Dites-m'en un peu plus."*
+1. **Two contractor landing pages auto-open Alex on first gesture** (`PageContractorVoiceFirstLanding.tsx`, `PageContractorAIGrowth.tsx`) — first scroll/tap fires `openAlex()` even when the user just wanted to read.
+2. **Greeting fires every overlay boot** (`OverlayAlexVoiceFullScreen.tsx` line 371-375 + `buildGreeting` passed as `initialGreeting` on every `start()`), with no per-session memory of "already greeted".
+3. **Silent auto-retries on first-audio timeout** (`MAX_AUTO_RETRIES = 2`) re-call `startRef.current` with a fresh greeting → user hears "Bonsoir Yanick" again.
+4. **Token retry chain inside `useLiveVoice.ts`** (`MAX_TOKEN_RETRIES = 2`) re-opens the WS session three times for the same boot.
+5. **Fallback chat panel re-launches voice** automatically via "Activer la voix" being styled as a primary CTA, and prepends "Je continue ici avec vous." on top of the existing greeting.
+6. **Dead code still present**: `useAlexHomeAutostart.ts` exists (currently unused but a footgun).
 
-**Fix:** Remove the `hint` segment entirely from the greeting builder. New template:
-- First visit (with name): `"Bonsoir ${name}. Je vous écoute."`
-- First visit (no name): `"Bonsoir. Décrivez-moi votre besoin en quelques mots."`
-- Returning: `"Rebonjour ${name}. On continue ?"`
+## Changes
 
-Also stop passing `"Accueil UNPRO"` / `"Entrepreneur UNPRO"` as a user-facing source in `src/components/home-orb/HeroOrbMockup.tsx` (line 51) — keep it only as an internal analytics tag, never spoken.
+### 1. Add `alexSessionState` (sessionStorage-backed)
 
-Audit any other location that interpolates route labels into Alex speech (sweep `openAlex(...)` callsites in 15+ pages — pass `undefined` or an internal-only key).
-
-## 2. Humanize the voice-unavailable fallback
-
-Replace the cold copy across:
-- `src/utils/friendlyErrors.ts`
-- `src/components/voice/AlexChatFallbackPanel.tsx`
-- `src/components/voice/VoiceReliabilityUI.tsx`
-- `src/features/alex/state/alexStore.ts`
-- `src/features/alex/hooks/useAlexVoice.ts` (handleTTSFailure message)
-- `src/features/alex/hooks/useAlexRecoveryWatchdog.ts`
-- `src/features/alex/hooks/useAlexBootstrap.ts`
-
-**New copy:** `"Je continue ici avec vous."` (single short line, no "temporairement indisponible").
-
-## 3. Build the Permission Manager
-
-**New file:** `src/lib/permissionManager.ts`
+New file `src/lib/alexSessionState.ts`:
 
 ```text
-type PermissionKind = "mic" | "camera" | "location" | "notifications"
+keys (sessionStorage):
+  unpro.alex.hasGreeted         "1" | null
+  unpro.alex.voiceStarted       "1" | null
+  unpro.alex.userInitiated      "1" | null
+  unpro.alex.lastInteractionAt  ISO timestamp
 
 API:
-- getStatus(kind)                  → "granted" | "denied" | "prompt" | "cooldown"
-- request(kind, reason)            → Promise<status> with contextual UI copy
-- isInCooldown(kind)               → bool
-- recordDeny(kind)                 → starts cooldown timer
-- onChange(kind, listener)         → reactive subscriptions
+  markGreeted() / hasGreeted()
+  markVoiceStarted() / wasVoiceStarted()
+  markUserInitiated() / wasUserInitiated()
+  touchInteraction()
+  resetSession()  // only called on explicit user close + retry
 ```
 
-Cooldowns (persisted in localStorage `unpro.perm.{kind}.deniedAt`):
-- mic: 24h
-- camera: 7d
-- notifications: 14d
-- location: session only (sessionStorage)
+### 2. `OverlayAlexVoiceFullScreen.tsx`
 
-Persistence layer: localStorage today; later sync to `user_sessions.permissions` jsonb when authed (no migration required for v1 — flag a TODO).
+- Inside the boot `useEffect` (line 335-516):
+  - Compute `greeting = hasGreeted() ? "" : buildGreeting()`.
+  - Only push the preview bubble when `greeting` is non-empty.
+  - Pass `initialGreeting: greeting` (empty string means "do not seed").
+  - Call `markGreeted()` once the greeting was actually sent.
+- **Remove silent retries**: set `MAX_AUTO_RETRIES = 0`. `armFirstAudioTimer` now goes straight to `bailToChat("no_first_audio")` — no second `startRef.current` call, no second greeting.
+- **`onConnect` nudge** (line 188-200): only send the seed when `!hasGreeted()`. Otherwise stay silent and let the user speak.
+- **Cleanup on overlay close** (line 543-570): do NOT reset `hasGreeted` / `voiceStarted` — they persist for the whole browser tab session.
 
-## 4. Make permission requests contextual (remove eager triggers)
+### 3. `useLiveVoice.ts`
 
-### Mic
-- Audit `useLiveVoice.ts`, `useAlexAudioCapture.ts`, `OverlayAlexVoiceFullScreen` → confirm `getUserMedia` only runs after explicit orb tap / "Activer la voix". No autostart on mount.
-- On denied: immediately switch to text fallback with `"Je continue ici avec vous."` — no retry loop, no popup. Respect 24h cooldown before the orb re-prompts.
+- Set `MAX_TOKEN_RETRIES = 0`. One attempt; on failure, surface `onError` and stop. No silent reconnects.
+- Remove the post-`onDisconnect` cooldown reconnect path.
 
-### Camera & Image library
-- New component `AlexCameraInvitePill` rendered inline in chat ONLY when Alex detects keywords: `moisi|fissure|toit|isolation|dégât d'eau|soumission|facture|inspiration`. Wording: `"Vous pouvez prendre une photo si vous voulez que je regarde."`
-- Existing upload buttons keep their current explicit request flow (already contextual).
+### 4. Kill auto-open on landing pages
 
-### Location
-- New `requestLocationContextually(reason)` helper. Gated to fire only after `intent_primary` is detected AND user enters matching / estimate phase.
-- Prompt: `"Pour trouver les bons professionnels près de chez vous, puis-je utiliser votre position ?"`
-- Fallback chain: geolocation → postal code input → city input. Never block the flow.
+- `src/pages/contractor-landing/PageContractorVoiceFirstLanding.tsx`: delete the `pointerdown/keydown/touchstart` listener `useEffect` (lines 61-86). Voice starts only when the user taps the orb / "Parler à Alex" button.
+- `src/pages/contractor-growth/PageContractorAIGrowth.tsx`: delete the equivalent `useEffect` (lines 42-58).
+- `src/pages/HomeProfessionalAdaptive.tsx`, `HomeIntentRouterDynamic.tsx`, `OwnerMenuPreviewPage.tsx`, `HomeContractorAdaptive.tsx`: verify no mount-`openAlex` (already user-driven — confirmed).
 
-### Notifications
-- Never requested on homepage. Add `requestNotificationsAfterBooking()` gated by post-booking confirmation events. Wording: `"Voulez-vous recevoir les mises à jour de votre demande ?"`
+### 5. Delete unused `useAlexHomeAutostart.ts`
 
-Search & sweep: `navigator.mediaDevices.getUserMedia`, `navigator.geolocation`, `Notification.requestPermission`. Every callsite must route through `permissionManager` and verify the entry condition is user-initiated + contextual.
+No consumers exist. Removed to prevent future regressions.
 
-## 5. Remove repetitive prompts
+### 6. `AlexChatFallbackPanel.tsx`
 
-In `useAlexReEngagement.ts` / `alexReEngagementEngine.ts` (already memorized as 3-attempt cap):
-- Hard-limit `"Êtes-vous toujours là?"`-style prompts to **0** automatic occurrences. Switch to silent passive state after first silence window. User can simply tap the orb to resume.
-- Verify no permission UI re-renders prompt after cooldown is active.
+- Replace the chat-panel intro line (line 105) and header subtitle (line 71) with a **single** message: `"Je peux continuer ici avec vous."` (no duplicate of the voice greeting).
+- "Activer la voix" button becomes a small ghost icon, requires a deliberate tap, and clears `voiceStarted` flag so a fresh start is allowed — but `hasGreeted` stays set so the user is not re-introduced.
 
-## 6. Voice pacing & UNPRO pronunciation
+### 7. Greeting source of truth
 
-- Pacing: confirm `eleven_multilingual_v2` settings stay at the current locked tuning (stability 0.52 etc.) — no slowdown mid-utterance. Remove any `speed` ramp in greeting builders if present.
-- UNPRO pronunciation: already handled by `src/lib/prepareAlexSpeechText.ts` (FR → "Un Pro", EN → "Hun Pro"). Sweep all TTS callsites to confirm every `speak(text)` runs through `prepareAlexSpeechText` first. Add the wrapper inside `elevenlabsService.speak()` so it's globally enforced and impossible to bypass.
+`buildGreeting()` stays in the overlay (already personality-aware), but is **only ever used once** per session. The contextual hint nudge that previously prepended "Je continue ici avec vous." everywhere is removed in favour of: a single greeting on first boot, silence on every subsequent reopen.
 
-## 7. Mobile UX
+## Acceptance
 
-- Orb stays central, chat expands inline. Verify `OverlayAlexVoiceFullScreen` and `AlexHomepageConversation` never `navigate()` to a separate chat route on mobile when the user starts speaking — keep the in-place expansion already wired.
+- Open `/`, open overlay, close overlay, reopen → user hears no second greeting.
+- Voice times out → fallback chat appears once, no auto-retry chain, no duplicate greeting bubble.
+- Reload `/contractor` landing pages → Alex does NOT open until the user taps the orb or CTA.
+- Console shows one `Starting session, greeting: ...` per browser tab session.
+- "Activer la voix" inside the fallback panel reopens voice without replaying the greeting.
 
-## Technical summary
+## Out of scope
 
-| Area | Files |
-|------|-------|
-| Greeting copy | `OverlayAlexVoiceFullScreen.tsx`, `HeroOrbMockup.tsx`, `alexCopy.ts` |
-| Fallback copy | `friendlyErrors.ts`, `AlexChatFallbackPanel.tsx`, `VoiceReliabilityUI.tsx`, `alexStore.ts`, `useAlexVoice.ts`, `useAlexRecoveryWatchdog.ts`, `useAlexBootstrap.ts` |
-| Permission manager | NEW `src/lib/permissionManager.ts` + unit test |
-| Mic gating | `useLiveVoice.ts`, `useAlexAudioCapture.ts` |
-| Camera invite | NEW `AlexCameraInvitePill.tsx`, wired in chat renderer |
-| Location helper | NEW `src/lib/requestLocationContextually.ts` + callsite refactor |
-| Notifications | NEW `src/lib/requestNotificationsAfterBooking.ts` |
-| Pronunciation enforcement | `src/services/elevenlabsService.ts` (wrap speak) |
-| Re-engagement | `useAlexReEngagement.ts` |
-
-No DB migration in v1 (localStorage only for permission state). Memory file `mem://features/permission-system` will be added to document the cooldown contract.
-
-## Success criteria
-
-- No user ever hears "Accueil UNPRO" or any internal label.
-- No permission requested on homepage load. Mic only on orb tap. Camera/location/notifications only after contextual intent.
-- Denied permissions never re-prompt during cooldown.
-- Voice-unavailable fallback says "Je continue ici avec vous." — nothing else.
-- UNPRO always pronounced "un pro" / "hun pro" — enforced at the TTS service layer.
-- Alex never repeats "Êtes-vous toujours là ?".
+- Server-side `alex_session_state` table (sessionStorage is sufficient for the loop fix; DB-backed memory already covered by `Persistent User Memory`).
+- Voice provider / ElevenLabs config (locked Sophia voice unchanged).

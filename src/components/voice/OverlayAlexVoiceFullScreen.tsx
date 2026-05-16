@@ -31,13 +31,14 @@ import {
   getActiveSessionId,
 } from "@/services/voiceRuntimeSingleton";
 import { elevenlabsService } from "@/features/alex/services/elevenlabsService";
+import { hasGreeted, markGreeted, markVoiceStarted } from "@/lib/alexSessionState";
 
 const STABILIZATION_MS = 4000;
 const HEARTBEAT_INTERVAL_MS = 2500; // Slower → less battery
 const BOOT_TIMEOUT_MS = 25000; // Cold-start absorbing (edge function + ElevenLabs handshake)
 const FIRST_AUDIO_TIMEOUT_MS = 6500; // Plus tolérant cold-start mobile avant retry
 const TOKEN_SLOW_THRESHOLD_MS = 2000; // Spec: show "Connexion d'Alex…" if >2s
-const MAX_AUTO_RETRIES = 2; // 1 boot + 2 silent = 3 attempts → fallback chat
+const MAX_AUTO_RETRIES = 0; // Strictly event-driven — never silently retry.
 
 // Helper to always get fresh state
 const getStore = () => useAlexVoiceLockedStore.getState();
@@ -110,6 +111,8 @@ export default function OverlayAlexVoiceFullScreen() {
     onFirstAudio: () => {
       firstAudioReceivedRef.current = true;
       autoRetryCountRef.current = 0;
+      markGreeted();
+      markVoiceStarted();
       alexVoiceService.setState("speaking", "first_audio");
       if (firstAudioTimerRef.current) {
         clearTimeout(firstAudioTimerRef.current);
@@ -186,20 +189,20 @@ export default function OverlayAlexVoiceFullScreen() {
       getStore().resetHeartbeat();
 
       // Safety nudge: if the agent has no configured first message, force it to greet.
+      // Only on the FIRST session boot — never replay a greeting on reopen.
       if (nudgeTimerRef.current) clearTimeout(nudgeTimerRef.current);
-      nudgeTimerRef.current = setTimeout(() => {
-        if (firstAudioReceivedRef.current || !getStore().isOverlayOpen) return;
-        try {
-          const hint = getStore().contextHint;
-          const seed = hint
-            ? `Bonjour Alex. ${hint}`
-            : "Bonjour Alex.";
-          console.log("[VoiceOverlay] 👋 No first audio in 1.2s — sending nudge:", seed);
-          (conversation as any)?.sendUserMessage?.(seed);
-        } catch (e) {
-          console.warn("[VoiceOverlay] nudge failed:", e);
-        }
-      }, 1200);
+      if (!hasGreeted()) {
+        nudgeTimerRef.current = setTimeout(() => {
+          if (firstAudioReceivedRef.current || !getStore().isOverlayOpen) return;
+          try {
+            const seed = "Bonjour Alex.";
+            console.log("[VoiceOverlay] 👋 No first audio in 1.2s — sending nudge:", seed);
+            (conversation as any)?.sendUserMessage?.(seed);
+          } catch (e) {
+            console.warn("[VoiceOverlay] nudge failed:", e);
+          }
+        }, 1200);
+      }
     },
     onDisconnect: () => {
       const s = getStore();
@@ -365,10 +368,10 @@ export default function OverlayAlexVoiceFullScreen() {
     autoRetryCountRef.current = 0;
     setSlowToken(false);
 
-    // Instant perception: show Alex greeting bubble immediately so the user sees
-    // a conversation before audio arrives. It is removed as soon as the real
-    // Alex transcript starts streaming (onFirstAudio).
-    if (transcriptsRef.current.length === 0) {
+    // Instant perception: show Alex greeting bubble immediately on the FIRST
+    // session boot only. Reopens stay silent — no replayed introduction.
+    const shouldGreet = !hasGreeted();
+    if (shouldGreet && transcriptsRef.current.length === 0) {
       const greetingId = `alex-preview-${++entryIdRef.current}`;
       setTranscripts([{ role: "alex", text: buildGreetingRef.current(), id: greetingId }]);
       lastAlexIdRef.current = null; // ensure next real transcript creates a new bubble
@@ -396,31 +399,8 @@ export default function OverlayAlexVoiceFullScreen() {
         if (firstAudioReceivedRef.current || !s.isOverlayOpen) return;
         if (!["stabilizing", "opening_session", "session_ready"].includes(s.machineState)) return;
 
-        if (autoRetryCountRef.current < MAX_AUTO_RETRIES) {
-          autoRetryCountRef.current += 1;
-          const attempt = alexVoiceService.incrementRetry();
-          const backoff = attempt === 1 ? 500 : attempt === 2 ? 1500 : 3000;
-          console.log(`[ALEX VOICE] 🔁 Silent retry ${attempt} in ${backoff}ms (no audio in ${FIRST_AUDIO_TIMEOUT_MS}ms)`);
-          try { stop(); } catch {}
-          setTimeout(() => {
-            if (!getStore().isOverlayOpen) return;
-            hasConnectedRef.current = false;
-            firstAudioReceivedRef.current = false;
-            startRef.current({ initialGreeting: buildGreetingRef.current(), force: true, mode: deriveMode(getStore().feature) })
-              .then(() => {
-                bootTimeRef.current = Date.now();
-                armFirstAudioTimer();
-              })
-              .catch((e: any) => {
-                console.error("[ALEX VOICE] retry failed:", e);
-                bailToChat("retry_failed");
-              });
-          }, backoff);
-          return;
-        }
-
-        // Out of retries → bail to chat directly (no red dead-end)
-        bailToChat("no_first_audio_final");
+        // Strictly event-driven: never silently retry. Go straight to fallback.
+        bailToChat("no_first_audio");
       }, FIRST_AUDIO_TIMEOUT_MS);
     };
 
@@ -459,10 +439,10 @@ export default function OverlayAlexVoiceFullScreen() {
           }
         }, TOKEN_SLOW_THRESHOLD_MS);
 
-        // Connect ElevenLabs
+        // Connect ElevenLabs — greet only on the FIRST session boot.
         setBootStep("connecting");
-        const greeting = buildGreetingRef.current();
-        console.log("[ALEX VOICE] Starting session, greeting:", greeting);
+        const greeting = shouldGreet ? buildGreetingRef.current() : "";
+        console.log("[ALEX VOICE] Starting session, greeting:", greeting || "(silent — already greeted)");
         await startRef.current({ initialGreeting: greeting, mode: deriveMode(getStore().feature) });
 
         // After await: check session still owns the runtime + overlay open

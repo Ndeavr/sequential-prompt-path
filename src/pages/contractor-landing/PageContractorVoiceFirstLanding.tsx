@@ -58,32 +58,8 @@ export default function PageContractorVoiceFirstLanding() {
     openAlex("contractor_onboarding", "fr");
   }, [openAlex, trackEntry]);
 
-  // Auto-start Alex voice (French) on mount — first user gesture unlocks audio
-  useEffect(() => {
-    if (autoStartedRef.current) return;
-    if (params.get("no_autostart") === "1") return;
-
-    const start = () => {
-      if (autoStartedRef.current) return;
-      autoStartedRef.current = true;
-      trackEntry("auto");
-      openAlex("contractor_onboarding", "fr");
-      window.removeEventListener("pointerdown", start);
-      window.removeEventListener("keydown", start);
-      window.removeEventListener("touchstart", start);
-    };
-
-    // Wait for first user gesture (browser autoplay policy)
-    window.addEventListener("pointerdown", start, { once: true });
-    window.addEventListener("keydown", start, { once: true });
-    window.addEventListener("touchstart", start, { once: true });
-
-    return () => {
-      window.removeEventListener("pointerdown", start);
-      window.removeEventListener("keydown", start);
-      window.removeEventListener("touchstart", start);
-    };
-  }, [openAlex, trackEntry, params]);
+  // Strictly event-driven: Alex never auto-opens. The user must tap the orb /
+  // "Parler à Alex" CTA. Listener-based autostart removed.
 
   return (
     <>

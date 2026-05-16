@@ -67,16 +67,20 @@ export default function AlexChatFallbackPanel() {
               <p className="text-sm font-semibold text-foreground">Alex — Mode chat</p>
               <p className="text-xs text-muted-foreground">
                 {reason === "permission_denied"
-                  ? "Micro désactivé. Je continue ici avec vous."
-                  : "Je continue ici avec vous."}
+                  ? "Micro désactivé. Je peux continuer ici avec vous."
+                  : "Je peux continuer ici avec vous."}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={() => {
+                // Deliberate re-activation: clear the "voice started" flag so a
+                // fresh attempt is allowed, but DO NOT clear `hasGreeted` — the
+                // user is never re-introduced.
+                import("@/lib/alexSessionState").then((m) => m.clearVoiceStarted());
                 close();
                 useAlexVoiceLockedStore.getState().openVoiceSession(
                   "fallback_retry_voice",
@@ -84,10 +88,9 @@ export default function AlexChatFallbackPanel() {
                 );
               }}
               aria-label="Réessayer la voix"
-              className="gap-1.5 text-primary"
+              className="text-muted-foreground hover:text-primary"
             >
               <Mic className="w-4 h-4" />
-              <span className="text-xs font-medium">Activer la voix</span>
             </Button>
             <Button variant="ghost" size="icon" onClick={close} aria-label="Fermer le chat">
               <X className="w-5 h-5" />
@@ -97,13 +100,15 @@ export default function AlexChatFallbackPanel() {
 
         {/* Messages */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground">
-            <div className="flex items-center gap-2 mb-1 text-primary">
-              <MessageSquare className="w-4 h-4" />
-              <span className="font-medium">Alex</span>
+          {allMessages.length === 0 && (
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground">
+              <div className="flex items-center gap-2 mb-1 text-primary">
+                <MessageSquare className="w-4 h-4" />
+                <span className="font-medium">Alex</span>
+              </div>
+              Décrivez votre besoin en quelques mots.
             </div>
-            Je continue ici avec vous. Décrivez votre besoin en quelques mots.
-          </div>
+          )}
 
           {allMessages.map((m, i) => (
             <div
