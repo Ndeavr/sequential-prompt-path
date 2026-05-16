@@ -15,7 +15,7 @@ import { prepareAlexSpeechText, type AlexSpeechLang } from "@/lib/prepareAlexSpe
 export const ALEX_PRIMARY_VOICE_ID = ALEX_VOICE_BASE.voiceId;
 export const ALEX_LANGUAGE = "fr" as const;
 
-export const TTS_TIMEOUT_MS = 8000;
+export const TTS_TIMEOUT_MS = 20000;
 
 const HOMEOWNER_TUNING = getVoiceConfigFor("homeowner");
 const VOICE_SETTINGS = {
@@ -101,8 +101,22 @@ export const elevenlabsService = {
     }, TTS_TIMEOUT_MS);
 
     try {
-      const { data, error } = await supabase.functions.invoke("alex-tts", {
-        body: { text: ttsText, settings: VOICE_SETTINGS, voice_id: ALEX_PRIMARY_VOICE_ID },
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-tts`;
+      const anon = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const { data: sessionData } = await Promise.race([
+        supabase.auth.getSession(),
+        new Promise<any>((resolve) => window.setTimeout(() => resolve({ data: { session: null } }), 600)),
+      ]);
+      const authToken = sessionData?.session?.access_token ?? anon;
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: anon,
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ text: ttsText, settings: VOICE_SETTINGS, voice_id: ALEX_PRIMARY_VOICE_ID }),
+        signal: abort.signal,
       });
 
       window.clearTimeout(timeoutId);
@@ -110,10 +124,16 @@ export const elevenlabsService = {
         throw new TTSUnavailableError("TTS_TIMEOUT", "TTS request aborted (timeout)");
       }
 
-      if (error) {
-        alexLog("[ALEX_TTS_ERROR]", { error: error.message });
-        throw new TTSUnavailableError("TTS_ERROR", error.message || "tts_error");
+      if (!resp.ok) {
+        const errorText = await resp.text().catch(() => "tts_error");
+        alexLog("[ALEX_TTS_ERROR]", { error: errorText.slice(0, 160), status: resp.status });
+        throw new TTSUnavailableError("TTS_ERROR", errorText || `http_${resp.status}`);
       }
+
+      const contentType = resp.headers.get("content-type") || "";
+      const data = contentType.includes("application/json")
+        ? await resp.json().catch(() => null)
+        : await resp.blob();
 
       // Edge fallback signal — NOT a success
       if (data && typeof data === "object" && (data.fallback === true || data.error === "tts_unavailable")) {
