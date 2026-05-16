@@ -113,6 +113,8 @@ export default function OverlayAlexVoiceFullScreen() {
         clearTimeout(nudgeTimerRef.current);
         nudgeTimerRef.current = null;
       }
+      // Remove the preview greeting bubble — real Alex transcript takes over
+      setTranscripts(prev => prev.filter(t => !t.id.startsWith("alex-preview-")));
 
       setBootStep("live");
 
