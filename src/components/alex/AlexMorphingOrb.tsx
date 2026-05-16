@@ -13,6 +13,8 @@
 import { motion } from "framer-motion";
 import { useCallback, useId, useState, type CSSProperties } from "react";
 import { cn } from "@/lib/utils";
+import useAlexGestures, { type GestureDirection } from "@/hooks/useAlexGestures";
+import AlexGestureMenu from "@/components/alex/AlexGestureMenu";
 
 export type AlexOrbStateV2 =
   | "idle"
@@ -26,7 +28,18 @@ export type AlexOrbSize = "sm" | "md" | "lg";
 interface Props {
   state?: AlexOrbStateV2;
   size?: AlexOrbSize;
+  /** Single-tap. Falls back to onClick for backwards compatibility. */
+  onTap?: () => void;
+  /** @deprecated use onTap. Kept so existing call sites keep working. */
   onClick?: () => void;
+  onDoubleTap?: () => void;
+  onLongPress?: () => void;
+  onSwipeUp?: () => void;
+  onSwipeDown?: () => void;
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
+  /** Disable gesture detection entirely (fall back to plain click). */
+  gesturesDisabled?: boolean;
   className?: string;
   ariaLabel?: string;
 }
@@ -58,19 +71,58 @@ const STATE_TUNING: Record<
 export default function AlexMorphingOrb({
   state = "idle",
   size = "md",
+  onTap,
   onClick,
+  onDoubleTap,
+  onLongPress,
+  onSwipeUp,
+  onSwipeDown,
+  onSwipeLeft,
+  onSwipeRight,
+  gesturesDisabled,
   className,
   ariaLabel = "Alex",
 }: Props) {
   const [ripple, setRipple] = useState(0);
+  const [recognisedDir, setRecognisedDir] = useState<GestureDirection>(null);
   const px = SIZE_PX[size];
   const t = STATE_TUNING[state];
   const filterId = useId().replace(/:/g, "");
 
-  const handleClick = useCallback(() => {
-    setRipple((n) => n + 1);
-    onClick?.();
-  }, [onClick]);
+  const tapHandler = onTap ?? onClick;
+
+  const fireRipple = useCallback(() => setRipple((n) => n + 1), []);
+
+  const { state: gesture, handlers } = useAlexGestures({
+    disabled: gesturesDisabled,
+    onTap: () => {
+      fireRipple();
+      tapHandler?.();
+    },
+    onDoubleTap: () => {
+      fireRipple();
+      onDoubleTap?.();
+    },
+    onLongPress: () => {
+      onLongPress?.();
+    },
+    onLongPressEnd: (dir) => {
+      if (dir) {
+        setRecognisedDir(dir);
+        fireRipple();
+        window.setTimeout(() => setRecognisedDir(null), 600);
+      }
+    },
+    onSwipeUp,
+    onSwipeDown,
+    onSwipeLeft,
+    onSwipeRight,
+  });
+
+  const longPressScale = gesture.isGestureActive ? 1.08 : 1;
+  // Subtle drag-follow on the orb itself (visual magnet effect)
+  const followX = gesture.isGestureActive ? gesture.dragX * 0.12 : 0;
+  const followY = gesture.isGestureActive ? gesture.dragY * 0.12 : 0;
 
   const cssVars: CSSProperties = {
     width: px,
