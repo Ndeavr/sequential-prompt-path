@@ -111,6 +111,8 @@ export default function OverlayAlexVoiceFullScreen() {
     onFirstAudio: () => {
       firstAudioReceivedRef.current = true;
       autoRetryCountRef.current = 0;
+      markGreeted();
+      markVoiceStarted();
       alexVoiceService.setState("speaking", "first_audio");
       if (firstAudioTimerRef.current) {
         clearTimeout(firstAudioTimerRef.current);
