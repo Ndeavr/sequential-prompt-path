@@ -10,6 +10,7 @@ import SeoHead from "@/seo/components/SeoHead";
 import SeoCta from "@/seo/components/SeoCta";
 import SeoFaqSection from "@/seo/components/SeoFaqSection";
 import SeoInternalLinks from "@/seo/components/SeoInternalLinks";
+import AeoBlocks from "@/seo/components/AeoBlocks";
 import { buildProblemLocationPage } from "@/seo/services/seoContentService";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -284,6 +285,8 @@ const ProblemLocationPage = () => {
               label: p.label,
             }))}
           />
+
+          <AeoBlocks pageUrl={`https://unpro.ca/probleme/${problem}/${city}`} />
         </div>
       </article>
     </MainLayout>

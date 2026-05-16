@@ -1884,6 +1884,584 @@ export type Database = {
           },
         ]
       }
+      aeo_building_types: {
+        Row: {
+          created_at: string
+          id: string
+          label_en: string | null
+          label_fr: string
+          slug: string
+          typical_era: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label_en?: string | null
+          label_fr: string
+          slug: string
+          typical_era?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label_en?: string | null
+          label_fr?: string
+          slug?: string
+          typical_era?: string | null
+        }
+        Relationships: []
+      }
+      aeo_comparison_pages: {
+        Row: {
+          canonical_url: string
+          created_at: string
+          id: string
+          indexable: boolean
+          last_generated_at: string | null
+          semantic_uniqueness_score: number | null
+          slug: string
+          status: string
+          title_fr: string
+          updated_at: string
+        }
+        Insert: {
+          canonical_url: string
+          created_at?: string
+          id?: string
+          indexable?: boolean
+          last_generated_at?: string | null
+          semantic_uniqueness_score?: number | null
+          slug: string
+          status?: string
+          title_fr: string
+          updated_at?: string
+        }
+        Update: {
+          canonical_url?: string
+          created_at?: string
+          id?: string
+          indexable?: boolean
+          last_generated_at?: string | null
+          semantic_uniqueness_score?: number | null
+          slug?: string
+          status?: string
+          title_fr?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      aeo_entity_facts: {
+        Row: {
+          created_at: string
+          entity_id: string
+          entity_type: string
+          fact_key: string
+          fact_value: Json
+          id: string
+          source: string | null
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          fact_key: string
+          fact_value: Json
+          id?: string
+          source?: string | null
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          fact_key?: string
+          fact_value?: Json
+          id?: string
+          source?: string | null
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
+      aeo_equipment: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          label_en: string | null
+          label_fr: string
+          slug: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          label_en?: string | null
+          label_fr: string
+          slug: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          label_en?: string | null
+          label_fr?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      aeo_extraction_blocks: {
+        Row: {
+          block_type: string
+          content_en: string | null
+          content_fr: string | null
+          created_at: string
+          id: string
+          page_url: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          block_type: string
+          content_en?: string | null
+          content_fr?: string | null
+          created_at?: string
+          id?: string
+          page_url: string
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          block_type?: string
+          content_en?: string | null
+          content_fr?: string | null
+          created_at?: string
+          id?: string
+          page_url?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      aeo_intent_vectors: {
+        Row: {
+          confidence: number
+          created_at: string
+          id: string
+          metadata: Json
+          page_url: string
+          primary_intent: string
+          secondary_intents: string[]
+          symptoms: string[]
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          metadata?: Json
+          page_url: string
+          primary_intent: string
+          secondary_intents?: string[]
+          symptoms?: string[]
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          metadata?: Json
+          page_url?: string
+          primary_intent?: string
+          secondary_intents?: string[]
+          symptoms?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      aeo_materials: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          label_en: string | null
+          label_fr: string
+          slug: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          label_en?: string | null
+          label_fr: string
+          slug: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          label_en?: string | null
+          label_fr?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      aeo_neighborhoods: {
+        Row: {
+          city_slug: string
+          created_at: string
+          housing_notes_fr: string | null
+          id: string
+          label_fr: string
+          postal_prefix: string | null
+          slug: string
+        }
+        Insert: {
+          city_slug: string
+          created_at?: string
+          housing_notes_fr?: string | null
+          id?: string
+          label_fr: string
+          postal_prefix?: string | null
+          slug: string
+        }
+        Update: {
+          city_slug?: string
+          created_at?: string
+          housing_notes_fr?: string | null
+          id?: string
+          label_fr?: string
+          postal_prefix?: string | null
+          slug?: string
+        }
+        Relationships: []
+      }
+      aeo_page_freshness_signals: {
+        Row: {
+          demand_signal: number | null
+          hydro_rate: number | null
+          id: string
+          last_refreshed: string
+          metadata: Json
+          page_url: string
+          season: string | null
+          weather_ctx: Json | null
+        }
+        Insert: {
+          demand_signal?: number | null
+          hydro_rate?: number | null
+          id?: string
+          last_refreshed?: string
+          metadata?: Json
+          page_url: string
+          season?: string | null
+          weather_ctx?: Json | null
+        }
+        Update: {
+          demand_signal?: number | null
+          hydro_rate?: number | null
+          id?: string
+          last_refreshed?: string
+          metadata?: Json
+          page_url?: string
+          season?: string | null
+          weather_ctx?: Json | null
+        }
+        Relationships: []
+      }
+      aeo_problem_pages: {
+        Row: {
+          canonical_url: string
+          city_slug: string
+          created_at: string
+          id: string
+          indexable: boolean
+          last_generated_at: string | null
+          problem_slug: string
+          semantic_uniqueness_score: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          canonical_url: string
+          city_slug: string
+          created_at?: string
+          id?: string
+          indexable?: boolean
+          last_generated_at?: string | null
+          problem_slug: string
+          semantic_uniqueness_score?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          canonical_url?: string
+          city_slug?: string
+          created_at?: string
+          id?: string
+          indexable?: boolean
+          last_generated_at?: string | null
+          problem_slug?: string
+          semantic_uniqueness_score?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      aeo_problems: {
+        Row: {
+          category: string | null
+          created_at: string
+          description_fr: string | null
+          id: string
+          label_en: string | null
+          label_fr: string
+          slug: string
+          updated_at: string
+          urgency_default: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description_fr?: string | null
+          id?: string
+          label_en?: string | null
+          label_fr: string
+          slug: string
+          updated_at?: string
+          urgency_default?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description_fr?: string | null
+          id?: string
+          label_en?: string | null
+          label_fr?: string
+          slug?: string
+          updated_at?: string
+          urgency_default?: string | null
+        }
+        Relationships: []
+      }
+      aeo_regulations: {
+        Row: {
+          authority: string | null
+          created_at: string
+          id: string
+          label_en: string | null
+          label_fr: string
+          reference_url: string | null
+          slug: string
+          summary_fr: string | null
+        }
+        Insert: {
+          authority?: string | null
+          created_at?: string
+          id?: string
+          label_en?: string | null
+          label_fr: string
+          reference_url?: string | null
+          slug: string
+          summary_fr?: string | null
+        }
+        Update: {
+          authority?: string | null
+          created_at?: string
+          id?: string
+          label_en?: string | null
+          label_fr?: string
+          reference_url?: string | null
+          slug?: string
+          summary_fr?: string | null
+        }
+        Relationships: []
+      }
+      aeo_seasonal_patterns: {
+        Row: {
+          created_at: string
+          description_fr: string | null
+          id: string
+          label_fr: string
+          related_problem_slugs: string[] | null
+          season: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description_fr?: string | null
+          id?: string
+          label_fr: string
+          related_problem_slugs?: string[] | null
+          season: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description_fr?: string | null
+          id?: string
+          label_fr?: string
+          related_problem_slugs?: string[] | null
+          season?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      aeo_semantic_edges: {
+        Row: {
+          created_at: string
+          edge_type: string
+          from_entity_id: string
+          from_entity_type: string
+          id: string
+          metadata: Json
+          to_entity_id: string
+          to_entity_type: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          edge_type: string
+          from_entity_id: string
+          from_entity_type: string
+          id?: string
+          metadata?: Json
+          to_entity_id: string
+          to_entity_type: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          edge_type?: string
+          from_entity_id?: string
+          from_entity_type?: string
+          id?: string
+          metadata?: Json
+          to_entity_id?: string
+          to_entity_type?: string
+          weight?: number
+        }
+        Relationships: []
+      }
+      aeo_service_pages: {
+        Row: {
+          canonical_url: string
+          city_slug: string
+          contractor_slug: string | null
+          created_at: string
+          id: string
+          indexable: boolean
+          last_generated_at: string | null
+          semantic_uniqueness_score: number | null
+          service_slug: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          canonical_url: string
+          city_slug: string
+          contractor_slug?: string | null
+          created_at?: string
+          id?: string
+          indexable?: boolean
+          last_generated_at?: string | null
+          semantic_uniqueness_score?: number | null
+          service_slug: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          canonical_url?: string
+          city_slug?: string
+          contractor_slug?: string | null
+          created_at?: string
+          id?: string
+          indexable?: boolean
+          last_generated_at?: string | null
+          semantic_uniqueness_score?: number | null
+          service_slug?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      aeo_symptoms: {
+        Row: {
+          created_at: string
+          id: string
+          label_en: string | null
+          label_fr: string
+          problem_slug: string | null
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label_en?: string | null
+          label_fr: string
+          problem_slug?: string | null
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label_en?: string | null
+          label_fr?: string
+          problem_slug?: string | null
+          slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aeo_symptoms_problem_slug_fkey"
+            columns: ["problem_slug"]
+            isOneToOne: false
+            referencedRelation: "aeo_problems"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      aeo_trust_pages: {
+        Row: {
+          canonical_url: string
+          created_at: string
+          id: string
+          indexable: boolean
+          last_generated_at: string | null
+          slug: string
+          status: string
+          title_fr: string
+          topic: string | null
+          updated_at: string
+        }
+        Insert: {
+          canonical_url: string
+          created_at?: string
+          id?: string
+          indexable?: boolean
+          last_generated_at?: string | null
+          slug: string
+          status?: string
+          title_fr: string
+          topic?: string | null
+          updated_at?: string
+        }
+        Update: {
+          canonical_url?: string
+          created_at?: string
+          id?: string
+          indexable?: boolean
+          last_generated_at?: string | null
+          slug?: string
+          status?: string
+          title_fr?: string
+          topic?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       affiliate_attributions: {
         Row: {
           confidence_score: number | null
