@@ -70,9 +70,27 @@ export default function PageVoiceHealth() {
     }
   }, []);
 
+  const refreshPings = useCallback(async () => {
+    try {
+      const { data } = await supabase
+        .from("voice_health_pings")
+        .select("kind, created_at")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      const rows = (data ?? []) as Array<{ kind: string; created_at: string }>;
+      const success = rows.find((r) => r.kind === "success");
+      const failure = rows.find((r) => r.kind === "failure");
+      if (success) setLastSpokenAt(success.created_at);
+      if (failure) setLastFailureAt(failure.created_at);
+    } catch {
+      /* admin-only — silently skip when not allowed */
+    }
+  }, []);
+
   useEffect(() => {
     refreshHealth();
     refreshMic();
+    refreshPings();
   }, [refreshHealth, refreshMic]);
 
   const runSmoke = useCallback(async () => {
