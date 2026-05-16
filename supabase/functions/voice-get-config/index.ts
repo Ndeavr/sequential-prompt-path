@@ -42,7 +42,7 @@ serve(async (req) => {
           fallback: true,
           config: {
             agent_id: null,
-            voice_id: "UJCi4DDncuo0VJDSIegj",
+            voice_id: "YxrwjAKoUKULGd0g8K9Y",
             language_default: "fr",
             allow_switch: false,
           },

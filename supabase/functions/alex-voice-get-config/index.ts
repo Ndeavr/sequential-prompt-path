@@ -26,10 +26,10 @@ serve(async (req) => {
       .single();
 
     if (error || !data) {
-      // Fallback defaults — locked Alex master voice (FR only)
+      // Fallback defaults — locked Sophia voice (Alex production)
       return new Response(JSON.stringify({
         provider: "elevenlabs",
-        voiceId: "UJCi4DDncuo0VJDSIegj",
+        voiceId: "YxrwjAKoUKULGd0g8K9Y",
         locale: "fr-QC",
         toneStyle: "premium_warm",
         speechRate: 1.0,

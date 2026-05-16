@@ -39,8 +39,8 @@ serve(async (req) => {
       .eq("is_active", true)
       .single();
 
-    // Use DB config, fallback to locked Alex master voice (FR only)
-    const voiceId = overrideVoiceId || profile?.voice_id_primary || "UJCi4DDncuo0VJDSIegj";
+    // Use DB config, fallback to locked Sophia voice (single Alex production voice)
+    const voiceId = overrideVoiceId || profile?.voice_id_primary || "YxrwjAKoUKULGd0g8K9Y";
     const stability = profile?.stability ?? 0.5;
     const similarityBoost = profile?.similarity_boost ?? 0.75;
     const style = profile?.style_exaggeration ?? 0.4;
