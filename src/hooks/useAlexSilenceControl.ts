@@ -52,8 +52,9 @@ const PROMPT_TEXT = {
 };
 
 export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
+export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
   const {
-    idleThresholdMs = 15_000,
+    idleThresholdMs = 7_000,
     pauseDelayAfterPromptMs = 3_000,
     onPresencePrompt,
     onPause,
