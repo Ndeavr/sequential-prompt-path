@@ -243,7 +243,20 @@ export default function AlexMorphingOrb({
 
 /* ─── Scoped CSS ─── */
 const ALEX_ORB_CSS = `
-.alex-orb { -webkit-tap-highlight-color: transparent; line-height: 0; overflow: visible; filter: grayscale(var(--orb-gray)); }
+.alex-orb {
+  -webkit-tap-highlight-color: transparent;
+  line-height: 0;
+  /* HARD LOCK — no ancestor utility can reintroduce a card/square */
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+  overflow: visible !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  filter: grayscale(var(--orb-gray));
+}
 .alex-orb > span,
 .alex-orb__drift > span { position: absolute; inset: 0; border-radius: 9999px; pointer-events: none; }
 .alex-orb__drift { position: absolute; inset: 0; display: block; overflow: visible; will-change: transform; animation: alexOrbDrift var(--orb-drift) ease-in-out infinite; }

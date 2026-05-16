@@ -10,6 +10,7 @@
 import { buildAlexFirstMessage } from "./alexSystemPromptV2";
 import { ALEX_CORE_PROMPT } from "./alexCorePrompt";
 import { getVoiceConfigFor, ALEX_VOICE_BASE, type AlexVoiceMode } from "@/config/alexVoiceConfig";
+import { prepareAlexSpeechText } from "@/lib/prepareAlexSpeechText";
 
 export type AlexLanguage = "fr" | "en";
 
@@ -49,19 +50,19 @@ export function buildAlexAgentOverrides(input: BuildOverridesInput) {
     : basePrompt;
 
   // Use mode-specific first message unless caller forced a personalized greeting via firstName.
-  const firstMessage = input.firstName
+  const rawFirstMessage = input.firstName
     ? buildAlexFirstMessage({
         firstName: input.firstName,
         isReturning: input.isReturning,
         language,
       })
     : tuning.firstMessage;
+  // Normalize brand pronunciation (UNPRO → "Un Pro" / "Hun Pro") before TTS.
+  const firstMessage = prepareAlexSpeechText(rawFirstMessage, language);
 
+  // Voice tuning is LOCKED in alexVoiceConfig — ignore caller overrides
+  // for stability/similarity/style/speakerBoost so it never drifts mid-session.
   const voiceId = input.voiceId ?? ALEX_VOICE_BASE.voiceId;
-  const stability = input.stability ?? tuning.stability;
-  const similarity_boost = input.similarity ?? tuning.similarity_boost;
-  const style = input.style ?? tuning.style;
-  const use_speaker_boost = input.speakerBoost ?? tuning.use_speaker_boost;
 
   return {
     agent: {
@@ -72,10 +73,10 @@ export function buildAlexAgentOverrides(input: BuildOverridesInput) {
     tts: {
       voiceId,
       modelId: ALEX_VOICE_BASE.modelId,
-      stability,
-      similarity_boost,
-      style,
-      use_speaker_boost,
+      stability: tuning.stability,
+      similarity_boost: tuning.similarity_boost,
+      style: tuning.style,
+      use_speaker_boost: tuning.use_speaker_boost,
       speed: tuning.speed,
     },
   };

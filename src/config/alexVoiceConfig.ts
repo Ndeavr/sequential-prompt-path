@@ -24,13 +24,14 @@ export interface AlexVoiceTuning {
   promptAddendum?: string;
 }
 
-// Production tuning — premium concierge, slightly faster than human, emotionally adaptive.
+// Production tuning — LOCKED. Same for every mode, every turn.
+// Do not vary per emotion, per turn, or per surface.
 const BASE_TUNING = {
-  stability: 0.48,
-  similarity_boost: 0.78,
-  style: 0.38,
+  stability: 0.50,
+  similarity_boost: 0.75,
+  style: 0.35,
   use_speaker_boost: true,
-  speed: 1.05,
+  speed: 1.0,
 } as const;
 
 const HOMEOWNER: AlexVoiceTuning = {

@@ -271,6 +271,9 @@ export function useVoiceReliability(options: VoiceReliabilityOptions = {}) {
   const playTTS = useCallback(async (text: string) => {
     setState("alex_speaking");
     try {
+      // Normalize brand pronunciation before sending to TTS.
+      const { prepareAlexSpeechText } = await import("@/lib/prepareAlexSpeechText");
+      const ttsText = prepareAlexSpeechText(text, "fr");
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-tts`,
         {
@@ -280,7 +283,7 @@ export function useVoiceReliability(options: VoiceReliabilityOptions = {}) {
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ text, voice_session_id: sessionId }),
+          body: JSON.stringify({ text: ttsText, voice_session_id: sessionId }),
         }
       );
 
