@@ -1,42 +1,61 @@
-## Problème
+## Goal
 
-Le Voice Lab affiche "Lecture impossible — fallback voix par défaut." Les tests FR/EN ne jouent jamais l'audio.
+Polish the full-screen Alex Voice overlay (`OverlayAlexVoiceFullScreen.tsx`) so it matches the homepage hero, shows live transcripts only, and feels instant.
 
-**Cause racine** : `supabase.functions.invoke()` tente de parser la réponse en JSON par défaut. L'edge function `alex-voice-test` retourne du binaire MP3 (`audio/mpeg`), donc le `Blob` reconstruit côté client est corrompu — `audio.onerror` se déclenche systématiquement.
+## Changes
 
-Bonus : l'edge function utilise `@supabase/supabase-js@2.99.0` au lieu de la version verrouillée `2.49.1` (mémoire projet : règle anti-microtask Deno).
+### 1. Use the same orb as the homepage
+- Replace the bespoke `LockedVoiceOrb` (small circles + `UnproIcon`) with `AlexMorphingOrb` (`@/components/alex/AlexMorphingOrb`) — the exact component used by `HeroOrbMockup`.
+- Map the overlay's machine state → `AlexOrbStateV2` (`speaking | listening | thinking | error | idle`).
+  - `speaking` → `isSpeaking || state==="speaking"`
+  - `thinking` → `processing_stt | processing_response | stabilizing | opening_session`
+  - `error` → `error_recoverable | error_fatal`
+  - `listening` → `listening | awaiting_user | capturing_voice | session_ready`
+  - else → `idle`
+- Size `lg`, click does nothing (already in session).
 
-## Fix
+### 2. Remove the "Accueil UNPRO" context pill
+- Drop the seeded user transcript built from `contextHint` (the lines 320-326 block that pushes the pill text into the transcript list).
+- Keep `contextHint` only for greeting context server-side; no UI bubble.
 
-### 1. `src/pages/admin/PageVoiceLab.tsx`
-Remplacer `supabase.functions.invoke` par un `fetch` direct vers l'edge function qui récupère la réponse en `Blob` brut (pattern documenté dans elevenlabs-tts).
+### 3. Clean status / remove duplicate "Connexion d'Alex…"
+- Remove the standalone boot/recovery loader row (lines 660-671) — the orb state itself communicates connecting via `thinking`.
+- Keep only the small subtitle under "Alex Voice" in the header (`statusText`). That single line shows "Alex démarre…" / "Alex écoute…" / "Vous parlez…" / "Alex parle…".
+- Boot label strings already say "Alex démarre…" — leave as-is.
 
-```ts
-const resp = await fetch(
-  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-voice-test`,
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-    },
-    body: JSON.stringify({ voice_id, language, test_text, stability, similarity_boost, style, speed }),
-  }
-);
-if (!resp.ok) throw new Error(`TTS ${resp.status}`);
-const blob = await resp.blob();
-```
+### 4. Live transcripts (Alex + user)
+- The hook already wires `onTranscript` (Alex) and `onUserTranscript` (user) into `setTranscripts`. Keep that.
+- Render the transcript list above the orb (already does). Confirm:
+  - User bubbles right-aligned, primary tint.
+  - Alex bubbles left-aligned with the "Alex" label.
+  - Auto-scroll on update (already present).
+- Show a subtle "·" typing indicator on the latest Alex bubble while `isSpeaking` and the bubble is still streaming (small CSS-only dot).
 
-Ajouter aussi un `await audio.play().catch(...)` propre + log du `voiceId` dans la console si erreur (debug).
+### 5. Sub-2s perceived start
+Two levers — perception + real latency:
 
-### 2. `supabase/functions/alex-voice-test/index.ts`
-- Aligner l'import Supabase sur `https://esm.sh/@supabase/supabase-js@2.49.1` (règle mémoire).
-- Aucune autre modif logique nécessaire (la fonction renvoie déjà `audio/mpeg` correctement).
+**Perception (immediate)**
+- As soon as boot starts, push a single Alex bubble with the greeting text (the same string returned by `buildGreeting()`), flagged as "preview" until first audio frame arrives. This makes the conversation visible within ~100ms even while ElevenLabs is still handshaking.
+- Switch orb to `thinking` immediately on open (already does via `stabilizing` mapping).
 
-### 3. Vérification
-- Redéployer l'edge function.
-- Tester Sophia FR, Sophia EN, Clara FR depuis `/admin/alex/voice-lab` → l'audio doit jouer sans toast d'erreur.
+**Real latency**
+- Lower `TOKEN_SLOW_THRESHOLD_MS` from 2000 → 1500 (cosmetic only, since the label row is removed).
+- Lower the safety nudge in `onConnect` from 2500 ms → 1200 ms so if the agent has no first message configured, we force a greeting much sooner.
+- Pre-warm the ElevenLabs token request: kick off the `getElevenLabsConversationToken` fetch in parallel with `getUserMedia` mic permission inside `useLiveVoice.start()` (instead of sequentially). If `useLiveVoice` already awaits mic first, hoist the token fetch to run concurrently via `Promise.all`.
+- Verify `useLiveVoice` does not call `setVolume` or other overrides before `startSession` (per memory `voice-connection-stability`); no client-side overrides.
 
-## Hors scope
-Aucune modification de la prod Alex, des overrides ElevenLabs, ou de `alexVoiceConfig.ts`. Fix purement Voice Lab admin.
+### 6. Files touched
+- `src/components/voice/OverlayAlexVoiceFullScreen.tsx` — orb swap, remove seed pill + loader row, add greeting preview bubble, nudge timing.
+- `src/hooks/useLiveVoice.ts` — parallelize token fetch + mic permission (read first to confirm structure).
+- No DB/schema changes. No edge function changes.
+
+### Out of scope
+- Voice ID / agent selection (unchanged, Sophia is already active in `voice_configs`).
+- Recovery, hard-reset, chat fallback flows (unchanged).
+- Homepage orb itself (unchanged).
+
+## Success criteria
+- Orb in voice overlay is visually identical to the homepage hero orb.
+- No "Accueil UNPRO" pill, no duplicate "Connexion d'Alex…" line — only the small status under the header.
+- Both Alex and user lines stream into the transcript area live.
+- First Alex bubble visible ≤ 500 ms after opening; first audio typically ≤ 2 s on warm cache.

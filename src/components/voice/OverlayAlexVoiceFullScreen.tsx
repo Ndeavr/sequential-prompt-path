@@ -22,6 +22,7 @@ import { executeHardReset } from "@/services/voiceHardResetEngine";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import UnproIcon from "@/components/brand/UnproIcon";
+import AlexMorphingOrb, { type AlexOrbStateV2 } from "@/components/alex/AlexMorphingOrb";
 import { alexVoiceService } from "@/services/alexVoiceService";
 import { useAlexChatFallbackStore } from "@/stores/alexChatFallbackStore";
 import {
@@ -46,6 +47,16 @@ function deriveMode(feature: string | undefined): "homeowner" | "contractor" | "
   if (f.includes("condo") || f.includes("manager")) return "condo_manager";
   if (f.includes("homeowner") || f.includes("owner")) return "homeowner";
   return "general";
+}
+
+function deriveOrbStateV2(state: LockedVoiceState, isSpeaking: boolean): AlexOrbStateV2 {
+  if (state === "error_recoverable" || state === "error_fatal") return "error";
+  if (isSpeaking || state === "speaking") return "speaking";
+  if (state === "processing_stt" || state === "processing_response" ||
+      state === "stabilizing" || state === "opening_session" || state === "requesting_permission") return "thinking";
+  if (state === "listening" || state === "awaiting_user" ||
+      state === "capturing_voice" || state === "session_ready") return "listening";
+  return "idle";
 }
 
 export default function OverlayAlexVoiceFullScreen() {
@@ -112,6 +123,8 @@ export default function OverlayAlexVoiceFullScreen() {
         clearTimeout(nudgeTimerRef.current);
         nudgeTimerRef.current = null;
       }
+      // Remove the preview greeting bubble — real Alex transcript takes over
+      setTranscripts(prev => prev.filter(t => !t.id.startsWith("alex-preview-")));
 
       setBootStep("live");
 
@@ -185,12 +198,12 @@ export default function OverlayAlexVoiceFullScreen() {
           const seed = hint
             ? `Bonjour Alex. ${hint}`
             : "Bonjour Alex.";
-          console.log("[VoiceOverlay] 👋 No first audio in 2.5s — sending nudge:", seed);
+          console.log("[VoiceOverlay] 👋 No first audio in 1.2s — sending nudge:", seed);
           (conversation as any)?.sendUserMessage?.(seed);
         } catch (e) {
           console.warn("[VoiceOverlay] nudge failed:", e);
         }
-      }, 2500);
+      }, 1200);
     },
     onDisconnect: () => {
       const s = getStore();
@@ -317,12 +330,13 @@ export default function OverlayAlexVoiceFullScreen() {
     autoRetryCountRef.current = 0;
     setSlowToken(false);
 
-    // Seed the pill/contextHint as a visible user transcript so user sees their intent
-    const initialHint = getStore().contextHint;
-    if (initialHint && transcriptsRef.current.length === 0) {
-      const seedId = `user-seed-${++entryIdRef.current}`;
-      setTranscripts([{ role: "user", text: initialHint, id: seedId }]);
-      getStore().addTranscript("user", initialHint);
+    // Instant perception: show Alex greeting bubble immediately so the user sees
+    // a conversation before audio arrives. It is removed as soon as the real
+    // Alex transcript starts streaming (onFirstAudio).
+    if (transcriptsRef.current.length === 0) {
+      const greetingId = `alex-preview-${++entryIdRef.current}`;
+      setTranscripts([{ role: "alex", text: buildGreetingRef.current(), id: greetingId }]);
+      lastAlexIdRef.current = null; // ensure next real transcript creates a new bubble
     }
 
     let bootTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -656,19 +670,7 @@ export default function OverlayAlexVoiceFullScreen() {
             </Button>
           </div>
 
-          {/* Recovery / boot loader */}
-          {(isStabilizing || isRecoveringNow) && (
-            <div className="px-6 py-4 flex items-center gap-2">
-              {isRecoveringNow ? (
-                <Zap className="w-4 h-4 text-primary animate-pulse" />
-              ) : (
-                <Sparkles className="w-4 h-4 text-primary animate-spin" />
-              )}
-              <span className="text-sm text-muted-foreground">
-                {isRecoveringNow ? recovery.phaseLabel : (slowToken ? "Connexion d'Alex…" : getBootStepLabel(bootStep))}
-              </span>
-            </div>
-          )}
+          {/* Boot loader removed — orb + header subtitle convey the state */}
 
           {/* Transcripts */}
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4">
@@ -699,9 +701,9 @@ export default function OverlayAlexVoiceFullScreen() {
             </div>
           </div>
 
-          {/* Voice Orb */}
+          {/* Voice Orb — same AlexMorphingOrb used on the homepage */}
           <div className="flex flex-col items-center py-6">
-            <LockedVoiceOrb state={state} isSpeaking={isSpeaking} />
+            <AlexMorphingOrb state={deriveOrbStateV2(state, isSpeaking)} size="lg" ariaLabel="Alex" />
           </div>
 
           {/* Error banner */}
