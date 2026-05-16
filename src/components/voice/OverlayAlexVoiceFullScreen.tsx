@@ -22,6 +22,7 @@ import { executeHardReset } from "@/services/voiceHardResetEngine";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import UnproIcon from "@/components/brand/UnproIcon";
+import AlexMorphingOrb, { type AlexOrbStateV2 } from "@/components/alex/AlexMorphingOrb";
 import { alexVoiceService } from "@/services/alexVoiceService";
 import { useAlexChatFallbackStore } from "@/stores/alexChatFallbackStore";
 import {
