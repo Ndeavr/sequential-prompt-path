@@ -152,7 +152,8 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
   /** Call on every user activity */
   const recordActivity = useCallback(() => {
     clearTimers();
-    promptSentRef.current = false;
+    // NOTE: do NOT reset promptSentRef or sessionPromptUsedRef — single-prompt
+    // is enforced for the entire session, not per cycle.
 
     if (status === "idle_prompted") {
       setStatus("active");
