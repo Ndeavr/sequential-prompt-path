@@ -298,6 +298,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         }
       } catch (e) { console.warn("[ElevenLabs V8] AudioContext resume failed", e); }
     } catch (micErr) {
+      const micName = (micErr as any)?.name as string | undefined;
+      alexVoiceService.setMicPermission(micName === "NotAllowedError" || micName === "NotFoundError" ? "denied" : "prompt");
       bootInProgressRef.current = false;
       setIsConnecting(false);
       callbacksRef.current?.onError?.(micErr);
