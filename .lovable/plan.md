@@ -1,81 +1,71 @@
-## Goal
+# Voice Health Contract — Phase 2 (close the gaps)
 
-Make Alex strictly **event-driven**. Voice starts only on explicit user action, greets exactly once per browser session, and never silently retries.
+Phase 1 (shipped last turn): `ALEX_VOICE_BACKUP` constant, `src/lib/voiceSmokeTest.ts`, admin page at `/admin/voice-health`, `PROTECTED FILE — ALEX VOICE CORE` headers on the 10 core files.
 
-## Root causes found
+This plan implements the parts of the spec that aren't live yet, without touching any voice runtime behavior beyond what the spec explicitly requires.
 
-1. **Two contractor landing pages auto-open Alex on first gesture** (`PageContractorVoiceFirstLanding.tsx`, `PageContractorAIGrowth.tsx`) — first scroll/tap fires `openAlex()` even when the user just wanted to read.
-2. **Greeting fires every overlay boot** (`OverlayAlexVoiceFullScreen.tsx` line 371-375 + `buildGreeting` passed as `initialGreeting` on every `start()`), with no per-session memory of "already greeted".
-3. **Silent auto-retries on first-audio timeout** (`MAX_AUTO_RETRIES = 2`) re-call `startRef.current` with a fresh greeting → user hears "Bonsoir Yanick" again.
-4. **Token retry chain inside `useLiveVoice.ts`** (`MAX_TOKEN_RETRIES = 2`) re-opens the WS session three times for the same boot.
-5. **Fallback chat panel re-launches voice** automatically via "Activer la voix" being styled as a primary CTA, and prepends "Je continue ici avec vous." on top of the existing greeting.
-6. **Dead code still present**: `useAlexHomeAutostart.ts` exists (currently unused but a footgun).
+## 1. Runtime auto-fallback (primary → backup)
 
-## Changes
+Goal: if the primary ElevenLabs voice fails, Alex keeps speaking via `ALEX_VOICE_BACKUP` and the failure is logged. Today only the smoke test exercises the backup — real sessions don't fail over.
 
-### 1. Add `alexSessionState` (sessionStorage-backed)
+- Edit `supabase/functions/alex-tts/index.ts`:
+  - On non-2xx ElevenLabs response (or fetch throw) for the primary voice, retry once against `ALEX_VOICE_BACKUP.voiceId` (hardcoded mirror of the client constant — same string).
+  - Add response header `X-Voice-Fallback-Used: true` on the retry path.
+  - Insert a row into `voice_reliability_events` with `event_type = 'tts_fallback_used'` and primary error detail (already used by `alex-voice-health`).
+- Edit `src/features/alex/services/elevenlabsService.ts` (client-side TTS path) with the same retry-once-with-backup pattern for the direct-from-client code path.
+- No change to voice IDs, model, format, mic, VAD, orb trigger, or state machine.
 
-New file `src/lib/alexSessionState.ts`:
+## 2. `pre_deploy_voice_guard` as a real deploy gate
 
-```text
-keys (sessionStorage):
-  unpro.alex.hasGreeted         "1" | null
-  unpro.alex.voiceStarted       "1" | null
-  unpro.alex.userInitiated      "1" | null
-  unpro.alex.lastInteractionAt  ISO timestamp
+Today `pre_deploy_voice_guard` is just an alias for `voice_smoke_test()`. Spec says: run npm test + smoke + route-mount + ElevenLabs + edge health, and **BLOCK DEPLOY** on failure.
 
-API:
-  markGreeted() / hasGreeted()
-  markVoiceStarted() / wasVoiceStarted()
-  markUserInitiated() / wasUserInitiated()
-  touchInteraction()
-  resetSession()  // only called on explicit user close + retry
-```
+- Add `scripts/pre-deploy-voice-guard.mjs` that:
+  1. Runs `bunx vitest run --reporter=dot` (skips if no tests).
+  2. Calls `alex-voice-health` edge function — fails if status !== `healthy`.
+  3. Calls `alex-voice-test` with primary voice ID — fails if response is not audio.
+  4. Calls `alex-voice-test` with backup voice ID — same check.
+  5. Static route-mount check: `grep` for `/admin/voice-health`, mount of `GlobalAlexOverlay` in `App.tsx`, and `AlexOrb` import in the three reference surfaces (homepage, contractor onboarding landing, homeowner flow).
+  6. Exits non-zero on any failure with a clear `[VOICE GUARD] FAIL: <reason>` line.
+- Add `package.json` script: `"voice:guard": "node scripts/pre-deploy-voice-guard.mjs"`.
+- README note (one paragraph in `docs/voice-health.md`) telling operators to run `bun run voice:guard` before any deploy.
 
-### 2. `OverlayAlexVoiceFullScreen.tsx`
+## 3. Smoke test — DOM-level checks
 
-- Inside the boot `useEffect` (line 335-516):
-  - Compute `greeting = hasGreeted() ? "" : buildGreeting()`.
-  - Only push the preview bubble when `greeting` is non-empty.
-  - Pass `initialGreeting: greeting` (empty string means "do not seed").
-  - Call `markGreeted()` once the greeting was actually sent.
-- **Remove silent retries**: set `MAX_AUTO_RETRIES = 0`. `armFirstAudioTimer` now goes straight to `bailToChat("no_first_audio")` — no second `startRef.current` call, no second greeting.
-- **`onConnect` nudge** (line 188-200): only send the seed when `!hasGreeted()`. Otherwise stay silent and let the user speak.
-- **Cleanup on overlay close** (line 543-570): do NOT reset `hasGreeted` / `voiceStarted` — they persist for the whole browser tab session.
+Current `voice_smoke_test()` covers TTS/playback/fallback/health. Spec also asks for orb-exists + click-starts-listening checks.
 
-### 3. `useLiveVoice.ts`
+- Extend `src/lib/voiceSmokeTest.ts` with two optional checks that run only in a browser context:
+  - `orb_present`: `document.querySelector('[data-alex-orb="true"]')` returns an element.
+  - `orb_click_starts_listening`: dispatches a synthetic click and observes the Alex store transitioning to `connecting`/`listening` within 2s.
+- Add `data-alex-orb="true"` (purely additive attribute, no behavior change) to the existing `AlexOrb` render roots.
 
-- Set `MAX_TOKEN_RETRIES = 0`. One attempt; on failure, surface `onError` and stop. No silent reconnects.
-- Remove the post-`onDisconnect` cooldown reconnect path.
+## 4. Persistent last-successful / last-failed TTS
 
-### 4. Kill auto-open on landing pages
+Admin page currently shows last success/failure from component state only — resets on reload.
 
-- `src/pages/contractor-landing/PageContractorVoiceFirstLanding.tsx`: delete the `pointerdown/keydown/touchstart` listener `useEffect` (lines 61-86). Voice starts only when the user taps the orb / "Parler à Alex" button.
-- `src/pages/contractor-growth/PageContractorAIGrowth.tsx`: delete the equivalent `useEffect` (lines 42-58).
-- `src/pages/HomeProfessionalAdaptive.tsx`, `HomeIntentRouterDynamic.tsx`, `OwnerMenuPreviewPage.tsx`, `HomeContractorAdaptive.tsx`: verify no mount-`openAlex` (already user-driven — confirmed).
+- Migration: `voice_health_pings` table (`id`, `kind` enum `'success'|'failure'`, `voice_id`, `surface`, `detail jsonb`, `created_at`). RLS: insert allowed to authenticated, select restricted to `has_role(auth.uid(),'admin')`.
+- On every TTS attempt in `alex-tts` and `elevenlabsService.ts`, fire-and-forget insert (success or failure).
+- `PageVoiceHealth` reads the two most recent rows for the cards "Last successful TTS" and "Last failed TTS".
 
-### 5. Delete unused `useAlexHomeAutostart.ts`
+## 5. Admin navigation entry
 
-No consumers exist. Removed to prevent future regressions.
+Add a sidebar link "System Health → Alex Voice" pointing to `/admin/voice-health` in the existing admin nav config (whichever file lists the admin items — wire it in beside the existing Alex admin links).
 
-### 6. `AlexChatFallbackPanel.tsx`
+## 6. Memory + docs
 
-- Replace the chat-panel intro line (line 105) and header subtitle (line 71) with a **single** message: `"Je peux continuer ici avec vous."` (no duplicate of the voice greeting).
-- "Activer la voix" button becomes a small ghost icon, requires a deliberate tap, and clears `voiceStarted` flag so a fresh start is allowed — but `hasGreeted` stays set so the user is not re-introduced.
+- Update `mem://features/voice-health-contract` with the new fallback edge function behavior, deploy guard script path, and `voice_health_pings` table.
+- Create `docs/voice-health.md` (one page) restating the contract for future agents.
 
-### 7. Greeting source of truth
+## Out of scope (explicitly not touched)
 
-`buildGreeting()` stays in the overlay (already personality-aware), but is **only ever used once** per session. The contextual hint nudge that previously prepended "Je continue ici avec vous." everywhere is removed in favour of: a single greeting on first boot, silence on every subsequent reopen.
+- Voice IDs, model, output format, tuning values.
+- Orb trigger, mic permission flow, VAD, AudioContext, state machine.
+- Greeting logic, session state, alex auto-start behavior.
+- Any non-voice files.
 
 ## Acceptance
 
-- Open `/`, open overlay, close overlay, reopen → user hears no second greeting.
-- Voice times out → fallback chat appears once, no auto-retry chain, no duplicate greeting bubble.
-- Reload `/contractor` landing pages → Alex does NOT open until the user taps the orb or CTA.
-- Console shows one `Starting session, greeting: ...` per browser tab session.
-- "Activer la voix" inside the fallback panel reopens voice without replaying the greeting.
-
-## Out of scope
-
-- Server-side `alex_session_state` table (sessionStorage is sufficient for the loop fix; DB-backed memory already covered by `Persistent User Memory`).
-- Voice provider / ElevenLabs config (locked Sophia voice unchanged).
+- Force a 500 from the primary ElevenLabs call (temporarily) → user still hears Alex via backup; `voice_reliability_events` shows `tts_fallback_used`; admin page shows the warning.
+- `bun run voice:guard` exits 0 when everything is green and non-zero when any check fails.
+- `/admin/voice-health` shows persistent "Last successful TTS" and "Last failed TTS" rows after reload.
+- Sidebar shows "System Health → Alex Voice" link.
+- No change in user-visible Alex behavior on homepage, contractor onboarding, homeowner flow, or mobile.

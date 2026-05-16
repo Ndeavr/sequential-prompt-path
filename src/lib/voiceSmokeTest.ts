@@ -164,6 +164,36 @@ export async function voice_smoke_test(): Promise<SmokeReport> {
     durationMs: Math.round(health.ms),
   });
 
+  // 6. DOM-level checks (only meaningful when running in a browser tab
+  // that mounts Alex). Skipped gracefully when no orb is on the page.
+  if (typeof document !== "undefined") {
+    const orb = document.querySelector<HTMLElement>('[data-alex-orb="true"]');
+    checks.push({
+      name: "orb_present",
+      pass: !!orb,
+      detail: orb ? "found" : "no [data-alex-orb] in DOM (page may not mount Alex)",
+    });
+    if (orb) {
+      const startedAtMode = (window as unknown as { __alexMode?: string }).__alexMode;
+      orb.click();
+      const reached = await new Promise<boolean>((resolve) => {
+        const deadline = Date.now() + 2000;
+        const tick = () => {
+          const m = (window as unknown as { __alexMode?: string }).__alexMode;
+          if (m && m !== startedAtMode && m !== "idle") return resolve(true);
+          if (Date.now() > deadline) return resolve(false);
+          setTimeout(tick, 100);
+        };
+        tick();
+      });
+      checks.push({
+        name: "orb_click_starts_listening",
+        pass: reached,
+        detail: reached ? "store mode transitioned" : "no transition within 2s (window.__alexMode unset?)",
+      });
+    }
+  }
+
   const finishedAt = new Date().toISOString();
   return {
     ok: checks.every((c) => c.pass),

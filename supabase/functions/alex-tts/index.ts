@@ -18,21 +18,17 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// LOCKED voice — Sophia (single source aligned with src/config/alexVoiceConfig.ts)
-const PRIMARY_VOICE_ID = "YxrwjAKoUKULGd0g8K9Y";
-const FALLBACK_VOICE_ID = "YxrwjAKoUKULGd0g8K9Y";
+// LOCKED voices — single source aligned with src/config/alexVoiceConfig.ts
+const PRIMARY_VOICE_ID = "YxrwjAKoUKULGd0g8K9Y"; // Sophia
+const FALLBACK_VOICE_ID = "XB0fDUnXU5powFXDhCwa"; // Charlotte (Voice Health Contract backup)
 const ALLOWED_VOICE_IDS = new Set<string>([
   "YxrwjAKoUKULGd0g8K9Y", // Sophia — Alex production voice (locked)
+  "XB0fDUnXU5powFXDhCwa", // Charlotte — Voice Health Contract backup
 ]);
 const MODEL_ID = "eleven_multilingual_v2";
 
-const FALLBACK_TRIGGER_ERRORS = [
-  "voice_limit_reached",
-  "voice_not_found",
-  "unauthorized",
-  "quota_exceeded",
-  "invalid_api_key",
-];
+// Errors that should NOT trigger fallback (request is malformed, no point retrying).
+const NON_RETRYABLE_ERRORS = ["invalid_request", "text_too_long", "bad_request"];
 
 async function callElevenLabs(
   apiKey: string,
@@ -75,8 +71,27 @@ async function callElevenLabs(
 }
 
 function shouldFallback(errorBody: string): boolean {
-  const lower = errorBody.toLowerCase();
-  return FALLBACK_TRIGGER_ERRORS.some((e) => lower.includes(e));
+  const lower = (errorBody || "").toLowerCase();
+  // Default: fallback on any failure unless it's clearly a malformed request.
+  return !NON_RETRYABLE_ERRORS.some((e) => lower.includes(e));
+}
+
+async function logPing(
+  supabase: ReturnType<typeof createClient>,
+  kind: "success" | "failure",
+  voiceId: string,
+  detail: Record<string, unknown>
+) {
+  try {
+    await supabase.from("voice_health_pings").insert({
+      kind,
+      voice_id: voiceId,
+      surface: "alex-tts",
+      detail,
+    });
+  } catch {
+    /* never block TTS on ping failure */
+  }
 }
 
 serve(async (req) => {
@@ -154,6 +169,11 @@ serve(async (req) => {
           fallback_applied: fallbackUsed,
         }).catch(() => {});
       }
+      await logPing(supabase, "failure", activeVoiceId, {
+        status: result.status,
+        error: result.errorBody?.slice(0, 200),
+        fallback_attempted: fallbackUsed,
+      });
 
       // Return 200 with fallback signal so client doesn't crash; client falls back silently.
       return new Response(JSON.stringify({
@@ -181,6 +201,10 @@ serve(async (req) => {
         },
       }).catch(() => {});
     }
+    await logPing(supabase, "success", activeVoiceId, {
+      fallback_used: fallbackUsed,
+      text_length: text.length,
+    });
 
     return new Response(result.audio!, {
       headers: {

@@ -149,6 +149,7 @@ const AlexOrbBase = ({
       type="button"
       onClick={onClick}
       aria-label={ariaLabel}
+      data-alex-orb="true"
       className={cn(
         "relative inline-flex items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 select-none",
         onClick ? "cursor-pointer" : "cursor-default",

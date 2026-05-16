@@ -144,6 +144,7 @@ export default function AlexMorphingOrb({
       type="button"
       {...handlers}
       aria-label={ariaLabel}
+      data-alex-orb="true"
       className={cn(
         "alex-orb group relative inline-block bg-transparent border-0 p-0 m-0 align-middle rounded-full",
         // No rectangular focus ring — it reads as a square around the orb on mobile.
