@@ -361,15 +361,16 @@ const ALEX_ORB_CSS = `
 }
 
 .alex-orb__chroma {
-  inset: 10% !important;
-  border: 1px solid;
+  inset: 8% !important;
   background: transparent;
   mix-blend-mode: screen;
-  opacity: var(--orb-chroma);
-  filter: blur(0.5px);
+  opacity: calc(var(--orb-chroma) * 1.4);
+  filter: blur(3px);
+  -webkit-mask: radial-gradient(circle, transparent 58%, black 64%, black 70%, transparent 78%);
+          mask: radial-gradient(circle, transparent 58%, black 64%, black 70%, transparent 78%);
 }
-.alex-orb__chroma--r { border-color: hsl(0 100% 65%); transform: translate(1px, 0); }
-.alex-orb__chroma--c { border-color: hsl(180 100% 65%); transform: translate(-1px, 0); }
+.alex-orb__chroma--r { background: radial-gradient(circle, hsl(0 100% 65% / 0.85), transparent 75%); transform: translate(1px, 0); }
+.alex-orb__chroma--c { background: radial-gradient(circle, hsl(180 100% 65% / 0.85), transparent 75%); transform: translate(-1px, 0); }
 
 .alex-orb__highlight {
   inset: 10% !important;
