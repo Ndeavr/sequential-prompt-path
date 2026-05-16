@@ -18,21 +18,17 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// LOCKED voice — Sophia (single source aligned with src/config/alexVoiceConfig.ts)
-const PRIMARY_VOICE_ID = "YxrwjAKoUKULGd0g8K9Y";
-const FALLBACK_VOICE_ID = "YxrwjAKoUKULGd0g8K9Y";
+// LOCKED voices — single source aligned with src/config/alexVoiceConfig.ts
+const PRIMARY_VOICE_ID = "YxrwjAKoUKULGd0g8K9Y"; // Sophia
+const FALLBACK_VOICE_ID = "XB0fDUnXU5powFXDhCwa"; // Charlotte (Voice Health Contract backup)
 const ALLOWED_VOICE_IDS = new Set<string>([
   "YxrwjAKoUKULGd0g8K9Y", // Sophia — Alex production voice (locked)
+  "XB0fDUnXU5powFXDhCwa", // Charlotte — Voice Health Contract backup
 ]);
 const MODEL_ID = "eleven_multilingual_v2";
 
-const FALLBACK_TRIGGER_ERRORS = [
-  "voice_limit_reached",
-  "voice_not_found",
-  "unauthorized",
-  "quota_exceeded",
-  "invalid_api_key",
-];
+// Errors that should NOT trigger fallback (request is malformed, no point retrying).
+const NON_RETRYABLE_ERRORS = ["invalid_request", "text_too_long", "bad_request"];
 
 async function callElevenLabs(
   apiKey: string,
