@@ -347,6 +347,7 @@ const PageAdminAlexDebugHome = lazy(() => import("@/pages/admin/PageAdminAlexDeb
 const PageAdminAlexSpeechTuning = lazy(() => import("@/pages/admin/AlexSpeechTuning"));
 const AlexVoiceAdmin = lazy(() => import("@/pages/admin/AlexVoiceAdmin"));
 const PageAdminAlexVoice = lazy(() => import("@/pages/admin/alex/PageAdminAlexVoice"));
+const PageVoiceHealth = lazy(() => import("@/pages/admin/PageVoiceHealth"));
 const PageAdminAlexContext = lazy(() => import("@/pages/admin/alex/PageAdminAlexContext"));
 const PageAdminAlexAnalytics = lazy(() => import("@/pages/admin/alex/PageAdminAlexAnalytics"));
 
