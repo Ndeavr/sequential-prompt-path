@@ -39,23 +39,7 @@ export default function PageContractorAIGrowth() {
   const [analysisStage, setAnalysisStage] = useState<"preparing" | "speaking" | "awaiting">("preparing");
   const [checkoutLoading, setCheckoutLoading] = useState<ContractorPlanSlug | null>(null);
 
-  // Auto-start Alex on first interaction
-  useEffect(() => {
-    if (autoStartedRef.current) return;
-    const start = () => {
-      if (autoStartedRef.current) return;
-      autoStartedRef.current = true;
-      openAlex("contractor_onboarding", "fr");
-      window.removeEventListener("pointerdown", start);
-      window.removeEventListener("touchstart", start);
-    };
-    window.addEventListener("pointerdown", start, { once: true });
-    window.addEventListener("touchstart", start, { once: true });
-    return () => {
-      window.removeEventListener("pointerdown", start);
-      window.removeEventListener("touchstart", start);
-    };
-  }, [openAlex]);
+  // Strictly event-driven: Alex never auto-opens. User must tap orb / CTA.
 
   // Track step events
   useEffect(() => {
