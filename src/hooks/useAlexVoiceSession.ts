@@ -1,3 +1,6 @@
+// PROTECTED FILE — ALEX VOICE CORE
+// Do not modify unless task explicitly says VOICE.
+// Any change requires voice_smoke_test passing before deploy.
 /**
  * useAlexVoiceSession — Unified voice session for Alex.
  *
