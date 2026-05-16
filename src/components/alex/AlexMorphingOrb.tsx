@@ -270,39 +270,46 @@ export default function AlexMorphingOrb({
 
 /* ─── Scoped CSS ─── */
 const ALEX_ORB_CSS = `
-.alex-orb { -webkit-tap-highlight-color: transparent; line-height: 0; filter: grayscale(var(--orb-gray)); }
+.alex-orb { -webkit-tap-highlight-color: transparent; line-height: 0; overflow: visible; filter: grayscale(var(--orb-gray)); }
 .alex-orb > span,
 .alex-orb__drift > span { position: absolute; inset: 0; border-radius: 9999px; pointer-events: none; }
-.alex-orb__drift { position: absolute; inset: 0; display: block; will-change: transform; animation: alexOrbDrift var(--orb-drift) ease-in-out infinite; }
+.alex-orb__drift { position: absolute; inset: 0; display: block; overflow: visible; will-change: transform; animation: alexOrbDrift var(--orb-drift) ease-in-out infinite; }
 
 .alex-orb__atmosphere {
-  inset: -28% !important;
+  inset: -80% !important;
   background: radial-gradient(circle at 50% 50%,
-    hsl(212 100% 65% / 0.45),
-    hsl(252 100% 70% / 0.25) 40%,
-    transparent 70%);
-  opacity: calc(0.7 * var(--orb-glow));
+    hsl(212 100% 65% / 0.30),
+    hsl(252 100% 70% / 0.18) 35%,
+    transparent 65%);
+  opacity: calc(0.85 * var(--orb-glow));
   mix-blend-mode: screen;
-  -webkit-mask: radial-gradient(circle, black 50%, transparent 70%);
-          mask: radial-gradient(circle, black 50%, transparent 70%);
+  filter: blur(28px);
+  -webkit-mask: radial-gradient(circle, black 25%, transparent 75%);
+          mask: radial-gradient(circle, black 25%, transparent 75%);
 }
 
 .alex-orb__nebula {
-  inset: -10% !important;
+  inset: -25% !important;
   background:
-    radial-gradient(ellipse 60% 50% at 30% 30%, hsl(195 100% 70% / 0.35), transparent 60%),
-    radial-gradient(ellipse 55% 45% at 75% 70%, hsl(265 100% 75% / 0.32), transparent 60%);
-  filter: blur(14px) saturate(var(--orb-sat));
+    radial-gradient(ellipse 60% 50% at 30% 30%, hsl(195 100% 70% / 0.40), transparent 60%),
+    radial-gradient(ellipse 55% 45% at 75% 70%, hsl(265 100% 75% / 0.38), transparent 60%);
+  filter: blur(22px) saturate(var(--orb-sat));
   mix-blend-mode: screen;
+  -webkit-mask: radial-gradient(circle, black 35%, transparent 75%);
+          mask: radial-gradient(circle, black 35%, transparent 75%);
   animation: alexOrbNebula calc(var(--orb-plasma) * 2) ease-in-out infinite;
 }
 
 .alex-orb__halo {
-  inset: -18% !important;
+  inset: -45% !important;
   background: radial-gradient(circle,
-    hsl(212 100% 65% / calc(0.45 * var(--orb-glow))) 0%,
-    transparent 65%);
-  filter: blur(10px);
+    hsl(212 100% 65% / calc(0.55 * var(--orb-glow))) 0%,
+    hsl(252 100% 70% / calc(0.25 * var(--orb-glow))) 35%,
+    transparent 70%);
+  filter: blur(20px);
+  mix-blend-mode: screen;
+  -webkit-mask: radial-gradient(circle, black 30%, transparent 75%);
+          mask: radial-gradient(circle, black 30%, transparent 75%);
   animation: alexOrbBreath var(--orb-breath) ease-in-out infinite;
 }
 
@@ -354,15 +361,16 @@ const ALEX_ORB_CSS = `
 }
 
 .alex-orb__chroma {
-  inset: 10% !important;
-  border: 1px solid;
+  inset: 8% !important;
   background: transparent;
   mix-blend-mode: screen;
-  opacity: var(--orb-chroma);
-  filter: blur(0.5px);
+  opacity: calc(var(--orb-chroma) * 1.4);
+  filter: blur(3px);
+  -webkit-mask: radial-gradient(circle, transparent 58%, black 64%, black 70%, transparent 78%);
+          mask: radial-gradient(circle, transparent 58%, black 64%, black 70%, transparent 78%);
 }
-.alex-orb__chroma--r { border-color: hsl(0 100% 65%); transform: translate(1px, 0); }
-.alex-orb__chroma--c { border-color: hsl(180 100% 65%); transform: translate(-1px, 0); }
+.alex-orb__chroma--r { background: radial-gradient(circle, hsl(0 100% 65% / 0.85), transparent 75%); transform: translate(1px, 0); }
+.alex-orb__chroma--c { background: radial-gradient(circle, hsl(180 100% 65% / 0.85), transparent 75%); transform: translate(-1px, 0); }
 
 .alex-orb__highlight {
   inset: 10% !important;

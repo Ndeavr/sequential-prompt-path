@@ -114,21 +114,10 @@ export default function HeroOrbMockup() {
         </div>
       </div>
 
-      {/* Sticky orb island — stays visible while transcript grows */}
-      <div
-        className={`relative z-10 mt-4 flex flex-col items-center ${
-          !isIdle ? "sticky top-0 pt-3 pb-2 backdrop-blur-md" : ""
-        }`}
-        style={
-          !isIdle
-            ? {
-                background:
-                  "linear-gradient(180deg, hsl(222 70% 4% / 0.85), hsl(222 70% 4% / 0))",
-              }
-            : undefined
-        }
-      >
-        <div className="mx-auto flex justify-center" style={{ maxWidth: 220 }}>
+      {/* Orb island — floats freely, no card, no backdrop */}
+      <div className="relative z-10 mt-8 flex flex-col items-center px-5">
+        {/* Generous breathing room so the aura never clips */}
+        <div className="relative flex items-center justify-center w-full" style={{ minHeight: 280 }}>
           <AlexMorphingOrb
             state={orbState}
             size="lg"
@@ -137,7 +126,7 @@ export default function HeroOrbMockup() {
           />
         </div>
 
-        <div className="mt-3 flex items-center gap-3">
+        <div className="mt-2 flex items-center gap-3">
           <span className="text-white text-lg font-bold tracking-[0.35em]">
             ALEX
           </span>
@@ -153,17 +142,9 @@ export default function HeroOrbMockup() {
         </div>
       </div>
 
-      {/* Inline conversation — orb is the CTA; transcript appears only when Alex speaks */}
+      {/* Inline conversation — transparent, no card chrome around the orb */}
       <div className="relative z-10 mt-6 px-5 max-w-md mx-auto">
-        <div
-          className="relative rounded-3xl border border-white/10 px-4 py-4 text-left backdrop-blur-md"
-          style={{
-            background:
-              "linear-gradient(180deg, hsl(220 50% 10% / 0.85), hsl(222 60% 6% / 0.85))",
-            boxShadow:
-              "0 30px 60px -20px hsl(212 100% 30% / 0.4), inset 0 0 0 1px hsl(212 100% 60% / 0.06)",
-          }}
-        >
+        <div className="relative px-1 py-2 text-left">
           <AlexHomepageConversation
             ref={convoRef}
             greeting={greeting}
