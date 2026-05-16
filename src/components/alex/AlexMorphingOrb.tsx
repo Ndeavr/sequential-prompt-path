@@ -200,6 +200,7 @@ export default function AlexMorphingOrb({
         <span aria-hidden className="alex-orb__halo" />
         <span aria-hidden className="alex-orb__caustics" />
         <span aria-hidden className="alex-orb__sphere" />
+        <span aria-hidden className="alex-orb__rim" />
 
         <motion.span
           aria-hidden
