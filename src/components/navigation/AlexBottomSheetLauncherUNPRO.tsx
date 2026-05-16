@@ -1,18 +1,18 @@
 /**
  * UNPRO — Alex Bottom Nav Orb
- * Taps navigates directly to /alex and starts voice.
- * No popup/bottom sheet.
+ * Taps starts Alex voice overlay inline.
+ * No page navigation.
  */
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 export default function AlexBottomSheetLauncherUNPRO() {
-  const navigate = useNavigate();
+  const { openAlex } = useAlexVoice();
 
   return (
     <button
-      onClick={() => navigate("/alex/voice")}
+      onClick={() => openAlex("general", "Navigation mobile")}
       className="relative flex flex-col items-center justify-center gap-0.5 flex-1 py-1"
       aria-label="Alex"
     >
