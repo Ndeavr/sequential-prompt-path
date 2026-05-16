@@ -828,6 +828,8 @@ function ConfirmRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+function AippRevealSection({
   aipp,
   revealed,
 }: {
