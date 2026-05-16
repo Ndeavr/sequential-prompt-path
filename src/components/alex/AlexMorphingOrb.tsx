@@ -142,14 +142,21 @@ export default function AlexMorphingOrb({
   return (
     <button
       type="button"
-      onClick={handleClick}
+      {...handlers}
       aria-label={ariaLabel}
       className={cn(
         "alex-orb group relative inline-block bg-transparent border-0 p-0 m-0 align-middle",
         "cursor-pointer select-none focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-8 focus-visible:outline-blue-400/40",
         className,
       )}
-      style={cssVars}
+      style={{
+        ...cssVars,
+        touchAction: "manipulation",
+        transform: `translate(${followX}px, ${followY}px) scale(${longPressScale})`,
+        transition: gesture.isGestureActive
+          ? "transform 60ms linear"
+          : "transform 280ms cubic-bezier(.2,.8,.2,1)",
+      }}
     >
       <style>{ALEX_ORB_CSS}</style>
 
@@ -185,25 +192,15 @@ export default function AlexMorphingOrb({
 
       {/* Drift wrapper — whole orb breathes positionally */}
       <span aria-hidden className="alex-orb__drift">
-        {/* Atmosphere — distorted nebula, far behind */}
         <span
           className="alex-orb__atmosphere"
           style={{ filter: `url(#orb-turb-${filterId})` }}
         />
-
-        {/* Nebula cloud */}
         <span aria-hidden className="alex-orb__nebula" />
-
-        {/* Aura halo */}
         <span aria-hidden className="alex-orb__halo" />
-
-        {/* Caustics shimmer (no hard rim) */}
         <span aria-hidden className="alex-orb__caustics" />
-
-        {/* Core translucent sphere */}
         <span aria-hidden className="alex-orb__sphere" />
 
-        {/* Plasma blobs */}
         <motion.span
           aria-hidden
           className="alex-orb__plasma alex-orb__plasma--a"
@@ -221,24 +218,20 @@ export default function AlexMorphingOrb({
         <span aria-hidden className="alex-orb__plasma alex-orb__plasma--b" />
         <span aria-hidden className="alex-orb__plasma alex-orb__plasma--c" />
 
-        {/* Chromatic aberration rings — AI hologram feel */}
         <span aria-hidden className="alex-orb__chroma alex-orb__chroma--r" />
         <span aria-hidden className="alex-orb__chroma alex-orb__chroma--c" />
 
-        {/* Specular highlight */}
         <span aria-hidden className="alex-orb__highlight" />
 
-        {/* Inner stars — depth */}
         <span aria-hidden className="alex-orb__star alex-orb__star--1" />
         <span aria-hidden className="alex-orb__star alex-orb__star--2" />
         <span aria-hidden className="alex-orb__star alex-orb__star--3" />
         <span aria-hidden className="alex-orb__star alex-orb__star--4" />
 
-        {/* Thinking shimmer */}
         {state === "thinking" && <span aria-hidden className="alex-orb__shimmer" />}
       </span>
 
-      {/* Ripple on tap */}
+      {/* Ripple on tap / gesture-recognised */}
       {ripple > 0 && (
         <motion.span
           key={ripple}
@@ -249,6 +242,28 @@ export default function AlexMorphingOrb({
           transition={{ duration: 0.8, ease: "easeOut" }}
         />
       )}
+
+      {/* Recognised-direction flash arrow tint */}
+      {recognisedDir && (
+        <motion.span
+          aria-hidden
+          className="alex-orb__ripple"
+          initial={{ scale: 0.7, opacity: 0.7 }}
+          animate={{ scale: 1.6, opacity: 0 }}
+          transition={{ duration: 0.55, ease: "easeOut" }}
+          style={{
+            borderColor: "hsl(252 100% 75% / 0.85)",
+            boxShadow: "0 0 40px hsl(252 100% 70% / 0.65)",
+          }}
+        />
+      )}
+
+      {/* Radial gesture menu (long-press) */}
+      <AlexGestureMenu
+        open={gesture.isGestureActive}
+        direction={gesture.gestureDirection}
+        orbSize={px}
+      />
     </button>
   );
 }
