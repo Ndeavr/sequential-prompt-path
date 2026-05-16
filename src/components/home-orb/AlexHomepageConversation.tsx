@@ -20,8 +20,8 @@ import { Send } from "lucide-react";
 import AlexInlineTranscript, {
   type AlexInlineMessage,
 } from "./AlexInlineTranscript";
-import { useAlexVoice as useAlexTTS } from "@/features/alex/hooks/useAlexVoice";
 import { prepareAlexSpeechText } from "@/lib/prepareAlexSpeechText";
+import { elevenlabsService } from "@/features/alex/services/elevenlabsService";
 
 export type AlexState = "idle" | "listening" | "thinking" | "speaking" | "error";
 
@@ -106,11 +106,17 @@ export default forwardRef<AlexHomepageConversationHandle, Props>(
     const hasGreetedRef = useRef(false);
     const greetingInflight = useRef(false);
 
-    const { speak, unlockAudio } = useAlexTTS();
-
     useEffect(() => {
       onStateChange?.(state);
     }, [state, onStateChange]);
+
+    const speakSentence = useCallback(async (sentence: string) => {
+      await elevenlabsService.speak(
+        prepareAlexSpeechText(sentence, "fr"),
+        () => setState("speaking"),
+        () => setState("idle"),
+      );
+    }, []);
 
     /**
      * Speak text sentence-by-sentence, revealing each line before its audio chunk.
@@ -125,9 +131,9 @@ export default forwardRef<AlexHomepageConversationHandle, Props>(
         for (const sentence of sentences) {
           setLiveSpoken((prev) => [...prev, sentence]);
           try {
-            await speak(prepareAlexSpeechText(sentence, "fr"));
+            await speakSentence(sentence);
           } catch {
-            /* TTS errors are logged inside the hook */
+            setState("idle");
           }
         }
 
@@ -141,20 +147,20 @@ export default forwardRef<AlexHomepageConversationHandle, Props>(
         setLiveSpoken([]);
         setState("idle");
       },
-      [speak],
+      [speakSentence],
     );
 
     const greet = useCallback(async () => {
       if (hasGreetedRef.current || greetingInflight.current) return;
       greetingInflight.current = true;
       try {
-        await unlockAudio();
+        elevenlabsService.init();
         await speakProgressive(greeting);
         hasGreetedRef.current = true;
       } finally {
         greetingInflight.current = false;
       }
-    }, [greeting, speakProgressive, unlockAudio]);
+    }, [greeting, speakProgressive]);
 
     const sendUser = useCallback(
       async (text: string) => {

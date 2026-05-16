@@ -14,11 +14,13 @@ import AlexHomepageConversation, {
 } from "./AlexHomepageConversation";
 import { useActiveRole } from "@/contexts/ActiveRoleContext";
 import ContractorModeBadge from "@/components/layout/ContractorModeBadge";
+import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 export default function HeroOrbMockup() {
   const convoRef = useRef<AlexHomepageConversationHandle>(null);
   const [alexState, setAlexState] = useState<AlexState>("idle");
   const { activeRole } = useActiveRole();
+  const { openAlex } = useAlexVoice();
   const isContractor = activeRole === "contractor";
 
   const isIdle = alexState === "idle";
@@ -44,7 +46,10 @@ export default function HeroOrbMockup() {
       ? "Pause"
       : "Online";
 
-  const handleStart = () => convoRef.current?.start();
+  const handleStart = () => {
+    const feature = isContractor ? "contractor" : "homeowner";
+    openAlex(feature, isContractor ? "Entrepreneur UNPRO" : "Accueil UNPRO");
+  };
 
   const greeting = isContractor
     ? "Bonjour. Je suis Alex d'UNPRO. Voyons ensemble comment faire évoluer votre entreprise."

@@ -14,9 +14,9 @@ import { useAlexVoiceLockedStore } from "@/stores/alexVoiceLockedStore";
 import { useAlexChatFallbackStore } from "@/stores/alexChatFallbackStore";
 import { alexLog } from "../utils/alexDebug";
 
-export const TTS_TIMEOUT_MS = 8000;
-export const TTS_SLOW_MS = 6000;
-export const ALEX_FROZEN_MS = 10000;
+export const TTS_TIMEOUT_MS = 20000;
+export const TTS_SLOW_MS = 12000;
+export const ALEX_FROZEN_MS = 26000;
 export const MAX_TTS_RETRIES = 1;
 
 export function isVoiceTemporarilyDisabled(): boolean {

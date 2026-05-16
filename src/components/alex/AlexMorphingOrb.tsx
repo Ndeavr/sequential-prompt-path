@@ -255,7 +255,11 @@ const ALEX_ORB_CSS = `
   overflow: visible !important;
   padding: 0 !important;
   margin: 0 !important;
-  filter: grayscale(var(--orb-gray));
+  filter: none !important;
+  isolation: isolate;
+  contain: none !important;
+  -webkit-mask-image: none !important;
+          mask-image: none !important;
 }
 .alex-orb > span,
 .alex-orb__drift > span { position: absolute; inset: 0; border-radius: 9999px; pointer-events: none; }
@@ -264,35 +268,36 @@ const ALEX_ORB_CSS = `
 .alex-orb__atmosphere {
   inset: -80% !important;
   background: radial-gradient(circle at 50% 50%,
-    hsl(212 100% 65% / 0.30),
-    hsl(252 100% 70% / 0.18) 35%,
-    transparent 65%);
+    hsl(212 100% 65% / 0.18) 0%,
+    hsl(252 100% 70% / 0.10) 30%,
+    hsl(212 100% 65% / 0.04) 48%,
+    transparent 72%);
   opacity: calc(0.85 * var(--orb-glow));
   mix-blend-mode: screen;
-  filter: blur(28px);
-  -webkit-mask: radial-gradient(circle, black 25%, transparent 75%);
-          mask: radial-gradient(circle, black 25%, transparent 75%);
+  filter: none !important;
+  -webkit-mask: none !important;
+          mask: none !important;
 }
 
 .alex-orb__nebula {
   inset: -25% !important;
   background:
-    radial-gradient(ellipse 60% 50% at 30% 30%, hsl(195 100% 70% / 0.40), transparent 60%),
-    radial-gradient(ellipse 55% 45% at 75% 70%, hsl(265 100% 75% / 0.38), transparent 60%);
-  filter: blur(22px) saturate(var(--orb-sat));
+    radial-gradient(ellipse 60% 50% at 30% 30%, hsl(195 100% 70% / 0.24), transparent 62%),
+    radial-gradient(ellipse 55% 45% at 75% 70%, hsl(265 100% 75% / 0.20), transparent 62%);
+  filter: saturate(var(--orb-sat));
   mix-blend-mode: screen;
-  -webkit-mask: radial-gradient(circle, black 35%, transparent 75%);
-          mask: radial-gradient(circle, black 35%, transparent 75%);
+  -webkit-mask: radial-gradient(circle, black 0%, black 52%, transparent 76%);
+          mask: radial-gradient(circle, black 0%, black 52%, transparent 76%);
   animation: alexOrbNebula calc(var(--orb-plasma) * 2) ease-in-out infinite;
 }
 
 .alex-orb__halo {
   inset: -45% !important;
   background: radial-gradient(circle,
-    hsl(212 100% 65% / calc(0.55 * var(--orb-glow))) 0%,
-    hsl(252 100% 70% / calc(0.25 * var(--orb-glow))) 35%,
+    hsl(212 100% 65% / calc(0.28 * var(--orb-glow))) 0%,
+    hsl(252 100% 70% / calc(0.13 * var(--orb-glow))) 35%,
     transparent 70%);
-  filter: blur(20px);
+  filter: none !important;
   mix-blend-mode: screen;
   -webkit-mask: radial-gradient(circle, black 30%, transparent 75%);
           mask: radial-gradient(circle, black 30%, transparent 75%);
@@ -351,7 +356,7 @@ const ALEX_ORB_CSS = `
 .alex-orb__plasma--a {
   background: radial-gradient(circle at 35% 40%, hsl(195 100% 78% / 0.7), hsl(212 100% 60% / 0.25) 45%, transparent 75%);
   border-radius: 60% 40% 55% 45% / 50% 60% 40% 50%;
-  filter: blur(14px);
+  filter: none !important;
   transform: scale(var(--orb-plasma-scale));
   animation: alexOrbMorphA var(--orb-plasma) ease-in-out infinite;
 }
@@ -359,14 +364,14 @@ const ALEX_ORB_CSS = `
   inset: 20% !important;
   background: radial-gradient(circle at 70% 65%, hsl(265 100% 78% / 0.55), hsl(252 90% 55% / 0.2) 50%, transparent 80%);
   border-radius: 45% 55% 40% 60% / 60% 40% 55% 45%;
-  filter: blur(16px);
+  filter: none !important;
   animation: alexOrbMorphB calc(var(--orb-plasma) * 1.4) ease-in-out infinite reverse;
 }
 .alex-orb__plasma--c {
   inset: 34% !important;
   background: radial-gradient(circle, hsl(180 100% 85% / 0.5), transparent 70%);
   border-radius: 55% 45% 60% 40%;
-  filter: blur(8px);
+  filter: none !important;
   animation: alexOrbDart calc(var(--orb-plasma) * 0.8) ease-in-out infinite;
 }
 
