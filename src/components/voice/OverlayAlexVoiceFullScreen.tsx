@@ -186,12 +186,12 @@ export default function OverlayAlexVoiceFullScreen() {
           const seed = hint
             ? `Bonjour Alex. ${hint}`
             : "Bonjour Alex.";
-          console.log("[VoiceOverlay] 👋 No first audio in 2.5s — sending nudge:", seed);
+          console.log("[VoiceOverlay] 👋 No first audio in 1.2s — sending nudge:", seed);
           (conversation as any)?.sendUserMessage?.(seed);
         } catch (e) {
           console.warn("[VoiceOverlay] nudge failed:", e);
         }
-      }, 2500);
+      }, 1200);
     },
     onDisconnect: () => {
       const s = getStore();
