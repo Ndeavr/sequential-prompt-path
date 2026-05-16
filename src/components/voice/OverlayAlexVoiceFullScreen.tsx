@@ -49,6 +49,16 @@ function deriveMode(feature: string | undefined): "homeowner" | "contractor" | "
   return "general";
 }
 
+function deriveOrbStateV2(state: LockedVoiceState, isSpeaking: boolean): AlexOrbStateV2 {
+  if (state === "error_recoverable" || state === "error_fatal") return "error";
+  if (isSpeaking || state === "speaking") return "speaking";
+  if (state === "processing_stt" || state === "processing_response" ||
+      state === "stabilizing" || state === "opening_session" || state === "requesting_permission") return "thinking";
+  if (state === "listening" || state === "awaiting_user" ||
+      state === "capturing_voice" || state === "session_ready") return "listening";
+  return "idle";
+}
+
 export default function OverlayAlexVoiceFullScreen() {
   const store = useAlexVoiceLockedStore();
   const { user } = useAuth();
