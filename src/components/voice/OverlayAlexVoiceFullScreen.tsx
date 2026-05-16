@@ -96,17 +96,12 @@ export default function OverlayAlexVoiceFullScreen() {
   const buildGreeting = useCallback(() => {
     const hour = new Date().getHours();
     const time = hour >= 5 && hour < 18 ? "Bonjour" : "Bonsoir";
-    const name = firstName ? ` ${firstName}` : "";
-
-    // Use contextHint from store for contextual greeting
-    const hint = getStore().contextHint;
-    if (hint) {
-      return `${time}${name}. Parfait, on regarde votre demande — ${hint}. Dites-m'en un peu plus en quelques mots.`;
-    }
+    // Greeting is intentionally short, human, and never exposes internal route
+    // names or context hints (no "Accueil UNPRO", "Navigation mobile", etc.).
     if (firstName) {
-      return `${time} ${firstName}. Heureuse de vous retrouver — quel projet avance aujourd'hui?`;
+      return `${time} ${firstName}. Je vous écoute.`;
     }
-    return `${time}. Je suis Alex d'UNPRO. Quel problème puis-je vous aider à régler aujourd'hui?`;
+    return `${time}. Décrivez-moi votre besoin en quelques mots.`;
   }, [firstName]);
 
   // ElevenLabs voice
