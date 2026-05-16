@@ -31,13 +31,14 @@ import {
   getActiveSessionId,
 } from "@/services/voiceRuntimeSingleton";
 import { elevenlabsService } from "@/features/alex/services/elevenlabsService";
+import { hasGreeted, markGreeted, markVoiceStarted } from "@/lib/alexSessionState";
 
 const STABILIZATION_MS = 4000;
 const HEARTBEAT_INTERVAL_MS = 2500; // Slower → less battery
 const BOOT_TIMEOUT_MS = 25000; // Cold-start absorbing (edge function + ElevenLabs handshake)
 const FIRST_AUDIO_TIMEOUT_MS = 6500; // Plus tolérant cold-start mobile avant retry
 const TOKEN_SLOW_THRESHOLD_MS = 2000; // Spec: show "Connexion d'Alex…" if >2s
-const MAX_AUTO_RETRIES = 2; // 1 boot + 2 silent = 3 attempts → fallback chat
+const MAX_AUTO_RETRIES = 0; // Strictly event-driven — never silently retry.
 
 // Helper to always get fresh state
 const getStore = () => useAlexVoiceLockedStore.getState();
