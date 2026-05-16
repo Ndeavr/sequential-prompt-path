@@ -286,7 +286,7 @@ const ProblemLocationPage = () => {
             }))}
           />
 
-          <AeoBlocks pageUrl={`https://unpro.ca/probleme/${params.problem}/${params.city}`} />
+          <AeoBlocks pageUrl={`https://unpro.ca/probleme/${problem}/${city}`} />
         </div>
       </article>
     </MainLayout>
