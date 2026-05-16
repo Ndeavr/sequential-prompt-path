@@ -432,6 +432,19 @@ function StepCard({ children }: { children: React.ReactNode }) {
   );
 }
 
+function normalizeWebsite(v: string): string {
+  const t = v.trim();
+  if (!t) return "";
+  if (/^https?:\/\//i.test(t)) return t.toLowerCase();
+  return `https://${t.toLowerCase()}`;
+}
+function normalizePhone(v: string): string {
+  const digits = v.replace(/\D/g, "").slice(0, 10);
+  if (digits.length < 4) return v.trim();
+  if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
 function Step0Identification({ form, update }: { form: FormState; update: <K extends keyof FormState>(k: K, v: FormState[K]) => void }) {
   return (
     <div className="space-y-5">
@@ -446,6 +459,7 @@ function Step0Identification({ form, update }: { form: FormState; update: <K ext
           autoFocus
           value={form.company_name}
           onChange={(e) => update("company_name", e.target.value)}
+          onBlur={(e) => update("company_name", e.target.value.trim())}
           placeholder="ex : Toiture Tremblay inc."
           className="bg-white/5 border-white/10"
         />
@@ -455,7 +469,12 @@ function Step0Identification({ form, update }: { form: FormState; update: <K ext
           <Input
             value={form.website}
             onChange={(e) => update("website", e.target.value)}
+            onBlur={(e) => update("website", normalizeWebsite(e.target.value))}
             placeholder="toituretremblay.ca"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            inputMode="url"
             className="bg-white/5 border-white/10"
           />
         </FieldGroup>
@@ -463,7 +482,9 @@ function Step0Identification({ form, update }: { form: FormState; update: <K ext
           <Input
             value={form.phone}
             onChange={(e) => update("phone", e.target.value)}
-            placeholder="514 555 1234"
+            onBlur={(e) => update("phone", normalizePhone(e.target.value))}
+            placeholder="(514) 555-1234"
+            inputMode="tel"
             className="bg-white/5 border-white/10"
           />
         </FieldGroup>
