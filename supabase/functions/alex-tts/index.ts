@@ -71,8 +71,27 @@ async function callElevenLabs(
 }
 
 function shouldFallback(errorBody: string): boolean {
-  const lower = errorBody.toLowerCase();
-  return FALLBACK_TRIGGER_ERRORS.some((e) => lower.includes(e));
+  const lower = (errorBody || "").toLowerCase();
+  // Default: fallback on any failure unless it's clearly a malformed request.
+  return !NON_RETRYABLE_ERRORS.some((e) => lower.includes(e));
+}
+
+async function logPing(
+  supabase: ReturnType<typeof createClient>,
+  kind: "success" | "failure",
+  voiceId: string,
+  detail: Record<string, unknown>
+) {
+  try {
+    await supabase.from("voice_health_pings").insert({
+      kind,
+      voice_id: voiceId,
+      surface: "alex-tts",
+      detail,
+    });
+  } catch {
+    /* never block TTS on ping failure */
+  }
 }
 
 serve(async (req) => {
