@@ -21,6 +21,7 @@ const PageImpactCounter = lazy(() => import("@/pages/PageImpactCounter"));
 
 // Extraction Engine
 const PageAdminExtractionQueue = lazy(() => import("@/pages/admin/PageAdminExtractionQueue"));
+const PageAdminAeoCockpit = lazy(() => import("@/pages/admin/PageAdminAeoCockpit"));
 const PageFacebookExtractionEngine = lazy(() => import("@/pages/admin/PageFacebookExtractionEngine"));
 const PageAdminCoverageCityDomain = lazy(() => import("@/pages/admin/PageAdminCoverageCityDomain"));
 
