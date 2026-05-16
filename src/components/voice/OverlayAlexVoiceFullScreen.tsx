@@ -439,10 +439,10 @@ export default function OverlayAlexVoiceFullScreen() {
           }
         }, TOKEN_SLOW_THRESHOLD_MS);
 
-        // Connect ElevenLabs
+        // Connect ElevenLabs — greet only on the FIRST session boot.
         setBootStep("connecting");
-        const greeting = buildGreetingRef.current();
-        console.log("[ALEX VOICE] Starting session, greeting:", greeting);
+        const greeting = shouldGreet ? buildGreetingRef.current() : "";
+        console.log("[ALEX VOICE] Starting session, greeting:", greeting || "(silent — already greeted)");
         await startRef.current({ initialGreeting: greeting, mode: deriveMode(getStore().feature) });
 
         // After await: check session still owns the runtime + overlay open
