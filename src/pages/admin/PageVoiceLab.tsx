@@ -114,22 +114,35 @@ export default function PageVoiceLab() {
       stop();
       setLoadingId(voice.id + ":" + language);
 
-      const { data, error } = await supabase.functions.invoke("alex-voice-test", {
-        body: {
-          voice_id: voice.voice_id,
-          language,
-          test_text: language === "fr" ? SAMPLE_FR : SAMPLE_EN,
-          stability,
-          similarity_boost: similarity,
-          style,
-          speed,
-        },
-      });
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/alex-voice-test`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            voice_id: voice.voice_id,
+            language,
+            test_text: language === "fr" ? SAMPLE_FR : SAMPLE_EN,
+            stability,
+            similarity_boost: similarity,
+            style,
+            speed,
+          }),
+        }
+      );
 
-      if (error) throw error;
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => "");
+        throw new Error(`TTS ${resp.status} ${errText.slice(0, 200)}`);
+      }
 
-      // Edge function returns audio/mpeg blob via invoke → data is Blob
-      const blob = data instanceof Blob ? data : new Blob([data as any], { type: "audio/mpeg" });
+      const blob = await resp.blob();
+      if (!blob.size) throw new Error("Audio vide");
+
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
       audioRef.current = audio;
@@ -139,8 +152,10 @@ export default function PageVoiceLab() {
         URL.revokeObjectURL(url);
       };
       audio.onerror = () => {
+        console.error("[VoiceLab] audio.onerror", { voiceId: voice.voice_id, language });
         toast.error("Lecture impossible — fallback voix par défaut.");
         setPlayingId(null);
+        URL.revokeObjectURL(url);
       };
       await audio.play();
     } catch (e: any) {
