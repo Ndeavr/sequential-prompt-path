@@ -95,29 +95,7 @@ export default function HeroOrbMockup() {
         aria-hidden
       />
 
-      {/* Top brand row */}
-      <div className="relative z-10 flex items-center justify-between px-5 pt-5 max-w-2xl mx-auto">
-        <div className="flex items-center gap-2 text-white">
-          <svg
-            viewBox="0 0 24 24"
-            className="w-6 h-6"
-            fill="none"
-            stroke="hsl(212 100% 60%)"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-          >
-            <path d="M3 11 12 3l9 8" />
-            <path d="M5 10v10h14V10" />
-          </svg>
-          <span className="font-bold tracking-wide">UNPRO</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <ContractorModeBadge />
-          {!isContractor && <span className="text-white/60 text-xs">Québec · IA</span>}
-        </div>
-      </div>
+      {/* Top row removed — redundant with global header */}
 
       {/* Orb island — floats freely, no card, no backdrop */}
       <div className="relative z-10 mt-8 flex flex-col items-center px-5">
