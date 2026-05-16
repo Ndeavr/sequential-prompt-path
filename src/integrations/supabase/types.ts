@@ -64077,6 +64077,33 @@ export type Database = {
           },
         ]
       }
+      voice_health_pings: {
+        Row: {
+          created_at: string
+          detail: Json
+          id: string
+          kind: string
+          surface: string | null
+          voice_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          detail?: Json
+          id?: string
+          kind: string
+          surface?: string | null
+          voice_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          detail?: Json
+          id?: string
+          kind?: string
+          surface?: string | null
+          voice_id?: string | null
+        }
+        Relationships: []
+      }
       voice_preferences: {
         Row: {
           accent_profile: string | null
