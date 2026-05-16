@@ -403,8 +403,19 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           ?? ALEX_VOICE_DEFAULTS.voiceId;
         lockedVoiceIdRef.current = resolvedVoiceId;
 
+        const EXPECTED_VOICE_ID = "YxrwjAKoUKULGd0g8K9Y"; // Sophia — locked Alex production voice
+        if (resolvedVoiceId !== EXPECTED_VOICE_ID) {
+          console.warn(
+            `[ElevenLabs V8] ⚠️ Voice mismatch — expected ${EXPECTED_VOICE_ID} (Sophia), got ${resolvedVoiceId}. ` +
+            `Check voice_configs.voice_id and the ElevenLabs agent (${data?.agentId}) Voice override in the dashboard.`,
+          );
+        }
+
         console.log("[ElevenLabs V8] Starting session", {
+          agentId: data?.agentId,
           voiceId: resolvedVoiceId,
+          expectedVoiceId: EXPECTED_VOICE_ID,
+          voiceMatches: resolvedVoiceId === EXPECTED_VOICE_ID,
           mode: options?.mode ?? "general",
           attempt,
           hasMemory: Boolean(memory),

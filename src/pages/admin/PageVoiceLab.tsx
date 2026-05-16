@@ -28,14 +28,14 @@ type VoiceCard = {
 
 const VOICES: VoiceCard[] = [
   {
-    id: "sophia-new",
-    name: "Sophia (Nouvelle voix premium)",
+    id: "sophia-prod",
+    name: "Sophia (Production actuelle)",
     voice_id: "YxrwjAKoUKULGd0g8K9Y",
     gender: "female",
     accent: "Neutre international",
     tone: "Premium chaleureux",
     languages: ["fr", "en"],
-    description: "Concierge premium — chaleur intelligente, énergie stable.",
+    description: "Voix de production verrouillée — concierge premium chaleureuse.",
   },
   {
     id: "clara",
@@ -58,14 +58,14 @@ const VOICES: VoiceCard[] = [
     description: "Calme, intelligente, ton luxe assuré.",
   },
   {
-    id: "alex-prod",
-    name: "Alex (Production actuelle)",
+    id: "alex-legacy",
+    name: "Alex (Ancienne voix — archive)",
     voice_id: "or4EV8aZq78KWcXw48wd",
     gender: "female",
     accent: "Québec premium",
     tone: "Concierge décisive",
     languages: ["fr", "en"],
-    description: "Voix de production verrouillée.",
+    description: "Ancienne voix de production, conservée pour comparaison.",
   },
   {
     id: "daniel",
