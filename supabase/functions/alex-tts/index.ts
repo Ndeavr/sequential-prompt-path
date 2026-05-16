@@ -169,6 +169,11 @@ serve(async (req) => {
           fallback_applied: fallbackUsed,
         }).catch(() => {});
       }
+      await logPing(supabase, "failure", activeVoiceId, {
+        status: result.status,
+        error: result.errorBody?.slice(0, 200),
+        fallback_attempted: fallbackUsed,
+      });
 
       // Return 200 with fallback signal so client doesn't crash; client falls back silently.
       return new Response(JSON.stringify({
@@ -196,6 +201,10 @@ serve(async (req) => {
         },
       }).catch(() => {});
     }
+    await logPing(supabase, "success", activeVoiceId, {
+      fallback_used: fallbackUsed,
+      text_length: text.length,
+    });
 
     return new Response(result.audio!, {
       headers: {
