@@ -145,8 +145,9 @@ export default function AlexMorphingOrb({
       {...handlers}
       aria-label={ariaLabel}
       className={cn(
-        "alex-orb group relative inline-block bg-transparent border-0 p-0 m-0 align-middle",
-        "cursor-pointer select-none focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-8 focus-visible:outline-blue-400/40",
+        "alex-orb group relative inline-block bg-transparent border-0 p-0 m-0 align-middle rounded-full",
+        // No rectangular focus ring — it reads as a square around the orb on mobile.
+        "cursor-pointer select-none outline-none focus:outline-none focus-visible:outline-none",
         className,
       )}
       style={{
@@ -258,9 +259,13 @@ const ALEX_ORB_CSS = `
   filter: none !important;
   isolation: isolate;
   contain: none !important;
+  outline: none !important;
   -webkit-mask-image: none !important;
           mask-image: none !important;
 }
+.alex-orb:focus,
+.alex-orb:focus-visible,
+.alex-orb:active { outline: none !important; box-shadow: none !important; }
 .alex-orb > span,
 .alex-orb__drift > span { position: absolute; inset: 0; border-radius: 9999px; pointer-events: none; }
 .alex-orb__drift { position: absolute; inset: 0; display: block; overflow: visible; will-change: transform; animation: alexOrbDrift var(--orb-drift) ease-in-out infinite; }
