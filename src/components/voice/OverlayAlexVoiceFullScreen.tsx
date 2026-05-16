@@ -399,31 +399,8 @@ export default function OverlayAlexVoiceFullScreen() {
         if (firstAudioReceivedRef.current || !s.isOverlayOpen) return;
         if (!["stabilizing", "opening_session", "session_ready"].includes(s.machineState)) return;
 
-        if (autoRetryCountRef.current < MAX_AUTO_RETRIES) {
-          autoRetryCountRef.current += 1;
-          const attempt = alexVoiceService.incrementRetry();
-          const backoff = attempt === 1 ? 500 : attempt === 2 ? 1500 : 3000;
-          console.log(`[ALEX VOICE] 🔁 Silent retry ${attempt} in ${backoff}ms (no audio in ${FIRST_AUDIO_TIMEOUT_MS}ms)`);
-          try { stop(); } catch {}
-          setTimeout(() => {
-            if (!getStore().isOverlayOpen) return;
-            hasConnectedRef.current = false;
-            firstAudioReceivedRef.current = false;
-            startRef.current({ initialGreeting: buildGreetingRef.current(), force: true, mode: deriveMode(getStore().feature) })
-              .then(() => {
-                bootTimeRef.current = Date.now();
-                armFirstAudioTimer();
-              })
-              .catch((e: any) => {
-                console.error("[ALEX VOICE] retry failed:", e);
-                bailToChat("retry_failed");
-              });
-          }, backoff);
-          return;
-        }
-
-        // Out of retries → bail to chat directly (no red dead-end)
-        bailToChat("no_first_audio_final");
+        // Strictly event-driven: never silently retry. Go straight to fallback.
+        bailToChat("no_first_audio");
       }, FIRST_AUDIO_TIMEOUT_MS);
     };
 
