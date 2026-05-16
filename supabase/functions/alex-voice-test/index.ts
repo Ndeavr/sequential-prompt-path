@@ -22,22 +22,26 @@ serve(async (req) => {
     const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
     if (!ELEVENLABS_API_KEY) throw new Error("ELEVENLABS_API_KEY not configured");
 
-    const { profile_key, language, test_text } = await req.json();
+    const { profile_key, language, test_text, voice_id, stability, similarity_boost, style, speed } = await req.json();
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: profile } = await supabase
-      .from("alex_voice_profiles")
-      .select("*")
-      .eq("profile_key", profile_key || "homeowner")
-      .eq("language", language || "fr")
-      .eq("is_active", true)
-      .single();
+    let profile: any = null;
+    if (!voice_id) {
+      const { data } = await supabase
+        .from("alex_voice_profiles")
+        .select("*")
+        .eq("profile_key", profile_key || "homeowner")
+        .eq("language", language || "fr")
+        .eq("is_active", true)
+        .single();
+      profile = data;
+    }
 
-    const voiceId = profile?.voice_id_primary || "XB0fDUnXU5powFXDhCwa";
+    const voiceId = voice_id || profile?.voice_id_primary || "XB0fDUnXU5powFXDhCwa";
     const text = test_text || DEFAULT_PHRASES[language || "fr"] || DEFAULT_PHRASES.fr;
 
     const response = await fetch(
@@ -52,11 +56,11 @@ serve(async (req) => {
           text,
           model_id: "eleven_multilingual_v2",
           voice_settings: {
-            stability: profile?.stability ?? 0.43,
-            similarity_boost: profile?.similarity_boost ?? 0.78,
-            style: profile?.style_exaggeration ?? 0.28,
+            stability: stability ?? profile?.stability ?? 0.52,
+            similarity_boost: similarity_boost ?? profile?.similarity_boost ?? 0.78,
+            style: style ?? profile?.style_exaggeration ?? 0.30,
             use_speaker_boost: true,
-            speed: profile?.speech_rate ?? 1.0,
+            speed: speed ?? profile?.speech_rate ?? 1.0,
           },
         }),
       }

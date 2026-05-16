@@ -26,10 +26,13 @@ export interface AlexVoiceTuning {
 
 // Production tuning — LOCKED. Same for every mode, every turn.
 // Do not vary per emotion, per turn, or per surface.
+// Energetic premium tuning — prevents "dying / sad cadence" drift mid-session.
+// Higher stability keeps pacing consistent end-to-end; low style avoids drama;
+// speed locked at 1.0 (never <0.98 or >1.03).
 const BASE_TUNING = {
-  stability: 0.50,
-  similarity_boost: 0.75,
-  style: 0.35,
+  stability: 0.52,
+  similarity_boost: 0.78,
+  style: 0.30,
   use_speaker_boost: true,
   speed: 1.0,
 } as const;

@@ -53,7 +53,7 @@ const PROMPT_TEXT = {
 
 export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
   const {
-    idleThresholdMs = 15_000,
+    idleThresholdMs = 7_000,
     pauseDelayAfterPromptMs = 3_000,
     onPresencePrompt,
     onPause,
@@ -69,6 +69,10 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const promptSentRef = useRef(false);
+  // Session-lifetime lock: once Alex asked "are you still there?" ONCE in this
+  // session, never ask again — not after activity, not after resume.
+  // Only `startMonitoring` (fresh session) resets it.
+  const sessionPromptUsedRef = useRef(false);
   const mountedRef = useRef(true);
 
   const clearTimers = useCallback(() => {
@@ -111,17 +115,21 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
     onPause?.();
   }, [sessionId, silenceCycle, logEvent, clearTimers, onPause]);
 
-  // Start idle detection — single prompt then immediate pause
+  // Start idle detection — single prompt PER SESSION then immediate pause
   const startIdleTimer = useCallback(() => {
     clearTimers();
+    // If the single per-session prompt was already used, never re-arm.
+    if (sessionPromptUsedRef.current) return;
     promptSentRef.current = false;
 
     idleTimerRef.current = setTimeout(() => {
       if (!mountedRef.current) return;
       if (promptSentRef.current) return;
+      if (sessionPromptUsedRef.current) return;
 
-      // Send the ONE and ONLY compassionate prompt
+      // Send the ONE and ONLY compassionate prompt for the entire session
       promptSentRef.current = true;
+      sessionPromptUsedRef.current = true;
       setStatus("idle_prompted");
       logEvent("idle_detected");
       logEvent("single_prompt_sent");
@@ -133,7 +141,6 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
         setStatus("pausing");
         logEvent("listening_stopped");
 
-        // Execute pause after a micro-delay for state propagation
         setTimeout(() => {
           if (!mountedRef.current) return;
           executePause();
@@ -145,7 +152,8 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
   /** Call on every user activity */
   const recordActivity = useCallback(() => {
     clearTimers();
-    promptSentRef.current = false;
+    // NOTE: do NOT reset promptSentRef or sessionPromptUsedRef — single-prompt
+    // is enforced for the entire session, not per cycle.
 
     if (status === "idle_prompted") {
       setStatus("active");
@@ -228,7 +236,7 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
         .then(() => {});
     }
 
-    promptSentRef.current = false;
+    // Resume keeps the per-session prompt lock — we never ask again.
     setStatus("active");
     startIdleTimer();
     onResume?.(restoredSnapshot);
@@ -237,6 +245,7 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
   const startMonitoring = useCallback(() => {
     setStatus("active");
     promptSentRef.current = false;
+    sessionPromptUsedRef.current = false; // fresh session — re-arm
     setSilenceCycle(0);
     startIdleTimer();
   }, [startIdleTimer]);
