@@ -20,7 +20,7 @@ import { alexLog } from "../utils/alexDebug";
 function handleTTSFailure(err: unknown) {
   const code = err instanceof TTSUnavailableError ? err.code : "TTS_ERROR";
   recordVoiceFailure(code);
-  const message = "La voix d'Alex est temporairement indisponible. Je continue ici.";
+  const message = "Je continue ici avec vous.";
   // Soft-degrade: mark unavailable + show notice. Do not auto-open chat overlay
   // (that would be too aggressive for a single greeting failure).
   useAlexStore.getState().markVoiceUnavailable(code, message);
