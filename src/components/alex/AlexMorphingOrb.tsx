@@ -145,8 +145,9 @@ export default function AlexMorphingOrb({
       {...handlers}
       aria-label={ariaLabel}
       className={cn(
-        "alex-orb group relative inline-block bg-transparent border-0 p-0 m-0 align-middle",
-        "cursor-pointer select-none focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-8 focus-visible:outline-blue-400/40",
+        "alex-orb group relative inline-block bg-transparent border-0 p-0 m-0 align-middle rounded-full",
+        // No rectangular focus ring — it reads as a square around the orb on mobile.
+        "cursor-pointer select-none outline-none focus:outline-none focus-visible:outline-none",
         className,
       )}
       style={{
