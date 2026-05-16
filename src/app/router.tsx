@@ -21,6 +21,7 @@ const PageImpactCounter = lazy(() => import("@/pages/PageImpactCounter"));
 
 // Extraction Engine
 const PageAdminExtractionQueue = lazy(() => import("@/pages/admin/PageAdminExtractionQueue"));
+const PageAdminAeoCockpit = lazy(() => import("@/pages/admin/PageAdminAeoCockpit"));
 const PageFacebookExtractionEngine = lazy(() => import("@/pages/admin/PageFacebookExtractionEngine"));
 const PageAdminCoverageCityDomain = lazy(() => import("@/pages/admin/PageAdminCoverageCityDomain"));
 
@@ -1133,6 +1134,7 @@ export const AppRouter = () => (
         <Route path="/admin/manual-test-send" element={<ProtectedRoute requiredRole="admin"><PageAdminManualTestSend /></ProtectedRoute>} />
         <Route path="/admin/challenge-tracker" element={<ProtectedRoute requiredRole="admin"><PageChallengeTracker /></ProtectedRoute>} />
         <Route path="/admin/email-templates" element={<ProtectedRoute requiredRole="admin"><PageAdminEmailTemplates /></ProtectedRoute>} />
+        <Route path="/admin/aeo" element={<ProtectedRoute requiredRole="admin"><PageAdminAeoCockpit /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
         <Route path="/admin/google-project-audit" element={<ProtectedRoute requiredRole="admin"><PageGoogleProjectUsageAudit /></ProtectedRoute>} />
         <Route path="/admin/omega" element={<ProtectedRoute requiredRole="admin"><PageAdminOmega /></ProtectedRoute>} />

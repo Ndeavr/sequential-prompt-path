@@ -54,13 +54,12 @@ Deno.serve(async (req) => {
     const problemBySlug = new Map((problems ?? []).map((p: any) => [p.slug, p]));
     const cityBySlug = new Map((cities ?? []).map((c: any) => [c.slug, c]));
 
-    const results: any[] = [];
-    for (const row of pending) {
+    const runOne = async (row: any) => {
       let ctx: Record<string, unknown> = {};
       if (kind === "problem_city") {
         const p = problemBySlug.get(row.problem_slug);
         const c = cityBySlug.get(row.city_slug);
-        if (!p || !c) continue;
+        if (!p || !c) return { url: row.canonical_url, ok: false, error: "missing_lookup" };
         ctx = {
           problem_slug: row.problem_slug,
           problem_label_fr: p.label_fr,
@@ -72,7 +71,7 @@ Deno.serve(async (req) => {
         };
       } else {
         const c = cityBySlug.get(row.city_slug);
-        if (!c) continue;
+        if (!c) return { url: row.canonical_url, ok: false, error: "missing_city" };
         ctx = {
           service_slug: row.service_slug,
           city_slug: row.city_slug,
@@ -80,7 +79,6 @@ Deno.serve(async (req) => {
           housing_notes_fr: c.housing_notes_fr,
         };
       }
-
       try {
         const res = await fetch(`${supabaseUrl}/functions/v1/aeo-generate-blocks`, {
           method: "POST",
@@ -88,19 +86,26 @@ Deno.serve(async (req) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
           },
-          body: JSON.stringify({
-            page_kind: kind,
-            page_url: row.canonical_url,
-            context: ctx,
-            dry_run,
-          }),
+          body: JSON.stringify({ page_kind: kind, page_url: row.canonical_url, context: ctx, dry_run }),
         });
         const json = await res.json();
-        results.push({ url: row.canonical_url, ok: json.ok, error: json.error });
+        return { url: row.canonical_url, ok: json.ok, error: json.error };
       } catch (e) {
-        results.push({ url: row.canonical_url, ok: false, error: String(e) });
+        return { url: row.canonical_url, ok: false, error: String(e) };
       }
-    }
+    };
+
+    // Parallel with concurrency cap = 5
+    const results: any[] = [];
+    const queue = [...pending];
+    const workers = Array.from({ length: Math.min(5, queue.length) }, async () => {
+      while (queue.length) {
+        const row = queue.shift();
+        if (!row) break;
+        results.push(await runOne(row));
+      }
+    });
+    await Promise.all(workers);
 
     return new Response(JSON.stringify({
       ok: true,
