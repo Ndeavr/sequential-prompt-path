@@ -1,72 +1,124 @@
-# FINAL FIX — Alex Orb + Voice (locked scope)
+# UNPRO — Production Stabilization Plan
 
-Touch only Alex orb UI, voice pipeline, overlay behavior, UNPRO pronunciation. No landing/Stripe/AIPP/auth/onboarding/outbound/schema changes.
+Scope is strictly revenue + Alex stability. No redesign, no unrelated edits. Each task ends with a verification step against the existing codebase before moving on.
 
-## 1. Orb chrome — guarantee no visible square
+---
 
-`src/components/alex/AlexMorphingOrb.tsx`
-- Add explicit `background: transparent !important; border: 0 !important; box-shadow: none !important; overflow: visible !important; border-radius: 9999px;` on the root `.alex-orb` button so no ancestor utility class (rounded-2xl, bg-white/5, border) can reintroduce a card.
-- Keep the existing layered orb visuals (atmosphere, halo, nebula, sphere, rim, plasma, chroma, highlight) — already verified circular and unclipped.
+## Phase 0 — Audit (no edits)
 
-`src/components/alex/AlexCompanionOrb.tsx`
-- Strip any wrapper styling other than positional `fixed` + z-index. Confirm no `bg-*`, `border`, or `rounded-*` on the wrapper.
+Before touching anything, inventory what already exists so we don't duplicate or break:
 
-Quick audit pass (search-only, fix where found):
-- `AlexLauncherHero.tsx`, `HeroOrbMockup.tsx`, `features/alex/AlexAssistant.tsx` — strip any leftover `bg-card`, `border`, `rounded-*`, `backdrop-blur`, `shadow-*` directly wrapping `<AlexMorphingOrb />`.
+- Outbound: `outbound-*` edge functions, `contractor_prospects`, sniper/outbound tables, `/admin/outbound`, `/admin/sniper` (memory: Sniper Outreach Engine, Outbound Autonomous Pipeline, Outbound Operations Hub).
+- Landing: `/pro/:slug`, `PageEntrepreneurDiagnosticLanding`, Nuclear Close Landing (memory).
+- Stripe: `useCheckoutPricing`, contractor plans config, Native Stripe Payment Element (memory: Checkout Architecture).
+- Alex orb/voice: `AlexMorphingOrb`, `AlexCompanionOrb`, `alexVoiceConfig`, `alexAgentOverrides`, `elevenlabsService`, `prepareAlexSpeechText`, `AlexVoiceContext`.
 
-## 2. Voice config lock
+Deliverable: a short internal map of what's already wired vs. what's missing. Build only the gaps.
 
-`src/config/alexVoiceConfig.ts`
-- Set BASE_TUNING to the spec exactly:
-  - `stability: 0.50`
-  - `similarity_boost: 0.75`
-  - `style: 0.35`
-  - `use_speaker_boost: true`
-  - `speed: 1.00`
-- Remove per-mode speed/style variation. All modes share BASE_TUNING; only `firstMessage` and optional `promptAddendum` differ.
+---
 
-`src/features/alex/voice/alexAgentOverrides.ts`
-- Already reads from config; verify no caller passes dynamic `stability/similarity/style` overrides. If any do (search `buildAlexAgentOverrides`), drop those args so tuning never drifts mid-session.
+## Task 1 — Outbound contractor agents (gap-fill)
 
-`src/features/alex/services/elevenlabsService.ts`
-- Audit for any code path that mutates voice settings between turns (emotional/contextual tuning). Remove. Settings must be set once at session start.
+Existing pipeline is largely built. Only fix what's broken:
 
-## 3. UNPRO pronunciation normalization (always-on)
+1. **Status taxonomy alignment**: ensure `contractor_prospects.status` accepts the full list (`queued, enriching, aipp_generated, landing_created, message_ready, approved, sent, clicked, visited, onboarding_started, plan_selected, checkout_started, paid, activated, failed, paused`). Add missing values via migration only if needed.
+2. **Admin approval gate**: confirm `/admin/outbound` requires explicit "Approve & Send" click before `send` edge functions run (Outbound Approval Gate memory). Add a confirmation modal if missing.
+3. **Pipeline log table**: if `pipeline_logs` (or equivalent) does not already exist, add a minimal append-only log table; otherwise reuse existing audit/event tables.
+4. **/admin/outbound cockpit**: verify sections render — Campaign status, Ready, Awaiting approval, Sent today, Clicks, Visits, Onboarding starts, Checkout starts, Paid, Failed, Retry, Pause, Start. Wire only the missing tiles to existing data.
 
-`src/lib/prepareAlexSpeechText.ts` already exists and handles UNPRO→"Un Pro" (fr) / "Hun Pro" (en). Enforce it at every TTS entry point:
-- `src/features/alex/services/elevenlabsService.ts` — wrap any `text` sent to ElevenLabs `text-to-speech` REST in `prepareAlexSpeechText(text, lang)`.
-- `src/services/alexSingleAudioChannel.ts` and any `useLiveVoice` / `alex-tts` callers — same wrap.
-- ElevenLabs ConvAI first message: build with `prepareAlexSpeechText(firstMessage, lang)` inside `buildAlexAgentOverrides`.
-- Display strings remain "UNPRO" — only the TTS-bound copy is normalized.
+Do NOT rename existing tables (`contractor_prospects`, `outbound_*`, sniper_*). New tables from the spec (`contractor_outreach_campaigns`, etc.) are created only if no existing equivalent is found.
 
-Greeting copy (already aligned):
-- FR: "Bonjour. Je suis Alex d'UNPRO. Expliquez-moi ce que vous voulez régler aujourd'hui."
-- EN: "Hi. I'm Alex from UNPRO. Tell me what you want to fix today."
+---
 
-## 4. Overlay stays inline — never redirect
+## Task 2 — Contractor landing page
 
-Audit and fix any place that calls `navigate('/alex')`, `navigate('/chat')`, or replaces page content when the orb is tapped:
-- `src/contexts/AlexVoiceContext.tsx` — `openAlex()` must only open the inline overlay (`GlobalAlexOverlay` / `AlexVoiceMode`), never navigate.
-- `AlexCompanionOrb`, `AlexLauncherHero`, `HeroOrbMockup` — tap handler = `openAlex()` only.
-- Long-press → quick actions menu (existing `AlexGestureMenu`); swipe up = expand panel; swipe down = minimize; left/right = suggestion cycle (wire to existing store actions where available, no new pages).
+`/pro/:slug` exists (Nuclear Close Landing). Verify and patch:
 
-## 5. Single greeting + one gentle follow-up max
+1. Render: business name, detected trade, city, AIPP score + summary, "what we detected", local opportunity, estimated missed revenue.
+2. Add (if missing) the 5 goal questions: appointments/month capacity, avg contract value, close rate, priority sector, primary goal (calls / big projects / fill slots).
+3. On answer → compute monthly capacity, revenue potential, recommended plan, urgency → show "Plan recommandé" card with CTA "Activer mes rendez-vous".
+4. CTA opens the existing inline Stripe Payment Element with the recommended plan + `prospect_id`/`contractor_id` metadata.
 
-`src/features/alex/services/alexWelcomeManager.ts` + `src/engines/alexReEngagementEngine.ts`
-- Ensure greeting fires exactly once per session (guard already exists — verify).
-- Cap auto re-prompts at 1 then go silent (memory: Alex Reengagement Control already says max 3 → tighten to 1 per this spec for the inline overlay surface).
+No redesign — reuse existing Nuclear Close visual language.
 
-## 6. Validation
+---
 
-After edits, run:
-- `rg "speed:\s*[01]\." src/config src/features/alex` → only `1.0` survives.
-- `rg "prepareAlexSpeechText" src` → wraps every TTS call.
-- `rg "navigate\((.alex|.chat)" src/components/alex src/contexts/AlexVoiceContext.tsx src/features/alex` → empty.
-- Visual: mobile preview 384px, orb on `/index` shows no square, glow unclipped, tap opens inline overlay.
+## Task 3 — Stripe subscriptions
+
+1. Confirm price catalog: Recrue 0$, Pro 349$, Premium 599$, Élite 999$, Signature 1 799$ (with thin space). Memory locks these.
+2. Checkout session must inject `prospect_id` and `recommended_plan` into metadata.
+3. Webhook / success handler: on `invoice.paid` / `checkout.session.completed`, mark prospect `paid` → `activated`, activate contractor profile, insert payment event.
+4. Success page `/activation/success` with the locked French copy. Create only if it doesn't already exist.
+
+Do not touch Stripe keys, publishable key (`pk_live_Gw47doir5ZX9n9uM0nrBpKro`), or existing checkout architecture.
+
+---
+
+## Task 4 — Alex orb (visual stabilization)
+
+In `AlexMorphingOrb.tsx` and any wrapper still rendering chrome:
+
+1. Root: `background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 9999px !important; overflow: visible !important; isolation: isolate;`
+2. Remove any ancestor `bg-*`, `border`, `rounded-*`, `backdrop-blur`, `shadow-*`, square aspect wrappers (check `AlexCompanionOrb`, `HeroOrbMockup`, `AlexBottomSheetLauncherUNPRO`, `AlexLauncherHero`).
+3. States via CSS-only animations on layered radial gradients:
+   - idle → slow breathing
+   - listening → subtle pulse
+   - thinking → rotating internal gradient
+   - speaking → audio-reactive scale (use existing `getOutputVolume`)
+   - error → soft amber glow
+4. Gestures (existing handler or add minimal): long-press → quick actions sheet; swipe up/down → expand/minimize; swipe left/right → cycle suggestions. Tap → `openAlex()` overlay on current page (never `navigate('/alex')`).
+
+---
+
+## Task 5 — Alex voice (lock + pronunciation)
+
+Already largely done; verify only:
+
+1. `alexVoiceConfig.ts` BASE_TUNING locked: `stability 0.50, similarity_boost 0.75, style 0.35, speaker_boost true, speed 1.0`, model `eleven_multilingual_v2`. Same across modes/turns.
+2. Every TTS entry point wraps text with `prepareAlexSpeechText(text, lang)`:
+   - `elevenlabsService` REST calls
+   - `useVoiceReliability` `alex-tts` call
+   - `alexAgentOverrides` `firstMessage`
+   - Any inline TTS in `AlexHomepageConversation`, `AlexAssistantSheet`, Nuclear Close
+3. Pronunciation map: FR `UNPRO → "Un Pro"`, `d'UNPRO → "d'Un Pro"`, `de UNPRO → "d'Un Pro"`; EN `UNPRO → "Hun Pro"`. Never expose this string to UI.
+4. No client overrides on `startSession` beyond `voiceId` + `firstMessage` (already enforced in `alexAgentOverrides`).
+
+---
+
+## Task 6 — Validation (manual + scripted)
+
+Run end-to-end on staging:
+
+1. Approve campaign in `/admin/outbound` → confirm `sent` row appears in pipeline log only after confirmation.
+2. Open generated landing URL → verify business name, AIPP score, no `mock|demo|placeholder|test` strings visible (grep public components).
+3. Answer goals → recommended plan card appears.
+4. Click CTA → Stripe Payment Element opens with correct plan + metadata.
+5. Complete test payment → prospect status `paid → activated`, `/activation/success` renders.
+6. Open Alex orb on `/index`, `/pro/:slug`, `/admin` → no square, overlay stays on page.
+7. Trigger Alex greeting → audio says "Un Pro", never "U-N-P-R-O".
+
+Add a small Vitest covering `prepareAlexSpeechText` edge cases (already exists — extend if gaps).
+
+---
+
+## Task 7 — Do-not-break protection
+
+- All edits scoped to: orb components, voice config/service, outbound admin gap-fills, landing page goal form, Stripe metadata + success page.
+- Untouched: auth, AIPP edge functions, existing landing pages outside `/pro/:slug`, contractor onboarding post-payment, outbound scraping/enrichment edge logic, Supabase RLS unless a new column/table requires it.
+- Migrations: additive only. No renames, no drops.
+- After edits: typecheck + targeted preview test on `/index`, `/pro/:slug`, `/admin/outbound`, `/activation/success`.
+
+---
 
 ## Technical notes
 
-- No DB migrations.
-- No new components or routes.
-- Touched files (max): `AlexMorphingOrb.tsx`, `AlexCompanionOrb.tsx`, `alexVoiceConfig.ts`, `alexAgentOverrides.ts`, `elevenlabsService.ts`, `alexSingleAudioChannel.ts`, `useLiveVoice.ts`, `AlexVoiceContext.tsx`, `alexWelcomeManager.ts`, `alexReEngagementEngine.ts`, plus 1-2 hero wrappers if they still hold chrome around the orb.
-- Memory updates: bump `mem://ai/alex/voice-config-active` to reflect new locked tuning (0.50 / 0.75 / 0.35 / boost on / 1.00).
+- New tables (only if missing): use `gen_random_uuid()`, `created_at/updated_at` triggers, RLS enabled, admin-only policies via `has_role`.
+- Edge functions: keep `https://esm.sh/@supabase/supabase-js@2.49.1` per project constraint.
+- Stripe metadata keys: `prospect_id`, `contractor_id`, `recommended_plan`, `source=outbound`.
+- All public-facing strings in fr-CA with thin-space currency formatting (existing `formatPrice` util).
+
+---
+
+## Out of scope (explicit)
+
+- No new homepage, no redesign of existing landings, no new admin sections beyond `/admin/outbound` gap-fills, no auth changes, no schema renames, no new AI features.
