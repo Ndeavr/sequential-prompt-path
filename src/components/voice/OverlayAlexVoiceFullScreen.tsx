@@ -660,19 +660,7 @@ export default function OverlayAlexVoiceFullScreen() {
             </Button>
           </div>
 
-          {/* Recovery / boot loader */}
-          {(isStabilizing || isRecoveringNow) && (
-            <div className="px-6 py-4 flex items-center gap-2">
-              {isRecoveringNow ? (
-                <Zap className="w-4 h-4 text-primary animate-pulse" />
-              ) : (
-                <Sparkles className="w-4 h-4 text-primary animate-spin" />
-              )}
-              <span className="text-sm text-muted-foreground">
-                {isRecoveringNow ? recovery.phaseLabel : (slowToken ? "Connexion d'Alex…" : getBootStepLabel(bootStep))}
-              </span>
-            </div>
-          )}
+          {/* Boot loader removed — orb + header subtitle convey the state */}
 
           {/* Transcripts */}
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4">
