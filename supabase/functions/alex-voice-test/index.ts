@@ -56,11 +56,11 @@ serve(async (req) => {
           text,
           model_id: "eleven_multilingual_v2",
           voice_settings: {
-            stability: profile?.stability ?? 0.43,
-            similarity_boost: profile?.similarity_boost ?? 0.78,
-            style: profile?.style_exaggeration ?? 0.28,
+            stability: stability ?? profile?.stability ?? 0.52,
+            similarity_boost: similarity_boost ?? profile?.similarity_boost ?? 0.78,
+            style: style ?? profile?.style_exaggeration ?? 0.30,
             use_speaker_boost: true,
-            speed: profile?.speech_rate ?? 1.0,
+            speed: speed ?? profile?.speech_rate ?? 1.0,
           },
         }),
       }
