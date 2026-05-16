@@ -259,9 +259,13 @@ const ALEX_ORB_CSS = `
   filter: none !important;
   isolation: isolate;
   contain: none !important;
+  outline: none !important;
   -webkit-mask-image: none !important;
           mask-image: none !important;
 }
+.alex-orb:focus,
+.alex-orb:focus-visible,
+.alex-orb:active { outline: none !important; box-shadow: none !important; }
 .alex-orb > span,
 .alex-orb__drift > span { position: absolute; inset: 0; border-radius: 9999px; pointer-events: none; }
 .alex-orb__drift { position: absolute; inset: 0; display: block; overflow: visible; will-change: transform; animation: alexOrbDrift var(--orb-drift) ease-in-out infinite; }
