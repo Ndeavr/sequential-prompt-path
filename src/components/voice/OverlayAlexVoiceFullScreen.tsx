@@ -368,10 +368,10 @@ export default function OverlayAlexVoiceFullScreen() {
     autoRetryCountRef.current = 0;
     setSlowToken(false);
 
-    // Instant perception: show Alex greeting bubble immediately so the user sees
-    // a conversation before audio arrives. It is removed as soon as the real
-    // Alex transcript starts streaming (onFirstAudio).
-    if (transcriptsRef.current.length === 0) {
+    // Instant perception: show Alex greeting bubble immediately on the FIRST
+    // session boot only. Reopens stay silent — no replayed introduction.
+    const shouldGreet = !hasGreeted();
+    if (shouldGreet && transcriptsRef.current.length === 0) {
       const greetingId = `alex-preview-${++entryIdRef.current}`;
       setTranscripts([{ role: "alex", text: buildGreetingRef.current(), id: greetingId }]);
       lastAlexIdRef.current = null; // ensure next real transcript creates a new bubble
