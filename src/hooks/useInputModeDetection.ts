@@ -38,6 +38,11 @@ export function useInputModeDetection(sessionId?: string) {
       const hasMic = devices.some((d) => d.kind === "audioinput");
 
       if (hasMic) {
+        const { isInCooldown } = await import("@/lib/permissionManager");
+        if (isInCooldown("mic")) {
+          setState((s) => ({ ...s, voiceAvailable: false, voiceChecked: true, activeMode: "chat" }));
+          return false;
+        }
         // Try to get permission
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         stream.getTracks().forEach((t) => t.stop());

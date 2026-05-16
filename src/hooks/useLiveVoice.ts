@@ -287,7 +287,22 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     try {
       console.log("[ElevenLabs V8] Requesting microphone...");
       alexVoiceService.setState("initializing", "start");
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      const { isInCooldown, recordDeny, clearDeny } = await import("@/lib/permissionManager");
+      if (isInCooldown("mic")) {
+        alexVoiceService.setMicPermission("denied");
+        bootInProgressRef.current = false;
+        setIsConnecting(false);
+        callbacksRef.current?.onError?.(new DOMException("Mic in cooldown", "NotAllowedError"));
+        return;
+      }
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        clearDeny("mic");
+      } catch (e) {
+        const n = (e as any)?.name;
+        if (n === "NotAllowedError" || n === "PermissionDeniedError") recordDeny("mic");
+        throw e;
+      }
       alexVoiceService.setMicPermission("granted");
       try {
         const Ctx = (window.AudioContext || (window as any).webkitAudioContext);
