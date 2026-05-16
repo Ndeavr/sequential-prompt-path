@@ -13,7 +13,7 @@ import AlexHomepageConversation, {
   type AlexState,
 } from "./AlexHomepageConversation";
 import { useActiveRole } from "@/contexts/ActiveRoleContext";
-import ContractorModeBadge from "@/components/layout/ContractorModeBadge";
+
 import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 export default function HeroOrbMockup() {
