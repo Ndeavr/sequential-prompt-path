@@ -13,6 +13,8 @@
 import { motion } from "framer-motion";
 import { useCallback, useId, useState, type CSSProperties } from "react";
 import { cn } from "@/lib/utils";
+import useAlexGestures, { type GestureDirection } from "@/hooks/useAlexGestures";
+import AlexGestureMenu from "@/components/alex/AlexGestureMenu";
 
 export type AlexOrbStateV2 =
   | "idle"
@@ -26,7 +28,18 @@ export type AlexOrbSize = "sm" | "md" | "lg";
 interface Props {
   state?: AlexOrbStateV2;
   size?: AlexOrbSize;
+  /** Single-tap. Falls back to onClick for backwards compatibility. */
+  onTap?: () => void;
+  /** @deprecated use onTap. Kept so existing call sites keep working. */
   onClick?: () => void;
+  onDoubleTap?: () => void;
+  onLongPress?: () => void;
+  onSwipeUp?: () => void;
+  onSwipeDown?: () => void;
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
+  /** Disable gesture detection entirely (fall back to plain click). */
+  gesturesDisabled?: boolean;
   className?: string;
   ariaLabel?: string;
 }
@@ -58,19 +71,58 @@ const STATE_TUNING: Record<
 export default function AlexMorphingOrb({
   state = "idle",
   size = "md",
+  onTap,
   onClick,
+  onDoubleTap,
+  onLongPress,
+  onSwipeUp,
+  onSwipeDown,
+  onSwipeLeft,
+  onSwipeRight,
+  gesturesDisabled,
   className,
   ariaLabel = "Alex",
 }: Props) {
   const [ripple, setRipple] = useState(0);
+  const [recognisedDir, setRecognisedDir] = useState<GestureDirection>(null);
   const px = SIZE_PX[size];
   const t = STATE_TUNING[state];
   const filterId = useId().replace(/:/g, "");
 
-  const handleClick = useCallback(() => {
-    setRipple((n) => n + 1);
-    onClick?.();
-  }, [onClick]);
+  const tapHandler = onTap ?? onClick;
+
+  const fireRipple = useCallback(() => setRipple((n) => n + 1), []);
+
+  const { state: gesture, handlers } = useAlexGestures({
+    disabled: gesturesDisabled,
+    onTap: () => {
+      fireRipple();
+      tapHandler?.();
+    },
+    onDoubleTap: () => {
+      fireRipple();
+      onDoubleTap?.();
+    },
+    onLongPress: () => {
+      onLongPress?.();
+    },
+    onLongPressEnd: (dir) => {
+      if (dir) {
+        setRecognisedDir(dir);
+        fireRipple();
+        window.setTimeout(() => setRecognisedDir(null), 600);
+      }
+    },
+    onSwipeUp,
+    onSwipeDown,
+    onSwipeLeft,
+    onSwipeRight,
+  });
+
+  const longPressScale = gesture.isGestureActive ? 1.08 : 1;
+  // Subtle drag-follow on the orb itself (visual magnet effect)
+  const followX = gesture.isGestureActive ? gesture.dragX * 0.12 : 0;
+  const followY = gesture.isGestureActive ? gesture.dragY * 0.12 : 0;
 
   const cssVars: CSSProperties = {
     width: px,
@@ -90,14 +142,21 @@ export default function AlexMorphingOrb({
   return (
     <button
       type="button"
-      onClick={handleClick}
+      {...handlers}
       aria-label={ariaLabel}
       className={cn(
         "alex-orb group relative inline-block bg-transparent border-0 p-0 m-0 align-middle",
         "cursor-pointer select-none focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-8 focus-visible:outline-blue-400/40",
         className,
       )}
-      style={cssVars}
+      style={{
+        ...cssVars,
+        touchAction: "manipulation",
+        transform: `translate(${followX}px, ${followY}px) scale(${longPressScale})`,
+        transition: gesture.isGestureActive
+          ? "transform 60ms linear"
+          : "transform 280ms cubic-bezier(.2,.8,.2,1)",
+      }}
     >
       <style>{ALEX_ORB_CSS}</style>
 
@@ -133,25 +192,15 @@ export default function AlexMorphingOrb({
 
       {/* Drift wrapper — whole orb breathes positionally */}
       <span aria-hidden className="alex-orb__drift">
-        {/* Atmosphere — distorted nebula, far behind */}
         <span
           className="alex-orb__atmosphere"
           style={{ filter: `url(#orb-turb-${filterId})` }}
         />
-
-        {/* Nebula cloud */}
         <span aria-hidden className="alex-orb__nebula" />
-
-        {/* Aura halo */}
         <span aria-hidden className="alex-orb__halo" />
-
-        {/* Caustics shimmer (no hard rim) */}
         <span aria-hidden className="alex-orb__caustics" />
-
-        {/* Core translucent sphere */}
         <span aria-hidden className="alex-orb__sphere" />
 
-        {/* Plasma blobs */}
         <motion.span
           aria-hidden
           className="alex-orb__plasma alex-orb__plasma--a"
@@ -169,24 +218,20 @@ export default function AlexMorphingOrb({
         <span aria-hidden className="alex-orb__plasma alex-orb__plasma--b" />
         <span aria-hidden className="alex-orb__plasma alex-orb__plasma--c" />
 
-        {/* Chromatic aberration rings — AI hologram feel */}
         <span aria-hidden className="alex-orb__chroma alex-orb__chroma--r" />
         <span aria-hidden className="alex-orb__chroma alex-orb__chroma--c" />
 
-        {/* Specular highlight */}
         <span aria-hidden className="alex-orb__highlight" />
 
-        {/* Inner stars — depth */}
         <span aria-hidden className="alex-orb__star alex-orb__star--1" />
         <span aria-hidden className="alex-orb__star alex-orb__star--2" />
         <span aria-hidden className="alex-orb__star alex-orb__star--3" />
         <span aria-hidden className="alex-orb__star alex-orb__star--4" />
 
-        {/* Thinking shimmer */}
         {state === "thinking" && <span aria-hidden className="alex-orb__shimmer" />}
       </span>
 
-      {/* Ripple on tap */}
+      {/* Ripple on tap / gesture-recognised */}
       {ripple > 0 && (
         <motion.span
           key={ripple}
@@ -197,6 +242,28 @@ export default function AlexMorphingOrb({
           transition={{ duration: 0.8, ease: "easeOut" }}
         />
       )}
+
+      {/* Recognised-direction flash arrow tint */}
+      {recognisedDir && (
+        <motion.span
+          aria-hidden
+          className="alex-orb__ripple"
+          initial={{ scale: 0.7, opacity: 0.7 }}
+          animate={{ scale: 1.6, opacity: 0 }}
+          transition={{ duration: 0.55, ease: "easeOut" }}
+          style={{
+            borderColor: "hsl(252 100% 75% / 0.85)",
+            boxShadow: "0 0 40px hsl(252 100% 70% / 0.65)",
+          }}
+        />
+      )}
+
+      {/* Radial gesture menu (long-press) */}
+      <AlexGestureMenu
+        open={gesture.isGestureActive}
+        direction={gesture.gestureDirection}
+        orbSize={px}
+      />
     </button>
   );
 }
