@@ -69,6 +69,10 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const promptSentRef = useRef(false);
+  // Session-lifetime lock: once Alex asked "are you still there?" ONCE in this
+  // session, never ask again — not after activity, not after resume.
+  // Only `startMonitoring` (fresh session) resets it.
+  const sessionPromptUsedRef = useRef(false);
   const mountedRef = useRef(true);
 
   const clearTimers = useCallback(() => {
