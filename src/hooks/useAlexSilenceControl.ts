@@ -236,7 +236,7 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
         .then(() => {});
     }
 
-    promptSentRef.current = false;
+    // Resume keeps the per-session prompt lock — we never ask again.
     setStatus("active");
     startIdleTimer();
     onResume?.(restoredSnapshot);
@@ -245,6 +245,7 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
   const startMonitoring = useCallback(() => {
     setStatus("active");
     promptSentRef.current = false;
+    sessionPromptUsedRef.current = false; // fresh session — re-arm
     setSilenceCycle(0);
     startIdleTimer();
   }, [startIdleTimer]);
