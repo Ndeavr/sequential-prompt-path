@@ -22,7 +22,7 @@ export function ToastVoiceFallbackActive({ visible, onDismiss }: { visible: bool
             <AlertTriangle className="w-4 h-4 text-yellow-500" />
             <span className="text-sm font-semibold text-foreground">Voix de secours activée</span>
           </div>
-          <p className="text-xs text-muted-foreground">La voix personnalisée d'Alex est temporairement indisponible. Une voix alternative est utilisée.</p>
+          <p className="text-xs text-muted-foreground">Je continue ici avec vous.</p>
           <Button size="sm" variant="ghost" onClick={onDismiss} className="mt-2 text-xs">OK</Button>
         </motion.div>
       )}

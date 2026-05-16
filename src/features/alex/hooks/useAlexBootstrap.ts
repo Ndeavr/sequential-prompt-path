@@ -215,7 +215,7 @@ export function useAlexBootstrap() {
           useAlexStore.getState().recordVoiceFailure();
           useAlexStore.getState().markVoiceUnavailable(
             "boot_autoplay_failed",
-            "La voix d'Alex est temporairement indisponible. Je continue ici.",
+            "Je continue ici avec vous.",
           );
           useAlexStore.setState({
             isAutoplayAllowed: false,

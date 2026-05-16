@@ -48,7 +48,8 @@ export default function HeroOrbMockup() {
 
   const handleStart = () => {
     const feature = isContractor ? "contractor" : "homeowner";
-    openAlex(feature, isContractor ? "Entrepreneur UNPRO" : "Accueil UNPRO");
+    // Internal feature key only — no human-facing label leaks into the greeting.
+    openAlex(feature);
   };
 
   const greeting = isContractor

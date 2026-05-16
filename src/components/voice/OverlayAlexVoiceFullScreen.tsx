@@ -96,17 +96,12 @@ export default function OverlayAlexVoiceFullScreen() {
   const buildGreeting = useCallback(() => {
     const hour = new Date().getHours();
     const time = hour >= 5 && hour < 18 ? "Bonjour" : "Bonsoir";
-    const name = firstName ? ` ${firstName}` : "";
-
-    // Use contextHint from store for contextual greeting
-    const hint = getStore().contextHint;
-    if (hint) {
-      return `${time}${name}. Parfait, on regarde votre demande — ${hint}. Dites-m'en un peu plus en quelques mots.`;
-    }
+    // Greeting is intentionally short, human, and never exposes internal route
+    // names or context hints (no "Accueil UNPRO", "Navigation mobile", etc.).
     if (firstName) {
-      return `${time} ${firstName}. Heureuse de vous retrouver — quel projet avance aujourd'hui?`;
+      return `${time} ${firstName}. Je vous écoute.`;
     }
-    return `${time}. Je suis Alex d'UNPRO. Quel problème puis-je vous aider à régler aujourd'hui?`;
+    return `${time}. Décrivez-moi votre besoin en quelques mots.`;
   }, [firstName]);
 
   // ElevenLabs voice
@@ -224,7 +219,7 @@ export default function OverlayAlexVoiceFullScreen() {
       const timeSinceBoot = Date.now() - bootTimeRef.current;
       const hadAudio = (alexVoiceService.getSnapshot().retryCount === 0) && wasConnected && timeSinceBoot > 2000;
       if (s.isOverlayOpen && hadAudio) {
-        s.setError("connection_lost", "La voix d'Alex a été interrompue. Vous pouvez continuer par chat.", true);
+        s.setError("connection_lost", "Je continue ici avec vous.", true);
       } else if (s.isOverlayOpen) {
         // Never connected (or connected without audio) → bail straight to chat instead of red dead-end.
         console.warn("[VoiceOverlay] Disconnect before audio → fallback chat");
@@ -302,10 +297,10 @@ export default function OverlayAlexVoiceFullScreen() {
       }
 
       // Mid-conversation error → recoverable banner (user can still use Réinit/Chat).
-      const rawMessage = (error as any)?.message || "Erreur de connexion vocale.";
+      const rawMessage = (error as any)?.message || "Je continue ici avec vous.";
       const msg = rawMessage.includes("moteur vocal") || rawMessage.includes("serveur vocal")
         ? rawMessage
-        : "La voix d'Alex a été interrompue. Vous pouvez continuer par chat.";
+        : "Je continue ici avec vous.";
       alexVoiceService.setError(msg, "voice_error");
       s.setError("voice_error", msg, true);
     },

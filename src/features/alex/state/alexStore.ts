@@ -390,7 +390,7 @@ export const useAlexStore = create<AlexState & AlexActions>()((set) => ({
   markVoiceUnavailable: (reason, message) =>
     set((s) => ({
       voiceUnavailableReason: reason,
-      recoveryNotice: message ?? s.recoveryNotice ?? "La voix d'Alex est temporairement indisponible. Je continue ici.",
+      recoveryNotice: message ?? s.recoveryNotice ?? "Je continue ici avec vous.",
       mode: s.mode === "speaking" || s.mode === "connecting_voice" ? "ready" : s.mode,
       hasActivePlayback: false,
       hasActiveTTSRequest: false,

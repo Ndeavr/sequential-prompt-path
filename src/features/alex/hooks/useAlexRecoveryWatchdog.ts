@@ -25,7 +25,7 @@ export function useAlexRecoveryWatchdog() {
         alexLog("watchdog:ALEX_FROZEN_AUTO_RECOVERY", { age: now - last });
         switchAlexToChatFallback(
           "tts_watchdog_frozen",
-          "La voix d'Alex est temporairement indisponible. Je continue ici.",
+          "Je continue ici avec vous.",
         );
       }
     };
