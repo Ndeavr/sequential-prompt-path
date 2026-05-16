@@ -115,17 +115,21 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
     onPause?.();
   }, [sessionId, silenceCycle, logEvent, clearTimers, onPause]);
 
-  // Start idle detection — single prompt then immediate pause
+  // Start idle detection — single prompt PER SESSION then immediate pause
   const startIdleTimer = useCallback(() => {
     clearTimers();
+    // If the single per-session prompt was already used, never re-arm.
+    if (sessionPromptUsedRef.current) return;
     promptSentRef.current = false;
 
     idleTimerRef.current = setTimeout(() => {
       if (!mountedRef.current) return;
       if (promptSentRef.current) return;
+      if (sessionPromptUsedRef.current) return;
 
-      // Send the ONE and ONLY compassionate prompt
+      // Send the ONE and ONLY compassionate prompt for the entire session
       promptSentRef.current = true;
+      sessionPromptUsedRef.current = true;
       setStatus("idle_prompted");
       logEvent("idle_detected");
       logEvent("single_prompt_sent");
@@ -137,7 +141,6 @@ export function useAlexSilenceControl(config: SilenceControlConfig = {}) {
         setStatus("pausing");
         logEvent("listening_stopped");
 
-        // Execute pause after a micro-delay for state propagation
         setTimeout(() => {
           if (!mountedRef.current) return;
           executePause();
