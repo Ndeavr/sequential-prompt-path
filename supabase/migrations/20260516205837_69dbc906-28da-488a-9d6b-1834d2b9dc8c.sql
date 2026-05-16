@@ -1,0 +1,1 @@
+UPDATE public.voice_configs SET voice_id = 'YxrwjAKoUKULGd0g8K9Y', label = 'Alex Production FR-first (Sophia)', updated_at = now() WHERE environment = 'prod';
