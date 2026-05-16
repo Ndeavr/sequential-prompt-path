@@ -685,7 +685,7 @@ function VerificationFlow({
   };
 
   const confidence: "Low" | "Medium" | "High" =
-    website && phone && companyName ? "Medium" : companyName && (website || phone) ? "Low" : "Low";
+    (website && phone && companyName ? "Medium" : "Low") as "Low" | "Medium" | "High";
 
   return (
     <motion.div
