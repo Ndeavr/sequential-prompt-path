@@ -30,6 +30,7 @@ import {
   unlockRuntime,
   getActiveSessionId,
 } from "@/services/voiceRuntimeSingleton";
+import { elevenlabsService } from "@/features/alex/services/elevenlabsService";
 
 const STABILIZATION_MS = 4000;
 const HEARTBEAT_INTERVAL_MS = 2500; // Slower → less battery
@@ -247,6 +248,45 @@ export default function OverlayAlexVoiceFullScreen() {
       }
       const s = getStore();
       if (!s.isOverlayOpen) return;
+
+      const errorName = (error as any)?.name as string | undefined;
+      const hasNoMicrophone = errorName === "NotFoundError" || errorName === "DevicesNotFoundError";
+
+      if (!firstAudioReceivedRef.current && hasNoMicrophone) {
+        console.warn("[VoiceOverlay] No microphone detected → playing Sophia greeting with TTS fallback");
+        firstAudioReceivedRef.current = true;
+        hasConnectedRef.current = true;
+        setBootStep("tts_fallback");
+        alexVoiceService.setMicPermission("denied");
+        alexVoiceService.setApiKeyConfigured(true);
+        alexVoiceService.setState("speaking", "tts_fallback_no_microphone");
+        s.transitionTo("speaking", "tts_fallback_no_microphone");
+        const greeting = buildGreetingRef.current();
+        setTranscripts(prev => prev.filter(t => !t.id.startsWith("alex-preview-")));
+        const newId = `alex-${++entryIdRef.current}`;
+        lastAlexIdRef.current = newId;
+        setTranscripts(prev => [...prev, { role: "alex" as const, text: greeting, id: newId }]);
+        s.addTranscript("alex", greeting);
+        elevenlabsService.init();
+        elevenlabsService.speak(
+          greeting,
+          () => {
+            alexVoiceService.setState("speaking", "tts_fallback_audio_started");
+          },
+          () => {
+            if (!getStore().isOverlayOpen) return;
+            getStore().transitionTo("awaiting_user", "tts_fallback_done");
+          },
+        ).catch((e) => {
+          console.warn("[VoiceOverlay] TTS fallback failed:", e);
+          openChatFallback(
+            "no_microphone_tts_failed",
+            transcriptsRef.current.map((t) => ({ role: t.role, text: t.text })),
+          );
+          s.closeVoiceSession("voice_error_pre_audio");
+        });
+        return;
+      }
 
       // BULLETPROOF: if voice never started successfully, bail to chat — no dead-end red screen.
       if (!firstAudioReceivedRef.current) {
