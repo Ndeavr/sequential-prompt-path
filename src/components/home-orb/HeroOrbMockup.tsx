@@ -68,6 +68,7 @@ export default function HeroOrbMockup() {
       ]
     : [
         { label: "Problème maison", href: "/problemes" },
+        { label: "Projet à développer", href: "/projet" },
         { label: "Analyse soumission", href: "/quote-analyzer" },
         { label: "Vérifier un pro", href: "/verifier-pro" },
         { label: "Rejoindre UNPRO", href: "/entrepreneur" },
