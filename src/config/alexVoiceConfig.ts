@@ -8,7 +8,7 @@
 export type AlexVoiceMode = "homeowner" | "contractor" | "condo_manager" | "general";
 
 export const ALEX_VOICE_BASE = {
-  voiceId: "or4EV8aZq78KWcXw48wd", // Alex premium concierge — locked
+  voiceId: "YxrwjAKoUKULGd0g8K9Y", // Sophia — premium concierge (active)
   modelId: "eleven_multilingual_v2",
   outputFormat: "mp3_44100_128",
 } as const;
