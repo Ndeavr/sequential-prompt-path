@@ -11,7 +11,7 @@
  * No canvas. Mobile-perf safe. Reduced-motion aware.
  */
 import { motion } from "framer-motion";
-import { useCallback, useId, useState, type CSSProperties } from "react";
+import { useCallback, useState, type CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 import useAlexGestures, { type GestureDirection } from "@/hooks/useAlexGestures";
 import AlexGestureMenu from "@/components/alex/AlexGestureMenu";
