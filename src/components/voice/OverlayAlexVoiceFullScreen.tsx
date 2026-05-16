@@ -198,8 +198,9 @@ export default function OverlayAlexVoiceFullScreen() {
             (conversation as any)?.sendUserMessage?.(seed);
           } catch (e) {
             console.warn("[VoiceOverlay] nudge failed:", e);
-        }
-      }, 1200);
+          }
+        }, 1200);
+      }
     },
     onDisconnect: () => {
       const s = getStore();
