@@ -255,7 +255,11 @@ const ALEX_ORB_CSS = `
   overflow: visible !important;
   padding: 0 !important;
   margin: 0 !important;
-  filter: grayscale(var(--orb-gray));
+  filter: none !important;
+  isolation: isolate;
+  contain: none !important;
+  -webkit-mask-image: none !important;
+          mask-image: none !important;
 }
 .alex-orb > span,
 .alex-orb__drift > span { position: absolute; inset: 0; border-radius: 9999px; pointer-events: none; }
@@ -264,25 +268,26 @@ const ALEX_ORB_CSS = `
 .alex-orb__atmosphere {
   inset: -80% !important;
   background: radial-gradient(circle at 50% 50%,
-    hsl(212 100% 65% / 0.30),
-    hsl(252 100% 70% / 0.18) 35%,
-    transparent 65%);
+    hsl(212 100% 65% / 0.18) 0%,
+    hsl(252 100% 70% / 0.10) 30%,
+    hsl(212 100% 65% / 0.04) 48%,
+    transparent 72%);
   opacity: calc(0.85 * var(--orb-glow));
   mix-blend-mode: screen;
-  filter: blur(28px);
-  -webkit-mask: radial-gradient(circle, black 25%, transparent 75%);
-          mask: radial-gradient(circle, black 25%, transparent 75%);
+  filter: none !important;
+  -webkit-mask: none !important;
+          mask: none !important;
 }
 
 .alex-orb__nebula {
   inset: -25% !important;
   background:
-    radial-gradient(ellipse 60% 50% at 30% 30%, hsl(195 100% 70% / 0.40), transparent 60%),
-    radial-gradient(ellipse 55% 45% at 75% 70%, hsl(265 100% 75% / 0.38), transparent 60%);
-  filter: blur(22px) saturate(var(--orb-sat));
+    radial-gradient(ellipse 60% 50% at 30% 30%, hsl(195 100% 70% / 0.24), transparent 62%),
+    radial-gradient(ellipse 55% 45% at 75% 70%, hsl(265 100% 75% / 0.20), transparent 62%);
+  filter: saturate(var(--orb-sat));
   mix-blend-mode: screen;
-  -webkit-mask: radial-gradient(circle, black 35%, transparent 75%);
-          mask: radial-gradient(circle, black 35%, transparent 75%);
+  -webkit-mask: radial-gradient(circle, black 0%, black 52%, transparent 76%);
+          mask: radial-gradient(circle, black 0%, black 52%, transparent 76%);
   animation: alexOrbNebula calc(var(--orb-plasma) * 2) ease-in-out infinite;
 }
 
