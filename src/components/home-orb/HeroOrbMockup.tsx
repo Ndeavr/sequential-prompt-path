@@ -49,7 +49,6 @@ export default function HeroOrbMockup() {
   const handleStart = () => {
     const feature = isContractor ? "contractor" : "homeowner";
     openAlex(feature, isContractor ? "Entrepreneur UNPRO" : "Accueil UNPRO");
-    convoRef.current?.start();
   };
 
   const greeting = isContractor
