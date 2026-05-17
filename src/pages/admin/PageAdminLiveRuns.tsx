@@ -1,15 +1,23 @@
 /**
  * PageAdminLiveRuns — Cockpit for end-to-end acquisition runs.
  * URL: /admin/live-runs
+ *
+ * Resilience contract:
+ * - Auth bootstrap via supabase.auth.getSession() (not gated on edge function).
+ * - Admin validated via validateAdmin (cache + email allowlist + user_roles).
+ * - List refresh tries `list-live-runs` first, falls back to direct table reads
+ *   (admin RLS allows SELECT on live_acquisition_runs / acquisition_run_steps).
+ * - Start ISR is NEVER blocked by a failed list refresh.
  */
 import { Helmet } from "react-helmet-async";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { validateAdmin } from "@/lib/adminGuard";
 
 type Run = {
   id: string;
@@ -38,18 +46,16 @@ const STATUS_COLORS: Record<string, string> = {
   blocked: "bg-amber-500/20 text-amber-300",
 };
 
-async function invokeWithTimeout<T = any>(
-  name: string,
-  body: any,
-  timeoutMs = 30000,
-): Promise<{ data: T | null; error: any }> {
+async function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
   return await Promise.race([
-    supabase.functions.invoke(name, { body }) as Promise<any>,
-    new Promise<any>((resolve) =>
-      setTimeout(() => resolve({ data: null, error: new Error(`Timeout ${timeoutMs}ms invoking ${name}`) }), timeoutMs),
+    p,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Timeout ${ms}ms · ${label}`)), ms),
     ),
   ]);
 }
+
+type SyncMode = "idle" | "function" | "fallback" | "error";
 
 export default function PageAdminLiveRuns() {
   const [runs, setRuns] = useState<Run[]>([]);
@@ -57,161 +63,287 @@ export default function PageAdminLiveRuns() {
   const [openRunId, setOpenRunId] = useState<string | null>(null);
   const [adminPhone, setAdminPhone] = useState("");
   const [confirmPhone, setConfirmPhone] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [authState, setAuthState] = useState<{ email?: string; isAdmin?: boolean; error?: string }>({});
+  const [starting, setStarting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMode, setSyncMode] = useState<SyncMode>("idle");
+  const [auth, setAuth] = useState<{
+    email?: string | null;
+    userId?: string | null;
+    isAdmin?: boolean;
+    source?: string;
+    error?: string;
+  }>({});
   const [lastError, setLastError] = useState<string | null>(null);
+  const bootstrapped = useRef(false);
 
-  const refresh = useCallback(async () => {
-    const { data, error } = await invokeWithTimeout<any>("list-live-runs", {}, 15000);
-    if (error || !data) {
-      setAuthState({ error: error?.message || "list-live-runs failed" });
-      return;
-    }
-    if (data.error) {
-      setAuthState({ email: data.email, isAdmin: false, error: data.message || data.error });
-      return;
-    }
-    setAuthState({ email: data.admin_email, isAdmin: true });
-    setRuns(data.runs || []);
-    const grouped: Record<string, Step[]> = {};
-    (data.steps || []).forEach((row: any) => {
-      (grouped[row.run_id] ||= []).push(row);
-    });
-    setSteps(grouped);
+  // ───── AUTH BOOTSTRAP ─────────────────────────────────────────────
+  useEffect(() => {
+    if (bootstrapped.current) return;
+    bootstrapped.current = true;
+    (async () => {
+      try {
+        const { data: sess } = await supabase.auth.getSession();
+        const user = sess.session?.user;
+        if (!user) {
+          setAuth({ error: "Pas de session active. Connectez-vous à /login d'abord." });
+          return;
+        }
+        const result = await validateAdmin(user.id, user.email ?? null);
+        if (result.allowed) {
+          setAuth({ email: user.email, userId: user.id, isAdmin: true, source: result.source });
+        } else {
+          setAuth({
+            email: user.email,
+            userId: user.id,
+            isAdmin: false,
+            error: result.reason === "load_error" ? `Role check failed: ${result.detail}` : "Rôle admin requis.",
+          });
+        }
+      } catch (e: any) {
+        setAuth({ error: e?.message || "Auth bootstrap failed" });
+      }
+    })();
   }, []);
 
+  // ───── DIRECT TABLE FALLBACK (admin RLS allows SELECT) ─────────────
+  const refreshViaTables = useCallback(async (): Promise<{ runs: Run[]; steps: Step[] }> => {
+    const { data: rRows, error: rErr } = await supabase
+      .from("live_acquisition_runs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (rErr) throw rErr;
+    const runs = (rRows || []) as unknown as Run[];
+    const ids = runs.map((r) => r.id);
+    let stepRows: Step[] = [];
+    if (ids.length) {
+      const { data: sRows, error: sErr } = await supabase
+        .from("acquisition_run_steps")
+        .select("*")
+        .in("run_id", ids)
+        .order("step_order");
+      if (sErr) throw sErr;
+      stepRows = (sRows || []) as unknown as Step[];
+    }
+    return { runs, steps: stepRows };
+  }, []);
+
+  // ───── EDGE FUNCTION (preferred, fast-fail) ────────────────────────
+  const refreshViaFunction = useCallback(async (): Promise<{ runs: Run[]; steps: Step[] }> => {
+    const { data, error } = await withTimeout(
+      supabase.functions.invoke("list-live-runs", { body: {} }) as Promise<any>,
+      8000,
+      "list-live-runs",
+    );
+    if (error) throw error;
+    if (!data || data.error) throw new Error(data?.message || data?.error || "list-live-runs failed");
+    return { runs: (data.runs || []) as Run[], steps: (data.steps || []) as Step[] };
+  }, []);
+
+  // ───── SAFE REFRESH: function first, fallback to tables ────────────
+  const safeRefresh = useCallback(async () => {
+    setSyncing(true);
+    try {
+      let result: { runs: Run[]; steps: Step[] };
+      try {
+        result = await refreshViaFunction();
+        setSyncMode("function");
+      } catch (fnErr: any) {
+        console.warn("[live-runs] function refresh failed, falling back to tables:", fnErr?.message);
+        result = await refreshViaTables();
+        setSyncMode("fallback");
+      }
+      setRuns(result.runs);
+      const grouped: Record<string, Step[]> = {};
+      result.steps.forEach((row) => {
+        (grouped[row.run_id] ||= []).push(row);
+      });
+      setSteps(grouped);
+    } catch (e: any) {
+      setSyncMode("error");
+      setLastError(e?.message || String(e));
+    } finally {
+      setSyncing(false);
+    }
+  }, [refreshViaFunction, refreshViaTables]);
+
+  // Trigger initial + realtime refresh AFTER admin validated
   useEffect(() => {
-    refresh();
+    if (!auth.isAdmin) return;
+    safeRefresh();
     const ch = supabase
-      .channel("live_runs")
-      .on("postgres_changes", { event: "*", schema: "public", table: "live_acquisition_runs" }, refresh)
-      .on("postgres_changes", { event: "*", schema: "public", table: "acquisition_run_steps" }, refresh)
+      .channel("live_runs_admin")
+      .on("postgres_changes", { event: "*", schema: "public", table: "live_acquisition_runs" }, safeRefresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "acquisition_run_steps" }, safeRefresh)
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [refresh]);
+  }, [auth.isAdmin, safeRefresh]);
 
+  // ───── START ISR RUN (NEVER gated on list refresh) ─────────────────
   const startIsrRun = async () => {
-    setLoading(true);
+    setStarting(true);
     setLastError(null);
     try {
-      const { data, error } = await invokeWithTimeout<any>(
+      const { data, error } = await withTimeout(
+        supabase.functions.invoke("run-live-acquisition", {
+          body: { slug: "isolation-solution-royal", campaign: "isr_first_live_test" },
+        }) as Promise<any>,
+        45000,
         "run-live-acquisition",
-        { slug: "isolation-solution-royal", campaign: "isr_first_live_test" },
-        30000,
       );
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const runId = data?.run_id;
-      const existed = (runs || []).some((r) => r.id === runId);
-      toast.success(existed ? `Run resumed — ${runId?.slice(0, 8)}…` : `Run created — ${runId?.slice(0, 8)}…`);
+      toast.success(`Run prêt — ${runId?.slice(0, 8)}…`);
       console.groupCollapsed(`[live-run] ${runId}`);
       console.log(data);
       console.groupEnd();
-      await refresh();
+      // Optimistic insert so UI shows the run even if refresh is slow.
+      if (runId && !runs.some((r) => r.id === runId)) {
+        setRuns((prev) => [
+          {
+            id: runId,
+            prospect_id: data.prospect_id || "",
+            campaign: "isr_first_live_test",
+            status: "running",
+            metadata: {
+              slug: "isolation-solution-royal",
+              landing_url: data.landing_url,
+              sms_body: data.sms_preview,
+              sms_to: data.sms_to,
+            },
+            created_at: new Date().toISOString(),
+          },
+          ...prev,
+        ]);
+      }
+      await safeRefresh();
     } catch (e: any) {
       const msg = e?.message || String(e);
       setLastError(msg);
       toast.error(msg);
     } finally {
-      setLoading(false);
+      setStarting(false);
     }
   };
 
   const dryRun = async (run: Run) => {
-    if (!adminPhone) return toast.error("Enter your admin phone (+1...)");
+    if (!adminPhone) return toast.error("Entrez votre numéro admin (+1...)");
     try {
-      const { data, error } = await invokeWithTimeout<any>(
+      const { data, error } = await withTimeout(
+        supabase.functions.invoke("approve-isr-sms", {
+          body: { run_id: run.id, dry_run: true, admin_phone: adminPhone },
+        }) as Promise<any>,
+        20000,
         "approve-isr-sms",
-        { run_id: run.id, dry_run: true, admin_phone: adminPhone },
       );
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success(`Dry-run sent to ${data.sent_to}${data.simulated ? " (simulated)" : ""}`);
+      toast.success(`Dry-run envoyé à ${data.sent_to}${data.simulated ? " (simulé)" : ""}`);
     } catch (e: any) {
-      toast.error(e.message || "Dry-run failed");
+      toast.error(e?.message || "Dry-run échoué");
     }
   };
 
   const approveSend = async (run: Run) => {
     const target = run.metadata?.sms_to;
     if (!confirmPhone || confirmPhone !== target) {
-      return toast.error(`Type the prospect phone exactly: ${target}`);
+      return toast.error(`Tapez exactement le numéro du prospect: ${target}`);
     }
-    if (!confirm(`Send REAL SMS to ${target}?`)) return;
+    if (!confirm(`Envoyer un SMS RÉEL à ${target}?`)) return;
     try {
-      const { data, error } = await invokeWithTimeout<any>(
+      const { data, error } = await withTimeout(
+        supabase.functions.invoke("approve-isr-sms", {
+          body: { run_id: run.id, dry_run: false, confirm_phone: confirmPhone },
+        }) as Promise<any>,
+        20000,
         "approve-isr-sms",
-        { run_id: run.id, dry_run: false, confirm_phone: confirmPhone },
       );
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success(`SMS sent — sid ${data.sid || "(simulated)"}`);
-      await refresh();
+      toast.success(`SMS envoyé — sid ${data.sid || "(simulé)"}`);
+      await safeRefresh();
     } catch (e: any) {
-      toast.error(e.message || "Send failed");
+      toast.error(e?.message || "Envoi échoué");
     }
   };
 
   const startCheckout = async (run: Run) => {
     try {
-      const { data, error } = await invokeWithTimeout<any>(
+      const { data, error } = await withTimeout(
+        supabase.functions.invoke("create-isr-promo-checkout", {
+          body: { slug: run.metadata?.slug, run_id: run.id },
+        }) as Promise<any>,
+        20000,
         "create-isr-promo-checkout",
-        { slug: run.metadata?.slug, run_id: run.id },
       );
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       window.open(data.url, "_blank");
     } catch (e: any) {
-      toast.error(e.message || "Checkout failed");
+      toast.error(e?.message || "Checkout échoué");
     }
   };
 
+  const syncChip =
+    syncMode === "function"
+      ? { label: "Sync fonction OK", cls: "bg-emerald-500/20 text-emerald-300" }
+      : syncMode === "fallback"
+        ? { label: "Sync directe (fallback)", cls: "bg-amber-500/20 text-amber-300" }
+        : syncMode === "error"
+          ? { label: "Sync indisponible", cls: "bg-red-500/20 text-red-300" }
+          : { label: "Sync en attente", cls: "bg-white/10 text-white/60" };
+
   return (
     <div className="min-h-screen bg-[#060B14] text-white p-6">
-      <Helmet><title>Live Acquisition Runs — Admin UNPRO</title></Helmet>
+      <Helmet><title>Runs d'acquisition live — Admin UNPRO</title></Helmet>
       <div className="max-w-6xl mx-auto space-y-6">
         <header className="flex items-start justify-between gap-3 flex-wrap">
           <div className="min-w-0">
-            <h1 className="text-3xl font-bold">Live Acquisition Runs</h1>
-            <p className="text-white/60 text-sm mt-1">End-to-end pipeline cockpit · ISR live test</p>
-            <p className="text-xs text-white/40 mt-1">
-              {authState.email ? (
-                <>Signed in as <span className="text-white/70">{authState.email}</span> · {authState.isAdmin ? <span className="text-emerald-400">admin</span> : <span className="text-red-400">not admin</span>}</>
-              ) : authState.error ? (
-                <span className="text-red-400">{authState.error}</span>
-              ) : (
-                "Checking auth…"
+            <h1 className="text-3xl font-bold">Runs d'acquisition live</h1>
+            <p className="text-white/60 text-sm mt-1">Cockpit pipeline end-to-end · test live ISR</p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {auth.email && (
+                <Badge className="bg-white/10 text-white/70">
+                  {auth.email}
+                </Badge>
               )}
-            </p>
+              {auth.isAdmin ? (
+                <Badge className="bg-emerald-500/20 text-emerald-300">Admin validé{auth.source ? ` · ${auth.source}` : ""}</Badge>
+              ) : auth.error ? (
+                <Badge className="bg-red-500/20 text-red-300">{auth.error}</Badge>
+              ) : (
+                <Badge className="bg-white/10 text-white/60">Vérification…</Badge>
+              )}
+              <Badge className={syncChip.cls}>{syncChip.label}</Badge>
+            </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={refresh} disabled={loading}>Refresh</Button>
-            <Button onClick={startIsrRun} disabled={loading || !authState.isAdmin}>
-              {loading ? "Starting…" : "Start ISR Live Run"}
+            <Button variant="outline" onClick={safeRefresh} disabled={syncing || !auth.isAdmin}>
+              {syncing ? "Sync…" : "Réessayer la sync"}
+            </Button>
+            <Button onClick={startIsrRun} disabled={starting || !auth.isAdmin}>
+              {starting ? "Démarrage…" : "Start ISR Live Run"}
             </Button>
           </div>
         </header>
 
-        {!authState.isAdmin && authState.email && (
-          <Card className="bg-red-500/10 border-red-500/30 p-4 text-sm text-red-200">
-            Admin role required. Your account <strong>{authState.email}</strong> doesn't have the <code>admin</code> role.
-          </Card>
-        )}
-
         {lastError && (
           <Card className="bg-red-500/10 border-red-500/30 p-4 text-sm text-red-200 flex items-start justify-between gap-3">
             <pre className="whitespace-pre-wrap break-words flex-1">{lastError}</pre>
-            <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(lastError)}>Copy</Button>
+            <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(lastError); setLastError(null); }}>
+              Copier &amp; fermer
+            </Button>
           </Card>
         )}
 
         <Card className="bg-white/[0.04] border-white/10 p-4 space-y-3">
-          <h2 className="font-semibold">SMS Approval Controls</h2>
+          <h2 className="font-semibold">Contrôles approbation SMS</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-white/60">Your admin phone (dry-run target)</label>
+              <label className="text-xs text-white/60">Votre numéro admin (cible dry-run)</label>
               <Input
                 placeholder="+15145551234"
                 value={adminPhone}
@@ -220,7 +352,7 @@ export default function PageAdminLiveRuns() {
               />
             </div>
             <div>
-              <label className="text-xs text-white/60">Prospect phone (type to confirm real send)</label>
+              <label className="text-xs text-white/60">Numéro prospect (tapez pour confirmer envoi réel)</label>
               <Input
                 placeholder="+15142499522"
                 value={confirmPhone}
@@ -234,7 +366,7 @@ export default function PageAdminLiveRuns() {
         <div className="space-y-4">
           {runs.length === 0 && (
             <Card className="bg-white/[0.04] border-white/10 p-8 text-center text-white/60">
-              No runs yet. Click "Start ISR Live Run" above.
+              {auth.isAdmin ? `Aucun run pour l'instant. Cliquez "Start ISR Live Run".` : "En attente de validation admin…"}
             </Card>
           )}
           {runs.map((run) => {
@@ -242,7 +374,7 @@ export default function PageAdminLiveRuns() {
             const rs = steps[run.id] || [];
             return (
               <Card key={run.id} className="bg-white/[0.04] border-white/10 p-4">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold">{run.metadata?.slug || "(no slug)"}</h3>
@@ -255,16 +387,16 @@ export default function PageAdminLiveRuns() {
                   </div>
                   <div className="flex gap-2 flex-wrap">
                     <Button size="sm" variant="outline" onClick={() => setOpenRunId(open ? null : run.id)}>
-                      {open ? "Hide" : "Steps"}
+                      {open ? "Masquer" : "Étapes"}
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => dryRun(run)}>
                       Dry-run SMS
                     </Button>
                     <Button size="sm" onClick={() => approveSend(run)}>
-                      Approve &amp; Send
+                      Approuver &amp; envoyer
                     </Button>
                     <Button size="sm" variant="secondary" onClick={() => startCheckout(run)}>
-                      Open $1 Checkout
+                      Checkout 1$
                     </Button>
                   </div>
                 </div>
@@ -291,7 +423,7 @@ export default function PageAdminLiveRuns() {
                     ))}
                     {run.metadata?.sms_body && (
                       <div className="mt-3 p-3 rounded bg-black/30 border border-white/10">
-                        <div className="text-xs text-white/50 mb-1">SMS preview (to {run.metadata.sms_to})</div>
+                        <div className="text-xs text-white/50 mb-1">Aperçu SMS (vers {run.metadata.sms_to})</div>
                         <pre className="text-xs whitespace-pre-wrap">{run.metadata.sms_body}</pre>
                       </div>
                     )}
