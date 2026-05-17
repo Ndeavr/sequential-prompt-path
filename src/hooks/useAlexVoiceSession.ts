@@ -403,7 +403,10 @@ export function useAlexVoiceSession() {
   }, [safeSetState, stopPlayback, sendUserMessage, startSTT, stopSTT, clearSilenceTimer]);
 
   // ─── Open Session ───
-  const openSession = useCallback(async (greetingText?: string) => {
+  const openSession = useCallback(async (
+    greetingText?: string,
+    options?: { suppressGreetingAudio?: boolean },
+  ) => {
     if (sessionRef.current) return;
     if (!sttSupported.current) { console.warn("[VoiceSession] STT not supported"); return; }
 
@@ -428,13 +431,14 @@ export function useAlexVoiceSession() {
 
       sessionIdRef.current = data.sessionId;
 
-      if (data.greeting) {
-        const msg: Msg = { role: "assistant", content: data.greeting };
+      const greetingContent = greetingText || data.greeting;
+      if (greetingContent) {
+        const msg: Msg = { role: "assistant", content: greetingContent };
         messagesRef.current = [msg];
         setMessages([msg]);
       }
 
-      if (data.greetingAudio) {
+      if (data.greetingAudio && !options?.suppressGreetingAudio) {
         enqueueAudio(data.greetingAudio);
       } else {
         prepareNextListenCycle();
