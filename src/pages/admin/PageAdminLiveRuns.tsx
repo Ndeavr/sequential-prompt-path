@@ -261,6 +261,74 @@ export default function PageAdminLiveRuns() {
     }
   };
 
+  // ───── STRIPE MODE CHECK (badge live/test) ─────────────────────────
+  useEffect(() => {
+    if (!adminReady) return;
+    supabase.functions.invoke("stripe-mode-check", { body: {} })
+      .then(({ data }) => setStripeMode((data?.mode as any) ?? "unknown"))
+      .catch(() => setStripeMode("unknown"));
+  }, [adminReady]);
+
+  // ───── POLLING: auto-refresh while a run is in-flight ──────────────
+  useEffect(() => {
+    if (!adminReady) return;
+    const hasActive = runs.some((r) => r.status === "running" || r.status === "pending");
+    if (!hasActive) return;
+    const t = setInterval(() => { safeRefresh(); }, 4000);
+    return () => clearInterval(t);
+  }, [adminReady, runs, safeRefresh]);
+
+  // ───── FULL LIVE CHAIN: start → real SMS to prospect ───────────────
+  const runFullLive = async () => {
+    if (stripeMode && stripeMode !== "live") {
+      if (!confirm(`Stripe est en mode ${stripeMode.toUpperCase()}. Continuer quand même?`)) return;
+    }
+    setFullRunBusy(true);
+    setLastError(null);
+    try {
+      // 1) Orchestrate
+      const { data: orch, error: oErr } = await withTimeout(
+        supabase.functions.invoke("run-live-acquisition", {
+          body: { slug: "isolation-solution-royal", campaign: "isr_first_live_test", force_new: true },
+        }) as Promise<any>,
+        45000, "run-live-acquisition",
+      );
+      if (oErr) throw oErr;
+      if (orch?.error) throw new Error(orch.error);
+      const runId: string = orch.run_id;
+      const smsTo: string = orch.sms_to;
+      if (!runId || !smsTo) throw new Error("orchestrator_missing_run_id_or_phone");
+
+      // 2) Hard confirm before real SMS
+      const typed = window.prompt(`Tapez exactement le numéro du prospect pour ENVOYER UN VRAI SMS:\n${smsTo}`);
+      if (typed !== smsTo) {
+        toast.error("Numéro non confirmé. Run prêt, SMS NON envoyé.");
+        await safeRefresh();
+        return;
+      }
+
+      // 3) Real send
+      const { data: send, error: sErr } = await withTimeout(
+        supabase.functions.invoke("approve-isr-sms", {
+          body: { run_id: runId, dry_run: false, confirm_phone: typed },
+        }) as Promise<any>,
+        25000, "approve-isr-sms",
+      );
+      if (sErr) throw sErr;
+      if (send?.error) throw new Error(send.error);
+      toast.success(`SMS LIVE envoyé à ${send.sent_to} — sid ${send.sid}`);
+      setOpenRunId(runId);
+      setConfirmPhone(typed);
+      await safeRefresh();
+    } catch (e: any) {
+      const msg = e?.message || String(e);
+      setLastError(msg);
+      toast.error(msg);
+    } finally {
+      setFullRunBusy(false);
+    }
+  };
+
   const dryRun = async (run: Run) => {
     if (!adminPhone) return toast.error("Entrez votre numéro admin (+1...)");
     try {
