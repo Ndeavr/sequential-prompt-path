@@ -439,13 +439,29 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           hasWebRtcToken: Boolean(data?.conversationToken),
         });
 
-        // Per memory `voice-connection-stability`: ALWAYS use signed URL (WebSocket).
-        // WebRTC reconnect on mobile fails after ~8s with code 1006 (LiveKit unreachable),
-        // and the conversation token is single-use so reconnect cannot recover.
-        await conversation.startSession({
-          signedUrl,
-          connectionType: "websocket",
-        } as any);
+        // Prefer WebRTC (lower latency, more reliable first-audio on mobile)
+        // when a conversation token is provided; fall back to signed-URL WebSocket
+        // if WebRTC handshake throws synchronously.
+        const conversationToken = (data as any)?.conversationToken;
+        try {
+          if (conversationToken) {
+            await conversation.startSession({
+              conversationToken,
+              connectionType: "webrtc",
+            } as any);
+          } else {
+            await conversation.startSession({
+              signedUrl,
+              connectionType: "websocket",
+            } as any);
+          }
+        } catch (startErr) {
+          console.warn("[ElevenLabs V8] Primary connectionType failed, trying websocket fallback", startErr);
+          await conversation.startSession({
+            signedUrl,
+            connectionType: "websocket",
+          } as any);
+        }
 
         console.log("[ElevenLabs V8] ✅ Session started");
         bootInProgressRef.current = false;

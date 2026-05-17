@@ -107,6 +107,50 @@ export default function OverlayAlexVoiceFullScreen() {
 
   // ElevenLabs voice
   const nudgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Voice-first fallback: when the live ElevenLabs session never delivers first
+  // audio (timeout / disconnect / error before audio), speak the greeting through
+  // the TTS fallback so Alex IS heard, then transition to a recoverable error
+  // state so the user can tap Réinitialiser or Passer au chat. Strictly
+  // user-initiated retry — no silent auto-reconnect.
+  const playTtsFallbackGreeting = useCallback((reason: string) => {
+    const s = getStore();
+    if (!s.isOverlayOpen) return;
+    firstAudioReceivedRef.current = true;
+    hasConnectedRef.current = true;
+    setBootStep("tts_fallback");
+    alexVoiceService.setApiKeyConfigured(true);
+    alexVoiceService.setState("speaking", `tts_fallback:${reason}`);
+    if (s.machineState !== "speaking") {
+      s.transitionTo("speaking", `tts_fallback:${reason}`);
+    }
+    const greeting = buildGreetingRef.current();
+    setTranscripts(prev => prev.filter(t => !t.id.startsWith("alex-preview-")));
+    const newId = `alex-${++entryIdRef.current}`;
+    lastAlexIdRef.current = newId;
+    setTranscripts(prev => [...prev, { role: "alex" as const, text: greeting, id: newId }]);
+    s.addTranscript("alex", greeting);
+    elevenlabsService.init();
+    elevenlabsService.speak(
+      greeting,
+      () => alexVoiceService.setState("speaking", "tts_fallback_audio_started"),
+      () => {
+        const latest = getStore();
+        if (!latest.isOverlayOpen) return;
+        // Surface recoverable banner so the user sees Retry/Chat buttons.
+        latest.setError("voice_offline", "Voix en mode secours. Touchez Réinitialiser pour réessayer.", true);
+      },
+    ).catch((e) => {
+      console.warn("[VoiceOverlay] TTS fallback failed:", e);
+      alexVoiceService.switchToFallbackChat(`${reason}_tts_failed`);
+      openChatFallback(
+        "voice_unavailable",
+        transcriptsRef.current.map((t) => ({ role: t.role, text: t.text })),
+      );
+      getStore().closeVoiceSession("voice_error_pre_audio");
+    });
+  }, [openChatFallback]);
+
   const { start, stop, isActive, isConnecting, isSpeaking, conversation } = useLiveVoice({
     onFirstAudio: () => {
       firstAudioReceivedRef.current = true;
@@ -224,14 +268,10 @@ export default function OverlayAlexVoiceFullScreen() {
       if (s.isOverlayOpen && hadAudio) {
         s.setError("connection_lost", "Je continue ici avec vous.", true);
       } else if (s.isOverlayOpen) {
-        // Never connected (or connected without audio) → bail straight to chat instead of red dead-end.
-        console.warn("[VoiceOverlay] Disconnect before audio → fallback chat");
-        alexVoiceService.switchToFallbackChat("disconnect_pre_audio");
-        openChatFallback(
-          "voice_unavailable",
-          transcriptsRef.current.map((t) => ({ role: t.role, text: t.text })),
-        );
-        s.closeVoiceSession("disconnect_pre_audio");
+        // Live conversation never delivered audio → speak greeting via TTS fallback
+        // so Alex actually talks, then surface user-initiated Retry/Chat controls.
+        console.warn("[VoiceOverlay] Disconnect before audio → TTS greeting fallback");
+        playTtsFallbackGreeting("disconnect_pre_audio");
       }
     },
     onError: (error) => {
@@ -252,50 +292,17 @@ export default function OverlayAlexVoiceFullScreen() {
 
       if (!firstAudioReceivedRef.current && hasNoMicrophone) {
         console.warn("[VoiceOverlay] No microphone detected → playing Sophia greeting with TTS fallback");
-        firstAudioReceivedRef.current = true;
-        hasConnectedRef.current = true;
-        setBootStep("tts_fallback");
         alexVoiceService.setMicPermission("denied");
-        alexVoiceService.setApiKeyConfigured(true);
-        alexVoiceService.setState("speaking", "tts_fallback_no_microphone");
-        s.transitionTo("speaking", "tts_fallback_no_microphone");
-        const greeting = buildGreetingRef.current();
-        setTranscripts(prev => prev.filter(t => !t.id.startsWith("alex-preview-")));
-        const newId = `alex-${++entryIdRef.current}`;
-        lastAlexIdRef.current = newId;
-        setTranscripts(prev => [...prev, { role: "alex" as const, text: greeting, id: newId }]);
-        s.addTranscript("alex", greeting);
-        elevenlabsService.init();
-        elevenlabsService.speak(
-          greeting,
-          () => {
-            alexVoiceService.setState("speaking", "tts_fallback_audio_started");
-          },
-          () => {
-            if (!getStore().isOverlayOpen) return;
-            getStore().transitionTo("awaiting_user", "tts_fallback_done");
-          },
-        ).catch((e) => {
-          console.warn("[VoiceOverlay] TTS fallback failed:", e);
-          openChatFallback(
-            "no_microphone_tts_failed",
-            transcriptsRef.current.map((t) => ({ role: t.role, text: t.text })),
-          );
-          s.closeVoiceSession("voice_error_pre_audio");
-        });
+        playTtsFallbackGreeting("no_microphone");
         return;
       }
 
-      // BULLETPROOF: if voice never started successfully, bail to chat — no dead-end red screen.
+      // BULLETPROOF: voice never delivered first audio → speak greeting via TTS
+      // so Alex is heard, then user can tap Réinitialiser or Passer au chat.
       if (!firstAudioReceivedRef.current) {
-        console.warn("[VoiceOverlay] Error before first audio → fallback chat");
+        console.warn("[VoiceOverlay] Error before first audio → TTS greeting fallback");
         try { stop(); } catch {}
-        alexVoiceService.switchToFallbackChat("voice_error_pre_audio");
-        openChatFallback(
-          "voice_unavailable",
-          transcriptsRef.current.map((t) => ({ role: t.role, text: t.text })),
-        );
-        s.closeVoiceSession("voice_error_pre_audio");
+        playTtsFallbackGreeting("voice_error_pre_audio");
         return;
       }
 
