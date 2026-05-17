@@ -38,6 +38,19 @@ const STATUS_COLORS: Record<string, string> = {
   blocked: "bg-amber-500/20 text-amber-300",
 };
 
+async function invokeWithTimeout<T = any>(
+  name: string,
+  body: any,
+  timeoutMs = 30000,
+): Promise<{ data: T | null; error: any }> {
+  return await Promise.race([
+    supabase.functions.invoke(name, { body }) as Promise<any>,
+    new Promise<any>((resolve) =>
+      setTimeout(() => resolve({ data: null, error: new Error(`Timeout ${timeoutMs}ms invoking ${name}`) }), timeoutMs),
+    ),
+  ]);
+}
+
 export default function PageAdminLiveRuns() {
   const [runs, setRuns] = useState<Run[]>([]);
   const [steps, setSteps] = useState<Record<string, Step[]>>({});
@@ -45,27 +58,26 @@ export default function PageAdminLiveRuns() {
   const [adminPhone, setAdminPhone] = useState("");
   const [confirmPhone, setConfirmPhone] = useState("");
   const [loading, setLoading] = useState(false);
+  const [authState, setAuthState] = useState<{ email?: string; isAdmin?: boolean; error?: string }>({});
+  const [lastError, setLastError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    const { data: r } = await supabase
-      .from("live_acquisition_runs")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(50);
-    setRuns((r as Run[]) || []);
-    if (r && r.length) {
-      const ids = r.map((x: any) => x.id);
-      const { data: s } = await supabase
-        .from("acquisition_run_steps")
-        .select("*")
-        .in("run_id", ids)
-        .order("step_order");
-      const grouped: Record<string, Step[]> = {};
-      (s || []).forEach((row: any) => {
-        (grouped[row.run_id] ||= []).push(row);
-      });
-      setSteps(grouped);
+    const { data, error } = await invokeWithTimeout<any>("list-live-runs", {}, 15000);
+    if (error || !data) {
+      setAuthState({ error: error?.message || "list-live-runs failed" });
+      return;
     }
+    if (data.error) {
+      setAuthState({ email: data.email, isAdmin: false, error: data.message || data.error });
+      return;
+    }
+    setAuthState({ email: data.admin_email, isAdmin: true });
+    setRuns(data.runs || []);
+    const grouped: Record<string, Step[]> = {};
+    (data.steps || []).forEach((row: any) => {
+      (grouped[row.run_id] ||= []).push(row);
+    });
+    setSteps(grouped);
   }, []);
 
   useEffect(() => {
@@ -82,15 +94,26 @@ export default function PageAdminLiveRuns() {
 
   const startIsrRun = async () => {
     setLoading(true);
+    setLastError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("run-live-acquisition", {
-        body: { slug: "isolation-solution-royal", campaign: "isr_first_live_test" },
-      });
+      const { data, error } = await invokeWithTimeout<any>(
+        "run-live-acquisition",
+        { slug: "isolation-solution-royal", campaign: "isr_first_live_test" },
+        30000,
+      );
       if (error) throw error;
-      toast.success(`Run created — ${data.run_id?.slice(0, 8)}…`);
+      if (data?.error) throw new Error(data.error);
+      const runId = data?.run_id;
+      const existed = (runs || []).some((r) => r.id === runId);
+      toast.success(existed ? `Run resumed — ${runId?.slice(0, 8)}…` : `Run created — ${runId?.slice(0, 8)}…`);
+      console.groupCollapsed(`[live-run] ${runId}`);
+      console.log(data);
+      console.groupEnd();
       await refresh();
     } catch (e: any) {
-      toast.error(e.message || "Failed to start run");
+      const msg = e?.message || String(e);
+      setLastError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -99,10 +122,12 @@ export default function PageAdminLiveRuns() {
   const dryRun = async (run: Run) => {
     if (!adminPhone) return toast.error("Enter your admin phone (+1...)");
     try {
-      const { data, error } = await supabase.functions.invoke("approve-isr-sms", {
-        body: { run_id: run.id, dry_run: true, admin_phone: adminPhone },
-      });
+      const { data, error } = await invokeWithTimeout<any>(
+        "approve-isr-sms",
+        { run_id: run.id, dry_run: true, admin_phone: adminPhone },
+      );
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success(`Dry-run sent to ${data.sent_to}${data.simulated ? " (simulated)" : ""}`);
     } catch (e: any) {
       toast.error(e.message || "Dry-run failed");
@@ -116,10 +141,12 @@ export default function PageAdminLiveRuns() {
     }
     if (!confirm(`Send REAL SMS to ${target}?`)) return;
     try {
-      const { data, error } = await supabase.functions.invoke("approve-isr-sms", {
-        body: { run_id: run.id, dry_run: false, confirm_phone: confirmPhone },
-      });
+      const { data, error } = await invokeWithTimeout<any>(
+        "approve-isr-sms",
+        { run_id: run.id, dry_run: false, confirm_phone: confirmPhone },
+      );
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success(`SMS sent — sid ${data.sid || "(simulated)"}`);
       await refresh();
     } catch (e: any) {
@@ -129,10 +156,12 @@ export default function PageAdminLiveRuns() {
 
   const startCheckout = async (run: Run) => {
     try {
-      const { data, error } = await supabase.functions.invoke("create-isr-promo-checkout", {
-        body: { slug: run.metadata?.slug, run_id: run.id },
-      });
+      const { data, error } = await invokeWithTimeout<any>(
+        "create-isr-promo-checkout",
+        { slug: run.metadata?.slug, run_id: run.id },
+      );
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       window.open(data.url, "_blank");
     } catch (e: any) {
       toast.error(e.message || "Checkout failed");
@@ -143,15 +172,40 @@ export default function PageAdminLiveRuns() {
     <div className="min-h-screen bg-[#060B14] text-white p-6">
       <Helmet><title>Live Acquisition Runs — Admin UNPRO</title></Helmet>
       <div className="max-w-6xl mx-auto space-y-6">
-        <header className="flex items-center justify-between">
-          <div>
+        <header className="flex items-start justify-between gap-3 flex-wrap">
+          <div className="min-w-0">
             <h1 className="text-3xl font-bold">Live Acquisition Runs</h1>
             <p className="text-white/60 text-sm mt-1">End-to-end pipeline cockpit · ISR live test</p>
+            <p className="text-xs text-white/40 mt-1">
+              {authState.email ? (
+                <>Signed in as <span className="text-white/70">{authState.email}</span> · {authState.isAdmin ? <span className="text-emerald-400">admin</span> : <span className="text-red-400">not admin</span>}</>
+              ) : authState.error ? (
+                <span className="text-red-400">{authState.error}</span>
+              ) : (
+                "Checking auth…"
+              )}
+            </p>
           </div>
-          <Button onClick={startIsrRun} disabled={loading}>
-            {loading ? "Starting…" : "Start ISR Live Run"}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={refresh} disabled={loading}>Refresh</Button>
+            <Button onClick={startIsrRun} disabled={loading || !authState.isAdmin}>
+              {loading ? "Starting…" : "Start ISR Live Run"}
+            </Button>
+          </div>
         </header>
+
+        {!authState.isAdmin && authState.email && (
+          <Card className="bg-red-500/10 border-red-500/30 p-4 text-sm text-red-200">
+            Admin role required. Your account <strong>{authState.email}</strong> doesn't have the <code>admin</code> role.
+          </Card>
+        )}
+
+        {lastError && (
+          <Card className="bg-red-500/10 border-red-500/30 p-4 text-sm text-red-200 flex items-start justify-between gap-3">
+            <pre className="whitespace-pre-wrap break-words flex-1">{lastError}</pre>
+            <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(lastError)}>Copy</Button>
+          </Card>
+        )}
 
         <Card className="bg-white/[0.04] border-white/10 p-4 space-y-3">
           <h2 className="font-semibold">SMS Approval Controls</h2>
