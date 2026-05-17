@@ -107,6 +107,50 @@ export default function OverlayAlexVoiceFullScreen() {
 
   // ElevenLabs voice
   const nudgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Voice-first fallback: when the live ElevenLabs session never delivers first
+  // audio (timeout / disconnect / error before audio), speak the greeting through
+  // the TTS fallback so Alex IS heard, then transition to a recoverable error
+  // state so the user can tap Réinitialiser or Passer au chat. Strictly
+  // user-initiated retry — no silent auto-reconnect.
+  const playTtsFallbackGreeting = useCallback((reason: string) => {
+    const s = getStore();
+    if (!s.isOverlayOpen) return;
+    firstAudioReceivedRef.current = true;
+    hasConnectedRef.current = true;
+    setBootStep("tts_fallback");
+    alexVoiceService.setApiKeyConfigured(true);
+    alexVoiceService.setState("speaking", `tts_fallback:${reason}`);
+    if (s.machineState !== "speaking") {
+      s.transitionTo("speaking", `tts_fallback:${reason}`);
+    }
+    const greeting = buildGreetingRef.current();
+    setTranscripts(prev => prev.filter(t => !t.id.startsWith("alex-preview-")));
+    const newId = `alex-${++entryIdRef.current}`;
+    lastAlexIdRef.current = newId;
+    setTranscripts(prev => [...prev, { role: "alex" as const, text: greeting, id: newId }]);
+    s.addTranscript("alex", greeting);
+    elevenlabsService.init();
+    elevenlabsService.speak(
+      greeting,
+      () => alexVoiceService.setState("speaking", "tts_fallback_audio_started"),
+      () => {
+        const latest = getStore();
+        if (!latest.isOverlayOpen) return;
+        // Surface recoverable banner so the user sees Retry/Chat buttons.
+        latest.setError("voice_offline", "Voix en mode secours. Touchez Réinitialiser pour réessayer.", true);
+      },
+    ).catch((e) => {
+      console.warn("[VoiceOverlay] TTS fallback failed:", e);
+      alexVoiceService.switchToFallbackChat(`${reason}_tts_failed`);
+      openChatFallback(
+        "voice_unavailable",
+        transcriptsRef.current.map((t) => ({ role: t.role, text: t.text })),
+      );
+      getStore().closeVoiceSession("voice_error_pre_audio");
+    });
+  }, [openChatFallback]);
+
   const { start, stop, isActive, isConnecting, isSpeaking, conversation } = useLiveVoice({
     onFirstAudio: () => {
       firstAudioReceivedRef.current = true;
