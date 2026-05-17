@@ -5,7 +5,7 @@ import {
   EmbeddedCheckout,
 } from "@stripe/react-stripe-js";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { BillingInterval } from "@/hooks/usePlanCatalog";
 import FormCouponCodeInline from "@/components/coupon/FormCouponCodeInline";
@@ -33,10 +33,10 @@ export default function InlineStripeCheckout({
 }: InlineStripeCheckoutProps) {
   const [couponResult, setCouponResult] = useState<CouponValidationResult | null>(null);
   const [checkoutKey, setCheckoutKey] = useState(0);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   const handleCouponChange = (result: CouponValidationResult | null) => {
     setCouponResult(result);
-    // Force re-create checkout session with new promo
     setCheckoutKey((k) => k + 1);
   };
 
@@ -48,7 +48,6 @@ export default function InlineStripeCheckout({
       returnUrl: `${window.location.origin}/pro/onboarding?plan=${planCode}&checkout=success&session_id={CHECKOUT_SESSION_ID}`,
     };
 
-    // Pass validated promo code to backend
     if (couponResult?.valid && couponResult.code) {
       body.promoCode = couponResult.code;
     }
@@ -59,9 +58,11 @@ export default function InlineStripeCheckout({
     );
 
     if (error || !data?.clientSecret) {
-      throw new Error(error?.message || "Impossible de créer la session de paiement");
+      const msg = data?.error || error?.message || "Paiement temporairement indisponible.";
+      setCheckoutError(msg);
+      throw new Error(msg);
     }
-
+    setCheckoutError(null);
     return data.clientSecret;
   }, [planCode, interval, couponResult]);
 
@@ -112,6 +113,27 @@ export default function InlineStripeCheckout({
           <p className="text-xs text-muted-foreground mt-1">
             Cliquez ci-dessous pour confirmer l'activation.
           </p>
+        </div>
+      )}
+
+      {/* Error fallback */}
+      {checkoutError && (
+        <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 space-y-3">
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">Paiement ralenti</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{checkoutError}</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline"
+              onClick={() => { setCheckoutError(null); setCheckoutKey((k) => k + 1); }}
+              className="gap-1.5">
+              <RefreshCw className="h-3.5 w-3.5" /> Réessayer
+            </Button>
+            <Button size="sm" variant="ghost" onClick={onCancel}>Retour aux plans</Button>
+          </div>
         </div>
       )}
 

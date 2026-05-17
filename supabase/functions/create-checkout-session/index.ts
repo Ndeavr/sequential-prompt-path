@@ -1,5 +1,5 @@
-import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -244,7 +244,7 @@ Deno.serve(async (req) => {
     }
 
     // ── STRIPE CHECKOUT (paid flow) ──
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     // Get or create Stripe customer
     const { data: existingSub } = await serviceClient
@@ -355,6 +355,13 @@ Deno.serve(async (req) => {
     });
 
     if (isEmbedded) {
+      if (!session.client_secret) {
+        console.error("Stripe returned no client_secret for embedded session", session.id);
+        return new Response(
+          JSON.stringify({ error: "Stripe n'a pas retourné de secret de paiement. Réessayez." }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       return new Response(JSON.stringify({ clientSecret: session.client_secret }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
