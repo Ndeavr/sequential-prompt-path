@@ -119,6 +119,11 @@ export default function OverlayAlexVoiceFullScreen() {
   const playTtsFallbackGreeting = useCallback((reason: string) => {
     const s = getStore();
     if (!s.isOverlayOpen) return;
+    if (ttsFallbackInProgressRef.current) {
+      console.warn("[VoiceOverlay] TTS fallback already in progress — skipping duplicate", reason);
+      return;
+    }
+    ttsFallbackInProgressRef.current = true;
     firstAudioReceivedRef.current = true;
     hasConnectedRef.current = true;
     setBootStep("tts_fallback");
@@ -139,20 +144,30 @@ export default function OverlayAlexVoiceFullScreen() {
       () => alexVoiceService.setState("speaking", "tts_fallback_audio_started"),
       () => {
         const latest = getStore();
+        ttsFallbackInProgressRef.current = false;
         if (!latest.isOverlayOpen) return;
-        // Surface recoverable banner so the user sees Retry/Chat buttons.
-        latest.setError("voice_offline", "Voix en mode secours. Touchez Réinitialiser pour réessayer.", true);
+        markGreeted();
+        markVoiceStarted();
+        if (latest.machineState === "speaking") {
+          latest.transitionTo("awaiting_user", "tts_fallback_finished");
+          setTimeout(() => {
+            const after = getStore();
+            if (after.isOverlayOpen && after.machineState === "awaiting_user") {
+              after.transitionTo("listening", "tts_fallback_listening");
+            }
+          }, 300);
+        }
+        void fallbackVoiceSession.openSession(greeting, { suppressGreetingAudio: true });
       },
     ).catch((e) => {
+      ttsFallbackInProgressRef.current = false;
       console.warn("[VoiceOverlay] TTS fallback failed:", e);
-      alexVoiceService.switchToFallbackChat(`${reason}_tts_failed`);
-      openChatFallback(
-        "voice_unavailable",
-        transcriptsRef.current.map((t) => ({ role: t.role, text: t.text })),
-      );
-      getStore().closeVoiceSession("voice_error_pre_audio");
+      const latest = getStore();
+      if (!latest.isOverlayOpen) return;
+      latest.transitionTo("awaiting_user", `${reason}_tts_failed_continue_listening`);
+      void fallbackVoiceSession.openSession(greeting);
     });
-  }, [openChatFallback]);
+  }, [fallbackVoiceSession]);
 
   const { start, stop, isActive, isConnecting, isSpeaking, conversation } = useLiveVoice({
     onFirstAudio: () => {
