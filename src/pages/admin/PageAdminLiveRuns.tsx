@@ -82,6 +82,8 @@ export default function PageAdminLiveRuns() {
     error?: string;
   }>({});
   const [lastError, setLastError] = useState<string | null>(null);
+  const [stripeMode, setStripeMode] = useState<"live" | "test" | "unknown" | null>(null);
+  const [fullRunBusy, setFullRunBusy] = useState(false);
 
   const userId = user?.id ?? null;
   const userEmail = user?.email ?? null;
