@@ -553,6 +553,7 @@ export default function OverlayAlexVoiceFullScreen() {
       if (firstAudioTimerRef.current) clearTimeout(firstAudioTimerRef.current);
       if (slowTokenTimerRef.current) clearTimeout(slowTokenTimerRef.current);
       elevenlabsService.stop();
+      void fallbackVoiceSession.closeSession();
       if (isActive) {
         stop();
       }
@@ -564,6 +565,7 @@ export default function OverlayAlexVoiceFullScreen() {
       }
       hasConnectedRef.current = false;
       firstAudioReceivedRef.current = false;
+      ttsFallbackInProgressRef.current = false;
       autoRetryCountRef.current = 0;
       setTranscripts([]);
       setSlowToken(false);
