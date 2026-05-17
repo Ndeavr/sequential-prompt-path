@@ -121,6 +121,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const lockedVoiceIdRef = useRef<string | null>(null);
   const bootInProgressRef = useRef(false);
   const ownedMicStreamRef = useRef<MediaStream | null>(null);
+  const inputDeviceIdRef = useRef<string | undefined>(undefined);
   const inputLevelTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startDebounceUntilRef = useRef(0);
 
@@ -391,12 +392,14 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         }
         const inputAudioTrack = ownedMicStreamRef.current.getAudioTracks()[0];
         if (inputAudioTrack) inputAudioTrack.enabled = true;
+        inputDeviceIdRef.current = inputAudioTrack?.getSettings?.().deviceId;
         console.log("[ElevenLabs V8] Mic verified", {
           mediaStreamActive: ownedMicStreamRef.current.active,
           inputAudioTrackEnabled: inputAudioTrack?.enabled,
           inputAudioTrackState: inputAudioTrack?.readyState,
         });
         alexVoiceService.setRealtimeDiagnostics({ microphoneActive: Boolean(ownedMicStreamRef.current.active && inputAudioTrack?.enabled) });
+        stopOwnedMicStream();
         clearDeny("mic");
       } catch (e) {
         const n = (e as any)?.name;
@@ -545,7 +548,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           await conversation.startSession({
             signedUrl,
             connectionType: "websocket",
-            inputDeviceId: ownedMicStreamRef.current?.getAudioTracks()[0]?.getSettings?.().deviceId,
+            inputDeviceId: inputDeviceIdRef.current,
           } as any);
         } catch (startErr) {
           if (!conversationToken) throw startErr;
@@ -553,7 +556,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           await conversation.startSession({
             conversationToken,
             connectionType: "webrtc",
-            inputDeviceId: ownedMicStreamRef.current?.getAudioTracks()[0]?.getSettings?.().deviceId,
+            inputDeviceId: inputDeviceIdRef.current,
           } as any);
         }
 
