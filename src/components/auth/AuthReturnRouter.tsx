@@ -162,10 +162,12 @@ export default function AuthReturnRouter() {
   const location = useLocation();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event !== "SIGNED_IN" || !session?.user) return;
 
       console.log("[AuthReturnRouter] SIGNED_IN", { user: session.user.id, path: location.pathname });
+
+      setTimeout(async () => {
       closeAuthOverlay();
 
       // Profile upsert (fire-and-forget)
@@ -248,6 +250,7 @@ export default function AuthReturnRouter() {
       const target = postLoginPathForRole(primaryRole, intent?.returnPath ?? null);
       console.log("[AuthReturnRouter] -> role redirect", { primaryRole, target });
       navigate(target, { replace: true });
+      }, 0);
     });
 
     return () => subscription.unsubscribe();

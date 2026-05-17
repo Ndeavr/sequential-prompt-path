@@ -10,7 +10,7 @@
  * - Start ISR is NEVER blocked by a failed list refresh.
  */
 import { Helmet } from "react-helmet-async";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { validateAdmin } from "@/lib/adminGuard";
+import { useAuth } from "@/hooks/useAuth";
 
 type Run = {
   id: string;
@@ -58,6 +59,13 @@ async function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise
 type SyncMode = "idle" | "function" | "fallback" | "error";
 
 export default function PageAdminLiveRuns() {
+  const {
+    user,
+    isAuthenticated,
+    isLoading: authLoading,
+    roles,
+    isAdmin: roleStoreAdmin,
+  } = useAuth() as any;
   const [runs, setRuns] = useState<Run[]>([]);
   const [steps, setSteps] = useState<Record<string, Step[]>>({});
   const [openRunId, setOpenRunId] = useState<string | null>(null);
@@ -74,36 +82,56 @@ export default function PageAdminLiveRuns() {
     error?: string;
   }>({});
   const [lastError, setLastError] = useState<string | null>(null);
-  const bootstrapped = useRef(false);
+
+  const userId = user?.id ?? null;
+  const userEmail = user?.email ?? null;
+  const authRoles = Array.isArray(roles) ? roles : [];
+  const adminReady = auth.isAdmin === true;
+  const knownAdmin = !!userId && (roleStoreAdmin || authRoles.includes("admin"));
 
   // ───── AUTH BOOTSTRAP ─────────────────────────────────────────────
   useEffect(() => {
-    if (bootstrapped.current) return;
-    bootstrapped.current = true;
-    (async () => {
+    let cancelled = false;
+
+    if (authLoading && !userId) {
+      setAuth({});
+      return;
+    }
+
+    if (!isAuthenticated || !userId) {
+      setAuth({ error: "Pas de session active. Connectez-vous à /login d'abord." });
+      return;
+    }
+
+    if (knownAdmin) {
+      setAuth({ email: userEmail, userId, isAdmin: true, source: "user_roles" });
+      return;
+    }
+
+    setAuth({ email: userEmail, userId, isAdmin: false });
+
+    void (async () => {
       try {
-        const { data: sess } = await supabase.auth.getSession();
-        const user = sess.session?.user;
-        if (!user) {
-          setAuth({ error: "Pas de session active. Connectez-vous à /login d'abord." });
-          return;
-        }
-        const result = await validateAdmin(user.id, user.email ?? null);
+        const result = await validateAdmin(userId, userEmail);
+        if (cancelled) return;
         if (result.allowed) {
-          setAuth({ email: user.email, userId: user.id, isAdmin: true, source: result.source });
+          setAuth({ email: userEmail, userId, isAdmin: true, source: result.source });
         } else {
           setAuth({
-            email: user.email,
-            userId: user.id,
+            email: userEmail,
+            userId,
             isAdmin: false,
             error: (result as any).reason === "load_error" ? `Role check failed: ${(result as any).detail || ""}` : "Rôle admin requis.",
           });
         }
       } catch (e: any) {
+        if (cancelled) return;
         setAuth({ error: e?.message || "Auth bootstrap failed" });
       }
     })();
-  }, []);
+
+    return () => { cancelled = true; };
+  }, [authLoading, isAuthenticated, userId, userEmail, knownAdmin]);
 
   // ───── DIRECT TABLE FALLBACK (admin RLS allows SELECT) ─────────────
   const refreshViaTables = useCallback(async (): Promise<{ runs: Run[]; steps: Step[] }> => {
@@ -154,6 +182,7 @@ export default function PageAdminLiveRuns() {
         setSyncMode("fallback");
       }
       setRuns(result.runs);
+      setOpenRunId((current) => current ?? result.runs[0]?.id ?? null);
       const grouped: Record<string, Step[]> = {};
       result.steps.forEach((row) => {
         (grouped[row.run_id] ||= []).push(row);
@@ -169,7 +198,7 @@ export default function PageAdminLiveRuns() {
 
   // Trigger initial + realtime refresh AFTER admin validated
   useEffect(() => {
-    if (!auth.isAdmin) return;
+    if (!adminReady) return;
     safeRefresh();
     const ch = supabase
       .channel("live_runs_admin")
@@ -179,7 +208,7 @@ export default function PageAdminLiveRuns() {
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [auth.isAdmin, safeRefresh]);
+  }, [adminReady, safeRefresh]);
 
   // ───── START ISR RUN (NEVER gated on list refresh) ─────────────────
   const startIsrRun = async () => {
@@ -219,6 +248,7 @@ export default function PageAdminLiveRuns() {
           ...prev,
         ]);
       }
+      if (runId) setOpenRunId(runId);
       await safeRefresh();
     } catch (e: any) {
       const msg = e?.message || String(e);
@@ -315,16 +345,16 @@ export default function PageAdminLiveRuns() {
               ) : auth.error ? (
                 <Badge className="bg-red-500/20 text-red-300">{auth.error}</Badge>
               ) : (
-                <Badge className="bg-white/10 text-white/60">Vérification…</Badge>
+                <Badge className="bg-white/10 text-white/60">Validation admin en cours…</Badge>
               )}
               <Badge className={syncChip.cls}>{syncChip.label}</Badge>
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={safeRefresh} disabled={syncing || !auth.isAdmin}>
+            <Button variant="outline" onClick={safeRefresh} disabled={syncing || !adminReady}>
               {syncing ? "Sync…" : "Réessayer la sync"}
             </Button>
-            <Button onClick={startIsrRun} disabled={starting || !auth.isAdmin}>
+            <Button onClick={startIsrRun} disabled={starting || !adminReady}>
               {starting ? "Démarrage…" : "Start ISR Live Run"}
             </Button>
           </div>
@@ -366,7 +396,13 @@ export default function PageAdminLiveRuns() {
         <div className="space-y-4">
           {runs.length === 0 && (
             <Card className="bg-white/[0.04] border-white/10 p-8 text-center text-white/60">
-              {auth.isAdmin ? `Aucun run pour l'instant. Cliquez "Start ISR Live Run".` : "En attente de validation admin…"}
+              {adminReady
+                ? syncing
+                  ? "Admin validé · chargement du run ISR…"
+                  : `Aucun run pour l'instant. Cliquez "Start ISR Live Run".`
+                : auth.error
+                  ? "Action bloquée · rôle admin requis."
+                  : "Validation admin en cours…"}
             </Card>
           )}
           {runs.map((run) => {

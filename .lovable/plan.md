@@ -1,94 +1,102 @@
-A — PROMPT LOVABLE FINAL
+## Diagnostic clair
 
-1. CONTEXT
-Build a hard fix for `/admin/live-runs`. Current UI shows `Timeout 15000ms invoking list-live-runs`, disables `Start ISR Live Run`, and prevents the ISR funnel from starting. The backend is healthy. The failure path is the admin page relying on `list-live-runs` during initial render; when that function call times out or is not deployed/reachable from the browser, the cockpit locks itself before the operator can start the run.
+Le backend répond correctement et le run ISR existe déjà avec les vraies données :
+- Prospect ISR réel présent : Isolation Solution Royal, Terrebonne, `+15142499522`, `info@isroyal.ca`, `https://isroyal.ca`
+- Run existant : `e4b60308-956c-49ed-9cc6-8bed4f8a98aa`
+- Étapes 1 à 5 complétées : search, extraction, AIPP, page, SMS draft
+- `list-live-runs` répond 200 avec le run et les étapes
+- La page `/pro/isolation-solution-royal` est prête côté données
 
-2. OBJECTIVE
-Make the ISR live acquisition cockpit operational now:
-- Start ISR run must work even if list refresh is delayed.
-- Existing runs must display via a reliable fallback.
-- Admin state must resolve from the existing admin guard/cache plus direct role check.
-- Errors must be visible and actionable.
-- No SMS sends without explicit admin action.
+Le blocage visible vient du frontend : `/admin/live-runs` reste en état `Vérification… / En attente de validation admin…`, donc l’UI ne charge pas le run existant et masque l’état réel du pipeline.
 
-3. USERS
-- Admin operator running ISR acquisition.
-- Founder reviewing funnel status on mobile.
+## Objectif
 
-4. DELIVERABLES
-Implement a targeted repair in:
+Rendre `/admin/live-runs` opérable maintenant :
+- Voir le run ISR existant dès l’ouverture
+- Débloquer le bouton `Start ISR Live Run`
+- Garder une validation admin sécurisée
+- Permettre dry-run SMS, approbation SMS réelle, checkout 1$ sans placeholders
+- Afficher les erreurs actionnables au lieu d’un écran d’attente
+
+## Plan d’implémentation
+
+### 1. Refactor auth admin de `PageAdminLiveRuns.tsx`
+
+Remplacer le bootstrap fragile basé uniquement sur `supabase.auth.getSession()` par le store global déjà fiable :
+- Utiliser `useAuth()` pour lire `user`, `isAuthenticated`, `isLoading`, `roles`, `isAdmin`
+- Conserver `validateAdmin()` comme confirmation secondaire
+- Ajouter une porte de secours sécurisée : si `roles` contient `admin` ou si `validateAdmin()` confirme, l’état passe immédiatement à `Admin validé`
+- Supprimer l’état bloquant permanent `Vérification…`
+
+Résultat : l’admin connecté ne reste plus coincé en attente.
+
+### 2. Charger le run ISR même si la validation UI tarde
+
+Modifier la logique de refresh :
+- Déclencher `safeRefresh()` dès que l’utilisateur admin est confirmé
+- Si `list-live-runs` réussit, afficher les données serveur
+- Si `list-live-runs` échoue, utiliser le fallback table existant
+- Si l’auth est encore en cours mais que l’utilisateur est connu, afficher un panneau `Connexion en cours` sans désactiver toute la page indéfiniment
+
+Résultat : le run existant `e4b60308...` apparaît avec les étapes au lieu du message `En attente de validation admin…`.
+
+### 3. Sécuriser le bouton `Start ISR Live Run`
+
+Changer le comportement du bouton :
+- Le bouton devient actif dès que l’admin est confirmé par `useAuth` ou `validateAdmin`
+- Au clic, appeler `run-live-acquisition`
+- Si un run existe déjà, le réutiliser et afficher `Run ISR prêt`
+- Après clic, forcer un `safeRefresh()` et ouvrir automatiquement les étapes du run
+- Afficher l’erreur exacte si l’appel échoue
+
+Résultat : le bouton entouré dans la capture devient réellement opérable.
+
+### 4. Améliorer l’état vide et les statuts
+
+Remplacer les messages vagues par des états utiles :
+- `Validation admin en cours…` uniquement pendant un délai court
+- `Admin validé · chargement du run ISR…`
+- `Run ISR prêt · SMS en attente d’approbation`
+- `Sync ralentie · actions disponibles` si fallback actif
+- `Action bloquée` seulement si rôle admin absent
+
+Résultat : plus de page morte, le cockpit montre le statut réel du funnel.
+
+### 5. Vérifier les edge functions déjà déployées
+
+Tester après correction :
+- `list-live-runs` retourne le run ISR
+- `run-live-acquisition` retourne ou réutilise le run ISR
+- `approve-isr-sms` garde la sécurité admin + format E.164 + confirmation prospect
+- `create-isr-promo-checkout` retourne une URL Stripe 1$
+
+Aucune migration requise.
+Aucun SMS réel envoyé pendant la validation.
+Aucune règle RLS affaiblie.
+
+## Fichiers à modifier
+
 - `src/pages/admin/PageAdminLiveRuns.tsx`
-- `supabase/functions/list-live-runs/index.ts` if needed
-- `supabase/functions/run-live-acquisition/index.ts` if needed
+  - refactor auth state
+  - refresh resilient
+  - UI cockpit non bloquante
+  - ouverture automatique du run ISR
 
-5. LOGIC
-Create a resilient frontend sequence:
-- Load current session first.
-- Validate admin using `validateAdmin(user.id, email)` from `src/lib/adminGuard.ts`.
-- Do not disable `Start ISR Live Run` because `list-live-runs` timed out.
-- Start run directly through `run-live-acquisition` when admin validation passes.
-- After run creation, insert returned run data into UI immediately.
-- Refresh list in the background.
-- If `list-live-runs` fails, fall back to direct table reads for `live_acquisition_runs` and `acquisition_run_steps` under existing RLS.
-- Show a compact error panel only for the failed refresh, not as a full cockpit blocker.
+Aucun changement prévu dans :
+- `src/integrations/supabase/client.ts`
+- `src/integrations/supabase/types.ts`
+- `.env`
+- migrations
 
-6. DATA
-Use existing tables only:
-- `live_acquisition_runs`
-- `acquisition_run_steps`
-- `war_prospects`
-- `user_roles`
+## Critères de succès
 
-No schema migration unless a direct check proves a missing unique constraint or policy blocks the flow.
-
-7. UI/UX
-Refactor cockpit copy and states:
-- Title in French-first UNPRO style: `Runs d’acquisition live`
-- Replace blocking red timeout with non-blocking status: `Synchronisation ralentie — actions disponibles.`
-- Add clear state chips: `Connecté`, `Admin validé`, `Sync ralentie`, `Run prêt`.
-- Keep Start button enabled for validated admin even when refresh fails.
-- Add `Réessayer la sync` instead of a generic blocking `Refresh`.
-- Preserve SMS dry-run and real-send controls.
-
-8. COMPONENTS
-Update existing page only:
-- Add `loadAuthState()` helper.
-- Add `refreshViaFunction()` helper.
-- Add `refreshViaTablesFallback()` helper.
-- Add `safeRefresh()` orchestrator.
-- Add `functionError` and `syncMode` UI state.
-
-9. ACTIONS
-Implement:
-- Admin validation using existing `validateAdmin`.
-- Fallback reads from tables when `list-live-runs` times out.
-- Immediate UI update after `run-live-acquisition` success.
-- Better timeout handling with AbortController-style guard or Promise timeout cleanup.
-- Direct function deploy/test for `list-live-runs` and `run-live-acquisition` after code changes.
-
-10. CONSTRAINTS
-- Do not edit generated Supabase client/types files.
-- Do not send the real SMS automatically.
-- Do not expose service-role secrets client-side.
-- Do not weaken RLS.
-- Do not rebuild the broader acquisition system.
-- Keep the fix scoped to making this cockpit operational.
-
-11. SUCCESS
-Complete when:
-- `/admin/live-runs` no longer blocks on `Timeout 15000ms invoking list-live-runs`.
-- Admin sees validated state.
-- `Start ISR Live Run` is clickable.
-- Clicking it creates/resumes the ISR run.
-- Run appears in the UI without requiring a successful list function refresh.
-- SMS preview remains visible.
-- Dry-run SMS and real-send controls remain admin-gated.
-- `$1 Checkout` button remains available after run creation.
-
-12. TASKS
-- Refactor `PageAdminLiveRuns.tsx` admin/session bootstrap.
-- Add non-blocking sync fallback to direct table reads.
-- Make `startIsrRun` independent from list refresh.
-- Harden error display and button disabled rules.
-- Deploy/test affected edge functions.
-- Verify in browser network/tools that the run path reaches the backend and renders a run card.
+- `/admin/live-runs` affiche `Admin validé`
+- Le run ISR existant apparaît sans cliquer
+- `Start ISR Live Run` fonctionne et ne reste plus bloqué
+- Le SMS preview est visible
+- `Dry-run SMS` reste sécurisé vers le numéro admin
+- `Approuver & envoyer` exige le numéro exact `+15142499522`
+- `Checkout 1$` ouvre Stripe
+- Le cockpit montre les étapes search → extracted → AIPP → page → sms_drafted
+- Aucun placeholder mock n’est affiché
+- Les pages existantes ne sont pas touchées
