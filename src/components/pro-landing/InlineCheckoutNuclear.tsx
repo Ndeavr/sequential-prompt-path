@@ -16,7 +16,7 @@ import {
   EmbeddedCheckout,
 } from "@stripe/react-stripe-js";
 import { motion } from "framer-motion";
-import { Crown, ShieldCheck, Lock, Loader2, ArrowRight, BadgePercent } from "lucide-react";
+import { Crown, ShieldCheck, Lock, Loader2, ArrowRight, BadgePercent, AlertTriangle, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { usePlanCatalog, type BillingInterval, type CatalogPlan } from "@/hooks/usePlanCatalog";
@@ -64,6 +64,7 @@ export default function InlineCheckoutNuclear({
   const [checkoutKey, setCheckoutKey] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
   const [authNeeded, setAuthNeeded] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const trackedView = useRef(false);
   const trackedStart = useRef(false);
   const completedRef = useRef(false);
@@ -147,8 +148,11 @@ export default function InlineCheckoutNuclear({
 
     const { data, error } = await supabase.functions.invoke("create-checkout-session", { body });
     if (error || !data?.clientSecret) {
-      throw new Error(error?.message || "Impossible de créer la session de paiement");
+      const msg = data?.error || error?.message || "Paiement temporairement indisponible.";
+      setCheckoutError(msg);
+      throw new Error(msg);
     }
+    setCheckoutError(null);
     return data.clientSecret as string;
   }, [activePlan, interval, couponResult, prospectId, prospectSlug, category, city, mode]);
 
@@ -346,14 +350,45 @@ export default function InlineCheckoutNuclear({
           </div>
         </div>
       ) : (
-        <div className="mt-5 overflow-hidden rounded-xl border border-white/10 bg-white">
-          <EmbeddedCheckoutProvider
-            key={`${activePlan.code}-${interval}-${mode}-${checkoutKey}`}
-            stripe={stripePromise}
-            options={{ fetchClientSecret }}
-          >
-            <EmbeddedCheckout />
-          </EmbeddedCheckoutProvider>
+        <div className="mt-5 space-y-3">
+          {checkoutError && (
+            <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 space-y-3">
+              <div className="flex items-start gap-2.5">
+                <AlertTriangle className="h-4 w-4 text-amber-300 shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-amber-100">Paiement ralenti</p>
+                  <p className="text-xs text-amber-100/80 mt-0.5">{checkoutError}</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => { setCheckoutError(null); setCheckoutKey((k) => k + 1); }}
+                  className="gap-1.5 border-amber-300/40 bg-transparent text-amber-100 hover:bg-amber-300/10"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" /> Réessayer
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => { setShowStripe(false); setCheckoutError(null); }}
+                  className="text-amber-100/80 hover:text-amber-50"
+                >
+                  Retour aux plans
+                </Button>
+              </div>
+            </div>
+          )}
+          <div className="overflow-hidden rounded-xl border border-white/10 bg-white">
+            <EmbeddedCheckoutProvider
+              key={`${activePlan.code}-${interval}-${mode}-${checkoutKey}`}
+              stripe={stripePromise}
+              options={{ fetchClientSecret }}
+            >
+              <EmbeddedCheckout />
+            </EmbeddedCheckoutProvider>
+          </div>
         </div>
       )}
     </motion.section>
