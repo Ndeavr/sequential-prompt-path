@@ -17,6 +17,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import { ALEX_VOICE_BASE, ALEX_VOICE_BACKUP } from "@/config/alexVoiceConfig";
+import { useAlexVoiceLockedStore } from "@/stores/alexVoiceLockedStore";
 
 export type SmokeCheck = {
   name: string;
@@ -207,6 +208,17 @@ export async function voice_smoke_test(): Promise<SmokeReport> {
         name: "orb_click_starts_listening",
         pass: reached,
         detail: reached ? "store mode transitioned" : "no transition within 2s (window.__alexMode unset?)",
+      });
+      const survivesPreAudioTimeout = await new Promise<boolean>((resolve) => {
+        setTimeout(() => {
+          const state = useAlexVoiceLockedStore.getState();
+          resolve(state.isOverlayOpen && state.machineState !== "idle");
+        }, 7500);
+      });
+      checks.push({
+        name: "pre_audio_timeout_keeps_voice_open",
+        pass: survivesPreAudioTimeout,
+        detail: survivesPreAudioTimeout ? "overlay survived fallback window" : "overlay closed before fallback voice could recover",
       });
     }
   }
