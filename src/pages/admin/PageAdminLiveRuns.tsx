@@ -10,7 +10,7 @@
  * - Start ISR is NEVER blocked by a failed list refresh.
  */
 import { Helmet } from "react-helmet-async";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { validateAdmin } from "@/lib/adminGuard";
+import { useAuth } from "@/hooks/useAuth";
 
 type Run = {
   id: string;
@@ -58,6 +59,13 @@ async function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise
 type SyncMode = "idle" | "function" | "fallback" | "error";
 
 export default function PageAdminLiveRuns() {
+  const {
+    user,
+    isAuthenticated,
+    isLoading: authLoading,
+    roles,
+    isAdmin: roleStoreAdmin,
+  } = useAuth() as any;
   const [runs, setRuns] = useState<Run[]>([]);
   const [steps, setSteps] = useState<Record<string, Step[]>>({});
   const [openRunId, setOpenRunId] = useState<string | null>(null);
@@ -74,36 +82,56 @@ export default function PageAdminLiveRuns() {
     error?: string;
   }>({});
   const [lastError, setLastError] = useState<string | null>(null);
-  const bootstrapped = useRef(false);
+
+  const userId = user?.id ?? null;
+  const userEmail = user?.email ?? null;
+  const authRoles = Array.isArray(roles) ? roles : [];
+  const adminReady = auth.isAdmin === true;
+  const knownAdmin = !!userId && (roleStoreAdmin || authRoles.includes("admin"));
 
   // ───── AUTH BOOTSTRAP ─────────────────────────────────────────────
   useEffect(() => {
-    if (bootstrapped.current) return;
-    bootstrapped.current = true;
-    (async () => {
+    let cancelled = false;
+
+    if (authLoading && !userId) {
+      setAuth({});
+      return;
+    }
+
+    if (!isAuthenticated || !userId) {
+      setAuth({ error: "Pas de session active. Connectez-vous à /login d'abord." });
+      return;
+    }
+
+    if (knownAdmin) {
+      setAuth({ email: userEmail, userId, isAdmin: true, source: "user_roles" });
+      return;
+    }
+
+    setAuth({ email: userEmail, userId, isAdmin: false });
+
+    void (async () => {
       try {
-        const { data: sess } = await supabase.auth.getSession();
-        const user = sess.session?.user;
-        if (!user) {
-          setAuth({ error: "Pas de session active. Connectez-vous à /login d'abord." });
-          return;
-        }
-        const result = await validateAdmin(user.id, user.email ?? null);
+        const result = await validateAdmin(userId, userEmail);
+        if (cancelled) return;
         if (result.allowed) {
-          setAuth({ email: user.email, userId: user.id, isAdmin: true, source: result.source });
+          setAuth({ email: userEmail, userId, isAdmin: true, source: result.source });
         } else {
           setAuth({
-            email: user.email,
-            userId: user.id,
+            email: userEmail,
+            userId,
             isAdmin: false,
             error: (result as any).reason === "load_error" ? `Role check failed: ${(result as any).detail || ""}` : "Rôle admin requis.",
           });
         }
       } catch (e: any) {
+        if (cancelled) return;
         setAuth({ error: e?.message || "Auth bootstrap failed" });
       }
     })();
-  }, []);
+
+    return () => { cancelled = true; };
+  }, [authLoading, isAuthenticated, userId, userEmail, knownAdmin]);
 
   // ───── DIRECT TABLE FALLBACK (admin RLS allows SELECT) ─────────────
   const refreshViaTables = useCallback(async (): Promise<{ runs: Run[]; steps: Step[] }> => {
