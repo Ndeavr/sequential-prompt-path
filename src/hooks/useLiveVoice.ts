@@ -403,6 +403,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
 
         connectionTimeoutRef.current = setTimeout(() => {
           console.error(`[ElevenLabs V8] ⏱️ Connection timeout ${CONNECTION_TIMEOUT_MS}ms`);
+          bootInProgressRef.current = false;
           setIsConnecting(false);
           setIsActive(false);
           try { conversation.endSession(); } catch {}
@@ -439,27 +440,21 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           hasWebRtcToken: Boolean(data?.conversationToken),
         });
 
-        // Prefer WebRTC (lower latency, more reliable first-audio on mobile)
-        // when a conversation token is provided; fall back to signed-URL WebSocket
-        // if WebRTC handshake throws synchronously.
+        // Prefer signed-URL WebSocket in production. Current mobile preview
+        // networks often block the LiveKit validate path used by WebRTC, which
+        // causes long reconnect loops before first audio.
         const conversationToken = (data as any)?.conversationToken;
         try {
-          if (conversationToken) {
-            await conversation.startSession({
-              conversationToken,
-              connectionType: "webrtc",
-            } as any);
-          } else {
-            await conversation.startSession({
-              signedUrl,
-              connectionType: "websocket",
-            } as any);
-          }
-        } catch (startErr) {
-          console.warn("[ElevenLabs V8] Primary connectionType failed, trying websocket fallback", startErr);
           await conversation.startSession({
             signedUrl,
             connectionType: "websocket",
+          } as any);
+        } catch (startErr) {
+          if (!conversationToken) throw startErr;
+          console.warn("[ElevenLabs V8] WebSocket failed, trying WebRTC fallback", startErr);
+          await conversation.startSession({
+            conversationToken,
+            connectionType: "webrtc",
           } as any);
         }
 
