@@ -299,6 +299,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       }
       setIsActive(false);
       setIsConnecting(false);
+      bootInProgressRef.current = false;
+      stopInputLevelMonitor();
       clearConnectionTimeout();
     };
     const handleForceKill = (e: Event) => {
@@ -308,6 +310,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       try { conversation.endSession(); } catch {}
       setIsActive(false);
       setIsConnecting(false);
+      bootInProgressRef.current = false;
+      stopInputLevelMonitor();
+      stopOwnedMicStream();
       clearConnectionTimeout();
     };
     window.addEventListener("alex-voice-cleanup", handleCleanup);
@@ -316,7 +321,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       window.removeEventListener("alex-voice-cleanup", handleCleanup);
       window.removeEventListener("alex-voice-force-kill", handleForceKill);
     };
-  }, [conversation, clearConnectionTimeout]);
+  }, [conversation, clearConnectionTimeout, stopInputLevelMonitor, stopOwnedMicStream]);
 
   const start = useCallback(async (options?: StartOptions) => {
     const forced = options?.force;
@@ -583,13 +588,20 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     conversation.endSession();
     setIsActive(false);
     setIsConnecting(false);
+    bootInProgressRef.current = false;
+    stopInputLevelMonitor();
+    stopOwnedMicStream();
     hasDeliveredFirstAudioRef.current = false;
     callbacksRef.current?.onDisconnect?.();
-  }, [conversation, clearConnectionTimeout]);
+  }, [conversation, clearConnectionTimeout, stopInputLevelMonitor, stopOwnedMicStream]);
 
   useEffect(() => {
-    return () => { clearConnectionTimeout(); };
-  }, [clearConnectionTimeout]);
+    return () => {
+      clearConnectionTimeout();
+      stopInputLevelMonitor();
+      stopOwnedMicStream();
+    };
+  }, [clearConnectionTimeout, stopInputLevelMonitor, stopOwnedMicStream]);
 
   return { start, stop, isActive, isConnecting, isSpeaking, conversation };
 }
