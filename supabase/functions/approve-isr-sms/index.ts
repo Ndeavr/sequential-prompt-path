@@ -61,32 +61,30 @@ Deno.serve(async (req) => {
       targetPhone = prospectPhone;
     }
 
-    // Send via Twilio (LOVABLE_API_KEY gateway)
+    // Send via Twilio (LOVABLE_API_KEY gateway). NEVER silently simulate.
     const twilioApiKey = Deno.env.get("TWILIO_API_KEY");
     const twilioFrom = Deno.env.get("TWILIO_PHONE_NUMBER") || Deno.env.get("TWILIO_FROM");
+    const messagingSid = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
 
-    let sendResult: any = { simulated: true, target: targetPhone };
-    if (twilioApiKey && twilioFrom && lovableKey) {
-      const resp = await fetch(
-        `https://connector-gateway.lovable.dev/twilio/Messages.json`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${lovableKey}`,
-            "X-Connection-Api-Key": twilioApiKey,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams({
-            To: targetPhone,
-            From: twilioFrom,
-            Body: smsBody,
-          }),
-        }
-      );
-      sendResult = await resp.json();
-      if (!resp.ok) throw new Error(`twilio_send_failed:${JSON.stringify(sendResult)}`);
-    }
+    if (!twilioApiKey || !lovableKey) throw new Error("twilio_not_configured: TWILIO_API_KEY or LOVABLE_API_KEY missing");
+    if (!messagingSid && !twilioFrom) throw new Error("twilio_not_configured: set TWILIO_MESSAGING_SERVICE_SID or TWILIO_PHONE_NUMBER");
+
+    const params: Record<string, string> = { To: targetPhone, Body: smsBody };
+    if (messagingSid) params.MessagingServiceSid = messagingSid;
+    else if (twilioFrom) params.From = twilioFrom;
+
+    const resp = await fetch(`https://connector-gateway.lovable.dev/twilio/Messages.json`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${lovableKey}`,
+        "X-Connection-Api-Key": twilioApiKey,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams(params),
+    });
+    const sendResult: any = await resp.json();
+    if (!resp.ok) throw new Error(`twilio_send_failed:${JSON.stringify(sendResult)}`);
 
     // Update step rows
     if (!dry_run) {
@@ -143,7 +141,7 @@ Deno.serve(async (req) => {
         dry_run,
         sent_to: targetPhone,
         sid: sendResult?.sid ?? null,
-        simulated: !!sendResult?.simulated,
+        simulated: false,
       }),
       { headers: { ...cors, "Content-Type": "application/json" } }
     );

@@ -124,11 +124,11 @@ Deno.serve(async (req) => {
 
     // STEP 4: page ready
     const origin = req.headers.get("origin") || "https://unpro.ca";
-    const landingUrl = `${origin}/pro/${slug}`;
+    const landingUrl = `${origin}/pro/${slug}?r=${runId}`;
     await logStep(sb, runId, "page", "succeeded", { url: landingUrl });
 
     // STEP 5: sms_drafted (does NOT send)
-    const trackingLink = landingUrl; // short link can be swapped in later
+    const trackingLink = landingUrl;
     const smsBody =
       `Bonjour ${prospect.company_name} — UNPRO a préparé votre profil IA local pour l'isolation d'entretoit sur la Rive-Nord. ` +
       `On a détecté des occasions de visibilité sur Google, ChatGPT et les recherches locales. ` +
