@@ -283,6 +283,7 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
           },
         ],
       }));
+      window.setTimeout(() => alexVoiceService.setImageUploadState("idle"), 1800);
       return;
     }
 
