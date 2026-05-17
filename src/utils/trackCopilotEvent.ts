@@ -18,6 +18,7 @@ export type CopilotEventName =
   | "value_summary_shown"
   | "photo_upload_started"
   | "photo_upload_failed"
+  | "photo_upload_failed_graceful"
   | "photo_upload_succeeded"
   | "quick_reply_clicked";
 

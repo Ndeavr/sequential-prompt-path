@@ -120,6 +120,58 @@ async function getIsLoggedIn(): Promise<boolean> {
   return !!data?.user;
 }
 
+/**
+ * Graceful upload-failure fallback. Never exposes technical errors.
+ * Scans recent message text for trade keywords and returns an intent-aware
+ * symptom question that keeps momentum toward booking.
+ */
+function buildGracefulUploadFallback(messages: ChatMessage[]): string {
+  const recent = messages
+    .slice(-6)
+    .map((m) => (m.text || "").toLowerCase())
+    .join(" ");
+
+  const intents: Array<{ match: RegExp; question: string }> = [
+    {
+      match: /\b(toit|toiture|bardeau|infiltration|gouttière)\b/,
+      question:
+        "Est-ce qu'il y a une infiltration active, une tache au plafond, ou des bardeaux visibles au sol?",
+    },
+    {
+      match: /\b(chauffage|climatisation|hvac|thermopompe|fournaise|froid|chaud|air)\b/,
+      question:
+        "C'est plutôt trop froid, trop chaud, un bruit inhabituel, ou aucun air qui sort?",
+    },
+    {
+      match: /\b(plomberie|fuite|drain|tuyau|robinet|eau chaude|toilette)\b/,
+      question:
+        "Est-ce une fuite active, un drain bouché, une pression faible, ou pas d'eau chaude?",
+    },
+    {
+      match: /\b(électricité|electrique|disjoncteur|panneau|prise|lumière|brûlé)\b/,
+      question:
+        "Est-ce un disjoncteur qui saute, une prise morte, une lumière qui clignote, ou une odeur de brûlé?",
+    },
+    {
+      match: /\b(isolation|courant d'air|grenier|barrage de glace)\b/,
+      question:
+        "Est-ce des courants d'air, du froid près des murs, ou des barrages de glace au toit?",
+    },
+    {
+      match: /\b(humidité|moisi|moisissure|condensation|tache)\b/,
+      question:
+        "Est-ce de la condensation aux fenêtres, une odeur de moisi, ou des taches sur les murs?",
+    },
+  ];
+
+  const matched = intents.find((i) => i.match.test(recent));
+  const question =
+    matched?.question ||
+    "Décrivez-moi simplement : quel est le problème, où il se situe, depuis quand, et si c'est urgent. Je vais trouver le bon entrepreneur.";
+
+  return `Je n'arrive pas à recevoir la photo pour le moment. Ce n'est pas grave — je peux quand même analyser la situation avec vous et trouver le bon professionnel. ${question}`;
+}
+
 function applyDecision(
   current: AlexSession,
   decision: EngineDecision,
@@ -269,8 +321,9 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
 
     const result = await uploadAlexFile(file);
     if (!result.ok || !result.file) {
-      trackCopilotEvent("photo_upload_failed", { error: result.error });
-      alexVoiceService.setImageUploadState("error");
+      // Graceful degradation: never expose technical errors. Pivot to symptom-based diagnostic.
+      trackCopilotEvent("photo_upload_failed_graceful", { error: result.error });
+      const gracefulText = buildGracefulUploadFallback(get().messages);
       set((s) => ({
         thinking: false,
         messages: [
@@ -278,12 +331,13 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
           {
             id: uid(),
             role: "alex",
-            text: result.error || "Impossible d'envoyer la photo. Réessayez.",
+            text: gracefulText,
             createdAt: Date.now(),
           },
         ],
       }));
-      window.setTimeout(() => alexVoiceService.setImageUploadState("idle"), 1800);
+      // Reset to idle immediately so the orb never shows a broken state.
+      alexVoiceService.setImageUploadState("idle");
       return;
     }
 
