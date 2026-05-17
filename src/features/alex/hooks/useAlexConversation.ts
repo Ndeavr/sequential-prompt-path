@@ -16,6 +16,7 @@ import { useAlexVoice } from "./useAlexVoice";
 import { useAlexVisualStore } from "../visual/visualStore";
 import { alexLog } from "../utils/alexDebug";
 import type { AlexIntent, STTTranscriptEvent } from "../types/alex.types";
+import { alexVoiceService } from "@/services/alexVoiceService";
 
 export function useAlexConversation() {
   const { speak } = useAlexVoice();
@@ -93,6 +94,7 @@ export function useAlexConversation() {
     state.markUserEngaged();
     state.resetNoResponse();
     state.startImageAnalysis();
+    alexVoiceService.setImageUploadState(file ? "uploading" : "idle");
 
     // Acknowledge fast (1 line, no checklist)
     const ack = acknowledgeUpload(state.activeLanguage);
@@ -181,6 +183,7 @@ export function useAlexConversation() {
         }
       }
     } catch (e) {
+      alexVoiceService.setImageUploadState("error");
       alexLog("conversation:upload_error", { e: String(e) });
       const fallback =
         "Je n'arrive pas à analyser cette image pour l'instant. Décrivez-moi en une phrase ce qui vous inquiète et je vous oriente.";
@@ -188,6 +191,10 @@ export function useAlexConversation() {
       await speak(fallback);
     } finally {
       state.finishImageAnalysis();
+      if (file && alexVoiceService.getSnapshot().imageUploadState !== "error") {
+        alexVoiceService.setImageUploadState("success");
+      }
+      window.setTimeout(() => alexVoiceService.setImageUploadState("idle"), 1800);
     }
 
     alexLog("conversation:upload");

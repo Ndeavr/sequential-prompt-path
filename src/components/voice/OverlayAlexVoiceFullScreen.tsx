@@ -16,7 +16,6 @@ import { X, PhoneOff, RefreshCw, AlertCircle, MessageSquare, Sparkles, WifiOff, 
 import { Button } from "@/components/ui/button";
 import { useAlexVoiceLockedStore, type LockedVoiceState } from "@/stores/alexVoiceLockedStore";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
-import { useAlexVoiceSession } from "@/hooks/useAlexVoiceSession";
 import { useAlexVoiceRecovery, type RecoveryPhase } from "@/hooks/useAlexVoiceRecovery";
 import { executeHardReset } from "@/services/voiceHardResetEngine";
 // audioEngine removed — no chimes in voice mode, prevents click artifacts
@@ -91,7 +90,6 @@ export default function OverlayAlexVoiceFullScreen() {
 
   // Voice recovery hook
   const recovery = useAlexVoiceRecovery();
-  const fallbackVoiceSession = useAlexVoiceSession();
 
   const firstName = user?.user_metadata?.first_name
     || user?.user_metadata?.full_name?.split(" ")[0]
@@ -120,6 +118,11 @@ export default function OverlayAlexVoiceFullScreen() {
   const playTtsFallbackGreeting = useCallback((reason: string) => {
     const s = getStore();
     if (!s.isOverlayOpen) return;
+    if (hasGreeted()) {
+      console.warn("[VoiceOverlay] Greeting already delivered — no replay", reason);
+      s.setError(reason, "Je continue ici avec vous.", true);
+      return;
+    }
     if (ttsFallbackInProgressRef.current) {
       console.warn("[VoiceOverlay] TTS fallback already in progress — skipping duplicate", reason);
       return;
@@ -158,7 +161,6 @@ export default function OverlayAlexVoiceFullScreen() {
             }
           }, 300);
         }
-        void fallbackVoiceSession.openSession(greeting, { suppressGreetingAudio: true });
       },
     ).catch((e) => {
       ttsFallbackInProgressRef.current = false;
@@ -170,9 +172,8 @@ export default function OverlayAlexVoiceFullScreen() {
       } else if (latest.machineState === "error_recoverable") {
         latest.transitionTo("listening", `${reason}_tts_failed_continue_listening`);
       }
-      void fallbackVoiceSession.openSession(greeting);
     });
-  }, [fallbackVoiceSession]);
+  }, []);
 
   const { start, stop, isActive, isConnecting, isSpeaking, conversation } = useLiveVoice({
     onFirstAudio: () => {
@@ -577,7 +578,6 @@ export default function OverlayAlexVoiceFullScreen() {
       if (ttsWarmupTimerRef.current) clearTimeout(ttsWarmupTimerRef.current);
       if (slowTokenTimerRef.current) clearTimeout(slowTokenTimerRef.current);
       elevenlabsService.stop();
-      void fallbackVoiceSession.closeSession();
       if (isActive) {
         stop();
       }
@@ -646,7 +646,6 @@ export default function OverlayAlexVoiceFullScreen() {
     try {
       const result = await executeHardReset();
       console.log('[ALEX VOICE] 💥 Hard reset complete', result);
-      await fallbackVoiceSession.closeSession();
     } catch (e) {
       console.warn('[ALEX VOICE] hard reset error', e);
     }
@@ -680,7 +679,7 @@ export default function OverlayAlexVoiceFullScreen() {
         getStore().closeVoiceSession("recovery_fallback_chat");
       },
     );
-  }, [buildGreeting, start, stop, recovery, openChatFallback, fallbackVoiceSession]);
+  }, [buildGreeting, start, stop, recovery, openChatFallback]);
 
   const handleFallbackChat = useCallback(() => {
     alexVoiceService.switchToFallbackChat("user_or_auto");

@@ -21,6 +21,7 @@ import { routeAlexIntent, resetRouter } from "@/services/alexMasterRouter";
 import { uploadAlexFile, type UploadedFile } from "@/services/alexUploadService";
 import { cleanAlexText } from "@/utils/sanitizeAlexText";
 import { supabase } from "@/integrations/supabase/client";
+import { alexVoiceService } from "@/services/alexVoiceService";
 
 export interface RecommendedPro {
   id: string;
@@ -263,11 +264,13 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
 
   uploadPhoto: async (file: File) => {
     trackCopilotEvent("photo_upload_started", { size: file.size, type: file.type });
+    alexVoiceService.setImageUploadState("uploading");
     set({ thinking: true });
 
     const result = await uploadAlexFile(file);
     if (!result.ok || !result.file) {
       trackCopilotEvent("photo_upload_failed", { error: result.error });
+      alexVoiceService.setImageUploadState("error");
       set((s) => ({
         thinking: false,
         messages: [
@@ -280,10 +283,12 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
           },
         ],
       }));
+      window.setTimeout(() => alexVoiceService.setImageUploadState("idle"), 1800);
       return;
     }
 
     trackCopilotEvent("photo_upload_succeeded", { isGuest: result.file.isGuest });
+    alexVoiceService.setImageUploadState("success");
 
     // User bubble with thumbnail
     set((s) => ({
@@ -303,6 +308,7 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
       session: applyDecision(s.session, decision),
       messages: [...s.messages, bubble],
     }));
+    window.setTimeout(() => alexVoiceService.setImageUploadState("idle"), 1800);
   },
 
   executeQuickReply: async (reply: QuickReply) => {

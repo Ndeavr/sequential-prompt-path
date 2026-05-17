@@ -10,6 +10,7 @@ import { ALEX_VOICE_DEFAULTS } from "@/features/alex/voice/alexAgentOverrides";
 import { loadAlexMemory } from "@/features/alex/voice/alexSessionMemory";
 import { alexVoiceService } from "@/services/alexVoiceService";
 import { logBoot, withTimeout } from "@/lib/bootDebug";
+import { ALEX_VOICE_BASE } from "@/config/alexVoiceConfig";
 
 const RECONNECT_COOLDOWN_MS = 5000;
 const CONNECTION_TIMEOUT_MS = 12_000;
@@ -119,12 +120,61 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const connectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lockedVoiceIdRef = useRef<string | null>(null);
   const bootInProgressRef = useRef(false);
+  const ownedMicStreamRef = useRef<MediaStream | null>(null);
+  const inputDeviceIdRef = useRef<string | undefined>(undefined);
+  const inputLevelTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startDebounceUntilRef = useRef(0);
 
   const clearConnectionTimeout = useCallback(() => {
     if (connectionTimeoutRef.current) {
       clearTimeout(connectionTimeoutRef.current);
       connectionTimeoutRef.current = null;
     }
+  }, []);
+
+  const verifyOwnedMicStream = useCallback(() => {
+    const stream = ownedMicStreamRef.current;
+    const track = stream?.getAudioTracks?.()[0] ?? null;
+    const ok = Boolean(stream?.active && track?.enabled && track.readyState === "live");
+    alexVoiceService.setRealtimeDiagnostics({
+      microphoneActive: ok,
+      asrReceivingAudio: ok && alexVoiceService.getSnapshot().wsConnected,
+    });
+    if (!ok && stream) {
+      console.warn("[ElevenLabs V8] Mic stream unhealthy", {
+        mediaStreamActive: stream.active,
+        inputAudioTrackEnabled: track?.enabled,
+        inputAudioTrackState: track?.readyState,
+      });
+    }
+    return ok;
+  }, []);
+
+  const stopInputLevelMonitor = useCallback(() => {
+    if (inputLevelTimerRef.current) {
+      clearInterval(inputLevelTimerRef.current);
+      inputLevelTimerRef.current = null;
+    }
+    alexVoiceService.setRealtimeDiagnostics({ inputLevel: 0, vadState: "idle", asrReceivingAudio: false });
+  }, []);
+
+  const startInputLevelMonitor = useCallback(() => {
+    stopInputLevelMonitor();
+    inputLevelTimerRef.current = setInterval(() => {
+      const api = conversationApiRef.current;
+      const raw = typeof api?.getInputVolume === "function" ? Number(api.getInputVolume() ?? 0) : 0;
+      const level = raw <= 1 ? raw * 100 : raw;
+      alexVoiceService.setInputLevel(level);
+      verifyOwnedMicStream();
+    }, 250);
+  }, [stopInputLevelMonitor, verifyOwnedMicStream]);
+
+  const stopOwnedMicStream = useCallback(() => {
+    ownedMicStreamRef.current?.getTracks().forEach((track) => {
+      try { track.stop(); } catch {}
+    });
+    ownedMicStreamRef.current = null;
+    alexVoiceService.setRealtimeDiagnostics({ microphoneActive: false, asrReceivingAudio: false });
   }, []);
 
   const sendAgentContext = useCallback((context: string, successLog?: string) => {
@@ -147,6 +197,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   }, [sendAgentContext]);
 
   const conversation = useConversation({
+    preferHeadphonesForIosDevices: true,
+    connectionDelay: { android: 3000, ios: 300, default: 0 },
     onConnect: () => {
       console.log("[ElevenLabs V7] ✅ Connected to agent");
       clearConnectionTimeout();
@@ -154,6 +206,22 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       setIsActive(true);
       setIsConnecting(false);
       callbacksRef.current?.onConnect?.();
+    },
+    onStatusChange: ({ status }: any) => {
+      alexVoiceService.markWsConnected(status === "connected");
+    },
+    onModeChange: ({ mode }: any) => {
+      alexVoiceService.setRealtimeDiagnostics({
+        ttsState: mode === "speaking" ? "speaking" : "idle",
+        vadState: mode === "listening" ? "listening" : alexVoiceService.getSnapshot().vadState,
+      });
+    },
+    onVadScore: (event: any) => {
+      const score = typeof event === "number" ? event : Number(event?.score ?? event?.vadScore ?? 0);
+      alexVoiceService.setVadScore(score);
+    },
+    onAudio: () => {
+      alexVoiceService.setRealtimeDiagnostics({ ttsState: "speaking" });
     },
     onDisconnect: () => {
       clearConnectionTimeout();
@@ -163,6 +231,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       setIsActive(false);
       setIsConnecting(false);
       hasDeliveredFirstAudioRef.current = false;
+      bootInProgressRef.current = false;
+      alexVoiceService.setRealtimeDiagnostics({ microphoneActive: false, inputLevel: 0, vadState: "idle", asrReceivingAudio: false, ttsState: "idle" });
       languageSessionRef.current.reset();
       activeLanguageRef.current = "fr-CA";
 
@@ -206,6 +276,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     },
     onError: (error: unknown) => {
       console.error("[ElevenLabs V7] Error:", error);
+      bootInProgressRef.current = false;
       setIsConnecting(false);
       callbacksRef.current?.onError?.(error);
     },
@@ -229,6 +300,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       }
       setIsActive(false);
       setIsConnecting(false);
+      bootInProgressRef.current = false;
+      stopInputLevelMonitor();
       clearConnectionTimeout();
     };
     const handleForceKill = (e: Event) => {
@@ -238,6 +311,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       try { conversation.endSession(); } catch {}
       setIsActive(false);
       setIsConnecting(false);
+      bootInProgressRef.current = false;
+      stopInputLevelMonitor();
+      stopOwnedMicStream();
       clearConnectionTimeout();
     };
     window.addEventListener("alex-voice-cleanup", handleCleanup);
@@ -246,10 +322,17 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       window.removeEventListener("alex-voice-cleanup", handleCleanup);
       window.removeEventListener("alex-voice-force-kill", handleForceKill);
     };
-  }, [conversation, clearConnectionTimeout]);
+  }, [conversation, clearConnectionTimeout, stopInputLevelMonitor, stopOwnedMicStream]);
 
   const start = useCallback(async (options?: StartOptions) => {
     const forced = options?.force;
+    const now = Date.now();
+
+    if (!forced && now < startDebounceUntilRef.current) {
+      console.warn("[ElevenLabs V8] Duplicate start debounced");
+      return;
+    }
+    startDebounceUntilRef.current = now + 1500;
 
     if (bootInProgressRef.current && !forced) {
       console.warn("[ElevenLabs V8] Boot already in progress — ignoring");
@@ -296,7 +379,27 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         return;
       }
       try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
+        if (!ownedMicStreamRef.current || !verifyOwnedMicStream()) {
+          ownedMicStreamRef.current?.getTracks().forEach((track) => { try { track.stop(); } catch {} });
+          ownedMicStreamRef.current = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+              channelCount: 1,
+            },
+          });
+        }
+        const inputAudioTrack = ownedMicStreamRef.current.getAudioTracks()[0];
+        if (inputAudioTrack) inputAudioTrack.enabled = true;
+        inputDeviceIdRef.current = inputAudioTrack?.getSettings?.().deviceId;
+        console.log("[ElevenLabs V8] Mic verified", {
+          mediaStreamActive: ownedMicStreamRef.current.active,
+          inputAudioTrackEnabled: inputAudioTrack?.enabled,
+          inputAudioTrackState: inputAudioTrack?.readyState,
+        });
+        alexVoiceService.setRealtimeDiagnostics({ microphoneActive: Boolean(ownedMicStreamRef.current.active && inputAudioTrack?.enabled) });
+        stopOwnedMicStream();
         clearDeny("mic");
       } catch (e) {
         const n = (e as any)?.name;
@@ -304,14 +407,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         throw e;
       }
       alexVoiceService.setMicPermission("granted");
-      try {
-        const Ctx = (window.AudioContext || (window as any).webkitAudioContext);
-        if (Ctx) {
-          const ctx = new Ctx();
-          if (ctx.state === "suspended") await ctx.resume();
-          alexVoiceService.setAudioUnlocked(ctx.state === "running");
-        }
-      } catch (e) { console.warn("[ElevenLabs V8] AudioContext resume failed", e); }
+      // Do not create a second AudioContext here. Playback is primed synchronously
+      // from the orb tap; the ElevenLabs SDK owns the single realtime audio graph.
+      alexVoiceService.setAudioUnlocked(true);
     } catch (micErr) {
       const micName = (micErr as any)?.name as string | undefined;
       alexVoiceService.setMicPermission(micName === "NotAllowedError" || micName === "NotFoundError" ? "denied" : "prompt");
@@ -406,6 +504,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           bootInProgressRef.current = false;
           setIsConnecting(false);
           setIsActive(false);
+          stopInputLevelMonitor();
           intentionallyStopped.current = true;
           try { conversation.endSession(); } catch {}
           callbacksRef.current?.onError?.(new Error("Connection timeout — voice unavailable"));
@@ -449,6 +548,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           await conversation.startSession({
             signedUrl,
             connectionType: "websocket",
+            inputDeviceId: inputDeviceIdRef.current,
           } as any);
         } catch (startErr) {
           if (!conversationToken) throw startErr;
@@ -456,10 +556,16 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           await conversation.startSession({
             conversationToken,
             connectionType: "webrtc",
+            inputDeviceId: inputDeviceIdRef.current,
           } as any);
         }
 
         console.log("[ElevenLabs V8] ✅ Session started");
+        startInputLevelMonitor();
+        alexVoiceService.setRealtimeDiagnostics({
+          currentVoiceGender: resolvedVoiceId === ALEX_VOICE_BASE.voiceId ? "female" : "unknown",
+          vadState: "listening",
+        });
         bootInProgressRef.current = false;
         return; // success
       } catch (err) {
@@ -475,7 +581,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     alexVoiceService.setError("Connexion vocale lente. Mode chat activé.", "retry_exhausted");
     console.error("[ElevenLabs V8] Failed after retries:", lastError);
     callbacksRef.current?.onError?.(lastError ?? new Error("voice_unavailable"));
-  }, [isActive, isConnecting, conversation, clearConnectionTimeout]);
+  }, [isActive, isConnecting, conversation, clearConnectionTimeout, verifyOwnedMicStream, startInputLevelMonitor, stopInputLevelMonitor]);
 
   const stop = useCallback(() => {
     clearConnectionTimeout();
@@ -485,13 +591,20 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     conversation.endSession();
     setIsActive(false);
     setIsConnecting(false);
+    bootInProgressRef.current = false;
+    stopInputLevelMonitor();
+    stopOwnedMicStream();
     hasDeliveredFirstAudioRef.current = false;
     callbacksRef.current?.onDisconnect?.();
-  }, [conversation, clearConnectionTimeout]);
+  }, [conversation, clearConnectionTimeout, stopInputLevelMonitor, stopOwnedMicStream]);
 
   useEffect(() => {
-    return () => { clearConnectionTimeout(); };
-  }, [clearConnectionTimeout]);
+    return () => {
+      clearConnectionTimeout();
+      stopInputLevelMonitor();
+      stopOwnedMicStream();
+    };
+  }, [clearConnectionTimeout, stopInputLevelMonitor, stopOwnedMicStream]);
 
   return { start, stop, isActive, isConnecting, isSpeaking, conversation };
 }

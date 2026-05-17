@@ -59,6 +59,13 @@ export default function AlexVoiceDiagnosticsPanel() {
       <Row label="signed url" value={snap.tokenReceived ? "yes" : "no"} ok={snap.tokenReceived} />
       <Row label="ws connected" value={snap.wsConnected ? "yes" : "no"} ok={snap.wsConnected} />
       <Row label="mic" value={snap.micPermission} ok={snap.micPermission === "granted" ? true : snap.micPermission === "denied" ? false : null} />
+      <Row label="mic active" value={snap.microphoneActive ? "active" : "inactive"} ok={snap.microphoneActive} />
+      <Row label="input level" value={`${snap.inputLevel}%`} ok={snap.inputLevel > 1 ? true : null} />
+      <Row label="vad" value={snap.vadState} ok={snap.vadState === "speech_detected" ? true : null} />
+      <Row label="tts" value={snap.ttsState} ok={snap.ttsState === "speaking" ? true : null} />
+      <Row label="asr" value={snap.asrReceivingAudio ? "receiving" : "no audio"} ok={snap.asrReceivingAudio} />
+      <Row label="upload" value={snap.imageUploadState} ok={snap.imageUploadState === "success" ? true : snap.imageUploadState === "error" ? false : null} />
+      <Row label="voice" value={snap.currentVoiceGender} ok={snap.currentVoiceGender === "female" || snap.currentVoiceGender === "male" ? true : null} />
       <Row label="audio unlocked" value={snap.audioUnlocked ? "yes" : "no"} ok={snap.audioUnlocked} />
       <Row label="retry" value={String(snap.retryCount)} />
       <Row label="latency" value={snap.latencyMs != null ? `${snap.latencyMs}ms` : "—"} />
