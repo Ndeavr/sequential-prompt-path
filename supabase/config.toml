@@ -141,3 +141,9 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.live-agent-go-live]
     verify_jwt = false
+  [functions.stripe-isr-webhook]
+    verify_jwt = false
+  [functions.log-isr-event]
+    verify_jwt = false
+  [functions.stripe-mode-check]
+    verify_jwt = false
