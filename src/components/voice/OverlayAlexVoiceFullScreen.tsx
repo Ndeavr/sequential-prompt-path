@@ -16,6 +16,7 @@ import { X, PhoneOff, RefreshCw, AlertCircle, MessageSquare, Sparkles, WifiOff, 
 import { Button } from "@/components/ui/button";
 import { useAlexVoiceLockedStore, type LockedVoiceState } from "@/stores/alexVoiceLockedStore";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
+import { useAlexVoiceSession } from "@/hooks/useAlexVoiceSession";
 import { useAlexVoiceRecovery, type RecoveryPhase } from "@/hooks/useAlexVoiceRecovery";
 import { executeHardReset } from "@/services/voiceHardResetEngine";
 // audioEngine removed — no chimes in voice mode, prevents click artifacts
@@ -76,6 +77,7 @@ export default function OverlayAlexVoiceFullScreen() {
   const lastAlexIdRef = useRef<string | null>(null);
   const hasConnectedRef = useRef(false);
   const firstAudioReceivedRef = useRef(false);
+  const ttsFallbackInProgressRef = useRef(false);
   const bootTimeRef = useRef<number>(0);
   const [bootStep, setBootStep] = useState<string>("init");
   const bootInitiatedRef = useRef(false);
@@ -88,6 +90,7 @@ export default function OverlayAlexVoiceFullScreen() {
 
   // Voice recovery hook
   const recovery = useAlexVoiceRecovery();
+  const fallbackVoiceSession = useAlexVoiceSession();
 
   const firstName = user?.user_metadata?.first_name
     || user?.user_metadata?.full_name?.split(" ")[0]
