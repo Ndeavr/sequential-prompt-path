@@ -355,6 +355,13 @@ Deno.serve(async (req) => {
     });
 
     if (isEmbedded) {
+      if (!session.client_secret) {
+        console.error("Stripe returned no client_secret for embedded session", session.id);
+        return new Response(
+          JSON.stringify({ error: "Stripe n'a pas retourné de secret de paiement. Réessayez." }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       return new Response(JSON.stringify({ clientSecret: session.client_secret }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
