@@ -164,6 +164,23 @@ export async function voice_smoke_test(): Promise<SmokeReport> {
     durationMs: Math.round(health.ms),
   });
 
+  // 5b. Live credentials available (conversationToken + signedUrl)
+  const creds = await timed(async () => {
+    const { data, error } = await supabase.functions.invoke("voice-get-signed-url", { body: {} });
+    if (error) throw error;
+    return data as { conversationToken?: string; signedUrl?: string; signed_url?: string } | null;
+  });
+  const hasToken = !!creds.result?.conversationToken;
+  const hasSigned = !!(creds.result?.signedUrl || creds.result?.signed_url);
+  checks.push({
+    name: "live_voice_credentials_ok",
+    pass: !creds.error && (hasToken || hasSigned),
+    detail: creds.error
+      ? String((creds.error as Error).message ?? creds.error)
+      : `webrtc=${hasToken} websocket=${hasSigned}`,
+    durationMs: Math.round(creds.ms),
+  });
+
   // 6. DOM-level checks (only meaningful when running in a browser tab
   // that mounts Alex). Skipped gracefully when no orb is on the page.
   if (typeof document !== "undefined") {
