@@ -269,8 +269,9 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
 
     const result = await uploadAlexFile(file);
     if (!result.ok || !result.file) {
-      trackCopilotEvent("photo_upload_failed", { error: result.error });
-      alexVoiceService.setImageUploadState("error");
+      // Graceful degradation: never expose technical errors. Pivot to symptom-based diagnostic.
+      trackCopilotEvent("photo_upload_failed_graceful", { error: result.error });
+      const gracefulText = buildGracefulUploadFallback(get().messages);
       set((s) => ({
         thinking: false,
         messages: [
@@ -278,12 +279,13 @@ export const useCopilotConversationStore = create<CopilotState>((set, get) => ({
           {
             id: uid(),
             role: "alex",
-            text: result.error || "Impossible d'envoyer la photo. Réessayez.",
+            text: gracefulText,
             createdAt: Date.now(),
           },
         ],
       }));
-      window.setTimeout(() => alexVoiceService.setImageUploadState("idle"), 1800);
+      // Reset to idle immediately so the orb never shows a broken state.
+      alexVoiceService.setImageUploadState("idle");
       return;
     }
 
