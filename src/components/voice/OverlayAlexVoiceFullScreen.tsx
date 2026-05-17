@@ -69,6 +69,7 @@ export default function OverlayAlexVoiceFullScreen() {
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stabilizationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const firstAudioTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const ttsWarmupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [transcripts, setTranscripts] = useState<Array<{ id: string; role: "user" | "alex"; text: string }>>([]);
   const [slowToken, setSlowToken] = useState(false);
   const slowTokenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -183,6 +184,10 @@ export default function OverlayAlexVoiceFullScreen() {
       if (firstAudioTimerRef.current) {
         clearTimeout(firstAudioTimerRef.current);
         firstAudioTimerRef.current = null;
+      }
+      if (ttsWarmupTimerRef.current) {
+        clearTimeout(ttsWarmupTimerRef.current);
+        ttsWarmupTimerRef.current = null;
       }
       if (nudgeTimerRef.current) {
         clearTimeout(nudgeTimerRef.current);
