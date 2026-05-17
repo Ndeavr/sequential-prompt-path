@@ -476,6 +476,16 @@ export default function OverlayAlexVoiceFullScreen() {
         setBootStep("connecting");
         const greeting = shouldGreet ? buildGreetingRef.current() : "";
         console.log("[ALEX VOICE] Starting session, greeting:", greeting || "(silent — already greeted)");
+        if (greeting) {
+          ttsWarmupTimerRef.current = setTimeout(() => {
+            const current = getStore();
+            if (!firstAudioReceivedRef.current && current.isOverlayOpen &&
+                ["stabilizing", "opening_session"].includes(current.machineState)) {
+              console.warn("[ALEX VOICE] Live voice slow — speaking TTS fallback immediately");
+              playTtsFallbackGreeting("live_slow_warmup");
+            }
+          }, 1800);
+        }
         await startRef.current({ initialGreeting: greeting, mode: deriveMode(getStore().feature) });
 
         // After await: check session still owns the runtime + overlay open
