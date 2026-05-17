@@ -319,7 +319,6 @@ export default function OverlayAlexVoiceFullScreen() {
       // so Alex is heard, then user can tap Réinitialiser or Passer au chat.
       if (!firstAudioReceivedRef.current) {
         console.warn("[VoiceOverlay] Error before first audio → TTS greeting fallback");
-        try { stop(); } catch {}
         playTtsFallbackGreeting("voice_error_pre_audio");
         return;
       }
@@ -424,8 +423,8 @@ export default function OverlayAlexVoiceFullScreen() {
         if (firstAudioReceivedRef.current || !s.isOverlayOpen) return;
         if (!["stabilizing", "opening_session", "session_ready"].includes(s.machineState)) return;
 
-        // Strictly event-driven: never silently retry. Go straight to fallback.
-        bailToChat("no_first_audio");
+        // Strictly event-driven: never silently retry. Speak via TTS fallback and keep voice open.
+        playTtsFallbackGreeting("no_first_audio");
       }, FIRST_AUDIO_TIMEOUT_MS);
     };
 
@@ -451,8 +450,8 @@ export default function OverlayAlexVoiceFullScreen() {
           const isStuck = s.isOverlayOpen &&
             ["stabilizing", "opening_session", "requesting_permission"].includes(s.machineState);
           if (isStuck) {
-            console.error("[ALEX VOICE] ⏱️ Hard boot timeout — bailing to chat");
-            bailToChat("boot_timeout");
+            console.error("[ALEX VOICE] ⏱️ Hard boot timeout — switching to TTS voice fallback");
+            playTtsFallbackGreeting("boot_timeout");
           }
         }, BOOT_TIMEOUT_MS);
 
