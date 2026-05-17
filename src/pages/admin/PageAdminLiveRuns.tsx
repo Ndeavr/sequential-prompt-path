@@ -247,6 +247,7 @@ export default function PageAdminLiveRuns() {
           ...prev,
         ]);
       }
+      if (runId) setOpenRunId(runId);
       await safeRefresh();
     } catch (e: any) {
       const msg = e?.message || String(e);
@@ -343,16 +344,16 @@ export default function PageAdminLiveRuns() {
               ) : auth.error ? (
                 <Badge className="bg-red-500/20 text-red-300">{auth.error}</Badge>
               ) : (
-                <Badge className="bg-white/10 text-white/60">Vérification…</Badge>
+                <Badge className="bg-white/10 text-white/60">Validation admin en cours…</Badge>
               )}
               <Badge className={syncChip.cls}>{syncChip.label}</Badge>
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={safeRefresh} disabled={syncing || !auth.isAdmin}>
+            <Button variant="outline" onClick={safeRefresh} disabled={syncing || !adminReady}>
               {syncing ? "Sync…" : "Réessayer la sync"}
             </Button>
-            <Button onClick={startIsrRun} disabled={starting || !auth.isAdmin}>
+            <Button onClick={startIsrRun} disabled={starting || !adminReady}>
               {starting ? "Démarrage…" : "Start ISR Live Run"}
             </Button>
           </div>
@@ -394,7 +395,13 @@ export default function PageAdminLiveRuns() {
         <div className="space-y-4">
           {runs.length === 0 && (
             <Card className="bg-white/[0.04] border-white/10 p-8 text-center text-white/60">
-              {auth.isAdmin ? `Aucun run pour l'instant. Cliquez "Start ISR Live Run".` : "En attente de validation admin…"}
+              {adminReady
+                ? syncing
+                  ? "Admin validé · chargement du run ISR…"
+                  : `Aucun run pour l'instant. Cliquez "Start ISR Live Run".`
+                : auth.error
+                  ? "Action bloquée · rôle admin requis."
+                  : "Validation admin en cours…"}
             </Card>
           )}
           {runs.map((run) => {
