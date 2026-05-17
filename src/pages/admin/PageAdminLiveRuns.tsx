@@ -96,7 +96,7 @@ export default function PageAdminLiveRuns() {
             email: user.email,
             userId: user.id,
             isAdmin: false,
-            error: result.reason === "load_error" ? `Role check failed: ${(result as any).detail || ""}` : "Rôle admin requis.",
+            error: (result as any).reason === "load_error" ? `Role check failed: ${(result as any).detail || ""}` : "Rôle admin requis.",
           });
         }
       } catch (e: any) {
