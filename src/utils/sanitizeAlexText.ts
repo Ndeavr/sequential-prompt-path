@@ -64,6 +64,18 @@ export interface SanitizeResult {
 export function sanitizeAlexText(input: string | null | undefined): SanitizeResult {
   if (!input) return { text: "", hadForbidden: false };
 
+  // Last-line defense: if the bubble contains any technical-leak phrase,
+  // replace the WHOLE bubble with the graceful fallback. Never leak.
+  for (const re of TECHNICAL_LEAK_PATTERNS) {
+    if (re.test(input)) {
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.debug("[alex.sanitize] technical leak rewritten", { match: re.source });
+      }
+      return { text: GRACEFUL_FALLBACK, hadForbidden: true, hadTechnicalLeak: true };
+    }
+  }
+
   let text = input;
   let hadForbidden = false;
 
