@@ -36,6 +36,13 @@ export interface AlexVoiceServiceSnapshot {
   micPermission: MicPermission;
   audioUnlocked: boolean;
   apiKeyConfigured: boolean | null; // null = unknown
+  microphoneActive: boolean;
+  inputLevel: number;
+  vadState: "idle" | "listening" | "speech_detected";
+  ttsState: "idle" | "speaking";
+  asrReceivingAudio: boolean;
+  imageUploadState: "idle" | "uploading" | "success" | "error";
+  currentVoiceGender: "male" | "female" | "unknown";
   updatedAt: number;
 }
 
@@ -49,6 +56,13 @@ const DEFAULT: AlexVoiceServiceSnapshot = {
   micPermission: "prompt",
   audioUnlocked: false,
   apiKeyConfigured: null,
+  microphoneActive: false,
+  inputLevel: 0,
+  vadState: "idle",
+  ttsState: "idle",
+  asrReceivingAudio: false,
+  imageUploadState: "idle",
+  currentVoiceGender: "female",
   updatedAt: Date.now(),
 };
 
@@ -106,7 +120,7 @@ class AlexVoiceServiceImpl {
   }
 
   markWsConnected(ok: boolean) {
-    this.update({ wsConnected: ok });
+    this.update({ wsConnected: ok, microphoneActive: ok ? this.snap.microphoneActive : false, asrReceivingAudio: ok ? this.snap.asrReceivingAudio : false });
     if (ok) console.log("[ALEX VOICE] connected");
   }
 
@@ -134,6 +148,33 @@ class AlexVoiceServiceImpl {
   switchToFallbackChat(reason: string) {
     console.log(`[ALEX VOICE] fallback chat (${reason})`);
     this.update({ state: "fallback_chat" });
+  }
+
+  setRealtimeDiagnostics(patch: Partial<Pick<AlexVoiceServiceSnapshot,
+    "microphoneActive" | "inputLevel" | "vadState" | "ttsState" | "asrReceivingAudio" | "imageUploadState" | "currentVoiceGender"
+  >>) {
+    this.update(patch);
+  }
+
+  setInputLevel(level: number) {
+    const normalized = Math.max(0, Math.min(100, Math.round(level)));
+    this.update({
+      inputLevel: normalized,
+      microphoneActive: this.snap.wsConnected && normalized >= 0,
+      asrReceivingAudio: this.snap.wsConnected && (normalized > 1 || this.snap.vadState === "speech_detected"),
+    });
+  }
+
+  setVadScore(score: number) {
+    const detected = score >= 0.55;
+    this.update({
+      vadState: detected ? "speech_detected" : "listening",
+      asrReceivingAudio: this.snap.wsConnected && (detected || this.snap.inputLevel > 1),
+    });
+  }
+
+  setImageUploadState(state: AlexVoiceServiceSnapshot["imageUploadState"]) {
+    this.update({ imageUploadState: state });
   }
 
   reset() {
