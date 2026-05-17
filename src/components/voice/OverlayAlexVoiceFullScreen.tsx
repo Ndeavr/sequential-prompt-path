@@ -531,6 +531,10 @@ export default function OverlayAlexVoiceFullScreen() {
 
     return () => {
       if (bootTimeoutId) clearTimeout(bootTimeoutId);
+      if (ttsWarmupTimerRef.current) {
+        clearTimeout(ttsWarmupTimerRef.current);
+        ttsWarmupTimerRef.current = null;
+      }
       if (slowTokenTimerRef.current) {
         clearTimeout(slowTokenTimerRef.current);
         slowTokenTimerRef.current = null;
@@ -570,6 +574,7 @@ export default function OverlayAlexVoiceFullScreen() {
       if (stabilizationTimerRef.current) clearTimeout(stabilizationTimerRef.current);
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
       if (firstAudioTimerRef.current) clearTimeout(firstAudioTimerRef.current);
+      if (ttsWarmupTimerRef.current) clearTimeout(ttsWarmupTimerRef.current);
       if (slowTokenTimerRef.current) clearTimeout(slowTokenTimerRef.current);
       elevenlabsService.stop();
       void fallbackVoiceSession.closeSession();
@@ -621,6 +626,7 @@ export default function OverlayAlexVoiceFullScreen() {
 
     // Clear all local timers
     if (firstAudioTimerRef.current) { clearTimeout(firstAudioTimerRef.current); firstAudioTimerRef.current = null; }
+    if (ttsWarmupTimerRef.current) { clearTimeout(ttsWarmupTimerRef.current); ttsWarmupTimerRef.current = null; }
     if (stabilizationTimerRef.current) { clearTimeout(stabilizationTimerRef.current); stabilizationTimerRef.current = null; }
     if (heartbeatRef.current) { clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
     if (slowTokenTimerRef.current) { clearTimeout(slowTokenTimerRef.current); slowTokenTimerRef.current = null; }
