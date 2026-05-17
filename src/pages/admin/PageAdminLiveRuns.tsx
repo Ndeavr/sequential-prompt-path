@@ -182,6 +182,7 @@ export default function PageAdminLiveRuns() {
         setSyncMode("fallback");
       }
       setRuns(result.runs);
+      setOpenRunId((current) => current ?? result.runs[0]?.id ?? null);
       const grouped: Record<string, Step[]> = {};
       result.steps.forEach((row) => {
         (grouped[row.run_id] ||= []).push(row);
@@ -197,7 +198,7 @@ export default function PageAdminLiveRuns() {
 
   // Trigger initial + realtime refresh AFTER admin validated
   useEffect(() => {
-    if (!auth.isAdmin) return;
+    if (!adminReady) return;
     safeRefresh();
     const ch = supabase
       .channel("live_runs_admin")
@@ -207,7 +208,7 @@ export default function PageAdminLiveRuns() {
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [auth.isAdmin, safeRefresh]);
+  }, [adminReady, safeRefresh]);
 
   // ───── START ISR RUN (NEVER gated on list refresh) ─────────────────
   const startIsrRun = async () => {
