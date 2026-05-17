@@ -423,6 +423,7 @@ export function useAlexVoiceSession() {
         userId: auth.userId,
         userName: auth.userName,
         feature: "general",
+        suppressGreetingAudio: !!options?.suppressGreetingAudio,
         context: {
           currentPage: window.location.pathname,
           isAuthenticated: auth.isAuthenticated,
