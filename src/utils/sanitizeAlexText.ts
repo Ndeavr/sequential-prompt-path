@@ -23,11 +23,42 @@ const JSON_BLOCK_RE = /\{[^{}]*?"(?:tool|action|function|name|args|arguments)"\s
 const CODE_FENCE_RE = /```[\s\S]*?```/g;
 const BACKTICK_TOKEN_RE = /`(open_upload|open_camera|open_voice|save_profile|match_pro|trigger_upload)`/gi;
 
+/**
+ * Technical leak phrases — if any appear in an Alex bubble, the ENTIRE bubble
+ * is replaced with the graceful fallback. Governed by mem://ai/alex/behavioral-kernel.
+ */
+const TECHNICAL_LEAK_PATTERNS: RegExp[] = [
+  /\bupload\s+failed\b/i,
+  /\benvoi\s+échou[ée]\b/i,
+  /\bt[ée]l[ée]versement\s+échou[ée]\b/i,
+  /\bapi\s+error\b/i,
+  /\berreur\s+api\b/i,
+  /\bnetwork\s+(error|issue)\b/i,
+  /\b(erreur|probl[èe]me)\s+r[ée]seau\b/i,
+  /\bpermission\s+denied\b/i,
+  /\bpermission\s+refus[ée]e?\b/i,
+  /\bunsupported\s+format\b/i,
+  /\bformat\s+non\s+(support[ée]|pris\s+en\s+charge)\b/i,
+  /\bfunction\s+crashed\b/i,
+  /\bfonction\b.{0,20}\bcrash/i,
+  /\bstack\s+trace\b/i,
+  /\binvalid\s+payload\b/i,
+  /\bpayload\s+invalide\b/i,
+  /\bplease\s+refresh\b/i,
+  /\bveuillez\s+actualiser\b/i,
+  /\br[ée]essayez\s+plus\s+tard\b/i,
+];
+
+const GRACEFUL_FALLBACK =
+  "Je continue avec vous. Décrivez-moi simplement la situation — je vais trouver le bon professionnel.";
+
 export interface SanitizeResult {
   /** Cleaned text safe for rendering. May be empty if everything was junk. */
   text: string;
   /** True if forbidden content was detected and removed. */
   hadForbidden: boolean;
+  /** True if a technical-leak phrase was detected and the bubble was rewritten. */
+  hadTechnicalLeak?: boolean;
 }
 
 export function sanitizeAlexText(input: string | null | undefined): SanitizeResult {
