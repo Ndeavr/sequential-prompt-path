@@ -158,7 +158,20 @@ export default function PageProLandingNuclearClose() {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("t");
+  const runId = searchParams.get("r");
   const navigate = useNavigate();
+
+  // ISR live-run tracking: link_clicked on mount, plan_viewed after 4s.
+  useEffect(() => {
+    if (!runId) return;
+    import("@/integrations/supabase/client").then(({ supabase }) => {
+      supabase.functions.invoke("log-isr-event", { body: { run_id: runId, step: "link_clicked" } });
+      const t = setTimeout(() => {
+        supabase.functions.invoke("log-isr-event", { body: { run_id: runId, step: "plan_viewed" } });
+      }, 4000);
+      return () => clearTimeout(t);
+    });
+  }, [runId]);
   const { speak, stop, isSpeaking, hasError } = useNuclearCloseFemaleVoice();
   const [prospect, setProspect] = useState<Prospect | null>(null);
   const [loading, setLoading] = useState(true);
