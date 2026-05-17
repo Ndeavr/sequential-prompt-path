@@ -32,7 +32,11 @@ const VOICE_SETTINGS = {
 let currentAudio: HTMLAudioElement | null = null;
 let currentObjectUrl: string | null = null;
 let currentAbort: AbortController | null = null;
+let primedAudio: HTMLAudioElement | null = null;
 let initialized = false;
+
+const SILENT_WAV_DATA_URI =
+  "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQQAAAAAAA==";
 
 export class TTSUnavailableError extends Error {
   code: "TTS_FALLBACK" | "TTS_TIMEOUT" | "TTS_ABORT" | "TTS_ERROR";
@@ -71,6 +75,27 @@ export const elevenlabsService = {
 
   isReady(): boolean {
     return initialized;
+  },
+
+  unlockPlayback(): void {
+    if (primedAudio) return;
+    try {
+      const audio = new Audio(SILENT_WAV_DATA_URI);
+      audio.muted = true;
+      audio.volume = 0;
+      primedAudio = audio;
+      void audio.play().then(() => {
+        try { audio.pause(); } catch {}
+        try { audio.currentTime = 0; } catch {}
+        audio.muted = false;
+        audio.volume = 1;
+        alexLog("tts:playback_unlocked");
+      }).catch((e) => {
+        alexLog("tts:playback_unlock_deferred", e?.message || String(e));
+      });
+    } catch (e) {
+      alexLog("tts:playback_unlock_error", String(e));
+    }
   },
 
   async speak(
@@ -154,7 +179,10 @@ export const elevenlabsService = {
         throw new TTSUnavailableError("TTS_ERROR", "Unexpected TTS response format");
       }
 
-      const audio = new Audio(audioUrl);
+      const audio = primedAudio ?? new Audio();
+      audio.src = audioUrl;
+      audio.muted = false;
+      audio.volume = 1;
       currentAudio = audio;
 
       return new Promise<void>((resolve, reject) => {
