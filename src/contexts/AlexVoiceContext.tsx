@@ -12,6 +12,7 @@
  */
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import { useAlexVoiceLockedStore } from "@/stores/alexVoiceLockedStore";
+import { elevenlabsService } from "@/features/alex/services/elevenlabsService";
 
 // Heavy audio modules are dynamically imported on first user interaction
 // to keep them out of the main entry chunk (was ~80 KB of audio code).
@@ -53,6 +54,9 @@ export function AlexVoiceProvider({ children }: { children: ReactNode }) {
       console.warn("[AlexVoiceContext] Locked voice session active — ignoring openAlex");
       return;
     }
+
+    // Prime mobile playback synchronously from the user tap before any async boot.
+    elevenlabsService.unlockPlayback();
 
     // Open the overlay synchronously (UX), then lazy-kill any other audio.
     lockedStore.openVoiceSession(feat, "user_openAlex", contextHint);
