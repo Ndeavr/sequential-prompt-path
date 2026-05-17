@@ -406,6 +406,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           bootInProgressRef.current = false;
           setIsConnecting(false);
           setIsActive(false);
+          intentionallyStopped.current = true;
           try { conversation.endSession(); } catch {}
           callbacksRef.current?.onError?.(new Error("Connection timeout — voice unavailable"));
         }, CONNECTION_TIMEOUT_MS);
