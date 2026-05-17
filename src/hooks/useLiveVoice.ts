@@ -137,7 +137,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     const ok = Boolean(stream?.active && track?.enabled && track.readyState === "live");
     alexVoiceService.setRealtimeDiagnostics({
       microphoneActive: ok,
-      asrReceivingAudio: ok && conversation.status === "connected",
+      asrReceivingAudio: ok && alexVoiceService.getSnapshot().wsConnected,
     });
     if (!ok && stream) {
       console.warn("[ElevenLabs V8] Mic stream unhealthy", {
@@ -147,7 +147,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       });
     }
     return ok;
-  }, [conversation.status]);
+  }, []);
 
   const stopInputLevelMonitor = useCallback(() => {
     if (inputLevelTimerRef.current) {
