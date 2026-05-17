@@ -418,14 +418,25 @@ export default function PageAdminLiveRuns() {
                 <Badge className="bg-white/10 text-white/60">Validation admin en cours…</Badge>
               )}
               <Badge className={syncChip.cls}>{syncChip.label}</Badge>
+              {stripeMode && (
+                <Badge className={stripeMode === "live"
+                  ? "bg-emerald-500/20 text-emerald-300"
+                  : "bg-amber-500/20 text-amber-300"}>
+                  Stripe {stripeMode.toUpperCase()}
+                </Badge>
+              )}
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button variant="outline" onClick={safeRefresh} disabled={syncing || !adminReady}>
               {syncing ? "Sync…" : "Réessayer la sync"}
             </Button>
-            <Button onClick={startIsrRun} disabled={starting || !adminReady}>
-              {starting ? "Démarrage…" : "Start ISR Live Run"}
+            <Button variant="outline" onClick={startIsrRun} disabled={starting || !adminReady}>
+              {starting ? "Démarrage…" : "Préparer (no-send)"}
+            </Button>
+            <Button onClick={runFullLive} disabled={fullRunBusy || !adminReady}
+              className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold">
+              {fullRunBusy ? "Envoi live…" : "🚀 Run live de A à Z"}
             </Button>
           </div>
         </header>
