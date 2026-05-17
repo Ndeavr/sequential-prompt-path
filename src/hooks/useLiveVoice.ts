@@ -399,14 +399,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         throw e;
       }
       alexVoiceService.setMicPermission("granted");
-      try {
-        const Ctx = (window.AudioContext || (window as any).webkitAudioContext);
-        if (Ctx) {
-          const ctx = new Ctx();
-          if (ctx.state === "suspended") await ctx.resume();
-          alexVoiceService.setAudioUnlocked(ctx.state === "running");
-        }
-      } catch (e) { console.warn("[ElevenLabs V8] AudioContext resume failed", e); }
+      // Do not create a second AudioContext here. Playback is primed synchronously
+      // from the orb tap; the ElevenLabs SDK owns the single realtime audio graph.
+      alexVoiceService.setAudioUnlocked(true);
     } catch (micErr) {
       const micName = (micErr as any)?.name as string | undefined;
       alexVoiceService.setMicPermission(micName === "NotAllowedError" || micName === "NotFoundError" ? "denied" : "prompt");
@@ -501,6 +496,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           bootInProgressRef.current = false;
           setIsConnecting(false);
           setIsActive(false);
+          stopInputLevelMonitor();
           intentionallyStopped.current = true;
           try { conversation.endSession(); } catch {}
           callbacksRef.current?.onError?.(new Error("Connection timeout — voice unavailable"));
