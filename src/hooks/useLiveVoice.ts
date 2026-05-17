@@ -10,6 +10,7 @@ import { ALEX_VOICE_DEFAULTS } from "@/features/alex/voice/alexAgentOverrides";
 import { loadAlexMemory } from "@/features/alex/voice/alexSessionMemory";
 import { alexVoiceService } from "@/services/alexVoiceService";
 import { logBoot, withTimeout } from "@/lib/bootDebug";
+import { ALEX_VOICE_BASE } from "@/config/alexVoiceConfig";
 
 const RECONNECT_COOLDOWN_MS = 5000;
 const CONNECTION_TIMEOUT_MS = 12_000;
@@ -119,6 +120,9 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const connectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lockedVoiceIdRef = useRef<string | null>(null);
   const bootInProgressRef = useRef(false);
+  const ownedMicStreamRef = useRef<MediaStream | null>(null);
+  const inputLevelTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startDebounceUntilRef = useRef(0);
 
   const clearConnectionTimeout = useCallback(() => {
     if (connectionTimeoutRef.current) {
@@ -147,6 +151,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   }, [sendAgentContext]);
 
   const conversation = useConversation({
+    preferHeadphonesForIosDevices: true,
+    connectionDelay: { android: 3000, ios: 300, default: 0 },
     onConnect: () => {
       console.log("[ElevenLabs V7] ✅ Connected to agent");
       clearConnectionTimeout();
@@ -154,6 +160,22 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       setIsActive(true);
       setIsConnecting(false);
       callbacksRef.current?.onConnect?.();
+    },
+    onStatusChange: ({ status }: any) => {
+      alexVoiceService.markWsConnected(status === "connected");
+    },
+    onModeChange: ({ mode }: any) => {
+      alexVoiceService.setRealtimeDiagnostics({
+        ttsState: mode === "speaking" ? "speaking" : "idle",
+        vadState: mode === "listening" ? "listening" : alexVoiceService.getSnapshot().vadState,
+      });
+    },
+    onVadScore: (event: any) => {
+      const score = typeof event === "number" ? event : Number(event?.score ?? event?.vadScore ?? 0);
+      alexVoiceService.setVadScore(score);
+    },
+    onAudio: () => {
+      alexVoiceService.setRealtimeDiagnostics({ ttsState: "speaking" });
     },
     onDisconnect: () => {
       clearConnectionTimeout();
@@ -163,6 +185,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
       setIsActive(false);
       setIsConnecting(false);
       hasDeliveredFirstAudioRef.current = false;
+      bootInProgressRef.current = false;
+      alexVoiceService.setRealtimeDiagnostics({ microphoneActive: false, inputLevel: 0, vadState: "idle", asrReceivingAudio: false, ttsState: "idle" });
       languageSessionRef.current.reset();
       activeLanguageRef.current = "fr-CA";
 
@@ -206,6 +230,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     },
     onError: (error: unknown) => {
       console.error("[ElevenLabs V7] Error:", error);
+      bootInProgressRef.current = false;
       setIsConnecting(false);
       callbacksRef.current?.onError?.(error);
     },
