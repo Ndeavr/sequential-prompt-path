@@ -578,7 +578,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     alexVoiceService.setError("Connexion vocale lente. Mode chat activé.", "retry_exhausted");
     console.error("[ElevenLabs V8] Failed after retries:", lastError);
     callbacksRef.current?.onError?.(lastError ?? new Error("voice_unavailable"));
-  }, [isActive, isConnecting, conversation, clearConnectionTimeout]);
+  }, [isActive, isConnecting, conversation, clearConnectionTimeout, verifyOwnedMicStream, startInputLevelMonitor, stopInputLevelMonitor]);
 
   const stop = useCallback(() => {
     clearConnectionTimeout();
