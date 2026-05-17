@@ -578,7 +578,6 @@ export default function OverlayAlexVoiceFullScreen() {
       if (ttsWarmupTimerRef.current) clearTimeout(ttsWarmupTimerRef.current);
       if (slowTokenTimerRef.current) clearTimeout(slowTokenTimerRef.current);
       elevenlabsService.stop();
-      void fallbackVoiceSession.closeSession();
       if (isActive) {
         stop();
       }
@@ -647,7 +646,6 @@ export default function OverlayAlexVoiceFullScreen() {
     try {
       const result = await executeHardReset();
       console.log('[ALEX VOICE] 💥 Hard reset complete', result);
-      await fallbackVoiceSession.closeSession();
     } catch (e) {
       console.warn('[ALEX VOICE] hard reset error', e);
     }
@@ -681,7 +679,7 @@ export default function OverlayAlexVoiceFullScreen() {
         getStore().closeVoiceSession("recovery_fallback_chat");
       },
     );
-  }, [buildGreeting, start, stop, recovery, openChatFallback, fallbackVoiceSession]);
+  }, [buildGreeting, start, stop, recovery, openChatFallback]);
 
   const handleFallbackChat = useCallback(() => {
     alexVoiceService.switchToFallbackChat("user_or_auto");
