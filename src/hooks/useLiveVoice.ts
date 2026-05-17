@@ -131,6 +131,51 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     }
   }, []);
 
+  const verifyOwnedMicStream = useCallback(() => {
+    const stream = ownedMicStreamRef.current;
+    const track = stream?.getAudioTracks?.()[0] ?? null;
+    const ok = Boolean(stream?.active && track?.enabled && track.readyState === "live");
+    alexVoiceService.setRealtimeDiagnostics({
+      microphoneActive: ok,
+      asrReceivingAudio: ok && conversation.status === "connected",
+    });
+    if (!ok && stream) {
+      console.warn("[ElevenLabs V8] Mic stream unhealthy", {
+        mediaStreamActive: stream.active,
+        inputAudioTrackEnabled: track?.enabled,
+        inputAudioTrackState: track?.readyState,
+      });
+    }
+    return ok;
+  }, [conversation.status]);
+
+  const stopInputLevelMonitor = useCallback(() => {
+    if (inputLevelTimerRef.current) {
+      clearInterval(inputLevelTimerRef.current);
+      inputLevelTimerRef.current = null;
+    }
+    alexVoiceService.setRealtimeDiagnostics({ inputLevel: 0, vadState: "idle", asrReceivingAudio: false });
+  }, []);
+
+  const startInputLevelMonitor = useCallback(() => {
+    stopInputLevelMonitor();
+    inputLevelTimerRef.current = setInterval(() => {
+      const api = conversationApiRef.current;
+      const raw = typeof api?.getInputVolume === "function" ? Number(api.getInputVolume() ?? 0) : 0;
+      const level = raw <= 1 ? raw * 100 : raw;
+      alexVoiceService.setInputLevel(level);
+      verifyOwnedMicStream();
+    }, 250);
+  }, [stopInputLevelMonitor, verifyOwnedMicStream]);
+
+  const stopOwnedMicStream = useCallback(() => {
+    ownedMicStreamRef.current?.getTracks().forEach((track) => {
+      try { track.stop(); } catch {}
+    });
+    ownedMicStreamRef.current = null;
+    alexVoiceService.setRealtimeDiagnostics({ microphoneActive: false, asrReceivingAudio: false });
+  }, []);
+
   const sendAgentContext = useCallback((context: string, successLog?: string) => {
     const api = conversationApiRef.current;
     if (typeof api?.sendContextualUpdate === "function") {
