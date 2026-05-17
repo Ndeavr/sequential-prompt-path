@@ -812,6 +812,7 @@ export const AppRouter = () => (
         <Route path="/entrepreneurs" element={<PageEntrepreneurJoin />} />
         <Route path="/entrepreneurs/disponibilite-categorie-specialite-ville" element={<ContractorAvailabilityPage />} />
         <Route path="/pro/:slug" element={<Suspense fallback={<LazyFallback />}><PageProLandingNuclearClose /></Suspense>} />
+        <Route path="/admin/live-runs" element={<Suspense fallback={<LazyFallback />}>{(() => { const P = lazy(() => import("@/pages/admin/PageAdminLiveRuns")); return <P />; })()}</Suspense>} />
         <Route path="/book/:slug" element={<PublicBookingPage />} />
         <Route path="/book/:slug/:typeSlug" element={<PublicBookingPage />} />
         <Route path="/book/success" element={<BookingPaymentSuccess />} />
