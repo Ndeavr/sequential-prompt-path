@@ -15,6 +15,7 @@ import Home from "@/pages/Home";
 import FallbackRoutePage from "@/pages/FallbackRoutePage";
 import PageEmergencyReset from "@/pages/PageEmergencyReset";
 import StaticContentPage from "@/pages/static/StaticContentPage";
+const PageAdminLiveRuns = lazy(() => import("@/pages/admin/PageAdminLiveRuns"));
 
 // Impact Counter
 const PageImpactCounter = lazy(() => import("@/pages/PageImpactCounter"));
@@ -812,6 +813,7 @@ export const AppRouter = () => (
         <Route path="/entrepreneurs" element={<PageEntrepreneurJoin />} />
         <Route path="/entrepreneurs/disponibilite-categorie-specialite-ville" element={<ContractorAvailabilityPage />} />
         <Route path="/pro/:slug" element={<Suspense fallback={<LazyFallback />}><PageProLandingNuclearClose /></Suspense>} />
+        <Route path="/admin/live-runs" element={<Suspense fallback={<LazyFallback />}><PageAdminLiveRuns /></Suspense>} />
         <Route path="/book/:slug" element={<PublicBookingPage />} />
         <Route path="/book/:slug/:typeSlug" element={<PublicBookingPage />} />
         <Route path="/book/success" element={<BookingPaymentSuccess />} />

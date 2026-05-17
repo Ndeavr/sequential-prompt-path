@@ -41,6 +41,16 @@ const CATEGORY_LABEL_FR: Record<string, string> = {
   asphalte: "asphalte",
   gazon: "entretien de gazon",
   peinture: "peinture",
+  isolation: "isolation d'entretoit",
+  plomberie: "plomberie",
+  electricite: "électricité",
+  cvac: "CVAC",
+  fenestration: "fenestration",
+  revetement: "revêtement",
+  excavation: "excavation",
+  paysagement: "paysagement",
+  renovation: "rénovation",
+  general: "services résidentiels",
 };
 
 function buildIntroScript(p: Prospect) {

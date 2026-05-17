@@ -849,6 +849,50 @@ export type Database = {
         }
         Relationships: []
       }
+      acquisition_run_steps: {
+        Row: {
+          completed_at: string | null
+          id: string
+          logs: Json
+          retry_count: number
+          run_id: string
+          started_at: string | null
+          status: string
+          step_key: string
+          step_order: number
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          logs?: Json
+          retry_count?: number
+          run_id: string
+          started_at?: string | null
+          status?: string
+          step_key: string
+          step_order: number
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          logs?: Json
+          retry_count?: number
+          run_id?: string
+          started_at?: string | null
+          status?: string
+          step_key?: string
+          step_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acquisition_run_steps_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "live_acquisition_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activation_pipeline_runs: {
         Row: {
           activated_at: string | null
@@ -38027,6 +38071,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      live_acquisition_runs: {
+        Row: {
+          campaign: string
+          created_at: string
+          id: string
+          metadata: Json
+          prospect_id: string | null
+          prospect_table: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          campaign: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          prospect_id?: string | null
+          prospect_table?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          campaign?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          prospect_id?: string | null
+          prospect_table?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       live_activity_events: {
         Row: {
