@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
         dry_run,
         sent_to: targetPhone,
         sid: sendResult?.sid ?? null,
-        simulated: !!sendResult?.simulated,
+        simulated: false,
       }),
       { headers: { ...cors, "Content-Type": "application/json" } }
     );
