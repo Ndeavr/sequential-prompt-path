@@ -655,7 +655,7 @@ export default function OverlayAlexVoiceFullScreen() {
         getStore().closeVoiceSession("recovery_fallback_chat");
       },
     );
-  }, [buildGreeting, start, stop, recovery, openChatFallback]);
+  }, [buildGreeting, start, stop, recovery, openChatFallback, fallbackVoiceSession]);
 
   const handleFallbackChat = useCallback(() => {
     alexVoiceService.switchToFallbackChat("user_or_auto");
