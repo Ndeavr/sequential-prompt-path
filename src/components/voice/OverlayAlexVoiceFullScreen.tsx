@@ -609,6 +609,7 @@ export default function OverlayAlexVoiceFullScreen() {
     // Reset local refs
     hasConnectedRef.current = false;
     firstAudioReceivedRef.current = false;
+    ttsFallbackInProgressRef.current = false;
     bootInitiatedRef.current = false;
     autoRetryCountRef.current = 0;
     setTranscripts([]);
@@ -620,6 +621,7 @@ export default function OverlayAlexVoiceFullScreen() {
     try {
       const result = await executeHardReset();
       console.log('[ALEX VOICE] 💥 Hard reset complete', result);
+      await fallbackVoiceSession.closeSession();
     } catch (e) {
       console.warn('[ALEX VOICE] hard reset error', e);
     }
