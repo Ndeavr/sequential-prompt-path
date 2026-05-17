@@ -164,7 +164,11 @@ export default function OverlayAlexVoiceFullScreen() {
       console.warn("[VoiceOverlay] TTS fallback failed:", e);
       const latest = getStore();
       if (!latest.isOverlayOpen) return;
-      latest.transitionTo("awaiting_user", `${reason}_tts_failed_continue_listening`);
+      if (latest.machineState === "speaking") {
+        latest.transitionTo("awaiting_user", `${reason}_tts_failed_continue_listening`);
+      } else if (latest.machineState === "error_recoverable") {
+        latest.transitionTo("listening", `${reason}_tts_failed_continue_listening`);
+      }
       void fallbackVoiceSession.openSession(greeting);
     });
   }, [fallbackVoiceSession]);
