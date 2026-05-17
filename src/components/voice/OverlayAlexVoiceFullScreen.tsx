@@ -16,6 +16,7 @@ import { X, PhoneOff, RefreshCw, AlertCircle, MessageSquare, Sparkles, WifiOff, 
 import { Button } from "@/components/ui/button";
 import { useAlexVoiceLockedStore, type LockedVoiceState } from "@/stores/alexVoiceLockedStore";
 import { useLiveVoice } from "@/hooks/useLiveVoice";
+import { useAlexVoiceSession } from "@/hooks/useAlexVoiceSession";
 import { useAlexVoiceRecovery, type RecoveryPhase } from "@/hooks/useAlexVoiceRecovery";
 import { executeHardReset } from "@/services/voiceHardResetEngine";
 // audioEngine removed — no chimes in voice mode, prevents click artifacts
@@ -68,6 +69,7 @@ export default function OverlayAlexVoiceFullScreen() {
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stabilizationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const firstAudioTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const ttsWarmupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [transcripts, setTranscripts] = useState<Array<{ id: string; role: "user" | "alex"; text: string }>>([]);
   const [slowToken, setSlowToken] = useState(false);
   const slowTokenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -76,6 +78,7 @@ export default function OverlayAlexVoiceFullScreen() {
   const lastAlexIdRef = useRef<string | null>(null);
   const hasConnectedRef = useRef(false);
   const firstAudioReceivedRef = useRef(false);
+  const ttsFallbackInProgressRef = useRef(false);
   const bootTimeRef = useRef<number>(0);
   const [bootStep, setBootStep] = useState<string>("init");
   const bootInitiatedRef = useRef(false);
@@ -88,6 +91,7 @@ export default function OverlayAlexVoiceFullScreen() {
 
   // Voice recovery hook
   const recovery = useAlexVoiceRecovery();
+  const fallbackVoiceSession = useAlexVoiceSession();
 
   const firstName = user?.user_metadata?.first_name
     || user?.user_metadata?.full_name?.split(" ")[0]
@@ -116,6 +120,11 @@ export default function OverlayAlexVoiceFullScreen() {
   const playTtsFallbackGreeting = useCallback((reason: string) => {
     const s = getStore();
     if (!s.isOverlayOpen) return;
+    if (ttsFallbackInProgressRef.current) {
+      console.warn("[VoiceOverlay] TTS fallback already in progress — skipping duplicate", reason);
+      return;
+    }
+    ttsFallbackInProgressRef.current = true;
     firstAudioReceivedRef.current = true;
     hasConnectedRef.current = true;
     setBootStep("tts_fallback");
@@ -136,20 +145,34 @@ export default function OverlayAlexVoiceFullScreen() {
       () => alexVoiceService.setState("speaking", "tts_fallback_audio_started"),
       () => {
         const latest = getStore();
+        ttsFallbackInProgressRef.current = false;
         if (!latest.isOverlayOpen) return;
-        // Surface recoverable banner so the user sees Retry/Chat buttons.
-        latest.setError("voice_offline", "Voix en mode secours. Touchez Réinitialiser pour réessayer.", true);
+        markGreeted();
+        markVoiceStarted();
+        if (latest.machineState === "speaking") {
+          latest.transitionTo("awaiting_user", "tts_fallback_finished");
+          setTimeout(() => {
+            const after = getStore();
+            if (after.isOverlayOpen && after.machineState === "awaiting_user") {
+              after.transitionTo("listening", "tts_fallback_listening");
+            }
+          }, 300);
+        }
+        void fallbackVoiceSession.openSession(greeting, { suppressGreetingAudio: true });
       },
     ).catch((e) => {
+      ttsFallbackInProgressRef.current = false;
       console.warn("[VoiceOverlay] TTS fallback failed:", e);
-      alexVoiceService.switchToFallbackChat(`${reason}_tts_failed`);
-      openChatFallback(
-        "voice_unavailable",
-        transcriptsRef.current.map((t) => ({ role: t.role, text: t.text })),
-      );
-      getStore().closeVoiceSession("voice_error_pre_audio");
+      const latest = getStore();
+      if (!latest.isOverlayOpen) return;
+      if (latest.machineState === "speaking") {
+        latest.transitionTo("awaiting_user", `${reason}_tts_failed_continue_listening`);
+      } else if (latest.machineState === "error_recoverable") {
+        latest.transitionTo("listening", `${reason}_tts_failed_continue_listening`);
+      }
+      void fallbackVoiceSession.openSession(greeting);
     });
-  }, [openChatFallback]);
+  }, [fallbackVoiceSession]);
 
   const { start, stop, isActive, isConnecting, isSpeaking, conversation } = useLiveVoice({
     onFirstAudio: () => {
@@ -161,6 +184,10 @@ export default function OverlayAlexVoiceFullScreen() {
       if (firstAudioTimerRef.current) {
         clearTimeout(firstAudioTimerRef.current);
         firstAudioTimerRef.current = null;
+      }
+      if (ttsWarmupTimerRef.current) {
+        clearTimeout(ttsWarmupTimerRef.current);
+        ttsWarmupTimerRef.current = null;
       }
       if (nudgeTimerRef.current) {
         clearTimeout(nudgeTimerRef.current);
@@ -301,7 +328,6 @@ export default function OverlayAlexVoiceFullScreen() {
       // so Alex is heard, then user can tap Réinitialiser or Passer au chat.
       if (!firstAudioReceivedRef.current) {
         console.warn("[VoiceOverlay] Error before first audio → TTS greeting fallback");
-        try { stop(); } catch {}
         playTtsFallbackGreeting("voice_error_pre_audio");
         return;
       }
@@ -406,8 +432,8 @@ export default function OverlayAlexVoiceFullScreen() {
         if (firstAudioReceivedRef.current || !s.isOverlayOpen) return;
         if (!["stabilizing", "opening_session", "session_ready"].includes(s.machineState)) return;
 
-        // Strictly event-driven: never silently retry. Go straight to fallback.
-        bailToChat("no_first_audio");
+        // Strictly event-driven: never silently retry. Speak via TTS fallback and keep voice open.
+        playTtsFallbackGreeting("no_first_audio");
       }, FIRST_AUDIO_TIMEOUT_MS);
     };
 
@@ -433,8 +459,8 @@ export default function OverlayAlexVoiceFullScreen() {
           const isStuck = s.isOverlayOpen &&
             ["stabilizing", "opening_session", "requesting_permission"].includes(s.machineState);
           if (isStuck) {
-            console.error("[ALEX VOICE] ⏱️ Hard boot timeout — bailing to chat");
-            bailToChat("boot_timeout");
+            console.error("[ALEX VOICE] ⏱️ Hard boot timeout — switching to TTS voice fallback");
+            playTtsFallbackGreeting("boot_timeout");
           }
         }, BOOT_TIMEOUT_MS);
 
@@ -450,6 +476,16 @@ export default function OverlayAlexVoiceFullScreen() {
         setBootStep("connecting");
         const greeting = shouldGreet ? buildGreetingRef.current() : "";
         console.log("[ALEX VOICE] Starting session, greeting:", greeting || "(silent — already greeted)");
+        if (greeting) {
+          ttsWarmupTimerRef.current = setTimeout(() => {
+            const current = getStore();
+            if (!firstAudioReceivedRef.current && current.isOverlayOpen &&
+                ["stabilizing", "opening_session"].includes(current.machineState)) {
+              console.warn("[ALEX VOICE] Live voice slow — speaking TTS fallback immediately");
+              playTtsFallbackGreeting("live_slow_warmup");
+            }
+          }, 1800);
+        }
         await startRef.current({ initialGreeting: greeting, mode: deriveMode(getStore().feature) });
 
         // After await: check session still owns the runtime + overlay open
@@ -495,6 +531,10 @@ export default function OverlayAlexVoiceFullScreen() {
 
     return () => {
       if (bootTimeoutId) clearTimeout(bootTimeoutId);
+      if (ttsWarmupTimerRef.current) {
+        clearTimeout(ttsWarmupTimerRef.current);
+        ttsWarmupTimerRef.current = null;
+      }
       if (slowTokenTimerRef.current) {
         clearTimeout(slowTokenTimerRef.current);
         slowTokenTimerRef.current = null;
@@ -534,8 +574,10 @@ export default function OverlayAlexVoiceFullScreen() {
       if (stabilizationTimerRef.current) clearTimeout(stabilizationTimerRef.current);
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
       if (firstAudioTimerRef.current) clearTimeout(firstAudioTimerRef.current);
+      if (ttsWarmupTimerRef.current) clearTimeout(ttsWarmupTimerRef.current);
       if (slowTokenTimerRef.current) clearTimeout(slowTokenTimerRef.current);
       elevenlabsService.stop();
+      void fallbackVoiceSession.closeSession();
       if (isActive) {
         stop();
       }
@@ -547,6 +589,7 @@ export default function OverlayAlexVoiceFullScreen() {
       }
       hasConnectedRef.current = false;
       firstAudioReceivedRef.current = false;
+      ttsFallbackInProgressRef.current = false;
       autoRetryCountRef.current = 0;
       setTranscripts([]);
       setSlowToken(false);
@@ -583,6 +626,7 @@ export default function OverlayAlexVoiceFullScreen() {
 
     // Clear all local timers
     if (firstAudioTimerRef.current) { clearTimeout(firstAudioTimerRef.current); firstAudioTimerRef.current = null; }
+    if (ttsWarmupTimerRef.current) { clearTimeout(ttsWarmupTimerRef.current); ttsWarmupTimerRef.current = null; }
     if (stabilizationTimerRef.current) { clearTimeout(stabilizationTimerRef.current); stabilizationTimerRef.current = null; }
     if (heartbeatRef.current) { clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
     if (slowTokenTimerRef.current) { clearTimeout(slowTokenTimerRef.current); slowTokenTimerRef.current = null; }
@@ -590,6 +634,7 @@ export default function OverlayAlexVoiceFullScreen() {
     // Reset local refs
     hasConnectedRef.current = false;
     firstAudioReceivedRef.current = false;
+    ttsFallbackInProgressRef.current = false;
     bootInitiatedRef.current = false;
     autoRetryCountRef.current = 0;
     setTranscripts([]);
@@ -601,6 +646,7 @@ export default function OverlayAlexVoiceFullScreen() {
     try {
       const result = await executeHardReset();
       console.log('[ALEX VOICE] 💥 Hard reset complete', result);
+      await fallbackVoiceSession.closeSession();
     } catch (e) {
       console.warn('[ALEX VOICE] hard reset error', e);
     }
@@ -634,7 +680,7 @@ export default function OverlayAlexVoiceFullScreen() {
         getStore().closeVoiceSession("recovery_fallback_chat");
       },
     );
-  }, [buildGreeting, start, stop, recovery, openChatFallback]);
+  }, [buildGreeting, start, stop, recovery, openChatFallback, fallbackVoiceSession]);
 
   const handleFallbackChat = useCallback(() => {
     alexVoiceService.switchToFallbackChat("user_or_auto");

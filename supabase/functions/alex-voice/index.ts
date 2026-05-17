@@ -129,7 +129,7 @@ serve(async (req) => {
 
     // ─── CREATE SESSION ───
     if (action === "create-session") {
-      const { userId, feature, userName, preferredSpokenName, context, voiceProfile, localHour } = body;
+      const { userId, feature, userName, preferredSpokenName, context, voiceProfile, localHour, suppressGreetingAudio } = body;
 
       let isReturning = false;
       if (userId) {
@@ -183,7 +183,7 @@ serve(async (req) => {
         ? getAlexVoiceSettings(voiceProfile as AlexVoiceProfile)
         : { ...ALEX_VOICE_CONFIG.voiceSettings, speed: speechStyle.speed };
 
-      const greetingAudio = await generateTTS(greetingForTTS, voiceSettings);
+      const greetingAudio = suppressGreetingAudio ? null : await generateTTS(greetingForTTS, voiceSettings);
       const greetingBase64 = greetingAudio ? base64Encode(greetingAudio) : null;
 
       try {
