@@ -220,13 +220,17 @@ export default function PageProLandingNuclearClose() {
     };
   }, [slug, token]);
 
-  // Auto-arm: try to autoplay, if blocked we show "Activer la voix" prompt
+  // Auto-arm: try to autoplay intro, then chain into 60s recap
   useEffect(() => {
     if (!prospect || voiceAttempted) return;
     setVoiceAttempted(true);
-    const script = buildIntroScript(prospect);
-    speak(script, { language: "fr" })
-      .then(() => setVoiceArmed(true))
+    const intro = buildIntroScript(prospect);
+    const recap = buildRecapScript(prospect);
+    speak(intro, { language: "fr" })
+      .then(() => {
+        setVoiceArmed(true);
+        return speak(recap, { language: "fr" });
+      })
       .catch(() => setVoiceArmed(false));
   }, [prospect, voiceAttempted, speak]);
 
