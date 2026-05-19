@@ -299,13 +299,14 @@ export default function PageAdminLiveRuns() {
       const smsTo: string = orch.sms_to;
       if (!runId || !smsTo) throw new Error("orchestrator_missing_run_id_or_phone");
 
-      // 2) Hard confirm before real SMS
-      const typed = window.prompt(`Tapez exactement le numéro du prospect pour ENVOYER UN VRAI SMS:\n${smsTo}`);
-      if (typed !== smsTo) {
-        toast.error("Numéro non confirmé. Run prêt, SMS NON envoyé.");
+      // 2) Hard confirm before real SMS (1-tap OK)
+      const ok = window.confirm(`Envoyer un VRAI SMS au prospect ${smsTo} ?\n\nOK = envoi live immédiat.\nAnnuler = run prêt sans envoi.`);
+      if (!ok) {
+        toast.message("Run prêt. SMS non envoyé.");
         await safeRefresh();
         return;
       }
+      const typed = smsTo;
 
       // 3) Real send
       const { data: send, error: sErr } = await withTimeout(
