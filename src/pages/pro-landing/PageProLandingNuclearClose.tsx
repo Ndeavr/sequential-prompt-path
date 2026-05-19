@@ -58,7 +58,20 @@ function buildIntroScript(p: Prospect) {
   return `Bonjour ${p.company_name}. J'ai analysé votre présence en ligne à ${p.city}. ` +
     `Pour une entreprise de ${cat}, votre score de visibilité est de ${p.scores.visibility} sur cent. ` +
     `Vous laissez environ ${p.scores.missed} opportunités qualifiées par mois sur la table. ` +
-    `J'ai une solution exclusive. Voulez-vous le résumé en soixante secondes ?`;
+    `Voici votre résumé en soixante secondes.`;
+}
+
+function buildRecapScript(p: Prospect) {
+  const cat = CATEGORY_LABEL_FR[p.category] ?? p.category;
+  const s = p.scores;
+  return `Sur cinq dimensions clés, voici votre diagnostic. ` +
+    `Visibilité ${s.visibility} sur cent. Confiance ${s.trust}. Conversion ${s.conversion}. ` +
+    `Vitesse ${s.speed}. Opportunité ${s.opportunity} sur cent. ` +
+    `Concrètement, à ${p.city}, ce sont environ ${s.missed} rendez-vous qualifiés par mois qui partent chez vos concurrents. ` +
+    `Sur douze mois, c'est ${s.missed * 12} opportunités manquées. ` +
+    `UNPRO active votre territoire en exclusivité, en ${cat}. Pas de soumissions partagées, pas de guerre de prix. ` +
+    `Juste des rendez-vous qualifiés, réservés à vous. ` +
+    `Touchez Rejoindre maintenant pour activer votre territoire avant qu'un concurrent ne le prenne.`;
 }
 
 function ScoreCard({
