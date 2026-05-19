@@ -264,6 +264,18 @@ export default function PageProLandingNuclearClose() {
   }
 
   const intro = buildIntroScript(prospect);
+  const recap = buildRecapScript(prospect);
+  const playFull = () =>
+    speak(intro, { language: "fr" })
+      .then(() => {
+        setVoiceArmed(true);
+        return speak(recap, { language: "fr" });
+      })
+      .catch(() => setVoiceArmed(false));
+  const playRecap = () =>
+    speak(recap, { language: "fr" })
+      .then(() => setVoiceArmed(true))
+      .catch(() => setVoiceArmed(false));
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#060B14] text-white">
