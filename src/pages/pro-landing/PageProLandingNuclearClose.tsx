@@ -58,7 +58,20 @@ function buildIntroScript(p: Prospect) {
   return `Bonjour ${p.company_name}. J'ai analysé votre présence en ligne à ${p.city}. ` +
     `Pour une entreprise de ${cat}, votre score de visibilité est de ${p.scores.visibility} sur cent. ` +
     `Vous laissez environ ${p.scores.missed} opportunités qualifiées par mois sur la table. ` +
-    `J'ai une solution exclusive. Voulez-vous le résumé en soixante secondes ?`;
+    `Voici votre résumé en soixante secondes.`;
+}
+
+function buildRecapScript(p: Prospect) {
+  const cat = CATEGORY_LABEL_FR[p.category] ?? p.category;
+  const s = p.scores;
+  return `Sur cinq dimensions clés, voici votre diagnostic. ` +
+    `Visibilité ${s.visibility} sur cent. Confiance ${s.trust}. Conversion ${s.conversion}. ` +
+    `Vitesse ${s.speed}. Opportunité ${s.opportunity} sur cent. ` +
+    `Concrètement, à ${p.city}, ce sont environ ${s.missed} rendez-vous qualifiés par mois qui partent chez vos concurrents. ` +
+    `Sur douze mois, c'est ${s.missed * 12} opportunités manquées. ` +
+    `UNPRO active votre territoire en exclusivité, en ${cat}. Pas de soumissions partagées, pas de guerre de prix. ` +
+    `Juste des rendez-vous qualifiés, réservés à vous. ` +
+    `Touchez Rejoindre maintenant pour activer votre territoire avant qu'un concurrent ne le prenne.`;
 }
 
 function ScoreCard({
@@ -207,13 +220,17 @@ export default function PageProLandingNuclearClose() {
     };
   }, [slug, token]);
 
-  // Auto-arm: try to autoplay, if blocked we show "Activer la voix" prompt
+  // Auto-arm: try to autoplay intro, then chain into 60s recap
   useEffect(() => {
     if (!prospect || voiceAttempted) return;
     setVoiceAttempted(true);
-    const script = buildIntroScript(prospect);
-    speak(script, { language: "fr" })
-      .then(() => setVoiceArmed(true))
+    const intro = buildIntroScript(prospect);
+    const recap = buildRecapScript(prospect);
+    speak(intro, { language: "fr" })
+      .then(() => {
+        setVoiceArmed(true);
+        return speak(recap, { language: "fr" });
+      })
       .catch(() => setVoiceArmed(false));
   }, [prospect, voiceAttempted, speak]);
 
@@ -247,6 +264,18 @@ export default function PageProLandingNuclearClose() {
   }
 
   const intro = buildIntroScript(prospect);
+  const recap = buildRecapScript(prospect);
+  const playFull = () =>
+    speak(intro, { language: "fr" })
+      .then(() => {
+        setVoiceArmed(true);
+        return speak(recap, { language: "fr" });
+      })
+      .catch(() => setVoiceArmed(false));
+  const playRecap = () =>
+    speak(recap, { language: "fr" })
+      .then(() => setVoiceArmed(true))
+      .catch(() => setVoiceArmed(false));
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#060B14] text-white">
@@ -330,26 +359,35 @@ export default function PageProLandingNuclearClose() {
               {isSpeaking ? "En train de vous parler…" : voiceArmed ? "Audio prêt" : "Touchez pour activer le son"}
             </p>
           </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() =>
-              isSpeaking
-                ? stop()
-                : speak(intro, { language: "fr" }).then(() => setVoiceArmed(true))
-            }
-            className="bg-white/10 text-white hover:bg-white/20"
-          >
-            {isSpeaking ? (
-              <>
-                <VolumeX className="mr-1.5 h-4 w-4" /> Couper
-              </>
-            ) : (
-              <>
-                <Volume2 className="mr-1.5 h-4 w-4" /> Écouter
-              </>
-            )}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => (isSpeaking ? stop() : playFull())}
+              className="bg-white/10 text-white hover:bg-white/20"
+            >
+              {isSpeaking ? (
+                <>
+                  <VolumeX className="mr-1.5 h-4 w-4" /> Couper
+                </>
+              ) : (
+                <>
+                  <Volume2 className="mr-1.5 h-4 w-4" /> Écouter
+                </>
+              )}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                stop();
+                playRecap();
+              }}
+              className="bg-primary/20 text-white hover:bg-primary/30 border border-primary/30"
+            >
+              <Sparkles className="mr-1.5 h-4 w-4" /> Résumé 60s
+            </Button>
+          </div>
           {hasError && (
             <p className="w-full text-xs text-rose-300">
               Audio indisponible — la lecture du contenu reste accessible ci-dessous.
