@@ -48,6 +48,8 @@ const PageContractorAIGrowth = lazy(() => import("@/pages/contractor-growth/Page
 
 // Nuclear Close — Personalized prospect landing
 const PageProLandingNuclearClose = lazy(() => import("@/pages/pro-landing/PageProLandingNuclearClose"));
+const PageGoShortLink = lazy(() => import("@/pages/PageGoShortLink"));
+const PageActivationSuccess = lazy(() => import("@/pages/PageActivationSuccess"));
 
 // Voice Sales Plan Onboarding
 const PageContractorPlanOnboarding = lazy(() => import("@/pages/voice-sales/PageContractorPlanOnboarding"));
