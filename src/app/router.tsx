@@ -16,6 +16,7 @@ import FallbackRoutePage from "@/pages/FallbackRoutePage";
 import PageEmergencyReset from "@/pages/PageEmergencyReset";
 import StaticContentPage from "@/pages/static/StaticContentPage";
 const PageAdminLiveRuns = lazy(() => import("@/pages/admin/PageAdminLiveRuns"));
+const PageAdminProspectSMS = lazy(() => import("@/pages/admin/PageAdminProspectSMS"));
 
 // Impact Counter
 const PageImpactCounter = lazy(() => import("@/pages/PageImpactCounter"));
@@ -48,6 +49,8 @@ const PageContractorAIGrowth = lazy(() => import("@/pages/contractor-growth/Page
 
 // Nuclear Close — Personalized prospect landing
 const PageProLandingNuclearClose = lazy(() => import("@/pages/pro-landing/PageProLandingNuclearClose"));
+const PageGoShortLink = lazy(() => import("@/pages/PageGoShortLink"));
+const PageProspectActivationSuccess = lazy(() => import("@/pages/PageProspectActivationSuccess"));
 
 // Voice Sales Plan Onboarding
 const PageContractorPlanOnboarding = lazy(() => import("@/pages/voice-sales/PageContractorPlanOnboarding"));
@@ -813,7 +816,10 @@ export const AppRouter = () => (
         <Route path="/entrepreneurs" element={<PageEntrepreneurJoin />} />
         <Route path="/entrepreneurs/disponibilite-categorie-specialite-ville" element={<ContractorAvailabilityPage />} />
         <Route path="/pro/:slug" element={<Suspense fallback={<LazyFallback />}><PageProLandingNuclearClose /></Suspense>} />
+        <Route path="/go/:slug" element={<Suspense fallback={<LazyFallback />}><PageGoShortLink /></Suspense>} />
+        <Route path="/activation-success" element={<Suspense fallback={<LazyFallback />}><PageProspectActivationSuccess /></Suspense>} />
         <Route path="/admin/live-runs" element={<Suspense fallback={<LazyFallback />}><PageAdminLiveRuns /></Suspense>} />
+        <Route path="/admin/prospect-sms" element={<Suspense fallback={<LazyFallback />}><PageAdminProspectSMS /></Suspense>} />
         <Route path="/book/:slug" element={<PublicBookingPage />} />
         <Route path="/book/:slug/:typeSlug" element={<PublicBookingPage />} />
         <Route path="/book/success" element={<BookingPaymentSuccess />} />
