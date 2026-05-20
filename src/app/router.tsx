@@ -49,7 +49,7 @@ const PageContractorAIGrowth = lazy(() => import("@/pages/contractor-growth/Page
 // Nuclear Close — Personalized prospect landing
 const PageProLandingNuclearClose = lazy(() => import("@/pages/pro-landing/PageProLandingNuclearClose"));
 const PageGoShortLink = lazy(() => import("@/pages/PageGoShortLink"));
-const PageActivationSuccess = lazy(() => import("@/pages/PageActivationSuccess"));
+const PageProspectActivationSuccess = lazy(() => import("@/pages/PageProspectActivationSuccess"));
 
 // Voice Sales Plan Onboarding
 const PageContractorPlanOnboarding = lazy(() => import("@/pages/voice-sales/PageContractorPlanOnboarding"));
@@ -815,6 +815,8 @@ export const AppRouter = () => (
         <Route path="/entrepreneurs" element={<PageEntrepreneurJoin />} />
         <Route path="/entrepreneurs/disponibilite-categorie-specialite-ville" element={<ContractorAvailabilityPage />} />
         <Route path="/pro/:slug" element={<Suspense fallback={<LazyFallback />}><PageProLandingNuclearClose /></Suspense>} />
+        <Route path="/go/:slug" element={<Suspense fallback={<LazyFallback />}><PageGoShortLink /></Suspense>} />
+        <Route path="/activation-success" element={<Suspense fallback={<LazyFallback />}><PageProspectActivationSuccess /></Suspense>} />
         <Route path="/admin/live-runs" element={<Suspense fallback={<LazyFallback />}><PageAdminLiveRuns /></Suspense>} />
         <Route path="/book/:slug" element={<PublicBookingPage />} />
         <Route path="/book/:slug/:typeSlug" element={<PublicBookingPage />} />
