@@ -51640,6 +51640,102 @@ export type Database = {
           },
         ]
       }
+      prospect_page_events: {
+        Row: {
+          event_type: string
+          id: string
+          metadata: Json | null
+          occurred_at: string
+          slug: string
+        }
+        Insert: {
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string
+          slug: string
+        }
+        Update: {
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      prospect_pages: {
+        Row: {
+          activated: boolean
+          activated_at: string | null
+          ai_score: number | null
+          city: string | null
+          company_name: string
+          created_at: string
+          google_reviews: Json | null
+          google_score: number | null
+          id: string
+          logo_url: string | null
+          opportunities: Json | null
+          phone: string | null
+          service: string | null
+          short_link: string | null
+          slug: string
+          stripe_customer_id: string | null
+          territory_data: Json | null
+          territory_score: number | null
+          trust_score: number | null
+          updated_at: string
+          visibility_score: number | null
+        }
+        Insert: {
+          activated?: boolean
+          activated_at?: string | null
+          ai_score?: number | null
+          city?: string | null
+          company_name: string
+          created_at?: string
+          google_reviews?: Json | null
+          google_score?: number | null
+          id?: string
+          logo_url?: string | null
+          opportunities?: Json | null
+          phone?: string | null
+          service?: string | null
+          short_link?: string | null
+          slug: string
+          stripe_customer_id?: string | null
+          territory_data?: Json | null
+          territory_score?: number | null
+          trust_score?: number | null
+          updated_at?: string
+          visibility_score?: number | null
+        }
+        Update: {
+          activated?: boolean
+          activated_at?: string | null
+          ai_score?: number | null
+          city?: string | null
+          company_name?: string
+          created_at?: string
+          google_reviews?: Json | null
+          google_score?: number | null
+          id?: string
+          logo_url?: string | null
+          opportunities?: Json | null
+          phone?: string | null
+          service?: string | null
+          short_link?: string | null
+          slug?: string
+          stripe_customer_id?: string | null
+          territory_data?: Json | null
+          territory_score?: number | null
+          trust_score?: number | null
+          updated_at?: string
+          visibility_score?: number | null
+        }
+        Relationships: []
+      }
       prospect_plan_sessions: {
         Row: {
           capacity_score: number | null
@@ -57613,6 +57709,68 @@ export type Database = {
           },
         ]
       }
+      short_link_clicks: {
+        Row: {
+          clicked_at: string
+          id: string
+          ip_hash: string | null
+          referrer: string | null
+          slug: string
+          user_agent: string | null
+        }
+        Insert: {
+          clicked_at?: string
+          id?: string
+          ip_hash?: string | null
+          referrer?: string | null
+          slug: string
+          user_agent?: string | null
+        }
+        Update: {
+          clicked_at?: string
+          id?: string
+          ip_hash?: string | null
+          referrer?: string | null
+          slug?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      short_links: {
+        Row: {
+          click_count: number
+          created_at: string
+          last_clicked_at: string | null
+          prospect_page_id: string | null
+          slug: string
+          target_path: string
+        }
+        Insert: {
+          click_count?: number
+          created_at?: string
+          last_clicked_at?: string | null
+          prospect_page_id?: string | null
+          slug: string
+          target_path: string
+        }
+        Update: {
+          click_count?: number
+          created_at?: string
+          last_clicked_at?: string | null
+          prospect_page_id?: string | null
+          slug?: string
+          target_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "short_links_prospect_page_id_fkey"
+            columns: ["prospect_page_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       signature_requests: {
         Row: {
           category: string
@@ -58636,6 +58794,62 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      sms_campaigns: {
+        Row: {
+          activated_at: string | null
+          clicked_at: string | null
+          company_name: string
+          conversion_status: string
+          error: string | null
+          id: string
+          phone: string
+          prospect_page_id: string | null
+          sent_at: string
+          short_link: string | null
+          sms_body: string
+          sms_variant: string
+          twilio_sid: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          clicked_at?: string | null
+          company_name: string
+          conversion_status?: string
+          error?: string | null
+          id?: string
+          phone: string
+          prospect_page_id?: string | null
+          sent_at?: string
+          short_link?: string | null
+          sms_body: string
+          sms_variant: string
+          twilio_sid?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          clicked_at?: string | null
+          company_name?: string
+          conversion_status?: string
+          error?: string | null
+          id?: string
+          phone?: string
+          prospect_page_id?: string | null
+          sent_at?: string
+          short_link?: string | null
+          sms_body?: string
+          sms_variant?: string
+          twilio_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_campaigns_prospect_page_id_fkey"
+            columns: ["prospect_page_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_pages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sms_event_queue: {
         Row: {
