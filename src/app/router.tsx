@@ -16,6 +16,7 @@ import FallbackRoutePage from "@/pages/FallbackRoutePage";
 import PageEmergencyReset from "@/pages/PageEmergencyReset";
 import StaticContentPage from "@/pages/static/StaticContentPage";
 const PageAdminLiveRuns = lazy(() => import("@/pages/admin/PageAdminLiveRuns"));
+const PageAdminProspectSMS = lazy(() => import("@/pages/admin/PageAdminProspectSMS"));
 
 // Impact Counter
 const PageImpactCounter = lazy(() => import("@/pages/PageImpactCounter"));
@@ -818,6 +819,7 @@ export const AppRouter = () => (
         <Route path="/go/:slug" element={<Suspense fallback={<LazyFallback />}><PageGoShortLink /></Suspense>} />
         <Route path="/activation-success" element={<Suspense fallback={<LazyFallback />}><PageProspectActivationSuccess /></Suspense>} />
         <Route path="/admin/live-runs" element={<Suspense fallback={<LazyFallback />}><PageAdminLiveRuns /></Suspense>} />
+        <Route path="/admin/prospect-sms" element={<Suspense fallback={<LazyFallback />}><PageAdminProspectSMS /></Suspense>} />
         <Route path="/book/:slug" element={<PublicBookingPage />} />
         <Route path="/book/:slug/:typeSlug" element={<PublicBookingPage />} />
         <Route path="/book/success" element={<BookingPaymentSuccess />} />
