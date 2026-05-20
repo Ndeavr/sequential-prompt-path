@@ -1,141 +1,83 @@
-// Confirms the $1 activation Stripe session and activates the contractor profile.
+// Confirm a Stripe activation checkout, mark prospect activated, send magic link.
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
   try {
-    const { session_id, run_id } = await req.json();
-    if (!session_id || !run_id) throw new Error("session_id and run_id required");
+    const { session_id, slug } = await req.json();
+    if (!session_id) {
+      return new Response(JSON.stringify({ error: "missing_session_id" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, { apiVersion: "2025-08-27.basil" });
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+
+    const paid = session.payment_status === "paid";
+    if (!paid) {
+      return new Response(JSON.stringify({ ok: false, status: session.payment_status }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-      apiVersion: "2025-08-27.basil",
-    });
+    const effectiveSlug = slug || (session.metadata?.prospect_slug as string);
+    const email = session.customer_details?.email ?? session.customer_email ?? null;
+    const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id ?? null;
 
-    const session = await stripe.checkout.sessions.retrieve(session_id);
-    if (session.payment_status !== "paid") {
-      return new Response(
-        JSON.stringify({ paid: false, status: session.payment_status }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
-    }
-
-    const { data: run } = await supabase
-      .from("activation_pipeline_runs")
-      .select(
-        "id, domain, recommended_plan, extraction, signals, contractor_id, activated_at",
-      )
-      .eq("id", run_id)
-      .maybeSingle();
-    if (!run) throw new Error("run not found");
-
-    // Idempotent: if already activated, return existing.
-    if (run.activated_at && run.contractor_id) {
-      return new Response(
-        JSON.stringify({
-          paid: true,
-          contractor_id: run.contractor_id,
-          run_id: run.id,
-          already_activated: true,
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
-    }
-
-    const signals = (run.signals ?? {}) as Record<string, unknown>;
-    const extraction = (run.extraction ?? {}) as Record<string, unknown>;
-    const emails = Array.isArray(signals.emails_found)
-      ? signals.emails_found as string[]
-      : [];
-    const phones = Array.isArray(signals.phones_found)
-      ? signals.phones_found as string[]
-      : [];
-    const businessName =
-      (extraction?.metadata as Record<string, unknown> | undefined)
-        ?.title as string ?? run.domain ?? "Entrepreneur UNPRO";
-
-    // Try to upsert a contractor row. The schema may vary; we keep this best-effort.
-    let contractorId: string | null = null;
-    try {
-      const { data: contractor } = await supabase
-        .from("contractors")
-        .insert({
-          business_name: businessName,
-          website: run.domain ? `https://${run.domain}` : null,
-          email: emails[0] ?? session.customer_details?.email ?? null,
-          phone: phones[0] ?? null,
-          is_founder: true,
-          founder_plan: run.recommended_plan,
-          activation_run_id: run.id,
-          status: "active",
-        })
-        .select("id")
-        .single();
-      contractorId = contractor?.id ?? null;
-    } catch (e) {
-      console.warn("[activation-confirm] contractor insert skipped", e);
-    }
-
-    await supabase
-      .from("activation_pipeline_runs")
-      .update({
-        pipeline_status: "activated",
+    if (effectiveSlug) {
+      await supabase.from("prospect_pages").update({
+        activated: true,
         activated_at: new Date().toISOString(),
-        contractor_id: contractorId,
-        stripe_session_id: session.id,
-      })
-      .eq("id", run.id);
+        stripe_customer_id: customerId,
+      }).eq("slug", effectiveSlug);
 
-    // Best-effort system event
-    try {
-      await supabase.from("system_events").insert({
-        event_type: "contractor_activated",
-        payload: {
-          run_id: run.id,
-          contractor_id: contractorId,
-          plan: run.recommended_plan,
-          amount: session.amount_total,
-          currency: session.currency,
-          domain: run.domain,
-        },
+      await supabase.from("prospect_page_events").insert({
+        slug: effectiveSlug, event_type: "activated", metadata: { session_id, email },
       });
-    } catch (_) { /* table optional */ }
 
-    return new Response(
-      JSON.stringify({
-        paid: true,
-        contractor_id: contractorId,
-        run_id: run.id,
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
-    );
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
+      await supabase.from("sms_campaigns")
+        .update({ activated_at: new Date().toISOString(), conversion_status: "activated" })
+        .eq("short_link", effectiveSlug);
+    }
+
+    // Send magic link if we have an email and no account yet
+    let dashboardUrl: string | null = null;
+    if (email) {
+      try {
+        const origin = req.headers.get("origin") || "https://unpro.ca";
+        const { data: link } = await supabase.auth.admin.generateLink({
+          type: "magiclink",
+          email,
+          options: { redirectTo: `${origin}/dashboard?welcome=1&slug=${encodeURIComponent(effectiveSlug ?? "")}` },
+        });
+        dashboardUrl = link?.properties?.action_link ?? null;
+      } catch {
+        // ignore: account creation is best-effort
+      }
+    }
+
+    return new Response(JSON.stringify({
+      ok: true,
+      slug: effectiveSlug,
+      email,
+      magic_link: dashboardUrl,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (e: any) {
+    return new Response(JSON.stringify({ error: e.message || String(e) }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
