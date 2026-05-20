@@ -33,6 +33,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import InlineCheckoutNuclear from "@/components/pro-landing/InlineCheckoutNuclear";
+import ActivationOffer1Dollar from "@/components/pro-landing/ActivationOffer1Dollar";
 
 type Prospect = NonNullable<Awaited<ReturnType<typeof resolveProspect>>>;
 
@@ -443,6 +444,13 @@ export default function PageProLandingNuclearClose() {
         <section className="mt-6">
           <MissedLeadsChart missed={prospect.scores.missed} />
         </section>
+
+        {/* Activation Offer 1$ / 7 jours */}
+        <ActivationOffer1Dollar
+          slug={prospect.slug}
+          companyName={prospect.company_name}
+          onTrack={(e) => logProLandingCta(prospect.id, e).catch(() => {})}
+        />
 
         {/* Inline embedded Stripe checkout — same-session conversion */}
         <section className="mt-6">
