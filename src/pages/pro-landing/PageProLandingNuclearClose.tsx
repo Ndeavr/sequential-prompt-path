@@ -34,6 +34,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import InlineCheckoutNuclear from "@/components/pro-landing/InlineCheckoutNuclear";
 import ActivationOffer1Dollar from "@/components/pro-landing/ActivationOffer1Dollar";
+import {
+  OpportunitiesGrid,
+  TerritoryScarcityBlock,
+  SocialProofFloating,
+} from "@/components/pro-landing/PremiumV2Sections";
 
 type Prospect = NonNullable<Awaited<ReturnType<typeof resolveProspect>>>;
 
@@ -445,6 +450,22 @@ export default function PageProLandingNuclearClose() {
           <MissedLeadsChart missed={prospect.scores.missed} />
         </section>
 
+        {/* V2 — Concrete opportunities grid */}
+        <OpportunitiesGrid
+          city={prospect.city}
+          category={prospect.category}
+          missed={prospect.scores.missed}
+          companyName={prospect.company_name}
+        />
+
+        {/* V2 — Territory scarcity */}
+        <TerritoryScarcityBlock
+          city={prospect.city}
+          category={prospect.category}
+          missed={prospect.scores.missed}
+          companyName={prospect.company_name}
+        />
+
         {/* Activation Offer 1$ / 7 jours */}
         <ActivationOffer1Dollar
           slug={prospect.slug}
@@ -523,6 +544,9 @@ export default function PageProLandingNuclearClose() {
             </div>
           </Card>
         </section>
+
+        {/* V2 — Social proof */}
+        <SocialProofFloating />
 
         {/* Trust strip */}
         <section className="mt-10 grid grid-cols-2 gap-3 text-xs text-white/60 md:grid-cols-4">
