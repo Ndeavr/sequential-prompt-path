@@ -74,8 +74,9 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: auth } } },
     );
-    const { data: claims } = await supabaseAuth.auth.getClaims(auth.replace("Bearer ", ""));
-    if (!claims?.claims?.sub) {
+    const { data: userData, error: userErr } = await supabaseAuth.auth.getUser();
+    const userId = userData?.user?.id;
+    if (userErr || !userId) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
     }
 
@@ -85,7 +86,7 @@ Deno.serve(async (req) => {
     );
 
     // Admin check
-    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: claims.claims.sub, _role: "admin" });
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
     if (!isAdmin) {
       return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: corsHeaders });
     }
