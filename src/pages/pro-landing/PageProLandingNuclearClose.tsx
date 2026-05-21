@@ -34,6 +34,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import InlineCheckoutNuclear from "@/components/pro-landing/InlineCheckoutNuclear";
 import ActivationOffer1Dollar from "@/components/pro-landing/ActivationOffer1Dollar";
+import {
+  OpportunitiesGrid,
+  TerritoryScarcityBlock,
+  SocialProofFloating,
+} from "@/components/pro-landing/PremiumV2Sections";
 
 type Prospect = NonNullable<Awaited<ReturnType<typeof resolveProspect>>>;
 
