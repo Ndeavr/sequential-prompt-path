@@ -545,6 +545,9 @@ export default function PageProLandingNuclearClose() {
           </Card>
         </section>
 
+        {/* V2 — Social proof */}
+        <SocialProofFloating />
+
         {/* Trust strip */}
         <section className="mt-10 grid grid-cols-2 gap-3 text-xs text-white/60 md:grid-cols-4">
           <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
