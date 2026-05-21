@@ -450,6 +450,22 @@ export default function PageProLandingNuclearClose() {
           <MissedLeadsChart missed={prospect.scores.missed} />
         </section>
 
+        {/* V2 — Concrete opportunities grid */}
+        <OpportunitiesGrid
+          city={prospect.city}
+          category={prospect.category}
+          missed={prospect.scores.missed}
+          companyName={prospect.company_name}
+        />
+
+        {/* V2 — Territory scarcity */}
+        <TerritoryScarcityBlock
+          city={prospect.city}
+          category={prospect.category}
+          missed={prospect.scores.missed}
+          companyName={prospect.company_name}
+        />
+
         {/* Activation Offer 1$ / 7 jours */}
         <ActivationOffer1Dollar
           slug={prospect.slug}
