@@ -52,13 +52,14 @@ const AdminDashboard = () => {
   const { data: blockers = [] } = useBlockers("open");
   const { data: actions = [] } = useActionLogs();
 
-  if (sL) return <AdminLayout><LoadingState /></AdminLayout>;
-
-  const critical = blockers.filter(b => b.severity_level === "critical");
   const greeting = useMemo(() => {
     const h = new Date().getHours();
     return h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir";
   }, []);
+
+  if (sL) return <AdminLayout><LoadingState /></AdminLayout>;
+
+  const critical = blockers.filter(b => b.severity_level === "critical");
   const dateLabel = new Date().toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" });
 
   // To-do queue, ordered by urgency
