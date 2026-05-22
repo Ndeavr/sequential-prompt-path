@@ -81,7 +81,7 @@ const SmartHeader = () => {
         }}
       >
         <div className="mx-auto max-w-7xl px-1 sm:px-4 lg:px-6">
-          <div className="flex items-center justify-between h-14 sm:h-14 lg:h-16">
+          <div className="flex items-center justify-between h-16 sm:h-18 lg:h-20">
             {/* Back button */}
             {!isHome && (
               <Button
@@ -106,7 +106,7 @@ const SmartHeader = () => {
               <img
                 src={unproWordmarkChrome}
                 alt="UNPRO"
-                className={`${isHome ? "h-9 sm:h-10 lg:h-11" : "h-8 sm:h-9 lg:h-10"} w-auto transition-all duration-300 group-hover:scale-105`}
+                className={`${isHome ? "h-14 sm:h-16 lg:h-18" : "h-12 sm:h-14 lg:h-16"} w-auto transition-all duration-300 group-hover:scale-105`}
                 style={{
                   filter:
                     "drop-shadow(0 1px 2px hsl(220 50% 0% / 0.5)) drop-shadow(0 0 0 transparent)",
