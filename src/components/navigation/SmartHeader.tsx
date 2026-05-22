@@ -21,9 +21,7 @@ import SmartCTA from "@/components/cta/SmartCTA";
 import QRShareSheet from "@/components/sharing/QRShareSheet";
 import MenuQuickActionsContextual from "./MenuQuickActionsContextual";
 import DrawerNavigationMobileIntent from "./DrawerNavigationMobileIntent";
-import unproLogoWordmark from "@/assets/unpro-logo-wordmark.png";
-import unproLogoIcon from "@/assets/unpro-logo.png";
-import unproLogoHouse from "@/assets/unpro-logo-house.png";
+import unproWordmarkChrome from "@/assets/unpro-wordmark-chrome.png";
 import type { UserRole } from "@/types/navigation";
 
 const guestMegaKeys = [
@@ -73,10 +71,13 @@ const SmartHeader = () => {
       <header
         className="sticky top-0 z-50"
         style={{
-          background: "hsl(220 40% 6% / 0.82)",
-          backdropFilter: "blur(20px) saturate(1.6)",
-          WebkitBackdropFilter: "blur(20px) saturate(1.6)",
-          borderBottom: "1px solid hsl(0 0% 100% / 0.06)",
+          background:
+            "linear-gradient(180deg, hsl(220 45% 7% / 0.92) 0%, hsl(220 40% 5% / 0.85) 100%)",
+          backdropFilter: "blur(28px) saturate(1.8)",
+          WebkitBackdropFilter: "blur(28px) saturate(1.8)",
+          borderBottom: "1px solid transparent",
+          borderImage:
+            "linear-gradient(90deg, transparent, hsl(210 30% 60% / 0.22), transparent) 1",
         }}
       >
         <div className="mx-auto max-w-7xl px-1 sm:px-4 lg:px-6">
@@ -103,9 +104,21 @@ const SmartHeader = () => {
             {/* Zone 1 — Brand */}
             <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0" style={{ minWidth: "fit-content" }}>
               <img
-                src={isHome ? unproLogoWordmark : unproLogoHouse}
+                src={unproWordmarkChrome}
                 alt="UNPRO"
-                className={`${isHome ? "h-10 sm:h-11 lg:h-12" : "h-9 sm:h-10 lg:h-11"} w-auto transition-all duration-300 group-hover:scale-105`}
+                className={`${isHome ? "h-9 sm:h-10 lg:h-11" : "h-8 sm:h-9 lg:h-10"} w-auto transition-all duration-300 group-hover:scale-105`}
+                style={{
+                  filter:
+                    "drop-shadow(0 1px 2px hsl(220 50% 0% / 0.5)) drop-shadow(0 0 0 transparent)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.filter =
+                    "drop-shadow(0 1px 2px hsl(220 50% 0% / 0.5)) drop-shadow(0 0 18px hsl(217 91% 60% / 0.35))";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.filter =
+                    "drop-shadow(0 1px 2px hsl(220 50% 0% / 0.5)) drop-shadow(0 0 0 transparent)";
+                }}
                 draggable={false}
               />
             </Link>
