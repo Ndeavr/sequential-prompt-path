@@ -2,7 +2,7 @@
  * UNPRO — Primary Logo (Quebec fleur-de-lys + UNPRO wordmark)
  * Renders the master PNG lockup. `showWordmark={false}` falls back to the icon-only fleur.
  */
-import unproMaster from "@/assets/unpro-logo-master-transparent.png";
+import unproMaster from "@/assets/unpro-wordmark-chrome.png";
 import unproFleur from "@/assets/unpro-icon-fleur.png";
 
 type UnproLogoProps = {
@@ -45,8 +45,8 @@ export default function UnproLogo({
     );
   }
 
-  // Master lockup aspect: 1672 x 941 ≈ 1.776
-  const height = Math.round(size / 1.776);
+  // Chrome wordmark aspect ≈ 1500 x 1000 ≈ 1.5
+  const height = Math.round(size / 1.5);
   return (
     <img
       src={unproMaster}

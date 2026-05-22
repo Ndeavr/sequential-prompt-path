@@ -1,112 +1,62 @@
-## Contexte
+# Refonte identité visuelle — Logo, Header, Footer
 
-Vous avez déjà :
-- `/pro/:slug` (PageProLandingNuclearClose) avec voix Alex, scores AIPP, CTAs
-- SMS pipeline outbound (Twilio, Live Runs admin)
-- Stripe checkout pour plans entrepreneurs
-- Tables `outbound_*`, `aipp_*`, contractor onboarding
+## 1. Nouvelles assets
 
-Ce qui manque pour livrer 100 % du brief :
-1. **Short links propres** `go.unpro.ca/{slug}` et `unpro.ca/go/{slug}` (avec tracking clic)
-2. **SMS A/B variants** (A, B, C) selon les copies exactes du brief
-3. **Offre 1$ / 7 jours** (Stripe coupon + trial) avec activation auto post-paiement
-4. **Landing premium** rafraîchie : Hero + Score + Opportunities + Reviews + Territory Map + Activation
-5. **Alex auto-greeting** contextualisé entreprise post-activation
-6. **Tracking** (delivered, click, scroll, activation, churn)
+- Copier l'upload chromé → `src/assets/unpro-wordmark-chrome.png` (lockup horizontal premium, métal brossé + arc bleu sur le 'O').
+- Générer un favicon carré dérivé (le 'O' chromé + arc bleu, isolé sur fond transparent, premium 3D) → `public/favicon-chrome-512.png` + `public/favicon-chrome-192.png` + `public/favicon-chrome-32.png` + nouveau `public/unpro-favicon.svg` (version vectorielle du 'O' arc bleu).
+- Garder `unpro-icon-fleur.png` pour avatars internes (fleur-de-lys signature québécoise).
 
-## Phase 1 — Ce que je construis maintenant (1 prompt = 1 module)
+## 2. Swap wordmark partout
 
-### A. Base de données
+Remplacer toutes les références `unpro-logo-wordmark.png`, `unpro-logo-house.png`, `unpro-logo.png` → nouveau `unpro-wordmark-chrome.png` dans :
+- `src/components/navigation/SmartHeader.tsx` (lignes 24-26, 106) — un seul lockup chromé (home et pages internes).
+- `src/components/navigation/SmartFooter.tsx` (lignes 10-11, 35) — wordmark unique.
+- Mettre à jour le composant central `src/components/brand/UnproLogo.tsx` pour pointer sur la nouvelle asset (master lockup) — propagation automatique aux ~30 fichiers qui l'utilisent (auth, Alex, onboarding, contractor funnel, etc.).
+- `UnproIcon.tsx` reste sur fleur-de-lys (avatars / contextes carrés internes).
 
-Migration unique :
-- `prospect_pages` (id, company_name, slug, city, service, visibility_score, ai_score, google_score, opportunities jsonb, google_reviews jsonb, territory_data jsonb, short_link, stripe_customer_id, activated, created_at)
-- `sms_campaigns` (id, company_name, phone, sms_variant ['A'|'B'|'C'], sent_at, clicked_at, activated_at, conversion_status, short_link)
-- `short_links` (slug PK, target_path, prospect_page_id, click_count, last_clicked_at)
-- `short_link_clicks` (id, slug, ts, user_agent, ip_hash, referrer)
-- RLS : admin only en écriture, lecture publique sur `prospect_pages` par slug + `short_links` par slug
+## 3. Favicon + meta
 
-### B. Routes courtes
+`index.html` lignes 8-12 :
+- `/favicon-32.png` → `/favicon-chrome-32.png`
+- `/favicon-64.png` → `/favicon-chrome-64.png`
+- `/unpro-favicon.svg` → nouvelle version 'O' chromé
+- `/icon-192.png` + `/icon-512.png` → versions dérivées chrome
+- Conserver `theme-color` cohérent (#060B14 dark).
 
-Edge function `short-link-resolve` :
-- Accepte `/go/:slug` (côté Vite redirect + côté edge pour `go.unpro.ca`)
-- Incrémente click_count, log dans `short_link_clicks`
-- 302 vers `/pro/:slug` (la page nuclear close existante)
+## 4. Header plus premium
 
-Route React `/go/:slug` qui appelle l'edge function puis redirige.
+`SmartHeader.tsx` :
+- Background : passer de `hsl(220 40% 6% / 0.82)` → gradient steel subtil :
+  ```text
+  linear-gradient(180deg, hsl(220 45% 7% / 0.92) 0%, hsl(220 40% 5% / 0.85) 100%)
+  ```
+- Border-bottom : `1px` chromé linéaire `linear-gradient(90deg, transparent, hsl(210 30% 60% / 0.18), transparent)`.
+- Backdrop blur monter à `blur(28px) saturate(1.8)`.
+- Logo : hover ajoute un glow bleu UNPRO subtil (`drop-shadow(0 0 18px hsl(217 91% 60% / 0.35))`).
+- Hauteur conservée (h-14 / h-16). Aucune logique modifiée (back button, mega menu, Alex orb, QR, profile menu, mobile drawer intacts).
 
-### C. SMS A/B engine
+## 5. Footer plus premium
 
-Edge function `sms-prospect-send` :
-- Input: `{ prospect_page_id, variant: 'A'|'B'|'C' | 'auto' }`
-- Si `auto` : round-robin pondéré sur les 3 variants
-- Build SMS exact selon les 3 templates du brief (company_name, service, city, short_link)
-- Envoie via connector Twilio existant
-- Insère dans `sms_campaigns` avec `sent_at`
+`SmartFooter.tsx` :
+- Background : remplacer plain `hsl(220 40% 4% / 0.8)` par gradient + texture leather :
+  ```text
+  radial-gradient(ellipse 60% 40% at 50% 0%, hsl(217 91% 60% / 0.04), transparent 60%),
+  linear-gradient(180deg, hsl(220 40% 5%) 0%, hsl(220 45% 3%) 100%)
+  ```
+- Bloc Brand : wordmark chromé `h-12`, sous-titre raffiné, micro-badge `Concierge IA · Québec` avec fleur-de-lys ⚜️ en accent.
+- Divider du milieu : remplacé par un trait chromé `via-primary/20` au lieu de `via-border/30`.
+- Bottom bar : ajout d'un signature lockup compact (icône fleur + © UNPRO {year} · Fait au Québec ⚜️), social links gardés mais hover bleu UNPRO au lieu de gris.
+- Sections dynamiques (config-driven) inchangées.
 
-Admin bouton « Envoyer SMS prospect » dans `/admin/live-runs` (déjà partiellement présent — étendre pour choisir variant + créer prospect_page si manquant).
+## 6. Hors scope
 
-### D. Offre 1$ / 7 jours
-
-- Créer un nouveau Stripe product « UNPRO Activation 7 jours » à 100¢ CAD (one-time)
-- Nouveau plan slug `activation_7d` dans `contractorPlans.ts` séparé des plans récurrents
-- Edge function `create-activation-checkout` : crée Stripe Checkout session one-time, success_url = `/activation-success?session_id={CHECKOUT_SESSION_ID}&slug={slug}`
-- Edge function `activation-confirm` : appelée par la page success, vérifie le payment, marque `prospect_pages.activated = true`, crée le compte auth si absent (magic link envoyé), retourne URL dashboard
-- Pas de webhook (per knowledge rule)
-
-### E. Landing premium `/pro/:slug` (refactor)
-
-Composants nouveaux à créer sous `src/components/pro-landing-v2/` :
-- `HeroPremium` : logo, nom, ville, métier, score global, badge « Analyse locale prête »
-- `VisibilityScoreModule` : 4 barres animées (Google, ChatGPT IA, Reviews Trust, Territory)
-- `OpportunitiesGrid` : cartes (volume, difficulté, visibilité, potentiel)
-- `GoogleReviewsBlock` : note + nombre + top 3 avis
-- `TerritoryMapDynamic` : carte Leaflet ou SVG simplifiée avec glow bleu UNPRO
-- `ActivationBlock` : 1$/7j en hero, puis cards Pro/Premium/Elite, CTA Stripe natif
-- `AlexGreetingAuto` : déjà existant, juste ajuster le script post-activation
-
-Intégrer dans `PageProLandingNuclearClose.tsx` derrière un flag (V2) pour pouvoir basculer sans casser le V1.
-
-### F. Tracking
-
-- `prospect_page_events` (id, slug, event_type ['view','scroll_25','scroll_75','cta_click','checkout_started','activated'], ts, metadata)
-- Hook `useProspectTracking(slug)` injecté dans la landing
-
-### G. Branding strict
-
-- Sanitizer global : reject any text containing `lovableproject.com`, UUIDs, « AI generated », « Internal project »
-- Tous les liens affichés à l'utilisateur passent par `formatShortLink()` → toujours `go.unpro.ca/...` ou `unpro.ca/go/...`
+- Pas de changement de structure de navigation, pas de nouveaux liens, pas de logique métier.
+- Aucun toucher aux composants Alex, voice, auth, pricing.
+- Pas de migration DB.
 
 ## Détails techniques
 
-**Domain routing** : `go.unpro.ca` pointe sur la même app (configuré via DNS/Cloud), une route `/` sur ce host = redirect vers `/go/:slug` ne s'applique pas — on utilise `/go/:slug` côté unpro.ca et un middleware côté edge function pour `go.unpro.ca/:slug` (host check).
-
-**Stripe** : utiliser `create_stripe_product_and_price` tool pour créer le product 1$ une fois. Stocker price ID dans `contractorPlans.ts`.
-
-**Alex post-activation** : `useNuclearCloseFemaleVoice` déjà en place, juste switch script via état `activated`.
-
-**Pas de scope dans Phase 1** :
-- Territory map dynamique avancée → version simplifiée (SVG + dots) en P1, Leaflet en P2
-- Import automatique Google Reviews → mock + champ manuel admin en P1, API Places en P2
-- Webhooks Stripe → exclu par règle (polling via activation-confirm)
-
-## Succès
-
-- Admin peut créer un `prospect_page` depuis `/admin/live-runs`, choisir variant A/B/C, envoyer SMS
-- Prospect reçoit SMS conforme à la copie exacte du brief avec lien `go.unpro.ca/...`
-- Clic = page premium chargée < 2s mobile, score visible immédiatement
-- Bouton « Activer 1$ / 7 jours » → Stripe checkout → retour app → compte créé → Alex parle
-- Tous les events trackés dans `prospect_page_events` + `sms_campaigns`
-- Zéro fuite lovableproject.com / UUID dans l'UI
-
-## Tâches d'exécution
-
-1. Migration SQL (prospect_pages, sms_campaigns, short_links, short_link_clicks, prospect_page_events + RLS)
-2. Créer Stripe product 1$/7j
-3. Edge functions : `short-link-resolve`, `sms-prospect-send`, `create-activation-checkout`, `activation-confirm`
-4. Route React `/go/:slug`
-5. Composants V2 landing (6 composants)
-6. Refactor `PageProLandingNuclearClose` avec flag V2
-7. Admin UI : créer prospect + envoyer SMS variant dans Live Runs
-8. Hook tracking + sanitizer branding
-
-Voulez-vous que je lance Phase 1 immédiatement, ou préférez-vous découper en sous-phases (DB+SMS d'abord, puis landing V2, puis activation 1$) ?
+- L'upload sera copié via `code--copy user-uploads://file_0000000049b0720c9480f28e0e53b974.png src/assets/unpro-wordmark-chrome.png`.
+- Le favicon dérivé sera généré via `imagegen--edit_image` à partir de l'upload : prompt = "isolate just the chrome 'O' letter with the blue arc, on solid white background, premium 3D, perfectly centered" puis `transparent_background=true`. Sortie : `public/favicon-chrome-512.png` (1024×1024), recopiée/resized en 192 et 32 via ImageMagick (`nix run nixpkgs#imagemagick`).
+- Toutes les références aux 3 anciennes assets wordmark (`unpro-logo-wordmark.png`, `unpro-logo-house.png`, `unpro-logo.png`) seront remplacées par un import unique `unpro-wordmark-chrome.png` (le fichier `UnproLogo.tsx` reste l'API canonique pour propager à tous les écrans).
+- Pas de changement aux semantic tokens HSL existants — uniquement composition de gradients dans les surfaces header/footer.

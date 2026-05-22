@@ -1,10 +1,17 @@
 <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="fleurGrad" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F5F7FA"/>
+      <stop offset="50%" stop-color="#B8BEC7"/>
+      <stop offset="100%" stop-color="#6B7280"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#60A5FA"/>
-      <stop offset="55%" stop-color="#2563EB"/>
       <stop offset="100%" stop-color="#1D4ED8"/>
     </linearGradient>
   </defs>
-  <path fill="url(#fleurGrad)" d="M32 4c-2 6-2 11 0 16-4-2-8-1-9 3-1 4 2 7 6 7-3 1-5 3-5 6 0 4 4 6 8 6v6h-4v3h4v3h-2v3h6v-3h-2v-3h4v-3h-4v-6c4 0 8-2 8-6 0-3-2-5-5-6 4 0 7-3 6-7-1-4-5-5-9-3 2-5 2-10 0-16z"/>
+  <g transform="translate(32 32)">
+    <circle r="24" fill="none" stroke="url(#chrome)" stroke-width="9"/>
+    <path d="M 0 -24 A 24 24 0 0 1 24 0" fill="none" stroke="url(#blue)" stroke-width="9" stroke-linecap="butt"/>
+  </g>
 </svg>
