@@ -120,8 +120,18 @@ export default function OverlayAlexVoiceFullScreen() {
     const s = getStore();
     if (!s.isOverlayOpen) return;
     if (hasGreeted()) {
-      console.warn("[VoiceOverlay] Greeting already delivered — no replay", reason);
-      s.setError(reason, "Je continue ici avec vous.", true);
+      // Greeting already delivered this tab session — no replay, no red banner.
+      // Just settle into a calm listening state so the user can speak.
+      console.warn("[VoiceOverlay] Greeting already delivered — settling to listening", reason);
+      firstAudioReceivedRef.current = true;
+      hasConnectedRef.current = true;
+      const allowedFrom = ["stabilizing", "opening_session", "session_ready", "awaiting_user", "speaking", "capturing_voice", "error_recoverable"];
+      if (allowedFrom.includes(s.machineState)) {
+        if (s.machineState === "stabilizing" || s.machineState === "opening_session") {
+          s.transitionTo("session_ready", `${reason}_settle`);
+        }
+        s.transitionTo("listening", `${reason}_settle_listening`);
+      }
       return;
     }
     if (ttsFallbackInProgressRef.current) {
