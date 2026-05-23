@@ -32,7 +32,7 @@ export default function OrbAlexPrimaryEntry({
       className={cn("relative flex items-center justify-center group", className)}
       aria-label="Parler à Alex"
     >
-      {/* Halo ring — slow spin */}
+      {/* Halo ring — very slow spin */}
       <motion.div
         className="absolute rounded-full"
         style={{
@@ -42,7 +42,7 @@ export default function OrbAlexPrimaryEntry({
             "conic-gradient(from 0deg, hsl(222 100% 61% / 0.08), hsl(195 100% 50% / 0.12), hsl(252 100% 65% / 0.08), hsl(222 100% 61% / 0.08))",
         }}
         animate={{ rotate: 360 }}
-        transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+        transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
       />
 
       {/* Breathing glow */}
@@ -53,11 +53,11 @@ export default function OrbAlexPrimaryEntry({
           height: "130%",
           background: "radial-gradient(circle, hsl(222 100% 61% / 0.15) 0%, transparent 70%)",
         }}
-        animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.9, 0.4] }}
-        transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+        animate={{ scale: [1, 1.12, 1], opacity: [0.4, 0.85, 0.4] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      {/* Main orb */}
+      {/* Main orb — slow breathing */}
       <motion.div
         className={cn(
           "relative rounded-full flex items-center justify-center overflow-hidden cursor-pointer",
@@ -68,13 +68,13 @@ export default function OrbAlexPrimaryEntry({
           boxShadow:
             "0 8px 32px -4px hsl(222 100% 61% / 0.35), 0 0 20px -4px hsl(195 100% 50% / 0.2), inset 0 1px 1px hsl(0 0% 100% / 0.2)",
         }}
-        animate={{ scale: [1, 1.04, 1] }}
-        transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+        animate={{ scale: [1, 1.03, 1] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
         whileHover={{
-          scale: 1.1,
+          scale: 1.04,
           boxShadow: "0 12px 48px -4px hsl(222 100% 61% / 0.5), 0 0 32px -4px hsl(195 100% 50% / 0.3)",
         }}
-        whileTap={{ scale: 0.95 }}
+        whileTap={{ scale: 0.97 }}
       >
         {/* Internal shine */}
         <motion.div
