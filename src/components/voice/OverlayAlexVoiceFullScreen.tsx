@@ -479,6 +479,8 @@ export default function OverlayAlexVoiceFullScreen() {
         const greeting = shouldGreet ? buildGreetingRef.current() : "";
         console.log("[ALEX VOICE] Starting session, greeting:", greeting || "(silent — already greeted)");
         if (greeting) {
+          // 1200ms warmup: if WebRTC hasn't delivered audio by then, speak the
+          // greeting via TTS so the user always hears Alex within ~3s of tap.
           ttsWarmupTimerRef.current = setTimeout(() => {
             const current = getStore();
             if (!firstAudioReceivedRef.current && current.isOverlayOpen &&
@@ -486,7 +488,7 @@ export default function OverlayAlexVoiceFullScreen() {
               console.warn("[ALEX VOICE] Live voice slow — speaking TTS fallback immediately");
               playTtsFallbackGreeting("live_slow_warmup");
             }
-          }, 1800);
+          }, 1200);
         }
         await startRef.current({ initialGreeting: greeting, mode: deriveMode(getStore().feature), firstName });
 
