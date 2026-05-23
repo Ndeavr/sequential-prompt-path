@@ -164,6 +164,46 @@ for (const f of protectedFiles) {
   else fail(`missing PROTECTED FILE header on ${f}`);
 }
 
+// ----- 6. Forbidden patterns (no browser TTS, no SCO, no alternate voice) -----
+import { readdirSync, statSync } from "node:fs";
+function walkSrc(dir, files = []) {
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry);
+    const s = statSync(full);
+    if (s.isDirectory()) walkSrc(full, files);
+    else if (/\.(ts|tsx|js|jsx)$/.test(entry)) files.push(full);
+  }
+  return files;
+}
+const FORBIDDEN = [
+  { pattern: /window\.speechSynthesis|new SpeechSynthesisUtterance/, label: "browser speechSynthesis (forbidden — female ElevenLabs only)" },
+  { pattern: /startBluetoothSco|MODE_IN_COMMUNICATION|VOICE_COMMUNICATION/, label: "Bluetooth SCO / call audio mode (forbidden)" },
+  { pattern: /mediaSession\s*\.\s*setActionHandler/, label: "navigator.mediaSession.setActionHandler (forbidden — Bluetooth transport hijack)" },
+];
+// Allow-list: alexVoiceAbstraction.ts contains comments referencing speechSynthesis to document the lock.
+const FORBIDDEN_ALLOW = new Set([
+  "src/services/alexVoiceAbstraction.ts",
+  "src/config/alexVoiceConfig.ts",
+]);
+try {
+  const files = walkSrc("src");
+  let forbiddenHits = 0;
+  for (const f of files) {
+    const rel = f.replace(/\\/g, "/");
+    if (FORBIDDEN_ALLOW.has(rel)) continue;
+    const content = readFileSync(f, "utf8");
+    for (const { pattern, label } of FORBIDDEN) {
+      if (pattern.test(content)) {
+        fail(`forbidden pattern in ${rel}: ${label}`);
+        forbiddenHits++;
+      }
+    }
+  }
+  if (!forbiddenHits) ok("no forbidden audio patterns (speechSynthesis / SCO / mediaSession handlers)");
+} catch (e) {
+  warn(`forbidden-pattern scan: ${e.message ?? e}`);
+}
+
 if (failed) {
   console.error("\n[VOICE GUARD] DEPLOY BLOCKED — fix the above before shipping.\n");
   process.exit(1);
