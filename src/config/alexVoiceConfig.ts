@@ -66,19 +66,19 @@ const BASE_TUNING = {
 
 const HOMEOWNER: AlexVoiceTuning = {
   ...BASE_TUNING,
-  firstMessage: "Bonjour. Je suis Alex d'Un Pro. Quel problème puis-je vous aider à régler aujourd'hui?",
+  firstMessage: "Bonjour. Je vous écoute.",
 };
 
 const CONTRACTOR: AlexVoiceTuning = {
   ...BASE_TUNING,
-  firstMessage: "Bonjour. Je suis Alex d'Un Pro. Voyons ensemble comment faire évoluer votre entreprise.",
+  firstMessage: "Bonjour. Je vous écoute.",
   promptAddendum:
     "Tu es conseillère stratégique calme et posée pour entrepreneurs. Confiance professionnelle, chaleur subtile. Jamais excitée, jamais bubbly, jamais théâtrale. Pose une seule question à la fois et avance vers la valeur.",
 };
 
 const CONDO: AlexVoiceTuning = {
   ...HOMEOWNER,
-  firstMessage: "Bonjour. Je suis Alex d'Un Pro. Décrivez la situation dans votre immeuble.",
+  firstMessage: "Bonjour. Je vous écoute.",
 };
 
 export function getVoiceConfigFor(mode: AlexVoiceMode = "general"): AlexVoiceTuning {
