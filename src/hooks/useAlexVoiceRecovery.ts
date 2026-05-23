@@ -178,10 +178,16 @@ export function useAlexVoiceRecovery() {
       console.log('[VoiceRecovery] Phase 4: Starting greeting test...');
 
       const greeting = buildGreetingFn();
-      await startFn({ initialGreeting: greeting });
-
-      // If we get here without error, start was successful
-      // The onFirstAudio callback in the overlay will handle the rest
+      // 3s hard fail-safe so the "Connexion d'Alex…" label never sticks.
+      await Promise.race([
+        startFn({ initialGreeting: greeting }),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error('greeting_test_timeout')),
+            GREETING_TEST_TIMEOUT_MS,
+          ),
+        ),
+      ]);
 
       // ─── RECOVERED ───
       setPhase('recovered');
