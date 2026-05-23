@@ -13,8 +13,8 @@ import { logBoot, withTimeout } from "@/lib/bootDebug";
 import { ALEX_VOICE_BASE } from "@/config/alexVoiceConfig";
 
 const RECONNECT_COOLDOWN_MS = 5000;
-const CONNECTION_TIMEOUT_MS = 12_000;
-const TOKEN_TIMEOUT_MS = 12_000;
+const CONNECTION_TIMEOUT_MS = 6_000; // 6s SDK connect cap — bail before user perception breaks
+const TOKEN_TIMEOUT_MS = 8_000;
 const MAX_TOKEN_RETRIES = 0; // Strictly event-driven — no silent reconnects.
 const RETRY_BACKOFF_MS = 1500;
 
