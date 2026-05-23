@@ -12,9 +12,9 @@ const EASE_SPRING: Transition["ease"] = [0.16, 1, 0.3, 1];
 /* ─── Reusable transitions ─── */
 export const transitions = {
   fast: { duration: 0.2, ease: EASE_PREMIUM } as Transition,
-  default: { duration: 0.4, ease: EASE_PREMIUM } as Transition,
-  smooth: { duration: 0.5, ease: EASE_SPRING } as Transition,
-  slow: { duration: 0.6, ease: EASE_SPRING } as Transition,
+  default: { duration: 0.42, ease: EASE_PREMIUM } as Transition,
+  smooth: { duration: 0.5, ease: EASE_PREMIUM } as Transition,
+  slow: { duration: 0.6, ease: EASE_PREMIUM } as Transition,
   /** Stagger children by 80ms */
   stagger: (stagger = 0.08) =>
     ({ staggerChildren: stagger, delayChildren: 0.05 }) as Transition,
@@ -72,7 +72,7 @@ export const staggerContainerCustom = (stagger = 0.08): Variants => ({
 
 /* ─── Interaction helpers (inline props, not variants) ─── */
 export const press = { whileTap: { scale: 0.97 } } as const;
-export const hover = { whileHover: { scale: 1.02 } } as const;
+export const hover = { whileHover: { y: -2 } } as const;
 export const hoverLift = {
   whileHover: { y: -2, transition: transitions.fast },
 } as const;

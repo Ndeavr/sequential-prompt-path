@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,8 +6,19 @@
 
 @layer base {
   :root {
-    --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
-    --font-display: 'Space Grotesk', 'Manrope', system-ui, sans-serif;
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-display: 'Inter', system-ui, -apple-system, sans-serif;
+
+    /* ─── Cinematic motion contract (Searchable-grade) ─── */
+    --ease-cinematic: cubic-bezier(0.22, 1, 0.36, 1);
+    --duration-cinematic: 420ms;
+    --duration-reveal: 600ms;
+
+    /* ─── Strict radius system ─── */
+    --radius-card: 28px;
+    --radius-button: 18px;
+    --radius-pill: 999px;
+    --radius-input: 14px;
 
     /* ─── UNPRO Dark Sharp Palette ─── */
     --primary: 222 100% 60%;
@@ -17,7 +28,7 @@
     --accent: 195 100% 52%;
     --accent-foreground: 0 0% 100%;
 
-    --background: 222 55% 4%;
+    --background: 226 63% 5%;
     --foreground: 216 30% 95%;
 
     --card: 222 40% 7%;
@@ -54,11 +65,11 @@
     --shadow-metal: 0 1px 0 0 hsl(0 0% 100% / 0.04), 0 -1px 0 0 hsl(222 50% 2% / 0.6);
 
     /* ─── Glass — dark, controlled, never milky ─── */
-    --glass-bg: hsl(220 35% 8% / 0.62);
+    --glass-bg: hsl(0 0% 100% / 0.04);
     --glass-border: hsl(0 0% 100% / 0.06);
-    --glass-highlight: linear-gradient(135deg, hsl(0 0% 100% / 0.04) 0%, transparent 50%);
-    --glass-blur: 14px;
-    --glass-metal-bg: linear-gradient(135deg, hsl(222 30% 10% / 0.65), hsl(222 35% 7% / 0.55));
+    --glass-highlight: linear-gradient(180deg, hsl(0 0% 100% / 0.05) 0%, transparent 40%);
+    --glass-blur: 24px;
+    --glass-metal-bg: linear-gradient(135deg, hsl(0 0% 100% / 0.05), hsl(0 0% 100% / 0.02));
     --glass-metal-border: hsl(0 0% 100% / 0.07);
     --glass-metal-shine: linear-gradient(135deg, hsl(0 0% 100% / 0.04) 0%, transparent 50%, hsl(0 0% 100% / 0.02) 100%);
 
@@ -95,8 +106,12 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
-    @apply tracking-tight font-semibold;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
   }
+  h1 { letter-spacing: -0.04em; line-height: 0.98; }
+  p { letter-spacing: -0.005em; }
 
   ::-webkit-scrollbar {
     width: 5px;
@@ -200,15 +215,19 @@
   /* --- Base glass card — semi-transparent with directional highlight --- */
   .glass-card {
     background: var(--glass-bg);
-    backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+    backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
     border: 1px solid var(--glass-border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-inner-glow), var(--shadow-sm);
+    border-radius: var(--radius-card);
+    box-shadow:
+      0 4px 30px hsl(0 0% 0% / 0.35),
+      inset 0 1px 0 hsl(0 0% 100% / 0.05);
     position: relative;
-    transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+    transition: box-shadow var(--duration-cinematic) var(--ease-cinematic),
+                transform var(--duration-cinematic) var(--ease-cinematic),
+                border-color var(--duration-cinematic) var(--ease-cinematic);
   }
-  /* Directional highlight — top-left specular */
+  /* Directional top highlight */
   .glass-card::before {
     content: '';
     position: absolute;
@@ -220,27 +239,33 @@
   }
   .glass-card > * { position: relative; z-index: 1; }
   .glass-card:hover {
-    box-shadow: var(--shadow-inner-glow), var(--shadow-md), 0 0 20px -6px hsl(222 100% 65% / 0.12);
-    border-color: hsl(222 100% 65% / 0.15);
+    box-shadow:
+      0 8px 40px hsl(0 0% 0% / 0.45),
+      inset 0 1px 0 hsl(0 0% 100% / 0.07);
+    border-color: hsl(0 0% 100% / 0.10);
   }
 
   .glass-surface {
     background: var(--glass-bg);
-    backdrop-filter: blur(28px) saturate(1.8);
-    -webkit-backdrop-filter: blur(28px) saturate(1.8);
+    backdrop-filter: blur(28px) saturate(1.4);
+    -webkit-backdrop-filter: blur(28px) saturate(1.4);
     border: 1px solid var(--glass-border);
   }
 
   /* --- Elevated glass card — deeper shadow, hover lift --- */
   .glass-card-elevated {
     background: var(--glass-bg);
-    backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+    backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
     border: 1px solid var(--glass-border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-inner-glow), var(--shadow-md);
+    border-radius: var(--radius-card);
+    box-shadow:
+      0 8px 40px hsl(0 0% 0% / 0.4),
+      inset 0 1px 0 hsl(0 0% 100% / 0.05);
     position: relative;
-    transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease;
+    transition: box-shadow var(--duration-cinematic) var(--ease-cinematic),
+                transform var(--duration-cinematic) var(--ease-cinematic),
+                border-color var(--duration-cinematic) var(--ease-cinematic);
   }
   .glass-card-elevated::before {
     content: '';
@@ -253,8 +278,10 @@
   }
   .glass-card-elevated > * { position: relative; z-index: 1; }
   .glass-card-elevated:hover {
-    box-shadow: var(--shadow-inner-glow), var(--shadow-lg), var(--shadow-glow);
-    border-color: hsl(222 100% 65% / 0.18);
+    box-shadow:
+      0 16px 60px hsl(0 0% 0% / 0.5),
+      inset 0 1px 0 hsl(0 0% 100% / 0.07);
+    border-color: hsl(0 0% 100% / 0.12);
     transform: translateY(-2px);
   }
 

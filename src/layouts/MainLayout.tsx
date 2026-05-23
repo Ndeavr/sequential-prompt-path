@@ -41,16 +41,24 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-x-hidden">
-      <div className="fixed inset-0 -z-10 noise-overlay leather-texture">
+      {/* Cinematic 4-layer background — fixed, never repaints on route change */}
+      <div className="fixed inset-0 -z-10 noise-overlay">
+        {/* Layer 1: base */}
+        <div className="absolute inset-0" style={{ background: "#050816" }} />
+        {/* Layer 2: blue glow top-left */}
         <div
           className="absolute inset-0"
           style={{
-            background: `
-              radial-gradient(ellipse 80% 60% at 15% 20%, hsl(222 100% 65% / 0.07), transparent 50%),
-              radial-gradient(ellipse 70% 50% at 85% 80%, hsl(195 100% 55% / 0.05), transparent 50%),
-              radial-gradient(ellipse 60% 40% at 50% 50%, hsl(252 100% 72% / 0.03), transparent 50%),
-              #060B14
-            `,
+            background:
+              "radial-gradient(circle at top left, rgba(0,132,255,0.22), transparent 40%)",
+          }}
+        />
+        {/* Layer 3: cyan glow bottom-right */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(circle at bottom right, rgba(0,255,255,0.10), transparent 45%)",
           }}
         />
       </div>
