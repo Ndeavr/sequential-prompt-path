@@ -102,11 +102,11 @@ const SmartHeader = () => {
             )}
 
             {/* Zone 1 — Brand */}
-            <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0" style={{ minWidth: "fit-content" }}>
+            <Link to={logoTo} className="flex items-center shrink-0 group p-0 m-0 -ml-1 sm:ml-0" style={{ minWidth: "fit-content" }}>
               <img
                 src={unproWordmarkChrome}
                 alt="UNPRO"
-                className={`${isHome ? "h-7 sm:h-8 lg:h-9" : "h-6 sm:h-7 lg:h-8"} w-auto transition-all duration-300 group-hover:scale-105`}
+                className={`${isHome ? "h-14 sm:h-16 lg:h-20" : "h-12 sm:h-14 lg:h-16"} w-auto -my-3 transition-all duration-300 group-hover:scale-105`}
                 style={{
                   filter:
                     "drop-shadow(0 1px 2px hsl(220 50% 0% / 0.5)) drop-shadow(0 0 0 transparent)",
