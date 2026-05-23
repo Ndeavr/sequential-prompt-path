@@ -10,15 +10,32 @@
  */
 export type AlexVoiceMode = "homeowner" | "contractor" | "condo_manager" | "general";
 
+// ─── ALEX FEMALE-ONLY VOICE LOCK ───────────────────────────────────────────
+// Single source of truth. Every TTS surface MUST read these constants.
+// No male fallback. No browser speechSynthesis. No alternate voice.
+export const ALEX_VOICE_MODE = "female_only" as const;
+export const ALEX_TTS_PROVIDER = "elevenlabs" as const;
+export const ALEX_VOICE_ID = "YxrwjAKoUKULGd0g8K9Y" as const; // Sophia — premium female concierge
+export const ALEX_DISABLE_BROWSER_TTS = true as const;
+export const ALEX_DISABLE_MALE_FALLBACK = true as const;
+
+export function getAlexFemaleVoiceId(): string {
+  return ALEX_VOICE_ID;
+}
+
 export const ALEX_VOICE_BASE = {
-  voiceId: "YxrwjAKoUKULGd0g8K9Y", // Sophia — premium concierge (active)
+  voiceId: ALEX_VOICE_ID, // Sophia — premium concierge (active)
   modelId: "eleven_multilingual_v2",
   outputFormat: "mp3_44100_128",
 } as const;
 
-/** Backup voice used by fallback logic if the primary voice fails. */
+/**
+ * Backup voice used by retry logic if the primary voice fails.
+ * Locked to the SAME Sophia voice — we never fall back to a different voice
+ * (no male, no alternate female). Only the TTS request is retried.
+ */
 export const ALEX_VOICE_BACKUP = {
-  voiceId: "XB0fDUnXU5powFXDhCwa", // Charlotte — premium female fallback
+  voiceId: ALEX_VOICE_ID,
   modelId: "eleven_multilingual_v2",
   outputFormat: "mp3_44100_128",
 } as const;
