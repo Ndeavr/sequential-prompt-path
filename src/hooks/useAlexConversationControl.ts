@@ -74,29 +74,19 @@ export function useAlexConversationControl(config: ConversationControlConfig = {
 
   const startSilenceTimer = useCallback(() => {
     clearTimers();
-    // Timer for first silence threshold
+    // ALEX FEMALE-ONLY: a single calm reminder, then passive listening forever.
+    // No second nag, no auto-close — Alex never says "êtes-vous encore là?".
     timerRef.current = setTimeout(() => {
-      setSilenceCount(prev => {
+      setSilenceCount((prev) => {
         const next = prev + 1;
         if (next === 1) {
           updateStatus("idle");
           onReminder1?.();
-          // Set timer for 2nd threshold
-          timerRef.current = setTimeout(() => {
-            setSilenceCount(2);
-            onReminder2?.();
-            updateStatus("closing");
-            // Auto-close after delay
-            closeTimerRef.current = setTimeout(() => {
-              updateStatus("closed");
-              onAutoClose?.();
-            }, autoCloseDelayMs);
-          }, silenceThreshold2Ms - silenceThreshold1Ms);
         }
         return next;
       });
     }, silenceThreshold1Ms);
-  }, [silenceThreshold1Ms, silenceThreshold2Ms, autoCloseDelayMs, onReminder1, onReminder2, onAutoClose]);
+  }, [silenceThreshold1Ms, onReminder1]);
 
   /** Start monitoring */
   const startSession = useCallback(() => {
