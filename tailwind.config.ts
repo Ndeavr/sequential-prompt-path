@@ -17,8 +17,8 @@ export default {
         "xs": "375px",
       },
       fontFamily: {
-        sans: ["Manrope", "system-ui", "-apple-system", "sans-serif"],
-        display: ["Space Grotesk", "Manrope", "system-ui", "sans-serif"],
+        sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
+        display: ["Inter", "system-ui", "-apple-system", "sans-serif"],
       },
       fontSize: {
         "display": ["3.75rem", { lineHeight: "1.02", fontWeight: "700", letterSpacing: "-0.035em" }],
@@ -99,6 +99,10 @@ export default {
         xl: "calc(var(--radius) + 4px)",
         "2xl": "calc(var(--radius) + 8px)",
         "3xl": "1.5rem",
+        card: "var(--radius-card)",
+        button: "var(--radius-button)",
+        pill: "var(--radius-pill)",
+        input: "var(--radius-input)",
       },
       boxShadow: {
         "soft": "var(--shadow-sm)",
