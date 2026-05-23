@@ -21,10 +21,12 @@ interface ConversationControlConfig {
   onStatusChange?: (status: ConversationStatus) => void;
 }
 
-const REMINDER_1_FR = "Je suis là si vous avez besoin.";
-const REMINDER_2_FR = "Je vais fermer la conversation. Revenez quand vous voulez.";
-const REMINDER_1_EN = "I'm here if you need me.";
-const REMINDER_2_EN = "I'll close the conversation. Come back anytime.";
+// ALEX FEMALE-ONLY: one calm, premium silence line. No "êtes-vous encore là?".
+// No auto-close question — Alex stays available and silent.
+const REMINDER_1_FR = "Je reste disponible quand vous êtes prêt.";
+const REMINDER_2_FR = "";
+const REMINDER_1_EN = "I'm here whenever you're ready.";
+const REMINDER_2_EN = "";
 
 export function getReminders(lang: "fr" | "en" = "fr") {
   return lang === "fr"
@@ -72,29 +74,19 @@ export function useAlexConversationControl(config: ConversationControlConfig = {
 
   const startSilenceTimer = useCallback(() => {
     clearTimers();
-    // Timer for first silence threshold
+    // ALEX FEMALE-ONLY: a single calm reminder, then passive listening forever.
+    // No second nag, no auto-close — Alex never says "êtes-vous encore là?".
     timerRef.current = setTimeout(() => {
-      setSilenceCount(prev => {
+      setSilenceCount((prev) => {
         const next = prev + 1;
         if (next === 1) {
           updateStatus("idle");
           onReminder1?.();
-          // Set timer for 2nd threshold
-          timerRef.current = setTimeout(() => {
-            setSilenceCount(2);
-            onReminder2?.();
-            updateStatus("closing");
-            // Auto-close after delay
-            closeTimerRef.current = setTimeout(() => {
-              updateStatus("closed");
-              onAutoClose?.();
-            }, autoCloseDelayMs);
-          }, silenceThreshold2Ms - silenceThreshold1Ms);
         }
         return next;
       });
     }, silenceThreshold1Ms);
-  }, [silenceThreshold1Ms, silenceThreshold2Ms, autoCloseDelayMs, onReminder1, onReminder2, onAutoClose]);
+  }, [silenceThreshold1Ms, onReminder1]);
 
   /** Start monitoring */
   const startSession = useCallback(() => {

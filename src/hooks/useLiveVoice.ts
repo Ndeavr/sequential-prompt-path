@@ -510,34 +510,37 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           callbacksRef.current?.onError?.(new Error("Connection timeout — voice unavailable"));
         }, CONNECTION_TIMEOUT_MS);
 
-        // Per memory `voice-connection-stability`: do NOT send client-side overrides
-        // unless required. ElevenLabs ignores overrides if not enabled in the agent
-        // dashboard, and including them can cause silent first-audio failures.
-        // Persist voice id only for diagnostics.
+        // ALEX FEMALE-ONLY: force voice ID via client overrides so the agent
+        // can NEVER speak in any other (male / alternate) voice — even if the
+        // ElevenLabs agent dashboard default is set wrong. Requires the
+        // overrides to be enabled in the agent's Security → Overrides panel.
         const memory = loadAlexMemory();
-        const resolvedVoiceId =
-          lockedVoiceIdRef.current
-          ?? (data?.voiceId as string)
-          ?? ALEX_VOICE_DEFAULTS.voiceId;
+        const resolvedVoiceId = ALEX_VOICE_BASE.voiceId; // Sophia, locked
         lockedVoiceIdRef.current = resolvedVoiceId;
 
-        const EXPECTED_VOICE_ID = "YxrwjAKoUKULGd0g8K9Y"; // Sophia — locked Alex production voice
-        if (resolvedVoiceId !== EXPECTED_VOICE_ID) {
-          console.warn(
-            `[ElevenLabs V8] ⚠️ Voice mismatch — expected ${EXPECTED_VOICE_ID} (Sophia), got ${resolvedVoiceId}. ` +
-            `Check voice_configs.voice_id and the ElevenLabs agent (${data?.agentId}) Voice override in the dashboard.`,
-          );
-        }
+        const firstName = options?.firstName?.trim() || null;
+        const personalizedFirstMessage = firstName
+          ? `Bonjour ${firstName}. Je vous écoute.`
+          : `Bonjour. Je vous écoute.`;
 
-        console.log("[ElevenLabs V8] Starting session", {
+        const overrides = {
+          agent: {
+            firstMessage: personalizedFirstMessage,
+            language: "fr",
+          },
+          tts: {
+            voiceId: resolvedVoiceId,
+          },
+        };
+
+        console.log("[ElevenLabs V8] Starting session (female-only)", {
           agentId: data?.agentId,
           voiceId: resolvedVoiceId,
-          expectedVoiceId: EXPECTED_VOICE_ID,
-          voiceMatches: resolvedVoiceId === EXPECTED_VOICE_ID,
           mode: options?.mode ?? "general",
           attempt,
           hasMemory: Boolean(memory),
           hasWebRtcToken: Boolean(data?.conversationToken),
+          firstName,
         });
 
         // Prefer signed-URL WebSocket in production. Current mobile preview
@@ -549,6 +552,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
             signedUrl,
             connectionType: "websocket",
             inputDeviceId: inputDeviceIdRef.current,
+            overrides,
           } as any);
         } catch (startErr) {
           if (!conversationToken) throw startErr;
@@ -557,6 +561,7 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
             conversationToken,
             connectionType: "webrtc",
             inputDeviceId: inputDeviceIdRef.current,
+            overrides,
           } as any);
         }
 

@@ -161,7 +161,12 @@ Priorise toujours : confiance, vitesse, clarté, rendez-vous.`;
 /** Backward-compat alias — existing imports use V2. */
 export const ALEX_SYSTEM_PROMPT_V2 = ALEX_SYSTEM_PROMPT_V3;
 
-/** Build the dynamic first message based on context. */
+/**
+ * Build the dynamic first message.
+ *
+ * ALEX FEMALE-ONLY: greeting is ALWAYS short and ends in listening posture.
+ * After the greeting, Alex stops speaking and waits — no follow-up question.
+ */
 export function buildAlexFirstMessage(opts: {
   firstName?: string | null;
   isReturning?: boolean;
@@ -171,13 +176,11 @@ export function buildAlexFirstMessage(opts: {
   const name = opts.firstName?.trim() || null;
 
   if (lang === "en") {
-    if (opts.isReturning && name) return `Welcome back ${name}. How can I help you today?`;
-    if (name) return `Hello ${name}. I'm Alex from Heun Pro. How can I help you today?`;
-    return `Hello. I'm Alex from Heun Pro. How can I help you today?`;
+    if (name) return `Hello ${name}. I'm listening.`;
+    return `Hello. I'm listening.`;
   }
 
   // French (default)
-  if (opts.isReturning && name) return `Rebonjour ${name}. On reprend où on s'est arrêté ?`;
-  if (name) return `Bonjour ${name}. Je suis Alex d'Un Pro. Comment puis-je vous aider aujourd'hui ?`;
-  return `Bonjour. Je suis Alex d'Un Pro. Comment puis-je vous aider aujourd'hui ?`;
+  if (name) return `Bonjour ${name}. Je vous écoute.`;
+  return `Bonjour. Je vous écoute.`;
 }
