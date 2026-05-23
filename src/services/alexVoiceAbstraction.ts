@@ -72,7 +72,8 @@ export class HybridVoiceProvider implements IAlexVoiceProvider {
   private _state: VoiceSessionState = 'idle';
   private events: VoiceSessionEvents | null = null;
   private recognition: any = null;
-  private synthesis: SpeechSynthesisUtterance | null = null;
+  // Browser speechSynthesis is disabled — kept only to preserve the class shape.
+  private synthesis: unknown = null;
 
   get state() { return this._state; }
 
