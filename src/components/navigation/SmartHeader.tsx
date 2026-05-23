@@ -106,7 +106,7 @@ const SmartHeader = () => {
               <img
                 src={unproWordmarkChrome}
                 alt="UNPRO"
-                className={`${isHome ? "h-14 sm:h-16 lg:h-20" : "h-12 sm:h-14 lg:h-16"} w-auto -my-3 transition-all duration-300 group-hover:scale-105`}
+                className={`${isHome ? "h-20 sm:h-24 lg:h-28" : "h-16 sm:h-20 lg:h-24"} w-auto -my-4 transition-all duration-300 group-hover:scale-105`}
                 style={{
                   filter:
                     "drop-shadow(0 1px 2px hsl(220 50% 0% / 0.5)) drop-shadow(0 0 0 transparent)",
