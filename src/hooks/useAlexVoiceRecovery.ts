@@ -37,16 +37,19 @@ export interface RecoveryState {
 
 const PHASE_LABELS: Record<RecoveryPhase, string> = {
   idle: '',
-  killing: 'Réinitialisation de la session…',
-  probing: 'Vérification du micro et audio…',
+  killing: 'Réinitialisation…',
+  probing: 'Vérification du micro…',
   rebuilding: 'Reconnexion vocale…',
-  greeting_test: 'Alex redémarre…',
+  greeting_test: 'Connexion d\'Alex…',
   recovered: 'Alex est reconnectée',
   failed_fallback_chat: 'Mode chat activé',
   closed: '',
 };
 
 const MAX_RECOVERY_ATTEMPTS = 2;
+// Hard fail-safe: never let recovery hang on a stuck startFn (e.g. ElevenLabs
+// WebRTC never resolving). After this we force-fallback to chat.
+const GREETING_TEST_TIMEOUT_MS = 3000;
 
 export function useAlexVoiceRecovery() {
   const [state, setState] = useState<RecoveryState>({
