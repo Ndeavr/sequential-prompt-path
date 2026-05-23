@@ -37,16 +37,19 @@ export interface RecoveryState {
 
 const PHASE_LABELS: Record<RecoveryPhase, string> = {
   idle: '',
-  killing: 'Réinitialisation de la session…',
-  probing: 'Vérification du micro et audio…',
+  killing: 'Réinitialisation…',
+  probing: 'Vérification du micro…',
   rebuilding: 'Reconnexion vocale…',
-  greeting_test: 'Alex redémarre…',
+  greeting_test: 'Connexion d\'Alex…',
   recovered: 'Alex est reconnectée',
   failed_fallback_chat: 'Mode chat activé',
   closed: '',
 };
 
 const MAX_RECOVERY_ATTEMPTS = 2;
+// Hard fail-safe: never let recovery hang on a stuck startFn (e.g. ElevenLabs
+// WebRTC never resolving). After this we force-fallback to chat.
+const GREETING_TEST_TIMEOUT_MS = 3000;
 
 export function useAlexVoiceRecovery() {
   const [state, setState] = useState<RecoveryState>({
@@ -175,10 +178,16 @@ export function useAlexVoiceRecovery() {
       console.log('[VoiceRecovery] Phase 4: Starting greeting test...');
 
       const greeting = buildGreetingFn();
-      await startFn({ initialGreeting: greeting });
-
-      // If we get here without error, start was successful
-      // The onFirstAudio callback in the overlay will handle the rest
+      // 3s hard fail-safe so the "Connexion d'Alex…" label never sticks.
+      await Promise.race([
+        startFn({ initialGreeting: greeting }),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error('greeting_test_timeout')),
+            GREETING_TEST_TIMEOUT_MS,
+          ),
+        ),
+      ]);
 
       // ─── RECOVERED ───
       setPhase('recovered');
@@ -210,13 +219,18 @@ export function useAlexVoiceRecovery() {
         error_message: err?.message ?? 'Unknown error',
       } as any).then(() => {});
 
-      if (attemptNum >= MAX_RECOVERY_ATTEMPTS) {
-        setPhase('failed_fallback_chat', 'La voix n\'est pas disponible. Mode chat activé.');
-        onFallbackChat?.();
-      } else {
-        setPhase('failed_fallback_chat', err?.message ?? 'Échec de la reconnexion.');
-        // Don't auto-retry — let user decide
-      }
+      // Always bail to chat on failure (incl. greeting_test_timeout) — never
+      // leave the user stuck on "Connexion d'Alex…". User can reopen voice.
+      const isTimeout = err?.message === 'greeting_test_timeout';
+      setPhase(
+        'failed_fallback_chat',
+        isTimeout
+          ? 'La voix met trop de temps. Mode chat activé.'
+          : attemptNum >= MAX_RECOVERY_ATTEMPTS
+            ? 'La voix n\'est pas disponible. Mode chat activé.'
+            : err?.message ?? 'Échec de la reconnexion.',
+      );
+      onFallbackChat?.();
     } finally {
       setRecovering(false);
     }
