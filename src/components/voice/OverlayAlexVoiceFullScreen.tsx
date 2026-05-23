@@ -487,7 +487,7 @@ export default function OverlayAlexVoiceFullScreen() {
             }
           }, 1800);
         }
-        await startRef.current({ initialGreeting: greeting, mode: deriveMode(getStore().feature) });
+        await startRef.current({ initialGreeting: greeting, mode: deriveMode(getStore().feature), firstName });
 
         // After await: check session still owns the runtime + overlay open
         if (!getStore().isOverlayOpen) return;
