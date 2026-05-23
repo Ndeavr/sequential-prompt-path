@@ -219,13 +219,18 @@ export function useAlexVoiceRecovery() {
         error_message: err?.message ?? 'Unknown error',
       } as any).then(() => {});
 
-      if (attemptNum >= MAX_RECOVERY_ATTEMPTS) {
-        setPhase('failed_fallback_chat', 'La voix n\'est pas disponible. Mode chat activé.');
-        onFallbackChat?.();
-      } else {
-        setPhase('failed_fallback_chat', err?.message ?? 'Échec de la reconnexion.');
-        // Don't auto-retry — let user decide
-      }
+      // Always bail to chat on failure (incl. greeting_test_timeout) — never
+      // leave the user stuck on "Connexion d'Alex…". User can reopen voice.
+      const isTimeout = err?.message === 'greeting_test_timeout';
+      setPhase(
+        'failed_fallback_chat',
+        isTimeout
+          ? 'La voix met trop de temps. Mode chat activé.'
+          : attemptNum >= MAX_RECOVERY_ATTEMPTS
+            ? 'La voix n\'est pas disponible. Mode chat activé.'
+            : err?.message ?? 'Échec de la reconnexion.',
+      );
+      onFallbackChat?.();
     } finally {
       setRecovering(false);
     }
