@@ -116,7 +116,8 @@ export class HybridVoiceProvider implements IAlexVoiceProvider {
   }
 
   interruptSpeech(): void {
-    window.speechSynthesis?.cancel();
+    // ALEX FEMALE-ONLY: browser speechSynthesis is disabled platform-wide.
+    // Only the ElevenLabs live agent owns audio output.
     this.setState('interrupted');
     this.events?.onBargeIn();
     setTimeout(() => this.setState('listening'), 100);
@@ -128,20 +129,20 @@ export class HybridVoiceProvider implements IAlexVoiceProvider {
 
   async closeSession(): Promise<void> {
     this.recognition?.stop();
-    window.speechSynthesis?.cancel();
     this.setState('closed');
   }
 
-  // TTS output for hybrid mode
-  speak(text: string, localeCode: string, rate: number): void {
-    this.setState('speaking');
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = localeCode;
-    utterance.rate = rate;
-    utterance.onend = () => this.setState('listening');
-    utterance.onerror = () => this.setState('listening');
-    this.synthesis = utterance;
-    window.speechSynthesis?.speak(utterance);
+  // TTS output for hybrid mode — DISABLED.
+  // Browser speechSynthesis is forbidden (would introduce a non-Alex voice).
+  // All audio MUST go through the ElevenLabs pipeline (Sophia, female-only).
+  speak(_text: string, _localeCode: string, _rate: number): void {
+    console.warn('[AlexVoice] blocked_browser_tts — speechSynthesis disabled by ALEX_DISABLE_BROWSER_TTS');
+    this.events?.onError({
+      code: 'browser_tts_blocked',
+      message: 'Browser TTS is disabled. Audio routes only through the ElevenLabs Alex voice.',
+      provider: this.providerKey,
+      recoverable: true,
+    });
   }
 
   startListening(): void {
