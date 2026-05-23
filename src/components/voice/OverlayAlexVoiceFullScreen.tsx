@@ -33,11 +33,12 @@ import {
 import { elevenlabsService } from "@/features/alex/services/elevenlabsService";
 import { hasGreeted, markGreeted, markVoiceStarted } from "@/lib/alexSessionState";
 
-const STABILIZATION_MS = 4000;
+// ChatGPT-Voice style: never block UI on TTS. 3s hard cap from spec.
+const STABILIZATION_MS = 1500;
 const HEARTBEAT_INTERVAL_MS = 2500; // Slower → less battery
-const BOOT_TIMEOUT_MS = 25000; // Cold-start absorbing (edge function + ElevenLabs handshake)
-const FIRST_AUDIO_TIMEOUT_MS = 6500; // Plus tolérant cold-start mobile avant retry
-const TOKEN_SLOW_THRESHOLD_MS = 2000; // Spec: show "Connexion d'Alex…" if >2s
+const BOOT_TIMEOUT_MS = 3000; // 3s spec hard cap — bail to TTS/chat if still booting
+const FIRST_AUDIO_TIMEOUT_MS = 3000; // 3s spec hard cap before TTS fallback
+const TOKEN_SLOW_THRESHOLD_MS = 1500; // Show "Connexion d'Alex…" sooner
 const MAX_AUTO_RETRIES = 0; // Strictly event-driven — never silently retry.
 
 // Helper to always get fresh state
