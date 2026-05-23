@@ -543,23 +543,26 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           firstName,
         });
 
-        // Prefer signed-URL WebSocket in production. Current mobile preview
-        // networks often block the LiveKit validate path used by WebRTC, which
-        // causes long reconnect loops before first audio.
+        // Prefer WebRTC with conversationToken — faster handshake on mobile
+        // networks. WebSocket signedUrl kept as fallback if WebRTC fails fast.
         const conversationToken = (data as any)?.conversationToken;
         try {
+          if (conversationToken) {
+            await conversation.startSession({
+              conversationToken,
+              connectionType: "webrtc",
+              inputDeviceId: inputDeviceIdRef.current,
+              overrides,
+            } as any);
+          } else {
+            throw new Error("no_conversation_token");
+          }
+        } catch (startErr) {
+          if (!signedUrl) throw startErr;
+          console.warn("[ElevenLabs V8] WebRTC failed, trying WebSocket fallback", startErr);
           await conversation.startSession({
             signedUrl,
             connectionType: "websocket",
-            inputDeviceId: inputDeviceIdRef.current,
-            overrides,
-          } as any);
-        } catch (startErr) {
-          if (!conversationToken) throw startErr;
-          console.warn("[ElevenLabs V8] WebSocket failed, trying WebRTC fallback", startErr);
-          await conversation.startSession({
-            conversationToken,
-            connectionType: "webrtc",
             inputDeviceId: inputDeviceIdRef.current,
             overrides,
           } as any);
