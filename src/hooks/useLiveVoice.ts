@@ -395,6 +395,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     intentionallyStopped.current = false;
     hasDeliveredFirstAudioRef.current = false;
     connectedAtRef.current = 0;
+    alternateTransportTriedRef.current = false;
+    lastSessionStartRef.current = null;
     languageSessionRef.current.reset();
     activeLanguageRef.current = "fr-CA";
     clearConnectionTimeout();
@@ -534,6 +536,11 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         alexVoiceService.setState("connecting", "got_signed_url");
 
         connectionTimeoutRef.current = setTimeout(() => {
+          if ((conversationApiRef.current as any)?.status === "connected") {
+            console.warn("[ElevenLabs V8] Timeout fired after connection — keeping session alive");
+            clearConnectionTimeout();
+            return;
+          }
           console.error(`[ElevenLabs V8] ⏱️ Connection timeout ${CONNECTION_TIMEOUT_MS}ms`);
           bootInProgressRef.current = false;
           setIsConnecting(false);
