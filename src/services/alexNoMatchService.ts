@@ -72,15 +72,12 @@ export class AlexNoMatchService {
   }
 
   getNoMatchCopy(_reason?: string): string {
-    return "Votre demande a été enregistrée en priorité. Un conseiller UNPRO vous contactera sous peu.";
+    return "Recherche intelligente active. Notification prioritaire disponible avec un compte gratuit.";
   }
 
-  getAlexVoiceResponse(_service: string, _city: string): string {
-    return [
-      "Je préfère être transparent avec vous : nous n'avons pas encore de partenaire vérifié disponible actuellement pour ce type d'intervention dans votre secteur.",
-      "Votre demande vient d'être enregistrée en priorité avec les détails du problème.",
-      "Un conseiller UNPRO analysera personnellement votre situation et communiquera avec vous sous peu afin de vous orienter vers la meilleure solution disponible.",
-    ].join(" ");
+  getAlexVoiceResponse(service: string, city: string): string {
+    const { buildNoMatchTitle, buildAlexVoiceLine } = require("@/lib/noMatchCopy") as typeof import("@/lib/noMatchCopy");
+    return `${buildNoMatchTitle({ service, city })} ${buildAlexVoiceLine({ service, city })}`;
   }
 }
 
