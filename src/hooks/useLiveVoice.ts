@@ -13,7 +13,7 @@ import { logBoot, withTimeout } from "@/lib/bootDebug";
 import { ALEX_VOICE_BASE } from "@/config/alexVoiceConfig";
 
 const RECONNECT_COOLDOWN_MS = 5000;
-const CONNECTION_TIMEOUT_MS = 6_000; // 6s SDK connect cap — bail before user perception breaks
+const CONNECTION_TIMEOUT_MS = 12_000; // Mobile-compatible SDK connect cap; do not kill late successful sessions
 const TOKEN_TIMEOUT_MS = 8_000;
 const MAX_TOKEN_RETRIES = 0; // Strictly event-driven — no silent reconnects.
 const RETRY_BACKOFF_MS = 1500;
@@ -124,6 +124,13 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const inputDeviceIdRef = useRef<string | undefined>(undefined);
   const inputLevelTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startDebounceUntilRef = useRef(0);
+  const alternateTransportTriedRef = useRef(false);
+  const lastSessionStartRef = useRef<{
+    signedUrl?: string;
+    conversationToken?: string;
+    inputDeviceId?: string;
+    overrides?: any;
+  } | null>(null);
 
   const clearConnectionTimeout = useCallback(() => {
     if (connectionTimeoutRef.current) {
