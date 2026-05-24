@@ -373,6 +373,7 @@ export default function PaintingCalculatorPage() {
         <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-blue-500/10 blur-3xl" />
         <div className="absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full bg-cyan-400/10 blur-3xl" />
       </div>
+      <AmbientLayer category={input.category} method={input.method} />
 
       <main className="relative max-w-3xl mx-auto px-5 pt-12 pb-32">
         {/* Hero */}
