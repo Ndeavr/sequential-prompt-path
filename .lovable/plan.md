@@ -1,85 +1,123 @@
-# AIPP Trust Refactor — Public/Private Split + Real Verification
+## UNPRO — AI Entity Profile System (Rebuild)
 
-Rebuild the AI-Indexed Profile system so public pages only show confirmed positive signals, all uncertainty moves to a private contractor cockpit, and trust badges reflect real validation (RBQ/NEQ/proofs).
+Sépare clairement la **page IA crawlable** (`/ai/:slug`) de la **page conversion humaine** (`/pro/:slug`). Objectif : devenir source citée par ChatGPT/Gemini/Perplexity sur les entrepreneurs résidentiels QC.
 
-## Architecture
+### 1. Database (migration unique)
+
+Nouvelles tables :
+
+- `ai_entities` — id, slug (unique), company_name, primary_service, primary_city, ai_summary, confidence_score, years_active, logo_url, website, phone, lat/lng, contractor_id (fk nullable), published, created_at, updated_at
+- `ai_entity_sources` — entity_id, source_type (`gbp|website|rbq|neq|facebook|instagram|bbb|homestars|sitemap`), source_url, status (`pending|ok|failed|stale`), last_sync, raw_payload jsonb
+- `ai_entity_reviews` — entity_id, source, rating, review_count, sentiment jsonb, themes text[], last_sync
+- `ai_entity_images` — entity_id, image_url, type (`logo|photo|team|truck|before_after|jobsite`), source, ai_caption, sort_order
+- `ai_entity_validations` — entity_id, rbq_status, rbq_number, neq_status, neq_number, insurance_status, google_verified, domain_https, last_checked
+- `ai_entity_services` — entity_id, label, slug, frequency (`high|medium|low`), evidence_url, image_url
+- `ai_entity_zones` — entity_id, city, region, detected_from (`gbp|website|citations|content`)
+- `ai_entity_faq` — entity_id, question, answer, generated_from
+
+Toutes : RLS public SELECT via vue `ai_entities_public` (filtre `published = true` + `confidence_score >= seuil`). Base tables : SELECT bloqué publiquement, service_role + admin only.
+
+Trigger `recompute_confidence_score()` sur insert/update validations/reviews/sources.
+
+### 2. États intelligents (interdiction d'inventer)
+
+Centraliser dans `src/lib/aiEntityStatus.ts` :
+
+| Champ | OK | En cours | Inconnu |
+|---|---|---|---|
+| RBQ | « RBQ validée #1234 » | « Validation RBQ en cours » | masqué |
+| NEQ | « NEQ active » | « Vérification du registre en cours » | masqué |
+| Assurance | « Assurance détectée » | « Validation en cours » | masqué |
+| GBP | « Google Business vérifié » | « Synchronisation Google en cours » | masqué |
+| HTTPS | « Site sécurisé HTTPS » | — | masqué |
+
+Règle absolue : aucune affirmation non sourcée. Si validation ≠ `confirmed` → label « en cours » ou élément masqué.
+
+### 3. Pipeline data engine (edge functions)
+
+Nouvelles fonctions Deno (npm: imports, CORS, validation Zod) :
+
+- `ai-entity-ingest` — orchestrateur : prend entity_id, lance sources en parallèle, met à jour `last_sync`/`status`.
+- `ai-entity-scrape-website` — Firecrawl scrape homepage + /contact + /about + /services + sitemap → extrait phone, email, logo, zones, services, photos, social handles. Écrit dans `ai_entity_sources`, `ai_entity_images`, `ai_entity_zones`, `ai_entity_services` avec evidence_url.
+- `ai-entity-gbp` — fetch Google Business (lien GBP existant), récupère rating, review_count, photos, hours, verified.
+- `ai-entity-verify-rbq` — Firecrawl REQ + RBQ public registry, fuzzy match nom/NEQ.
+- `ai-entity-verify-neq` — réutilise existant.
+- `ai-entity-reviews-aggregate` — agrège Google + Facebook + BBB + HomeStars si disponibles.
+- `ai-entity-sentiment` — Gemini 2.5 Flash sur reviews → themes[] + sentiment scores (rapidité, ponctualité, propreté, prix, etc.) avec evidence snippets.
+- `ai-entity-summary` — Gemini génère `ai_summary` (3-4 phrases) + 5 FAQs à partir des données confirmées uniquement (no-hallucination guardrail : doit citer un champ source).
+- `ai-entity-compute-score` — calcule `confidence_score` (0-100) selon validations + sources + reviews.
+
+### 4. Routes & pages
+
+**Nouvelle page `/ai/:slug` — `src/pages/ai/PageAiEntity.tsx`** (knowledge-first, zero funnel) :
 
 ```text
-                  ┌─ aipp_profiles ──────────────────┐
-                  │  + trust_level (1-4)             │
-                  │  + visibility_rules (jsonb)      │
-                  └──────────────┬───────────────────┘
-                                 │
-        ┌────────────────────────┼────────────────────────┐
-        │                        │                        │
-  aipp_profile_validations  service_proofs        aipp_detected_methods
-  (RBQ/NEQ/insurance,       (per-claim evidence,  (per-service materials
-   verified flags)           url, confidence)      detected from sources)
+HERO
+  Logo + Nom + Métier principal • Ville
+  Sous-titre: "Entreprise analysée par UNPRO AI"
+  Score IA + années activité
 
-  PUBLIC view (/ai-indexed-profiles/:slug)
-    → reads only confirmed=true rows
-    → hides any field without proof
-    → renders trust badge from computed trust_level
-
-  PRIVATE cockpit (/contractor/aipp-cockpit)
-    → shows gaps, mismatches, "Non trouvé", action checklist
+BADGES (vrais uniquement)
+RATINGS (Google/FB/BBB/HomeStars si présents)
+RÉSUMÉ IA (texte factuel)
+SERVICES DÉTECTÉS (tags + images + fréquence + villes)
+ZONES DESSERVIES
+GALERIE (logo, photos, équipe, chantier, avant/après)
+ANALYSE DES AVIS (thèmes IA + evidence)
+FAQ IA
+JSON-LD: LocalBusiness + Contractor + Service[] + FAQPage + AggregateRating + GeoCoordinates + sameAs + Review[] + Organization
 ```
 
-## Database (one migration)
+Rules UI : pas de bouton « Vérifier cette entreprise », pas de « Analyser mes soumissions », pas d'Alex, pas d'auth overlay. Lien discret en bas : « Prendre rendez-vous » → `/pro/:slug`.
 
-1. **aipp_profiles** — add `trust_level smallint (1-4)`, `trust_label text`, `public_visibility jsonb` (per-field allow flags computed by trigger).
-2. **service_proofs** — new table: `contractor_id, profile_id, service, method, material, proof_source (homepage|footer|jsonld|gmb|...), proof_url, snippet, confidence_score numeric, detected_at`. RLS: public read where `confidence_score >= 0.6`.
-3. **aipp_detected_methods** — new table linking a service to validated methods/materials with proof refs.
-4. **aipp_profile_validations** — add `insurance_status`, `insurance_verified_at`, `gmb_status`, `gmb_url`, `social_status`.
-5. **Trigger** `recompute_aipp_trust()`: on insert/update of validations or proofs, recompute `trust_level`:
-   - L1 site+services detected
-   - L2 + phone/address coherent + GMB found
-   - L3 + RBQ confirmed + NEQ confirmed + insurance
-   - L4 + uploaded docs + history
-6. **RLS**: public can SELECT only fields exposed via a `aipp_public_profiles` view (`security_invoker=on`) that strips unconfirmed columns. Base table public SELECT denied; contractor + admin can read full row.
+**Page `/pro/:slug`** (déjà existante `PageAiIndexedProfile.tsx` ou similaire) : conserver pour conversion (Alex, booking, avant/après, urgences). Audit séparé hors scope de ce build.
 
-## Edge functions
+Router : ajouter `/ai/:slug` dans `src/app/router.tsx` + `ROUTES.AI_ENTITY` dans `routesConfig.ts`.
 
-- **`aipp-import-website`** (extend): also extract phone/email/logo/favicon/socials/hours/zones from homepage + `/contact` + `/about` + JSON-LD + OpenGraph + sitemap. Write each finding into `service_proofs` with source URL + snippet. Never overwrite human-verified fields (Contractor Identity Resolution rule).
-- **`aipp-verify-rbq`** (already exists): unchanged.
-- **`aipp-verify-neq`** (new): scrape registreentreprises.gouv.qc.ca; same fuzzy match pattern as RBQ.
-- **`aipp-detect-methods`** (new): given homepage markdown + services, call Gemini with strict tool schema returning `{service, method, material, evidence_snippet, confidence}[]`. Zero hallucination guardrail: must include verbatim snippet from source.
-- **`aipp-recalc-score`** (extend): recompute trust_level and write `public_visibility` map.
+### 5. SEO infrastructure
 
-## Public page rewrite (`PageAiIndexedProfile.tsx`)
+- `public/ai-sitemap.xml` généré par script `scripts/generate-ai-sitemap.ts` (predev + prebuild) : query `ai_entities_public` → 1 entrée par slug avec `lastmod = updated_at`.
+- Référencer `ai-sitemap.xml` dans `public/robots.txt` et `public/sitemap.xml` (sitemapindex).
+- `index.html` reste sitewide ; per-page meta via `react-helmet-async` (déjà présent) sur `/ai/:slug` : title, description, canonical `https://unpro.ca/ai/:slug`, og:*.
+- JSON-LD injecté inline via `<script type="application/ld+json">` (pas useEffect) pour garantir présence au premier render — important pour crawlers non-JS.
+- Prerender server (existant Lovable) servira `/ai/*` aux user-agents bots.
+- Ajouter `/ai/*` à `llms.txt`.
 
-- Replace hard-coded "Profil IA vérifié UNPRO" pill with dynamic `TrustBadge` driven by `trust_level` (1→"Profil analysé", 2→"Présence commerciale validée", 3→"Entreprise vérifiée", 4→"Entreprise certifiée UNPRO").
-- Rename "Données vérifiées" → "Informations publiques analysées". Render only rows where `public_visibility[field] === true`. Remove all "Non trouvé" / "À confirmer" chips publicly.
-- Replace generic material chips with **"Méthodes détectées"** section pulled from `aipp_detected_methods` (only `confidence >= 0.7`). ISR demo: shows "Fibre de verre soufflée, Ventilation des soffites, Scellant pare-air, Décontamination" — cellulose/uréthane removed because no proof.
-- Glassmorphism, warm theme, Apple-level minimal (Stripe Identity reference).
+### 6. Admin
 
-## Private cockpit (`/contractor/aipp-cockpit`)
+Page `/admin/ai-entities` :
+- Liste avec score, validations status, last_sync par source.
+- Actions : « Lancer ingestion », « Refaire RBQ », « Refaire NEQ », « Régénérer résumé IA », « Publier/Dépublier ».
+- Drawer evidence : voir snippets sources par champ.
 
-New page showing:
-- AIPP score breakdown (citability, NAP, social, completeness, trust).
-- Gap checklist (missing RBQ, missing insurance, no GMB, schema incomplete) with one-click actions.
-- NAP mismatch alerts and source diff drawer.
-- Re-run verification buttons.
+### 7. Seed démo
 
-## Admin
+Lancer pipeline complet sur `isolation-solution-royal` :
+- scrape site, GBP, RBQ, NEQ, reviews, sentiment, résumé, FAQ.
+- Vérifier rendu `/ai/isolation-solution-royal` : badges réels, services avec evidence, JSON-LD validé via Schema.org validator (mental check).
 
-- Extend `/admin/aipp-profiles` with: trust_level column, "Vérifier NEQ" button, "Détecter méthodes" button, view proofs drawer.
+### Détails techniques
 
-## ISR demo seed
+- **Edge functions** : `import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'`, CORS via `npm:@supabase/supabase-js@2/cors`, Zod validation, service role pour writes.
+- **Sécurité** : vues `SECURITY INVOKER`, base tables denied publiquement, validations PII (téléphone, email) seulement si confirmé via source publique.
+- **Confidence score** : 100 = RBQ+NEQ+GBP+HTTPS+5 reviews+sentiment OK ; <40 = `published = false` (pas exposé sur `/ai/*`).
+- **No-hallucination** : `ai-entity-summary` et `ai-entity-faq` reçoivent uniquement les champs `confirmed` ; tool schema strict ; si données manquantes → phrase « en cours d'analyse ».
 
-After deploy, run `aipp-import-website` + `aipp-detect-methods` + `aipp-verify-rbq` + `aipp-verify-neq` on isolation-solution-royal. Manually mark fibre-de-verre-soufflée / ventilation / décontamination as confirmed; ensure cellulose/uréthane absent from `aipp_detected_methods`.
+### Hors scope (phases suivantes)
 
-## Out of scope (later phase)
+- Embeddings vectoriels pour search IA interne.
+- Refonte UX `/pro/:slug` (déjà existant, traité séparément).
+- Crawl Instagram/TikTok.
+- Multi-langue EN.
 
-- Document upload + L4 certification flow
-- Social media (FB/IG/YT) deep scraping
-- Citability score per AI engine (ChatGPT/Gemini) — keep current placeholders private only
-- Storage of historical scrape snapshots
+### Tâches
 
-## Phasing
+1. Migration Supabase (8 tables + vue publique + RLS + trigger score).
+2. `src/lib/aiEntityStatus.ts` (labels intelligents).
+3. 9 edge functions du pipeline.
+4. Page `/ai/:slug` + route + helmet + JSON-LD inline.
+5. `scripts/generate-ai-sitemap.ts` + hooks predev/prebuild + robots/sitemap refs.
+6. Admin `/admin/ai-entities`.
+7. Seed démo ISR + QA visuelle.
 
-**Phase A (this build)**: migration + public/private view + trust badge rewrite + visibility filter + remove all "Non trouvé" publicly + ISR cleanup of methods + extend import for phone/email/logo proofs.
-
-**Phase B (next)**: `aipp-verify-neq`, `aipp-detect-methods`, private cockpit page, admin proofs drawer.
-
-Confirm Phase A scope, or request A+B in one build.
+**Confirme ce plan pour build, ou indique ce qu'il faut couper/ajouter.**
