@@ -34613,6 +34613,157 @@ export type Database = {
           },
         ]
       }
+      growth_diagnostic_bubbles: {
+        Row: {
+          category: string
+          created_at: string
+          diagnostic_id: string
+          id: string
+          payload: Json | null
+          title: string
+          value_numeric: number | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          diagnostic_id: string
+          id?: string
+          payload?: Json | null
+          title: string
+          value_numeric?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          diagnostic_id?: string
+          id?: string
+          payload?: Json | null
+          title?: string
+          value_numeric?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_diagnostic_bubbles_diagnostic_id_fkey"
+            columns: ["diagnostic_id"]
+            isOneToOne: false
+            referencedRelation: "growth_diagnostics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_diagnostic_events: {
+        Row: {
+          created_at: string
+          diagnostic_id: string
+          event_type: string
+          id: string
+          payload: Json | null
+        }
+        Insert: {
+          created_at?: string
+          diagnostic_id: string
+          event_type: string
+          id?: string
+          payload?: Json | null
+        }
+        Update: {
+          created_at?: string
+          diagnostic_id?: string
+          event_type?: string
+          id?: string
+          payload?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_diagnostic_events_diagnostic_id_fkey"
+            columns: ["diagnostic_id"]
+            isOneToOne: false
+            referencedRelation: "growth_diagnostics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_diagnostics: {
+        Row: {
+          annual_revenue: number | null
+          avg_contract_value: number | null
+          business_type: string | null
+          city: string | null
+          closing_rate: number | null
+          created_at: string
+          current_step: string | null
+          guest_token: string | null
+          id: string
+          metadata: Json | null
+          monthly_appointments: number | null
+          monthly_leads: number | null
+          monthly_projects: number | null
+          projected_loss_monthly: number | null
+          projected_revenue: number | null
+          recommended_plan: string | null
+          sales_reps: number | null
+          seasonality: string | null
+          status: string | null
+          team_size: number | null
+          trucks: number | null
+          updated_at: string
+          user_id: string | null
+          uses_shared_leads: string | null
+        }
+        Insert: {
+          annual_revenue?: number | null
+          avg_contract_value?: number | null
+          business_type?: string | null
+          city?: string | null
+          closing_rate?: number | null
+          created_at?: string
+          current_step?: string | null
+          guest_token?: string | null
+          id?: string
+          metadata?: Json | null
+          monthly_appointments?: number | null
+          monthly_leads?: number | null
+          monthly_projects?: number | null
+          projected_loss_monthly?: number | null
+          projected_revenue?: number | null
+          recommended_plan?: string | null
+          sales_reps?: number | null
+          seasonality?: string | null
+          status?: string | null
+          team_size?: number | null
+          trucks?: number | null
+          updated_at?: string
+          user_id?: string | null
+          uses_shared_leads?: string | null
+        }
+        Update: {
+          annual_revenue?: number | null
+          avg_contract_value?: number | null
+          business_type?: string | null
+          city?: string | null
+          closing_rate?: number | null
+          created_at?: string
+          current_step?: string | null
+          guest_token?: string | null
+          id?: string
+          metadata?: Json | null
+          monthly_appointments?: number | null
+          monthly_leads?: number | null
+          monthly_projects?: number | null
+          projected_loss_monthly?: number | null
+          projected_revenue?: number | null
+          recommended_plan?: string | null
+          sales_reps?: number | null
+          seasonality?: string | null
+          status?: string | null
+          team_size?: number | null
+          trucks?: number | null
+          updated_at?: string
+          user_id?: string | null
+          uses_shared_leads?: string | null
+        }
+        Relationships: []
+      }
       growth_engine_metrics: {
         Row: {
           created_at: string
