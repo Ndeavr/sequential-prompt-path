@@ -32,6 +32,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default function PageAiIndexedProfile() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -177,8 +178,38 @@ export default function PageAiIndexedProfile() {
     { label: "Réseaux sociaux", key: "social_status" },
   ];
 
+  const goBook = () => navigate(`/rendez-vous?contractor=${encodeURIComponent(p.slug)}&trade=${encodeURIComponent(p.primary_trade || "")}&city=${encodeURIComponent(p.primary_city || "")}`);
+  const goVerify = () => navigate(`/verification?company=${encodeURIComponent(p.company_name)}`);
+  const goAnalyze = () => navigate(`/analyser-soumission?context=${encodeURIComponent(p.slug)}`);
+
   return (
-    <div className="landing-warm min-h-screen text-stone-900">
+    <div
+      data-theme="warm"
+      className="min-h-screen"
+      style={{
+        background: "#F7F6F0",
+        color: "#1c1917",
+        colorScheme: "light",
+      }}
+    >
+      {/* Scoped token override so shadcn cards / badges stay readable on this page */}
+      <style>{`
+        [data-theme="warm"] {
+          --background: 48 33% 97%;
+          --foreground: 24 10% 10%;
+          --card: 0 0% 100%;
+          --card-foreground: 24 10% 10%;
+          --muted: 30 12% 92%;
+          --muted-foreground: 25 5% 35%;
+          --border: 30 10% 88%;
+          --primary: 24 10% 10%;
+          --primary-foreground: 48 33% 97%;
+        }
+        [data-theme="warm"] h1, [data-theme="warm"] h2, [data-theme="warm"] h3 {
+          color: #1c1917;
+        }
+      `}</style>
+
       <Helmet>
         <html lang="fr-CA" />
         <title>{p.meta_title || `${p.company_name} — Profil IA vérifié UNPRO`}</title>
@@ -194,7 +225,6 @@ export default function PageAiIndexedProfile() {
         ))}
       </Helmet>
 
-      {/* Hidden entity facts block for AI crawlers */}
       <div className="aipp-entity-facts sr-only" aria-hidden="true" data-aipp-facts>
         <pre>{JSON.stringify(facts?.facts ?? {}, null, 2)}</pre>
       </div>
@@ -202,33 +232,55 @@ export default function PageAiIndexedProfile() {
       <main className="container mx-auto max-w-5xl px-4 py-10 md:py-16 space-y-12">
         {/* HERO */}
         <header className="text-center space-y-4">
-          {p.logo_url && <img src={p.logo_url} alt={`Logo ${p.company_name}`} className="h-16 mx-auto" />}
+          {p.logo_url ? (
+            <img
+              src={p.logo_url}
+              alt={`Logo ${p.company_name}`}
+              className="h-16 mx-auto object-contain"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+            />
+          ) : (
+            <div className="h-16 w-16 mx-auto rounded-full bg-stone-900 text-amber-50 flex items-center justify-center text-2xl font-bold">
+              {p.company_name?.[0] ?? "U"}
+            </div>
+          )}
           <Badge className="bg-stone-900 text-amber-50 hover:bg-stone-900 gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5" /> Profil IA vérifié UNPRO
           </Badge>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">{p.company_name}</h1>
-          <p className="text-lg text-stone-600">{p.primary_trade} · {p.primary_city}</p>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight" style={{ color: "#1c1917" }}>
+            {p.company_name}
+          </h1>
+          <p className="text-lg" style={{ color: "#57534e" }}>
+            {p.primary_trade} · {p.primary_city}
+          </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <div className="rounded-full bg-stone-900 text-amber-50 px-4 py-1.5 text-sm font-semibold">
               Score AIPP {aippScore}/100
             </div>
-            <div className="rounded-full bg-white border border-stone-300 px-4 py-1.5 text-sm">
+            <div className="rounded-full bg-white border border-stone-300 px-4 py-1.5 text-sm" style={{ color: "#1c1917" }}>
               Confiance {trustScore}/100
             </div>
             {p.google_rating && (
-              <div className="rounded-full bg-white border border-stone-300 px-4 py-1.5 text-sm flex items-center gap-1">
+              <div className="rounded-full bg-white border border-stone-300 px-4 py-1.5 text-sm flex items-center gap-1" style={{ color: "#1c1917" }}>
                 <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" /> {p.google_rating} Google
               </div>
             )}
           </div>
 
           <div className="flex flex-wrap justify-center gap-3 pt-4">
-            <Button className="rounded-full">Demander un rendez-vous</Button>
-            <Button variant="outline" className="rounded-full">Vérifier cette entreprise</Button>
-            <Button variant="outline" className="rounded-full">Analyser mes soumissions</Button>
+            <Button onClick={goBook} className="rounded-full bg-stone-900 hover:bg-stone-800 text-amber-50">
+              Demander un rendez-vous
+            </Button>
+            <Button onClick={goVerify} variant="outline" className="rounded-full border-stone-400 text-stone-900 hover:bg-stone-100">
+              Vérifier cette entreprise
+            </Button>
+            <Button onClick={goAnalyze} variant="outline" className="rounded-full border-stone-400 text-stone-900 hover:bg-stone-100">
+              Analyser mes soumissions
+            </Button>
           </div>
         </header>
+
 
         {/* AI SUMMARY */}
         <section className="aipp-summary">
@@ -379,8 +431,8 @@ export default function PageAiIndexedProfile() {
                   { label: "Citabilité Gemini", v: scores.gemini_citability },
                 ].map(({ label, v }) => (
                   <div key={label} className="text-center">
-                    <div className="text-2xl font-bold">{v}<span className="text-sm text-stone-400">/100</span></div>
-                    <div className="text-xs text-stone-500 mt-1">{label}</div>
+                    <div className="text-2xl font-bold text-stone-900">{v ?? 0}<span className="text-sm text-stone-400 font-normal">/100</span></div>
+                    <div className="text-xs text-stone-600 mt-1">{label}</div>
                   </div>
                 ))}
               </CardContent>
@@ -403,8 +455,8 @@ export default function PageAiIndexedProfile() {
 
         {/* FAQ */}
         <section>
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-            <FileSearch className="w-5 h-5" /> Questions fréquentes
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-stone-900">
+            <Sparkles className="w-5 h-5" /> Questions fréquentes
           </h2>
           <div className="space-y-2">
             {jsonLdStack[3].mainEntity.map((q: any, i: number) => (
