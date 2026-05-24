@@ -1,161 +1,65 @@
+## UNPRO Global Empty-State Conversion System
 
-# UNPRO AI Growth Diagnostic — Build Plan
+Replace every "no provider available" dead-end with a single premium conversion module that captures account creation, preserves the project, and reinforces UNPRO's AI matching intelligence.
 
-A cinematic, voice-first AI business diagnostic for contractors. Single immersive page at **`/diagnostic-ia`** that orchestrates Alex, live calculations, floating insight bubbles, competitor analysis, before/after transformation and plan activation. Reuses existing engines (Alex voice, AIPP scoring, contractor plans, Stripe native checkout) — does **not** rebuild them.
+### 1. New shared copy + component
 
----
+**`src/lib/noMatchCopy.ts`** (new) — single source of truth.
+- `getProNoun(service)` → `peintre | couvreur | électricien | plombier | spécialiste CVAC | paysagiste | notaire | inspecteur | gestionnaire | professionnel` (fallback).
+- `getCityFragment(city?)` → `"à Laval"`, `"dans le secteur de Montréal"`, or `"dans votre secteur"`.
+- `buildNoMatchTitle({ service, city })` → `"Aucun {noun} disponible ne correspond actuellement à vos critères {cityFragment}."`
+- `buildNoMatchBullets({ isAuthed, hasEstimate })` → returns the 4 ✓ value props (alerts, save project, AI broaden, priority recommendations).
+- `buildAlexVoiceLine({ service, city })` → `"Je peux élargir la recherche ou vous prévenir dès qu'un {noun} compatible devient disponible {cityFragment}."`
+- Banned-phrase list exported for lint/test (`"Nous n'avons pas encore"`, `"Aucun partenaire"`, `"Service indisponible"`, `"Rien trouvé"`, `"Pas de résultats"`).
 
-## 1. Scope (Phase 1)
+**`src/components/conversion/NoMatchConversionCard.tsx`** (new) — premium card used everywhere.
+Props: `{ service, city?, hasEstimate?, onAlex?, variant?: "card" | "inline" | "page" }`.
+- Title (dynamic, from helper).
+- 4 ✓ bullets (account benefits, swapped to "Activer les alertes intelligentes" when `useAuth().user` is present).
+- Status row: `Projet sauvegardé` (if hasEstimate), `Recherche intelligente active` (pulse/glow via existing `animate-pulse` + token glow), `Notification prioritaire`.
+- Primary CTA `Créer mon compte UNPRO` → `/signup?next=<current>` (hidden if authed; replaced by `Activer les alertes intelligentes` calling waitlist).
+- Secondary CTA `Se connecter` → `/login?next=<current>` (hidden if authed).
+- Tertiary CTA `Parler à Alex` → calls `onAlex` or opens Alex orb event.
+- Social proof line: `"Des centaines de propriétaires utilisent UNPRO chaque semaine pour trouver le bon professionnel."`
+- Pure design-system tokens (`bg-card`, `border-border`, `text-foreground`, `bg-primary`, glass + subtle glow). Mobile-first.
 
-Ship one production-ready immersive flow:
-- Hero → Discovery → Pain/Loss Reveal → Competitor Snapshot → Before/After → Plan Recommendation → Stripe activation
-- Persist every diagnostic to Supabase (resumable)
-- Alex auto-greets once per tab, narrates key reveals (event-driven, no autostart loops)
-- Mobile-first, dark cinematic theme (matches `mem://style/premium-cinematic-theme`)
+### 2. Rewrite existing surfaces to use the new module
 
-Out of scope for Phase 1 (will be Phase 2):
-- Real competitor scrape (use stubbed top-3 + AIPP score where available)
-- Full AI vision on uploaded business cards
-- A/B reveal variants
+| File | Change |
+|---|---|
+| `src/components/alex-conversation/CardNoMatchFallback.tsx` | Replace body with `<NoMatchConversionCard variant="inline" service={ctx.service} city={ctx.city} hasEstimate={!!ctx.estimate} />`. Accept optional context props (read from `copilotConversationStore` if not provided). |
+| `src/components/alex/no-match/BannerNoMatchPrimary.tsx` | Keep banner shape, swap message generator to `buildNoMatchTitle` + add the AI/alerts subline. Remove `AlertTriangle` (use `Sparkles`). |
+| `src/pages/PageNoMatchFallback.tsx` | Render `<NoMatchConversionCard variant="page" />` with service/city pulled from `useNoMatchRecovery` context; keep existing waitlist flow as the authed CTA target. |
+| `src/services/alexNoMatchService.ts` | Rewrite `getNoMatchCopy` and `getAlexVoiceResponse` to use `buildAlexVoiceLine` + premium framing (no "nous n'avons pas encore", no "partenaire vérifié"). |
+| `src/features/alex/voice/alexCorePrompt.ts` (line ~68 "Si aucun pro disponible") | Replace fragment with the new positioning: compatibility filtering + offer to broaden / notify. |
+| `src/components/contractor/LeadDecisionCard.tsx` line 74 | Soften `"aucun autre entrepreneur disponible"` → `"Recherche intelligente en cours pour un autre professionnel compatible."` |
 
----
+Admin-only `EmptyState` strings (AdminLeads, AdminQuotes, AdminDocuments, AdminAlerts, AdminAppointments, AdminContractors, AdminScreenshot*, AdminOutreach*) are **out of scope** — they are internal staff UI, not user-facing conversion surfaces.
 
-## 2. Route & files
+### 3. Auth + estimate detection
 
-```
-src/pages/diagnostic/PageAIGrowthDiagnostic.tsx              # shell, scroll-snap sections, orb mount
-src/features/growthDiagnostic/
-  engine.ts                                                  # pure calc: lossEngine, projection, planRecommender
-  bubbles.ts                                                 # bubble generation from session state
-  types.ts
-  services.ts                                                # Supabase CRUD + RPC calls
-  session.ts                                                 # sessionStorage + DB sync
-  narration.ts                                               # Alex narration triggers (event-driven)
-  components/
-    HeroDiagnostic.tsx                                       # cinematic hero + CTA
-    StepBusinessType.tsx                                     # chip grid (10 trades)
-    StepLocation.tsx                                         # reuses useAddressAutocomplete
-    StepTeam.tsx                                             # animated sliders
-    StepRevenue.tsx                                          # counters + sliders
-    StepSharedLeads.tsx                                      # Yes/No/Sometimes + cinematic comparison
-    BubbleField.tsx                                          # floating glass bubbles around orb
-    BubbleCard.tsx                                           # expanded insight card
-    LiveMetricsHUD.tsx                                       # animated counters (revenue/loss/hours)
-    CompetitorTable.tsx                                      # current vs optimized
-    BeforeAfterReveal.tsx                                    # split-screen cinematic
-    FinalDiagnosis.tsx                                       # Alex specific findings
-    PlanRecommendationCard.tsx                               # dynamic plan + reason
-    RevenueReveal.tsx                                        # 540k → 1.2M cinematic
-    ScarcityBlock.tsx                                        # "3 spots left in your area"
-    FinalCTA.tsx                                             # Activate / Reserve / $1 trial
-src/styles/diagnostic.css                                    # bubble float keyframes, glass tokens
-```
+- Inside the card, use existing `useAuth()` hook to swap CTAs.
+- Estimate detection: read `sessionStorage` keys already used by the painting calculator / growth diagnostic (`unpro:lastEstimate` convention — add a tiny `getSavedEstimate()` helper in `noMatchCopy.ts` reading the keys we already write).
 
-Add to router: `/diagnostic-ia` (public, no auth gate until plan selection).
+### 4. Alex proactive line
 
----
+- Expose `getAlexNoMatchProactive(service, city)` from `noMatchCopy.ts`.
+- Wire into `useNoMatchRecovery` so the existing TTS path speaks the new line on `detected` step.
 
-## 3. Data model (Supabase migration)
+### 5. Verification
 
-Three new tables, all UUID + jsonb + RLS:
+- `rg` for the banned phrases inside `src/` (excluding admin) returns zero hits after the refactor.
+- Mount `/alex/no-match` and the painting calculator no-match branch on mobile viewport (384px) to confirm CTAs stack, pulse animation runs, and signup deep-link preserves `next`.
 
-**`growth_diagnostics`** — one row per session
-- `user_id` nullable, `guest_token` text, `business_type` text, `city` text, `team_size` int, `sales_reps` int, `trucks` int, `monthly_projects` int, `annual_revenue` numeric, `avg_contract_value` numeric, `monthly_appointments` int, `monthly_leads` int, `closing_rate` numeric, `seasonality` text, `uses_shared_leads` text, `current_step` text, `status` text, `recommended_plan` text, `projected_revenue` numeric, `projected_loss_monthly` numeric
+### Out of scope
 
-**`growth_diagnostic_events`** — analytics + replay
-- `diagnostic_id` fk, `event_type` text (`step_completed`, `bubble_expanded`, `narration_triggered`, `plan_recommended`, `cta_clicked`), `payload` jsonb
+- Admin dashboards' generic empty states.
+- New backend tables / edge functions (existing `alex-no-match-handle` and `useNoMatchRecovery` are reused).
+- New routes.
 
-**`growth_diagnostic_bubbles`** — generated insight log (for AI tuning + future ML)
-- `diagnostic_id` fk, `category` text (`insight|loss|opportunity|social_proof`), `title` text, `value_numeric` numeric, `payload` jsonb
+### Technical notes
 
-RLS: owner can CRUD own rows (by `user_id` or `guest_token` via session). Service role for edge functions.
-
----
-
-## 4. Calculation engine (`engine.ts`)
-
-Pure deterministic functions — no AI calls. Drives every counter, bubble and reveal.
-
-```
-lossPerMonth =
-    missedCallsLoss(monthly_leads, closing_rate, avg_contract_value)
-  + sharedLeadsTax(uses_shared_leads, monthly_appointments, avg_contract_value)
-  + capacityGap(team_size, trucks, monthly_projects, avg_contract_value)
-
-projectedRevenue =
-    annual_revenue
-  * uplift(business_type, city_demand, closing_rate, uses_shared_leads)
-
-planRecommender → Recrue|Pro|Premium|Élite|Signature
-  based on team_size, monthly_projects, projected_revenue gap, uses_shared_leads
-  (uses existing pricing from mem core: 149/349/599/999/1799)
-```
-
-Bubbles generated from same inputs (`bubbles.ts`) so they always agree with the HUD numbers.
-
----
-
-## 5. Alex narration (event-driven)
-
-Reuses existing voice infra (no new voice config). Narration triggered on:
-- Hero CTA tap → greet once per tab
-- `step_completed:revenue` → reveal first loss bubble
-- `shared_leads:yes` → cinematic competitor split + commentary
-- `final_diagnosis` → 2-sentence specific finding
-- `plan_recommended` → one-sentence "why this plan"
-
-No autostart, no retries, voice failure → silent fallback to text reveal (per `mem://features/alex-event-driven-session`).
-
----
-
-## 6. Bubble engine (visual)
-
-- 5–9 bubbles orbit the Alex orb using CSS `@keyframes` + transform (no heavy lib)
-- Categories color-coded: insight=cyan, loss=soft-red, opportunity=green, social-proof=white
-- Hover/tap → expand card with sourced numbers from `engine.ts`
-- Bubbles enter/exit per step (Framer Motion `AnimatePresence` already in project)
-
----
-
-## 7. Stripe activation
-
-Reuses native Stripe Payment Element flow already wired in project (`mem://pricing/checkout-architecture`).
-- Plan card → "Activer mon profil" → existing checkout flow with recommended plan pre-selected
-- "Démarrer à 1$" → existing $1 trial coupon path
-- Auth gate only at checkout step (not earlier — matches `mem://features/homeowner-subscription-flow` "pay before account creation" pattern, adapted for contractor)
-
----
-
-## 8. SEO / meta
-
-- `<Helmet>` title: "Diagnostic IA de croissance pour entrepreneurs | UNPRO"
-- Meta description, canonical `https://unpro.ca/diagnostic-ia`
-- JSON-LD: Service + Organization
-- Sitemap entry added (priority 0.9, weekly)
-
----
-
-## 9. Tasks (build order)
-
-1. Migration: 3 tables + RLS + indexes
-2. `engine.ts` + unit-style sanity calc (pure functions)
-3. `session.ts` + `services.ts` (sessionStorage + Supabase sync)
-4. `PageAIGrowthDiagnostic.tsx` shell + scroll-snap sections
-5. Step components (BusinessType → Location → Team → Revenue → SharedLeads)
-6. `LiveMetricsHUD` + `BubbleField` + `BubbleCard`
-7. `CompetitorTable` + `BeforeAfterReveal`
-8. `FinalDiagnosis` + `PlanRecommendationCard` + `RevenueReveal` + `ScarcityBlock` + `FinalCTA`
-9. Alex narration hooks (event-driven)
-10. Stripe activation wire-up (recommended plan pre-selected)
-11. Router entry + sitemap entry + SEO head
-12. Mobile QA at 384px viewport
-
----
-
-## 10. Decisions to confirm before build
-
-1. **Auth gate placement** — only at "Activer mon profil" (Stripe step), letting guests complete entire diagnostic? **Recommended: yes** — maximizes completion + emotional commitment before friction.
-2. **Competitor data** — Phase 1 uses deterministic stub (top-3 from local contractor table by city + AIPP score where available). Real-time Firecrawl scrape deferred to Phase 2. OK?
-3. **Recommended plan default** — start from team_size + projected_revenue gap (deterministic), no AI call needed in Phase 1. OK?
-
-If you answer "go" or "oui", I'll build all 12 tasks in one pass.
+- Files created: 2 (`noMatchCopy.ts`, `NoMatchConversionCard.tsx`).
+- Files edited: 6 listed above.
+- No DB migration. No new dependencies.
+- All colors via semantic tokens; pulse via Tailwind `animate-pulse` + `shadow-[0_0_24px_hsl(var(--primary)/0.35)]`.
