@@ -94,7 +94,7 @@ export default function PaintingCalculatorPage() {
     () => SUPPORTED_CITIES.find((c) => c.slug === cityParam) || null,
     [cityParam],
   );
-  const { user, loading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
 
   const [input, setInput] = useState<CalculatorInput>(DEFAULT_INPUT);
   const [photos, setPhotos] = useState<PaintingPhoto[]>([]);
