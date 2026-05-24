@@ -223,7 +223,7 @@ export default function PageAiIndexedProfile() {
 
       <Helmet>
         <html lang="fr-CA" />
-        <title>{p.meta_title || `${p.company_name} — Profil IA vérifié UNPRO`}</title>
+        <title>{p.meta_title || `${p.company_name} — Profil analysé par UNPRO`}</title>
         <meta name="description" content={p.meta_description || p.short_ai_summary} />
         <link rel="canonical" href={canonical} />
         <meta property="og:title" content={p.meta_title || p.company_name} />
