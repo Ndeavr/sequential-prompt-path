@@ -314,31 +314,33 @@ export default function PageAiIndexedProfile() {
           </Card>
         </section>
 
-        {/* VERIFIED DATA */}
-        <section>
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5" /> Données vérifiées
-          </h2>
-          <Card className="bg-white border-stone-200">
-            <CardContent className="p-0 divide-y divide-stone-100">
-              {validationRows.map((row) => {
-                const status = validations?.[row.key] || "unverified";
-                return (
+        {/* INFORMATIONS PUBLIQUES ANALYSÉES — public surface only shows confirmed rows */}
+        {publicValidationRows.length > 0 && (
+          <section>
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5" /> Informations publiques analysées
+            </h2>
+            <Card className="bg-white border-stone-200">
+              <CardContent className="p-0 divide-y divide-stone-100">
+                {publicValidationRows.map((row) => (
                   <div key={row.label} className="flex items-center justify-between px-5 py-3.5">
                     <div className="flex items-center gap-3">
-                      {STATUS_ICON[status]}
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                       <div>
                         <div className="font-medium">{row.label}</div>
-                        {row.value && <div className="text-sm text-stone-500">{row.value}</div>}
+                        <div className="text-sm text-stone-500 break-all">{row.value}</div>
                       </div>
                     </div>
-                    <Badge variant="outline" className="text-xs">{STATUS_LABEL[status]}</Badge>
+                    <Badge variant="outline" className="text-xs border-emerald-200 text-emerald-700">Confirmé</Badge>
                   </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        </section>
+                ))}
+              </CardContent>
+            </Card>
+            <p className="text-xs text-stone-500 mt-2 px-1">
+              UNPRO n'affiche publiquement que les informations confirmées par des sources vérifiables.
+            </p>
+          </section>
+        )}
 
         {/* SERVICES */}
         {services.length > 0 && (
