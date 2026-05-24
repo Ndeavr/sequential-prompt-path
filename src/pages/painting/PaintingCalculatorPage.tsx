@@ -515,69 +515,154 @@ export default function PaintingCalculatorPage() {
           </StepCard>
         )}
 
-        {/* STEP 3 — Surfaces */}
+        {/* STEP 3 — Surfaces, méthode, matériau, condition */}
         {step === 3 && (
           <StepCard title="Quelques détails" subtitle="Plus c'est précis, plus l'estimation est juste.">
             <div className="space-y-5">
-              <Field label="Nombre de pièces">
-                <NumberStepper
-                  value={input.roomCount}
-                  onChange={(v) => setInput((i) => ({ ...i, roomCount: v }))}
-                  min={1}
-                  max={20}
-                />
-              </Field>
-              <Field label="Surface moyenne par pièce (pi²)">
-                <NumberStepper
-                  value={input.avgRoomSqft}
-                  onChange={(v) => setInput((i) => ({ ...i, avgRoomSqft: v }))}
-                  min={60}
-                  max={600}
-                  step={10}
-                />
-              </Field>
-              <Field label="Hauteur des plafonds (pi)">
-                <NumberStepper
-                  value={input.ceilingHeightFt}
-                  onChange={(v) => setInput((i) => ({ ...i, ceilingHeightFt: v }))}
-                  min={7}
-                  max={14}
-                />
-              </Field>
+              {input.category && SINGLE_ZONE.includes(input.category) ? (
+                <>
+                  <Field label="Surface totale à traiter (pi²)">
+                    <NumberStepper
+                      value={input.avgRoomSqft}
+                      onChange={(v) => setInput((i) => ({ ...i, avgRoomSqft: v, roomCount: 1 }))}
+                      min={50}
+                      max={20000}
+                      step={50}
+                    />
+                  </Field>
+                  <Field label="Périmètre / bordures (pi linéaires) — optionnel">
+                    <NumberStepper
+                      value={input.linearFt ?? 0}
+                      onChange={(v) => setInput((i) => ({ ...i, linearFt: v }))}
+                      min={0}
+                      max={2000}
+                      step={5}
+                    />
+                  </Field>
+                </>
+              ) : (
+                <>
+                  <Field label="Nombre de pièces">
+                    <NumberStepper
+                      value={input.roomCount}
+                      onChange={(v) => setInput((i) => ({ ...i, roomCount: v }))}
+                      min={1}
+                      max={20}
+                    />
+                  </Field>
+                  <Field label="Surface moyenne par pièce (pi²)">
+                    <NumberStepper
+                      value={input.avgRoomSqft}
+                      onChange={(v) => setInput((i) => ({ ...i, avgRoomSqft: v }))}
+                      min={60}
+                      max={600}
+                      step={10}
+                    />
+                  </Field>
+                  <Field label="Hauteur des plafonds (pi)">
+                    <NumberStepper
+                      value={input.ceilingHeightFt}
+                      onChange={(v) => setInput((i) => ({ ...i, ceilingHeightFt: v }))}
+                      min={7}
+                      max={14}
+                    />
+                  </Field>
+                </>
+              )}
 
-              <Field label="État des murs">
-                <SegmentedGroup
-                  options={Object.entries(WALL_CONDITION_LABELS).map(([v, l]) => ({ value: v, label: l }))}
-                  value={input.wallCondition}
-                  onChange={(v) => setInput((i) => ({ ...i, wallCondition: v as WallCondition }))}
-                />
-              </Field>
+              {input.category && CATEGORY_METHODS[input.category].length > 1 && (
+                <Field label="Méthode d'application">
+                  <SegmentedGroup
+                    options={CATEGORY_METHODS[input.category].map((m) => ({
+                      value: m,
+                      label: METHODS[m].label,
+                    }))}
+                    value={input.method ?? CATEGORY_METHODS[input.category][0]}
+                    onChange={(v) => setInput((i) => ({ ...i, method: v as ApplicationMethod }))}
+                  />
+                </Field>
+              )}
 
-              <Field label="Qualité de peinture">
-                <SegmentedGroup
-                  options={Object.entries(PAINT_QUALITY_LABELS).map(([v, l]) => ({ value: v, label: l }))}
-                  value={input.paintQuality}
-                  onChange={(v) => setInput((i) => ({ ...i, paintQuality: v as PaintQuality }))}
-                />
-              </Field>
+              {input.category && CATEGORY_MATERIALS[input.category].length > 1 && (
+                <Field label="Matériau de surface">
+                  <SegmentedGroup
+                    options={CATEGORY_MATERIALS[input.category].map((m) => ({
+                      value: m,
+                      label: MATERIALS[m].label,
+                    }))}
+                    value={input.material ?? CATEGORY_MATERIALS[input.category][0]}
+                    onChange={(v) => setInput((i) => ({ ...i, material: v as SurfaceMaterial }))}
+                  />
+                </Field>
+              )}
 
-              <div className="grid grid-cols-3 gap-2">
-                <Toggle
-                  label="Plafonds"
-                  active={input.includesCeilings}
-                  onClick={() => setInput((i) => ({ ...i, includesCeilings: !i.includesCeilings }))}
-                />
-                <Toggle
-                  label="Moulures"
-                  active={input.includesTrim}
-                  onClick={() => setInput((i) => ({ ...i, includesTrim: !i.includesTrim }))}
-                />
-                <Toggle
-                  label="Portes"
-                  active={input.includesDoors}
-                  onClick={() => setInput((i) => ({ ...i, includesDoors: !i.includesDoors }))}
-                />
-              </div>
+              {input.category && (
+                <Field label="État de la surface (cochez ce qui s'applique)">
+                  <div className="flex flex-wrap gap-2">
+                    {CATEGORY_CONDITIONS[input.category].map((code) => {
+                      const active = (input.conditionCodes ?? []).includes(code);
+                      return (
+                        <button
+                          key={code}
+                          onClick={() =>
+                            setInput((i) => {
+                              const cur = new Set(i.conditionCodes ?? []);
+                              if (cur.has(code)) cur.delete(code);
+                              else cur.add(code);
+                              return { ...i, conditionCodes: Array.from(cur) };
+                            })
+                          }
+                          className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
+                            active
+                              ? "bg-cyan-400/15 border-cyan-400/60 text-cyan-100"
+                              : "bg-white/5 border-white/10 text-white/70 hover:border-white/30"
+                          }`}
+                        >
+                          {CONDITIONS[code].label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </Field>
+              )}
+
+              {!input.category || !SINGLE_ZONE.includes(input.category) ? (
+                <>
+                  <Field label="État général">
+                    <SegmentedGroup
+                      options={Object.entries(WALL_CONDITION_LABELS).map(([v, l]) => ({ value: v, label: l }))}
+                      value={input.wallCondition}
+                      onChange={(v) => setInput((i) => ({ ...i, wallCondition: v as WallCondition }))}
+                    />
+                  </Field>
+
+                  <Field label="Qualité de peinture">
+                    <SegmentedGroup
+                      options={Object.entries(PAINT_QUALITY_LABELS).map(([v, l]) => ({ value: v, label: l }))}
+                      value={input.paintQuality}
+                      onChange={(v) => setInput((i) => ({ ...i, paintQuality: v as PaintQuality }))}
+                    />
+                  </Field>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <Toggle
+                      label="Plafonds"
+                      active={input.includesCeilings}
+                      onClick={() => setInput((i) => ({ ...i, includesCeilings: !i.includesCeilings }))}
+                    />
+                    <Toggle
+                      label="Moulures"
+                      active={input.includesTrim}
+                      onClick={() => setInput((i) => ({ ...i, includesTrim: !i.includesTrim }))}
+                    />
+                    <Toggle
+                      label="Portes"
+                      active={input.includesDoors}
+                      onClick={() => setInput((i) => ({ ...i, includesDoors: !i.includesDoors }))}
+                    />
+                  </div>
+                </>
+              ) : null}
 
               <Field label="Urgence">
                 <SegmentedGroup
@@ -586,6 +671,7 @@ export default function PaintingCalculatorPage() {
                   onChange={(v) => setInput((i) => ({ ...i, urgency: v as Urgency }))}
                 />
               </Field>
+
 
               {/* Live teaser */}
               {result && (
