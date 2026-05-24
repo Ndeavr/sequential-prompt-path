@@ -9,17 +9,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ExternalLink, Plus } from "lucide-react";
+import { ExternalLink, Plus, ShieldCheck } from "lucide-react";
 
 export default function PageAippProfiles() {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
     const { data } = await supabase
       .from("aipp_profiles" as any)
-      .select("id, slug, display_name, primary_trade, primary_city, public_status, updated_at")
+      .select("id, slug, company_name, primary_trade, primary_city, public_status, updated_at")
       .order("updated_at", { ascending: false })
       .limit(100);
     setRows(data ?? []);
@@ -37,6 +38,22 @@ export default function PageAippProfiles() {
     if (error) return toast.error(error.message);
     toast.success(next === "published" ? "Publié" : "Dépublié");
     load();
+  };
+
+  const verifyRbq = async (id: string) => {
+    setVerifyingId(id);
+    try {
+      const { data, error } = await supabase.functions.invoke("aipp-verify-rbq", {
+        body: { profile_id: id },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "Échec");
+      toast.success(`RBQ : ${data.rbq_status}${data.rbq_number ? ` (${data.rbq_number})` : ""}`);
+    } catch (e: any) {
+      toast.error(e.message || "Erreur vérification RBQ");
+    } finally {
+      setVerifyingId(null);
+    }
   };
 
   return (
@@ -60,7 +77,7 @@ export default function PageAippProfiles() {
               <CardContent className="p-4 flex items-center justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-white truncate">{r.display_name}</span>
+                    <span className="font-medium text-white truncate">{r.company_name}</span>
                     <Badge variant={r.public_status === "published" ? "default" : "secondary"}>
                       {r.public_status}
                     </Badge>
@@ -73,6 +90,10 @@ export default function PageAippProfiles() {
                   <Link to={`/ai-indexed-profiles/${r.slug}`} target="_blank">
                     <Button size="sm" variant="ghost"><ExternalLink className="w-4 h-4" /></Button>
                   </Link>
+                  <Button size="sm" variant="outline" onClick={() => verifyRbq(r.id)} disabled={verifyingId === r.id}>
+                    <ShieldCheck className="w-4 h-4 mr-1" />
+                    {verifyingId === r.id ? "Vérif…" : "RBQ"}
+                  </Button>
                   <Button size="sm" variant="outline" onClick={() => toggle(r.id, r.public_status)}>
                     {r.public_status === "published" ? "Dépublier" : "Publier"}
                   </Button>
