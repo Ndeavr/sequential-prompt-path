@@ -224,9 +224,10 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
-    console.error("aipp-import-website", e);
+    const msg = e instanceof Error ? e.message : (typeof e === "string" ? e : JSON.stringify(e));
+    console.error("aipp-import-website", msg, e);
     return new Response(
-      JSON.stringify({ ok: false, error: e instanceof Error ? e.message : "Unknown" }),
+      JSON.stringify({ ok: false, error: msg || "Unknown" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
