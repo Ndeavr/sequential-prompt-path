@@ -33,11 +33,11 @@ import {
 import { elevenlabsService } from "@/features/alex/services/elevenlabsService";
 import { hasGreeted, markGreeted, markVoiceStarted } from "@/lib/alexSessionState";
 
-// ChatGPT-Voice style: never block UI on TTS. 3s hard cap from spec.
+// ChatGPT-Voice style: keep one realtime session alive; only fallback after a true connect failure.
 const STABILIZATION_MS = 1500;
 const HEARTBEAT_INTERVAL_MS = 2500; // Slower → less battery
-const BOOT_TIMEOUT_MS = 3000; // 3s spec hard cap — bail to TTS/chat if still booting
-const FIRST_AUDIO_TIMEOUT_MS = 3000; // 3s spec hard cap before TTS fallback
+const BOOT_TIMEOUT_MS = 12_000;
+const FIRST_AUDIO_TIMEOUT_MS = 12_000;
 const TOKEN_SLOW_THRESHOLD_MS = 1500; // Show "Connexion d'Alex…" sooner
 const MAX_AUTO_RETRIES = 0; // Strictly event-driven — never silently retry.
 
@@ -69,7 +69,6 @@ export default function OverlayAlexVoiceFullScreen() {
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stabilizationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const firstAudioTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const ttsWarmupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [transcripts, setTranscripts] = useState<Array<{ id: string; role: "user" | "alex"; text: string }>>([]);
   const [slowToken, setSlowToken] = useState(false);
   const slowTokenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
