@@ -4051,14 +4051,20 @@ export type Database = {
           insurance_status:
             | Database["public"]["Enums"]["aipp_fact_status"]
             | null
+          neq_candidates: Json | null
           neq_number: string | null
           neq_source_url: string | null
           neq_status: Database["public"]["Enums"]["aipp_fact_status"] | null
+          neq_verified_at: string | null
           phone_status: Database["public"]["Enums"]["aipp_fact_status"] | null
           profile_id: string
+          rbq_candidates: Json | null
+          rbq_categories: string[] | null
           rbq_number: string | null
           rbq_source_url: string | null
           rbq_status: Database["public"]["Enums"]["aipp_fact_status"] | null
+          rbq_valid_until: string | null
+          rbq_verified_at: string | null
           reviewed_by_admin: boolean | null
           social_status: Database["public"]["Enums"]["aipp_fact_status"] | null
           updated_at: string
@@ -4079,14 +4085,20 @@ export type Database = {
           insurance_status?:
             | Database["public"]["Enums"]["aipp_fact_status"]
             | null
+          neq_candidates?: Json | null
           neq_number?: string | null
           neq_source_url?: string | null
           neq_status?: Database["public"]["Enums"]["aipp_fact_status"] | null
+          neq_verified_at?: string | null
           phone_status?: Database["public"]["Enums"]["aipp_fact_status"] | null
           profile_id: string
+          rbq_candidates?: Json | null
+          rbq_categories?: string[] | null
           rbq_number?: string | null
           rbq_source_url?: string | null
           rbq_status?: Database["public"]["Enums"]["aipp_fact_status"] | null
+          rbq_valid_until?: string | null
+          rbq_verified_at?: string | null
           reviewed_by_admin?: boolean | null
           social_status?: Database["public"]["Enums"]["aipp_fact_status"] | null
           updated_at?: string
@@ -4109,14 +4121,20 @@ export type Database = {
           insurance_status?:
             | Database["public"]["Enums"]["aipp_fact_status"]
             | null
+          neq_candidates?: Json | null
           neq_number?: string | null
           neq_source_url?: string | null
           neq_status?: Database["public"]["Enums"]["aipp_fact_status"] | null
+          neq_verified_at?: string | null
           phone_status?: Database["public"]["Enums"]["aipp_fact_status"] | null
           profile_id?: string
+          rbq_candidates?: Json | null
+          rbq_categories?: string[] | null
           rbq_number?: string | null
           rbq_source_url?: string | null
           rbq_status?: Database["public"]["Enums"]["aipp_fact_status"] | null
+          rbq_valid_until?: string | null
+          rbq_verified_at?: string | null
           reviewed_by_admin?: boolean | null
           social_status?: Database["public"]["Enums"]["aipp_fact_status"] | null
           updated_at?: string
