@@ -1,68 +1,111 @@
-## État actuel (diagnostic rapide)
-
-- **Domaine email**: `notify.unpro.ca` ✅ vérifié — mais `email_domain_configs` est vide (le sender n'est pas enregistré côté UNPRO config).
-- **Prospects**: 80 lignes dans `contractor_prospects`, **1 seule** ligne dans `sniper_targets`. Le scraping n'alimente pas le sniper.
-- **Envois**: `email_send_log` = **0 email** envoyé sur 7 jours. Test Center a logué : *"Test email échec: Edge Function returned a non-2xx status code"*.
-- **SMS**: tables `sms_*` + `acq_sms_logs` présentes, mais connector Twilio non vérifié.
-- **Fonctions présentes**: `fn-scrape-google-results`, `scrape-rbq-leads`, `scrape-qc-exterior-trades`, `sniper-import-targets`, `sniper-enrich-target`, `sniper-generate-assets`, `sniper-queue-send`, `sniper-update-heat`, `sms-prospect-send`, `send-sms-prospect`, `send-outbound-test-email`, `send-transactional-email`.
-- **Landing**: `/analyse/:slug` → `PageOutreachLanding` existe ✅.
+# Plan — AIPP Universal Entity Template + ISR Demo
 
 ## Objectif
+Transformer chaque entrepreneur en **entité structurée vérifiable et citable par les IA** (ChatGPT, Gemini, Perplexity). Page modèle réutilisable sur 10 000+ profils, avec JSON-LD complet, preuves vérifiées, et zéro invention.
 
-Rendre opérationnel le flux **scrape → enrich → score AIPP → envoi email + SMS → landing `/analyse/:slug`** sur les 3 pipelines (Sniper, Outbound Autopilot, Prospect Execution).
+## Architecture
 
-## Plan d'exécution
+```
+/aipp/:slug              → Page publique AIPP (template universel)
+/admin/aipp-import       → Centre d'import + validation
+/admin/aipp-profiles     → Liste / modération profils
+```
 
-### 1. Diagnostic complet (lecture)
-- Lire `send-outbound-test-email` + `sniper-queue-send` + `sms-prospect-send` pour repérer la cause du non-2xx.
-- Vérifier secrets disponibles (`RESEND_API_KEY` ou Lovable Emails, `TWILIO_*`, `FIRECRAWL_API_KEY`).
-- Vérifier connector Twilio via `standard_connectors--list_connections`. Si absent → demander connexion.
-- Inspecter `sniper-import-targets` pour comprendre pourquoi `contractor_prospects` (80) ne sont pas migrés en `sniper_targets` (1).
+Route démo : `/aipp/isolation-solution-royal`
 
-### 2. Correctifs Email
-- Seed `email_domain_configs` avec `notify.unpro.ca` (sender = `alex@notify.unpro.ca`, reply-to = `bonjour@unpro.ca`, `is_active = true`).
-- Corriger l'erreur non-2xx du `send-outbound-test-email` (probablement: domaine sender hardcodé vs vérifié, ou template manquant).
-- Forcer toutes les fonctions d'envoi à utiliser la file `transactional_emails` Lovable Emails (queue process-email-queue déjà en place).
-- Lien dans email = `https://unpro.ca/analyse/{slug}` avec UTM + token de tracking (déjà supporté par PageOutreachLanding).
+## Phase 1 — Schéma Supabase (migration unique)
 
-### 3. Correctifs SMS
-- Si Twilio non connecté → présenter `standard_connectors--connect` Twilio.
-- Brancher `sms-prospect-send` sur gateway Twilio (`/Accounts/{SID}/Messages.json`) avec lien court vers `/analyse/{slug}`.
-- Activer la séquence fallback SMS (2 emails non ouverts → SMS) via `sms_fallback_sequences`.
+Tables :
+- `aipp_profiles` — identité + statut publication
+- `aipp_profile_sources` — URL source de chaque fait (traçabilité)
+- `aipp_profile_services` — taxonomie normalisée (service, sous-services, problèmes, saisonnalité, urgence, valeur projet, client idéal)
+- `aipp_profile_locations` — villes desservies (génération contenu local)
+- `aipp_profile_media` — photos, vidéos, avant/après, alt SEO auto
+- `aipp_profile_reviews` — avis + résumé IA + forces/points faibles
+- `aipp_profile_validations` — RBQ, NEQ, assurance, NAP, GBP (statut: confirmed / unverified / not_found + source)
+- `aipp_profile_scores` — AIPP, trust, SEO, AI citation, NAP, review, media
+- `aipp_entity_facts` — bloc invisible « facts » lisible par IA
+- `aipp_schema_snapshots` — JSON-LD versionné par profil
+- `aipp_import_runs` — historique scrape + diagnostics
 
-### 4. Pipeline scraping → sniper
-- Backfill: convertir les 80 `contractor_prospects` existants en `sniper_targets` via une RPC `import_prospects_to_sniper()`.
-- Vérifier que `fn-scrape-google-results` écrit bien dans `contractor_prospects` (queries Google ville×catégorie depuis `city_activity_matrix`).
-- Brancher cron `outbound-autopilot` (15 min) pour déclencher en cascade: scrape → enrich (Firecrawl + AIPP) → generate-assets (email + SMS) → queue-send (respect des fenêtres).
+RLS :
+- Public : lecture si `public_status = 'published'`
+- Admin : full CRUD via `has_role(admin)`
+- Contractor : peut demander correction sur son profil lié (table `aipp_profile_corrections`)
+- Documents privés : aucune lecture publique
 
-### 5. Smoke test end-to-end
-- Lancer manuellement `fn-scrape-google-results` pour 1 ville × 1 catégorie (ex: Laval × Isolation).
-- Vérifier insertion `sniper_targets`.
-- Déclencher `sniper-enrich-target` puis `sniper-generate-assets` puis `sniper-queue-send` sur 1 cible test.
-- Confirmer ligne `email_send_log` status = `sent`, ouvrir `/analyse/{slug}`, vérifier tracking view.
-- Tester SMS sur un numéro test (admin).
-- Publier le résultat dans **Test Center** (table `outbound_test_logs` à créer si nécessaire avec entrées success/error).
+## Phase 2 — Page publique `/aipp/:slug`
 
-### 6. Cockpit Test Center
-- Ajouter bouton **"Lancer cycle complet"** dans `/admin/sniper` qui exécute les 4 étapes en séquence et stream les logs en realtime.
-- KPI temps réel: scraped (24h), enriched, sent (email/sms), opens, landing views, conversions.
+Composant `PageAippProfile` + sections modulaires :
 
-## Constraints
+1. **HeroAipp** — Logo, nom, métier, ville, badge « Profil IA vérifié UNPRO », score AIPP, score confiance, note Google, 3 CTA (Vérifier / RDV / Analyser soumissions)
+2. **AippAiSummary** — Résumé IA des sources analysées
+3. **AippVerifiedData** — Table 10 lignes (Confirmé / À confirmer / Non trouvé) avec icône + source
+4. **AippServicesGrid** — Services normalisés (taxonomie UNPRO)
+5. **AippServiceAreas** — Carte + villes (contenu local unique par ville)
+6. **AippGallery** — Photos + alt SEO auto + avant/après slider
+7. **AippVideoBlock** — Vidéo + transcript + résumé IA
+8. **AippReviewsSummary** — Résumé IA + forces + extraits
+9. **AippScoreBreakdown** — Score sur 100 avec 10 sous-dimensions
+10. **AippWhyRecommend** — « Profil compatible » (jamais « meilleur »)
+11. **AippFaqIa** — 6 Q/R optimisées AEO
+12. **AippEntityFacts** — Bloc `<div hidden>` lisible IA avec faits propres
 
-- Aucune nouvelle UI superflue — réutiliser `/admin/sniper`, `/admin/outbound`, `/admin/test-center`.
-- Garder lien unique = `/analyse/:slug` (Landing AIPP) pour tous les envois.
-- Respecter quota Lovable Emails + Twilio (rate limit, send windows 9h-19h heure QC, max 50/jour par boîte).
-- Aucune fuite copy interne (jamais "non-2xx", "edge function", etc.) dans les UI utilisateur.
+**SEO/AEO** :
+- `react-helmet-async` : title, description, canonical, OG, Twitter
+- `SchemaStack` injecte JSON-LD : LocalBusiness, HomeAndConstructionBusiness, Contractor, Service, OfferCatalog, Review, AggregateRating, FAQPage, BreadcrumbList, ImageObject, VideoObject, Organization, WebPage, SpeakableSpecification
+- Sitemap : route `aipp-sitemap` edge function listant tous les profils published
+- robots: index, follow
 
-## Livrables
+## Phase 3 — Score AIPP
 
-1. Migration: seed `email_domain_configs` + RPC `import_prospects_to_sniper()` + table `outbound_test_logs` si manquante.
-2. Fix `send-outbound-test-email` + `sniper-queue-send` + `sms-prospect-send` (corps réponse, sender, lien).
-3. Hook Twilio connector + edge function `send-sms-prospect` câblé.
-4. Cron autopilot 15 min.
-5. Bouton **"Lancer cycle complet"** + stream logs en realtime.
-6. Smoke test passé (email reçu + SMS reçu + landing tracked).
+Service `src/services/aippEntityScoreService.ts` :
+- 10 dimensions × 10 pts = 100
+- Présence web, NAP, avis, photos, autorité locale, structure IA, preuves, spécialisation, citabilité ChatGPT, citabilité Gemini/Perplexity
+- Score recalculé à chaque update profil + stocké dans `aipp_profile_scores`
 
-## Question préalable
+## Phase 4 — Admin Import Center `/admin/aipp-import`
 
-Twilio est-il déjà connecté dans le workspace, ou je dois déclencher l'ajout du connector Twilio en début d'implémentation ?
+Edge function `aipp-import-website` :
+- Input : URL site
+- Firecrawl scrape (markdown + links + branding + images)
+- Lovable AI Gateway (Gemini 3 Flash) → extraction structurée via tool calling :
+  - nom légal/commercial, téléphone, courriel, RBQ/NEQ, services, villes, Google Business
+- Génère : résumé IA, FAQ, alt text images, JSON-LD complet
+- Calcule score AIPP, diagnostique données manquantes
+- Sauvegarde dans `aipp_import_runs` + populate `aipp_profiles` (draft)
+
+UI admin :
+- Input URL → bouton « Scraper »
+- Preview de chaque champ détecté avec statut (confirmé/à confirmer)
+- Boutons : « Publier », « Demander validation entrepreneur », « Recalculer score »
+- Liste des runs précédents
+
+## Phase 5 — Démo ISR (Isolation Solution Royal)
+
+Seed via migration :
+- Profile published avec :
+  - Site : isroyal.ca
+  - Services : isolation entretoit, décontamination moisissure, ventilation soffites, étanchéité air, inspection entretoit
+  - Zones : Terrebonne, Laval, Montréal, Rive-Nord, Lanaudière
+  - Positionnement : spécialiste entretoit résidentiel, inspection gratuite
+- **Sans inventer** RBQ/assurance/note → marqués `not_found` ou `unverified`
+- Photos placeholder (à remplacer par scrape réel)
+- JSON-LD complet généré + validé
+
+## Détails techniques
+
+- Frontend : React + Vite + TanStack Query, `react-helmet-async` déjà installé
+- AI : Lovable AI Gateway, model `google/gemini-3-flash-preview` (extraction) et `google/gemini-2.5-pro` (résumé long)
+- Scrape : Firecrawl (connector existant) — formats `markdown`, `links`, `branding`, `screenshot`
+- Edge functions Deno : `aipp-import-website`, `aipp-generate-summary`, `aipp-compute-score`, `aipp-sitemap`
+- Réutilise : `SchemaStack`, `SeoHead`, `SeoFaqSection`, `SeoStructuredDataInjector`, `seoSchema.ts`
+- Conformité memory : SECURITY INVOKER pour views publiques, fr-CA strict, dark cinematic pour app et warm neutral pour `/aipp/:slug` (page publique SEO)
+
+## Hors-scope (phase suivante)
+- Comparatif multi-entrepreneurs
+- Flow contractor « réclamer mon profil » complet (UI seulement, pas auth flow)
+- Auto-scrape récurrent (cron)
+
+## Question avant build
+Confirmes-tu : **page publique `/aipp/:slug` en thème Warm Neutral** (cohérent avec landing SEO publique) et **import admin sous `/admin/aipp-import` en Cinematic Dark** ?

@@ -3580,6 +3580,690 @@ export type Database = {
         }
         Relationships: []
       }
+      aipp_entity_facts: {
+        Row: {
+          facts: Json
+          id: string
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          facts?: Json
+          id?: string
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          facts?: Json
+          id?: string
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aipp_entity_facts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "aipp_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aipp_import_runs: {
+        Row: {
+          completed_at: string | null
+          diagnostics: Json | null
+          error: string | null
+          extracted_data: Json | null
+          id: string
+          profile_id: string | null
+          raw_scrape: Json | null
+          source_url: string
+          started_at: string
+          started_by: string | null
+          status: string
+          steps_completed: Json | null
+        }
+        Insert: {
+          completed_at?: string | null
+          diagnostics?: Json | null
+          error?: string | null
+          extracted_data?: Json | null
+          id?: string
+          profile_id?: string | null
+          raw_scrape?: Json | null
+          source_url: string
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          steps_completed?: Json | null
+        }
+        Update: {
+          completed_at?: string | null
+          diagnostics?: Json | null
+          error?: string | null
+          extracted_data?: Json | null
+          id?: string
+          profile_id?: string | null
+          raw_scrape?: Json | null
+          source_url?: string
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          steps_completed?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aipp_import_runs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "aipp_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aipp_profile_corrections: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          current_value: string | null
+          evidence_url: string | null
+          field_key: string
+          id: string
+          profile_id: string
+          proposed_value: string | null
+          requested_by: string
+          resolved_at: string | null
+          status: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          current_value?: string | null
+          evidence_url?: string | null
+          field_key: string
+          id?: string
+          profile_id: string
+          proposed_value?: string | null
+          requested_by: string
+          resolved_at?: string | null
+          status?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          current_value?: string | null
+          evidence_url?: string | null
+          field_key?: string
+          id?: string
+          profile_id?: string
+          proposed_value?: string | null
+          requested_by?: string
+          resolved_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aipp_profile_corrections_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "aipp_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aipp_profile_locations: {
+        Row: {
+          city: string
+          created_at: string
+          id: string
+          is_primary: boolean | null
+          local_content: string | null
+          postal_codes: string[] | null
+          profile_id: string
+          region: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          local_content?: string | null
+          postal_codes?: string[] | null
+          profile_id: string
+          region?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          local_content?: string | null
+          postal_codes?: string[] | null
+          profile_id?: string
+          region?: string | null
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aipp_profile_locations_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "aipp_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aipp_profile_media: {
+        Row: {
+          alt_text: string | null
+          caption: string | null
+          created_at: string
+          id: string
+          is_before: boolean | null
+          media_type: string
+          paired_with: string | null
+          profile_id: string
+          sort_order: number | null
+          thumbnail_url: string | null
+          url: string
+          video_summary: string | null
+          video_transcript: string | null
+        }
+        Insert: {
+          alt_text?: string | null
+          caption?: string | null
+          created_at?: string
+          id?: string
+          is_before?: boolean | null
+          media_type: string
+          paired_with?: string | null
+          profile_id: string
+          sort_order?: number | null
+          thumbnail_url?: string | null
+          url: string
+          video_summary?: string | null
+          video_transcript?: string | null
+        }
+        Update: {
+          alt_text?: string | null
+          caption?: string | null
+          created_at?: string
+          id?: string
+          is_before?: boolean | null
+          media_type?: string
+          paired_with?: string | null
+          profile_id?: string
+          sort_order?: number | null
+          thumbnail_url?: string | null
+          url?: string
+          video_summary?: string | null
+          video_transcript?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aipp_profile_media_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "aipp_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aipp_profile_reviews: {
+        Row: {
+          author_name: string | null
+          created_at: string
+          excerpt: string | null
+          full_text: string | null
+          id: string
+          is_summary: boolean | null
+          profile_id: string
+          rating: number | null
+          review_source: string | null
+          reviewed_at: string | null
+          source_url: string | null
+          strengths: string[] | null
+          weaknesses: string[] | null
+        }
+        Insert: {
+          author_name?: string | null
+          created_at?: string
+          excerpt?: string | null
+          full_text?: string | null
+          id?: string
+          is_summary?: boolean | null
+          profile_id: string
+          rating?: number | null
+          review_source?: string | null
+          reviewed_at?: string | null
+          source_url?: string | null
+          strengths?: string[] | null
+          weaknesses?: string[] | null
+        }
+        Update: {
+          author_name?: string | null
+          created_at?: string
+          excerpt?: string | null
+          full_text?: string | null
+          id?: string
+          is_summary?: boolean | null
+          profile_id?: string
+          rating?: number | null
+          review_source?: string | null
+          reviewed_at?: string | null
+          source_url?: string | null
+          strengths?: string[] | null
+          weaknesses?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aipp_profile_reviews_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "aipp_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aipp_profile_scores: {
+        Row: {
+          ai_citation_score: number
+          aipp_score: number
+          breakdown: Json | null
+          chatgpt_citability: number
+          computed_at: string
+          gemini_citability: number
+          id: string
+          local_authority_score: number
+          media_score: number
+          nap_consistency_score: number
+          profile_id: string
+          proofs_score: number
+          review_quality_score: number
+          seo_score: number
+          specialization_score: number
+          structure_score: number
+          trust_score: number
+          web_presence_score: number
+        }
+        Insert: {
+          ai_citation_score?: number
+          aipp_score?: number
+          breakdown?: Json | null
+          chatgpt_citability?: number
+          computed_at?: string
+          gemini_citability?: number
+          id?: string
+          local_authority_score?: number
+          media_score?: number
+          nap_consistency_score?: number
+          profile_id: string
+          proofs_score?: number
+          review_quality_score?: number
+          seo_score?: number
+          specialization_score?: number
+          structure_score?: number
+          trust_score?: number
+          web_presence_score?: number
+        }
+        Update: {
+          ai_citation_score?: number
+          aipp_score?: number
+          breakdown?: Json | null
+          chatgpt_citability?: number
+          computed_at?: string
+          gemini_citability?: number
+          id?: string
+          local_authority_score?: number
+          media_score?: number
+          nap_consistency_score?: number
+          profile_id?: string
+          proofs_score?: number
+          review_quality_score?: number
+          seo_score?: number
+          specialization_score?: number
+          structure_score?: number
+          trust_score?: number
+          web_presence_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aipp_profile_scores_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "aipp_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aipp_profile_services: {
+        Row: {
+          avg_project_value_max: number | null
+          avg_project_value_min: number | null
+          created_at: string
+          id: string
+          ideal_client: string | null
+          is_primary: boolean | null
+          problems_solved: string[] | null
+          profile_id: string
+          seasonality: string | null
+          service_name: string
+          sort_order: number | null
+          sub_services: string[] | null
+          urgency_capable: boolean | null
+        }
+        Insert: {
+          avg_project_value_max?: number | null
+          avg_project_value_min?: number | null
+          created_at?: string
+          id?: string
+          ideal_client?: string | null
+          is_primary?: boolean | null
+          problems_solved?: string[] | null
+          profile_id: string
+          seasonality?: string | null
+          service_name: string
+          sort_order?: number | null
+          sub_services?: string[] | null
+          urgency_capable?: boolean | null
+        }
+        Update: {
+          avg_project_value_max?: number | null
+          avg_project_value_min?: number | null
+          created_at?: string
+          id?: string
+          ideal_client?: string | null
+          is_primary?: boolean | null
+          problems_solved?: string[] | null
+          profile_id?: string
+          seasonality?: string | null
+          service_name?: string
+          sort_order?: number | null
+          sub_services?: string[] | null
+          urgency_capable?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aipp_profile_services_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "aipp_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aipp_profile_sources: {
+        Row: {
+          collected_at: string
+          confidence: number | null
+          created_at: string
+          fact_key: string
+          id: string
+          profile_id: string
+          raw_excerpt: string | null
+          source_type: string | null
+          source_url: string
+        }
+        Insert: {
+          collected_at?: string
+          confidence?: number | null
+          created_at?: string
+          fact_key: string
+          id?: string
+          profile_id: string
+          raw_excerpt?: string | null
+          source_type?: string | null
+          source_url: string
+        }
+        Update: {
+          collected_at?: string
+          confidence?: number | null
+          created_at?: string
+          fact_key?: string
+          id?: string
+          profile_id?: string
+          raw_excerpt?: string | null
+          source_type?: string | null
+          source_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aipp_profile_sources_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "aipp_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aipp_profile_validations: {
+        Row: {
+          address_status: Database["public"]["Enums"]["aipp_fact_status"] | null
+          email_status: Database["public"]["Enums"]["aipp_fact_status"] | null
+          google_business_status:
+            | Database["public"]["Enums"]["aipp_fact_status"]
+            | null
+          id: string
+          insurance_source_url: string | null
+          insurance_status:
+            | Database["public"]["Enums"]["aipp_fact_status"]
+            | null
+          neq_number: string | null
+          neq_source_url: string | null
+          neq_status: Database["public"]["Enums"]["aipp_fact_status"] | null
+          phone_status: Database["public"]["Enums"]["aipp_fact_status"] | null
+          profile_id: string
+          rbq_number: string | null
+          rbq_source_url: string | null
+          rbq_status: Database["public"]["Enums"]["aipp_fact_status"] | null
+          reviewed_by_admin: boolean | null
+          social_status: Database["public"]["Enums"]["aipp_fact_status"] | null
+          updated_at: string
+          validated_at: string | null
+          validation_notes: string | null
+          website_status: Database["public"]["Enums"]["aipp_fact_status"] | null
+        }
+        Insert: {
+          address_status?:
+            | Database["public"]["Enums"]["aipp_fact_status"]
+            | null
+          email_status?: Database["public"]["Enums"]["aipp_fact_status"] | null
+          google_business_status?:
+            | Database["public"]["Enums"]["aipp_fact_status"]
+            | null
+          id?: string
+          insurance_source_url?: string | null
+          insurance_status?:
+            | Database["public"]["Enums"]["aipp_fact_status"]
+            | null
+          neq_number?: string | null
+          neq_source_url?: string | null
+          neq_status?: Database["public"]["Enums"]["aipp_fact_status"] | null
+          phone_status?: Database["public"]["Enums"]["aipp_fact_status"] | null
+          profile_id: string
+          rbq_number?: string | null
+          rbq_source_url?: string | null
+          rbq_status?: Database["public"]["Enums"]["aipp_fact_status"] | null
+          reviewed_by_admin?: boolean | null
+          social_status?: Database["public"]["Enums"]["aipp_fact_status"] | null
+          updated_at?: string
+          validated_at?: string | null
+          validation_notes?: string | null
+          website_status?:
+            | Database["public"]["Enums"]["aipp_fact_status"]
+            | null
+        }
+        Update: {
+          address_status?:
+            | Database["public"]["Enums"]["aipp_fact_status"]
+            | null
+          email_status?: Database["public"]["Enums"]["aipp_fact_status"] | null
+          google_business_status?:
+            | Database["public"]["Enums"]["aipp_fact_status"]
+            | null
+          id?: string
+          insurance_source_url?: string | null
+          insurance_status?:
+            | Database["public"]["Enums"]["aipp_fact_status"]
+            | null
+          neq_number?: string | null
+          neq_source_url?: string | null
+          neq_status?: Database["public"]["Enums"]["aipp_fact_status"] | null
+          phone_status?: Database["public"]["Enums"]["aipp_fact_status"] | null
+          profile_id?: string
+          rbq_number?: string | null
+          rbq_source_url?: string | null
+          rbq_status?: Database["public"]["Enums"]["aipp_fact_status"] | null
+          reviewed_by_admin?: boolean | null
+          social_status?: Database["public"]["Enums"]["aipp_fact_status"] | null
+          updated_at?: string
+          validated_at?: string | null
+          validation_notes?: string | null
+          website_status?:
+            | Database["public"]["Enums"]["aipp_fact_status"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aipp_profile_validations_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "aipp_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aipp_profiles: {
+        Row: {
+          canonical_url: string | null
+          company_name: string
+          contractor_id: string | null
+          created_at: string
+          email: string | null
+          founded_year: number | null
+          google_business_url: string | null
+          google_rating: number | null
+          google_review_count: number | null
+          hero_image_url: string | null
+          id: string
+          legal_name: string | null
+          logo_url: string | null
+          long_ai_summary: string | null
+          meta_description: string | null
+          meta_title: string | null
+          phone: string | null
+          positioning_statement: string | null
+          primary_city: string | null
+          primary_trade: string | null
+          public_status: Database["public"]["Enums"]["aipp_public_status"]
+          published_at: string | null
+          short_ai_summary: string | null
+          slug: string
+          team_size: string | null
+          trade_name: string | null
+          updated_at: string
+          verification_status: Database["public"]["Enums"]["aipp_verification_status"]
+          website_url: string | null
+        }
+        Insert: {
+          canonical_url?: string | null
+          company_name: string
+          contractor_id?: string | null
+          created_at?: string
+          email?: string | null
+          founded_year?: number | null
+          google_business_url?: string | null
+          google_rating?: number | null
+          google_review_count?: number | null
+          hero_image_url?: string | null
+          id?: string
+          legal_name?: string | null
+          logo_url?: string | null
+          long_ai_summary?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          phone?: string | null
+          positioning_statement?: string | null
+          primary_city?: string | null
+          primary_trade?: string | null
+          public_status?: Database["public"]["Enums"]["aipp_public_status"]
+          published_at?: string | null
+          short_ai_summary?: string | null
+          slug: string
+          team_size?: string | null
+          trade_name?: string | null
+          updated_at?: string
+          verification_status?: Database["public"]["Enums"]["aipp_verification_status"]
+          website_url?: string | null
+        }
+        Update: {
+          canonical_url?: string | null
+          company_name?: string
+          contractor_id?: string | null
+          created_at?: string
+          email?: string | null
+          founded_year?: number | null
+          google_business_url?: string | null
+          google_rating?: number | null
+          google_review_count?: number | null
+          hero_image_url?: string | null
+          id?: string
+          legal_name?: string | null
+          logo_url?: string | null
+          long_ai_summary?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          phone?: string | null
+          positioning_statement?: string | null
+          primary_city?: string | null
+          primary_trade?: string | null
+          public_status?: Database["public"]["Enums"]["aipp_public_status"]
+          published_at?: string | null
+          short_ai_summary?: string | null
+          slug?: string
+          team_size?: string | null
+          trade_name?: string | null
+          updated_at?: string
+          verification_status?: Database["public"]["Enums"]["aipp_verification_status"]
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      aipp_schema_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          json_ld: Json
+          profile_id: string
+          schema_version: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          json_ld: Json
+          profile_id: string
+          schema_version?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          json_ld?: Json
+          profile_id?: string
+          schema_version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aipp_schema_snapshots_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "aipp_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       aipp_score_checks: {
         Row: {
           business_name: string
@@ -66453,6 +67137,7 @@ export type Database = {
         Args: { p_city: string; p_trade: string }
         Returns: boolean
       }
+      aipp_is_published: { Args: { _profile_id: string }; Returns: boolean }
       approve_company: {
         Args: { _actor_id: string; _company_id: string }
         Returns: Json
@@ -66832,6 +67517,7 @@ export type Database = {
         | "complete"
         | "failed"
       aipp_confidence_level: "low" | "medium" | "high"
+      aipp_fact_status: "confirmed" | "unverified" | "not_found" | "disputed"
       aipp_job_status: "queued" | "running" | "complete" | "failed"
       aipp_job_type:
         | "full_audit"
@@ -66839,6 +67525,12 @@ export type Database = {
         | "website_scan"
         | "google_scan"
         | "verification_scan"
+      aipp_public_status: "draft" | "review" | "published" | "archived"
+      aipp_verification_status:
+        | "unverified"
+        | "partially_verified"
+        | "verified"
+        | "disputed"
       app_role: "homeowner" | "contractor" | "admin" | "partner"
       appointment_status:
         | "requested"
@@ -67078,6 +67770,7 @@ export const Constants = {
         "failed",
       ],
       aipp_confidence_level: ["low", "medium", "high"],
+      aipp_fact_status: ["confirmed", "unverified", "not_found", "disputed"],
       aipp_job_status: ["queued", "running", "complete", "failed"],
       aipp_job_type: [
         "full_audit",
@@ -67085,6 +67778,13 @@ export const Constants = {
         "website_scan",
         "google_scan",
         "verification_scan",
+      ],
+      aipp_public_status: ["draft", "review", "published", "archived"],
+      aipp_verification_status: [
+        "unverified",
+        "partially_verified",
+        "verified",
+        "disputed",
       ],
       app_role: ["homeowner", "contractor", "admin", "partner"],
       appointment_status: [
