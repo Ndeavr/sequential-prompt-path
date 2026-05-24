@@ -80,8 +80,11 @@ Deno.serve(async (req) => {
     if (!FIRECRAWL_API_KEY) throw new Error("FIRECRAWL_API_KEY missing");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
 
-    const { url, persist = false } = await req.json();
-    if (!url || typeof url !== "string") throw new Error("url required");
+    const { url: rawUrl, persist = false } = await req.json();
+    if (!rawUrl || typeof rawUrl !== "string") throw new Error("url required");
+    let url = rawUrl.trim();
+    if (!/^https?:\/\//i.test(url)) url = `https://${url.replace(/^\/+/, "")}`;
+    try { new URL(url); } catch { throw new Error(`URL invalide: ${rawUrl}`); }
 
     // 1) Scrape
     const scrapeRes = await fetch(FIRECRAWL, {
