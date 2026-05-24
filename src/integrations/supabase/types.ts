@@ -3580,6 +3580,56 @@ export type Database = {
         }
         Relationships: []
       }
+      aipp_detected_methods: {
+        Row: {
+          confidence: number
+          confirmed_by_contractor: boolean
+          created_at: string
+          detected_at: string
+          evidence_snippet: string | null
+          id: string
+          material: string | null
+          method: string | null
+          profile_id: string
+          service_name: string
+          source_url: string | null
+        }
+        Insert: {
+          confidence?: number
+          confirmed_by_contractor?: boolean
+          created_at?: string
+          detected_at?: string
+          evidence_snippet?: string | null
+          id?: string
+          material?: string | null
+          method?: string | null
+          profile_id: string
+          service_name: string
+          source_url?: string | null
+        }
+        Update: {
+          confidence?: number
+          confirmed_by_contractor?: boolean
+          created_at?: string
+          detected_at?: string
+          evidence_snippet?: string | null
+          id?: string
+          material?: string | null
+          method?: string | null
+          profile_id?: string
+          service_name?: string
+          source_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aipp_detected_methods_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "aipp_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       aipp_entity_facts: {
         Row: {
           facts: Json
