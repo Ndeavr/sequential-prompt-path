@@ -66465,6 +66465,13 @@ export type Database = {
         }
         Returns: undefined
       }
+      backfill_prospects_to_sniper: {
+        Args: never
+        Returns: {
+          imported: number
+          skipped: number
+        }[]
+      }
       calculate_contractor_live_score: {
         Args: { p_contractor_id: string }
         Returns: Json
