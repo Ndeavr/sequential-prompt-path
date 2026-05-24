@@ -147,3 +147,5 @@ project_id = "clmaqdnphbndvmmqvpff"
     verify_jwt = false
   [functions.stripe-mode-check]
     verify_jwt = false
+  [functions.analyze-painting-photo]
+    verify_jwt = false
