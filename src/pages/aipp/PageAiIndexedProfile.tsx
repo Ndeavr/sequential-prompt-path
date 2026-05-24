@@ -4,15 +4,15 @@
  * Warm Neutral theme for SEO/AEO public surface.
  */
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  CheckCircle2, AlertCircle, XCircle, Sparkles, MapPin, Phone, Globe, Mail,
-  Award, ShieldCheck, FileSearch, Star,
+  CheckCircle2, AlertCircle, XCircle, Sparkles, MapPin,
+  Award, ShieldCheck, Star,
 } from "lucide-react";
 
 type Profile = any;
