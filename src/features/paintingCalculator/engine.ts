@@ -109,8 +109,6 @@ export function computeEstimate(
   input: CalculatorInput,
   city: CityPricing,
 ): CalculatorResult {
-  // Lazy import to avoid circular deps
-  const cat = require("./projectCatalog") as typeof import("./projectCatalog");
   const isSingleZone = !!input.category && cat.SINGLE_ZONE.includes(input.category);
 
   let wallArea: number;
