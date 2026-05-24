@@ -41,6 +41,22 @@ import {
   type PaintQuality,
 } from "@/features/paintingCalculator/engine";
 import {
+  CATEGORY_LABELS,
+  CATEGORY_TAGLINES,
+  CATEGORY_ITEMS,
+  CATEGORY_METHODS,
+  CATEGORY_MATERIALS,
+  CATEGORY_CONDITIONS,
+  SINGLE_ZONE,
+  METHODS,
+  MATERIALS,
+  CONDITIONS,
+  type ProjectCategory,
+  type ApplicationMethod,
+  type SurfaceMaterial,
+  type SurfaceConditionCode,
+} from "@/features/paintingCalculator/projectCatalog";
+import {
   fetchCityPricing,
   uploadPaintingPhoto,
   analyzePhotoInline,
@@ -53,6 +69,7 @@ import {
   getGuestSessionId,
 } from "@/features/paintingCalculator/session";
 import type { PaintingPhoto, PainterMatch } from "@/features/paintingCalculator/types";
+import AmbientLayer from "@/pages/painting/AmbientLayer";
 
 const SUPPORTED_CITIES = [
   { slug: "montreal", name: "Montréal" },
@@ -233,7 +250,19 @@ export default function PaintingCalculatorPage() {
           estimated_total_max: result.totalMax,
           confidence_level: result.confidence,
           status: "ready",
-        })
+          project_details: {
+            category: input.category ?? null,
+            items: input.items ?? [],
+            method: input.method ?? null,
+            material: input.material ?? null,
+            conditionCodes: input.conditionCodes ?? [],
+          },
+          recommended_method: result.recommendedMethod ?? null,
+          difficulty: result.difficulty ?? null,
+          lifespan_years: result.lifespanYears ?? null,
+          maintenance_level: result.maintenanceLevel ?? null,
+          linear_ft: input.linearFt ?? null,
+        } as any)
         .select("id")
         .single();
       if (error) throw error;
@@ -356,6 +385,7 @@ export default function PaintingCalculatorPage() {
         <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-blue-500/10 blur-3xl" />
         <div className="absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full bg-cyan-400/10 blur-3xl" />
       </div>
+      <AmbientLayer category={input.category} method={input.method} />
 
       <main className="relative max-w-3xl mx-auto px-5 pt-12 pb-32">
         {/* Hero */}
@@ -395,29 +425,53 @@ export default function PaintingCalculatorPage() {
           ))}
         </div>
 
-        {/* STEP 1 — Project type */}
+        {/* STEP 1 — Project category (9 surfaces & coatings) */}
         {step === 1 && (
           <StepCard
-            title="Que voulez-vous peinturer?"
-            subtitle="Choisissez ce qui décrit le mieux votre projet."
+            title="Quel type de projet souhaitez-vous estimer ?"
+            subtitle="Peinture, scellant, teinture ou protection — choisissez votre surface."
           >
             <div className="grid grid-cols-2 gap-3">
-              {(Object.keys(PROJECT_TYPE_LABELS) as ProjectType[]).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => {
-                    setInput((i) => ({ ...i, projectType: t }));
-                    setStep(2);
-                  }}
-                  className={`text-left p-4 rounded-2xl border transition-all ${
-                    input.projectType === t
-                      ? "bg-cyan-400/10 border-cyan-400/50"
-                      : "bg-white/[0.03] border-white/10 hover:border-white/30"
-                  }`}
-                >
-                  <div className="text-sm font-medium">{PROJECT_TYPE_LABELS[t]}</div>
-                </button>
-              ))}
+              {(Object.keys(CATEGORY_LABELS) as ProjectCategory[]).map((c) => {
+                const single = SINGLE_ZONE.includes(c);
+                const projectType: ProjectType =
+                  c === "exterior" ? "exterior"
+                  : c === "deck_wood" ? "exterior"
+                  : c === "metal_specialty" ? "stairs_railings"
+                  : c === "commercial" ? "whole_house"
+                  : single ? "exterior"
+                  : "single_room";
+                const defaultMethod = CATEGORY_METHODS[c][0];
+                const defaultMaterial = CATEGORY_MATERIALS[c][0];
+                return (
+                  <button
+                    key={c}
+                    onClick={() => {
+                      setInput((i) => ({
+                        ...i,
+                        category: c,
+                        projectType,
+                        method: defaultMethod,
+                        material: defaultMaterial,
+                        conditionCodes: i.conditionCodes ?? [],
+                        // sensible defaults for single-zone (avgRoomSqft = total zone)
+                        ...(single
+                          ? { roomCount: 1, avgRoomSqft: 400, includesCeilings: false }
+                          : {}),
+                      }));
+                      setStep(2);
+                    }}
+                    className={`text-left p-4 rounded-2xl border transition-all ${
+                      input.category === c
+                        ? "bg-cyan-400/10 border-cyan-400/50"
+                        : "bg-white/[0.03] border-white/10 hover:border-white/30"
+                    }`}
+                  >
+                    <div className="text-sm font-semibold">{CATEGORY_LABELS[c]}</div>
+                    <div className="text-[11px] text-white/50 mt-0.5">{CATEGORY_TAGLINES[c]}</div>
+                  </button>
+                );
+              })}
             </div>
           </StepCard>
         )}
@@ -474,69 +528,154 @@ export default function PaintingCalculatorPage() {
           </StepCard>
         )}
 
-        {/* STEP 3 — Surfaces */}
+        {/* STEP 3 — Surfaces, méthode, matériau, condition */}
         {step === 3 && (
           <StepCard title="Quelques détails" subtitle="Plus c'est précis, plus l'estimation est juste.">
             <div className="space-y-5">
-              <Field label="Nombre de pièces">
-                <NumberStepper
-                  value={input.roomCount}
-                  onChange={(v) => setInput((i) => ({ ...i, roomCount: v }))}
-                  min={1}
-                  max={20}
-                />
-              </Field>
-              <Field label="Surface moyenne par pièce (pi²)">
-                <NumberStepper
-                  value={input.avgRoomSqft}
-                  onChange={(v) => setInput((i) => ({ ...i, avgRoomSqft: v }))}
-                  min={60}
-                  max={600}
-                  step={10}
-                />
-              </Field>
-              <Field label="Hauteur des plafonds (pi)">
-                <NumberStepper
-                  value={input.ceilingHeightFt}
-                  onChange={(v) => setInput((i) => ({ ...i, ceilingHeightFt: v }))}
-                  min={7}
-                  max={14}
-                />
-              </Field>
+              {input.category && SINGLE_ZONE.includes(input.category) ? (
+                <>
+                  <Field label="Surface totale à traiter (pi²)">
+                    <NumberStepper
+                      value={input.avgRoomSqft}
+                      onChange={(v) => setInput((i) => ({ ...i, avgRoomSqft: v, roomCount: 1 }))}
+                      min={50}
+                      max={20000}
+                      step={50}
+                    />
+                  </Field>
+                  <Field label="Périmètre / bordures (pi linéaires) — optionnel">
+                    <NumberStepper
+                      value={input.linearFt ?? 0}
+                      onChange={(v) => setInput((i) => ({ ...i, linearFt: v }))}
+                      min={0}
+                      max={2000}
+                      step={5}
+                    />
+                  </Field>
+                </>
+              ) : (
+                <>
+                  <Field label="Nombre de pièces">
+                    <NumberStepper
+                      value={input.roomCount}
+                      onChange={(v) => setInput((i) => ({ ...i, roomCount: v }))}
+                      min={1}
+                      max={20}
+                    />
+                  </Field>
+                  <Field label="Surface moyenne par pièce (pi²)">
+                    <NumberStepper
+                      value={input.avgRoomSqft}
+                      onChange={(v) => setInput((i) => ({ ...i, avgRoomSqft: v }))}
+                      min={60}
+                      max={600}
+                      step={10}
+                    />
+                  </Field>
+                  <Field label="Hauteur des plafonds (pi)">
+                    <NumberStepper
+                      value={input.ceilingHeightFt}
+                      onChange={(v) => setInput((i) => ({ ...i, ceilingHeightFt: v }))}
+                      min={7}
+                      max={14}
+                    />
+                  </Field>
+                </>
+              )}
 
-              <Field label="État des murs">
-                <SegmentedGroup
-                  options={Object.entries(WALL_CONDITION_LABELS).map(([v, l]) => ({ value: v, label: l }))}
-                  value={input.wallCondition}
-                  onChange={(v) => setInput((i) => ({ ...i, wallCondition: v as WallCondition }))}
-                />
-              </Field>
+              {input.category && CATEGORY_METHODS[input.category].length > 1 && (
+                <Field label="Méthode d'application">
+                  <SegmentedGroup
+                    options={CATEGORY_METHODS[input.category].map((m) => ({
+                      value: m,
+                      label: METHODS[m].label,
+                    }))}
+                    value={input.method ?? CATEGORY_METHODS[input.category][0]}
+                    onChange={(v) => setInput((i) => ({ ...i, method: v as ApplicationMethod }))}
+                  />
+                </Field>
+              )}
 
-              <Field label="Qualité de peinture">
-                <SegmentedGroup
-                  options={Object.entries(PAINT_QUALITY_LABELS).map(([v, l]) => ({ value: v, label: l }))}
-                  value={input.paintQuality}
-                  onChange={(v) => setInput((i) => ({ ...i, paintQuality: v as PaintQuality }))}
-                />
-              </Field>
+              {input.category && CATEGORY_MATERIALS[input.category].length > 1 && (
+                <Field label="Matériau de surface">
+                  <SegmentedGroup
+                    options={CATEGORY_MATERIALS[input.category].map((m) => ({
+                      value: m,
+                      label: MATERIALS[m].label,
+                    }))}
+                    value={input.material ?? CATEGORY_MATERIALS[input.category][0]}
+                    onChange={(v) => setInput((i) => ({ ...i, material: v as SurfaceMaterial }))}
+                  />
+                </Field>
+              )}
 
-              <div className="grid grid-cols-3 gap-2">
-                <Toggle
-                  label="Plafonds"
-                  active={input.includesCeilings}
-                  onClick={() => setInput((i) => ({ ...i, includesCeilings: !i.includesCeilings }))}
-                />
-                <Toggle
-                  label="Moulures"
-                  active={input.includesTrim}
-                  onClick={() => setInput((i) => ({ ...i, includesTrim: !i.includesTrim }))}
-                />
-                <Toggle
-                  label="Portes"
-                  active={input.includesDoors}
-                  onClick={() => setInput((i) => ({ ...i, includesDoors: !i.includesDoors }))}
-                />
-              </div>
+              {input.category && (
+                <Field label="État de la surface (cochez ce qui s'applique)">
+                  <div className="flex flex-wrap gap-2">
+                    {CATEGORY_CONDITIONS[input.category].map((code) => {
+                      const active = (input.conditionCodes ?? []).includes(code);
+                      return (
+                        <button
+                          key={code}
+                          onClick={() =>
+                            setInput((i) => {
+                              const cur = new Set(i.conditionCodes ?? []);
+                              if (cur.has(code)) cur.delete(code);
+                              else cur.add(code);
+                              return { ...i, conditionCodes: Array.from(cur) };
+                            })
+                          }
+                          className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
+                            active
+                              ? "bg-cyan-400/15 border-cyan-400/60 text-cyan-100"
+                              : "bg-white/5 border-white/10 text-white/70 hover:border-white/30"
+                          }`}
+                        >
+                          {CONDITIONS[code].label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </Field>
+              )}
+
+              {!input.category || !SINGLE_ZONE.includes(input.category) ? (
+                <>
+                  <Field label="État général">
+                    <SegmentedGroup
+                      options={Object.entries(WALL_CONDITION_LABELS).map(([v, l]) => ({ value: v, label: l }))}
+                      value={input.wallCondition}
+                      onChange={(v) => setInput((i) => ({ ...i, wallCondition: v as WallCondition }))}
+                    />
+                  </Field>
+
+                  <Field label="Qualité de peinture">
+                    <SegmentedGroup
+                      options={Object.entries(PAINT_QUALITY_LABELS).map(([v, l]) => ({ value: v, label: l }))}
+                      value={input.paintQuality}
+                      onChange={(v) => setInput((i) => ({ ...i, paintQuality: v as PaintQuality }))}
+                    />
+                  </Field>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <Toggle
+                      label="Plafonds"
+                      active={input.includesCeilings}
+                      onClick={() => setInput((i) => ({ ...i, includesCeilings: !i.includesCeilings }))}
+                    />
+                    <Toggle
+                      label="Moulures"
+                      active={input.includesTrim}
+                      onClick={() => setInput((i) => ({ ...i, includesTrim: !i.includesTrim }))}
+                    />
+                    <Toggle
+                      label="Portes"
+                      active={input.includesDoors}
+                      onClick={() => setInput((i) => ({ ...i, includesDoors: !i.includesDoors }))}
+                    />
+                  </div>
+                </>
+              ) : null}
 
               <Field label="Urgence">
                 <SegmentedGroup
@@ -545,6 +684,7 @@ export default function PaintingCalculatorPage() {
                   onChange={(v) => setInput((i) => ({ ...i, urgency: v as Urgency }))}
                 />
               </Field>
+
 
               {/* Live teaser */}
               {result && (
@@ -673,14 +813,69 @@ export default function PaintingCalculatorPage() {
 
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <Stat label="Surface estimée" value={`${result.surfaceSqft} pi²`} />
-                  <Stat label="Peinture requise" value={`${result.paintGallons} gal.`} />
-                  <Stat label="Coût peinture" value={fmtMoney(result.paintCost)} />
+                  <Stat label="Produit requis" value={`${result.paintGallons} gal.`} />
+                  <Stat label="Coût produit" value={fmtMoney(result.paintCost)} />
                   <Stat label="Coût main-d'œuvre" value={fmtMoney(result.labourCost)} />
                   <Stat label="Préparation" value={fmtMoney(result.prepCost)} />
                   <Stat label="Durée estimée" value={`${result.durationDays} jour${result.durationDays > 1 ? "s" : ""}`} />
+                  {result.recommendedMethod && (
+                    <Stat label="Méthode recommandée" value={METHODS[result.recommendedMethod].label} />
+                  )}
+                  {result.difficulty && (
+                    <Stat label="Difficulté" value={result.difficulty === "specialisee" ? "Spécialisée" : result.difficulty.charAt(0).toUpperCase() + result.difficulty.slice(1)} />
+                  )}
                 </div>
               </CardContent>
             </Card>
+
+            {/* Décision propriétaire */}
+            {result.decisionAdvice && (
+              <Card className="bg-white/[0.03] border-white/10 rounded-3xl">
+                <CardContent className="p-6 space-y-4">
+                  <h2 className="text-lg font-semibold">Décision propriétaire</h2>
+                  <div className="p-4 rounded-2xl bg-gradient-to-br from-cyan-500/5 to-blue-500/5 border border-cyan-400/15">
+                    <div className="text-xs uppercase tracking-wider text-cyan-300 mb-1">
+                      {result.decisionAdvice.title}
+                    </div>
+                    <div className="text-sm font-semibold text-white">
+                      Recommandé : {result.decisionAdvice.recommended}
+                    </div>
+                    <div className="text-xs text-white/60 mt-1">
+                      Alternative : {result.decisionAdvice.alternative}
+                    </div>
+                    <div className="text-xs text-white/70 mt-2 leading-relaxed">
+                      {result.decisionAdvice.reasoning}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {result.lifespanYears !== undefined && (
+                      <Stat label="Durée de vie" value={`${result.lifespanYears} ans`} />
+                    )}
+                    {result.maintenanceLevel && (
+                      <Stat
+                        label="Entretien"
+                        value={
+                          result.maintenanceLevel === "faible"
+                            ? "Faible"
+                            : result.maintenanceLevel === "moyen"
+                            ? "Moyen"
+                            : "Élevé"
+                        }
+                      />
+                    )}
+                    {result.resaleRoiPct !== undefined && (
+                      <Stat label="ROI revente" value={`${result.resaleRoiPct}%`} />
+                    )}
+                  </div>
+                  {result.alexHint && (
+                    <div className="flex items-start gap-2 p-3 rounded-2xl bg-white/[0.04] border border-white/10">
+                      <Sparkles className="h-4 w-4 text-cyan-300 mt-0.5 shrink-0" />
+                      <p className="text-xs text-white/70 leading-relaxed">{result.alexHint}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Matches */}
             <Card className="bg-white/[0.03] border-white/10 rounded-3xl">

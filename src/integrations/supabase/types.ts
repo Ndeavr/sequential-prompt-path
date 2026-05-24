@@ -45111,6 +45111,7 @@ export type Database = {
           confidence_level: string | null
           created_at: string
           current_color: string | null
+          difficulty: string | null
           estimated_labour_cost: number | null
           estimated_paint_cost: number | null
           estimated_prep_cost: number | null
@@ -45121,11 +45122,16 @@ export type Database = {
           includes_ceilings: boolean | null
           includes_doors: boolean | null
           includes_trim: boolean | null
+          lifespan_years: number | null
+          linear_ft: number | null
+          maintenance_level: string | null
           new_color: string | null
           occupied_home: boolean | null
           paint_quality: string | null
           postal_code: string | null
+          project_details: Json
           project_type: string
+          recommended_method: string | null
           room_count: number | null
           status: string
           surface_sqft: number | null
@@ -45143,6 +45149,7 @@ export type Database = {
           confidence_level?: string | null
           created_at?: string
           current_color?: string | null
+          difficulty?: string | null
           estimated_labour_cost?: number | null
           estimated_paint_cost?: number | null
           estimated_prep_cost?: number | null
@@ -45153,11 +45160,16 @@ export type Database = {
           includes_ceilings?: boolean | null
           includes_doors?: boolean | null
           includes_trim?: boolean | null
+          lifespan_years?: number | null
+          linear_ft?: number | null
+          maintenance_level?: string | null
           new_color?: string | null
           occupied_home?: boolean | null
           paint_quality?: string | null
           postal_code?: string | null
+          project_details?: Json
           project_type: string
+          recommended_method?: string | null
           room_count?: number | null
           status?: string
           surface_sqft?: number | null
@@ -45175,6 +45187,7 @@ export type Database = {
           confidence_level?: string | null
           created_at?: string
           current_color?: string | null
+          difficulty?: string | null
           estimated_labour_cost?: number | null
           estimated_paint_cost?: number | null
           estimated_prep_cost?: number | null
@@ -45185,11 +45198,16 @@ export type Database = {
           includes_ceilings?: boolean | null
           includes_doors?: boolean | null
           includes_trim?: boolean | null
+          lifespan_years?: number | null
+          linear_ft?: number | null
+          maintenance_level?: string | null
           new_color?: string | null
           occupied_home?: boolean | null
           paint_quality?: string | null
           postal_code?: string | null
+          project_details?: Json
           project_type?: string
+          recommended_method?: string | null
           room_count?: number | null
           status?: string
           surface_sqft?: number | null

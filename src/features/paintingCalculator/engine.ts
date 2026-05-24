@@ -2,6 +2,8 @@
  * UNPRO — Painting Calculator Engine
  * Transparent ranges, deterministic math. No fake precision.
  */
+import * as cat from "./projectCatalog";
+
 
 export type ProjectType =
   | "single_room"
@@ -41,6 +43,13 @@ export interface CalculatorInput {
   darkToLight: boolean;
   occupiedHome: boolean;
   urgency: Urgency;
+  // Phase 2 — multi-surface / coating (optional, back-compat)
+  category?: import("./projectCatalog").ProjectCategory;
+  items?: string[];
+  method?: import("./projectCatalog").ApplicationMethod;
+  material?: import("./projectCatalog").SurfaceMaterial;
+  conditionCodes?: import("./projectCatalog").SurfaceConditionCode[];
+  linearFt?: number;
 }
 
 export interface CalculatorResult {
@@ -59,6 +68,13 @@ export interface CalculatorResult {
     ceilingArea: number;
     trimAdjustment: number;
   };
+  recommendedMethod?: import("./projectCatalog").ApplicationMethod;
+  difficulty?: "facile" | "moyenne" | "elevee" | "specialisee";
+  lifespanYears?: number;
+  maintenanceLevel?: "faible" | "moyen" | "eleve";
+  resaleRoiPct?: number;
+  decisionAdvice?: import("./projectCatalog").DecisionAdvice;
+  alexHint?: string;
 }
 
 const COVERAGE_SQFT_PER_GALLON = 350;
@@ -93,38 +109,74 @@ export function computeEstimate(
   input: CalculatorInput,
   city: CityPricing,
 ): CalculatorResult {
-  // Derive wall area from floor area: perimeter ≈ 4 × √floorArea, walls = perimeter × ceilingHeight
-  const perRoomPerimeter = 4 * Math.sqrt(Math.max(input.avgRoomSqft, 60));
-  const wallArea = perRoomPerimeter * input.ceilingHeightFt * input.roomCount;
-  const ceilingArea = input.includesCeilings ? input.avgRoomSqft * input.roomCount : 0;
-  const trimAdjustment =
-    (input.includesTrim ? 80 : 0) * input.roomCount +
-    (input.includesDoors ? 40 : 0) * input.roomCount;
+  const isSingleZone = !!input.category && cat.SINGLE_ZONE.includes(input.category);
+
+  let wallArea: number;
+  let ceilingArea: number;
+  let trimAdjustment: number;
+
+  if (isSingleZone) {
+    // For pool/asphalte/pavé/toiture: avgRoomSqft acts as zone surface, no walls/ceiling math.
+    wallArea = 0;
+    ceilingArea = input.avgRoomSqft * Math.max(1, input.roomCount);
+    trimAdjustment = (input.linearFt ?? 0) * 1.5;
+  } else {
+    const perRoomPerimeter = 4 * Math.sqrt(Math.max(input.avgRoomSqft, 60));
+    wallArea = perRoomPerimeter * input.ceilingHeightFt * input.roomCount;
+    ceilingArea = input.includesCeilings ? input.avgRoomSqft * input.roomCount : 0;
+    trimAdjustment =
+      (input.includesTrim ? 80 : 0) * input.roomCount +
+      (input.includesDoors ? 40 : 0) * input.roomCount;
+  }
 
   const surface = wallArea + ceilingArea + trimAdjustment;
 
+  // Advanced multipliers (material × method × max condition)
+  let methodLabour = 1;
+  let methodMaterial = 1;
+  let materialPrep = 1;
+  let materialPrimer = 1;
+  let condPrep = 1;
+  let condMaterial = 1;
+  if (input.method && cat.METHODS[input.method]) {
+    methodLabour = cat.METHODS[input.method].labour_mult;
+    methodMaterial = cat.METHODS[input.method].material_mult;
+  }
+  if (input.material && cat.MATERIALS[input.material]) {
+    materialPrep = cat.MATERIALS[input.material].prep_mult;
+    materialPrimer = cat.MATERIALS[input.material].primer_mult;
+  }
+  if (input.conditionCodes?.length) {
+    for (const c of input.conditionCodes) {
+      const m = cat.CONDITIONS[c];
+      if (!m) continue;
+      condPrep = Math.max(condPrep, m.prep_mult);
+      condMaterial = Math.max(condMaterial, m.material_mult);
+    }
+  }
+
   // Paint
   const coats = Math.max(1, input.coats) + (input.darkToLight ? 1 : 0);
-  const gallons = Math.ceil((surface * coats) / COVERAGE_SQFT_PER_GALLON);
+  const gallons = Math.max(1, Math.ceil((surface * coats) / COVERAGE_SQFT_PER_GALLON));
   const paintCost =
-    gallons * city.paint_quality_base_cost * QUALITY_MULTIPLIER[input.paintQuality];
+    gallons * city.paint_quality_base_cost * QUALITY_MULTIPLIER[input.paintQuality] *
+    methodMaterial * materialPrimer * condMaterial;
 
-  // Labour — midpoint of city rate × surface × labour modifier
+  // Labour
   const midRate = (city.min_rate_sqft + city.max_rate_sqft) / 2;
-  const labourCost = surface * midRate * city.labour_modifier;
+  const labourCost = surface * midRate * city.labour_modifier * methodLabour;
 
   // Prep
   const prepCost =
-    labourCost * CONDITION_PREP_MULT[input.wallCondition] * city.prep_multiplier;
+    labourCost * CONDITION_PREP_MULT[input.wallCondition] * city.prep_multiplier *
+    materialPrep * condPrep;
 
-  // Complexity & adjustments
   const complexityMult = PROJECT_TYPE_COMPLEXITY[input.projectType];
   const occupiedMult = input.occupiedHome ? 1.08 : 1.0;
   const urgencyMult = URGENCY_MULT[input.urgency];
 
   const base = (paintCost + labourCost + prepCost) * complexityMult * occupiedMult * urgencyMult;
 
-  // ±15% range — transparent, not fake precision
   const totalMin = Math.round((base * 0.88) / 25) * 25;
   const totalMax = Math.round((base * 1.18) / 25) * 25;
 
@@ -133,9 +185,31 @@ export function computeEstimate(
 
   const durationDays = Math.max(1, Math.ceil(surface / 450) * coats);
 
-  // Confidence drops if photos absent or condition is poor
   const confidence: "low" | "medium" | "high" =
     input.wallCondition === "poor" ? "low" : input.roomCount >= 4 ? "medium" : "high";
+
+  // Phase 2 extras
+  let recommendedMethod: import("./projectCatalog").ApplicationMethod | undefined;
+  let difficulty: "facile" | "moyenne" | "elevee" | "specialisee" | undefined;
+  let lifespanYears: number | undefined;
+  let maintenanceLevel: "faible" | "moyen" | "eleve" | undefined;
+  let resaleRoiPct: number | undefined;
+  let decisionAdvice: import("./projectCatalog").DecisionAdvice | undefined;
+  let alexHint: string | undefined;
+  if (input.category) {
+    recommendedMethod = cat.recommendMethod(
+      input.category,
+      input.material,
+      input.conditionCodes ?? [],
+    );
+    difficulty = cat.difficultyFor(input.category, input.conditionCodes ?? []);
+    const pack = cat.getDecisionPack(input.category);
+    lifespanYears = pack.lifespanYears;
+    maintenanceLevel = pack.maintenance;
+    resaleRoiPct = pack.resaleRoiPct;
+    decisionAdvice = pack.decision;
+    alexHint = cat.alexHintFor(input.category, input.method ?? recommendedMethod);
+  }
 
   return {
     surfaceSqft: Math.round(surface),
@@ -153,6 +227,13 @@ export function computeEstimate(
       ceilingArea: Math.round(ceilingArea),
       trimAdjustment: Math.round(trimAdjustment),
     },
+    recommendedMethod,
+    difficulty,
+    lifespanYears,
+    maintenanceLevel,
+    resaleRoiPct,
+    decisionAdvice,
+    alexHint,
   };
 }
 
