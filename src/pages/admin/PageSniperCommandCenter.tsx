@@ -32,6 +32,7 @@ export default function PageSniperCommandCenter() {
         onRefresh={refresh}
       />
 
+      <SniperCycleRunner />
       <KpiStrip kpis={viewModel.kpis} />
 
       {loading ? (
