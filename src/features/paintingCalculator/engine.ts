@@ -41,6 +41,13 @@ export interface CalculatorInput {
   darkToLight: boolean;
   occupiedHome: boolean;
   urgency: Urgency;
+  // Phase 2 — multi-surface / coating (optional, back-compat)
+  category?: import("./projectCatalog").ProjectCategory;
+  items?: string[];
+  method?: import("./projectCatalog").ApplicationMethod;
+  material?: import("./projectCatalog").SurfaceMaterial;
+  conditionCodes?: import("./projectCatalog").SurfaceConditionCode[];
+  linearFt?: number;
 }
 
 export interface CalculatorResult {
@@ -59,6 +66,13 @@ export interface CalculatorResult {
     ceilingArea: number;
     trimAdjustment: number;
   };
+  recommendedMethod?: import("./projectCatalog").ApplicationMethod;
+  difficulty?: "facile" | "moyenne" | "elevee" | "specialisee";
+  lifespanYears?: number;
+  maintenanceLevel?: "faible" | "moyen" | "eleve";
+  resaleRoiPct?: number;
+  decisionAdvice?: import("./projectCatalog").DecisionAdvice;
+  alexHint?: string;
 }
 
 const COVERAGE_SQFT_PER_GALLON = 350;
