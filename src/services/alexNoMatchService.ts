@@ -2,6 +2,7 @@
  * AlexNoMatchService — handles no-match detection, waitlist, retry, and admin stats.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { buildNoMatchTitle, buildAlexVoiceLine } from "@/lib/noMatchCopy";
 
 const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
@@ -76,7 +77,6 @@ export class AlexNoMatchService {
   }
 
   getAlexVoiceResponse(service: string, city: string): string {
-    const { buildNoMatchTitle, buildAlexVoiceLine } = require("@/lib/noMatchCopy") as typeof import("@/lib/noMatchCopy");
     return `${buildNoMatchTitle({ service, city })} ${buildAlexVoiceLine({ service, city })}`;
   }
 }
