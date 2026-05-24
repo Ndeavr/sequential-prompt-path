@@ -13,6 +13,7 @@ import CampaignPerformancePanel from "@/components/command-center/CampaignPerfor
 import RecentEventsFeed from "@/components/command-center/RecentEventsFeed";
 import { SniperTargetDrawer } from "@/components/sniper/SniperTargetDrawer";
 import { SniperCsvImport } from "@/components/sniper/SniperCsvImport";
+import { SniperCycleRunner } from "@/components/sniper/SniperCycleRunner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 export default function PageSniperCommandCenter() {
@@ -31,6 +32,7 @@ export default function PageSniperCommandCenter() {
         onRefresh={refresh}
       />
 
+      <SniperCycleRunner />
       <KpiStrip kpis={viewModel.kpis} />
 
       {loading ? (
