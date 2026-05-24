@@ -71,7 +71,7 @@ export default function LeadDecisionCard({ matchId, responseStatus, onDecision }
         toast.info(
           data.escalated
             ? "Lead décliné — transmis au prochain entrepreneur."
-            : "Lead décliné — aucun autre entrepreneur disponible."
+            : "Lead décliné — recherche intelligente en cours pour un autre professionnel compatible."
         );
       }
 
