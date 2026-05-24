@@ -72,10 +72,11 @@ export default function PageContractorAippCockpit() {
       .eq("user_id", user.id)
       .maybeSingle();
 
+    const contractorId = (contractor as any)?.id ?? "00000000-0000-0000-0000-000000000000";
     const { data: p } = await supabase
       .from("aipp_profiles" as any)
       .select("*")
-      .eq("contractor_id", contractor?.id ?? "00000000-0000-0000-0000-000000000000")
+      .eq("contractor_id", contractorId)
       .maybeSingle();
 
     if (!p) { setProfile(null); setLoading(false); return; }
