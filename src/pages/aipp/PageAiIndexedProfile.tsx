@@ -159,34 +159,35 @@ export default function PageAiIndexedProfile() {
       "@type": "FAQPage",
       mainEntity: [
         { "@type": "Question", name: `${p.company_name} est-elle vérifiée par UNPRO ?`,
-          acceptedAnswer: { "@type": "Answer", text: `UNPRO a analysé les données publiques disponibles sur ${p.company_name}. Le statut actuel est : ${p.verification_status}.` } },
+          acceptedAnswer: { "@type": "Answer", text: `UNPRO a analysé les données publiques disponibles sur ${p.company_name} et structuré un profil basé sur les sources officielles, le site web et les répertoires publics.` } },
         { "@type": "Question", name: `Quels services offre ${p.company_name} ?`,
           acceptedAnswer: { "@type": "Answer", text: services.map((s: any) => s.service_name).join(", ") } },
         { "@type": "Question", name: `${p.company_name} dessert-elle ma ville ?`,
           acceptedAnswer: { "@type": "Answer", text: `Zones desservies : ${locations.map((l: any) => l.city).join(", ")}.` } },
         { "@type": "Question", name: `${p.company_name} a-t-elle une licence RBQ ?`,
-          acceptedAnswer: { "@type": "Answer", text: validations?.rbq_status === "confirmed" ? `RBQ ${validations.rbq_number} confirmée.` : "Non confirmée par UNPRO à ce jour." } },
+          acceptedAnswer: { "@type": "Answer", text: validations?.rbq_status === "confirmed" ? `RBQ ${validations.rbq_number} confirmée par UNPRO.` : `Aucune licence RBQ confirmée par UNPRO à ce jour pour ${p.company_name}.` } },
         { "@type": "Question", name: `Peut-on demander un rendez-vous via UNPRO ?`,
-          acceptedAnswer: { "@type": "Answer", text: "Oui. UNPRO permet la prise de rendez-vous directe avec les entreprises vérifiées." } },
+          acceptedAnswer: { "@type": "Answer", text: "Oui. UNPRO permet la prise de rendez-vous directe avec les entreprises analysées." } },
         { "@type": "Question", name: `Comment UNPRO valide-t-elle les données ?`,
-          acceptedAnswer: { "@type": "Answer", text: "UNPRO analyse les sources publiques (site web, registres officiels, avis, médias) et marque chaque fait comme confirmé, à confirmer ou non trouvé." } },
+          acceptedAnswer: { "@type": "Answer", text: "UNPRO analyse les sources publiques (site web, registres officiels, avis, médias). Seules les informations confirmées sont affichées publiquement; les éléments à compléter restent dans le tableau de bord privé de l'entreprise." } },
       ],
     },
   ];
 
-  const validationRows: { label: string; key: string; value?: string }[] = [
-    { label: "Nom légal", key: "name_status", value: p.legal_name },
-    { label: "Nom commercial", key: "name_status", value: p.trade_name || p.company_name },
-    { label: "Téléphone", key: "phone_status", value: p.phone || undefined },
-    { label: "Site web", key: "website_status", value: p.website_url || undefined },
-    { label: "Courriel", key: "email_status", value: p.email || undefined },
-    { label: "Adresse / ville", key: "address_status", value: p.primary_city || undefined },
-    { label: "RBQ", key: "rbq_status", value: validations?.rbq_number || undefined },
-    { label: "NEQ", key: "neq_status", value: validations?.neq_number || undefined },
-    { label: "Assurance", key: "insurance_status" },
-    { label: "Google Business", key: "google_business_status", value: p.google_business_url || undefined },
-    { label: "Réseaux sociaux", key: "social_status" },
-  ];
+  // Only confirmed rows appear publicly. Unverified / not_found are hidden.
+  const publicValidationRows: { label: string; value?: string }[] = [
+    { label: "Nom légal", value: validations?.legal_name_status === "confirmed" ? p.legal_name : undefined },
+    { label: "Nom commercial", value: validations?.name_status === "confirmed" ? (p.trade_name || p.company_name) : undefined },
+    { label: "Téléphone", value: validations?.phone_status === "confirmed" ? p.phone : undefined },
+    { label: "Site web", value: validations?.website_status === "confirmed" ? p.website_url : undefined },
+    { label: "Courriel", value: validations?.email_status === "confirmed" ? p.email : undefined },
+    { label: "Adresse / ville", value: validations?.address_status === "confirmed" ? p.primary_city : undefined },
+    { label: "RBQ", value: validations?.rbq_status === "confirmed" ? validations?.rbq_number : undefined },
+    { label: "NEQ", value: validations?.neq_status === "confirmed" ? validations?.neq_number : undefined },
+    { label: "Google Business", value: validations?.google_business_status === "confirmed" ? p.google_business_url : undefined },
+  ].filter((r) => !!r.value);
+
+  const trust = computeTrust(validations);
 
   const goBook = () => navigate(`/rendez-vous?contractor=${encodeURIComponent(p.slug)}&trade=${encodeURIComponent(p.primary_trade || "")}&city=${encodeURIComponent(p.primary_city || "")}`);
   const goVerify = () => navigate(`/verification?company=${encodeURIComponent(p.company_name)}`);
