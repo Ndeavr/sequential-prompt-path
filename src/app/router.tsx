@@ -74,6 +74,7 @@ const PageGoogleProjectUsageAudit = lazy(() => import("@/pages/admin/PageGoogleP
 // Calculators
 const PageCalculateurTaxesQuebec = lazy(() => import("@/pages/calculators/PageCalculateurTaxesQuebec"));
 const PageIsRoyalCalculateurTaxes = lazy(() => import("@/pages/calculators/PageIsRoyalCalculateurTaxes"));
+const PaintingCalculatorPage = lazy(() => import("@/pages/painting/PaintingCalculatorPage"));
 
 // Lightweight loading fallback
 const LazyFallback = () => (
@@ -731,6 +732,8 @@ export const AppRouter = () => (
         <Route path="/cest-quoi-unpro" element={<Suspense fallback={<LazyFallback />}><PageUnproFAQ25 /></Suspense>} />
         <Route path="/calculateur-taxes-quebec" element={<Suspense fallback={<LazyFallback />}><PageCalculateurTaxesQuebec /></Suspense>} />
         <Route path="/isroyal/calculateur-taxes" element={<Suspense fallback={<LazyFallback />}><PageIsRoyalCalculateurTaxes /></Suspense>} />
+        <Route path="/peinture/calculateur" element={<Suspense fallback={<LazyFallback />}><PaintingCalculatorPage /></Suspense>} />
+        <Route path="/:city/peinture/calculateur" element={<Suspense fallback={<LazyFallback />}><PaintingCalculatorPage /></Suspense>} />
         <Route path="/go" element={<PageAdLandingAipp />} />
         <Route path="/aipp-check" element={<PageAdLandingAipp />} />
         <Route path="/business-import" element={<PageBusinessImport />} />
