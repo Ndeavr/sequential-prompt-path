@@ -75,6 +75,7 @@ const PageGoogleProjectUsageAudit = lazy(() => import("@/pages/admin/PageGoogleP
 const PageCalculateurTaxesQuebec = lazy(() => import("@/pages/calculators/PageCalculateurTaxesQuebec"));
 const PageIsRoyalCalculateurTaxes = lazy(() => import("@/pages/calculators/PageIsRoyalCalculateurTaxes"));
 const PaintingCalculatorPage = lazy(() => import("@/pages/painting/PaintingCalculatorPage"));
+const PageAIGrowthDiagnostic = lazy(() => import("@/pages/diagnostic/PageAIGrowthDiagnostic"));
 
 // Lightweight loading fallback
 const LazyFallback = () => (
