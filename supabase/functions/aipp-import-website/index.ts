@@ -80,8 +80,11 @@ Deno.serve(async (req) => {
     if (!FIRECRAWL_API_KEY) throw new Error("FIRECRAWL_API_KEY missing");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
 
-    const { url, persist = false } = await req.json();
-    if (!url || typeof url !== "string") throw new Error("url required");
+    const { url: rawUrl, persist = false } = await req.json();
+    if (!rawUrl || typeof rawUrl !== "string") throw new Error("url required");
+    let url = rawUrl.trim();
+    if (!/^https?:\/\//i.test(url)) url = `https://${url.replace(/^\/+/, "")}`;
+    try { new URL(url); } catch { throw new Error(`URL invalide: ${rawUrl}`); }
 
     // 1) Scrape
     const scrapeRes = await fetch(FIRECRAWL, {
@@ -221,9 +224,10 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
-    console.error("aipp-import-website", e);
+    const msg = e instanceof Error ? e.message : (typeof e === "string" ? e : JSON.stringify(e));
+    console.error("aipp-import-website", msg, e);
     return new Response(
-      JSON.stringify({ ok: false, error: e instanceof Error ? e.message : "Unknown" }),
+      JSON.stringify({ ok: false, error: msg || "Unknown" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
