@@ -165,11 +165,12 @@ Deno.serve(async (req) => {
         destination = target.email;
         if (!destination) { results.push({ tid, skipped: "no_email" }); continue; }
         if (!mailbox) { results.push({ tid, skipped: "no_verified_mailbox" }); continue; }
-        provider = "resend";
+        provider = "lovable_email";
         if (dryRun) {
           providerResult = { ok: true, id: `dry-${crypto.randomUUID()}` };
         } else {
           providerResult = await sendEmail({
+            supabase,
             to: destination,
             subject: variant.subject_line || `UNPRO — ${target.business_name}`,
             text: variant.message_body,
