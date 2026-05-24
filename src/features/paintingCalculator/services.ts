@@ -56,12 +56,12 @@ export async function analyzePhotoInline(imageUrl: string): Promise<Record<strin
 }
 
 export async function findMatchingPainters(citySlug: string, limit = 3): Promise<PainterMatch[]> {
-  // Try real contractors table — paint/painting category in this city.
   try {
     const { data } = await supabase
       .from("contractors")
-      .select("id, business_name, city, rating, review_count, specialties, badges, description")
+      .select("id, business_name, city, rating, review_count, specialty, description")
       .ilike("city", `%${citySlug}%`)
+      .ilike("specialty", "%peint%")
       .limit(limit);
     if (data && data.length) {
       return data.map((c: any) => ({
@@ -70,9 +70,9 @@ export async function findMatchingPainters(citySlug: string, limit = 3): Promise
         city: c.city || citySlug,
         rating: Number(c.rating) || 4.7,
         reviewCount: Number(c.review_count) || 0,
-        badges: c.badges || ["Vérifié UNPRO"],
-        specialties: c.specialties || ["Peinture intérieure"],
-        description: c.description || "Peintre résidentiel vérifié.",
+        badges: ["Vérifié UNPRO"],
+        specialties: c.specialty ? [c.specialty] : ["Peinture résidentielle"],
+        description: c.description || "Peintre résidentiel vérifié par UNPRO.",
         nextAvailability: "Disponible cette semaine",
         pricingStyle: "Tarif transparent",
       }));
@@ -82,3 +82,4 @@ export async function findMatchingPainters(citySlug: string, limit = 3): Promise
   }
   return [];
 }
+
