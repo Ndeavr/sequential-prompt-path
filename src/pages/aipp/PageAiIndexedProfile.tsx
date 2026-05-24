@@ -255,8 +255,16 @@ export default function PageAiIndexedProfile() {
               {p.company_name?.[0] ?? "U"}
             </div>
           )}
-          <Badge className="bg-stone-900 text-amber-50 hover:bg-stone-900 gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5" /> Profil IA vérifié UNPRO
+          <Badge
+            className={`gap-1.5 ${
+              trust.level >= 3
+                ? "bg-emerald-600 text-white hover:bg-emerald-600"
+                : trust.level === 2
+                ? "bg-stone-900 text-amber-50 hover:bg-stone-900"
+                : "bg-white text-stone-900 border border-stone-300 hover:bg-white"
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" /> {trust.label}
           </Badge>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight" style={{ color: "#1c1917" }}>
             {p.company_name}
