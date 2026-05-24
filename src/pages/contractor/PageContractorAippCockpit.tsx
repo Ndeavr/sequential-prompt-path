@@ -80,11 +80,12 @@ export default function PageContractorAippCockpit() {
       .maybeSingle();
 
     if (!p) { setProfile(null); setLoading(false); return; }
+    const pid = (p as any).id;
     setProfile(p);
 
     const [{ data: v }, { data: m }] = await Promise.all([
-      supabase.from("aipp_profile_validations" as any).select("*").eq("profile_id", p.id).maybeSingle(),
-      supabase.from("aipp_detected_methods" as any).select("*").eq("profile_id", p.id).order("confidence", { ascending: false }),
+      supabase.from("aipp_profile_validations" as any).select("*").eq("profile_id", pid).maybeSingle(),
+      supabase.from("aipp_detected_methods" as any).select("*").eq("profile_id", pid).order("confidence", { ascending: false }),
     ]);
     setValidation(v ?? null);
     setMethods(m ?? []);
