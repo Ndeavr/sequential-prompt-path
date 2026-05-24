@@ -44902,6 +44902,200 @@ export type Database = {
         }
         Relationships: []
       }
+      painting_city_pricing: {
+        Row: {
+          city_name: string
+          city_slug: string
+          created_at: string
+          id: string
+          labour_modifier: number
+          max_rate_sqft: number
+          min_rate_sqft: number
+          notes_fr: string | null
+          paint_quality_base_cost: number
+          prep_multiplier: number
+          service_type: string
+          updated_at: string
+          urgency_multiplier: number
+        }
+        Insert: {
+          city_name: string
+          city_slug: string
+          created_at?: string
+          id?: string
+          labour_modifier?: number
+          max_rate_sqft: number
+          min_rate_sqft: number
+          notes_fr?: string | null
+          paint_quality_base_cost?: number
+          prep_multiplier?: number
+          service_type?: string
+          updated_at?: string
+          urgency_multiplier?: number
+        }
+        Update: {
+          city_name?: string
+          city_slug?: string
+          created_at?: string
+          id?: string
+          labour_modifier?: number
+          max_rate_sqft?: number
+          min_rate_sqft?: number
+          notes_fr?: string | null
+          paint_quality_base_cost?: number
+          prep_multiplier?: number
+          service_type?: string
+          updated_at?: string
+          urgency_multiplier?: number
+        }
+        Relationships: []
+      }
+      painting_estimates: {
+        Row: {
+          address_line: string | null
+          ai_notes: Json | null
+          ceiling_height_ft: number | null
+          city_slug: string | null
+          coats: number | null
+          confidence_level: string | null
+          created_at: string
+          current_color: string | null
+          estimated_labour_cost: number | null
+          estimated_paint_cost: number | null
+          estimated_prep_cost: number | null
+          estimated_total_max: number | null
+          estimated_total_min: number | null
+          guest_session_id: string | null
+          id: string
+          includes_ceilings: boolean | null
+          includes_doors: boolean | null
+          includes_trim: boolean | null
+          new_color: string | null
+          occupied_home: boolean | null
+          paint_quality: string | null
+          postal_code: string | null
+          project_type: string
+          room_count: number | null
+          status: string
+          surface_sqft: number | null
+          updated_at: string
+          urgency: string | null
+          user_id: string | null
+          wall_condition: string | null
+        }
+        Insert: {
+          address_line?: string | null
+          ai_notes?: Json | null
+          ceiling_height_ft?: number | null
+          city_slug?: string | null
+          coats?: number | null
+          confidence_level?: string | null
+          created_at?: string
+          current_color?: string | null
+          estimated_labour_cost?: number | null
+          estimated_paint_cost?: number | null
+          estimated_prep_cost?: number | null
+          estimated_total_max?: number | null
+          estimated_total_min?: number | null
+          guest_session_id?: string | null
+          id?: string
+          includes_ceilings?: boolean | null
+          includes_doors?: boolean | null
+          includes_trim?: boolean | null
+          new_color?: string | null
+          occupied_home?: boolean | null
+          paint_quality?: string | null
+          postal_code?: string | null
+          project_type: string
+          room_count?: number | null
+          status?: string
+          surface_sqft?: number | null
+          updated_at?: string
+          urgency?: string | null
+          user_id?: string | null
+          wall_condition?: string | null
+        }
+        Update: {
+          address_line?: string | null
+          ai_notes?: Json | null
+          ceiling_height_ft?: number | null
+          city_slug?: string | null
+          coats?: number | null
+          confidence_level?: string | null
+          created_at?: string
+          current_color?: string | null
+          estimated_labour_cost?: number | null
+          estimated_paint_cost?: number | null
+          estimated_prep_cost?: number | null
+          estimated_total_max?: number | null
+          estimated_total_min?: number | null
+          guest_session_id?: string | null
+          id?: string
+          includes_ceilings?: boolean | null
+          includes_doors?: boolean | null
+          includes_trim?: boolean | null
+          new_color?: string | null
+          occupied_home?: boolean | null
+          paint_quality?: string | null
+          postal_code?: string | null
+          project_type?: string
+          room_count?: number | null
+          status?: string
+          surface_sqft?: number | null
+          updated_at?: string
+          urgency?: string | null
+          user_id?: string | null
+          wall_condition?: string | null
+        }
+        Relationships: []
+      }
+      painting_photos: {
+        Row: {
+          ai_notes: Json | null
+          created_at: string
+          detected_condition: string | null
+          detected_surface_sqft: number | null
+          estimate_id: string | null
+          guest_session_id: string | null
+          id: string
+          image_url: string
+          storage_path: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_notes?: Json | null
+          created_at?: string
+          detected_condition?: string | null
+          detected_surface_sqft?: number | null
+          estimate_id?: string | null
+          guest_session_id?: string | null
+          id?: string
+          image_url: string
+          storage_path?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_notes?: Json | null
+          created_at?: string
+          detected_condition?: string | null
+          detected_surface_sqft?: number | null
+          estimate_id?: string | null
+          guest_session_id?: string | null
+          id?: string
+          image_url?: string
+          storage_path?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "painting_photos_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "painting_estimates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_applications: {
         Row: {
           created_at: string
