@@ -220,7 +220,7 @@ export default function InlineCheckoutNuclear({
         Votre territoire {city} — réservez en moins de 60 secondes
       </h2>
       <p className="mt-1 text-sm text-white/70">
-        Aucun redirect. Paiement sécurisé Stripe. Annulation en tout temps.
+        {activePlan.name} — {activePlan.tagline || activePlan.shortPitch || "Activation immédiate de votre territoire."}
       </p>
 
       {/* Mode toggle */}
