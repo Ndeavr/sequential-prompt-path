@@ -41,6 +41,22 @@ import {
   type PaintQuality,
 } from "@/features/paintingCalculator/engine";
 import {
+  CATEGORY_LABELS,
+  CATEGORY_TAGLINES,
+  CATEGORY_ITEMS,
+  CATEGORY_METHODS,
+  CATEGORY_MATERIALS,
+  CATEGORY_CONDITIONS,
+  SINGLE_ZONE,
+  METHODS,
+  MATERIALS,
+  CONDITIONS,
+  type ProjectCategory,
+  type ApplicationMethod,
+  type SurfaceMaterial,
+  type SurfaceConditionCode,
+} from "@/features/paintingCalculator/projectCatalog";
+import {
   fetchCityPricing,
   uploadPaintingPhoto,
   analyzePhotoInline,
@@ -53,6 +69,7 @@ import {
   getGuestSessionId,
 } from "@/features/paintingCalculator/session";
 import type { PaintingPhoto, PainterMatch } from "@/features/paintingCalculator/types";
+import AmbientLayer from "@/pages/painting/AmbientLayer";
 
 const SUPPORTED_CITIES = [
   { slug: "montreal", name: "Montréal" },
