@@ -1,65 +1,128 @@
-## UNPRO Global Empty-State Conversion System
+## Painting Calculator → Intelligent Surface, Coating & Sealant Estimator
 
-Replace every "no provider available" dead-end with a single premium conversion module that captures account creation, preserves the project, and reinforces UNPRO's AI matching intelligence.
+Transform the painting calculator into a multi-surface project + protective-coating estimator with a richer taxonomy (interior, exterior, deck/wood, metal/specialty, commercial, **piscine, pavé uni, asphalte, toiture nano**), application method, surface material, expanded condition signals, smarter AI photo analysis, and a richer result panel — all on the existing `/peinture/calculateur` route.
 
-### 1. New shared copy + component
+### 1. New taxonomy module
 
-**`src/lib/noMatchCopy.ts`** (new) — single source of truth.
-- `getProNoun(service)` → `peintre | couvreur | électricien | plombier | spécialiste CVAC | paysagiste | notaire | inspecteur | gestionnaire | professionnel` (fallback).
-- `getCityFragment(city?)` → `"à Laval"`, `"dans le secteur de Montréal"`, or `"dans votre secteur"`.
-- `buildNoMatchTitle({ service, city })` → `"Aucun {noun} disponible ne correspond actuellement à vos critères {cityFragment}."`
-- `buildNoMatchBullets({ isAuthed, hasEstimate })` → returns the 4 ✓ value props (alerts, save project, AI broaden, priority recommendations).
-- `buildAlexVoiceLine({ service, city })` → `"Je peux élargir la recherche ou vous prévenir dès qu'un {noun} compatible devient disponible {cityFragment}."`
-- Banned-phrase list exported for lint/test (`"Nous n'avons pas encore"`, `"Aucun partenaire"`, `"Service indisponible"`, `"Rien trouvé"`, `"Pas de résultats"`).
+**`src/features/paintingCalculator/projectCatalog.ts`** (new) — single source of truth.
 
-**`src/components/conversion/NoMatchConversionCard.tsx`** (new) — premium card used everywhere.
-Props: `{ service, city?, hasEstimate?, onAlex?, variant?: "card" | "inline" | "page" }`.
-- Title (dynamic, from helper).
-- 4 ✓ bullets (account benefits, swapped to "Activer les alertes intelligentes" when `useAuth().user` is present).
-- Status row: `Projet sauvegardé` (if hasEstimate), `Recherche intelligente active` (pulse/glow via existing `animate-pulse` + token glow), `Notification prioritaire`.
-- Primary CTA `Créer mon compte UNPRO` → `/signup?next=<current>` (hidden if authed; replaced by `Activer les alertes intelligentes` calling waitlist).
-- Secondary CTA `Se connecter` → `/login?next=<current>` (hidden if authed).
-- Tertiary CTA `Parler à Alex` → calls `onAlex` or opens Alex orb event.
-- Social proof line: `"Des centaines de propriétaires utilisent UNPRO chaque semaine pour trouver le bon professionnel."`
-- Pure design-system tokens (`bg-card`, `border-border`, `text-foreground`, `bg-primary`, glass + subtle glow). Mobile-first.
+`ProjectCategory`:
+- `interior` — Murs, Plafonds, Portes, Escaliers, Condo/maison, Cuisine/SDB
+- `exterior` — Façade, Revêtement, Brique peinte, Aluminium, Bois extérieur, Garage
+- `deck_wood` — Patio, Clôture, Pergola, Teinture, Bois traité, Cèdre
+- `metal_specialty` — Fer forgé, Rampes, Escaliers métal, Epoxy, Spray, Antirouille
+- `commercial` — Bureau, Entrepôt, Restaurant, Multi-logements, Cage d'escalier, Stationnement
+- **`pool` — Piscine béton, Piscine fibre, Spa, Margelles, Plage de piscine**
+- **`paver_sealing` — Pavé uni résidentiel, Allée, Patio en pavé, Bordures, Joints polymériques**
+- **`asphalt` — Entrée résidentielle, Stationnement commercial, Réparations, Scellant noir, Lignage**
+- **`roof_nano` — Toiture asphalte, Toiture métal, Toiture plate, Bardeaux, Membrane élastomère**
 
-### 2. Rewrite existing surfaces to use the new module
+`ApplicationMethod`: `rouleau | pinceau | spray | airless | teinture | vernis | epoxy | antirouille | scellant_nano | scellant_acrylique | scellant_silane | epandage_asphalte`. Each carries `labour_multiplier`, `coverage_bonus`, `unit_basis` (`sqft` vs `linear_ft`), and one Alex hint sentence.
 
-| File | Change |
-|---|---|
-| `src/components/alex-conversation/CardNoMatchFallback.tsx` | Replace body with `<NoMatchConversionCard variant="inline" service={ctx.service} city={ctx.city} hasEstimate={!!ctx.estimate} />`. Accept optional context props (read from `copilotConversationStore` if not provided). |
-| `src/components/alex/no-match/BannerNoMatchPrimary.tsx` | Keep banner shape, swap message generator to `buildNoMatchTitle` + add the AI/alerts subline. Remove `AlertTriangle` (use `Sparkles`). |
-| `src/pages/PageNoMatchFallback.tsx` | Render `<NoMatchConversionCard variant="page" />` with service/city pulled from `useNoMatchRecovery` context; keep existing waitlist flow as the authed CTA target. |
-| `src/services/alexNoMatchService.ts` | Rewrite `getNoMatchCopy` and `getAlexVoiceResponse` to use `buildAlexVoiceLine` + premium framing (no "nous n'avons pas encore", no "partenaire vérifié"). |
-| `src/features/alex/voice/alexCorePrompt.ts` (line ~68 "Si aucun pro disponible") | Replace fragment with the new positioning: compatibility filtering + offer to broaden / notify. |
-| `src/components/contractor/LeadDecisionCard.tsx` line 74 | Soften `"aucun autre entrepreneur disponible"` → `"Recherche intelligente en cours pour un autre professionnel compatible."` |
+`SurfaceMaterial`: `gypse | bois | aluminium | vinyle | brique | beton | metal | fer_forge | composite | stucco | pave_uni | asphalte | bardeau | membrane_elasto | fibre_piscine | beton_piscine`. Each carries `prep_factor`, `primer_factor`, and a `recommended_methods[]` shortlist used for the auto-recommendation.
 
-Admin-only `EmptyState` strings (AdminLeads, AdminQuotes, AdminDocuments, AdminAlerts, AdminAppointments, AdminContractors, AdminScreenshot*, AdminOutreach*) are **out of scope** — they are internal staff UI, not user-facing conversion surfaces.
+`SurfaceConditionCode` (rich FR labels) maps to engine codes:
+- Pavé/asphalte: `joints_erodes`, `mauvaises_herbes`, `affaissement`, `taches_huile`, `fissures_pave`, `decoloration_asphalte`
+- Toiture nano: `mousse_lichen`, `granules_perdus`, `oxydation`, `infiltration_legere`
+- Piscine: `farinage`, `taches_calcaire`, `coque_usee`
+- Plus existing: `excellent, bon, ecaille, rouille, fissures, bois_abime, moisissure, ancienne_peinture, graffiti, decoloration_uv`
 
-### 3. Auth + estimate detection
+Each rich code → underlying `WallCondition` + condition-specific `prep_modifier`, `materials_modifier`, `urgency_hint`.
 
-- Inside the card, use existing `useAuth()` hook to swap CTAs.
-- Estimate detection: read `sessionStorage` keys already used by the painting calculator / growth diagnostic (`unpro:lastEstimate` convention — add a tiny `getSavedEstimate()` helper in `noMatchCopy.ts` reading the keys we already write).
+`ProjectDetails` = `{ category, items[], method, material, conditionCodes[] }`.
 
-### 4. Alex proactive line
+### 2. Engine extensions
 
-- Expose `getAlexNoMatchProactive(service, city)` from `noMatchCopy.ts`.
-- Wire into `useNoMatchRecovery` so the existing TTS path speaks the new line on `detected` step.
+**`src/features/paintingCalculator/engine.ts`** (edit) — back-compat additive.
 
-### 5. Verification
+- Extend `CalculatorInput` with optional `category, items, method, material, conditionCodes`.
+- New helper `applyAdvancedModifiers(base, input)` multiplies prep/materials/labour by material × method × max(condition) factors.
+- For categories where `unit_basis === "linear_ft"` (clôture, lignage) or `linear_ft + sqft` mixed (asphalte: linear edge + surface), `computeEstimate` accepts `linearFt` alongside `avgRoomSqft` and uses the right multiplier path. Pool/asphalte/pavé/toiture use a single-zone surface model (no room/ceiling math).
+- Result gains `recommendedMethod`, `difficulty` (facile/moyenne/elevee/specialisee), `lifespanYears`, `maintenanceLevel` (faible/moyen/eleve), `paintVsStainAdvice?`, `resaleRoiPct?`.
+- Deterministic recommendation examples:
+  - `pool + beton_piscine` → `scellant_acrylique` (epoxy si farinage)
+  - `paver_sealing + pave_uni` → `scellant_silane` + Alex hint sur joints polymériques
+  - `asphalt + entree` → `epandage_asphalte`
+  - `roof_nano + bardeau` → `scellant_nano` (gating: rejette si `infiltration_legere` → recommande inspection)
+  - `clôture + cèdre + teinture` → `spray + finition rouleau`
+  - `fer_forge` → `pinceau + antirouille`
 
-- `rg` for the banned phrases inside `src/` (excluding admin) returns zero hits after the refactor.
-- Mount `/alex/no-match` and the painting calculator no-match branch on mobile viewport (384px) to confirm CTAs stack, pulse animation runs, and signup deep-link preserves `next`.
+### 3. UI: new step structure (same route)
 
-### Out of scope
+Replace existing Step 1 chip grid with 5 intelligent steps in `src/pages/painting/steps/`:
 
-- Admin dashboards' generic empty states.
-- New backend tables / edge functions (existing `alex-no-match-handle` and `useNoMatchRecovery` are reused).
-- New routes.
+1. `StepProjectCategory.tsx` — 9 premium category chips (5 originaux + Piscine, Pavé, Asphalte, Toiture nano).
+2. `StepProjectItems.tsx` — multi-select items scoped to category.
+3. `StepMethod.tsx` — methods filtered by category (ex. `roof_nano` n'affiche que scellants).
+4. `StepMaterial.tsx` — materials filtered by category.
+5. `StepCondition.tsx` — multi-select conditions filtered by category.
 
-### Technical notes
+Existing photo / surface-detail / gate / result steps shift down. Progress bar adapts to the new count. Surface-detail step swaps room/ceiling fields for `surface_sqft` + optional `linear_ft` when category is pool/asphalte/pavé/toiture.
 
-- Files created: 2 (`noMatchCopy.ts`, `NoMatchConversionCard.tsx`).
-- Files edited: 6 listed above.
-- No DB migration. No new dependencies.
-- All colors via semantic tokens; pulse via Tailwind `animate-pulse` + `shadow-[0_0_24px_hsl(var(--primary)/0.35)]`.
+### 4. Dynamic ambient effects
+
+**`src/pages/painting/AmbientLayer.tsx`** (new, CSS-only, respects `prefers-reduced-motion`):
+- `deck_wood + clôture` → animated wood-plank gradient
+- `metal_specialty || fer_forge` → metallic radial shimmer
+- `spray` method → subtle particle field
+- `pool` → soft cyan caustics
+- `asphalt` → black gradient with subtle yellow lane stripe
+- `paver_sealing` → herringbone faint pattern
+- `roof_nano` → slow blue-to-cyan diagonal sheen ("nano" feel)
+
+### 5. Photo analysis enhancements
+
+**`supabase/functions/analyze-painting-photo/index.ts`** (edit) — extend Gemini tool-call schema:
+
+Existing fields + new: `fenceLengthFt?, railingComplexity?, windowCount?, sidingType?, rustSeverity?, sprayFeasibility?, patioDimensions?, paverAreaSqft?, paverJointCondition?, asphaltAreaSqft?, asphaltCrackSeverity?, oilStainsPresent?, roofPitch?, roofMaterial?, mossPresence?, granuleLoss?, poolSurfaceType?, poolChalking?`.
+
+Photo step auto-fills `category`, `material`, `conditionCodes` when first photo returns high-confidence detections (user can override).
+
+### 6. Result panel
+
+Replace flat Stat grid with three sections:
+
+- **Estimation principale** — min/max range with bigger typography + "Méthode recommandée".
+- **Décomposition** — Préparation / Matériaux / Produit / Main-d'œuvre / Durée estimée / Difficulté chips.
+- **Décision propriétaire** (collapsible) — `Peinture vs teinture` (interior/exterior/deck) OU `Scellant nano vs traditionnel` (toiture/pavé) OU `Scellant acrylique vs époxy` (piscine); `Durée de vie estimée`; `Entretien futur`; `Rentabilité avant revente`.
+
+Alex inline hint from catalog, e.g.:
+- "Le scellant nano sur toiture prolonge la durée de vie sans remplacement complet."
+- "Sceller un pavé uni protège les joints et empêche les mauvaises herbes."
+- "L'asphalte refait dans les 30 derniers jours ne doit pas être scellé tout de suite."
+- "Une piscine en béton qui farine demande un époxy plutôt qu'un acrylique."
+
+### 7. Persistence
+
+**`supabase/migrations/<ts>_painting_estimate_project_details.sql`**
+
+```sql
+ALTER TABLE public.painting_estimates
+  ADD COLUMN IF NOT EXISTS project_details jsonb NOT NULL DEFAULT '{}'::jsonb,
+  ADD COLUMN IF NOT EXISTS recommended_method text,
+  ADD COLUMN IF NOT EXISTS difficulty text,
+  ADD COLUMN IF NOT EXISTS lifespan_years numeric,
+  ADD COLUMN IF NOT EXISTS maintenance_level text,
+  ADD COLUMN IF NOT EXISTS linear_ft numeric;
+```
+
+`handleSaveAndContinue` writes `project_details = { category, items, method, material, conditionCodes }` + flat columns. RLS untouched.
+
+### 8. Verification
+
+- TS: `computeEstimate` stable when new fields absent.
+- Mobile preview (384px): 9-category grid stays 2-col, ambient effect doesn't push CTAs.
+- No banned phrases in result/match copy; swap hard-coded "n'avons pas encore de peintre" for `<NoMatchConversionCard>` (shipped last turn).
+- SEO unchanged (title/canonical/JSON-LD stable); page still works for guest until gate.
+- Sanity check that pool/asphalte/pavé/toiture estimates land in realistic QC ranges before opening to users.
+
+### Files touched
+
+**New (8):** `projectCatalog.ts`, `AmbientLayer.tsx`, 5 step components, 1 SQL migration.
+**Edited (4):** `engine.ts`, `types.ts`, `PaintingCalculatorPage.tsx`, `analyze-painting-photo/index.ts`.
+
+### Out of scope (defer)
+
+- Renaming the route from `/peinture/calculateur` to a generic `/coatings/calculateur` — keep existing SEO; add category-specific landing pages in a Phase 2 AEO batch (`/piscine/scellant/:ville`, `/pave-uni/scellant/:ville`, `/asphalte/scellant/:ville`, `/toiture/nano/:ville`).
+- Real ML for spray feasibility / roof pitch — Phase 1 uses Gemini Vision text classification.
+- Separate normalized items/methods tables — jsonb suffices for Phase 1.
