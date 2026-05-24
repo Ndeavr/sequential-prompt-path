@@ -11,24 +11,34 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  CheckCircle2, AlertCircle, XCircle, Sparkles, MapPin,
+  CheckCircle2, Sparkles, MapPin,
   Award, ShieldCheck, Star,
 } from "lucide-react";
 
 type Profile = any;
 
-const STATUS_ICON: Record<string, JSX.Element> = {
-  confirmed: <CheckCircle2 className="w-4 h-4 text-emerald-600" />,
-  unverified: <AlertCircle className="w-4 h-4 text-amber-600" />,
-  not_found: <XCircle className="w-4 h-4 text-stone-400" />,
-  disputed: <AlertCircle className="w-4 h-4 text-red-600" />,
-};
-const STATUS_LABEL: Record<string, string> = {
-  confirmed: "Confirmé",
-  unverified: "À confirmer",
-  not_found: "Non trouvé",
-  disputed: "Contesté",
-};
+/**
+ * Compute trust level from validations.
+ * L1 "Profil analysé par UNPRO"           — site/services détectés
+ * L2 "Présence commerciale validée"       — web + (phone OU GMB) cohérents
+ * L3 "Entreprise vérifiée"                — RBQ + NEQ confirmés
+ * L4 "Entreprise certifiée UNPRO"         — docs réels uploadés (réservé)
+ */
+function computeTrust(v: any): { level: 1 | 2 | 3 | 4; label: string } {
+  const ok = (s?: string) => s === "confirmed";
+  if (v) {
+    if (ok(v.documents_status) && ok(v.rbq_status) && ok(v.neq_status)) {
+      return { level: 4, label: "Entreprise certifiée UNPRO" };
+    }
+    if (ok(v.rbq_status) && ok(v.neq_status)) {
+      return { level: 3, label: "Entreprise vérifiée" };
+    }
+    if (ok(v.website_status) && (ok(v.phone_status) || ok(v.google_business_status) || ok(v.address_status))) {
+      return { level: 2, label: "Présence commerciale validée" };
+    }
+  }
+  return { level: 1, label: "Profil analysé par UNPRO" };
+}
 
 export default function PageAiIndexedProfile() {
   const { slug } = useParams();
