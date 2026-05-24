@@ -283,6 +283,33 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     },
     onError: (error: unknown) => {
       console.error("[ElevenLabs V7] Error:", error);
+      const msg = String((error as any)?.message ?? error ?? "");
+      const canTryAlternateTransport =
+        !alternateTransportTriedRef.current &&
+        lastSessionStartRef.current?.conversationToken &&
+        /v1 RTC path not found|websocket|1006|closed/i.test(msg);
+
+      if (canTryAlternateTransport) {
+        alternateTransportTriedRef.current = true;
+        const last = lastSessionStartRef.current;
+        console.warn("[ElevenLabs V8] Transport error — trying WebRTC backup once", msg);
+        void (async () => {
+          try {
+            try { conversationApiRef.current?.endSession?.(); } catch {}
+            await conversationApiRef.current?.startSession?.({
+              conversationToken: last?.conversationToken,
+              connectionType: "webrtc",
+              inputDeviceId: last?.inputDeviceId,
+              overrides: last?.overrides,
+            } as any);
+          } catch (fallbackErr) {
+            bootInProgressRef.current = false;
+            setIsConnecting(false);
+            callbacksRef.current?.onError?.(fallbackErr);
+          }
+        })();
+        return;
+      }
       bootInProgressRef.current = false;
       setIsConnecting(false);
       callbacksRef.current?.onError?.(error);
