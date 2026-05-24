@@ -357,10 +357,18 @@ export default function PageAiIndexedProfile() {
                       {s.is_primary && <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100">Principal</Badge>}
                     </div>
                     {s.sub_services?.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {s.sub_services.map((sub: string) => (
-                          <Badge key={sub} variant="secondary" className="text-xs">{sub}</Badge>
-                        ))}
+                      <div className="space-y-1.5">
+                        <div className="text-xs uppercase tracking-wide text-stone-500">Méthodes détectées</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {s.sub_services.map((sub: string) => (
+                            <span
+                              key={sub}
+                              className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 text-xs font-medium"
+                            >
+                              <CheckCircle2 className="w-3 h-3" /> {sub}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
                     {s.problems_solved?.length > 0 && (
