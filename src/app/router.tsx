@@ -116,6 +116,7 @@ const PageAdminAcquisition = lazy(() => import("@/pages/admin/acquisition/PageAd
 const PageAippPublic = lazy(() => import("@/pages/aipp/PageAippPublic"));
 const PageAiIndexedProfile = lazy(() => import("@/pages/aipp/PageAiIndexedProfile"));
 const PageAiEntity = lazy(() => import("@/pages/ai/PageAiEntity"));
+const PageAdminAiEntities = lazy(() => import("@/pages/admin/PageAdminAiEntities"));
 const PageAippImport = lazy(() => import("@/pages/admin/PageAippImport"));
 const PageAippProfiles = lazy(() => import("@/pages/admin/PageAippProfiles"));
 const PageContractorAippCockpit = lazy(() => import("@/pages/contractor/PageContractorAippCockpit"));
