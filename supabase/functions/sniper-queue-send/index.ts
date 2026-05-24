@@ -9,7 +9,9 @@ const corsHeaders = {
 
 const GATEWAY = "https://connector-gateway.lovable.dev";
 
+// Send via Lovable Emails queue (verified sender: notify.unpro.ca)
 async function sendEmail(params: {
+  supabase: any;
   to: string;
   subject: string;
   text: string;
@@ -17,28 +19,41 @@ async function sendEmail(params: {
   fromEmail: string;
   replyTo?: string;
 }): Promise<{ ok: boolean; id?: string; error?: string }> {
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-  const resendKey = Deno.env.get("RESEND_API_KEY");
-  if (!lovableKey || !resendKey) return { ok: false, error: "Missing LOVABLE_API_KEY or RESEND_API_KEY" };
+  const messageId = crypto.randomUUID();
+  const senderDomain = (params.fromEmail.split("@")[1] || "notify.unpro.ca").toLowerCase();
+  const fromAddress = `${params.fromName} <${params.fromEmail}>`;
+  const escaped = params.text
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const html = `<!doctype html><html><body style="font-family:-apple-system,Segoe UI,Inter,sans-serif;font-size:15px;line-height:1.55;color:#111;background:#fff;padding:24px;">${
+    escaped.split(/\n{2,}/).map(p => `<p style="margin:0 0 14px 0;">${p.replace(/\n/g, "<br/>")}</p>`).join("")
+  }</body></html>`;
 
-  const res = await fetch(`${GATEWAY}/resend/emails`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${lovableKey}`,
-      "X-Connection-Api-Key": resendKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: `${params.fromName} <${params.fromEmail}>`,
-      to: [params.to],
+  await params.supabase.from("email_send_log").insert({
+    message_id: messageId,
+    template_name: "sniper_outreach",
+    recipient_email: params.to,
+    status: "pending",
+  });
+
+  const { error: enqueueError } = await params.supabase.rpc("enqueue_email", {
+    queue_name: "transactional_emails",
+    payload: {
+      message_id: messageId,
+      to: params.to,
+      from: fromAddress,
+      sender_domain: senderDomain,
       subject: params.subject,
+      html,
       text: params.text,
       reply_to: params.replyTo,
-    }),
+      purpose: "transactional",
+      label: "sniper_outreach",
+      idempotency_key: `sniper-${messageId}`,
+      queued_at: new Date().toISOString(),
+    },
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) return { ok: false, error: `Resend ${res.status}: ${JSON.stringify(data).slice(0, 300)}` };
-  return { ok: true, id: data?.id };
+  if (enqueueError) return { ok: false, error: `enqueue: ${enqueueError.message}` };
+  return { ok: true, id: messageId };
 }
 
 async function sendSms(params: { to: string; body: string }): Promise<{ ok: boolean; id?: string; error?: string }> {
