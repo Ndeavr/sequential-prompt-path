@@ -584,26 +584,29 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           firstName,
         });
 
-        // Prefer WebRTC with conversationToken — faster handshake on mobile
-        // networks. WebSocket signedUrl kept as fallback if WebRTC fails fast.
+        // Use WebSocket first: this agent currently exposes signedUrl reliably,
+        // while WebRTC may fail internally with LiveKit "v1 RTC path not found".
         const conversationToken = (data as any)?.conversationToken;
+        lastSessionStartRef.current = {
+          signedUrl,
+          conversationToken,
+          inputDeviceId: inputDeviceIdRef.current,
+          overrides,
+        };
         try {
-          if (conversationToken) {
-            await conversation.startSession({
-              conversationToken,
-              connectionType: "webrtc",
-              inputDeviceId: inputDeviceIdRef.current,
-              overrides,
-            } as any);
-          } else {
-            throw new Error("no_conversation_token");
-          }
-        } catch (startErr) {
-          if (!signedUrl) throw startErr;
-          console.warn("[ElevenLabs V8] WebRTC failed, trying WebSocket fallback", startErr);
           await conversation.startSession({
             signedUrl,
             connectionType: "websocket",
+            inputDeviceId: inputDeviceIdRef.current,
+            overrides,
+          } as any);
+        } catch (startErr) {
+          if (!conversationToken) throw startErr;
+          alternateTransportTriedRef.current = true;
+          console.warn("[ElevenLabs V8] WebSocket failed, trying WebRTC backup", startErr);
+          await conversation.startSession({
+            conversationToken,
+            connectionType: "webrtc",
             inputDeviceId: inputDeviceIdRef.current,
             overrides,
           } as any);
