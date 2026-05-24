@@ -250,7 +250,19 @@ export default function PaintingCalculatorPage() {
           estimated_total_max: result.totalMax,
           confidence_level: result.confidence,
           status: "ready",
-        })
+          project_details: {
+            category: input.category ?? null,
+            items: input.items ?? [],
+            method: input.method ?? null,
+            material: input.material ?? null,
+            conditionCodes: input.conditionCodes ?? [],
+          },
+          recommended_method: result.recommendedMethod ?? null,
+          difficulty: result.difficulty ?? null,
+          lifespan_years: result.lifespanYears ?? null,
+          maintenance_level: result.maintenanceLevel ?? null,
+          linear_ft: input.linearFt ?? null,
+        } as any)
         .select("id")
         .single();
       if (error) throw error;
