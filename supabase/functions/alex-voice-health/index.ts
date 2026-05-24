@@ -4,7 +4,7 @@
  * Never exposes secret values.
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,9 +28,9 @@ serve(async (req) => {
     if (!elevenKey) {
       checks.elevenlabs_key = { status: "missing", detail: "ELEVENLABS_API_KEY not configured" };
     } else {
-      // Quick validate by listing voices (cheap endpoint)
+      // Quick validate with the same auth style used by production TTS.
       try {
-        const resp = await fetch("https://api.elevenlabs.io/v1/user", {
+        const resp = await fetch("https://api.elevenlabs.io/v1/voices", {
           headers: { "xi-api-key": elevenKey },
         });
         if (resp.ok) {
