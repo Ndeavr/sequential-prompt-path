@@ -1165,6 +1165,7 @@ export const AppRouter = () => (
         <Route path="/admin/acquisition" element={<ProtectedRoute requiredRole="admin"><PageAdminAcquisition /></ProtectedRoute>} />
         <Route path="/aipp/:slug" element={<PageAippPublic />} />
         <Route path="/ai-indexed-profiles/:slug" element={<PageAiIndexedProfile />} />
+        <Route path="/ai/:slug" element={<Suspense fallback={<LazyFallback />}><PageAiEntity /></Suspense>} />
         <Route path="/admin/aipp-import" element={<ProtectedRoute requiredRole="admin"><PageAippImport /></ProtectedRoute>} />
         <Route path="/admin/aipp-profiles" element={<ProtectedRoute requiredRole="admin"><PageAippProfiles /></ProtectedRoute>} />
         <Route path="/contractor/aipp-cockpit" element={<ProtectedRoute><PageContractorAippCockpit /></ProtectedRoute>} />
