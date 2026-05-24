@@ -412,29 +412,53 @@ export default function PaintingCalculatorPage() {
           ))}
         </div>
 
-        {/* STEP 1 — Project type */}
+        {/* STEP 1 — Project category (9 surfaces & coatings) */}
         {step === 1 && (
           <StepCard
-            title="Que voulez-vous peinturer?"
-            subtitle="Choisissez ce qui décrit le mieux votre projet."
+            title="Quel type de projet souhaitez-vous estimer ?"
+            subtitle="Peinture, scellant, teinture ou protection — choisissez votre surface."
           >
             <div className="grid grid-cols-2 gap-3">
-              {(Object.keys(PROJECT_TYPE_LABELS) as ProjectType[]).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => {
-                    setInput((i) => ({ ...i, projectType: t }));
-                    setStep(2);
-                  }}
-                  className={`text-left p-4 rounded-2xl border transition-all ${
-                    input.projectType === t
-                      ? "bg-cyan-400/10 border-cyan-400/50"
-                      : "bg-white/[0.03] border-white/10 hover:border-white/30"
-                  }`}
-                >
-                  <div className="text-sm font-medium">{PROJECT_TYPE_LABELS[t]}</div>
-                </button>
-              ))}
+              {(Object.keys(CATEGORY_LABELS) as ProjectCategory[]).map((c) => {
+                const single = SINGLE_ZONE.includes(c);
+                const projectType: ProjectType =
+                  c === "exterior" ? "exterior"
+                  : c === "deck_wood" ? "exterior"
+                  : c === "metal_specialty" ? "stairs_railings"
+                  : c === "commercial" ? "whole_house"
+                  : single ? "exterior"
+                  : "single_room";
+                const defaultMethod = CATEGORY_METHODS[c][0];
+                const defaultMaterial = CATEGORY_MATERIALS[c][0];
+                return (
+                  <button
+                    key={c}
+                    onClick={() => {
+                      setInput((i) => ({
+                        ...i,
+                        category: c,
+                        projectType,
+                        method: defaultMethod,
+                        material: defaultMaterial,
+                        conditionCodes: i.conditionCodes ?? [],
+                        // sensible defaults for single-zone (avgRoomSqft = total zone)
+                        ...(single
+                          ? { roomCount: 1, avgRoomSqft: 400, includesCeilings: false }
+                          : {}),
+                      }));
+                      setStep(2);
+                    }}
+                    className={`text-left p-4 rounded-2xl border transition-all ${
+                      input.category === c
+                        ? "bg-cyan-400/10 border-cyan-400/50"
+                        : "bg-white/[0.03] border-white/10 hover:border-white/30"
+                    }`}
+                  >
+                    <div className="text-sm font-semibold">{CATEGORY_LABELS[c]}</div>
+                    <div className="text-[11px] text-white/50 mt-0.5">{CATEGORY_TAGLINES[c]}</div>
+                  </button>
+                );
+              })}
             </div>
           </StepCard>
         )}
