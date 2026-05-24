@@ -801,14 +801,69 @@ export default function PaintingCalculatorPage() {
 
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <Stat label="Surface estimée" value={`${result.surfaceSqft} pi²`} />
-                  <Stat label="Peinture requise" value={`${result.paintGallons} gal.`} />
-                  <Stat label="Coût peinture" value={fmtMoney(result.paintCost)} />
+                  <Stat label="Produit requis" value={`${result.paintGallons} gal.`} />
+                  <Stat label="Coût produit" value={fmtMoney(result.paintCost)} />
                   <Stat label="Coût main-d'œuvre" value={fmtMoney(result.labourCost)} />
                   <Stat label="Préparation" value={fmtMoney(result.prepCost)} />
                   <Stat label="Durée estimée" value={`${result.durationDays} jour${result.durationDays > 1 ? "s" : ""}`} />
+                  {result.recommendedMethod && (
+                    <Stat label="Méthode recommandée" value={METHODS[result.recommendedMethod].label} />
+                  )}
+                  {result.difficulty && (
+                    <Stat label="Difficulté" value={result.difficulty === "specialisee" ? "Spécialisée" : result.difficulty.charAt(0).toUpperCase() + result.difficulty.slice(1)} />
+                  )}
                 </div>
               </CardContent>
             </Card>
+
+            {/* Décision propriétaire */}
+            {result.decisionAdvice && (
+              <Card className="bg-white/[0.03] border-white/10 rounded-3xl">
+                <CardContent className="p-6 space-y-4">
+                  <h2 className="text-lg font-semibold">Décision propriétaire</h2>
+                  <div className="p-4 rounded-2xl bg-gradient-to-br from-cyan-500/5 to-blue-500/5 border border-cyan-400/15">
+                    <div className="text-xs uppercase tracking-wider text-cyan-300 mb-1">
+                      {result.decisionAdvice.title}
+                    </div>
+                    <div className="text-sm font-semibold text-white">
+                      Recommandé : {result.decisionAdvice.recommended}
+                    </div>
+                    <div className="text-xs text-white/60 mt-1">
+                      Alternative : {result.decisionAdvice.alternative}
+                    </div>
+                    <div className="text-xs text-white/70 mt-2 leading-relaxed">
+                      {result.decisionAdvice.reasoning}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {result.lifespanYears !== undefined && (
+                      <Stat label="Durée de vie" value={`${result.lifespanYears} ans`} />
+                    )}
+                    {result.maintenanceLevel && (
+                      <Stat
+                        label="Entretien"
+                        value={
+                          result.maintenanceLevel === "faible"
+                            ? "Faible"
+                            : result.maintenanceLevel === "moyen"
+                            ? "Moyen"
+                            : "Élevé"
+                        }
+                      />
+                    )}
+                    {result.resaleRoiPct !== undefined && (
+                      <Stat label="ROI revente" value={`${result.resaleRoiPct}%`} />
+                    )}
+                  </div>
+                  {result.alexHint && (
+                    <div className="flex items-start gap-2 p-3 rounded-2xl bg-white/[0.04] border border-white/10">
+                      <Sparkles className="h-4 w-4 text-cyan-300 mt-0.5 shrink-0" />
+                      <p className="text-xs text-white/70 leading-relaxed">{result.alexHint}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Matches */}
             <Card className="bg-white/[0.03] border-white/10 rounded-3xl">
