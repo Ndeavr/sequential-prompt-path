@@ -24,8 +24,16 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const { data: prospect } = await supabase
-      .from("prospect_pages").select("*").eq("slug", slug).maybeSingle();
+    // Resolve prospect from war_prospects (same source as /pro/:slug landing).
+    // Fallback to legacy prospect_pages for backward compatibility.
+    let { data: prospect } = await supabase
+      .from("war_prospects").select("id, slug").eq("slug", slug).maybeSingle();
+
+    if (!prospect) {
+      const legacy = await supabase
+        .from("prospect_pages").select("id, slug").eq("slug", slug).maybeSingle();
+      prospect = legacy.data;
+    }
 
     if (!prospect) {
       return new Response(JSON.stringify({ error: "prospect_not_found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -49,9 +57,12 @@ Deno.serve(async (req) => {
       locale: "fr",
     });
 
-    await supabase.from("prospect_page_events").insert({
-      slug, event_type: "checkout_started", metadata: { session_id: session.id },
-    });
+    // Best-effort event log (table may not exist in all envs).
+    try {
+      await supabase.from("prospect_page_events").insert({
+        slug, event_type: "checkout_started", metadata: { session_id: session.id },
+      });
+    } catch (_) { /* ignore */ }
 
     return new Response(JSON.stringify({ url: session.url, session_id: session.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
