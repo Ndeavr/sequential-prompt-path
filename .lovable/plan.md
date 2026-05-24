@@ -1,72 +1,85 @@
-## Problèmes constatés sur `/ai-indexed-profiles/isolation-solution-royal`
+# AIPP Trust Refactor — Public/Private Split + Real Verification
 
-D'après les captures :
-1. **Textes invisibles** — les H1/H2 ("Isolation Solution Royal", "Analyse AIPP", "Questions fréquentes", titres de services, scores `70/100`...) s'affichent en quasi-noir sur fond quasi-noir. La classe `landing-warm` ne s'applique pas correctement et le thème sombre global "bleed through". Les `text-stone-900` deviennent illisibles.
-2. **RBQ non vérifiée** — actuellement la validation RBQ est seulement marquée `not_found` au seed, jamais croisée avec le registre RBQ.
-3. **Bouton "Demander un rendez-vous"** — aucun `onClick`, ne fait rien.
-4. **Logo absent** — `logo_url` vide en BDD, jamais hydraté lors du scrape.
+Rebuild the AI-Indexed Profile system so public pages only show confirmed positive signals, all uncertainty moves to a private contractor cockpit, and trust badges reflect real validation (RBQ/NEQ/proofs).
 
----
+## Architecture
 
-## Phase 1 — Corrections immédiates (UI + CTA + Logo)
+```text
+                  ┌─ aipp_profiles ──────────────────┐
+                  │  + trust_level (1-4)             │
+                  │  + visibility_rules (jsonb)      │
+                  └──────────────┬───────────────────┘
+                                 │
+        ┌────────────────────────┼────────────────────────┐
+        │                        │                        │
+  aipp_profile_validations  service_proofs        aipp_detected_methods
+  (RBQ/NEQ/insurance,       (per-claim evidence,  (per-service materials
+   verified flags)           url, confidence)      detected from sources)
 
-### A. Lisibilité / Theme
-- Forcer un fond **warm neutral réel** sur `PageAiIndexedProfile` via wrapper `style={{ background: '#F7F6F0', color: '#1c1917' }}` au lieu de dépendre de `.landing-warm` (qui peut être surchargé par un parent dark).
-- Ajouter `data-theme="warm"` sur le root + un `<style>` scoped qui force `color-scheme: light` et override les tokens `--background`, `--foreground`, `--card`, `--muted-foreground` pour cette page uniquement.
-- Remplacer `text-stone-900` par `text-[#1c1917]` explicite sur H1/H2 et `text-stone-600` par `text-[#57534e]` pour les sous-titres.
-- Score breakdown : les chiffres `70/100` rendent avec `text-stone-300` (trop pâle). Passer en `text-stone-900 font-bold` pour le nombre, `text-stone-500` uniquement pour `/100`.
+  PUBLIC view (/ai-indexed-profiles/:slug)
+    → reads only confirmed=true rows
+    → hides any field without proof
+    → renders trust badge from computed trust_level
 
-### B. CTA "Demander un rendez-vous"
-- Wire les 3 boutons hero :
-  - **Demander un rendez-vous** → `navigate('/rendez-vous?contractor=${slug}&trade=${primary_trade}&city=${primary_city}')`
-  - **Vérifier cette entreprise** → `navigate('/verification?company=${company_name}')`
-  - **Analyser mes soumissions** → `navigate('/analyser-soumission?context=${slug}')`
-- Tracker l'événement (`trackFunnelEvent('aipp_cta_click', { slug, cta })`) avant navigation.
+  PRIVATE cockpit (/contractor/aipp-cockpit)
+    → shows gaps, mismatches, "Non trouvé", action checklist
+```
 
-### C. Logo
-- Étendre la edge function `aipp-import-website` pour extraire le logo via Firecrawl format `branding` (déjà supporté). Champs récupérés : `branding.images.logo`, `branding.images.favicon`.
-- Stocker dans `aipp_profiles.logo_url` lors du `persist`.
-- Seed manuellement `logo_url` pour `isolation-solution-royal` à partir de `isroyal.ca` (re-run import en mode persist, ou UPDATE direct via tool insert).
-- Fallback hero si pas de logo : afficher la première initiale dans un cercle warm `bg-stone-900 text-amber-50`.
+## Database (one migration)
 
----
+1. **aipp_profiles** — add `trust_level smallint (1-4)`, `trust_label text`, `public_visibility jsonb` (per-field allow flags computed by trigger).
+2. **service_proofs** — new table: `contractor_id, profile_id, service, method, material, proof_source (homepage|footer|jsonld|gmb|...), proof_url, snippet, confidence_score numeric, detected_at`. RLS: public read where `confidence_score >= 0.6`.
+3. **aipp_detected_methods** — new table linking a service to validated methods/materials with proof refs.
+4. **aipp_profile_validations** — add `insurance_status`, `insurance_verified_at`, `gmb_status`, `gmb_url`, `social_status`.
+5. **Trigger** `recompute_aipp_trust()`: on insert/update of validations or proofs, recompute `trust_level`:
+   - L1 site+services detected
+   - L2 + phone/address coherent + GMB found
+   - L3 + RBQ confirmed + NEQ confirmed + insurance
+   - L4 + uploaded docs + history
+6. **RLS**: public can SELECT only fields exposed via a `aipp_public_profiles` view (`security_invoker=on`) that strips unconfirmed columns. Base table public SELECT denied; contractor + admin can read full row.
 
-## Phase 2 — Vérification RBQ réelle
+## Edge functions
 
-### Nouvelle edge function `aipp-verify-rbq`
-- Input : `{ profile_id, company_name, neq?, address_city? }`
-- Logique :
-  1. Scrape `https://www.rbq.gouv.qc.ca/recherche-titulaires` via Firecrawl `scrape` + format `json` avec prompt structuré (nom commercial + ville).
-  2. Si match unique trouvé → écrire `aipp_profile_validations.rbq_number`, `rbq_status='confirmed'`, `rbq_categories[]`, `rbq_valid_until`.
-  3. Si plusieurs candidats → `rbq_status='unverified'` + stocker `rbq_candidates` (jsonb).
-  4. Si aucun → `rbq_status='not_found'`.
-  5. Logger source dans `aipp_profile_sources` (`source_type='rbq_registry'`, `source_url`, `fetched_at`).
-- Idem pattern pour **NEQ** via Registraire des entreprises (`registreentreprises.gouv.qc.ca`) — fonction `aipp-verify-neq`.
+- **`aipp-import-website`** (extend): also extract phone/email/logo/favicon/socials/hours/zones from homepage + `/contact` + `/about` + JSON-LD + OpenGraph + sitemap. Write each finding into `service_proofs` with source URL + snippet. Never overwrite human-verified fields (Contractor Identity Resolution rule).
+- **`aipp-verify-rbq`** (already exists): unchanged.
+- **`aipp-verify-neq`** (new): scrape registreentreprises.gouv.qc.ca; same fuzzy match pattern as RBQ.
+- **`aipp-detect-methods`** (new): given homepage markdown + services, call Gemini with strict tool schema returning `{service, method, material, evidence_snippet, confidence}[]`. Zero hallucination guardrail: must include verbatim snippet from source.
+- **`aipp-recalc-score`** (extend): recompute trust_level and write `public_visibility` map.
 
-### UI admin
-- Sur `/admin/aipp-profiles`, ajouter bouton **"Vérifier RBQ + NEQ"** par profil qui invoque les deux edge functions en parallèle puis re-fetch.
-- Sur la page publique, afficher si `confirmed` : numéro RBQ + lien direct `https://www1.rbq.gouv.qc.ca/...?numLicence=XXXX` comme **source vérifiable**.
+## Public page rewrite (`PageAiIndexedProfile.tsx`)
 
-### Migration mineure
-- Ajouter colonnes à `aipp_profile_validations` si manquantes :
-  - `rbq_candidates jsonb`
-  - `rbq_valid_until date`
-  - `rbq_categories text[]`
-  - `neq_candidates jsonb`
-  - `rbq_verified_at timestamptz`
-  - `neq_verified_at timestamptz`
+- Replace hard-coded "Profil IA vérifié UNPRO" pill with dynamic `TrustBadge` driven by `trust_level` (1→"Profil analysé", 2→"Présence commerciale validée", 3→"Entreprise vérifiée", 4→"Entreprise certifiée UNPRO").
+- Rename "Données vérifiées" → "Informations publiques analysées". Render only rows where `public_visibility[field] === true`. Remove all "Non trouvé" / "À confirmer" chips publicly.
+- Replace generic material chips with **"Méthodes détectées"** section pulled from `aipp_detected_methods` (only `confidence >= 0.7`). ISR demo: shows "Fibre de verre soufflée, Ventilation des soffites, Scellant pare-air, Décontamination" — cellulose/uréthane removed because no proof.
+- Glassmorphism, warm theme, Apple-level minimal (Stripe Identity reference).
 
----
+## Private cockpit (`/contractor/aipp-cockpit`)
 
-## Out of scope (phases suivantes)
-- Vérification assurance (pas de registre public consolidable)
-- Auto-recheck cron mensuel RBQ/NEQ
-- Affichage des sources cliquables dans une drawer "Comment c'est vérifié"
+New page showing:
+- AIPP score breakdown (citability, NAP, social, completeness, trust).
+- Gap checklist (missing RBQ, missing insurance, no GMB, schema incomplete) with one-click actions.
+- NAP mismatch alerts and source diff drawer.
+- Re-run verification buttons.
 
----
+## Admin
 
-## Question pour confirmation
+- Extend `/admin/aipp-profiles` with: trust_level column, "Vérifier NEQ" button, "Détecter méthodes" button, view proofs drawer.
 
-Je propose de livrer **Phase 1 maintenant** (lisibilité + 3 CTA + logo via re-scrape branding + seed `isolation-solution-royal`) pour débloquer visuellement, puis Phase 2 (RBQ/NEQ réelles) dans un second tour.
+## ISR demo seed
 
-Confirmes-tu cet ordre, ou tu veux que je fasse tout (Phase 1 + Phase 2) en un seul build ?
+After deploy, run `aipp-import-website` + `aipp-detect-methods` + `aipp-verify-rbq` + `aipp-verify-neq` on isolation-solution-royal. Manually mark fibre-de-verre-soufflée / ventilation / décontamination as confirmed; ensure cellulose/uréthane absent from `aipp_detected_methods`.
+
+## Out of scope (later phase)
+
+- Document upload + L4 certification flow
+- Social media (FB/IG/YT) deep scraping
+- Citability score per AI engine (ChatGPT/Gemini) — keep current placeholders private only
+- Storage of historical scrape snapshots
+
+## Phasing
+
+**Phase A (this build)**: migration + public/private view + trust badge rewrite + visibility filter + remove all "Non trouvé" publicly + ISR cleanup of methods + extend import for phone/email/logo proofs.
+
+**Phase B (next)**: `aipp-verify-neq`, `aipp-detect-methods`, private cockpit page, admin proofs drawer.
+
+Confirm Phase A scope, or request A+B in one build.

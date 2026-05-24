@@ -11,24 +11,34 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  CheckCircle2, AlertCircle, XCircle, Sparkles, MapPin,
+  CheckCircle2, Sparkles, MapPin,
   Award, ShieldCheck, Star,
 } from "lucide-react";
 
 type Profile = any;
 
-const STATUS_ICON: Record<string, JSX.Element> = {
-  confirmed: <CheckCircle2 className="w-4 h-4 text-emerald-600" />,
-  unverified: <AlertCircle className="w-4 h-4 text-amber-600" />,
-  not_found: <XCircle className="w-4 h-4 text-stone-400" />,
-  disputed: <AlertCircle className="w-4 h-4 text-red-600" />,
-};
-const STATUS_LABEL: Record<string, string> = {
-  confirmed: "Confirmé",
-  unverified: "À confirmer",
-  not_found: "Non trouvé",
-  disputed: "Contesté",
-};
+/**
+ * Compute trust level from validations.
+ * L1 "Profil analysé par UNPRO"           — site/services détectés
+ * L2 "Présence commerciale validée"       — web + (phone OU GMB) cohérents
+ * L3 "Entreprise vérifiée"                — RBQ + NEQ confirmés
+ * L4 "Entreprise certifiée UNPRO"         — docs réels uploadés (réservé)
+ */
+function computeTrust(v: any): { level: 1 | 2 | 3 | 4; label: string } {
+  const ok = (s?: string) => s === "confirmed";
+  if (v) {
+    if (ok(v.documents_status) && ok(v.rbq_status) && ok(v.neq_status)) {
+      return { level: 4, label: "Entreprise certifiée UNPRO" };
+    }
+    if (ok(v.rbq_status) && ok(v.neq_status)) {
+      return { level: 3, label: "Entreprise vérifiée" };
+    }
+    if (ok(v.website_status) && (ok(v.phone_status) || ok(v.google_business_status) || ok(v.address_status))) {
+      return { level: 2, label: "Présence commerciale validée" };
+    }
+  }
+  return { level: 1, label: "Profil analysé par UNPRO" };
+}
 
 export default function PageAiIndexedProfile() {
   const { slug } = useParams();
@@ -149,34 +159,35 @@ export default function PageAiIndexedProfile() {
       "@type": "FAQPage",
       mainEntity: [
         { "@type": "Question", name: `${p.company_name} est-elle vérifiée par UNPRO ?`,
-          acceptedAnswer: { "@type": "Answer", text: `UNPRO a analysé les données publiques disponibles sur ${p.company_name}. Le statut actuel est : ${p.verification_status}.` } },
+          acceptedAnswer: { "@type": "Answer", text: `UNPRO a analysé les données publiques disponibles sur ${p.company_name} et structuré un profil basé sur les sources officielles, le site web et les répertoires publics.` } },
         { "@type": "Question", name: `Quels services offre ${p.company_name} ?`,
           acceptedAnswer: { "@type": "Answer", text: services.map((s: any) => s.service_name).join(", ") } },
         { "@type": "Question", name: `${p.company_name} dessert-elle ma ville ?`,
           acceptedAnswer: { "@type": "Answer", text: `Zones desservies : ${locations.map((l: any) => l.city).join(", ")}.` } },
         { "@type": "Question", name: `${p.company_name} a-t-elle une licence RBQ ?`,
-          acceptedAnswer: { "@type": "Answer", text: validations?.rbq_status === "confirmed" ? `RBQ ${validations.rbq_number} confirmée.` : "Non confirmée par UNPRO à ce jour." } },
+          acceptedAnswer: { "@type": "Answer", text: validations?.rbq_status === "confirmed" ? `RBQ ${validations.rbq_number} confirmée par UNPRO.` : `Aucune licence RBQ confirmée par UNPRO à ce jour pour ${p.company_name}.` } },
         { "@type": "Question", name: `Peut-on demander un rendez-vous via UNPRO ?`,
-          acceptedAnswer: { "@type": "Answer", text: "Oui. UNPRO permet la prise de rendez-vous directe avec les entreprises vérifiées." } },
+          acceptedAnswer: { "@type": "Answer", text: "Oui. UNPRO permet la prise de rendez-vous directe avec les entreprises analysées." } },
         { "@type": "Question", name: `Comment UNPRO valide-t-elle les données ?`,
-          acceptedAnswer: { "@type": "Answer", text: "UNPRO analyse les sources publiques (site web, registres officiels, avis, médias) et marque chaque fait comme confirmé, à confirmer ou non trouvé." } },
+          acceptedAnswer: { "@type": "Answer", text: "UNPRO analyse les sources publiques (site web, registres officiels, avis, médias). Seules les informations confirmées sont affichées publiquement; les éléments à compléter restent dans le tableau de bord privé de l'entreprise." } },
       ],
     },
   ];
 
-  const validationRows: { label: string; key: string; value?: string }[] = [
-    { label: "Nom légal", key: "name_status", value: p.legal_name },
-    { label: "Nom commercial", key: "name_status", value: p.trade_name || p.company_name },
-    { label: "Téléphone", key: "phone_status", value: p.phone || undefined },
-    { label: "Site web", key: "website_status", value: p.website_url || undefined },
-    { label: "Courriel", key: "email_status", value: p.email || undefined },
-    { label: "Adresse / ville", key: "address_status", value: p.primary_city || undefined },
-    { label: "RBQ", key: "rbq_status", value: validations?.rbq_number || undefined },
-    { label: "NEQ", key: "neq_status", value: validations?.neq_number || undefined },
-    { label: "Assurance", key: "insurance_status" },
-    { label: "Google Business", key: "google_business_status", value: p.google_business_url || undefined },
-    { label: "Réseaux sociaux", key: "social_status" },
-  ];
+  // Only confirmed rows appear publicly. Unverified / not_found are hidden.
+  const publicValidationRows: { label: string; value?: string }[] = [
+    { label: "Nom légal", value: validations?.legal_name_status === "confirmed" ? p.legal_name : undefined },
+    { label: "Nom commercial", value: validations?.name_status === "confirmed" ? (p.trade_name || p.company_name) : undefined },
+    { label: "Téléphone", value: validations?.phone_status === "confirmed" ? p.phone : undefined },
+    { label: "Site web", value: validations?.website_status === "confirmed" ? p.website_url : undefined },
+    { label: "Courriel", value: validations?.email_status === "confirmed" ? p.email : undefined },
+    { label: "Adresse / ville", value: validations?.address_status === "confirmed" ? p.primary_city : undefined },
+    { label: "RBQ", value: validations?.rbq_status === "confirmed" ? validations?.rbq_number : undefined },
+    { label: "NEQ", value: validations?.neq_status === "confirmed" ? validations?.neq_number : undefined },
+    { label: "Google Business", value: validations?.google_business_status === "confirmed" ? p.google_business_url : undefined },
+  ].filter((r) => !!r.value);
+
+  const trust = computeTrust(validations);
 
   const goBook = () => navigate(`/rendez-vous?contractor=${encodeURIComponent(p.slug)}&trade=${encodeURIComponent(p.primary_trade || "")}&city=${encodeURIComponent(p.primary_city || "")}`);
   const goVerify = () => navigate(`/verification?company=${encodeURIComponent(p.company_name)}`);
@@ -212,7 +223,7 @@ export default function PageAiIndexedProfile() {
 
       <Helmet>
         <html lang="fr-CA" />
-        <title>{p.meta_title || `${p.company_name} — Profil IA vérifié UNPRO`}</title>
+        <title>{p.meta_title || `${p.company_name} — Profil analysé par UNPRO`}</title>
         <meta name="description" content={p.meta_description || p.short_ai_summary} />
         <link rel="canonical" href={canonical} />
         <meta property="og:title" content={p.meta_title || p.company_name} />
@@ -244,8 +255,16 @@ export default function PageAiIndexedProfile() {
               {p.company_name?.[0] ?? "U"}
             </div>
           )}
-          <Badge className="bg-stone-900 text-amber-50 hover:bg-stone-900 gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5" /> Profil IA vérifié UNPRO
+          <Badge
+            className={`gap-1.5 ${
+              trust.level >= 3
+                ? "bg-emerald-600 text-white hover:bg-emerald-600"
+                : trust.level === 2
+                ? "bg-stone-900 text-amber-50 hover:bg-stone-900"
+                : "bg-white text-stone-900 border border-stone-300 hover:bg-white"
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" /> {trust.label}
           </Badge>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight" style={{ color: "#1c1917" }}>
             {p.company_name}
@@ -295,31 +314,33 @@ export default function PageAiIndexedProfile() {
           </Card>
         </section>
 
-        {/* VERIFIED DATA */}
-        <section>
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5" /> Données vérifiées
-          </h2>
-          <Card className="bg-white border-stone-200">
-            <CardContent className="p-0 divide-y divide-stone-100">
-              {validationRows.map((row) => {
-                const status = validations?.[row.key] || "unverified";
-                return (
+        {/* INFORMATIONS PUBLIQUES ANALYSÉES — public surface only shows confirmed rows */}
+        {publicValidationRows.length > 0 && (
+          <section>
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5" /> Informations publiques analysées
+            </h2>
+            <Card className="bg-white border-stone-200">
+              <CardContent className="p-0 divide-y divide-stone-100">
+                {publicValidationRows.map((row) => (
                   <div key={row.label} className="flex items-center justify-between px-5 py-3.5">
                     <div className="flex items-center gap-3">
-                      {STATUS_ICON[status]}
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                       <div>
                         <div className="font-medium">{row.label}</div>
-                        {row.value && <div className="text-sm text-stone-500">{row.value}</div>}
+                        <div className="text-sm text-stone-500 break-all">{row.value}</div>
                       </div>
                     </div>
-                    <Badge variant="outline" className="text-xs">{STATUS_LABEL[status]}</Badge>
+                    <Badge variant="outline" className="text-xs border-emerald-200 text-emerald-700">Confirmé</Badge>
                   </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        </section>
+                ))}
+              </CardContent>
+            </Card>
+            <p className="text-xs text-stone-500 mt-2 px-1">
+              UNPRO n'affiche publiquement que les informations confirmées par des sources vérifiables.
+            </p>
+          </section>
+        )}
 
         {/* SERVICES */}
         {services.length > 0 && (
@@ -336,10 +357,18 @@ export default function PageAiIndexedProfile() {
                       {s.is_primary && <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100">Principal</Badge>}
                     </div>
                     {s.sub_services?.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {s.sub_services.map((sub: string) => (
-                          <Badge key={sub} variant="secondary" className="text-xs">{sub}</Badge>
-                        ))}
+                      <div className="space-y-1.5">
+                        <div className="text-xs uppercase tracking-wide text-stone-500">Méthodes détectées</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {s.sub_services.map((sub: string) => (
+                            <span
+                              key={sub}
+                              className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 text-xs font-medium"
+                            >
+                              <CheckCircle2 className="w-3 h-3" /> {sub}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
                     {s.problems_solved?.length > 0 && (
