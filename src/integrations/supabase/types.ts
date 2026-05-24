@@ -3286,6 +3286,392 @@ export type Database = {
           },
         ]
       }
+      ai_entities: {
+        Row: {
+          ai_summary: string | null
+          company_name: string
+          confidence_score: number
+          contractor_id: string | null
+          created_at: string
+          email: string | null
+          id: string
+          last_ingested_at: string | null
+          lat: number | null
+          legal_name: string | null
+          lng: number | null
+          logo_url: string | null
+          phone: string | null
+          primary_city: string | null
+          primary_service: string | null
+          published: boolean
+          slug: string
+          updated_at: string
+          website: string | null
+          years_active: number | null
+        }
+        Insert: {
+          ai_summary?: string | null
+          company_name: string
+          confidence_score?: number
+          contractor_id?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_ingested_at?: string | null
+          lat?: number | null
+          legal_name?: string | null
+          lng?: number | null
+          logo_url?: string | null
+          phone?: string | null
+          primary_city?: string | null
+          primary_service?: string | null
+          published?: boolean
+          slug: string
+          updated_at?: string
+          website?: string | null
+          years_active?: number | null
+        }
+        Update: {
+          ai_summary?: string | null
+          company_name?: string
+          confidence_score?: number
+          contractor_id?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_ingested_at?: string | null
+          lat?: number | null
+          legal_name?: string | null
+          lng?: number | null
+          logo_url?: string | null
+          phone?: string | null
+          primary_city?: string | null
+          primary_service?: string | null
+          published?: boolean
+          slug?: string
+          updated_at?: string
+          website?: string | null
+          years_active?: number | null
+        }
+        Relationships: []
+      }
+      ai_entity_faq: {
+        Row: {
+          answer: string
+          created_at: string
+          entity_id: string
+          generated_from: string | null
+          id: string
+          question: string
+          sort_order: number
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          entity_id: string
+          generated_from?: string | null
+          id?: string
+          question: string
+          sort_order?: number
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          entity_id?: string
+          generated_from?: string | null
+          id?: string
+          question?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_entity_faq_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "ai_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_entity_images: {
+        Row: {
+          ai_caption: string | null
+          created_at: string
+          entity_id: string
+          id: string
+          image_url: string
+          sort_order: number
+          source: string | null
+          type: string
+        }
+        Insert: {
+          ai_caption?: string | null
+          created_at?: string
+          entity_id: string
+          id?: string
+          image_url: string
+          sort_order?: number
+          source?: string | null
+          type?: string
+        }
+        Update: {
+          ai_caption?: string | null
+          created_at?: string
+          entity_id?: string
+          id?: string
+          image_url?: string
+          sort_order?: number
+          source?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_entity_images_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "ai_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_entity_reviews: {
+        Row: {
+          created_at: string
+          entity_id: string
+          id: string
+          last_sync: string | null
+          rating: number | null
+          review_count: number | null
+          sentiment: Json | null
+          source: string
+          source_url: string | null
+          themes: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          id?: string
+          last_sync?: string | null
+          rating?: number | null
+          review_count?: number | null
+          sentiment?: Json | null
+          source: string
+          source_url?: string | null
+          themes?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          id?: string
+          last_sync?: string | null
+          rating?: number | null
+          review_count?: number | null
+          sentiment?: Json | null
+          source?: string
+          source_url?: string | null
+          themes?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_entity_reviews_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "ai_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_entity_services: {
+        Row: {
+          created_at: string
+          entity_id: string
+          evidence_snippet: string | null
+          evidence_url: string | null
+          frequency: string
+          id: string
+          image_url: string | null
+          label: string
+          slug: string | null
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          evidence_snippet?: string | null
+          evidence_url?: string | null
+          frequency?: string
+          id?: string
+          image_url?: string | null
+          label: string
+          slug?: string | null
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          evidence_snippet?: string | null
+          evidence_url?: string | null
+          frequency?: string
+          id?: string
+          image_url?: string | null
+          label?: string
+          slug?: string | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_entity_services_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "ai_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_entity_sources: {
+        Row: {
+          created_at: string
+          entity_id: string
+          id: string
+          last_sync: string | null
+          raw_payload: Json | null
+          source_type: string
+          source_url: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          id?: string
+          last_sync?: string | null
+          raw_payload?: Json | null
+          source_type: string
+          source_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          id?: string
+          last_sync?: string | null
+          raw_payload?: Json | null
+          source_type?: string
+          source_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_entity_sources_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "ai_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_entity_validations: {
+        Row: {
+          created_at: string
+          domain_https: boolean
+          entity_id: string
+          google_verified: boolean
+          id: string
+          insurance_status: string
+          last_checked: string | null
+          neq_number: string | null
+          neq_status: string
+          rbq_number: string | null
+          rbq_status: string
+          recent_photos: boolean
+          recent_reviews: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          domain_https?: boolean
+          entity_id: string
+          google_verified?: boolean
+          id?: string
+          insurance_status?: string
+          last_checked?: string | null
+          neq_number?: string | null
+          neq_status?: string
+          rbq_number?: string | null
+          rbq_status?: string
+          recent_photos?: boolean
+          recent_reviews?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          domain_https?: boolean
+          entity_id?: string
+          google_verified?: boolean
+          id?: string
+          insurance_status?: string
+          last_checked?: string | null
+          neq_number?: string | null
+          neq_status?: string
+          rbq_number?: string | null
+          rbq_status?: string
+          recent_photos?: boolean
+          recent_reviews?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_entity_validations_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: true
+            referencedRelation: "ai_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_entity_zones: {
+        Row: {
+          city: string
+          created_at: string
+          detected_from: string | null
+          entity_id: string
+          id: string
+          region: string | null
+          sort_order: number
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          detected_from?: string | null
+          entity_id: string
+          id?: string
+          region?: string | null
+          sort_order?: number
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          detected_from?: string | null
+          entity_id?: string
+          id?: string
+          region?: string | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_entity_zones_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "ai_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_explanations: {
         Row: {
           created_at: string
@@ -67473,6 +67859,10 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      recompute_ai_entity_score: {
+        Args: { p_entity: string }
+        Returns: undefined
       }
       refresh_appointment_value_matrix: { Args: never; Returns: Json }
       reject_company: {
