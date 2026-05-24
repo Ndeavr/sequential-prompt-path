@@ -89,14 +89,15 @@ Deno.serve(async (req) => {
     const batchSize: number = body.batchSize || 10;
     const dryRun: boolean = body.dryRun === true;
 
-    // Pick a default verified mailbox for email
-    const { data: mailbox } = await supabase
+    // Pick any verified mailbox (prefer api_lovable, fall back to first verified)
+    const { data: mailboxes } = await supabase
       .from("outbound_mailboxes")
       .select("*")
       .eq("mailbox_status", "verified")
-      .eq("connection_type", "api_lovable")
-      .limit(1)
-      .maybeSingle();
+      .order("connection_type", { ascending: false });
+    const mailbox = (mailboxes || []).find((m: any) => m.connection_type === "api_lovable")
+      ?? (mailboxes || [])[0]
+      ?? null;
 
     let targetIds: string[] = [];
     if (targetId) {
