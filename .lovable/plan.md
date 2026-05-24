@@ -1,68 +1,54 @@
-A — PROMPT LOVABLE FINAL
+## Root cause
 
-1. CONTEXTE
-Alex Voice reçoit bien le token et le signed URL, puis échoue avant le premier audio. Les logs montrent un timeout dans `useLiveVoice` après `conversation.startSession`, pendant que l’overlay bascule vers un fallback qui marque le greeting comme déjà livré et affiche seulement “Je continue ici avec vous.”
+Logs prove the failure path:
 
-2. OBJECTIVE
-Réparer le démarrage vocal réel sans refaire toute l’architecture maintenant : Alex doit ouvrir, parler avec Sophia, puis rester en écoute au lieu de tomber dans un état erreur/fallback.
+1. WebRTC startSession with `conversationToken` → LiveKit returns `v1 RTC path not found`. The SDK swallows it and retries internally — our `try/catch` never gets a throw, so the WebSocket fallback in `useLiveVoice` never runs.
+2. The 1200 ms "warmup" speaks the greeting via HTMLAudio. The single user-gesture audio unlock is consumed there, so when WebRTC finally reaches a room, browser blocks playback with `NotAllowedError`.
+3. The 6 s `CONNECTION_TIMEOUT_MS` fires because `onConnect` never arrives, calls `conversation.endSession()`, raises "Connection timeout — voice unavailable", and the overlay shows "Je continue ici avec vous." → mic is killed.
 
-3. USERS
-Utilisateur mobile UNPRO qui ouvre Alex Voice depuis l’accueil.
+Net effect: intro plays → session is force-killed → user is stranded.
 
-4. DELIVERABLES
-- Corriger `useLiveVoice` pour éviter le blocage WebSocket/WebRTC.
-- Corriger `OverlayAlexVoiceFullScreen` pour ne plus traiter un greeting preview comme un greeting vocal livré.
-- Corriger le fallback pour ne jamais afficher un bandeau rouge “Je continue ici avec vous.” quand le micro peut encore écouter.
-- Garder Sophia `YxrwjAKoUKULGd0g8K9Y` comme seule voix.
+## Fix (surgical, voice-only)
 
-5. LOGIC
-- Passer le démarrage principal en WebRTC avec `conversationToken`, car le token est déjà retourné par `voice-get-signed-url`.
-- Garder WebSocket `signedUrl` seulement comme fallback court si WebRTC échoue immédiatement.
-- Réduire le timeout de connexion réel à 3000 ms pour respecter la règle hard cap.
-- À timeout avant premier audio : arrêter la session SDK, libérer le lock, forcer l’état `listening`, puis jouer une seule fois le greeting Sophia via TTS direct si aucun vrai audio n’a été reçu.
-- Ne jamais appeler `markGreeted()` avant un vrai début audio ou une fin TTS réussie.
-- Ne jamais appeler `s.setError(..., "Je continue ici avec vous.", true)` pour un timeout de boot pré-audio.
+### 1. `src/hooks/useLiveVoice.ts` — make WebSocket the primary transport
 
-6. DATA
-Aucune migration. Aucune table modifiée.
+- Use `signedUrl` + `connectionType: "websocket"` as the **first** attempt. WebSocket is the only path that the current edge token + agent reliably support; logs show WebRTC `v1 RTC path not found` consistently.
+- Keep `conversationToken` + `connectionType: "webrtc"` as a **second** attempt only if the WebSocket attempt synchronously throws.
+- Raise `CONNECTION_TIMEOUT_MS` from `6_000` to `12_000` to absorb mobile/3G handshakes without false aborts.
+- In the connection-timeout handler, if `conversation.status === "connected"` at firing time, do NOT call `endSession()` — just clear the timer. Prevents killing a session that connected late.
 
-7. UI/UX
-- Supprimer le dead-end rouge pour les erreurs pré-audio récupérables.
-- Afficher “Connexion d’Alex…” maximum 3 secondes.
-- Après 3 secondes, afficher un état calme d’écoute ou le chat fallback si le micro est impossible.
-- Conserver les boutons Réinitialiser Alex / Passer au chat seulement si nécessaire.
+### 2. `src/components/voice/OverlayAlexVoiceFullScreen.tsx` — stop racing the real session
 
-8. COMPONENTS
-- `OverlayAlexVoiceFullScreen.tsx`
-- `useLiveVoice.ts`
-- `voiceRuntimeSingleton.ts` si nécessaire pour ajouter un reset forcé sûr.
+- **Remove the 1200 ms `ttsWarmupTimerRef` preemptive `playTtsFallbackGreeting("live_slow_warmup")`.** This is what consumes the audio gesture and creates the dead-end after the intro.
+- Replace it with a single fallback that fires **only after** `CONNECTION_TIMEOUT_MS` (12 s) AND no real audio has been received — i.e. only on a true failure path, not while a real session is still negotiating.
+- Keep the "Connexion d'Alex…" label after 2 s (purely visual, no audio side-effect).
+- When `playTtsFallbackGreeting` completes, after the greeting finishes, transition straight to `listening` and keep the mic alive (already partially done — verify no `endSession()` is called in that branch).
 
-9. ACTIONS
-- Refactorer l’ordre de connexion : `conversationToken` WebRTC d’abord, `signedUrl` WebSocket fallback.
-- Ajouter un `AbortController` logique de session : chaque callback vérifie que le boot courant possède encore le runtime.
-- Corriger le TTS fallback : il doit parler si aucun audio réel n’a joué, même si une bulle preview existe.
-- Corriger le cleanup : arrêter mic, SDK session, timers, TTS, runtime lock.
-- Corriger le retry : ne pas utiliser un flow de recovery qui peut retomber dans `failed_fallback_chat` immédiatement.
+### 3. Defensive: `onError` from `useConversation`
 
-10. CONSTRAINTS
-- Ne pas utiliser `window.speechSynthesis`.
-- Ne pas ajouter de mode appel Bluetooth.
-- Ne pas modifier `src/integrations/supabase/client.ts` ou `types.ts`.
-- Ne pas ajouter de provider vocal masculin.
-- Ne pas autostart sans action utilisateur.
+- If the SDK emits an error containing `"v1 RTC path not found"` or `"WebSocket"` and we haven't yet fired the second attempt, automatically restart the session with the alternate transport instead of bubbling the error to the overlay.
 
-11. SUCCESS
-- Ouverture Alex Voice depuis `/index`.
-- Token reçu.
-- Session démarre sans rester bloquée.
-- Sophia dit “Bonjour Yanick. Je vous écoute.” si prénom disponible.
-- L’interface passe à “Alex écoute…”.
-- Aucun “Alex redémarre…”.
-- Aucun bandeau rouge “Je continue ici avec vous.” sur boot normal.
-- Le bouton Réinitialiser relance proprement une seule session.
+## Files to edit
 
-12. TASKS
-- Modifier `useLiveVoice.ts` pour privilégier WebRTC token, timeout 3s, cleanup agressif, fallback WebSocket court.
-- Modifier `OverlayAlexVoiceFullScreen.tsx` pour dissocier preview greeting et greeting vocal livré, supprimer l’erreur rouge pré-audio, forcer listening après fail-safe.
-- Modifier le retry pour redémarrer via le même boot clean sans recovery parallèle.
-- Valider par logs console ciblés : token reçu, connection start, onConnect, first audio ou fallback TTS, listening.
+```text
+src/hooks/useLiveVoice.ts
+src/components/voice/OverlayAlexVoiceFullScreen.tsx
+```
+
+No changes to: edge functions, voice ID, prompts, agent overrides, Supabase, types, client.
+
+## Success criteria
+
+- Tap orb → mic granted → token OK → **WebSocket** session connects within ~2-3 s → Alex says "Bonjour Yanick. Je vous écoute." (real session, not HTMLAudio fallback) → overlay shows "Alex écoute…" and stays in `listening` waiting for the user.
+- No `Connection timeout — voice unavailable` error on normal boot.
+- No red "Je continue ici avec vous." banner on normal boot.
+- No `NotAllowedError: play() can only be initiated by a user gesture` in console.
+- If both transports actually fail, the TTS fallback greets once and the mic remains armed for chat fallback.
+
+## Tasks
+
+1. Reorder transports in `useLiveVoice.ts` (WebSocket primary, WebRTC secondary) and raise connection timeout to 12 s.
+2. Make the connection timeout non-destructive when SDK is already `connected`.
+3. Delete the 1200 ms preemptive TTS warmup in `OverlayAlexVoiceFullScreen.tsx`; keep the post-timeout fallback only.
+4. In `useLiveVoice` `onError`, auto-retry with the alternate transport once on `v1 RTC path not found` / WebSocket close 1006.
+5. Verify with console logs: `VOICE_TOKEN_OK` → `Session started` → `Connected to agent` → `first_audio` → `listening`.
