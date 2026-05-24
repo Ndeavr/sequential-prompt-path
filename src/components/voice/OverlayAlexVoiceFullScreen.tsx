@@ -33,11 +33,11 @@ import {
 import { elevenlabsService } from "@/features/alex/services/elevenlabsService";
 import { hasGreeted, markGreeted, markVoiceStarted } from "@/lib/alexSessionState";
 
-// ChatGPT-Voice style: never block UI on TTS. 3s hard cap from spec.
+// ChatGPT-Voice style: keep one realtime session alive; only fallback after a true connect failure.
 const STABILIZATION_MS = 1500;
 const HEARTBEAT_INTERVAL_MS = 2500; // Slower → less battery
-const BOOT_TIMEOUT_MS = 3000; // 3s spec hard cap — bail to TTS/chat if still booting
-const FIRST_AUDIO_TIMEOUT_MS = 3000; // 3s spec hard cap before TTS fallback
+const BOOT_TIMEOUT_MS = 12_000;
+const FIRST_AUDIO_TIMEOUT_MS = 12_000;
 const TOKEN_SLOW_THRESHOLD_MS = 1500; // Show "Connexion d'Alex…" sooner
 const MAX_AUTO_RETRIES = 0; // Strictly event-driven — never silently retry.
 
@@ -69,7 +69,6 @@ export default function OverlayAlexVoiceFullScreen() {
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stabilizationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const firstAudioTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const ttsWarmupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [transcripts, setTranscripts] = useState<Array<{ id: string; role: "user" | "alex"; text: string }>>([]);
   const [slowToken, setSlowToken] = useState(false);
   const slowTokenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -196,10 +195,6 @@ export default function OverlayAlexVoiceFullScreen() {
       if (firstAudioTimerRef.current) {
         clearTimeout(firstAudioTimerRef.current);
         firstAudioTimerRef.current = null;
-      }
-      if (ttsWarmupTimerRef.current) {
-        clearTimeout(ttsWarmupTimerRef.current);
-        ttsWarmupTimerRef.current = null;
       }
       if (nudgeTimerRef.current) {
         clearTimeout(nudgeTimerRef.current);
@@ -488,18 +483,6 @@ export default function OverlayAlexVoiceFullScreen() {
         setBootStep("connecting");
         const greeting = shouldGreet ? buildGreetingRef.current() : "";
         console.log("[ALEX VOICE] Starting session, greeting:", greeting || "(silent — already greeted)");
-        if (greeting) {
-          // 1200ms warmup: if WebRTC hasn't delivered audio by then, speak the
-          // greeting via TTS so the user always hears Alex within ~3s of tap.
-          ttsWarmupTimerRef.current = setTimeout(() => {
-            const current = getStore();
-            if (!firstAudioReceivedRef.current && current.isOverlayOpen &&
-                ["stabilizing", "opening_session"].includes(current.machineState)) {
-              console.warn("[ALEX VOICE] Live voice slow — speaking TTS fallback immediately");
-              playTtsFallbackGreeting("live_slow_warmup");
-            }
-          }, 1200);
-        }
         await startRef.current({ initialGreeting: greeting, mode: deriveMode(getStore().feature), firstName });
 
         // After await: check session still owns the runtime + overlay open
@@ -545,10 +528,6 @@ export default function OverlayAlexVoiceFullScreen() {
 
     return () => {
       if (bootTimeoutId) clearTimeout(bootTimeoutId);
-      if (ttsWarmupTimerRef.current) {
-        clearTimeout(ttsWarmupTimerRef.current);
-        ttsWarmupTimerRef.current = null;
-      }
       if (slowTokenTimerRef.current) {
         clearTimeout(slowTokenTimerRef.current);
         slowTokenTimerRef.current = null;
@@ -588,7 +567,6 @@ export default function OverlayAlexVoiceFullScreen() {
       if (stabilizationTimerRef.current) clearTimeout(stabilizationTimerRef.current);
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
       if (firstAudioTimerRef.current) clearTimeout(firstAudioTimerRef.current);
-      if (ttsWarmupTimerRef.current) clearTimeout(ttsWarmupTimerRef.current);
       if (slowTokenTimerRef.current) clearTimeout(slowTokenTimerRef.current);
       elevenlabsService.stop();
       if (isActive) {
@@ -639,7 +617,6 @@ export default function OverlayAlexVoiceFullScreen() {
 
     // Clear all local timers
     if (firstAudioTimerRef.current) { clearTimeout(firstAudioTimerRef.current); firstAudioTimerRef.current = null; }
-    if (ttsWarmupTimerRef.current) { clearTimeout(ttsWarmupTimerRef.current); ttsWarmupTimerRef.current = null; }
     if (stabilizationTimerRef.current) { clearTimeout(stabilizationTimerRef.current); stabilizationTimerRef.current = null; }
     if (heartbeatRef.current) { clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
     if (slowTokenTimerRef.current) { clearTimeout(slowTokenTimerRef.current); slowTokenTimerRef.current = null; }

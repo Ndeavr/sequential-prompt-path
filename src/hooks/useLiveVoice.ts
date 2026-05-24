@@ -13,7 +13,7 @@ import { logBoot, withTimeout } from "@/lib/bootDebug";
 import { ALEX_VOICE_BASE } from "@/config/alexVoiceConfig";
 
 const RECONNECT_COOLDOWN_MS = 5000;
-const CONNECTION_TIMEOUT_MS = 6_000; // 6s SDK connect cap — bail before user perception breaks
+const CONNECTION_TIMEOUT_MS = 12_000; // Mobile-compatible SDK connect cap; do not kill late successful sessions
 const TOKEN_TIMEOUT_MS = 8_000;
 const MAX_TOKEN_RETRIES = 0; // Strictly event-driven — no silent reconnects.
 const RETRY_BACKOFF_MS = 1500;
@@ -124,6 +124,13 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
   const inputDeviceIdRef = useRef<string | undefined>(undefined);
   const inputLevelTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startDebounceUntilRef = useRef(0);
+  const alternateTransportTriedRef = useRef(false);
+  const lastSessionStartRef = useRef<{
+    signedUrl?: string;
+    conversationToken?: string;
+    inputDeviceId?: string;
+    overrides?: any;
+  } | null>(null);
 
   const clearConnectionTimeout = useCallback(() => {
     if (connectionTimeoutRef.current) {
@@ -276,6 +283,33 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     },
     onError: (error: unknown) => {
       console.error("[ElevenLabs V7] Error:", error);
+      const msg = String((error as any)?.message ?? error ?? "");
+      const canTryAlternateTransport =
+        !alternateTransportTriedRef.current &&
+        lastSessionStartRef.current?.conversationToken &&
+        /v1 RTC path not found|websocket|1006|closed/i.test(msg);
+
+      if (canTryAlternateTransport) {
+        alternateTransportTriedRef.current = true;
+        const last = lastSessionStartRef.current;
+        console.warn("[ElevenLabs V8] Transport error — trying WebRTC backup once", msg);
+        void (async () => {
+          try {
+            try { conversationApiRef.current?.endSession?.(); } catch {}
+            await conversationApiRef.current?.startSession?.({
+              conversationToken: last?.conversationToken,
+              connectionType: "webrtc",
+              inputDeviceId: last?.inputDeviceId,
+              overrides: last?.overrides,
+            } as any);
+          } catch (fallbackErr) {
+            bootInProgressRef.current = false;
+            setIsConnecting(false);
+            callbacksRef.current?.onError?.(fallbackErr);
+          }
+        })();
+        return;
+      }
       bootInProgressRef.current = false;
       setIsConnecting(false);
       callbacksRef.current?.onError?.(error);
@@ -361,6 +395,8 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
     intentionallyStopped.current = false;
     hasDeliveredFirstAudioRef.current = false;
     connectedAtRef.current = 0;
+    alternateTransportTriedRef.current = false;
+    lastSessionStartRef.current = null;
     languageSessionRef.current.reset();
     activeLanguageRef.current = "fr-CA";
     clearConnectionTimeout();
@@ -500,6 +536,11 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
         alexVoiceService.setState("connecting", "got_signed_url");
 
         connectionTimeoutRef.current = setTimeout(() => {
+          if ((conversationApiRef.current as any)?.status === "connected") {
+            console.warn("[ElevenLabs V8] Timeout fired after connection — keeping session alive");
+            clearConnectionTimeout();
+            return;
+          }
           console.error(`[ElevenLabs V8] ⏱️ Connection timeout ${CONNECTION_TIMEOUT_MS}ms`);
           bootInProgressRef.current = false;
           setIsConnecting(false);
@@ -543,26 +584,29 @@ export function useLiveVoice(callbacks?: UseLiveVoiceCallbacks) {
           firstName,
         });
 
-        // Prefer WebRTC with conversationToken — faster handshake on mobile
-        // networks. WebSocket signedUrl kept as fallback if WebRTC fails fast.
+        // Use WebSocket first: this agent currently exposes signedUrl reliably,
+        // while WebRTC may fail internally with LiveKit "v1 RTC path not found".
         const conversationToken = (data as any)?.conversationToken;
+        lastSessionStartRef.current = {
+          signedUrl,
+          conversationToken,
+          inputDeviceId: inputDeviceIdRef.current,
+          overrides,
+        };
         try {
-          if (conversationToken) {
-            await conversation.startSession({
-              conversationToken,
-              connectionType: "webrtc",
-              inputDeviceId: inputDeviceIdRef.current,
-              overrides,
-            } as any);
-          } else {
-            throw new Error("no_conversation_token");
-          }
-        } catch (startErr) {
-          if (!signedUrl) throw startErr;
-          console.warn("[ElevenLabs V8] WebRTC failed, trying WebSocket fallback", startErr);
           await conversation.startSession({
             signedUrl,
             connectionType: "websocket",
+            inputDeviceId: inputDeviceIdRef.current,
+            overrides,
+          } as any);
+        } catch (startErr) {
+          if (!conversationToken) throw startErr;
+          alternateTransportTriedRef.current = true;
+          console.warn("[ElevenLabs V8] WebSocket failed, trying WebRTC backup", startErr);
+          await conversation.startSession({
+            conversationToken,
+            connectionType: "webrtc",
             inputDeviceId: inputDeviceIdRef.current,
             overrides,
           } as any);
