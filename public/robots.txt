@@ -16,3 +16,5 @@ Disallow: /notifications
 Disallow: /elements/
 
 Sitemap: https://unpro.ca/sitemap.xml
+Sitemap: https://unpro.ca/ai-sitemap.xml
+
