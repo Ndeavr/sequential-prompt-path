@@ -114,6 +114,9 @@ const LandingContractorAIActivation = lazy(() => import("@/pages/acquisition/Lan
 const PageAdminPipelineProspects = lazy(() => import("@/pages/admin/acquisition/PageAdminPipelineProspects"));
 const PageAdminAcquisition = lazy(() => import("@/pages/admin/acquisition/PageAdminAcquisition"));
 const PageAippPublic = lazy(() => import("@/pages/aipp/PageAippPublic"));
+const PageAiIndexedProfile = lazy(() => import("@/pages/aipp/PageAiIndexedProfile"));
+const PageAippImport = lazy(() => import("@/pages/admin/PageAippImport"));
+const PageAippProfiles = lazy(() => import("@/pages/admin/PageAippProfiles"));
 const PageAcqActivation = lazy(() => import("@/pages/acquisition/PageAcqActivation"));
 const PageActivationSuccess = lazy(() => import("@/pages/acquisition/PageActivationSuccess"));
 const PageAdminWarRoom = lazy(() => import("@/pages/admin/acquisition/PageAdminWarRoom"));
@@ -1159,6 +1162,9 @@ export const AppRouter = () => (
         <Route path="/admin/contractors" element={<ProtectedRoute requiredRole="admin"><AdminContractors /></ProtectedRoute>} />
         <Route path="/admin/acquisition" element={<ProtectedRoute requiredRole="admin"><PageAdminAcquisition /></ProtectedRoute>} />
         <Route path="/aipp/:slug" element={<PageAippPublic />} />
+        <Route path="/ai-indexed-profiles/:slug" element={<PageAiIndexedProfile />} />
+        <Route path="/admin/aipp-import" element={<ProtectedRoute requiredRole="admin"><PageAippImport /></ProtectedRoute>} />
+        <Route path="/admin/aipp-profiles" element={<ProtectedRoute requiredRole="admin"><PageAippProfiles /></ProtectedRoute>} />
         <Route path="/activation/:slug" element={<PageAcqActivation />} />
         <Route path="/activation-success" element={<PageActivationSuccess />} />
         <Route path="/admin/war-room" element={<ProtectedRoute requiredRole="admin"><PageAdminWarRoom /></ProtectedRoute>} />
