@@ -2,6 +2,8 @@
  * UNPRO — Painting Calculator Engine
  * Transparent ranges, deterministic math. No fake precision.
  */
+import * as cat from "./projectCatalog";
+
 
 export type ProjectType =
   | "single_room"
