@@ -1,111 +1,72 @@
-# Plan — AIPP Universal Entity Template + ISR Demo
+## Problèmes constatés sur `/ai-indexed-profiles/isolation-solution-royal`
 
-## Objectif
-Transformer chaque entrepreneur en **entité structurée vérifiable et citable par les IA** (ChatGPT, Gemini, Perplexity). Page modèle réutilisable sur 10 000+ profils, avec JSON-LD complet, preuves vérifiées, et zéro invention.
+D'après les captures :
+1. **Textes invisibles** — les H1/H2 ("Isolation Solution Royal", "Analyse AIPP", "Questions fréquentes", titres de services, scores `70/100`...) s'affichent en quasi-noir sur fond quasi-noir. La classe `landing-warm` ne s'applique pas correctement et le thème sombre global "bleed through". Les `text-stone-900` deviennent illisibles.
+2. **RBQ non vérifiée** — actuellement la validation RBQ est seulement marquée `not_found` au seed, jamais croisée avec le registre RBQ.
+3. **Bouton "Demander un rendez-vous"** — aucun `onClick`, ne fait rien.
+4. **Logo absent** — `logo_url` vide en BDD, jamais hydraté lors du scrape.
 
-## Architecture
+---
 
-```
-/aipp/:slug              → Page publique AIPP (template universel)
-/admin/aipp-import       → Centre d'import + validation
-/admin/aipp-profiles     → Liste / modération profils
-```
+## Phase 1 — Corrections immédiates (UI + CTA + Logo)
 
-Route démo : `/aipp/isolation-solution-royal`
+### A. Lisibilité / Theme
+- Forcer un fond **warm neutral réel** sur `PageAiIndexedProfile` via wrapper `style={{ background: '#F7F6F0', color: '#1c1917' }}` au lieu de dépendre de `.landing-warm` (qui peut être surchargé par un parent dark).
+- Ajouter `data-theme="warm"` sur le root + un `<style>` scoped qui force `color-scheme: light` et override les tokens `--background`, `--foreground`, `--card`, `--muted-foreground` pour cette page uniquement.
+- Remplacer `text-stone-900` par `text-[#1c1917]` explicite sur H1/H2 et `text-stone-600` par `text-[#57534e]` pour les sous-titres.
+- Score breakdown : les chiffres `70/100` rendent avec `text-stone-300` (trop pâle). Passer en `text-stone-900 font-bold` pour le nombre, `text-stone-500` uniquement pour `/100`.
 
-## Phase 1 — Schéma Supabase (migration unique)
+### B. CTA "Demander un rendez-vous"
+- Wire les 3 boutons hero :
+  - **Demander un rendez-vous** → `navigate('/rendez-vous?contractor=${slug}&trade=${primary_trade}&city=${primary_city}')`
+  - **Vérifier cette entreprise** → `navigate('/verification?company=${company_name}')`
+  - **Analyser mes soumissions** → `navigate('/analyser-soumission?context=${slug}')`
+- Tracker l'événement (`trackFunnelEvent('aipp_cta_click', { slug, cta })`) avant navigation.
 
-Tables :
-- `aipp_profiles` — identité + statut publication
-- `aipp_profile_sources` — URL source de chaque fait (traçabilité)
-- `aipp_profile_services` — taxonomie normalisée (service, sous-services, problèmes, saisonnalité, urgence, valeur projet, client idéal)
-- `aipp_profile_locations` — villes desservies (génération contenu local)
-- `aipp_profile_media` — photos, vidéos, avant/après, alt SEO auto
-- `aipp_profile_reviews` — avis + résumé IA + forces/points faibles
-- `aipp_profile_validations` — RBQ, NEQ, assurance, NAP, GBP (statut: confirmed / unverified / not_found + source)
-- `aipp_profile_scores` — AIPP, trust, SEO, AI citation, NAP, review, media
-- `aipp_entity_facts` — bloc invisible « facts » lisible par IA
-- `aipp_schema_snapshots` — JSON-LD versionné par profil
-- `aipp_import_runs` — historique scrape + diagnostics
+### C. Logo
+- Étendre la edge function `aipp-import-website` pour extraire le logo via Firecrawl format `branding` (déjà supporté). Champs récupérés : `branding.images.logo`, `branding.images.favicon`.
+- Stocker dans `aipp_profiles.logo_url` lors du `persist`.
+- Seed manuellement `logo_url` pour `isolation-solution-royal` à partir de `isroyal.ca` (re-run import en mode persist, ou UPDATE direct via tool insert).
+- Fallback hero si pas de logo : afficher la première initiale dans un cercle warm `bg-stone-900 text-amber-50`.
 
-RLS :
-- Public : lecture si `public_status = 'published'`
-- Admin : full CRUD via `has_role(admin)`
-- Contractor : peut demander correction sur son profil lié (table `aipp_profile_corrections`)
-- Documents privés : aucune lecture publique
+---
 
-## Phase 2 — Page publique `/aipp/:slug`
+## Phase 2 — Vérification RBQ réelle
 
-Composant `PageAippProfile` + sections modulaires :
+### Nouvelle edge function `aipp-verify-rbq`
+- Input : `{ profile_id, company_name, neq?, address_city? }`
+- Logique :
+  1. Scrape `https://www.rbq.gouv.qc.ca/recherche-titulaires` via Firecrawl `scrape` + format `json` avec prompt structuré (nom commercial + ville).
+  2. Si match unique trouvé → écrire `aipp_profile_validations.rbq_number`, `rbq_status='confirmed'`, `rbq_categories[]`, `rbq_valid_until`.
+  3. Si plusieurs candidats → `rbq_status='unverified'` + stocker `rbq_candidates` (jsonb).
+  4. Si aucun → `rbq_status='not_found'`.
+  5. Logger source dans `aipp_profile_sources` (`source_type='rbq_registry'`, `source_url`, `fetched_at`).
+- Idem pattern pour **NEQ** via Registraire des entreprises (`registreentreprises.gouv.qc.ca`) — fonction `aipp-verify-neq`.
 
-1. **HeroAipp** — Logo, nom, métier, ville, badge « Profil IA vérifié UNPRO », score AIPP, score confiance, note Google, 3 CTA (Vérifier / RDV / Analyser soumissions)
-2. **AippAiSummary** — Résumé IA des sources analysées
-3. **AippVerifiedData** — Table 10 lignes (Confirmé / À confirmer / Non trouvé) avec icône + source
-4. **AippServicesGrid** — Services normalisés (taxonomie UNPRO)
-5. **AippServiceAreas** — Carte + villes (contenu local unique par ville)
-6. **AippGallery** — Photos + alt SEO auto + avant/après slider
-7. **AippVideoBlock** — Vidéo + transcript + résumé IA
-8. **AippReviewsSummary** — Résumé IA + forces + extraits
-9. **AippScoreBreakdown** — Score sur 100 avec 10 sous-dimensions
-10. **AippWhyRecommend** — « Profil compatible » (jamais « meilleur »)
-11. **AippFaqIa** — 6 Q/R optimisées AEO
-12. **AippEntityFacts** — Bloc `<div hidden>` lisible IA avec faits propres
+### UI admin
+- Sur `/admin/aipp-profiles`, ajouter bouton **"Vérifier RBQ + NEQ"** par profil qui invoque les deux edge functions en parallèle puis re-fetch.
+- Sur la page publique, afficher si `confirmed` : numéro RBQ + lien direct `https://www1.rbq.gouv.qc.ca/...?numLicence=XXXX` comme **source vérifiable**.
 
-**SEO/AEO** :
-- `react-helmet-async` : title, description, canonical, OG, Twitter
-- `SchemaStack` injecte JSON-LD : LocalBusiness, HomeAndConstructionBusiness, Contractor, Service, OfferCatalog, Review, AggregateRating, FAQPage, BreadcrumbList, ImageObject, VideoObject, Organization, WebPage, SpeakableSpecification
-- Sitemap : route `aipp-sitemap` edge function listant tous les profils published
-- robots: index, follow
+### Migration mineure
+- Ajouter colonnes à `aipp_profile_validations` si manquantes :
+  - `rbq_candidates jsonb`
+  - `rbq_valid_until date`
+  - `rbq_categories text[]`
+  - `neq_candidates jsonb`
+  - `rbq_verified_at timestamptz`
+  - `neq_verified_at timestamptz`
 
-## Phase 3 — Score AIPP
+---
 
-Service `src/services/aippEntityScoreService.ts` :
-- 10 dimensions × 10 pts = 100
-- Présence web, NAP, avis, photos, autorité locale, structure IA, preuves, spécialisation, citabilité ChatGPT, citabilité Gemini/Perplexity
-- Score recalculé à chaque update profil + stocké dans `aipp_profile_scores`
+## Out of scope (phases suivantes)
+- Vérification assurance (pas de registre public consolidable)
+- Auto-recheck cron mensuel RBQ/NEQ
+- Affichage des sources cliquables dans une drawer "Comment c'est vérifié"
 
-## Phase 4 — Admin Import Center `/admin/aipp-import`
+---
 
-Edge function `aipp-import-website` :
-- Input : URL site
-- Firecrawl scrape (markdown + links + branding + images)
-- Lovable AI Gateway (Gemini 3 Flash) → extraction structurée via tool calling :
-  - nom légal/commercial, téléphone, courriel, RBQ/NEQ, services, villes, Google Business
-- Génère : résumé IA, FAQ, alt text images, JSON-LD complet
-- Calcule score AIPP, diagnostique données manquantes
-- Sauvegarde dans `aipp_import_runs` + populate `aipp_profiles` (draft)
+## Question pour confirmation
 
-UI admin :
-- Input URL → bouton « Scraper »
-- Preview de chaque champ détecté avec statut (confirmé/à confirmer)
-- Boutons : « Publier », « Demander validation entrepreneur », « Recalculer score »
-- Liste des runs précédents
+Je propose de livrer **Phase 1 maintenant** (lisibilité + 3 CTA + logo via re-scrape branding + seed `isolation-solution-royal`) pour débloquer visuellement, puis Phase 2 (RBQ/NEQ réelles) dans un second tour.
 
-## Phase 5 — Démo ISR (Isolation Solution Royal)
-
-Seed via migration :
-- Profile published avec :
-  - Site : isroyal.ca
-  - Services : isolation entretoit, décontamination moisissure, ventilation soffites, étanchéité air, inspection entretoit
-  - Zones : Terrebonne, Laval, Montréal, Rive-Nord, Lanaudière
-  - Positionnement : spécialiste entretoit résidentiel, inspection gratuite
-- **Sans inventer** RBQ/assurance/note → marqués `not_found` ou `unverified`
-- Photos placeholder (à remplacer par scrape réel)
-- JSON-LD complet généré + validé
-
-## Détails techniques
-
-- Frontend : React + Vite + TanStack Query, `react-helmet-async` déjà installé
-- AI : Lovable AI Gateway, model `google/gemini-3-flash-preview` (extraction) et `google/gemini-2.5-pro` (résumé long)
-- Scrape : Firecrawl (connector existant) — formats `markdown`, `links`, `branding`, `screenshot`
-- Edge functions Deno : `aipp-import-website`, `aipp-generate-summary`, `aipp-compute-score`, `aipp-sitemap`
-- Réutilise : `SchemaStack`, `SeoHead`, `SeoFaqSection`, `SeoStructuredDataInjector`, `seoSchema.ts`
-- Conformité memory : SECURITY INVOKER pour views publiques, fr-CA strict, dark cinematic pour app et warm neutral pour `/aipp/:slug` (page publique SEO)
-
-## Hors-scope (phase suivante)
-- Comparatif multi-entrepreneurs
-- Flow contractor « réclamer mon profil » complet (UI seulement, pas auth flow)
-- Auto-scrape récurrent (cron)
-
-## Question avant build
-Confirmes-tu : **page publique `/aipp/:slug` en thème Warm Neutral** (cohérent avec landing SEO publique) et **import admin sous `/admin/aipp-import` en Cinematic Dark** ?
+Confirmes-tu cet ordre, ou tu veux que je fasse tout (Phase 1 + Phase 2) en un seul build ?
