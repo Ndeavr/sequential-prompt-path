@@ -182,14 +182,97 @@ Retourne JSON strict: {"subject": "...", "body": "..."}`;
   }
 }
 
+// ─── Validators & helpers ─────────────────────────────────────────────────────
+type RunStatus =
+  | "queued" | "validating" | "scraping" | "deduplicating" | "enriching"
+  | "scoring" | "personalizing" | "waiting_approval" | "dry_run_completed"
+  | "sending" | "tracking" | "payment_pending" | "paid" | "activated"
+  | "completed" | "blocked" | "failed";
+
+type Counts = {
+  scraped: number; simulated: number; duplicates: number;
+  enriched: number; scored: number; personalized: number;
+  approval_queued: number; errors: number;
+};
+
+function validateTransition(target: RunStatus, c: Counts, simulationMode: boolean): { ok: boolean; reason?: string } {
+  const realOrSim = c.scraped + c.simulated;
+  switch (target) {
+    case "scraping": return { ok: true };
+    case "enriching":
+      return realOrSim > 0 ? { ok: true } : { ok: false, reason: "Aucun prospect scrapé ni simulé — enrichissement impossible." };
+    case "scoring":
+      return c.enriched > 0 || c.simulated > 0 ? { ok: true } : { ok: false, reason: "Aucun prospect enrichi — scoring impossible." };
+    case "personalizing":
+      return c.scored > 0 ? { ok: true } : { ok: false, reason: "Aucun prospect scoré — personnalisation impossible." };
+    case "dry_run_completed":
+      if (c.scraped > 0) return { ok: true };
+      if (simulationMode && c.simulated > 0) return { ok: true };
+      return { ok: false, reason: "Aucun prospect réel ni simulé généré." };
+    case "completed":
+      return c.scraped > 0 ? { ok: true } : { ok: false, reason: "Pipeline live terminé sans aucun prospect réel." };
+    default: return { ok: true };
+  }
+}
+
+const SIM_NAMES = ["Toiture Boréal", "Plomberie Lafleur", "Élec Lavoie", "Iso Plus", "Toits Saint-Pierre", "Chauffage Beaupré", "Peinture Lévesque", "Drain Bélanger", "Fenêtres Cardinal", "HVAC Nord"];
+function generateSimulatedProspects(trade: string, cities: string[], n: number) {
+  const out: any[] = [];
+  for (let i = 0; i < n; i++) {
+    const name = `${SIM_NAMES[i % SIM_NAMES.length]} ${i + 1}`;
+    const city = cities[i % cities.length];
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-sim-" + Math.random().toString(36).slice(2, 8);
+    out.push({
+      id: crypto.randomUUID(), // local-only id for in-memory pipeline
+      company_name: name, company_slug: slug, city, trade,
+      website_url: `https://${slug}.example.ca`,
+      phone: "514-555-0" + String(100 + i).padStart(3, "0"),
+      email: `info@${slug}.example.ca`,
+      google_rating: 3.5 + (i % 15) / 10,
+      review_count: 5 + i * 3,
+      rbq_number: null, neq_number: null,
+      __simulated: true,
+    });
+  }
+  return out;
+}
+
 // ─── Main orchestrator ────────────────────────────────────────────────────────
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   let runId: string | null = null;
+  const counts: Counts = { scraped: 0, simulated: 0, duplicates: 0, enriched: 0, scored: 0, personalized: 0, approval_queued: 0, errors: 0 };
+  let simulationMode = false;
+
+  // Guarded status setter — refuses invalid transitions
+  const transition = async (target: RunStatus, extra: Record<string, any> = {}) => {
+    if (!runId) return;
+    const v = validateTransition(target, counts, simulationMode);
+    if (!v.ok) {
+      await supabase.from("outbound_run_logs").insert({
+        run_id: runId, step: target, status: "blocked",
+        message: `Transition refusée → ${target}: ${v.reason}`, payload: { counts, simulationMode },
+      });
+      throw new Error(`GUARD_BLOCKED:${target}:${v.reason}`);
+    }
+    await supabase.from("autopilot_runs").update({
+      status: target, current_stage: target, last_step: target,
+      simulation_mode: simulationMode,
+      execution_mode: simulationMode ? "simulation" : "real",
+      simulated_count: counts.simulated,
+      scraped_count: counts.scraped, deduplicated_count: counts.duplicates,
+      enriched_count: counts.enriched, scored_count: counts.scored,
+      personalized_count: counts.personalized, pending_count: counts.approval_queued,
+      failed_count: counts.errors, stats: counts, ...extra,
+    }).eq("id", runId);
+    await supabase.from("outbound_run_logs").insert({
+      run_id: runId, step: target, status: "ok",
+      message: `→ ${target}`, payload: { counts, simulationMode },
+    });
+  };
 
   try {
-    // Auth check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Authorization manquante");
     const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
@@ -197,11 +280,7 @@ serve(async (req) => {
     });
     const { data: userData, error: userErr } = await userClient.auth.getUser();
     if (userErr || !userData.user) throw new Error("Utilisateur non authentifié");
-
-    const { data: isAdmin } = await userClient.rpc("has_role", {
-      _user_id: userData.user.id,
-      _role: "admin",
-    });
+    const { data: isAdmin } = await userClient.rpc("has_role", { _user_id: userData.user.id, _role: "admin" });
     if (!isAdmin) throw new Error("Accès admin requis");
 
     const payload = (await req.json()) as AutopilotPayload;
@@ -212,44 +291,27 @@ serve(async (req) => {
 
     if (!trade || cities.length === 0) {
       return new Response(JSON.stringify({ error: "trade et cities requis" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Create run
     const { data: run, error: runErr } = await supabase
       .from("autopilot_runs")
       .insert({
-        trade,
-        cities,
-        target_limit: limit,
-        dry_run: dryRun,
-        status: "scraping",
-        current_stage: "scraping",
-        started_at: new Date().toISOString(),
-        triggered_by: userData.user.id,
-        stats: {},
-      })
-      .select()
-      .single();
+        trade, cities, target_limit: limit, target_count: limit,
+        dry_run: dryRun, status: "queued", current_stage: "queued",
+        execution_mode: "pending", started_at: new Date().toISOString(),
+        triggered_by: userData.user.id, stats: {},
+      }).select().single();
     if (runErr || !run) throw new Error(`Run init failed: ${runErr?.message}`);
     runId = run.id;
 
-    const stats: Record<string, number> = {
-      scraped: 0,
-      duplicates: 0,
-      enriched: 0,
-      scored: 0,
-      personalized: 0,
-      approval_queued: 0,
-      errors: 0,
-    };
+    await transition("scraping");
 
     const perCity = Math.ceil(limit / cities.length);
     const allProspects: any[] = [];
 
-    // ── Stage 1: Scrape per city
+    // ── Stage 1: Real scrape (Google Places)
     for (const city of cities) {
       try {
         const places = await searchGooglePlaces(trade, city, perCity);
@@ -260,61 +322,63 @@ serve(async (req) => {
           const name = place.displayName?.text ?? "Sans nom";
           const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60) + "-" + (place.id ?? "").slice(-6);
 
-          // Upsert by google_place_id
-          const { data: existing } = await supabase
-            .from("outbound_companies")
-            .select("id")
-            .eq("google_place_id", place.id)
-            .maybeSingle();
-
+          const { data: existing } = await supabase.from("outbound_companies").select("id").eq("google_place_id", place.id).maybeSingle();
           if (existing) {
-            stats.duplicates++;
+            counts.duplicates++;
             await supabase.from("outbound_companies").update({ autopilot_run_id: runId }).eq("id", existing.id);
             allProspects.push({ id: existing.id, company_name: name, website_url: website, phone, city, trade, google_rating: place.rating, review_count: place.userRatingCount });
             continue;
           }
-
-          const { data: inserted, error: insErr } = await supabase
-            .from("outbound_companies")
-            .insert({
-              company_name: name,
-              company_slug: slug,
-              website_url: website,
-              phone,
-              city,
-              region: "Québec",
-              trade,
-              specialty: trade,
-              language: "fr",
-              google_place_id: place.id,
-              google_rating: place.rating ?? null,
-              review_count: place.userRatingCount ?? 0,
-              address: place.formattedAddress ?? null,
-              business_status: (place.businessStatus ?? "OPERATIONAL").toLowerCase() === "operational" ? "active" : "inactive",
-              autopilot_run_id: runId,
-            })
-            .select()
-            .single();
-          if (insErr) {
-            console.error("Insert err", insErr.message);
-            stats.errors++;
-            continue;
-          }
-          stats.scraped++;
+          const { data: inserted, error: insErr } = await supabase.from("outbound_companies").insert({
+            company_name: name, company_slug: slug, website_url: website, phone, city,
+            region: "Québec", trade, specialty: trade, language: "fr",
+            google_place_id: place.id, google_rating: place.rating ?? null,
+            review_count: place.userRatingCount ?? 0, address: place.formattedAddress ?? null,
+            business_status: (place.businessStatus ?? "OPERATIONAL").toLowerCase() === "operational" ? "active" : "inactive",
+            autopilot_run_id: runId, is_simulated: false,
+          }).select().single();
+          if (insErr) { console.error("Insert err", insErr.message); counts.errors++; continue; }
+          counts.scraped++;
           allProspects.push({ ...inserted, trade });
         }
-      } catch (e) {
-        console.error(`Stage1 ${city}:`, e);
-        stats.errors++;
-      }
+      } catch (e) { console.error(`Stage1 ${city}:`, e); counts.errors++; }
     }
 
-    await supabase.from("autopilot_runs").update({ current_stage: "enriching", stats }).eq("id", runId);
+    // ── Simulation fallback (dry-run only, when real scrape produced 0)
+    if (counts.scraped === 0) {
+      if (!dryRun) {
+        await supabase.from("autopilot_runs").update({
+          status: "blocked", current_stage: "blocked", last_step: "scraping",
+          execution_mode: "blocked", block_reason: "Aucune entreprise scrapée en mode live. Vérifier GOOGLE_PLACES_API_KEY / mapping métier-ville.",
+          next_action: "Vérifier sources et relancer", alert_admin: true,
+          target_count: limit, scraped_count: 0, stats: counts,
+          finished_at: new Date().toISOString(),
+        }).eq("id", runId);
+        await supabase.from("outbound_admin_alerts").insert({
+          run_id: runId, severity: "critical", title: "Pipeline live bloqué — 0 prospect scrapé",
+          message: "Le scraping n'a retourné aucun résultat.", missing_component: "google_places",
+          suggested_fix: "Vérifier la clé GOOGLE_PLACES_API_KEY et le mapping métier/ville.",
+        });
+        return new Response(JSON.stringify({ ok: false, run_id: runId, status: "blocked", counts, execution_mode: "blocked" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      // dry-run → generate simulated prospects
+      simulationMode = true;
+      const sim = generateSimulatedProspects(trade, cities, Math.min(limit, 15));
+      counts.simulated = sim.length;
+      allProspects.push(...sim);
+      await supabase.from("outbound_run_logs").insert({
+        run_id: runId, step: "simulation_generated", status: "ok",
+        message: `Mode simulation activé · ${sim.length} prospects générés`, payload: { sample: sim.slice(0, 3).map(s => s.company_name) },
+      });
+    }
 
-    // ── Stage 2: Firecrawl enrich (only ones with a website)
+    await transition("enriching");
+
+    // ── Stage 2: Enrich (real only — simulated already has fake data)
     const scrapedMap = new Map<string, any>();
     for (const p of allProspects) {
-      if (!p.website_url) continue;
+      if (p.__simulated || !p.website_url) continue;
       try {
         const scraped = await firecrawlScrape(p.website_url);
         if (scraped) {
@@ -322,209 +386,167 @@ serve(async (req) => {
           const email = extractEmail(scraped.markdown ?? "");
           const rbqMatch = (scraped.markdown ?? "").match(/RBQ\s*:?\s*(\d{4}-\d{4}-\d{2})/i);
           const neqMatch = (scraped.markdown ?? "").match(/NEQ\s*:?\s*(\d{10})/i);
-          await supabase
-            .from("outbound_companies")
-            .update({
-              email: email ?? undefined,
-              rbq_number: rbqMatch ? rbqMatch[1] : undefined,
-              neq_number: neqMatch ? neqMatch[1] : undefined,
-            })
-            .eq("id", p.id);
-          stats.enriched++;
+          await supabase.from("outbound_companies").update({
+            email: email ?? undefined,
+            rbq_number: rbqMatch ? rbqMatch[1] : undefined,
+            neq_number: neqMatch ? neqMatch[1] : undefined,
+          }).eq("id", p.id);
+          counts.enriched++;
         }
-      } catch (e) {
-        console.error(`Enrich ${p.id}:`, e);
-        stats.errors++;
-      }
+      } catch (e) { console.error(`Enrich ${p.id}:`, e); counts.errors++; }
     }
-    await supabase.from("autopilot_runs").update({ current_stage: "scoring", stats }).eq("id", runId);
 
-    // ── Stage 3: Score
+    await transition("scoring");
+
+    // ── Stage 3: Score (real + simulated)
     const scored: Array<{ prospect: any; score: any }> = [];
     for (const p of allProspects) {
       try {
-        const fresh = await supabase.from("outbound_companies").select("*").eq("id", p.id).single();
-        if (!fresh.data) continue;
-        const scoreResult = computeAippScore(fresh.data, scrapedMap.get(p.id));
-        scored.push({ prospect: fresh.data, score: scoreResult });
+        let source = p;
+        if (!p.__simulated) {
+          const fresh = await supabase.from("outbound_companies").select("*").eq("id", p.id).single();
+          if (!fresh.data) continue;
+          source = fresh.data;
+        }
+        const scoreResult = computeAippScore(source, scrapedMap.get(p.id));
+        scored.push({ prospect: { ...source, __simulated: p.__simulated, trade: source.trade ?? p.trade }, score: scoreResult });
 
-        // Store in outbound_ai_scores via lead pivot
-        let leadId: string | null = null;
-        const existingLead = await supabase
-          .from("outbound_leads")
-          .select("id")
-          .eq("company_id", p.id)
-          .maybeSingle();
-        if (existingLead.data) {
-          leadId = existingLead.data.id;
-        } else {
-          const inserted = await supabase
-            .from("outbound_leads")
-            .insert({ company_id: p.id, crm_status: "new", pipeline_stage: "scored" })
-            .select("id")
-            .single();
-          leadId = inserted.data?.id ?? null;
+        if (!p.__simulated) {
+          let leadId: string | null = null;
+          const existingLead = await supabase.from("outbound_leads").select("id").eq("company_id", p.id).maybeSingle();
+          if (existingLead.data) leadId = existingLead.data.id;
+          else {
+            const ins = await supabase.from("outbound_leads").insert({ company_id: p.id, crm_status: "new", pipeline_stage: "scored" }).select("id").single();
+            leadId = ins.data?.id ?? null;
+          }
+          if (leadId) {
+            await supabase.from("outbound_ai_scores").insert({
+              lead_id: leadId, scoring_version: "autopilot-v1",
+              score_json: scoreResult, reasoning_summary: scoreResult.weaknesses.slice(0, 3).join(" • "),
+            });
+            (scored[scored.length - 1].prospect as any).__lead_id = leadId;
+          }
         }
-        if (leadId) {
-          await supabase.from("outbound_ai_scores").insert({
-            lead_id: leadId,
-            scoring_version: "autopilot-v1",
-            score_json: scoreResult,
-            reasoning_summary: scoreResult.weaknesses.slice(0, 3).join(" • "),
-          });
-          (p as any).__lead_id = leadId;
-          (fresh.data as any).__lead_id = leadId;
-        }
-        stats.scored++;
-      } catch (e) {
-        console.error(`Score ${p.id}:`, e);
-        stats.errors++;
-      }
+        counts.scored++;
+      } catch (e) { console.error(`Score ${p.id}:`, e); counts.errors++; }
     }
-    await supabase.from("autopilot_runs").update({ current_stage: "personalizing", stats }).eq("id", runId);
 
-    // ── Stage 4: Personalize (stored in outbound_ai_personalizations keyed by lead_id)
+    await transition("personalizing");
+
+    // ── Stage 4: Personalize
     for (const { prospect, score } of scored) {
       try {
-        const leadId = (prospect as any).__lead_id;
-        if (!leadId) continue;
         const email = await generatePersonalizedEmail(prospect, score);
-        if (email?.subject && email?.body) {
+        if (!email?.subject || !email?.body) continue;
+        if (!prospect.__simulated && (prospect as any).__lead_id) {
           await supabase.from("outbound_ai_personalizations").insert({
-            lead_id: leadId,
+            lead_id: (prospect as any).__lead_id,
             personalization_type: "email_full",
             prompt_used: `Trade=${prospect.trade}; City=${prospect.city}; Score=${score.total}`,
             generated_output: JSON.stringify({ subject: email.subject, body: email.body }),
             approved: false,
           });
-          stats.personalized++;
         }
-      } catch (e) {
-        console.error(`Personalize ${prospect.id}:`, e);
-        stats.errors++;
-      }
+        counts.personalized++;
+      } catch (e) { console.error(`Personalize ${prospect.id}:`, e); counts.errors++; }
     }
-    await supabase.from("autopilot_runs").update({ current_stage: "approval_gate", stats }).eq("id", runId);
 
-    // ── Stage 5: Push to approval gate
+    // ── Stage 5: Approval gate (real only)
     for (const { prospect } of scored) {
+      if (prospect.__simulated) continue;
       try {
         await supabase.from("outbound_approvals").insert({
-          prospect_id: prospect.id,
-          approval_status: "pending_approval",
+          prospect_id: prospect.id, approval_status: "pending_approval",
         }).then(() => {}, () => {});
-        stats.approval_queued++;
-      } catch {
-        // ignore duplicates
-      }
+        counts.approval_queued++;
+      } catch { /* duplicates */ }
     }
 
-    // ── Status discipline: never "done" with 0 scraped
-    const counts = {
-      scraped_count: stats.scraped,
-      deduplicated_count: stats.duplicates,
-      enriched_count: stats.enriched,
-      scored_count: stats.scored,
-      personalized_count: stats.personalized,
-      pending_count: stats.approval_queued,
-      failed_count: stats.errors,
-    };
-
-    let finalStatus: string;
+    // ── Final guarded transition
+    let finalStatus: RunStatus;
     let blockReason: string | null = null;
-    let nextAction: string | null = null;
+    let nextAction: string;
     let alertAdmin = false;
 
-    if (stats.scraped === 0) {
-      finalStatus = dryRun ? "dry_run_completed" : "blocked";
-      blockReason = dryRun
-        ? "Aucune entreprise scrapée (mode test)."
-        : "Aucune entreprise scrapée. Vérifier sources (Google Places, Firecrawl), clé API, mapping métier/ville.";
-      nextAction = dryRun
-        ? "Ajuster métier/villes ou relancer en live"
-        : "Vérifier les sources et relancer le scraping";
-      alertAdmin = !dryRun;
-    } else if (dryRun) {
-      finalStatus = "waiting_approval";
-      nextAction = "Approuver pour envoi live";
+    if (dryRun) {
+      const v = validateTransition("dry_run_completed", counts, simulationMode);
+      if (v.ok) {
+        finalStatus = "dry_run_completed";
+        nextAction = simulationMode
+          ? `Simulation générée pour validation · ${counts.simulated} prospects simulés`
+          : `${counts.scraped} entreprises analysées (dry-run sans envoi)`;
+      } else {
+        finalStatus = "blocked"; blockReason = v.reason ?? "Aucun prospect généré.";
+        nextAction = "Vérifier sources ou activer simulation"; alertAdmin = true;
+      }
     } else {
-      finalStatus = "completed";
-      nextAction = "Pipeline terminé";
+      const v = validateTransition("completed", counts, simulationMode);
+      if (v.ok) { finalStatus = "completed"; nextAction = "Pipeline live terminé"; }
+      else { finalStatus = "blocked"; blockReason = v.reason ?? "Pipeline live vide."; nextAction = "Vérifier sources et relancer"; alertAdmin = true; }
     }
 
-    await supabase
-      .from("autopilot_runs")
-      .update({
-        status: finalStatus,
-        current_stage: finalStatus,
-        last_step: "approval_gate",
-        next_action: nextAction,
-        block_reason: blockReason,
-        alert_admin: alertAdmin,
-        target_count: limit,
-        ...counts,
-        stats,
-        finished_at: new Date().toISOString(),
-      })
-      .eq("id", runId);
+    await supabase.from("autopilot_runs").update({
+      status: finalStatus, current_stage: finalStatus, last_step: "finalize",
+      next_action: nextAction, block_reason: blockReason, alert_admin: alertAdmin,
+      simulation_mode: simulationMode,
+      execution_mode: finalStatus === "blocked" ? "blocked" : (simulationMode ? "simulation" : "real"),
+      target_count: limit,
+      scraped_count: counts.scraped, deduplicated_count: counts.duplicates,
+      enriched_count: counts.enriched, scored_count: counts.scored,
+      personalized_count: counts.personalized, pending_count: counts.approval_queued,
+      failed_count: counts.errors, simulated_count: counts.simulated,
+      stats: counts, finished_at: new Date().toISOString(),
+    }).eq("id", runId);
 
     await supabase.from("outbound_run_logs").insert({
-      run_id: runId,
-      step: "pipeline_complete",
-      status: finalStatus,
-      message: blockReason ?? `Pipeline terminé · ${stats.scraped} scrapés`,
-      payload: { stats, counts, dry_run: dryRun },
+      run_id: runId, step: "pipeline_complete", status: finalStatus,
+      message: blockReason ?? nextAction, payload: { counts, simulation_mode: simulationMode, dry_run: dryRun },
     });
 
     if (alertAdmin) {
       await supabase.from("outbound_admin_alerts").insert({
-        run_id: runId,
-        severity: "critical",
-        title: "Run live sans aucun prospect scrapé",
-        message: blockReason,
-        missing_component: "google_places_or_firecrawl",
-        suggested_fix: "Vérifier GOOGLE_PLACES_API_KEY, FIRECRAWL_API_KEY, et le mapping métier/ville.",
+        run_id: runId, severity: "critical",
+        title: "Pipeline terminé sans exécution réelle",
+        message: blockReason ?? "Counts à 0 sans simulation.",
+        suggested_fix: "Vérifier clés API, mapping métier/ville, ou activer le mode simulation.",
       });
     }
 
-    return new Response(
-      JSON.stringify({ ok: true, run_id: runId, status: finalStatus, stats, counts, block_reason: blockReason, dry_run: dryRun }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({
+      ok: finalStatus !== "blocked", run_id: runId, status: finalStatus,
+      counts, simulation_mode: simulationMode,
+      execution_mode: finalStatus === "blocked" ? "blocked" : (simulationMode ? "simulation" : "real"),
+      block_reason: blockReason, dry_run: dryRun,
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err: any) {
     console.error("Autopilot error:", err);
     if (runId) {
-      await supabase
-        .from("autopilot_runs")
-        .update({
-          status: "failed",
-          last_step: "exception",
-          block_reason: err.message?.slice(0, 500),
-          next_action: "Examiner les logs et relancer",
-          alert_admin: true,
-          error_message: err.message?.slice(0, 500),
-          finished_at: new Date().toISOString(),
-        })
-        .eq("id", runId);
+      const isGuard = String(err.message ?? "").startsWith("GUARD_BLOCKED:");
+      await supabase.from("autopilot_runs").update({
+        status: isGuard ? "blocked" : "failed",
+        last_step: "exception",
+        block_reason: err.message?.slice(0, 500),
+        next_action: "Examiner les logs et relancer",
+        alert_admin: true,
+        execution_mode: "blocked",
+        error_message: err.message?.slice(0, 500),
+        finished_at: new Date().toISOString(),
+      }).eq("id", runId);
       await supabase.from("outbound_run_logs").insert({
-        run_id: runId,
-        step: "exception",
-        status: "failed",
-        message: err.message?.slice(0, 500) ?? "Erreur inconnue",
-        payload: {},
+        run_id: runId, step: "exception", status: "failed",
+        message: err.message?.slice(0, 500) ?? "Erreur inconnue", payload: {},
       });
       await supabase.from("outbound_admin_alerts").insert({
-        run_id: runId,
-        severity: "critical",
-        title: "Exception pipeline autopilot",
+        run_id: runId, severity: "critical",
+        title: isGuard ? "Transition refusée par le guard" : "Exception pipeline autopilot",
         message: err.message?.slice(0, 500),
-        suggested_fix: "Consulter les logs Edge Function autopilot-mvp.",
+        suggested_fix: "Consulter logs Edge Function autopilot-mvp.",
       });
     }
     return new Response(JSON.stringify({ error: err.message ?? "Erreur inconnue" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
+
 
