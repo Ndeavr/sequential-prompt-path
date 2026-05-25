@@ -13988,48 +13988,102 @@ export type Database = {
       }
       autopilot_runs: {
         Row: {
+          activated_count: number
+          alert_admin: boolean
+          block_reason: string | null
+          checkout_started_count: number
           cities: string[]
+          clicked_count: number
           created_at: string
           current_stage: string | null
+          deduplicated_count: number
           dry_run: boolean
+          enriched_count: number
           error_message: string | null
+          failed_count: number
           finished_at: string | null
           id: string
+          last_step: string | null
+          next_action: string | null
+          opened_count: number
+          paid_count: number
+          pending_count: number
+          personalized_count: number
+          scored_count: number
+          scraped_count: number
+          sent_count: number
           started_at: string | null
           stats: Json
           status: string
+          target_count: number | null
           target_limit: number
           trade: string
           triggered_by: string | null
           updated_at: string
         }
         Insert: {
+          activated_count?: number
+          alert_admin?: boolean
+          block_reason?: string | null
+          checkout_started_count?: number
           cities?: string[]
+          clicked_count?: number
           created_at?: string
           current_stage?: string | null
+          deduplicated_count?: number
           dry_run?: boolean
+          enriched_count?: number
           error_message?: string | null
+          failed_count?: number
           finished_at?: string | null
           id?: string
+          last_step?: string | null
+          next_action?: string | null
+          opened_count?: number
+          paid_count?: number
+          pending_count?: number
+          personalized_count?: number
+          scored_count?: number
+          scraped_count?: number
+          sent_count?: number
           started_at?: string | null
           stats?: Json
           status?: string
+          target_count?: number | null
           target_limit?: number
           trade: string
           triggered_by?: string | null
           updated_at?: string
         }
         Update: {
+          activated_count?: number
+          alert_admin?: boolean
+          block_reason?: string | null
+          checkout_started_count?: number
           cities?: string[]
+          clicked_count?: number
           created_at?: string
           current_stage?: string | null
+          deduplicated_count?: number
           dry_run?: boolean
+          enriched_count?: number
           error_message?: string | null
+          failed_count?: number
           finished_at?: string | null
           id?: string
+          last_step?: string | null
+          next_action?: string | null
+          opened_count?: number
+          paid_count?: number
+          pending_count?: number
+          personalized_count?: number
+          scored_count?: number
+          scraped_count?: number
+          sent_count?: number
           started_at?: string | null
           stats?: Json
           status?: string
+          target_count?: number | null
           target_limit?: number
           trade?: string
           triggered_by?: string | null
@@ -43544,6 +43598,60 @@ export type Database = {
         }
         Relationships: []
       }
+      outbound_admin_alerts: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          missing_component: string | null
+          resolved: boolean
+          resolved_at: string | null
+          run_id: string | null
+          severity: string
+          suggested_fix: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          missing_component?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          run_id?: string | null
+          severity?: string
+          suggested_fix?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          missing_component?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          run_id?: string | null
+          severity?: string
+          suggested_fix?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_admin_alerts_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "autopilot_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_admin_alerts_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "v_autopilot_pipeline"
+            referencedColumns: ["run_id"]
+          },
+        ]
+      }
       outbound_ai_personalizations: {
         Row: {
           approved: boolean | null
@@ -45205,6 +45313,51 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "outbound_messages"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_run_logs: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          payload: Json
+          run_id: string
+          status: string
+          step: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          payload?: Json
+          run_id: string
+          status: string
+          step: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          payload?: Json
+          run_id?: string
+          status?: string
+          step?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_run_logs_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "autopilot_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_run_logs_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "v_autopilot_pipeline"
+            referencedColumns: ["run_id"]
           },
         ]
       }
@@ -68636,19 +68789,34 @@ export type Database = {
       }
       v_autopilot_pipeline: {
         Row: {
+          activated_count: number | null
+          alert_admin: boolean | null
+          block_reason: string | null
+          checkout_started_count: number | null
           cities: string[] | null
           clicked_count: number | null
           created_at: string | null
           current_stage: string | null
+          deduplicated_count: number | null
           dry_run: boolean | null
           enriched_count: number | null
           error_message: string | null
+          failed_count: number | null
           finished_at: string | null
+          last_step: string | null
+          next_action: string | null
+          opened_count: number | null
+          paid_count: number | null
+          pending_count: number | null
+          personalized_count: number | null
           run_id: string | null
           run_status: string | null
+          scored_count: number | null
           scraped_count: number | null
+          sent_count: number | null
           started_at: string | null
           stats: Json | null
+          target_count: number | null
           target_limit: number | null
           trade: string | null
         }
