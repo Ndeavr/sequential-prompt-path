@@ -303,6 +303,14 @@ export default function PageAdminAutopilotMvp() {
                     <Stat label="En attente" value={r.pending_count ?? 0} />
                     <Stat label="Clics" value={r.clicked_count ?? 0} />
                   </div>
+                  <div className="flex justify-end mt-3">
+                    <a
+                      href={`/admin/autopilot-mvp/run/${r.run_id}`}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Détails →
+                    </a>
+                  </div>
 
                 </Card>
               ))}
