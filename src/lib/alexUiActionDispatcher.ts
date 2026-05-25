@@ -18,7 +18,11 @@ export type AlexUIActionType =
   | "open_booking"
   | "show_chips"
   | "show_trust"
-  | "show_prediction";
+  | "show_prediction"
+  | "smart.highlight_field"
+  | "smart.open_bubble"
+  | "smart.suggest_value";
+
 
 export interface AlexUIAction {
   type: AlexUIActionType | string;
@@ -175,10 +179,46 @@ export function dispatchAlexAction(action: AlexUIAction, deps: DispatcherDeps) {
       deps.navigate(action.target || "/dashboard/predictions");
       break;
 
+    // ── Smart Context bridge ──
+    case "smart.highlight_field":
+      if (action.target) {
+        const sel = `[data-smart-field="${action.target}"]`;
+        clearHighlights();
+        applyOverlay(sel, HIGHLIGHT_CLASS);
+      }
+      break;
+
+    case "smart.open_bubble":
+      if (action.target) {
+        try {
+          window.dispatchEvent(
+            new CustomEvent("unpro:smart:open_bubble", { detail: { fieldId: action.target } }),
+          );
+        } catch {
+          // no-op
+        }
+      }
+      break;
+
+    case "smart.suggest_value":
+      if (action.target) {
+        try {
+          window.dispatchEvent(
+            new CustomEvent("unpro:smart:suggest_value", {
+              detail: { fieldId: action.target, value: action.value ?? action.items },
+            }),
+          );
+        } catch {
+          // no-op
+        }
+      }
+      break;
+
     default:
       console.warn("[AlexDispatcher] Unknown action type:", action.type);
   }
 }
+
 
 /**
  * Dispatch a batch of UI actions sequentially.

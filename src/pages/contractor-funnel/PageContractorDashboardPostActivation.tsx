@@ -12,6 +12,8 @@ import CardGlass from "@/components/unpro/CardGlass";
 import SectionContainer from "@/components/unpro/SectionContainer";
 import UnproLogo from "@/components/brand/UnproLogo";
 import { fadeUp, staggerContainer } from "@/lib/motion";
+import { WidgetSmartOpportunities } from "@/components/smart-context";
+
 import { useContractorFunnel } from "@/hooks/useContractorFunnel";
 import { supabase } from "@/integrations/supabase/client";
 import { trackFunnelEvent } from "@/utils/trackFunnelEvent";
@@ -201,7 +203,13 @@ export default function PageContractorDashboardPostActivation() {
               ))}
             </motion.div>
 
+            {/* Smart Opportunities */}
+            <motion.div variants={fadeUp}>
+              <WidgetSmartOpportunities surface="dashboard" />
+            </motion.div>
+
             {/* Tasks */}
+
             <motion.div variants={fadeUp}>
               <CardGlass noAnimation>
                 <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">

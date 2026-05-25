@@ -1,10 +1,11 @@
 /**
  * useSmartContext — merges static registry + admin overrides + dynamic recommendation.
+ * Also exposes askAlex(id) to push the entry's alexScript into the Alex chat fallback.
  */
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { getRegistryEntry } from "./registry";
+import { getRegistryEntry, SMART_CONTEXT_REGISTRY } from "./registry";
 import { recommend } from "@/services/smartRecommendationEngine";
 import type { SmartContextEntry, SmartContextRuntime } from "./types";
 
@@ -36,4 +37,24 @@ export function useSmartContext(id: string, runtime: SmartContextRuntime = {}) {
     if (dynamic) merged.recommendation = dynamic;
     return merged;
   }, [id, override, runtime.cityName, runtime.tradeSlug, runtime.capacity, runtime.goal, runtime.currentValue]);
+}
+
+/**
+ * askAlex — pushes the entry's alexScript into the global Alex session.
+ * Uses a CustomEvent so any Alex surface (voice or chat) can react to it.
+ */
+export function useAskAlex() {
+  return useCallback((entryId: string) => {
+    const entry = SMART_CONTEXT_REGISTRY[entryId];
+    if (!entry?.alexScript) return;
+    try {
+      window.dispatchEvent(
+        new CustomEvent("unpro:alex:script", {
+          detail: { fieldId: entryId, script: entry.alexScript, source: "smart-context" },
+        }),
+      );
+    } catch {
+      // no-op
+    }
+  }, []);
 }
