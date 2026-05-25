@@ -1,141 +1,130 @@
-## Phase B — Landing prospect + Stripe→AIPP auto-publish (livraison complète)
 
-Boucle l'autopilot end-to-end : email envoyé → prospect clique → landing personnalisée premium avec son score AIPP réel + faiblesses + Alex + checkout → paiement → profil entrepreneur publié automatiquement + email de bienvenue.
+# UNPRO Outbound Autopilot Control System
 
----
+## Contexte
+Le dashboard `/admin/autopilot-mvp` affiche aujourd'hui des runs `done` avec `scraped_count = 0`. C'est un état interdit : un run ne peut pas être "terminé" sans résultat. Cette refonte transforme le module en vrai pipeline autonome avec étapes vérifiées, statuts stricts, alertes admin et UI de contrôle.
 
-### 1. Données (1 migration)
-
-**Nouvelles colonnes `outbound_leads`:**
-- `landing_slug` text unique (généré : `slugify(company)-{shortId}`)
-- `landing_token` text unique (sécurité contre énumération)
-- `landing_first_viewed_at`, `landing_last_viewed_at`, `landing_view_count` int default 0
-- `checkout_initiated_at`, `checkout_session_id`, `checkout_plan_code`
-- `paid_at`, `published_contractor_id` uuid (FK `contractors.id`)
-- `publish_status` enum : `pending|published|failed`
-
-**Nouvelle table `outbound_landing_events`** : `lead_id, event_type (view|cta_click|alex_open|checkout_start|paid|published), payload jsonb, ip, ua, created_at`. RLS: insert public + select admin only.
-
-**Vue `v_outbound_funnel`** : agrège views→clicks→checkout→paid→published par jour/trade/ville.
-
-**Trigger** : à l'insert d'un lead par autopilot-mvp, génère `landing_slug` + `landing_token` automatiquement.
+## Objectif
+Pipeline déterministe en 11 étapes avec statuts explicites, retry automatique, blocage clair en cas d'échec, et UI cockpit permettant de diagnostiquer/réparer chaque run.
 
 ---
 
-### 2. Edge functions
+## 1. Données (1 migration)
 
-**`outbound-landing-resolve` (public, verify_jwt=false)**
-- GET `?slug=...&t=...` → vérifie token, log view dans `outbound_landing_events`, incrémente view_count, retourne `{ lead, aipp_score, weaknesses, recommended_plan, company_meta }`.
-- Calcule plan recommandé via logique existante `compute-plan-recommendation` (score < 40 → Pro, 40-60 → Premium, 60+ → Élite).
+### Tables nouvelles
+- **`outbound_runs`** (remplace l'usage actuel) — colonnes : `trade`, `cities text[]`, `mode` (dry_run|live), `status` (enum strict), `target_count`, `scraped_count`, `deduplicated_count`, `enriched_count`, `scored_count`, `personalized_count`, `sent_count`, `opened_count`, `clicked_count`, `checkout_started_count`, `paid_count`, `activated_count`, `pending_count`, `failed_count`, `error_message`, `block_reason`, `last_step`, `next_action`, `alert_admin bool`, `created_by`, timestamps.
+- **`outbound_prospects`** — tracking par entreprise avec `scrape_status`, `enrichment_status`, `aipp_score`, `weaknesses jsonb`, `personalization_status`, `email_subject/body`, `sms_body`, `landing_url`, `approval_status`, `send/open/click/payment_status`, `contractor_id`.
+- **`outbound_run_logs`** — log par étape (`step`, `status`, `message`, `payload jsonb`).
+- **`outbound_admin_alerts`** — `severity`, `title`, `message`, `missing_component`, `suggested_fix`, `resolved`.
 
-**`outbound-checkout-start` (public)**
-- POST `{ slug, token, plan_code }` → crée Stripe Checkout session avec `metadata: { lead_id, slug, source: "outbound_landing" }`, log event, retourne URL.
-- Réutilise `create-contractor-checkout` existant (wrapper qui injecte metadata).
+### Enum statuts (strict, "done" interdit)
+`queued | validating | scraping | deduplicating | enriching | scoring | personalizing | waiting_approval | dry_run_completed | sending | tracking | payment_pending | paid | activated | completed | blocked | failed`
 
-**`outbound-checkout-webhook` (public, signature Stripe)**
-- Sur `checkout.session.completed` avec `metadata.source = "outbound_landing"` :
-  1. Marque `outbound_leads.paid_at`, `checkout_session_id`, `checkout_plan_code`
-  2. Appelle `outbound-publish-contractor` (chaîne interne)
-  3. Log `paid` event
+### Migration de l'existant
+Mapper les anciens runs `done` :
+- `scraped_count = 0` + `mode = dry_run` → `dry_run_completed`
+- `scraped_count = 0` + `mode = live` → `blocked` avec `block_reason = "legacy_zero_scrape"`
+- `scraped_count > 0` → `completed`
 
-**`outbound-publish-contractor` (interne, service-role)**
-- Crée ou met à jour ligne `contractors` à partir des données enrichies du lead (business_name, phone, website, rbq, neq, address, services, trade, google_rating, google_review_count).
-- Crée `contractor_scores` avec AIPP réel.
-- Crée `contractor_plans` ligne active avec plan acheté.
-- Génère slug public `/entrepreneur/:slug`.
-- Marque `outbound_leads.published_contractor_id`, `publish_status='published'`, log `published`.
-- Envoie email bienvenue via `send-transactional-email` existant (template "contractor_welcome") avec lien magic vers `/contractor/onboarding?lead=...` pour finir profil (photo, équipe, avant-après).
-
-**`outbound-magic-link` (public)**
-- GET `?lead_id=...&token=...` → crée user Supabase auth (passwordless), lie à `contractor.user_id`, redirige `/contractor/dashboard`.
+### RLS
+Admin-only sur les 4 tables (via `has_role(auth.uid(), 'admin')`).
 
 ---
 
-### 3. UI publique — Landing /pro/diagnostic/:slug
+## 2. Edge Functions (7)
 
-Route React, dark cinematic theme (memory:premium-cinematic-theme), mobile-first.
+1. **`run-outbound-autopilot`** — orchestrateur principal. Exécute séquentiellement les 11 étapes, écrit dans `outbound_run_logs` après chaque étape, met à jour `last_step` + `next_action` + counts, déclenche alertes.
+2. **`verify-outbound-step`** — vérifie une étape isolée (sources, RLS, API keys, edge fn disponible).
+3. **`retry-outbound-run`** — reprend depuis `last_step` (pas depuis zéro).
+4. **`approve-outbound-run`** — passe `waiting_approval` ou `dry_run_completed` → `sending`.
+5. **`send-outbound-test`** — envoi unique à l'admin pour valider template.
+6. **`track-outbound-conversion`** — webhook landing/Stripe (visit, plan_selected, checkout_started, payment_success, profile_activated).
+7. **`alert-admin-outbound-issue`** — crée entrée dans `outbound_admin_alerts` + flag `alert_admin = true` sur le run.
 
-**Sections (scroll narratif) :**
-1. **Hero personnalisé** : `Bonjour {prénom_dirigeant_si_connu}, voici l'analyse IA de {Nom Entreprise}` + AIPP score animé /100 + verdict en 1 phrase.
-2. **Breakdown 5 dimensions** (Web, Google, Trust, AI Readiness, Conversion) avec barres + chiffres réels.
-3. **3 faiblesses critiques** identifiées (cards avec icônes, impact $ estimé).
-4. **Projection revenus** : "Avec ces 3 corrections + UNPRO, +{X} rendez-vous/mois = +{Y}$ revenus annuels" (utilise `compute-plan-recommendation`).
-5. **Plan recommandé** sticky avec CTA Stripe inline (Payment Element existant) + 2 alternatives.
-6. **Alex orb** flottant : voice-first, prompt contextuel `"Tu parles à {dirigeant} de {entreprise}, score AIPP {X}, faiblesses : {liste}. Explique le plan en 30 sec."` (réutilise `alexCopilotEngine` + `alexVoiceConfig`).
-7. **Trust strip** : RBQ, NEQ, témoignages, garantie 30j.
-8. **Footer minimal** avec lien désabonnement.
+### Pipeline détaillé (dans `run-outbound-autopilot`)
+```text
+1. create_run         → status=queued
+2. validate_sources   → check API keys (Firecrawl, Google Places), RLS, tables
+                        si manque → status=blocked, alert_admin
+3. scrape_targets     → Google Places > Firecrawl > existing_database fallback
+                        retry 2x, si 0 → blocked OU dry_run_completed_simulation
+4. deduplicate        → par name/phone/website/email/city
+5. enrich_prospects   → website, email, RBQ, reviews, weaknesses, AI gaps
+6. score_aipp         → score 0-100 + dimensions
+7. personalize_outreach → email subject/body + SMS + landing URL + AIPP preview
+8. approval_gate      → si dry_run → waiting_approval/dry_run_completed STOP
+9. live_send          → envoi email/SMS, log sent/failed/bounced
+10. landing_conversion_tracking → suivi via webhook
+11. payment_activation → création contractor + plan + AIPP profile
+```
 
-Composants : `PageOutboundLanding.tsx`, `AippScoreReveal` (réutilise `mem://features/aipp-score-reveal-engine`), `WeaknessCard`, `RevenueProjection`, `RecommendedPlanCard`, `OutboundAlexOrb`.
-
-Tracking : appel `outbound-landing-resolve` au mount (view) + events sur scroll, CTA click, Alex open, checkout start.
-
----
-
-### 4. UI admin — Dashboard funnel `/admin/outbound/landing-funnel`
-
-Tableau live (refresh 10s) : par lead → status (sent, viewed, alex_engaged, checkout_started, paid, published), views, last_seen, CTA "Voir landing", "Republier".
-
-KPIs en haut : conversion rate (sent→view, view→checkout, checkout→paid), revenus 7j/30j, top trades convertissant.
-
-Branchée sur `v_outbound_funnel`.
-
----
-
-### 5. Intégration autopilot-mvp existant
-
-Modifier `autopilot-mvp/index.ts` :
-- À l'insertion du lead, capturer `landing_slug` + `landing_token` retournés.
-- Personnalisation Gemini : injecter URL landing `https://app.unpro.ca/pro/diagnostic/{slug}?t={token}` dans le prompt + email body.
-
----
-
-### 6. Stripe
-
-- Vérifier `STRIPE_SECRET_KEY` (déjà présent, mémoires confirment Stripe natif actif).
-- Ajouter secret `STRIPE_WEBHOOK_SECRET_OUTBOUND` (l'utilisateur le configurera après création du webhook côté Stripe dashboard pointant sur `outbound-checkout-webhook`).
-- Wrapper `create-contractor-checkout` accepte param `metadata` pour pass-through.
+### Logique d'alerte
+Déclenche `alert-admin-outbound-issue` si :
+- étape échoue 2x
+- `scraped_count = 0` après scrape (mode live)
+- `enriched_count = 0` après enrichissement
+- `personalized_count = 0`
+- Stripe checkout fail
+- payment success mais profil non activé
+- RLS bloque write / API key manquante / edge fn timeout
+- run bloqué > 5 min sur même étape
 
 ---
 
-### 7. Email de bienvenue
+## 3. UI — `/admin/autopilot-mvp` (refonte cards "Derniers runs")
 
-- Template `contractor_welcome.tsx` dans `supabase/functions/_shared/email-templates/` : confirmation paiement, score AIPP, plan activé, magic link onboarding, prochaines étapes.
-- Branché sur `send-transactional-email` (queue pgmq existante).
+Chaque card affiche :
+- **Badge statut** coloré (vert=completed/paid, ambre=waiting_approval/dry_run_completed, rouge=blocked/failed, bleu=running)
+- **Progress bar** par étape (11 segments)
+- **Grille de counts** : target / scraped / enriched / scored / personalized / sent / clicked / paid
+- **`last_step`** + **`next_action`** en clair
+- **`block_reason`** si bloqué (bandeau rouge avec cause exacte)
+- **Badge admin alert** si `alert_admin = true`
+- **Boutons contextuels** :
+  - Voir logs (drawer)
+  - Vérifier étapes (lance verify)
+  - Relancer (retry depuis last_step)
+  - Continuer autopilot
+  - Send test
+  - Approuver live (si waiting_approval)
+  - Voir prospects (drawer)
+  - Voir paiements
 
----
+### Bandeau rouge si `scraped_count = 0`
+> "Aucune entreprise scrapée. Ce run n'est pas terminé."
+> Cause : `{block_reason}` — Fix suggéré : `{suggested_fix}`
 
-### 8. Sécurité
-
-- Token URL signé (HMAC, secret `OUTBOUND_LANDING_SECRET` à ajouter).
-- Rate-limit `outbound-landing-resolve` (5 req/min par IP via simple table in-memory edge).
-- Webhook Stripe : vérification signature stricte.
-- RLS landing_events : public insert, admin select only.
-
----
-
-### Risques & non-objectifs
-
-**Pas dans cette phase** : refonte route `/entrepreneur/:slug` publique (existe déjà), refacto `contractors`, suppression `acq_*` legacy, SMS fallback (déjà branché ailleurs).
-
-**Risques** :
-- Si `outbound_leads` n'a pas tous les champs enrichis attendus → fallback gracieux (score affiché, faiblesses génériques par défaut).
-- Race condition double-paiement → idempotency Stripe + lock sur `outbound_leads.paid_at IS NULL`.
-
----
-
-### Succès
-
-Un prospect Isolation Laval reçoit l'email envoyé par autopilot → clique → voit son score AIPP réel + plan recommandé → engage Alex 30 sec → paie via Stripe → 5 sec plus tard son profil `/entrepreneur/isolation-xyz-laval` est live + il reçoit email magic-link pour compléter onboarding. Admin voit toute la chaîne dans `/admin/outbound/landing-funnel`.
+### Nouvelle vue `/admin/outbound/run/:id`
+Détail complet : timeline logs, table prospects, alertes liées, paiements, boutons d'action.
 
 ---
 
-### Détails techniques (résumé)
+## 4. Hooks frontend
+- `useOutboundRuns()` — liste avec realtime
+- `useOutboundRun(id)` — détail
+- `useOutboundProspects(runId)`
+- `useOutboundLogs(runId)`
+- `useOutboundAlerts()`
+- Mutations : `useRetryRun`, `useApproveRun`, `useSendTest`, `useVerifyStep`
 
-- **Migration** : `outbound_leads` (colonnes landing/paid/published), `outbound_landing_events` (table+RLS), trigger slug, vue `v_outbound_funnel`.
-- **Edge functions (5 nouvelles)** : `outbound-landing-resolve`, `outbound-checkout-start`, `outbound-checkout-webhook`, `outbound-publish-contractor`, `outbound-magic-link`.
-- **Edge functions modifiées (2)** : `autopilot-mvp` (capture slug/URL), `create-contractor-checkout` (accepte metadata).
-- **Routes React (2)** : `/pro/diagnostic/:slug` (public landing), `/admin/outbound/landing-funnel` (admin).
-- **Composants nouveaux (~8)** sous `src/features/outboundLanding/`.
-- **Secrets à ajouter** : `OUTBOUND_LANDING_SECRET` (HMAC), `STRIPE_WEBHOOK_SECRET_OUTBOUND`.
-- **Email template** : `contractor_welcome` via queue pgmq existante.
-- **Stack respecté** : dark cinematic #050816, Inter -0.04em, ElevenLabs Sophia voice ID locked, Stripe Payment Element fr-CA, esm.sh@2.49.1 pour Supabase.
+---
+
+## 5. Non inclus (risques/exclusions)
+- Pas de refonte des tables `outbound_*` existantes (sequences, mailboxes) — coexistence
+- Migration legacy des anciens `outbound_leads` non touchée (Phase B reste indépendante)
+- Pas de remplacement de l'edge function `autopilot-mvp` existante — sera désactivée au profit de `run-outbound-autopilot`
+
+## 6. Succès
+- Aucun run ne peut afficher `status = done` ou `status = completed` avec `scraped_count = 0`
+- Chaque run bloqué affiche cause + fix + bouton de réparation
+- Admin reçoit alerte automatique sur tout problème pipeline
+- Retry reprend exactement à `last_step` sans rejouer les étapes réussies
+- Dry-run clair (`dry_run_completed`), jamais confondu avec succès live
+
+## 7. Plan d'exécution
+1. Migration SQL (4 tables + enum + RLS + migration legacy)
+2. Edge function `run-outbound-autopilot` (orchestrateur)
+3. Edge functions auxiliaires (verify, retry, approve, send-test, track, alert)
+4. Refonte UI cards + nouvelle page détail
+5. Hooks + realtime
+6. Tests sur 2 runs Toiture/Isolation actuels (devraient passer `blocked`)
