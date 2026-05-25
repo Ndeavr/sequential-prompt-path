@@ -23357,6 +23357,36 @@ export type Database = {
           },
         ]
       }
+      contractor_goal_profiles: {
+        Row: {
+          avg_contract_value: number | null
+          capacity_per_month: number | null
+          contractor_id: string
+          created_at: string
+          primary_goal: string
+          secondary_goals: Json
+          updated_at: string
+        }
+        Insert: {
+          avg_contract_value?: number | null
+          capacity_per_month?: number | null
+          contractor_id: string
+          created_at?: string
+          primary_goal: string
+          secondary_goals?: Json
+          updated_at?: string
+        }
+        Update: {
+          avg_contract_value?: number | null
+          capacity_per_month?: number | null
+          contractor_id?: string
+          created_at?: string
+          primary_goal?: string
+          secondary_goals?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contractor_import_consents: {
         Row: {
           captured_at: string
@@ -60108,6 +60138,72 @@ export type Database = {
             referencedColumns: ["contractor_id"]
           },
         ]
+      }
+      smart_context_cache: {
+        Row: {
+          cache_key: string
+          city: string | null
+          created_at: string
+          expires_at: string
+          field_id: string
+          id: string
+          payload: Json
+          trade: string | null
+        }
+        Insert: {
+          cache_key: string
+          city?: string | null
+          created_at?: string
+          expires_at?: string
+          field_id: string
+          id?: string
+          payload: Json
+          trade?: string | null
+        }
+        Update: {
+          cache_key?: string
+          city?: string | null
+          created_at?: string
+          expires_at?: string
+          field_id?: string
+          id?: string
+          payload?: Json
+          trade?: string | null
+        }
+        Relationships: []
+      }
+      smart_context_overrides: {
+        Row: {
+          active: boolean
+          created_at: string
+          field_id: string
+          id: string
+          lang: string
+          payload: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          field_id: string
+          id?: string
+          lang?: string
+          payload: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          field_id?: string
+          id?: string
+          lang?: string
+          payload?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       smart_decline_logs: {
         Row: {
