@@ -323,6 +323,13 @@ export default function PageAdminAutopilotMvp() {
                       <Badge variant="outline" className={STATUS_STYLE[r.run_status] ?? ""}>
                         {r.run_status}
                       </Badge>
+                      {r.execution_mode && (
+                        <Badge variant="outline" className={`text-[10px] ${EXEC_BADGE[r.execution_mode] ?? ""}`}>
+                          {r.execution_mode === "real" ? "REAL DATA" :
+                           r.execution_mode === "simulation" ? "SIMULATION" :
+                           r.execution_mode === "blocked" ? "BLOCKED" : "PENDING"}
+                        </Badge>
+                      )}
                       {r.alert_admin && (
                         <Badge variant="outline" className="text-[10px] bg-red-500/10 text-red-400 border-red-500/40">
                           Alerte admin
@@ -330,9 +337,11 @@ export default function PageAdminAutopilotMvp() {
                       )}
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 md:grid-cols-7 gap-3 mt-4 text-center">
+                  <ExecutionTimeline r={r} />
+                  <div className="grid grid-cols-4 md:grid-cols-8 gap-3 mt-4 text-center">
                     <Stat label="Cible" value={r.target_count ?? r.target_limit ?? 0} />
                     <Stat label="Scrapés" value={r.scraped_count ?? 0} />
+                    <Stat label="Simulés" value={r.simulated_count ?? 0} />
                     <Stat label="Enrichis" value={r.enriched_count ?? 0} />
                     <Stat label="Scorés" value={r.scored_count ?? 0} />
                     <Stat label="Personnalisés" value={r.personalized_count ?? 0} />
@@ -349,6 +358,7 @@ export default function PageAdminAutopilotMvp() {
                   </div>
 
                 </Card>
+
               ))}
             </div>
           )}
