@@ -349,21 +349,31 @@ serve(async (req) => {
         scored.push({ prospect: fresh.data, score: scoreResult });
 
         // Store in outbound_ai_scores via lead pivot
-        const { data: lead } = await supabase
+        let leadId: string | null = null;
+        const existingLead = await supabase
           .from("outbound_leads")
-          .upsert(
-            { company_id: p.id, status: "new" },
-            { onConflict: "company_id" }
-          )
-          .select()
-          .single();
-        if (lead) {
+          .select("id")
+          .eq("company_id", p.id)
+          .maybeSingle();
+        if (existingLead.data) {
+          leadId = existingLead.data.id;
+        } else {
+          const inserted = await supabase
+            .from("outbound_leads")
+            .insert({ company_id: p.id, crm_status: "new", pipeline_stage: "scored" })
+            .select("id")
+            .single();
+          leadId = inserted.data?.id ?? null;
+        }
+        if (leadId) {
           await supabase.from("outbound_ai_scores").insert({
-            lead_id: lead.id,
+            lead_id: leadId,
             scoring_version: "autopilot-v1",
             score_json: scoreResult,
             reasoning_summary: scoreResult.weaknesses.slice(0, 3).join(" • "),
           });
+          (p as any).__lead_id = leadId;
+          (prospect as any).__lead_id = leadId;
         }
         stats.scored++;
       } catch (e) {
