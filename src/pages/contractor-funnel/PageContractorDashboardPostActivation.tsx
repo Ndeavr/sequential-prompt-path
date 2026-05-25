@@ -203,7 +203,13 @@ export default function PageContractorDashboardPostActivation() {
               ))}
             </motion.div>
 
+            {/* Smart Opportunities */}
+            <motion.div variants={fadeUp}>
+              <WidgetSmartOpportunities surface="dashboard" />
+            </motion.div>
+
             {/* Tasks */}
+
             <motion.div variants={fadeUp}>
               <CardGlass noAnimation>
                 <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
