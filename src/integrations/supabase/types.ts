@@ -14000,6 +14000,7 @@ export type Database = {
           dry_run: boolean
           enriched_count: number
           error_message: string | null
+          execution_mode: string
           failed_count: number
           finished_at: string | null
           id: string
@@ -14012,6 +14013,8 @@ export type Database = {
           scored_count: number
           scraped_count: number
           sent_count: number
+          simulated_count: number
+          simulation_mode: boolean
           started_at: string | null
           stats: Json
           status: string
@@ -14034,6 +14037,7 @@ export type Database = {
           dry_run?: boolean
           enriched_count?: number
           error_message?: string | null
+          execution_mode?: string
           failed_count?: number
           finished_at?: string | null
           id?: string
@@ -14046,6 +14050,8 @@ export type Database = {
           scored_count?: number
           scraped_count?: number
           sent_count?: number
+          simulated_count?: number
+          simulation_mode?: boolean
           started_at?: string | null
           stats?: Json
           status?: string
@@ -14068,6 +14074,7 @@ export type Database = {
           dry_run?: boolean
           enriched_count?: number
           error_message?: string | null
+          execution_mode?: string
           failed_count?: number
           finished_at?: string | null
           id?: string
@@ -14080,6 +14087,8 @@ export type Database = {
           scored_count?: number
           scraped_count?: number
           sent_count?: number
+          simulated_count?: number
+          simulation_mode?: boolean
           started_at?: string | null
           stats?: Json
           status?: string
@@ -44238,6 +44247,7 @@ export type Database = {
           google_place_id: string | null
           google_rating: number | null
           id: string
+          is_simulated: boolean
           language: string | null
           legitimacy_score: number | null
           neq_number: string | null
@@ -44265,6 +44275,7 @@ export type Database = {
           google_place_id?: string | null
           google_rating?: number | null
           id?: string
+          is_simulated?: boolean
           language?: string | null
           legitimacy_score?: number | null
           neq_number?: string | null
@@ -44292,6 +44303,7 @@ export type Database = {
           google_place_id?: string | null
           google_rating?: number | null
           id?: string
+          is_simulated?: boolean
           language?: string | null
           legitimacy_score?: number | null
           neq_number?: string | null
@@ -68801,6 +68813,7 @@ export type Database = {
           dry_run: boolean | null
           enriched_count: number | null
           error_message: string | null
+          execution_mode: string | null
           failed_count: number | null
           finished_at: string | null
           last_step: string | null
@@ -68814,6 +68827,8 @@ export type Database = {
           scored_count: number | null
           scraped_count: number | null
           sent_count: number | null
+          simulated_count: number | null
+          simulation_mode: boolean | null
           started_at: string | null
           stats: Json | null
           target_count: number | null
