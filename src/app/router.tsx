@@ -1307,6 +1307,7 @@ export const AppRouter = () => (
         <Route path="/admin/outreach/analytics" element={<ProtectedRoute requiredRole="admin"><AdminOutreachAnalytics /></ProtectedRoute>} />
         <Route path="/admin/outbound" element={<ProtectedRoute requiredRole="admin"><PageOutboundControlTower /></ProtectedRoute>} />
         <Route path="/admin/autopilot-mvp" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAutopilotMvp /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/autopilot-mvp/run/:runId" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LazyFallback />}><PageAdminAutopilotRunDetail /></Suspense></ProtectedRoute>} />
         <Route path="/admin/outbound/legacy" element={<ProtectedRoute requiredRole="admin"><PageOutboundDashboard /></ProtectedRoute>} />
         <Route path="/admin/outbound/test-center" element={<ProtectedRoute requiredRole="admin"><PageOutboundTestCenter /></ProtectedRoute>} />
         <Route path="/admin/outreach-live" element={<ProtectedRoute requiredRole="admin"><PageOutreachLive /></ProtectedRoute>} />
