@@ -13986,6 +13986,57 @@ export type Database = {
         }
         Relationships: []
       }
+      autopilot_runs: {
+        Row: {
+          cities: string[]
+          created_at: string
+          current_stage: string | null
+          dry_run: boolean
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          started_at: string | null
+          stats: Json
+          status: string
+          target_limit: number
+          trade: string
+          triggered_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          cities?: string[]
+          created_at?: string
+          current_stage?: string | null
+          dry_run?: boolean
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          started_at?: string | null
+          stats?: Json
+          status?: string
+          target_limit?: number
+          trade: string
+          triggered_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cities?: string[]
+          created_at?: string
+          current_stage?: string | null
+          dry_run?: boolean
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          started_at?: string | null
+          stats?: Json
+          status?: string
+          target_limit?: number
+          trade?: string
+          triggered_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       availability_cache: {
         Row: {
           category_slug: string
@@ -44068,56 +44119,83 @@ export type Database = {
       }
       outbound_companies: {
         Row: {
+          address: string | null
+          autopilot_run_id: string | null
           business_status: string | null
           city: string | null
           company_name: string
           company_slug: string | null
           created_at: string | null
+          email: string | null
+          google_place_id: string | null
           google_rating: number | null
           id: string
           language: string | null
           legitimacy_score: number | null
+          neq_number: string | null
+          phone: string | null
+          postal_code: string | null
           rbq_number: string | null
           region: string | null
           review_count: number | null
+          services: Json | null
           specialty: string | null
           sub_specialty: string | null
+          trade: string | null
           updated_at: string | null
           website_url: string | null
         }
         Insert: {
+          address?: string | null
+          autopilot_run_id?: string | null
           business_status?: string | null
           city?: string | null
           company_name: string
           company_slug?: string | null
           created_at?: string | null
+          email?: string | null
+          google_place_id?: string | null
           google_rating?: number | null
           id?: string
           language?: string | null
           legitimacy_score?: number | null
+          neq_number?: string | null
+          phone?: string | null
+          postal_code?: string | null
           rbq_number?: string | null
           region?: string | null
           review_count?: number | null
+          services?: Json | null
           specialty?: string | null
           sub_specialty?: string | null
+          trade?: string | null
           updated_at?: string | null
           website_url?: string | null
         }
         Update: {
+          address?: string | null
+          autopilot_run_id?: string | null
           business_status?: string | null
           city?: string | null
           company_name?: string
           company_slug?: string | null
           created_at?: string | null
+          email?: string | null
+          google_place_id?: string | null
           google_rating?: number | null
           id?: string
           language?: string | null
           legitimacy_score?: number | null
+          neq_number?: string | null
+          phone?: string | null
+          postal_code?: string | null
           rbq_number?: string | null
           region?: string | null
           review_count?: number | null
+          services?: Json | null
           specialty?: string | null
           sub_specialty?: string | null
+          trade?: string | null
           updated_at?: string | null
           website_url?: string | null
         }
@@ -68505,6 +68583,26 @@ export type Database = {
           screen_name: string | null
           total_converted_shares: number | null
           total_screenshots: number | null
+        }
+        Relationships: []
+      }
+      v_autopilot_pipeline: {
+        Row: {
+          cities: string[] | null
+          clicked_count: number | null
+          created_at: string | null
+          current_stage: string | null
+          dry_run: boolean | null
+          enriched_count: number | null
+          error_message: string | null
+          finished_at: string | null
+          run_id: string | null
+          run_status: string | null
+          scraped_count: number | null
+          started_at: string | null
+          stats: Json | null
+          target_limit: number | null
+          trade: string | null
         }
         Relationships: []
       }
