@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowRight, MapPin, Plus, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { SmartBubble, SmartFieldShell } from "@/components/smart-context";
+import { useGoalProfile } from "@/features/smartContext/useGoalProfile";
 
 const POPULAR_CITIES = [
   "Montréal", "Laval", "Longueuil", "Québec", "Gatineau",
