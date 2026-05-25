@@ -28,22 +28,46 @@ const TRADES = [
 const SUGGESTED_CITIES = ["Laval", "Terrebonne", "Montréal", "Longueuil", "Mascouche", "Repentigny", "Blainville"];
 
 type Run = {
-  id: string;
+  run_id: string;
   trade: string;
   cities: string[];
-  status: string;
+  run_status: string;
   current_stage: string | null;
+  last_step: string | null;
+  next_action: string | null;
+  block_reason: string | null;
+  alert_admin: boolean;
   dry_run: boolean;
+  target_count: number;
   target_limit: number;
   stats: Record<string, number>;
   scraped_count: number;
+  deduplicated_count: number;
   enriched_count: number;
+  scored_count: number;
+  personalized_count: number;
+  sent_count: number;
   clicked_count: number;
+  paid_count: number;
+  pending_count: number;
+  failed_count: number;
   error_message: string | null;
   created_at: string;
-  started_at: string | null;
-  finished_at: string | null;
 };
+
+const STATUS_STYLE: Record<string, string> = {
+  completed: "bg-emerald-500/15 text-emerald-400 border-emerald-500/40",
+  paid: "bg-emerald-500/15 text-emerald-400 border-emerald-500/40",
+  activated: "bg-emerald-500/15 text-emerald-400 border-emerald-500/40",
+  waiting_approval: "bg-amber-500/15 text-amber-400 border-amber-500/40",
+  dry_run_completed: "bg-amber-500/15 text-amber-400 border-amber-500/40",
+  blocked: "bg-red-500/15 text-red-400 border-red-500/40",
+  failed: "bg-red-500/15 text-red-400 border-red-500/40",
+  queued: "bg-blue-500/15 text-blue-400 border-blue-500/40",
+  scraping: "bg-blue-500/15 text-blue-400 border-blue-500/40",
+  enriching: "bg-blue-500/15 text-blue-400 border-blue-500/40",
+};
+
 
 export default function PageAdminAutopilotMvp() {
   const [trade, setTrade] = useState(TRADES[0]);
