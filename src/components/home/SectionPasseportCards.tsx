@@ -57,8 +57,13 @@ export default function SectionPasseportCards() {
             <motion.div key={card.title} variants={fadeUp} custom={i}>
               <Link
                 to={card.route}
-                className="glass-card-elevated rounded-2xl p-3 sm:p-4 h-full flex flex-col text-center group light-ray-fx"
+                className="glass-card-elevated rounded-2xl p-3 sm:p-4 h-full flex flex-col text-center group light-ray-fx relative"
               >
+                {("badge" in card) && (card as any).badge && (
+                  <span className="absolute top-1.5 right-1.5 z-20 rounded-full bg-primary/15 px-1.5 py-0.5 text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-primary ring-1 ring-primary/30">
+                    {(card as any).badge}
+                  </span>
+                )}
                 <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-gradient-to-br ${card.gradient} flex items-center justify-center mx-auto mb-2 shadow-md relative z-10`}>
                   <card.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
