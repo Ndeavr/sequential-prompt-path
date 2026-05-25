@@ -12,6 +12,8 @@ import CardGlass from "@/components/unpro/CardGlass";
 import SectionContainer from "@/components/unpro/SectionContainer";
 import UnproLogo from "@/components/brand/UnproLogo";
 import { fadeUp, staggerContainer } from "@/lib/motion";
+import { WidgetSmartOpportunities } from "@/components/smart-context";
+
 import { useContractorFunnel } from "@/hooks/useContractorFunnel";
 import { supabase } from "@/integrations/supabase/client";
 import { trackFunnelEvent } from "@/utils/trackFunnelEvent";
