@@ -13,6 +13,7 @@ import { useAlexVoice } from "@/contexts/AlexVoiceContext";
 
 const CATEGORIES = [
   { key: "all", label: "Tous" },
+  { key: "passeport-maison", label: "Passeport Maison" },
   { key: "toiture", label: "Toiture" },
   { key: "isolation", label: "Isolation" },
   { key: "renovation", label: "Rénovation" },
