@@ -38,10 +38,13 @@ type Run = {
   block_reason: string | null;
   alert_admin: boolean;
   dry_run: boolean;
+  simulation_mode?: boolean;
+  execution_mode?: "real" | "simulation" | "blocked" | "pending";
   target_count: number;
   target_limit: number;
   stats: Record<string, number>;
   scraped_count: number;
+  simulated_count?: number;
   deduplicated_count: number;
   enriched_count: number;
   scored_count: number;
@@ -67,6 +70,39 @@ const STATUS_STYLE: Record<string, string> = {
   scraping: "bg-blue-500/15 text-blue-400 border-blue-500/40",
   enriching: "bg-blue-500/15 text-blue-400 border-blue-500/40",
 };
+
+const EXEC_BADGE: Record<string, string> = {
+  real: "bg-emerald-500/15 text-emerald-400 border-emerald-500/40",
+  simulation: "bg-purple-500/15 text-purple-300 border-purple-500/40",
+  blocked: "bg-red-500/15 text-red-400 border-red-500/40",
+  pending: "bg-slate-500/15 text-slate-400 border-slate-500/40",
+};
+
+function ExecutionTimeline({ r }: { r: Run }) {
+  const steps = [
+    { label: "Sources", done: r.scraped_count > 0 || (r.simulated_count ?? 0) > 0 },
+    { label: "Scraping", done: r.scraped_count > 0 || (r.simulated_count ?? 0) > 0 },
+    { label: "Enrichissement", done: r.enriched_count > 0 || r.simulation_mode },
+    { label: "Scoring AIPP", done: r.scored_count > 0 },
+    { label: "Personnalisation", done: r.personalized_count > 0 },
+    { label: "Approbation", done: r.pending_count > 0 },
+  ];
+  const failedAt = ["blocked", "failed"].includes(r.run_status) ? steps.findIndex((s) => !s.done) : -1;
+  return (
+    <div className="flex flex-wrap gap-2 mt-3 text-[11px]">
+      {steps.map((s, i) => (
+        <span key={s.label} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded ${
+          s.done ? "bg-emerald-500/10 text-emerald-300" :
+          i === failedAt ? "bg-red-500/10 text-red-300" :
+          "bg-muted/30 text-muted-foreground"
+        }`}>
+          {s.done ? "✓" : i === failedAt ? "✕" : "○"} {s.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 
 
 export default function PageAdminAutopilotMvp() {
