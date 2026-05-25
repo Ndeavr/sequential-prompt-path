@@ -419,18 +419,76 @@ serve(async (req) => {
       }
     }
 
+    // ── Status discipline: never "done" with 0 scraped
+    const counts = {
+      scraped_count: stats.scraped,
+      deduplicated_count: stats.duplicates,
+      enriched_count: stats.enriched,
+      scored_count: stats.scored,
+      personalized_count: stats.personalized,
+      pending_count: stats.approval_queued,
+      failed_count: stats.errors,
+    };
+
+    let finalStatus: string;
+    let blockReason: string | null = null;
+    let nextAction: string | null = null;
+    let alertAdmin = false;
+
+    if (stats.scraped === 0) {
+      finalStatus = dryRun ? "dry_run_completed" : "blocked";
+      blockReason = dryRun
+        ? "Aucune entreprise scrapée (mode test)."
+        : "Aucune entreprise scrapée. Vérifier sources (Google Places, Firecrawl), clé API, mapping métier/ville.";
+      nextAction = dryRun
+        ? "Ajuster métier/villes ou relancer en live"
+        : "Vérifier les sources et relancer le scraping";
+      alertAdmin = !dryRun;
+    } else if (dryRun) {
+      finalStatus = "waiting_approval";
+      nextAction = "Approuver pour envoi live";
+    } else {
+      finalStatus = "completed";
+      nextAction = "Pipeline terminé";
+    }
+
     await supabase
       .from("autopilot_runs")
       .update({
-        status: "completed",
-        current_stage: "done",
+        status: finalStatus,
+        current_stage: finalStatus,
+        last_step: "approval_gate",
+        next_action: nextAction,
+        block_reason: blockReason,
+        alert_admin: alertAdmin,
+        target_count: limit,
+        ...counts,
         stats,
         finished_at: new Date().toISOString(),
       })
       .eq("id", runId);
 
+    await supabase.from("outbound_run_logs").insert({
+      run_id: runId,
+      step: "pipeline_complete",
+      status: finalStatus,
+      message: blockReason ?? `Pipeline terminé · ${stats.scraped} scrapés`,
+      payload: { stats, counts, dry_run: dryRun },
+    });
+
+    if (alertAdmin) {
+      await supabase.from("outbound_admin_alerts").insert({
+        run_id: runId,
+        severity: "critical",
+        title: "Run live sans aucun prospect scrapé",
+        message: blockReason,
+        missing_component: "google_places_or_firecrawl",
+        suggested_fix: "Vérifier GOOGLE_PLACES_API_KEY, FIRECRAWL_API_KEY, et le mapping métier/ville.",
+      });
+    }
+
     return new Response(
-      JSON.stringify({ ok: true, run_id: runId, stats, dry_run: dryRun }),
+      JSON.stringify({ ok: true, run_id: runId, status: finalStatus, stats, counts, block_reason: blockReason, dry_run: dryRun }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: any) {
@@ -440,10 +498,28 @@ serve(async (req) => {
         .from("autopilot_runs")
         .update({
           status: "failed",
+          last_step: "exception",
+          block_reason: err.message?.slice(0, 500),
+          next_action: "Examiner les logs et relancer",
+          alert_admin: true,
           error_message: err.message?.slice(0, 500),
           finished_at: new Date().toISOString(),
         })
         .eq("id", runId);
+      await supabase.from("outbound_run_logs").insert({
+        run_id: runId,
+        step: "exception",
+        status: "failed",
+        message: err.message?.slice(0, 500) ?? "Erreur inconnue",
+        payload: {},
+      });
+      await supabase.from("outbound_admin_alerts").insert({
+        run_id: runId,
+        severity: "critical",
+        title: "Exception pipeline autopilot",
+        message: err.message?.slice(0, 500),
+        suggested_fix: "Consulter les logs Edge Function autopilot-mvp.",
+      });
     }
     return new Response(JSON.stringify({ error: err.message ?? "Erreur inconnue" }), {
       status: 500,
@@ -451,3 +527,4 @@ serve(async (req) => {
     });
   }
 });
+
