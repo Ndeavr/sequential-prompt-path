@@ -1,123 +1,144 @@
-## UNPRO — AI Entity Profile System (Rebuild)
+# UNPRO Smart Context Engine — Global UX Intelligence Layer
 
-Sépare clairement la **page IA crawlable** (`/ai/:slug`) de la **page conversion humaine** (`/pro/:slug`). Objectif : devenir source citée par ChatGPT/Gemini/Perplexity sur les entrepreneurs résidentiels QC.
+Build a reusable system that turns every strategic field, metric, and setting across UNPRO into an explained, recommended, AI-guided decision — never a raw form input.
 
-### 1. Database (migration unique)
+---
 
-Nouvelles tables :
+## 1. Core primitive: `SmartContext`
 
-- `ai_entities` — id, slug (unique), company_name, primary_service, primary_city, ai_summary, confidence_score, years_active, logo_url, website, phone, lat/lng, contractor_id (fk nullable), published, created_at, updated_at
-- `ai_entity_sources` — entity_id, source_type (`gbp|website|rbq|neq|facebook|instagram|bbb|homestars|sitemap`), source_url, status (`pending|ok|failed|stale`), last_sync, raw_payload jsonb
-- `ai_entity_reviews` — entity_id, source, rating, review_count, sentiment jsonb, themes text[], last_sync
-- `ai_entity_images` — entity_id, image_url, type (`logo|photo|team|truck|before_after|jobsite`), source, ai_caption, sort_order
-- `ai_entity_validations` — entity_id, rbq_status, rbq_number, neq_status, neq_number, insurance_status, google_verified, domain_https, last_checked
-- `ai_entity_services` — entity_id, label, slug, frequency (`high|medium|low`), evidence_url, image_url
-- `ai_entity_zones` — entity_id, city, region, detected_from (`gbp|website|citations|content`)
-- `ai_entity_faq` — entity_id, question, answer, generated_from
+A single source of truth for "what is this / why it matters / what should I do".
 
-Toutes : RLS public SELECT via vue `ai_entities_public` (filtre `published = true` + `confidence_score >= seuil`). Base tables : SELECT bloqué publiquement, service_role + admin only.
+**New module:** `src/features/smartContext/`
 
-Trigger `recompute_confidence_score()` sur insert/update validations/reviews/sources.
+- `types.ts` — `SmartContextEntry`:
+  ```
+  {
+    id: string;                    // e.g. "territory.radius_km"
+    label: string;
+    what: string;                  // 1 phrase
+    why: string;                   // impact on revenue/visibility
+    moneyImpact?: string;          // "+12% conversion typique"
+    ifEnabled?: string;            // consequence of enabling
+    warning?: string;
+    recommendation?: {
+      value: string | number;
+      reasonFr: string;
+      source: "ai" | "benchmark" | "territory";
+    };
+    aiVisibilityImpact?: "high" | "medium" | "low" | "none";
+    examples?: string[];           // dynamic, city/trade-aware
+    alexScript?: string;           // what Alex says, NOT label readout
+  }
+  ```
+- `registry.ts` — static catalog of all ~60 strategic UNPRO fields (territory, cities, plans, response time, calendar sync, photos, AI score, XL projects, automation, badges, verification…).
+- `resolver.ts` — `useSmartContext(id, ctx)` hook merging static registry + dynamic signals from `useContractorProfile`, `useDemandGrid`, `useCityServiceDemandGrid`, `useAippScore`, `useGoalProfile` (new) to personalize `recommendation`, `examples`, `moneyImpact`.
 
-### 2. États intelligents (interdiction d'inventer)
+---
 
-Centraliser dans `src/lib/aiEntityStatus.ts` :
+## 2. UI primitives (reusable everywhere)
 
-| Champ | OK | En cours | Inconnu |
-|---|---|---|---|
-| RBQ | « RBQ validée #1234 » | « Validation RBQ en cours » | masqué |
-| NEQ | « NEQ active » | « Vérification du registre en cours » | masqué |
-| Assurance | « Assurance détectée » | « Validation en cours » | masqué |
-| GBP | « Google Business vérifié » | « Synchronisation Google en cours » | masqué |
-| HTTPS | « Site sécurisé HTTPS » | — | masqué |
+**New components:** `src/components/smart-context/`
 
-Règle absolue : aucune affirmation non sourcée. Si validation ≠ `confirmed` → label « en cours » ou élément masqué.
+- `<SmartBubble id="...">` — premium glass popover (desktop hover, mobile tap-sheet). Sections: What → Why → Money impact → AI recommendation → "Demander à Alex".
+- `<SmartBubbleTrigger>` — subtle `info` icon, glow on AI-recommended/warning state.
+- `<SmartFieldShell>` — wraps any input/setting; renders label + bubble trigger + inline AI recommendation chip ("UNPRO recommande 25 km") + accept-suggestion action.
+- `<SmartRecommendationCard>` — for dashboards: `Recommended | Not Recommended | Upgrade | Opportunity | High-demand | Visibility | Capacity warning` variants.
+- `<SmartGoalSelector>` — the "Quel est votre objectif principal ?" gate (7 options from spec). Stores to `contractor_goal_profile`.
+- `<AlexFieldHighlight>` — listens to `alexUiActionDispatcher` events (`highlight_field`, `suggest_value`) → glow + auto-scroll + recommended-range overlay.
 
-### 3. Pipeline data engine (edge functions)
+Design tokens: glassmorphism (`bg-card/80 backdrop-blur-xl`), 24px radius, 420ms `cubic-bezier(.22,1,.36,1)`, mobile-first, no blocking overlays, swipe-to-close on mobile sheet.
 
-Nouvelles fonctions Deno (npm: imports, CORS, validation Zod) :
+---
 
-- `ai-entity-ingest` — orchestrateur : prend entity_id, lance sources en parallèle, met à jour `last_sync`/`status`.
-- `ai-entity-scrape-website` — Firecrawl scrape homepage + /contact + /about + /services + sitemap → extrait phone, email, logo, zones, services, photos, social handles. Écrit dans `ai_entity_sources`, `ai_entity_images`, `ai_entity_zones`, `ai_entity_services` avec evidence_url.
-- `ai-entity-gbp` — fetch Google Business (lien GBP existant), récupère rating, review_count, photos, hours, verified.
-- `ai-entity-verify-rbq` — Firecrawl REQ + RBQ public registry, fuzzy match nom/NEQ.
-- `ai-entity-verify-neq` — réutilise existant.
-- `ai-entity-reviews-aggregate` — agrège Google + Facebook + BBB + HomeStars si disponibles.
-- `ai-entity-sentiment` — Gemini 2.5 Flash sur reviews → themes[] + sentiment scores (rapidité, ponctualité, propreté, prix, etc.) avec evidence snippets.
-- `ai-entity-summary` — Gemini génère `ai_summary` (3-4 phrases) + 5 FAQs à partir des données confirmées uniquement (no-hallucination guardrail : doit citer un champ source).
-- `ai-entity-compute-score` — calcule `confidence_score` (0-100) selon validations + sources + reviews.
+## 3. Goal-based personalization
 
-### 4. Routes & pages
-
-**Nouvelle page `/ai/:slug` — `src/pages/ai/PageAiEntity.tsx`** (knowledge-first, zero funnel) :
-
-```text
-HERO
-  Logo + Nom + Métier principal • Ville
-  Sous-titre: "Entreprise analysée par UNPRO AI"
-  Score IA + années activité
-
-BADGES (vrais uniquement)
-RATINGS (Google/FB/BBB/HomeStars si présents)
-RÉSUMÉ IA (texte factuel)
-SERVICES DÉTECTÉS (tags + images + fréquence + villes)
-ZONES DESSERVIES
-GALERIE (logo, photos, équipe, chantier, avant/après)
-ANALYSE DES AVIS (thèmes IA + evidence)
-FAQ IA
-JSON-LD: LocalBusiness + Contractor + Service[] + FAQPage + AggregateRating + GeoCoordinates + sameAs + Review[] + Organization
+**New table:** `contractor_goal_profiles`
 ```
+contractor_id (pk fk), primary_goal enum, secondary_goals jsonb,
+capacity_per_month int, avg_contract_value numeric,
+updated_at timestamptz
+```
+RLS: owner read/write, admin read.
 
-Rules UI : pas de bouton « Vérifier cette entreprise », pas de « Analyser mes soumissions », pas d'Alex, pas d'auth overlay. Lien discret en bas : « Prendre rendez-vous » → `/pro/:slug`.
+**Hook:** `useGoalProfile()` — drives recommendation logic across plans, territory radius, city suggestions, automation defaults, Alex tone.
 
-**Page `/pro/:slug`** (déjà existante `PageAiIndexedProfile.tsx` ou similaire) : conserver pour conversion (Alex, booking, avant/après, urgences). Audit séparé hors scope de ce build.
+Gate: before showing plans / territory / visibility / automation pages, if `primary_goal` missing → render `<SmartGoalSelector>` first.
 
-Router : ajouter `/ai/:slug` dans `src/app/router.tsx` + `ROUTES.AI_ENTITY` dans `routesConfig.ts`.
+---
 
-### 5. SEO infrastructure
+## 4. Recommendation engine
 
-- `public/ai-sitemap.xml` généré par script `scripts/generate-ai-sitemap.ts` (predev + prebuild) : query `ai_entities_public` → 1 entrée par slug avec `lastmod = updated_at`.
-- Référencer `ai-sitemap.xml` dans `public/robots.txt` et `public/sitemap.xml` (sitemapindex).
-- `index.html` reste sitewide ; per-page meta via `react-helmet-async` (déjà présent) sur `/ai/:slug` : title, description, canonical `https://unpro.ca/ai/:slug`, og:*.
-- JSON-LD injecté inline via `<script type="application/ld+json">` (pas useEffect) pour garantir présence au premier render — important pour crawlers non-JS.
-- Prerender server (existant Lovable) servira `/ai/*` aux user-agents bots.
-- Ajouter `/ai/*` à `llms.txt`.
+**New service:** `src/services/smartRecommendationEngine.ts`
 
-### 6. Admin
+Pure function: `recommend(fieldId, { profile, goal, demandGrid, aippScore, capacity }) → SmartRecommendation`.
 
-Page `/admin/ai-entities` :
-- Liste avec score, validations status, last_sync par source.
-- Actions : « Lancer ingestion », « Refaire RBQ », « Refaire NEQ », « Régénérer résumé IA », « Publier/Dépublier ».
-- Drawer evidence : voir snippets sources par champ.
+Rules (deterministic, no LLM call on render):
+- `territory.radius_km` → goal × trade × demand density.
+- `territory.cities` → cross `useCityServiceDemandGrid` gap score; flag saturated vs opportunity.
+- `plan.tier` → capacity + goal + current AIPP.
+- `response_time` → benchmark vs trade median.
+- `calendar.sync`, `photos.before_after`, `xl_projects.access`, `automation.*` → binary recommend with reason.
 
-### 7. Seed démo
+LLM-backed enrichment (cached): edge function `smart-context-enrich` (Gemini 3 Flash) generates 1-phrase `examples[]` per (fieldId, city, trade) → cached in `smart_context_cache` (24h TTL).
 
-Lancer pipeline complet sur `isolation-solution-royal` :
-- scrape site, GBP, RBQ, NEQ, reviews, sentiment, résumé, FAQ.
-- Vérifier rendu `/ai/isolation-solution-royal` : badges réels, services avec evidence, JSON-LD validé via Schema.org validator (mental check).
+---
 
-### Détails techniques
+## 5. Alex integration
 
-- **Edge functions** : `import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'`, CORS via `npm:@supabase/supabase-js@2/cors`, Zod validation, service role pour writes.
-- **Sécurité** : vues `SECURITY INVOKER`, base tables denied publiquement, validations PII (téléphone, email) seulement si confirmé via source publique.
-- **Confidence score** : 100 = RBQ+NEQ+GBP+HTTPS+5 reviews+sentiment OK ; <40 = `published = false` (pas exposé sur `/ai/*`).
-- **No-hallucination** : `ai-entity-summary` et `ai-entity-faq` reçoivent uniquement les champs `confirmed` ; tool schema strict ; si données manquantes → phrase « en cours d'analyse ».
+- Extend `src/lib/alexUiActionDispatcher.ts` with actions: `highlight_field(id)`, `suggest_value(id, value)`, `open_bubble(id)`.
+- Update Alex system prompt (mem `ai/alex/system-prompt-active`) with a "Strategist Guidance" section: when user lands on a strategic field, Alex speaks the `alexScript` from the registry — never reads labels. Examples (city, radius, plan) from spec embedded as few-shot.
+- `useSmartContext` exposes `askAlex(id)` → opens Alex chat with pre-loaded context + dispatches `highlight_field`.
 
-### Hors scope (phases suivantes)
+---
 
-- Embeddings vectoriels pour search IA interne.
-- Refonte UX `/pro/:slug` (déjà existant, traité séparément).
-- Crawl Instagram/TikTok.
-- Multi-langue EN.
+## 6. Coverage map (where it ships)
 
-### Tâches
+Phase 1 retrofit (this build):
+- Contractor onboarding wizard (`ProSetupWizard` — all 6 steps)
+- Territory & city selection screens
+- Plan selection / pricing pages
+- Contractor dashboard strategic widgets (AIPP score, response time, calendar sync, XL access)
+- Profile completion fields (photos, bio, badges, verification)
 
-1. Migration Supabase (8 tables + vue publique + RLS + trigger score).
-2. `src/lib/aiEntityStatus.ts` (labels intelligents).
-3. 9 edge functions du pipeline.
-4. Page `/ai/:slug` + route + helmet + JSON-LD inline.
-5. `scripts/generate-ai-sitemap.ts` + hooks predev/prebuild + robots/sitemap refs.
-6. Admin `/admin/ai-entities`.
-7. Seed démo ISR + QA visuelle.
+Phase 2 (next build, scoped separately): automation settings, CRM integrations, growth dashboards, project qualification, AIPP cockpit, condo manager flows, homeowner-side trust badges.
 
-**Confirme ce plan pour build, ou indique ce qu'il faut couper/ajouter.**
+---
+
+## 7. Admin
+
+`/admin/smart-context` — edit/override registry entries, A/B test copy, see top-clicked bubbles, accept-rate of AI recommendations, per-field conversion lift.
+
+Table: `smart_context_overrides` (id, field_id, lang, payload jsonb, active, updated_by).
+
+---
+
+## Technical details
+
+- All copy fr-CA, follows localization memory.
+- No new top-level routes except `/admin/smart-context`.
+- Storage: 2 new tables + 1 cache table; reuses existing demand/AIPP/contractor data.
+- 1 edge function (`smart-context-enrich`) using Lovable AI Gateway (`google/gemini-3-flash-preview`).
+- Bubble component shared between desktop popover and mobile bottom-sheet via `useIsMobile`.
+- Zero impact on existing forms — `<SmartFieldShell>` wraps without changing form state.
+- Telemetry: `conversion_events` `bubble_opened`, `recommendation_accepted`, `goal_set`, `alex_field_guidance`.
+
+---
+
+## Out of scope
+
+- Rewriting plan pricing logic, AIPP scoring, demand grid (already shipped).
+- Homeowner-side bubbles (Phase 2).
+- Voice generation changes (only prompt + dispatcher additions).
+- Migrating existing tooltips/Popovers everywhere — Phase 1 retrofits only the 5 surfaces above; rest follows incrementally.
+
+---
+
+## Success criteria
+
+- Every strategic field on the 5 Phase 1 surfaces has a `SmartBubble` with What/Why/Money/AI-reco.
+- Goal selector gates plans/territory/automation.
+- Alex highlights fields and speaks strategist scripts, never label readouts.
+- Recommendations visibly personalize by city + trade + goal.
+- Admin can edit copy live without redeploy.
+
+Confirm and I ship Phase 1.

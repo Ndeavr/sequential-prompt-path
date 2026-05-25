@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowRight, MapPin, Plus, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { SmartBubble, SmartFieldShell } from "@/components/smart-context";
+import { useGoalProfile } from "@/features/smartContext/useGoalProfile";
 
 const POPULAR_CITIES = [
   "Montréal", "Laval", "Longueuil", "Québec", "Gatineau",
@@ -28,6 +30,13 @@ export default function SetupStepZones({ contractorId, onNext, onBack }: Props) 
   const [custom, setCustom] = useState("");
   const [saving, setSaving] = useState(false);
   const [radius, setRadius] = useState(25);
+  const { data: goalProfile } = useGoalProfile();
+  const runtime = {
+    goal: goalProfile?.primary_goal ?? null,
+    cityName: zones[0] ?? null,
+    capacity: goalProfile?.capacity_per_month ?? null,
+    currentValue: radius,
+  };
 
   useEffect(() => {
     if (!contractorId) return;
@@ -86,36 +95,48 @@ export default function SetupStepZones({ contractorId, onNext, onBack }: Props) 
         </p>
       </div>
 
-      <div className="rounded-3xl border border-border/50 bg-card/60 backdrop-blur p-6 space-y-4">
-        <div className="flex items-center gap-3 mb-2">
-          <label className="text-xs text-muted-foreground whitespace-nowrap">Rayon: {radius} km</label>
-          <input
-            type="range"
-            min={5}
-            max={100}
-            step={5}
-            value={radius}
-            onChange={e => setRadius(Number(e.target.value))}
-            className="flex-1 accent-primary"
-          />
-        </div>
+      <div className="rounded-3xl border border-border/50 bg-card/60 backdrop-blur p-6 space-y-5">
+        <SmartFieldShell
+          id="territory.radius_km"
+          runtime={runtime}
+          onAcceptRecommendation={(v) => typeof v === "number" && setRadius(v)}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground whitespace-nowrap min-w-[70px]">{radius} km</span>
+            <input
+              type="range"
+              min={5}
+              max={100}
+              step={5}
+              value={radius}
+              onChange={e => setRadius(Number(e.target.value))}
+              className="flex-1 accent-primary"
+            />
+          </div>
+        </SmartFieldShell>
 
-        <div className="flex flex-wrap gap-2">
-          {POPULAR_CITIES.map(city => (
-            <Badge
-              key={city}
-              variant={zones.includes(city) ? "default" : "outline"}
-              className={`cursor-pointer text-xs py-1.5 px-3 transition-all ${
-                zones.includes(city)
-                  ? "bg-accent text-accent-foreground shadow-sm"
-                  : "hover:bg-accent/10 hover:border-accent/30"
-              }`}
-              onClick={() => toggle(city)}
-            >
-              {zones.includes(city) && <X className="h-3 w-3 mr-1" />}
-              {city}
-            </Badge>
-          ))}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-foreground/85">Villes desservies</span>
+            <SmartBubble id="territory.cities" runtime={runtime} />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {POPULAR_CITIES.map(city => (
+              <Badge
+                key={city}
+                variant={zones.includes(city) ? "default" : "outline"}
+                className={`cursor-pointer text-xs py-1.5 px-3 transition-all ${
+                  zones.includes(city)
+                    ? "bg-accent text-accent-foreground shadow-sm"
+                    : "hover:bg-accent/10 hover:border-accent/30"
+                }`}
+                onClick={() => toggle(city)}
+              >
+                {zones.includes(city) && <X className="h-3 w-3 mr-1" />}
+                {city}
+              </Badge>
+            ))}
+          </div>
         </div>
 
         <div className="flex gap-2">
