@@ -1,73 +1,104 @@
-## Objectif
+## Phase 4 — AI Visibility Operating System (Plans ↔ Features ↔ Profiles)
 
-Publier 3 articles premium pour propulser le concept **Passeport Maison UNPRO = Carfax de l'habitation** + enrichir la section Passeport Maison existante (cartes d'entrée homepage + page `/proprietaires/passeport-maison`) avec le narratif "Trust Score / Contribution Maison".
+Consolide la stack des plans en une matrice canonique unique, branche les multipliers de visibilité IA, pose le moteur `recommendation_score` unifié et livre les UI de gating + cockpit admin.
 
-## Livrables
+---
 
-### 1. Trois articles (table `blog_articles`, statut `published`)
+### 1. Migration SQL (1 seule migration)
 
-Insertion via migration (seed SQL). Catégorie `passeport-maison` ajoutée dans le filtre du blog index.
+**Tables nouvelles**
+- `plans` — table canonique unifiée
+  - `code` (recrue/pro/premium/elite/signature), `name`, `monthly_price`, `yearly_price`, `one_time_price`
+  - `visibility_multiplier` (1.0 → 5.0), `recommendation_multiplier`, `ai_index_priority` (1-100)
+  - `territory_radius_km`, `booking_priority`, `appointments_included`
+  - `trust_boost`, `seo_boost`, `citation_boost`
+- `plan_features` — matrice plan × feature (booléen + limite)
+  - `plan_code`, `feature_key`, `enabled`, `limit_value` (nullable, -1 = illimité), `teaser_copy`, `upgrade_target`
+- `profile_visibility_history` — timeseries
+  - `contractor_id`, `visibility_score`, `ai_citation_count`, `booking_count`, `recorded_at`
+- `profile_ai_citation_history` — timeseries citations IA
+  - `contractor_id`, `source` (chatgpt/perplexity/gemini/google_aio), `query`, `cited_at`
 
-| # | Slug | Titre | Angle | Audience |
-|---|------|-------|-------|----------|
-| 1 | `passeport-maison-carfax-habitation` | Pourquoi le Passeport Maison UNPRO va devenir aussi essentiel que le Carfax | Article fondateur : valeur démontrable, garanties, taxes, score maison | Propriétaires |
-| 2 | `score-confiance-entrepreneur-unpro` | Le Score Confiance UNPRO : comment chaque preuve documentée augmente vos rendez-vous | Trust Score, +points par action, effet IA/matching | Entrepreneurs |
-| 3 | `valeur-maison-historique-renovations-quebec` | Vendre plus cher : prouver vos rénovations avec un historique vivant | Comparaison 2 maisons, impact prix de vente, acheteurs rassurés | Propriétaires/vendeurs |
+**Vues**
+- `v_contractor_recommendation_score` (SECURITY INVOKER) — formule unifiée :
+  `trust*0.25 + ai_visibility*0.20 + activity*0.15 + reviews*0.15 + completeness*0.10 + plan_multiplier*0.15`
 
-Chaque article :
-- 1200-1800 mots, `content_markdown` riche (H2/H3, listes, tableau, citations)
-- `meta_description`, `seo_title`, `faq_json` (3-5 Q/R), `schema_json` (Article + FAQPage), `tags`, `reading_time_minutes`, `word_count`
-- `internal_linking_json` cross-link entre les 3 + vers `/proprietaires/passeport-maison`, `/pro`, `/journal`
-- `cta_variant` adapté (homeowner vs contractor)
-- `featured_image_url` : réutiliser visuels existants (pas de génération d'image)
+**Triggers**
+- `trg_recalc_visibility_on_plan_change` (upgrade/downgrade)
+- `trg_snapshot_visibility_daily` (via cron pg)
+- `trg_log_citation_on_aeo_event`
 
-### 2. Enrichissement page `/proprietaires/passeport-maison` (`PropertyGraphPage`)
+**Seed**
+- 5 plans (recrue/pro/premium/elite/signature) avec multipliers réels
+- ~30 feature_flags : `ai_index_priority`, `aeo_blocks_published`, `territory_lock`, `booking_direct`, `route_optimization`, `priority_dispatch`, `visibility_max`, `aipp_max`, `appointments_max`, `properties_max`, `quotes_per_month`, `analytics_advanced`, `priority_support`, etc.
 
-Ajout d'un nouveau composant `SectionPasseportValueProps.tsx` injecté en haut :
-- Bannière "Le Carfax de votre maison"
-- 5 piliers : Prouver / Réduire risques / Garanties / Taxes / Score Maison (icônes lucide, glass cards)
-- Bloc "Trust Score Contribution" expliquant le système de points premium (sans jamais dire "gamification" — termes : *Niveau Documentation*, *Indice Qualité UNPRO*)
-- CTA double : "Ouvrir mon Passeport" + "Lire l'article fondateur" → article #1
+---
 
-### 3. Enrichissement `SectionPasseportCards` (homepage)
+### 2. Code TypeScript
 
-Ajustement copy carte "Passeport Maison" :
-- desc : "Le Carfax de votre maison : historique, garanties, valeur"
-- micro-tag "Nouveau" subtil
-Aucun changement structurel.
+**Nouveau (`src/features/planSystem/`)**
+- `types.ts` — `Plan`, `PlanFeature`, `FeatureKey`
+- `usePlanMatrix.ts` — fetch `plans` + `plan_features` (React Query, staleTime 5min)
+- `useFeatureAccess.ts` — `useFeatureAccess('booking_direct')` → `{ allowed, limit, used, teaser, upgradeTarget }`
+- `recommendationScoreEngine.ts` — calcul client-side + fetch vue
+- `index.ts` — barrel
 
-### 4. Catégorie blog
+**Nouveau composant gating réutilisable**
+- `src/components/plan-gating/LockedFeatureTeaser.tsx`
+  - Props : `featureKey`, `children`, `mode: 'blur'|'replace'|'inline'`
+  - Affiche teaser + ROI + CTA upgrade auto-targetté
+- `src/components/plan-gating/FeatureUsageBar.tsx` — barre `used/limit` avec warning à 80%
 
-Ajouter `{ key: "passeport-maison", label: "Passeport Maison" }` dans `CATEGORIES` de `BlogIndexPage.tsx`.
+**Refactor (non-cassant, garde compat)**
+- `src/config/contractorPlans.ts` → reste source de fallback, ajoute import dynamique de `usePlanMatrix`
+- `src/config/planRules.ts` → marqué `@deprecated`, redirige vers `useFeatureAccess`
+- `src/hooks/useContractorPlan.ts` → enrichi avec `multipliers` et `featureAccess` map
 
-## Logique technique
+---
 
-- **Migration unique** `seed_passeport_maison_articles.sql` : 3 `INSERT INTO blog_articles` avec contenu markdown complet, FAQ JSON, schema JSON-LD, tags, `published_at = now()`, `status = 'published'`, `audience_type = 'public'`.
-- Pas de nouvelles tables, pas de RLS à modifier (existant ok).
-- Pas d'edge function nécessaire.
-- Composants front en `glass-card` semantic tokens (respect design system Cinematic Dark).
+### 3. Admin Cockpit
 
-## Contraintes
+**Nouveau (`src/pages/admin/PageAdminPlansMatrix.tsx`)** — route `/admin/plans-matrix`
+- **Vue 1 : Matrix Plans × Features** (table éditable) — toggle enabled, edit limits
+- **Vue 2 : Multipliers Live** — slider sur `visibility_multiplier`, preview impact recommendation_score
+- **Vue 3 : Health par Plan** — nb contractors, MRR, visibilité moyenne, AI citations, booking rate
+- **Vue 4 : Recalc Manuel** — bouton "Recalculer tous les scores" (trigger function)
 
-- Français Québec strict, ponctuation UNPRO (espaces, "V" de ville).
-- Aucun terme "gamification", "points de gamer".
-- Aucune mention "3 soumissions" en positif.
-- Mobile-first, sémantique SEO (un seul H1 par article).
-- Pas de génération d'images (réutilise visuels existants ou dégradés CSS).
+Ajout entrée sidebar admin sous "Operations".
 
-## Succès
+---
 
-- 3 articles accessibles via `/blog/:slug` et listés sur `/blog?category=passeport-maison`.
-- Page `/proprietaires/passeport-maison` enrichie avec le narratif Carfax + Trust Score.
-- Cross-links fonctionnels article ↔ page Passeport ↔ homepage.
-- JSON-LD Article + FAQ valide pour chaque article.
+### 4. Branchements UI existants
 
-## Tâches
+- **Dashboard contractor** : injecter `<LockedFeatureTeaser featureKey="route_optimization">` autour des sections Élite+
+- **Plans page** : afficher `visibility_multiplier` ("Votre profil 3× plus visible dans l'IA") et `ai_index_priority` ("Priorité #1 dans les citations ChatGPT")
+- **Profil entrepreneur public** : badge "Visibilité Signature" avec multiplier
+- **Smart Context Engine** : recommendations boostées par `recommendation_multiplier` du plan actif
 
-1. Migration SQL : seed des 3 articles complets
-2. Créer `src/components/passeport/SectionPasseportValueProps.tsx`
-3. Injecter le composant en haut de `PropertyGraphPage`
-4. Mettre à jour copy `SectionPasseportCards`
-5. Ajouter catégorie `passeport-maison` au `BlogIndexPage`
+---
 
-Confirme et je build d'un coup.
+### 5. Stack technique
+
+- React 18 + Vite + TS + Tailwind tokens sémantiques
+- Supabase migration + 4 triggers + 1 vue SECURITY INVOKER
+- React Query pour cache plans/features (staleTime 5min)
+- Aucun edge function nouveau (lecture DB + vue suffit)
+- Aucun secret requis
+- fr-CA, mobile-first, glassmorphism dark theme cohérent
+- Pas de breaking change : anciens hooks marqués deprecated mais fonctionnels
+
+---
+
+### 6. Critères de succès
+
+- ✅ 1 source canonique `plans` + `plan_features` (fin des hardcoded)
+- ✅ `useFeatureAccess('xxx')` fonctionne partout, retourne teaser auto
+- ✅ `recommendation_score` calculé via vue unifiée avec multipliers
+- ✅ Historique visibilité + citations snapshoté quotidiennement
+- ✅ Admin peut éditer la matrice et voir l'impact en live
+- ✅ Upgrade contractor → recalcul automatique du score
+- ✅ Gating UI cohérent sur toutes les surfaces
+
+---
+
+**Livraison en 1 batch.** Confirme et je build.
