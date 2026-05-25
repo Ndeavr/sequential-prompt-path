@@ -225,7 +225,7 @@ serve(async (req) => {
         cities,
         target_limit: limit,
         dry_run: dryRun,
-        status: "running",
+        status: "scraping",
         current_stage: "scraping",
         started_at: new Date().toISOString(),
         triggered_by: userData.user.id,
