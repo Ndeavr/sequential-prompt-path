@@ -1,2 +1,4 @@
-/** Plan System feature — placeholder barrel export */
-export {};
+export * from "./types";
+export * from "./usePlanMatrix";
+export * from "./useFeatureAccess";
+export * from "./recommendationScoreEngine";
