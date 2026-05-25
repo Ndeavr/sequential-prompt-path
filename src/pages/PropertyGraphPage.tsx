@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import SectionPasseportValueProps from "@/components/passeport/SectionPasseportValueProps";
 
 /* ─── Graph Data ─── */
 const nodes = [
@@ -108,6 +109,9 @@ export default function PropertyGraphPage() {
           <span className="text-meta text-muted-foreground">Property Knowledge Graph</span>
         </div>
       </header>
+
+      {/* Narratif Carfax + Indice Qualité UNPRO */}
+      <SectionPasseportValueProps />
 
       <div className="container mx-auto px-4 py-8">
         {/* Title */}

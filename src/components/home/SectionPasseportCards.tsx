@@ -18,10 +18,11 @@ const CARDS = [
   {
     icon: HomeIcon,
     title: "Passeport Maison",
-    desc: "Documents, historique, valeur, travaux",
+    desc: "Le Carfax de votre maison : historique, garanties, valeur",
     cta: "Ouvrir",
     route: "/dashboard/property",
     gradient: "from-primary to-primary/70",
+    badge: "Nouveau",
   },
   {
     icon: Building,
