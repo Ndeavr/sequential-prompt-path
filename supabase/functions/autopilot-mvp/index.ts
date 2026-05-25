@@ -383,18 +383,20 @@ serve(async (req) => {
     }
     await supabase.from("autopilot_runs").update({ current_stage: "personalizing", stats }).eq("id", runId);
 
-    // ── Stage 4: Personalize
+    // ── Stage 4: Personalize (stored in outbound_ai_personalizations keyed by lead_id)
     for (const { prospect, score } of scored) {
       try {
+        const leadId = (prospect as any).__lead_id;
+        if (!leadId) continue;
         const email = await generatePersonalizedEmail(prospect, score);
         if (email?.subject && email?.body) {
           await supabase.from("outbound_ai_personalizations").insert({
-            company_id: prospect.id,
-            subject: email.subject,
-            body: email.body,
-            personalization_score: Math.min(100, score.weaknesses.length * 20 + 40),
-            model_used: "google/gemini-2.5-flash",
-          }).then(() => {}, () => {});
+            lead_id: leadId,
+            personalization_type: "email_full",
+            prompt_used: `Trade=${prospect.trade}; City=${prospect.city}; Score=${score.total}`,
+            generated_output: JSON.stringify({ subject: email.subject, body: email.body }),
+            approved: false,
+          });
           stats.personalized++;
         }
       } catch (e) {
