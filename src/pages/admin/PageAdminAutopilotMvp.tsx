@@ -253,13 +253,13 @@ export default function PageAdminAutopilotMvp() {
           ) : (
             <div className="grid gap-3">
               {runs.map((r) => (
-                <Card key={r.id} className="p-4 bg-card/40 border-border/50">
+                <Card key={r.run_id} className="p-4 bg-card/40 border-border/50">
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <div className="font-semibold flex items-center gap-2">
-                        {r.status === "completed" ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        ) : r.status === "failed" ? (
+                        {["completed","paid","activated"].includes(r.run_status) ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                        ) : ["blocked","failed"].includes(r.run_status) ? (
                           <AlertCircle className="h-4 w-4 text-red-500" />
                         ) : (
                           <Loader2 className="h-4 w-4 animate-spin text-blue-400" />
@@ -269,25 +269,41 @@ export default function PageAdminAutopilotMvp() {
                       <div className="text-xs text-muted-foreground mt-1">
                         {new Date(r.created_at).toLocaleString("fr-CA")}
                         {r.dry_run && " · DRY-RUN"}
-                        {r.current_stage && ` · ${r.current_stage}`}
+                        {r.last_step && ` · ${r.last_step}`}
                       </div>
-                      {r.error_message && (
+                      {r.next_action && (
+                        <div className="text-xs text-muted-foreground mt-1">→ {r.next_action}</div>
+                      )}
+                      {r.block_reason && (
+                        <div className="mt-2 rounded-md border border-red-500/40 bg-red-500/10 p-2 text-xs text-red-300">
+                          ⚠ {r.block_reason}
+                        </div>
+                      )}
+                      {r.error_message && !r.block_reason && (
                         <div className="text-xs text-red-400 mt-1">⚠ {r.error_message}</div>
                       )}
                     </div>
-                    <Badge variant={r.status === "completed" ? "default" : r.status === "failed" ? "destructive" : "secondary"}>
-                      {r.status}
-                    </Badge>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant="outline" className={STATUS_STYLE[r.run_status] ?? ""}>
+                        {r.run_status}
+                      </Badge>
+                      {r.alert_admin && (
+                        <Badge variant="outline" className="text-[10px] bg-red-500/10 text-red-400 border-red-500/40">
+                          Alerte admin
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   <div className="grid grid-cols-3 md:grid-cols-7 gap-3 mt-4 text-center">
-                    <Stat label="Cible" value={r.target_limit} />
-                    <Stat label="Scrapés" value={r.scraped_count ?? r.stats?.scraped ?? 0} />
-                    <Stat label="Enrichis" value={r.enriched_count ?? r.stats?.enriched ?? 0} />
-                    <Stat label="Scorés" value={r.stats?.scored ?? 0} />
-                    <Stat label="Personnalisés" value={r.stats?.personalized ?? 0} />
-                    <Stat label="En attente" value={r.stats?.approval_queued ?? 0} />
+                    <Stat label="Cible" value={r.target_count ?? r.target_limit ?? 0} />
+                    <Stat label="Scrapés" value={r.scraped_count ?? 0} />
+                    <Stat label="Enrichis" value={r.enriched_count ?? 0} />
+                    <Stat label="Scorés" value={r.scored_count ?? 0} />
+                    <Stat label="Personnalisés" value={r.personalized_count ?? 0} />
+                    <Stat label="En attente" value={r.pending_count ?? 0} />
                     <Stat label="Clics" value={r.clicked_count ?? 0} />
                   </div>
+
                 </Card>
               ))}
             </div>
