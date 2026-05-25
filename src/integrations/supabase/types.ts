@@ -68813,6 +68813,7 @@ export type Database = {
           dry_run: boolean | null
           enriched_count: number | null
           error_message: string | null
+          execution_mode: string | null
           failed_count: number | null
           finished_at: string | null
           last_step: string | null
@@ -68826,6 +68827,8 @@ export type Database = {
           scored_count: number | null
           scraped_count: number | null
           sent_count: number | null
+          simulated_count: number | null
+          simulation_mode: boolean | null
           started_at: string | null
           stats: Json | null
           target_count: number | null
