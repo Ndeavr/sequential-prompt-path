@@ -120,6 +120,9 @@ const PageAdminAiEntities = lazy(() => import("@/pages/admin/PageAdminAiEntities
 const PageAdminSmartContext = lazy(() => import("@/pages/admin/PageAdminSmartContext"));
 const PageAdminPlansMatrix = lazy(() => import("@/pages/admin/PageAdminPlansMatrix"));
 const PageAdminAutopilotMvp = lazy(() => import("@/pages/admin/PageAdminAutopilotMvp"));
+const PageAdminOutboundLandingFunnel = lazy(() => import("@/pages/admin/outbound/PageAdminOutboundLandingFunnel"));
+const PageOutboundLanding = lazy(() => import("@/pages/outbound/PageOutboundLanding"));
+const PageOutboundLandingSuccess = lazy(() => import("@/pages/outbound/PageOutboundLandingSuccess"));
 
 const PageAippImport = lazy(() => import("@/pages/admin/PageAippImport"));
 const PageAippProfiles = lazy(() => import("@/pages/admin/PageAippProfiles"));
